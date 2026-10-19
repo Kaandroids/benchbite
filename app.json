@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "benchbite",
+    "name": "Benchbite",
     "slug": "benchbite",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "benchbite",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.benchbite.app"
     },
     "android": {
+      "package": "com.benchbite.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
