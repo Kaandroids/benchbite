@@ -1,6 +1,7 @@
 {
   "name": "benchbite",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.22.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.21",

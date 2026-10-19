@@ -1,0 +1,9 @@
+# pnpm only installs package versions that have been published for a while
+# (minimumReleaseAge), which protects against compromised releases.
+# Expo publishes SDK packages together and `expo install` pins compatible versions,
+# so packages from the Expo organization are exempt from the delay.
+minimumReleaseAgeExclude:
+  - expo
+  - expo-*
+  - '@expo/*'
+  - babel-preset-expo
