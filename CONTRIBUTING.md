@@ -32,4 +32,4 @@ Open an issue using one of the templates. Please search existing issues first.
 ## Security
 
 Do not open a public issue for security problems. Use
-[private vulnerability reporting](https://github.com/Kaandroids/platefy/security/advisories/new) instead.
+[private vulnerability reporting](https://github.com/Kaandroids/benchbite/security/advisories/new) instead.
