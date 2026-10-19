@@ -6,17 +6,13 @@
 ## Context
 
 Platefy combines workout tracking and nutrition tracking in a single mobile app.
-It is built and maintained by one developer and serves as a public portfolio project.
 
 The constraints are:
 
 - The app must run on both iOS and Android from a single codebase.
 - There is no capacity to operate servers, so the backend should be managed.
 - The data is relational (users, workouts, exercises, sets, meals, foods) and must be isolated per user.
-- The stack should reflect skills that are in demand on the job market.
-
-An earlier plan also included an Angular web app and native smartwatch apps.
-These were dropped to keep the scope achievable for a single developer.
+- The stack should have a large ecosystem and an active community.
 
 ## Decision
 
