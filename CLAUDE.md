@@ -13,6 +13,34 @@ It is developed in the open, so code, history and documentation are held to the 
 
 There is no separate backend server.
 
+Expo-specific guidance for AI agents lives in `AGENTS.md`, which is maintained by the Expo template:
+
+@AGENTS.md
+
+## Commands
+
+This project uses pnpm. Use `pnpm expo ...` wherever Expo docs or `AGENTS.md` say `npx expo ...`.
+
+```bash
+pnpm install              # install dependencies
+pnpm start                # start the Expo dev server
+pnpm expo install <pkg>   # add a dependency (resolves SDK-compatible versions)
+pnpm typecheck            # TypeScript
+pnpm lint                 # ESLint, fails on warnings
+pnpm format               # format with Prettier (format:check only verifies)
+```
+
+Run `pnpm typecheck`, `pnpm lint` and `pnpm format:check` before every commit.
+
+## Project structure
+
+```
+src/app/      # Expo Router screens and layouts only
+src/          # components, hooks and other app code
+assets/       # images and icons
+docs/adr/     # Architecture Decision Records
+```
+
 ## Workflow
 
 Development is AI-assisted. The maintainer and Claude plan work together; Claude implements it
