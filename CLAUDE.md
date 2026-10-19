@@ -1,7 +1,7 @@
 # Platefy
 
 Platefy is a mobile app for tracking workouts and nutrition in one place.
-It is a public portfolio project, so code, history and documentation are part of the product.
+It is developed in the open, so code, history and documentation are held to the same standard as the app.
 
 ## Stack
 
