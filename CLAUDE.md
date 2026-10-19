@@ -5,11 +5,11 @@ It is developed in the open, so code, history and documentation are held to the 
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Mobile | React Native with Expo |
-| Backend | Supabase: Postgres + Row Level Security, Auth, Storage, Realtime |
-| Server-side logic | Supabase Edge Functions (Deno + TypeScript) |
+| Layer             | Technology                                                       |
+| ----------------- | ---------------------------------------------------------------- |
+| Mobile            | React Native with Expo                                           |
+| Backend           | Supabase: Postgres + Row Level Security, Auth, Storage, Realtime |
+| Server-side logic | Supabase Edge Functions (Deno + TypeScript)                      |
 
 There is no separate backend server.
 

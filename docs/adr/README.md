@@ -14,6 +14,6 @@ and mark the old one as `Superseded by ADR-NNNN`.
 
 ## Index
 
-| ADR | Title | Status |
-|---|---|---|
+| ADR                                       | Title                                   | Status   |
+| ----------------------------------------- | --------------------------------------- | -------- |
 | [0001](0001-react-native-and-supabase.md) | Use React Native with Expo and Supabase | Accepted |
