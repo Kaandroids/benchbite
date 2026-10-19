@@ -26,8 +26,8 @@ The constraints are:
 
 - **Flutter:** Comparable cross-platform capabilities, but Dart is used less outside Flutter,
   while React and TypeScript skills transfer to web development.
-- **Native apps (Swift and Kotlin):** Best platform integration, but two codebases are too much
-  for one developer.
+- **Native apps (Swift and Kotlin):** Best platform integration, but two codebases double the
+  implementation and maintenance effort for every feature.
 - **Firebase:** Mature and well documented, but its document database is a poor fit for
   relational fitness and nutrition data, and its pricing scales with reads.
 - **A custom backend (e.g. Spring Boot):** Full control, but it requires hosting, scaling and
