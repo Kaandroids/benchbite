@@ -7,3 +7,9 @@ minimumReleaseAgeExclude:
   - expo-*
   - '@expo/*'
   - babel-preset-expo
+
+# Dependencies may only run install scripts when listed here with true.
+# unrs-resolver's postinstall only re-checks its prebuilt native binary,
+# which pnpm already installs as a platform-specific optional dependency.
+allowBuilds:
+  unrs-resolver: false
