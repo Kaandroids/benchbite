@@ -1,10 +1,10 @@
 # Contributing
 
-Thanks for your interest in Platefy. This document explains how changes get into the project.
+Thanks for your interest in Benchbite. This document explains how changes get into the project.
 
 ## How development works
 
-Platefy uses an AI-assisted workflow:
+Benchbite uses an AI-assisted workflow:
 
 1. The maintainer and [Claude Code](https://claude.com/claude-code) plan a change, usually as a GitHub issue.
 2. Claude implements it on a branch and opens a pull request as the `benchbite-bot` GitHub App.

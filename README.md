@@ -1,4 +1,4 @@
-# Platefy
+# Benchbite
 
 A mobile app for tracking workouts and nutrition in one place.
 

@@ -1,6 +1,6 @@
-# Platefy
+# Benchbite
 
-Platefy is a mobile app for tracking workouts and nutrition in one place.
+Benchbite is a mobile app for tracking workouts and nutrition in one place.
 It is developed in the open, so code, history and documentation are held to the same standard as the app.
 
 ## Stack
