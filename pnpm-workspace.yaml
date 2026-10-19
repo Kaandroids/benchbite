@@ -1,0 +1,15 @@
+# pnpm only installs package versions that have been published for a while
+# (minimumReleaseAge), which protects against compromised releases.
+# Expo publishes SDK packages together and `expo install` pins compatible versions,
+# so packages from the Expo organization are exempt from the delay.
+minimumReleaseAgeExclude:
+  - expo
+  - expo-*
+  - '@expo/*'
+  - babel-preset-expo
+
+# Dependencies may only run install scripts when listed here with true.
+# unrs-resolver's postinstall only re-checks its prebuilt native binary,
+# which pnpm already installs as a platform-specific optional dependency.
+allowBuilds:
+  unrs-resolver: false
