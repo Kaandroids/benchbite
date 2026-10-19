@@ -16,7 +16,7 @@ There is no separate backend server.
 ## Workflow
 
 Development is AI-assisted. The maintainer and Claude plan work together; Claude implements it
-and opens pull requests as the `platefy-bot` GitHub App; the maintainer reviews and merges.
+and opens pull requests as the `benchbite-bot` GitHub App; the maintainer reviews and merges.
 
 - Never push to `main`. It is protected; every change goes through a pull request.
 - One pull request covers one topic. If a change grows beyond that, split it.

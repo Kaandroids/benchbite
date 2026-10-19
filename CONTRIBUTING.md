@@ -7,7 +7,7 @@ Thanks for your interest in Platefy. This document explains how changes get into
 Platefy uses an AI-assisted workflow:
 
 1. The maintainer and [Claude Code](https://claude.com/claude-code) plan a change, usually as a GitHub issue.
-2. Claude implements it on a branch and opens a pull request as the `platefy-bot` GitHub App.
+2. Claude implements it on a branch and opens a pull request as the `benchbite-bot` GitHub App.
 3. The maintainer reviews the pull request and leaves feedback.
 4. Claude addresses the feedback with new commits until the pull request is approved.
 5. The maintainer squash-merges it into `main`.
