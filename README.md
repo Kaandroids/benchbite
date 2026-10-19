@@ -15,6 +15,12 @@ This project uses an AI-assisted workflow. Features are planned together with
 [Claude Code](https://claude.com/claude-code), implemented by the `platefy-bot` GitHub App
 in pull requests, and reviewed and merged by the maintainer.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [CLAUDE.md](CLAUDE.md) for the full set of conventions.
+
+## Documentation
+
+- [Architecture Decision Records](docs/adr/README.md)
+
 ## License
 
 [MIT](LICENSE)
