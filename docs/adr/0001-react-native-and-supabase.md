@@ -5,7 +5,7 @@
 
 ## Context
 
-Platefy combines workout tracking and nutrition tracking in a single mobile app.
+Benchbite combines workout tracking and nutrition tracking in a single mobile app.
 
 The constraints are:
 
