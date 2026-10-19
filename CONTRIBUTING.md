@@ -1,13 +1,13 @@
 # Contributing
 
-Thanks for your interest in Platefy. This document explains how changes get into the project.
+Thanks for your interest in Benchbite. This document explains how changes get into the project.
 
 ## How development works
 
-Platefy uses an AI-assisted workflow:
+Benchbite uses an AI-assisted workflow:
 
 1. The maintainer and [Claude Code](https://claude.com/claude-code) plan a change, usually as a GitHub issue.
-2. Claude implements it on a branch and opens a pull request as the `platefy-bot` GitHub App.
+2. Claude implements it on a branch and opens a pull request as the `benchbite-bot` GitHub App.
 3. The maintainer reviews the pull request and leaves feedback.
 4. Claude addresses the feedback with new commits until the pull request is approved.
 5. The maintainer squash-merges it into `main`.
@@ -32,4 +32,4 @@ Open an issue using one of the templates. Please search existing issues first.
 ## Security
 
 Do not open a public issue for security problems. Use
-[private vulnerability reporting](https://github.com/Kaandroids/platefy/security/advisories/new) instead.
+[private vulnerability reporting](https://github.com/Kaandroids/benchbite/security/advisories/new) instead.

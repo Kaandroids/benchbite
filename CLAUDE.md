@@ -1,6 +1,6 @@
-# Platefy
+# Benchbite
 
-Platefy is a mobile app for tracking workouts and nutrition in one place.
+Benchbite is a mobile app for tracking workouts and nutrition in one place.
 It is developed in the open, so code, history and documentation are held to the same standard as the app.
 
 ## Stack
@@ -16,7 +16,7 @@ There is no separate backend server.
 ## Workflow
 
 Development is AI-assisted. The maintainer and Claude plan work together; Claude implements it
-and opens pull requests as the `platefy-bot` GitHub App; the maintainer reviews and merges.
+and opens pull requests as the `benchbite-bot` GitHub App; the maintainer reviews and merges.
 
 - Never push to `main`. It is protected; every change goes through a pull request.
 - One pull request covers one topic. If a change grows beyond that, split it.
