@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,14 +14,14 @@ type ScreenProps = {
   progress?: number;
   /** Shows a back button at the top. */
   onBack?: () => void;
-  backLabel?: string;
   /** Stays at the bottom while the content scrolls, typically the main button. */
   footer?: ReactNode;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
-export function Screen({ children, progress, onBack, backLabel = 'Back', footer }: ScreenProps) {
+export function Screen({ children, progress, onBack, footer }: ScreenProps) {
   const { colors, spacing } = useTheme();
+  const { t } = useTranslation();
   const hasTopBar = progress !== undefined || onBack !== undefined;
 
   return (
@@ -33,7 +34,7 @@ export function Screen({ children, progress, onBack, backLabel = 'Back', footer 
           {onBack ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={backLabel}
+              accessibilityLabel={t('common.back')}
               onPress={onBack}
               hitSlop={8}
               style={styles.back}

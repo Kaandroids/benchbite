@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ type SessionErrorProps = {
 /** Shown when the first anonymous sign-in fails, usually because the device is offline. */
 export function SessionError({ onRetry }: SessionErrorProps) {
   const { colors, radii, spacing } = useTheme();
+  const { t } = useTranslation();
   const [isRetrying, setIsRetrying] = useState(false);
 
   async function handleRetry() {
@@ -26,7 +28,9 @@ export function SessionError({ onRetry }: SessionErrorProps) {
   }
 
   return (
-    <Screen footer={<Button label="Try again" loading={isRetrying} onPress={handleRetry} />}>
+    <Screen
+      footer={<Button label={t('common.tryAgain')} loading={isRetrying} onPress={handleRetry} />}
+    >
       <View style={[styles.content, { gap: spacing.md }]}>
         <View
           style={[
@@ -41,11 +45,10 @@ export function SessionError({ onRetry }: SessionErrorProps) {
           <Icon name="offline" size={36} color="primary" />
         </View>
         <Text variant="title" style={styles.centered}>
-          Couldn’t connect
+          {t('sessionError.title')}
         </Text>
         <Text color="textMuted" style={styles.centered}>
-          Benchbite needs an internet connection the first time it starts. Check your connection and
-          try again.
+          {t('sessionError.message')}
         </Text>
       </View>
     </Screen>
