@@ -93,14 +93,175 @@ export type Database = {
         };
         Relationships: [];
       };
+      goals: {
+        Row: {
+          created_at: string;
+          kind: Database['public']['Enums']['goal_kind'];
+          target_weight_kg: number | null;
+          updated_at: string;
+          user_id: string;
+          weekly_pace_kg: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          kind: Database['public']['Enums']['goal_kind'];
+          target_weight_kg?: number | null;
+          updated_at?: string;
+          user_id: string;
+          weekly_pace_kg?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          kind?: Database['public']['Enums']['goal_kind'];
+          target_weight_kg?: number | null;
+          updated_at?: string;
+          user_id?: string;
+          weekly_pace_kg?: number | null;
+        };
+        Relationships: [];
+      };
+      health_data_consents: {
+        Row: {
+          granted_at: string;
+          id: number;
+          policy_version: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          granted_at?: string;
+          id?: never;
+          policy_version: string;
+          user_id: string;
+        };
+        Update: {
+          granted_at?: string;
+          id?: never;
+          policy_version?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          birth_year: number;
+          created_at: string;
+          experience: Database['public']['Enums']['experience'];
+          height_cm: number;
+          height_unit: Database['public']['Enums']['height_unit'];
+          onboarding_completed_at: string | null;
+          pregnant_or_breastfeeding: boolean;
+          session_minutes: number;
+          sex: Database['public']['Enums']['sex'];
+          training_days: number[];
+          training_setup: Database['public']['Enums']['training_setup'];
+          updated_at: string;
+          user_id: string;
+          weight_unit: Database['public']['Enums']['weight_unit'];
+        };
+        ComputedFields: never;
+        Insert: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          birth_year: number;
+          created_at?: string;
+          experience: Database['public']['Enums']['experience'];
+          height_cm: number;
+          height_unit: Database['public']['Enums']['height_unit'];
+          onboarding_completed_at?: string | null;
+          pregnant_or_breastfeeding?: boolean;
+          session_minutes: number;
+          sex: Database['public']['Enums']['sex'];
+          training_days: number[];
+          training_setup: Database['public']['Enums']['training_setup'];
+          updated_at?: string;
+          user_id: string;
+          weight_unit: Database['public']['Enums']['weight_unit'];
+        };
+        Update: {
+          activity_level?: Database['public']['Enums']['activity_level'];
+          birth_year?: number;
+          created_at?: string;
+          experience?: Database['public']['Enums']['experience'];
+          height_cm?: number;
+          height_unit?: Database['public']['Enums']['height_unit'];
+          onboarding_completed_at?: string | null;
+          pregnant_or_breastfeeding?: boolean;
+          session_minutes?: number;
+          sex?: Database['public']['Enums']['sex'];
+          training_days?: number[];
+          training_setup?: Database['public']['Enums']['training_setup'];
+          updated_at?: string;
+          user_id?: string;
+          weight_unit?: Database['public']['Enums']['weight_unit'];
+        };
+        Relationships: [];
+      };
+      weight_entries: {
+        Row: {
+          created_at: string;
+          id: number;
+          measured_on: string;
+          user_id: string;
+          weight_kg: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: never;
+          measured_on?: string;
+          user_id: string;
+          weight_kg: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: never;
+          measured_on?: string;
+          user_id?: string;
+          weight_kg?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      calculate_nutrition_targets: {
+        Args: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          age: number;
+          goal: Database['public']['Enums']['goal_kind'];
+          height_cm: number;
+          pregnant_or_breastfeeding?: boolean;
+          sex: Database['public']['Enums']['sex'];
+          target_weight_kg?: number;
+          training_days_per_week: number;
+          weekly_pace_kg?: number;
+          weight_kg: number;
+        };
+        Returns: Database['public']['CompositeTypes']['nutrition_targets'];
+        SetofOptions: {
+          from: '*';
+          to: 'nutrition_targets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      my_nutrition_targets: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['nutrition_targets'];
+        SetofOptions: {
+          from: '*';
+          to: 'nutrition_targets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
+      activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
       equipment:
         | 'barbell'
         | 'dumbbell'
@@ -125,6 +286,9 @@ export type Database = {
       exercise_force: 'push' | 'pull' | 'static';
       exercise_level: 'beginner' | 'intermediate' | 'expert';
       exercise_mechanic: 'compound' | 'isolation';
+      experience: 'beginner' | 'intermediate' | 'advanced';
+      goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
+      height_unit: 'cm' | 'ft';
       muscle:
         | 'abdominals'
         | 'abductors'
@@ -143,9 +307,17 @@ export type Database = {
         | 'shoulders'
         | 'traps'
         | 'triceps';
+      sex: 'female' | 'male' | 'unspecified';
+      training_setup: 'gym' | 'dumbbells' | 'bodyweight';
+      weight_unit: 'kg' | 'lb';
     };
     CompositeTypes: {
-      [_ in never]: never;
+      nutrition_targets: {
+        calories: number | null;
+        protein_g: number | null;
+        carbs_g: number | null;
+        fat_g: number | null;
+      };
     };
   };
 };
@@ -257,6 +429,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      activity_level: ['sedentary', 'light', 'moderate', 'active'],
       equipment: [
         'barbell',
         'dumbbell',
@@ -283,6 +456,9 @@ export const Constants = {
       exercise_force: ['push', 'pull', 'static'],
       exercise_level: ['beginner', 'intermediate', 'expert'],
       exercise_mechanic: ['compound', 'isolation'],
+      experience: ['beginner', 'intermediate', 'advanced'],
+      goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
+      height_unit: ['cm', 'ft'],
       muscle: [
         'abdominals',
         'abductors',
@@ -302,6 +478,9 @@ export const Constants = {
         'traps',
         'triceps',
       ],
+      sex: ['female', 'male', 'unspecified'],
+      training_setup: ['gym', 'dumbbells', 'bodyweight'],
+      weight_unit: ['kg', 'lb'],
     },
   },
 } as const;
