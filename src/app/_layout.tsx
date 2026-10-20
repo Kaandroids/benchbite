@@ -12,6 +12,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { SessionError } from '@/components/session-error';
+import '@/i18n';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
 

@@ -1,0 +1,10 @@
+{
+  "common": {
+    "back": "Zurück",
+    "tryAgain": "Erneut versuchen"
+  },
+  "sessionError": {
+    "title": "Keine Verbindung",
+    "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
+  }
+}
