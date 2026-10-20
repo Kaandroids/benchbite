@@ -8,6 +8,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { SessionError } from '@/components/session-error';
 import { SessionProvider, useSession } from '@/providers/session-provider';
@@ -18,9 +20,12 @@ void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <SessionProvider>
-      <RootNavigator />
-    </SessionProvider>
+    // Gesture detectors, such as the one in the slider, only work inside this view.
+    <GestureHandlerRootView style={styles.root}>
+      <SessionProvider>
+        <RootNavigator />
+      </SessionProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -67,3 +72,9 @@ function RootNavigator() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
