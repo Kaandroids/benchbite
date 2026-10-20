@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -36,6 +36,13 @@ select is(
   -- Three training days raise the moderate activity level to active: 1780 * 1.725 = 3071.
   public.calculate_nutrition_targets('male', 30, 180, 80, 'moderate', 3, 'stay_healthy'),
   'my_nutrition_targets() uses the saved profile, goal and latest weight'
+);
+
+select throws_ok(
+  $$ update public.profiles set training_days = '{1,2,3,4,5,6,7}' $$,
+  '23514',
+  null,
+  'Profiles allow at most six training days'
 );
 
 select throws_ok(
