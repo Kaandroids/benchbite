@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
+import { Screen } from '@/components/ui/screen';
+import { Text } from '@/components/ui/text';
+import { useTheme } from '@/theme';
 
 type SessionErrorProps = {
   onRetry: () => Promise<void>;
@@ -7,8 +13,8 @@ type SessionErrorProps = {
 
 /** Shown when the first anonymous sign-in fails, usually because the device is offline. */
 export function SessionError({ onRetry }: SessionErrorProps) {
+  const { colors, radii, spacing } = useTheme();
   const [isRetrying, setIsRetrying] = useState(false);
-  const isDark = useColorScheme() === 'dark';
 
   async function handleRetry() {
     setIsRetrying(true);
@@ -20,60 +26,45 @@ export function SessionError({ onRetry }: SessionErrorProps) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}>
-      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Couldn’t connect</Text>
-      <Text style={[styles.message, { color: isDark ? '#aaa' : '#555' }]}>
-        Benchbite needs an internet connection the first time it starts. Check your connection and
-        try again.
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        disabled={isRetrying}
-        onPress={handleRetry}
-        style={({ pressed }) => [styles.button, (pressed || isRetrying) && styles.buttonPressed]}
-      >
-        {isRetrying ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonLabel}>Try again</Text>
-        )}
-      </Pressable>
-    </View>
+    <Screen footer={<Button label="Try again" loading={isRetrying} onPress={handleRetry} />}>
+      <View style={[styles.content, { gap: spacing.md }]}>
+        <View
+          style={[
+            styles.iconTile,
+            {
+              borderRadius: radii.xl,
+              backgroundColor: colors.iconBackground,
+              marginBottom: spacing.sm,
+            },
+          ]}
+        >
+          <Icon name="offline" size={36} color="primary" />
+        </View>
+        <Text variant="title" style={styles.centered}>
+          Couldn’t connect
+        </Text>
+        <Text color="textMuted" style={styles.centered}>
+          Benchbite needs an internet connection the first time it starts. Check your connection and
+          try again.
+        </Text>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    padding: 24,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  message: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  button: {
-    marginTop: 12,
-    minWidth: 160,
-    minHeight: 48,
+  iconTile: {
+    width: 80,
+    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: '#208AEF',
   },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonLabel: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  centered: {
+    textAlign: 'center',
   },
 });

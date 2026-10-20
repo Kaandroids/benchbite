@@ -1,9 +1,19 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/ui/text';
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
+      <Text variant="headline">Benchbite</Text>
+      {__DEV__ ? (
+        <Link href="/dev/components">
+          <Text variant="bodyStrong" color="primaryText">
+            Open the component gallery
+          </Text>
+        </Link>
+      ) : null}
     </View>
   );
 }
@@ -13,5 +23,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
   },
 });
