@@ -60,6 +60,7 @@ export type Database = {
           instructions: string[];
           level: Database['public']['Enums']['exercise_level'];
           mechanic: Database['public']['Enums']['exercise_mechanic'] | null;
+          metrics: Database['public']['Enums']['exercise_metric'][];
           name: string;
           primary_muscles: Database['public']['Enums']['muscle'][];
           secondary_muscles: Database['public']['Enums']['muscle'][];
@@ -74,6 +75,7 @@ export type Database = {
           instructions: string[];
           level: Database['public']['Enums']['exercise_level'];
           mechanic?: Database['public']['Enums']['exercise_mechanic'] | null;
+          metrics: Database['public']['Enums']['exercise_metric'][];
           name: string;
           primary_muscles: Database['public']['Enums']['muscle'][];
           secondary_muscles: Database['public']['Enums']['muscle'][];
@@ -87,6 +89,7 @@ export type Database = {
           instructions?: string[];
           level?: Database['public']['Enums']['exercise_level'];
           mechanic?: Database['public']['Enums']['exercise_mechanic'] | null;
+          metrics?: Database['public']['Enums']['exercise_metric'][];
           name?: string;
           primary_muscles?: Database['public']['Enums']['muscle'][];
           secondary_muscles?: Database['public']['Enums']['muscle'][];
@@ -286,6 +289,7 @@ export type Database = {
       exercise_force: 'push' | 'pull' | 'static';
       exercise_level: 'beginner' | 'intermediate' | 'expert';
       exercise_mechanic: 'compound' | 'isolation';
+      exercise_metric: 'weight' | 'reps' | 'duration' | 'distance';
       experience: 'beginner' | 'intermediate' | 'advanced';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
       height_unit: 'cm' | 'ft';
@@ -456,6 +460,7 @@ export const Constants = {
       exercise_force: ['push', 'pull', 'static'],
       exercise_level: ['beginner', 'intermediate', 'expert'],
       exercise_mechanic: ['compound', 'isolation'],
+      exercise_metric: ['weight', 'reps', 'duration', 'distance'],
       experience: ['beginner', 'intermediate', 'advanced'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
       height_unit: ['cm', 'ft'],
