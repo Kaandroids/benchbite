@@ -5,6 +5,8 @@
 export type ColorTokens = {
   background: string;
   surface: string;
+  /** A surface raised above `track`, such as the selected segment of a segmented control. */
+  elevated: string;
   text: string;
   textMuted: string;
   border: string;
@@ -35,6 +37,7 @@ export type ColorTokens = {
 export const lightColors: ColorTokens = {
   background: '#F6F6F8',
   surface: '#FFFFFF',
+  elevated: '#FFFFFF',
   text: '#16171A', // 16.6:1 on background
   textMuted: '#676A72', // 5.0:1 on background
   border: '#E3E4E8',
@@ -60,6 +63,7 @@ export const lightColors: ColorTokens = {
 export const darkColors: ColorTokens = {
   background: '#111214',
   surface: '#1B1C1F',
+  elevated: '#3A3C42',
   text: '#F2F3F5', // 16.9:1 on background
   textMuted: '#9A9DA5', // 6.9:1 on background
   border: '#2B2D31',
