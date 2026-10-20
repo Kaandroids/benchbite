@@ -1,3 +1,7 @@
+// Hermes has no Intl.PluralRules, which i18next needs to pick plural forms such as "1 day" and
+// "3 days". The polyfill only installs itself where it is missing.
+import 'intl-pluralrules';
+
 import { getLocales } from 'expo-localization';
 import { createInstance } from 'i18next';
 import { initReactI18next } from 'react-i18next';
