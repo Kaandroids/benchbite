@@ -74,15 +74,22 @@ pnpm start
 ```
 
 Scan the QR code with the camera (iOS) or Expo Go (Android). Press `i` or `a` in the terminal
-to open a simulator instead. Restart the dev server after changing `.env.local`.
+to open the iOS Simulator or Android Emulator instead. Restart the dev server after changing
+`.env.local`.
 
-`127.0.0.1` in `.env.local` only reaches your computer from the iOS Simulator. Change
-`EXPO_PUBLIC_SUPABASE_URL` to:
+`127.0.0.1` in `.env.local` reaches your computer directly from the iOS Simulator. Elsewhere:
 
-- your computer's IP address on the local network (for example `http://192.168.1.20:54321`) on
-  a physical device; the phone must be on the same network. On macOS, `ipconfig getifaddr en0`
-  prints the address.
-- `http://10.0.2.2:54321` on the Android Emulator.
+- **Android Emulator, or an Android device connected over USB:** forward the Supabase port to
+  your computer with `adb` (part of the Android SDK platform tools). Run it again after the
+  emulator or device restarts:
+
+  ```bash
+  adb reverse tcp:54321 tcp:54321
+  ```
+
+- **Physical device over Wi-Fi:** change `EXPO_PUBLIC_SUPABASE_URL` to your computer's IP
+  address on the local network, for example `http://192.168.1.20:54321`. The phone must be on
+  the same network. On macOS, `ipconfig getifaddr en0` prints the address.
 
 ### Scripts
 
