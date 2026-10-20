@@ -2,8 +2,8 @@
 //
 // - converts its images to WebP in supabase/storage/exercise-images/, which local Supabase
 //   uploads to the exercise-images bucket, and
-// - writes a migration that inserts or updates every exercise and the translated names from
-//   supabase/data/exercise-names.json.
+// - writes a migration that inserts or updates every exercise with its metrics and the
+//   translated names from supabase/data/exercise-names.json.
 //
 // Run with `pnpm import:exercises`. To update the library, change UPSTREAM_COMMIT, run the
 // script again and commit the new migration and images.
@@ -23,6 +23,7 @@ const PARALLEL_DOWNLOADS = 8;
 const ROOT = join(import.meta.dirname, '..');
 const IMAGES_DIR = join(ROOT, 'supabase', 'storage', 'exercise-images');
 const NAMES_FILE = join(ROOT, 'supabase', 'data', 'exercise-names.json');
+const METRICS_FILE = join(ROOT, 'supabase', 'data', 'exercise-metrics.json');
 const MIGRATIONS_DIR = join(ROOT, 'supabase', 'migrations');
 
 type UpstreamExercise = {
@@ -41,6 +42,36 @@ type UpstreamExercise = {
 };
 
 type TranslatedNames = Record<string, { de: string; tr: string }>;
+
+type Metric = 'weight' | 'reps' | 'duration' | 'distance';
+
+/** Equipment that adds no weight to measure. */
+const UNWEIGHTED_EQUIPMENT = new Set([null, 'body only', 'bands', 'exercise ball']);
+
+/**
+ * The metrics most exercises of a kind record. Exceptions are listed in
+ * supabase/data/exercise-metrics.json.
+ */
+function defaultMetrics(exercise: UpstreamExercise): Metric[] {
+  if (exercise.category === 'stretching' || exercise.equipment === 'foam roll') {
+    return ['duration'];
+  }
+  if (exercise.category === 'cardio') {
+    return ['distance', 'duration'];
+  }
+  // Holds such as planks and isometric exercises.
+  if (exercise.force === 'static') {
+    return ['duration'];
+  }
+  // Jumps and bounds on boxes, hurdles and cones are counted, not weighed.
+  if (
+    UNWEIGHTED_EQUIPMENT.has(exercise.equipment) ||
+    (exercise.category === 'plyometrics' && exercise.equipment === 'other')
+  ) {
+    return ['reps'];
+  }
+  return ['weight', 'reps'];
+}
 
 async function fetchExercises(): Promise<UpstreamExercise[]> {
   const response = await fetch(`${UPSTREAM}/dist/exercises.json`);
@@ -90,7 +121,7 @@ function sqlArray(values: string[], type: string): string {
   return `array[${values.map(sqlString).join(', ')}]::${type}[]`;
 }
 
-function exerciseRow(exercise: UpstreamExercise): string {
+function exerciseRow(exercise: UpstreamExercise, metrics: Metric[]): string {
   return `  (${[
     sqlString(exercise.id),
     sqlString(exercise.name),
@@ -103,10 +134,15 @@ function exerciseRow(exercise: UpstreamExercise): string {
     sqlArray(exercise.secondaryMuscles, 'public.muscle'),
     sqlArray(exercise.instructions, 'text'),
     sqlArray(exercise.images.map(webpPath), 'text'),
+    sqlArray(metrics, 'public.exercise_metric'),
   ].join(', ')})`;
 }
 
-function migration(exercises: UpstreamExercise[], names: TranslatedNames): string {
+function migration(
+  exercises: UpstreamExercise[],
+  names: TranslatedNames,
+  metricOverrides: Record<string, Metric[]>,
+): string {
   const translations = Object.entries(names).flatMap(([id, byLanguage]) =>
     Object.entries(byLanguage).map(
       ([language, name]) => `  (${[id, language, name].map(sqlString).join(', ')})`,
@@ -117,10 +153,14 @@ function migration(exercises: UpstreamExercise[], names: TranslatedNames): strin
 
 insert into public.exercises (
   id, name, level, category, equipment, force, mechanic,
-  primary_muscles, secondary_muscles, instructions, image_paths
+  primary_muscles, secondary_muscles, instructions, image_paths, metrics
 )
 values
-${exercises.map(exerciseRow).join(',\n')}
+${exercises
+  .map((exercise) =>
+    exerciseRow(exercise, metricOverrides[exercise.id] ?? defaultMetrics(exercise)),
+  )
+  .join(',\n')}
 on conflict (id) do update set
   name = excluded.name,
   level = excluded.level,
@@ -131,7 +171,8 @@ on conflict (id) do update set
   primary_muscles = excluded.primary_muscles,
   secondary_muscles = excluded.secondary_muscles,
   instructions = excluded.instructions,
-  image_paths = excluded.image_paths;
+  image_paths = excluded.image_paths,
+  metrics = excluded.metrics;
 
 insert into public.exercise_translations (exercise_id, language, name)
 values
@@ -148,10 +189,17 @@ function timestamp(): string {
 const exercises = (await fetchExercises()).sort((a, b) => a.id.localeCompare(b.id));
 const names = JSON.parse(readFileSync(NAMES_FILE, 'utf8')) as TranslatedNames;
 
+const metricOverrides = JSON.parse(readFileSync(METRICS_FILE, 'utf8')) as Record<string, Metric[]>;
+
 const ids = new Set(exercises.map((exercise) => exercise.id));
-const unknown = Object.keys(names).filter((id) => !ids.has(id));
-if (unknown.length > 0) {
-  throw new Error(`exercise-names.json has unknown exercises: ${unknown.join(', ')}`);
+for (const [file, entries] of [
+  ['exercise-names.json', names],
+  ['exercise-metrics.json', metricOverrides],
+] as const) {
+  const unknown = Object.keys(entries).filter((id) => !ids.has(id));
+  if (unknown.length > 0) {
+    throw new Error(`${file} has unknown exercises: ${unknown.join(', ')}`);
+  }
 }
 
 const images = exercises.flatMap((exercise) => exercise.images);
@@ -159,7 +207,7 @@ console.log(`Converting ${images.length} images…`);
 await convertImages(images);
 
 const file = join(MIGRATIONS_DIR, `${timestamp()}_import_exercises.sql`);
-writeFileSync(file, migration(exercises, names));
+writeFileSync(file, migration(exercises, names, metricOverrides));
 console.log(
   `Wrote ${exercises.length} exercises and ${Object.keys(names).length} names to ${file}`,
 );
