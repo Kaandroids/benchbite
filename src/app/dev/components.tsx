@@ -10,6 +10,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
+import { defaultUnits, useNumberFormat, type HeightUnit, type WeightUnit } from '@/i18n/units';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 
 const GOALS = [
@@ -70,10 +71,11 @@ export default function ComponentGallery() {
   const [days, setDays] = useState(['Monday', 'Wednesday', 'Friday']);
   const [progress, setProgress] = useState(0.3);
   const [loading, setLoading] = useState(false);
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
+  const { format, decimalSeparator } = useNumberFormat();
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>(() => defaultUnits().weight);
   // Weight in tenths of the selected unit, so that both wheels read from one number.
-  const [weightTenths, setWeightTenths] = useState(725);
-  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
+  const [weightTenths, setWeightTenths] = useState(() => (weightUnit === 'lb' ? 1598 : 725));
+  const [heightUnit, setHeightUnit] = useState<HeightUnit>(() => defaultUnits().height);
   const [centimetres, setCentimetres] = useState(178);
   const [pace, setPace] = useState(0.5);
 
@@ -81,7 +83,7 @@ export default function ComponentGallery() {
     return <Redirect href="/" />;
   }
 
-  const changeWeightUnit = (unit: 'kg' | 'lb') => {
+  const changeWeightUnit = (unit: WeightUnit) => {
     const factor = unit === 'lb' ? 1 / KG_PER_LB : KG_PER_LB;
     setWeightUnit(unit);
     setWeightTenths((tenths) => Math.round(tenths * factor));
@@ -149,7 +151,7 @@ export default function ComponentGallery() {
             values={TENTHS}
             value={weightTenths % 10}
             onChange={(tenth) => setWeightTenths(wholeWeight * 10 + tenth)}
-            format={(tenth) => `.${tenth}`}
+            format={(tenth) => `${decimalSeparator}${tenth}`}
             width={64}
           />
           <Text variant="headline" color="textMuted">
@@ -157,7 +159,7 @@ export default function ComponentGallery() {
           </Text>
         </View>
         <Text color="textMuted">
-          Selected: {(weightTenths / 10).toFixed(1)} {weightUnit}
+          Selected: {format(weightTenths / 10, { minimumFractionDigits: 1 })} {weightUnit}
         </Text>
       </Section>
 
@@ -203,7 +205,7 @@ export default function ComponentGallery() {
       </Section>
 
       <Section title="Slider">
-        <Text variant="bodyStrong">{pace.toFixed(2)} kg per week</Text>
+        <Text variant="bodyStrong">{format(pace, { minimumFractionDigits: 2 })} kg per week</Text>
         <Slider
           accessibilityLabel="Weekly pace"
           value={pace}

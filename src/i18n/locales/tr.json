@@ -1,0 +1,10 @@
+{
+  "common": {
+    "back": "Geri",
+    "tryAgain": "Tekrar dene"
+  },
+  "sessionError": {
+    "title": "Bağlanılamadı",
+    "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
+  }
+}

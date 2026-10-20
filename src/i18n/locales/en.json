@@ -1,0 +1,10 @@
+{
+  "common": {
+    "back": "Back",
+    "tryAgain": "Try again"
+  },
+  "sessionError": {
+    "title": "Couldn’t connect",
+    "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
+  }
+}
