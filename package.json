@@ -36,6 +36,7 @@
     "eslint-config-expo": "~58.0.4",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
+    "sharp": "^0.35.5",
     "supabase": "^2.121.0",
     "typescript": "~6.0.3"
   },
@@ -47,7 +48,8 @@
     "typecheck": "tsc --noEmit && tsc -p scripts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:locales": "node scripts/check-locales.ts"
+    "check:locales": "node scripts/check-locales.ts",
+    "import:exercises": "node scripts/import-exercises.ts"
   },
   "private": true
 }
