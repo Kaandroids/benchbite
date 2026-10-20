@@ -23,3 +23,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0005](0005-guest-first-accounts.md)               | Let people start as guests with anonymous sign-ins               | Accepted |
 | [0006](0006-styling-with-stylesheet-and-tokens.md) | Style the app with StyleSheet and theme tokens                   | Accepted |
 | [0007](0007-internationalization.md)               | Translate the app with i18next and default units from the device | Accepted |
+| [0008](0008-exercise-library.md)                   | Import free-exercise-db as the exercise library                  | Accepted |

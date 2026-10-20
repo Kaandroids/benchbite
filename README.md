@@ -65,6 +65,17 @@ Useful commands:
 
 See [ADR 0003](docs/adr/0003-local-first-database-development.md) for how database changes are made.
 
+After changing the schema, regenerate the TypeScript types with `pnpm db:types`.
+
+#### Exercise library
+
+The exercise library comes from [free-exercise-db](https://github.com/yuhonas/free-exercise-db).
+Its data is in a migration and its images are in `supabase/storage/exercise-images/`, so
+`pnpm supabase start` and `pnpm supabase db reset` load both without a download. To update the
+library, change the upstream commit in `scripts/import-exercises.ts` and run
+`pnpm import:exercises`, which converts the images to WebP and writes a new migration. See
+[ADR 0008](docs/adr/0008-exercise-library.md).
+
 ### Run the app
 
 With the local Supabase stack running:
@@ -93,14 +104,16 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 
 ### Scripts
 
-| Command              | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| `pnpm start`         | Start the Expo dev server                      |
-| `pnpm typecheck`     | Type-check with TypeScript                     |
-| `pnpm lint`          | Lint with ESLint (fails on warnings)           |
-| `pnpm format`        | Format all files with Prettier                 |
-| `pnpm format:check`  | Check formatting without changing it           |
-| `pnpm check:locales` | Check that all translations have the same keys |
+| Command                 | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| `pnpm start`            | Start the Expo dev server                         |
+| `pnpm typecheck`        | Type-check with TypeScript                        |
+| `pnpm lint`             | Lint with ESLint (fails on warnings)              |
+| `pnpm format`           | Format all files with Prettier                    |
+| `pnpm format:check`     | Check formatting without changing it              |
+| `pnpm check:locales`    | Check that all translations have the same keys    |
+| `pnpm db:types`         | Generate TypeScript types from the local database |
+| `pnpm import:exercises` | Import the exercise library from free-exercise-db |
 
 ## Development workflow
 
@@ -113,6 +126,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [CLAUDE.md](CLAUDE.m
 ## Documentation
 
 - [Architecture Decision Records](docs/adr/README.md)
+
+## Acknowledgements
+
+The exercise data and images come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+by Clint Plummer ([@yuhonas](https://github.com/yuhonas)) and contributors, released into the
+public domain under the [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md).
 
 ## License
 
