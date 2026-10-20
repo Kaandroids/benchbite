@@ -61,6 +61,7 @@ Useful commands:
 | ------------------------ | ----------------------------------------------- |
 | `pnpm supabase status`   | Show the local URLs and keys                    |
 | `pnpm supabase db reset` | Recreate the local database from the migrations |
+| `pnpm supabase test db`  | Run the database tests in `supabase/tests/`     |
 | `pnpm supabase stop`     | Stop the stack and keep its data                |
 
 See [ADR 0003](docs/adr/0003-local-first-database-development.md) for how database changes are made.
