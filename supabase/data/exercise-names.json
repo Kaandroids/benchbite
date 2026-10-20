@@ -1,0 +1,338 @@
+{
+  "Ab_Roller": {
+    "de": "Ab Roller",
+    "tr": "Ab Roller (Karın Tekerleği)"
+  },
+  "Arnold_Dumbbell_Press": {
+    "de": "Arnold Press",
+    "tr": "Arnold Press"
+  },
+  "Barbell_Bench_Press_-_Medium_Grip": {
+    "de": "Bankdrücken (Langhantel)",
+    "tr": "Bench Press (Halter)"
+  },
+  "Barbell_Curl": {
+    "de": "Langhantel-Curl",
+    "tr": "Biceps Curl (Halter)"
+  },
+  "Barbell_Deadlift": {
+    "de": "Kreuzheben",
+    "tr": "Deadlift"
+  },
+  "Barbell_Hip_Thrust": {
+    "de": "Hip Thrust (Langhantel)",
+    "tr": "Hip Thrust (Halter)"
+  },
+  "Barbell_Incline_Bench_Press_-_Medium_Grip": {
+    "de": "Schrägbankdrücken",
+    "tr": "Incline Bench Press (Halter)"
+  },
+  "Barbell_Lunge": {
+    "de": "Ausfallschritte (Langhantel)",
+    "tr": "Lunge (Halter)"
+  },
+  "Barbell_Shrug": {
+    "de": "Shrugs (Langhantel)",
+    "tr": "Shrug (Halter)"
+  },
+  "Barbell_Squat": {
+    "de": "Kniebeuge (Langhantel)",
+    "tr": "Squat (Halter)"
+  },
+  "Bench_Dips": {
+    "de": "Dips an der Bank",
+    "tr": "Bench Dips"
+  },
+  "Bent_Over_Barbell_Row": {
+    "de": "Langhantelrudern",
+    "tr": "Barbell Row"
+  },
+  "Bodyweight_Squat": {
+    "de": "Kniebeuge (Körpergewicht)",
+    "tr": "Squat (Vücut Ağırlığı)"
+  },
+  "Bodyweight_Walking_Lunge": {
+    "de": "Ausfallschritte gehend",
+    "tr": "Yürüyerek Lunge"
+  },
+  "Butterfly": {
+    "de": "Butterfly (Maschine)",
+    "tr": "Pec Deck (Makine)"
+  },
+  "Cable_Crossover": {
+    "de": "Kabelzug-Crossover",
+    "tr": "Cable Crossover"
+  },
+  "Cable_Crunch": {
+    "de": "Crunches am Kabel",
+    "tr": "Kablo Crunch"
+  },
+  "Cable_Rope_Overhead_Triceps_Extension": {
+    "de": "Trizeps-Strecken über Kopf (Kabel)",
+    "tr": "Baş Üstü Triceps Extension (Kablo)"
+  },
+  "Chin-Up": {
+    "de": "Klimmzüge (Untergriff)",
+    "tr": "Ters Tutuş Barfiks"
+  },
+  "Close-Grip_Front_Lat_Pulldown": {
+    "de": "Latzug eng",
+    "tr": "Dar Tutuş Lat Pulldown"
+  },
+  "Concentration_Curls": {
+    "de": "Konzentrations-Curl",
+    "tr": "Concentration Curl"
+  },
+  "Crunches": {
+    "de": "Crunches",
+    "tr": "Mekik"
+  },
+  "Dead_Bug": {
+    "de": "Dead Bug",
+    "tr": "Dead Bug"
+  },
+  "Decline_Push-Up": {
+    "de": "Liegestütze (Füße erhöht)",
+    "tr": "Ayaklar Yüksekte Şınav"
+  },
+  "Dips_-_Chest_Version": {
+    "de": "Dips (Brust)",
+    "tr": "Dips (Göğüs)"
+  },
+  "Dips_-_Triceps_Version": {
+    "de": "Dips (Trizeps)",
+    "tr": "Dips (Triceps)"
+  },
+  "Dumbbell_Bench_Press": {
+    "de": "Bankdrücken (Kurzhantel)",
+    "tr": "Bench Press (Dambıl)"
+  },
+  "Dumbbell_Flyes": {
+    "de": "Fliegende (Kurzhantel)",
+    "tr": "Dumbbell Fly"
+  },
+  "Dumbbell_Lunges": {
+    "de": "Ausfallschritte (Kurzhantel)",
+    "tr": "Lunge (Dambıl)"
+  },
+  "Dumbbell_Shoulder_Press": {
+    "de": "Schulterdrücken (Kurzhantel)",
+    "tr": "Omuz Press (Dambıl)"
+  },
+  "Dumbbell_Shrug": {
+    "de": "Shrugs (Kurzhantel)",
+    "tr": "Shrug (Dambıl)"
+  },
+  "Dumbbell_Squat": {
+    "de": "Kniebeuge (Kurzhantel)",
+    "tr": "Squat (Dambıl)"
+  },
+  "EZ-Bar_Curl": {
+    "de": "SZ-Curl",
+    "tr": "Biceps Curl (EZ Bar)"
+  },
+  "EZ-Bar_Skullcrusher": {
+    "de": "Stirndrücken (SZ-Stange)",
+    "tr": "Skull Crusher (EZ Bar)"
+  },
+  "Face_Pull": {
+    "de": "Face Pull",
+    "tr": "Face Pull"
+  },
+  "Farmers_Walk": {
+    "de": "Farmer’s Walk",
+    "tr": "Farmer’s Walk"
+  },
+  "Front_Dumbbell_Raise": {
+    "de": "Frontheben (Kurzhantel)",
+    "tr": "Ön Kaldırış (Dambıl)"
+  },
+  "Front_Squat_Clean_Grip": {
+    "de": "Frontkniebeuge",
+    "tr": "Front Squat"
+  },
+  "Glute_Kickback": {
+    "de": "Glute Kickback",
+    "tr": "Glute Kickback"
+  },
+  "Goblet_Squat": {
+    "de": "Goblet Squat",
+    "tr": "Goblet Squat"
+  },
+  "Good_Morning": {
+    "de": "Good Morning",
+    "tr": "Good Morning"
+  },
+  "Hack_Squat": {
+    "de": "Hackenschmidt-Kniebeuge",
+    "tr": "Hack Squat (Makine)"
+  },
+  "Hammer_Curls": {
+    "de": "Hammer-Curls",
+    "tr": "Hammer Curl"
+  },
+  "Hanging_Leg_Raise": {
+    "de": "Beinheben hängend",
+    "tr": "Barda Bacak Kaldırma"
+  },
+  "Hyperextensions_Back_Extensions": {
+    "de": "Rückenstrecken",
+    "tr": "Hyperextension (Sırt Ekstansiyonu)"
+  },
+  "Incline_Dumbbell_Press": {
+    "de": "Schrägbankdrücken (Kurzhantel)",
+    "tr": "Incline Bench Press (Dambıl)"
+  },
+  "Incline_Push-Up": {
+    "de": "Liegestütze (Hände erhöht)",
+    "tr": "Eller Yüksekte Şınav"
+  },
+  "Inverted_Row": {
+    "de": "Rudern hängend (Inverted Row)",
+    "tr": "Inverted Row"
+  },
+  "Leg_Extensions": {
+    "de": "Beinstrecker",
+    "tr": "Leg Extension"
+  },
+  "Leg_Press": {
+    "de": "Beinpresse",
+    "tr": "Leg Press"
+  },
+  "Leverage_Chest_Press": {
+    "de": "Brustpresse (Maschine)",
+    "tr": "Chest Press (Makine)"
+  },
+  "Lying_Leg_Curls": {
+    "de": "Beinbeuger liegend",
+    "tr": "Yatarak Leg Curl"
+  },
+  "Machine_Shoulder_Military_Press": {
+    "de": "Schulterpresse (Maschine)",
+    "tr": "Omuz Press (Makine)"
+  },
+  "Mountain_Climbers": {
+    "de": "Mountain Climbers",
+    "tr": "Mountain Climber"
+  },
+  "One-Arm_Dumbbell_Row": {
+    "de": "Einarmiges Kurzhantelrudern",
+    "tr": "Tek Kol Dumbbell Row"
+  },
+  "Plank": {
+    "de": "Unterarmstütz (Planke)",
+    "tr": "Plank"
+  },
+  "Preacher_Curl": {
+    "de": "Scott-Curl (Langhantel)",
+    "tr": "Preacher Curl (Halter)"
+  },
+  "Pullups": {
+    "de": "Klimmzüge",
+    "tr": "Barfiks"
+  },
+  "Push-Ups_-_Close_Triceps_Position": {
+    "de": "Enge Liegestütze",
+    "tr": "Dar Şınav"
+  },
+  "Pushups": {
+    "de": "Liegestütze",
+    "tr": "Şınav"
+  },
+  "Reverse_Flyes": {
+    "de": "Reverse Flys",
+    "tr": "Reverse Fly"
+  },
+  "Romanian_Deadlift": {
+    "de": "Rumänisches Kreuzheben",
+    "tr": "Romanian Deadlift"
+  },
+  "Russian_Twist": {
+    "de": "Russian Twist",
+    "tr": "Russian Twist"
+  },
+  "Seated_Cable_Rows": {
+    "de": "Rudern am Kabel",
+    "tr": "Seated Cable Row"
+  },
+  "Seated_Calf_Raise": {
+    "de": "Wadenheben sitzend",
+    "tr": "Oturarak Calf Raise"
+  },
+  "Seated_Dumbbell_Curl": {
+    "de": "Kurzhantel-Curl sitzend",
+    "tr": "Oturarak Dumbbell Curl"
+  },
+  "Seated_Leg_Curl": {
+    "de": "Beinbeuger sitzend",
+    "tr": "Oturarak Leg Curl"
+  },
+  "Side_Bridge": {
+    "de": "Seitstütz",
+    "tr": "Yan Plank"
+  },
+  "Side_Lateral_Raise": {
+    "de": "Seitheben",
+    "tr": "Lateral Raise"
+  },
+  "Single_Leg_Glute_Bridge": {
+    "de": "Einbeinige Glute Bridge",
+    "tr": "Tek Bacak Glute Bridge"
+  },
+  "Split_Squat_with_Dumbbells": {
+    "de": "Split Squat (Kurzhantel)",
+    "tr": "Split Squat (Dambıl)"
+  },
+  "Standing_Calf_Raises": {
+    "de": "Wadenheben stehend",
+    "tr": "Ayakta Calf Raise"
+  },
+  "Standing_Dumbbell_Calf_Raise": {
+    "de": "Wadenheben (Kurzhantel)",
+    "tr": "Calf Raise (Dambıl)"
+  },
+  "Standing_Dumbbell_Triceps_Extension": {
+    "de": "Trizeps-Strecken stehend",
+    "tr": "Ayakta Triceps Extension (Dambıl)"
+  },
+  "Standing_Dumbbell_Upright_Row": {
+    "de": "Aufrechtes Rudern (Kurzhantel)",
+    "tr": "Upright Row (Dambıl)"
+  },
+  "Standing_Military_Press": {
+    "de": "Schulterdrücken stehend",
+    "tr": "Military Press"
+  },
+  "Step-up_with_Knee_Raise": {
+    "de": "Step-up mit Knieheben",
+    "tr": "Diz Kaldırmalı Step-up"
+  },
+  "Stiff-Legged_Dumbbell_Deadlift": {
+    "de": "Kreuzheben gestreckt (Kurzhantel)",
+    "tr": "Stiff-Leg Deadlift (Dambıl)"
+  },
+  "Sumo_Deadlift": {
+    "de": "Sumo-Kreuzheben",
+    "tr": "Sumo Deadlift"
+  },
+  "Superman": {
+    "de": "Superman",
+    "tr": "Superman"
+  },
+  "T-Bar_Row_with_Handle": {
+    "de": "T-Bar-Rudern",
+    "tr": "T-Bar Row"
+  },
+  "Tricep_Dumbbell_Kickback": {
+    "de": "Trizeps-Kickback (Kurzhantel)",
+    "tr": "Triceps Kickback (Dambıl)"
+  },
+  "Triceps_Pushdown": {
+    "de": "Trizepsdrücken am Kabel",
+    "tr": "Triceps Pushdown"
+  },
+  "Wide-Grip_Lat_Pulldown": {
+    "de": "Latzug breit",
+    "tr": "Geniş Tutuş Lat Pulldown"
+  }
+}
