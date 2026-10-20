@@ -17,8 +17,8 @@ export const typography = {
   body: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22 },
   bodyStrong: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 22 },
   caption: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
-  /** Button labels: large and bold enough for the 3:1 contrast rule on the orange button. */
-  button: { fontFamily: fonts.extraBold, fontSize: 18, lineHeight: 22, letterSpacing: 0.4 },
+  /** Button labels: WCAG counts bold text from 18.66 px as large, which allows 3:1 contrast. */
+  button: { fontFamily: fonts.extraBold, fontSize: 19, lineHeight: 24, letterSpacing: 0.4 },
 } satisfies Record<string, TextStyle>;
 
 export type TypographyVariant = keyof typeof typography;
