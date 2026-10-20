@@ -49,7 +49,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:locales": "node scripts/check-locales.ts",
-    "import:exercises": "node scripts/import-exercises.ts"
+    "import:exercises": "node scripts/import-exercises.ts",
+    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && prettier --write src/lib/database.types.ts"
   },
   "private": true
 }
