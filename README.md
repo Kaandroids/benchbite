@@ -23,18 +23,18 @@ A mobile app for tracking workouts and nutrition in one place.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or another Docker-compatible runtime,
   for the local Supabase stack.
 
-### Run the app
+### Set up
 
 ```bash
 git clone https://github.com/Kaandroids/benchbite.git
 cd benchbite
 corepack enable
 pnpm install
-pnpm start
+cp .env.example .env.local
 ```
 
-Scan the QR code with the camera (iOS) or Expo Go (Android). Press `i` or `a` in the terminal
-to open a simulator instead.
+`.env.local` holds the Supabase URL and publishable key the app connects to. It is ignored by
+Git, and the defaults point at the local Supabase stack.
 
 ### Run Supabase locally
 
@@ -64,6 +64,25 @@ Useful commands:
 | `pnpm supabase stop`     | Stop the stack and keep its data                |
 
 See [ADR 0003](docs/adr/0003-local-first-database-development.md) for how database changes are made.
+
+### Run the app
+
+With the local Supabase stack running:
+
+```bash
+pnpm start
+```
+
+Scan the QR code with the camera (iOS) or Expo Go (Android). Press `i` or `a` in the terminal
+to open a simulator instead. Restart the dev server after changing `.env.local`.
+
+`127.0.0.1` in `.env.local` only reaches your computer from the iOS Simulator. Change
+`EXPO_PUBLIC_SUPABASE_URL` to:
+
+- your computer's IP address on the local network (for example `http://192.168.1.20:54321`) on
+  a physical device; the phone must be on the same network. On macOS, `ipconfig getifaddr en0`
+  prints the address.
+- `http://10.0.2.2:54321` on the Android Emulator.
 
 ### Scripts
 

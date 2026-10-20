@@ -14,8 +14,9 @@ and mark the old one as `Superseded by ADR-NNNN`.
 
 ## Index
 
-| ADR                                              | Title                                               | Status   |
-| ------------------------------------------------ | --------------------------------------------------- | -------- |
-| [0001](0001-react-native-and-supabase.md)        | Use React Native with Expo and Supabase             | Accepted |
-| [0002](0002-single-expo-project-at-the-root.md)  | Keep a single Expo project at the repository root   | Accepted |
-| [0003](0003-local-first-database-development.md) | Develop the database against a local Supabase stack | Accepted |
+| ADR                                              | Title                                                  | Status   |
+| ------------------------------------------------ | ------------------------------------------------------ | -------- |
+| [0001](0001-react-native-and-supabase.md)        | Use React Native with Expo and Supabase                | Accepted |
+| [0002](0002-single-expo-project-at-the-root.md)  | Keep a single Expo project at the repository root      | Accepted |
+| [0003](0003-local-first-database-development.md) | Develop the database against a local Supabase stack    | Accepted |
+| [0004](0004-auth-session-storage.md)             | Store the auth session with expo-sqlite's localStorage | Accepted |
