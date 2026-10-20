@@ -8,7 +8,12 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"]
-    }
+    },
+    // Without this, TypeScript loads every installed @types package, including the Node types
+    // that only scripts/ should see.
+    "types": []
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  // Node scripts are type-checked with their own tsconfig.
+  "exclude": ["node_modules", "scripts"]
 }

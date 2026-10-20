@@ -1,0 +1,5 @@
+{
+  "//": "Marks the scripts as ES modules for Node, without changing how the app is bundled.",
+  "type": "module",
+  "private": true
+}
