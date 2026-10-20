@@ -14,6 +14,15 @@ Benchbite uses an AI-assisted workflow:
 
 The `main` branch is protected: changes require a pull request and an approving review.
 
+Every pull request runs the [CI workflow](.github/workflows/ci.yml), which checks types, lint and
+formatting. Run the same checks locally before pushing:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm format:check
+```
+
 ## Conventions
 
 The full set of rules lives in [`CLAUDE.md`](CLAUDE.md). In short:

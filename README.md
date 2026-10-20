@@ -1,5 +1,7 @@
 # Benchbite
 
+[![CI](https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml/badge.svg)](https://github.com/Kaandroids/benchbite/actions/workflows/ci.yml)
+
 A mobile app for tracking workouts and nutrition in one place.
 
 > **Status:** Early development. The app currently shows a blank start screen.
