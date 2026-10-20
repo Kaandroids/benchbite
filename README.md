@@ -93,13 +93,14 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 
 ### Scripts
 
-| Command             | Description                          |
-| ------------------- | ------------------------------------ |
-| `pnpm start`        | Start the Expo dev server            |
-| `pnpm typecheck`    | Type-check with TypeScript           |
-| `pnpm lint`         | Lint with ESLint (fails on warnings) |
-| `pnpm format`       | Format all files with Prettier       |
-| `pnpm format:check` | Check formatting without changing it |
+| Command              | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| `pnpm start`         | Start the Expo dev server                      |
+| `pnpm typecheck`     | Type-check with TypeScript                     |
+| `pnpm lint`          | Lint with ESLint (fails on warnings)           |
+| `pnpm format`        | Format all files with Prettier                 |
+| `pnpm format:check`  | Check formatting without changing it           |
+| `pnpm check:locales` | Check that all translations have the same keys |
 
 ## Development workflow
 

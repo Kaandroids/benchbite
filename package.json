@@ -44,7 +44,8 @@
     "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:locales": "node scripts/check-locales.mjs"
   },
   "private": true
 }
