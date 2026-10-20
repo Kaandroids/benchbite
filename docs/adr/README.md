@@ -24,3 +24,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0006](0006-styling-with-stylesheet-and-tokens.md) | Style the app with StyleSheet and theme tokens                   | Accepted |
 | [0007](0007-internationalization.md)               | Translate the app with i18next and default units from the device | Accepted |
 | [0008](0008-exercise-library.md)                   | Import free-exercise-db as the exercise library                  | Accepted |
+| [0009](0009-nutrition-targets.md)                  | Calculate nutrition targets in Postgres on every read            | Accepted |
