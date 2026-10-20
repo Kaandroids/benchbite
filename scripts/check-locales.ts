@@ -7,11 +7,13 @@ const LOCALES_DIR = join(import.meta.dirname, '..', 'src', 'i18n', 'locales');
 const SOURCE = 'en';
 
 /** Flattens nested objects into a map of dotted keys to strings. */
-function flatten(object, prefix = '') {
-  const entries = {};
+type Messages = { [key: string]: string | Messages };
+
+function flatten(object: Messages, prefix = ''): Record<string, string> {
+  const entries: Record<string, string> = {};
   for (const [key, value] of Object.entries(object)) {
     const path = prefix ? `${prefix}.${key}` : key;
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'object') {
       Object.assign(entries, flatten(value, path));
     } else {
       entries[path] = String(value);
@@ -20,12 +22,12 @@ function flatten(object, prefix = '') {
   return entries;
 }
 
-function placeholders(text) {
-  return [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort();
+function placeholders(text: string): string[] {
+  return [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1] ?? '').sort();
 }
 
-function load(locale) {
-  return flatten(JSON.parse(readFileSync(join(LOCALES_DIR, `${locale}.json`), 'utf8')));
+function load(locale: string): Record<string, string> {
+  return flatten(JSON.parse(readFileSync(join(LOCALES_DIR, `${locale}.json`), 'utf8')) as Messages);
 }
 
 const source = load(SOURCE);
@@ -34,13 +36,15 @@ const locales = readdirSync(LOCALES_DIR)
   .map((file) => file.replace(/\.json$/, ''))
   .filter((locale) => locale !== SOURCE);
 
-const errors = [];
+const errors: string[] = [];
 for (const locale of locales) {
   const translation = load(locale);
   for (const key of Object.keys(source)) {
     if (!(key in translation)) {
       errors.push(`${locale}: missing key "${key}"`);
-    } else if (placeholders(source[key]).join() !== placeholders(translation[key]).join()) {
+    } else if (
+      placeholders(source[key] ?? '').join() !== placeholders(translation[key] ?? '').join()
+    ) {
       errors.push(`${locale}: "${key}" uses different placeholders than ${SOURCE}`);
     }
   }
