@@ -12,4 +12,5 @@ minimumReleaseAgeExclude:
 # unrs-resolver's postinstall only re-checks its prebuilt native binary,
 # which pnpm already installs as a platform-specific optional dependency.
 allowBuilds:
+  '@parcel/watcher': set this to true or false
   unrs-resolver: false
