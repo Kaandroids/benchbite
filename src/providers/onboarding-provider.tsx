@@ -1,4 +1,5 @@
 import { createContext, use, useEffect, useState, type PropsWithChildren } from 'react';
+import { AppState } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import {
@@ -75,27 +76,40 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
   const [draft, setDraft] = useState(() => loadDraft(userId) ?? EMPTY_DRAFT);
 
   // Someone who finished the onboarding on another device, after signing in to their account,
-  // skips it here too. Without a connection, the copy on the device stands.
+  // skips it here too. The server is asked once per user, and again whenever the app returns to
+  // the foreground until it answers, so starting offline only delays the check. The answer can
+  // only finish the onboarding, never undo it, so restarting it from the gallery sticks.
   useEffect(() => {
-    if (completed) {
-      return;
-    }
-    let cancelled = false;
-    void supabase
-      .from('profiles')
-      .select('onboarding_completed_at')
-      .eq('user_id', userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && data?.onboarding_completed_at) {
-          saveCompleted(userId, true);
-          setCompleted(true);
-        }
-      });
-    return () => {
-      cancelled = true;
+    let answered = false;
+    const check = async () => {
+      if (answered) {
+        return;
+      }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error || answered) {
+        return;
+      }
+      answered = true;
+      if (data?.onboarding_completed_at) {
+        saveCompleted(userId, true);
+        setCompleted(true);
+      }
     };
-  }, [userId, completed]);
+    void check();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void check();
+      }
+    });
+    return () => {
+      answered = true;
+      subscription.remove();
+    };
+  }, [userId]);
 
   // Builds on the latest draft, so that answering and moving on in one handler both count. A
   // draft that did not change is neither saved nor rendered again. Once the onboarding is
