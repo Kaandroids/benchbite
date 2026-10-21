@@ -57,12 +57,18 @@ const VARIANTS: TypographyVariant[] = [
 const ICONS: IconName[] = [
   'back',
   'bolt',
+  'chart',
   'check',
   'close',
   'dumbbell',
+  'external',
   'flame',
   'heart',
+  'meal',
   'offline',
+  'shield',
+  'sparkles',
+  'target',
 ];
 
 /** Every design system component in its states, for development only. */
