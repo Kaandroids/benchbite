@@ -10,6 +10,8 @@ export default function OnboardingLayout() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        // Replacing is only used to go back after resuming, so it slides the other way.
+        animationTypeForReplace: 'pop',
         contentStyle: { backgroundColor: colors.background },
       }}
     />
