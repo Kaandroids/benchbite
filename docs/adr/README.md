@@ -14,15 +14,16 @@ and mark the old one as `Superseded by ADR-NNNN`.
 
 ## Index
 
-| ADR                                                | Title                                                               | Status   |
-| -------------------------------------------------- | ------------------------------------------------------------------- | -------- |
-| [0001](0001-react-native-and-supabase.md)          | Use React Native with Expo and Supabase                             | Accepted |
-| [0002](0002-single-expo-project-at-the-root.md)    | Keep a single Expo project at the repository root                   | Accepted |
-| [0003](0003-local-first-database-development.md)   | Develop the database against a local Supabase stack                 | Accepted |
-| [0004](0004-auth-session-storage.md)               | Store the auth session with expo-sqlite's localStorage              | Accepted |
-| [0005](0005-guest-first-accounts.md)               | Let people start as guests with anonymous sign-ins                  | Accepted |
-| [0006](0006-styling-with-stylesheet-and-tokens.md) | Style the app with StyleSheet and theme tokens                      | Accepted |
-| [0007](0007-internationalization.md)               | Translate the app with i18next and default units from the device    | Accepted |
-| [0008](0008-exercise-library.md)                   | Import free-exercise-db as the exercise library                     | Accepted |
-| [0009](0009-nutrition-targets.md)                  | Calculate nutrition targets in Postgres on every read               | Accepted |
-| [0010](0010-plan-builder-edge-function.md)         | Build the starter workout plan in an Edge Function from fixed rules | Accepted |
+| ADR                                                | Title                                                                              | Status   |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
+| [0001](0001-react-native-and-supabase.md)          | Use React Native with Expo and Supabase                                            | Accepted |
+| [0002](0002-single-expo-project-at-the-root.md)    | Keep a single Expo project at the repository root                                  | Accepted |
+| [0003](0003-local-first-database-development.md)   | Develop the database against a local Supabase stack                                | Accepted |
+| [0004](0004-auth-session-storage.md)               | Store the auth session with expo-sqlite's localStorage                             | Accepted |
+| [0005](0005-guest-first-accounts.md)               | Let people start as guests with anonymous sign-ins                                 | Accepted |
+| [0006](0006-styling-with-stylesheet-and-tokens.md) | Style the app with StyleSheet and theme tokens                                     | Accepted |
+| [0007](0007-internationalization.md)               | Translate the app with i18next and default units from the device                   | Accepted |
+| [0008](0008-exercise-library.md)                   | Import free-exercise-db as the exercise library                                    | Accepted |
+| [0009](0009-nutrition-targets.md)                  | Calculate nutrition targets in Postgres on every read                              | Accepted |
+| [0010](0010-plan-builder-edge-function.md)         | Build the starter workout plan in an Edge Function from fixed rules                | Accepted |
+| [0011](0011-onboarding-flow.md)                    | Guide new users through an onboarding flow kept on the device until it is finished | Accepted |
