@@ -84,11 +84,14 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
  * Saves the onboarding in one transaction (complete_onboarding). Saving again after a save that
  * already went through, for example after going back from the next step, counts as saved.
  */
+/** The SQLSTATE complete_onboarding raises when the onboarding was saved before. */
+const ALREADY_COMPLETED = 'BB001';
+
 export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPlan) {
   // The calculated result is sent as the plan, not again as an answer.
-  const { plan: _plan, targets: _targets, ...onlyAnswers } = answers;
+  const { plan: _plan, targets: _targets, reminderMinutes: _reminder, ...onlyAnswers } = answers;
   const { error } = await supabase.rpc('complete_onboarding', { answers: onlyAnswers, plan });
-  if (error && !error.message.includes('already completed')) {
+  if (error && error.code !== ALREADY_COMPLETED) {
     throw error;
   }
 }
