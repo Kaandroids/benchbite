@@ -380,6 +380,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      age_in_years: { Args: { birth_year: number }; Returns: number };
       calculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -402,6 +403,7 @@ export type Database = {
         };
       };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];

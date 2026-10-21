@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -48,18 +48,28 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 -- Rejected answers save nothing.
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('birthYear', extract(year from current_date)::integer - 17)), pg_temp.plan()) $$,
-  'P0001', 'Benchbite is for people aged 18 and over',
+  'BB002', 'Benchbite is for people aged 18 and over',
   'Users under 18 are rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers('{"consentedPolicyVersion": null}'), pg_temp.plan()) $$,
-  'P0001', 'Health data consent is required',
+  'BB003', 'Health data consent is required',
   'Saving without consent is rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers('{"trainingDays": [1, 3]}'), pg_temp.plan()) $$,
-  'P0001', 'The plan does not match the training days',
+  'BB004', 'The plan does not match the training days',
   'A plan for other days is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(
+       pg_temp.answers(),
+       jsonb_set(pg_temp.plan(), '{sessions,0,exercises}', (
+         select jsonb_agg(pg_temp.plan() #> '{sessions,0,exercises,0}') from generate_series(1, 13)
+       ))
+     ) $$,
+  'BB005', 'A session has too many exercises',
+  'A session with too many exercises is rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan('No_Such_Exercise')) $$,
@@ -96,8 +106,22 @@ select results_eq(
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
-  'P0001', 'The onboarding is already completed',
+  'BB001', 'The onboarding is already completed',
   'The onboarding cannot be saved twice'
+);
+
+-- The plan cannot be changed directly, not even by its owner.
+select throws_ok(
+  $$ delete from public.workout_plans $$,
+  '42501', null,
+  'Users cannot delete their plan'
+);
+select throws_ok(
+  $$ insert into public.plan_exercises (session_id, user_id, position, exercise_id, slot, sets,
+       target_reps_min, target_reps_max, rest_seconds)
+     select id, user_id, 9, 'Plank', 'core', 3, 8, 12, 60 from public.plan_sessions limit 1 $$,
+  '42501', null,
+  'Users cannot add exercises to their plan directly'
 );
 
 -- Other users see nothing and cannot add to the plan. The plan's id is taken while signed in as
