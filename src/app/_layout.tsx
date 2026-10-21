@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
+import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
 
@@ -24,7 +25,9 @@ export default function RootLayout() {
     // Gesture detectors, such as the one in the slider, only work inside this view.
     <GestureHandlerRootView style={styles.root}>
       <SessionProvider>
-        <RootNavigator />
+        <OnboardingProvider>
+          <RootNavigator />
+        </OnboardingProvider>
       </SessionProvider>
     </GestureHandlerRootView>
   );
@@ -32,6 +35,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status, retry } = useSession();
+  const { completed } = useOnboarding();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
   const [fontsLoaded, fontError] = useFonts({
@@ -68,7 +72,17 @@ function RootNavigator() {
             headerShown: false,
             contentStyle: { backgroundColor: colors.background },
           }}
-        />
+        >
+          {/* Until the onboarding is finished, only the onboarding is reachable. Finishing it
+              switches to the app and removes the onboarding from the history. */}
+          <Stack.Protected guard={!completed}>
+            <Stack.Screen name="onboarding" />
+          </Stack.Protected>
+          <Stack.Protected guard={completed}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+          <Stack.Screen name="dev/components" />
+        </Stack>
       )}
     </>
   );
