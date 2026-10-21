@@ -238,6 +238,40 @@
         "60": "Eksiksiz bir antrenman",
         "75": "Ek hacim için zaman"
       }
+    },
+    "building": {
+      "steps": {
+        "calories": "Kalorilerin hesaplanıyor",
+        "exercises": "Egzersizlerin seçiliyor",
+        "week": "Haftan hazırlanıyor"
+      },
+      "error": "Planını oluşturamadık. Bağlantını kontrol edip tekrar dene."
+    },
+    "plan": {
+      "calories": "Günde {{calories}} kcal",
+      "macros": {
+        "protein": "Protein",
+        "carbs": "Karbonhidrat",
+        "fat": "Yağ"
+      },
+      "grams": "{{count}} g",
+      "nutrition": "Günlük hedeflerin",
+      "weight": "Kilon",
+      "week": "Haftan",
+      "session": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+      "more": "+{{count}} tane daha",
+      "sessionTypes": {
+        "full_body": "Tüm vücut",
+        "upper": "Üst vücut",
+        "lower": "Alt vücut",
+        "push": "İtiş",
+        "pull": "Çekiş",
+        "legs": "Bacak"
+      },
+      "start": "Planımı başlat",
+      "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+      "editLater": "Bunların hepsini sonra değiştirebilirsin.",
+      "today": "Bugün"
     }
   }
 }

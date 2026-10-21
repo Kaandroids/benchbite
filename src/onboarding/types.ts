@@ -1,5 +1,7 @@
 import type { Database } from '@/lib/database.types';
 
+import type { NutritionTargets, WorkoutPlan } from './plan';
+
 type Enums = Database['public']['Enums'];
 
 /**
@@ -26,4 +28,7 @@ export type OnboardingAnswers = {
   sessionMinutes?: 30 | 45 | 60 | 75;
   weightUnit?: Enums['weight_unit'];
   heightUnit?: Enums['height_unit'];
+  /** The result calculated on the building step, shown on the plan step and then saved. */
+  targets?: NutritionTargets;
+  plan?: WorkoutPlan;
 };
