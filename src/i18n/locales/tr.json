@@ -65,10 +65,10 @@
         "title": "Planın"
       },
       "reminders": {
-        "title": "Hatırlatma ister misin?"
+        "title": "Antrenmanlarını hatırlatalım mı?"
       },
       "summary": {
-        "title": "Her şey hazır"
+        "title": "Her şey hazır!"
       }
     },
     "options": {
@@ -272,6 +272,28 @@
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",
       "today": "Bugün"
+    },
+    "reminders": {
+      "body": "Antrenman günlerinde kısa bir hatırlatma, böylece hiçbir antrenman aklından çıkmaz.",
+      "time": "Hatırlatma saati",
+      "enable": "Hatırlatmaları aç",
+      "skip": "Şimdi değil",
+      "channel": "Antrenman hatırlatmaları",
+      "notification": {
+        "title": "Bugün: {{session}}",
+        "body": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!"
+      }
+    },
+    "summary": {
+      "body": "Planın hazır. Senin için kurduklarımız:",
+      "workouts_one": "Haftada {{count}} antrenman",
+      "workouts_other": "Haftada {{count}} antrenman",
+      "remindersOn": "Hatırlatma saati: {{time}}",
+      "remindersOff": "Hatırlatma yok",
+      "next": "İlk antrenmanın",
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "start": "Başlayalım"
     }
   }
 }

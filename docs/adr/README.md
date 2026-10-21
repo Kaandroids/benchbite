@@ -27,3 +27,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0009](0009-nutrition-targets.md)                  | Calculate nutrition targets in Postgres on every read                              | Accepted |
 | [0010](0010-plan-builder-edge-function.md)         | Build the starter workout plan in an Edge Function from fixed rules                | Accepted |
 | [0011](0011-onboarding-flow.md)                    | Guide new users through an onboarding flow kept on the device until it is finished | Accepted |
+| [0012](0012-local-workout-reminders.md)            | Remind people to train with local notifications                                    | Accepted |

@@ -15,10 +15,12 @@ import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
+import { showRemindersInForeground } from '@/reminders/reminders';
 import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
+showRemindersInForeground();
 
 export default function RootLayout() {
   return (

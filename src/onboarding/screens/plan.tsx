@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat, weightIn } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { useTheme, type ColorTokens } from '@/theme';
@@ -16,8 +17,6 @@ import { saveOnboarding, type WorkoutPlan } from '../plan';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
 
-// 1 January 2024 was a Monday, so day n of that month is ISO weekday n.
-const weekdayDate = (weekday: number) => new Date(2024, 0, weekday);
 /** Exercise names shown per session before "+n more". */
 const NAMES_SHOWN = 4;
 
@@ -72,6 +71,7 @@ export function PlanStep() {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
+  const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
   const { targets, plan } = answers;
   const names = useExerciseNames(plan);
@@ -91,7 +91,6 @@ export function PlanStep() {
     (answers.goal === 'lose_fat' || answers.goal === 'build_muscle') && targetKg && pace;
   const showWeight = (kg: number) =>
     `${format(weightIn(unit, kg), { maximumFractionDigits: 1 })} ${unit}`;
-  const weekday = new Intl.DateTimeFormat(i18n.language, { weekday: 'long' });
 
   const save = async () => {
     setSaving(true);
@@ -194,7 +193,7 @@ export function PlanStep() {
           return (
             <View key={session.weekday} style={[styles.session, { gap: 2 }]}>
               <Text variant="caption" color="primaryText">
-                {weekday.format(weekdayDate(session.weekday))}
+                {weekday(session.weekday)}
               </Text>
               <Text variant="bodyStrong">{t(`onboarding.plan.sessionTypes.${session.type}`)}</Text>
               <Text variant="caption" color="textMuted">
