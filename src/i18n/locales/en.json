@@ -157,8 +157,7 @@
       "declined": {
         "title": "A personal plan needs your consent",
         "body": "Without health data, Benchbite can't calculate your targets or build your plan. You can change your mind at any time.",
-        "review": "Review the consent",
-        "changeGoal": "Change my goal"
+        "review": "Review the consent"
       }
     }
   }

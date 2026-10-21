@@ -157,8 +157,7 @@
       "declined": {
         "title": "Ein persönlicher Plan braucht deine Einwilligung",
         "body": "Ohne Gesundheitsdaten kann Benchbite weder deine Ziele berechnen noch deinen Plan erstellen. Du kannst es dir jederzeit anders überlegen.",
-        "review": "Einwilligung ansehen",
-        "changeGoal": "Ziel ändern"
+        "review": "Einwilligung ansehen"
       }
     }
   }

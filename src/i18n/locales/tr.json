@@ -113,7 +113,7 @@
     },
     "goal": {
       "descriptions": {
-        "lose_fat": "Yağ yak, kasını koru",
+        "lose_fat": "Kasını korurken yağ yak",
         "build_muscle": "Hafif bir kalori fazlasıyla kas kazan",
         "get_stronger": "Adım adım daha ağır kaldır",
         "stay_healthy": "Formda hisset, dengeni koru"
@@ -157,8 +157,7 @@
       "declined": {
         "title": "Kişisel bir plan için onayın gerekiyor",
         "body": "Sağlık verileri olmadan Benchbite hedeflerini hesaplayamaz ve planını oluşturamaz. İstediğin zaman fikrini değiştirebilirsin.",
-        "review": "Onay metnine dön",
-        "changeGoal": "Hedefimi değiştir"
+        "review": "Onay metnine dön"
       }
     }
   }
