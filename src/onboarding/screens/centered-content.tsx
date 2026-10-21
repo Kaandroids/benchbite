@@ -6,8 +6,8 @@ import { useTheme } from '@/theme';
 type CenteredContentProps = {
   children: ReactNode;
   /**
-   * Feedback under the input, such as a warning or a projected date. It fills the lower half, so
-   * the input stays in place however much feedback is shown.
+   * Feedback under the input, such as a warning or a projected date. It fills the space below the
+   * input, so the input stays in place however much feedback is shown.
    */
   below?: ReactNode;
 };
@@ -40,12 +40,13 @@ const styles = StyleSheet.create({
   halves: {
     flex: 1,
   },
+  // The input ends at 40 % of the space, leaving more room for the feedback below it.
   upper: {
-    flex: 1,
+    flex: 2,
     justifyContent: 'flex-end',
   },
   lower: {
-    flex: 1,
+    flex: 3,
   },
   feedback: {
     position: 'absolute',
