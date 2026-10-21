@@ -146,6 +146,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      plan_slot_exercises: {
+        Row: {
+          exercise_id: string;
+          min_experience: Database['public']['Enums']['experience'];
+          priority: number;
+          requires: Database['public']['Enums']['training_setup'];
+          slot: Database['public']['Enums']['plan_slot'];
+        };
+        ComputedFields: never;
+        Insert: {
+          exercise_id: string;
+          min_experience: Database['public']['Enums']['experience'];
+          priority: number;
+          requires: Database['public']['Enums']['training_setup'];
+          slot: Database['public']['Enums']['plan_slot'];
+        };
+        Update: {
+          exercise_id?: string;
+          min_experience?: Database['public']['Enums']['experience'];
+          priority?: number;
+          requires?: Database['public']['Enums']['training_setup'];
+          slot?: Database['public']['Enums']['plan_slot'];
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plan_slot_exercises_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -311,6 +344,21 @@ export type Database = {
         | 'shoulders'
         | 'traps'
         | 'triceps';
+      plan_slot:
+        | 'squat'
+        | 'hinge'
+        | 'lunge'
+        | 'horizontal_push'
+        | 'incline_push'
+        | 'vertical_push'
+        | 'horizontal_pull'
+        | 'vertical_pull'
+        | 'biceps'
+        | 'triceps'
+        | 'shoulders'
+        | 'calves'
+        | 'core'
+        | 'conditioning';
       sex: 'female' | 'male' | 'unspecified';
       training_setup: 'gym' | 'dumbbells' | 'bodyweight';
       weight_unit: 'kg' | 'lb';
@@ -482,6 +530,22 @@ export const Constants = {
         'shoulders',
         'traps',
         'triceps',
+      ],
+      plan_slot: [
+        'squat',
+        'hinge',
+        'lunge',
+        'horizontal_push',
+        'incline_push',
+        'vertical_push',
+        'horizontal_pull',
+        'vertical_pull',
+        'biceps',
+        'triceps',
+        'shoulders',
+        'calves',
+        'core',
+        'conditioning',
       ],
       sex: ['female', 'male', 'unspecified'],
       training_setup: ['gym', 'dumbbells', 'bodyweight'],
