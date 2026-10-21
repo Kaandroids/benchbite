@@ -97,14 +97,22 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
     };
   }, [userId, completed]);
 
-  // Builds on the latest draft, so that answering and moving on in one handler both count.
-  // Saving twice is harmless, so the updater may run twice in development.
-  const update = (change: (current: Draft) => Draft) =>
+  // Builds on the latest draft, so that answering and moving on in one handler both count. A
+  // draft that did not change is neither saved nor rendered again. Once the onboarding is
+  // finished, the last step may still be on screen and record itself; that is ignored, so the
+  // discarded draft is not written back.
+  const update = (change: (current: Draft) => Draft) => {
+    if (completed) {
+      return;
+    }
     setDraft((current) => {
       const next = change(current);
-      saveDraft(userId, next);
+      if (next !== current) {
+        saveDraft(userId, next);
+      }
       return next;
     });
+  };
 
   const value: OnboardingContextValue = {
     completed,
