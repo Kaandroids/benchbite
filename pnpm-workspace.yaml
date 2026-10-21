@@ -11,6 +11,7 @@ minimumReleaseAgeExclude:
 # Dependencies may only run install scripts when listed here with true.
 # unrs-resolver's postinstall only re-checks its prebuilt native binary,
 # which pnpm already installs as a platform-specific optional dependency.
+# The same holds for @parcel/watcher, which Jest uses to watch files.
 allowBuilds:
-  '@parcel/watcher': set this to true or false
+  '@parcel/watcher': false
   unrs-resolver: false
