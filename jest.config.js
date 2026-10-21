@@ -12,7 +12,7 @@ module.exports = {
   },
   // Packages that ship untranspiled code, with pnpm's .pnpm folder in front.
   transformIgnorePatterns: [
-    'node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg))',
+    'node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|standard-navigation))',
   ],
   // Node scripts and Edge Functions have their own tests (node, deno test, pgTAP).
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/scripts/', '<rootDir>/supabase/'],

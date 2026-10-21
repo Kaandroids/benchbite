@@ -1,9 +1,11 @@
-// Renders components the way the app does: with translations and the safe area. Tests import
+// Renders components the way the app does: with translations, the safe area and the gesture
+// handler root. Tests import
 // render and screen from here instead of from the testing library.
 import '@/i18n';
 
 import { render as renderComponent, type RenderOptions } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const SAFE_AREA = {
@@ -14,7 +16,9 @@ const SAFE_AREA = {
 export function render(ui: ReactElement, options?: RenderOptions) {
   return renderComponent(ui, {
     wrapper: ({ children }) => (
-      <SafeAreaProvider initialMetrics={SAFE_AREA}>{children}</SafeAreaProvider>
+      <GestureHandlerRootView>
+        <SafeAreaProvider initialMetrics={SAFE_AREA}>{children}</SafeAreaProvider>
+      </GestureHandlerRootView>
     ),
     ...options,
   });
