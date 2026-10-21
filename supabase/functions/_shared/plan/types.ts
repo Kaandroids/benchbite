@@ -47,8 +47,6 @@ export type PlannedExercise = {
 export type Session = {
   weekday: number;
   type: SessionType;
-  /** Counts how often this type already occurred in the week, so repeats use other exercises. */
-  variant: number;
   exercises: PlannedExercise[];
   /** A short conditioning block at the end, for fat loss. */
   finisher: PlannedExercise | null;

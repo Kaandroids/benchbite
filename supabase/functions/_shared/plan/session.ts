@@ -55,16 +55,25 @@ export function candidatesFor(
 }
 
 /**
- * Picks a candidate for the slot that is not yet in the session. A repeated session type takes
- * the next candidate, so that a second push day does not repeat the first one.
+ * How often each slot was already filled this week. A slot that comes back takes the next
+ * candidate, so that a squat on Tuesday and another on Friday are different exercises.
  */
+export type SlotUses = Map<Slot, number>;
+
+/** Picks the slot's next candidate for this week that is not yet in the session. */
 function pick(
   candidates: CatalogueEntry[],
-  variant: number,
+  slotUses: SlotUses,
   used: Set<string>,
 ): CatalogueEntry | undefined {
   const unused = candidates.filter((entry) => !used.has(entry.exerciseId));
-  return unused.length === 0 ? undefined : unused[variant % unused.length];
+  if (unused.length === 0) {
+    return undefined;
+  }
+  const slot = unused[0]!.slot;
+  const uses = slotUses.get(slot) ?? 0;
+  slotUses.set(slot, uses + 1);
+  return unused[uses % unused.length];
 }
 
 function planned(entry: CatalogueEntry, prescription: Prescription): PlannedExercise {
@@ -88,7 +97,7 @@ export function buildSession(
   catalogue: CatalogueEntry[],
   weekday: number,
   type: SessionType,
-  variant: number,
+  slotUses: SlotUses,
 ): Session {
   const budget = input.sessionMinutes * 60;
   let seconds = WARM_UP_SECONDS;
@@ -98,7 +107,7 @@ export function buildSession(
   if (conditioningMinutes > 0) {
     const entry = pick(
       candidatesFor(catalogue, 'conditioning', input.setup, input.experience),
-      variant,
+      slotUses,
       new Set(),
     );
     if (entry) {
@@ -113,7 +122,7 @@ export function buildSession(
   for (const { slot, role } of TEMPLATES[type]) {
     const entry = pick(
       candidatesFor(catalogue, slot, input.setup, input.experience),
-      variant,
+      slotUses,
       used,
     );
     if (!entry) {
@@ -134,7 +143,6 @@ export function buildSession(
   return {
     weekday,
     type,
-    variant,
     exercises,
     finisher,
     estimatedMinutes: Math.ceil(seconds / 60),

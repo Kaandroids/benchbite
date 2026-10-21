@@ -9,6 +9,16 @@ const accessory = (slot: Slot): TemplateSlot => ({ slot, role: 'accessory' });
  * The slots of each session type in order of importance. When time runs out, the slots at the
  * end are left out first.
  */
+// Lower body days of an upper and lower split and leg days of push, pull, legs train the same
+// slots. Where both occur in one week, the second day gets other exercises (see session.ts).
+const LEG_DAY: TemplateSlot[] = [
+  main('squat'),
+  main('hinge'),
+  accessory('lunge'),
+  accessory('calves'),
+  accessory('core'),
+];
+
 export const TEMPLATES: Record<SessionType, TemplateSlot[]> = {
   full_body: [
     main('squat'),
@@ -30,7 +40,7 @@ export const TEMPLATES: Record<SessionType, TemplateSlot[]> = {
     accessory('triceps'),
     accessory('shoulders'),
   ],
-  lower: [main('squat'), main('hinge'), accessory('lunge'), accessory('calves'), accessory('core')],
+  lower: LEG_DAY,
   push: [
     main('horizontal_push'),
     main('vertical_push'),
@@ -47,5 +57,5 @@ export const TEMPLATES: Record<SessionType, TemplateSlot[]> = {
     accessory('biceps'),
     accessory('core'),
   ],
-  legs: [main('squat'), main('hinge'), accessory('lunge'), accessory('calves'), accessory('core')],
+  legs: LEG_DAY,
 };

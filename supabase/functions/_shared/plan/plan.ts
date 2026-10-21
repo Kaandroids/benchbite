@@ -1,6 +1,6 @@
-import { buildSession } from './session.ts';
+import { buildSession, type SlotUses } from './session.ts';
 import { splitFor } from './split.ts';
-import type { CatalogueEntry, Plan, PlanInput, SessionType } from './types.ts';
+import type { CatalogueEntry, Plan, PlanInput } from './types.ts';
 
 /**
  * Builds the starter plan: one session for each training day, following the split for the
@@ -9,14 +9,11 @@ import type { CatalogueEntry, Plan, PlanInput, SessionType } from './types.ts';
 export function buildPlan(input: PlanInput, catalogue: CatalogueEntry[]): Plan {
   const weekdays = [...new Set(input.trainingDays)].sort((a, b) => a - b);
   const types = splitFor(weekdays.length, input.experience);
-  const seen = new Map<SessionType, number>();
+  const slotUses: SlotUses = new Map();
 
-  const sessions = weekdays.map((weekday, index) => {
-    const type = types[index]!;
-    const variant = seen.get(type) ?? 0;
-    seen.set(type, variant + 1);
-    return buildSession(input, catalogue, weekday, type, variant);
-  });
+  const sessions = weekdays.map((weekday, index) =>
+    buildSession(input, catalogue, weekday, types[index]!, slotUses),
+  );
 
   return { sessions };
 }

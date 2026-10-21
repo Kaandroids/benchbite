@@ -142,3 +142,26 @@ Deno.test('hinges are only trained on leg and full body days', () => {
     assertEquals(hinges.length > 0, session.type === 'legs', session.type);
   }
 });
+
+Deno.test('no two days of a week are the same', () => {
+  for (let days = 2; days <= 6; days++) {
+    for (const experience of ['beginner', 'intermediate'] as const) {
+      const sessions = ids({
+        ...input,
+        experience,
+        trainingDays: [1, 2, 3, 4, 5, 6].slice(0, days),
+      });
+      const distinct = new Set(sessions.map((session) => session.join()));
+      assertEquals(distinct.size, sessions.length, `${days} days, ${experience}`);
+    }
+  }
+});
+
+Deno.test('a slot that comes back later in the week takes the next exercise', () => {
+  const [upper, lower, push, , legs] = buildPlan(
+    { ...input, trainingDays: [1, 2, 3, 4, 5] },
+    CATALOGUE,
+  ).sessions;
+  assertNotEquals(upper!.exercises[0]!.exerciseId, push!.exercises[0]!.exerciseId);
+  assertNotEquals(lower!.exercises[0]!.exerciseId, legs!.exercises[0]!.exerciseId);
+});
