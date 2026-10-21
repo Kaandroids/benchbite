@@ -1,4 +1,12 @@
-import { createContext, use, useEffect, useState, type PropsWithChildren } from 'react';
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 import { AppState } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
@@ -115,43 +123,54 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
   // draft that did not change is neither saved nor rendered again. Once the onboarding is
   // finished, the last step may still be on screen and record itself; that is ignored, so the
   // discarded draft is not written back.
-  const update = (change: (current: Draft) => Draft) => {
-    if (completed) {
-      return;
-    }
-    setDraft((current) => {
-      const next = change(current);
-      if (next !== current) {
-        saveDraft(userId, next);
+  const update = useCallback(
+    (change: (current: Draft) => Draft) => {
+      if (completed) {
+        return;
       }
-      return next;
-    });
-  };
+      setDraft((current) => {
+        const next = change(current);
+        if (next !== current) {
+          saveDraft(userId, next);
+        }
+        return next;
+      });
+    },
+    [completed, userId],
+  );
 
-  const value: OnboardingContextValue = {
-    completed,
-    draft,
-    // Returning the same draft for the same step lets React skip the render.
-    setStep: (step) =>
-      update((current) => (current.step === step ? current : { ...current, step })),
-    answer: (answers) =>
-      update((current) => ({
-        ...current,
-        answers: pruneAnswers({ ...current.answers, ...answers }),
-      })),
-    complete: () => {
-      saveCompleted(userId, true);
-      clearDraft(userId);
-      setDraft(EMPTY_DRAFT);
-      setCompleted(true);
-    },
-    reset: () => {
-      saveCompleted(userId, false);
-      clearDraft(userId);
-      setDraft(EMPTY_DRAFT);
-      setCompleted(false);
-    },
-  };
+  // The functions keep their identity while the draft changes, so that the screens' effects
+  // that depend on them run once per focus, not after every answer.
+  const actions = useMemo(
+    () => ({
+      // Returning the same draft for the same step lets React skip the render.
+      setStep: (step: Step) =>
+        update((current) => (current.step === step ? current : { ...current, step })),
+      answer: (answers: OnboardingAnswers) =>
+        update((current) => ({
+          ...current,
+          answers: pruneAnswers({ ...current.answers, ...answers }),
+        })),
+      complete: () => {
+        saveCompleted(userId, true);
+        clearDraft(userId);
+        setDraft(EMPTY_DRAFT);
+        setCompleted(true);
+      },
+      reset: () => {
+        saveCompleted(userId, false);
+        clearDraft(userId);
+        setDraft(EMPTY_DRAFT);
+        setCompleted(false);
+      },
+    }),
+    [update, userId],
+  );
+
+  const value = useMemo(
+    (): OnboardingContextValue => ({ completed, draft, ...actions }),
+    [completed, draft, actions],
+  );
 
   return <OnboardingContext value={value}>{children}</OnboardingContext>;
 }
