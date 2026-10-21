@@ -35,13 +35,15 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
 type PaceRange = { min: number; max: number; step: number; default: number };
 
 /**
- * The weekly paces the slider offers, in the user's unit. Losing fat ranges from about a quarter
- * to one kilogram a week; muscle grows much slower, from about 0.1 to 0.5 kilograms.
+ * The weekly paces the slider offers, in the user's unit. The fastest pace matches what the
+ * calorie targets allow: a deficit of at most 1000 kcal a day, about 0.9 kilograms or two pounds
+ * a week, and a surplus of at most 500 kcal, about 0.45 kilograms or one pound. Popular apps such
+ * as MyFitnessPal stop at two pounds a week too.
  */
 export const PACE_RANGES: Record<'kg' | 'lb', Record<'lose_fat' | 'build_muscle', PaceRange>> = {
   kg: {
-    lose_fat: { min: 0.25, max: 1, step: 0.05, default: 0.5 },
-    build_muscle: { min: 0.1, max: 0.5, step: 0.05, default: 0.25 },
+    lose_fat: { min: 0.25, max: 0.9, step: 0.05, default: 0.5 },
+    build_muscle: { min: 0.1, max: 0.45, step: 0.05, default: 0.25 },
   },
   lb: {
     lose_fat: { min: 0.5, max: 2, step: 0.1, default: 1 },
