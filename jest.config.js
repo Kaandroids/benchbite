@@ -3,6 +3,8 @@
 module.exports = {
   preset: 'jest-expo',
   setupFiles: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup-after-env.ts'],
+  resolver: '<rootDir>/jest/resolver.js',
   // Metro resolves the tsconfig paths in the app; Jest needs them spelled out.
   moduleNameMapper: {
     '^@/assets/(.*)$': '<rootDir>/assets/$1',
