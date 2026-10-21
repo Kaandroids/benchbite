@@ -10,7 +10,16 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
-import { defaultUnits, useNumberFormat, type HeightUnit, type WeightUnit } from '@/i18n/units';
+import {
+  defaultUnits,
+  feetAndInchesToCm,
+  heightToFeetAndInches,
+  useNumberFormat,
+  weightIn,
+  weightToKg,
+  type HeightUnit,
+  type WeightUnit,
+} from '@/i18n/units';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 
@@ -42,7 +51,6 @@ const TENTHS = range(0, 9);
 const CENTIMETRES = range(120, 230);
 const FEET = range(3, 7);
 const INCHES = range(0, 11);
-const KG_PER_LB = 0.45359237;
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const VARIANTS: TypographyVariant[] = [
@@ -92,14 +100,15 @@ export default function ComponentGallery() {
   }
 
   const changeWeightUnit = (unit: WeightUnit) => {
-    const factor = unit === 'lb' ? 1 / KG_PER_LB : KG_PER_LB;
     setWeightUnit(unit);
-    setWeightTenths((tenths) => Math.round(tenths * factor));
+    setWeightTenths((tenths) =>
+      Math.round(weightIn(unit, weightToKg(weightUnit, tenths / 10)) * 10),
+    );
   };
   const wholeWeight = Math.floor(weightTenths / 10);
-  const totalInches = Math.round(centimetres / 2.54);
-  const setFeetAndInches = (feet: number, inches: number) =>
-    setCentimetres(Math.round((feet * 12 + inches) * 2.54));
+  const { feet, inches } = heightToFeetAndInches(centimetres);
+  const setFeetAndInches = (newFeet: number, newInches: number) =>
+    setCentimetres(Math.round(feetAndInchesToCm(newFeet, newInches)));
 
   const toggleDay = (day: string) =>
     setDays((current) =>
@@ -208,15 +217,15 @@ export default function ComponentGallery() {
             <WheelPicker
               accessibilityLabel="Height, feet"
               values={FEET}
-              value={Math.floor(totalInches / 12)}
-              onChange={(feet) => setFeetAndInches(feet, totalInches % 12)}
+              value={feet}
+              onChange={(newFeet) => setFeetAndInches(newFeet, inches)}
               format={(feet) => `${feet} ft`}
             />
             <WheelPicker
               accessibilityLabel="Height, inches"
               values={INCHES}
-              value={totalInches % 12}
-              onChange={(inches) => setFeetAndInches(Math.floor(totalInches / 12), inches)}
+              value={inches}
+              onChange={(newInches) => setFeetAndInches(feet, newInches)}
               format={(inches) => `${inches} in`}
             />
           </View>

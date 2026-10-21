@@ -159,6 +159,49 @@
         "body": "Without health data, Benchbite can't calculate your targets or build your plan. You can change your mind at any time.",
         "review": "Review the consent"
       }
+    },
+    "units": {
+      "kg": "kg",
+      "lb": "lb",
+      "cm": "cm",
+      "ftIn": "ft / in",
+      "feet": "{{count}} ft",
+      "inches": "{{count}} in"
+    },
+    "birthYear": {
+      "age": "You're turning {{count}} this year",
+      "tooYoung": "Benchbite is for people aged 18 and over."
+    },
+    "targetWeight": {
+      "difference": "{{difference}} {{unit}} from now",
+      "wrongDirection": {
+        "lose_fat": "To lose fat, your target has to be below your current weight.",
+        "build_muscle": "To build muscle, your target has to be above your current weight."
+      },
+      "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
+      "useLowest": "Make {{weight}} {{unit}} my target",
+      "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",
+      "changeGoal": "Choose another goal"
+    },
+    "pace": {
+      "perWeek": "{{value}} {{unit}} per week",
+      "slower": "Slower",
+      "faster": "Faster",
+      "levels": {
+        "ideal": "Ideal: steady and sustainable",
+        "ambitious": "Ambitious: doable, but demanding",
+        "aggressive": "Aggressive: hard to keep up and less healthy"
+      },
+      "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
+      "disclaimer": "These are estimates, not medical advice."
+    },
+    "activity": {
+      "descriptions": {
+        "sedentary": "Desk job, little walking",
+        "light": "On your feet some of the day",
+        "moderate": "On your feet most of the day",
+        "active": "Physical work all day"
+      }
     }
   }
 }

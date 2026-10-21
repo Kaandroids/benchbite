@@ -159,6 +159,49 @@
         "body": "Ohne Gesundheitsdaten kann Benchbite weder deine Ziele berechnen noch deinen Plan erstellen. Du kannst es dir jederzeit anders überlegen.",
         "review": "Einwilligung ansehen"
       }
+    },
+    "units": {
+      "kg": "kg",
+      "lb": "lb",
+      "cm": "cm",
+      "ftIn": "ft / in",
+      "feet": "{{count}} ft",
+      "inches": "{{count}} in"
+    },
+    "birthYear": {
+      "age": "Du wirst dieses Jahr {{count}}",
+      "tooYoung": "Benchbite ist für Menschen ab 18 Jahren."
+    },
+    "targetWeight": {
+      "difference": "{{difference}} {{unit}} ab heute",
+      "wrongDirection": {
+        "lose_fat": "Zum Abnehmen muss dein Ziel unter deinem aktuellen Gewicht liegen.",
+        "build_muscle": "Für Muskelaufbau muss dein Ziel über deinem aktuellen Gewicht liegen."
+      },
+      "belowHealthy": "Das liegt unter einem gesunden Gewicht für deine Größe. Das niedrigste gesunde Ziel ist {{weight}} {{unit}}.",
+      "useLowest": "{{weight}} {{unit}} als Ziel nehmen",
+      "alreadyLow": "Dein Gewicht liegt schon am unteren Ende des gesunden Bereichs, daher empfehlen wir kein Abnehmen. Muskelaufbau oder Gesundbleiben passen besser zu dir.",
+      "changeGoal": "Anderes Ziel wählen"
+    },
+    "pace": {
+      "perWeek": "{{value}} {{unit}} pro Woche",
+      "slower": "Langsamer",
+      "faster": "Schneller",
+      "levels": {
+        "ideal": "Ideal: gleichmäßig und durchhaltbar",
+        "ambitious": "Ehrgeizig: machbar, aber fordernd",
+        "aggressive": "Aggressiv: schwer durchzuhalten und weniger gesund"
+      },
+      "projected": "Du könntest {{weight}} {{unit}} bis zum {{date}} erreichen.",
+      "disclaimer": "Das sind Schätzungen, keine medizinische Beratung."
+    },
+    "activity": {
+      "descriptions": {
+        "sedentary": "Bürojob, wenig Bewegung",
+        "light": "Einen Teil des Tages auf den Beinen",
+        "moderate": "Den größten Teil des Tages auf den Beinen",
+        "active": "Den ganzen Tag körperliche Arbeit"
+      }
     }
   }
 }

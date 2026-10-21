@@ -159,6 +159,49 @@
         "body": "Sağlık verileri olmadan Benchbite hedeflerini hesaplayamaz ve planını oluşturamaz. İstediğin zaman fikrini değiştirebilirsin.",
         "review": "Onay metnine dön"
       }
+    },
+    "units": {
+      "kg": "kg",
+      "lb": "lb",
+      "cm": "cm",
+      "ftIn": "ft / in",
+      "feet": "{{count}} ft",
+      "inches": "{{count}} in"
+    },
+    "birthYear": {
+      "age": "Bu yıl {{count}} yaşına giriyorsun",
+      "tooYoung": "Benchbite 18 yaş ve üzeri içindir."
+    },
+    "targetWeight": {
+      "difference": "Şu andan {{difference}} {{unit}}",
+      "wrongDirection": {
+        "lose_fat": "Yağ yakmak için hedefin şu anki kilonun altında olmalı.",
+        "build_muscle": "Kas yapmak için hedefin şu anki kilonun üstünde olmalı."
+      },
+      "belowHealthy": "Bu, boyuna göre sağlıklı kilonun altında. En düşük sağlıklı hedef {{weight}} {{unit}}.",
+      "useLowest": "Hedefim {{weight}} {{unit}} olsun",
+      "alreadyLow": "Kilon zaten sağlıklı aralığın alt sınırında, bu yüzden yağ yakmayı önermiyoruz. Kas yapmak ya da sağlıklı kalmak sana daha uygun.",
+      "changeGoal": "Başka bir hedef seç"
+    },
+    "pace": {
+      "perWeek": "Haftada {{value}} {{unit}}",
+      "slower": "Daha yavaş",
+      "faster": "Daha hızlı",
+      "levels": {
+        "ideal": "İdeal: dengeli ve sürdürülebilir",
+        "ambitious": "İddialı: yapılabilir ama zorlayıcı",
+        "aggressive": "Agresif: sürdürmesi zor ve daha az sağlıklı"
+      },
+      "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
+      "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir."
+    },
+    "activity": {
+      "descriptions": {
+        "sedentary": "Masa başı iş, az yürüyüş",
+        "light": "Günün bir kısmında ayakta",
+        "moderate": "Günün çoğunda ayakta",
+        "active": "Gün boyu fiziksel iş"
+      }
     }
   }
 }

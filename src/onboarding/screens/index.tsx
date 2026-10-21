@@ -4,7 +4,14 @@ import type { Step } from '../steps';
 import { ConsentStep } from './consent';
 import { GoalStep } from './goal';
 import { GoalInsightStep } from './goal-insight';
+import { ActivityStep } from './activity';
+import { BirthYearStep } from './birth-year';
+import { HeightStep } from './height';
+import { PaceStep } from './pace';
 import { PlaceholderStep } from './placeholder-step';
+import { SexStep } from './sex';
+import { TargetWeightStep } from './target-weight';
+import { WeightStep } from './weight';
 import { WelcomeStep } from './welcome';
 
 const placeholder =
@@ -18,19 +25,13 @@ export const STEP_SCREENS: Record<Step, ComponentType> = {
   goal: GoalStep,
   'goal-insight': GoalInsightStep,
   consent: ConsentStep,
-  sex: placeholder('sex', { choice: 'sex' }),
-  'birth-year': placeholder('birth-year', { defaults: () => ({ birthYear: 1995 }) }),
-  height: placeholder('height', { defaults: () => ({ heightCm: 178, heightUnit: 'cm' }) }),
-  weight: placeholder('weight', { defaults: () => ({ weightKg: 80, weightUnit: 'kg' }) }),
-  'target-weight': placeholder('target-weight', {
-    defaults: ({ goal, weightKg = 80 }) => ({
-      targetWeightKg: goal === 'lose_fat' ? weightKg - 5 : weightKg + 3,
-    }),
-  }),
-  pace: placeholder('pace', {
-    defaults: ({ goal }) => ({ weeklyPaceKg: goal === 'lose_fat' ? 0.5 : 0.25 }),
-  }),
-  activity: placeholder('activity', { choice: 'activityLevel' }),
+  sex: SexStep,
+  'birth-year': BirthYearStep,
+  height: HeightStep,
+  weight: WeightStep,
+  'target-weight': TargetWeightStep,
+  pace: PaceStep,
+  activity: ActivityStep,
   'training-intro': placeholder('training-intro'),
   experience: placeholder('experience', { choice: 'experience' }),
   'training-days': placeholder('training-days', { defaults: () => ({ trainingDays: [1, 3, 5] }) }),
