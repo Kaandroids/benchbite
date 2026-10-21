@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
@@ -14,7 +14,7 @@ type SessionErrorProps = {
 
 /** Shown when the first anonymous sign-in fails, usually because the device is offline. */
 export function SessionError({ onRetry }: SessionErrorProps) {
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { t } = useTranslation();
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -32,17 +32,8 @@ export function SessionError({ onRetry }: SessionErrorProps) {
       footer={<Button label={t('common.tryAgain')} loading={isRetrying} onPress={handleRetry} />}
     >
       <View style={[styles.content, { gap: spacing.md }]}>
-        <View
-          style={[
-            styles.iconTile,
-            {
-              borderRadius: radii.xl,
-              backgroundColor: colors.iconBackground,
-              marginBottom: spacing.sm,
-            },
-          ]}
-        >
-          <Icon name="offline" size={36} color="primary" />
+        <View style={{ marginBottom: spacing.sm }}>
+          <IconTile name="offline" size={80} />
         </View>
         <Text variant="title" style={styles.centered}>
           {t('sessionError.title')}
@@ -58,12 +49,6 @@ export function SessionError({ onRetry }: SessionErrorProps) {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconTile: {
-    width: 80,
-    height: 80,
     alignItems: 'center',
     justifyContent: 'center',
   },

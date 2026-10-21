@@ -1,7 +1,11 @@
 import type { ComponentType } from 'react';
 
 import type { Step } from '../steps';
+import { ConsentStep } from './consent';
+import { GoalStep } from './goal';
+import { GoalInsightStep } from './goal-insight';
 import { PlaceholderStep } from './placeholder-step';
+import { WelcomeStep } from './welcome';
 
 const placeholder =
   (step: Step, props: Omit<Parameters<typeof PlaceholderStep>[0], 'step'> = {}) =>
@@ -10,10 +14,10 @@ const placeholder =
 
 /** The screen of every onboarding step. Placeholders are replaced in #16 to #20. */
 export const STEP_SCREENS: Record<Step, ComponentType> = {
-  welcome: placeholder('welcome'),
-  goal: placeholder('goal', { choice: 'goal' }),
-  'goal-insight': placeholder('goal-insight'),
-  consent: placeholder('consent', { defaults: () => ({ consentedPolicyVersion: 'placeholder' }) }),
+  welcome: WelcomeStep,
+  goal: GoalStep,
+  'goal-insight': GoalInsightStep,
+  consent: ConsentStep,
   sex: placeholder('sex', { choice: 'sex' }),
   'birth-year': placeholder('birth-year', { defaults: () => ({ birthYear: 1995 }) }),
   height: placeholder('height', { defaults: () => ({ heightCm: 178, heightUnit: 'cm' }) }),

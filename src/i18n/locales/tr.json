@@ -101,6 +101,64 @@
       }
     },
     "minutes": "{{count}} dk",
-    "placeholder": "Bu adım henüz hazır değil. Şimdilik şu cevabı veriyor: {{value}}"
+    "placeholder": "Bu adım henüz hazır değil. Şimdilik şu cevabı veriyor: {{value}}",
+    "welcome": {
+      "tagline": "Hedefine göre antrenman yap ve beslen.",
+      "points": {
+        "plan": "Sana özel bir antrenman planı",
+        "nutrition": "Hedefine göre kalori ve makrolar",
+        "together": "Antrenman ve beslenme tek uygulamada"
+      },
+      "start": "Başlayalım"
+    },
+    "goal": {
+      "descriptions": {
+        "lose_fat": "Kasını korurken yağ yak",
+        "build_muscle": "Hafif bir kalori fazlasıyla kas kazan",
+        "get_stronger": "Adım adım daha ağır kaldır",
+        "stay_healthy": "Formda hisset, dengeni koru"
+      }
+    },
+    "goalInsight": {
+      "lose_fat": {
+        "title": "Yağ yakmanın sırrı istikrar",
+        "body": "Ölçülü bir kalori açığı ve kuvvet antrenmanıyla kasını korurken yağ yakarsın. Günlük hedefini ve sürdürebileceğin bir planı birlikte belirleyeceğiz."
+      },
+      "build_muscle": {
+        "title": "Kas, zamanla ve proteinle büyür",
+        "body": "Sınırına yakın antrenman, yeterli protein ve hafif bir kalori fazlası haftadan haftaya kas yapar. İhtiyacın olanı tam olarak hesaplayacağız."
+      },
+      "get_stronger": {
+        "title": "Güç, ilerlemeyle gelir",
+        "body": "Yeterli dinlenmeyle yapılan ağır temel hareketler ve zamanla biraz daha fazla ağırlık seni güçlendirir. Planın bunların üzerine kurulacak."
+      },
+      "stay_healthy": {
+        "title": "Küçük alışkanlıklar, büyük fark",
+        "body": "Düzenli antrenman ve dengeli öğünler seni formda ve enerjik tutar. İkisini de haftana yerleştireceğiz."
+      }
+    },
+    "consent": {
+      "intro": "Planını oluşturmak için Benchbite'ın bazı sağlık verilerine ihtiyacı var. Bunun için açık onayın gerekiyor.",
+      "what": {
+        "title": "Ne topluyoruz",
+        "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın."
+      },
+      "why": {
+        "title": "Ne için",
+        "body": "Sadece kalori hedeflerini ve antrenman planını hesaplamak için."
+      },
+      "control": {
+        "title": "Kontrol sende",
+        "body": "Güvenle saklanır ve sadece sen görebilirsin. Onayını istediğin zaman geri çekebilir, verilerini silebilirsin."
+      },
+      "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
+      "policy": "Gizlilik politikasını oku",
+      "decline": "Onay vermiyorum",
+      "declined": {
+        "title": "Kişisel bir plan için onayın gerekiyor",
+        "body": "Sağlık verileri olmadan Benchbite hedeflerini hesaplayamaz ve planını oluşturamaz. İstediğin zaman fikrini değiştirebilirsin.",
+        "review": "Onay metnine dön"
+      }
+    }
   }
 }
