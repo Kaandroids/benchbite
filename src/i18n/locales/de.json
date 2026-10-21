@@ -65,10 +65,10 @@
         "title": "Dein Plan"
       },
       "reminders": {
-        "title": "Möchtest du Erinnerungen?"
+        "title": "Sollen wir dich ans Training erinnern?"
       },
       "summary": {
-        "title": "Alles bereit"
+        "title": "Alles bereit!"
       }
     },
     "options": {
@@ -272,6 +272,28 @@
       "saveError": "Wir konnten deinen Plan nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
       "editLater": "Du kannst das alles später ändern.",
       "today": "Heute"
+    },
+    "reminders": {
+      "body": "Eine kurze Erinnerung an deinen Trainingstagen, damit kein Workout untergeht.",
+      "time": "Uhrzeit der Erinnerung",
+      "enable": "Erinnerungen aktivieren",
+      "skip": "Nicht jetzt",
+      "channel": "Trainingserinnerungen",
+      "notification": {
+        "title": "Heute: {{session}}",
+        "body": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!"
+      }
+    },
+    "summary": {
+      "body": "Dein Plan ist fertig. Das haben wir für dich eingerichtet.",
+      "workouts_one": "{{count}} Training pro Woche",
+      "workouts_other": "{{count}} Trainings pro Woche",
+      "remindersOn": "Erinnerungen um {{time}}",
+      "remindersOff": "Keine Erinnerungen",
+      "next": "Dein erstes Training",
+      "today": "Heute",
+      "tomorrow": "Morgen",
+      "start": "Los geht's"
     }
   }
 }

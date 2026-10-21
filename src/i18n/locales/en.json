@@ -65,10 +65,10 @@
         "title": "Your plan"
       },
       "reminders": {
-        "title": "Do you want reminders?"
+        "title": "Should we remind you to train?"
       },
       "summary": {
-        "title": "You're all set"
+        "title": "You're all set!"
       }
     },
     "options": {
@@ -272,6 +272,28 @@
       "saveError": "We couldn't save your plan. Check your connection and try again.",
       "editLater": "You can change all of this later.",
       "today": "Today"
+    },
+    "reminders": {
+      "body": "A short reminder on your training days, so no workout slips your mind.",
+      "time": "Reminder time",
+      "enable": "Turn on reminders",
+      "skip": "Not now",
+      "channel": "Workout reminders",
+      "notification": {
+        "title": "Today: {{session}}",
+        "body": "{{count}} exercises, about {{minutes}} min. You've got this!"
+      }
+    },
+    "summary": {
+      "body": "Your plan is ready. Here's what we set up for you.",
+      "workouts_one": "{{count}} workout a week",
+      "workouts_other": "{{count}} workouts a week",
+      "remindersOn": "Reminders at {{time}}",
+      "remindersOff": "No reminders",
+      "next": "Your first workout",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "start": "Let's go"
     }
   }
 }
