@@ -3,6 +3,7 @@ import { createContext, use, useEffect, useState, type PropsWithChildren } from 
 import { supabase } from '@/lib/supabase';
 import {
   clearDraft,
+  forgetOtherUsers,
   loadCompleted,
   loadDraft,
   saveCompleted,
@@ -33,21 +34,50 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
 const EMPTY_DRAFT: Draft = { step: 'welcome', answers: {} };
 
+/** Used until the session is ready; the app shows nothing before that. */
+const LOADING: OnboardingContextValue = {
+  completed: false,
+  draft: EMPTY_DRAFT,
+  setStep: () => {},
+  answer: () => {},
+  complete: () => {},
+  reset: () => {},
+};
+
 /**
- * Holds the onboarding's state and keeps it on the device after every change. The server decides
- * whether the onboarding was finished; the copy on the device answers while offline.
+ * Holds the onboarding's state of the signed-in user and keeps it on the device after every
+ * change. When the user changes, for example because a new guest account replaced an expired
+ * one, the state is loaded again for the new user.
  */
 export function OnboardingProvider({ children }: PropsWithChildren) {
   const sessionState = useSession();
-  const [completed, setCompleted] = useState(loadCompleted);
-  const [draft, setDraft] = useState(() => loadDraft() ?? EMPTY_DRAFT);
-
   const userId = sessionState.status === 'ready' ? sessionState.session.user.id : null;
+
+  if (!userId) {
+    return <OnboardingContext value={LOADING}>{children}</OnboardingContext>;
+  }
+  return (
+    <UserOnboardingProvider key={userId} userId={userId}>
+      {children}
+    </UserOnboardingProvider>
+  );
+}
+
+/**
+ * The server decides whether the onboarding was finished; the copy on the device answers
+ * immediately and while offline.
+ */
+function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
+  const [completed, setCompleted] = useState(() => {
+    forgetOtherUsers(userId);
+    return loadCompleted(userId);
+  });
+  const [draft, setDraft] = useState(() => loadDraft(userId) ?? EMPTY_DRAFT);
 
   // Someone who finished the onboarding on another device, after signing in to their account,
   // skips it here too. Without a connection, the copy on the device stands.
   useEffect(() => {
-    if (!userId || completed) {
+    if (completed) {
       return;
     }
     let cancelled = false;
@@ -58,7 +88,7 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
       .maybeSingle()
       .then(({ data }) => {
         if (!cancelled && data?.onboarding_completed_at) {
-          saveCompleted(true);
+          saveCompleted(userId, true);
           setCompleted(true);
         }
       });
@@ -72,7 +102,7 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
   const update = (change: (current: Draft) => Draft) =>
     setDraft((current) => {
       const next = change(current);
-      saveDraft(next);
+      saveDraft(userId, next);
       return next;
     });
 
@@ -85,14 +115,14 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
     answer: (answers) =>
       update((current) => ({ ...current, answers: { ...current.answers, ...answers } })),
     complete: () => {
-      saveCompleted(true);
-      clearDraft();
+      saveCompleted(userId, true);
+      clearDraft(userId);
       setDraft(EMPTY_DRAFT);
       setCompleted(true);
     },
     reset: () => {
-      saveCompleted(false);
-      clearDraft();
+      saveCompleted(userId, false);
+      clearDraft(userId);
       setDraft(EMPTY_DRAFT);
       setCompleted(false);
     },

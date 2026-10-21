@@ -1,23 +1,50 @@
 // The onboarding's state on the device: the draft of an unfinished onboarding, and whether it was
-// finished. Both are read synchronously, so the app can choose its first screen without waiting.
+// finished. Both are stored per user, so a new guest account never sees another user's answers,
+// and read synchronously, so the app can choose its first screen without waiting.
+//
+// Storage errors are logged and treated as "nothing stored": the worst case is going through the
+// onboarding again, which is better than an app that crashes on launch.
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { isStep, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
 
-const DRAFT_KEY = 'onboarding.draft';
-const COMPLETED_KEY = 'onboarding.completed';
+const PREFIX = 'onboarding.';
 /** Raised when the answers change shape, so that an older draft is discarded instead of misread. */
 const DRAFT_VERSION = 1;
 
 export type Draft = { step: Step; answers: OnboardingAnswers };
 
-export function loadDraft(): Draft | null {
+const draftKey = (userId: string) => `${PREFIX}${userId}.draft`;
+const completedKey = (userId: string) => `${PREFIX}${userId}.completed`;
+
+function read(key: string): string | null {
   try {
-    const stored = Storage.getItemSync(DRAFT_KEY);
-    if (!stored) {
-      return null;
+    return Storage.getItemSync(key);
+  } catch (error) {
+    console.warn(`Could not read ${key}`, error);
+    return null;
+  }
+}
+
+function write(key: string, value: string | null) {
+  try {
+    if (value === null) {
+      Storage.removeItemSync(key);
+    } else {
+      Storage.setItemSync(key, value);
     }
+  } catch (error) {
+    console.warn(`Could not write ${key}`, error);
+  }
+}
+
+export function loadDraft(userId: string): Draft | null {
+  const stored = read(draftKey(userId));
+  if (!stored) {
+    return null;
+  }
+  try {
     const draft = JSON.parse(stored) as { version?: number; step?: string; answers?: unknown };
     if (draft.version !== DRAFT_VERSION || !draft.step || !isStep(draft.step)) {
       return null;
@@ -29,22 +56,34 @@ export function loadDraft(): Draft | null {
   }
 }
 
-export function saveDraft(draft: Draft) {
-  Storage.setItemSync(DRAFT_KEY, JSON.stringify({ version: DRAFT_VERSION, ...draft }));
+export function saveDraft(userId: string, draft: Draft) {
+  write(draftKey(userId), JSON.stringify({ version: DRAFT_VERSION, ...draft }));
 }
 
-export function clearDraft() {
-  Storage.removeItemSync(DRAFT_KEY);
+export function clearDraft(userId: string) {
+  write(draftKey(userId), null);
 }
 
-export function loadCompleted(): boolean {
-  return Storage.getItemSync(COMPLETED_KEY) === 'true';
+export function loadCompleted(userId: string): boolean {
+  return read(completedKey(userId)) === 'true';
 }
 
-export function saveCompleted(completed: boolean) {
-  if (completed) {
-    Storage.setItemSync(COMPLETED_KEY, 'true');
-  } else {
-    Storage.removeItemSync(COMPLETED_KEY);
+export function saveCompleted(userId: string, completed: boolean) {
+  write(completedKey(userId), completed ? 'true' : null);
+}
+
+/**
+ * Removes what other users left on this device, such as the draft of a guest account that was
+ * replaced. Drafts hold health data, so they should not outlive their account.
+ */
+export function forgetOtherUsers(userId: string) {
+  try {
+    for (const key of Storage.getAllKeysSync()) {
+      if (key.startsWith(PREFIX) && !key.startsWith(`${PREFIX}${userId}.`)) {
+        Storage.removeItemSync(key);
+      }
+    }
+  } catch (error) {
+    console.warn('Could not remove the onboarding data of other users', error);
   }
 }
