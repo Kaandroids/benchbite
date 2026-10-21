@@ -49,6 +49,10 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm format:check
 
+      - name: Tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm test --ci
+
       - name: Locale check
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm check:locales
