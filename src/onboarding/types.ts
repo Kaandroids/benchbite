@@ -31,4 +31,6 @@ export type OnboardingAnswers = {
   /** The result calculated on the building step, shown on the plan step and then saved. */
   targets?: NutritionTargets;
   plan?: WorkoutPlan;
+  /** The time of the workout reminders in minutes after midnight, if the user turned them on. */
+  reminderMinutes?: number;
 };
