@@ -10,23 +10,19 @@ import { BirthYearStep } from './birth-year';
 import { HeightStep } from './height';
 import { PaceStep } from './pace';
 import { ExperienceStep } from './experience';
-import { PlaceholderStep } from './placeholder-step';
 import { PlanStep } from './plan';
+import { RemindersStep } from './reminders';
 import { SessionLengthStep } from './session-length';
 import { SetupStep } from './setup';
 import { TrainingDaysStep } from './training-days';
 import { TrainingIntroStep } from './training-intro';
 import { SexStep } from './sex';
+import { SummaryStep } from './summary';
 import { TargetWeightStep } from './target-weight';
 import { WeightStep } from './weight';
 import { WelcomeStep } from './welcome';
 
-const placeholder =
-  (step: Step) =>
-  // eslint-disable-next-line react/display-name -- replaced by real screens in #19 and #20
-  () => <PlaceholderStep step={step} />;
-
-/** The screen of every onboarding step. Placeholders are replaced in #16 to #20. */
+/** The screen of every onboarding step. */
 export const STEP_SCREENS: Record<Step, ComponentType> = {
   welcome: WelcomeStep,
   goal: GoalStep,
@@ -46,6 +42,6 @@ export const STEP_SCREENS: Record<Step, ComponentType> = {
   'session-length': SessionLengthStep,
   building: BuildingStep,
   plan: PlanStep,
-  reminders: placeholder('reminders'),
-  summary: placeholder('summary'),
+  reminders: RemindersStep,
+  summary: SummaryStep,
 };
