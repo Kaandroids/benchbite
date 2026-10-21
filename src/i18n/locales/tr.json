@@ -192,7 +192,11 @@
         "aggressive": "Agresif: sürdürmesi zor ve daha az sağlıklı"
       },
       "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
-      "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir."
+      "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir.",
+      "fastest": {
+        "lose_fat": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo vermek çoğunlukla kas kaybına yol açar ve sürdürmesi zordur.",
+        "build_muscle": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo almak kas değil, çoğunlukla yağ ekler."
+      }
     },
     "activity": {
       "descriptions": {

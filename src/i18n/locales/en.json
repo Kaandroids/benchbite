@@ -192,7 +192,11 @@
         "aggressive": "Aggressive: hard to keep up and less healthy"
       },
       "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
-      "disclaimer": "These are estimates, not medical advice."
+      "disclaimer": "These are estimates, not medical advice.",
+      "fastest": {
+        "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
+        "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
+      }
     },
     "activity": {
       "descriptions": {
