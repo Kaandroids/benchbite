@@ -39,6 +39,10 @@
     "de": "Kniebeuge (Langhantel)",
     "tr": "Squat (Halter)"
   },
+  "Battling_Ropes": {
+    "de": "Battle Ropes",
+    "tr": "Battle Rope"
+  },
   "Bench_Dips": {
     "de": "Dips an der Bank",
     "tr": "Bench Dips"
@@ -47,6 +51,14 @@
     "de": "Langhantelrudern",
     "tr": "Barbell Row"
   },
+  "Bent_Over_Two-Dumbbell_Row": {
+    "de": "Vorgebeugtes Rudern (Kurzhanteln)",
+    "tr": "Eğilerek Dumbbell Row"
+  },
+  "Bicycling_Stationary": {
+    "de": "Ergometer",
+    "tr": "Sabit Bisiklet"
+  },
   "Bodyweight_Squat": {
     "de": "Kniebeuge (Körpergewicht)",
     "tr": "Squat (Vücut Ağırlığı)"
@@ -54,6 +66,10 @@
   "Bodyweight_Walking_Lunge": {
     "de": "Ausfallschritte gehend",
     "tr": "Yürüyerek Lunge"
+  },
+  "Butt_Lift_Bridge": {
+    "de": "Glute Bridge",
+    "tr": "Glute Bridge (Kalça Köprüsü)"
   },
   "Butterfly": {
     "de": "Butterfly (Maschine)",
@@ -106,6 +122,10 @@
   "Dumbbell_Bench_Press": {
     "de": "Bankdrücken (Kurzhantel)",
     "tr": "Bench Press (Dambıl)"
+  },
+  "Dumbbell_Floor_Press": {
+    "de": "Bodendrücken (Kurzhantel)",
+    "tr": "Yerde Dumbbell Press"
   },
   "Dumbbell_Flyes": {
     "de": "Fliegende (Kurzhantel)",
@@ -191,6 +211,10 @@
     "de": "Rudern hängend (Inverted Row)",
     "tr": "Inverted Row"
   },
+  "Knee_Tuck_Jump": {
+    "de": "Hocksprung",
+    "tr": "Diz Çekerek Zıplama"
+  },
   "Leg_Extensions": {
     "de": "Beinstrecker",
     "tr": "Leg Extension"
@@ -246,6 +270,10 @@
   "Romanian_Deadlift": {
     "de": "Rumänisches Kreuzheben",
     "tr": "Romanian Deadlift"
+  },
+  "Rowing_Stationary": {
+    "de": "Rudergerät",
+    "tr": "Kürek Makinesi"
   },
   "Russian_Twist": {
     "de": "Russian Twist",
@@ -303,6 +331,10 @@
     "de": "Schulterdrücken stehend",
     "tr": "Military Press"
   },
+  "Star_Jump": {
+    "de": "Sternsprung",
+    "tr": "Yıldız Zıplama"
+  },
   "Step-up_with_Knee_Raise": {
     "de": "Step-up mit Knieheben",
     "tr": "Diz Kaldırmalı Step-up"
@@ -310,6 +342,10 @@
   "Stiff-Legged_Dumbbell_Deadlift": {
     "de": "Kreuzheben gestreckt (Kurzhantel)",
     "tr": "Stiff-Leg Deadlift (Dambıl)"
+  },
+  "Straight-Arm_Dumbbell_Pullover": {
+    "de": "Überzüge (Kurzhantel)",
+    "tr": "Dumbbell Pullover"
   },
   "Sumo_Deadlift": {
     "de": "Sumo-Kreuzheben",
