@@ -4,19 +4,23 @@ import '@supabase/functions-js/edge-runtime.d.ts';
 import { withSupabase } from '@supabase/server';
 import { z } from 'zod';
 
-import type { Database } from '../_shared/database.types.ts';
+import { Constants, type Database } from '../_shared/database.types.ts';
 import { buildPlan } from '../_shared/plan/plan.ts';
 import type { CatalogueEntry } from '../_shared/plan/types.ts';
 
+// The allowed values come from the generated database types, so a new enum value is accepted
+// as soon as the types are regenerated.
+const { Enums } = Constants.public;
+
 const PlanRequest = z.object({
-  goal: z.enum(['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy']),
-  experience: z.enum(['beginner', 'intermediate', 'advanced']),
+  goal: z.enum(Enums.goal_kind),
+  experience: z.enum(Enums.experience),
   trainingDays: z
     .array(z.number().int().min(1).max(7))
     .min(1)
     .max(6)
     .refine((days) => new Set(days).size === days.length, 'Training days must be unique'),
-  setup: z.enum(['gym', 'dumbbells', 'bodyweight']),
+  setup: z.enum(Enums.training_setup),
   sessionMinutes: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(75)]),
 });
 

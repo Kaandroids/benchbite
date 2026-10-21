@@ -2,41 +2,28 @@
 // onboarding answers and checks each plan against the real exercise catalogue. Run with
 // `pnpm check:plans` while the stack is running.
 
+import { Constants, type Database } from '../src/lib/database.types.ts';
+import type { PlanInput, Session } from '../supabase/functions/_shared/plan/types.ts';
+
 const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 // The local stack's fixed development key, as in .env.example.
 const KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 const PARALLEL_REQUESTS = 8;
 
-const GOALS = ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'] as const;
-const EXPERIENCES = ['beginner', 'intermediate', 'advanced'] as const;
-const SETUPS = ['gym', 'dumbbells', 'bodyweight'] as const;
+// The enums are ordered: setups from the most equipment to the least, experience from beginner
+// to advanced.
+const {
+  goal_kind: GOALS,
+  experience: EXPERIENCES,
+  training_setup: SETUPS,
+} = Constants.public.Enums;
 const SESSION_MINUTES = [30, 45, 60, 75] as const;
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
-type Setup = (typeof SETUPS)[number];
-type Experience = (typeof EXPERIENCES)[number];
-type Target = { reps: { min: number; max: number } } | { seconds: number };
-type PlannedExercise = { exerciseId: string; slot: string; sets: number; target: Target };
-type Session = {
-  weekday: number;
-  exercises: PlannedExercise[];
-  finisher: PlannedExercise | null;
-  estimatedMinutes: number;
-};
-type Answers = {
-  goal: (typeof GOALS)[number];
-  experience: Experience;
-  trainingDays: number[];
-  setup: Setup;
-  sessionMinutes: (typeof SESSION_MINUTES)[number];
-};
-type CatalogueRow = {
-  slot: string;
-  exercise_id: string;
-  requires: Setup;
-  min_experience: Experience;
-  exercises: { metrics: string[] };
+type Tables = Database['public']['Tables'];
+type CatalogueRow = Tables['plan_slot_exercises']['Row'] & {
+  exercises: Pick<Tables['exercises']['Row'], 'metrics'>;
 };
 
 async function signInAnonymously(): Promise<string> {
@@ -62,8 +49,8 @@ async function loadCatalogue(token: string): Promise<CatalogueRow[]> {
   return (await response.json()) as CatalogueRow[];
 }
 
-function allAnswers(): Answers[] {
-  const answers: Answers[] = [];
+function allAnswers(): PlanInput[] {
+  const answers: PlanInput[] = [];
   for (const goal of GOALS)
     for (const experience of EXPERIENCES)
       for (const setup of SETUPS)
@@ -80,7 +67,7 @@ function allAnswers(): Answers[] {
 }
 
 /** Returns what is wrong with the plan for these answers, if anything. */
-function problems(answers: Answers, sessions: Session[], catalogue: CatalogueRow[]): string[] {
+function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueRow[]): string[] {
   const found: string[] = [];
   const setupRank = SETUPS.indexOf(answers.setup);
   const experienceRank = EXPERIENCES.indexOf(answers.experience);

@@ -1,3 +1,4 @@
+import { Constants } from '../database.types.ts';
 import { prescribe, prescribeFinisher, type Prescription } from './prescription.ts';
 import { TEMPLATES } from './templates.ts';
 import type {
@@ -21,10 +22,11 @@ const MIN_SETS = 2;
 /** Sessions this short take one set less of everything, so that more exercises fit. */
 const SHORT_SESSION_MINUTES = 30;
 
-// Setups from the most equipment to the least. An exercise is possible when it needs the
-// user's setup or less.
-const SETUPS: Setup[] = ['gym', 'dumbbells', 'bodyweight'];
-const EXPERIENCES: Experience[] = ['beginner', 'intermediate', 'advanced'];
+// The database enums are ordered: setups from the most equipment to the least, experience from
+// beginner to advanced. An exercise is possible when it needs the user's setup or less, and the
+// user's experience or less.
+const SETUPS: readonly Setup[] = Constants.public.Enums.training_setup;
+const EXPERIENCES: readonly Experience[] = Constants.public.Enums.experience;
 
 function workSeconds(target: Target): number {
   return 'seconds' in target
