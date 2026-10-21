@@ -74,7 +74,9 @@ The exercise library comes from [free-exercise-db](https://github.com/yuhonas/fr
 Its data is in a migration and its images are in `supabase/storage/exercise-images/`, so
 `pnpm supabase start` and `pnpm supabase db reset` load both without a download. To update the
 library, change the upstream commit in `scripts/import-exercises.ts` and run
-`pnpm import:exercises`, which converts the images to WebP and writes a new migration. See
+`pnpm import:exercises`, which converts the images to WebP and writes a new migration. After
+changing only the translated names in `supabase/data/exercise-names.json`, run
+`pnpm import:exercises --names-only`, which writes a migration with just the names. See
 [ADR 0008](docs/adr/0008-exercise-library.md).
 
 ### Run the app
