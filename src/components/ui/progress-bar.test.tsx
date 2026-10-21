@@ -2,8 +2,8 @@ import { render, screen } from '@/test/render';
 
 import { ProgressBar } from './progress-bar';
 
-// The bar is not an accessibility element (it has no `accessible`), so it cannot be found by role.
-const progressBar = () => screen.getByLabelText('Onboarding');
+// Regression: without `accessible`, the bar was no accessibility element and iOS did not read it.
+const progressBar = () => screen.getByRole('progressbar', { name: 'Onboarding' });
 
 describe('ProgressBar', () => {
   it('describes the progress as a percentage', async () => {
