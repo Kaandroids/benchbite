@@ -32,13 +32,21 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
   return goal === 'lose_fat' ? targetKg < weightKg : targetKg > weightKg;
 }
 
-/** The weekly paces the slider offers, in kilograms. */
-export const PACE_RANGE_KG: Record<
-  'lose_fat' | 'build_muscle',
-  { min: number; max: number; default: number }
-> = {
-  lose_fat: { min: 0.25, max: 1, default: 0.5 },
-  build_muscle: { min: 0.1, max: 0.5, default: 0.25 },
+type PaceRange = { min: number; max: number; step: number; default: number };
+
+/**
+ * The weekly paces the slider offers, in the user's unit. Losing fat ranges from about a quarter
+ * to one kilogram a week; muscle grows much slower, from about 0.1 to 0.5 kilograms.
+ */
+export const PACE_RANGES: Record<'kg' | 'lb', Record<'lose_fat' | 'build_muscle', PaceRange>> = {
+  kg: {
+    lose_fat: { min: 0.25, max: 1, step: 0.05, default: 0.5 },
+    build_muscle: { min: 0.1, max: 0.5, step: 0.05, default: 0.25 },
+  },
+  lb: {
+    lose_fat: { min: 0.5, max: 2, step: 0.1, default: 1 },
+    build_muscle: { min: 0.25, max: 1, step: 0.05, default: 0.5 },
+  },
 };
 
 export type PaceLevel = 'ideal' | 'ambitious' | 'aggressive';

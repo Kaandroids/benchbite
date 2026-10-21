@@ -36,6 +36,16 @@ export function weightToKg(unit: WeightUnit, value: number): number {
   return unit === 'kg' ? toTenth(value) : toTenth(value * KG_PER_LB);
 }
 
+/** A weekly pace in kilograms, in the given unit with two decimals, as paces are small. */
+export function paceIn(unit: WeightUnit, kg: number): number {
+  return Math.round((unit === 'kg' ? kg : kg / KG_PER_LB) * 100) / 100;
+}
+
+/** A weekly pace given in the unit, in kilograms with two decimals. */
+export function paceToKg(unit: WeightUnit, value: number): number {
+  return Math.round((unit === 'kg' ? value : value * KG_PER_LB) * 100) / 100;
+}
+
 /** A height in centimetres as whole feet and inches. */
 export function heightToFeetAndInches(cm: number): { feet: number; inches: number } {
   const totalInches = Math.round(cm / CM_PER_INCH);
