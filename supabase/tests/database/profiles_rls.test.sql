@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -14,22 +14,18 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
--- User A saves the onboarding.
-select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+-- User A's onboarding, saved as complete_onboarding() would save it.
+insert into public.profiles (user_id, sex, birth_year, height_cm, weight_unit, height_unit,
+  activity_level, experience, training_setup, training_days, session_minutes,
+  onboarding_completed_at)
+values ('00000000-0000-0000-0000-00000000000a', 'male', extract(year from current_date) - 30,
+  180, 'kg', 'cm', 'moderate', 'beginner', 'gym', '{1,3,5}', 60, now());
+insert into public.goals (user_id, kind) values ('00000000-0000-0000-0000-00000000000a', 'stay_healthy');
+insert into public.weight_entries (user_id, weight_kg) values ('00000000-0000-0000-0000-00000000000a', 80);
+insert into public.health_data_consents (user_id, policy_version)
+  values ('00000000-0000-0000-0000-00000000000a', '2026-10-21');
 
-select lives_ok(
-  $$
-    insert into public.profiles (user_id, sex, birth_year, height_cm, weight_unit, height_unit,
-      activity_level, experience, training_setup, training_days, session_minutes)
-    values ('00000000-0000-0000-0000-00000000000a', 'male', extract(year from current_date) - 30,
-      180, 'kg', 'cm', 'moderate', 'beginner', 'gym', '{1,3,5}', 60);
-    insert into public.goals (user_id, kind) values ('00000000-0000-0000-0000-00000000000a', 'stay_healthy');
-    insert into public.weight_entries (user_id, weight_kg) values ('00000000-0000-0000-0000-00000000000a', 80);
-    insert into public.health_data_consents (user_id, policy_version)
-      values ('00000000-0000-0000-0000-00000000000a', '2026-10-21');
-  $$,
-  'Users can save their own onboarding'
-);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select is(
   public.my_nutrition_targets(),
@@ -43,6 +39,59 @@ select throws_ok(
   '23514',
   null,
   'Profiles allow at most six training days'
+);
+
+select throws_ok(
+  $$ update public.profiles set training_days = '{1,1,3}' $$,
+  '23514',
+  null,
+  'Profiles do not allow a training day twice'
+);
+
+select throws_ok(
+  $$ update public.profiles set birth_year = extract(year from current_date) - 17 $$,
+  'BB002',
+  'Benchbite is for people aged 18 and over',
+  'Profiles do not allow users under 18'
+);
+
+select lives_ok(
+  $$ update public.profiles set height_cm = 181, training_days = '{2,4}';
+     update public.goals set kind = 'lose_fat', target_weight_kg = 75, weekly_pace_kg = 0.5; $$,
+  'Users can change their answers'
+);
+
+select throws_ok(
+  $$ update public.profiles set onboarding_completed_at = null $$,
+  '42501',
+  null,
+  'Users cannot undo finishing the onboarding'
+);
+
+select throws_ok(
+  $$ insert into public.profiles (user_id, sex, birth_year, height_cm, weight_unit, height_unit,
+       activity_level, experience, training_setup, training_days, session_minutes,
+       onboarding_completed_at)
+     values ('00000000-0000-0000-0000-00000000000a', 'male', 2015, 180, 'kg', 'cm', 'moderate',
+       'beginner', 'gym', '{1}', 60, now()) $$,
+  '42501',
+  null,
+  'Users cannot create a profile without the onboarding'
+);
+
+select throws_ok(
+  $$ insert into public.goals (user_id, kind) values ('00000000-0000-0000-0000-00000000000a', 'lose_fat') $$,
+  '42501',
+  null,
+  'Users cannot create a goal without the onboarding'
+);
+
+select throws_ok(
+  $$ insert into public.health_data_consents (user_id, policy_version)
+     values ('00000000-0000-0000-0000-00000000000a', repeat('x', 33)) $$,
+  '23514',
+  null,
+  'Consents only accept short policy versions'
 );
 
 select throws_ok(
@@ -107,7 +156,7 @@ select throws_ok(
 reset role;
 select is(
   (select height_cm from public.profiles where user_id = '00000000-0000-0000-0000-00000000000a'),
-  180.0,
+  181.0,
   'Other users left the profile unchanged'
 );
 
