@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { defaultUnits, type WeightUnit } from '@/i18n/units';
-import { useTheme } from '@/theme';
 
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
+import { CenteredContent } from './centered-content';
 import { WeightWheels } from './weight-wheels';
 
 /** A typical weight to start the wheels from, so most people only scroll a little. */
@@ -23,7 +22,6 @@ const DEFAULT_WEIGHT_KG: Record<NonNullable<OnboardingAnswers['sex']>, number> =
 /** The current weight in kilograms or pounds; it is stored in kilograms either way. */
 export function WeightStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { answers, progress, next, back } = useStep('weight');
   const [unit, setUnit] = useState<WeightUnit>(answers.weightUnit ?? defaultUnits().weight);
   const [weightKg, setWeightKg] = useState(
@@ -48,14 +46,14 @@ export function WeightStep() {
         value={unit}
         onChange={setUnit}
       />
-      <View style={{ marginTop: spacing.lg }}>
+      <CenteredContent>
         <WeightWheels
           kg={weightKg}
           unit={unit}
           onChange={setWeightKg}
           accessibilityLabel={t('onboarding.steps.weight.title')}
         />
-      </View>
+      </CenteredContent>
     </Screen>
   );
 }

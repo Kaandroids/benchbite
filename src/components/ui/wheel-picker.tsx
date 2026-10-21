@@ -15,7 +15,7 @@ import { useTheme } from '@/theme';
 
 import { Text } from './text';
 
-const ITEM_HEIGHT = 48;
+const ITEM_HEIGHT = 60;
 /** Rows shown at once. Odd, so that one row sits in the middle. */
 const VISIBLE_ITEMS = 5;
 const PADDING = ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
@@ -52,7 +52,7 @@ export function WheelPicker({
   format = String,
   formatAccessibilityValue = format,
   accessibilityLabel,
-  width = 96,
+  width = 120,
 }: WheelPickerProps) {
   const { colors, radii } = useTheme();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -160,7 +160,7 @@ function WheelItem({ label, index, scrollY }: WheelItemProps) {
 
   return (
     <Animated.View style={[styles.item, { top: PADDING + index * ITEM_HEIGHT }, animatedStyle]}>
-      <Text variant="title" numberOfLines={1}>
+      <Text variant="display" numberOfLines={1}>
         {label}
       </Text>
     </Animated.View>

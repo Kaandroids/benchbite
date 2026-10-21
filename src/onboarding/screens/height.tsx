@@ -18,6 +18,7 @@ import { useTheme } from '@/theme';
 import { HEIGHT_RANGE_CM } from '../body';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
+import { CenteredContent } from './centered-content';
 
 const range = (from: number, to: number) =>
   Array.from({ length: to - from + 1 }, (_, i) => from + i);
@@ -66,42 +67,44 @@ export function HeightStep() {
       />
       {/* Each wheel has its own key, so switching units mounts fresh wheels instead of reusing
           one whose scroll position belongs to the other unit. */}
-      <View style={[styles.row, { gap: spacing.xs, marginTop: spacing.lg }]}>
-        {unit === 'cm' ? (
-          <>
-            <WheelPicker
-              key="cm"
-              accessibilityLabel={t('onboarding.steps.height.title')}
-              values={CENTIMETRES}
-              value={Math.round(heightCm)}
-              onChange={setHeightCm}
-              formatAccessibilityValue={(cm) => `${cm} cm`}
-            />
-            <Text variant="headline" color="textMuted">
-              {t('onboarding.units.cm')}
-            </Text>
-          </>
-        ) : (
-          <>
-            <WheelPicker
-              key="feet"
-              accessibilityLabel={t('onboarding.steps.height.title')}
-              values={FEET}
-              value={feet}
-              onChange={(newFeet) => setHeightCm(clamp(feetAndInchesToCm(newFeet, inches)))}
-              format={(newFeet) => t('onboarding.units.feet', { count: newFeet })}
-            />
-            <WheelPicker
-              key="inches"
-              accessibilityLabel={t('onboarding.steps.height.title')}
-              values={INCHES}
-              value={inches}
-              onChange={(newInches) => setHeightCm(clamp(feetAndInchesToCm(feet, newInches)))}
-              format={(newInches) => t('onboarding.units.inches', { count: newInches })}
-            />
-          </>
-        )}
-      </View>
+      <CenteredContent>
+        <View style={[styles.row, { gap: spacing.xs }]}>
+          {unit === 'cm' ? (
+            <>
+              <WheelPicker
+                key="cm"
+                accessibilityLabel={t('onboarding.steps.height.title')}
+                values={CENTIMETRES}
+                value={Math.round(heightCm)}
+                onChange={setHeightCm}
+                formatAccessibilityValue={(cm) => `${cm} cm`}
+              />
+              <Text variant="headline" color="textMuted">
+                {t('onboarding.units.cm')}
+              </Text>
+            </>
+          ) : (
+            <>
+              <WheelPicker
+                key="feet"
+                accessibilityLabel={t('onboarding.steps.height.title')}
+                values={FEET}
+                value={feet}
+                onChange={(newFeet) => setHeightCm(clamp(feetAndInchesToCm(newFeet, inches)))}
+                format={(newFeet) => t('onboarding.units.feet', { count: newFeet })}
+              />
+              <WheelPicker
+                key="inches"
+                accessibilityLabel={t('onboarding.steps.height.title')}
+                values={INCHES}
+                value={inches}
+                onChange={(newInches) => setHeightCm(clamp(feetAndInchesToCm(feet, newInches)))}
+                format={(newInches) => t('onboarding.units.inches', { count: newInches })}
+              />
+            </>
+          )}
+        </View>
+      </CenteredContent>
     </Screen>
   );
 }

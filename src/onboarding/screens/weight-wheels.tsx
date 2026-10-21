@@ -59,7 +59,7 @@ export function WeightWheels({ kg, unit, onChange, accessibilityLabel }: WeightW
         onChange={(newTenth) => change(whole, newTenth)}
         format={(newTenth) => `${decimalSeparator}${newTenth}`}
         formatAccessibilityValue={(newTenth) => `${whole}${decimalSeparator}${newTenth} ${unit}`}
-        width={64}
+        width={88}
       />
       <Text variant="headline" color="textMuted">
         {unit}

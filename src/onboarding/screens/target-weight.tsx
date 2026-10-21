@@ -12,6 +12,7 @@ import { useTheme } from '@/theme';
 
 import { isTargetInGoalDirection, minHealthyWeightKg } from '../body';
 import { useStep } from '../use-step';
+import { CenteredContent } from './centered-content';
 import { WeightWheels } from './weight-wheels';
 
 /** How far from the current weight the wheel starts. */
@@ -81,7 +82,7 @@ export function TargetWeightStep() {
       }
     >
       <Text variant="title">{t('onboarding.steps.target-weight.title')}</Text>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+      <CenteredContent>
         <WeightWheels
           kg={targetKg}
           unit={unit}
@@ -111,7 +112,7 @@ export function TargetWeightStep() {
             })}
           </Text>
         )}
-      </View>
+      </CenteredContent>
     </Screen>
   );
 }
