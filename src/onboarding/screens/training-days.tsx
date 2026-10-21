@@ -6,20 +6,19 @@ import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useWeekdayFormat } from '@/i18n/dates';
 
 import { MAX_TRAINING_DAYS, RECOMMENDED_DAYS } from '../training';
 import { useStep } from '../use-step';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
-// 1 January 2024 was a Monday, so day n of that month is ISO weekday n.
-const weekdayDate = (weekday: number) => new Date(2024, 0, weekday);
 
 /**
  * The days of the week to train, starting on Monday. Until the user picks days, the
  * recommendation for their experience is selected, so it follows a change of experience.
  */
 export function TrainingDaysStep() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { answers, progress, next, back } = useStep('training-days');
   const recommended = RECOMMENDED_DAYS[answers.experience ?? 'beginner'];
   const [chosen, setChosen] = useState(answers.trainingDaysChosen ?? false);
@@ -27,7 +26,7 @@ export function TrainingDaysStep() {
     chosen && answers.trainingDays ? answers.trainingDays : recommended,
   );
   const [limit, setLimit] = useState<'min' | 'max' | null>(null);
-  const weekdayName = new Intl.DateTimeFormat(i18n.language, { weekday: 'long' });
+  const weekdayName = useWeekdayFormat();
   const isRecommended = days.join() === recommended.join();
 
   const toggle = (weekday: number) => {
@@ -68,7 +67,7 @@ export function TrainingDaysStep() {
         <ChoiceCard
           key={weekday}
           type="checkbox"
-          title={weekdayName.format(weekdayDate(weekday))}
+          title={weekdayName(weekday)}
           selected={days.includes(weekday)}
           onPress={() => toggle(weekday)}
         />
