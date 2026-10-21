@@ -101,6 +101,65 @@
       }
     },
     "minutes": "{{count}} min",
-    "placeholder": "This step is not finished yet. For now it answers: {{value}}"
+    "placeholder": "This step is not finished yet. For now it answers: {{value}}",
+    "welcome": {
+      "tagline": "Train and eat for your goal.",
+      "points": {
+        "plan": "A workout plan made for you",
+        "nutrition": "Calories and macros for your goal",
+        "together": "Training and nutrition in one app"
+      },
+      "start": "Let's get started"
+    },
+    "goal": {
+      "descriptions": {
+        "lose_fat": "Burn fat and keep your muscle",
+        "build_muscle": "Gain muscle with a small surplus",
+        "get_stronger": "Lift heavier, step by step",
+        "stay_healthy": "Feel fit and keep a balance"
+      }
+    },
+    "goalInsight": {
+      "lose_fat": {
+        "title": "Losing fat is about consistency",
+        "body": "A moderate calorie deficit and strength training let you lose fat while keeping your muscle. We'll set your daily target and a plan you can stick to."
+      },
+      "build_muscle": {
+        "title": "Muscle grows with time and protein",
+        "body": "Training close to your limit, enough protein and a small calorie surplus build muscle week by week. We'll calculate exactly what you need."
+      },
+      "get_stronger": {
+        "title": "Strength comes from progression",
+        "body": "Heavy compound lifts with enough rest, and a little more weight over time, make you stronger. Your plan will be built around them."
+      },
+      "stay_healthy": {
+        "title": "Small habits, big difference",
+        "body": "Regular training and balanced meals keep you fit and full of energy. We'll make both fit into your week."
+      }
+    },
+    "consent": {
+      "intro": "To create your plan, Benchbite needs some health data. That needs your explicit consent.",
+      "what": {
+        "title": "What we collect",
+        "body": "Your sex, age, height, weight, activity and training."
+      },
+      "why": {
+        "title": "Why",
+        "body": "Only to calculate your calorie targets and your workout plan."
+      },
+      "control": {
+        "title": "Your control",
+        "body": "Stored securely and only visible to you. You can withdraw your consent and delete your data at any time."
+      },
+      "agree": "I agree that Benchbite processes my health data for these purposes.",
+      "policy": "Read the privacy policy",
+      "decline": "I don't agree",
+      "declined": {
+        "title": "A personal plan needs your consent",
+        "body": "Without health data, Benchbite can't calculate your targets or build your plan. You can change your mind at any time.",
+        "review": "Review the consent",
+        "changeGoal": "Change my goal"
+      }
+    }
   }
 }

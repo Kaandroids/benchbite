@@ -101,6 +101,65 @@
       }
     },
     "minutes": "{{count}} Min.",
-    "placeholder": "Dieser Schritt ist noch nicht fertig. Vorerst antwortet er: {{value}}"
+    "placeholder": "Dieser Schritt ist noch nicht fertig. Vorerst antwortet er: {{value}}",
+    "welcome": {
+      "tagline": "Trainiere und iss für dein Ziel.",
+      "points": {
+        "plan": "Ein Trainingsplan nur für dich",
+        "nutrition": "Kalorien und Makros für dein Ziel",
+        "together": "Training und Ernährung in einer App"
+      },
+      "start": "Los geht's"
+    },
+    "goal": {
+      "descriptions": {
+        "lose_fat": "Fett verbrennen, Muskeln erhalten",
+        "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
+        "get_stronger": "Schritt für Schritt schwerer heben",
+        "stay_healthy": "Fit fühlen und in Balance bleiben"
+      }
+    },
+    "goalInsight": {
+      "lose_fat": {
+        "title": "Beim Abnehmen zählt Beständigkeit",
+        "body": "Ein moderates Kaloriendefizit und Krafttraining lassen dich Fett verlieren und Muskeln behalten. Wir legen dein tägliches Ziel und einen Plan fest, den du durchhältst."
+      },
+      "build_muscle": {
+        "title": "Muskeln wachsen mit Zeit und Protein",
+        "body": "Training nah an deiner Grenze, genug Protein und ein kleiner Kalorienüberschuss bauen Woche für Woche Muskeln auf. Wir berechnen genau, was du brauchst."
+      },
+      "get_stronger": {
+        "title": "Kraft entsteht durch Steigerung",
+        "body": "Schwere Grundübungen mit genug Pause und mit der Zeit etwas mehr Gewicht machen dich stärker. Dein Plan wird darauf aufgebaut."
+      },
+      "stay_healthy": {
+        "title": "Kleine Gewohnheiten, großer Unterschied",
+        "body": "Regelmäßiges Training und ausgewogene Mahlzeiten halten dich fit und voller Energie. Wir bringen beides in deine Woche."
+      }
+    },
+    "consent": {
+      "intro": "Für deinen Plan braucht Benchbite einige Gesundheitsdaten. Dafür brauchen wir deine ausdrückliche Einwilligung.",
+      "what": {
+        "title": "Was wir erfassen",
+        "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
+      },
+      "why": {
+        "title": "Wofür",
+        "body": "Nur um deine Kalorienziele und deinen Trainingsplan zu berechnen."
+      },
+      "control": {
+        "title": "Deine Kontrolle",
+        "body": "Sicher gespeichert und nur für dich sichtbar. Du kannst deine Einwilligung jederzeit widerrufen und deine Daten löschen."
+      },
+      "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
+      "policy": "Datenschutzerklärung lesen",
+      "decline": "Ich stimme nicht zu",
+      "declined": {
+        "title": "Ein persönlicher Plan braucht deine Einwilligung",
+        "body": "Ohne Gesundheitsdaten kann Benchbite weder deine Ziele berechnen noch deinen Plan erstellen. Du kannst es dir jederzeit anders überlegen.",
+        "review": "Einwilligung ansehen",
+        "changeGoal": "Ziel ändern"
+      }
+    }
   }
 }
