@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert';
 
-import { prescribe, prescribeFinisher } from './prescription.ts';
+import { prescribe, prescribeFinisher, usesTimeTarget } from './prescription.ts';
 
 Deno.test('strength means few heavy reps with long rests', () => {
   assertEquals(prescribe('get_stronger', 'intermediate', 'main', ['weight', 'reps']), {
@@ -34,7 +34,7 @@ Deno.test('exercises that only record duration get a time', () => {
 Deno.test('finishers are steady on machines and in rounds with bodyweight', () => {
   assertEquals(prescribeFinisher(['distance', 'duration'], 10), {
     sets: 1,
-    target: { seconds: 600 },
+    target: { seconds: 540 },
     restSeconds: 0,
   });
   assertEquals(prescribeFinisher(['reps'], 5), {
@@ -42,4 +42,12 @@ Deno.test('finishers are steady on machines and in rounds with bodyweight', () =
     target: { reps: { min: 10, max: 15 } },
     restSeconds: 15,
   });
+});
+
+Deno.test('only exercises that record duration but not reps get a time', () => {
+  assertEquals(usesTimeTarget(['duration']), true);
+  assertEquals(usesTimeTarget(['distance', 'duration']), true);
+  assertEquals(usesTimeTarget(['reps', 'duration']), false);
+  assertEquals(usesTimeTarget(['weight', 'reps']), false);
+  assertEquals(prescribeFinisher(['reps', 'duration'], 5).target, { reps: { min: 10, max: 15 } });
 });

@@ -91,7 +91,7 @@ Deno.test('every session fits into the chosen length', () => {
 Deno.test('fat loss sessions end with conditioning', () => {
   const plan = buildPlan({ ...input, goal: 'lose_fat', sessionMinutes: 60 }, CATALOGUE);
   assertEquals(plan.sessions[0]!.finisher?.exerciseId, 'Rowing');
-  assertEquals(plan.sessions[0]!.finisher?.target, { seconds: 600 });
+  assertEquals(plan.sessions[0]!.finisher?.target, { seconds: 540 });
   assertEquals(buildPlan(input, CATALOGUE).sessions[0]!.finisher, null);
 });
 
@@ -104,19 +104,20 @@ Deno.test('short sessions keep the main exercises and drop accessories first', (
   assertEquals(slots.slice(0, 2), ['squat', 'horizontal_push']);
 });
 
-Deno.test('finishers take about as long as planned', () => {
-  for (const sessionMinutes of [45, 60] as const) {
-    const plan = buildPlan(
-      { ...input, goal: 'lose_fat', setup: 'bodyweight', sessionMinutes },
-      CATALOGUE,
-    );
-    const finisher = plan.sessions[0]!.finisher!;
-    assertEquals(finisher.exerciseId, 'Mountain_Climbers');
-    assert(
-      exerciseSeconds(finisher) <=
-        finisherMinutes({ ...input, goal: 'lose_fat', sessionMinutes }) * 60,
-    );
-  }
+Deno.test('finishers take no longer than planned', () => {
+  for (const [setup, exerciseId] of [
+    ['gym', 'Rowing'],
+    ['bodyweight', 'Mountain_Climbers'],
+  ] as const)
+    for (const sessionMinutes of [45, 60] as const) {
+      const plan = buildPlan({ ...input, goal: 'lose_fat', setup, sessionMinutes }, CATALOGUE);
+      const finisher = plan.sessions[0]!.finisher!;
+      assertEquals(finisher.exerciseId, exerciseId);
+      assert(
+        exerciseSeconds(finisher) <=
+          finisherMinutes({ ...input, goal: 'lose_fat', sessionMinutes }) * 60,
+      );
+    }
 });
 
 Deno.test('30-minute sessions take one set less and fit more exercises', () => {

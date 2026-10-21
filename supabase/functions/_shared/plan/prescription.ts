@@ -37,6 +37,14 @@ const HOLD_SECONDS: Record<Experience, number> = { beginner: 30, intermediate: 4
 const HOLD_REST_SECONDS = 45;
 
 /**
+ * Whether an exercise gets a time rather than a rep range: only when it records duration and
+ * not reps, as for planks or a rowing machine. Targets then match what is logged.
+ */
+export function usesTimeTarget(metrics: Metric[]): boolean {
+  return metrics.includes('duration') && !metrics.includes('reps');
+}
+
+/**
  * Sets, a rep or time target and the rest between sets. Exercises that record reps get a rep
  * range; exercises that only record duration, such as planks, get a time.
  */
@@ -49,7 +57,7 @@ export function prescribe(
   const sets =
     SETS[experience][role] +
     (goal === 'get_stronger' && experience === 'advanced' && role === 'main' ? 1 : 0);
-  if (!metrics.includes('reps') && metrics.includes('duration')) {
+  if (usesTimeTarget(metrics)) {
     return { sets, target: { seconds: HOLD_SECONDS[experience] }, restSeconds: HOLD_REST_SECONDS };
   }
   const { reps, restSeconds } = SCHEMES[goal][role];
@@ -57,13 +65,13 @@ export function prescribe(
 }
 
 /**
- * A conditioning finisher: steady work on a cardio machine for the given minutes, or rounds of
- * a bodyweight exercise that take about a minute each, including a short rest. One minute is
- * left for getting set up.
+ * A conditioning finisher of the given minutes: steady work on a cardio machine, or rounds of a
+ * bodyweight exercise that take about a minute each, including a short rest. Both leave one
+ * minute for getting set up, so the block takes the minutes it was given.
  */
 export function prescribeFinisher(metrics: Metric[], minutes: number): Prescription {
-  if (metrics.includes('duration')) {
-    return { sets: 1, target: { seconds: minutes * 60 }, restSeconds: 0 };
+  if (usesTimeTarget(metrics)) {
+    return { sets: 1, target: { seconds: (minutes - 1) * 60 }, restSeconds: 0 };
   }
   return { sets: minutes - 1, target: { reps: { min: 10, max: 15 } }, restSeconds: 15 };
 }
