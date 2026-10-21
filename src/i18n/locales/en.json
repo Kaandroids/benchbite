@@ -1,10 +1,106 @@
 {
   "common": {
     "back": "Back",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "continue": "Continue"
   },
   "sessionError": {
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": {
+        "title": "Welcome to Benchbite"
+      },
+      "goal": {
+        "title": "What's your main goal?"
+      },
+      "goal-insight": {
+        "title": "Great choice"
+      },
+      "consent": {
+        "title": "Your health data"
+      },
+      "sex": {
+        "title": "What's your sex?"
+      },
+      "birth-year": {
+        "title": "When were you born?"
+      },
+      "height": {
+        "title": "How tall are you?"
+      },
+      "weight": {
+        "title": "What do you weigh?"
+      },
+      "target-weight": {
+        "title": "What's your target weight?"
+      },
+      "pace": {
+        "title": "How fast do you want to get there?"
+      },
+      "activity": {
+        "title": "How active are you outside workouts?"
+      },
+      "training-intro": {
+        "title": "Now let's tailor your training"
+      },
+      "experience": {
+        "title": "How experienced are you?"
+      },
+      "training-days": {
+        "title": "Which days do you want to train?"
+      },
+      "setup": {
+        "title": "Where do you train?"
+      },
+      "session-length": {
+        "title": "How long can a workout take?"
+      },
+      "building": {
+        "title": "Building your plan"
+      },
+      "plan": {
+        "title": "Your plan"
+      },
+      "reminders": {
+        "title": "Do you want reminders?"
+      },
+      "summary": {
+        "title": "You're all set"
+      }
+    },
+    "options": {
+      "goal": {
+        "lose_fat": "Lose fat",
+        "build_muscle": "Build muscle",
+        "get_stronger": "Get stronger",
+        "stay_healthy": "Stay healthy"
+      },
+      "sex": {
+        "female": "Female",
+        "male": "Male",
+        "unspecified": "Prefer not to say"
+      },
+      "activityLevel": {
+        "sedentary": "Mostly sitting",
+        "light": "Lightly active",
+        "moderate": "Moderately active",
+        "active": "Very active"
+      },
+      "experience": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "setup": {
+        "gym": "Gym",
+        "dumbbells": "Dumbbells at home",
+        "bodyweight": "Bodyweight only"
+      }
+    },
+    "minutes": "{{count}} min",
+    "placeholder": "This step is not finished yet. For now it answers: {{value}}"
   }
 }

@@ -1,10 +1,106 @@
 {
   "common": {
     "back": "Geri",
-    "tryAgain": "Tekrar dene"
+    "tryAgain": "Tekrar dene",
+    "continue": "Devam"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": {
+        "title": "Benchbite'a hoş geldin"
+      },
+      "goal": {
+        "title": "Ana hedefin ne?"
+      },
+      "goal-insight": {
+        "title": "Harika bir seçim"
+      },
+      "consent": {
+        "title": "Sağlık verilerin"
+      },
+      "sex": {
+        "title": "Cinsiyetin ne?"
+      },
+      "birth-year": {
+        "title": "Hangi yıl doğdun?"
+      },
+      "height": {
+        "title": "Boyun kaç?"
+      },
+      "weight": {
+        "title": "Kaç kilosun?"
+      },
+      "target-weight": {
+        "title": "Hedef kilon kaç?"
+      },
+      "pace": {
+        "title": "Hedefine ne kadar hızlı ulaşmak istersin?"
+      },
+      "activity": {
+        "title": "Antrenman dışında ne kadar aktifsin?"
+      },
+      "training-intro": {
+        "title": "Şimdi antrenmanını sana göre ayarlayalım"
+      },
+      "experience": {
+        "title": "Ne kadar deneyimlisin?"
+      },
+      "training-days": {
+        "title": "Hangi günler antrenman yapmak istersin?"
+      },
+      "setup": {
+        "title": "Nerede antrenman yapıyorsun?"
+      },
+      "session-length": {
+        "title": "Bir antrenman ne kadar sürebilir?"
+      },
+      "building": {
+        "title": "Planın hazırlanıyor"
+      },
+      "plan": {
+        "title": "Planın"
+      },
+      "reminders": {
+        "title": "Hatırlatma ister misin?"
+      },
+      "summary": {
+        "title": "Her şey hazır"
+      }
+    },
+    "options": {
+      "goal": {
+        "lose_fat": "Yağ yak",
+        "build_muscle": "Kas yap",
+        "get_stronger": "Güçlen",
+        "stay_healthy": "Sağlıklı kal"
+      },
+      "sex": {
+        "female": "Kadın",
+        "male": "Erkek",
+        "unspecified": "Belirtmek istemiyorum"
+      },
+      "activityLevel": {
+        "sedentary": "Çoğunlukla oturarak",
+        "light": "Az aktif",
+        "moderate": "Orta derecede aktif",
+        "active": "Çok aktif"
+      },
+      "experience": {
+        "beginner": "Yeni başlayan",
+        "intermediate": "Orta seviye",
+        "advanced": "İleri seviye"
+      },
+      "setup": {
+        "gym": "Spor salonu",
+        "dumbbells": "Evde dambıl",
+        "bodyweight": "Sadece vücut ağırlığı"
+      }
+    },
+    "minutes": "{{count}} dk",
+    "placeholder": "Bu adım henüz hazır değil. Şimdilik şu cevabı veriyor: {{value}}"
   }
 }

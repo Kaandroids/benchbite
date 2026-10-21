@@ -11,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { defaultUnits, useNumberFormat, type HeightUnit, type WeightUnit } from '@/i18n/units';
+import { useOnboarding } from '@/providers/onboarding-provider';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 
 const GOALS = [
@@ -71,6 +72,7 @@ export default function ComponentGallery() {
   const [days, setDays] = useState(['Monday', 'Wednesday', 'Friday']);
   const [progress, setProgress] = useState(0.3);
   const [loading, setLoading] = useState(false);
+  const { reset } = useOnboarding();
   const { format, decimalSeparator } = useNumberFormat();
   const [weightUnit, setWeightUnit] = useState<WeightUnit>(() => defaultUnits().weight);
   // Weight in tenths of the selected unit, so that both wheels read from one number.
@@ -114,6 +116,18 @@ export default function ComponentGallery() {
       }
     >
       <Text variant="title">Component gallery</Text>
+
+      <Section title="Onboarding">
+        <Button
+          variant="secondary"
+          label="Start the onboarding again"
+          onPress={() => {
+            reset();
+            // Back to the home screen, which is no longer allowed and redirects to the onboarding.
+            router.back();
+          }}
+        />
+      </Section>
 
       <Section title="Progress">
         <View style={[styles.row, { gap: spacing.sm }]}>

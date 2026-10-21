@@ -1,10 +1,106 @@
 {
   "common": {
     "back": "Zurück",
-    "tryAgain": "Erneut versuchen"
+    "tryAgain": "Erneut versuchen",
+    "continue": "Weiter"
   },
   "sessionError": {
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": {
+        "title": "Willkommen bei Benchbite"
+      },
+      "goal": {
+        "title": "Was ist dein Hauptziel?"
+      },
+      "goal-insight": {
+        "title": "Gute Wahl"
+      },
+      "consent": {
+        "title": "Deine Gesundheitsdaten"
+      },
+      "sex": {
+        "title": "Was ist dein Geschlecht?"
+      },
+      "birth-year": {
+        "title": "Wann bist du geboren?"
+      },
+      "height": {
+        "title": "Wie groß bist du?"
+      },
+      "weight": {
+        "title": "Wie viel wiegst du?"
+      },
+      "target-weight": {
+        "title": "Was ist dein Zielgewicht?"
+      },
+      "pace": {
+        "title": "Wie schnell möchtest du dorthin kommen?"
+      },
+      "activity": {
+        "title": "Wie aktiv bist du außerhalb des Trainings?"
+      },
+      "training-intro": {
+        "title": "Jetzt passen wir dein Training an"
+      },
+      "experience": {
+        "title": "Wie viel Trainingserfahrung hast du?"
+      },
+      "training-days": {
+        "title": "An welchen Tagen möchtest du trainieren?"
+      },
+      "setup": {
+        "title": "Wo trainierst du?"
+      },
+      "session-length": {
+        "title": "Wie lange darf ein Training dauern?"
+      },
+      "building": {
+        "title": "Dein Plan wird erstellt"
+      },
+      "plan": {
+        "title": "Dein Plan"
+      },
+      "reminders": {
+        "title": "Möchtest du Erinnerungen?"
+      },
+      "summary": {
+        "title": "Alles bereit"
+      }
+    },
+    "options": {
+      "goal": {
+        "lose_fat": "Fett verlieren",
+        "build_muscle": "Muskeln aufbauen",
+        "get_stronger": "Stärker werden",
+        "stay_healthy": "Gesund bleiben"
+      },
+      "sex": {
+        "female": "Weiblich",
+        "male": "Männlich",
+        "unspecified": "Keine Angabe"
+      },
+      "activityLevel": {
+        "sedentary": "Überwiegend sitzend",
+        "light": "Leicht aktiv",
+        "moderate": "Mäßig aktiv",
+        "active": "Sehr aktiv"
+      },
+      "experience": {
+        "beginner": "Anfänger",
+        "intermediate": "Fortgeschritten",
+        "advanced": "Erfahren"
+      },
+      "setup": {
+        "gym": "Fitnessstudio",
+        "dumbbells": "Kurzhanteln zu Hause",
+        "bodyweight": "Nur Körpergewicht"
+      }
+    },
+    "minutes": "{{count}} Min.",
+    "placeholder": "Dieser Schritt ist noch nicht fertig. Vorerst antwortet er: {{value}}"
   }
 }
