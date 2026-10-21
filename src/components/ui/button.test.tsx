@@ -19,4 +19,15 @@ describe('Button', () => {
     expect(onPress).not.toHaveBeenCalled();
     expect(screen.getByRole('button')).toBeBusy();
   });
+
+  it('is announced as disabled', async () => {
+    await render(<Button label="Continue" disabled />);
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+  });
+
+  it('shows a spinner instead of the label while loading, keeping its name', async () => {
+    await render(<Button label="Continue" loading />);
+    expect(screen.queryByText('Continue')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeBusy();
+  });
 });
