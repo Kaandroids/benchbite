@@ -20,6 +20,8 @@ export type OnboardingAnswers = {
   experience?: Enums['experience'];
   /** ISO weekdays, 1 for Monday to 7 for Sunday. */
   trainingDays?: number[];
+  /** Whether the user picked the days; until then they follow the recommendation. */
+  trainingDaysChosen?: boolean;
   setup?: Enums['training_setup'];
   sessionMinutes?: 30 | 45 | 60 | 75;
   weightUnit?: Enums['weight_unit'];
