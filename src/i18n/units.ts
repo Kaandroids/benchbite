@@ -20,6 +20,33 @@ export function defaultUnits(): Units {
   }
 }
 
+const KG_PER_LB = 0.45359237;
+const CM_PER_INCH = 2.54;
+
+/** Rounds to one decimal, the precision weights and heights are stored with. */
+const toTenth = (value: number) => Math.round(value * 10) / 10;
+
+/** A weight in kilograms, shown in the given unit with one decimal. */
+export function weightIn(unit: WeightUnit, kg: number): number {
+  return unit === 'kg' ? toTenth(kg) : toTenth(kg / KG_PER_LB);
+}
+
+/** A weight given in the unit, in kilograms with one decimal. */
+export function weightToKg(unit: WeightUnit, value: number): number {
+  return unit === 'kg' ? toTenth(value) : toTenth(value * KG_PER_LB);
+}
+
+/** A height in centimetres as whole feet and inches. */
+export function heightToFeetAndInches(cm: number): { feet: number; inches: number } {
+  const totalInches = Math.round(cm / CM_PER_INCH);
+  return { feet: Math.floor(totalInches / 12), inches: totalInches % 12 };
+}
+
+/** A height in feet and inches, in centimetres with one decimal. */
+export function feetAndInchesToCm(feet: number, inches: number): number {
+  return toTenth((feet * 12 + inches) * CM_PER_INCH);
+}
+
 /**
  * Formats numbers for the app language, for example 72.5 in English and 72,5 in German and
  * Turkish. It follows the app language rather than the device region, so that numbers match
