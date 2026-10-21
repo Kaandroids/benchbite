@@ -29,8 +29,11 @@ export function PaceStep() {
   const weightKg = answers.weightKg ?? 72;
   const targetKg = answers.targetWeightKg ?? weightKg;
   const paceRange = PACE_RANGES[unit][goal];
-  const [pace, setPace] = useState(
-    answers.weeklyPaceKg === undefined ? paceRange.default : paceIn(unit, answers.weeklyPaceKg),
+  // A pace saved before the limits changed may lie outside them.
+  const [pace, setPace] = useState(() =>
+    answers.weeklyPaceKg === undefined
+      ? paceRange.default
+      : Math.min(paceRange.max, Math.max(paceRange.min, paceIn(unit, answers.weeklyPaceKg))),
   );
   const paceKg = paceToKg(unit, pace);
   const level = paceLevel(goal, weightKg, paceKg);
@@ -47,7 +50,30 @@ export function PaceStep() {
       }
     >
       <Text variant="title">{t('onboarding.steps.pace.title')}</Text>
-      <CenteredContent>
+      <CenteredContent
+        below={
+          <>
+            <Text variant="bodyStrong" color={LEVEL_COLORS[level]} style={styles.centered}>
+              {t(`onboarding.pace.levels.${level}`)}
+            </Text>
+            {pace >= paceRange.max ? (
+              <Text color="textMuted" style={styles.centered}>
+                {t(`onboarding.pace.fastest.${goal}`)}
+              </Text>
+            ) : null}
+            <Text style={styles.centered}>
+              {t('onboarding.pace.projected', {
+                weight: format(weightIn(unit, targetKg), { maximumFractionDigits: 1 }),
+                unit,
+                date,
+              })}
+            </Text>
+            <Text variant="caption" color="textMuted" style={styles.centered}>
+              {t('onboarding.pace.disclaimer')}
+            </Text>
+          </>
+        }
+      >
         <Text variant="display" style={styles.centered}>
           {t('onboarding.pace.perWeek', {
             value: format(pace, { minimumFractionDigits: 2 }),
@@ -67,19 +93,6 @@ export function PaceStep() {
           minLabel={t('onboarding.pace.slower')}
           maxLabel={t('onboarding.pace.faster')}
         />
-        <Text variant="bodyStrong" color={LEVEL_COLORS[level]} style={styles.centered}>
-          {t(`onboarding.pace.levels.${level}`)}
-        </Text>
-        <Text style={styles.centered}>
-          {t('onboarding.pace.projected', {
-            weight: format(weightIn(unit, targetKg), { maximumFractionDigits: 1 }),
-            unit,
-            date,
-          })}
-        </Text>
-        <Text variant="caption" color="textMuted" style={styles.centered}>
-          {t('onboarding.pace.disclaimer')}
-        </Text>
       </CenteredContent>
     </Screen>
   );

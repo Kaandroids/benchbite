@@ -192,7 +192,11 @@
         "aggressive": "Aggressiv: schwer durchzuhalten und weniger gesund"
       },
       "projected": "Du könntest {{weight}} {{unit}} bis zum {{date}} erreichen.",
-      "disclaimer": "Das sind Schätzungen, keine medizinische Beratung."
+      "disclaimer": "Das sind Schätzungen, keine medizinische Beratung.",
+      "fastest": {
+        "lose_fat": "Das ist das schnellste Tempo, das wir empfehlen. Schneller abzunehmen kostet vor allem Muskeln und ist schwer durchzuhalten.",
+        "build_muscle": "Das ist das schnellste Tempo, das wir empfehlen. Schneller zuzunehmen baut vor allem Fett auf, keine Muskeln."
+      }
     },
     "activity": {
       "descriptions": {

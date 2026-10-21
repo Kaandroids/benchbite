@@ -82,36 +82,41 @@ export function TargetWeightStep() {
       }
     >
       <Text variant="title">{t('onboarding.steps.target-weight.title')}</Text>
-      <CenteredContent>
+      <CenteredContent
+        below={
+          <>
+            {wrongDirection ? (
+              <Text color="danger" style={styles.centered}>
+                {t(`onboarding.targetWeight.wrongDirection.${goal}`)}
+              </Text>
+            ) : belowHealthy ? (
+              <View style={{ gap: spacing.sm }}>
+                <Text color="danger" style={styles.centered}>
+                  {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
+                </Text>
+                <Button
+                  variant="secondary"
+                  label={t('onboarding.targetWeight.useLowest', { weight: show(lowestKg), unit })}
+                  onPress={() => setTargetKg(lowestKg)}
+                />
+              </View>
+            ) : (
+              <Text variant="bodyStrong" color="primaryText" style={styles.centered}>
+                {t('onboarding.targetWeight.difference', {
+                  difference: `${sign}${show(Math.abs(differenceKg))}`,
+                  unit,
+                })}
+              </Text>
+            )}
+          </>
+        }
+      >
         <WeightWheels
           kg={targetKg}
           unit={unit}
           onChange={setTargetKg}
           accessibilityLabel={t('onboarding.steps.target-weight.title')}
         />
-        {wrongDirection ? (
-          <Text color="danger" style={styles.centered}>
-            {t(`onboarding.targetWeight.wrongDirection.${goal}`)}
-          </Text>
-        ) : belowHealthy ? (
-          <View style={{ gap: spacing.sm }}>
-            <Text color="danger" style={styles.centered}>
-              {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
-            </Text>
-            <Button
-              variant="secondary"
-              label={t('onboarding.targetWeight.useLowest', { weight: show(lowestKg), unit })}
-              onPress={() => setTargetKg(lowestKg)}
-            />
-          </View>
-        ) : (
-          <Text variant="bodyStrong" color="primaryText" style={styles.centered}>
-            {t('onboarding.targetWeight.difference', {
-              difference: `${sign}${show(Math.abs(differenceKg))}`,
-              unit,
-            })}
-          </Text>
-        )}
       </CenteredContent>
     </Screen>
   );
