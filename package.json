@@ -50,7 +50,8 @@
     "format:check": "prettier --check .",
     "check:locales": "node scripts/check-locales.ts",
     "import:exercises": "node scripts/import-exercises.ts",
-    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && prettier --write src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && cp src/lib/database.types.ts supabase/functions/_shared/database.types.ts && prettier --write src/lib/database.types.ts supabase/functions/_shared/database.types.ts",
+    "functions:check": "deno check supabase/functions && deno lint supabase/functions && deno test supabase/functions"
   },
   "private": true
 }
