@@ -22,6 +22,8 @@ A mobile app for tracking workouts and nutrition in one place.
 - [Expo Go](https://expo.dev/go) on an iOS or Android device, or an iOS Simulator / Android Emulator.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or another Docker-compatible runtime,
   for the local Supabase stack.
+- [Deno](https://docs.deno.com/runtime/getting_started/installation/) 2, to check and test the Edge
+  Functions.
 
 ### Set up
 
@@ -79,6 +81,13 @@ changing only the translated names in `supabase/data/exercise-names.json`, run
 `pnpm import:exercises --names-only`, which writes a migration with just the names. See
 [ADR 0008](docs/adr/0008-exercise-library.md).
 
+#### Edge Functions
+
+Edge Functions live in `supabase/functions/` and run on Deno. `pnpm supabase start` serves them
+at `http://127.0.0.1:54321/functions/v1/<name>`, and `pnpm supabase functions serve` serves them
+with their logs in the terminal. Code shared between functions is in `supabase/functions/_shared/`.
+See [ADR 0010](docs/adr/0010-plan-builder-edge-function.md).
+
 ### Run the app
 
 With the local Supabase stack running:
@@ -107,16 +116,18 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 
 ### Scripts
 
-| Command                 | Description                                       |
-| ----------------------- | ------------------------------------------------- |
-| `pnpm start`            | Start the Expo dev server                         |
-| `pnpm typecheck`        | Type-check with TypeScript                        |
-| `pnpm lint`             | Lint with ESLint (fails on warnings)              |
-| `pnpm format`           | Format all files with Prettier                    |
-| `pnpm format:check`     | Check formatting without changing it              |
-| `pnpm check:locales`    | Check that all translations have the same keys    |
-| `pnpm db:types`         | Generate TypeScript types from the local database |
-| `pnpm import:exercises` | Import the exercise library from free-exercise-db |
+| Command                 | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `pnpm start`            | Start the Expo dev server                             |
+| `pnpm typecheck`        | Type-check with TypeScript                            |
+| `pnpm lint`             | Lint with ESLint (fails on warnings)                  |
+| `pnpm format`           | Format all files with Prettier                        |
+| `pnpm format:check`     | Check formatting without changing it                  |
+| `pnpm check:locales`    | Check that all translations have the same keys        |
+| `pnpm db:types`         | Generate TypeScript types from the local database     |
+| `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
+| `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
+| `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
 ## Development workflow
 

@@ -53,6 +53,16 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm check:locales
 
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        with:
+          deno-version: v2.x
+
+      # Type-checks, lints and unit-tests the Edge Functions with Deno.
+      - name: Edge Functions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm functions:check
+
   database:
     name: Database
     runs-on: ubuntu-latest
@@ -72,9 +82,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Only Postgres is needed, with every migration applied.
-      - name: Start the database
-        run: pnpm supabase db start
+      # Postgres with every migration applied, plus Auth, the API gateway and the Edge Functions
+      # runtime for the end-to-end checks. Services nothing here uses are left out.
+      - name: Start Supabase
+        run: pnpm supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,realtime,postgres-meta,storage-api
 
       - name: Database tests
         id: tests
@@ -85,4 +96,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           pnpm db:types
-          git diff --exit-code src/lib/database.types.ts
+          git diff --exit-code src/lib/database.types.ts supabase/functions/_shared/database.types.ts
+
+      - name: Generated plans
+        if: ${{ !cancelled() && steps.tests.outcome != 'skipped' }}
+        run: pnpm check:plans

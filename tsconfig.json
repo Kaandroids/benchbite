@@ -14,6 +14,6 @@
     "types": []
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  // Node scripts are type-checked with their own tsconfig.
-  "exclude": ["node_modules", "scripts"]
+  // Node scripts have their own tsconfig, and Edge Functions are checked by Deno.
+  "exclude": ["node_modules", "scripts", "supabase/functions"]
 }
