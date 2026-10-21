@@ -85,7 +85,7 @@ jobs:
       # Postgres with every migration applied, plus Auth, the API gateway and the Edge Functions
       # runtime for the end-to-end checks. Services nothing here uses are left out.
       - name: Start Supabase
-        run: pnpm supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,realtime,postgres-meta
+        run: pnpm supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,realtime,postgres-meta,storage-api
 
       - name: Database tests
         id: tests
