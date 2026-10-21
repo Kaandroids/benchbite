@@ -101,7 +101,6 @@
       }
     },
     "minutes": "{{count}} dk",
-    "placeholder": "Bu adım henüz hazır değil. Şimdilik şu cevabı veriyor: {{value}}",
     "welcome": {
       "tagline": "Hedefine göre antrenman yap ve beslen.",
       "points": {
@@ -201,6 +200,39 @@
         "light": "Günün bir kısmında ayakta",
         "moderate": "Günün çoğunda ayakta",
         "active": "Gün boyu fiziksel iş"
+      }
+    },
+    "trainingIntro": {
+      "body": "Nasıl antrenman yaptığını anlat, haftana, ekipmanına ve zamanına uyan bir plan hazırlayalım."
+    },
+    "experience": {
+      "descriptions": {
+        "beginner": "Ağırlık antrenmanına yeni başlıyorsun ya da uzun bir aradan dönüyorsun",
+        "intermediate": "En az altı aydır düzenli antrenman yapıyorsun",
+        "advanced": "Yıllardır antrenman yapıyorsun, temel hareketlere hâkimsin"
+      }
+    },
+    "trainingDays": {
+      "count_one": "Haftada {{count}} gün",
+      "count_other": "Haftada {{count}} gün",
+      "recommended": "Deneyimine göre önerilen",
+      "maxReached": "Haftada en az bir dinlenme günü bırak.",
+      "minReached": "En az bir gün seç."
+    },
+    "setup": {
+      "descriptions": {
+        "gym": "Makineler, halterler ve dambıllar",
+        "dumbbells": "Bir çift dambıl yeterli, bench gerekmiyor",
+        "bodyweight": "Ekipman yok, bir sandalye ve sağlam bir masa"
+      }
+    },
+    "sessionLength": {
+      "longest": "75+ dk",
+      "descriptions": {
+        "30": "Kısa ve temel hareketlere odaklı",
+        "45": "Temel hareketler ve birkaç ek hareket",
+        "60": "Eksiksiz bir antrenman",
+        "75": "Ek hacim için zaman"
       }
     }
   }

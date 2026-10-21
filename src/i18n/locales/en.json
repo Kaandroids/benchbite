@@ -101,7 +101,6 @@
       }
     },
     "minutes": "{{count}} min",
-    "placeholder": "This step is not finished yet. For now it answers: {{value}}",
     "welcome": {
       "tagline": "Train and eat for your goal.",
       "points": {
@@ -201,6 +200,39 @@
         "light": "On your feet some of the day",
         "moderate": "On your feet most of the day",
         "active": "Physical work all day"
+      }
+    },
+    "trainingIntro": {
+      "body": "Tell us how you train, and we'll build a plan that fits your week, your equipment and your time."
+    },
+    "experience": {
+      "descriptions": {
+        "beginner": "New to strength training, or back after a long break",
+        "intermediate": "Training regularly for at least six months",
+        "advanced": "Training for years and confident with the main lifts"
+      }
+    },
+    "trainingDays": {
+      "count_one": "{{count}} day a week",
+      "count_other": "{{count}} days a week",
+      "recommended": "Recommended for your experience",
+      "maxReached": "Keep at least one rest day a week.",
+      "minReached": "Choose at least one day."
+    },
+    "setup": {
+      "descriptions": {
+        "gym": "Machines, barbells and dumbbells",
+        "dumbbells": "A pair of dumbbells is enough, no bench needed",
+        "bodyweight": "No equipment, a chair and a sturdy table"
+      }
+    },
+    "sessionLength": {
+      "longest": "75+ min",
+      "descriptions": {
+        "30": "Short and focused on the main lifts",
+        "45": "The main lifts and a few extras",
+        "60": "A complete workout",
+        "75": "Time for extra volume"
       }
     }
   }

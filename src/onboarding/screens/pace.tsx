@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { paceIn, paceToKg, useNumberFormat, weightIn } from '@/i18n/units';
-import { useTheme, type ColorTokens } from '@/theme';
+import type { ColorTokens } from '@/theme';
 
 import { PACE_RANGES, paceLevel, projectedDate, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
+import { CenteredContent } from './centered-content';
 
 const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
   ideal: 'success',
@@ -21,7 +22,6 @@ const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
 /** How fast to reach the target, with how demanding that is and when the target is reached. */
 export function PaceStep() {
   const { t, i18n } = useTranslation();
-  const { spacing } = useTheme();
   const { format } = useNumberFormat();
   const { answers, progress, next, back } = useStep('pace');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
@@ -47,7 +47,7 @@ export function PaceStep() {
       }
     >
       <Text variant="title">{t('onboarding.steps.pace.title')}</Text>
-      <View style={{ gap: spacing.lg, marginTop: spacing.lg }}>
+      <CenteredContent>
         <Text variant="display" style={styles.centered}>
           {t('onboarding.pace.perWeek', {
             value: format(pace, { minimumFractionDigits: 2 }),
@@ -80,7 +80,7 @@ export function PaceStep() {
         <Text variant="caption" color="textMuted" style={styles.centered}>
           {t('onboarding.pace.disclaimer')}
         </Text>
-      </View>
+      </CenteredContent>
     </Screen>
   );
 }

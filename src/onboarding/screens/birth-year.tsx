@@ -10,6 +10,7 @@ import { useTheme } from '@/theme';
 
 import { ageIn, MIN_AGE } from '../body';
 import { useStep } from '../use-step';
+import { CenteredContent } from './centered-content';
 
 const THIS_YEAR = new Date().getFullYear();
 // Ages from 14, so that younger people see why they cannot continue instead of picking a
@@ -39,20 +40,22 @@ export function BirthYearStep() {
       }
     >
       <Text variant="title">{t('onboarding.steps.birth-year.title')}</Text>
-      <View style={[styles.center, { gap: spacing.lg, marginTop: spacing.lg }]}>
-        <WheelPicker
-          accessibilityLabel={t('onboarding.steps.birth-year.title')}
-          values={YEARS}
-          value={birthYear}
-          onChange={setBirthYear}
-          width={140}
-        />
-        <Text color={tooYoung ? 'danger' : 'textMuted'} style={styles.centered}>
-          {tooYoung
-            ? t('onboarding.birthYear.tooYoung')
-            : t('onboarding.birthYear.age', { count: age })}
-        </Text>
-      </View>
+      <CenteredContent>
+        <View style={[styles.center, { gap: spacing.lg }]}>
+          <WheelPicker
+            accessibilityLabel={t('onboarding.steps.birth-year.title')}
+            values={YEARS}
+            value={birthYear}
+            onChange={setBirthYear}
+            width={180}
+          />
+          <Text color={tooYoung ? 'danger' : 'textMuted'} style={styles.centered}>
+            {tooYoung
+              ? t('onboarding.birthYear.tooYoung')
+              : t('onboarding.birthYear.age', { count: age })}
+          </Text>
+        </View>
+      </CenteredContent>
     </Screen>
   );
 }
