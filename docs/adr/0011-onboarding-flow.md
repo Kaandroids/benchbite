@@ -21,11 +21,18 @@ to decide on every start whether to show the onboarding or the app.
   still opens as a screen of its own, with the native transition and back gesture.
 - **Draft on the device:** the answers and the current step are saved to expo-sqlite's
   key-value store after every change and restored on the next launch, so an interrupted
-  onboarding resumes on the same screen. The draft carries a version, so an outdated one is
-  discarded. Nothing is written to Supabase until the last step (#19).
+  onboarding resumes on the same screen. The draft is stored per user, so a new guest account
+  never sees another user's answers, and those of other users are removed. It carries a
+  version, so an outdated one is discarded. Answers of steps that left the flow, such as a
+  target weight after the goal changed, are dropped. Nothing is written to Supabase until the
+  last step (#19).
+- **Reachable steps only:** the step route opens a step only if it belongs to the flow for the
+  answers so far and the user has reached it, so a link cannot skip the consent.
 - **Finished or not:** the server's `profiles.onboarding_completed_at` decides, and a copy on
-  the device answers immediately and while offline. The copy lets the app choose its first
-  screen without waiting; the server lets someone who finished on another device skip it.
+  the device, also per user, answers immediately and while offline. The copy lets the app
+  choose its first screen without waiting; the server, asked once per user and again when the
+  app returns to the foreground until it answers, lets someone who finished on another device
+  skip it.
 - **Progress:** measured against every step, including those that may be skipped, so the total
   never grows and skipping moves the bar further.
 - **State:** a React context, `OnboardingProvider`, rather than a state library, as one flow
@@ -44,7 +51,8 @@ to decide on every start whether to show the onboarding or the app.
 
 - Clearing the app's data or reinstalling loses an unfinished onboarding, which also loses the
   guest account, so nothing else is lost with it.
-- Going back after resuming opens the previous step with a replace instead of a back
-  navigation, because the earlier steps are not in the history.
+- After resuming, the earlier steps are not in the history. The back arrow and Android's back
+  button open the previous step by replacing the screen, but the iOS back swipe does nothing on
+  the first screen after resuming.
 - The question order can change between releases; raising the draft version discards
   unfinished drafts that no longer fit.
