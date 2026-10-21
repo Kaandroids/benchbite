@@ -7,7 +7,10 @@ import type { CatalogueEntry, Plan, PlanInput } from './types.ts';
  * number of days. The same answers always give the same plan.
  */
 export function buildPlan(input: PlanInput, catalogue: CatalogueEntry[]): Plan {
-  const weekdays = [...new Set(input.trainingDays)].sort((a, b) => a - b);
+  if (new Set(input.trainingDays).size !== input.trainingDays.length) {
+    throw new RangeError('Training days must not repeat');
+  }
+  const weekdays = [...input.trainingDays].sort((a, b) => a - b);
   const types = splitFor(weekdays.length, input.experience);
   const slotUses: SlotUses = new Map();
 

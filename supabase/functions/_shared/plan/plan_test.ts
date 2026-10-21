@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertNotEquals } from '@std/assert';
+import { assert, assertEquals, assertNotEquals, assertThrows } from '@std/assert';
 
 import { buildPlan } from './plan.ts';
 import { candidatesFor, exerciseSeconds, finisherMinutes } from './session.ts';
@@ -188,4 +188,8 @@ Deno.test('when time runs out, the remaining slots are left out in order', () =>
               assertEquals(slots, possible.slice(0, slots.length), JSON.stringify(answers));
             }
           }
+});
+
+Deno.test('repeated training days are rejected', () => {
+  assertThrows(() => buildPlan({ ...input, trainingDays: [1, 1, 3] }, CATALOGUE), RangeError);
 });
