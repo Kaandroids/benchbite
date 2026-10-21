@@ -28,9 +28,10 @@ pnpm expo install <pkg>   # add a dependency (resolves SDK-compatible versions)
 pnpm typecheck            # TypeScript
 pnpm lint                 # ESLint, fails on warnings
 pnpm format               # format with Prettier (format:check only verifies)
+pnpm test                 # Jest tests of the app
 ```
 
-Run `pnpm typecheck`, `pnpm lint` and `pnpm format:check` before every commit.
+Run `pnpm typecheck`, `pnpm lint`, `pnpm format:check` and `pnpm test` before every commit.
 
 ## Project structure
 

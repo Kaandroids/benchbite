@@ -123,6 +123,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm lint`             | Lint with ESLint (fails on warnings)                  |
 | `pnpm format`           | Format all files with Prettier                        |
 | `pnpm format:check`     | Check formatting without changing it                  |
+| `pnpm test`             | Run the app's tests with Jest                         |
 | `pnpm check:locales`    | Check that all translations have the same keys        |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
