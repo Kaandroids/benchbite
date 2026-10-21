@@ -40,7 +40,7 @@ describe('WeightStep', () => {
     await wheelAction(1, 'increment');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     // 176.5 lb is 80.06 kg.
-    expect(mockStep.next).toHaveBeenCalledWith({ weightKg: 80.1, weightUnit: 'lb' });
+    expect(mockStep.next).toHaveBeenCalledWith({ weightKg: 80.06, weightUnit: 'lb' });
   });
 
   it('saves the whole and tenth wheels together', async () => {

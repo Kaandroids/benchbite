@@ -31,9 +31,14 @@ export function weightIn(unit: WeightUnit, kg: number): number {
   return unit === 'kg' ? toTenth(kg) : toTenth(kg / KG_PER_LB);
 }
 
-/** A weight given in the unit, in kilograms with one decimal. */
+/**
+ * A weight given in the unit, in kilograms: with one decimal from kilograms, and with two from
+ * pounds. A tenth of a kilogram is more than two tenths of a pound, so rounding pounds to it would
+ * make some of the pounds shown impossible to choose. The database stores one decimal, which can
+ * show a pound value up to a tenth off there.
+ */
 export function weightToKg(unit: WeightUnit, value: number): number {
-  return unit === 'kg' ? toTenth(value) : toTenth(value * KG_PER_LB);
+  return unit === 'kg' ? toTenth(value) : Math.round(value * KG_PER_LB * 100) / 100;
 }
 
 /** A weekly pace in kilograms, in the given unit with two decimals, as paces are small. */
