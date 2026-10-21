@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 
 import type { Step } from '../steps';
+import { BuildingStep } from './building';
 import { ConsentStep } from './consent';
 import { GoalStep } from './goal';
 import { GoalInsightStep } from './goal-insight';
@@ -10,6 +11,7 @@ import { HeightStep } from './height';
 import { PaceStep } from './pace';
 import { ExperienceStep } from './experience';
 import { PlaceholderStep } from './placeholder-step';
+import { PlanStep } from './plan';
 import { SessionLengthStep } from './session-length';
 import { SetupStep } from './setup';
 import { TrainingDaysStep } from './training-days';
@@ -42,8 +44,8 @@ export const STEP_SCREENS: Record<Step, ComponentType> = {
   'training-days': TrainingDaysStep,
   setup: SetupStep,
   'session-length': SessionLengthStep,
-  building: placeholder('building'),
-  plan: placeholder('plan'),
+  building: BuildingStep,
+  plan: PlanStep,
   reminders: placeholder('reminders'),
   summary: placeholder('summary'),
 };
