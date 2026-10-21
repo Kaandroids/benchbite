@@ -73,6 +73,9 @@ function BuildingChecklist({ answers, onDone, failed, onFail }: BuildingChecklis
   useEffect(() => {
     let cancelled = false;
     const work = Promise.all([calculateTargets(answers), generatePlan(answers)]);
+    // A failure is handled once the checklist reaches the last line. Until then, nothing waits
+    // for the work, so a quick failure would also be reported as an unhandled rejection.
+    work.catch(() => {});
     // The checklist advances on its own; the last line waits for the work.
     void (async () => {
       for (let line = 1; line < STEPS.length; line++) {
