@@ -11,7 +11,7 @@ import {
   saveDraft,
   type Draft,
 } from '@/onboarding/storage';
-import type { Step } from '@/onboarding/steps';
+import { pruneAnswers, type Step } from '@/onboarding/steps';
 import type { OnboardingAnswers } from '@/onboarding/types';
 
 import { useSession } from './session-provider';
@@ -135,7 +135,10 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
     setStep: (step) =>
       update((current) => (current.step === step ? current : { ...current, step })),
     answer: (answers) =>
-      update((current) => ({ ...current, answers: { ...current.answers, ...answers } })),
+      update((current) => ({
+        ...current,
+        answers: pruneAnswers({ ...current.answers, ...answers }),
+      })),
     complete: () => {
       saveCompleted(userId, true);
       clearDraft(userId);

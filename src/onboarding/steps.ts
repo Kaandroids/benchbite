@@ -39,6 +39,31 @@ export function isIncluded(step: Step, answers: OnboardingAnswers): boolean {
   return true;
 }
 
+/** The answers each conditional step collects. */
+const ANSWERS_OF: Partial<Record<Step, (keyof OnboardingAnswers)[]>> = {
+  'target-weight': ['targetWeightKg'],
+  pace: ['weeklyPaceKg'],
+};
+
+/**
+ * Drops the answers of steps that are no longer part of the flow, such as a target weight after
+ * the goal changed to staying healthy, so they are never saved.
+ */
+export function pruneAnswers(answers: OnboardingAnswers): OnboardingAnswers {
+  const pruned = { ...answers };
+  for (const [step, fields] of Object.entries(ANSWERS_OF) as [
+    Step,
+    (keyof OnboardingAnswers)[],
+  ][]) {
+    if (!isIncluded(step, pruned)) {
+      for (const field of fields) {
+        delete pruned[field];
+      }
+    }
+  }
+  return pruned;
+}
+
 /** The next step for these answers, or null after the last one. */
 export function nextStep(step: Step, answers: OnboardingAnswers): Step | null {
   for (let index = STEPS.indexOf(step) + 1; index < STEPS.length; index++) {
