@@ -2,6 +2,7 @@ import { assert, assertEquals, assertNotEquals } from '@std/assert';
 
 import { buildPlan } from './plan.ts';
 import { candidatesFor, exerciseSeconds, finisherMinutes } from './session.ts';
+import { TEMPLATES } from './templates.ts';
 import { CATALOGUE } from './test-catalogue.ts';
 import type { PlanInput } from './types.ts';
 
@@ -165,4 +166,26 @@ Deno.test('a slot that comes back later in the week takes the next exercise', ()
   ).sessions;
   assertNotEquals(upper!.exercises[0]!.exerciseId, push!.exercises[0]!.exerciseId);
   assertNotEquals(lower!.exercises[0]!.exerciseId, legs!.exercises[0]!.exerciseId);
+});
+
+Deno.test('when time runs out, the remaining slots are left out in order', () => {
+  for (const setup of ['gym', 'dumbbells', 'bodyweight'] as const)
+    for (const experience of ['beginner', 'intermediate', 'advanced'] as const)
+      for (const goal of ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'] as const)
+        for (const sessionMinutes of [30, 45, 60, 75] as const)
+          for (const days of [1, 3, 4, 5, 6]) {
+            const answers = { setup, experience, goal, sessionMinutes };
+            const plan = buildPlan(
+              { ...answers, trainingDays: [1, 2, 3, 4, 5, 6].slice(0, days) },
+              CATALOGUE,
+            );
+            for (const session of plan.sessions) {
+              // The template's slots that the setup has an exercise for, in order.
+              const possible = TEMPLATES[session.type]
+                .map(({ slot }) => slot)
+                .filter((slot) => candidatesFor(CATALOGUE, slot, setup, experience).length > 0);
+              const slots = session.exercises.map((exercise) => exercise.slot);
+              assertEquals(slots, possible.slice(0, slots.length), JSON.stringify(answers));
+            }
+          }
 });

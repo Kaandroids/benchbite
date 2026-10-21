@@ -70,10 +70,12 @@ function pick(
   if (unused.length === 0) {
     return undefined;
   }
-  const slot = unused[0]!.slot;
-  const uses = slotUses.get(slot) ?? 0;
-  slotUses.set(slot, uses + 1);
-  return unused[uses % unused.length];
+  return unused[(slotUses.get(unused[0]!.slot) ?? 0) % unused.length];
+}
+
+/** Counts a slot as filled once its exercise is in the session. */
+function countUse(slotUses: SlotUses, slot: Slot) {
+  slotUses.set(slot, (slotUses.get(slot) ?? 0) + 1);
 }
 
 function planned(entry: CatalogueEntry, prescription: Prescription): PlannedExercise {
@@ -90,7 +92,9 @@ export function finisherMinutes(input: PlanInput): number {
 
 /**
  * Builds one session. Slots are filled in order of importance while time is left; a slot that
- * does not fit is tried with fewer sets, down to two, and left out if it still does not fit.
+ * does not fit is tried with fewer sets, down to two. If it still does not fit, it and every
+ * slot after it are left out, so a less important exercise never replaces a more important one.
+ * Slots without a possible exercise for the setup are skipped.
  */
 export function buildSession(
   input: PlanInput,
@@ -113,6 +117,7 @@ export function buildSession(
     if (entry) {
       const prescription = prescribeFinisher(entry.metrics, conditioningMinutes);
       finisher = planned(entry, prescription);
+      countUse(slotUses, entry.slot);
       seconds += exerciseSeconds(prescription);
     }
   }
@@ -133,11 +138,13 @@ export function buildSession(
       prescribed.sets = Math.max(MIN_SETS, prescribed.sets - 1);
     }
     const prescription = fit(prescribed, budget - seconds);
-    if (prescription) {
-      exercises.push(planned(entry, prescription));
-      used.add(entry.exerciseId);
-      seconds += exerciseSeconds(prescription);
+    if (!prescription) {
+      break;
     }
+    exercises.push(planned(entry, prescription));
+    used.add(entry.exerciseId);
+    countUse(slotUses, slot);
+    seconds += exerciseSeconds(prescription);
   }
 
   return {
