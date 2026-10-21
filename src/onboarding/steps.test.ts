@@ -1,6 +1,8 @@
 import {
   STEPS,
+  canGoBackFrom,
   isIncluded,
+  isPassing,
   isStep,
   nextStep,
   previousStep,
@@ -74,6 +76,20 @@ describe('steps', () => {
     expect(previousStep('welcome', {})).toBeNull();
     expect(nextStep('reminders', {})).toBe('summary');
     expect(previousStep('goal', {})).toBe('welcome');
+  });
+
+  // Regression: going back from the plan showed the finished building screen, which had nothing
+  // left to do and no way on.
+  it('skips the building step when going back', () => {
+    expect(isPassing('building')).toBe(true);
+    expect(nextStep('session-length', {})).toBe('building');
+    expect(previousStep('plan', {})).toBe('session-length');
+  });
+
+  it('has no way back from the summary, which follows the saved onboarding', () => {
+    expect(canGoBackFrom('summary')).toBe(false);
+    expect(previousStep('summary', {})).toBeNull();
+    expect(canGoBackFrom('reminders')).toBe(true);
   });
 
   it('drops answers of steps that left the flow', () => {
