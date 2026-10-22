@@ -9,6 +9,8 @@ import type { DayStatus } from '@/streak/streak';
 import { useTheme } from '@/theme';
 
 const MARK_SIZE = 36;
+/** The flame and snowflake reach a little past the mark, so they read as big as the number. */
+const SHAPE_SIZE = 40;
 // Each shape with the view box that centres it.
 const FLAME = {
   viewBox: '5.75 2.5 12.5 15',
@@ -64,10 +66,10 @@ export function WeekStrip({ today, days }: WeekStripProps) {
             <View style={styles.mark}>
               {status ? (
                 <Svg
-                  width={MARK_SIZE}
-                  height={MARK_SIZE}
+                  width={SHAPE_SIZE}
+                  height={SHAPE_SIZE}
                   viewBox={status === 'done' ? FLAME.viewBox : '0 0 36 36'}
-                  style={StyleSheet.absoluteFill}
+                  style={styles.shape}
                   testID={`streak-${status}`}
                 >
                   {status === 'done' ? (
@@ -108,5 +110,10 @@ const styles = StyleSheet.create({
     height: MARK_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  shape: {
+    position: 'absolute',
+    top: (MARK_SIZE - SHAPE_SIZE) / 2,
+    left: (MARK_SIZE - SHAPE_SIZE) / 2,
   },
 });

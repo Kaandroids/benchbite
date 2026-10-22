@@ -58,7 +58,7 @@ export const lightColors: ColorTokens = {
   protein: '#FF6A10',
   carbs: '#F5B800',
   fat: '#6E5BD8',
-  streakDay: '#FFD3B8',
+  streakDay: '#FFB68A',
   frozen: '#93C5FD',
 };
 
@@ -85,6 +85,6 @@ export const darkColors: ColorTokens = {
   protein: '#FF7F26',
   carbs: '#FFD23F',
   fat: '#9F8CFF',
-  streakDay: '#6B3410',
+  streakDay: '#8F4513',
   frozen: '#2F5C8F',
 };
