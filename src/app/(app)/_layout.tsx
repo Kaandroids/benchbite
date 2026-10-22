@@ -26,7 +26,16 @@ export default function AppLayout() {
     <NativeTabs
       tintColor={colors.primary}
       backgroundColor={colors.surface}
-      labelStyle={{ fontFamily: fonts.bold, color: colors.textMuted }}
+      iconColor={{ default: colors.textMuted, selected: colors.primary }}
+      labelStyle={{
+        default: { fontFamily: fonts.bold, color: colors.textMuted },
+        selected: { fontFamily: fonts.bold, color: colors.primary },
+      }}
+      // Android: every label stays visible, and the pill behind the selected icon is tinted with
+      // the primary colour instead of Material's grey.
+      labelVisibilityMode="labeled"
+      indicatorColor={colors.iconBackground}
+      rippleColor={colors.selected}
     >
       {TABS.map(({ name, label, icon }) => (
         <NativeTabs.Trigger key={name} name={name}>
