@@ -7,7 +7,7 @@ import { act, fireEvent, render, screen } from '@/test/render';
 import { addExercises, clearDraft } from './draft';
 import { EditorScreen } from './editor-screen';
 import { testExercise, testWorkout } from './test-data';
-import { useDeleteWorkout, useSaveWorkout, useWorkouts } from './workouts';
+import { useDeleteWorkout, useExerciseLimit, useSaveWorkout, useWorkouts } from './workouts';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
@@ -22,6 +22,7 @@ jest.mock('./workouts', () => ({
   useWorkouts: jest.fn(),
   useSaveWorkout: jest.fn(),
   useDeleteWorkout: jest.fn(),
+  useExerciseLimit: jest.fn(),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 
@@ -73,6 +74,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useWorkouts).mockReturnValue(loaded([PUSH]) as never);
   jest.mocked(useExerciseLibrary).mockReturnValue(loaded(LIBRARY) as never);
+  jest.mocked(useExerciseLimit).mockReturnValue(loaded(10) as never);
   jest.mocked(useSaveWorkout).mockReturnValue({
     mutateAsync: saveWorkout.mockResolvedValue(5),
     isPending: false,
@@ -129,6 +131,38 @@ describe('EditorScreen', () => {
     await render(<EditorScreen id={5} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Add exercises' }));
     expect(router.push).toHaveBeenCalledWith('/workout/pick');
+  });
+
+  it('stops adding exercises at the limit', async () => {
+    jest.mocked(useExerciseLimit).mockReturnValue(loaded(2) as never);
+    await render(<EditorScreen id={5} />);
+    expect(screen.queryByRole('button', { name: 'Add exercises' })).toBeNull();
+    expect(screen.getByText('Workouts can have up to 2 exercises.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+  });
+
+  it('asks to remove exercises above the limit before saving', async () => {
+    jest.mocked(useExerciseLimit).mockReturnValue(loaded(1) as never);
+    await render(<EditorScreen id={5} />);
+    expect(screen.getByText('Remove 1 exercise to save. Workouts can have up to 1.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('says why a workout was not saved', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    saveWorkout
+      .mockRejectedValueOnce({ code: 'BB008' })
+      .mockRejectedValueOnce(new Error('offline'));
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(alert).toHaveBeenLastCalledWith('Not saved', 'Workouts can have up to 10 exercises.');
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(alert).toHaveBeenLastCalledWith(
+      'Not saved',
+      "We couldn't save the workout. Check your connection and try again.",
+    );
+    expect(router.back).not.toHaveBeenCalled();
   });
 
   it('deletes the workout after asking', async () => {

@@ -17,7 +17,7 @@ import { fonts, typography, useTheme } from '@/theme';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
 import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useDeleteWorkout, useSaveWorkout, useWorkouts } from './workouts';
+import { useDeleteWorkout, useExerciseLimit, useSaveWorkout, useWorkouts } from './workouts';
 
 const ROW_HEIGHT = 76;
 
@@ -27,6 +27,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
   const library = useExerciseLibrary();
+  const limit = useExerciseLimit();
   const draft = useDraft();
   const save = useSaveWorkout();
   const remove = useDeleteWorkout();
@@ -37,7 +38,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const longWeekdayName = useWeekdayFormat('long');
   const [editing, setEditing] = useState<string | null>(null);
   const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
-  const loaded = allLoaded([workouts, library]);
+  const loaded = allLoaded([workouts, library, limit]);
 
   // Starts the draft once the workout is loaded. Finishers become ordinary exercises.
   useEffect(() => {
@@ -69,7 +70,9 @@ export function EditorScreen({ id }: { id?: number }) {
 
   const details = (exerciseId: string) => library.data?.find((item) => item.id === exerciseId);
   const close = () => router.back();
-  const canSave = !!draft && draft.name.trim() !== '' && draft.exercises.length > 0;
+  const max = limit.data ?? 0;
+  const over = draft ? draft.exercises.length - max : 0;
+  const canSave = !!draft && draft.name.trim() !== '' && draft.exercises.length > 0 && over <= 0;
 
   const onSave = async () => {
     if (!draft) {
@@ -85,6 +88,12 @@ export function EditorScreen({ id }: { id?: number }) {
       router.back();
     } catch (error) {
       console.warn('Could not save the workout', error);
+      // BB008: the limit changed since it was loaded.
+      const tooMany = (error as { code?: string }).code === 'BB008';
+      Alert.alert(
+        t('editor.saveErrorTitle'),
+        tooMany ? t('editor.limit', { max }) : t('editor.saveError'),
+      );
     }
   };
 
@@ -184,15 +193,13 @@ export function EditorScreen({ id }: { id?: number }) {
 
       {!loaded || !draft ? (
         <View style={[styles.flex, { padding: spacing.xl }]}>
-          <LoadState queries={[workouts, library]} />
+          <LoadState queries={[workouts, library, limit]} />
         </View>
       ) : (
         <ScrollView
           contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.xl }}
           keyboardShouldPersistTaps="handled"
         >
-          {save.isError ? <Text color="danger">{t('editor.saveError')}</Text> : null}
-
           <View style={{ gap: spacing.sm }}>
             <Text variant="caption" color="textMuted" style={styles.bold}>
               {t('editor.name')}
@@ -299,24 +306,35 @@ export function EditorScreen({ id }: { id?: number }) {
                 />
               </View>
             ) : null}
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push('/workout/pick')}
-              style={[
-                styles.add,
-                {
-                  gap: spacing.sm,
-                  borderRadius: radii.lg,
-                  borderColor: colors.planned,
-                  backgroundColor: colors.selected,
-                },
-              ]}
-            >
-              <Icon name="plus" size={20} color="primaryText" />
-              <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
-                {t('picker.title')}
+            {over > 0 ? (
+              <Text variant="caption" color="danger">
+                {t('editor.overLimit', { count: over, max })}
               </Text>
-            </Pressable>
+            ) : over === 0 ? (
+              <Text variant="caption" color="textMuted">
+                {t('editor.limit', { max })}
+              </Text>
+            ) : null}
+            {over < 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/workout/pick')}
+                style={[
+                  styles.add,
+                  {
+                    gap: spacing.sm,
+                    borderRadius: radii.lg,
+                    borderColor: colors.planned,
+                    backgroundColor: colors.selected,
+                  },
+                ]}
+              >
+                <Icon name="plus" size={20} color="primaryText" />
+                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                  {t('picker.title')}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {draft.id !== undefined ? (
