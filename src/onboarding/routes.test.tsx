@@ -1,8 +1,13 @@
+import { router } from 'expo-router';
 import { renderRouter, screen, act } from 'expo-router/testing-library';
 import { useSyncExternalStore, type PropsWithChildren } from 'react';
 import { Text } from 'react-native';
 
+import AppLayout from '@/app/(app)/_layout';
 import AppIndex from '@/app/(app)/index';
+import NutritionTab from '@/app/(app)/nutrition';
+import ProgressTab from '@/app/(app)/progress';
+import WorkoutTab from '@/app/(app)/workout';
 import RootLayout from '@/app/_layout';
 import OnboardingStep from '@/app/onboarding/[step]';
 import OnboardingLayout from '@/app/onboarding/_layout';
@@ -72,10 +77,16 @@ const ONBOARDING_ROUTES = {
   'onboarding/[step]': OnboardingStep,
 };
 
+const TODAY = "Your targets and today's workout will be here.";
+
 const APP_ROUTES = {
   _layout: RootLayout,
   ...ONBOARDING_ROUTES,
+  '(app)/_layout': AppLayout,
   '(app)/index': AppIndex,
+  '(app)/workout': WorkoutTab,
+  '(app)/nutrition': NutritionTab,
+  '(app)/progress': ProgressTab,
   'dev/components': () => <Text>Component gallery</Text>,
 };
 
@@ -134,14 +145,14 @@ describe('root layout', () => {
     const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
     expect(app.getPathname()).toBe('/onboarding/welcome');
     expect(screen.getByText('Step welcome')).toBeOnTheScreen();
-    expect(screen.queryByText('Benchbite')).not.toBeOnTheScreen();
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
   });
 
   it('opens the app once the onboarding is finished', async () => {
     setOnboarding('welcome', {}, true);
     const app = await renderRouter(APP_ROUTES, { initialUrl: '/onboarding/welcome' });
     expect(app.getPathname()).toBe('/');
-    expect(screen.getByText('Benchbite')).toBeOnTheScreen();
+    expect(screen.getByText(TODAY)).toBeOnTheScreen();
   });
 
   it('switches to the app when the onboarding is finished', async () => {
@@ -151,7 +162,7 @@ describe('root layout', () => {
 
     await act(() => setOnboarding('welcome', {}, true));
     expect(app.getPathname()).toBe('/');
-    expect(screen.getByText('Benchbite')).toBeOnTheScreen();
+    expect(screen.getByText(TODAY)).toBeOnTheScreen();
   });
 
   it('shows the connection error when the sign-in failed', async () => {
@@ -171,6 +182,45 @@ describe('root layout', () => {
     setOnboarding('welcome');
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
-    expect(screen.queryByText('Benchbite')).not.toBeOnTheScreen();
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+  });
+});
+
+/** The native tabs in order, as titles; the focused one is the only one that takes touches. */
+function tabs() {
+  return screen.container
+    .queryAll((node) => String(node.type).startsWith('RNSTabsScreen'))
+    .map((tab) => ({ title: tab.props.title, focused: tab.props.pointerEvents !== 'none' }));
+}
+
+describe('app tabs', () => {
+  beforeEach(() => setOnboarding('welcome', {}, true));
+
+  it('shows Today, Workout, Nutrition and Progress, starting on Today', async () => {
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(tabs()).toEqual([
+      { title: 'Today', focused: true },
+      { title: 'Workout', focused: false },
+      { title: 'Nutrition', focused: false },
+      { title: 'Progress', focused: false },
+    ]);
+  });
+
+  it.each([
+    ['/workout', 'Workout'],
+    ['/nutrition', 'Nutrition'],
+    ['/progress', 'Progress'],
+  ] as const)('opens %s on its tab', async (path, title) => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.navigate(path));
+    expect(app.getPathname()).toBe(path);
+    expect(tabs().filter((tab) => tab.focused)).toEqual([{ title, focused: true }]);
+  });
+
+  it('links to the component gallery in development', async () => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.navigate('/dev/components'));
+    expect(app.getPathname()).toBe('/dev/components');
+    expect(screen.getByText('Component gallery')).toBeOnTheScreen();
   });
 });

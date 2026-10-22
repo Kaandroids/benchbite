@@ -1,12 +1,13 @@
 import { Link } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
+import { ComingSoon } from '@/components/coming-soon';
 import { Text } from '@/components/ui/text';
 
-export default function Index() {
+export default function TodayTab() {
+  const { t } = useTranslation();
   return (
-    <View style={styles.container}>
-      <Text variant="headline">Benchbite</Text>
+    <ComingSoon icon="home" message={t('comingSoon.today')}>
       {__DEV__ ? (
         <Link href="/dev/components">
           <Text variant="bodyStrong" color="primaryText">
@@ -14,15 +15,6 @@ export default function Index() {
           </Text>
         </Link>
       ) : null}
-    </View>
+    </ComingSoon>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-});
