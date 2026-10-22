@@ -8,6 +8,19 @@
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
   },
+  "tabs": {
+    "today": "Today",
+    "workout": "Workout",
+    "nutrition": "Nutrition",
+    "progress": "Progress"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "today": "Your targets and today's workout will be here.",
+    "workout": "Your weekly plan and its workouts will be here.",
+    "nutrition": "Logging your meals will be here.",
+    "progress": "Your weight and progress will be here."
+  },
   "onboarding": {
     "steps": {
       "welcome": {
