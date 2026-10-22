@@ -1,5 +1,11 @@
 import { useTranslation } from 'react-i18next';
 
+/** A date as the database stores days, YYYY-MM-DD, in the device's time zone. */
+export function toIsoDate(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 /** The ISO weekday of a date, 1 for Monday to 7 for Sunday. */
 export function isoWeekday(date: Date): number {
   return ((date.getDay() + 6) % 7) + 1;

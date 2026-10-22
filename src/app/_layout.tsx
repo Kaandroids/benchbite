@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
+import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { showRemindersInForeground } from '@/reminders/reminders';
 import { fonts, useTheme } from '@/theme';
@@ -27,9 +28,11 @@ export default function RootLayout() {
     // Gesture detectors, such as the one in the slider, only work inside this view.
     <GestureHandlerRootView style={styles.root}>
       <SessionProvider>
-        <OnboardingProvider>
-          <RootNavigator />
-        </OnboardingProvider>
+        <QueryProvider>
+          <OnboardingProvider>
+            <RootNavigator />
+          </OnboardingProvider>
+        </QueryProvider>
       </SessionProvider>
     </GestureHandlerRootView>
   );

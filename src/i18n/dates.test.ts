@@ -1,7 +1,14 @@
 import i18n from '@/i18n';
 import { act, renderHook } from '@/test/render';
 
-import { isoWeekday, useDateFormat, useTimeFormat, useWeekdayFormat } from './dates';
+import { isoWeekday, toIsoDate, useDateFormat, useTimeFormat, useWeekdayFormat } from './dates';
+
+describe('toIsoDate', () => {
+  it("writes the device's day, padded", () => {
+    expect(toIsoDate(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+    expect(toIsoDate(new Date(2026, 9, 22, 0, 30))).toBe('2026-10-22');
+  });
+});
 
 describe('isoWeekday', () => {
   it('numbers the days from Monday (1) to Sunday (7)', () => {
