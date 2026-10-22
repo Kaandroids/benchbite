@@ -165,6 +165,43 @@ export function useSetWorkoutActive() {
   });
 }
 
+/** A workout as the editor builds it: without an id until it is first saved. */
+export type WorkoutDraft = {
+  id?: number;
+  name: string;
+  weekdays: number[];
+  exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
+};
+
+/** Saves a new or changed workout with its exercises, and returns its id. */
+export function useSaveWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (draft: WorkoutDraft) => {
+      const { data, error } = await supabase.rpc('save_workout', { workout: draft });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+  });
+}
+
+/** Deletes a workout with its exercises. */
+export function useDeleteWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase.from('workouts').delete().eq('id', id);
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+  });
+}
+
 /** The URL of an exercise picture in the public exercise-images bucket. */
 export function exerciseImageUrl(path: string): string {
   return supabase.storage.from('exercise-images').getPublicUrl(path).data.publicUrl;

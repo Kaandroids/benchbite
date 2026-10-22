@@ -3,6 +3,8 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
   fetchWorkouts,
+  useDeleteWorkout,
+  useSaveWorkout,
   useSetWorkoutActive,
   useWeek,
   useWorkouts,
@@ -10,12 +12,13 @@ import {
   type Workout,
 } from './workouts';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 const order = jest.fn();
 const select = jest.fn(() => ({ order }));
 const eq = jest.fn();
 const update = jest.fn(() => ({ eq }));
+const remove = jest.fn(() => ({ eq }));
 
 const exerciseRow = (position: number, exerciseId: string, more: object = {}) => ({
   position,
@@ -56,7 +59,7 @@ const workout = (id: number, weekdays: number[], active = true): Workout => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.mocked(supabase.from).mockReturnValue({ select, update } as never);
+  jest.mocked(supabase.from).mockReturnValue({ select, update, delete: remove } as never);
 });
 
 describe('fetchWorkouts', () => {
@@ -175,7 +178,9 @@ describe('useSetWorkoutActive', () => {
     await act(() => result.current.setActive.mutateAsync({ id: 1, active: false }));
     expect(update).toHaveBeenCalledWith({ active: false });
     expect(eq).toHaveBeenCalledWith('id', 1);
-    expect(result.current.workouts.data?.map((item) => item.active)).toEqual([false, true]);
+    await waitFor(() =>
+      expect(result.current.workouts.data?.map((item) => item.active)).toEqual([false, true]),
+    );
   });
 
   it('puts the workout back if saving fails', async () => {
@@ -190,5 +195,49 @@ describe('useSetWorkoutActive', () => {
       result.current.setActive.mutateAsync({ id: 1, active: false }).catch(() => undefined),
     );
     await waitFor(() => expect(result.current.workouts.data?.[0]?.active).toBe(true));
+  });
+});
+
+describe('useSaveWorkout', () => {
+  const draft = {
+    name: 'Arms',
+    weekdays: [2],
+    exercises: [
+      { exerciseId: 'curl', sets: 3, target: { reps: { min: 8, max: 12 } }, restSeconds: 60 },
+    ],
+  };
+
+  it('saves the workout in one call and loads the workouts again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useSaveWorkout(), { queryClient });
+    let id: number | undefined;
+    await act(async () => {
+      id = await result.current.mutateAsync(draft);
+    });
+    expect(id).toBe(12);
+    expect(supabase.rpc).toHaveBeenCalledWith('save_workout', { workout: draft });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+  });
+
+  it('fails with the error the database returns', async () => {
+    const error = { code: 'BB007', message: 'A target does not suit its exercise' };
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error } as never);
+    const { result } = await renderHook(() => useSaveWorkout());
+    await act(() => expect(result.current.mutateAsync(draft)).rejects.toBe(error));
+  });
+});
+
+describe('useDeleteWorkout', () => {
+  it('deletes the workout and loads the workouts again', async () => {
+    eq.mockResolvedValue({ error: null });
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useDeleteWorkout(), { queryClient });
+    await act(() => result.current.mutateAsync(4));
+    expect(remove).toHaveBeenCalled();
+    expect(eq).toHaveBeenCalledWith('id', 4);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });
 });
