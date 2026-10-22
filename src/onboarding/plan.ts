@@ -1,6 +1,7 @@
 // Calculating and saving the onboarding's result: the nutrition targets, the workout plan and
 // the save that completes the onboarding. The rules live on the server (ADR 0009, ADR 0010).
 import { supabase } from '@/lib/supabase';
+import { targetsFrom, type NutritionTargets } from '@/nutrition/targets';
 import type { Plan } from '@shared/plan/types';
 
 import type { OnboardingAnswers } from './types';
@@ -8,12 +9,7 @@ import type { OnboardingAnswers } from './types';
 /** The generate-plan Edge Function's response. */
 export type WorkoutPlan = Plan;
 
-export type NutritionTargets = {
-  calories: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-};
+export type { NutritionTargets };
 
 /** Answers the result needs; the steps before guarantee them. */
 function required<K extends keyof OnboardingAnswers>(answers: OnboardingAnswers, key: K) {
@@ -39,12 +35,11 @@ export async function calculateTargets(answers: OnboardingAnswers): Promise<Nutr
   if (error) {
     throw error;
   }
-  return {
-    calories: data.calories ?? 0,
-    proteinG: data.protein_g ?? 0,
-    carbsG: data.carbs_g ?? 0,
-    fatG: data.fat_g ?? 0,
-  };
+  const targets = targetsFrom(data);
+  if (!targets) {
+    throw new Error('The nutrition targets could not be calculated');
+  }
+  return targets;
 }
 
 export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutPlan> {

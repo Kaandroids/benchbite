@@ -103,13 +103,23 @@ describe('calculateTargets', () => {
     );
   });
 
-  it('turns missing values in the result into zero', async () => {
+  it('fails rather than showing zero calories when the result has none', async () => {
     rpc.mockResolvedValue({
       data: { calories: null, protein_g: null, carbs_g: null, fat_g: null },
       error: null,
     });
+    await expect(calculateTargets(ANSWERS)).rejects.toThrow(
+      'The nutrition targets could not be calculated',
+    );
+  });
+
+  it('turns missing macros into zero', async () => {
+    rpc.mockResolvedValue({
+      data: { calories: 2200, protein_g: null, carbs_g: null, fat_g: null },
+      error: null,
+    });
     await expect(calculateTargets(ANSWERS)).resolves.toEqual({
-      calories: 0,
+      calories: 2200,
       proteinG: 0,
       carbsG: 0,
       fatG: 0,
