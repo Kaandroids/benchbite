@@ -11,7 +11,7 @@ import { useTheme } from '@/theme';
 const MARK_SIZE = 36;
 // Each shape with the view box that centres it.
 const FLAME = {
-  viewBox: '2 -1 20 22',
+  viewBox: '4.5 1 15 18',
   d: 'M12 2.5c.8 3.2 4.8 5.4 4.8 10.2a4.8 4.8 0 0 1-9.6 0c0-2.3 1.1-3.8 2.3-4.9.1 1.9 1 3.1 2.2 3.4-.4-3.2-.4-5.8.3-8.7z',
 };
 const SNOWFLAKE =
