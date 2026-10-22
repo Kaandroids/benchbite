@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(22);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -14,27 +14,28 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
--- Answers and a plan for two training days, the second one with a finisher.
+-- Answers and a plan for three training days: a workout on two of them, and one with a finisher
+-- on the third.
 create function pg_temp.answers(changes jsonb default '{}') returns jsonb language sql as $$
   select jsonb_build_object(
     'goal', 'lose_fat', 'consentedPolicyVersion', '2026-10-21', 'sex', 'female',
     'birthYear', extract(year from current_date)::integer - 30, 'heightCm', 168, 'weightKg', 70,
     'targetWeightKg', 64, 'weeklyPaceKg', 0.5, 'activityLevel', 'light',
-    'experience', 'beginner', 'trainingDays', jsonb_build_array(1, 4), 'setup', 'gym',
+    'experience', 'beginner', 'trainingDays', jsonb_build_array(1, 3, 4), 'setup', 'gym',
     'sessionMinutes', 45, 'weightUnit', 'kg', 'heightUnit', 'cm'
   ) || changes;
 $$;
 
 create function pg_temp.plan(exercise_id text default 'Barbell_Squat') returns jsonb language sql as $$
   select jsonb_build_object('sessions', jsonb_build_array(
-    jsonb_build_object('weekday', 1, 'type', 'full_body', 'estimatedMinutes', 44,
+    jsonb_build_object('weekdays', jsonb_build_array(1, 4), 'type', 'full_body', 'estimatedMinutes', 44,
       'exercises', jsonb_build_array(
         jsonb_build_object('exerciseId', exercise_id, 'slot', 'squat', 'sets', 3,
           'target', jsonb_build_object('reps', jsonb_build_object('min', 8, 'max', 12)), 'restSeconds', 75),
         jsonb_build_object('exerciseId', 'Plank', 'slot', 'core', 'sets', 2,
           'target', jsonb_build_object('seconds', 30), 'restSeconds', 45)),
       'finisher', null),
-    jsonb_build_object('weekday', 4, 'type', 'full_body', 'estimatedMinutes', 45,
+    jsonb_build_object('weekdays', jsonb_build_array(3), 'type', 'lower', 'estimatedMinutes', 45,
       'exercises', jsonb_build_array(
         jsonb_build_object('exerciseId', 'Leg_Press', 'slot', 'squat', 'sets', 3,
           'target', jsonb_build_object('reps', jsonb_build_object('min', 8, 'max', 12)), 'restSeconds', 75)),
@@ -60,6 +61,25 @@ select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers('{"trainingDays": [1, 3]}'), pg_temp.plan()) $$,
   'BB004', 'The plan does not match the training days',
   'A plan for other days is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(
+       pg_temp.answers(),
+       jsonb_set(pg_temp.plan(), '{sessions,1,weekdays}', '[3, 4]')
+     ) $$,
+  'BB004', 'The plan does not match the training days',
+  'A plan with two workouts on one day is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(
+       pg_temp.answers('{"trainingDays": [1, 2, 3, 4, 5, 6]}'),
+       jsonb_build_object('sessions', (
+         select jsonb_agg(jsonb_set(pg_temp.plan() #> '{sessions,1}', '{weekdays}', jsonb_build_array(d)))
+         from generate_series(1, 6) d
+       ))
+     ) $$,
+  'BB009', 'A user can have up to 3 workouts',
+  'A plan with more workouts than the limit is rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(
@@ -98,15 +118,15 @@ select results_eq(
 select is((select count(*)::integer from public.health_data_consents), 1, 'The consent is saved');
 select results_eq(
   $$ select weekdays, type::text, active from public.workouts order by weekdays $$,
-  $$ values ('{1}'::smallint[], 'full_body', true), ('{4}'::smallint[], 'full_body', true) $$,
-  'Each session of the plan is saved as an active workout on its weekday'
+  $$ values ('{1,4}'::smallint[], 'full_body', true), ('{3}'::smallint[], 'lower', true) $$,
+  'Each session of the plan is saved as an active workout on its weekdays'
 );
 select results_eq(
   $$ select w.weekdays[1]::integer, e.position::integer, e.exercise_id, e.is_finisher
      from public.workouts w join public.workout_exercises e on e.workout_id = w.id
      order by w.weekdays, e.position $$,
   $$ values (1, 0, 'Barbell_Squat', false), (1, 1, 'Plank', false),
-            (4, 0, 'Leg_Press', false), (4, 1, 'Rowing_Stationary', true) $$,
+            (3, 0, 'Leg_Press', false), (3, 1, 'Rowing_Stationary', true) $$,
   'The exercises are saved in order, with the finisher last'
 );
 select throws_ok(
