@@ -26,7 +26,6 @@ export type ColorTokens = {
   /** Background of the icon tile on an unselected card. */
   iconBackground: string;
   success: string;
-  successBackground: string;
   warning: string;
   danger: string;
   protein: string;
@@ -50,7 +49,6 @@ export const lightColors: ColorTokens = {
   selected: '#FFF2E9',
   iconBackground: '#FFEDE2',
   success: '#15803D',
-  successBackground: '#E3F4E8',
   warning: '#B45309',
   danger: '#DC2626',
   protein: '#FF6A10',
@@ -76,7 +74,6 @@ export const darkColors: ColorTokens = {
   selected: '#24262B',
   iconBackground: '#2A2C31',
   success: '#4ADE80',
-  successBackground: '#13301F',
   warning: '#FBBF24',
   danger: '#F87171',
   protein: '#FF7F26',

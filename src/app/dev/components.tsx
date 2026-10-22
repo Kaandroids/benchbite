@@ -71,12 +71,9 @@ const VARIANTS: TypographyVariant[] = [
 const ICONS: IconName[] = [
   'back',
   'bolt',
-  'calendar',
   'chart',
   'check',
-  'close',
   'dumbbell',
-  'external',
   'flame',
   'gym',
   'heart',
@@ -85,7 +82,6 @@ const ICONS: IconName[] = [
   'offline',
   'person',
   'shield',
-  'sparkles',
   'target',
   'timer',
 ];
