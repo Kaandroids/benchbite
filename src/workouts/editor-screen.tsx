@@ -38,6 +38,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const weekdayName = useWeekdayFormat('narrow');
   const longWeekdayName = useWeekdayFormat('long');
   const [editing, setEditing] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
   // A workout from the plan builder is named by its type until the user gives it a name.
   const typeName = workout && workout.name === null ? workoutName(workout) : null;
@@ -211,6 +212,7 @@ export function EditorScreen({ id }: { id?: number }) {
         </View>
       ) : (
         <ScrollView
+          scrollEnabled={!dragging}
           contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.xl }}
           keyboardShouldPersistTaps="handled"
         >
@@ -306,6 +308,7 @@ export function EditorScreen({ id }: { id?: number }) {
                   keyOf={(exercise) => exercise.key}
                   rowHeight={ROW_HEIGHT}
                   handleLabel={t('editor.reorder')}
+                  onDragChange={setDragging}
                   onMove={(from, to) =>
                     setExercises((exercises) => {
                       const next = [...exercises];
