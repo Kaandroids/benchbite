@@ -15,6 +15,8 @@ import { dirname, join } from 'node:path';
 
 import sharp from 'sharp';
 
+import type { Database } from '../src/lib/database.types.ts';
+
 const UPSTREAM_COMMIT = 'f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5';
 const UPSTREAM = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/${UPSTREAM_COMMIT}`;
 
@@ -46,7 +48,7 @@ type UpstreamExercise = {
 
 type TranslatedNames = Record<string, { de: string; tr: string }>;
 
-type Metric = 'weight' | 'reps' | 'duration' | 'distance';
+type Metric = Database['public']['Enums']['exercise_metric'];
 
 /** Equipment that adds no weight to measure. */
 const UNWEIGHTED_EQUIPMENT = new Set([null, 'body only', 'bands', 'exercise ball']);
