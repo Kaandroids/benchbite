@@ -20,10 +20,10 @@ import {
   type HeightUnit,
   type WeightUnit,
 } from '@/i18n/units';
-import { useOnboarding } from '@/providers/onboarding-provider';
-import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 import { range } from '@/lib/math';
 import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
+import { useOnboarding } from '@/providers/onboarding-provider';
+import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },

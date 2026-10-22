@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { useTheme } from '@/theme';
 import { clamp } from '@/lib/math';
+import { useTheme } from '@/theme';
 
 type ProgressBarProps = {
   /** Between 0 and 1. */

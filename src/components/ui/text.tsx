@@ -1,10 +1,15 @@
-import { Text as NativeText, type TextProps as NativeTextProps } from 'react-native';
+import {
+  Text as NativeText,
+  type TextProps as NativeTextProps,
+  type TextStyle,
+} from 'react-native';
 
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 
 export type TextProps = NativeTextProps & {
   variant?: TypographyVariant;
   color?: keyof ColorTokens;
+  align?: TextStyle['textAlign'];
 };
 
 // Large text already fills the screen; letting it grow without limit with the system font size
@@ -15,13 +20,13 @@ const MAX_FONT_SCALE: Partial<Record<TypographyVariant, number>> = {
   button: 1.5,
 };
 
-export function Text({ variant = 'body', color = 'text', style, ...props }: TextProps) {
+export function Text({ variant = 'body', color = 'text', align, style, ...props }: TextProps) {
   const { colors, typography } = useTheme();
   return (
     <NativeText
       maxFontSizeMultiplier={MAX_FONT_SCALE[variant]}
       {...props}
-      style={[typography[variant], { color: colors[color] }, style]}
+      style={[typography[variant], { color: colors[color], textAlign: align }, style]}
     />
   );
 }

@@ -56,7 +56,7 @@ export function TargetWeightStep() {
       >
         <View style={[styles.centeredContent, { gap: spacing.lg }]}>
           <IconTile name="heart" size={88} />
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t('onboarding.targetWeight.alreadyLow')}
           </Text>
         </View>
@@ -86,12 +86,12 @@ export function TargetWeightStep() {
         below={
           <>
             {wrongDirection ? (
-              <Text color="danger" style={styles.centered}>
+              <Text color="danger" align="center">
                 {t(`onboarding.targetWeight.wrongDirection.${goal}`)}
               </Text>
             ) : belowHealthy ? (
               <View style={{ gap: spacing.sm }}>
-                <Text color="danger" style={styles.centered}>
+                <Text color="danger" align="center">
                   {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
                 </Text>
                 <Button
@@ -101,7 +101,7 @@ export function TargetWeightStep() {
                 />
               </View>
             ) : (
-              <Text variant="bodyStrong" color="primaryText" style={styles.centered}>
+              <Text variant="bodyStrong" color="primaryText" align="center">
                 {t('onboarding.targetWeight.difference', {
                   difference: `${sign}${show(Math.abs(differenceKg))}`,
                   unit,
@@ -127,8 +127,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

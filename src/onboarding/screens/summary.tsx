@@ -98,10 +98,10 @@ export function SummaryStep() {
           </View>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ gap: spacing.sm }}>
-          <Text variant="title" style={styles.centered}>
+          <Text variant="title" align="center">
             {t('onboarding.steps.summary.title')}
           </Text>
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t('onboarding.summary.body')}
           </Text>
         </Animated.View>
@@ -156,9 +156,6 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
   card: {
     borderWidth: 1,

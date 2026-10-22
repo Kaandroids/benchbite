@@ -119,7 +119,7 @@ export function PlanStep() {
       footer={
         <View style={{ gap: spacing.sm }}>
           {saveFailed ? (
-            <Text color="danger" style={styles.centered}>
+            <Text color="danger" align="center">
               {t('onboarding.plan.saveError')}
             </Text>
           ) : null}
@@ -213,7 +213,7 @@ export function PlanStep() {
         })}
       </Animated.View>
 
-      <Text variant="caption" color="textMuted" style={styles.centered}>
+      <Text variant="caption" color="textMuted" align="center">
         {t('onboarding.plan.editLater')}
       </Text>
     </Screen>
@@ -239,8 +239,5 @@ const styles = StyleSheet.create({
   },
   session: {
     paddingVertical: 4,
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

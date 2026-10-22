@@ -13,8 +13,8 @@ import {
   heightToFeetAndInches,
   type HeightUnit,
 } from '@/i18n/units';
-import { useTheme } from '@/theme';
 import { clamp, range } from '@/lib/math';
+import { useTheme } from '@/theme';
 
 import { HEIGHT_RANGE_CM } from '../body';
 import type { OnboardingAnswers } from '../types';

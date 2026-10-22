@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useNumberFormat, weightIn, weightToKg, type WeightUnit } from '@/i18n/units';
-import { useTheme } from '@/theme';
 import { clamp, range } from '@/lib/math';
+import { useTheme } from '@/theme';
 
 import { WEIGHT_RANGE_KG } from '../body';
 

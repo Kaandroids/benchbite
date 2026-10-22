@@ -35,10 +35,10 @@ export function SessionError({ onRetry }: SessionErrorProps) {
         <View style={{ marginBottom: spacing.sm }}>
           <IconTile name="offline" size={80} />
         </View>
-        <Text variant="title" style={styles.centered}>
+        <Text variant="title" align="center">
           {t('sessionError.title')}
         </Text>
-        <Text color="textMuted" style={styles.centered}>
+        <Text color="textMuted" align="center">
           {t('sessionError.message')}
         </Text>
       </View>
@@ -51,8 +51,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

@@ -46,10 +46,10 @@ export function ConsentStep() {
       >
         <View style={[styles.centeredContent, { gap: spacing.lg }]}>
           <IconTile name="shield" size={88} />
-          <Text variant="title" style={styles.centered}>
+          <Text variant="title" align="center">
             {t('onboarding.consent.declined.title')}
           </Text>
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t('onboarding.consent.declined.body')}
           </Text>
         </View>
@@ -116,9 +116,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
   point: {
     flexDirection: 'row',

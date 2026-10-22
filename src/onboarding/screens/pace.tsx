@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { paceIn, paceToKg, useNumberFormat, weightIn } from '@/i18n/units';
-import type { ColorTokens } from '@/theme';
 import { clamp } from '@/lib/math';
+import type { ColorTokens } from '@/theme';
 
 import { PACE_RANGES, paceLevel, projectedDate, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
@@ -54,28 +53,28 @@ export function PaceStep() {
       <CenteredContent
         below={
           <>
-            <Text variant="bodyStrong" color={LEVEL_COLORS[level]} style={styles.centered}>
+            <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align="center">
               {t(`onboarding.pace.levels.${level}`)}
             </Text>
             {pace >= paceRange.max ? (
-              <Text color="textMuted" style={styles.centered}>
+              <Text color="textMuted" align="center">
                 {t(`onboarding.pace.fastest.${goal}`)}
               </Text>
             ) : null}
-            <Text style={styles.centered}>
+            <Text align="center">
               {t('onboarding.pace.projected', {
                 weight: format(weightIn(unit, targetKg), { maximumFractionDigits: 1 }),
                 unit,
                 date,
               })}
             </Text>
-            <Text variant="caption" color="textMuted" style={styles.centered}>
+            <Text variant="caption" color="textMuted" align="center">
               {t('onboarding.pace.disclaimer')}
             </Text>
           </>
         }
       >
-        <Text variant="display" style={styles.centered}>
+        <Text variant="display" align="center">
           {t('onboarding.pace.perWeek', {
             value: format(pace, { minimumFractionDigits: 2 }),
             unit,
@@ -98,9 +97,3 @@ export function PaceStep() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    textAlign: 'center',
-  },
-});

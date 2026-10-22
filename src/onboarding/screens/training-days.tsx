@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
@@ -73,7 +72,7 @@ export function TrainingDaysStep() {
         />
       ))}
       {limit ? (
-        <Text color="danger" style={styles.centered}>
+        <Text color="danger" align="center">
           {t(
             limit === 'max'
               ? 'onboarding.trainingDays.maxReached'
@@ -84,9 +83,3 @@ export function TrainingDaysStep() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    textAlign: 'center',
-  },
-});

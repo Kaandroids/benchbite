@@ -29,10 +29,10 @@ export function GoalInsightStep() {
           <IconTile name={GOAL_ICONS[goal]} size={88} />
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(150).duration(400)} style={{ gap: spacing.md }}>
-          <Text variant="title" style={styles.centered}>
+          <Text variant="title" align="center">
             {t(`onboarding.goalInsight.${goal}.title`)}
           </Text>
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t(`onboarding.goalInsight.${goal}.body`)}
           </Text>
         </Animated.View>
@@ -46,8 +46,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

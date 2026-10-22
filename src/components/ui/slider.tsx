@@ -10,8 +10,8 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { useTheme } from '@/theme';
 import { clamp } from '@/lib/math';
+import { useTheme } from '@/theme';
 
 import { Text } from './text';
 

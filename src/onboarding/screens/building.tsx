@@ -136,7 +136,7 @@ function BuildingChecklist({ answers, onDone, failed, onFail }: BuildingChecklis
         })}
       </View>
       {failed ? (
-        <Text color="danger" style={styles.centered}>
+        <Text color="danger" align="center">
           {t('onboarding.building.error')}
         </Text>
       ) : null}
@@ -167,8 +167,5 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-  },
-  centered: {
-    textAlign: 'center',
   },
 });
