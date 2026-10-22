@@ -148,6 +148,36 @@
       "triceps": "Triceps"
     }
   },
+  "exercise": {
+    "start": "Start",
+    "end": "End",
+    "equipment": "Equipment",
+    "level": "Level",
+    "howTo": "How to do it",
+    "notFound": {
+      "title": "Exercise not found",
+      "message": "It may have been removed from the library."
+    },
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "expert": "Expert"
+    },
+    "equipmentKinds": {
+      "barbell": "Barbell",
+      "dumbbell": "Dumbbell",
+      "body only": "Body weight",
+      "cable": "Cable",
+      "machine": "Machine",
+      "kettlebells": "Kettlebell",
+      "bands": "Bands",
+      "medicine ball": "Medicine ball",
+      "exercise ball": "Exercise ball",
+      "foam roll": "Foam roller",
+      "e-z curl bar": "EZ bar",
+      "other": "Other"
+    }
+  },
   "onboarding": {
     "steps": {
       "welcome": {

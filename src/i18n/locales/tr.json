@@ -148,6 +148,36 @@
       "triceps": "Triseps"
     }
   },
+  "exercise": {
+    "start": "Başlangıç",
+    "end": "Bitiş",
+    "equipment": "Ekipman",
+    "level": "Seviye",
+    "howTo": "Nasıl yapılır",
+    "notFound": {
+      "title": "Egzersiz bulunamadı",
+      "message": "Kütüphaneden kaldırılmış olabilir."
+    },
+    "levels": {
+      "beginner": "Başlangıç",
+      "intermediate": "Orta",
+      "expert": "İleri"
+    },
+    "equipmentKinds": {
+      "barbell": "Halter",
+      "dumbbell": "Dambıl",
+      "body only": "Vücut ağırlığı",
+      "cable": "Kablo",
+      "machine": "Makine",
+      "kettlebells": "Kettlebell",
+      "bands": "Lastik bant",
+      "medicine ball": "Sağlık topu",
+      "exercise ball": "Pilates topu",
+      "foam roll": "Foam roller",
+      "e-z curl bar": "EZ bar",
+      "other": "Diğer"
+    }
+  },
   "onboarding": {
     "steps": {
       "welcome": {

@@ -148,6 +148,36 @@
       "triceps": "Trizeps"
     }
   },
+  "exercise": {
+    "start": "Start",
+    "end": "Ende",
+    "equipment": "Ausrüstung",
+    "level": "Niveau",
+    "howTo": "So geht’s",
+    "notFound": {
+      "title": "Übung nicht gefunden",
+      "message": "Sie wurde vielleicht aus der Bibliothek entfernt."
+    },
+    "levels": {
+      "beginner": "Anfänger",
+      "intermediate": "Fortgeschritten",
+      "expert": "Experte"
+    },
+    "equipmentKinds": {
+      "barbell": "Langhantel",
+      "dumbbell": "Kurzhantel",
+      "body only": "Körpergewicht",
+      "cable": "Kabelzug",
+      "machine": "Maschine",
+      "kettlebells": "Kettlebell",
+      "bands": "Bänder",
+      "medicine ball": "Medizinball",
+      "exercise ball": "Gymnastikball",
+      "foam roll": "Faszienrolle",
+      "e-z curl bar": "SZ-Stange",
+      "other": "Sonstiges"
+    }
+  },
   "onboarding": {
     "steps": {
       "welcome": {
