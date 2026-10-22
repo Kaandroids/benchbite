@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
+import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
@@ -42,15 +43,11 @@ export function ConsentStep() {
           />
         }
       >
-        <View style={[styles.centeredContent, { gap: spacing.lg }]}>
-          <IconTile name="shield" size={88} />
-          <Text variant="title" align="center">
-            {t('onboarding.consent.declined.title')}
-          </Text>
-          <Text color="textMuted" align="center">
-            {t('onboarding.consent.declined.body')}
-          </Text>
-        </View>
+        <MessageView
+          icon="shield"
+          title={t('onboarding.consent.declined.title')}
+          message={t('onboarding.consent.declined.body')}
+        />
       </Screen>
     );
   }
@@ -110,11 +107,6 @@ export function ConsentStep() {
 }
 
 const styles = StyleSheet.create({
-  centeredContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   point: {
     flexDirection: 'row',
     alignItems: 'center',
