@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { paceIn, paceToKg, useNumberFormat, weightIn } from '@/i18n/units';
 import type { ColorTokens } from '@/theme';
+import { clamp } from '@/lib/math';
 
 import { PACE_RANGES, paceLevel, projectedDate, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
@@ -33,7 +34,7 @@ export function PaceStep() {
   const [pace, setPace] = useState(() =>
     answers.weeklyPaceKg === undefined
       ? paceRange.default
-      : Math.min(paceRange.max, Math.max(paceRange.min, paceIn(unit, answers.weeklyPaceKg))),
+      : clamp(paceIn(unit, answers.weeklyPaceKg), paceRange.min, paceRange.max),
   );
   const paceKg = paceToKg(unit, pace);
   const level = paceLevel(goal, weightKg, paceKg);

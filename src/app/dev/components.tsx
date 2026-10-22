@@ -22,6 +22,8 @@ import {
 } from '@/i18n/units';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
+import { range } from '@/lib/math';
+import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },
@@ -35,9 +37,6 @@ const GOALS = [
   { id: 'health', icon: 'heart', title: 'Stay healthy', description: 'Balanced training and food' },
 ] satisfies { id: string; icon: IconName; title: string; description: string }[];
 
-const range = (from: number, to: number) =>
-  Array.from({ length: to - from + 1 }, (_, i) => from + i);
-
 const WEIGHT_UNITS = [
   { value: 'kg', label: 'kg' },
   { value: 'lb', label: 'lb' },
@@ -46,10 +45,17 @@ const HEIGHT_UNITS = [
   { value: 'cm', label: 'cm' },
   { value: 'ft', label: 'ft / in' },
 ] as const;
-const WHOLE_WEIGHTS = { kg: range(30, 250), lb: range(66, 551) };
+// The onboarding's limits, so the wheels behave as they do there.
+const WHOLE_WEIGHTS = {
+  kg: range(WEIGHT_RANGE_KG.min, WEIGHT_RANGE_KG.max),
+  lb: range(
+    Math.ceil(weightIn('lb', WEIGHT_RANGE_KG.min)),
+    Math.floor(weightIn('lb', WEIGHT_RANGE_KG.max)),
+  ),
+};
 const TENTHS = range(0, 9);
-const CENTIMETRES = range(120, 230);
-const FEET = range(3, 7);
+const CENTIMETRES = range(HEIGHT_RANGE_CM.min, HEIGHT_RANGE_CM.max);
+const FEET = range(3, 8);
 const INCHES = range(0, 11);
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];

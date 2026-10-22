@@ -14,14 +14,12 @@ import {
   type HeightUnit,
 } from '@/i18n/units';
 import { useTheme } from '@/theme';
+import { clamp, range } from '@/lib/math';
 
 import { HEIGHT_RANGE_CM } from '../body';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
-
-const range = (from: number, to: number) =>
-  Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
 const CENTIMETRES = range(HEIGHT_RANGE_CM.min, HEIGHT_RANGE_CM.max);
 const FEET = range(3, 8);
@@ -34,7 +32,7 @@ const DEFAULT_HEIGHT_CM: Record<NonNullable<OnboardingAnswers['sex']>, number> =
   unspecified: 172,
 };
 
-const clamp = (cm: number) => Math.min(HEIGHT_RANGE_CM.max, Math.max(HEIGHT_RANGE_CM.min, cm));
+const clampHeight = (cm: number) => clamp(cm, HEIGHT_RANGE_CM.min, HEIGHT_RANGE_CM.max);
 
 /** The height in centimetres or in feet and inches; it is stored in centimetres either way. */
 export function HeightStep() {
@@ -90,7 +88,7 @@ export function HeightStep() {
                 accessibilityLabel={t('onboarding.steps.height.title')}
                 values={FEET}
                 value={feet}
-                onChange={(newFeet) => setHeightCm(clamp(feetAndInchesToCm(newFeet, inches)))}
+                onChange={(newFeet) => setHeightCm(clampHeight(feetAndInchesToCm(newFeet, inches)))}
                 format={(newFeet) => t('onboarding.units.feet', { count: newFeet })}
               />
               <WheelPicker
@@ -98,7 +96,9 @@ export function HeightStep() {
                 accessibilityLabel={t('onboarding.steps.height.title')}
                 values={INCHES}
                 value={inches}
-                onChange={(newInches) => setHeightCm(clamp(feetAndInchesToCm(feet, newInches)))}
+                onChange={(newInches) =>
+                  setHeightCm(clampHeight(feetAndInchesToCm(feet, newInches)))
+                }
                 format={(newInches) => t('onboarding.units.inches', { count: newInches })}
               />
             </>
