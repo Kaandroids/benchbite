@@ -21,6 +21,27 @@
     "nutrition": "Logging your meals will be here.",
     "progress": "Your weight and progress will be here."
   },
+  "nutrition": {
+    "calories": "{{calories}} kcal a day",
+    "grams": "{{count}} g",
+    "macros": {
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat"
+    }
+  },
+  "workout": {
+    "session_one": "{{count}} exercise · about {{minutes}} min",
+    "session_other": "{{count}} exercises · about {{minutes}} min",
+    "sessionTypes": {
+      "full_body": "Full body",
+      "upper": "Upper body",
+      "lower": "Lower body",
+      "push": "Push",
+      "pull": "Pull",
+      "legs": "Legs"
+    }
+  },
   "onboarding": {
     "steps": {
       "welcome": {
@@ -258,27 +279,10 @@
       "error": "We couldn't build your plan. Check your connection and try again."
     },
     "plan": {
-      "calories": "{{calories}} kcal a day",
-      "macros": {
-        "protein": "Protein",
-        "carbs": "Carbs",
-        "fat": "Fat"
-      },
-      "grams": "{{count}} g",
       "nutrition": "Your daily targets",
       "weight": "Your weight",
       "week": "Your week",
-      "session_one": "{{count}} exercise · about {{minutes}} min",
-      "session_other": "{{count}} exercises · about {{minutes}} min",
       "more": "+{{count}} more",
-      "sessionTypes": {
-        "full_body": "Full body",
-        "upper": "Upper body",
-        "lower": "Lower body",
-        "push": "Push",
-        "pull": "Pull",
-        "legs": "Legs"
-      },
       "start": "Start my plan",
       "saveError": "We couldn't save your plan. Check your connection and try again.",
       "editLater": "You can change all of this later.",

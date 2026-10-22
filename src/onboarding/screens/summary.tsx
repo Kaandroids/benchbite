@@ -10,27 +10,12 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { isoWeekday, useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
+import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { nextSession } from '@/plan/next-session';
 import { useTheme } from '@/theme';
 
-import type { WorkoutPlan } from '../plan';
 import { useStep } from '../use-step';
-
-type Session = WorkoutPlan['sessions'][number];
-
-/** The next session from today on, and in how many days it is. */
-function nextSession(plan: WorkoutPlan, today: Date): { session: Session; inDays: number } | null {
-  const weekday = isoWeekday(today);
-  let best: { session: Session; inDays: number } | null = null;
-  for (const session of plan.sessions) {
-    const inDays = (session.weekday - weekday + 7) % 7;
-    if (!best || inDays < best.inDays) {
-      best = { session, inDays };
-    }
-  }
-  return best;
-}
 
 /**
  * The end of the onboarding: a short celebration, what was set up, and the first workout.
@@ -55,7 +40,7 @@ export function SummaryStep() {
       ? [
           {
             icon: 'flame' as const,
-            label: t('onboarding.plan.calories', { calories: format(targets.calories) }),
+            label: t('nutrition.calories', { calories: format(targets.calories) }),
           },
         ]
       : []),
@@ -121,10 +106,10 @@ export function SummaryStep() {
                   ? t('onboarding.summary.tomorrow')
                   : weekdayName(upcoming.session.weekday)}
               {' · '}
-              {t(`onboarding.plan.sessionTypes.${upcoming.session.type}`)}
+              {t(`workout.sessionTypes.${upcoming.session.type}`)}
             </Text>
             <Text color="textMuted">
-              {t('onboarding.plan.session', {
+              {t('workout.session', {
                 count: upcoming.session.exercises.length,
                 minutes: upcoming.session.estimatedMinutes,
               })}

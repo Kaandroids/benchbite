@@ -48,7 +48,7 @@ export function RemindersStep() {
         sessions.map((session) => ({
           weekday: session.weekday,
           title: t('onboarding.reminders.notification.title', {
-            session: t(`onboarding.plan.sessionTypes.${session.type}`),
+            session: t(`workout.sessionTypes.${session.type}`),
           }),
           body: t('onboarding.reminders.notification.body', {
             count: session.exercises.length,

@@ -21,6 +21,27 @@
     "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
     "progress": "Kilon ve ilerlemen yakında burada olacak."
   },
+  "nutrition": {
+    "calories": "Günde {{calories}} kcal",
+    "grams": "{{count}} g",
+    "macros": {
+      "protein": "Protein",
+      "carbs": "Karbonhidrat",
+      "fat": "Yağ"
+    }
+  },
+  "workout": {
+    "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "sessionTypes": {
+      "full_body": "Tüm vücut",
+      "upper": "Üst vücut",
+      "lower": "Alt vücut",
+      "push": "İtiş",
+      "pull": "Çekiş",
+      "legs": "Bacak"
+    }
+  },
   "onboarding": {
     "steps": {
       "welcome": {
@@ -258,27 +279,10 @@
       "error": "Planını oluşturamadık. Bağlantını kontrol edip tekrar dene."
     },
     "plan": {
-      "calories": "Günde {{calories}} kcal",
-      "macros": {
-        "protein": "Protein",
-        "carbs": "Karbonhidrat",
-        "fat": "Yağ"
-      },
-      "grams": "{{count}} g",
       "nutrition": "Günlük hedeflerin",
       "weight": "Kilon",
       "week": "Haftan",
-      "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
-      "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
       "more": "+{{count}} tane daha",
-      "sessionTypes": {
-        "full_body": "Tüm vücut",
-        "upper": "Üst vücut",
-        "lower": "Alt vücut",
-        "push": "İtiş",
-        "pull": "Çekiş",
-        "legs": "Bacak"
-      },
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",
