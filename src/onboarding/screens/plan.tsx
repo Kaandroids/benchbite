@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat, useWeightFormat } from '@/i18n/units';
-import { supabase } from '@/lib/supabase';
 import { useTheme, type ColorTokens } from '@/theme';
 
 import { projectedDate } from '../body';
-import { saveOnboarding, type WorkoutPlan } from '../plan';
+import { saveOnboarding } from '../plan';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
 
@@ -26,43 +26,6 @@ const MACROS: { key: 'protein' | 'carbs' | 'fat'; color: keyof ColorTokens }[] =
   { key: 'carbs', color: 'carbs' },
   { key: 'fat', color: 'fat' },
 ];
-
-/** Exercise names in the app language, falling back to English. */
-function useExerciseNames(plan: WorkoutPlan | undefined): Record<string, string> {
-  const { i18n } = useTranslation();
-  const [names, setNames] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!plan) {
-      return;
-    }
-    const ids = [
-      ...new Set(plan.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId))),
-    ];
-    let cancelled = false;
-    void supabase
-      .from('exercises')
-      .select('id, name, exercise_translations (language, name)')
-      .in('id', ids)
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        setNames(
-          Object.fromEntries(
-            data.map((exercise) => [
-              exercise.id,
-              exercise.exercise_translations.find((t) => t.language === i18n.language)?.name ??
-                exercise.name,
-            ]),
-          ),
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [plan, i18n.language]);
-
-  return names;
-}
 
 /**
  * The result of the onboarding: the projected weight, the daily targets and the week's workouts.
@@ -77,7 +40,9 @@ export function PlanStep() {
   const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
   const { targets, plan } = answers;
-  const names = useExerciseNames(plan);
+  const names = useExerciseNames(
+    plan?.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId)) ?? [],
+  );
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
 
