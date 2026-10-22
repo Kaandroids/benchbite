@@ -1,9 +1,9 @@
--- complete_onboarding() saves everything or nothing, checks what the app checks, and plans stay
--- private.
+-- complete_onboarding() saves everything or nothing, checks what the app checks, and workouts
+-- stay private.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -78,7 +78,7 @@ select throws_ok(
 );
 select is_empty($$ select 1 from public.profiles $$, 'A failed save leaves no profile');
 select is_empty($$ select 1 from public.weight_entries $$, 'A failed save leaves no weight');
-select is_empty($$ select 1 from public.workout_plans $$, 'A failed save leaves no plan');
+select is_empty($$ select 1 from public.workouts $$, 'A failed save leaves no workouts');
 
 -- A valid save writes everything.
 select lives_ok(
@@ -97,12 +97,17 @@ select results_eq(
 );
 select is((select count(*)::integer from public.health_data_consents), 1, 'The consent is saved');
 select results_eq(
-  $$ select s.weekday::integer, e.position::integer, e.exercise_id, e.is_finisher
-     from public.plan_sessions s join public.plan_exercises e on e.session_id = s.id
-     order by s.weekday, e.position $$,
+  $$ select weekdays, type::text, active from public.workouts order by weekdays $$,
+  $$ values ('{1}'::smallint[], 'full_body', true), ('{4}'::smallint[], 'full_body', true) $$,
+  'Each session of the plan is saved as an active workout on its weekday'
+);
+select results_eq(
+  $$ select w.weekdays[1]::integer, e.position::integer, e.exercise_id, e.is_finisher
+     from public.workouts w join public.workout_exercises e on e.workout_id = w.id
+     order by w.weekdays, e.position $$,
   $$ values (1, 0, 'Barbell_Squat', false), (1, 1, 'Plank', false),
             (4, 0, 'Leg_Press', false), (4, 1, 'Rowing_Stationary', true) $$,
-  'The plan is saved in order, with the finisher last'
+  'The exercises are saved in order, with the finisher last'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
@@ -110,33 +115,29 @@ select throws_ok(
   'The onboarding cannot be saved twice'
 );
 
--- The plan cannot be changed directly, not even by its owner.
+-- Workouts are created only by the onboarding for now, so users cannot add or delete them
+-- directly, not even their own.
 select throws_ok(
-  $$ delete from public.workout_plans $$,
+  $$ delete from public.workouts $$,
   '42501', null,
-  'Users cannot delete their plan'
+  'Users cannot delete their workouts'
 );
 select throws_ok(
-  $$ insert into public.plan_exercises (session_id, user_id, position, exercise_id, slot, sets,
+  $$ insert into public.workout_exercises (workout_id, user_id, position, exercise_id, slot, sets,
        target_reps_min, target_reps_max, rest_seconds)
-     select id, user_id, 9, 'Plank', 'core', 3, 8, 12, 60 from public.plan_sessions limit 1 $$,
+     select id, user_id, 9, 'Plank', 'core', 3, 8, 12, 60 from public.workouts limit 1 $$,
   '42501', null,
-  'Users cannot add exercises to their plan directly'
+  'Users cannot add exercises to their workouts directly'
 );
 
--- Other users see nothing and cannot add to the plan. The plan's id is taken while signed in as
--- its owner, as the other user cannot read it.
-select set_config('test.plan_id', (select id::text from public.workout_plans), true);
+-- Other users see nothing and cannot add workouts.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
-select is_empty($$ select 1 from public.plan_sessions $$, 'Users cannot read other plans');
+select is_empty($$ select 1 from public.workouts $$, 'Users cannot read other users'' workouts');
 select throws_ok(
-  format(
-    $$ insert into public.plan_sessions (plan_id, user_id, weekday, type, estimated_minutes)
-       values (%L, '00000000-0000-0000-0000-00000000000b', 2, 'push', 30) $$,
-    current_setting('test.plan_id')
-  ),
+  $$ insert into public.workouts (user_id, weekdays, type, estimated_minutes)
+     values ('00000000-0000-0000-0000-00000000000b', '{2}', 'push', 30) $$,
   '42501', null,
-  'Users cannot add sessions to another user''s plan'
+  'Users cannot add workouts directly'
 );
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);

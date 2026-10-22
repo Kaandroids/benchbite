@@ -30,7 +30,7 @@ export type CatalogueEntry = {
   metrics: Metric[];
 };
 
-export type SessionType = Enums['plan_session_type'];
+export type SessionType = Enums['workout_type'];
 
 /** Main exercises come first and get the heavier prescription. */
 export type Role = 'main' | 'accessory';
