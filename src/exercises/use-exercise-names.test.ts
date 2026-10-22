@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
-import { renderHook, waitFor } from '@/test/render';
+import { act, renderHook, waitFor } from '@/test/render';
 
 import { useExerciseNames } from './use-exercise-names';
 
@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  await i18n.changeLanguage('en');
+  await act(() => i18n.changeLanguage('en'));
 });
 
 describe('useExerciseNames', () => {
@@ -38,7 +38,7 @@ describe('useExerciseNames', () => {
   });
 
   it('uses the translation for the app language, falling back to English', async () => {
-    await i18n.changeLanguage('de');
+    await act(() => i18n.changeLanguage('de'));
     const { result } = await renderHook(() => useExerciseNames(['squat', 'row']));
     await waitFor(() => expect(result.current).toEqual({ squat: 'Kniebeuge', row: 'Barbell row' }));
   });
