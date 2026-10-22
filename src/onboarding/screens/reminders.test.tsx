@@ -19,9 +19,9 @@ jest.mock('@/reminders/reminders', () => ({
 
 const PLAN: WorkoutPlan = {
   sessions: [
-    { weekday: 1, type: 'push', exercises: [], finisher: null, estimatedMinutes: 45 },
+    { weekdays: [1, 5], type: 'push', exercises: [], finisher: null, estimatedMinutes: 45 },
     {
-      weekday: 3,
+      weekdays: [3],
       type: 'pull',
       exercises: ['row'].map((exerciseId) => ({
         exerciseId,
@@ -53,7 +53,7 @@ describe('RemindersStep', () => {
     expect(screen.getByText(/^6:00\sPM$/)).toBeTruthy();
   });
 
-  it('asks for permission and schedules one reminder per session at the chosen time', async () => {
+  it('asks for permission and schedules one reminder per training day at the chosen time', async () => {
     jest.mocked(requestReminderPermission).mockResolvedValue(true);
     await render(<RemindersStep />);
     await fireEvent(
@@ -75,6 +75,11 @@ describe('RemindersStep', () => {
           weekday: 3,
           title: 'Today: Pull',
           body: "1 exercise, about 30 min. You've got this!",
+        },
+        {
+          weekday: 5,
+          title: 'Today: Push',
+          body: "0 exercises, about 45 min. You've got this!",
         },
       ],
       18 * 60 + 15,

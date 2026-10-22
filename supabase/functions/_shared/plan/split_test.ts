@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from '@std/assert';
+import { assert, assertEquals, assertThrows } from '@std/assert';
 
 import { splitFor } from './split.ts';
 
@@ -14,11 +14,19 @@ Deno.test('three days are full body for beginners and push, pull, legs otherwise
 
 Deno.test('four to six days split the body', () => {
   assertEquals(splitFor(4, 'beginner'), ['upper', 'lower', 'upper', 'lower']);
-  assertEquals(splitFor(5, 'beginner'), ['upper', 'lower', 'push', 'pull', 'legs']);
+  assertEquals(splitFor(5, 'beginner'), ['upper', 'lower', 'full_body', 'upper', 'lower']);
   assertEquals(splitFor(6, 'beginner'), ['push', 'pull', 'legs', 'push', 'pull', 'legs']);
 });
 
 Deno.test('a plan needs one to six days', () => {
   assertThrows(() => splitFor(0, 'beginner'), RangeError);
   assertThrows(() => splitFor(7, 'beginner'), RangeError);
+});
+
+Deno.test('a week has at most three types', () => {
+  for (let days = 1; days <= 6; days++) {
+    for (const experience of ['beginner', 'intermediate', 'advanced'] as const) {
+      assert(new Set(splitFor(days, experience)).size <= 3, `${days} days, ${experience}`);
+    }
+  }
 });
