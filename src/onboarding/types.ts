@@ -1,4 +1,5 @@
 import type { Database } from '@/lib/database.types';
+import type { SessionMinutes } from '@shared/plan/limits';
 
 import type { NutritionTargets, WorkoutPlan } from './plan';
 
@@ -25,7 +26,7 @@ export type OnboardingAnswers = {
   /** Whether the user picked the days; until then they follow the recommendation. */
   trainingDaysChosen?: boolean;
   setup?: Enums['training_setup'];
-  sessionMinutes?: 30 | 45 | 60 | 75;
+  sessionMinutes?: SessionMinutes;
   weightUnit?: Enums['weight_unit'];
   heightUnit?: Enums['height_unit'];
   /** The result calculated on the building step, shown on the plan step and then saved. */

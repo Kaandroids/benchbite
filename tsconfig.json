@@ -7,7 +7,9 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@/assets/*": ["./assets/*"]
+      "@/assets/*": ["./assets/*"],
+      // Code the app shares with the Edge Functions.
+      "@shared/*": ["./supabase/functions/_shared/*"]
     },
     // Without this, TypeScript loads every installed @types package, including the Node types
     // that only scripts/ should see. The Jest globals are needed by the tests.

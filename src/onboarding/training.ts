@@ -3,8 +3,7 @@ import type { OnboardingAnswers } from './types';
 
 type Experience = NonNullable<OnboardingAnswers['experience']>;
 
-/** Every plan keeps at least one rest day, which the database enforces too. */
-export const MAX_TRAINING_DAYS = 6;
+export { MAX_TRAINING_DAYS, SESSION_MINUTES } from '@shared/plan/limits';
 
 /**
  * Training days suggested for each level of experience, as ISO weekdays starting on Monday, with
@@ -15,5 +14,3 @@ export const RECOMMENDED_DAYS: Record<Experience, number[]> = {
   intermediate: [1, 2, 4, 5],
   advanced: [1, 2, 3, 5, 6],
 };
-
-export const SESSION_MINUTES = [30, 45, 60, 75] as const;

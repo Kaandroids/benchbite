@@ -3,6 +3,7 @@
 // `pnpm check:plans` while the stack is running.
 
 import { Constants, type Database } from '../src/lib/database.types.ts';
+import { MAX_TRAINING_DAYS, SESSION_MINUTES } from '../supabase/functions/_shared/plan/limits.ts';
 import type { PlanInput, Session } from '../supabase/functions/_shared/plan/types.ts';
 
 const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
@@ -18,7 +19,6 @@ const {
   experience: EXPERIENCES,
   training_setup: SETUPS,
 } = Constants.public.Enums;
-const SESSION_MINUTES = [30, 45, 60, 75] as const;
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 type Tables = Database['public']['Tables'];
@@ -55,7 +55,7 @@ function allAnswers(): PlanInput[] {
     for (const experience of EXPERIENCES)
       for (const setup of SETUPS)
         for (const sessionMinutes of SESSION_MINUTES)
-          for (let days = 1; days <= 6; days++)
+          for (let days = 1; days <= MAX_TRAINING_DAYS; days++)
             answers.push({
               goal,
               experience,

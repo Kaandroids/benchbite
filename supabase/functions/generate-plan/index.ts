@@ -5,6 +5,7 @@ import { withSupabase } from '@supabase/server';
 import { z } from 'zod';
 
 import { Constants, type Database } from '../_shared/database.types.ts';
+import { MAX_TRAINING_DAYS, SESSION_MINUTES } from '../_shared/plan/limits.ts';
 import { buildPlan } from '../_shared/plan/plan.ts';
 import type { CatalogueEntry } from '../_shared/plan/types.ts';
 
@@ -18,10 +19,10 @@ const PlanRequest = z.object({
   trainingDays: z
     .array(z.number().int().min(1).max(7))
     .min(1)
-    .max(6)
+    .max(MAX_TRAINING_DAYS)
     .refine((days) => new Set(days).size === days.length, 'Training days must be unique'),
   setup: z.enum(Enums.training_setup),
-  sessionMinutes: z.union([z.literal(30), z.literal(45), z.literal(60), z.literal(75)]),
+  sessionMinutes: z.literal(SESSION_MINUTES),
 });
 
 export default {

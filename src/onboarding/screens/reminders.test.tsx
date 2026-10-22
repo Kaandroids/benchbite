@@ -25,7 +25,7 @@ const PLAN: WorkoutPlan = {
       type: 'pull',
       exercises: ['row'].map((exerciseId) => ({
         exerciseId,
-        slot: 'main',
+        slot: 'horizontal_pull',
         sets: 3,
         target: { seconds: 30 },
         restSeconds: 60,
