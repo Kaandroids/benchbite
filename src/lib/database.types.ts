@@ -387,6 +387,7 @@ export type Database = {
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      max_workout_exercises: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];

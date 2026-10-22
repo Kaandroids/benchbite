@@ -1,9 +1,9 @@
--- save_workout() creates and replaces only the caller's workouts, checks each target against what
--- the exercise records, and estimates the length. Users delete only their own workouts.
+-- save_workout() creates and replaces only the caller's workouts, keeps them within the caller's
+-- exercise limit, checks each target against what the exercise records, and estimates the length. Users delete only their own workouts.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -39,22 +39,29 @@ select throws_ok(
   '42501', null,
   'Anon cannot save a workout'
 );
+select throws_ok(
+  $$ select public.max_workout_exercises() $$,
+  '42501', null,
+  'Anon cannot ask for the exercise limit'
+);
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
+select is(public.max_workout_exercises(), 10, 'Users may have 10 exercises in a workout');
 
 -- Rejected workouts save nothing.
 select throws_ok(
   $$ select public.save_workout(pg_temp.workout('[]')) $$,
-  'BB008', 'A workout needs 1 to 20 exercises',
+  'BB008', 'A workout needs 1 to 10 exercises',
   'A workout without exercises is rejected'
 );
 select throws_ok(
   $$ select public.save_workout(pg_temp.workout((
        select jsonb_agg(pg_temp.exercise('Hammer_Curls', '{"reps": {"min": 8, "max": 12}}'))
-       from generate_series(1, 21)
+       from generate_series(1, 11)
      ))) $$,
-  'BB008', 'A workout needs 1 to 20 exercises',
-  'A workout with more than 20 exercises is rejected'
+  'BB008', 'A workout needs 1 to 10 exercises',
+  'A workout with more than 10 exercises is rejected'
 );
 select throws_ok(
   $$ select public.save_workout(pg_temp.workout(jsonb_build_array(
