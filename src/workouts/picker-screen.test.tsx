@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from '@/test/render';
 
 import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
-import { useExerciseLimit } from './workouts';
+import { useWorkoutLimits } from './workouts';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/exercises/library', () => ({
@@ -16,7 +16,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./draft', () => ({ addExercises: jest.fn(), useDraft: jest.fn() }));
 jest.mock('./workouts', () => ({
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
-  useExerciseLimit: jest.fn(),
+  useWorkoutLimits: jest.fn(),
 }));
 
 const exercise = (
@@ -55,7 +55,7 @@ const loaded = <T,>(data: T) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useExerciseLibrary).mockReturnValue(loaded([BENCH, PULLDOWN, ROWING]) as never);
-  jest.mocked(useExerciseLimit).mockReturnValue(loaded(10) as never);
+  jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 10, workouts: 5 }) as never);
   jest.mocked(useDraft).mockReturnValue({ name: '', weekdays: [], exercises: [] });
 });
 
@@ -99,7 +99,7 @@ describe('PickerScreen', () => {
   });
 
   it('stops choosing when the workout is full', async () => {
-    jest.mocked(useExerciseLimit).mockReturnValue(loaded(2) as never);
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 2, workouts: 5 }) as never);
     jest.mocked(useDraft).mockReturnValue({
       name: 'Push',
       weekdays: [],

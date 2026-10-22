@@ -7,7 +7,7 @@ import { act, fireEvent, render, screen } from '@/test/render';
 import { addExercises, clearDraft } from './draft';
 import { EditorScreen } from './editor-screen';
 import { testExercise, testWorkout } from './test-data';
-import { useDeleteWorkout, useExerciseLimit, useSaveWorkout, useWorkouts } from './workouts';
+import { useDeleteWorkout, useWorkoutLimits, useSaveWorkout, useWorkouts } from './workouts';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), dismiss: jest.fn() },
@@ -22,7 +22,7 @@ jest.mock('./workouts', () => ({
   useWorkouts: jest.fn(),
   useSaveWorkout: jest.fn(),
   useDeleteWorkout: jest.fn(),
-  useExerciseLimit: jest.fn(),
+  useWorkoutLimits: jest.fn(),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 
@@ -74,7 +74,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useWorkouts).mockReturnValue(loaded([PUSH]) as never);
   jest.mocked(useExerciseLibrary).mockReturnValue(loaded(LIBRARY) as never);
-  jest.mocked(useExerciseLimit).mockReturnValue(loaded(10) as never);
+  jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 10, workouts: 5 }) as never);
   jest.mocked(useSaveWorkout).mockReturnValue({
     mutateAsync: saveWorkout.mockResolvedValue(5),
     isPending: false,
@@ -148,7 +148,7 @@ describe('EditorScreen', () => {
   });
 
   it('stops adding exercises at the limit', async () => {
-    jest.mocked(useExerciseLimit).mockReturnValue(loaded(2) as never);
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 2, workouts: 5 }) as never);
     await render(<EditorScreen id={5} />);
     expect(screen.queryByRole('button', { name: 'Add exercises' })).toBeNull();
     expect(screen.getByText('Workouts can have up to 2 exercises.')).toBeTruthy();
@@ -156,7 +156,7 @@ describe('EditorScreen', () => {
   });
 
   it('asks to remove exercises above the limit before saving', async () => {
-    jest.mocked(useExerciseLimit).mockReturnValue(loaded(1) as never);
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 1, workouts: 5 }) as never);
     await render(<EditorScreen id={5} />);
     expect(screen.getByText('Remove 1 exercise to save. Workouts can have up to 1.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
@@ -175,6 +175,12 @@ describe('EditorScreen', () => {
     expect(alert).toHaveBeenLastCalledWith(
       'Not saved',
       "We couldn't save the workout. Check your connection and try again.",
+    );
+    saveWorkout.mockRejectedValueOnce({ code: 'BB009' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(alert).toHaveBeenLastCalledWith(
+      'Not saved',
+      'You can have up to 5 workouts, archived ones included. Delete one to make room.',
     );
     expect(router.back).not.toHaveBeenCalled();
   });

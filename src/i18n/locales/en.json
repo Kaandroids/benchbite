@@ -149,7 +149,9 @@
       "triceps": "Triceps"
     },
     "edit": "Edit",
-    "startLabel": "Start {{name}}"
+    "startLabel": "Start {{name}}",
+    "limitTitle": "No room for another workout",
+    "limit": "You can have up to {{max}} workouts, archived ones included. Delete one to make room."
   },
   "exercise": {
     "start": "Start",

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
@@ -11,7 +11,7 @@ import { isoWeekday } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
-import { useWorkouts } from './workouts';
+import { useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
  * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below.
@@ -21,8 +21,19 @@ export function WorkoutsScreen() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
+  const limits = useWorkoutLimits();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
   const today = isoWeekday(new Date());
+  // Archived workouts count too (ADR 0018).
+  const full = limits.data !== undefined && (workouts.data?.length ?? 0) >= limits.data.workouts;
+
+  const create = () => {
+    if (full) {
+      Alert.alert(t('workout.limitTitle'), t('workout.limit', { max: limits.data.workouts }));
+      return;
+    }
+    router.push('/workout/edit');
+  };
 
   return (
     // Inside a tab, the bottom inset includes the tab bar, which covers the content on iOS.
@@ -55,7 +66,7 @@ export function WorkoutsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('editor.newTitle')}
-            onPress={() => router.push('/workout/edit')}
+            onPress={create}
             style={({ pressed }) => [
               styles.headerButton,
               {

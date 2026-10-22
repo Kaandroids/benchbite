@@ -149,7 +149,9 @@
       "triceps": "Triseps"
     },
     "edit": "Düzenle",
-    "startLabel": "{{name}} başlat"
+    "startLabel": "{{name}} başlat",
+    "limitTitle": "Yeni antrenmana yer yok",
+    "limit": "Arşivdekiler dahil en fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil."
   },
   "exercise": {
     "start": "Başlangıç",

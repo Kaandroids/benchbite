@@ -149,7 +149,9 @@
       "triceps": "Trizeps"
     },
     "edit": "Bearbeiten",
-    "startLabel": "{{name}} starten"
+    "startLabel": "{{name}} starten",
+    "limitTitle": "Kein Platz für ein weiteres Training",
+    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen."
   },
   "exercise": {
     "start": "Start",

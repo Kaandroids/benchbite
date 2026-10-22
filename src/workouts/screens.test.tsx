@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ArchiveScreen } from './archive-screen';
 import { testExercise, testWorkout } from './test-data';
 import { WorkoutScreen } from './workout-screen';
-import { useSetWorkoutActive, useWorkouts, type Workout } from './workouts';
+import { useSetWorkoutActive, useWorkoutLimits, useWorkouts, type Workout } from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
@@ -13,6 +14,7 @@ jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
   useWorkouts: jest.fn(),
   useSetWorkoutActive: jest.fn(),
+  useWorkoutLimits: jest.fn(),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 jest.mock('@/lib/supabase', () => ({
@@ -48,6 +50,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   jest.mocked(useSetWorkoutActive).mockReturnValue({ mutate } as never);
+  jest.mocked(useWorkoutLimits).mockReturnValue({ data: { exercises: 20, workouts: 2 } } as never);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -99,6 +102,18 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/workout/archive');
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
     expect(router.push).toHaveBeenCalledWith('/workout/edit');
+  });
+
+  it('says when there is no room for another workout, counting the archive', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
+    await render(<WorkoutsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    expect(router.push).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledWith(
+      'No room for another workout',
+      'You can have up to 2 workouts, archived ones included. Delete one to make room.',
+    );
   });
 
   it('offers to start active workouts instead of switching them off', async () => {

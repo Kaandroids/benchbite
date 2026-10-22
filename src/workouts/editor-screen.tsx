@@ -18,7 +18,7 @@ import { fonts, typography, useTheme } from '@/theme';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
 import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useDeleteWorkout, useExerciseLimit, useSaveWorkout, useWorkouts } from './workouts';
+import { useDeleteWorkout, useWorkoutLimits, useSaveWorkout, useWorkouts } from './workouts';
 
 const ROW_HEIGHT = 76;
 
@@ -28,7 +28,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
   const library = useExerciseLibrary();
-  const limit = useExerciseLimit();
+  const limits = useWorkoutLimits();
   const draft = useDraft();
   const save = useSaveWorkout();
   const remove = useDeleteWorkout();
@@ -42,7 +42,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
   // A workout from the plan builder is named by its type until the user gives it a name.
   const typeName = workout && workout.name === null ? workoutName(workout) : null;
-  const loaded = allLoaded([workouts, library, limit]);
+  const loaded = allLoaded([workouts, library, limits]);
 
   // Starts the draft once the workout is loaded. Finishers become ordinary exercises.
   useEffect(() => {
@@ -74,7 +74,7 @@ export function EditorScreen({ id }: { id?: number }) {
 
   const details = (exerciseId: string) => library.data?.find((item) => item.id === exerciseId);
   const close = () => router.back();
-  const max = limit.data ?? 0;
+  const max = limits.data?.exercises ?? 0;
   const over = draft ? draft.exercises.length - max : 0;
   const canSave =
     !!draft &&
@@ -96,11 +96,15 @@ export function EditorScreen({ id }: { id?: number }) {
       router.back();
     } catch (error) {
       console.warn('Could not save the workout', error);
-      // BB008: the limit changed since it was loaded.
-      const tooMany = (error as { code?: string }).code === 'BB008';
+      // The limits can change after they were loaded, or another device can add a workout.
+      const code = (error as { code?: string }).code;
       Alert.alert(
         t('editor.saveErrorTitle'),
-        tooMany ? t('editor.limit', { max }) : t('editor.saveError'),
+        code === 'BB008'
+          ? t('editor.limit', { max })
+          : code === 'BB009'
+            ? t('workout.limit', { max: limits.data?.workouts ?? 0 })
+            : t('editor.saveError'),
       );
     }
   };
@@ -208,7 +212,7 @@ export function EditorScreen({ id }: { id?: number }) {
         />
       ) : !loaded || !draft ? (
         <View style={[styles.flex, { padding: spacing.xl }]}>
-          <LoadState queries={[workouts, library, limit]} />
+          <LoadState queries={[workouts, library, limits]} />
         </View>
       ) : (
         <ScrollView

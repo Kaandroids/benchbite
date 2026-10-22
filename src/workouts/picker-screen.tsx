@@ -21,7 +21,7 @@ import {
 import { fonts, typography, useTheme } from '@/theme';
 
 import { addExercises, useDraft } from './draft';
-import { useExerciseLimit } from './workouts';
+import { useWorkoutLimits } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
 const ROW_HEIGHT = 73;
@@ -32,7 +32,7 @@ export function PickerScreen() {
   const { colors, radii, spacing } = useTheme();
   const caption = useExerciseCaption();
   const library = useExerciseLibrary();
-  const limit = useExerciseLimit();
+  const limits = useWorkoutLimits();
   const draft = useDraft();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<ExerciseFilter | null>(null);
@@ -41,7 +41,7 @@ export function PickerScreen() {
   const results = library.data ? filterExercises(library.data, query, filter, i18n.language) : [];
 
   // How many more the workout has room for; the rest of the library waits until one is unchosen.
-  const room = (limit.data ?? 0) - (draft?.exercises.length ?? 0);
+  const room = (limits.data?.exercises ?? 0) - (draft?.exercises.length ?? 0);
   const full = chosen.length >= room;
 
   const toggle = (exercise: LibraryExercise) =>
@@ -167,7 +167,7 @@ export function PickerScreen() {
         </ScrollView>
       </View>
 
-      {allLoaded([library, limit]) ? (
+      {allLoaded([library, limits]) ? (
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
@@ -188,7 +188,7 @@ export function PickerScreen() {
         />
       ) : (
         <View style={[styles.root, { padding: spacing.xl }]}>
-          <LoadState queries={[library, limit]} />
+          <LoadState queries={[library, limits]} />
         </View>
       )}
 
@@ -201,9 +201,9 @@ export function PickerScreen() {
           gap: spacing.sm,
         }}
       >
-        {limit.data !== undefined && full ? (
+        {limits.data !== undefined && full ? (
           <Text variant="caption" color="textMuted" align="center">
-            {t('picker.limit', { max: limit.data })}
+            {t('picker.limit', { max: limits.data.exercises })}
           </Text>
         ) : null}
         <Button
