@@ -109,6 +109,12 @@ describe('EditorScreen', () => {
     expect(screen.getByText('1 × 5 min')).toBeTruthy();
   });
 
+  it('says when the workout does not exist', async () => {
+    await render(<EditorScreen id={99} />);
+    expect(screen.getByText('Workout not found')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
   it('saves the name, days and exercises, then goes back', async () => {
     await render(<EditorScreen id={5} />);
     await fireEvent.changeText(screen.getByLabelText('Name'), '  Chest day ');

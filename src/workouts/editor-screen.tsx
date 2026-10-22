@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
+import { MessageView } from '@/components/ui/message-view';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -191,7 +192,13 @@ export function EditorScreen({ id }: { id?: number }) {
         </Pressable>
       </View>
 
-      {!loaded || !draft ? (
+      {loaded && id !== undefined && !workout && !draft ? (
+        <MessageView
+          icon="dumbbell"
+          title={t('workout.notFound.title')}
+          message={t('workout.notFound.message')}
+        />
+      ) : !loaded || !draft ? (
         <View style={[styles.flex, { padding: spacing.xl }]}>
           <LoadState queries={[workouts, library, limit]} />
         </View>
