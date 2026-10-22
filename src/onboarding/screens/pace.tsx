@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
-import { paceIn, paceToKg, useNumberFormat, weightIn } from '@/i18n/units';
+import { useDateFormat } from '@/i18n/dates';
+import { paceIn, paceToKg, useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import type { ColorTokens } from '@/theme';
 
@@ -21,8 +22,10 @@ const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
 
 /** How fast to reach the target, with how demanding that is and when the target is reached. */
 export function PaceStep() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { format } = useNumberFormat();
+  const formatWeight = useWeightFormat();
+  const formatDate = useDateFormat('long');
   const { answers, progress, next, back } = useStep('pace');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const unit = answers.weightUnit ?? 'kg';
@@ -37,9 +40,7 @@ export function PaceStep() {
   );
   const paceKg = paceToKg(unit, pace);
   const level = paceLevel(goal, weightKg, paceKg);
-  const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'long' }).format(
-    projectedDate(weightKg, targetKg, paceKg, new Date()),
-  );
+  const date = formatDate(projectedDate(weightKg, targetKg, paceKg, new Date()));
 
   return (
     <Screen
@@ -63,7 +64,7 @@ export function PaceStep() {
             ) : null}
             <Text align="center">
               {t('onboarding.pace.projected', {
-                weight: format(weightIn(unit, targetKg), { maximumFractionDigits: 1 }),
+                weight: formatWeight(targetKg, unit),
                 unit,
                 date,
               })}

@@ -7,8 +7,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useWeekdayFormat } from '@/i18n/dates';
-import { useNumberFormat, weightIn } from '@/i18n/units';
+import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
+import { useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { useTheme, type ColorTokens } from '@/theme';
 
@@ -68,9 +68,11 @@ function useExerciseNames(plan: WorkoutPlan | undefined): Record<string, string>
  * Continuing saves everything in one transaction.
  */
 export function PlanStep() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
+  const formatWeight = useWeightFormat();
+  const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
   const { targets, plan } = answers;
@@ -89,8 +91,7 @@ export function PlanStep() {
   const pace = answers.weeklyPaceKg;
   const changesWeight =
     (answers.goal === 'lose_fat' || answers.goal === 'build_muscle') && targetKg && pace;
-  const showWeight = (kg: number) =>
-    `${format(weightIn(unit, kg), { maximumFractionDigits: 1 })} ${unit}`;
+  const showWeight = (kg: number) => `${formatWeight(kg, unit)} ${unit}`;
 
   const save = async () => {
     setSaving(true);
@@ -141,9 +142,7 @@ export function PlanStep() {
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
               value: showWeight(targetKg),
-              label: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(
-                projectedDate(weightKg, targetKg, pace, new Date()),
-              ),
+              label: formatDate(projectedDate(weightKg, targetKg, pace, new Date())),
             }}
           />
         </Animated.View>

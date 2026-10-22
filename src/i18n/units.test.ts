@@ -10,6 +10,7 @@ import {
   paceIn,
   paceToKg,
   useNumberFormat,
+  useWeightFormat,
   weightIn,
   weightToKg,
 } from './units';
@@ -170,5 +171,25 @@ describe('useNumberFormat', () => {
     await i18n.changeLanguage('de');
     const { result } = await renderHook(() => useNumberFormat());
     expect(result.current.format(80, { minimumFractionDigits: 1 })).toBe('80,0');
+  });
+});
+
+describe('useWeightFormat', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('formats a weight in the unit with at most one decimal', async () => {
+    const { result } = await renderHook(() => useWeightFormat());
+    expect(result.current(72.5, 'kg')).toBe('72.5');
+    expect(result.current(80, 'kg')).toBe('80');
+    // 72.5 / 0.45359237 = 159.836…
+    expect(result.current(72.5, 'lb')).toBe('159.8');
+  });
+
+  it('follows the app language', async () => {
+    await i18n.changeLanguage('de');
+    const { result } = await renderHook(() => useWeightFormat());
+    expect(result.current(72.5, 'kg')).toBe('72,5');
   });
 });

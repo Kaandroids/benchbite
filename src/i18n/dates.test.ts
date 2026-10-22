@@ -1,7 +1,7 @@
 import i18n from '@/i18n';
 import { renderHook } from '@/test/render';
 
-import { isoWeekday, useTimeFormat, useWeekdayFormat } from './dates';
+import { isoWeekday, useDateFormat, useTimeFormat, useWeekdayFormat } from './dates';
 
 describe('isoWeekday', () => {
   it('numbers the days from Monday (1) to Sunday (7)', () => {
@@ -82,5 +82,24 @@ describe('useTimeFormat', () => {
     expect(result.current(0)).toBe('0:00');
     expect(result.current(23 * 60 + 45)).toBe('23:45');
     expect(result.current(7 * 60 + 5)).toBe('7:05');
+  });
+});
+
+describe('useDateFormat', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('formats dates in the given style and the app language', async () => {
+    const date = new Date(2026, 9, 21);
+    await i18n.changeLanguage('en');
+    const { result: long } = await renderHook(() => useDateFormat('long'));
+    expect(long.current(date)).toBe('October 21, 2026');
+    const { result: medium } = await renderHook(() => useDateFormat('medium'));
+    expect(medium.current(date)).toBe('Oct 21, 2026');
+
+    await i18n.changeLanguage('de');
+    const { result: german } = await renderHook(() => useDateFormat('long'));
+    expect(german.current(date)).toBe('21. Oktober 2026');
   });
 });

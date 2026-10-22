@@ -16,6 +16,13 @@ export function useWeekdayFormat(width: 'long' | 'short' = 'long') {
   return (weekday: number) => formatter.format(new Date(2024, 0, weekday));
 }
 
+/** Formats dates in the app language, for example "21 October 2026" with the long style. */
+export function useDateFormat(style: 'long' | 'medium') {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, { dateStyle: style });
+  return (date: Date) => formatter.format(date);
+}
+
 /** Formats a time of day, given in minutes after midnight, as the app language writes it. */
 export function useTimeFormat() {
   const { i18n } = useTranslation();

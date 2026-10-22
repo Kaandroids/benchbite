@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useNumberFormat, weightIn } from '@/i18n/units';
+import { useWeightFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { isTargetInGoalDirection, minHealthyWeightKg } from '../body';
@@ -26,7 +26,7 @@ const DEFAULT_CHANGE_KG = { lose_fat: -5, build_muscle: 3 };
 export function TargetWeightStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { format } = useNumberFormat();
+  const formatWeight = useWeightFormat();
   const { answers, progress, next, back } = useStep('target-weight');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const weightKg = answers.weightKg ?? 72;
@@ -37,7 +37,7 @@ export function TargetWeightStep() {
     answers.targetWeightKg ?? Math.max(lowestKg, weightKg + DEFAULT_CHANGE_KG[goal]),
   );
 
-  const show = (kg: number) => format(weightIn(unit, kg), { maximumFractionDigits: 1 });
+  const show = (kg: number) => formatWeight(kg, unit);
 
   // Someone already at the lower end of a healthy weight should not lose more.
   if (goal === 'lose_fat' && weightKg <= lowestKg) {
