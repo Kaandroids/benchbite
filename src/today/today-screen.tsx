@@ -13,8 +13,8 @@ import { useDateFormat } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { usePlan } from '@/plan/use-plan';
-import { NO_STREAK } from '@/streak/streak';
 import { StreakBadge } from '@/streak/streak-badge';
+import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
@@ -34,9 +34,9 @@ export function TodayScreen() {
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
+  const streak = useStreak();
   const queries = [plan, targets, latestWeight, weightUnit];
   const today = new Date();
-  const streak = NO_STREAK;
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));

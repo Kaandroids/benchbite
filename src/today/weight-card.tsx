@@ -78,7 +78,8 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
     pending.current = { timer: setTimeout(save, SAVE_DELAY_MS), save };
   };
 
-  const stepButton = (icon: IconName, label: string, deltaKg: number) => (
+  // Minus is quieter than plus, so the two read apart at a glance.
+  const stepButton = (icon: IconName, label: string, deltaKg: number, quiet: boolean) => (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -88,11 +89,11 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
         styles.step,
         {
           borderRadius: radii.full,
-          backgroundColor: pressed ? colors.selected : colors.iconBackground,
+          backgroundColor: pressed ? colors.border : quiet ? colors.track : colors.iconBackground,
         },
       ]}
     >
-      <Icon name={icon} color="primary" />
+      <Icon name={icon} color={quiet ? 'textMuted' : 'primary'} />
     </Pressable>
   );
 
@@ -117,8 +118,8 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
             </Text>
           </View>
           <View style={[styles.row, { gap: spacing.sm }]}>
-            {stepButton('minus', t('today.weight.decrease'), -STEP_KG)}
-            {stepButton('plus', t('today.weight.increase'), STEP_KG)}
+            {stepButton('minus', t('today.weight.decrease'), -STEP_KG, true)}
+            {stepButton('plus', t('today.weight.increase'), STEP_KG, false)}
           </View>
         </View>
       )}
