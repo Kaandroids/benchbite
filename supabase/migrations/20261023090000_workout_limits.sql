@@ -1,22 +1,28 @@
--- How many exercises a workout may have depends on the user (ADR 0018). For now every user has the
--- free limit of 10; premium will raise it. The app asks max_workout_exercises() instead of knowing
--- the number, and save_workout() checks it. Plans from the plan builder stay within the free limit
--- (FREE_WORKOUT_EXERCISES in supabase/functions/_shared/plan/limits.ts).
+-- How many workouts a user may have, and how many exercises each may have, depends on the user
+-- (ADR 0018). For now every user has the free limits; premium will raise them. The app asks
+-- workout_limits() instead of knowing the numbers, and save_workout() checks them.
+--
+-- A new error code:
+--   BB009  the user already has as many workouts as they may have
+--
+-- The plan builder's workouts stay within the exercise limit (FREE_WORKOUT_EXERCISES in
+-- supabase/functions/_shared/plan/limits.ts). They are not held to the workout limit: a plan may
+-- have a workout for each of up to 6 training days.
 
--- The most exercises the caller's workouts may have.
-create function public.max_workout_exercises()
-returns integer
+-- The caller's limits: exercises in one workout, and workouts in all, archived ones included.
+create function public.workout_limits()
+returns table (exercises integer, workouts integer)
 language sql
 stable
 set search_path = ''
 as $$
-  select 10;
+  select 20, 5;
 $$;
 
-revoke execute on function public.max_workout_exercises from public, anon;
-grant execute on function public.max_workout_exercises to authenticated;
+revoke execute on function public.workout_limits from public, anon;
+grant execute on function public.workout_limits to authenticated;
 
--- Unchanged apart from the limit, which was 20 for everyone.
+-- Unchanged apart from the limits; the exercise limit was a fixed 20.
 create or replace function public.save_workout(workout jsonb)
 returns bigint
 language plpgsql
@@ -30,15 +36,23 @@ declare
   days smallint[] := array(
     select value::smallint from jsonb_array_elements_text(coalesce(workout -> 'weekdays', '[]'))
   );
-  limit_exercises integer := public.max_workout_exercises();
+  max_exercises integer;
+  max_workouts integer;
   minutes smallint;
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
 
-  if jsonb_array_length(items) not between 1 and limit_exercises then
-    raise exception 'A workout needs 1 to % exercises', limit_exercises using errcode = 'BB008';
+  select l.exercises, l.workouts into max_exercises, max_workouts from public.workout_limits() l;
+
+  if jsonb_array_length(items) not between 1 and max_exercises then
+    raise exception 'A workout needs 1 to % exercises', max_exercises using errcode = 'BB008';
+  end if;
+  -- Workouts from the plan builder count too, archived ones as well.
+  if saved_id is null
+    and (select count(*) from public.workouts w where w.user_id = caller_id) >= max_workouts then
+    raise exception 'A user can have up to % workouts', max_workouts using errcode = 'BB009';
   end if;
   -- Unknown exercises are left to the foreign key.
   if exists (

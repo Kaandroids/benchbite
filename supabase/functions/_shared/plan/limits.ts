@@ -11,6 +11,6 @@ export type SessionMinutes = (typeof SESSION_MINUTES)[number];
 
 /**
  * The most exercises a workout may have, finisher included, without premium. The database has the
- * same limit in max_workout_exercises(), and plans stay within it.
+ * same limit in workout_limits(), and plans stay within it.
  */
-export const FREE_WORKOUT_EXERCISES = 10;
+export const FREE_WORKOUT_EXERCISES = 20;

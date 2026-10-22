@@ -5,35 +5,39 @@
 
 ## Context
 
-A workout may have a limited number of exercises. The limit was 20 for everyone. Without premium
-it is now 10, and premium will raise it. More limits like this are likely, for example the number
-of active workouts.
+Without premium, a user may have up to 5 workouts with up to 20 exercises each. Premium will
+raise these limits, and more limits like them are likely.
 
-The app has to know the limit to stop users before they save, and `save_workout()` (ADR 0017) has
-to enforce it.
+The app has to know the limits to stop users before they save, and `save_workout()` (ADR 0017) has
+to enforce them.
 
 ## Decision
 
-- **The database decides:** `max_workout_exercises()` returns the caller's limit, and
-  `save_workout()` checks the workout against it. For now it returns 10 for everyone; once premium
-  exists it will look at the caller's subscription.
-- **The app asks:** the app calls the function and does not know the number itself. The picker
-  stops at the limit, and the editor says why a workout cannot be saved.
-- **Plans fit the free limit:** the plan builder's workouts stay within 10 exercises, so that every
-  user can edit them. `FREE_WORKOUT_EXERCISES` in the shared plan limits says so, and
-  `pnpm check:plans` checks it.
+- **The database decides:** `workout_limits()` returns the caller's limits, and `save_workout()`
+  checks against them. For now it returns the free limits for everyone; once premium exists it
+  will look at the caller's subscription.
+- **The app asks:** the app calls the function and does not know the numbers itself. The workout
+  list stops offering new workouts at the limit, the picker stops at the exercise limit, and the
+  editor says why a workout cannot be saved.
+- **Every workout counts:** archived workouts count towards the workout limit, so archiving is not
+  a way around it.
+- **Plans fit the free exercise limit:** the plan builder's workouts stay within 20 exercises, so
+  that every user can edit them. `FREE_WORKOUT_EXERCISES` in the shared plan limits says so, and
+  `pnpm check:plans` checks it. The plan builder is not held to the workout limit: a plan has a
+  workout for each of up to 6 training days.
 
 ## Alternatives considered
 
-- **A constant in the app:** a new limit would need an app update, and the app could not tell a
+- **Constants in the app:** a new limit would need an app update, and the app could not tell a
   premium user from a free one.
-- **A limits table:** more flexible, but there is only one limit and no premium yet. A function
-  can later read from a table without the app noticing.
+- **A limits table:** more flexible, but there are only two limits and no premium yet. The
+  function can later read from a table without the app noticing.
+- **Counting only active workouts:** archiving would get around the limit.
 
 ## Consequences
 
 - Raising a limit, or making it depend on premium, only needs a migration.
-- The free limit is written twice, in `max_workout_exercises()` and in the plan builder's limits.
-  Both mention the other.
-- Workouts saved earlier with more than 10 exercises can still be opened, but must be shortened
-  before they are saved again.
+- The free exercise limit is written twice, in `workout_limits()` and in the plan builder's
+  limits. Both mention the other.
+- A user whose plan has 6 workouts has more than the free limit and cannot create another one
+  until they delete one.
