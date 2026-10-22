@@ -22,6 +22,7 @@ export const ICONS = {
   person: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },
+  snowflake: { ios: 'snowflake', android: 'ac_unit', web: 'ac_unit' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;

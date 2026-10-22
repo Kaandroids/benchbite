@@ -23,6 +23,11 @@
   "today": {
     "loading": "Wird geladen",
     "targets": "Deine Tagesziele",
+    "week": {
+      "done": "Training erledigt",
+      "missed": "Training verpasst",
+      "planned": "Training geplant"
+    },
     "workout": {
       "title": "Heutiges Training",
       "restDay": "Ruhetag",
@@ -57,9 +62,9 @@
       "carbs": "Kohlenhydrate",
       "fat": "Fett"
     },
-    "caloriesOf": "{{eaten}} / {{target}} kcal",
-    "gramsOf": "{{eaten}} / {{target}} g",
-    "calorieLabel": "Kalorien"
+    "calorieLabel": "Kalorien",
+    "calorieTarget": "/ {{target}} kcal",
+    "gramTarget": "/ {{target}} g"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",

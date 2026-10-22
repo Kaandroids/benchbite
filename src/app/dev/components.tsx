@@ -160,7 +160,12 @@ export default function ComponentGallery() {
           <StreakBadge streak={{ count: 11, doneToday: false, days: {} }} />
           <StreakBadge streak={{ count: 0, doneToday: false, days: {} }} />
         </View>
-        <WeekStrip today={new Date()} days={sampleStreak(new Date(), true).days} />
+        <WeekStrip
+          today={new Date()}
+          days={sampleStreak(new Date(), true).days}
+          trainingDays={[1, 3, 5, 7]}
+          trainedOn={new Set(Object.keys(sampleStreak(new Date(), true).days))}
+        />
         <Text color="textMuted">Show a sample streak on the Today tab:</Text>
         <View style={[styles.row, { gap: spacing.sm }]}>
           <Button

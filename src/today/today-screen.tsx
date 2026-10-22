@@ -25,6 +25,9 @@ import { WorkoutCard } from './workout-card';
 /** Meals are logged in the nutrition milestone; until then nothing is eaten. */
 const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
+/** Workouts are logged in #34; until then none is finished. */
+const NO_WORKOUTS: ReadonlySet<string> = new Set();
+
 /** The home tab: the week, today's workout, the daily targets and the weight. */
 export function TodayScreen() {
   const { t } = useTranslation();
@@ -75,7 +78,12 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekStrip today={today} days={streak.days} />
+        <WeekStrip
+          today={today}
+          days={streak.days}
+          trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
+          trainedOn={NO_WORKOUTS}
+        />
         {plan.data ? <WorkoutCard plan={plan.data} today={today} /> : null}
         {targets.data ? (
           <Card entering={FadeInDown.delay(200).duration(400)}>

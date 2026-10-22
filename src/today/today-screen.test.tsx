@@ -134,11 +134,15 @@ describe('TodayScreen', () => {
     expect(plan.refetch).not.toHaveBeenCalled();
   });
 
-  it('highlights today in the week', async () => {
+  it('highlights today and marks the workouts in the week', async () => {
     mockData();
     await render(<TodayScreen />);
-    expect(screen.getByLabelText('Mon 19')).toBeTruthy();
-    expect(screen.getByLabelText('Wed 21').props.accessibilityState).toEqual({ selected: true });
+    // No workout is finished until workouts can be logged.
+    expect(screen.getByLabelText('Mon 19, workout missed')).toBeTruthy();
+    expect(screen.getByLabelText('Wed 21, workout planned').props.accessibilityState).toEqual({
+      selected: true,
+    });
+    expect(screen.getByLabelText('Fri 23, workout planned')).toBeTruthy();
     expect(screen.getByLabelText('Sun 25')).toBeTruthy();
   });
 

@@ -23,7 +23,7 @@ type DailyProgressProps = {
   eaten: NutritionTargets;
 };
 
-/** How much of the day's calories and macros was eaten, against the targets. */
+/** How much of the day's calories and macros was eaten, large, against the targets, small. */
 export function DailyProgress({ targets, eaten }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -35,10 +35,10 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
     <>
       <View style={{ gap: spacing.sm }}>
         <Text variant="title" color="primaryText">
-          {t('nutrition.caloriesOf', {
-            eaten: format(eaten.calories),
-            target: format(targets.calories),
-          })}
+          {format(eaten.calories)}{' '}
+          <Text variant="bodyStrong" color="textMuted">
+            {t('nutrition.calorieTarget', { target: format(targets.calories) })}
+          </Text>
         </Text>
         <ProgressBar value={share('calories')} accessibilityLabel={t('nutrition.calorieLabel')} />
       </View>
@@ -48,11 +48,11 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
             <Text variant="caption" color="textMuted">
               {t(`nutrition.macros.${key}`)}
             </Text>
-            <Text variant="bodyStrong">
-              {t('nutrition.gramsOf', {
-                eaten: format(eaten[nutrient]),
-                target: format(targets[nutrient]),
-              })}
+            <Text variant="headline">
+              {format(eaten[nutrient])}{' '}
+              <Text variant="caption" color="textMuted">
+                {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
+              </Text>
             </Text>
             <ProgressBar
               value={share(nutrient)}

@@ -1,37 +1,32 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import type { DayStatus } from '@/streak/streak';
-import { fonts, useTheme } from '@/theme';
+import { fonts, useTheme, type ColorTokens } from '@/theme';
 
-const MARK_SIZE = 36;
-/** The flame and snowflake reach a little past the mark, so they read as big as the number. */
-const SHAPE_SIZE = 40;
-// Each shape with the view box that centres it.
-const FLAME = {
-  viewBox: '3 1.5 18 20',
-  d: 'M12 2c1 2.5 3.5 4 4 7 .6-1 .8-2 .8-3 2 2 3.2 4.6 3.2 7.5A8 8 0 0 1 4 13.5c0-2.4 1-4.4 2.5-6 .1 1.4.6 2.6 1.5 3.4C8 7 10 4.5 12 2z',
-};
-/** Moves the number into the wide lower part of the flame. */
-const FLAME_NUMBER_OFFSET = 5;
-const SNOWFLAKE =
-  'M18 3v30M5 10.5l26 15M31 10.5l-26 15M13 4.5l5 4 5-4M13 31.5l5-4 5 4M3.5 15.5l6.4-1-2.3-6M32.5 20.5l-6.4 1 2.3 6M32.5 15.5l-6.4-1 2.3-6M3.5 20.5l6.4 1-2.3 6';
+const MARK_SIZE = 38;
+const BADGE_SIZE = 18;
 
 type WeekStripProps = {
   today: Date;
   /** How the past days counted for the streak, by their date as YYYY-MM-DD. */
   days: Record<string, DayStatus>;
+  /** ISO weekdays of the plan's workouts, 1 for Monday to 7 for Sunday. */
+  trainingDays: readonly number[];
+  /** Dates as YYYY-MM-DD on which a workout was finished. */
+  trainedOn: ReadonlySet<string>;
 };
 
 /**
- * The current week from Monday to Sunday with today highlighted. A flame behind a past day shows
- * that it kept the streak going, a snowflake that it was frozen.
+ * The current week from Monday to Sunday with today highlighted. Past days show whether they kept
+ * the streak or were frozen, and a dot under each workout day shows whether it was done, missed
+ * or is still ahead.
  */
-export function WeekStrip({ today, days }: WeekStripProps) {
+export function WeekStrip({ today, days, trainingDays, trainedOn }: WeekStripProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const weekdayName = useWeekdayFormat('short');
@@ -42,15 +37,35 @@ export function WeekStrip({ today, days }: WeekStripProps) {
       {range(1, 7).map((weekday) => {
         const date = new Date(today);
         date.setDate(today.getDate() + weekday - todayWeekday);
+        const isoDate = toIsoDate(date);
         const isToday = weekday === todayWeekday;
-        const status = isToday ? undefined : days[toIsoDate(date)];
+        const status = isToday ? undefined : days[isoDate];
+        const workout = !trainingDays.includes(weekday)
+          ? undefined
+          : trainedOn.has(isoDate)
+            ? 'done'
+            : weekday < todayWeekday
+              ? 'missed'
+              : 'planned';
+        const dotColor: keyof ColorTokens | undefined =
+          workout === 'done'
+            ? 'primary'
+            : workout === 'missed'
+              ? 'textMuted'
+              : workout && 'planned';
+        const label = [
+          `${weekdayName(weekday)} ${date.getDate()}`,
+          status && t(`streak.${status}`),
+          workout && t(`today.week.${workout}`),
+        ]
+          .filter(Boolean)
+          .join(', ');
+
         return (
           <View
             key={weekday}
             accessible
-            accessibilityLabel={`${weekdayName(weekday)} ${date.getDate()}${
-              status ? `, ${t(`streak.${status}`)}` : ''
-            }`}
+            accessibilityLabel={label}
             accessibilityState={{ selected: isToday }}
             style={[
               styles.day,
@@ -69,37 +84,48 @@ export function WeekStrip({ today, days }: WeekStripProps) {
             >
               {weekdayName(weekday)}
             </Text>
-            <View style={styles.mark}>
-              {status ? (
-                <Svg
-                  width={SHAPE_SIZE}
-                  height={SHAPE_SIZE}
-                  viewBox={status === 'done' ? FLAME.viewBox : '0 0 36 36'}
-                  style={styles.shape}
-                  testID={`streak-${status}`}
-                >
-                  {status === 'done' ? (
-                    <Path d={FLAME.d} fill={colors.streakDay} />
-                  ) : (
-                    <Path
-                      d={SNOWFLAKE}
-                      fill="none"
-                      stroke={colors.frozen}
-                      strokeWidth={2.6}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
-                </Svg>
-              ) : null}
+            <View
+              style={[
+                styles.mark,
+                {
+                  backgroundColor:
+                    status === 'done'
+                      ? colors.primaryButton
+                      : status === 'frozen'
+                        ? colors.frozenBackground
+                        : 'transparent',
+                },
+              ]}
+            >
               <Text
                 variant={isToday ? 'headline' : 'bodyStrong'}
-                color={isToday ? 'onPrimary' : 'text'}
-                style={status === 'done' ? styles.onFlame : undefined}
+                color={
+                  isToday || status === 'done'
+                    ? 'onPrimary'
+                    : status === 'frozen'
+                      ? 'frozen'
+                      : 'text'
+                }
               >
                 {date.getDate()}
               </Text>
+              {status ? (
+                <View
+                  testID={`streak-${status}`}
+                  style={[styles.badge, { backgroundColor: colors.background }]}
+                >
+                  <Icon
+                    name={status === 'done' ? 'flame' : 'snowflake'}
+                    size={12}
+                    color={status === 'done' ? 'primary' : 'frozen'}
+                  />
+                </View>
+              ) : null}
             </View>
+            <View
+              testID={workout && `workout-${workout}`}
+              style={[styles.dot, { backgroundColor: dotColor ? colors[dotColor] : 'transparent' }]}
+            />
           </View>
         );
       })}
@@ -115,22 +141,30 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  mark: {
-    width: MARK_SIZE,
-    height: MARK_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   todayName: {
     fontFamily: fonts.bold,
     fontSize: 14,
   },
-  onFlame: {
-    marginTop: FLAME_NUMBER_OFFSET,
+  mark: {
+    width: MARK_SIZE,
+    height: MARK_SIZE,
+    borderRadius: MARK_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  shape: {
+  badge: {
     position: 'absolute',
-    top: (MARK_SIZE - SHAPE_SIZE) / 2,
-    left: (MARK_SIZE - SHAPE_SIZE) / 2,
+    top: -5,
+    right: -5,
+    width: BADGE_SIZE,
+    height: BADGE_SIZE,
+    borderRadius: BADGE_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });

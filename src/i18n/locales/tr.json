@@ -23,6 +23,11 @@
   "today": {
     "loading": "Yükleniyor",
     "targets": "Günlük hedeflerin",
+    "week": {
+      "done": "antrenman yapıldı",
+      "missed": "antrenman kaçırıldı",
+      "planned": "antrenman planlandı"
+    },
     "workout": {
       "title": "Bugünün antrenmanı",
       "restDay": "Dinlenme günü",
@@ -57,9 +62,9 @@
       "carbs": "Karbonhidrat",
       "fat": "Yağ"
     },
-    "caloriesOf": "{{eaten}} / {{target}} kcal",
-    "gramsOf": "{{eaten}} / {{target}} g",
-    "calorieLabel": "Kalori"
+    "calorieLabel": "Kalori",
+    "calorieTarget": "/ {{target}} kcal",
+    "gramTarget": "/ {{target}} g"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",

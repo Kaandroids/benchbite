@@ -31,10 +31,11 @@ export type ColorTokens = {
   protein: string;
   carbs: string;
   fat: string;
-  /** The flame behind a day that kept the streak going, under `text`. */
-  streakDay: string;
-  /** Frozen streak days: the snowflake behind them. */
+  /** Text and icons of frozen streak days, on `frozenBackground`. */
   frozen: string;
+  frozenBackground: string;
+  /** A workout planned for today or later, lighter than a finished one. */
+  planned: string;
 };
 
 export const lightColors: ColorTokens = {
@@ -58,8 +59,9 @@ export const lightColors: ColorTokens = {
   protein: '#FF6A10',
   carbs: '#F5B800',
   fat: '#6E5BD8',
-  streakDay: '#FFB68A',
-  frozen: '#93C5FD',
+  frozen: '#1D4ED8', // 5.5:1 on frozenBackground
+  frozenBackground: '#DBEAFE',
+  planned: '#FFC9A8',
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -85,6 +87,7 @@ export const darkColors: ColorTokens = {
   protein: '#FF7F26',
   carbs: '#FFD23F',
   fat: '#9F8CFF',
-  streakDay: '#8F4513',
-  frozen: '#2F5C8F',
+  frozen: '#93C5FD', // 6.4:1 on frozenBackground
+  frozenBackground: '#1E3A5F',
+  planned: '#A8561C',
 };
