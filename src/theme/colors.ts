@@ -74,8 +74,8 @@ export const lightColors: ColorTokens = {
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(22, 23, 26, 0.45)',
-  info: '#1D4ED8',
-  infoBackground: '#DBEAFE',
+  info: '#4F83E0',
+  infoBackground: '#EAF1FD',
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -107,6 +107,6 @@ export const darkColors: ColorTokens = {
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(0, 0, 0, 0.6)',
-  info: '#93C5FD',
-  infoBackground: '#1E3A5F',
+  info: '#86AEE0',
+  infoBackground: '#1C2C40',
 };

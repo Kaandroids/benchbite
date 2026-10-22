@@ -170,8 +170,7 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('Wed')).toBeTruthy();
     expect(screen.getByText('Lats · Middle back · Biceps')).toBeTruthy();
-    // Three exercises; the third exercise's number is a 3 too.
-    expect(screen.getAllByText('3')).toHaveLength(2);
+    expect(screen.getByText('3')).toBeTruthy();
     expect(screen.getByText('exercises')).toBeTruthy();
     expect(screen.getByText('9')).toBeTruthy();
     expect(screen.getByText('sets')).toBeTruthy();
@@ -192,14 +191,11 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Rest 0:30')).toBeTruthy();
   });
 
-  it('shows the exercise pictures', async () => {
+  it('leaves the pictures to the exercise details', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
-    const sources = screen.container
-      .queryAll((node) => node.type === 'Image')
-      .map((node) => node.props.source?.uri);
-    expect(sources).toContain('https://images.test/pulldown/0.webp');
-    expect(sources).toContain('https://images.test/rope/0.webp');
+    expect(screen.container.queryAll((node) => node.type === 'Image')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Details of Name of rope' })).toBeTruthy();
   });
 
   it('opens the editor and each exercise’s details', async () => {

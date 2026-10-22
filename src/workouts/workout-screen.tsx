@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
@@ -15,16 +15,9 @@ import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import {
-  exerciseImageUrl,
-  useSetWorkoutActive,
-  useWorkouts,
-  type WorkoutExercise,
-} from './workouts';
+import { useSetWorkoutActive, useWorkouts, type WorkoutExercise } from './workouts';
 
-const IMAGE_SIZE = 60;
-
-/** A workout with every exercise's picture, target and rest, and its finisher. */
+/** A workout with every exercise's target and rest, and its finisher. */
 export function WorkoutScreen({ id }: { id: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -69,9 +62,9 @@ export function WorkoutScreen({ id }: { id: number }) {
     { value: `~${workout.estimatedMinutes}`, label: t('workout.stats.minutes') },
   ];
 
-  const row = (exercise: WorkoutExercise, number: number | null, divider: boolean) => (
+  const row = (exercise: WorkoutExercise, key: string, divider: boolean) => (
     <View
-      key={`${exercise.exerciseId}-${number}`}
+      key={key}
       style={[
         styles.exercise,
         {
@@ -82,39 +75,8 @@ export function WorkoutScreen({ id }: { id: number }) {
         },
       ]}
     >
-      {number !== null ? (
-        <Text variant="caption" color="textMuted" style={styles.number}>
-          {number}
-        </Text>
-      ) : null}
-      <View
-        style={[
-          styles.image,
-          {
-            borderRadius: radii.md,
-            borderColor: colors.border,
-            backgroundColor: colors.imageBackground,
-          },
-        ]}
-      >
-        {exercise.imagePath ? (
-          <Image
-            source={{ uri: exerciseImageUrl(exercise.imagePath) }}
-            style={styles.imageFill}
-            accessibilityIgnoresInvertColors
-          />
-        ) : null}
-      </View>
       <View style={[styles.exerciseText, { gap: 2 }]}>
-        <View style={[styles.nameRow, { gap: spacing.sm }]}>
-          <Text variant="bodyStrong" style={styles.name}>
-            {names[exercise.exerciseId] ?? ''}
-          </Text>
-          <InfoButton
-            exerciseId={exercise.exerciseId}
-            exerciseName={names[exercise.exerciseId] ?? ''}
-          />
-        </View>
+        <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
         <Text variant="bodyStrong" color="primaryText">
           {formatTarget(exercise.sets, exercise.target)}
         </Text>
@@ -122,6 +84,10 @@ export function WorkoutScreen({ id }: { id: number }) {
           {formatRest(exercise.restSeconds)}
         </Text>
       </View>
+      <InfoButton
+        exerciseId={exercise.exerciseId}
+        exerciseName={names[exercise.exerciseId] ?? ''}
+      />
     </View>
   );
 
@@ -200,7 +166,9 @@ export function WorkoutScreen({ id }: { id: number }) {
 
       <Card>
         <View>
-          {workout.exercises.map((exercise, index) => row(exercise, index + 1, index > 0))}
+          {workout.exercises.map((exercise, index) =>
+            row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
+          )}
         </View>
       </Card>
 
@@ -215,7 +183,7 @@ export function WorkoutScreen({ id }: { id: number }) {
               {t('workout.finisher.body')}
             </Text>
           </View>
-          {row(workout.finisher, null, false)}
+          {row(workout.finisher, 'finisher', false)}
         </Card>
       ) : null}
     </Screen>
@@ -249,30 +217,9 @@ const styles = StyleSheet.create({
   },
   exercise: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  number: {
-    width: 16,
-    fontFamily: fonts.extraBold,
-  },
-  image: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  imageFill: {
-    width: '100%',
-    height: '100%',
-  },
-  exerciseText: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  name: {
+  exerciseText: {
     flex: 1,
   },
   finisherTitle: {
