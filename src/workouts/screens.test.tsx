@@ -194,11 +194,14 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Rest 0:30')).toBeTruthy();
   });
 
-  it('leaves the pictures to the exercise details', async () => {
+  it('shows the exercise pictures', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
-    expect(screen.container.queryAll((node) => node.type === 'Image')).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Details of Name of rope' })).toBeTruthy();
+    const sources = screen.container
+      .queryAll((node) => node.type === 'Image')
+      .map((node) => node.props.source?.uri);
+    expect(sources).toContain('https://images.test/pulldown/0.webp');
+    expect(sources).toContain('https://images.test/rope/0.webp');
   });
 
   it('opens the editor and each exercise’s details', async () => {

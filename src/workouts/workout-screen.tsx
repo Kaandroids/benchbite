@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
@@ -15,9 +15,16 @@ import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useSetWorkoutActive, useWorkouts, type WorkoutExercise } from './workouts';
+import {
+  exerciseImageUrl,
+  useSetWorkoutActive,
+  useWorkouts,
+  type WorkoutExercise,
+} from './workouts';
 
-/** A workout with every exercise's target and rest, and its finisher. */
+const IMAGE_SIZE = 60;
+
+/** A workout with every exercise's picture, target and rest, and its finisher. */
 export function WorkoutScreen({ id }: { id: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -75,6 +82,24 @@ export function WorkoutScreen({ id }: { id: number }) {
         },
       ]}
     >
+      <View
+        style={[
+          styles.image,
+          {
+            borderRadius: radii.md,
+            borderColor: colors.border,
+            backgroundColor: colors.imageBackground,
+          },
+        ]}
+      >
+        {exercise.imagePath ? (
+          <Image
+            source={{ uri: exerciseImageUrl(exercise.imagePath) }}
+            style={styles.imageFill}
+            accessibilityIgnoresInvertColors
+          />
+        ) : null}
+      </View>
       <View style={[styles.exerciseText, { gap: 2 }]}>
         <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
         <Text variant="bodyStrong" color="primaryText">
@@ -218,6 +243,16 @@ const styles = StyleSheet.create({
   exercise: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  image: {
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  imageFill: {
+    width: '100%',
+    height: '100%',
   },
   exerciseText: {
     flex: 1,
