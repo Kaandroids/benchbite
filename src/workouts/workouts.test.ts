@@ -230,14 +230,16 @@ describe('useSaveWorkout', () => {
 });
 
 describe('useDeleteWorkout', () => {
-  it('deletes the workout and loads the workouts again', async () => {
+  it('deletes the workout, drops it from the list at once and loads the workouts again', async () => {
     eq.mockResolvedValue({ error: null });
     const queryClient = createTestQueryClient();
-    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    queryClient.setQueryData(['workouts'], [{ id: 4 }, { id: 5 }]);
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
     const { result } = await renderHook(() => useDeleteWorkout(), { queryClient });
     await act(() => result.current.mutateAsync(4));
     expect(remove).toHaveBeenCalled();
     expect(eq).toHaveBeenCalledWith('id', 4);
+    expect(queryClient.getQueryData(['workouts'])).toEqual([{ id: 5 }]);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });
 });

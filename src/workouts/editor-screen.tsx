@@ -116,7 +116,8 @@ export function EditorScreen({ id }: { id?: number }) {
         style: 'destructive',
         onPress: () =>
           void remove.mutateAsync(workoutId).then(
-            () => router.dismissTo('/workout'),
+            // Closes the editor and the deleted workout, back to the list it was opened from.
+            () => router.dismiss(2),
             (error: unknown) => console.warn('Could not delete the workout', error),
           ),
       },
@@ -351,7 +352,13 @@ export function EditorScreen({ id }: { id?: number }) {
           </View>
 
           {draft.id !== undefined ? (
-            <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: remove.isPending }}
+              disabled={remove.isPending}
+              onPress={onDelete}
+              style={[styles.delete, { opacity: remove.isPending ? 0.4 : 1 }]}
+            >
               <Text variant="bodyStrong" color="danger" style={styles.bold}>
                 {t('editor.delete')}
               </Text>

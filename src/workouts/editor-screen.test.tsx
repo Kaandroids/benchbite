@@ -10,7 +10,7 @@ import { testExercise, testWorkout } from './test-data';
 import { useDeleteWorkout, useExerciseLimit, useSaveWorkout, useWorkouts } from './workouts';
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), dismiss: jest.fn() },
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/exercises/library', () => ({
@@ -188,7 +188,7 @@ describe('EditorScreen', () => {
     const confirm = buttons.find((button) => button.style === 'destructive');
     await act(async () => confirm?.onPress?.());
     expect(deleteWorkout).toHaveBeenCalledWith(5);
-    expect(router.dismissTo).toHaveBeenCalledWith('/workout');
+    expect(router.dismiss).toHaveBeenCalledWith(2);
   });
 
   describe('the exercise sheet', () => {

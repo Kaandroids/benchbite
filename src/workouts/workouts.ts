@@ -214,7 +214,13 @@ export function useDeleteWorkout() {
         throw error;
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    // Removed from the list at once, without waiting for the refetch, so the screens can close.
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<Workout[]>(WORKOUTS_KEY, (workouts) =>
+        workouts?.filter((workout) => workout.id !== id),
+      );
+      void queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY });
+    },
   });
 }
 
