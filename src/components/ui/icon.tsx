@@ -16,6 +16,7 @@ export const ICONS = {
   heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
   home: { ios: 'house', android: 'home', web: 'home' },
   meal: { ios: 'fork.knife', android: 'restaurant', web: 'restaurant' },
+  moon: { ios: 'moon', android: 'bedtime', web: 'bedtime' },
   offline: { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' },
   person: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },

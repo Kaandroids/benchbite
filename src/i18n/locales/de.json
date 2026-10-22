@@ -16,10 +16,38 @@
   },
   "comingSoon": {
     "title": "Bald verfügbar",
-    "today": "Hier findest du bald deine Ziele und das heutige Training.",
     "workout": "Hier findest du bald deinen Wochenplan und seine Trainings.",
     "nutrition": "Hier kannst du bald deine Mahlzeiten eintragen.",
     "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
+  },
+  "today": {
+    "title": "Heute",
+    "loading": "Wird geladen",
+    "targets": "Deine Tagesziele",
+    "week": {
+      "workout": "Training"
+    },
+    "workout": {
+      "title": "Heutiges Training",
+      "restDay": "Ruhetag",
+      "next": "Nächstes: {{day}} · {{session}}",
+      "tomorrow": "morgen"
+    },
+    "weight": {
+      "title": "Gewicht",
+      "none": "Noch kein Gewicht eingetragen.",
+      "loggedToday": "Heute eingetragen",
+      "loggedOn": "Eingetragen am {{date}}",
+      "log": "Gewicht eintragen",
+      "correct": "Gewicht korrigieren",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "saveError": "Wir konnten dein Gewicht nicht speichern. Prüfe deine Verbindung und versuche es erneut."
+    },
+    "error": {
+      "title": "Heute konnte nicht geladen werden",
+      "message": "Prüfe deine Verbindung und versuche es erneut."
+    }
   },
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",
@@ -40,7 +68,8 @@
       "push": "Push",
       "pull": "Pull",
       "legs": "Beine"
-    }
+    },
+    "more": "+{{count}} weitere"
   },
   "onboarding": {
     "steps": {
@@ -282,7 +311,6 @@
       "nutrition": "Deine täglichen Ziele",
       "weight": "Dein Gewicht",
       "week": "Deine Woche",
-      "more": "+{{count}} weitere",
       "start": "Plan starten",
       "saveError": "Wir konnten deinen Plan nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
       "editLater": "Du kannst das alles später ändern.",

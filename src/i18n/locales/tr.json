@@ -16,10 +16,38 @@
   },
   "comingSoon": {
     "title": "Yakında",
-    "today": "Hedeflerin ve bugünkü antrenmanın yakında burada olacak.",
     "workout": "Haftalık planın ve antrenmanların yakında burada olacak.",
     "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
     "progress": "Kilon ve ilerlemen yakında burada olacak."
+  },
+  "today": {
+    "title": "Bugün",
+    "loading": "Yükleniyor",
+    "targets": "Günlük hedeflerin",
+    "week": {
+      "workout": "antrenman"
+    },
+    "workout": {
+      "title": "Bugünün antrenmanı",
+      "restDay": "Dinlenme günü",
+      "next": "Sıradaki: {{day}} · {{session}}",
+      "tomorrow": "yarın"
+    },
+    "weight": {
+      "title": "Kilo",
+      "none": "Henüz kilo girmedin.",
+      "loggedToday": "Bugün girildi",
+      "loggedOn": "{{date}} tarihinde girildi",
+      "log": "Kilonu gir",
+      "correct": "Kilonu düzelt",
+      "save": "Kaydet",
+      "cancel": "Vazgeç",
+      "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene."
+    },
+    "error": {
+      "title": "Bugün yüklenemedi",
+      "message": "Bağlantını kontrol edip tekrar dene."
+    }
   },
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
@@ -40,7 +68,8 @@
       "push": "İtiş",
       "pull": "Çekiş",
       "legs": "Bacak"
-    }
+    },
+    "more": "+{{count}} tane daha"
   },
   "onboarding": {
     "steps": {
@@ -282,7 +311,6 @@
       "nutrition": "Günlük hedeflerin",
       "weight": "Kilon",
       "week": "Haftan",
-      "more": "+{{count}} tane daha",
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",

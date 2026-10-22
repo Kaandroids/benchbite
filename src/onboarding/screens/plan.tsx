@@ -130,7 +130,7 @@ export function PlanStep() {
               {shown ? (
                 <Text variant="caption">
                   {shown}
-                  {hidden > 0 ? ` ${t('onboarding.plan.more', { count: hidden })}` : ''}
+                  {hidden > 0 ? ` ${t('workout.more', { count: hidden })}` : ''}
                 </Text>
               ) : null}
             </View>

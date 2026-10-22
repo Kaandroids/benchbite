@@ -16,10 +16,38 @@
   },
   "comingSoon": {
     "title": "Coming soon",
-    "today": "Your targets and today's workout will be here.",
     "workout": "Your weekly plan and its workouts will be here.",
     "nutrition": "Logging your meals will be here.",
     "progress": "Your weight and progress will be here."
+  },
+  "today": {
+    "title": "Today",
+    "loading": "Loading",
+    "targets": "Your daily targets",
+    "week": {
+      "workout": "workout"
+    },
+    "workout": {
+      "title": "Today's workout",
+      "restDay": "Rest day",
+      "next": "Next: {{day}} · {{session}}",
+      "tomorrow": "tomorrow"
+    },
+    "weight": {
+      "title": "Weight",
+      "none": "No weight logged yet.",
+      "loggedToday": "Logged today",
+      "loggedOn": "Logged on {{date}}",
+      "log": "Log weight",
+      "correct": "Correct weight",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saveError": "We couldn't save your weight. Check your connection and try again."
+    },
+    "error": {
+      "title": "Today couldn't load",
+      "message": "Check your connection and try again."
+    }
   },
   "nutrition": {
     "calories": "{{calories}} kcal a day",
@@ -40,7 +68,8 @@
       "push": "Push",
       "pull": "Pull",
       "legs": "Legs"
-    }
+    },
+    "more": "+{{count}} more"
   },
   "onboarding": {
     "steps": {
@@ -282,7 +311,6 @@
       "nutrition": "Your daily targets",
       "weight": "Your weight",
       "week": "Your week",
-      "more": "+{{count}} more",
       "start": "Start my plan",
       "saveError": "We couldn't save your plan. Check your connection and try again.",
       "editLater": "You can change all of this later.",
