@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { toIsoDate } from '@/i18n/dates';
+import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
@@ -9,6 +10,20 @@ export type WeightEntry = {
   /** The day, YYYY-MM-DD. */
   measuredOn: string;
 };
+
+/** The unit the signed-in user chose for weights in the onboarding; kilograms without a profile. */
+export function useWeightUnit() {
+  return useQuery({
+    queryKey: ['profile', 'weight-unit'],
+    queryFn: async (): Promise<WeightUnit> => {
+      const { data, error } = await supabase.from('profiles').select('weight_unit').maybeSingle();
+      if (error) {
+        throw error;
+      }
+      return data?.weight_unit ?? 'kg';
+    },
+  });
+}
 
 /** The signed-in user's latest weight, or null before the first one. */
 export function useLatestWeight() {
