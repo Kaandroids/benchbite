@@ -19,6 +19,8 @@ import { useLogWeight, type WeightEntry } from '@/weight/weights';
  * database stores a tenth of a kilogram, so a tenth of a pound would often not change it.
  */
 const STEP_KG = 0.1;
+/** How faded the minus button is next to plus. */
+const QUIET_OPACITY = 0.55;
 /** How long after the last press the weight is saved, so quick presses are saved once. */
 export const SAVE_DELAY_MS = 800;
 
@@ -89,11 +91,12 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
         styles.step,
         {
           borderRadius: radii.full,
-          backgroundColor: pressed ? colors.border : quiet ? colors.track : colors.iconBackground,
+          backgroundColor: pressed ? colors.selected : colors.iconBackground,
+          opacity: quiet && !pressed ? QUIET_OPACITY : 1,
         },
       ]}
     >
-      <Icon name={icon} color={quiet ? 'textMuted' : 'primary'} />
+      <Icon name={icon} color="primary" />
     </Pressable>
   );
 
