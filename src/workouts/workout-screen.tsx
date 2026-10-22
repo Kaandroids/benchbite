@@ -77,7 +77,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         {
           gap: spacing.md,
           paddingVertical: spacing.md,
-          borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
+          borderTopWidth: divider ? 1 : 0,
           borderTopColor: colors.border,
         },
       ]}
