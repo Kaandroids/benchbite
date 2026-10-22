@@ -74,7 +74,11 @@ export function useExerciseLibrary() {
 
 /** Lower case and without accents, so that "kniebeuge" finds "Kniebeuge" and "sinav" "şınav". */
 function searchable(text: string, language: string): string {
-  return text.toLocaleLowerCase(language).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
+  return text
+    .toLocaleLowerCase(language)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ı/g, 'i');
 }
 
 /**
