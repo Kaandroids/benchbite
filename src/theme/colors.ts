@@ -36,6 +36,10 @@ export type ColorTokens = {
   frozenBackground: string;
   /** A workout planned for today or later, lighter than a finished one. */
   planned: string;
+  /** Behind exercise pictures, which are drawn on white, in both themes. */
+  imageBackground: string;
+  /** The thumb of on/off switches. */
+  switchThumb: string;
 };
 
 export const lightColors: ColorTokens = {
@@ -62,6 +66,8 @@ export const lightColors: ColorTokens = {
   frozen: '#1D4ED8', // 5.5:1 on frozenBackground
   frozenBackground: '#DBEAFE',
   planned: '#FFC9A8',
+  imageBackground: '#FFFFFF',
+  switchThumb: '#FFFFFF',
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -90,4 +96,6 @@ export const darkColors: ColorTokens = {
   frozen: '#93C5FD', // 6.4:1 on frozenBackground
   frozenBackground: '#1E3A5F',
   planned: '#A8561C',
+  imageBackground: '#FFFFFF',
+  switchThumb: '#FFFFFF',
 };

@@ -12,11 +12,11 @@ import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
-import { usePlan } from '@/plan/use-plan';
 import { StreakBadge } from '@/streak/streak-badge';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
+import { useWeek } from '@/workouts/workouts';
 
 import { WeekStrip } from './week-strip';
 import { WeightCard } from './weight-card';
@@ -33,7 +33,7 @@ export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const formatDate = useDateFormat('long');
-  const plan = usePlan();
+  const plan = useWeek();
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();

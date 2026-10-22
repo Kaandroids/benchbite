@@ -5,6 +5,7 @@ import { useTheme, type ColorTokens } from '@/theme';
 // One entry per icon the app uses: SF Symbols on iOS, Material Symbols on Android and web.
 // Outlined variants on both, because Material Symbols render outlined by default.
 export const ICONS = {
+  archive: { ios: 'archivebox', android: 'inventory_2', web: 'inventory_2' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
@@ -12,6 +13,7 @@ export const ICONS = {
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
   dumbbell: { ios: 'dumbbell', android: 'fitness_center', web: 'fitness_center' },
   flame: { ios: 'flame', android: 'local_fire_department', web: 'local_fire_department' },
+  forward: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
   gym: { ios: 'building.2', android: 'apartment', web: 'apartment' },
   heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
   home: { ios: 'house', android: 'home', web: 'home' },

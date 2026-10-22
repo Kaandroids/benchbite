@@ -7,7 +7,10 @@ import AppLayout from '@/app/(app)/_layout';
 import AppIndex from '@/app/(app)/index';
 import NutritionTab from '@/app/(app)/nutrition';
 import ProgressTab from '@/app/(app)/progress';
-import WorkoutTab from '@/app/(app)/workout';
+import WorkoutDetail from '@/app/(app)/workout/[id]';
+import WorkoutLayout from '@/app/(app)/workout/_layout';
+import WorkoutArchive from '@/app/(app)/workout/archive';
+import WorkoutTab from '@/app/(app)/workout/index';
 import RootLayout from '@/app/_layout';
 import OnboardingStep from '@/app/onboarding/[step]';
 import OnboardingLayout from '@/app/onboarding/_layout';
@@ -33,6 +36,20 @@ jest.mock('@/onboarding/screens', () => {
 jest.mock('@/today/today-screen', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { TodayScreen: () => <MockText>Today screen</MockText> };
+});
+
+// The workout screens load the user's workouts; these tests only check which one opens.
+jest.mock('@/workouts/workouts-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { WorkoutsScreen: () => <MockText>Workouts screen</MockText> };
+});
+jest.mock('@/workouts/archive-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { ArchiveScreen: () => <MockText>Archive screen</MockText> };
+});
+jest.mock('@/workouts/workout-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { WorkoutScreen: ({ id }: { id: number }) => <MockText>{`Workout ${id}`}</MockText> };
 });
 
 jest.mock('@/providers/onboarding-provider', () => ({
@@ -90,7 +107,10 @@ const APP_ROUTES = {
   ...ONBOARDING_ROUTES,
   '(app)/_layout': AppLayout,
   '(app)/index': AppIndex,
-  '(app)/workout': WorkoutTab,
+  '(app)/workout/_layout': WorkoutLayout,
+  '(app)/workout/index': WorkoutTab,
+  '(app)/workout/archive': WorkoutArchive,
+  '(app)/workout/[id]': WorkoutDetail,
   '(app)/nutrition': NutritionTab,
   '(app)/progress': ProgressTab,
   'dev/components': () => <Text>Component gallery</Text>,
@@ -221,6 +241,18 @@ describe('app tabs', () => {
     await act(() => router.navigate(path));
     expect(app.getPathname()).toBe(path);
     expect(tabs().filter((tab) => tab.focused)).toEqual([{ title, focused: true }]);
+  });
+
+  it.each([
+    ['/workout', 'Workouts screen'],
+    ['/workout/archive', 'Archive screen'],
+    ['/workout/7', 'Workout 7'],
+  ] as const)('opens %s inside the Workout tab', async (path, text) => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.navigate(path));
+    expect(app.getPathname()).toBe(path);
+    expect(screen.getByText(text)).toBeOnTheScreen();
+    expect(tabs().filter((tab) => tab.focused)).toEqual([{ title: 'Workout', focused: true }]);
   });
 
   it('links to the component gallery in development', async () => {
