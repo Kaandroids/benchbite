@@ -1,7 +1,7 @@
 import { getLocales } from 'expo-localization';
 
 import i18n from '@/i18n';
-import { renderHook } from '@/test/render';
+import { act, renderHook } from '@/test/render';
 
 import {
   defaultUnits,
@@ -10,6 +10,7 @@ import {
   paceIn,
   paceToKg,
   useNumberFormat,
+  useWeightFormat,
   weightIn,
   weightToKg,
 } from './units';
@@ -147,11 +148,11 @@ describe('height conversions', () => {
 
 describe('useNumberFormat', () => {
   afterEach(async () => {
-    await i18n.changeLanguage('en');
+    await act(() => i18n.changeLanguage('en'));
   });
 
   it('formats numbers the English way', async () => {
-    await i18n.changeLanguage('en');
+    await act(() => i18n.changeLanguage('en'));
     const { result } = await renderHook(() => useNumberFormat());
     expect(result.current.format(72.5)).toBe('72.5');
     expect(result.current.format(1234.5)).toBe('1,234.5');
@@ -159,7 +160,7 @@ describe('useNumberFormat', () => {
   });
 
   it.each(['de', 'tr'])('formats numbers with a decimal comma in %s', async (language) => {
-    await i18n.changeLanguage(language);
+    await act(() => i18n.changeLanguage(language));
     const { result } = await renderHook(() => useNumberFormat());
     expect(result.current.format(72.5)).toBe('72,5');
     expect(result.current.format(1234.5)).toBe('1.234,5');
@@ -167,8 +168,29 @@ describe('useNumberFormat', () => {
   });
 
   it('passes the options on to the formatter', async () => {
-    await i18n.changeLanguage('de');
+    await act(() => i18n.changeLanguage('de'));
     const { result } = await renderHook(() => useNumberFormat());
     expect(result.current.format(80, { minimumFractionDigits: 1 })).toBe('80,0');
+  });
+});
+
+describe('useWeightFormat', () => {
+  afterEach(async () => {
+    await act(() => i18n.changeLanguage('en'));
+  });
+
+  it('formats a weight in the unit with at most one decimal', async () => {
+    const { result } = await renderHook(() => useWeightFormat());
+    expect(result.current(72.5, 'kg')).toBe('72.5');
+    expect(result.current(80, 'kg')).toBe('80');
+    // 72.5 / 0.45359237 = 159.836…
+    expect(result.current(72.5, 'lb')).toBe('159.8');
+  });
+
+  it.each(['de', 'tr'])('writes the decimal comma in %s', async (language) => {
+    await act(() => i18n.changeLanguage(language));
+    const { result } = await renderHook(() => useWeightFormat());
+    expect(result.current(72.5, 'kg')).toBe('72,5');
+    expect(result.current(72.5, 'lb')).toBe('159,8');
   });
 });

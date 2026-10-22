@@ -1,29 +1,12 @@
 // Calculating and saving the onboarding's result: the nutrition targets, the workout plan and
 // the save that completes the onboarding. The rules live on the server (ADR 0009, ADR 0010).
 import { supabase } from '@/lib/supabase';
+import type { Plan } from '@shared/plan/types';
 
 import type { OnboardingAnswers } from './types';
 
-type SessionType = 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
-
-export type PlannedExercise = {
-  exerciseId: string;
-  slot: string;
-  sets: number;
-  target: { reps: { min: number; max: number } } | { seconds: number };
-  restSeconds: number;
-};
-
 /** The generate-plan Edge Function's response. */
-export type WorkoutPlan = {
-  sessions: {
-    weekday: number;
-    type: SessionType;
-    exercises: PlannedExercise[];
-    finisher: PlannedExercise | null;
-    estimatedMinutes: number;
-  }[];
-};
+export type WorkoutPlan = Plan;
 
 export type NutritionTargets = {
   calories: number;
@@ -80,12 +63,13 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
   return data;
 }
 
+/** The SQLSTATE complete_onboarding raises when the onboarding was saved before. */
+const ALREADY_COMPLETED = 'BB001';
+
 /**
  * Saves the onboarding in one transaction (complete_onboarding). Saving again after a save that
  * already went through, for example after going back from the next step, counts as saved.
  */
-/** The SQLSTATE complete_onboarding raises when the onboarding was saved before. */
-const ALREADY_COMPLETED = 'BB001';
 
 export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPlan) {
   // The calculated result is sent as the plan, not again as an answer.

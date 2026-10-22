@@ -91,6 +91,8 @@ export function useStep(step: Step) {
   return {
     answers: draft.answers,
     progress: progressOf(step),
+    /** Saves answers without moving on, for example to withdraw one. */
+    answer,
     next,
     back: previous ? back : undefined,
     /**

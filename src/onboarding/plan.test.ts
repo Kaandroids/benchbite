@@ -36,7 +36,7 @@ const PLAN: WorkoutPlan = {
       exercises: [
         {
           exerciseId: 'squat',
-          slot: 'legs',
+          slot: 'squat',
           sets: 3,
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,

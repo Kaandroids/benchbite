@@ -34,10 +34,10 @@ export function WelcomeStep() {
           <Icon name="dumbbell" size={44} color="onPrimary" />
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(150).duration(400)}>
-          <Text variant="title" style={styles.centered}>
+          <Text variant="title" align="center">
             {t('onboarding.steps.welcome.title')}
           </Text>
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t('onboarding.welcome.tagline')}
           </Text>
         </Animated.View>
@@ -69,9 +69,6 @@ const styles = StyleSheet.create({
     height: 88,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
   point: {
     flexDirection: 'row',

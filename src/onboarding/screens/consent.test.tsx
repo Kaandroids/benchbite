@@ -9,11 +9,6 @@ import { ConsentStep } from './consent';
 let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 
-const mockAnswer = jest.fn();
-jest.mock('@/providers/onboarding-provider', () => ({
-  useOnboarding: () => ({ answer: mockAnswer }),
-}));
-
 const AGREE = 'I agree that Benchbite processes my health data for these purposes.';
 
 const continueButton = () => screen.getByRole('button', { name: 'Continue' });
@@ -21,7 +16,6 @@ const agreeBox = () => screen.getByRole('checkbox', { name: AGREE });
 
 describe('ConsentStep', () => {
   beforeEach(() => {
-    mockAnswer.mockClear();
     mockStep = createStep();
   });
 
@@ -66,7 +60,7 @@ describe('ConsentStep', () => {
     mockStep = createStep({ consentedPolicyVersion: PRIVACY_POLICY_VERSION });
     await render(<ConsentStep />);
     await fireEvent.press(screen.getByRole('button', { name: "I don't agree" }));
-    expect(mockAnswer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
+    expect(mockStep.answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
     expect(screen.getByText('A personal plan needs your consent')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
 

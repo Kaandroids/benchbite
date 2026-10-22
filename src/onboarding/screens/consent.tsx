@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
+import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useOnboarding } from '@/providers/onboarding-provider';
 import { useTheme } from '@/theme';
 
 import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
@@ -27,8 +27,7 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
 export function ConsentStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answer } = useOnboarding();
-  const { answers, progress, next, back } = useStep('consent');
+  const { answers, progress, answer, next, back } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [declined, setDeclined] = useState(false);
 
@@ -44,15 +43,11 @@ export function ConsentStep() {
           />
         }
       >
-        <View style={[styles.centeredContent, { gap: spacing.lg }]}>
-          <IconTile name="shield" size={88} />
-          <Text variant="title" style={styles.centered}>
-            {t('onboarding.consent.declined.title')}
-          </Text>
-          <Text color="textMuted" style={styles.centered}>
-            {t('onboarding.consent.declined.body')}
-          </Text>
-        </View>
+        <MessageView
+          icon="shield"
+          title={t('onboarding.consent.declined.title')}
+          message={t('onboarding.consent.declined.body')}
+        />
       </Screen>
     );
   }
@@ -112,14 +107,6 @@ export function ConsentStep() {
 }
 
 const styles = StyleSheet.create({
-  centeredContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
-  },
   point: {
     flexDirection: 'row',
     alignItems: 'center',

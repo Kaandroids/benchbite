@@ -1,19 +1,20 @@
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useWeekdayFormat } from '@/i18n/dates';
-import { useNumberFormat, weightIn } from '@/i18n/units';
-import { supabase } from '@/lib/supabase';
+import { useExerciseNames } from '@/exercises/use-exercise-names';
+import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
+import { useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
 import { projectedDate } from '../body';
-import { saveOnboarding, type WorkoutPlan } from '../plan';
+import { saveOnboarding } from '../plan';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
 
@@ -26,55 +27,22 @@ const MACROS: { key: 'protein' | 'carbs' | 'fat'; color: keyof ColorTokens }[] =
   { key: 'fat', color: 'fat' },
 ];
 
-/** Exercise names in the app language, falling back to English. */
-function useExerciseNames(plan: WorkoutPlan | undefined): Record<string, string> {
-  const { i18n } = useTranslation();
-  const [names, setNames] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!plan) {
-      return;
-    }
-    const ids = [
-      ...new Set(plan.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId))),
-    ];
-    let cancelled = false;
-    void supabase
-      .from('exercises')
-      .select('id, name, exercise_translations (language, name)')
-      .in('id', ids)
-      .then(({ data }) => {
-        if (cancelled || !data) return;
-        setNames(
-          Object.fromEntries(
-            data.map((exercise) => [
-              exercise.id,
-              exercise.exercise_translations.find((t) => t.language === i18n.language)?.name ??
-                exercise.name,
-            ]),
-          ),
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [plan, i18n.language]);
-
-  return names;
-}
-
 /**
  * The result of the onboarding: the projected weight, the daily targets and the week's workouts.
  * Continuing saves everything in one transaction.
  */
 export function PlanStep() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
+  const formatWeight = useWeightFormat();
+  const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
   const { targets, plan } = answers;
-  const names = useExerciseNames(plan);
+  const names = useExerciseNames(
+    plan?.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId)) ?? [],
+  );
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
 
@@ -89,8 +57,7 @@ export function PlanStep() {
   const pace = answers.weeklyPaceKg;
   const changesWeight =
     (answers.goal === 'lose_fat' || answers.goal === 'build_muscle') && targetKg && pace;
-  const showWeight = (kg: number) =>
-    `${format(weightIn(unit, kg), { maximumFractionDigits: 1 })} ${unit}`;
+  const showWeight = (kg: number) => `${formatWeight(kg, unit)} ${unit}`;
 
   const save = async () => {
     setSaving(true);
@@ -106,12 +73,6 @@ export function PlanStep() {
     }
   };
 
-  const card = [
-    styles.card,
-    { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radii.lg },
-    { padding: spacing.lg, gap: spacing.md },
-  ];
-
   return (
     <Screen
       progress={progress}
@@ -119,7 +80,7 @@ export function PlanStep() {
       footer={
         <View style={{ gap: spacing.sm }}>
           {saveFailed ? (
-            <Text color="danger" style={styles.centered}>
+            <Text color="danger" align="center">
               {t('onboarding.plan.saveError')}
             </Text>
           ) : null}
@@ -134,22 +95,20 @@ export function PlanStep() {
       <Text variant="title">{t('onboarding.steps.plan.title')}</Text>
 
       {changesWeight ? (
-        <Animated.View entering={FadeInDown.duration(400)} style={card}>
+        <Card entering={FadeInDown.duration(400)}>
           <Text variant="headline">{t('onboarding.plan.weight')}</Text>
           <WeightChart
             falling={targetKg < weightKg}
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
               value: showWeight(targetKg),
-              label: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(
-                projectedDate(weightKg, targetKg, pace, new Date()),
-              ),
+              label: formatDate(projectedDate(weightKg, targetKg, pace, new Date())),
             }}
           />
-        </Animated.View>
+        </Card>
       ) : null}
 
-      <Animated.View entering={FadeInDown.delay(150).duration(400)} style={card}>
+      <Card entering={FadeInDown.delay(150).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.nutrition')}</Text>
         <Text variant="title" color="primaryText">
           {t('onboarding.plan.calories', { calories: format(targets.calories) })}
@@ -180,9 +139,9 @@ export function PlanStep() {
             </View>
           ))}
         </View>
-      </Animated.View>
+      </Card>
 
-      <Animated.View entering={FadeInDown.delay(300).duration(400)} style={card}>
+      <Card entering={FadeInDown.delay(300).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.week')}</Text>
         {plan.sessions.map((session) => {
           const exerciseNames = session.exercises.map(
@@ -211,9 +170,9 @@ export function PlanStep() {
             </View>
           );
         })}
-      </Animated.View>
+      </Card>
 
-      <Text variant="caption" color="textMuted" style={styles.centered}>
+      <Text variant="caption" color="textMuted" align="center">
         {t('onboarding.plan.editLater')}
       </Text>
     </Screen>
@@ -221,9 +180,6 @@ export function PlanStep() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-  },
   macros: {
     flexDirection: 'row',
   },
@@ -239,8 +195,5 @@ const styles = StyleSheet.create({
   },
   session: {
     paddingVertical: 4,
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

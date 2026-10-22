@@ -75,3 +75,9 @@ export function useNumberFormat() {
   const decimalSeparator = format(1.5).charAt(1);
   return { format, decimalSeparator };
 }
+
+/** Formats a weight in kilograms as a number in the unit, with at most one decimal. */
+export function useWeightFormat() {
+  const { format } = useNumberFormat();
+  return (kg: number, unit: WeightUnit) => format(weightIn(unit, kg), { maximumFractionDigits: 1 });
+}

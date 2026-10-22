@@ -3,12 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useNumberFormat, weightIn, weightToKg, type WeightUnit } from '@/i18n/units';
+import { clamp, range } from '@/lib/math';
 import { useTheme } from '@/theme';
 
 import { WEIGHT_RANGE_KG } from '../body';
-
-const range = (from: number, to: number) =>
-  Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
 const TENTHS = range(0, 9);
 const WHOLE = {
@@ -39,7 +37,7 @@ export function WeightWheels({ kg, unit, onChange, accessibilityLabel }: WeightW
 
   const change = (newWhole: number, newTenth: number) => {
     const next = weightToKg(unit, newWhole + newTenth / 10);
-    onChange(Math.min(WEIGHT_RANGE_KG.max, Math.max(WEIGHT_RANGE_KG.min, next)));
+    onChange(clamp(next, WEIGHT_RANGE_KG.min, WEIGHT_RANGE_KG.max));
   };
 
   return (

@@ -49,7 +49,7 @@ export function BirthYearStep() {
             onChange={setBirthYear}
             width={180}
           />
-          <Text color={tooYoung ? 'danger' : 'textMuted'} style={styles.centered}>
+          <Text color={tooYoung ? 'danger' : 'textMuted'} align="center">
             {tooYoung
               ? t('onboarding.birthYear.tooYoung')
               : t('onboarding.birthYear.age', { count: age })}
@@ -63,8 +63,5 @@ export function BirthYearStep() {
 const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
-  },
-  centered: {
-    textAlign: 'center',
   },
 });

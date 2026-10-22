@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
@@ -37,7 +38,7 @@ function nextSession(plan: WorkoutPlan, today: Date): { session: Session; inDays
  */
 export function SummaryStep() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const weekdayName = useWeekdayFormat();
   const formatTime = useTimeFormat();
@@ -75,17 +76,6 @@ export function SummaryStep() {
     },
   ];
 
-  const card = [
-    styles.card,
-    {
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      borderRadius: radii.lg,
-      padding: spacing.lg,
-      gap: spacing.md,
-    },
-  ];
-
   return (
     <Screen
       progress={progress}
@@ -98,16 +88,16 @@ export function SummaryStep() {
           </View>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ gap: spacing.sm }}>
-          <Text variant="title" style={styles.centered}>
+          <Text variant="title" align="center">
             {t('onboarding.steps.summary.title')}
           </Text>
-          <Text color="textMuted" style={styles.centered}>
+          <Text color="textMuted" align="center">
             {t('onboarding.summary.body')}
           </Text>
         </Animated.View>
       </View>
 
-      <Animated.View entering={FadeInDown.delay(450).duration(400)} style={card}>
+      <Card entering={FadeInDown.delay(450).duration(400)}>
         {rows.map((row) => (
           <View key={row.icon} style={[styles.row, { gap: spacing.md }]}>
             <IconTile name={row.icon} size={40} />
@@ -116,10 +106,10 @@ export function SummaryStep() {
             </Text>
           </View>
         ))}
-      </Animated.View>
+      </Card>
 
       {upcoming ? (
-        <Animated.View entering={FadeInDown.delay(600).duration(400)} style={card}>
+        <Card entering={FadeInDown.delay(600).duration(400)}>
           <Text variant="caption" color="primaryText">
             {t('onboarding.summary.next')}
           </Text>
@@ -140,7 +130,7 @@ export function SummaryStep() {
               })}
             </Text>
           </View>
-        </Animated.View>
+        </Card>
       ) : null}
     </Screen>
   );
@@ -156,12 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  centered: {
-    textAlign: 'center',
-  },
-  card: {
-    borderWidth: 1,
   },
   row: {
     flexDirection: 'row',

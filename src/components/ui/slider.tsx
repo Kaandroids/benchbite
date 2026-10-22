@@ -10,6 +10,7 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
 
 import { Text } from './text';
@@ -128,7 +129,7 @@ export function Slider({
   const fillStyle = useAnimatedStyle(() => ({ width: offset.get() + TRACK_HEIGHT / 2 }));
 
   const stepBy = (delta: number) => {
-    const next = Math.round(Math.min(max, Math.max(min, value + delta * step)) * 1e6) / 1e6;
+    const next = Math.round(clamp(value + delta * step, min, max) * 1e6) / 1e6;
     if (next !== value) {
       onChange(next);
     }

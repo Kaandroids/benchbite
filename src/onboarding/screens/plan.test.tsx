@@ -29,7 +29,7 @@ jest.mock('expo-router', () => {
 
 const exercise = (exerciseId: string) => ({
   exerciseId,
-  slot: 'main',
+  slot: 'squat' as const,
   sets: 3,
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,

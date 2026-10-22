@@ -9,6 +9,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/assets/(.*)$': '<rootDir>/assets/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@shared/(.*)$': '<rootDir>/supabase/functions/_shared/$1',
   },
   // Packages that ship untranspiled code, with pnpm's .pnpm folder in front.
   transformIgnorePatterns: [

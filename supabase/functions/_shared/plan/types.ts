@@ -1,6 +1,7 @@
 // Types of the plan builder. They mirror the database enums, so that the rules can be tested
 // without a database.
 import type { Database } from '../database.types.ts';
+import type { SessionMinutes } from './limits.ts';
 
 type Enums = Database['public']['Enums'];
 
@@ -16,7 +17,7 @@ export type PlanInput = {
   /** ISO weekdays, 1 for Monday to 7 for Sunday, at most six. */
   trainingDays: number[];
   setup: Setup;
-  sessionMinutes: 30 | 45 | 60 | 75;
+  sessionMinutes: SessionMinutes;
 };
 
 /** One row of the plan slot catalogue, with the metrics of its exercise. */
@@ -29,7 +30,7 @@ export type CatalogueEntry = {
   metrics: Metric[];
 };
 
-export type SessionType = 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
+export type SessionType = Enums['plan_session_type'];
 
 /** Main exercises come first and get the heavier prescription. */
 export type Role = 'main' | 'accessory';

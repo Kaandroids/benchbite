@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
 
 type ProgressBarProps = {
@@ -12,7 +13,7 @@ type ProgressBarProps = {
 
 export function ProgressBar({ value, accessibilityLabel }: ProgressBarProps) {
   const { colors, radii } = useTheme();
-  const clamped = Math.min(1, Math.max(0, value));
+  const clamped = clamp(value, 0, 1);
   const progress = useSharedValue(clamped);
 
   useEffect(() => {

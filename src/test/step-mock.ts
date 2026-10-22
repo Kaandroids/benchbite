@@ -8,11 +8,19 @@ import type { OnboardingAnswers } from '@/onboarding/types';
 export type StepMock = {
   answers: OnboardingAnswers;
   progress: number;
+  answer: jest.Mock<void, [OnboardingAnswers]>;
   next: jest.Mock<void, [OnboardingAnswers?]>;
   back: jest.Mock<void, []>;
   choose: jest.Mock<void, [OnboardingAnswers]>;
 };
 
 export function createStep(answers: OnboardingAnswers = {}): StepMock {
-  return { answers, progress: 0.5, next: jest.fn(), back: jest.fn(), choose: jest.fn() };
+  return {
+    answers,
+    progress: 0.5,
+    answer: jest.fn(),
+    next: jest.fn(),
+    back: jest.fn(),
+    choose: jest.fn(),
+  };
 }
