@@ -2,9 +2,10 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
@@ -107,12 +108,6 @@ export function PlanStep() {
     }
   };
 
-  const card = [
-    styles.card,
-    { borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radii.lg },
-    { padding: spacing.lg, gap: spacing.md },
-  ];
-
   return (
     <Screen
       progress={progress}
@@ -135,7 +130,7 @@ export function PlanStep() {
       <Text variant="title">{t('onboarding.steps.plan.title')}</Text>
 
       {changesWeight ? (
-        <Animated.View entering={FadeInDown.duration(400)} style={card}>
+        <Card entering={FadeInDown.duration(400)}>
           <Text variant="headline">{t('onboarding.plan.weight')}</Text>
           <WeightChart
             falling={targetKg < weightKg}
@@ -145,10 +140,10 @@ export function PlanStep() {
               label: formatDate(projectedDate(weightKg, targetKg, pace, new Date())),
             }}
           />
-        </Animated.View>
+        </Card>
       ) : null}
 
-      <Animated.View entering={FadeInDown.delay(150).duration(400)} style={card}>
+      <Card entering={FadeInDown.delay(150).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.nutrition')}</Text>
         <Text variant="title" color="primaryText">
           {t('onboarding.plan.calories', { calories: format(targets.calories) })}
@@ -179,9 +174,9 @@ export function PlanStep() {
             </View>
           ))}
         </View>
-      </Animated.View>
+      </Card>
 
-      <Animated.View entering={FadeInDown.delay(300).duration(400)} style={card}>
+      <Card entering={FadeInDown.delay(300).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.week')}</Text>
         {plan.sessions.map((session) => {
           const exerciseNames = session.exercises.map(
@@ -210,7 +205,7 @@ export function PlanStep() {
             </View>
           );
         })}
-      </Animated.View>
+      </Card>
 
       <Text variant="caption" color="textMuted" align="center">
         {t('onboarding.plan.editLater')}
@@ -220,9 +215,6 @@ export function PlanStep() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-  },
   macros: {
     flexDirection: 'row',
   },
