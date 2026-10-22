@@ -8,6 +8,19 @@
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
   },
+  "tabs": {
+    "today": "Bugün",
+    "workout": "Antrenman",
+    "nutrition": "Beslenme",
+    "progress": "İlerleme"
+  },
+  "comingSoon": {
+    "title": "Yakında",
+    "today": "Hedeflerin ve bugünkü antrenmanın yakında burada olacak.",
+    "workout": "Haftalık planın ve antrenmanların yakında burada olacak.",
+    "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
+    "progress": "Kilon ve ilerlemen yakında burada olacak."
+  },
   "onboarding": {
     "steps": {
       "welcome": {

@@ -8,6 +8,19 @@
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
   },
+  "tabs": {
+    "today": "Heute",
+    "workout": "Training",
+    "nutrition": "Ernährung",
+    "progress": "Fortschritt"
+  },
+  "comingSoon": {
+    "title": "Bald verfügbar",
+    "today": "Hier findest du bald deine Ziele und das heutige Training.",
+    "workout": "Hier findest du bald deinen Wochenplan und seine Trainings.",
+    "nutrition": "Hier kannst du bald deine Mahlzeiten eintragen.",
+    "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
+  },
   "onboarding": {
     "steps": {
       "welcome": {

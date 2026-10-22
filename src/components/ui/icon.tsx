@@ -4,7 +4,7 @@ import { useTheme, type ColorTokens } from '@/theme';
 
 // One entry per icon the app uses: SF Symbols on iOS, Material Symbols on Android and web.
 // Outlined variants on both, because Material Symbols render outlined by default.
-const ICONS = {
+export const ICONS = {
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
