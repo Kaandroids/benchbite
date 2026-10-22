@@ -1,20 +1,26 @@
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat } from '@/i18n/dates';
 import { useWeightFormat, type WeightUnit } from '@/i18n/units';
+import { clamp } from '@/lib/math';
+import { WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useTheme } from '@/theme';
 import { useLogWeight, type WeightEntry } from '@/weight/weights';
-import { WeightWheels } from '@/weight/weight-wheels';
 
-/** Where the wheels start before the first weight is logged. */
-const DEFAULT_WEIGHT_KG = 70;
+/**
+ * How much one press changes the weight. It is a tenth of a kilogram in either unit, because the
+ * database stores a tenth of a kilogram, so a tenth of a pound would often not change it.
+ */
+const STEP_KG = 0.1;
+/** How long after the last press the weight is saved, so quick presses are saved once. */
+export const SAVE_DELAY_MS = 800;
 
 type WeightCardProps = {
   latest: WeightEntry | null;
@@ -22,96 +28,118 @@ type WeightCardProps = {
   today: Date;
 };
 
-/** The latest weight and a way to log today's, on wheels that open in the card. */
+/**
+ * The latest weight, with buttons to change today's weight a tenth of a kilogram at a time. The
+ * change is saved shortly after the last press.
+ */
 export function WeightCard({ latest, unit, today }: WeightCardProps) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const formatWeight = useWeightFormat();
   const formatDate = useDateFormat('medium');
   const logWeight = useLogWeight();
   const [draftKg, setDraftKg] = useState<number | null>(null);
+  const pending = useRef<{ timer: ReturnType<typeof setTimeout>; save: () => void } | null>(null);
 
-  const loggedToday = latest?.measuredOn === toIsoDate(today);
+  // Leaving the screen saves a change that is still waiting.
+  useEffect(
+    () => () => {
+      if (pending.current) {
+        clearTimeout(pending.current.timer);
+        pending.current.save();
+      }
+    },
+    [],
+  );
 
-  const save = (kg: number) =>
-    logWeight.mutate(kg, {
-      onSuccess: () => {
-        setDraftKg(null);
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      },
-    });
+  const shownKg = draftKg ?? latest?.weightKg;
+  const loggedToday = draftKg !== null || latest?.measuredOn === toIsoDate(today);
+
+  const change = (deltaKg: number) => {
+    if (shownKg === undefined) {
+      return;
+    }
+    const nextKg = clamp(
+      Math.round((shownKg + deltaKg) * 10) / 10,
+      WEIGHT_RANGE_KG.min,
+      WEIGHT_RANGE_KG.max,
+    );
+    setDraftKg(nextKg);
+    logWeight.reset();
+    void Haptics.selectionAsync();
+    if (pending.current) {
+      clearTimeout(pending.current.timer);
+    }
+    const save = () => {
+      pending.current = null;
+      // The draft stays until the saved weight has been loaded again, so the value doesn't jump.
+      logWeight.mutate(nextKg, { onSettled: () => setDraftKg(null) });
+    };
+    pending.current = { timer: setTimeout(save, SAVE_DELAY_MS), save };
+  };
+
+  const stepButton = (icon: IconName, label: string, deltaKg: number) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => change(deltaKg)}
+      hitSlop={4}
+      style={({ pressed }) => [
+        styles.step,
+        {
+          borderRadius: radii.full,
+          backgroundColor: pressed ? colors.selected : colors.iconBackground,
+        },
+      ]}
+    >
+      <Icon name={icon} color="primary" />
+    </Pressable>
+  );
 
   return (
     <Card entering={FadeInDown.delay(300).duration(400)}>
       <Text variant="headline">{t('today.weight.title')}</Text>
-      {latest ? (
-        <View style={styles.latest}>
-          <Text variant="title">
-            {formatWeight(latest.weightKg, unit)} {unit}
-          </Text>
-          <Text color="textMuted">
-            {loggedToday
-              ? t('today.weight.loggedToday')
-              : t('today.weight.loggedOn', {
-                  // A day without a time zone, so it is read as local midnight.
-                  date: formatDate(new Date(`${latest.measuredOn}T00:00`)),
-                })}
-          </Text>
-        </View>
-      ) : (
+      {shownKg === undefined ? (
         <Text color="textMuted">{t('today.weight.none')}</Text>
-      )}
-
-      {draftKg === null ? (
-        <Button
-          variant="secondary"
-          label={loggedToday ? t('today.weight.correct') : t('today.weight.log')}
-          onPress={() => {
-            logWeight.reset();
-            setDraftKg(latest?.weightKg ?? DEFAULT_WEIGHT_KG);
-          }}
-        />
       ) : (
-        <View style={{ gap: spacing.md }}>
-          <WeightWheels
-            kg={draftKg}
-            unit={unit}
-            onChange={setDraftKg}
-            accessibilityLabel={t('today.weight.title')}
-          />
-          {logWeight.isError ? (
-            <Text color="danger" align="center">
-              {t('today.weight.saveError')}
+        <View style={[styles.row, { gap: spacing.md }]}>
+          <View style={styles.latest}>
+            <Text variant="title">
+              {formatWeight(shownKg, unit)} {unit}
             </Text>
-          ) : null}
-          <View style={[styles.actions, { gap: spacing.sm }]}>
-            <Button
-              variant="ghost"
-              label={t('today.weight.cancel')}
-              onPress={() => setDraftKg(null)}
-              style={styles.action}
-            />
-            <Button
-              label={t('today.weight.save')}
-              loading={logWeight.isPending}
-              onPress={() => save(draftKg)}
-              style={styles.action}
-            />
+            <Text color="textMuted">
+              {loggedToday
+                ? t('today.weight.loggedToday')
+                : t('today.weight.loggedOn', {
+                    // A day without a time zone, so it is read as local midnight.
+                    date: formatDate(new Date(`${latest?.measuredOn}T00:00`)),
+                  })}
+            </Text>
+          </View>
+          <View style={[styles.row, { gap: spacing.sm }]}>
+            {stepButton('minus', t('today.weight.decrease'), -STEP_KG)}
+            {stepButton('plus', t('today.weight.increase'), STEP_KG)}
           </View>
         </View>
       )}
+      {logWeight.isError ? <Text color="danger">{t('today.weight.saveError')}</Text> : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   latest: {
+    flex: 1,
     gap: 2,
   },
-  actions: {
-    flexDirection: 'row',
-  },
-  action: {
-    flex: 1,
+  step: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

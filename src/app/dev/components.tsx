@@ -10,6 +10,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
+import { toIsoDate } from '@/i18n/dates';
 import {
   defaultUnits,
   feetAndInchesToCm,
@@ -23,7 +24,10 @@ import {
 import { range } from '@/lib/math';
 import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
+import type { DayStatus } from '@/streak/streak';
+import { StreakBadge } from '@/streak/streak-badge';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
+import { WeekStrip } from '@/today/week-strip';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },
@@ -36,6 +40,19 @@ const GOALS = [
   { id: 'strength', icon: 'bolt', title: 'Get stronger', description: 'Heavy, 4–6 reps' },
   { id: 'health', icon: 'heart', title: 'Stay healthy', description: 'Balanced training and food' },
 ] satisfies { id: string; icon: IconName; title: string; description: string }[];
+
+/** Streak days before today, from four days ago to yesterday. */
+const STREAK_DAYS: DayStatus[] = ['done', 'done', 'frozen', 'done'];
+
+function streakDays(today: Date): Record<string, DayStatus> {
+  return Object.fromEntries(
+    STREAK_DAYS.map((status, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - STREAK_DAYS.length + index);
+      return [toIsoDate(date), status];
+    }),
+  );
+}
 
 const WEIGHT_UNITS = [
   { value: 'kg', label: 'kg' },
@@ -149,6 +166,15 @@ export default function ComponentGallery() {
             router.back();
           }}
         />
+      </Section>
+
+      <Section title="Streak">
+        <View style={[styles.row, { gap: spacing.sm }]}>
+          <StreakBadge streak={{ count: 12, doneToday: true, days: {} }} />
+          <StreakBadge streak={{ count: 11, doneToday: false, days: {} }} />
+          <StreakBadge streak={{ count: 0, doneToday: false, days: {} }} />
+        </View>
+        <WeekStrip today={new Date()} days={streakDays(new Date())} />
       </Section>
 
       <Section title="Progress">

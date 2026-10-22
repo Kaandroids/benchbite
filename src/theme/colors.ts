@@ -31,6 +31,10 @@ export type ColorTokens = {
   protein: string;
   carbs: string;
   fat: string;
+  /** The flame behind a day that kept the streak going, under `text`. */
+  streakDay: string;
+  /** Frozen streak days: the snowflake behind them. */
+  frozen: string;
 };
 
 export const lightColors: ColorTokens = {
@@ -54,6 +58,8 @@ export const lightColors: ColorTokens = {
   protein: '#FF6A10',
   carbs: '#F5B800',
   fat: '#6E5BD8',
+  streakDay: '#FFD3B8',
+  frozen: '#93C5FD',
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -79,4 +85,6 @@ export const darkColors: ColorTokens = {
   protein: '#FF7F26',
   carbs: '#FFD23F',
   fat: '#9F8CFF',
+  streakDay: '#6B3410',
+  frozen: '#2F5C8F',
 };

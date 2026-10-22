@@ -21,12 +21,8 @@
     "progress": "Your weight and progress will be here."
   },
   "today": {
-    "title": "Today",
     "loading": "Loading",
     "targets": "Your daily targets",
-    "week": {
-      "workout": "workout"
-    },
     "workout": {
       "title": "Today's workout",
       "restDay": "Rest day",
@@ -38,16 +34,20 @@
       "none": "No weight logged yet.",
       "loggedToday": "Logged today",
       "loggedOn": "Logged on {{date}}",
-      "log": "Log weight",
-      "correct": "Correct weight",
-      "save": "Save",
-      "cancel": "Cancel",
-      "saveError": "We couldn't save your weight. Check your connection and try again."
+      "saveError": "We couldn't save your weight. Check your connection and try again.",
+      "decrease": "Decrease weight",
+      "increase": "Increase weight"
     },
     "error": {
       "title": "Today couldn't load",
       "message": "Check your connection and try again."
     }
+  },
+  "streak": {
+    "label_one": "{{count}}-day streak",
+    "label_other": "{{count}}-day streak",
+    "done": "streak kept",
+    "frozen": "streak frozen"
   },
   "nutrition": {
     "calories": "{{calories}} kcal a day",
@@ -56,7 +56,10 @@
       "protein": "Protein",
       "carbs": "Carbs",
       "fat": "Fat"
-    }
+    },
+    "caloriesOf": "{{eaten}} / {{target}} kcal",
+    "gramsOf": "{{eaten}} / {{target}} g",
+    "calorieLabel": "Calories"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

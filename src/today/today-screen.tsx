@@ -10,9 +10,11 @@ import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
-import { MacroTargets } from '@/nutrition/macro-targets';
-import { useNutritionTargets } from '@/nutrition/targets';
+import { DailyProgress } from '@/nutrition/daily-progress';
+import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { usePlan } from '@/plan/use-plan';
+import { NO_STREAK } from '@/streak/streak';
+import { StreakBadge } from '@/streak/streak-badge';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
@@ -20,17 +22,21 @@ import { WeekStrip } from './week-strip';
 import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
+/** Meals are logged in the nutrition milestone; until then nothing is eaten. */
+const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+
 /** The home tab: the week, today's workout, the daily targets and the weight. */
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const formatDate = useDateFormat('full');
+  const formatDate = useDateFormat('long');
   const plan = usePlan();
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const queries = [plan, targets, latestWeight, weightUnit];
   const today = new Date();
+  const streak = NO_STREAK;
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
@@ -69,15 +75,12 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekStrip
-          today={today}
-          trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
-        />
+        <WeekStrip today={today} days={streak.days} />
         {plan.data ? <WorkoutCard plan={plan.data} today={today} /> : null}
         {targets.data ? (
           <Card entering={FadeInDown.delay(200).duration(400)}>
             <Text variant="headline">{t('today.targets')}</Text>
-            <MacroTargets targets={targets.data} />
+            <DailyProgress targets={targets.data} eaten={NOTHING_EATEN} />
           </Card>
         ) : null}
         <WeightCard
@@ -106,11 +109,14 @@ export function TodayScreen() {
           />
         }
       >
-        <View>
-          <Text variant="caption" color="textMuted">
+        <View style={styles.header}>
+          <View style={styles.side} />
+          <Text variant="bodyStrong" accessibilityRole="header">
             {formatDate(today)}
           </Text>
-          <Text variant="title">{t('today.title')}</Text>
+          <View style={[styles.side, styles.end]}>
+            <StreakBadge streak={streak} />
+          </View>
         </View>
         {content}
         {__DEV__ ? (
@@ -131,6 +137,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  side: {
+    flex: 1,
+  },
+  end: {
+    alignItems: 'flex-end',
   },
   center: {
     flex: 1,
