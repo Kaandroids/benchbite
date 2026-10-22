@@ -52,6 +52,9 @@ and opens pull requests as the `benchbite-bot` GitHub App; the maintainer review
 - Commit early and often. Each commit is a small, self-contained step that can be reviewed on its own.
 - Pull requests are squash-merged, so the PR title becomes the commit on `main`.
 - Address every review comment with a new commit. Do not force-push a branch under review.
+- Do not implement a design before it is approved. For new screens and visible UI changes, Claude
+  first proposes the design as an Artifact (a mock-up of the screens and their states); the
+  maintainer approves it before any code is written.
 
 ### Naming
 
