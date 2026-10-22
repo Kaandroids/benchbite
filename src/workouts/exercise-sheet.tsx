@@ -1,0 +1,307 @@
+import { useTranslation } from 'react-i18next';
+import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '@/components/ui/button';
+import { InfoButton } from '@/components/ui/info-button';
+import { StepButtons } from '@/components/ui/step-buttons';
+import { Text } from '@/components/ui/text';
+import type { LibraryExercise } from '@/exercises/library';
+import { useNumberFormat } from '@/i18n/units';
+import { clamp } from '@/lib/math';
+import { useTheme } from '@/theme';
+
+import type { DraftExercise } from './draft';
+import { minutesAndSeconds } from './format';
+import { exerciseImageUrl } from './workouts';
+
+const LIMITS = {
+  sets: { min: 1, max: 10, step: 1 },
+  reps: { min: 1, max: 100, step: 1 },
+  rest: { min: 0, max: 600, step: 15 },
+  seconds: { min: 5, max: 3600, step: 15 },
+  meters: { min: 100, max: 100000, step: 100 },
+};
+
+type ExerciseSheetProps = {
+  exercise: DraftExercise | null;
+  details: LibraryExercise | undefined;
+  onChange: (exercise: DraftExercise) => void;
+  onRemove: () => void;
+  onClose: () => void;
+};
+
+/** The sets, target and rest of one exercise of the workout being edited, in a bottom sheet. */
+export function ExerciseSheet({
+  exercise,
+  details,
+  onChange,
+  onRemove,
+  onClose,
+}: ExerciseSheetProps) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const { format } = useNumberFormat();
+
+  if (!exercise) {
+    return null;
+  }
+  const { target } = exercise;
+  const set = (change: Partial<DraftExercise>) => onChange({ ...exercise, ...change });
+  const step = (value: number, delta: number, limits: { min: number; max: number }) =>
+    clamp(value + delta, limits.min, limits.max);
+
+  type Row = {
+    label: string;
+    value: string;
+    decrease: () => void;
+    increase: () => void;
+    canDecrease: boolean;
+    canIncrease: boolean;
+  };
+  const row = (
+    label: string,
+    value: number,
+    limits: { min: number; max: number; step: number },
+    apply: (next: number) => void,
+    shown: string = String(value),
+  ): Row => ({
+    label,
+    value: shown,
+    decrease: () => apply(step(value, -limits.step, limits)),
+    increase: () => apply(step(value, limits.step, limits)),
+    canDecrease: value > limits.min,
+    canIncrease: value < limits.max,
+  });
+
+  const rows: Row[] = [row(t('editor.sets'), exercise.sets, LIMITS.sets, (sets) => set({ sets }))];
+  if ('reps' in target) {
+    const { min, max } = target.reps;
+    rows.push(
+      row(t('editor.repsFrom'), min, LIMITS.reps, (next) =>
+        set({ target: { reps: { min: next, max: Math.max(max, next) } } }),
+      ),
+      row(t('editor.repsTo'), max, { ...LIMITS.reps, min }, (next) =>
+        set({ target: { reps: { min, max: next } } }),
+      ),
+    );
+  } else {
+    const distance = details?.metrics.includes('distance') ?? target.meters !== null;
+    // A distance exercise may drop either its time or its distance, but not both.
+    const optional = (
+      value: number | null,
+      limits: typeof LIMITS.seconds,
+      other: number | null,
+    ) => ({
+      ...limits,
+      min: distance && other !== null ? 0 : limits.min,
+      value: value ?? 0,
+    });
+    if (distance) {
+      const meters = optional(target.meters, LIMITS.meters, target.seconds);
+      rows.push(
+        row(
+          t('editor.distance'),
+          meters.value,
+          meters,
+          (next) => set({ target: { ...target, meters: next === 0 ? null : next } }),
+          target.meters === null
+            ? '–'
+            : target.meters >= 1000
+              ? `${format(target.meters / 1000)} km`
+              : `${target.meters} m`,
+        ),
+      );
+    }
+    const seconds = optional(target.seconds, LIMITS.seconds, target.meters);
+    rows.push(
+      row(
+        t('editor.time'),
+        seconds.value,
+        seconds,
+        (next) => set({ target: { ...target, seconds: next === 0 ? null : next } }),
+        target.seconds === null ? '–' : minutesAndSeconds(target.seconds),
+      ),
+    );
+  }
+  rows.push(
+    row(
+      t('editor.rest'),
+      exercise.restSeconds,
+      LIMITS.rest,
+      (restSeconds) => set({ restSeconds }),
+      minutesAndSeconds(exercise.restSeconds),
+    ),
+  );
+
+  const detail = [
+    details?.primaryMuscles[0] ? t(`workout.muscles.${details.primaryMuscles[0]}`) : null,
+    details?.equipment ? t(`exercise.equipmentKinds.${details.equipment}`) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.root}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+          onPress={onClose}
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
+        />
+        <SafeAreaView
+          edges={['bottom']}
+          style={[
+            {
+              backgroundColor: colors.background,
+              borderTopLeftRadius: radii.xl,
+              borderTopRightRadius: radii.xl,
+              padding: spacing.xl,
+              gap: spacing.lg,
+            },
+          ]}
+        >
+          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+          <View style={[styles.header, { gap: spacing.md }]}>
+            <View
+              style={[
+                styles.image,
+                {
+                  borderRadius: radii.md,
+                  borderColor: colors.border,
+                  backgroundColor: colors.imageBackground,
+                },
+              ]}
+            >
+              {details?.imagePaths[0] ? (
+                <Image
+                  source={{ uri: exerciseImageUrl(details.imagePaths[0]) }}
+                  style={styles.fill}
+                />
+              ) : null}
+            </View>
+            <View style={styles.title}>
+              <Text variant="headline">{details?.name ?? ''}</Text>
+              <Text variant="caption" color="textMuted">
+                {detail}
+              </Text>
+            </View>
+            <InfoButton
+              exerciseId={exercise.exerciseId}
+              exerciseName={details?.name ?? ''}
+              onOpen={onClose}
+            />
+          </View>
+
+          <View
+            style={[
+              styles.card,
+              {
+                borderRadius: radii.lg,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                paddingHorizontal: spacing.lg,
+              },
+            ]}
+          >
+            {rows.map((item, index) => (
+              <View
+                key={item.label}
+                style={[
+                  styles.row,
+                  {
+                    gap: spacing.md,
+                    paddingVertical: spacing.sm,
+                    borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
+                    borderTopColor: colors.border,
+                  },
+                ]}
+              >
+                <Text variant="bodyStrong" style={styles.label}>
+                  {item.label}
+                </Text>
+                <Text
+                  variant="headline"
+                  style={styles.value}
+                  accessibilityLabel={`${item.label} ${item.value}`}
+                >
+                  {item.value}
+                </Text>
+                <StepButtons
+                  size={44}
+                  onDecrease={item.decrease}
+                  onIncrease={item.increase}
+                  canDecrease={item.canDecrease}
+                  canIncrease={item.canIncrease}
+                  decreaseLabel={t('editor.less', { label: item.label })}
+                  increaseLabel={t('editor.more', { label: item.label })}
+                />
+              </View>
+            ))}
+          </View>
+
+          <View style={[styles.actions, { gap: spacing.md }]}>
+            <Button
+              variant="ghost"
+              label={t('editor.remove')}
+              onPress={onRemove}
+              style={styles.action}
+            />
+            <Button label={t('editor.done')} onPress={onClose} style={styles.action} />
+          </View>
+        </SafeAreaView>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  image: {
+    width: 64,
+    height: 64,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  fill: {
+    width: '100%',
+    height: '100%',
+  },
+  title: {
+    flex: 1,
+  },
+  card: {
+    borderWidth: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  label: {
+    flex: 1,
+  },
+  value: {
+    minWidth: 64,
+    textAlign: 'center',
+  },
+  actions: {
+    flexDirection: 'row',
+  },
+  action: {
+    flex: 1,
+  },
+});

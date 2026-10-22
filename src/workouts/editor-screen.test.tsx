@@ -1,0 +1,198 @@
+import { router } from 'expo-router';
+import { Alert } from 'react-native';
+
+import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { act, fireEvent, render, screen } from '@/test/render';
+
+import { addExercises, clearDraft } from './draft';
+import { EditorScreen } from './editor-screen';
+import { testExercise, testWorkout } from './test-data';
+import { useDeleteWorkout, useSaveWorkout, useWorkouts } from './workouts';
+
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
+}));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
+  useExerciseLibrary: jest.fn(),
+}));
+jest.mock('./workouts', () => ({
+  ...jest.requireActual<typeof import('./workouts')>('./workouts'),
+  useWorkouts: jest.fn(),
+  useSaveWorkout: jest.fn(),
+  useDeleteWorkout: jest.fn(),
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
+
+const libraryExercise = (
+  id: string,
+  name: string,
+  metrics: LibraryExercise['metrics'],
+): LibraryExercise => ({
+  id,
+  name,
+  englishName: name,
+  metrics,
+  primaryMuscles: ['chest'],
+  secondaryMuscles: [],
+  equipment: 'barbell',
+  level: 'beginner',
+  category: 'strength',
+  imagePaths: [`${id}/0.webp`],
+});
+
+const LIBRARY = [
+  libraryExercise('bench', 'Bench press', ['weight', 'reps']),
+  libraryExercise('rowing', 'Rowing', ['distance', 'duration']),
+  libraryExercise('plank', 'Plank', ['duration']),
+];
+
+const PUSH = testWorkout(5, {
+  type: 'push',
+  weekdays: [1],
+  exercises: [testExercise('bench', { sets: 4, restSeconds: 120 })],
+  finisher: testExercise('rowing', {
+    target: { seconds: 300, meters: null },
+    restSeconds: 0,
+    sets: 1,
+  }),
+});
+
+const saveWorkout = jest.fn();
+const deleteWorkout = jest.fn();
+const loaded = <T,>(data: T) => ({
+  data,
+  isPending: false,
+  isError: false,
+  isFetching: false,
+  refetch: jest.fn(),
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.mocked(useWorkouts).mockReturnValue(loaded([PUSH]) as never);
+  jest.mocked(useExerciseLibrary).mockReturnValue(loaded(LIBRARY) as never);
+  jest.mocked(useSaveWorkout).mockReturnValue({
+    mutateAsync: saveWorkout.mockResolvedValue(5),
+    isPending: false,
+    isError: false,
+  } as never);
+  jest.mocked(useDeleteWorkout).mockReturnValue({
+    mutateAsync: deleteWorkout.mockResolvedValue(undefined),
+  } as never);
+});
+afterEach(() => clearDraft());
+
+describe('EditorScreen', () => {
+  it('starts a new workout empty, and saves only with a name and an exercise', async () => {
+    await render(<EditorScreen />);
+    expect(screen.getByText('New workout')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Arms');
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await act(() => addExercises([LIBRARY[0]!]));
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    expect(screen.queryByText('Delete workout')).toBeNull();
+  });
+
+  it('loads a workout with its finisher as an ordinary exercise', async () => {
+    await render(<EditorScreen id={5} />);
+    expect(screen.getByText('Edit workout')).toBeTruthy();
+    expect(screen.getByLabelText('Name').props.value).toBe('Push');
+    expect(screen.getByRole('checkbox', { name: 'Monday' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Tuesday' })).not.toBeChecked();
+    expect(screen.getByText('Exercises · 2')).toBeTruthy();
+    expect(screen.getByText('4 × 8–12 reps')).toBeTruthy();
+    expect(screen.getByText('1 × 5 min')).toBeTruthy();
+  });
+
+  it('saves the name, days and exercises, then goes back', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.changeText(screen.getByLabelText('Name'), '  Chest day ');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Thursday' }));
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Monday' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith({
+      id: 5,
+      name: 'Chest day',
+      weekdays: [4],
+      exercises: [
+        { exerciseId: 'bench', sets: 4, target: { reps: { min: 8, max: 12 } }, restSeconds: 120 },
+        { exerciseId: 'rowing', sets: 1, target: { seconds: 300, meters: null }, restSeconds: 0 },
+      ],
+    });
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('opens the picker to add exercises', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add exercises' }));
+    expect(router.push).toHaveBeenCalledWith('/workout/pick');
+  });
+
+  it('deletes the workout after asking', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(deleteWorkout).not.toHaveBeenCalled();
+    const buttons = alert.mock.calls[0]?.[2] ?? [];
+    const confirm = buttons.find((button) => button.style === 'destructive');
+    await act(async () => confirm?.onPress?.());
+    expect(deleteWorkout).toHaveBeenCalledWith(5);
+    expect(router.dismissTo).toHaveBeenCalledWith('/workout');
+  });
+
+  describe('the exercise sheet', () => {
+    const open = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
+    const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
+
+    it('changes the sets, reps and rest', async () => {
+      await render(<EditorScreen id={5} />);
+      await open('Bench press');
+      await press('More: Sets');
+      await press('More: Reps from');
+      await press('Less: Reps to');
+      await press('More: Rest');
+      await press('Done');
+      expect(screen.getByText('5 × 9–11 reps')).toBeTruthy();
+      expect(screen.getByText('Rest 2:15')).toBeTruthy();
+    });
+
+    it('keeps the rep range in order', async () => {
+      await render(<EditorScreen id={5} />);
+      await open('Bench press');
+      for (let i = 0; i < 5; i++) {
+        await press('More: Reps from');
+      }
+      expect(screen.getByLabelText('Reps from 13')).toBeTruthy();
+      expect(screen.getByLabelText('Reps to 13')).toBeTruthy();
+    });
+
+    it('sets a distance, a time or both, never neither', async () => {
+      await render(<EditorScreen id={5} />);
+      await open('Rowing');
+      expect(screen.getByLabelText('Distance –')).toBeTruthy();
+      // Without a distance, the time stops at its shortest instead of turning off.
+      for (let i = 0; i < 25; i++) {
+        await press('Less: Time');
+      }
+      expect(screen.getByLabelText('Time 0:05')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Less: Time' })).toBeDisabled();
+      await press('More: Distance');
+      expect(screen.getByLabelText('Distance 100 m')).toBeTruthy();
+      await press('Less: Time');
+      expect(screen.getByLabelText('Time –')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Less: Distance' })).toBeDisabled();
+      await press('Done');
+      expect(screen.getByText('1 × 100 m')).toBeTruthy();
+    });
+
+    it('removes the exercise', async () => {
+      await render(<EditorScreen id={5} />);
+      await open('Bench press');
+      await press('Remove');
+      expect(screen.getByText('Exercises · 1')).toBeTruthy();
+    });
+  });
+});

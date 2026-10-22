@@ -147,7 +147,8 @@
       "shoulders": "Schultern",
       "traps": "Trapez",
       "triceps": "Trizeps"
-    }
+    },
+    "edit": "Bearbeiten"
   },
   "exercise": {
     "start": "Start",
@@ -196,6 +197,33 @@
       "core": "Rumpf",
       "cardio": "Cardio"
     }
+  },
+  "editor": {
+    "newTitle": "Neues Workout",
+    "editTitle": "Workout bearbeiten",
+    "save": "Speichern",
+    "name": "Name",
+    "namePlaceholder": "Zum Beispiel Zug oder Arme",
+    "days": "Tage (optional)",
+    "daysHint": "Tage planen nur deine Woche. Du kannst jedes Workout an jedem Tag machen.",
+    "exercises_one": "Übungen · {{count}}",
+    "exercises_other": "Übungen · {{count}}",
+    "reorder": "Zum Sortieren ziehen",
+    "delete": "Workout löschen",
+    "deleteTitle": "Dieses Workout löschen?",
+    "deleteMessage": "Es wird mit seinen Übungen gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
+    "saveError": "Wir konnten das Workout nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
+    "sets": "Sätze",
+    "repsFrom": "Wdh. von",
+    "repsTo": "Wdh. bis",
+    "time": "Zeit",
+    "distance": "Distanz",
+    "rest": "Pause",
+    "less": "Weniger: {{label}}",
+    "more": "Mehr: {{label}}",
+    "remove": "Entfernen",
+    "done": "Fertig"
   },
   "onboarding": {
     "steps": {

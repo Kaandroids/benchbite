@@ -147,7 +147,8 @@
       "shoulders": "Shoulders",
       "traps": "Traps",
       "triceps": "Triceps"
-    }
+    },
+    "edit": "Edit"
   },
   "exercise": {
     "start": "Start",
@@ -196,6 +197,33 @@
       "core": "Core",
       "cardio": "Cardio"
     }
+  },
+  "editor": {
+    "newTitle": "New workout",
+    "editTitle": "Edit workout",
+    "save": "Save",
+    "name": "Name",
+    "namePlaceholder": "For example Pull or Arms",
+    "days": "Days (optional)",
+    "daysHint": "Days only plan your week. You can do any workout on any day.",
+    "exercises_one": "Exercises · {{count}}",
+    "exercises_other": "Exercises · {{count}}",
+    "reorder": "Drag to reorder",
+    "delete": "Delete workout",
+    "deleteTitle": "Delete this workout?",
+    "deleteMessage": "It is removed with its exercises. This cannot be undone.",
+    "cancel": "Cancel",
+    "saveError": "We couldn't save the workout. Check your connection and try again.",
+    "sets": "Sets",
+    "repsFrom": "Reps from",
+    "repsTo": "Reps to",
+    "time": "Time",
+    "distance": "Distance",
+    "rest": "Rest",
+    "less": "Less: {{label}}",
+    "more": "More: {{label}}",
+    "remove": "Remove",
+    "done": "Done"
   },
   "onboarding": {
     "steps": {

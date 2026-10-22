@@ -147,7 +147,8 @@
       "shoulders": "Omuz",
       "traps": "Trapez",
       "triceps": "Triseps"
-    }
+    },
+    "edit": "Düzenle"
   },
   "exercise": {
     "start": "Başlangıç",
@@ -196,6 +197,33 @@
       "core": "Karın",
       "cardio": "Kardiyo"
     }
+  },
+  "editor": {
+    "newTitle": "Yeni antrenman",
+    "editTitle": "Antrenmanı düzenle",
+    "save": "Kaydet",
+    "name": "Ad",
+    "namePlaceholder": "Örneğin Sırt veya Kol",
+    "days": "Günler (isteğe bağlı)",
+    "daysHint": "Günler sadece haftanı planlar. Her antrenmanı her gün yapabilirsin.",
+    "exercises_one": "Egzersizler · {{count}}",
+    "exercises_other": "Egzersizler · {{count}}",
+    "reorder": "Sıralamak için sürükle",
+    "delete": "Antrenmanı sil",
+    "deleteTitle": "Bu antrenman silinsin mi?",
+    "deleteMessage": "Egzersizleriyle birlikte silinir. Bu geri alınamaz.",
+    "cancel": "Vazgeç",
+    "saveError": "Antrenmanı kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+    "sets": "Set",
+    "repsFrom": "Tekrar (en az)",
+    "repsTo": "Tekrar (en çok)",
+    "time": "Süre",
+    "distance": "Mesafe",
+    "rest": "Dinlenme",
+    "less": "Azalt: {{label}}",
+    "more": "Artır: {{label}}",
+    "remove": "Kaldır",
+    "done": "Tamam"
   },
   "onboarding": {
     "steps": {
