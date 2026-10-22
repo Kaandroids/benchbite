@@ -385,6 +385,7 @@ export type Database = {
         };
       };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
@@ -395,6 +396,11 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      save_workout: { Args: { workout: Json }; Returns: number };
+      target_suits: {
+        Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
+        Returns: boolean;
       };
     };
     Enums: {

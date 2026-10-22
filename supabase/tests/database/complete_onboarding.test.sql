@@ -115,12 +115,11 @@ select throws_ok(
   'The onboarding cannot be saved twice'
 );
 
--- Workouts are created only by the onboarding for now, so users cannot add or delete them
--- directly, not even their own.
+-- Workouts are written through the onboarding and save_workout(), never directly.
 select throws_ok(
-  $$ delete from public.workouts $$,
+  $$ update public.workouts set estimated_minutes = 10 $$,
   '42501', null,
-  'Users cannot delete their workouts'
+  'Users cannot change their workouts directly'
 );
 select throws_ok(
   $$ insert into public.workout_exercises (workout_id, user_id, position, exercise_id, slot, sets,
