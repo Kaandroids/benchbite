@@ -12,6 +12,7 @@ import WorkoutLayout from '@/app/(app)/workout/_layout';
 import WorkoutArchive from '@/app/(app)/workout/archive';
 import ExerciseDetails from '@/app/(app)/workout/exercise/[id]';
 import PickExercises from '@/app/(app)/workout/pick';
+import EditWorkout from '@/app/(app)/workout/edit';
 import WorkoutTab from '@/app/(app)/workout/index';
 import RootLayout from '@/app/_layout';
 import OnboardingStep from '@/app/onboarding/[step]';
@@ -54,6 +55,12 @@ jest.mock('@/workouts/workout-screen', () => {
   return { WorkoutScreen: ({ id }: { id: number }) => <MockText>{`Workout ${id}`}</MockText> };
 });
 
+jest.mock('@/workouts/editor-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    EditorScreen: ({ id }: { id?: number }) => <MockText>{`Editor ${id ?? 'new'}`}</MockText>,
+  };
+});
 jest.mock('@/workouts/picker-screen', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { PickerScreen: () => <MockText>Picker screen</MockText> };
@@ -124,6 +131,7 @@ const APP_ROUTES = {
   '(app)/workout/[id]': WorkoutDetail,
   '(app)/workout/exercise/[id]': ExerciseDetails,
   '(app)/workout/pick': PickExercises,
+  '(app)/workout/edit': EditWorkout,
   '(app)/nutrition': NutritionTab,
   '(app)/progress': ProgressTab,
   'dev/components': () => <Text>Component gallery</Text>,
@@ -262,10 +270,12 @@ describe('app tabs', () => {
     ['/workout/7', 'Workout 7'],
     ['/workout/exercise/Plank', 'Exercise Plank'],
     ['/workout/pick', 'Picker screen'],
+    ['/workout/edit', 'Editor new'],
+    ['/workout/edit?id=7', 'Editor 7'],
   ] as const)('opens %s inside the Workout tab', async (path, text) => {
     const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
     await act(() => router.navigate(path));
-    expect(app.getPathname()).toBe(path);
+    expect(app.getPathname()).toBe(path.split('?')[0]);
     expect(screen.getByText(text)).toBeOnTheScreen();
     expect(tabs().filter((tab) => tab.focused)).toEqual([{ title: 'Workout', focused: true }]);
   });

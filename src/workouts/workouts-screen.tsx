@@ -52,6 +52,22 @@ export function WorkoutsScreen() {
           >
             <Icon name="archive" color="textMuted" />
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('editor.newTitle')}
+            onPress={() => router.push('/workout/edit')}
+            style={({ pressed }) => [
+              styles.headerButton,
+              {
+                borderRadius: radii.full,
+                backgroundColor: colors.primaryButton,
+                borderColor: colors.primaryButton,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Icon name="plus" color="onPrimary" />
+          </Pressable>
         </View>
 
         <LoadState queries={[workouts]} />
@@ -100,6 +116,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   title: {
     flex: 1,

@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Switch } from '@/components/ui/switch';
@@ -105,7 +106,15 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : null}
       </View>
       <View style={[styles.exerciseText, { gap: 2 }]}>
-        <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
+        <View style={[styles.nameRow, { gap: spacing.sm }]}>
+          <Text variant="bodyStrong" style={styles.name}>
+            {names[exercise.exerciseId] ?? ''}
+          </Text>
+          <InfoButton
+            exerciseId={exercise.exerciseId}
+            exerciseName={names[exercise.exerciseId] ?? ''}
+          />
+        </View>
         <Text variant="bodyStrong" color="primaryText">
           {formatTarget(exercise.sets, exercise.target)}
         </Text>
@@ -117,7 +126,32 @@ export function WorkoutScreen({ id }: { id: number }) {
   );
 
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen
+      onBack={() => router.back()}
+      action={
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } })
+          }
+          style={({ pressed }) => [
+            styles.edit,
+            {
+              gap: spacing.xs,
+              borderRadius: radii.full,
+              backgroundColor: colors.iconBackground,
+              paddingHorizontal: spacing.md,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Icon name="edit" size={16} color="primaryText" />
+          <Text variant="bodyStrong" color="primaryText" style={styles.finisherLabel}>
+            {t('workout.edit')}
+          </Text>
+        </Pressable>
+      }
+    >
       <View style={[styles.header, { gap: spacing.md }]}>
         <View style={[styles.headerText, { gap: spacing.xs }]}>
           <Text variant="title" accessibilityRole="header">
@@ -189,6 +223,11 @@ export function WorkoutScreen({ id }: { id: number }) {
 }
 
 const styles = StyleSheet.create({
+  edit: {
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -227,6 +266,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   exerciseText: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  name: {
     flex: 1,
   },
   finisherTitle: {

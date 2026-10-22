@@ -96,6 +96,8 @@ describe('WorkoutsScreen', () => {
     });
     await fireEvent.press(screen.getByRole('button', { name: 'Archive' }));
     expect(router.push).toHaveBeenCalledWith('/workout/archive');
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
   it('switches a workout off', async () => {
@@ -198,6 +200,19 @@ describe('WorkoutScreen', () => {
       .map((node) => node.props.source?.uri);
     expect(sources).toContain('https://images.test/pulldown/0.webp');
     expect(sources).toContain('https://images.test/rope/0.webp');
+  });
+
+  it('opens the editor and each exercise’s details', async () => {
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/edit', params: { id: '7' } });
+    await waitFor(() => expect(screen.getByText('Name of row')).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Details of Name of row' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/workout/exercise/[id]',
+      params: { id: 'row' },
+    });
   });
 
   it('switches the workout off', async () => {
