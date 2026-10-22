@@ -4,6 +4,7 @@
 
 import { Constants, type Database } from '../src/lib/database.types.ts';
 import { MAX_TRAINING_DAYS, SESSION_MINUTES } from '../supabase/functions/_shared/plan/limits.ts';
+import { usesTimeTarget } from '../supabase/functions/_shared/plan/prescription.ts';
 import type { PlanInput, Session } from '../supabase/functions/_shared/plan/types.ts';
 
 const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
@@ -106,8 +107,7 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
       if (EXPERIENCES.indexOf(row.min_experience) > experienceRank) {
         found.push(`${exercise.exerciseId} is for ${row.min_experience} users`);
       }
-      const recordsReps = row.exercises.metrics.includes('reps');
-      if (recordsReps !== 'reps' in exercise.target) {
+      if (usesTimeTarget(row.exercises.metrics) !== 'seconds' in exercise.target) {
         found.push(
           `${exercise.exerciseId} records ${row.exercises.metrics} but has another target`,
         );
