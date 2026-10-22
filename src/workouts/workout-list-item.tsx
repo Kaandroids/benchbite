@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
+import { useWorkoutName } from './format';
 import { useSetWorkoutActive, type Workout } from './workouts';
 
 type WorkoutListItemProps = {
@@ -20,7 +21,7 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const setActive = useSetWorkoutActive();
-  const name = t(`workout.sessionTypes.${workout.type}`);
+  const name = useWorkoutName()(workout);
 
   return (
     <View

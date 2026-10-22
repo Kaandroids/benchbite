@@ -115,9 +115,12 @@
     "target": {
       "repRange": "{{sets}} × {{min}}–{{max}} tekrar",
       "reps": "{{sets}} × {{reps}} tekrar",
-      "seconds": "{{sets}} × {{seconds}} sn",
-      "minutes": "{{sets}} × {{minutes}} dk",
-      "time": "{{sets}} × {{time}} dk"
+      "sets": "{{sets}} × {{target}}",
+      "seconds": "{{seconds}} sn",
+      "minutes": "{{minutes}} dk",
+      "time": "{{time}} dk",
+      "meters": "{{meters}} m",
+      "kilometers": "{{kilometers}} km"
     },
     "rest": "Dinlenme {{time}}",
     "noRest": "Dinlenme yok",

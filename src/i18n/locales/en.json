@@ -115,9 +115,12 @@
     "target": {
       "repRange": "{{sets}} × {{min}}–{{max}} reps",
       "reps": "{{sets}} × {{reps}} reps",
-      "seconds": "{{sets}} × {{seconds}} s",
-      "minutes": "{{sets}} × {{minutes}} min",
-      "time": "{{sets}} × {{time}} min"
+      "sets": "{{sets}} × {{target}}",
+      "seconds": "{{seconds}} s",
+      "minutes": "{{minutes}} min",
+      "time": "{{time}} min",
+      "meters": "{{meters}} m",
+      "kilometers": "{{kilometers}} km"
     },
     "rest": "Rest {{time}}",
     "noRest": "No rest",

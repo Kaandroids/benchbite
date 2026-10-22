@@ -1,30 +1,49 @@
 import { useTranslation } from 'react-i18next';
 
-import type { Target } from '@shared/plan/types';
+import { useNumberFormat } from '@/i18n/units';
 
-import type { Muscle, Workout } from './workouts';
+import type { Muscle, Workout, WorkoutTarget } from './workouts';
 
 /** A time in seconds as minutes and seconds, such as 1:30. */
 export function minutesAndSeconds(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-/** The sets and target of an exercise, such as "3 × 8–12 reps" or "3 × 45 s". */
+/** A workout's name, or the name of its type for workouts from the onboarding. */
+export function useWorkoutName() {
+  const { t } = useTranslation();
+  return ({ name, type }: Pick<Workout, 'name' | 'type'>) =>
+    name ?? (type ? t(`workout.sessionTypes.${type}`) : '');
+}
+
+/**
+ * The sets and target of an exercise, such as "3 × 8–12 reps", "3 × 45 s" or "1 × 400 m · 2 min".
+ */
 export function useTargetFormat() {
   const { t } = useTranslation();
-  return (sets: number, target: Target) => {
-    if ('seconds' in target) {
-      const { seconds } = target;
-      return seconds < 60
-        ? t('workout.target.seconds', { sets, seconds })
-        : seconds % 60 === 0
-          ? t('workout.target.minutes', { sets, minutes: seconds / 60 })
-          : t('workout.target.time', { sets, time: minutesAndSeconds(seconds) });
+  const { format } = useNumberFormat();
+  const time = (seconds: number) =>
+    seconds < 60
+      ? t('workout.target.seconds', { seconds })
+      : seconds % 60 === 0
+        ? t('workout.target.minutes', { minutes: seconds / 60 })
+        : t('workout.target.time', { time: minutesAndSeconds(seconds) });
+  const distance = (meters: number) =>
+    meters >= 1000
+      ? t('workout.target.kilometers', { kilometers: format(meters / 1000) })
+      : t('workout.target.meters', { meters });
+  return (sets: number, target: WorkoutTarget) => {
+    if ('reps' in target) {
+      const { min, max } = target.reps;
+      return min === max
+        ? t('workout.target.reps', { sets, reps: min })
+        : t('workout.target.repRange', { sets, min, max });
     }
-    const { min, max } = target.reps;
-    return min === max
-      ? t('workout.target.reps', { sets, reps: min })
-      : t('workout.target.repRange', { sets, min, max });
+    const parts = [
+      target.meters !== null ? distance(target.meters) : null,
+      target.seconds !== null ? time(target.seconds) : null,
+    ].filter((part) => part !== null);
+    return t('workout.target.sets', { sets, target: parts.join(' · ') });
   };
 }
 

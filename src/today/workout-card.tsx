@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
+import { useWorkoutName } from '@/workouts/format';
 import { nextSession } from '@/workouts/next-session';
 import type { WeekSession } from '@/workouts/workouts';
 
@@ -29,6 +30,7 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
+  const workoutName = useWorkoutName();
   const upcoming = nextSession(plan, today);
   const session = upcoming?.inDays === 0 ? upcoming.session : null;
   const names = useExerciseNames(session?.exercises.map((exercise) => exercise.exerciseId) ?? []);
@@ -48,7 +50,7 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
             <Text color="textMuted">
               {t('today.workout.next', {
                 day: inDays === 1 ? t('today.workout.tomorrow') : weekdayName(next.weekday),
-                session: t(`workout.sessionTypes.${next.type}`),
+                session: workoutName(next),
               })}
             </Text>
           </View>
@@ -77,7 +79,7 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
             <Text variant="caption" color="primaryText">
               {t('today.workout.title')}
             </Text>
-            <Text variant="headline">{t(`workout.sessionTypes.${session.type}`)}</Text>
+            <Text variant="headline">{workoutName(session)}</Text>
           </View>
           <Icon name="forward" color="textMuted" />
         </View>

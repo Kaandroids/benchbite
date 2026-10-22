@@ -13,7 +13,7 @@ import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
-import { mainMuscles, useRestFormat, useTargetFormat } from './format';
+import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import {
   exerciseImageUrl,
   useSetWorkoutActive,
@@ -36,6 +36,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const names = useExerciseNames(all.map((exercise) => exercise.exerciseId));
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
+  const workoutName = useWorkoutName();
 
   if (!allLoaded([workouts])) {
     return (
@@ -56,7 +57,7 @@ export function WorkoutScreen({ id }: { id: number }) {
     );
   }
 
-  const name = t(`workout.sessionTypes.${workout.type}`);
+  const name = workoutName(workout);
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const stats = [
     {

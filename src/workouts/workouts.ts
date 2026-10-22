@@ -2,12 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
-import type { PlannedExercise, Session } from '@shared/plan/types';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
 
-export type WorkoutExercise = PlannedExercise & {
+/** A rep range, or a time, a distance or both. */
+export type WorkoutTarget =
+  { reps: { min: number; max: number } } | { seconds: number | null; meters: number | null };
+
+export type WorkoutExercise = {
+  exerciseId: string;
+  sets: number;
+  target: WorkoutTarget;
+  restSeconds: number;
   primaryMuscles: Muscle[];
   /** The first picture of the exercise, as a path in the exercise-images bucket. */
   imagePath: string | null;
@@ -15,7 +22,9 @@ export type WorkoutExercise = PlannedExercise & {
 
 export type Workout = {
   id: number;
-  type: Enums['workout_type'];
+  /** The name given by the user; workouts from the onboarding are named after their type. */
+  name: string | null;
+  type: Enums['workout_type'] | null;
   /** ISO weekdays, 1 for Monday to 7 for Sunday, from Monday on; empty for any day. */
   weekdays: number[];
   active: boolean;
@@ -24,8 +33,11 @@ export type Workout = {
   finisher: WorkoutExercise | null;
 };
 
-/** A workout on one day of the week, in the shape the plan builder returns sessions. */
-export type WeekSession = Session & { workoutId: number };
+/** A workout on one day of the week. */
+export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimatedMinutes'> & {
+  weekday: number;
+  workoutId: number;
+};
 
 const WORKOUTS_KEY = ['workouts'];
 
@@ -33,11 +45,11 @@ type ExerciseRow = Pick<
   Database['public']['Tables']['workout_exercises']['Row'],
   | 'position'
   | 'exercise_id'
-  | 'slot'
   | 'sets'
   | 'target_reps_min'
   | 'target_reps_max'
   | 'target_seconds'
+  | 'target_meters'
   | 'rest_seconds'
   | 'is_finisher'
 > & {
@@ -50,13 +62,12 @@ type ExerciseRow = Pick<
 function workoutExercise(row: ExerciseRow): WorkoutExercise {
   return {
     exerciseId: row.exercise_id,
-    slot: row.slot,
     sets: row.sets,
-    // The table allows either a time or a rep range, never both.
+    // The table allows either a rep range, or a time and a distance, one of which may be missing.
     target:
-      row.target_seconds !== null
-        ? { seconds: row.target_seconds }
-        : { reps: { min: row.target_reps_min ?? 0, max: row.target_reps_max ?? 0 } },
+      row.target_reps_min !== null
+        ? { reps: { min: row.target_reps_min, max: row.target_reps_max ?? row.target_reps_min } }
+        : { seconds: row.target_seconds, meters: row.target_meters },
     restSeconds: row.rest_seconds,
     primaryMuscles: row.exercises.primary_muscles,
     imagePath: row.exercises.image_paths[0] ?? null,
@@ -68,10 +79,10 @@ export async function fetchWorkouts(): Promise<Workout[]> {
   const { data, error } = await supabase
     .from('workouts')
     .select(
-      `id, weekdays, active, type, estimated_minutes,
+      `id, name, weekdays, active, type, estimated_minutes,
       workout_exercises (
-        position, exercise_id, slot, sets, target_reps_min, target_reps_max, target_seconds,
-        rest_seconds, is_finisher,
+        position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
+        target_meters, rest_seconds, is_finisher,
         exercises (primary_muscles, image_paths)
       )`,
     )
@@ -84,6 +95,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
     const finisher = rows.find((exercise) => exercise.is_finisher);
     return {
       id: row.id,
+      name: row.name,
       type: row.type,
       weekdays: [...row.weekdays].sort((a, b) => a - b),
       active: row.active,
@@ -105,9 +117,9 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
       workout.weekdays.map((weekday) => ({
         weekday,
         workoutId: workout.id,
+        name: workout.name,
         type: workout.type,
         exercises: workout.exercises,
-        finisher: workout.finisher,
         estimatedMinutes: workout.estimatedMinutes,
       })),
     )

@@ -1,11 +1,16 @@
 import { renderHook } from '@/test/render';
 
-import { mainMuscles, minutesAndSeconds, useRestFormat, useTargetFormat } from './format';
+import {
+  mainMuscles,
+  minutesAndSeconds,
+  useRestFormat,
+  useTargetFormat,
+  useWorkoutName,
+} from './format';
 import type { Workout, WorkoutExercise } from './workouts';
 
 const exercise = (primaryMuscles: WorkoutExercise['primaryMuscles']): WorkoutExercise => ({
   exerciseId: 'x',
-  slot: 'squat',
   sets: 3,
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,
@@ -28,10 +33,13 @@ describe('useTargetFormat', () => {
   it.each([
     [{ reps: { min: 8, max: 12 } }, '3 × 8–12 reps'],
     [{ reps: { min: 10, max: 10 } }, '3 × 10 reps'],
-    [{ seconds: 45 }, '3 × 45 s'],
-    [{ seconds: 240 }, '3 × 4 min'],
-    [{ seconds: 90 }, '3 × 1:30 min'],
-  ])('writes %j as %s', async (target, text) => {
+    [{ seconds: 45, meters: null }, '3 × 45 s'],
+    [{ seconds: 240, meters: null }, '3 × 4 min'],
+    [{ seconds: 90, meters: null }, '3 × 1:30 min'],
+    [{ seconds: null, meters: 400 }, '3 × 400 m'],
+    [{ seconds: null, meters: 2500 }, '3 × 2.5 km'],
+    [{ seconds: 120, meters: 400 }, '3 × 400 m · 2 min'],
+  ] as const)('writes %j as %s', async (target, text) => {
     const { result } = await renderHook(() => useTargetFormat());
     expect(result.current(3, target)).toBe(text);
   });
@@ -45,10 +53,19 @@ describe('useRestFormat', () => {
   });
 });
 
+describe('useWorkoutName', () => {
+  it('uses the name, or the name of the type without one', async () => {
+    const { result } = await renderHook(() => useWorkoutName());
+    expect(result.current({ name: 'Arms day', type: 'push' })).toBe('Arms day');
+    expect(result.current({ name: null, type: 'push' })).toBe('Push');
+  });
+});
+
 describe('mainMuscles', () => {
   it('lists the muscles most exercises work, ties in order, ignoring the finisher', () => {
     const workout: Workout = {
       id: 1,
+      name: null,
       type: 'pull',
       weekdays: [],
       active: true,
