@@ -75,16 +75,25 @@ describe('weight conversions', () => {
     expect(weightToKg('kg', 80.06)).toBe(80.1);
   });
 
-  it('converts pounds to kilograms with one decimal', () => {
+  it('converts pounds to kilograms with two decimals', () => {
     // 160 × 0.45359237 = 72.574…
-    expect(weightToKg('lb', 160)).toBe(72.6);
+    expect(weightToKg('lb', 160)).toBe(72.57);
     // 220.5 × 0.45359237 = 100.017…
-    expect(weightToKg('lb', 220.5)).toBe(100);
+    expect(weightToKg('lb', 220.5)).toBe(100.02);
   });
 
-  it('round-trips a weight shown in pounds back to the stored kilograms', () => {
+  // Regression: kilograms rounded to a tenth turned 150.2 lb back into 150.1 lb, so the tenths
+  // wheel jumped back and some values could not be chosen.
+  it('keeps every tenth of a pound that is chosen', () => {
+    for (let tenths = 670; tenths <= 6610; tenths++) {
+      const lb = tenths / 10;
+      expect(weightIn('lb', weightToKg('lb', lb))).toBe(lb);
+    }
+  });
+
+  it('turns a weight shown in pounds back into nearly the same kilograms', () => {
     for (const kg of [30, 55.5, 72.5, 80.1, 120, 300]) {
-      expect(weightToKg('lb', weightIn('lb', kg))).toBe(kg);
+      expect(weightToKg('lb', weightIn('lb', kg))).toBeCloseTo(kg, 1);
     }
   });
 });

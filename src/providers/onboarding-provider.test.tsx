@@ -114,6 +114,20 @@ describe('OnboardingProvider', () => {
     });
   });
 
+  // Regression: new functions after every answer ran the steps' focus effects again, which let a
+  // quick second tap open the next step twice.
+  it('keeps its functions while the draft changes', async () => {
+    const { result } = await renderOnboarding();
+    const { setStep, answer, complete, reset } = result.current;
+    await act(() => result.current.answer({ goal: 'lose_fat' }));
+    await act(() => result.current.setStep('goal'));
+    expect(result.current.draft).toMatchObject({ step: 'goal', answers: { goal: 'lose_fat' } });
+    expect(result.current.setStep).toBe(setStep);
+    expect(result.current.answer).toBe(answer);
+    expect(result.current.complete).toBe(complete);
+    expect(result.current.reset).toBe(reset);
+  });
+
   it('saves the step', async () => {
     const { result } = await renderOnboarding();
     await act(() => result.current.setStep('goal'));

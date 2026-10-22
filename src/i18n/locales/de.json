@@ -258,7 +258,8 @@
       "nutrition": "Deine täglichen Ziele",
       "weight": "Dein Gewicht",
       "week": "Deine Woche",
-      "session": "{{count}} Übungen · etwa {{minutes}} Min.",
+      "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
+      "session_other": "{{count}} Übungen · etwa {{minutes}} Min.",
       "more": "+{{count}} weitere",
       "sessionTypes": {
         "full_body": "Ganzkörper",
@@ -281,7 +282,8 @@
       "channel": "Trainingserinnerungen",
       "notification": {
         "title": "Heute: {{session}}",
-        "body": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!"
+        "body_one": "{{count}} Übung, etwa {{minutes}} Min. Du schaffst das!",
+        "body_other": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!"
       }
     },
     "summary": {

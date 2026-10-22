@@ -258,7 +258,8 @@
       "nutrition": "Your daily targets",
       "weight": "Your weight",
       "week": "Your week",
-      "session": "{{count}} exercises · about {{minutes}} min",
+      "session_one": "{{count}} exercise · about {{minutes}} min",
+      "session_other": "{{count}} exercises · about {{minutes}} min",
       "more": "+{{count}} more",
       "sessionTypes": {
         "full_body": "Full body",
@@ -281,7 +282,8 @@
       "channel": "Workout reminders",
       "notification": {
         "title": "Today: {{session}}",
-        "body": "{{count}} exercises, about {{minutes}} min. You've got this!"
+        "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",
+        "body_other": "{{count}} exercises, about {{minutes}} min. You've got this!"
       }
     },
     "summary": {

@@ -23,6 +23,8 @@ export function ProgressBar({ value, accessibilityLabel }: ProgressBarProps) {
 
   return (
     <View
+      // Without it, iOS does not read the bar.
+      accessible
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped * 100) }}

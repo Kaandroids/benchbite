@@ -52,6 +52,19 @@ describe('SummaryStep', () => {
     expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
   });
 
+  it('counts a single exercise in the singular', async () => {
+    const row = {
+      exerciseId: 'row',
+      slot: 'horizontal_pull' as const,
+      sets: 3,
+      target: { reps: { min: 8, max: 12 } },
+      restSeconds: 90,
+    };
+    mockStep = createStep({ plan: plan({ ...session(3, 'pull'), exercises: [row] }) });
+    await render(<SummaryStep />);
+    expect(screen.getByText('1 exercise · about 45 min')).toBeTruthy();
+  });
+
   it('shows a workout tomorrow as Tomorrow', async () => {
     mockStep = createStep({ plan: plan(session(1, 'push'), session(4, 'legs')) });
     await render(<SummaryStep />);

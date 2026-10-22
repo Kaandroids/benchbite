@@ -75,11 +75,30 @@ export function nextStep(step: Step, answers: OnboardingAnswers): Step | null {
   return null;
 }
 
-/** The previous step for these answers, or null on the first one. */
+/**
+ * Whether the step only does its work and moves on. It is replaced by the next step rather than
+ * left in the history, and going back skips it, so it is not shown again with its work done.
+ */
+export function isPassing(step: Step): boolean {
+  return step === 'building';
+}
+
+/**
+ * Whether the user can go back from the step. The summary is shown once the onboarding is saved,
+ * so its answers can no longer be changed there.
+ */
+export function canGoBackFrom(step: Step): boolean {
+  return step !== 'summary';
+}
+
+/** The step that going back opens, or null if there is none. */
 export function previousStep(step: Step, answers: OnboardingAnswers): Step | null {
+  if (!canGoBackFrom(step)) {
+    return null;
+  }
   for (let index = STEPS.indexOf(step) - 1; index >= 0; index--) {
     const candidate = STEPS[index]!;
-    if (isIncluded(candidate, answers)) {
+    if (isIncluded(candidate, answers) && !isPassing(candidate)) {
       return candidate;
     }
   }

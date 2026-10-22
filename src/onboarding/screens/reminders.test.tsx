@@ -23,7 +23,7 @@ const PLAN: WorkoutPlan = {
     {
       weekday: 3,
       type: 'pull',
-      exercises: ['row', 'curl'].map((exerciseId) => ({
+      exercises: ['row'].map((exerciseId) => ({
         exerciseId,
         slot: 'main',
         sets: 3,
@@ -74,7 +74,7 @@ describe('RemindersStep', () => {
         {
           weekday: 3,
           title: 'Today: Pull',
-          body: "2 exercises, about 30 min. You've got this!",
+          body: "1 exercise, about 30 min. You've got this!",
         },
       ],
       18 * 60 + 15,
