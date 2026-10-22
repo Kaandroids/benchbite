@@ -19,10 +19,10 @@ export function ComingSoon({ icon, message, children }: ComingSoonProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   return (
-    // The tab bar keeps clear of the bottom edge itself.
+    // Inside a tab, the bottom inset includes the tab bar, which covers the content on iOS.
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background, padding: spacing.lg }]}
-      edges={['top']}
+      edges={['top', 'bottom']}
     >
       <MessageView icon={icon} title={t('comingSoon.title')} message={message} />
       {children ? <View style={styles.extra}>{children}</View> : null}
