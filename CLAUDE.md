@@ -50,6 +50,10 @@ and opens pull requests as the `benchbite-bot` GitHub App; the maintainer review
 - Never push to `main`. It is protected; every change goes through a pull request.
 - One pull request covers one topic. If a change grows beyond that, split it.
 - Commit early and often. Each commit is a small, self-contained step that can be reviewed on its own.
+  Split a change into as many commits as it has steps, for example the data layer, each screen,
+  translations and tests, rather than one commit for a whole feature.
+- Keep commit messages short: the subject line, and at most two or three lines of body when the
+  reason is not obvious. Details belong in the pull request description.
 - Pull requests are squash-merged, so the PR title becomes the commit on `main`.
 - Address every review comment with a new commit. Do not force-push a branch under review.
 - Do not implement a design before it is approved. For new screens and visible UI changes, Claude
