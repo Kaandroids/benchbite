@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
@@ -14,9 +14,9 @@ import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
-const STEPS = ['calories', 'exercises', 'week'] as const;
+const CHECKLIST = ['calories', 'exercises', 'week'] as const;
 /** Each line of the checklist takes at least this long, so the work is seen being done. */
-const STEP_MS = 900;
+const LINE_MS = 900;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -69,48 +69,53 @@ function BuildingChecklist({ answers, onDone, failed, onFail }: BuildingChecklis
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const [done, setDone] = useState(0);
+  // Read when the attempt starts and ends, so that changes to them do not start it again.
+  const build = useEffectEvent(() =>
+    Promise.all([calculateTargets(answers), generatePlan(answers)]),
+  );
+  const finish = useEffectEvent(onDone);
+  const fail = useEffectEvent(onFail);
 
   useEffect(() => {
     let cancelled = false;
-    const work = Promise.all([calculateTargets(answers), generatePlan(answers)]);
+    const work = build();
     // A failure is handled once the checklist reaches the last line. Until then, nothing waits
     // for the work, so a quick failure would also be reported as an unhandled rejection.
     work.catch(() => {});
     // The checklist advances on its own; the last line waits for the work.
     void (async () => {
-      for (let line = 1; line < STEPS.length; line++) {
-        await wait(STEP_MS);
+      for (let line = 1; line < CHECKLIST.length; line++) {
+        await wait(LINE_MS);
         if (cancelled) return;
         setDone(line);
       }
       try {
-        const [[targets, plan]] = await Promise.all([work, wait(STEP_MS)]);
+        const [[targets, plan]] = await Promise.all([work, wait(LINE_MS)]);
         if (cancelled) return;
-        setDone(STEPS.length);
-        await wait(STEP_MS / 2);
+        setDone(CHECKLIST.length);
+        await wait(LINE_MS / 2);
         if (cancelled) return;
-        onDone(targets, plan);
+        finish(targets, plan);
       } catch (error) {
         console.warn('Could not build the plan', error);
-        if (!cancelled) onFail();
+        if (!cancelled) fail();
       }
     })();
     return () => {
       cancelled = true;
     };
     // Runs once per attempt; a retry mounts a new checklist.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <CenteredContent>
       <View style={{ gap: spacing.lg }}>
-        {STEPS.map((step, index) => {
+        {CHECKLIST.map((line, index) => {
           const finished = index < done;
           const current = index === done && !failed;
           return (
             <Animated.View
-              key={step}
+              key={line}
               entering={FadeIn.delay(index * 150)}
               style={[styles.line, { gap: spacing.md }]}
             >
@@ -129,7 +134,7 @@ function BuildingChecklist({ answers, onDone, failed, onFail }: BuildingChecklis
                 )}
               </View>
               <Text variant="bodyStrong" color={finished || current ? 'text' : 'textMuted'}>
-                {t(`onboarding.building.steps.${step}`)}
+                {t(`onboarding.building.steps.${line}`)}
               </Text>
             </Animated.View>
           );
