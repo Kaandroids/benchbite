@@ -2,7 +2,13 @@ import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { fetchLibrary, filterExercises, useExerciseLibrary, type LibraryExercise } from './library';
+import {
+  fetchLibrary,
+  filterExercises,
+  searchText,
+  useExerciseLibrary,
+  type LibraryExercise,
+} from './library';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
@@ -20,11 +26,11 @@ const row = (id: string, name: string, more: object = {}) => ({
   ...more,
 });
 
-const order = jest.fn();
+const eq = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.mocked(supabase.from).mockReturnValue({ select: () => ({ order }) } as never);
+  jest.mocked(supabase.from).mockReturnValue({ select: () => ({ eq }) } as never);
 });
 
 afterEach(async () => {
@@ -33,7 +39,7 @@ afterEach(async () => {
 
 describe('fetchLibrary', () => {
   it('names the exercises in the language, falling back to English, sorted by that name', async () => {
-    order.mockResolvedValue({
+    eq.mockResolvedValue({
       data: [
         row('squat', 'Barbell Squat', {
           exercise_translations: [{ language: 'de', name: 'Kniebeuge' }],
@@ -43,9 +49,10 @@ describe('fetchLibrary', () => {
       error: null,
     });
     const library = await fetchLibrary('de');
-    expect(library.map((exercise) => [exercise.name, exercise.englishName])).toEqual([
-      ['Barbell Row', 'Barbell Row'],
-      ['Kniebeuge', 'Barbell Squat'],
+    expect(eq).toHaveBeenCalledWith('exercise_translations.language', 'de');
+    expect(library.map((exercise) => [exercise.name, exercise.searchText])).toEqual([
+      ['Barbell Row', 'barbell row barbell row'],
+      ['Kniebeuge', 'kniebeuge barbell squat'],
     ]);
     expect(library[1]).toMatchObject({
       id: 'squat',
@@ -57,24 +64,28 @@ describe('fetchLibrary', () => {
 
   it('fails with the error the database returns', async () => {
     const error = { code: '500', message: 'boom' };
-    order.mockResolvedValue({ data: null, error });
+    eq.mockResolvedValue({ data: null, error });
     await expect(fetchLibrary('en')).rejects.toBe(error);
   });
 });
 
 describe('useExerciseLibrary', () => {
   it('loads the library in the app language', async () => {
-    order.mockResolvedValue({ data: [row('squat', 'Barbell Squat')], error: null });
+    eq.mockResolvedValue({ data: [row('squat', 'Barbell Squat')], error: null });
     const { result } = await renderHook(() => useExerciseLibrary());
     await waitFor(() => expect(result.current.data).toHaveLength(1));
   });
 });
 
 describe('filterExercises', () => {
-  const exercise = (name: string, more: Partial<LibraryExercise> = {}): LibraryExercise => ({
+  const exercise = (
+    name: string,
+    more: Partial<LibraryExercise> = {},
+    englishName = name,
+  ): LibraryExercise => ({
     id: name,
     name,
-    englishName: name,
+    searchText: searchText([name, englishName], 'tr'),
     metrics: ['weight', 'reps'],
     primaryMuscles: ['chest'],
     secondaryMuscles: [],
@@ -86,7 +97,7 @@ describe('filterExercises', () => {
   });
   const library = [
     exercise('Bench Press'),
-    exercise('Şınav', { englishName: 'Pushups' }),
+    exercise('Şınav', {}, 'Pushups'),
     exercise('Lat Pulldown', { primaryMuscles: ['lats'] }),
     exercise('Rowing', { primaryMuscles: ['quadriceps'], category: 'cardio' }),
   ];

@@ -14,7 +14,7 @@ jest.mock('@/workouts/workouts', () => ({
 const ROW: LibraryExercise = {
   id: 'row',
   name: 'Seated cable row',
-  englishName: 'Seated Cable Rows',
+  searchText: 'seated cable rows',
   metrics: ['weight', 'reps'],
   primaryMuscles: ['middle back'],
   secondaryMuscles: ['biceps', 'lats'],

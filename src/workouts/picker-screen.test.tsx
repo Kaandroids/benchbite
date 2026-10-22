@@ -24,7 +24,7 @@ const exercise = (
 ): LibraryExercise => ({
   id,
   name,
-  englishName: name,
+  searchText: name.toLowerCase(),
   metrics: ['weight', 'reps'],
   primaryMuscles: ['chest'],
   secondaryMuscles: [],

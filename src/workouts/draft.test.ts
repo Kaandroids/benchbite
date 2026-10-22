@@ -13,7 +13,7 @@ import {
 const exercise = (id: string, metrics: LibraryExercise['metrics']): LibraryExercise => ({
   id,
   name: id,
-  englishName: id,
+  searchText: id,
   metrics,
   primaryMuscles: [],
   secondaryMuscles: [],

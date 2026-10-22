@@ -10,7 +10,8 @@ export type LibraryExercise = {
   id: string;
   /** The name in the app language, falling back to English. */
   name: string;
-  englishName: string;
+  /** The name in the app language and in English, prepared once for search by `searchText()`. */
+  searchText: string;
   metrics: Enums['exercise_metric'][];
   primaryMuscles: Enums['muscle'][];
   secondaryMuscles: Enums['muscle'][];
@@ -33,6 +34,20 @@ export const MUSCLE_GROUPS = {
 /** A filter of the picker: a muscle group, or cardio, which is a category of its own. */
 export type ExerciseFilter = keyof typeof MUSCLE_GROUPS | 'cardio';
 
+/** Lower case and without accents, so that "kniebeuge" finds "Kniebeuge" and "sinav" "şınav". */
+function searchable(text: string, language: string): string {
+  return text
+    .toLocaleLowerCase(language)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ı/g, 'i');
+}
+
+/** The names an exercise is found by, as `filterExercises()` compares them. */
+export function searchText(names: string[], language: string): string {
+  return names.map((name) => searchable(name, language)).join(' ');
+}
+
 export async function fetchLibrary(language: string): Promise<LibraryExercise[]> {
   const { data, error } = await supabase
     .from('exercises')
@@ -40,25 +55,26 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
       `id, name, metrics, primary_muscles, secondary_muscles, equipment, level, category,
       image_paths, exercise_translations (language, name)`,
     )
-    .order('name');
+    .eq('exercise_translations.language', language);
   if (error) {
     throw error;
   }
   return data
-    .map((row) => ({
-      id: row.id,
-      name:
-        row.exercise_translations.find((translation) => translation.language === language)?.name ??
-        row.name,
-      englishName: row.name,
-      metrics: row.metrics,
-      primaryMuscles: row.primary_muscles,
-      secondaryMuscles: row.secondary_muscles,
-      equipment: row.equipment,
-      level: row.level,
-      category: row.category,
-      imagePaths: row.image_paths,
-    }))
+    .map((row) => {
+      const name = row.exercise_translations[0]?.name ?? row.name;
+      return {
+        id: row.id,
+        name,
+        searchText: searchText([name, row.name], language),
+        metrics: row.metrics,
+        primaryMuscles: row.primary_muscles,
+        secondaryMuscles: row.secondary_muscles,
+        equipment: row.equipment,
+        level: row.level,
+        category: row.category,
+        imagePaths: row.image_paths,
+      };
+    })
     .sort((a, b) => a.name.localeCompare(b.name, language));
 }
 
@@ -70,15 +86,6 @@ export function useExerciseLibrary() {
     queryFn: () => fetchLibrary(i18n.language),
     staleTime: Infinity,
   });
-}
-
-/** Lower case and without accents, so that "kniebeuge" finds "Kniebeuge" and "sinav" "şınav". */
-function searchable(text: string, language: string): string {
-  return text
-    .toLocaleLowerCase(language)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ı/g, 'i');
 }
 
 /**
@@ -105,8 +112,7 @@ export function filterExercises(
     ) {
       return false;
     }
-    const names = `${searchable(exercise.name, language)} ${searchable(exercise.englishName, language)}`;
-    return words.every((word) => names.includes(word));
+    return words.every((word) => exercise.searchText.includes(word));
   });
 }
 

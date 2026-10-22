@@ -32,7 +32,7 @@ const libraryExercise = (
 ): LibraryExercise => ({
   id,
   name,
-  englishName: name,
+  searchText: name.toLowerCase(),
   metrics,
   primaryMuscles: ['chest'],
   secondaryMuscles: [],
