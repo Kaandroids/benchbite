@@ -7,25 +7,18 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { nextSession } from '@/workouts/next-session';
 import type { WeekSession } from '@/workouts/workouts';
 
-/** Exercise names listed before "+n more". */
-const NAMES_SHOWN = 4;
-
 type WorkoutCardProps = {
   plan: { sessions: WeekSession[] };
   today: Date;
 };
 
-/**
- * Today's workout with its exercises, which opens the workout, or on a rest day, when the next
- * workout is.
- */
+/** Today's workout with its size, which opens the workout, or on a rest day, when the next one is. */
 export function WorkoutCard({ plan, today }: WorkoutCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -33,7 +26,6 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
   const workoutName = useWorkoutName();
   const upcoming = nextSession(plan, today);
   const session = upcoming?.inDays === 0 ? upcoming.session : null;
-  const names = useExerciseNames(session?.exercises.map((exercise) => exercise.exerciseId) ?? []);
 
   if (!upcoming) {
     return null;
@@ -58,10 +50,6 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
       </Card>
     );
   }
-
-  const exerciseNames = session.exercises.map((exercise) => names[exercise.exerciseId] ?? '');
-  const shown = exerciseNames.slice(0, NAMES_SHOWN).filter(Boolean);
-  const hidden = exerciseNames.length - NAMES_SHOWN;
 
   return (
     <Pressable
@@ -89,20 +77,6 @@ export function WorkoutCard({ plan, today }: WorkoutCardProps) {
             minutes: session.estimatedMinutes,
           })}
         </Text>
-        {shown.length > 0 ? (
-          <View style={{ gap: spacing.xs }}>
-            {shown.map((name, index) => (
-              <Text key={index} variant="bodyStrong">
-                {name}
-              </Text>
-            ))}
-            {hidden > 0 ? (
-              <Text variant="caption" color="textMuted">
-                {t('workout.more', { count: hidden })}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
       </Card>
     </Pressable>
   );

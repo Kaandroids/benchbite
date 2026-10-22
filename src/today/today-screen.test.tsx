@@ -150,16 +150,13 @@ describe('TodayScreen', () => {
     expect(screen.getByLabelText('Sun 25')).toBeTruthy();
   });
 
-  it("shows today's workout with its first exercises", async () => {
+  it("shows today's workout with its size, leaving the exercises to the workout", async () => {
     mockData();
     await render(<TodayScreen />);
     expect(screen.getByText("Today's workout")).toBeTruthy();
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('6 exercises · about 45 min')).toBeTruthy();
-    expect(await screen.findByText('Name of exercise-0')).toBeTruthy();
-    expect(screen.getByText('Name of exercise-3')).toBeTruthy();
-    expect(screen.queryByText('Name of exercise-4')).toBeNull();
-    expect(screen.getByText('+2 more')).toBeTruthy();
+    expect(screen.queryByText('Name of exercise-0')).toBeNull();
   });
 
   it("opens today's workout", async () => {
