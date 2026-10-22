@@ -146,103 +146,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      plan_exercises: {
-        Row: {
-          exercise_id: string;
-          id: number;
-          is_finisher: boolean;
-          position: number;
-          rest_seconds: number;
-          session_id: number;
-          sets: number;
-          slot: Database['public']['Enums']['plan_slot'];
-          target_reps_max: number | null;
-          target_reps_min: number | null;
-          target_seconds: number | null;
-          user_id: string;
-        };
-        ComputedFields: never;
-        Insert: {
-          exercise_id: string;
-          id?: never;
-          is_finisher?: boolean;
-          position: number;
-          rest_seconds: number;
-          session_id: number;
-          sets: number;
-          slot: Database['public']['Enums']['plan_slot'];
-          target_reps_max?: number | null;
-          target_reps_min?: number | null;
-          target_seconds?: number | null;
-          user_id: string;
-        };
-        Update: {
-          exercise_id?: string;
-          id?: never;
-          is_finisher?: boolean;
-          position?: number;
-          rest_seconds?: number;
-          session_id?: number;
-          sets?: number;
-          slot?: Database['public']['Enums']['plan_slot'];
-          target_reps_max?: number | null;
-          target_reps_min?: number | null;
-          target_seconds?: number | null;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'plan_exercises_exercise_id_fkey';
-            columns: ['exercise_id'];
-            isOneToOne: false;
-            referencedRelation: 'exercises';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'plan_exercises_session_id_fkey';
-            columns: ['session_id'];
-            isOneToOne: false;
-            referencedRelation: 'plan_sessions';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      plan_sessions: {
-        Row: {
-          estimated_minutes: number;
-          id: number;
-          plan_id: string;
-          type: Database['public']['Enums']['plan_session_type'];
-          user_id: string;
-          weekday: number;
-        };
-        ComputedFields: never;
-        Insert: {
-          estimated_minutes: number;
-          id?: never;
-          plan_id: string;
-          type: Database['public']['Enums']['plan_session_type'];
-          user_id: string;
-          weekday: number;
-        };
-        Update: {
-          estimated_minutes?: number;
-          id?: never;
-          plan_id?: string;
-          type?: Database['public']['Enums']['plan_session_type'];
-          user_id?: string;
-          weekday?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'plan_sessions_plan_id_fkey';
-            columns: ['plan_id'];
-            isOneToOne: false;
-            referencedRelation: 'workout_plans';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       plan_slot_exercises: {
         Row: {
           exercise_id: string;
@@ -356,22 +259,95 @@ export type Database = {
         };
         Relationships: [];
       };
-      workout_plans: {
+      workout_exercises: {
         Row: {
-          created_at: string;
-          id: string;
+          exercise_id: string;
+          id: number;
+          is_finisher: boolean;
+          position: number;
+          rest_seconds: number;
+          sets: number;
+          slot: Database['public']['Enums']['plan_slot'];
+          target_reps_max: number | null;
+          target_reps_min: number | null;
+          target_seconds: number | null;
           user_id: string;
+          workout_id: number;
         };
         ComputedFields: never;
         Insert: {
-          created_at?: string;
-          id?: string;
+          exercise_id: string;
+          id?: never;
+          is_finisher?: boolean;
+          position: number;
+          rest_seconds: number;
+          sets: number;
+          slot: Database['public']['Enums']['plan_slot'];
+          target_reps_max?: number | null;
+          target_reps_min?: number | null;
+          target_seconds?: number | null;
           user_id: string;
+          workout_id: number;
         };
         Update: {
-          created_at?: string;
-          id?: string;
+          exercise_id?: string;
+          id?: never;
+          is_finisher?: boolean;
+          position?: number;
+          rest_seconds?: number;
+          sets?: number;
+          slot?: Database['public']['Enums']['plan_slot'];
+          target_reps_max?: number | null;
+          target_reps_min?: number | null;
+          target_seconds?: number | null;
           user_id?: string;
+          workout_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workout_exercises_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'workout_exercises_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      workouts: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          estimated_minutes: number;
+          id: number;
+          type: Database['public']['Enums']['workout_type'];
+          user_id: string;
+          weekdays: number[];
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          estimated_minutes: number;
+          id?: never;
+          type: Database['public']['Enums']['workout_type'];
+          user_id: string;
+          weekdays?: number[];
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          estimated_minutes?: number;
+          id?: never;
+          type?: Database['public']['Enums']['workout_type'];
+          user_id?: string;
+          weekdays?: number[];
         };
         Relationships: [];
       };
@@ -463,7 +439,6 @@ export type Database = {
         | 'shoulders'
         | 'traps'
         | 'triceps';
-      plan_session_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
       plan_slot:
         | 'squat'
         | 'hinge'
@@ -482,6 +457,7 @@ export type Database = {
       sex: 'female' | 'male' | 'unspecified';
       training_setup: 'gym' | 'dumbbells' | 'bodyweight';
       weight_unit: 'kg' | 'lb';
+      workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
     };
     CompositeTypes: {
       nutrition_targets: {
@@ -651,7 +627,6 @@ export const Constants = {
         'traps',
         'triceps',
       ],
-      plan_session_type: ['full_body', 'upper', 'lower', 'push', 'pull', 'legs'],
       plan_slot: [
         'squat',
         'hinge',
@@ -671,6 +646,7 @@ export const Constants = {
       sex: ['female', 'male', 'unspecified'],
       training_setup: ['gym', 'dumbbells', 'bodyweight'],
       weight_unit: ['kg', 'lb'],
+      workout_type: ['full_body', 'upper', 'lower', 'push', 'pull', 'legs'],
     },
   },
 } as const;
