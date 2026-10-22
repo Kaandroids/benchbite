@@ -168,7 +168,8 @@ export function useSetWorkoutActive() {
 /** A workout as the editor builds it: without an id until it is first saved. */
 export type WorkoutDraft = {
   id?: number;
-  name: string;
+  /** Null keeps the plan builder's type as the name, in whatever language the app is in. */
+  name: string | null;
   weekdays: number[];
   exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
 };

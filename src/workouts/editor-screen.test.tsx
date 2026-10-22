@@ -101,12 +101,20 @@ describe('EditorScreen', () => {
   it('loads a workout with its finisher as an ordinary exercise', async () => {
     await render(<EditorScreen id={5} />);
     expect(screen.getByText('Edit workout')).toBeTruthy();
-    expect(screen.getByLabelText('Name').props.value).toBe('Push');
+    // The type names the workout until it gets a name of its own.
+    expect(screen.getByLabelText('Name').props.value).toBe('');
+    expect(screen.getByLabelText('Name').props.placeholder).toBe('Push');
     expect(screen.getByRole('checkbox', { name: 'Monday' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Tuesday' })).not.toBeChecked();
     expect(screen.getByText('Exercises · 2')).toBeTruthy();
     expect(screen.getByText('4 × 8–12 reps')).toBeTruthy();
     expect(screen.getByText('1 × 5 min')).toBeTruthy();
+  });
+
+  it('keeps the type as the name of an unnamed workout', async () => {
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(saveWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5, name: null }));
   });
 
   it('says when the workout does not exist', async () => {

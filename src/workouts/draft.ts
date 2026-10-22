@@ -9,7 +9,11 @@ export type DraftExercise = WorkoutDraft['exercises'][number] & {
   key: string;
 };
 
-export type Draft = Omit<WorkoutDraft, 'exercises'> & { exercises: DraftExercise[] };
+/** The name is what the user typed; empty until they type one. */
+export type Draft = Omit<WorkoutDraft, 'name' | 'exercises'> & {
+  name: string;
+  exercises: DraftExercise[];
+};
 
 // The workout being edited. The editor and the exercise picker are separate screens that change
 // the same draft; there is only ever one editor open.
@@ -33,7 +37,7 @@ export function useDraft(): Draft | null {
 }
 
 /** Starts editing a workout, or a new one. */
-export function startDraft(workout: WorkoutDraft) {
+export function startDraft(workout: Omit<Draft, 'exercises'> & Pick<WorkoutDraft, 'exercises'>) {
   draft = {
     ...workout,
     exercises: workout.exercises.map((exercise) => ({ ...exercise, key: String(nextKey++) })),

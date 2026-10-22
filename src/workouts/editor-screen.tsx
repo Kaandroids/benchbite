@@ -39,6 +39,8 @@ export function EditorScreen({ id }: { id?: number }) {
   const longWeekdayName = useWeekdayFormat('long');
   const [editing, setEditing] = useState<string | null>(null);
   const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
+  // A workout from the plan builder is named by its type until the user gives it a name.
+  const typeName = workout && workout.name === null ? workoutName(workout) : null;
   const loaded = allLoaded([workouts, library, limit]);
 
   // Starts the draft once the workout is loaded. Finishers become ordinary exercises.
@@ -50,7 +52,7 @@ export function EditorScreen({ id }: { id?: number }) {
       workout
         ? {
             id: workout.id,
-            name: workoutName(workout),
+            name: workout.name ?? '',
             weekdays: workout.weekdays,
             exercises: [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])].map(
               ({ exerciseId, sets, target, restSeconds }) => ({
@@ -73,7 +75,11 @@ export function EditorScreen({ id }: { id?: number }) {
   const close = () => router.back();
   const max = limit.data ?? 0;
   const over = draft ? draft.exercises.length - max : 0;
-  const canSave = !!draft && draft.name.trim() !== '' && draft.exercises.length > 0 && over <= 0;
+  const canSave =
+    !!draft &&
+    (draft.name.trim() !== '' || typeName !== null) &&
+    draft.exercises.length > 0 &&
+    over <= 0;
 
   const onSave = async () => {
     if (!draft) {
@@ -82,7 +88,7 @@ export function EditorScreen({ id }: { id?: number }) {
     try {
       await save.mutateAsync({
         ...(draft.id !== undefined ? { id: draft.id } : {}),
-        name: draft.name.trim(),
+        name: draft.name.trim() || null,
         weekdays: draft.weekdays,
         exercises: draft.exercises.map(({ key: _key, ...exercise }) => exercise),
       });
@@ -215,7 +221,7 @@ export function EditorScreen({ id }: { id?: number }) {
               accessibilityLabel={t('editor.name')}
               value={draft.name}
               onChangeText={(name) => updateDraft((current) => ({ ...current, name }))}
-              placeholder={t('editor.namePlaceholder')}
+              placeholder={typeName ?? t('editor.namePlaceholder')}
               placeholderTextColor={colors.textMuted}
               maxLength={60}
               style={[
