@@ -6,16 +6,18 @@ import { Text } from '@/components/ui/text';
 import { isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import type { DayStatus } from '@/streak/streak';
-import { useTheme } from '@/theme';
+import { fonts, useTheme } from '@/theme';
 
 const MARK_SIZE = 36;
 /** The flame and snowflake reach a little past the mark, so they read as big as the number. */
 const SHAPE_SIZE = 40;
 // Each shape with the view box that centres it.
 const FLAME = {
-  viewBox: '5.75 2.5 12.5 15',
-  d: 'M12 2.5c.8 3.2 4.8 5.4 4.8 10.2a4.8 4.8 0 0 1-9.6 0c0-2.3 1.1-3.8 2.3-4.9.1 1.9 1 3.1 2.2 3.4-.4-3.2-.4-5.8.3-8.7z',
+  viewBox: '3 1.5 18 20',
+  d: 'M12 2c1 2.5 3.5 4 4 7 .6-1 .8-2 .8-3 2 2 3.2 4.6 3.2 7.5A8 8 0 0 1 4 13.5c0-2.4 1-4.4 2.5-6 .1 1.4.6 2.6 1.5 3.4C8 7 10 4.5 12 2z',
 };
+/** Moves the number into the wide lower part of the flame. */
+const FLAME_NUMBER_OFFSET = 5;
 const SNOWFLAKE =
   'M18 3v30M5 10.5l26 15M31 10.5l-26 15M13 4.5l5 4 5-4M13 31.5l5-4 5 4M3.5 15.5l6.4-1-2.3-6M32.5 20.5l-6.4 1 2.3 6M32.5 15.5l-6.4-1 2.3-6M3.5 20.5l6.4 1-2.3 6';
 
@@ -60,7 +62,11 @@ export function WeekStrip({ today, days }: WeekStripProps) {
               },
             ]}
           >
-            <Text variant="caption" color={isToday ? 'onPrimary' : 'textMuted'}>
+            <Text
+              variant="caption"
+              color={isToday ? 'onPrimary' : 'textMuted'}
+              style={isToday ? styles.todayName : undefined}
+            >
               {weekdayName(weekday)}
             </Text>
             <View style={styles.mark}>
@@ -86,7 +92,11 @@ export function WeekStrip({ today, days }: WeekStripProps) {
                   )}
                 </Svg>
               ) : null}
-              <Text variant="bodyStrong" color={isToday ? 'onPrimary' : 'text'}>
+              <Text
+                variant={isToday ? 'headline' : 'bodyStrong'}
+                color={isToday ? 'onPrimary' : 'text'}
+                style={status === 'done' ? styles.onFlame : undefined}
+              >
                 {date.getDate()}
               </Text>
             </View>
@@ -110,6 +120,13 @@ const styles = StyleSheet.create({
     height: MARK_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  todayName: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+  },
+  onFlame: {
+    marginTop: FLAME_NUMBER_OFFSET,
   },
   shape: {
     position: 'absolute',
