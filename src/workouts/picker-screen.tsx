@@ -20,7 +20,8 @@ import {
 } from '@/exercises/library';
 import { fonts, typography, useTheme } from '@/theme';
 
-import { addExercises } from './draft';
+import { addExercises, useDraft } from './draft';
+import { useExerciseLimit } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
 const ROW_HEIGHT = 73;
@@ -31,11 +32,17 @@ export function PickerScreen() {
   const { colors, radii, spacing } = useTheme();
   const caption = useExerciseCaption();
   const library = useExerciseLibrary();
+  const limit = useExerciseLimit();
+  const draft = useDraft();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<ExerciseFilter | null>(null);
   // In the order they were chosen, which is the order they are added in.
   const [chosen, setChosen] = useState<LibraryExercise[]>([]);
   const results = library.data ? filterExercises(library.data, query, filter, i18n.language) : [];
+
+  // How many more the workout has room for; the rest of the library waits until one is unchosen.
+  const room = (limit.data ?? 0) - (draft?.exercises.length ?? 0);
+  const full = chosen.length >= room;
 
   const toggle = (exercise: LibraryExercise) =>
     setChosen((current) =>
@@ -70,16 +77,18 @@ export function PickerScreen() {
 
   const row = ({ item }: { item: LibraryExercise }) => {
     const selected = chosen.some((exercise) => exercise.id === item.id);
+    const disabled = full && !selected;
     const detail = caption(item);
     return (
       <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
         <InfoButton exerciseId={item.id} exerciseName={item.name} />
         <Pressable
           accessibilityRole="checkbox"
-          accessibilityState={{ checked: selected }}
+          accessibilityState={{ checked: selected, disabled }}
           accessibilityLabel={item.name}
+          disabled={disabled}
           onPress={() => toggle(item)}
-          style={[styles.choice, { gap: spacing.md }]}
+          style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
         >
           <ExerciseThumbnail path={item.imagePaths[0]} size={52} />
           <View style={styles.text}>
@@ -158,7 +167,7 @@ export function PickerScreen() {
         </ScrollView>
       </View>
 
-      {allLoaded([library]) ? (
+      {allLoaded([library, limit]) ? (
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
@@ -179,7 +188,7 @@ export function PickerScreen() {
         />
       ) : (
         <View style={[styles.root, { padding: spacing.xl }]}>
-          <LoadState queries={[library]} />
+          <LoadState queries={[library, limit]} />
         </View>
       )}
 
@@ -189,8 +198,14 @@ export function PickerScreen() {
           paddingVertical: spacing.lg,
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
+          gap: spacing.sm,
         }}
       >
+        {limit.data !== undefined && full ? (
+          <Text variant="caption" color="textMuted" align="center">
+            {t('picker.limit', { max: limit.data })}
+          </Text>
+        ) : null}
         <Button
           label={chosen.length > 0 ? t('picker.add', { count: chosen.length }) : t('picker.title')}
           disabled={chosen.length === 0}

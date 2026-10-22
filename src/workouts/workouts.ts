@@ -173,6 +173,21 @@ export type WorkoutDraft = {
   exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
 };
 
+/** How many exercises the user's workouts may have, which premium will raise (ADR 0018). */
+export function useExerciseLimit() {
+  return useQuery({
+    queryKey: ['workout-limits'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('max_workout_exercises');
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity,
+  });
+}
+
 /** Saves a new or changed workout with its exercises, and returns its id. */
 export function useSaveWorkout() {
   const queryClient = useQueryClient();

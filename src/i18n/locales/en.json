@@ -197,7 +197,8 @@
       "legs": "Legs",
       "core": "Core",
       "cardio": "Cardio"
-    }
+    },
+    "limit": "Workouts can have up to {{max}} exercises."
   },
   "editor": {
     "newTitle": "New workout",
@@ -224,7 +225,11 @@
     "less": "Less: {{label}}",
     "more": "More: {{label}}",
     "remove": "Remove",
-    "done": "Done"
+    "done": "Done",
+    "limit": "Workouts can have up to {{max}} exercises.",
+    "overLimit_one": "Remove {{count}} exercise to save. Workouts can have up to {{max}}.",
+    "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}.",
+    "saveErrorTitle": "Not saved"
   },
   "onboarding": {
     "steps": {

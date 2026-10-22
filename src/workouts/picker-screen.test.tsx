@@ -3,8 +3,9 @@ import { router } from 'expo-router';
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { fireEvent, render, screen } from '@/test/render';
 
-import { addExercises } from './draft';
+import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
+import { useExerciseLimit } from './workouts';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/exercises/library', () => ({
@@ -12,9 +13,10 @@ jest.mock('@/exercises/library', () => ({
   useExerciseLibrary: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('./draft', () => ({ addExercises: jest.fn() }));
+jest.mock('./draft', () => ({ addExercises: jest.fn(), useDraft: jest.fn() }));
 jest.mock('./workouts', () => ({
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+  useExerciseLimit: jest.fn(),
 }));
 
 const exercise = (
@@ -42,15 +44,19 @@ const PULLDOWN = exercise('pulldown', 'Lat pulldown', {
 });
 const ROWING = exercise('rowing', 'Rowing', { primaryMuscles: ['quadriceps'], category: 'cardio' });
 
+const loaded = <T,>(data: T) => ({
+  data,
+  isPending: false,
+  isError: false,
+  isFetching: false,
+  refetch: jest.fn(),
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.mocked(useExerciseLibrary).mockReturnValue({
-    data: [BENCH, PULLDOWN, ROWING],
-    isPending: false,
-    isError: false,
-    isFetching: false,
-    refetch: jest.fn(),
-  } as never);
+  jest.mocked(useExerciseLibrary).mockReturnValue(loaded([BENCH, PULLDOWN, ROWING]) as never);
+  jest.mocked(useExerciseLimit).mockReturnValue(loaded(10) as never);
+  jest.mocked(useDraft).mockReturnValue({ name: '', weekdays: [], exercises: [] });
 });
 
 describe('PickerScreen', () => {
@@ -90,6 +96,30 @@ describe('PickerScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add 2 exercises' }));
     expect(addExercises).toHaveBeenCalledWith([PULLDOWN, BENCH]);
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('stops choosing when the workout is full', async () => {
+    jest.mocked(useExerciseLimit).mockReturnValue(loaded(2) as never);
+    jest.mocked(useDraft).mockReturnValue({
+      name: 'Push',
+      weekdays: [],
+      exercises: [
+        {
+          key: '1',
+          exerciseId: 'dip',
+          sets: 3,
+          target: { reps: { min: 8, max: 12 } },
+          restSeconds: 90,
+        },
+      ],
+    });
+    await render(<PickerScreen />);
+    expect(screen.queryByText('Workouts can have up to 2 exercises.')).toBeNull();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Bench press' }));
+    expect(screen.getByText('Workouts can have up to 2 exercises.')).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'Rowing' })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Bench press' }));
+    expect(screen.getByRole('checkbox', { name: 'Rowing' })).toBeEnabled();
   });
 
   it('opens an exercise’s details', async () => {

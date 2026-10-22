@@ -197,7 +197,8 @@
       "legs": "Beine",
       "core": "Rumpf",
       "cardio": "Cardio"
-    }
+    },
+    "limit": "Ein Training kann bis zu {{max}} Übungen haben."
   },
   "editor": {
     "newTitle": "Neues Workout",
@@ -224,7 +225,11 @@
     "less": "Weniger: {{label}}",
     "more": "Mehr: {{label}}",
     "remove": "Entfernen",
-    "done": "Fertig"
+    "done": "Fertig",
+    "limit": "Ein Training kann bis zu {{max}} Übungen haben.",
+    "overLimit_one": "Entferne {{count}} Übung, um zu speichern. Ein Training kann bis zu {{max}} haben.",
+    "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben.",
+    "saveErrorTitle": "Nicht gespeichert"
   },
   "onboarding": {
     "steps": {

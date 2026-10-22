@@ -197,7 +197,8 @@
       "legs": "Bacak",
       "core": "Karın",
       "cardio": "Kardiyo"
-    }
+    },
+    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir."
   },
   "editor": {
     "newTitle": "Yeni antrenman",
@@ -224,7 +225,11 @@
     "less": "Azalt: {{label}}",
     "more": "Artır: {{label}}",
     "remove": "Kaldır",
-    "done": "Tamam"
+    "done": "Tamam",
+    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "overLimit_one": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "saveErrorTitle": "Kaydedilemedi"
   },
   "onboarding": {
     "steps": {
