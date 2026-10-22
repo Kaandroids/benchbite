@@ -23,7 +23,10 @@ import {
 import { range } from '@/lib/math';
 import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
+import { StreakBadge } from '@/streak/streak-badge';
+import { sampleStreak, showSampleStreak } from '@/streak/use-streak';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
+import { WeekStrip } from '@/today/week-strip';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },
@@ -149,6 +152,34 @@ export default function ComponentGallery() {
             router.back();
           }}
         />
+      </Section>
+
+      <Section title="Streak">
+        <View style={[styles.row, { gap: spacing.sm }]}>
+          <StreakBadge streak={{ count: 12, doneToday: true, days: {} }} />
+          <StreakBadge streak={{ count: 11, doneToday: false, days: {} }} />
+          <StreakBadge streak={{ count: 0, doneToday: false, days: {} }} />
+        </View>
+        <WeekStrip
+          today={new Date()}
+          days={sampleStreak(new Date(), true).days}
+          trainingDays={[1, 3, 5, 7]}
+          trainedOn={new Set(Object.keys(sampleStreak(new Date(), true).days))}
+        />
+        <Text color="textMuted">Show a sample streak on the Today tab:</Text>
+        <View style={[styles.row, { gap: spacing.sm }]}>
+          <Button
+            variant="secondary"
+            label="Done today"
+            onPress={() => showSampleStreak(sampleStreak(new Date(), true))}
+          />
+          <Button
+            variant="secondary"
+            label="Open today"
+            onPress={() => showSampleStreak(sampleStreak(new Date(), false))}
+          />
+          <Button variant="ghost" label="None" onPress={() => showSampleStreak(null)} />
+        </View>
       </Section>
 
       <Section title="Progress">

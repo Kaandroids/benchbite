@@ -6,7 +6,7 @@ import { useNumberFormat, weightIn, weightToKg, type WeightUnit } from '@/i18n/u
 import { clamp, range } from '@/lib/math';
 import { useTheme } from '@/theme';
 
-import { WEIGHT_RANGE_KG } from '../body';
+import { WEIGHT_RANGE_KG } from '@/onboarding/body';
 
 const TENTHS = range(0, 9);
 const WHOLE = {

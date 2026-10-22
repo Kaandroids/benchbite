@@ -10,8 +10,9 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
-import { useNumberFormat, useWeightFormat } from '@/i18n/units';
-import { useTheme, type ColorTokens } from '@/theme';
+import { useWeightFormat } from '@/i18n/units';
+import { MacroTargets } from '@/nutrition/macro-targets';
+import { useTheme } from '@/theme';
 
 import { projectedDate } from '../body';
 import { saveOnboarding } from '../plan';
@@ -21,20 +22,13 @@ import { WeightChart } from './weight-chart';
 /** Exercise names shown per session before "+n more". */
 const NAMES_SHOWN = 4;
 
-const MACROS: { key: 'protein' | 'carbs' | 'fat'; color: keyof ColorTokens }[] = [
-  { key: 'protein', color: 'protein' },
-  { key: 'carbs', color: 'carbs' },
-  { key: 'fat', color: 'fat' },
-];
-
 /**
  * The result of the onboarding: the projected weight, the daily targets and the week's workouts.
  * Continuing saves everything in one transaction.
  */
 export function PlanStep() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const { format } = useNumberFormat();
+  const { spacing } = useTheme();
   const formatWeight = useWeightFormat();
   const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
@@ -110,35 +104,7 @@ export function PlanStep() {
 
       <Card entering={FadeInDown.delay(150).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.nutrition')}</Text>
-        <Text variant="title" color="primaryText">
-          {t('onboarding.plan.calories', { calories: format(targets.calories) })}
-        </Text>
-        <View style={[styles.macros, { gap: spacing.sm }]}>
-          {MACROS.map(({ key, color }) => (
-            <View
-              key={key}
-              style={[
-                styles.macro,
-                { borderRadius: radii.md, backgroundColor: colors.track, padding: spacing.md },
-              ]}
-            >
-              <View style={[styles.dot, { backgroundColor: colors[color] }]} />
-              <Text variant="bodyStrong">
-                {t('onboarding.plan.grams', {
-                  count:
-                    key === 'protein'
-                      ? targets.proteinG
-                      : key === 'carbs'
-                        ? targets.carbsG
-                        : targets.fatG,
-                })}
-              </Text>
-              <Text variant="caption" color="textMuted">
-                {t(`onboarding.plan.macros.${key}`)}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <MacroTargets targets={targets} />
       </Card>
 
       <Card entering={FadeInDown.delay(300).duration(400)}>
@@ -154,9 +120,9 @@ export function PlanStep() {
               <Text variant="caption" color="primaryText">
                 {weekday(session.weekday)}
               </Text>
-              <Text variant="bodyStrong">{t(`onboarding.plan.sessionTypes.${session.type}`)}</Text>
+              <Text variant="bodyStrong">{t(`workout.sessionTypes.${session.type}`)}</Text>
               <Text variant="caption" color="textMuted">
-                {t('onboarding.plan.session', {
+                {t('workout.session', {
                   count: session.exercises.length,
                   minutes: session.estimatedMinutes,
                 })}
@@ -164,7 +130,7 @@ export function PlanStep() {
               {shown ? (
                 <Text variant="caption">
                   {shown}
-                  {hidden > 0 ? ` ${t('onboarding.plan.more', { count: hidden })}` : ''}
+                  {hidden > 0 ? ` ${t('workout.more', { count: hidden })}` : ''}
                 </Text>
               ) : null}
             </View>
@@ -180,19 +146,6 @@ export function PlanStep() {
 }
 
 const styles = StyleSheet.create({
-  macros: {
-    flexDirection: 'row',
-  },
-  macro: {
-    flex: 1,
-    gap: 2,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginBottom: 4,
-  },
   session: {
     paddingVertical: 4,
   },

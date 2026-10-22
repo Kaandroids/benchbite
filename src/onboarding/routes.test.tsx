@@ -29,6 +29,12 @@ jest.mock('@/onboarding/screens', () => {
   };
 });
 
+// The Today screen loads the user's data; these tests only need to see that it opens.
+jest.mock('@/today/today-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { TodayScreen: () => <MockText>Today screen</MockText> };
+});
+
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
@@ -77,7 +83,7 @@ const ONBOARDING_ROUTES = {
   'onboarding/[step]': OnboardingStep,
 };
 
-const TODAY = "Your targets and today's workout will be here.";
+const TODAY = 'Today screen';
 
 const APP_ROUTES = {
   _layout: RootLayout,

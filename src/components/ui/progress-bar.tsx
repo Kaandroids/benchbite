@@ -3,15 +3,17 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { clamp } from '@/lib/math';
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 type ProgressBarProps = {
   /** Between 0 and 1. */
   value: number;
+  /** The colour of the filled part. */
+  color?: keyof ColorTokens;
   accessibilityLabel?: string;
 };
 
-export function ProgressBar({ value, accessibilityLabel }: ProgressBarProps) {
+export function ProgressBar({ value, color = 'primary', accessibilityLabel }: ProgressBarProps) {
   const { colors, radii } = useTheme();
   const clamped = clamp(value, 0, 1);
   const progress = useSharedValue(clamped);
@@ -34,7 +36,7 @@ export function ProgressBar({ value, accessibilityLabel }: ProgressBarProps) {
       <Animated.View
         style={[
           styles.fill,
-          { backgroundColor: colors.primary, borderRadius: radii.full },
+          { backgroundColor: colors[color], borderRadius: radii.full },
           fillStyle,
         ]}
       />

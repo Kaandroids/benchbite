@@ -16,10 +16,68 @@
   },
   "comingSoon": {
     "title": "Coming soon",
-    "today": "Your targets and today's workout will be here.",
     "workout": "Your weekly plan and its workouts will be here.",
     "nutrition": "Logging your meals will be here.",
     "progress": "Your weight and progress will be here."
+  },
+  "today": {
+    "loading": "Loading",
+    "targets": "Your daily targets",
+    "week": {
+      "done": "workout done",
+      "missed": "workout missed",
+      "planned": "workout planned"
+    },
+    "workout": {
+      "title": "Today's workout",
+      "restDay": "Rest day",
+      "next": "Next: {{day}} · {{session}}",
+      "tomorrow": "tomorrow"
+    },
+    "weight": {
+      "title": "Weight",
+      "none": "No weight logged yet.",
+      "loggedToday": "Logged today",
+      "loggedOn": "Logged on {{date}}",
+      "saveError": "We couldn't save your weight. Check your connection and try again.",
+      "decrease": "Decrease weight",
+      "increase": "Increase weight"
+    },
+    "error": {
+      "title": "Today couldn't load",
+      "message": "Check your connection and try again."
+    }
+  },
+  "streak": {
+    "label_one": "{{count}}-day streak",
+    "label_other": "{{count}}-day streak",
+    "done": "streak kept",
+    "frozen": "streak frozen"
+  },
+  "nutrition": {
+    "calories": "{{calories}} kcal a day",
+    "grams": "{{count}} g",
+    "macros": {
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat"
+    },
+    "calorieLabel": "Calories",
+    "calorieTarget": "/ {{target}} kcal",
+    "gramTarget": "/ {{target}} g"
+  },
+  "workout": {
+    "session_one": "{{count}} exercise · about {{minutes}} min",
+    "session_other": "{{count}} exercises · about {{minutes}} min",
+    "sessionTypes": {
+      "full_body": "Full body",
+      "upper": "Upper body",
+      "lower": "Lower body",
+      "push": "Push",
+      "pull": "Pull",
+      "legs": "Legs"
+    },
+    "more": "+{{count}} more"
   },
   "onboarding": {
     "steps": {
@@ -258,27 +316,9 @@
       "error": "We couldn't build your plan. Check your connection and try again."
     },
     "plan": {
-      "calories": "{{calories}} kcal a day",
-      "macros": {
-        "protein": "Protein",
-        "carbs": "Carbs",
-        "fat": "Fat"
-      },
-      "grams": "{{count}} g",
       "nutrition": "Your daily targets",
       "weight": "Your weight",
       "week": "Your week",
-      "session_one": "{{count}} exercise · about {{minutes}} min",
-      "session_other": "{{count}} exercises · about {{minutes}} min",
-      "more": "+{{count}} more",
-      "sessionTypes": {
-        "full_body": "Full body",
-        "upper": "Upper body",
-        "lower": "Lower body",
-        "push": "Push",
-        "pull": "Pull",
-        "legs": "Legs"
-      },
       "start": "Start my plan",
       "saveError": "We couldn't save your plan. Check your connection and try again.",
       "editLater": "You can change all of this later.",

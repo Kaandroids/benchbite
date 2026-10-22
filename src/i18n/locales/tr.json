@@ -16,10 +16,68 @@
   },
   "comingSoon": {
     "title": "Yakında",
-    "today": "Hedeflerin ve bugünkü antrenmanın yakında burada olacak.",
     "workout": "Haftalık planın ve antrenmanların yakında burada olacak.",
     "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
     "progress": "Kilon ve ilerlemen yakında burada olacak."
+  },
+  "today": {
+    "loading": "Yükleniyor",
+    "targets": "Günlük hedeflerin",
+    "week": {
+      "done": "antrenman yapıldı",
+      "missed": "antrenman kaçırıldı",
+      "planned": "antrenman planlandı"
+    },
+    "workout": {
+      "title": "Bugünün antrenmanı",
+      "restDay": "Dinlenme günü",
+      "next": "Sıradaki: {{day}} · {{session}}",
+      "tomorrow": "yarın"
+    },
+    "weight": {
+      "title": "Kilo",
+      "none": "Henüz kilo girmedin.",
+      "loggedToday": "Bugün girildi",
+      "loggedOn": "{{date}} tarihinde girildi",
+      "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+      "decrease": "Kiloyu azalt",
+      "increase": "Kiloyu artır"
+    },
+    "error": {
+      "title": "Bugün yüklenemedi",
+      "message": "Bağlantını kontrol edip tekrar dene."
+    }
+  },
+  "streak": {
+    "label_one": "{{count}} günlük seri",
+    "label_other": "{{count}} günlük seri",
+    "done": "seri sürdü",
+    "frozen": "seri donduruldu"
+  },
+  "nutrition": {
+    "calories": "Günde {{calories}} kcal",
+    "grams": "{{count}} g",
+    "macros": {
+      "protein": "Protein",
+      "carbs": "Karbonhidrat",
+      "fat": "Yağ"
+    },
+    "calorieLabel": "Kalori",
+    "calorieTarget": "/ {{target}} kcal",
+    "gramTarget": "/ {{target}} g"
+  },
+  "workout": {
+    "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "sessionTypes": {
+      "full_body": "Tüm vücut",
+      "upper": "Üst vücut",
+      "lower": "Alt vücut",
+      "push": "İtiş",
+      "pull": "Çekiş",
+      "legs": "Bacak"
+    },
+    "more": "+{{count}} tane daha"
   },
   "onboarding": {
     "steps": {
@@ -258,27 +316,9 @@
       "error": "Planını oluşturamadık. Bağlantını kontrol edip tekrar dene."
     },
     "plan": {
-      "calories": "Günde {{calories}} kcal",
-      "macros": {
-        "protein": "Protein",
-        "carbs": "Karbonhidrat",
-        "fat": "Yağ"
-      },
-      "grams": "{{count}} g",
       "nutrition": "Günlük hedeflerin",
       "weight": "Kilon",
       "week": "Haftan",
-      "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
-      "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
-      "more": "+{{count}} tane daha",
-      "sessionTypes": {
-        "full_body": "Tüm vücut",
-        "upper": "Üst vücut",
-        "lower": "Alt vücut",
-        "push": "İtiş",
-        "pull": "Çekiş",
-        "legs": "Bacak"
-      },
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",

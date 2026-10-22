@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
-import { useLatestWeight, useLogWeight } from './weights';
+import { useLatestWeight, useLogWeight, useWeightUnit } from './weights';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
@@ -12,7 +12,7 @@ jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
 const maybeSingle = jest.fn();
 const limit = jest.fn(() => ({ maybeSingle }));
 const order = jest.fn(() => ({ limit }));
-const select = jest.fn(() => ({ order }));
+const select = jest.fn(() => ({ order, maybeSingle }));
 const upsert = jest.fn();
 
 beforeEach(() => {
@@ -22,6 +22,22 @@ beforeEach(() => {
     status: 'ready',
     session: { user: { id: 'user-1' } } as never,
     retry: jest.fn(),
+  });
+});
+
+describe('useWeightUnit', () => {
+  it('loads the unit from the profile', async () => {
+    maybeSingle.mockResolvedValue({ data: { weight_unit: 'lb' }, error: null });
+    const { result } = await renderHook(() => useWeightUnit());
+    await waitFor(() => expect(result.current.data).toBe('lb'));
+    expect(supabase.from).toHaveBeenCalledWith('profiles');
+    expect(select).toHaveBeenCalledWith('weight_unit');
+  });
+
+  it('is kilograms without a profile', async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: null });
+    const { result } = await renderHook(() => useWeightUnit());
+    await waitFor(() => expect(result.current.data).toBe('kg'));
   });
 });
 

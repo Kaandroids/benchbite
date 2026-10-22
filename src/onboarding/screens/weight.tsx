@@ -6,11 +6,11 @@ import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { defaultUnits, type WeightUnit } from '@/i18n/units';
+import { WeightWheels } from '@/weight/weight-wheels';
 
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
-import { WeightWheels } from './weight-wheels';
 
 /** A typical weight to start the wheels from, so most people only scroll a little. */
 const DEFAULT_WEIGHT_KG: Record<NonNullable<OnboardingAnswers['sex']>, number> = {
