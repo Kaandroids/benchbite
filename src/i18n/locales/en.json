@@ -148,7 +148,9 @@
       "traps": "Traps",
       "triceps": "Triceps"
     },
-    "edit": "Edit"
+    "edit": "Edit",
+    "start": "Start",
+    "startLabel": "Start {{name}}"
   },
   "exercise": {
     "start": "Start",

@@ -148,7 +148,9 @@
       "traps": "Trapez",
       "triceps": "Triseps"
     },
-    "edit": "Düzenle"
+    "edit": "Düzenle",
+    "start": "Başla",
+    "startLabel": "{{name}} başlat"
   },
   "exercise": {
     "start": "Başlangıç",

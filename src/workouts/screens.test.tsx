@@ -70,6 +70,7 @@ describe('WorkoutsScreen', () => {
     expect(screen.getAllByText('Today')).toHaveLength(1);
     // Inactive workouts are in the archive.
     expect(screen.queryByText('Upper body')).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^Start / })).toHaveLength(3);
   });
 
   it('shows the empty history until workouts can be logged', async () => {
@@ -130,6 +131,8 @@ describe('ArchiveScreen', () => {
     ]);
     await render(<ArchiveScreen />);
     expect(screen.queryByText('Push')).toBeNull();
+    // Inactive workouts cannot be started.
+    expect(screen.queryByRole('button', { name: /^Start / })).toBeNull();
     await fireEvent(screen.getByLabelText('Upper body is active'), 'valueChange', true);
     expect(mutate).toHaveBeenCalledWith({ id: 2, active: true });
   });
