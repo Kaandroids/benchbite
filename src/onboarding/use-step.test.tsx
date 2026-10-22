@@ -63,6 +63,13 @@ describe('useStep', () => {
     expect(last.current.progress).toBe(1);
   });
 
+  it('saves answers without moving on', async () => {
+    const { result } = await renderStep('consent');
+    await act(() => result.current.answer({ consentedPolicyVersion: undefined }));
+    expect(answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
   it('saves the answers and opens the next step for them', async () => {
     const { result } = await renderStep('weight', { goal: 'stay_healthy' });
     await act(() => result.current.next({ weightKg: 80 }));

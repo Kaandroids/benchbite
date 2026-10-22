@@ -8,7 +8,6 @@ import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useOnboarding } from '@/providers/onboarding-provider';
 import { useTheme } from '@/theme';
 
 import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
@@ -27,8 +26,7 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
 export function ConsentStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answer } = useOnboarding();
-  const { answers, progress, next, back } = useStep('consent');
+  const { answers, progress, answer, next, back } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [declined, setDeclined] = useState(false);
 
