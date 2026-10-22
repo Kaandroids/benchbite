@@ -50,7 +50,11 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
         style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
       >
         <View style={[styles.row, { gap: spacing.sm }]}>
-          <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
+          <Text
+            variant="headline"
+            color={workout.active ? 'text' : 'textMuted'}
+            style={styles.name}
+          >
             {name}
           </Text>
           {today ? (
@@ -112,6 +116,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  // Long names wrap and leave room for the Today pill instead of pushing it out.
+  name: {
+    flexShrink: 1,
   },
   start: {
     width: 52,
