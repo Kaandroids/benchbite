@@ -1,11 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
 import { InfoButton } from '@/components/ui/info-button';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
+import { useExerciseCaption } from '@/exercises/caption';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import type { LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
@@ -13,7 +15,6 @@ import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
 import { minutesAndSeconds } from './format';
-import { exerciseImageUrl } from './workouts';
 
 const LIMITS = {
   sets: { min: 1, max: 10, step: 1 },
@@ -41,6 +42,7 @@ export function ExerciseSheet({
 }: ExerciseSheetProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const caption = useExerciseCaption();
   const { format } = useNumberFormat();
 
   if (!exercise) {
@@ -134,12 +136,7 @@ export function ExerciseSheet({
     ),
   );
 
-  const detail = [
-    details?.primaryMuscles[0] ? t(`workout.muscles.${details.primaryMuscles[0]}`) : null,
-    details?.equipment ? t(`exercise.equipmentKinds.${details.equipment}`) : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const detail = details ? caption(details) : '';
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -164,23 +161,7 @@ export function ExerciseSheet({
         >
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           <View style={[styles.header, { gap: spacing.md }]}>
-            <View
-              style={[
-                styles.image,
-                {
-                  borderRadius: radii.md,
-                  borderColor: colors.border,
-                  backgroundColor: colors.imageBackground,
-                },
-              ]}
-            >
-              {details?.imagePaths[0] ? (
-                <Image
-                  source={{ uri: exerciseImageUrl(details.imagePaths[0]) }}
-                  style={styles.fill}
-                />
-              ) : null}
-            </View>
+            <ExerciseThumbnail path={details?.imagePaths[0]} size={64} />
             <View style={styles.title}>
               <Text variant="headline">{details?.name ?? ''}</Text>
               <Text variant="caption" color="textMuted">
@@ -270,16 +251,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  image: {
-    width: 64,
-    height: 64,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  fill: {
-    width: '100%',
-    height: '100%',
   },
   title: {
     flex: 1,

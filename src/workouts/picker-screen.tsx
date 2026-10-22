@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
+import { useExerciseCaption } from '@/exercises/caption';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import {
   filterExercises,
   MUSCLE_GROUPS,
@@ -19,7 +21,6 @@ import {
 import { fonts, typography, useTheme } from '@/theme';
 
 import { addExercises } from './draft';
-import { exerciseImageUrl } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
 const ROW_HEIGHT = 73;
@@ -28,6 +29,7 @@ const ROW_HEIGHT = 73;
 export function PickerScreen() {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const caption = useExerciseCaption();
   const library = useExerciseLibrary();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<ExerciseFilter | null>(null);
@@ -68,12 +70,7 @@ export function PickerScreen() {
 
   const row = ({ item }: { item: LibraryExercise }) => {
     const selected = chosen.some((exercise) => exercise.id === item.id);
-    const detail = [
-      item.primaryMuscles[0] ? t(`workout.muscles.${item.primaryMuscles[0]}`) : null,
-      item.equipment ? t(`exercise.equipmentKinds.${item.equipment}`) : null,
-    ]
-      .filter(Boolean)
-      .join(' · ');
+    const detail = caption(item);
     return (
       <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
         <InfoButton exerciseId={item.id} exerciseName={item.name} />
@@ -84,20 +81,7 @@ export function PickerScreen() {
           onPress={() => toggle(item)}
           style={[styles.choice, { gap: spacing.md }]}
         >
-          <View
-            style={[
-              styles.image,
-              {
-                borderRadius: radii.md,
-                borderColor: colors.border,
-                backgroundColor: colors.imageBackground,
-              },
-            ]}
-          >
-            {item.imagePaths[0] ? (
-              <Image source={{ uri: exerciseImageUrl(item.imagePaths[0]) }} style={styles.fill} />
-            ) : null}
-          </View>
+          <ExerciseThumbnail path={item.imagePaths[0]} size={52} />
           <View style={styles.text}>
             <Text variant="bodyStrong" numberOfLines={2}>
               {item.name}
@@ -264,16 +248,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  image: {
-    width: 52,
-    height: 52,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  fill: {
-    width: '100%',
-    height: '100%',
   },
   text: {
     flex: 1,

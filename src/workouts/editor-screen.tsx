@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
@@ -16,7 +17,7 @@ import { fonts, typography, useTheme } from '@/theme';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
 import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { exerciseImageUrl, useDeleteWorkout, useSaveWorkout, useWorkouts } from './workouts';
+import { useDeleteWorkout, useSaveWorkout, useWorkouts } from './workouts';
 
 const ROW_HEIGHT = 76;
 
@@ -119,20 +120,7 @@ export function EditorScreen({ id }: { id?: number }) {
         onPress={() => setEditing(exercise.key)}
         style={[styles.exercise, { gap: spacing.md }]}
       >
-        <View
-          style={[
-            styles.image,
-            {
-              borderRadius: radii.md,
-              borderColor: colors.border,
-              backgroundColor: colors.imageBackground,
-            },
-          ]}
-        >
-          {info?.imagePaths[0] ? (
-            <Image source={{ uri: exerciseImageUrl(info.imagePaths[0]) }} style={styles.fill} />
-          ) : null}
-        </View>
+        <ExerciseThumbnail path={info?.imagePaths[0]} size={52} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}
@@ -402,16 +390,6 @@ const styles = StyleSheet.create({
   exercise: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  image: {
-    width: 52,
-    height: 52,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  fill: {
-    width: '100%',
-    height: '100%',
   },
   add: {
     height: 52,
