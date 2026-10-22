@@ -22,7 +22,10 @@ const SAFE_AREA = {
 /** A query client that fails at once instead of retrying, so error states can be tested. */
 export function createTestQueryClient() {
   return new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } },
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { retry: false, gcTime: Infinity },
+    },
   });
 }
 
