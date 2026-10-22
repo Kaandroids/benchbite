@@ -2,11 +2,16 @@
   "common": {
     "back": "Zurück",
     "tryAgain": "Erneut versuchen",
-    "continue": "Weiter"
+    "continue": "Weiter",
+    "loading": "Wird geladen"
   },
   "sessionError": {
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
+  },
+  "loadError": {
+    "title": "Das konnte nicht geladen werden",
+    "message": "Prüfe deine Verbindung und versuche es erneut."
   },
   "tabs": {
     "today": "Heute",
@@ -16,7 +21,6 @@
   },
   "comingSoon": {
     "title": "Bald verfügbar",
-    "workout": "Hier findest du bald deinen Wochenplan und seine Trainings.",
     "nutrition": "Hier kannst du bald deine Mahlzeiten eintragen.",
     "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
   },
@@ -32,7 +36,8 @@
       "title": "Heutiges Training",
       "restDay": "Ruhetag",
       "next": "Nächstes: {{day}} · {{session}}",
-      "tomorrow": "morgen"
+      "tomorrow": "morgen",
+      "open": "Öffnet das Workout"
     },
     "weight": {
       "title": "Gewicht",
@@ -77,7 +82,68 @@
       "pull": "Pull",
       "legs": "Beine"
     },
-    "more": "+{{count}} weitere"
+    "more": "+{{count}} weitere",
+    "title": "Workouts",
+    "today": "Heute",
+    "anyDay": "Jeder Tag",
+    "activeCount_one": "Aktiv · {{count}}",
+    "activeCount_other": "Aktiv · {{count}}",
+    "noActive": "Keine aktiven Workouts. Schalte eines im Archiv ein.",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "activeLabel": "{{name}} ist aktiv",
+    "history": {
+      "title": "Verlauf",
+      "empty": "Deine abgeschlossenen Workouts erscheinen hier."
+    },
+    "archive": {
+      "title": "Archiv",
+      "body": "Inaktive Workouts bleiben hier und gehören nicht zu deiner Woche.",
+      "empty": "Keine archivierten Workouts."
+    },
+    "notFound": {
+      "title": "Workout nicht gefunden",
+      "message": "Es wurde vielleicht entfernt."
+    },
+    "stats": {
+      "exercises_one": "Übung",
+      "exercises_other": "Übungen",
+      "sets_one": "Satz",
+      "sets_other": "Sätze",
+      "minutes": "Minuten"
+    },
+    "target": {
+      "repRange": "{{sets}} × {{min}}–{{max}} Wdh.",
+      "reps": "{{sets}} × {{reps}} Wdh.",
+      "seconds": "{{sets}} × {{seconds}} s",
+      "minutes": "{{sets}} × {{minutes}} min",
+      "time": "{{sets}} × {{time}} min"
+    },
+    "rest": "Pause {{time}}",
+    "noRest": "Keine Pause",
+    "finisher": {
+      "title": "Finisher",
+      "body": "für etwas mehr Kalorienverbrauch"
+    },
+    "muscles": {
+      "abdominals": "Bauch",
+      "abductors": "Abduktoren",
+      "adductors": "Adduktoren",
+      "biceps": "Bizeps",
+      "calves": "Waden",
+      "chest": "Brust",
+      "forearms": "Unterarme",
+      "glutes": "Gesäß",
+      "hamstrings": "Beinbeuger",
+      "lats": "Latissimus",
+      "lower back": "Unterer Rücken",
+      "middle back": "Mittlerer Rücken",
+      "neck": "Nacken",
+      "quadriceps": "Quadrizeps",
+      "shoulders": "Schultern",
+      "traps": "Trapez",
+      "triceps": "Trizeps"
+    }
   },
   "onboarding": {
     "steps": {

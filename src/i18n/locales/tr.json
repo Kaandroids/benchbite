@@ -2,11 +2,16 @@
   "common": {
     "back": "Geri",
     "tryAgain": "Tekrar dene",
-    "continue": "Devam"
+    "continue": "Devam",
+    "loading": "Yükleniyor"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
+  },
+  "loadError": {
+    "title": "Yüklenemedi",
+    "message": "Bağlantını kontrol edip tekrar dene."
   },
   "tabs": {
     "today": "Bugün",
@@ -16,7 +21,6 @@
   },
   "comingSoon": {
     "title": "Yakında",
-    "workout": "Haftalık planın ve antrenmanların yakında burada olacak.",
     "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
     "progress": "Kilon ve ilerlemen yakında burada olacak."
   },
@@ -32,7 +36,8 @@
       "title": "Bugünün antrenmanı",
       "restDay": "Dinlenme günü",
       "next": "Sıradaki: {{day}} · {{session}}",
-      "tomorrow": "yarın"
+      "tomorrow": "yarın",
+      "open": "Antrenmanı açar"
     },
     "weight": {
       "title": "Kilo",
@@ -77,7 +82,68 @@
       "pull": "Çekiş",
       "legs": "Bacak"
     },
-    "more": "+{{count}} tane daha"
+    "more": "+{{count}} tane daha",
+    "title": "Antrenmanlar",
+    "today": "Bugün",
+    "anyDay": "Her gün",
+    "activeCount_one": "Aktif · {{count}}",
+    "activeCount_other": "Aktif · {{count}}",
+    "noActive": "Aktif antrenman yok. Arşivden birini aç.",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "activeLabel": "{{name}} aktif",
+    "history": {
+      "title": "Geçmiş",
+      "empty": "Tamamladığın antrenmanlar burada görünecek."
+    },
+    "archive": {
+      "title": "Arşiv",
+      "body": "Pasif antrenmanlar burada saklanır ve haftana dahil edilmez.",
+      "empty": "Arşivde antrenman yok."
+    },
+    "notFound": {
+      "title": "Antrenman bulunamadı",
+      "message": "Kaldırılmış olabilir."
+    },
+    "stats": {
+      "exercises_one": "egzersiz",
+      "exercises_other": "egzersiz",
+      "sets_one": "set",
+      "sets_other": "set",
+      "minutes": "dakika"
+    },
+    "target": {
+      "repRange": "{{sets}} × {{min}}–{{max}} tekrar",
+      "reps": "{{sets}} × {{reps}} tekrar",
+      "seconds": "{{sets}} × {{seconds}} sn",
+      "minutes": "{{sets}} × {{minutes}} dk",
+      "time": "{{sets}} × {{time}} dk"
+    },
+    "rest": "Dinlenme {{time}}",
+    "noRest": "Dinlenme yok",
+    "finisher": {
+      "title": "Finisher",
+      "body": "biraz daha yakmak için"
+    },
+    "muscles": {
+      "abdominals": "Karın",
+      "abductors": "Abdüktörler",
+      "adductors": "Addüktörler",
+      "biceps": "Biseps",
+      "calves": "Baldır",
+      "chest": "Göğüs",
+      "forearms": "Ön kol",
+      "glutes": "Kalça",
+      "hamstrings": "Arka bacak",
+      "lats": "Kanat",
+      "lower back": "Bel",
+      "middle back": "Orta sırt",
+      "neck": "Boyun",
+      "quadriceps": "Ön bacak",
+      "shoulders": "Omuz",
+      "traps": "Trapez",
+      "triceps": "Triseps"
+    }
   },
   "onboarding": {
     "steps": {

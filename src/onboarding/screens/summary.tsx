@@ -12,7 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { nextSession } from '@/plan/next-session';
+import { nextSession } from '@/workouts/next-session';
 import { useTheme } from '@/theme';
 
 import { useStep } from '../use-step';

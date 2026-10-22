@@ -2,11 +2,16 @@
   "common": {
     "back": "Back",
     "tryAgain": "Try again",
-    "continue": "Continue"
+    "continue": "Continue",
+    "loading": "Loading"
   },
   "sessionError": {
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
+  },
+  "loadError": {
+    "title": "This couldn't load",
+    "message": "Check your connection and try again."
   },
   "tabs": {
     "today": "Today",
@@ -16,7 +21,6 @@
   },
   "comingSoon": {
     "title": "Coming soon",
-    "workout": "Your weekly plan and its workouts will be here.",
     "nutrition": "Logging your meals will be here.",
     "progress": "Your weight and progress will be here."
   },
@@ -32,7 +36,8 @@
       "title": "Today's workout",
       "restDay": "Rest day",
       "next": "Next: {{day}} · {{session}}",
-      "tomorrow": "tomorrow"
+      "tomorrow": "tomorrow",
+      "open": "Opens the workout"
     },
     "weight": {
       "title": "Weight",
@@ -77,7 +82,68 @@
       "pull": "Pull",
       "legs": "Legs"
     },
-    "more": "+{{count}} more"
+    "more": "+{{count}} more",
+    "title": "Workouts",
+    "today": "Today",
+    "anyDay": "Any day",
+    "activeCount_one": "Active · {{count}}",
+    "activeCount_other": "Active · {{count}}",
+    "noActive": "No active workouts. Switch one on in the archive.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activeLabel": "{{name}} is active",
+    "history": {
+      "title": "History",
+      "empty": "Your finished workouts will show here."
+    },
+    "archive": {
+      "title": "Archive",
+      "body": "Inactive workouts are kept here and left out of your week.",
+      "empty": "No archived workouts."
+    },
+    "notFound": {
+      "title": "Workout not found",
+      "message": "It may have been removed."
+    },
+    "stats": {
+      "exercises_one": "exercise",
+      "exercises_other": "exercises",
+      "sets_one": "set",
+      "sets_other": "sets",
+      "minutes": "minutes"
+    },
+    "target": {
+      "repRange": "{{sets}} × {{min}}–{{max}} reps",
+      "reps": "{{sets}} × {{reps}} reps",
+      "seconds": "{{sets}} × {{seconds}} s",
+      "minutes": "{{sets}} × {{minutes}} min",
+      "time": "{{sets}} × {{time}} min"
+    },
+    "rest": "Rest {{time}}",
+    "noRest": "No rest",
+    "finisher": {
+      "title": "Finisher",
+      "body": "to burn a little more"
+    },
+    "muscles": {
+      "abdominals": "Abs",
+      "abductors": "Abductors",
+      "adductors": "Adductors",
+      "biceps": "Biceps",
+      "calves": "Calves",
+      "chest": "Chest",
+      "forearms": "Forearms",
+      "glutes": "Glutes",
+      "hamstrings": "Hamstrings",
+      "lats": "Lats",
+      "lower back": "Lower back",
+      "middle back": "Middle back",
+      "neck": "Neck",
+      "quadriceps": "Quads",
+      "shoulders": "Shoulders",
+      "traps": "Traps",
+      "triceps": "Triceps"
+    }
   },
   "onboarding": {
     "steps": {

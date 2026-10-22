@@ -1,14 +1,14 @@
-import type { Plan, Session } from '@shared/plan/types';
-import type { NutritionTargets } from '@/nutrition/targets';
-import { useNutritionTargets } from '@/nutrition/targets';
-import { usePlan } from '@/plan/use-plan';
+import { router } from 'expo-router';
+
+import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
+import { useWeek, type WeekSession } from '@/workouts/workouts';
 
 import { TodayScreen } from './today-screen';
 import { SAVE_DELAY_MS } from './weight-card';
 
-jest.mock('@/plan/use-plan', () => ({ usePlan: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('@/lib/supabase', () => ({
     }),
   },
 }));
-jest.mock('expo-router', () => ({ Link: () => null }));
+jest.mock('expo-router', () => ({ Link: () => null, router: { push: jest.fn() } }));
 
 type Query<T> = {
   data?: T;
@@ -65,7 +65,8 @@ const exercise = (exerciseId: string) => ({
   restSeconds: 90,
 });
 
-const session = (weekday: number, type: Session['type'], exerciseCount = 0): Session => ({
+const session = (weekday: number, type: WeekSession['type'], exerciseCount = 0): WeekSession => ({
+  workoutId: weekday,
   weekday,
   type,
   exercises: Array.from({ length: exerciseCount }, (_, index) => exercise(`exercise-${index}`)),
@@ -75,6 +76,8 @@ const session = (weekday: number, type: Session['type'], exerciseCount = 0): Ses
 
 const TARGETS: NutritionTargets = { calories: 2200, proteinG: 150, carbsG: 250, fatG: 70 };
 // Monday, Wednesday and Friday.
+type Plan = { sessions: WeekSession[] };
+
 const PLAN: Plan = { sessions: [session(1, 'push'), session(3, 'pull', 6), session(5, 'legs')] };
 
 // A Wednesday.
@@ -100,7 +103,7 @@ function mockData({
   unit?: Query<'kg' | 'lb'>;
   log?: { isError: boolean; isPending: boolean };
 } = {}) {
-  jest.mocked(usePlan).mockReturnValue(plan as never);
+  jest.mocked(useWeek).mockReturnValue(plan as never);
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useLatestWeight).mockReturnValue(weight as never);
   jest.mocked(useWeightUnit).mockReturnValue(unit as never);
@@ -156,6 +159,14 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Name of exercise-3')).toBeTruthy();
     expect(screen.queryByText('Name of exercise-4')).toBeNull();
     expect(screen.getByText('+2 more')).toBeTruthy();
+  });
+
+  it("opens today's workout", async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByHintText('Opens the workout'));
+    // The sessions of the test week use their weekday as the workout's id.
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
   });
 
   it('shows the next workout on a rest day', async () => {
