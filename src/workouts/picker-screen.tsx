@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
 import {
   filterExercises,
@@ -75,17 +76,7 @@ export function PickerScreen() {
       .join(' · ');
     return (
       <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('exercise.details', { name: item.name })}
-          onPress={() =>
-            router.push({ pathname: '/workout/exercise/[id]', params: { id: item.id } })
-          }
-          hitSlop={4}
-          style={[styles.info, { borderColor: colors.border, backgroundColor: colors.surface }]}
-        >
-          <Icon name="info" size={18} color="textMuted" />
-        </Pressable>
+        <InfoButton exerciseId={item.id} exerciseName={item.name} />
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected }}
@@ -268,14 +259,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  info: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   choice: {
     flex: 1,

@@ -40,6 +40,11 @@ export type ColorTokens = {
   imageBackground: string;
   /** The thumb of on/off switches. */
   switchThumb: string;
+  /** Dims the screen behind a sheet. */
+  scrim: string;
+  /** The "i" that opens an exercise's details, on `infoBackground`. */
+  info: string;
+  infoBackground: string;
 };
 
 export const lightColors: ColorTokens = {
@@ -68,6 +73,9 @@ export const lightColors: ColorTokens = {
   planned: '#FFC9A8',
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
+  scrim: 'rgba(22, 23, 26, 0.45)',
+  info: '#1D4ED8',
+  infoBackground: '#DBEAFE',
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -98,4 +106,7 @@ export const darkColors: ColorTokens = {
   planned: '#A8561C',
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
+  scrim: 'rgba(0, 0, 0, 0.6)',
+  info: '#93C5FD',
+  infoBackground: '#1E3A5F',
 };
