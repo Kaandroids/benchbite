@@ -3,7 +3,8 @@
     "back": "Back",
     "tryAgain": "Try again",
     "continue": "Continue",
-    "loading": "Loading"
+    "loading": "Loading",
+    "close": "Close"
   },
   "sessionError": {
     "title": "Couldn’t connect",
@@ -176,6 +177,24 @@
       "foam roll": "Foam roller",
       "e-z curl bar": "EZ bar",
       "other": "Other"
+    },
+    "details": "Details of {{name}}"
+  },
+  "picker": {
+    "title": "Add exercises",
+    "search": "Search exercises",
+    "all": "All",
+    "empty": "No exercises found.",
+    "add_one": "Add {{count}} exercise",
+    "add_other": "Add {{count}} exercises",
+    "filters": {
+      "chest": "Chest",
+      "back": "Back",
+      "shoulders": "Shoulders",
+      "arms": "Arms",
+      "legs": "Legs",
+      "core": "Core",
+      "cardio": "Cardio"
     }
   },
   "onboarding": {

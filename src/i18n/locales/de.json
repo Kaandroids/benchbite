@@ -3,7 +3,8 @@
     "back": "Zurück",
     "tryAgain": "Erneut versuchen",
     "continue": "Weiter",
-    "loading": "Wird geladen"
+    "loading": "Wird geladen",
+    "close": "Schließen"
   },
   "sessionError": {
     "title": "Keine Verbindung",
@@ -176,6 +177,24 @@
       "foam roll": "Faszienrolle",
       "e-z curl bar": "SZ-Stange",
       "other": "Sonstiges"
+    },
+    "details": "Details zu {{name}}"
+  },
+  "picker": {
+    "title": "Übungen hinzufügen",
+    "search": "Übungen suchen",
+    "all": "Alle",
+    "empty": "Keine Übungen gefunden.",
+    "add_one": "{{count}} Übung hinzufügen",
+    "add_other": "{{count}} Übungen hinzufügen",
+    "filters": {
+      "chest": "Brust",
+      "back": "Rücken",
+      "shoulders": "Schultern",
+      "arms": "Arme",
+      "legs": "Beine",
+      "core": "Rumpf",
+      "cardio": "Cardio"
     }
   },
   "onboarding": {

@@ -3,7 +3,8 @@
     "back": "Geri",
     "tryAgain": "Tekrar dene",
     "continue": "Devam",
-    "loading": "Yükleniyor"
+    "loading": "Yükleniyor",
+    "close": "Kapat"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
@@ -176,6 +177,24 @@
       "foam roll": "Foam roller",
       "e-z curl bar": "EZ bar",
       "other": "Diğer"
+    },
+    "details": "{{name}} detayları"
+  },
+  "picker": {
+    "title": "Egzersiz ekle",
+    "search": "Egzersiz ara",
+    "all": "Tümü",
+    "empty": "Egzersiz bulunamadı.",
+    "add_one": "{{count}} egzersiz ekle",
+    "add_other": "{{count}} egzersiz ekle",
+    "filters": {
+      "chest": "Göğüs",
+      "back": "Sırt",
+      "shoulders": "Omuz",
+      "arms": "Kol",
+      "legs": "Bacak",
+      "core": "Karın",
+      "cardio": "Kardiyo"
     }
   },
   "onboarding": {
