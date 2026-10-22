@@ -6,6 +6,7 @@ import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
 
 import { TodayScreen } from './today-screen';
+import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/plan/use-plan', () => ({ usePlan: jest.fn() }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
@@ -114,10 +115,12 @@ describe('TodayScreen', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('shows the date and a spinner while loading', async () => {
+  it('shows the date and the streak while loading', async () => {
     mockData({ targets: pending() });
     await render(<TodayScreen />);
-    expect(screen.getByText('Wednesday, October 21, 2026')).toBeTruthy();
+    expect(screen.getByText('October 21, 2026')).toBeTruthy();
+    // Streaks are not recorded yet, so every user has none.
+    expect(screen.getByLabelText('0-day streak')).toBeTruthy();
     expect(screen.getByLabelText('Loading')).toBeTruthy();
     expect(screen.queryByText('Your daily targets')).toBeNull();
   });
@@ -131,14 +134,11 @@ describe('TodayScreen', () => {
     expect(plan.refetch).not.toHaveBeenCalled();
   });
 
-  it('marks today and the training days in the week', async () => {
+  it('highlights today in the week', async () => {
     mockData();
     await render(<TodayScreen />);
-    expect(screen.getByLabelText('Mon 19, workout')).toBeTruthy();
-    expect(screen.getByLabelText('Tue 20')).toBeTruthy();
-    expect(screen.getByLabelText('Wed 21, workout').props.accessibilityState).toEqual({
-      selected: true,
-    });
+    expect(screen.getByLabelText('Mon 19')).toBeTruthy();
+    expect(screen.getByLabelText('Wed 21').props.accessibilityState).toEqual({ selected: true });
     expect(screen.getByLabelText('Sun 25')).toBeTruthy();
   });
 
@@ -169,11 +169,13 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Next: Monday · Push')).toBeTruthy();
   });
 
-  it('shows the daily targets', async () => {
+  it('shows what was eaten against the daily targets, nothing until meals can be logged', async () => {
     mockData();
     await render(<TodayScreen />);
-    expect(screen.getByText('2,200 kcal a day')).toBeTruthy();
-    expect(screen.getByText('150 g')).toBeTruthy();
+    expect(screen.getByText('0 / 2,200 kcal')).toBeTruthy();
+    expect(screen.getByText('0 / 150 g')).toBeTruthy();
+    expect(screen.getByText('0 / 250 g')).toBeTruthy();
+    expect(screen.getByText('0 / 70 g')).toBeTruthy();
   });
 
   it('leaves out what the user has no data for', async () => {
@@ -204,19 +206,20 @@ describe('the weight card', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('asks for the first weight', async () => {
+  const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
+
+  it('says when no weight is logged', async () => {
     mockData({ weight: loaded(null) });
     await render(<TodayScreen />);
     expect(screen.getByText('No weight logged yet.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Log weight' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Increase weight' })).toBeNull();
   });
 
-  it("offers to correct today's weight", async () => {
+  it("shows today's weight", async () => {
     mockData();
     await render(<TodayScreen />);
     expect(screen.getByText('80 kg')).toBeTruthy();
     expect(screen.getByText('Logged today')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Correct weight' })).toBeTruthy();
   });
 
   it('shows the day of an earlier weight, in the unit of the user', async () => {
@@ -227,31 +230,53 @@ describe('the weight card', () => {
     await render(<TodayScreen />);
     expect(screen.getByText('176.4 lb')).toBeTruthy();
     expect(screen.getByText('Logged on Oct 19, 2026')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Log weight' })).toBeTruthy();
   });
 
-  it('saves the weight chosen on the wheels', async () => {
+  it('changes the weight a tenth of a kilogram per press and saves it once after the last', async () => {
     mockData({ weight: loaded({ weightKg: 80, measuredOn: '2026-10-19' }) });
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Log weight' }));
-    expect(reset).toHaveBeenCalled();
-    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-    expect(mutate).toHaveBeenCalledWith(80, expect.anything());
+    await press('Increase weight');
+    await press('Increase weight');
+    await press('Increase weight');
+    await press('Decrease weight');
+    expect(screen.getByText('80.2 kg')).toBeTruthy();
+    expect(screen.getByText('Logged today')).toBeTruthy();
+    expect(mutate).not.toHaveBeenCalled();
+    await act(() => jest.advanceTimersByTime(SAVE_DELAY_MS));
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(mutate).toHaveBeenCalledWith(80.2, expect.anything());
   });
 
-  it('closes the wheels when cancelled', async () => {
+  it('shows the saved weight once it is loaded again', async () => {
     mockData();
+    mutate.mockImplementation((_kg: number, { onSettled }: { onSettled: () => void }) =>
+      onSettled(),
+    );
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Correct weight' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
-    expect(mutate).not.toHaveBeenCalled();
+    await press('Decrease weight');
+    await act(() => jest.advanceTimersByTime(SAVE_DELAY_MS));
+    // The mocked query still returns the old weight.
+    expect(screen.getByText('80 kg')).toBeTruthy();
+  });
+
+  it('saves a waiting change when the screen closes', async () => {
+    mockData();
+    const { unmount } = await render(<TodayScreen />);
+    await press('Increase weight');
+    await act(() => unmount());
+    expect(mutate).toHaveBeenCalledWith(80.1, expect.anything());
+  });
+
+  it('stays within the weights the database accepts', async () => {
+    mockData({ weight: loaded({ weightKg: 30, measuredOn: '2026-10-21' }) });
+    await render(<TodayScreen />);
+    await press('Decrease weight');
+    expect(screen.getByText('30 kg')).toBeTruthy();
   });
 
   it('says when saving failed', async () => {
     mockData({ log: { isError: true, isPending: false } });
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Correct weight' }));
     expect(
       screen.getByText("We couldn't save your weight. Check your connection and try again."),
     ).toBeTruthy();
