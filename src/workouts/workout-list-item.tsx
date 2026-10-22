@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
@@ -17,8 +18,8 @@ type WorkoutListItemProps = {
 };
 
 /**
- * A workout in a list: its name, days and size, with a switch to turn it on or off and, while it
- * is active, a button to start it.
+ * A workout in a list: its name, days and size, with a button to start it while it is active and a
+ * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
  */
 export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps) {
   const { t } = useTranslation();
@@ -31,6 +32,8 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
       style={[
         styles.card,
         {
+          gap: spacing.md,
+          padding: spacing.lg,
           borderRadius: radii.lg,
           backgroundColor: colors.surface,
           borderColor: today ? colors.primary : colors.border,
@@ -38,46 +41,39 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
         },
       ]}
     >
-      <View style={[styles.top, { gap: spacing.md, padding: spacing.lg }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={name}
-          onPress={() =>
-            router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
-          }
-          style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
-        >
-          <View style={[styles.row, { gap: spacing.sm }]}>
-            <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
-              {name}
-            </Text>
-            {today ? (
-              <View
-                style={[
-                  styles.pill,
-                  { borderRadius: radii.full, backgroundColor: colors.primaryButton },
-                ]}
-              >
-                <Text variant="caption" color="onPrimary" style={styles.pillText}>
-                  {t('workout.today')}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-          <Text variant="caption" color="textMuted">
-            {t('workout.session', {
-              count: workout.exercises.length,
-              minutes: workout.estimatedMinutes,
-            })}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={name}
+        onPress={() =>
+          router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
+        }
+        style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
+      >
+        <View style={[styles.row, { gap: spacing.sm }]}>
+          <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
+            {name}
           </Text>
-        </Pressable>
-        <Switch
-          accessibilityLabel={t('workout.activeLabel', { name })}
-          value={workout.active}
-          onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
-        />
-      </View>
+          {today ? (
+            <View
+              style={[
+                styles.pill,
+                { borderRadius: radii.full, backgroundColor: colors.primaryButton },
+              ]}
+            >
+              <Text variant="caption" color="onPrimary" style={styles.pillText}>
+                {t('workout.today')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+        <Text variant="caption" color="textMuted">
+          {t('workout.session', {
+            count: workout.exercises.length,
+            minutes: workout.estimatedMinutes,
+          })}
+        </Text>
+      </Pressable>
       {workout.active ? (
         // Starting a workout comes with logging it (#78).
         <Pressable
@@ -86,28 +82,29 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
           style={({ pressed }) => [
             styles.start,
             {
-              borderTopColor: colors.border,
-              backgroundColor: colors.background,
+              borderRadius: radii.full,
+              backgroundColor: colors.iconBackground,
               opacity: pressed ? 0.6 : 1,
             },
           ]}
         >
-          <Text variant="bodyStrong" style={styles.pillText}>
-            {t('workout.start')}
-          </Text>
+          <Icon name="play" size={22} color="primaryText" />
         </Pressable>
-      ) : null}
+      ) : (
+        <Switch
+          accessibilityLabel={t('workout.activeLabel', { name })}
+          value={workout.active}
+          onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    overflow: 'hidden',
-  },
-  top: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   body: {
     flex: 1,
@@ -117,10 +114,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   start: {
-    height: 48,
+    width: 52,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   pill: {
     paddingHorizontal: 8,

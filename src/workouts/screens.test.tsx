@@ -101,11 +101,11 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
-  it('switches a workout off', async () => {
+  it('offers to start active workouts instead of switching them off', async () => {
     mockWorkouts([testWorkout(5, { type: 'pull' })]);
     await render(<WorkoutsScreen />);
-    await fireEvent(screen.getByLabelText('Pull is active'), 'valueChange', false);
-    expect(mutate).toHaveBeenCalledWith({ id: 5, active: false });
+    expect(screen.getByRole('button', { name: 'Start Pull' })).toBeTruthy();
+    expect(screen.queryByLabelText('Pull is active')).toBeNull();
   });
 
   it('shows an error with a retry', async () => {
