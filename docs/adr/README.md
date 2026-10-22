@@ -30,3 +30,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0012](0012-local-workout-reminders.md)                | Remind people to train with local notifications                                    | Accepted |
 | [0013](0013-onboarding-written-by-definer-function.md) | Write the onboarding only through a function with its owner's rights               | Accepted |
 | [0014](0014-native-tab-bar.md)                         | Use the system's tab bar for the main screens                                      | Accepted |
+| [0015](0015-server-data-with-tanstack-query.md)        | Load and cache the user's data with TanStack Query                                 | Accepted |
