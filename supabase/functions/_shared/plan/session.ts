@@ -92,40 +92,44 @@ export function finisherMinutes(input: PlanInput): number {
   return input.sessionMinutes >= 60 ? 10 : 5;
 }
 
-/**
- * Builds one session. Slots are filled in order of importance while time is left; a slot that
- * does not fit is tried with fewer sets, down to two. If it still does not fit, it and every
- * slot after it are left out, so a less important exercise never replaces a more important one.
- * Slots without a possible exercise for the setup are skipped.
- */
-export function buildSession(
+/** The conditioning block at the end of a fat loss session, if the setup allows one. */
+function buildFinisher(
   input: PlanInput,
   catalogue: CatalogueEntry[],
-  weekday: number,
+  slotUses: SlotUses,
+): PlannedExercise | null {
+  const minutes = finisherMinutes(input);
+  if (minutes === 0) {
+    return null;
+  }
+  const entry = pick(
+    candidatesFor(catalogue, 'conditioning', input.setup, input.experience),
+    slotUses,
+    new Set(),
+  );
+  if (!entry) {
+    return null;
+  }
+  countUse(slotUses, entry.slot);
+  return planned(entry, prescribeFinisher(entry.metrics, minutes));
+}
+
+/**
+ * The session's exercises within the seconds left. Slots are filled in order of importance; a
+ * slot that does not fit is tried with fewer sets, down to two. If it still does not fit, it and
+ * every slot after it are left out, so a less important exercise never replaces a more important
+ * one. Slots without a possible exercise for the setup are skipped.
+ */
+function buildExercises(
+  input: PlanInput,
+  catalogue: CatalogueEntry[],
   type: SessionType,
   slotUses: SlotUses,
-): Session {
-  const budget = input.sessionMinutes * 60;
-  let seconds = WARM_UP_SECONDS;
-
-  let finisher: PlannedExercise | null = null;
-  const conditioningMinutes = finisherMinutes(input);
-  if (conditioningMinutes > 0) {
-    const entry = pick(
-      candidatesFor(catalogue, 'conditioning', input.setup, input.experience),
-      slotUses,
-      new Set(),
-    );
-    if (entry) {
-      const prescription = prescribeFinisher(entry.metrics, conditioningMinutes);
-      finisher = planned(entry, prescription);
-      countUse(slotUses, entry.slot);
-      seconds += exerciseSeconds(prescription);
-    }
-  }
-
+  secondsLeft: number,
+): PlannedExercise[] {
   const exercises: PlannedExercise[] = [];
   const used = new Set<string>();
+  let left = secondsLeft;
   for (const { slot, role } of TEMPLATES[type]) {
     const entry = pick(
       candidatesFor(catalogue, slot, input.setup, input.experience),
@@ -139,16 +143,39 @@ export function buildSession(
     if (input.sessionMinutes <= SHORT_SESSION_MINUTES) {
       prescribed.sets = Math.max(MIN_SETS, prescribed.sets - 1);
     }
-    const prescription = fit(prescribed, budget - seconds);
+    const prescription = fit(prescribed, left);
     if (!prescription) {
       break;
     }
     exercises.push(planned(entry, prescription));
     used.add(entry.exerciseId);
     countUse(slotUses, slot);
-    seconds += exerciseSeconds(prescription);
+    left -= exerciseSeconds(prescription);
   }
+  return exercises;
+}
 
+/**
+ * Builds one session: the warm-up, the finisher for fat loss, then as many of the exercises as
+ * fit into the time that is left.
+ */
+export function buildSession(
+  input: PlanInput,
+  catalogue: CatalogueEntry[],
+  weekday: number,
+  type: SessionType,
+  slotUses: SlotUses,
+): Session {
+  const finisher = buildFinisher(input, catalogue, slotUses);
+  const fixedSeconds = WARM_UP_SECONDS + (finisher ? exerciseSeconds(finisher) : 0);
+  const exercises = buildExercises(
+    input,
+    catalogue,
+    type,
+    slotUses,
+    input.sessionMinutes * 60 - fixedSeconds,
+  );
+  const seconds = exercises.reduce((total, e) => total + exerciseSeconds(e), fixedSeconds);
   return {
     weekday,
     type,
