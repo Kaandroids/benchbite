@@ -149,7 +149,7 @@
       "triceps": "Triceps"
     },
     "edit": "Edit",
-    "start": "Start",
+    "start": "Start workout",
     "startLabel": "Start {{name}}"
   },
   "exercise": {

@@ -26,7 +26,6 @@ export const ICONS = {
   moon: { ios: 'moon', android: 'bedtime', web: 'bedtime' },
   offline: { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' },
   person: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
-  play: { ios: 'play', android: 'play_arrow', web: 'play_arrow' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
   search: { ios: 'magnifyingglass', android: 'search', web: 'search' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },
