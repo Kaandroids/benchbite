@@ -59,7 +59,8 @@ const failed = <T,>(): Query<T> => ({
 
 const exercise = (exerciseId: string) => ({
   exerciseId,
-  slot: 'squat' as const,
+  primaryMuscles: [],
+  imagePath: null,
   sets: 3,
   target: { reps: { min: 8, max: 12 } },
   restSeconds: 90,
@@ -68,9 +69,9 @@ const exercise = (exerciseId: string) => ({
 const session = (weekday: number, type: WeekSession['type'], exerciseCount = 0): WeekSession => ({
   workoutId: weekday,
   weekday,
+  name: null,
   type,
   exercises: Array.from({ length: exerciseCount }, (_, index) => exercise(`exercise-${index}`)),
-  finisher: null,
   estimatedMinutes: 45,
 });
 

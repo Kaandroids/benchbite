@@ -7,7 +7,6 @@ export function testExercise(
 ): WorkoutExercise {
   return {
     exerciseId,
-    slot: 'squat',
     sets: 3,
     target: { reps: { min: 8, max: 12 } },
     restSeconds: 90,
@@ -21,6 +20,7 @@ export function testExercise(
 export function testWorkout(id: number, more: Partial<Workout> = {}): Workout {
   return {
     id,
+    name: null,
     type: 'full_body',
     weekdays: [1],
     active: true,

@@ -156,7 +156,7 @@ describe('WorkoutScreen', () => {
       }),
     ],
     finisher: testExercise('rope', {
-      target: { seconds: 45 },
+      target: { seconds: 45, meters: null },
       restSeconds: 30,
       primaryMuscles: ['calves'],
     }),

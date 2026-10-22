@@ -13,6 +13,7 @@ import type {
   Target,
 } from './types.ts';
 
+// save_workout() estimates hand-made workouts with the same times (ADR 0017); change both.
 export const WARM_UP_SECONDS = 5 * 60;
 /** Setting up the next exercise: loading a bar, finding a bench. */
 const TRANSITION_SECONDS = 60;

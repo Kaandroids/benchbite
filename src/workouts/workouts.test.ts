@@ -25,6 +25,7 @@ const exerciseRow = (position: number, exerciseId: string, more: object = {}) =>
   target_reps_min: 8,
   target_reps_max: 12,
   target_seconds: null,
+  target_meters: null,
   rest_seconds: 90,
   is_finisher: false,
   exercises: { primary_muscles: ['quadriceps'], image_paths: [`${exerciseId}/0.webp`] },
@@ -33,6 +34,7 @@ const exerciseRow = (position: number, exerciseId: string, more: object = {}) =>
 
 const row = (id: number, weekdays: number[], more: object = {}) => ({
   id,
+  name: null,
   weekdays,
   active: true,
   type: 'full_body',
@@ -43,6 +45,7 @@ const row = (id: number, weekdays: number[], more: object = {}) => ({
 
 const workout = (id: number, weekdays: number[], active = true): Workout => ({
   id,
+  name: null,
   type: 'full_body',
   weekdays,
   active,
@@ -84,6 +87,7 @@ describe('fetchWorkouts', () => {
     const [lower] = await fetchWorkouts();
     expect(lower).toEqual({
       id: 4,
+      name: null,
       type: 'lower',
       weekdays: [2, 5],
       active: true,
@@ -91,7 +95,6 @@ describe('fetchWorkouts', () => {
       exercises: [
         {
           exerciseId: 'squat',
-          slot: 'squat',
           sets: 3,
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
@@ -100,7 +103,6 @@ describe('fetchWorkouts', () => {
         },
         {
           exerciseId: 'lunge',
-          slot: 'squat',
           sets: 3,
           target: { reps: { min: 8, max: 12 } },
           restSeconds: 90,
@@ -110,9 +112,8 @@ describe('fetchWorkouts', () => {
       ],
       finisher: {
         exerciseId: 'bike',
-        slot: 'conditioning',
         sets: 3,
-        target: { seconds: 300 },
+        target: { seconds: 300, meters: null },
         restSeconds: 0,
         primaryMuscles: ['quadriceps'],
         imagePath: null,
