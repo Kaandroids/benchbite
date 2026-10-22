@@ -15,7 +15,7 @@ export function isoWeekday(date: Date): number {
  * Names ISO weekdays in the app language, for example "Monday" or "Mon". Like numbers, they
  * follow the app language rather than the device region.
  */
-export function useWeekdayFormat(width: 'long' | 'short' = 'long') {
+export function useWeekdayFormat(width: 'long' | 'short' | 'narrow' = 'long') {
   const { i18n } = useTranslation();
   const formatter = new Intl.DateTimeFormat(i18n.language, { weekday: width });
   // 1 January 2024 was a Monday, so day n of that month is ISO weekday n.

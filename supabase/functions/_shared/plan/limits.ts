@@ -8,3 +8,9 @@ export const MAX_TRAINING_DAYS = 6;
 export const SESSION_MINUTES = [30, 45, 60, 75] as const;
 
 export type SessionMinutes = (typeof SESSION_MINUTES)[number];
+
+/**
+ * The most exercises a workout may have, finisher included, without premium. The database has the
+ * same limit in workout_limits(), and plans stay within it.
+ */
+export const FREE_WORKOUT_EXERCISES = 20;

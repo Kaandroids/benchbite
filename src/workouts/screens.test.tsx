@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ArchiveScreen } from './archive-screen';
 import { testExercise, testWorkout } from './test-data';
 import { WorkoutScreen } from './workout-screen';
-import { useSetWorkoutActive, useWorkouts, type Workout } from './workouts';
+import { useSetWorkoutActive, useWorkoutLimits, useWorkouts, type Workout } from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
@@ -13,6 +14,7 @@ jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
   useWorkouts: jest.fn(),
   useSetWorkoutActive: jest.fn(),
+  useWorkoutLimits: jest.fn(),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 jest.mock('@/lib/supabase', () => ({
@@ -48,6 +50,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   jest.mocked(useSetWorkoutActive).mockReturnValue({ mutate } as never);
+  jest.mocked(useWorkoutLimits).mockReturnValue({ data: { exercises: 20, workouts: 2 } } as never);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -70,6 +73,7 @@ describe('WorkoutsScreen', () => {
     expect(screen.getAllByText('Today')).toHaveLength(1);
     // Inactive workouts are in the archive.
     expect(screen.queryByText('Upper body')).toBeNull();
+    expect(screen.getAllByRole('button', { name: /^Start / })).toHaveLength(3);
   });
 
   it('shows the empty history until workouts can be logged', async () => {
@@ -96,13 +100,27 @@ describe('WorkoutsScreen', () => {
     });
     await fireEvent.press(screen.getByRole('button', { name: 'Archive' }));
     expect(router.push).toHaveBeenCalledWith('/workout/archive');
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
-  it('switches a workout off', async () => {
+  it('says when there is no room for another workout, counting the archive', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
+    await render(<WorkoutsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    expect(router.push).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledWith(
+      'No room for another workout',
+      'You can have up to 2 workouts, archived ones included. Delete one to make room.',
+    );
+  });
+
+  it('offers to start active workouts instead of switching them off', async () => {
     mockWorkouts([testWorkout(5, { type: 'pull' })]);
     await render(<WorkoutsScreen />);
-    await fireEvent(screen.getByLabelText('Pull is active'), 'valueChange', false);
-    expect(mutate).toHaveBeenCalledWith({ id: 5, active: false });
+    expect(screen.getByRole('button', { name: 'Start Pull' })).toBeTruthy();
+    expect(screen.queryByLabelText('Pull is active')).toBeNull();
   });
 
   it('shows an error with a retry', async () => {
@@ -128,6 +146,8 @@ describe('ArchiveScreen', () => {
     ]);
     await render(<ArchiveScreen />);
     expect(screen.queryByText('Push')).toBeNull();
+    // Inactive workouts cannot be started.
+    expect(screen.queryByRole('button', { name: /^Start / })).toBeNull();
     await fireEvent(screen.getByLabelText('Upper body is active'), 'valueChange', true);
     expect(mutate).toHaveBeenCalledWith({ id: 2, active: true });
   });
@@ -168,8 +188,7 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('Wed')).toBeTruthy();
     expect(screen.getByText('Lats · Middle back · Biceps')).toBeTruthy();
-    // Three exercises; the third exercise's number is a 3 too.
-    expect(screen.getAllByText('3')).toHaveLength(2);
+    expect(screen.getByText('3')).toBeTruthy();
     expect(screen.getByText('exercises')).toBeTruthy();
     expect(screen.getByText('9')).toBeTruthy();
     expect(screen.getByText('sets')).toBeTruthy();
@@ -198,6 +217,19 @@ describe('WorkoutScreen', () => {
       .map((node) => node.props.source?.uri);
     expect(sources).toContain('https://images.test/pulldown/0.webp');
     expect(sources).toContain('https://images.test/rope/0.webp');
+  });
+
+  it('opens the editor and each exercise’s details', async () => {
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/edit', params: { id: '7' } });
+    await waitFor(() => expect(screen.getByText('Name of row')).toBeTruthy());
+    await fireEvent.press(screen.getByRole('button', { name: 'Details of Name of row' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/workout/exercise/[id]',
+      params: { id: 'row' },
+    });
   });
 
   it('switches the workout off', async () => {

@@ -3,7 +3,8 @@
     "back": "Back",
     "tryAgain": "Try again",
     "continue": "Continue",
-    "loading": "Loading"
+    "loading": "Loading",
+    "close": "Close"
   },
   "sessionError": {
     "title": "Couldn’t connect",
@@ -146,7 +147,91 @@
       "shoulders": "Shoulders",
       "traps": "Traps",
       "triceps": "Triceps"
-    }
+    },
+    "edit": "Edit",
+    "startLabel": "Start {{name}}",
+    "limitTitle": "No room for another workout",
+    "limit": "You can have up to {{max}} workouts, archived ones included. Delete one to make room."
+  },
+  "exercise": {
+    "start": "Start",
+    "end": "End",
+    "equipment": "Equipment",
+    "level": "Level",
+    "howTo": "How to do it",
+    "notFound": {
+      "title": "Exercise not found",
+      "message": "It may have been removed from the library."
+    },
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "expert": "Expert"
+    },
+    "equipmentKinds": {
+      "barbell": "Barbell",
+      "dumbbell": "Dumbbell",
+      "body only": "Body weight",
+      "cable": "Cable",
+      "machine": "Machine",
+      "kettlebells": "Kettlebell",
+      "bands": "Bands",
+      "medicine ball": "Medicine ball",
+      "exercise ball": "Exercise ball",
+      "foam roll": "Foam roller",
+      "e-z curl bar": "EZ bar",
+      "other": "Other"
+    },
+    "details": "Details of {{name}}"
+  },
+  "picker": {
+    "title": "Add exercises",
+    "search": "Search exercises",
+    "all": "All",
+    "empty": "No exercises found.",
+    "add_one": "Add {{count}} exercise",
+    "add_other": "Add {{count}} exercises",
+    "filters": {
+      "chest": "Chest",
+      "back": "Back",
+      "shoulders": "Shoulders",
+      "arms": "Arms",
+      "legs": "Legs",
+      "core": "Core",
+      "cardio": "Cardio"
+    },
+    "limit": "Workouts can have up to {{max}} exercises."
+  },
+  "editor": {
+    "newTitle": "New workout",
+    "editTitle": "Edit workout",
+    "save": "Save",
+    "name": "Name",
+    "namePlaceholder": "For example Pull or Arms",
+    "days": "Days (optional)",
+    "daysHint": "Days only plan your week. You can do any workout on any day.",
+    "exercises_one": "Exercises · {{count}}",
+    "exercises_other": "Exercises · {{count}}",
+    "reorder": "Drag to reorder",
+    "delete": "Delete workout",
+    "deleteTitle": "Delete this workout?",
+    "deleteMessage": "It is removed with its exercises. This cannot be undone.",
+    "cancel": "Cancel",
+    "saveError": "We couldn't save the workout. Check your connection and try again.",
+    "sets": "Sets",
+    "repsFrom": "Reps from",
+    "repsTo": "Reps to",
+    "time": "Time",
+    "distance": "Distance",
+    "rest": "Rest",
+    "less": "Less: {{label}}",
+    "more": "More: {{label}}",
+    "remove": "Remove",
+    "done": "Done",
+    "limit": "Workouts can have up to {{max}} exercises.",
+    "overLimit_one": "Remove {{count}} exercise to save. Workouts can have up to {{max}}.",
+    "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}.",
+    "saveErrorTitle": "Not saved"
   },
   "onboarding": {
     "steps": {

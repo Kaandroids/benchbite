@@ -402,6 +402,13 @@ export type Database = {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;
       };
+      workout_limits: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          exercises: number;
+          workouts: number;
+        }[];
+      };
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';

@@ -165,6 +165,65 @@ export function useSetWorkoutActive() {
   });
 }
 
+/** A workout as the editor builds it: without an id until it is first saved. */
+export type WorkoutDraft = {
+  id?: number;
+  /** Null keeps the plan builder's type as the name, in whatever language the app is in. */
+  name: string | null;
+  weekdays: number[];
+  exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
+};
+
+/** How many workouts the user may have, and how many exercises each, which premium will raise (ADR 0018). */
+export function useWorkoutLimits() {
+  return useQuery({
+    queryKey: ['workout-limits'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('workout_limits').single();
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    staleTime: Infinity,
+  });
+}
+
+/** Saves a new or changed workout with its exercises, and returns its id. */
+export function useSaveWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (draft: WorkoutDraft) => {
+      const { data, error } = await supabase.rpc('save_workout', { workout: draft });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+  });
+}
+
+/** Deletes a workout with its exercises. */
+export function useDeleteWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase.from('workouts').delete().eq('id', id);
+      if (error) {
+        throw error;
+      }
+    },
+    // Removed from the list at once, without waiting for the refetch, so the screens can close.
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<Workout[]>(WORKOUTS_KEY, (workouts) =>
+        workouts?.filter((workout) => workout.id !== id),
+      );
+      void queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY });
+    },
+  });
+}
+
 /** The URL of an exercise picture in the public exercise-images bucket. */
 export function exerciseImageUrl(path: string): string {
   return supabase.storage.from('exercise-images').getPublicUrl(path).data.publicUrl;

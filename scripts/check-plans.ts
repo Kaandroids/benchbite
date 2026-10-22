@@ -3,7 +3,11 @@
 // `pnpm check:plans` while the stack is running.
 
 import { Constants, type Database } from '../src/lib/database.types.ts';
-import { MAX_TRAINING_DAYS, SESSION_MINUTES } from '../supabase/functions/_shared/plan/limits.ts';
+import {
+  FREE_WORKOUT_EXERCISES,
+  MAX_TRAINING_DAYS,
+  SESSION_MINUTES,
+} from '../supabase/functions/_shared/plan/limits.ts';
 import { usesTimeTarget } from '../supabase/functions/_shared/plan/prescription.ts';
 import type { PlanInput, Session } from '../supabase/functions/_shared/plan/types.ts';
 
@@ -80,8 +84,9 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
     if (session.estimatedMinutes > answers.sessionMinutes) {
       found.push(`day ${session.weekday} takes ${session.estimatedMinutes} minutes`);
     }
-    if (session.exercises.length < 2) {
-      found.push(`day ${session.weekday} has ${session.exercises.length} exercises`);
+    const count = session.exercises.length + (session.finisher ? 1 : 0);
+    if (session.exercises.length < 2 || count > FREE_WORKOUT_EXERCISES) {
+      found.push(`day ${session.weekday} has ${count} exercises`);
     }
     if ((answers.goal === 'lose_fat') !== (session.finisher !== null)) {
       found.push(`day ${session.weekday} has the wrong finisher`);

@@ -3,7 +3,8 @@
     "back": "Zurück",
     "tryAgain": "Erneut versuchen",
     "continue": "Weiter",
-    "loading": "Wird geladen"
+    "loading": "Wird geladen",
+    "close": "Schließen"
   },
   "sessionError": {
     "title": "Keine Verbindung",
@@ -146,7 +147,91 @@
       "shoulders": "Schultern",
       "traps": "Trapez",
       "triceps": "Trizeps"
-    }
+    },
+    "edit": "Bearbeiten",
+    "startLabel": "{{name}} starten",
+    "limitTitle": "Kein Platz für ein weiteres Training",
+    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen."
+  },
+  "exercise": {
+    "start": "Start",
+    "end": "Ende",
+    "equipment": "Ausrüstung",
+    "level": "Niveau",
+    "howTo": "So geht’s",
+    "notFound": {
+      "title": "Übung nicht gefunden",
+      "message": "Sie wurde vielleicht aus der Bibliothek entfernt."
+    },
+    "levels": {
+      "beginner": "Anfänger",
+      "intermediate": "Fortgeschritten",
+      "expert": "Experte"
+    },
+    "equipmentKinds": {
+      "barbell": "Langhantel",
+      "dumbbell": "Kurzhantel",
+      "body only": "Körpergewicht",
+      "cable": "Kabelzug",
+      "machine": "Maschine",
+      "kettlebells": "Kettlebell",
+      "bands": "Bänder",
+      "medicine ball": "Medizinball",
+      "exercise ball": "Gymnastikball",
+      "foam roll": "Faszienrolle",
+      "e-z curl bar": "SZ-Stange",
+      "other": "Sonstiges"
+    },
+    "details": "Details zu {{name}}"
+  },
+  "picker": {
+    "title": "Übungen hinzufügen",
+    "search": "Übungen suchen",
+    "all": "Alle",
+    "empty": "Keine Übungen gefunden.",
+    "add_one": "{{count}} Übung hinzufügen",
+    "add_other": "{{count}} Übungen hinzufügen",
+    "filters": {
+      "chest": "Brust",
+      "back": "Rücken",
+      "shoulders": "Schultern",
+      "arms": "Arme",
+      "legs": "Beine",
+      "core": "Rumpf",
+      "cardio": "Cardio"
+    },
+    "limit": "Ein Training kann bis zu {{max}} Übungen haben."
+  },
+  "editor": {
+    "newTitle": "Neues Workout",
+    "editTitle": "Workout bearbeiten",
+    "save": "Speichern",
+    "name": "Name",
+    "namePlaceholder": "Zum Beispiel Zug oder Arme",
+    "days": "Tage (optional)",
+    "daysHint": "Tage planen nur deine Woche. Du kannst jedes Workout an jedem Tag machen.",
+    "exercises_one": "Übungen · {{count}}",
+    "exercises_other": "Übungen · {{count}}",
+    "reorder": "Zum Sortieren ziehen",
+    "delete": "Workout löschen",
+    "deleteTitle": "Dieses Workout löschen?",
+    "deleteMessage": "Es wird mit seinen Übungen gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "cancel": "Abbrechen",
+    "saveError": "Wir konnten das Workout nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
+    "sets": "Sätze",
+    "repsFrom": "Wdh. von",
+    "repsTo": "Wdh. bis",
+    "time": "Zeit",
+    "distance": "Distanz",
+    "rest": "Pause",
+    "less": "Weniger: {{label}}",
+    "more": "Mehr: {{label}}",
+    "remove": "Entfernen",
+    "done": "Fertig",
+    "limit": "Ein Training kann bis zu {{max}} Übungen haben.",
+    "overLimit_one": "Entferne {{count}} Übung, um zu speichern. Ein Training kann bis zu {{max}} haben.",
+    "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben.",
+    "saveErrorTitle": "Nicht gespeichert"
   },
   "onboarding": {
     "steps": {

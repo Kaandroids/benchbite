@@ -1,9 +1,9 @@
--- save_workout() creates and replaces only the caller's workouts, checks each target against what
--- the exercise records, and estimates the length. Users delete only their own workouts.
+-- save_workout() creates and replaces only the caller's workouts, keeps them within the caller's
+-- limits, checks each target against what the exercise records, and estimates the length. Users delete only their own workouts.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -39,8 +39,19 @@ select throws_ok(
   '42501', null,
   'Anon cannot save a workout'
 );
+select throws_ok(
+  $$ select * from public.workout_limits() $$,
+  '42501', null,
+  'Anon cannot ask for the limits'
+);
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
+select results_eq(
+  $$ select * from public.workout_limits() $$,
+  $$ values (20, 5) $$,
+  'Users may have 5 workouts with 20 exercises each'
+);
 
 -- Rejected workouts save nothing.
 select throws_ok(
@@ -138,6 +149,18 @@ select results_eq(
   $$ values ('Barbell_Squat') $$,
   'The exercises are replaced'
 );
+
+-- A sixth workout is rejected, archived ones counted; replacing one is still allowed.
+select lives_ok(
+  $$ select public.save_workout(pg_temp.valid()) from generate_series(1, 3) $$,
+  'Users can have up to 5 workouts'
+);
+select throws_ok(
+  $$ select public.save_workout(pg_temp.valid()) $$,
+  'BB009', 'A user can have up to 5 workouts',
+  'A sixth workout is rejected, the inactive one counted'
+);
+delete from public.workouts where name = 'Arms';
 
 -- Other users can neither replace nor delete the workout.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');

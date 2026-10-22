@@ -3,7 +3,8 @@
     "back": "Geri",
     "tryAgain": "Tekrar dene",
     "continue": "Devam",
-    "loading": "Yükleniyor"
+    "loading": "Yükleniyor",
+    "close": "Kapat"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
@@ -146,7 +147,91 @@
       "shoulders": "Omuz",
       "traps": "Trapez",
       "triceps": "Triseps"
-    }
+    },
+    "edit": "Düzenle",
+    "startLabel": "{{name}} başlat",
+    "limitTitle": "Yeni antrenmana yer yok",
+    "limit": "Arşivdekiler dahil en fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil."
+  },
+  "exercise": {
+    "start": "Başlangıç",
+    "end": "Bitiş",
+    "equipment": "Ekipman",
+    "level": "Seviye",
+    "howTo": "Nasıl yapılır",
+    "notFound": {
+      "title": "Egzersiz bulunamadı",
+      "message": "Kütüphaneden kaldırılmış olabilir."
+    },
+    "levels": {
+      "beginner": "Başlangıç",
+      "intermediate": "Orta",
+      "expert": "İleri"
+    },
+    "equipmentKinds": {
+      "barbell": "Halter",
+      "dumbbell": "Dambıl",
+      "body only": "Vücut ağırlığı",
+      "cable": "Kablo",
+      "machine": "Makine",
+      "kettlebells": "Kettlebell",
+      "bands": "Lastik bant",
+      "medicine ball": "Sağlık topu",
+      "exercise ball": "Pilates topu",
+      "foam roll": "Foam roller",
+      "e-z curl bar": "EZ bar",
+      "other": "Diğer"
+    },
+    "details": "{{name}} detayları"
+  },
+  "picker": {
+    "title": "Egzersiz ekle",
+    "search": "Egzersiz ara",
+    "all": "Tümü",
+    "empty": "Egzersiz bulunamadı.",
+    "add_one": "{{count}} egzersiz ekle",
+    "add_other": "{{count}} egzersiz ekle",
+    "filters": {
+      "chest": "Göğüs",
+      "back": "Sırt",
+      "shoulders": "Omuz",
+      "arms": "Kol",
+      "legs": "Bacak",
+      "core": "Karın",
+      "cardio": "Kardiyo"
+    },
+    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir."
+  },
+  "editor": {
+    "newTitle": "Yeni antrenman",
+    "editTitle": "Antrenmanı düzenle",
+    "save": "Kaydet",
+    "name": "Ad",
+    "namePlaceholder": "Örneğin Sırt veya Kol",
+    "days": "Günler (isteğe bağlı)",
+    "daysHint": "Günler sadece haftanı planlar. Her antrenmanı her gün yapabilirsin.",
+    "exercises_one": "Egzersizler · {{count}}",
+    "exercises_other": "Egzersizler · {{count}}",
+    "reorder": "Sıralamak için sürükle",
+    "delete": "Antrenmanı sil",
+    "deleteTitle": "Bu antrenman silinsin mi?",
+    "deleteMessage": "Egzersizleriyle birlikte silinir. Bu geri alınamaz.",
+    "cancel": "Vazgeç",
+    "saveError": "Antrenmanı kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+    "sets": "Set",
+    "repsFrom": "Tekrar (en az)",
+    "repsTo": "Tekrar (en çok)",
+    "time": "Süre",
+    "distance": "Mesafe",
+    "rest": "Dinlenme",
+    "less": "Azalt: {{label}}",
+    "more": "Artır: {{label}}",
+    "remove": "Kaldır",
+    "done": "Tamam",
+    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "overLimit_one": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "saveErrorTitle": "Kaydedilemedi"
   },
   "onboarding": {
     "steps": {

@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
 import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat } from '@/i18n/dates';
 import { useWeightFormat, type WeightUnit } from '@/i18n/units';
@@ -19,8 +19,6 @@ import { useLogWeight, type WeightEntry } from '@/weight/weights';
  * database stores a tenth of a kilogram, so a tenth of a pound would often not change it.
  */
 const STEP_KG = 0.1;
-/** How faded the minus button is next to plus. */
-const QUIET_OPACITY = 0.55;
 /** How long after the last press the weight is saved, so quick presses are saved once. */
 export const SAVE_DELAY_MS = 800;
 
@@ -36,7 +34,7 @@ type WeightCardProps = {
  */
 export function WeightCard({ latest, unit, today }: WeightCardProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const formatWeight = useWeightFormat();
   const formatDate = useDateFormat('medium');
   const logWeight = useLogWeight();
@@ -80,26 +78,6 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
     pending.current = { timer: setTimeout(save, SAVE_DELAY_MS), save };
   };
 
-  // Minus is quieter than plus, so the two read apart at a glance.
-  const stepButton = (icon: IconName, label: string, deltaKg: number, quiet: boolean) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={() => change(deltaKg)}
-      hitSlop={4}
-      style={({ pressed }) => [
-        styles.step,
-        {
-          borderRadius: radii.full,
-          backgroundColor: pressed ? colors.selected : colors.iconBackground,
-          opacity: quiet && !pressed ? QUIET_OPACITY : 1,
-        },
-      ]}
-    >
-      <Icon name={icon} color="primary" />
-    </Pressable>
-  );
-
   return (
     <Card entering={FadeInDown.delay(300).duration(400)}>
       <Text variant="headline">{t('today.weight.title')}</Text>
@@ -120,10 +98,12 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
                   })}
             </Text>
           </View>
-          <View style={[styles.row, { gap: spacing.sm }]}>
-            {stepButton('minus', t('today.weight.decrease'), -STEP_KG, true)}
-            {stepButton('plus', t('today.weight.increase'), STEP_KG, false)}
-          </View>
+          <StepButtons
+            onDecrease={() => change(-STEP_KG)}
+            onIncrease={() => change(STEP_KG)}
+            decreaseLabel={t('today.weight.decrease')}
+            increaseLabel={t('today.weight.increase')}
+          />
         </View>
       )}
       {logWeight.isError ? <Text color="danger">{t('today.weight.saveError')}</Text> : null}
@@ -139,11 +119,5 @@ const styles = StyleSheet.create({
   latest: {
     flex: 1,
     gap: 2,
-  },
-  step: {
-    width: 48,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

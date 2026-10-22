@@ -16,13 +16,15 @@ type ScreenProps = {
   onBack?: () => void;
   /** Stays at the bottom while the content scrolls, typically the main button. */
   footer?: ReactNode;
+  /** A button at the end of the top bar, such as Edit. */
+  action?: ReactNode;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
-export function Screen({ children, progress, onBack, footer }: ScreenProps) {
+export function Screen({ children, progress, onBack, footer, action }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
-  const hasTopBar = progress !== undefined || onBack !== undefined;
+  const hasTopBar = progress !== undefined || onBack !== undefined || action !== undefined;
 
   return (
     <SafeAreaView
@@ -46,7 +48,10 @@ export function Screen({ children, progress, onBack, footer }: ScreenProps) {
             <View style={styles.progress}>
               <ProgressBar value={progress} />
             </View>
-          ) : null}
+          ) : (
+            <View style={styles.progress} />
+          )}
+          {action}
         </View>
       ) : null}
       <ScrollView

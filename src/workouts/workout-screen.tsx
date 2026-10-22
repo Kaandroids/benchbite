@@ -1,25 +1,22 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import {
-  exerciseImageUrl,
-  useSetWorkoutActive,
-  useWorkouts,
-  type WorkoutExercise,
-} from './workouts';
+import { useSetWorkoutActive, useWorkouts, type WorkoutExercise } from './workouts';
 
 const IMAGE_SIZE = 60;
 
@@ -68,42 +65,20 @@ export function WorkoutScreen({ id }: { id: number }) {
     { value: `~${workout.estimatedMinutes}`, label: t('workout.stats.minutes') },
   ];
 
-  const row = (exercise: WorkoutExercise, number: number | null, divider: boolean) => (
+  const row = (exercise: WorkoutExercise, key: string, divider: boolean) => (
     <View
-      key={`${exercise.exerciseId}-${number}`}
+      key={key}
       style={[
         styles.exercise,
         {
           gap: spacing.md,
           paddingVertical: spacing.md,
-          borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
+          borderTopWidth: divider ? 1 : 0,
           borderTopColor: colors.border,
         },
       ]}
     >
-      {number !== null ? (
-        <Text variant="caption" color="textMuted" style={styles.number}>
-          {number}
-        </Text>
-      ) : null}
-      <View
-        style={[
-          styles.image,
-          {
-            borderRadius: radii.md,
-            borderColor: colors.border,
-            backgroundColor: colors.imageBackground,
-          },
-        ]}
-      >
-        {exercise.imagePath ? (
-          <Image
-            source={{ uri: exerciseImageUrl(exercise.imagePath) }}
-            style={styles.imageFill}
-            accessibilityIgnoresInvertColors
-          />
-        ) : null}
-      </View>
+      <ExerciseThumbnail path={exercise.imagePath} size={IMAGE_SIZE} />
       <View style={[styles.exerciseText, { gap: 2 }]}>
         <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
         <Text variant="bodyStrong" color="primaryText">
@@ -113,11 +88,40 @@ export function WorkoutScreen({ id }: { id: number }) {
           {formatRest(exercise.restSeconds)}
         </Text>
       </View>
+      <InfoButton
+        exerciseId={exercise.exerciseId}
+        exerciseName={names[exercise.exerciseId] ?? ''}
+      />
     </View>
   );
 
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen
+      onBack={() => router.back()}
+      action={
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } })
+          }
+          style={({ pressed }) => [
+            styles.edit,
+            {
+              gap: spacing.xs,
+              borderRadius: radii.full,
+              backgroundColor: colors.iconBackground,
+              paddingHorizontal: spacing.md,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Icon name="edit" size={16} color="primaryText" />
+          <Text variant="bodyStrong" color="primaryText" style={styles.finisherLabel}>
+            {t('workout.edit')}
+          </Text>
+        </Pressable>
+      }
+    >
       <View style={[styles.header, { gap: spacing.md }]}>
         <View style={[styles.headerText, { gap: spacing.xs }]}>
           <Text variant="title" accessibilityRole="header">
@@ -166,7 +170,9 @@ export function WorkoutScreen({ id }: { id: number }) {
 
       <Card>
         <View>
-          {workout.exercises.map((exercise, index) => row(exercise, index + 1, index > 0))}
+          {workout.exercises.map((exercise, index) =>
+            row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
+          )}
         </View>
       </Card>
 
@@ -181,7 +187,7 @@ export function WorkoutScreen({ id }: { id: number }) {
               {t('workout.finisher.body')}
             </Text>
           </View>
-          {row(workout.finisher, null, false)}
+          {row(workout.finisher, 'finisher', false)}
         </Card>
       ) : null}
     </Screen>
@@ -189,6 +195,11 @@ export function WorkoutScreen({ id }: { id: number }) {
 }
 
 const styles = StyleSheet.create({
+  edit: {
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -210,21 +221,7 @@ const styles = StyleSheet.create({
   },
   exercise: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  number: {
-    width: 16,
-    fontFamily: fonts.extraBold,
-  },
-  image: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  imageFill: {
-    width: '100%',
-    height: '100%',
+    alignItems: 'flex-start',
   },
   exerciseText: {
     flex: 1,

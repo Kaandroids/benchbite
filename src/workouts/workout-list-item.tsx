@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
@@ -16,7 +17,10 @@ type WorkoutListItemProps = {
   today?: boolean;
 };
 
-/** A workout in a list: its name, days and size, with a switch to turn it on or off. */
+/**
+ * A workout in a list: its name, days and size, with a button to start it while it is active and a
+ * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
+ */
 export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -46,7 +50,11 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
         style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
       >
         <View style={[styles.row, { gap: spacing.sm }]}>
-          <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
+          <Text
+            variant="headline"
+            color={workout.active ? 'text' : 'textMuted'}
+            style={styles.name}
+          >
             {name}
           </Text>
           {today ? (
@@ -70,11 +78,29 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
           })}
         </Text>
       </Pressable>
-      <Switch
-        accessibilityLabel={t('workout.activeLabel', { name })}
-        value={workout.active}
-        onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
-      />
+      {workout.active ? (
+        // Starting a workout comes with logging it (#78).
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('workout.startLabel', { name })}
+          style={({ pressed }) => [
+            styles.start,
+            {
+              borderRadius: radii.full,
+              backgroundColor: colors.iconBackground,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Icon name="play" size={22} color="primaryText" />
+        </Pressable>
+      ) : (
+        <Switch
+          accessibilityLabel={t('workout.activeLabel', { name })}
+          value={workout.active}
+          onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
+        />
+      )}
     </View>
   );
 }
@@ -90,6 +116,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  // Long names wrap and leave room for the Today pill instead of pushing it out.
+  name: {
+    flexShrink: 1,
+  },
+  start: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pill: {
     paddingHorizontal: 8,
