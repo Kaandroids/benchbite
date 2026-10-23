@@ -83,32 +83,34 @@ export function WorkoutListItem({
           ) : null}
         </View>
         <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        {/* Two even rows: what the workout holds, then how long and hard it is. */}
-        <View style={{ gap: 2 }}>
-          <View style={[styles.stats, { gap: spacing.md }]}>
+        {/* One line: the counts go without their words, which the icons and labels give. */}
+        <View style={[styles.stats, { gap: spacing.md }]}>
+          <IconStat
+            icon="dumbbell"
+            color="info"
+            text={String(exercises.length)}
+            label={t('workout.size.exercises', { count: exercises.length })}
+          />
+          <IconStat
+            icon="target"
+            color="fat"
+            text={String(sets)}
+            label={t('history.sets', { count: sets })}
+          />
+          <IconStat
+            icon="timer"
+            color="primaryText"
+            text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
+          />
+          {kcalPerMinute ? (
             <IconStat
-              icon="dumbbell"
-              color="info"
-              text={t('workout.size.exercises', { count: exercises.length })}
+              icon="flame"
+              color="primary"
+              text={t('workout.size.kcal', {
+                kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
+              })}
             />
-            <IconStat icon="target" color="fat" text={t('history.sets', { count: sets })} />
-          </View>
-          <View style={[styles.stats, { gap: spacing.md }]}>
-            <IconStat
-              icon="timer"
-              color="primaryText"
-              text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
-            />
-            {kcalPerMinute ? (
-              <IconStat
-                icon="flame"
-                color="primary"
-                text={t('workout.size.kcal', {
-                  kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
-                })}
-              />
-            ) : null}
-          </View>
+          ) : null}
         </View>
       </Pressable>
       {running ? (

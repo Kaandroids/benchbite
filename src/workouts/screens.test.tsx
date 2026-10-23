@@ -106,8 +106,8 @@ describe('WorkoutsScreen', () => {
     expect(screen.getByText('Sat')).toBeTruthy();
     expect(screen.getByText('Any day')).toBeTruthy();
     // Each has one exercise of three sets, estimated at 45 minutes and 7.5 kcal a minute.
-    expect(screen.getAllByText('1 exercise')).toHaveLength(3);
-    expect(screen.getAllByText('3 sets')).toHaveLength(3);
+    expect(screen.getAllByLabelText('1 exercise')).toHaveLength(3);
+    expect(screen.getAllByLabelText('3 sets')).toHaveLength(3);
     expect(screen.getAllByText('~45 min')).toHaveLength(3);
     expect(screen.getAllByText('~338 kcal')).toHaveLength(3);
     // Only the workout on Wednesday is today's.
