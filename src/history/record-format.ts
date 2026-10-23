@@ -47,6 +47,37 @@ export function pointsOf(progress: readonly ProgressPoint[], metric: ProgressMet
   });
 }
 
+/** How far back the chart goes. */
+export const TIME_RANGES = ['1m', '3m', '6m', '1y', 'all'] as const;
+export type TimeRange = (typeof TIME_RANGES)[number];
+
+const MONTHS: Record<TimeRange, number | null> = { '1m': 1, '3m': 3, '6m': 6, '1y': 12, all: null };
+
+/** The points from the start of a range up to `today`, or all of them. */
+export function pointsIn<T extends { date: Date }>(
+  points: readonly T[],
+  range: TimeRange,
+  today: Date,
+): T[] {
+  const months = MONTHS[range];
+  if (months === null) {
+    return [...points];
+  }
+  // The same day months ago, or the last day of that month when it is shorter (March 31 → Feb 28).
+  const lastDay = new Date(today.getFullYear(), today.getMonth() - months + 1, 0).getDate();
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth() - months,
+    Math.min(today.getDate(), lastDay),
+  );
+  return points.filter((point) => point.date >= start);
+}
+
+/** The range the chart starts with: the last three months, or everything when they are empty. */
+export function defaultRange(points: readonly { date: Date }[], today: Date): TimeRange {
+  return pointsIn(points, '3m', today).length > 0 ? '3m' : 'all';
+}
+
 /** Whether a lower value is the better one, as for a pace. */
 export const lowerIsBetter = (metric: ProgressMetric) => metric === 'pace';
 

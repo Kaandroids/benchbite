@@ -679,6 +679,15 @@
     },
     "oneRepMaxNote": "Das geschätzte 1RM ist das Gewicht, das du wahrscheinlich einmal heben könntest, berechnet aus Gewicht und Wiederholungen eines Satzes. Es ist eine Schätzung, kein Gewicht, das du gehoben hast.",
     "chartSummary_one": "{{metric}} in 1 Training, am {{to}}: {{latest}}",
-    "chartSummary_other": "{{metric}} in {{count}} Trainings vom {{from}} bis {{to}}: niedrigster Wert {{lowest}}, höchster {{highest}}, zuletzt {{latest}}"
+    "chartSummary_other": "{{metric}} in {{count}} Trainings vom {{from}} bis {{to}}: niedrigster Wert {{lowest}}, höchster {{highest}}, zuletzt {{latest}}",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1J",
+      "all": "Alle"
+    },
+    "rangeLabel": "Zeitraum",
+    "noWorkoutsInRange": "Keine Trainings in diesem Zeitraum"
   }
 }

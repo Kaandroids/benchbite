@@ -120,8 +120,12 @@ describe('ExerciseHistoryScreen', () => {
     expect(screen.getByText('105 kg')).toBeOnTheScreen();
     expect(screen.getByText('85 × 7 · Oct 23')).toBeOnTheScreen();
     expect(screen.getByText(/^Est\. 1RM is the most you could likely lift/)).toBeOnTheScreen();
-    expect(screen.getByText('+10 kg since Oct 12, 2025')).toBeOnTheScreen();
     expect(screen.getByText('Oct 12, 2025')).toBeOnTheScreen();
+    // The chart starts with the last three months; everything shows the year before.
+    expect(screen.getByRole('radio', { name: '3M' })).toBeChecked();
+    expect(screen.getByLabelText('Heaviest in 1 workout, on Oct 23: 85 kg')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('radio', { name: 'All' }));
+    expect(screen.getByText('+10 kg since Oct 12, 2025')).toBeOnTheScreen();
     expect(
       screen.getByLabelText(
         'Heaviest over 2 workouts from Oct 12, 2025 to Oct 23: lowest 75 kg, highest 85 kg, latest 85 kg',
@@ -136,9 +140,18 @@ describe('ExerciseHistoryScreen', () => {
 
   it('switches what the chart shows', async () => {
     await render(<ExerciseHistoryScreen id="bench" />);
+    await fireEvent.press(screen.getByRole('radio', { name: 'All' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Volume' }));
     expect(screen.getByText('+650 kg since Oct 12, 2025')).toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Volume' })).toBeSelected();
+  });
+
+  it('starts with everything when the last three months are empty, and says when a range is', async () => {
+    jest.useFakeTimers({ now: new Date(2027, 2, 1) });
+    await render(<ExerciseHistoryScreen id="bench" />);
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    await fireEvent.press(screen.getByRole('radio', { name: '1M' }));
+    expect(screen.getByText('No workouts in this time')).toBeOnTheScreen();
   });
 
   it('opens a workout', async () => {

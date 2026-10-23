@@ -7,6 +7,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
 import { useShortDateFormat } from '@/i18n/dates';
@@ -23,10 +24,14 @@ import {
   lowerIsBetter,
   metricsOf,
   pointsOf,
+  defaultRange,
+  pointsIn,
   scaleOf,
+  TIME_RANGES,
   useMetricFormat,
   useRecordFormat,
   type ProgressMetric,
+  type TimeRange,
 } from './record-format';
 
 /** An exercise's records, a chart of its progress, and its sets in the workouts it was done in. */
@@ -40,7 +45,9 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
   const workoutName = useWorkoutName();
   const formatTotal = useTotalFormat();
   const [chosen, setChosen] = useState<ProgressMetric | null>(null);
-  const day = useShortDateFormat(new Date());
+  const [chosenRange, setChosenRange] = useState<TimeRange | null>(null);
+  const today = new Date();
+  const day = useShortDateFormat(today);
 
   const exercise = library.data?.find((item) => item.id === id);
   const title = (
@@ -88,7 +95,9 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
   );
   const metrics = metricsOf(kind);
   const metric = chosen && metrics.includes(chosen) ? chosen : metrics[0];
-  const points = pointsOf(progress, metric);
+  const allPoints = pointsOf(progress, metric);
+  const range = chosenRange ?? defaultRange(allPoints, today);
+  const points = pointsIn(allPoints, range, today);
   const first = points[0];
   const last = points[points.length - 1];
   const change = last && first && points.length > 1 ? last.value - first.value : 0;
@@ -174,7 +183,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
         </View>
       ) : null}
 
-      {points.length > 0 ? (
+      {allPoints.length > 0 ? (
         <View style={card}>
           <View style={[styles.row, { gap: spacing.sm }]}>
             <Icon name="trend" size={18} color="primary" />
@@ -224,13 +233,30 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
               );
             })}
           </View>
-          <ProgressChart
-            points={points}
-            formatValue={(value) => formatMetric.value(metric, value)}
-            formatTick={(value) => formatMetric.tick(metric, value)}
-            scale={scaleOf(metric)}
-            inverted={lowerIsBetter(metric)}
-            description={description}
+          {points.length > 0 ? (
+            <ProgressChart
+              points={points}
+              formatValue={(value) => formatMetric.value(metric, value)}
+              formatTick={(value) => formatMetric.tick(metric, value)}
+              scale={scaleOf(metric)}
+              inverted={lowerIsBetter(metric)}
+              description={description}
+            />
+          ) : (
+            <View style={styles.noPoints}>
+              <Text color="textMuted" align="center">
+                {t('exerciseHistory.noWorkoutsInRange')}
+              </Text>
+            </View>
+          )}
+          <SegmentedControl
+            options={TIME_RANGES.map((value) => ({
+              value,
+              label: t(`exerciseHistory.ranges.${value}`),
+            }))}
+            value={range}
+            onChange={setChosenRange}
+            accessibilityLabel={t('exerciseHistory.rangeLabel')}
           />
         </View>
       ) : null}
@@ -349,6 +375,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: '45%',
     gap: 2,
+  },
+  noPoints: {
+    height: 150,
+    justifyContent: 'center',
   },
   metric: {
     height: 32,
