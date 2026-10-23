@@ -194,8 +194,14 @@ export function SetRow({
             field={field}
             value={set[field]}
             label={labels[field]}
-            // Added weight is optional; a short hint fits the narrow field.
-            placeholder={field === 'weightKg' && kind.addedWeight ? '0' : undefined}
+            // Added weight is optional, and a time is measured from zero; short hints fit the field.
+            placeholder={
+              field === 'weightKg' && kind.addedWeight
+                ? '0'
+                : field === 'seconds'
+                  ? minutesAndSeconds(0)
+                  : undefined
+            }
             done={set.done}
             clock={field === 'seconds' && running ? clock : null}
             invalid={field === 'weightKg' && invalid}

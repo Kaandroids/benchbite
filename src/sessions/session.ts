@@ -134,17 +134,17 @@ export function resetSessionStore() {
 
 /**
  * The values a set starts with: last time's, the set before it if there were fewer, or else the
- * target. They count only once the set is done.
+ * target. They count only once the set is done. The time is left out: the clock measures it.
  */
 function startingValues(target: WorkoutTarget, last: SetValues[], index: number): SetValues {
   const previous = last[index] ?? last[last.length - 1];
   if (previous) {
-    return previous;
+    return { ...previous, seconds: null };
   }
   if ('reps' in target) {
     return { weightKg: null, reps: target.reps.max, seconds: null, meters: null };
   }
-  return { weightKg: null, reps: null, seconds: target.seconds, meters: target.meters };
+  return { weightKg: null, reps: null, seconds: null, meters: target.meters };
 }
 
 /** Starts a workout, its sets filled in from last time. */
@@ -262,7 +262,7 @@ export function toggleDone(
   return next;
 }
 
-/** Adds a set to an exercise, with the values of its last set. */
+/** Adds a set to an exercise, with the values of its last set but its time. */
 export function addSet(value: Session, exercise: number): Session {
   return {
     ...value,
@@ -272,7 +272,7 @@ export function addSet(value: Session, exercise: number): Session {
       }
       const last = item.sets[item.sets.length - 1];
       const values = last
-        ? { weightKg: last.weightKg, reps: last.reps, seconds: last.seconds, meters: last.meters }
+        ? { weightKg: last.weightKg, reps: last.reps, seconds: null, meters: last.meters }
         : startingValues(item.target, [], 0);
       return { ...item, sets: [...item.sets, { ...values, done: false }] };
     }),

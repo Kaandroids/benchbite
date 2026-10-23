@@ -73,7 +73,8 @@ describe('startSession', () => {
   it('fills in the target without a last time', () => {
     const session = start();
     expect(session.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, reps: 12 });
-    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 45, meters: null });
+    // The time is left to the clock, so that a target is not taken for one already done.
+    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: null, meters: null });
     expect(session.exercises[2]?.sets[0]).toMatchObject({ seconds: null, meters: 2000 });
   });
 
