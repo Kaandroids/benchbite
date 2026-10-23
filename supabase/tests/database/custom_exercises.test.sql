@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -110,7 +110,7 @@ select throws_ok(
   'BB015', null, 'Other users cannot put a custom exercise in their workouts'
 );
 
--- A edits and archives it; once it has logged sets, what it records stays.
+-- A edits and archives it; once a workout has it, what it records stays.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select lives_ok(
   $$ select public.edit_exercise((select id from made),
@@ -124,6 +124,10 @@ create temp table glutes as select public.save_workout(jsonb_build_object(
     'sets', 3, 'target', '{"reps": {"min": 8, "max": 12}}'::jsonb, 'restSeconds', 60))
 )) as id;
 grant select on glutes to authenticated;
+select throws_ok(
+  $$ select public.edit_exercise((select id from made), pg_temp.hip_thrust('{"metrics": ["duration"]}')) $$,
+  'BB018', null, 'What an exercise records cannot change while a workout has it'
+);
 select public.log_workout(jsonb_build_object(
   'workoutId', (select id from glutes), 'startedAt', now() - interval '1 hour', 'finishedAt', now(),
   'exercises', jsonb_build_array(jsonb_build_object('exerciseId', (select id from made),
