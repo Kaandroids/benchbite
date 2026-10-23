@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { fireEvent, render, screen } from '@/test/render';
 
 import { CreateExerciseScreen } from './create-exercise-screen';
-import { takeCreatedExercise, useCreateExercise } from './custom';
+import { emptyForm, takeCreatedExercise, useCreateExercise, useEditExercise } from './custom';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
@@ -13,13 +13,21 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./custom', () => ({
   ...jest.requireActual<typeof import('./custom')>('./custom'),
   useCreateExercise: jest.fn(),
+  useEditExercise: jest.fn(),
 }));
 
 const mutateAsync = jest.fn();
+const editAsync = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useCreateExercise).mockReturnValue({ mutateAsync, isPending: false } as never);
+  jest
+    .mocked(useEditExercise)
+    .mockReturnValue({
+      mutateAsync: editAsync.mockResolvedValue(undefined),
+      isPending: false,
+    } as never);
 });
 
 describe('CreateExerciseScreen', () => {
@@ -54,6 +62,28 @@ describe('CreateExerciseScreen', () => {
       }),
     );
     expect(takeCreatedExercise()).toEqual({ id: 'custom-1', name: 'Hip thrust' });
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('edits an exercise, keeping what it records once it is logged', async () => {
+    const form = {
+      ...emptyForm('Hip thrust'),
+      logKind: 'weightReps' as const,
+      primaryMuscles: ['glutes' as const],
+    };
+    await render(<CreateExerciseScreen editing={{ id: 'custom-1', form, logged: true }} />);
+    expect(screen.getByText('Edit exercise')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Reps' })).toBeDisabled();
+    expect(screen.getByText('It has been logged, so this stays.')).toBeTruthy();
+    // Nothing changed yet, so nothing to save.
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Hip thrust machine');
+    await fireEvent.press(screen.getByRole('button', { name: 'Save changes' }));
+    expect(editAsync).toHaveBeenCalledWith({
+      form: expect.objectContaining({ name: 'Hip thrust machine' }),
+      before: [],
+    });
     expect(router.back).toHaveBeenCalled();
   });
 });

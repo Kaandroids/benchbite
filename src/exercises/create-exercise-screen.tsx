@@ -17,10 +17,11 @@ import {
   LOG_KINDS,
   setCreatedExercise,
   useCreateExercise,
+  useEditExercise,
   type CustomExerciseForm,
   type LogKind,
 } from './custom';
-import { pickPhoto } from './photos';
+import { isUserPhoto, pickPhoto, usePictureUrls } from './photos';
 
 type Enums = Database['public']['Enums'];
 
@@ -57,21 +58,35 @@ const LEVELS: Enums['exercise_level'][] = ['beginner', 'intermediate', 'expert']
 const MAX_MAIN_MUSCLES = 5;
 const MAX_STEPS = 20;
 
+type Editing = {
+  id: string;
+  form: CustomExerciseForm;
+  /** Once it has logged sets, what it records cannot change. */
+  logged: boolean;
+};
+
 /**
- * Creates the user's own exercise (#33): what it needs at the top, a name, how it is logged, its
- * main muscles and its level, and what may be added below. `name` fills in the name, as when
- * the picker found nothing by it.
+ * Creates the user's own exercise (#33), or edits it: what it needs at the top, a name, how it is
+ * logged, its main muscles and its level, and what may be added below. `name` fills in the name,
+ * as when the picker found nothing by it.
  */
-export function CreateExerciseScreen({ name = '' }: { name?: string }) {
+export function CreateExerciseScreen({ name = '', editing }: { name?: string; editing?: Editing }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const create = useCreateExercise();
-  const [form, setForm] = useState<CustomExerciseForm>(() => emptyForm(name));
+  const edit = useEditExercise(editing?.id ?? '');
+  const initial = editing?.form ?? emptyForm(name);
+  const [form, setForm] = useState<CustomExerciseForm>(initial);
+  const saving = create.isPending || edit.isPending;
+  // Photos the exercise already has are shown through their signed URLs.
+  const urls = usePictureUrls(
+    form.photos.filter((photo): photo is string => !!photo && isUserPhoto(photo)),
+  );
   const change = (fields: Partial<CustomExerciseForm>) =>
     setForm((current) => ({ ...current, ...fields }));
 
   // Leaving with something typed asks first; after creating, the screen just closes.
-  const changed = JSON.stringify(form) !== JSON.stringify(emptyForm(name));
+  const changed = JSON.stringify(form) !== JSON.stringify(initial);
   const [leave, setLeave] = useState<(() => void) | null>(null);
   usePreventRemove(changed && leave === null, ({ repeat }) =>
     Alert.alert(t('customExercise.discardTitle'), t('customExercise.discardMessage'), [
@@ -85,17 +100,23 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
   );
   useEffect(() => leave?.(), [leave]);
 
+  const failed = (error: unknown) => {
+    console.warn('Could not save the exercise', error);
+    Alert.alert(t('customExercise.saveErrorTitle'), t('customExercise.saveError'));
+  };
   const save = () =>
-    create.mutateAsync(form).then(
-      (exercise) => {
-        setCreatedExercise(exercise);
-        setLeave(() => () => router.back());
-      },
-      (error: unknown) => {
-        console.warn('Could not create the exercise', error);
-        Alert.alert(t('customExercise.saveErrorTitle'), t('customExercise.saveError'));
-      },
-    );
+    editing
+      ? edit
+          .mutateAsync({
+            form,
+            before: editing.form.photos.filter((photo): photo is string => photo !== null),
+          })
+          .then(() => setLeave(() => () => router.back()), failed)
+      : create.mutateAsync(form).then((exercise) => {
+          setCreatedExercise(exercise);
+          setLeave(() => () => router.back());
+        }, failed);
+  const kindLocked = editing?.logged ?? false;
 
   const label = (text: string) => (
     <Text variant="caption" color="textMuted" style={styles.label}>
@@ -178,13 +199,13 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
       closes
       title={
         <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
-          {t('customExercise.title')}
+          {editing ? t('customExercise.editTitle') : t('customExercise.title')}
         </Text>
       }
       footer={
         <Button
-          label={t('customExercise.create')}
-          disabled={!isComplete(form) || create.isPending}
+          label={editing ? t('customExercise.save') : t('customExercise.create')}
+          disabled={!isComplete(form) || saving || (editing !== undefined && !changed)}
           onPress={() => void save()}
         />
       }
@@ -211,8 +232,9 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
               <Pressable
                 key={kind}
                 accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
+                accessibilityState={{ checked: on, disabled: kindLocked }}
                 accessibilityLabel={t(`customExercise.logKinds.${kind}.title`)}
+                disabled={kindLocked}
                 onPress={() => change({ logKind: kind })}
                 style={[
                   styles.kind,
@@ -222,6 +244,7 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
                     borderWidth: on ? 2 : 1.5,
                     borderColor: on ? colors.primaryButton : colors.border,
                     backgroundColor: on ? colors.selected : colors.surface,
+                    opacity: kindLocked && !on ? 0.4 : 1,
                   },
                 ]}
               >
@@ -236,7 +259,7 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
           })}
         </View>
         <Text variant="caption" color="textMuted">
-          {t('customExercise.logKindFixed')}
+          {kindLocked ? t('customExercise.logKindLocked') : t('customExercise.logKindFixed')}
         </Text>
       </View>
 
@@ -280,14 +303,15 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
         {label(t('customExercise.photos'))}
         <View style={[styles.photos, { gap: spacing.sm }]}>
           {([0, 1] as const).map((index) => {
-            const uri = form.photos[index];
+            const photo = form.photos[index];
+            const uri = photo && isUserPhoto(photo) ? urls[photo] : photo;
             const name = index === 0 ? t('exercise.start') : t('exercise.end');
             return (
               <Pressable
                 key={index}
                 accessibilityRole="button"
                 accessibilityLabel={
-                  uri
+                  photo
                     ? t('customExercise.changePhoto', { name })
                     : t('customExercise.addPhoto', { name })
                 }
@@ -296,16 +320,16 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
                   styles.photo,
                   {
                     borderRadius: radii.md,
-                    borderColor: uri ? colors.border : colors.placeholder,
-                    borderStyle: uri ? 'solid' : 'dashed',
+                    borderColor: photo ? colors.border : colors.placeholder,
+                    borderStyle: photo ? 'solid' : 'dashed',
                     backgroundColor: colors.surface,
                     gap: spacing.xs,
                   },
                 ]}
               >
-                {uri ? (
+                {photo ? (
                   <>
-                    <Image source={{ uri }} style={StyleSheet.absoluteFill} />
+                    {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} /> : null}
                     <View
                       style={[
                         styles.photoName,
