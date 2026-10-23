@@ -24,9 +24,7 @@ export function useStartWorkout() {
     if (!userId) {
       return;
     }
-    const ids = [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])].map(
-      (exercise) => exercise.exerciseId,
-    );
+    const ids = workout.exercises.map((exercise) => exercise.exerciseId);
     let last: LastSets = {};
     try {
       last = await queryClient.fetchQuery({

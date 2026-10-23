@@ -13,7 +13,6 @@ const session = (weekday: number, type: WorkoutPlan['sessions'][number]['type'])
   weekdays: [weekday],
   type,
   exercises: [],
-  finisher: null,
   estimatedMinutes: 45,
 });
 

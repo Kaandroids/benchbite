@@ -52,12 +52,10 @@ const LIBRARY = [
 const PUSH = testWorkout(5, {
   type: 'push',
   weekdays: [1],
-  exercises: [testExercise('bench', { sets: 4, restSeconds: 120 })],
-  finisher: testExercise('rowing', {
-    target: { seconds: 300, meters: null },
-    restSeconds: 0,
-    sets: 1,
-  }),
+  exercises: [
+    testExercise('bench', { sets: 4, restSeconds: 120 }),
+    testExercise('rowing', { target: { seconds: 300, meters: null }, restSeconds: 0, sets: 1 }),
+  ],
 });
 
 const saveWorkout = jest.fn();
@@ -98,7 +96,7 @@ describe('EditorScreen', () => {
     expect(screen.queryByText('Delete workout')).toBeNull();
   });
 
-  it('loads a workout with its finisher as an ordinary exercise', async () => {
+  it('loads a workout with its exercises', async () => {
     await render(<EditorScreen id={5} />);
     expect(screen.getByText('Edit workout')).toBeTruthy();
     // The type names the workout until it gets a name of its own.

@@ -44,7 +44,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const typeName = workout && workout.name === null ? workoutName(workout) : null;
   const loaded = allLoaded([workouts, library, limits]);
 
-  // Starts the draft once the workout is loaded. Finishers become ordinary exercises.
+  // Starts the draft once the workout is loaded.
   useEffect(() => {
     if (!loaded || (id !== undefined && !workout)) {
       return;
@@ -55,14 +55,12 @@ export function EditorScreen({ id }: { id?: number }) {
             id: workout.id,
             name: workout.name ?? '',
             weekdays: workout.weekdays,
-            exercises: [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])].map(
-              ({ exerciseId, sets, target, restSeconds }) => ({
-                exerciseId,
-                sets,
-                target,
-                restSeconds,
-              }),
-            ),
+            exercises: workout.exercises.map(({ exerciseId, sets, target, restSeconds }) => ({
+              exerciseId,
+              sets,
+              target,
+              restSeconds,
+            })),
           }
         : { name: '', weekdays: [], exercises: [] },
     );

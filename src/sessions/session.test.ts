@@ -42,12 +42,8 @@ const PUSH = testWorkout(7, {
   exercises: [
     testExercise('bench', { sets: 2, restSeconds: 90 }),
     testExercise('plank', { sets: 1, target: { seconds: 45, meters: null }, restSeconds: 0 }),
+    testExercise('rowing', { sets: 1, target: { seconds: null, meters: 2000 }, restSeconds: 0 }),
   ],
-  finisher: testExercise('rowing', {
-    sets: 1,
-    target: { seconds: null, meters: 2000 },
-    restSeconds: 0,
-  }),
 });
 
 const start = (last = {}) => startSession('user-a', PUSH, last, NOW);
@@ -58,7 +54,7 @@ beforeEach(() => {
 });
 
 describe('startSession', () => {
-  it('starts the workout with its finisher, filled in from last time', () => {
+  it('starts the workout, filled in from last time', () => {
     const session = start({
       bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }],
     });

@@ -1,5 +1,5 @@
 import { Constants } from '../database.types.ts';
-import { prescribe, prescribeFinisher, type Prescription } from './prescription.ts';
+import { prescribe, prescribeConditioning, type Prescription } from './prescription.ts';
 import { TEMPLATES } from './templates.ts';
 import type {
   CatalogueEntry,
@@ -86,7 +86,7 @@ function planned(entry: CatalogueEntry, prescription: Prescription): PlannedExer
 }
 
 /** Minutes of conditioning at the end of a fat loss session. */
-export function finisherMinutes(input: PlanInput): number {
+export function conditioningMinutes(input: PlanInput): number {
   if (input.goal !== 'lose_fat') {
     return 0;
   }
@@ -94,12 +94,12 @@ export function finisherMinutes(input: PlanInput): number {
 }
 
 /** The conditioning block at the end of a fat loss session, if the setup allows one. */
-function buildFinisher(
+function buildConditioning(
   input: PlanInput,
   catalogue: CatalogueEntry[],
   slotUses: SlotUses,
 ): PlannedExercise | null {
-  const minutes = finisherMinutes(input);
+  const minutes = conditioningMinutes(input);
   if (minutes === 0) {
     return null;
   }
@@ -112,7 +112,7 @@ function buildFinisher(
     return null;
   }
   countUse(slotUses, entry.slot);
-  return planned(entry, prescribeFinisher(entry.metrics, minutes));
+  return planned(entry, prescribeConditioning(entry.metrics, minutes));
 }
 
 /**
@@ -157,8 +157,8 @@ function buildExercises(
 }
 
 /**
- * Builds one session: the warm-up, the finisher for fat loss, then as many of the exercises as
- * fit into the time that is left.
+ * Builds one session: the warm-up, then as many of the exercises as fit into the time that is
+ * left after the conditioning for fat loss, which comes last as an ordinary exercise.
  */
 export function buildSession(
   input: PlanInput,
@@ -167,8 +167,8 @@ export function buildSession(
   type: SessionType,
   slotUses: SlotUses,
 ): Session {
-  const finisher = buildFinisher(input, catalogue, slotUses);
-  const fixedSeconds = WARM_UP_SECONDS + (finisher ? exerciseSeconds(finisher) : 0);
+  const conditioning = buildConditioning(input, catalogue, slotUses);
+  const fixedSeconds = WARM_UP_SECONDS + (conditioning ? exerciseSeconds(conditioning) : 0);
   const exercises = buildExercises(
     input,
     catalogue,
@@ -180,8 +180,7 @@ export function buildSession(
   return {
     weekdays,
     type,
-    exercises,
-    finisher,
+    exercises: conditioning ? [...exercises, conditioning] : exercises,
     estimatedMinutes: Math.ceil(seconds / 60),
   };
 }

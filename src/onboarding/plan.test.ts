@@ -42,7 +42,6 @@ const PLAN: WorkoutPlan = {
           restSeconds: 90,
         },
       ],
-      finisher: null,
       estimatedMinutes: 40,
     },
   ],

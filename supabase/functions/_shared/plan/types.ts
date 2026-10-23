@@ -51,8 +51,6 @@ export type Session = {
   weekdays: number[];
   type: SessionType;
   exercises: PlannedExercise[];
-  /** A short conditioning block at the end, for fat loss. */
-  finisher: PlannedExercise | null;
   estimatedMinutes: number;
 };
 
