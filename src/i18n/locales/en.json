@@ -631,7 +631,10 @@
       "empty": "Keep at least one set, or delete the workout instead.",
       "missing": "Fill in the marked values to save.",
       "saveErrorTitle": "Not saved",
-      "saveError": "We couldn't save your changes. Check your connection and try again."
+      "saveError": "We couldn't save your changes. Check your connection and try again.",
+      "discardTitle": "Discard your changes?",
+      "discardMessage": "Your changes to this workout are not saved.",
+      "keepEditing": "Keep editing"
     }
   }
 }

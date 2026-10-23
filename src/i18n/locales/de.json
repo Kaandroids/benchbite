@@ -631,7 +631,10 @@
       "empty": "Behalte mindestens einen Satz oder lösche das Training.",
       "missing": "Fülle die markierten Werte aus, um zu speichern.",
       "saveErrorTitle": "Nicht gespeichert",
-      "saveError": "Deine Änderungen konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+      "saveError": "Deine Änderungen konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "discardTitle": "Änderungen verwerfen?",
+      "discardMessage": "Deine Änderungen an diesem Training werden nicht gespeichert.",
+      "keepEditing": "Weiter bearbeiten"
     }
   }
 }

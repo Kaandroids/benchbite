@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, usePreventRemove } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -100,7 +100,7 @@ function LogEditor({
   const workoutName = useWorkoutName();
   const edit = useEditLog();
   // Each set gets a key of its own, so that removing one keeps the others' inputs in place.
-  const [exercises, setExercises] = useState<EditedExercise[]>(() => {
+  const [original] = useState<EditedExercise[]>(() => {
     let key = 0;
     return initial.map((exercise) => ({
       place: exercise.place,
@@ -114,8 +114,28 @@ function LogEditor({
       })),
     }));
   });
+  const [exercises, setExercises] = useState(original);
   // Missing values are marked once saving was tried.
   const [checked, setChecked] = useState(false);
+
+  // Leaving with changes asks first, whether with the close button or the system's back.
+  const valuesOf = (list: EditedExercise[]) =>
+    JSON.stringify(list.map((exercise) => exercise.sets.map(({ key: _key, ...values }) => values)));
+  const changed = valuesOf(exercises) !== valuesOf(original);
+  // How the screen is left once it may be: after saving, or discarding the changes. It runs once
+  // the screen no longer holds on to them.
+  const [leave, setLeave] = useState<(() => void) | null>(null);
+  usePreventRemove(changed && leave === null, ({ repeat }) =>
+    Alert.alert(t('history.edit.discardTitle'), t('history.edit.discardMessage'), [
+      { text: t('history.edit.keepEditing'), style: 'cancel' },
+      {
+        text: t('session.summary.discard'),
+        style: 'destructive',
+        onPress: () => setLeave(() => repeat),
+      },
+    ]),
+  );
+  useEffect(() => leave?.(), [leave]);
 
   const details = (exerciseId: string) => library.find((item) => item.id === exerciseId);
   const kindOf = (exerciseId: string) =>
@@ -147,7 +167,7 @@ function LogEditor({
           sets: exercise.sets.map(({ key: _key, ...values }) => values),
         })),
       });
-      router.back();
+      setLeave(() => () => router.back());
     } catch (error) {
       console.warn('Could not save the workout log', error);
       Alert.alert(

@@ -631,7 +631,10 @@
       "empty": "En az bir set bırak ya da antrenmanı sil.",
       "missing": "Kaydetmek için işaretli değerleri doldur.",
       "saveErrorTitle": "Kaydedilemedi",
-      "saveError": "Değişikliklerin kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+      "saveError": "Değişikliklerin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "discardTitle": "Değişiklikler silinsin mi?",
+      "discardMessage": "Bu antrenmanda yaptığın değişiklikler kaydedilmeyecek.",
+      "keepEditing": "Düzenlemeye devam et"
     }
   }
 }

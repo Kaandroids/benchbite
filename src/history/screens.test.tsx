@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
@@ -19,7 +19,10 @@ import { HistoryScreen } from './history-screen';
 import { LogScreen } from './log-screen';
 import { RecentLogs } from './recent-logs';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn() },
+  usePreventRemove: jest.fn(),
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
@@ -394,6 +397,31 @@ describe('EditLogScreen', () => {
     expect(screen.getAllByLabelText('Reps of set 20')).toHaveLength(1);
     // Only the cable row and the plank can still get sets.
     expect(screen.getAllByRole('button', { name: '+ Add set' })).toHaveLength(2);
+  });
+
+  it('asks before leaving with changes', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    const prevents = () => jest.mocked(usePreventRemove).mock.lastCall?.[0];
+    await render(<EditLogScreen id={3} />);
+    expect(prevents()).toBe(false);
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Remove set 1' })[0]!);
+    expect(prevents()).toBe(true);
+
+    // Leaving, by the close button or the system's back, is held until the user decides.
+    const repeat = jest.fn();
+    await act(async () =>
+      jest.mocked(usePreventRemove).mock.lastCall?.[1]?.({ data: { action: {} }, repeat } as never),
+    );
+    expect(alert).toHaveBeenCalledWith(
+      'Discard your changes?',
+      'Your changes to this workout are not saved.',
+      expect.any(Array),
+    );
+    const discard = alert.mock.calls[0]?.[2]?.find((button) => button.style === 'destructive');
+    await act(async () => discard?.onPress?.());
+    expect(prevents()).toBe(false);
+    expect(repeat).toHaveBeenCalled();
+    expect(editLog).not.toHaveBeenCalled();
   });
 
   it('says when saving fails and stays open', async () => {
