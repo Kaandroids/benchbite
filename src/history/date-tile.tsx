@@ -4,8 +4,15 @@ import { Text } from '@/components/ui/text';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 
+type DateTileProps = {
+  date: Date;
+  large?: boolean;
+  /** On orange, or on grey where it would add to too much orange. */
+  tinted?: boolean;
+};
+
 /** A day as a small tile: its weekday above its date, as on a calendar. */
-export function DateTile({ date, large = false }: { date: Date; large?: boolean }) {
+export function DateTile({ date, large = false, tinted = true }: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');
   return (
@@ -13,7 +20,10 @@ export function DateTile({ date, large = false }: { date: Date; large?: boolean 
       style={[
         styles.tile,
         large ? styles.large : styles.small,
-        { borderRadius: large ? radii.lg : radii.md, backgroundColor: colors.selected },
+        {
+          borderRadius: large ? radii.lg : radii.md,
+          backgroundColor: tinted ? colors.selected : colors.background,
+        },
       ]}
     >
       <Text variant="caption" color="primaryText" style={styles.weekday}>
