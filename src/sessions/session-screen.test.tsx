@@ -18,7 +18,7 @@ import { SessionScreen } from './session-screen';
 import { useStartWorkout } from './start';
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
+  router: { push: jest.fn(), back: jest.fn(), dismissAll: jest.fn() },
 }));
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -153,7 +153,7 @@ describe('SessionScreen', () => {
     );
     expect(router.back).toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Finish' }));
-    expect(router.push).toHaveBeenCalledWith('/workout/finish');
+    expect(router.push).toHaveBeenCalledWith('/session/finish');
   });
 });
 
@@ -186,7 +186,7 @@ describe('FinishScreen', () => {
         ],
       }),
     );
-    expect(router.dismissTo).toHaveBeenCalledWith('/workout');
+    expect(router.dismissAll).toHaveBeenCalled();
     expect(startWorkout).not.toHaveBeenCalled();
   });
 
@@ -205,7 +205,7 @@ describe('FinishScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Discard' }));
     const confirm = alert.mock.calls[0]?.[2]?.find((button) => button.style === 'destructive');
     await act(async () => confirm?.onPress?.());
-    expect(router.dismissTo).toHaveBeenCalledWith('/workout');
+    expect(router.dismissAll).toHaveBeenCalled();
     const { result } = await renderHook(() => useActiveSession('user-a'));
     expect(result.current).toBeNull();
   });
@@ -221,6 +221,6 @@ describe('FinishScreen', () => {
       'Not saved',
       "We couldn't save the workout. Check your connection and try again.",
     );
-    expect(router.dismissTo).not.toHaveBeenCalled();
+    expect(router.dismissAll).not.toHaveBeenCalled();
   });
 });

@@ -175,7 +175,7 @@ describe('WorkoutsScreen', () => {
       expect(screen.getByText('Running')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Start Push' })).toBeNull();
       await fireEvent.press(screen.getByRole('button', { name: 'IN PROGRESS: Push' }));
-      expect(router.push).toHaveBeenCalledWith('/workout/session');
+      expect(router.push).toHaveBeenCalledWith('/session');
     });
 
     it('asks before starting another one', async () => {
@@ -191,7 +191,7 @@ describe('WorkoutsScreen', () => {
 
       await fireEvent.press(screen.getByRole('button', { name: 'Finish Push, then start Pull' }));
       expect(router.push).toHaveBeenCalledWith({
-        pathname: '/workout/finish',
+        pathname: '/session/finish',
         params: { next: '5' },
       });
 
@@ -207,7 +207,7 @@ describe('WorkoutsScreen', () => {
       await act(async () => {
         await fireEvent.press(screen.getByRole('button', { name: 'Resume Push' }));
       });
-      expect(router.push).toHaveBeenCalledWith('/workout/session');
+      expect(router.push).toHaveBeenCalledWith('/session');
     });
   });
 

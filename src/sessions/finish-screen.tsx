@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat } from '@/i18n/dates';
@@ -40,13 +41,13 @@ export function FinishScreen({ next }: { next?: number }) {
 
   if (!session) {
     return (
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+      <Screen onBack={() => router.back()}>
         <MessageView
           icon="dumbbell"
           title={t('session.none.title')}
           message={t('session.none.message')}
         />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -91,7 +92,7 @@ export function FinishScreen({ next }: { next?: number }) {
     try {
       await logWorkout.mutateAsync(toLog(session, finishedAt));
       endSession();
-      router.dismissTo('/workout');
+      router.dismissAll();
       const following = workouts.data?.find((workout) => workout.id === next);
       if (following) {
         await startWorkout(following);
@@ -110,7 +111,7 @@ export function FinishScreen({ next }: { next?: number }) {
         style: 'destructive',
         onPress: () => {
           endSession();
-          router.dismissTo('/workout');
+          router.dismissAll();
         },
       },
     ]);

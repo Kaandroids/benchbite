@@ -85,6 +85,9 @@ function RootNavigator() {
           </Stack.Protected>
           <Stack.Protected guard={completed}>
             <Stack.Screen name="(app)" />
+            {/* The workout in progress covers the tabs, so nothing but the workout is in reach. */}
+            <Stack.Screen name="session/index" />
+            <Stack.Screen name="session/finish" />
           </Stack.Protected>
           <Stack.Screen name="dev/components" />
         </Stack>

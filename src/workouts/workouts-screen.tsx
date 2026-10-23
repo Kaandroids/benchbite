@@ -139,12 +139,12 @@ export function WorkoutsScreen() {
           next={waiting}
           onResume={() => {
             setWaiting(null);
-            router.push('/workout/session');
+            router.push('/session');
           }}
           onFinish={() => {
             const next = waiting;
             setWaiting(null);
-            router.push({ pathname: '/workout/finish', params: { next: String(next?.id) } });
+            router.push({ pathname: '/session/finish', params: { next: String(next?.id) } });
           }}
           onDiscard={() => {
             const next = waiting;

@@ -38,6 +38,6 @@ export function useStartWorkout() {
       console.warn('Could not load the last sets', error);
     }
     startSession(userId, workout, last);
-    router.push('/workout/session');
+    router.push('/session');
   };
 }

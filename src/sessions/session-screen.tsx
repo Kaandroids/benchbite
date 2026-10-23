@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
+import { Screen } from '@/components/ui/screen';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -67,13 +68,13 @@ export function SessionScreen() {
 
   if (!session) {
     return (
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+      <Screen onBack={() => router.back()}>
         <MessageView
           icon="dumbbell"
           title={t('session.none.title')}
           message={t('session.none.message')}
         />
-      </SafeAreaView>
+      </Screen>
     );
   }
 
@@ -253,7 +254,7 @@ export function SessionScreen() {
           onPress={() => router.back()}
           style={styles.headerButton}
         >
-          <Icon name="down" color="textMuted" />
+          <Icon name="back" color="textMuted" />
         </Pressable>
         <View style={[styles.flex, styles.center]}>
           <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
@@ -265,7 +266,7 @@ export function SessionScreen() {
         </View>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/workout/finish')}
+          onPress={() => router.push('/session/finish')}
           style={[
             styles.finish,
             { borderRadius: radii.full, backgroundColor: colors.primaryButton },

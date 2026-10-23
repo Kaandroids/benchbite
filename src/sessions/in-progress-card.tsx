@@ -32,7 +32,7 @@ export function InProgressCard({ session }: { session: Session }) {
       accessibilityRole="button"
       accessibilityLabel={`${t('session.inProgress')}: ${workoutName(session)}`}
       accessibilityHint={t('session.resume')}
-      onPress={() => router.push('/workout/session')}
+      onPress={() => router.push('/session')}
       style={({ pressed }) => [
         styles.card,
         {

@@ -13,7 +13,6 @@ export const ICONS = {
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },
-  down: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
   dumbbell: { ios: 'dumbbell', android: 'fitness_center', web: 'fitness_center' },
   edit: { ios: 'pencil', android: 'edit', web: 'edit' },
   flame: { ios: 'flame', android: 'local_fire_department', web: 'local_fire_department' },
