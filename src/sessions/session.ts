@@ -322,6 +322,9 @@ export function changeRest(value: Session, seconds: number, now = Date.now()): S
 export function toLog(value: Session, finishedAt = Date.now()) {
   return {
     workoutId: value.workoutId,
+    // What the workout had, so the history can say how much of it was done.
+    plannedExercises: value.exercises.length,
+    plannedSets: value.exercises.reduce((total, exercise) => total + exercise.sets.length, 0),
     startedAt: new Date(value.startedAt).toISOString(),
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => ({

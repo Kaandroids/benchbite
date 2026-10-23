@@ -166,6 +166,8 @@ describe('finishing', () => {
     session = setValues(session, 0, 0, { weightKg: 80, reps: 8 });
     expect(toLog(session, NOW + 3_600_000)).toEqual({
       workoutId: 7,
+      plannedExercises: 3,
+      plannedSets: 4,
       startedAt: new Date(NOW).toISOString(),
       finishedAt: new Date(NOW + 3_600_000).toISOString(),
       exercises: [
