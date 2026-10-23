@@ -60,11 +60,21 @@ export function ExerciseScreen({ id }: { id: string }) {
   );
 
   return (
-    <Screen onBack={() => router.back()}>
-      <Text variant="title" accessibilityRole="header">
-        {exercise.name}
-      </Text>
-
+    <Screen
+      onBack={() => router.back()}
+      // In the top bar, as on the other screens; long names take a second line.
+      title={
+        <Text
+          variant="bodyStrong"
+          accessibilityRole="header"
+          align="center"
+          numberOfLines={2}
+          style={styles.title}
+        >
+          {exercise.name}
+        </Text>
+      }
+    >
       <View style={[styles.row, { gap: spacing.sm }]}>
         {pictures.map((path, index) => (
           <View key={path} style={[styles.picture, { gap: spacing.xs }]}>
@@ -142,6 +152,9 @@ export function ExerciseScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
+  title: {
+    fontFamily: fonts.extraBold,
+  },
   row: {
     flexDirection: 'row',
   },
