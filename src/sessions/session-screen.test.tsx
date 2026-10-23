@@ -164,6 +164,17 @@ describe('SessionScreen', () => {
     expect(screen.getByLabelText('Reps of set 1').props.value).toBe('999');
   });
 
+  it('needs reps before a set is done, as the log would refuse it', async () => {
+    await render(<SessionScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).not.toBeChecked();
+    expect(screen.getByLabelText('Reps of set 1').props['aria-invalid']).toBe(true);
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '8');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+  });
+
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
     startSession('user-a', PUSH, {}, {}, NOW.getTime());
