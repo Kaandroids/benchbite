@@ -289,9 +289,9 @@ export function startClock(
   return { ...value, clock: { exercise, set: index, startedAt: now }, rest: null };
 }
 
-/** The seconds a clock has run. */
+/** The seconds a clock has run; never below zero, as `now` may lag just behind its start. */
 export function clockSeconds(clock: SetClock, now = Date.now()): number {
-  return Math.floor((now - clock.startedAt) / 1000);
+  return Math.max(0, Math.floor((now - clock.startedAt) / 1000));
 }
 
 /** Stops the clock and marks its set done with the time it ran. */

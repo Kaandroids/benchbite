@@ -141,6 +141,7 @@ describe('the clock of a timed set', () => {
     let session = startClock(start(), 1, 0, NOW);
     expect(session.clock).toEqual({ exercise: 1, set: 0, startedAt: NOW });
     expect(clockSeconds(session.clock!, NOW + 13_000)).toBe(13);
+    expect(clockSeconds(session.clock!, NOW - 400)).toBe(0);
     session = stopClock(session, NOW + 52_000);
     expect(session.clock).toBeNull();
     expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 52, done: true });
