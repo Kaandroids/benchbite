@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -24,6 +24,15 @@ insert into public.goals (user_id, kind) values ('00000000-0000-0000-0000-000000
 insert into public.weight_entries (user_id, weight_kg) values ('00000000-0000-0000-0000-00000000000a', 80);
 insert into public.health_data_consents (user_id, policy_version)
   values ('00000000-0000-0000-0000-00000000000a', '2026-10-21');
+
+-- Checked whoever writes, here the table owner as complete_onboarding() runs.
+select throws_ok(
+  $$ insert into public.health_data_consents (user_id, policy_version)
+     values ('00000000-0000-0000-0000-00000000000a', repeat('x', 33)) $$,
+  '23514',
+  null,
+  'Consents only accept short policy versions'
+);
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
@@ -88,10 +97,10 @@ select throws_ok(
 
 select throws_ok(
   $$ insert into public.health_data_consents (user_id, policy_version)
-     values ('00000000-0000-0000-0000-00000000000a', repeat('x', 33)) $$,
-  '23514',
+     values ('00000000-0000-0000-0000-00000000000a', '2026-10-21') $$,
+  '42501',
   null,
-  'Consents only accept short policy versions'
+  'Users cannot give consent without the onboarding'
 );
 
 select throws_ok(
