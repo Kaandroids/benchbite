@@ -164,6 +164,8 @@ export function SetRow({
     }
     onToggle();
   };
+  // A timed set is done with its clock, or with a tick once its time is typed by hand.
+  const clockButton = kind.timed && !set.done && (running || set.seconds === null);
   const labels: Record<SetField, string> = {
     weightKg: t('session.weightOf', { number }),
     reps: t('session.repsOf', { number }),
@@ -210,7 +212,7 @@ export function SetRow({
           />
         </View>
       ))}
-      {kind.timed && !set.done ? (
+      {clockButton ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={

@@ -176,6 +176,18 @@ describe('SessionScreen', () => {
     expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:48');
   });
 
+  it('ticks a timed set whose time is typed by hand', async () => {
+    await render(<SessionScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Plank' }));
+    expect(screen.queryByRole('checkbox', { name: 'Set 1 done' })).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '0:45');
+    await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
+    expect(screen.queryByRole('button', { name: 'Start the clock of set 1' })).toBeNull();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:45');
+  });
+
   it('minimizes and finishes', async () => {
     await render(<SessionScreen />);
     await fireEvent.press(
