@@ -709,5 +709,46 @@
     },
     "rangeLabel": "Time range",
     "noWorkoutsInRange": "No workouts in this time"
+  },
+  "customExercise": {
+    "title": "New exercise",
+    "name": "Name",
+    "namePlaceholder": "Such as Hip thrust machine",
+    "logKind": "What you log",
+    "logKindFixed": "It can't be changed once you have logged it.",
+    "logKinds": {
+      "weightReps": {
+        "title": "Weight × reps",
+        "example": "Like a bench press"
+      },
+      "reps": {
+        "title": "Reps",
+        "example": "Like pull-ups"
+      },
+      "time": {
+        "title": "Time",
+        "example": "Like a plank"
+      },
+      "distanceTime": {
+        "title": "Distance & time",
+        "example": "Like rowing"
+      }
+    },
+    "mainMuscles": "Main muscles",
+    "optional": "Optional",
+    "otherMuscles": "Other muscles",
+    "step": "Step {{number}}",
+    "removeStep": "Remove step {{number}}",
+    "addStep": "+ Add a step",
+    "create": "Create exercise",
+    "saveErrorTitle": "Not created",
+    "saveError": "We couldn't create the exercise. Check your connection and try again.",
+    "discardTitle": "Discard this exercise?",
+    "discardMessage": "What you filled in is not saved.",
+    "createRow": "Create exercise",
+    "createRowHint": "Add one the library does not have",
+    "noneTitle": "No exercise found",
+    "noneMessage": "The library does not have it yet. Add it as your own, and log it like any other.",
+    "createNamed": "Create “{{name}}”"
   }
 }

@@ -709,5 +709,46 @@
     },
     "rangeLabel": "Zaman aralığı",
     "noWorkoutsInRange": "Bu aralıkta antrenman yok"
+  },
+  "customExercise": {
+    "title": "Yeni hareket",
+    "name": "İsim",
+    "namePlaceholder": "Örneğin Hip thrust makinesi",
+    "logKind": "Ne kaydedeceksin",
+    "logKindFixed": "Bir kez kaydettikten sonra değiştirilemez.",
+    "logKinds": {
+      "weightReps": {
+        "title": "Ağırlık × tekrar",
+        "example": "Bench press gibi"
+      },
+      "reps": {
+        "title": "Tekrar",
+        "example": "Barfiks gibi"
+      },
+      "time": {
+        "title": "Süre",
+        "example": "Plank gibi"
+      },
+      "distanceTime": {
+        "title": "Mesafe ve süre",
+        "example": "Kürek gibi"
+      }
+    },
+    "mainMuscles": "Ana kaslar",
+    "optional": "İsteğe bağlı",
+    "otherMuscles": "Diğer kaslar",
+    "step": "Adım {{number}}",
+    "removeStep": "{{number}}. adımı kaldır",
+    "addStep": "+ Adım ekle",
+    "create": "Hareketi oluştur",
+    "saveErrorTitle": "Oluşturulamadı",
+    "saveError": "Hareketi oluşturamadık. Bağlantını kontrol edip tekrar dene.",
+    "discardTitle": "Bu hareketten vazgeçilsin mi?",
+    "discardMessage": "Doldurdukların kaydedilmez.",
+    "createRow": "Hareket oluştur",
+    "createRowHint": "Kütüphanede olmayan birini ekle",
+    "noneTitle": "Hareket bulunamadı",
+    "noneMessage": "Kütüphanede henüz yok. Kendi hareketin olarak ekle ve diğerleri gibi kaydet.",
+    "createNamed": "“{{name}}” oluştur"
   }
 }
