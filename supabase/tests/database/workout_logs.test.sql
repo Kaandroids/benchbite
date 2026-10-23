@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(26);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -56,6 +56,20 @@ select throws_ok(
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
+-- A log sent again with the same client id, as after a lost response, is saved once.
+select is(
+  public.log_workout(pg_temp.log('{"clientId": "11111111-1111-1111-1111-111111111111"}')),
+  public.log_workout(pg_temp.log('{"clientId": "11111111-1111-1111-1111-111111111111"}')),
+  'A log sent twice returns the log saved the first time'
+);
+select is(
+  (select count(*)::integer from public.workout_logs
+   where client_id = '11111111-1111-1111-1111-111111111111'),
+  1,
+  'A log sent twice is saved once'
+);
+delete from public.workout_logs where client_id = '11111111-1111-1111-1111-111111111111';
 
 -- Rejected logs save nothing.
 select throws_ok(
