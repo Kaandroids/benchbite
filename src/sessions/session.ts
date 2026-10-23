@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
 import { SET_LIMITS } from './fields';
+import type { Bests } from './records';
 
 /** What a set records; a value the exercise does not record stays null. */
 export type SetValues = {
@@ -24,6 +25,11 @@ export type SessionExercise = {
   sets: SessionSet[];
   /** The sets of the exercise's latest log, shown as "last time". */
   last: SetValues[];
+  /**
+   * The exercise's records before the workout, which sets are compared with; missing in a workout
+   * started before they were kept, or without a connection.
+   */
+  bests?: Bests;
 };
 
 /** A clock that counts up for a timed set, until it is stopped. */
@@ -52,6 +58,9 @@ export type Session = {
 
 /** Sets of an exercise's latest log, in order. */
 export type LastSets = Record<string, SetValues[]>;
+
+/** Each exercise's records before the workout. */
+export type ExerciseBests = Record<string, Bests>;
 
 const KEY = 'session.current';
 /** Raised when the session changes shape, so that an older one is dropped instead of misread. */
@@ -154,6 +163,7 @@ export function startSession(
   userId: string,
   workout: Workout,
   last: LastSets,
+  bests: ExerciseBests = {},
   now = Date.now(),
 ): Session {
   const { exercises } = workout;
@@ -168,6 +178,7 @@ export function startSession(
       target,
       restSeconds,
       last: last[exerciseId] ?? [],
+      bests: bests[exerciseId],
       sets: Array.from({ length: sets }, (_set, index) => ({
         ...startingValues(target, last[exerciseId] ?? [], index),
         done: false,
