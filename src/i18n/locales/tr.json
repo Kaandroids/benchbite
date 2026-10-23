@@ -496,6 +496,11 @@
       "week": "Haftan",
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+      "refused": {
+        "tooYoung": "Benchbite 18 yaş ve üzeri içindir. Geri dönüp doğum yılını kontrol et.",
+        "noConsent": "Sağlık verilerinin işlenmesine onayın eksik. Geri dönüp onay ver.",
+        "daysChanged": "Planın artık antrenman günlerinle uyuşmuyor. Geri dönüp günleri yeniden seç."
+      },
       "editLater": "Bunların hepsini sonra değiştirebilirsin.",
       "today": "Bugün"
     },

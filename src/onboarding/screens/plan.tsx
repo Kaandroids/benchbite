@@ -15,7 +15,7 @@ import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
 import { projectedDate } from '../body';
-import { saveOnboarding } from '../plan';
+import { refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
@@ -39,7 +39,8 @@ export function PlanStep() {
     plan?.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId)) ?? [],
   );
   const [saving, setSaving] = useState(false);
-  const [saveFailed, setSaveFailed] = useState(false);
+  // Why saving failed: the connection, or an answer the server refused.
+  const [failure, setFailure] = useState<RefusedAnswer | 'connection' | null>(null);
 
   if (!targets || !plan) {
     // Reached without a result, for example from an old draft: build it again.
@@ -56,13 +57,13 @@ export function PlanStep() {
 
   const save = async () => {
     setSaving(true);
-    setSaveFailed(false);
+    setFailure(null);
     try {
       await saveOnboarding(answers, plan);
       next();
     } catch (error) {
       console.warn('Could not save the onboarding', error);
-      setSaveFailed(true);
+      setFailure(refusedAnswer(error) ?? 'connection');
     } finally {
       setSaving(false);
     }
@@ -74,16 +75,23 @@ export function PlanStep() {
       onBack={back}
       footer={
         <View style={{ gap: spacing.sm }}>
-          {saveFailed ? (
+          {failure ? (
             <Text color="danger" align="center">
-              {t('onboarding.plan.saveError')}
+              {failure === 'connection'
+                ? t('onboarding.plan.saveError')
+                : t(`onboarding.plan.refused.${failure}`)}
             </Text>
           ) : null}
-          <Button
-            label={saveFailed ? t('common.tryAgain') : t('onboarding.plan.start')}
-            loading={saving}
-            onPress={() => void save()}
-          />
+          {failure && failure !== 'connection' && back ? (
+            // Trying again would be refused again, so the way on is back to the answer.
+            <Button label={t('common.back')} onPress={back} />
+          ) : (
+            <Button
+              label={failure ? t('common.tryAgain') : t('onboarding.plan.start')}
+              loading={saving}
+              onPress={() => void save()}
+            />
+          )}
         </View>
       }
     >

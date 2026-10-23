@@ -496,6 +496,11 @@
       "week": "Deine Woche",
       "start": "Plan starten",
       "saveError": "Wir konnten deinen Plan nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
+      "refused": {
+        "tooYoung": "Benchbite ist für Personen ab 18 Jahren. Geh zurück und prüfe dein Geburtsjahr.",
+        "noConsent": "Deine Einwilligung zur Verarbeitung deiner Gesundheitsdaten fehlt. Geh zurück, um sie zu geben.",
+        "daysChanged": "Dein Plan passt nicht mehr zu deinen Trainingstagen. Geh zurück und wähle sie erneut."
+      },
       "editLater": "Du kannst das alles später ändern.",
       "today": "Heute"
     },
