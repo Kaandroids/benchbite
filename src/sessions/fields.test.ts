@@ -52,7 +52,19 @@ describe('parseTime', () => {
   it('reads minutes and seconds, or seconds', () => {
     expect(parseTime('1:30')).toBe(90);
     expect(parseTime(' 45 ')).toBe(45);
+    expect(parseTime('90')).toBe(90);
     expect(parseTime('0:00')).toBeNull();
     expect(parseTime('abc')).toBeNull();
+  });
+
+  it('reads more than two digits as a clock', () => {
+    expect(parseTime('130')).toBe(90);
+    expect(parseTime('1111')).toBe(11 * 60 + 11);
+    expect(parseTime('0045')).toBe(45);
+  });
+
+  it('reads at most a day', () => {
+    expect(parseTime('9999999')).toBe(86_400);
+    expect(parseTime('2000:00')).toBe(86_400);
   });
 });
