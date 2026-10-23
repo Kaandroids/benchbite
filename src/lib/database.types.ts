@@ -523,6 +523,35 @@ export type Database = {
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
+      exercise_progress: {
+        Args: { exercise_id: string };
+        Returns: {
+          best_pace: number;
+          heaviest_kg: number;
+          log_id: number;
+          longest_meters: number;
+          longest_seconds: number;
+          most_reps: number;
+          one_rep_max_kg: number;
+          started_at: string;
+          total_reps: number;
+          total_seconds: number;
+          volume_kg: number;
+        }[];
+      };
+      exercise_records: {
+        Args: { exercise_id: string };
+        Returns: {
+          achieved_at: string;
+          kind: string;
+          log_id: number;
+          meters: number;
+          reps: number;
+          seconds: number;
+          value: number;
+          weight_kg: number;
+        }[];
+      };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       last_sets: {
@@ -558,6 +587,7 @@ export type Database = {
         };
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
+      one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
