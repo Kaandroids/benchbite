@@ -22,6 +22,13 @@ import {
   type Session,
 } from './session';
 
+// The test environment has no native crypto; each workout still gets an id of its own.
+jest.mock('expo-crypto', () => {
+  let count = 0;
+  return {
+    randomUUID: () => `00000000-0000-4000-8000-${String((count += 1)).padStart(12, '0')}`,
+  };
+});
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
   return {
@@ -170,6 +177,13 @@ describe('the clock of a timed set', () => {
 });
 
 describe('finishing', () => {
+  it('sends the id the workout got when it started, a new one for each workout', () => {
+    const first = start();
+    expect(toLog(first, NOW + 60_000).clientId).toBe(first.id);
+    expect(first.id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(start().id).not.toBe(first.id);
+  });
+
   it('counts what was planned at the start, not the sets added on the way', () => {
     const session = addSet(start(), 0);
     expect(toLog(session, NOW + 60_000)).toMatchObject({ plannedExercises: 3, plannedSets: 4 });
@@ -179,6 +193,7 @@ describe('finishing', () => {
     let session: Session = toggleDone(start(), 0, 0, NOW);
     session = setValues(session, 0, 0, { weightKg: 80, reps: 8 });
     expect(toLog(session, NOW + 3_600_000)).toEqual({
+      clientId: session.id,
       workoutId: 7,
       plannedExercises: 3,
       plannedSets: 4,

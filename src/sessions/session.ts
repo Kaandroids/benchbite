@@ -1,5 +1,6 @@
 // The workout in progress (ADR 0020). It lives on the device until it is finished, so that a lost
 // connection or a closed app loses nothing; only one workout runs at a time.
+import { randomUUID } from 'expo-crypto';
 import { Storage } from 'expo-sqlite/kv-store';
 import { useSyncExternalStore } from 'react';
 
@@ -40,6 +41,11 @@ export type SetClock = {
 };
 
 export type Session = {
+  /**
+   * Sent with the log, so that the workout is saved once however often it is sent (a lost
+   * response, a retry). Missing in workouts started before it was kept.
+   */
+  id?: string;
   userId: string;
   workoutId: number;
   /** The workout's name and type when it started, for showing it while it runs. */
@@ -168,6 +174,7 @@ export function startSession(
 ): Session {
   const { exercises } = workout;
   const value: Session = {
+    id: randomUUID(),
     userId,
     workoutId: workout.id,
     name: workout.name,
@@ -337,6 +344,7 @@ export function changeRest(value: Session, seconds: number, now = Date.now()): S
 /** The sets that were done, the way log_workout() takes them. Exercises without any are left out. */
 export function toLog(value: Session, finishedAt = Date.now()) {
   return {
+    clientId: value.id,
     workoutId: value.workoutId,
     // What the workout had, so the history can say how much of it was done.
     plannedExercises: value.planned.exercises,
