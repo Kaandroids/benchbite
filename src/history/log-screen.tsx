@@ -8,11 +8,10 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
-import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { describeSet, setKindOf } from '@/sessions/fields';
 import type { SetValues } from '@/sessions/session';
-import { fonts, useTheme, type ColorTokens } from '@/theme';
+import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
 import {
@@ -25,8 +24,6 @@ import {
 } from './history';
 import { shortSet, summarizeSets } from './exercise-summary';
 
-type Stat = { color: keyof ColorTokens; value: string; label: string };
-
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
   const { t, i18n } = useTranslation();
@@ -36,7 +33,6 @@ export function LogScreen({ id }: { id: number }) {
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
-  const formatDate = useDateFormat('full');
   const { format } = useNumberFormat();
   const log = summary.data;
 
@@ -59,19 +55,29 @@ export function LogScreen({ id }: { id: number }) {
     );
   }
 
+  // "Friday, October 23 · 18:04 – 18:56", with the year only when it is not this one.
+  const day = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+  }).format(log.startedAt);
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  const hours = time.formatRange
+    ? time.formatRange(log.startedAt, log.finishedAt)
+    : `${time.format(log.startedAt)} – ${time.format(log.finishedAt)}`;
   const seconds = Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000);
   const totalTime =
     seconds < 3600
       ? minutesAndSeconds(seconds)
       : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`;
-  // The workout at a glance: each figure in the colour it has elsewhere in the app.
-  const stats: Stat[] = [
-    { color: 'primaryText', value: totalTime, label: t('history.stats.time') },
-    { color: 'info', value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
-    { color: 'fat', value: format(Math.round(log.kilograms)), label: 'kg' },
+  // The workout at a glance, quietly: the figures stand out by weight, not colour.
+  const stats = [
+    { value: totalTime, label: t('history.stats.time') },
+    { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
+    { value: format(Math.round(log.kilograms)), label: 'kg' },
     ...(log.estimatedKcal !== null
-      ? [{ color: 'primary' as const, value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
+      ? [{ value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
       : []),
   ];
 
@@ -113,16 +119,11 @@ export function LogScreen({ id }: { id: number }) {
         <Text variant="title" accessibilityRole="header">
           {workoutName(log)}
         </Text>
-        <Text color="textMuted">
-          {`${formatDate(log.startedAt)} · ${time.format(log.startedAt)}–${time.format(log.finishedAt)}`}
-        </Text>
+        <Text color="textMuted">{`${day} · ${hours}`}</Text>
         <View style={[styles.stats, { columnGap: spacing.md, marginTop: spacing.xs }]}>
           {stats.map((stat) => (
             <Text key={stat.label} color="textMuted" style={styles.semibold}>
-              <Text color={stat.color} style={[styles.bold, styles.tabular]}>
-                {stat.value}
-              </Text>{' '}
-              {stat.label}
+              <Text style={[styles.bold, styles.tabular]}>{stat.value}</Text> {stat.label}
             </Text>
           ))}
         </View>
