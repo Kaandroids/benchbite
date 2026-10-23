@@ -18,7 +18,12 @@ import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useSetWorkoutActive, useWorkouts, type WorkoutExercise } from './workouts';
+import {
+  useKcalPerMinute,
+  useSetWorkoutActive,
+  useWorkouts,
+  type WorkoutExercise,
+} from './workouts';
 
 const IMAGE_SIZE = 60;
 
@@ -29,6 +34,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const workouts = useWorkouts();
   const setActive = useSetWorkoutActive();
   const session = useActiveSession(useUserId());
+  const { data: kcalPerMinute } = useKcalPerMinute();
   const workout = workouts.data?.find((candidate) => candidate.id === id);
   const names = useExerciseNames(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
   const formatTarget = useTargetFormat();
@@ -63,6 +69,9 @@ export function WorkoutScreen({ id }: { id: number }) {
     },
     { value: sets, label: t('workout.stats.sets', { count: sets }) },
     { value: `~${workout.estimatedMinutes}`, label: t('workout.stats.minutes') },
+    ...(kcalPerMinute
+      ? [{ value: `~${Math.round(kcalPerMinute * workout.estimatedMinutes)}`, label: 'kcal' }]
+      : []),
   ];
 
   const row = (exercise: WorkoutExercise, key: string, divider: boolean) => (
@@ -155,18 +164,24 @@ export function WorkoutScreen({ id }: { id: number }) {
         </View>
       </View>
 
-      <View style={[styles.stats, { gap: spacing.sm }]}>
-        {stats.map((stat) => (
+      {/* One card of even columns, like a finished workout's figures. */}
+      <View
+        style={[
+          styles.stats,
+          {
+            paddingVertical: spacing.md,
+            borderRadius: radii.lg,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {stats.map((stat, index) => (
           <View
             key={stat.label}
             style={[
               styles.stat,
-              {
-                borderRadius: radii.md,
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                padding: spacing.sm,
-              },
+              { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
             ]}
           >
             <Text variant="headline">{stat.value}</Text>
@@ -207,11 +222,11 @@ const styles = StyleSheet.create({
   },
   stats: {
     flexDirection: 'row',
+    borderWidth: 1,
   },
   stat: {
     flex: 1,
     alignItems: 'center',
-    borderWidth: 1,
   },
   exercise: {
     flexDirection: 'row',
