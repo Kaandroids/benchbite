@@ -19,6 +19,9 @@ export const RECORD_KINDS = [
 
 export type RecordKind = (typeof RECORD_KINDS)[number];
 
+/** A set's place in its workout: the exercise's place, and the set's place within it, from 0. */
+export type SetPlace = { exercise: number; set: number };
+
 /** The best an exercise has been done, and the set that did it (the workout's total for most_time). */
 export type ExerciseRecord = {
   kind: RecordKind;
@@ -26,6 +29,8 @@ export type ExerciseRecord = {
   set: SetValues;
   logId: number;
   achievedAt: Date;
+  /** Where the set is in its workout; null for most_time, which is no single set. */
+  place: SetPlace | null;
 };
 
 /** What an exercise came to in one workout; null where the exercise does not record it. */
@@ -50,14 +55,17 @@ export type ExerciseSession = {
   startedAt: Date;
   name: string | null;
   type: Workout['type'];
-  sets: SetValues[];
+  sets: (SetValues & { place: SetPlace })[];
 };
+
+/** The workouts whose sets are listed; the chart and the records still see every workout. */
+export const SESSION_LIMIT = 50;
 
 export type ExerciseHistory = {
   records: ExerciseRecord[];
   /** Oldest first, for the chart. */
   progress: ProgressPoint[];
-  /** Latest first. */
+  /** The latest SESSION_LIMIT workouts, latest first. */
   sessions: ExerciseSession[];
 };
 
@@ -102,6 +110,7 @@ export function bySession(rows: readonly SetRow[]): ExerciseSession[] {
       reps: row.reps,
       seconds: row.seconds,
       meters: row.meters,
+      place: { exercise: row.exercise_position, set: row.set_position },
     });
   }
   return [...sessions.values()].sort(
@@ -109,50 +118,38 @@ export function bySession(rows: readonly SetRow[]): ExerciseSession[] {
   );
 }
 
-/**
- * The sets that set a record, as the index of the set in each session. A record keeps the values
- * of its set, so the first set of its workout with those values is the one; a workout's total
- * time is no single set.
- */
+/** The sets that set a record, as the index of the set in each session, by the record's place. */
 export function recordSets(
   records: readonly ExerciseRecord[],
   sessions: readonly ExerciseSession[],
 ): Map<number, Set<number>> {
   const marked = new Map<number, Set<number>>();
-  for (const record of records) {
-    if (record.kind === 'most_time') {
-      continue;
-    }
-    const session = sessions.find((candidate) => candidate.logId === record.logId);
+  for (const { logId, place } of records) {
     const index =
-      session?.sets.findIndex(
-        (set) =>
-          set.weightKg === record.set.weightKg &&
-          set.reps === record.set.reps &&
-          set.seconds === record.set.seconds &&
-          set.meters === record.set.meters,
-      ) ?? -1;
+      sessions
+        .find((session) => session.logId === logId)
+        ?.sets.findIndex(
+          (set) => place && set.place.exercise === place.exercise && set.place.set === place.set,
+        ) ?? -1;
     if (index >= 0) {
-      marked.set(record.logId, (marked.get(record.logId) ?? new Set()).add(index));
+      marked.set(logId, (marked.get(logId) ?? new Set()).add(index));
     }
   }
   return marked;
 }
 
-/** An exercise's records, progress and sets in every finished workout of the signed-in user. */
+/**
+ * An exercise's records and progress over every finished workout of the signed-in user, and its
+ * sets in the latest of them. The sets are read for those workouts only, so that a long history
+ * stays within the rows a request returns.
+ */
 export function useExerciseHistory(exerciseId: string) {
   return useQuery({
     queryKey: [...LOGS_KEY, 'exercise', exerciseId],
     queryFn: async (): Promise<ExerciseHistory> => {
-      const [records, progress, sets] = await Promise.all([
+      const [records, progress] = await Promise.all([
         supabase.rpc('exercise_records', { exercise_id: exerciseId }),
         supabase.rpc('exercise_progress', { exercise_id: exerciseId }),
-        supabase
-          .from('logged_sets')
-          .select(
-            'log_id, exercise_position, set_position, weight_kg, reps, seconds, meters, workout_logs(started_at, name, type)',
-          )
-          .eq('exercise_id', exerciseId),
       ]);
       if (records.error) {
         throw records.error;
@@ -160,6 +157,14 @@ export function useExerciseHistory(exerciseId: string) {
       if (progress.error) {
         throw progress.error;
       }
+      const latest = progress.data.slice(-SESSION_LIMIT).map((row) => row.log_id);
+      const sets = await supabase
+        .from('logged_sets')
+        .select(
+          'log_id, exercise_position, set_position, weight_kg, reps, seconds, meters, workout_logs(started_at, name, type)',
+        )
+        .eq('exercise_id', exerciseId)
+        .in('log_id', latest);
       if (sets.error) {
         throw sets.error;
       }
@@ -180,6 +185,10 @@ export function useExerciseHistory(exerciseId: string) {
             },
             logId: row.log_id,
             achievedAt: new Date(row.achieved_at),
+            place:
+              row.exercise_position === null || row.set_position === null
+                ? null
+                : { exercise: row.exercise_position, set: row.set_position },
           })),
         progress: progress.data.map((row) => ({
           logId: row.log_id,
