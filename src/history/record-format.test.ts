@@ -2,7 +2,14 @@ import { setKindOf } from '@/sessions/fields';
 import { renderHook } from '@/test/render';
 
 import type { ProgressPoint } from './exercise-history';
-import { metricsOf, pointsOf, scaleOf, useMetricFormat } from './record-format';
+import {
+  defaultRange,
+  metricsOf,
+  pointsIn,
+  pointsOf,
+  scaleOf,
+  useMetricFormat,
+} from './record-format';
 
 const target = { reps: { min: 8, max: 12 } };
 
@@ -57,5 +64,30 @@ describe('useMetricFormat', () => {
     expect(result.current.value('heaviest', 72.5)).toBe('72.5 kg');
     expect(result.current.value('pace', 220)).toBe('3:40 /km');
     expect(result.current.tick('longest', 90)).toBe('1:30');
+  });
+});
+
+describe('pointsIn', () => {
+  const at = (month: number, day: number) => ({ date: new Date(2026, month, day, 18), value: 1 });
+  const points = [at(0, 10), at(6, 1), at(8, 1), at(9, 20)];
+  const today = new Date(2026, 9, 24);
+
+  it('keeps the points since the same day months ago', () => {
+    expect(pointsIn(points, '1m', today)).toEqual([at(9, 20)]);
+    expect(pointsIn(points, '3m', today)).toEqual([at(8, 1), at(9, 20)]);
+    expect(pointsIn(points, '1y', today)).toHaveLength(4);
+    expect(pointsIn(points, 'all', today)).toHaveLength(4);
+  });
+
+  it('goes back to the end of a shorter month', () => {
+    expect(pointsIn([at(1, 27), at(1, 28)], '1m', new Date(2026, 2, 31))).toEqual([at(1, 28)]);
+  });
+});
+
+describe('defaultRange', () => {
+  it('starts with the last three months, or everything when they are empty', () => {
+    const today = new Date(2026, 9, 24);
+    expect(defaultRange([{ date: new Date(2026, 9, 1) }], today)).toBe('3m');
+    expect(defaultRange([{ date: new Date(2026, 1, 1) }], today)).toBe('all');
   });
 });
