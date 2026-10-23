@@ -7,6 +7,7 @@ import {
   addSet,
   changeRest,
   clockSeconds,
+  MAX_SETS,
   endSession,
   resetSessionStore,
   sessionTotals,
@@ -115,6 +116,14 @@ describe('logging sets', () => {
     session = setValues(session, 0, 0, { weightKg: 50 });
     // The emptied set takes it, the done one keeps its own.
     expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50, 60]);
+  });
+
+  it('adds sets up to as many as a log can keep', () => {
+    let session = start();
+    for (let added = 0; added < MAX_SETS; added++) {
+      session = addSet(session, 0);
+    }
+    expect(session.exercises[0]?.sets).toHaveLength(MAX_SETS);
   });
 
   it('changes values and adds a set like the last one', () => {

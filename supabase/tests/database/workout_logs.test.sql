@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -113,6 +113,12 @@ select results_eq(
      from public.workout_logs where id = current_setting('test.first')::bigint $$,
   $$ values (900::bigint, null::text, 'push', 3, 5, 300) $$,
   'The log keeps the workout, its type, what was planned and the calories from the weight then'
+);
+select is(
+  (select planned_exercise_ids from public.workout_log_summaries
+   where id = current_setting('test.first')::bigint),
+  array['Barbell_Bench_Press_-_Medium_Grip', 'Plank', 'Rowing_Stationary'],
+  'The log keeps the workout''s exercises in order, the skipped one too'
 );
 select results_eq(
   $$ select exercise_position::integer, set_position::integer, exercise_id, weight_kg, reps::integer,

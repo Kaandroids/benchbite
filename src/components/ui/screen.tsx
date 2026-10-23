@@ -14,6 +14,8 @@ type ScreenProps = {
   progress?: number;
   /** Shows a back button at the top. */
   onBack?: () => void;
+  /** Shows the back button as a cross, for leaving without saving. */
+  closes?: boolean;
   /** Stays at the bottom while the content scrolls, typically the main button. */
   footer?: ReactNode;
   /** A button at the end of the top bar, such as Edit. */
@@ -23,7 +25,15 @@ type ScreenProps = {
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
-export function Screen({ children, progress, onBack, footer, action, title }: ScreenProps) {
+export function Screen({
+  children,
+  progress,
+  onBack,
+  closes = false,
+  footer,
+  action,
+  title,
+}: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
   const hasTopBar = progress !== undefined || onBack !== undefined || action !== undefined;
@@ -38,12 +48,12 @@ export function Screen({ children, progress, onBack, footer, action, title }: Sc
           {onBack ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
+              accessibilityLabel={closes ? t('common.close') : t('common.back')}
               onPress={onBack}
               hitSlop={8}
               style={styles.back}
             >
-              <Icon name="back" color="textMuted" />
+              <Icon name={closes ? 'close' : 'back'} color="textMuted" />
             </Pressable>
           ) : null}
           {progress !== undefined ? (

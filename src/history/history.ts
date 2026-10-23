@@ -23,6 +23,8 @@ export type LogSummary = {
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
   estimatedKcal: number | null;
+  /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
+  plannedExerciseIds: string[] | null;
 };
 
 /** A set of a finished workout. */
@@ -34,6 +36,53 @@ export type LoggedSet = {
   seconds: number | null;
   meters: number | null;
 };
+
+/** The values of a set, without its place in the workout. */
+export type SetValues = Omit<LoggedSet, 'exercisePosition' | 'exerciseId'>;
+
+/** The sets of one exercise of a finished workout, and its place in the workout from 0. */
+export type LoggedExercise = { place: number; exerciseId: string; sets: LoggedSet[] };
+
+/** The sets of a finished workout by exercise, in the order the exercises were done. */
+export function byExercise(sets: readonly LoggedSet[]): LoggedExercise[] {
+  const exercises: LoggedExercise[] = [];
+  for (const set of sets) {
+    const last = exercises[exercises.length - 1];
+    if (last && last.exerciseId === set.exerciseId && last.place === set.exercisePosition) {
+      last.sets.push(set);
+    } else {
+      exercises.push({ place: set.exercisePosition, exerciseId: set.exerciseId, sets: [set] });
+    }
+  }
+  return exercises;
+}
+
+/**
+ * The exercises of a finished workout and the ones it skipped, in the workout's order. A log keeps
+ * each exercise's place in the workout, so a place without sets is an exercise that was skipped;
+ * `planned` names the workout's exercises, as far as it still has them.
+ */
+export function withSkipped(
+  sets: readonly LoggedSet[],
+  planned: readonly string[],
+): LoggedExercise[] {
+  const logged = byExercise(sets);
+  const byPlace = new Map(logged.map((exercise) => [exercise.place, exercise]));
+  const loggedIds = new Set(logged.map((exercise) => exercise.exerciseId));
+  const places = Math.max(planned.length, ...logged.map((exercise) => exercise.place + 1));
+  const exercises: LoggedExercise[] = [];
+  for (let place = 0; place < places; place++) {
+    const done = byPlace.get(place);
+    const skipped = planned[place];
+    if (done) {
+      exercises.push(done);
+    } else if (skipped !== undefined && !loggedIds.has(skipped)) {
+      // An exercise done elsewhere in the log was moved in the workout since, not skipped.
+      exercises.push({ place, exerciseId: skipped, sets: [] });
+    }
+  }
+  return exercises;
+}
 
 /** Whether less was done than planned. */
 export function isPartial(done: number, planned: number | null): planned is number {
@@ -66,6 +115,7 @@ function toSummary(row: SummaryRow): LogSummary {
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
+    plannedExerciseIds: row.planned_exercise_ids,
   };
 }
 
@@ -187,6 +237,36 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
       ]),
+  });
+}
+
+/** Replaces the sets of a finished workout; its time and calories stay as they were (ADR 0023). */
+export function useEditLog() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      exercises,
+    }: {
+      id: number;
+      exercises: { place: number; exerciseId: string; sets: SetValues[] }[];
+    }) => {
+      // The function takes an exercise's place from its index, so every place up to the last is
+      // sent: exercises without sets, and gaps without an exercise, keep the others where they were.
+      const places = Math.max(0, ...exercises.map((exercise) => exercise.place + 1));
+      const byPlace = new Map(exercises.map((exercise) => [exercise.place, exercise]));
+      const log = {
+        exercises: Array.from({ length: places }, (_, place) => {
+          const exercise = byPlace.get(place);
+          return { exerciseId: exercise?.exerciseId ?? null, sets: exercise?.sets ?? [] };
+        }),
+      };
+      const { error } = await supabase.rpc('edit_workout_log', { log_id: id, log });
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: LOGS_KEY }),
   });
 }
 

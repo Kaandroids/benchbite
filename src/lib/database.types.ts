@@ -388,6 +388,7 @@ export type Database = {
           finished_at: string;
           id: number;
           name: string | null;
+          planned_exercise_ids: string[] | null;
           planned_exercises: number | null;
           planned_sets: number | null;
           started_at: string;
@@ -401,6 +402,7 @@ export type Database = {
           finished_at: string;
           id?: never;
           name?: string | null;
+          planned_exercise_ids?: string[] | null;
           planned_exercises?: number | null;
           planned_sets?: number | null;
           started_at: string;
@@ -413,6 +415,7 @@ export type Database = {
           finished_at?: string;
           id?: never;
           name?: string | null;
+          planned_exercise_ids?: string[] | null;
           planned_exercises?: number | null;
           planned_sets?: number | null;
           started_at?: string;
@@ -474,6 +477,7 @@ export type Database = {
           id: number | null;
           kilograms: number | null;
           name: string | null;
+          planned_exercise_ids: string[] | null;
           planned_exercises: number | null;
           planned_sets: number | null;
           sets: number | null;
@@ -516,7 +520,9 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       last_sets: {

@@ -37,7 +37,8 @@ import {
   useActiveSession,
   type SessionExercise,
 } from './session';
-import { BUTTON_SIZE, fieldWidth, NUMBER_WIDTH, SetRow } from './set-row';
+import { SetRow } from './set-row';
+import { AddSetButton, SetHeader } from './set-table';
 import { useUserId } from './start';
 import { useNow } from './use-now';
 
@@ -133,14 +134,6 @@ export function SessionScreen() {
   const open = (exercise: SessionExercise, index: number) => {
     const info = details(exercise.exerciseId);
     const kind = setKindOf(info?.metrics, exercise.target);
-    const width = fieldWidth(kind);
-    const columns = kind.fields.map((field) =>
-      field === 'weightKg'
-        ? kind.addedWeight
-          ? t('session.columns.addedKg')
-          : t('session.columns.kg')
-        : t(`session.columns.${field}`),
-    );
     return (
       <View
         key={index}
@@ -171,31 +164,7 @@ export function SessionScreen() {
           <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
         </View>
 
-        <View style={[styles.row, { gap: spacing.sm, paddingHorizontal: 2 }]}>
-          <Text
-            variant="caption"
-            color="textMuted"
-            align="center"
-            style={[styles.bold, { width: NUMBER_WIDTH }]}
-          >
-            {t('session.columns.set')}
-          </Text>
-          <Text variant="caption" color="textMuted" style={[styles.bold, styles.flex]}>
-            {t('session.columns.last')}
-          </Text>
-          {columns.map((column) => (
-            <Text
-              key={column}
-              variant="caption"
-              color="textMuted"
-              align="center"
-              style={[styles.bold, { width }]}
-            >
-              {column}
-            </Text>
-          ))}
-          <View style={{ width: BUTTON_SIZE }} />
-        </View>
+        <SetHeader kind={kind} showLast />
 
         {exercise.sets.map((set, setIndex) => {
           const running =
@@ -227,15 +196,10 @@ export function SessionScreen() {
           );
         })}
 
-        <Pressable
-          accessibilityRole="button"
+        <AddSetButton
+          count={exercise.sets.length}
           onPress={() => updateSession((current) => addSet(current, index))}
-          style={[styles.addSet, { borderRadius: radii.md, backgroundColor: colors.background }]}
-        >
-          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
-            {t('session.addSet')}
-          </Text>
-        </Pressable>
+        />
       </View>
     );
   };
@@ -364,11 +328,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addSet: {
-    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },

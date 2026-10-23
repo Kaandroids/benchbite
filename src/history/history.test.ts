@@ -2,19 +2,22 @@ import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
+  byExercise,
   byWeek,
   doneOf,
   durationMinutes,
   fetchLogSummaries,
   useDeleteLog,
+  useEditLog,
   useLoggedSets,
   useLogSummary,
   useRecentLogs,
   weekStart,
+  withSkipped,
   type LogSummary,
 } from './history';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 const log = (id: number, started: string, minutes: number): LogSummary => {
   const startedAt = new Date(started);
@@ -31,6 +34,7 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
     plannedSets: null,
     kilograms: 1000,
     estimatedKcal: 300,
+    plannedExerciseIds: null,
   };
 };
 
@@ -53,6 +57,7 @@ describe('fetchLogSummaries', () => {
           planned_sets: 24,
           kilograms: 6240.5,
           estimated_kcal: null,
+          planned_exercise_ids: ['curl', 'dips'],
         },
       ],
       error: null,
@@ -75,6 +80,7 @@ describe('fetchLogSummaries', () => {
       plannedSets: 24,
       kilograms: 6240.5,
       estimatedKcal: null,
+      plannedExerciseIds: ['curl', 'dips'],
     });
     expect(durationMinutes(summary!)).toBe(52);
   });
@@ -127,6 +133,98 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'all'],
       ['workout-logs', 'recent'],
       ['workout-logs', 'week'],
+    ]);
+  });
+});
+
+describe('useEditLog', () => {
+  it('replaces the sets in their places and loads every log again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+    const { result } = await renderHook(() => useEditLog(), { queryClient });
+    const hold = { weightKg: null, reps: null, seconds: 50, meters: null };
+    await act(() =>
+      result.current.mutateAsync({
+        id: 7,
+        exercises: [
+          { place: 0, exerciseId: 'Plank', sets: [hold] },
+          { place: 2, exerciseId: 'Pushups', sets: [] },
+          { place: 3, exerciseId: 'Plank', sets: [hold] },
+        ],
+      }),
+    );
+    // Place 1 had no exercise left to name, and stays a gap.
+    expect(supabase.rpc).toHaveBeenCalledWith('edit_workout_log', {
+      log_id: 7,
+      log: {
+        exercises: [
+          { exerciseId: 'Plank', sets: [hold] },
+          { exerciseId: null, sets: [] },
+          { exerciseId: 'Pushups', sets: [] },
+          { exerciseId: 'Plank', sets: [hold] },
+        ],
+      },
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-logs'] });
+  });
+
+  it('fails when the edit is rejected', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: { code: 'BB010' } } as never);
+    const { result } = await renderHook(() => useEditLog());
+    await act(() =>
+      expect(result.current.mutateAsync({ id: 7, exercises: [] })).rejects.toEqual({
+        code: 'BB010',
+      }),
+    );
+  });
+});
+
+describe('byExercise', () => {
+  const set = (exercisePosition: number, exerciseId: string, reps: number) => ({
+    exercisePosition,
+    exerciseId,
+    weightKg: null,
+    reps,
+    seconds: null,
+    meters: null,
+  });
+
+  it('groups the sets by exercise, keeping an exercise done twice apart', () => {
+    const groups = byExercise([set(0, 'a', 1), set(0, 'a', 2), set(1, 'b', 3), set(2, 'a', 4)]);
+    expect(groups.map((group) => [group.exerciseId, group.sets.map((s) => s.reps)])).toEqual([
+      ['a', [1, 2]],
+      ['b', [3]],
+      ['a', [4]],
+    ]);
+  });
+});
+
+describe('withSkipped', () => {
+  const set = (exercisePosition: number, exerciseId: string) => ({
+    exercisePosition,
+    exerciseId,
+    weightKg: null,
+    reps: 8,
+    seconds: null,
+    meters: null,
+  });
+  const shape = (exercises: ReturnType<typeof withSkipped>) =>
+    exercises.map((exercise) => [exercise.exerciseId, exercise.sets.length]);
+
+  it('puts the skipped exercises of the workout in their places', () => {
+    expect(shape(withSkipped([set(0, 'a'), set(2, 'c')], ['a', 'b', 'c', 'd']))).toEqual([
+      ['a', 1],
+      ['b', 0],
+      ['c', 1],
+      ['d', 0],
+    ]);
+  });
+
+  it('leaves out an exercise logged in another place, and keeps what the workout lost', () => {
+    expect(shape(withSkipped([set(0, 'a'), set(3, 'x')], ['b', 'a']))).toEqual([
+      ['a', 1],
+      ['x', 1],
     ]);
   });
 });
