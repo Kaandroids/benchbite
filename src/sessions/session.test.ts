@@ -73,7 +73,8 @@ describe('startSession', () => {
   it('fills in the target without a last time', () => {
     const session = start();
     expect(session.exercises[0]?.sets[0]).toMatchObject({ weightKg: null, reps: 12 });
-    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 45, meters: null });
+    // The time is left to the clock, so that a target is not taken for one already done.
+    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: null, meters: null });
     expect(session.exercises[2]?.sets[0]).toMatchObject({ seconds: null, meters: 2000 });
   });
 
@@ -137,20 +138,18 @@ describe('logging sets', () => {
 });
 
 describe('the clock of a timed set', () => {
-  it('counts down from the target time and logs the time it ran', () => {
+  it('counts up past the target time and logs the time it ran', () => {
     let session = startClock(start(), 1, 0, NOW);
-    expect(session.clock).toEqual({ exercise: 1, set: 0, startedAt: NOW, seconds: 45 });
-    expect(clockSeconds(session.clock!, NOW + 13_000)).toBe(32);
-    expect(clockSeconds(session.clock!, NOW + 60_000)).toBe(0);
-    session = stopClock(session, NOW + 50_000);
+    expect(session.clock).toEqual({ exercise: 1, set: 0, startedAt: NOW });
+    expect(clockSeconds(session.clock!, NOW + 13_000)).toBe(13);
+    expect(clockSeconds(session.clock!, NOW - 400)).toBe(0);
+    session = stopClock(session, NOW + 52_700);
     expect(session.clock).toBeNull();
-    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 45, done: true });
+    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 52, done: true });
   });
 
-  it('counts up for a distance and logs the time when stopped', () => {
+  it('keeps the distance of a set it times', () => {
     let session = startClock(start(), 2, 0, NOW);
-    expect(session.clock?.seconds).toBeNull();
-    expect(clockSeconds(session.clock!, NOW + 221_000)).toBe(221);
     session = stopClock(session, NOW + 490_000);
     expect(session.exercises[2]?.sets[0]).toMatchObject({ meters: 2000, seconds: 490, done: true });
   });

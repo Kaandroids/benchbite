@@ -9,6 +9,7 @@ import { FinishScreen } from './finish-screen';
 import { useLogWorkout } from './logs';
 import {
   resetSessionStore,
+  startClock,
   startSession,
   toggleDone,
   updateSession,
@@ -157,17 +158,32 @@ describe('SessionScreen', () => {
     expect(screen.getByText('0 of 4 sets')).toBeTruthy();
   });
 
-  it('times a held exercise with a clock that logs the set when it runs out', async () => {
+  it('times a held exercise with a clock that counts up until it is stopped', async () => {
     await render(<SessionScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Plank' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Start the clock of set 1' }));
     await act(async () => {
-      jest.advanceTimersByTime(13_000);
+      jest.advanceTimersByTime(50_005);
     });
-    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:32');
-    await act(async () => {
-      jest.advanceTimersByTime(33_000);
-    });
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:50');
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop the clock of set 1' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:50');
+
+    // The logged time can still be corrected by hand.
+    await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '0:48');
+    await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:48');
+  });
+
+  it('ticks a timed set whose time is typed by hand', async () => {
+    await render(<SessionScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Plank' }));
+    expect(screen.queryByRole('checkbox', { name: 'Set 1 done' })).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '0:45');
+    await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
+    expect(screen.queryByRole('button', { name: 'Start the clock of set 1' })).toBeNull();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
     expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
     expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:45');
   });
@@ -214,6 +230,26 @@ describe('FinishScreen', () => {
     );
     expect(router.dismissAll).toHaveBeenCalled();
     expect(startWorkout).not.toHaveBeenCalled();
+  });
+
+  it('logs the set of a clock that still runs', async () => {
+    updateSession((session) => startClock(session, 1, 0));
+    await act(async () => {
+      jest.advanceTimersByTime(40_000);
+    });
+    await render(<FinishScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          { exerciseId: 'bench', sets: [] },
+          {
+            exerciseId: 'plank',
+            sets: [{ weightKg: null, reps: null, seconds: 40, meters: null }],
+          },
+        ],
+      }),
+    );
   });
 
   it('starts the next workout after saving', async () => {

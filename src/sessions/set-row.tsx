@@ -74,7 +74,7 @@ function SetInput({
       aria-invalid={invalid}
       value={running ? minutesAndSeconds(clock) : (text ?? show(field, value))}
       placeholder={placeholder}
-      placeholderTextColor={colors.textMuted}
+      placeholderTextColor={colors.placeholder}
       editable={!running}
       keyboardType={
         field === 'weightKg'
@@ -164,6 +164,8 @@ export function SetRow({
     }
     onToggle();
   };
+  // A timed set is done with its clock, or with a tick once its time is typed by hand.
+  const clockButton = kind.timed && !set.done && (running || set.seconds === null);
   const labels: Record<SetField, string> = {
     weightKg: t('session.weightOf', { number }),
     reps: t('session.repsOf', { number }),
@@ -194,8 +196,13 @@ export function SetRow({
             field={field}
             value={set[field]}
             label={labels[field]}
+            // Added weight is optional, and a time is measured from zero; short hints fit the field.
             placeholder={
-              field === 'weightKg' && kind.addedWeight ? t('session.optional') : undefined
+              field === 'weightKg' && kind.addedWeight
+                ? '0'
+                : field === 'seconds'
+                  ? minutesAndSeconds(0)
+                  : undefined
             }
             done={set.done}
             clock={field === 'seconds' && running ? clock : null}
@@ -205,7 +212,7 @@ export function SetRow({
           />
         </View>
       ))}
-      {kind.timed && !set.done ? (
+      {clockButton ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={
