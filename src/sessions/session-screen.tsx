@@ -50,21 +50,16 @@ export function SessionScreen() {
   const workoutName = useWorkoutName();
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
-  const now = useNow(!!session);
+  const now = useNow(!!session, session?.clock?.startedAt);
 
-  // A countdown that reaches zero logs its set, and a rest that is over ends.
-  const clockDone =
-    !!session?.clock && session.clock.seconds !== null && clockSeconds(session.clock, now) === 0;
+  // A rest that is over ends.
   const restOver = !!session?.rest && session.rest.endsAt <= now;
   useEffect(() => {
-    if (clockDone) {
-      updateSession((current) => stopClock(current));
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else if (restOver) {
+    if (restOver) {
       updateSession((current) => ({ ...current, rest: null }));
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-  }, [clockDone, restOver]);
+  }, [restOver]);
 
   if (!session) {
     return (

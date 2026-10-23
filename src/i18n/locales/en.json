@@ -530,7 +530,6 @@
       "meters": "M",
       "seconds": "TIME"
     },
-    "optional": "optional",
     "addSet": "+ Add set",
     "done": "Set {{number}} done",
     "startClock": "Start the clock of set {{number}}",

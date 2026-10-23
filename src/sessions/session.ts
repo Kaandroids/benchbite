@@ -24,13 +24,11 @@ export type SessionExercise = {
   last: SetValues[];
 };
 
-/** A clock that runs for a timed set: down from the target time, or up without one. */
+/** A clock that counts up for a timed set, until it is stopped. */
 export type SetClock = {
   exercise: number;
   set: number;
   startedAt: number;
-  /** The seconds to count down from; null counts up. */
-  seconds: number | null;
 };
 
 export type Session = {
@@ -136,17 +134,17 @@ export function resetSessionStore() {
 
 /**
  * The values a set starts with: last time's, the set before it if there were fewer, or else the
- * target. They count only once the set is done.
+ * target. They count only once the set is done. The time is left out: the clock measures it.
  */
 function startingValues(target: WorkoutTarget, last: SetValues[], index: number): SetValues {
   const previous = last[index] ?? last[last.length - 1];
   if (previous) {
-    return previous;
+    return { ...previous, seconds: null };
   }
   if ('reps' in target) {
     return { weightKg: null, reps: target.reps.max, seconds: null, meters: null };
   }
-  return { weightKg: null, reps: null, seconds: target.seconds, meters: target.meters };
+  return { weightKg: null, reps: null, seconds: null, meters: target.meters };
 }
 
 /** Starts a workout, its sets filled in from last time. */
@@ -264,7 +262,7 @@ export function toggleDone(
   return next;
 }
 
-/** Adds a set to an exercise, with the values of its last set. */
+/** Adds a set to an exercise, with the values of its last set but its time. */
 export function addSet(value: Session, exercise: number): Session {
   return {
     ...value,
@@ -274,33 +272,26 @@ export function addSet(value: Session, exercise: number): Session {
       }
       const last = item.sets[item.sets.length - 1];
       const values = last
-        ? { weightKg: last.weightKg, reps: last.reps, seconds: last.seconds, meters: last.meters }
+        ? { weightKg: last.weightKg, reps: last.reps, seconds: null, meters: last.meters }
         : startingValues(item.target, [], 0);
       return { ...item, sets: [...item.sets, { ...values, done: false }] };
     }),
   };
 }
 
-/** Starts the clock of a timed set: down from its target time, or up for a distance. */
+/** Starts the clock of a timed set; it counts up, so a set can run past its target time. */
 export function startClock(
   value: Session,
   exercise: number,
   index: number,
   now = Date.now(),
 ): Session {
-  const target = value.exercises[exercise]?.target;
-  const countdown = target && 'seconds' in target && target.meters === null ? target.seconds : null;
-  return {
-    ...value,
-    clock: { exercise, set: index, startedAt: now, seconds: countdown },
-    rest: null,
-  };
+  return { ...value, clock: { exercise, set: index, startedAt: now }, rest: null };
 }
 
-/** The seconds a clock has run, or has left when it counts down. */
+/** The seconds a clock has run; never below zero, as `now` may lag just behind its start. */
 export function clockSeconds(clock: SetClock, now = Date.now()): number {
-  const elapsed = Math.floor((now - clock.startedAt) / 1000);
-  return clock.seconds === null ? elapsed : Math.max(0, clock.seconds - elapsed);
+  return Math.max(0, Math.floor((now - clock.startedAt) / 1000));
 }
 
 /** Stops the clock and marks its set done with the time it ran. */
@@ -309,8 +300,8 @@ export function stopClock(value: Session, now = Date.now()): Session {
   if (!clock) {
     return value;
   }
-  const elapsed = Math.max(1, Math.round((now - clock.startedAt) / 1000));
-  const seconds = clock.seconds === null ? elapsed : Math.min(clock.seconds, elapsed);
+  // Rounded down, as the clock shows it.
+  const seconds = Math.max(1, Math.floor((now - clock.startedAt) / 1000));
   const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
   return toggleDone(next, clock.exercise, clock.set, now);
 }

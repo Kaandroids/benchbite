@@ -530,7 +530,6 @@
       "meters": "M",
       "seconds": "SÜRE"
     },
-    "optional": "isteğe bağlı",
     "addSet": "+ Set ekle",
     "done": "Set {{number}} tamam",
     "startClock": "Set {{number}} için sayacı başlat",
