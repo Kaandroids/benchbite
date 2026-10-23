@@ -14,7 +14,7 @@ import {
   useKindLock,
   type CustomExerciseForm,
 } from './custom';
-import { removePhotos } from './photos';
+import { removePhotos, uploadPhoto } from './photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn(), from: jest.fn() } }));
 jest.mock('./photos', () => ({
@@ -71,9 +71,57 @@ describe('useCreateExercise', () => {
     await act(async () => {
       await result.current.mutateAsync({ ...HIP, photos: [null, 'end.jpg'] });
     });
+    // The end alone stays second.
     expect(supabase.rpc).toHaveBeenCalledWith('create_exercise', {
-      exercise: expect.objectContaining({ imagePaths: ['u/end.jpg'] }),
+      exercise: expect.objectContaining({ imagePaths: [null, 'u/end.jpg'] }),
     });
+  });
+
+  it('leaves out a missing end', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 'custom-2', error: null } as never);
+    const { result } = await renderHook(() => useCreateExercise(), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ ...HIP, photos: ['start.jpg', null] });
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('create_exercise', {
+      exercise: expect.objectContaining({ imagePaths: ['u/start.jpg'] }),
+    });
+  });
+
+  it('removes the photos it uploaded when the save fails', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest
+      .mocked(supabase.rpc)
+      .mockResolvedValue({ data: null, error: new Error('offline') } as never);
+    const { result } = await renderHook(() => useCreateExercise(), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await expect(
+        result.current.mutateAsync({ ...HIP, photos: ['start.jpg', 'end.jpg'] }),
+      ).rejects.toThrow('offline');
+    });
+    expect(removePhotos).toHaveBeenCalledWith(['u/start.jpg', 'u/end.jpg']);
+    warn.mockRestore();
+  });
+
+  it('removes the photos it uploaded when another upload fails', async () => {
+    jest
+      .mocked(uploadPhoto)
+      .mockResolvedValueOnce('u/start.jpg')
+      .mockRejectedValueOnce(new Error('offline'));
+    const { result } = await renderHook(() => useCreateExercise(), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await expect(
+        result.current.mutateAsync({ ...HIP, photos: ['start.jpg', 'end.jpg'] }),
+      ).rejects.toThrow('offline');
+    });
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(removePhotos).toHaveBeenCalledWith(['u/start.jpg']);
   });
 
   it('creates the exercise, loads the library again and gives it back as listed', async () => {

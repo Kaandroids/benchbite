@@ -62,10 +62,45 @@ export function formOf(exercise: LibraryExercise, instructions: string[]): Custo
   };
 }
 
-/** Uploads the form's new photos and resolves to the paths of all of them, in order. */
-async function photoPaths(form: CustomExerciseForm): Promise<string[]> {
-  const photos = form.photos.filter((photo): photo is string => photo !== null);
-  return Promise.all(photos.map((photo) => (isUserPhoto(photo) ? photo : uploadPhoto(photo))));
+/** Removes photos uploaded for a save that failed; one left behind costs storage only. */
+const discard = (paths: string[]) =>
+  removePhotos(paths).catch((error: unknown) => console.warn('Could not remove photos', error));
+
+/**
+ * Uploads the form's new photos and saves the exercise with the paths of all of them in their
+ * places: the start first, a missing start as null before the end. When the upload or the save
+ * fails, the photos it uploaded are removed again, so that trying again leaves none behind.
+ */
+async function savingPhotos<T>(
+  form: CustomExerciseForm,
+  save: (imagePaths: (string | null)[]) => Promise<T>,
+): Promise<T> {
+  const uploads = await Promise.allSettled(
+    form.photos.map((photo) =>
+      photo === null || isUserPhoto(photo) ? Promise.resolve(photo) : uploadPhoto(photo),
+    ),
+  );
+  const uploaded = uploads.flatMap((upload, index) =>
+    upload.status === 'fulfilled' && upload.value !== form.photos[index] && upload.value
+      ? [upload.value]
+      : [],
+  );
+  try {
+    const imagePaths = uploads.map((upload) => {
+      if (upload.status === 'rejected') {
+        throw upload.reason;
+      }
+      return upload.value;
+    });
+    // A missing end is left out, and with it a missing start.
+    while (imagePaths.length > 0 && imagePaths.at(-1) === null) {
+      imagePaths.pop();
+    }
+    return await save(imagePaths);
+  } catch (error) {
+    await discard(uploaded);
+    throw error;
+  }
 }
 
 /** Whether the form has what an exercise needs: a name, a way of logging and a main muscle. */
@@ -74,7 +109,7 @@ export function isComplete(form: CustomExerciseForm): boolean {
 }
 
 /** The exercise as create_exercise() takes it, with the paths of its uploaded photos. */
-export function toExercise(form: CustomExerciseForm, imagePaths: string[] = []) {
+export function toExercise(form: CustomExerciseForm, imagePaths: (string | null)[] = []) {
   return {
     name: form.name.trim(),
     metrics: form.logKind ? [...LOG_KINDS[form.logKind]] : [],
@@ -96,27 +131,28 @@ export function toExercise(form: CustomExerciseForm, imagePaths: string[] = []) 
 export function useCreateExercise() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (form: CustomExerciseForm): Promise<LibraryExercise> => {
-      const exercise = toExercise(form, await photoPaths(form));
-      const { data: id, error } = await supabase.rpc('create_exercise', { exercise });
-      if (error) {
-        throw error;
-      }
-      return {
-        id,
-        name: exercise.name,
-        searchText: exercise.name.toLowerCase(),
-        metrics: exercise.metrics,
-        primaryMuscles: exercise.primaryMuscles,
-        secondaryMuscles: exercise.secondaryMuscles,
-        equipment: exercise.equipment,
-        level: exercise.level,
-        category: exercise.metrics.includes('distance') ? 'cardio' : 'strength',
-        imagePaths: exercise.imagePaths,
-        custom: true,
-        archived: false,
-      };
-    },
+    mutationFn: (form: CustomExerciseForm): Promise<LibraryExercise> =>
+      savingPhotos(form, async (imagePaths) => {
+        const exercise = toExercise(form, imagePaths);
+        const { data: id, error } = await supabase.rpc('create_exercise', { exercise });
+        if (error) {
+          throw error;
+        }
+        return {
+          id,
+          name: exercise.name,
+          searchText: exercise.name.toLowerCase(),
+          metrics: exercise.metrics,
+          primaryMuscles: exercise.primaryMuscles,
+          secondaryMuscles: exercise.secondaryMuscles,
+          equipment: exercise.equipment,
+          level: exercise.level,
+          category: exercise.metrics.includes('distance') ? 'cardio' : 'strength',
+          imagePaths: exercise.imagePaths,
+          custom: true,
+          archived: false,
+        };
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['exercises'] }),
   });
 }
@@ -129,18 +165,17 @@ export function useEditExercise(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ form, before }: { form: CustomExerciseForm; before: string[] }) => {
-      const imagePaths = await photoPaths(form);
-      const { error } = await supabase.rpc('edit_exercise', {
-        exercise_id: id,
-        exercise: toExercise(form, imagePaths),
+      const imagePaths = await savingPhotos(form, async (paths) => {
+        const { error } = await supabase.rpc('edit_exercise', {
+          exercise_id: id,
+          exercise: toExercise(form, paths),
+        });
+        if (error) {
+          throw error;
+        }
+        return paths;
       });
-      if (error) {
-        throw error;
-      }
-      // A photo left behind costs storage only, so a failure here is not the edit's.
-      await removePhotos(before.filter((path) => !imagePaths.includes(path))).catch(
-        (removeError: unknown) => console.warn('Could not remove old photos', removeError),
-      );
+      await discard(before.filter((path) => !imagePaths.includes(path)));
     },
     onSuccess: () =>
       Promise.all([
