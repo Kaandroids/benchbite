@@ -47,11 +47,14 @@ type SetInputProps = {
   clock: number | null;
   /** Marks a value that is needed before the set can be done. */
   invalid?: boolean;
+  /** Shows the value faint, as a suggestion, until the set is done. */
+  muted?: boolean;
   onChange: (value: number | null) => void;
   ref?: Ref<TextInputInstance>;
 };
 
-function SetInput({
+/** A value of a set, typed as a weight, a number, a time such as "1:30" or a distance. */
+export function SetInput({
   field,
   value,
   label,
@@ -59,6 +62,7 @@ function SetInput({
   done,
   clock,
   invalid = false,
+  muted = true,
   onChange,
   ref,
 }: SetInputProps) {
@@ -116,7 +120,7 @@ function SetInput({
                 borderWidth: invalid ? 2 : 1.5,
                 borderColor: invalid ? colors.danger : colors.border,
                 backgroundColor: colors.surface,
-                color: colors.textMuted,
+                color: muted ? colors.textMuted : colors.text,
               },
       ]}
     />
