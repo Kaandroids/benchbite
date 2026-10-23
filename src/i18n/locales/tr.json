@@ -606,6 +606,23 @@
       "offTitle": "Bildirimler kapalı",
       "offMessage": "Dinlenmenin bittiğini duymak için telefonunun ayarlarından Benchbite bildirimlerini aç.",
       "openSettings": "Ayarları aç"
+    },
+    "end": {
+      "title": "Ne zaman bitirdin?",
+      "hour": "Saat",
+      "minute": "Dakika",
+      "range": "Son setin ({{time}}) ile şimdi arasında.",
+      "done": "Tamam",
+      "change": "Bitiş {{time}}. Değiştir",
+      "label": "Başlangıç {{started}} · Bitiş",
+      "changeLabel": "Değiştir",
+      "hint": "Bitirmeyi mi unuttun? Gerçekten bıraktığın saati seç."
+    },
+    "leftOpen": {
+      "title": "{{name}} kaydedildi",
+      "message": "Açık bırakmıştın, bu yüzden son setinde ({{time}}) bitmiş olarak kaydettik.",
+      "view": "Gör",
+      "dismiss": "Kapat"
     }
   },
   "history": {

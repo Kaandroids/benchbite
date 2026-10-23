@@ -70,6 +70,7 @@ jest.mock('@/exercises/exercise-screen', () => {
   return { ExerciseScreen: ({ id }: { id: string }) => <MockText>{`Exercise ${id}`}</MockText> };
 });
 
+jest.mock('@/sessions/left-open', () => ({ LeftOpenSaver: () => null }));
 jest.mock('@/sessions/rest-alarm', () => ({
   REST_NOTIFICATION_ID: 'rest-end',
   RestAlarm: () => null,
