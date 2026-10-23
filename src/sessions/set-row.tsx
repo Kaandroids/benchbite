@@ -90,10 +90,10 @@ export function SetInput({
       selectTextOnFocus
       onChangeText={(typed) => {
         setText(typed);
-        // Saved as soon as it reads as a value, so that the set can be ticked while the keyboard
-        // is still up; "1:" or an empty field wait until editing ends.
+        // Saved as soon as it reads as a value or is cleared, so that the set can be ticked or
+        // saved while the keyboard is still up; "1:" or "2." wait until editing ends.
         const value = read(field, typed);
-        if (value !== null) {
+        if (value !== null || typed.trim() === '') {
           onChange(value);
         }
       }}

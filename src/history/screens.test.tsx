@@ -336,8 +336,8 @@ describe('EditLogScreen', () => {
 
   it('marks what is missing instead of saving', async () => {
     await render(<EditLogScreen id={3} />);
+    // Cleared with the keyboard still up.
     await fireEvent.changeText(screen.getByLabelText('Reps of set 2'), '');
-    await fireEvent(screen.getByLabelText('Reps of set 2'), 'endEditing');
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     expect(editLog).not.toHaveBeenCalled();
     expect(screen.getByText('Fill in the marked values to save.')).toBeTruthy();
