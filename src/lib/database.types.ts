@@ -52,6 +52,7 @@ export type Database = {
       };
       exercises: {
         Row: {
+          archived_at: string | null;
           category: Database['public']['Enums']['exercise_category'];
           equipment: Database['public']['Enums']['equipment'] | null;
           force: Database['public']['Enums']['exercise_force'] | null;
@@ -62,11 +63,13 @@ export type Database = {
           mechanic: Database['public']['Enums']['exercise_mechanic'] | null;
           metrics: Database['public']['Enums']['exercise_metric'][];
           name: string;
+          owner_id: string | null;
           primary_muscles: Database['public']['Enums']['muscle'][];
           secondary_muscles: Database['public']['Enums']['muscle'][];
         };
         ComputedFields: never;
         Insert: {
+          archived_at?: string | null;
           category: Database['public']['Enums']['exercise_category'];
           equipment?: Database['public']['Enums']['equipment'] | null;
           force?: Database['public']['Enums']['exercise_force'] | null;
@@ -77,10 +80,12 @@ export type Database = {
           mechanic?: Database['public']['Enums']['exercise_mechanic'] | null;
           metrics: Database['public']['Enums']['exercise_metric'][];
           name: string;
+          owner_id?: string | null;
           primary_muscles: Database['public']['Enums']['muscle'][];
           secondary_muscles: Database['public']['Enums']['muscle'][];
         };
         Update: {
+          archived_at?: string | null;
           category?: Database['public']['Enums']['exercise_category'];
           equipment?: Database['public']['Enums']['equipment'] | null;
           force?: Database['public']['Enums']['exercise_force'] | null;
@@ -91,6 +96,7 @@ export type Database = {
           mechanic?: Database['public']['Enums']['exercise_mechanic'] | null;
           metrics?: Database['public']['Enums']['exercise_metric'][];
           name?: string;
+          owner_id?: string | null;
           primary_muscles?: Database['public']['Enums']['muscle'][];
           secondary_muscles?: Database['public']['Enums']['muscle'][];
         };
@@ -499,6 +505,7 @@ export type Database = {
     };
     Functions: {
       age_in_years: { Args: { birth_year: number }; Returns: number };
+      archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       calculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -522,6 +529,20 @@ export type Database = {
       };
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      create_exercise: { Args: { exercise: Json }; Returns: string };
+      custom_exercise_fields: {
+        Args: { exercise: Json };
+        Returns: {
+          equipment: Database['public']['Enums']['equipment'];
+          instructions: string[];
+          level: Database['public']['Enums']['exercise_level'];
+          metrics: Database['public']['Enums']['exercise_metric'][];
+          name: string;
+          primary_muscles: Database['public']['Enums']['muscle'][];
+          secondary_muscles: Database['public']['Enums']['muscle'][];
+        }[];
+      };
+      edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
         Args: { exercise_ids: string[] };
@@ -586,6 +607,10 @@ export type Database = {
         };
       };
       log_workout: { Args: { log: Json }; Returns: number };
+      metrics_valid: {
+        Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
+        Returns: boolean;
+      };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];
