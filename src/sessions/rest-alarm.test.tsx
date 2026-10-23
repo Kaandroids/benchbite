@@ -6,13 +6,20 @@ import {
 } from 'expo-notifications/build/NotificationPermissions';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { Storage } from 'expo-sqlite/kv-store';
-import { Alert, type AlertButton } from 'react-native';
+import { Alert, Linking, type AlertButton } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
-import { offerRestAlarm, RestAlarm, scheduleRestEnd } from './rest-alarm';
+import {
+  enableRestAlerts,
+  offerRestAlarm,
+  refreshPermission,
+  resetPermission,
+  RestAlarm,
+  scheduleRestEnd,
+} from './rest-alarm';
 import { changeRest, resetSessionStore, startSession, toggleDone, updateSession } from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -67,6 +74,7 @@ beforeEach(() => {
   resetSessionStore();
   startSession('user-a', PUSH, {}, {}, NOW);
   Storage.removeItemSync('rest-alarm.asked');
+  resetPermission();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -168,5 +176,52 @@ describe('RestAlarm', () => {
       Haptics.NotificationFeedbackType.Success,
     );
     expect(cancel).toHaveBeenCalledWith('rest-end');
+  });
+});
+
+describe('enableRestAlerts', () => {
+  const texts = {
+    channelName: 'Rest timer',
+    offTitle: 'Notifications are off',
+    offMessage: "Turn them on in your phone's settings.",
+    openSettings: 'Open settings',
+    notNow: 'Not now',
+  };
+
+  it('shows the system prompt while it can', async () => {
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
+    requestPermissions.mockResolvedValue({ granted: true });
+    await enableRestAlerts(texts);
+    expect(requestPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains and opens the phone's settings when the app can no longer ask", async () => {
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: false });
+    const openSettings = jest.spyOn(Linking, 'openSettings').mockResolvedValue();
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons?: AlertButton[]) => {
+      buttons?.find((item) => item.text === 'Open settings')?.onPress?.();
+    });
+    await enableRestAlerts(texts);
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Notifications are off',
+      "Turn them on in your phone's settings.",
+      expect.any(Array),
+    );
+    expect(requestPermissions).not.toHaveBeenCalled();
+    expect(openSettings).toHaveBeenCalled();
+  });
+});
+
+describe('the rest alarm and the permission', () => {
+  it('schedules the running rest once notifications are allowed', async () => {
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
+    await render(<RestAlarm />);
+    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    expect(schedule).not.toHaveBeenCalled();
+    getPermissions.mockResolvedValue({ granted: true, canAskAgain: true });
+    await act(() => refreshPermission());
+    expect(schedule).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: expect.objectContaining({ date: NOW + 90_000 }) }),
+    );
   });
 });

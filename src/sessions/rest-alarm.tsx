@@ -15,9 +15,9 @@ import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notificat
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
 import { Storage } from 'expo-sqlite/kv-store';
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform } from 'react-native';
+import { Alert, AppState, Linking, Platform } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 
@@ -33,6 +33,62 @@ const LATE_MS = 2000;
 const ASKED_KEY = 'rest-alarm.asked';
 
 type RestNotification = { title: string; body: string; channelName: string };
+
+/** Whether notifications are allowed, and whether the system prompt can still be shown. */
+export type NotificationPermission = { granted: boolean; canAskAgain: boolean };
+
+// The permission as last read, shared by everything that shows or depends on it. It is read
+// again whenever the app comes back, as it can change in the phone's settings meanwhile.
+let permission: NotificationPermission | null = null;
+const listeners = new Set<() => void>();
+
+/** Reads the notification permission again, and tells everything that shows it. */
+export async function refreshPermission() {
+  const { granted, canAskAgain } = await getPermissionsAsync();
+  if (permission?.granted !== granted || permission.canAskAgain !== canAskAgain) {
+    permission = { granted, canAskAgain };
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** The notification permission, read when first used and whenever the app comes back. */
+export function useNotificationPermission(): NotificationPermission | null {
+  useEffect(() => {
+    const read = () =>
+      void refreshPermission().catch((error: unknown) =>
+        console.warn('Could not read the notification permission', error),
+      );
+    read();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        read();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+  return useSyncExternalStore(subscribe, () => permission);
+}
+
+/** For tests: forgets the permission read. */
+export function resetPermission() {
+  permission = null;
+}
+
+type RestAlertsTexts = {
+  channelName: string;
+  /** Explains that notifications can only be turned on in the phone's settings now. */
+  offTitle: string;
+  offMessage: string;
+  openSettings: string;
+  notNow: string;
+};
 
 type RestAlarmOffer = {
   title: string;
@@ -75,7 +131,30 @@ export async function offerRestAlarm(offer: RestAlarmOffer) {
   if (allowed) {
     await createChannel(offer.channelName);
     await requestPermissionsAsync();
+    await refreshPermission();
   }
+}
+
+/**
+ * Turns rest alerts on when asked to, as from the rest bar: with the system prompt while it can
+ * still be shown, or else by explaining that and opening the phone's settings.
+ */
+export async function enableRestAlerts(texts: RestAlertsTexts) {
+  const current = await getPermissionsAsync();
+  if (current.granted) {
+    await refreshPermission();
+    return;
+  }
+  if (current.canAskAgain) {
+    await createChannel(texts.channelName);
+    await requestPermissionsAsync();
+    await refreshPermission();
+    return;
+  }
+  Alert.alert(texts.offTitle, texts.offMessage, [
+    { text: texts.notNow, style: 'cancel' },
+    { text: texts.openSettings, onPress: () => void Linking.openSettings() },
+  ]);
 }
 
 /** Schedules the notification for the end of a rest, replacing the one before, when allowed. */
@@ -107,6 +186,8 @@ export function RestAlarm() {
   const endsAt = session?.rest?.endsAt;
   const exerciseId = session?.exercises[session.current]?.exerciseId;
   const name = library.data?.find((item) => item.id === exerciseId)?.name;
+  // Scheduled again once notifications are allowed, also during a rest.
+  const granted = useNotificationPermission()?.granted ?? false;
 
   useEffect(() => {
     if (endsAt === undefined || endsAt <= Date.now()) {
@@ -129,7 +210,7 @@ export function RestAlarm() {
       );
     }, endsAt - Date.now());
     return () => clearTimeout(timer);
-  }, [endsAt, name, t]);
+  }, [endsAt, name, t, granted]);
 
   return null;
 }
