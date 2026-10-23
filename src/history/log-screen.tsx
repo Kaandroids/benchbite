@@ -120,13 +120,36 @@ export function LogScreen({ id }: { id: number }) {
           {workoutName(log)}
         </Text>
         <Text color="textMuted">{`${day} · ${hours}`}</Text>
-        <View style={[styles.stats, { columnGap: spacing.md, marginTop: spacing.xs }]}>
-          {stats.map((stat) => (
-            <Text key={stat.label} color="textMuted" style={styles.semibold}>
-              <Text style={[styles.bold, styles.tabular]}>{stat.value}</Text> {stat.label}
+      </View>
+
+      {/* Four even columns, like the figures on a workout's screen. */}
+      <View
+        style={[
+          styles.stats,
+          {
+            paddingVertical: spacing.md,
+            borderRadius: radii.lg,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
+        {stats.map((stat, index) => (
+          <View
+            key={stat.label}
+            style={[
+              styles.stat,
+              { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
+            ]}
+          >
+            <Text variant="headline" style={styles.tabular}>
+              {stat.value}
             </Text>
-          ))}
-        </View>
+            <Text variant="caption" color="textMuted">
+              {stat.label}
+            </Text>
+          </View>
+        ))}
       </View>
 
       {exercises.map((exercise, index) => {
@@ -134,25 +157,12 @@ export function LogScreen({ id }: { id: number }) {
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
         const { best, total } = summarizeSets(exercise.sets, kind);
         const describe = (set: SetValues) => describeSet(set, kind);
-        const totals = {
-          volume: [
-            t('history.exercise.volume'),
-            `${format(Math.round(total.kind === 'volume' ? total.kilograms : 0))} kg`,
-          ],
-          reps: [
-            t('history.exercise.totalReps'),
-            t('history.exercise.reps', { count: total.kind === 'reps' ? total.reps : 0 }),
-          ],
-          time: [
-            t('history.exercise.totalTime'),
-            minutesAndSeconds(total.kind === 'time' ? total.seconds : 0),
-          ],
-          distance: [
-            t('history.exercise.totalDistance'),
-            `${format(total.kind === 'distance' ? total.meters : 0)} m`,
-          ],
-        } as const;
-        const [totalLabel, totalValue] = totals[total.kind];
+        const totalValue = {
+          volume: () => `${format(Math.round(total.kind === 'volume' ? total.kilograms : 0))} kg`,
+          reps: () => t('history.exercise.reps', { count: total.kind === 'reps' ? total.reps : 0 }),
+          time: () => minutesAndSeconds(total.kind === 'time' ? total.seconds : 0),
+          distance: () => `${format(total.kind === 'distance' ? total.meters : 0)} m`,
+        }[total.kind]();
         return (
           <View
             key={index}
@@ -174,31 +184,42 @@ export function LogScreen({ id }: { id: number }) {
                   {info?.name ?? ''}
                 </Text>
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
-                  {t('history.exercise.setCount', { count: exercise.sets.length })}
+                  {[
+                    t('history.exercise.setCount', { count: exercise.sets.length }),
+                    totalValue,
+                  ].join(' · ')}
                 </Text>
               </View>
             </View>
-            <View style={[styles.row, { gap: spacing.sm }]}>
-              <View
-                style={[styles.box, { borderRadius: radii.md, backgroundColor: colors.selected }]}
-              >
-                <Text variant="caption" color="primaryText" style={styles.bold}>
-                  {t('history.exercise.best')}
-                </Text>
-                <Text variant="headline">{best ? describe(best) : '—'}</Text>
-              </View>
-              <View
-                style={[styles.box, { borderRadius: radii.md, backgroundColor: colors.background }]}
-              >
-                <Text variant="caption" color="textMuted" style={styles.bold}>
-                  {totalLabel}
-                </Text>
-                <Text variant="headline">{totalValue}</Text>
-              </View>
+            {/* Every set, the best one picked out. */}
+            <View style={[styles.chips, { gap: spacing.xs }]}>
+              {exercise.sets.map((set, setIndex) => {
+                const isBest = set === best;
+                return (
+                  <View
+                    key={setIndex}
+                    accessibilityLabel={
+                      isBest ? `${t('history.exercise.best')}: ${describe(set)}` : undefined
+                    }
+                    style={[
+                      styles.chip,
+                      {
+                        borderRadius: radii.md,
+                        backgroundColor: isBest ? colors.selected : colors.background,
+                      },
+                    ]}
+                  >
+                    <Text
+                      variant="caption"
+                      color={isBest ? 'primaryText' : 'text'}
+                      style={[styles.bold, styles.tabular]}
+                    >
+                      {shortSet(set, kind, describe)}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
-            <Text color="textMuted" style={styles.semibold}>
-              {exercise.sets.map((set) => shortSet(set, kind, describe)).join(' · ')}
-            </Text>
           </View>
         );
       })}
@@ -237,15 +258,22 @@ const styles = StyleSheet.create({
   },
   stats: {
     flexDirection: 'row',
+    borderWidth: 1,
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  chips: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   exercise: {
     borderWidth: 1,
-  },
-  box: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
   },
   delete: {
     height: 48,

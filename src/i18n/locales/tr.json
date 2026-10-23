@@ -608,10 +608,6 @@
     "deleteError": "Antrenman silinemedi. Bağlantını kontrol edip tekrar dene.",
     "exercise": {
       "best": "EN İYİ SET",
-      "volume": "HACİM",
-      "totalReps": "TOPLAM TEKRAR",
-      "totalTime": "TOPLAM SÜRE",
-      "totalDistance": "MESAFE",
       "reps": "{{count}} tekrar",
       "setCount_one": "{{count}} set",
       "setCount_other": "{{count}} set"
