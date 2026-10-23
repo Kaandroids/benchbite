@@ -69,6 +69,8 @@ const exercise = (
   level: 'beginner',
   category: 'strength',
   imagePaths: [],
+  custom: false,
+  archived: false,
 });
 
 const PUSH = testWorkout(4, {

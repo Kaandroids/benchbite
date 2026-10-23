@@ -212,6 +212,7 @@
     "add_one": "{{count}} egzersiz ekle",
     "add_other": "{{count}} egzersiz ekle",
     "filters": {
+      "mine": "Benim",
       "chest": "Göğüs",
       "back": "Sırt",
       "shoulders": "Omuz",

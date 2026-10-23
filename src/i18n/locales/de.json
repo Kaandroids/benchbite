@@ -212,6 +212,7 @@
     "add_one": "{{count}} Übung hinzufügen",
     "add_other": "{{count}} Übungen hinzufügen",
     "filters": {
+      "mine": "Meine",
       "chest": "Brust",
       "back": "Rücken",
       "shoulders": "Schultern",

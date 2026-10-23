@@ -212,6 +212,7 @@
     "add_one": "Add {{count}} exercise",
     "add_other": "Add {{count}} exercises",
     "filters": {
+      "mine": "Mine",
       "chest": "Chest",
       "back": "Back",
       "shoulders": "Shoulders",

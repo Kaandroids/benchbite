@@ -93,6 +93,8 @@ describe('filterExercises', () => {
     level: 'beginner',
     category: 'strength',
     imagePaths: [],
+    custom: false,
+    archived: false,
     ...more,
   });
   const library = [
@@ -100,6 +102,8 @@ describe('filterExercises', () => {
     exercise('Şınav', {}, 'Pushups'),
     exercise('Lat Pulldown', { primaryMuscles: ['lats'] }),
     exercise('Rowing', { primaryMuscles: ['quadriceps'], category: 'cardio' }),
+    exercise('Hip thrust', { primaryMuscles: ['glutes'], custom: true }),
+    exercise('Old press', { custom: true, archived: true }),
   ];
   const names = (query: string, filter: Parameters<typeof filterExercises>[2] = null) =>
     filterExercises(library, query, filter, 'tr').map((item) => item.name);
@@ -118,7 +122,12 @@ describe('filterExercises', () => {
     expect(names('', 'cardio')).toEqual(['Rowing']);
   });
 
-  it('keeps everything without a query or a filter', () => {
-    expect(names('')).toHaveLength(4);
+  it("keeps the user's own exercises", () => {
+    expect(names('', 'mine')).toEqual(['Hip thrust']);
+  });
+
+  it('keeps everything without a query or a filter, but archived exercises', () => {
+    expect(names('')).toHaveLength(5);
+    expect(names('press')).toEqual(['Bench Press']);
   });
 });

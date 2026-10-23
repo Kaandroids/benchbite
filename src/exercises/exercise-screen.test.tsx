@@ -22,6 +22,8 @@ const ROW: LibraryExercise = {
   level: 'beginner',
   category: 'strength',
   imagePaths: ['row/0.webp', 'row/1.webp'],
+  custom: false,
+  archived: false,
 };
 
 const query = <T,>(data: T | undefined, state: { isError?: boolean } = {}) => ({
