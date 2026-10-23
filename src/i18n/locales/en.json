@@ -592,6 +592,12 @@
       "next": "Next up: {{name}}",
       "body": "Time for your next set.",
       "channel": "Rest timer"
+    },
+    "restAlarm": {
+      "title": "Tell you when your rest is over?",
+      "message": "We let you know when it ends, also when your phone is locked.",
+      "allow": "Allow",
+      "notNow": "Not now"
     }
   },
   "history": {

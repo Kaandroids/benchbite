@@ -592,6 +592,12 @@
       "next": "Weiter mit: {{name}}",
       "body": "Zeit für deinen nächsten Satz.",
       "channel": "Pausentimer"
+    },
+    "restAlarm": {
+      "title": "Bescheid geben, wenn die Pause vorbei ist?",
+      "message": "Wir melden uns, wenn sie endet, auch bei gesperrtem Handy.",
+      "allow": "Erlauben",
+      "notNow": "Jetzt nicht"
     }
   },
   "history": {

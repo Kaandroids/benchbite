@@ -5,12 +5,14 @@ import {
   requestPermissionsAsync,
 } from 'expo-notifications/build/NotificationPermissions';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
+import { Storage } from 'expo-sqlite/kv-store';
+import { Alert, type AlertButton } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 import { act, render } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
-import { RestAlarm, scheduleRestEnd } from './rest-alarm';
+import { offerRestAlarm, RestAlarm, scheduleRestEnd } from './rest-alarm';
 import { changeRest, resetSessionStore, startSession, toggleDone, updateSession } from './session';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -64,6 +66,7 @@ beforeEach(() => {
   } as never);
   resetSessionStore();
   startSession('user-a', PUSH, {}, {}, NOW);
+  Storage.removeItemSync('rest-alarm.asked');
 });
 afterEach(() => jest.useRealTimers());
 
@@ -77,15 +80,57 @@ describe('scheduleRestEnd', () => {
     });
   });
 
-  it('asks for permission once, and schedules nothing without it', async () => {
+  it('schedules nothing without permission, and does not ask for it', async () => {
     getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
-    requestPermissions.mockResolvedValue({ granted: false });
     await scheduleRestEnd(NOW + 90_000, content);
-    expect(requestPermissions).toHaveBeenCalledTimes(1);
-    getPermissions.mockResolvedValue({ granted: false, canAskAgain: false });
-    await scheduleRestEnd(NOW + 90_000, content);
-    expect(requestPermissions).toHaveBeenCalledTimes(1);
+    expect(requestPermissions).not.toHaveBeenCalled();
     expect(schedule).not.toHaveBeenCalled();
+  });
+});
+
+describe('offerRestAlarm', () => {
+  const offer = {
+    title: 'Tell you when your rest is over?',
+    message: 'We let you know when it ends.',
+    allow: 'Allow',
+    notNow: 'Not now',
+    channelName: 'Rest timer',
+  };
+  const answer = (button: string) =>
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons?: AlertButton[]) => {
+      buttons?.find((item) => item.text === button)?.onPress?.();
+    });
+
+  it('asks first, and shows the system prompt only on Allow', async () => {
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
+    requestPermissions.mockResolvedValue({ granted: true });
+    const alert = answer('Allow');
+    await offerRestAlarm(offer);
+    expect(alert).toHaveBeenCalledWith(
+      offer.title,
+      offer.message,
+      expect.any(Array),
+      expect.objectContaining({ cancelable: true }),
+    );
+    expect(requestPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the system prompt on Not now, and asks only once', async () => {
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: true });
+    const alert = answer('Not now');
+    await offerRestAlarm(offer);
+    await offerRestAlarm(offer);
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(requestPermissions).not.toHaveBeenCalled();
+  });
+
+  it('does not ask when notifications are allowed, or cannot be asked for', async () => {
+    const alert = answer('Allow');
+    getPermissions.mockResolvedValue({ granted: true, canAskAgain: true });
+    await offerRestAlarm(offer);
+    getPermissions.mockResolvedValue({ granted: false, canAskAgain: false });
+    await offerRestAlarm(offer);
+    expect(alert).not.toHaveBeenCalled();
   });
 });
 

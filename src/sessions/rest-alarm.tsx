@@ -1,7 +1,7 @@
 // The end of the rest between sets, signalled even when the app is in the background or the
 // phone is locked (#35): a local notification is scheduled for the moment the rest ends, and
 // replaced or cancelled whenever the rest changes. While the app is open, a haptic signals it
-// instead, and the notification is not shown.
+// instead, and the notification is not shown. Permission is offered once, when a workout starts.
 //
 // Imported from the package's modules rather than its index, as in src/reminders/reminders.ts.
 import * as Haptics from 'expo-haptics';
@@ -14,9 +14,10 @@ import {
 import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
+import { Storage } from 'expo-sqlite/kv-store';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 
@@ -28,27 +29,61 @@ export const REST_NOTIFICATION_ID = 'rest-end';
 const CHANNEL_ID = 'rest-timer';
 /** A rest that ended longer ago than this, as seen on coming back to the app, is not signalled. */
 const LATE_MS = 2000;
+/** Set once the user was asked, so that a "Not now" is not asked again. */
+const ASKED_KEY = 'rest-alarm.asked';
 
 type RestNotification = { title: string; body: string; channelName: string };
 
-/**
- * Schedules the notification for the end of a rest, replacing the one before. Without permission
- * it asks once, with the system prompt, and otherwise schedules nothing.
- */
-export async function scheduleRestEnd(endsAt: number, content: RestNotification) {
+type RestAlarmOffer = {
+  title: string;
+  message: string;
+  allow: string;
+  notNow: string;
+  channelName: string;
+};
+
+async function createChannel(name: string) {
   if (Platform.OS === 'android') {
-    // High importance, so that it shows over the screen and vibrates.
-    await setNotificationChannelAsync(CHANNEL_ID, {
-      name: content.channelName,
-      importance: AndroidImportance.HIGH,
-    });
+    // High importance, so that it shows over the screen and vibrates. Android 13 and later also
+    // only show the permission prompt once the app has a channel.
+    await setNotificationChannelAsync(CHANNEL_ID, { name, importance: AndroidImportance.HIGH });
   }
+}
+
+/**
+ * Offers to signal the end of rests, when a workout starts and notifications are not allowed
+ * yet. The app's own question comes first, so that "Not now" keeps the system prompt, which can
+ * be shown only once, for later; either way it is asked only once.
+ */
+export async function offerRestAlarm(offer: RestAlarmOffer) {
   const permission = await getPermissionsAsync();
-  if (!permission.granted) {
-    if (!permission.canAskAgain || !(await requestPermissionsAsync()).granted) {
-      return;
-    }
+  if (permission.granted || !permission.canAskAgain || Storage.getItemSync(ASKED_KEY)) {
+    return;
   }
+  Storage.setItemSync(ASKED_KEY, 'true');
+  const allowed = await new Promise<boolean>((resolve) =>
+    Alert.alert(
+      offer.title,
+      offer.message,
+      [
+        { text: offer.notNow, style: 'cancel', onPress: () => resolve(false) },
+        { text: offer.allow, onPress: () => resolve(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolve(false) },
+    ),
+  );
+  if (allowed) {
+    await createChannel(offer.channelName);
+    await requestPermissionsAsync();
+  }
+}
+
+/** Schedules the notification for the end of a rest, replacing the one before, when allowed. */
+export async function scheduleRestEnd(endsAt: number, content: RestNotification) {
+  if (!(await getPermissionsAsync()).granted) {
+    return;
+  }
+  await createChannel(content.channelName);
   await scheduleNotificationAsync({
     identifier: REST_NOTIFICATION_ID,
     content: { title: content.title, body: content.body },
