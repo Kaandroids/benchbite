@@ -84,11 +84,11 @@ export function isPassing(step: Step): boolean {
 }
 
 /**
- * Whether the user can go back from the step. The summary is shown once the onboarding is saved,
- * so its answers can no longer be changed there.
+ * Whether the user can go back from the step. The plan step saves the onboarding, and a saved
+ * onboarding cannot be saved again, so the steps after it have no way back to change the answers.
  */
 export function canGoBackFrom(step: Step): boolean {
-  return step !== 'summary';
+  return STEPS.indexOf(step) <= STEPS.indexOf('plan');
 }
 
 /** The step that going back opens, or null if there is none. */

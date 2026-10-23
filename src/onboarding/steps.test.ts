@@ -86,10 +86,12 @@ describe('steps', () => {
     expect(previousStep('plan', {})).toBe('session-length');
   });
 
-  it('has no way back from the summary, which follows the saved onboarding', () => {
+  it('has no way back once the plan step saved the onboarding', () => {
+    expect(canGoBackFrom('plan')).toBe(true);
+    expect(canGoBackFrom('reminders')).toBe(false);
+    expect(previousStep('reminders', {})).toBeNull();
     expect(canGoBackFrom('summary')).toBe(false);
     expect(previousStep('summary', {})).toBeNull();
-    expect(canGoBackFrom('reminders')).toBe(true);
   });
 
   it('drops answers of steps that left the flow', () => {
