@@ -1,11 +1,43 @@
--- A log also keeps how many exercises and sets the workout had when it was started, so that the
--- history can say how much of it was done, such as 7 of 8 exercises. Logs saved before have none.
+-- A log also keeps what the workout had when it was started, so that the history can say how
+-- much of it was done (7 of 8 exercises), and the calories it burned, estimated when it is saved
+-- so that the history never changes afterwards (ADR 0021). Logs saved before have neither.
 
 alter table public.workout_logs
   add column planned_exercises smallint check (planned_exercises between 1 and 50),
-  add column planned_sets smallint check (planned_sets between 1 and 1000);
+  add column planned_sets smallint check (planned_sets between 1 and 1000),
+  add column estimated_kcal integer check (estimated_kcal >= 0);
 
--- Unchanged apart from saving "plannedExercises" and "plannedSets", which are optional.
+-- Calories burned in a minute of strength training: 5 METs, a kilocalorie per kilogram of body
+-- weight and hour for each MET.
+create function public.strength_kcal_per_minute(weight_kg numeric)
+returns numeric
+language sql
+immutable
+set search_path = ''
+as $$
+  select 5.0 * weight_kg / 60;
+$$;
+
+-- The same for the caller at their latest weight, for estimating planned workouts; null without a
+-- weight.
+create function public.my_strength_kcal_per_minute()
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select public.strength_kcal_per_minute(e.weight_kg)
+  from public.weight_entries e
+  where e.user_id = (select auth.uid())
+  order by e.measured_on desc
+  limit 1;
+$$;
+
+revoke execute on function public.my_strength_kcal_per_minute from public, anon;
+grant execute on function public.my_strength_kcal_per_minute to authenticated;
+
+-- Unchanged apart from saving "plannedExercises" and "plannedSets", which are optional, and the
+-- estimate of the calories.
 create or replace function public.log_workout(log jsonb)
 returns bigint
 language plpgsql
@@ -46,11 +78,15 @@ begin
   end if;
 
   insert into public.workout_logs (
-    user_id, workout_id, name, type, started_at, finished_at, planned_exercises, planned_sets
+    user_id, workout_id, name, type, started_at, finished_at, planned_exercises, planned_sets,
+    estimated_kcal
   )
   values (
     caller_id, source_id, source.name, source.type, started, finished,
-    (log ->> 'plannedExercises')::smallint, (log ->> 'plannedSets')::smallint
+    (log ->> 'plannedExercises')::smallint, (log ->> 'plannedSets')::smallint,
+    round(
+      public.my_strength_kcal_per_minute() * extract(epoch from finished - started) / 60
+    )::integer
   )
   returning id into new_log_id;
 

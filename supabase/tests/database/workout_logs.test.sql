@@ -15,6 +15,8 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
+-- User a weighs 72 kg, so 50 minutes burn about 300 kcal at 5 METs.
+insert into public.weight_entries (user_id, weight_kg) values ('00000000-0000-0000-0000-00000000000a', 72);
 insert into public.workouts (id, user_id, name, type, estimated_minutes)
   overriding system value values
   (900, '00000000-0000-0000-0000-00000000000a', null, 'push', 45),
@@ -106,10 +108,11 @@ select is_empty($$ select 1 from public.workout_logs $$, 'Rejected logs are not 
 -- A valid log is saved with the workout's type and its sets in order.
 select set_config('test.first', public.log_workout(pg_temp.log())::text, true);
 select results_eq(
-  $$ select workout_id, name, type::text, planned_exercises::integer, planned_sets::integer
+  $$ select workout_id, name, type::text, planned_exercises::integer, planned_sets::integer,
+       estimated_kcal
      from public.workout_logs where id = current_setting('test.first')::bigint $$,
-  $$ values (900::bigint, null::text, 'push', 3, 5) $$,
-  'The log keeps the workout, its type and what was planned'
+  $$ values (900::bigint, null::text, 'push', 3, 5, 300) $$,
+  'The log keeps the workout, its type, what was planned and the calories from the weight then'
 );
 select results_eq(
   $$ select exercise_position::integer, set_position::integer, exercise_id, weight_kg, reps::integer,
