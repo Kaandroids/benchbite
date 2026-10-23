@@ -196,7 +196,10 @@ export function SessionScreen() {
           );
         })}
 
-        <AddSetButton onPress={() => updateSession((current) => addSet(current, index))} />
+        <AddSetButton
+          count={exercise.sets.length}
+          onPress={() => updateSession((current) => addSet(current, index))}
+        />
       </View>
     );
   };

@@ -269,6 +269,7 @@ function LogEditor({
               />
             ))}
             <AddSetButton
+              count={exercise.sets.length}
               onPress={() =>
                 setExercises((current) => {
                   // A new set repeats the one before it, like during a workout.

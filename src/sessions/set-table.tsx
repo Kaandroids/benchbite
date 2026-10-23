@@ -7,7 +7,7 @@ import { fonts, typography, useTheme } from '@/theme';
 import { minutesAndSeconds } from '@/workouts/format';
 
 import { describeSet, parseTime, type SetField, type SetKind } from './fields';
-import type { SetValues } from './session';
+import { MAX_SETS, type SetValues } from './session';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
 // header, a line for each set and a button that adds one.
@@ -268,10 +268,13 @@ export function SetLine({
   );
 }
 
-/** Adds a set to an exercise. */
-export function AddSetButton({ onPress }: { onPress: () => void }) {
+/** Adds a set to an exercise, until it has as many as a log can keep. */
+export function AddSetButton({ count, onPress }: { count: number; onPress: () => void }) {
   const { t } = useTranslation();
   const { colors, radii } = useTheme();
+  if (count >= MAX_SETS) {
+    return null;
+  }
   return (
     <Pressable
       accessibilityRole="button"

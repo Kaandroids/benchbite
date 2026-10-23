@@ -355,6 +355,17 @@ describe('EditLogScreen', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
+  it('adds sets up to as many as a log can keep', async () => {
+    await render(<EditLogScreen id={3} />);
+    // The bench press has 2 sets.
+    for (let added = 0; added < 18; added++) {
+      await fireEvent.press(screen.getAllByRole('button', { name: '+ Add set' })[0]!);
+    }
+    expect(screen.getAllByLabelText('Reps of set 20')).toHaveLength(1);
+    // Only the cable row and the plank can still get sets.
+    expect(screen.getAllByRole('button', { name: '+ Add set' })).toHaveLength(2);
+  });
+
   it('says when saving fails and stays open', async () => {
     const alert = jest.spyOn(Alert, 'alert');
     jest.spyOn(console, 'warn').mockImplementation(() => {});

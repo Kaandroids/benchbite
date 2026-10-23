@@ -262,12 +262,15 @@ export function toggleDone(
   return next;
 }
 
+/** The most sets an exercise can have in a log (logged_sets.set_position). */
+export const MAX_SETS = 20;
+
 /** Adds a set to an exercise, with the values of its last set but its time. */
 export function addSet(value: Session, exercise: number): Session {
   return {
     ...value,
     exercises: value.exercises.map((item, i) => {
-      if (i !== exercise) {
+      if (i !== exercise || item.sets.length >= MAX_SETS) {
         return item;
       }
       const last = item.sets[item.sets.length - 1];
