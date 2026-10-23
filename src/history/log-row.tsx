@@ -56,13 +56,19 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
         </Text>
         {icons ? (
           <View style={[styles.stats, { gap: spacing.md }]}>
-            <IconStat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
+            <IconStat
+              icon="dumbbell"
+              color="info"
+              text={String(log.exercises)}
+              label={t('workout.size.exercises', { count: log.exercises })}
+            />
             <IconStat
               icon="target"
               color="fat"
               text={String(log.sets)}
               label={t('history.sets', { count: log.sets })}
             />
+            <IconStat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
             {log.estimatedKcal !== null ? (
               <IconStat
                 icon="flame"

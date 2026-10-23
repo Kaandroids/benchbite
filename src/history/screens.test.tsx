@@ -37,6 +37,7 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   type,
   startedAt: start,
   finishedAt: new Date(start.getTime() + minutes * 60_000),
+  exercises: 6,
   sets: 17,
   kilograms: 6240,
   estimatedKcal: 390,
@@ -133,6 +134,7 @@ describe('HistoryScreen', () => {
     expect(screen.getByText(/October 5/)).toBeTruthy();
     // With icons: the sets as a number that screen readers say in words.
     expect(screen.getByText('52 min')).toBeTruthy();
+    expect(screen.getAllByLabelText('6 exercises')).toHaveLength(4);
     expect(screen.getAllByLabelText('17 sets')).toHaveLength(4);
   });
 });

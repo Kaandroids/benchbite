@@ -14,6 +14,7 @@ export type LogSummary = {
   type: Workout['type'];
   startedAt: Date;
   finishedAt: Date;
+  exercises: number;
   sets: number;
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
@@ -50,6 +51,7 @@ export async function fetchLogSummaries(): Promise<LogSummary[]> {
     type: row.type,
     startedAt: new Date(row.started_at ?? 0),
     finishedAt: new Date(row.finished_at ?? 0),
+    exercises: row.exercises ?? 0,
     sets: row.sets ?? 0,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
