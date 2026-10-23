@@ -63,7 +63,7 @@ function SetInput({
   ref,
 }: SetInputProps) {
   const { colors, radii } = useTheme();
-  // Typed text is kept until editing ends, so that "1:" or "2." can be typed on the way.
+  // Typed text is shown until editing ends, so that "1:" or "2." can be typed on the way.
   const [text, setText] = useState<string | null>(null);
   const running = clock !== null;
   return (
@@ -84,7 +84,15 @@ function SetInput({
             : 'number-pad'
       }
       selectTextOnFocus
-      onChangeText={setText}
+      onChangeText={(typed) => {
+        setText(typed);
+        // Saved as soon as it reads as a value, so that the set can be ticked while the keyboard
+        // is still up; "1:" or an empty field wait until editing ends.
+        const value = read(field, typed);
+        if (value !== null) {
+          onChange(value);
+        }
+      }}
       onEndEditing={() => {
         if (text !== null) {
           onChange(read(field, text));
