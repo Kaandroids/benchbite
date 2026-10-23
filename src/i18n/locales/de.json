@@ -611,6 +611,8 @@
       "reps": "{{count}} Wdh.",
       "setCount_one": "{{count}} Satz",
       "setCount_other": "{{count}} Sätze"
-    }
+    },
+    "started": "Begonnen",
+    "ended": "Beendet"
   }
 }

@@ -611,6 +611,8 @@
       "reps": "{{count}} tekrar",
       "setCount_one": "{{count}} set",
       "setCount_other": "{{count}} set"
-    }
+    },
+    "started": "Başladı",
+    "ended": "Bitti"
   }
 }

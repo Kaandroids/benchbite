@@ -22,7 +22,6 @@ import {
   useLogSummary,
   type LoggedSet,
 } from './history';
-import { DateTile } from './date-tile';
 import { shortSet, summarizeSets } from './exercise-summary';
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
@@ -56,15 +55,15 @@ export function LogScreen({ id }: { id: number }) {
     );
   }
 
-  // Beside the date tile: "October · 18:04 – 18:56", with the year only when it is not this one.
-  const month = new Intl.DateTimeFormat(i18n.language, {
+  // "Friday, October 23" under the name in the top bar, with the year only when it is not this
+  // one; when it started and ended is in the figures below.
+  const day = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
     month: 'long',
+    day: 'numeric',
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
-  const hours = time.formatRange
-    ? time.formatRange(log.startedAt, log.finishedAt)
-    : `${time.format(log.startedAt)} – ${time.format(log.finishedAt)}`;
   const seconds = Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000);
   const totalTime =
     seconds < 3600
@@ -113,45 +112,80 @@ export function LogScreen({ id }: { id: number }) {
     ]);
 
   return (
-    <Screen onBack={() => router.back()}>
-      <View style={[styles.row, { gap: spacing.md }]}>
-        <DateTile date={log.startedAt} large />
-        <View style={[styles.flex, { gap: 2 }]}>
-          <Text variant="title" accessibilityRole="header" numberOfLines={2}>
+    <Screen
+      onBack={() => router.back()}
+      title={
+        <>
+          <Text
+            variant="bodyStrong"
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={styles.bold}
+          >
             {workoutName(log)}
           </Text>
-          <Text color="textMuted">{`${month} · ${hours}`}</Text>
-        </View>
-      </View>
-
-      {/* Four even columns, like the figures on a workout's screen. */}
+          <Text variant="caption" color="textMuted" numberOfLines={1}>
+            {day}
+          </Text>
+        </>
+      }
+    >
+      {/* Four even columns, like the figures on a workout's screen, over when it started and ended. */}
       <View
         style={[
-          styles.stats,
-          {
-            paddingVertical: spacing.md,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-          },
+          styles.card,
+          { borderRadius: radii.lg, borderColor: colors.border, backgroundColor: colors.surface },
         ]}
       >
-        {stats.map((stat, index) => (
-          <View
-            key={stat.label}
-            style={[
-              styles.stat,
-              { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-            ]}
-          >
-            <Text variant="headline" style={styles.tabular}>
-              {stat.value}
-            </Text>
-            <Text variant="caption" color="textMuted">
-              {stat.label}
-            </Text>
-          </View>
-        ))}
+        <View style={[styles.row, { paddingVertical: spacing.md }]}>
+          {stats.map((stat, index) => (
+            <View
+              key={stat.label}
+              style={[
+                styles.stat,
+                { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
+              ]}
+            >
+              <Text variant="headline" style={styles.tabular}>
+                {stat.value}
+              </Text>
+              <Text variant="caption" color="textMuted">
+                {stat.label}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <View
+          style={[
+            styles.row,
+            { paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+          ]}
+        >
+          {[
+            [t('history.started'), log.startedAt],
+            [t('history.ended'), log.finishedAt],
+          ].map(([label, at], index) => (
+            <View
+              key={String(label)}
+              style={[
+                styles.stat,
+                styles.when,
+                {
+                  gap: spacing.xs,
+                  borderLeftWidth: index > 0 ? 1 : 0,
+                  borderLeftColor: colors.border,
+                },
+              ]}
+            >
+              <Text variant="caption" color="textMuted">
+                {String(label)}
+              </Text>
+              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+                {time.format(at as Date)}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {exercises.map((exercise, index) => {
@@ -258,9 +292,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  stats: {
-    flexDirection: 'row',
+  card: {
     borderWidth: 1,
+  },
+  when: {
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   stat: {
     flex: 1,

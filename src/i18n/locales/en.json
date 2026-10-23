@@ -611,6 +611,8 @@
       "reps": "{{count}} reps",
       "setCount_one": "{{count}} set",
       "setCount_other": "{{count}} sets"
-    }
+    },
+    "started": "Started",
+    "ended": "Ended"
   }
 }
