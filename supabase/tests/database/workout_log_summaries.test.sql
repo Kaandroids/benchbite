@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(4);
+select plan(5);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -42,6 +42,11 @@ select results_eq(
   $$ select kilograms, estimated_kcal from public.workout_log_summaries where id = 701 $$,
   $$ values (0::numeric, null::integer) $$,
   'Without weights lifted or a weight that day, the sums are zero and there is no estimate'
+);
+select is(
+  round(public.my_strength_kcal_per_minute() * 60),
+  450::numeric,
+  'Planned workouts are estimated from the latest weight'
 );
 select is(
   (select count(*)::integer from public.workout_log_summaries),

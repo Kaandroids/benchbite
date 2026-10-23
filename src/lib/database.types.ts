@@ -542,6 +542,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
@@ -565,6 +566,7 @@ export type Database = {
           weight_kg: number;
         }[];
       };
+      strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;
