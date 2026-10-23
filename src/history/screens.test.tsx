@@ -176,16 +176,22 @@ describe('HistoryScreen', () => {
 });
 
 describe('LogScreen', () => {
-  it('shows when, how long and how hard, and every set', async () => {
+  it('shows when, how long and how hard, and each exercise with its best set and total', async () => {
     await render(<LogScreen id={3} />);
     expect(screen.getByText('Push')).toBeTruthy();
     expect(screen.getByText('52:00')).toBeTruthy();
-    expect(screen.getByText('6,240 kg')).toBeTruthy();
+    expect(screen.getByText('17/24')).toBeTruthy();
+    expect(screen.getByText('6,240')).toBeTruthy();
     expect(screen.getByText('~390')).toBeTruthy();
     expect(screen.getByText('Bench press')).toBeTruthy();
+    expect(screen.getByText('2 sets')).toBeTruthy();
     expect(screen.getByText('80 kg × 8')).toBeTruthy();
-    expect(screen.getByText('80 kg × 7')).toBeTruthy();
-    expect(screen.getByText('0:50')).toBeTruthy();
+    expect(screen.getByText('VOLUME')).toBeTruthy();
+    expect(screen.getByText('1,200 kg')).toBeTruthy();
+    expect(screen.getByText('80 × 8 · 80 × 7')).toBeTruthy();
+    // The plank: its longest hold, all of its time, and its one set.
+    expect(screen.getByText('TOTAL TIME')).toBeTruthy();
+    expect(screen.getAllByText('0:50')).toHaveLength(3);
   });
 
   it('deletes the workout after asking', async () => {

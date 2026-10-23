@@ -605,6 +605,16 @@
     "setsOf_one": "{{done}} von {{count}} Satz",
     "setsOf_other": "{{done}} von {{count}} Sätzen",
     "deleteErrorTitle": "Nicht gelöscht",
-    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut."
+    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
+    "exercise": {
+      "best": "BESTER SATZ",
+      "volume": "VOLUMEN",
+      "totalReps": "WDH. GESAMT",
+      "totalTime": "ZEIT GESAMT",
+      "totalDistance": "DISTANZ",
+      "reps": "{{count}} Wdh.",
+      "setCount_one": "{{count}} Satz",
+      "setCount_other": "{{count}} Sätze"
+    }
   }
 }

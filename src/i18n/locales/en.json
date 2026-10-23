@@ -605,6 +605,16 @@
     "setsOf_one": "{{done}} of {{count}} set",
     "setsOf_other": "{{done}} of {{count}} sets",
     "deleteErrorTitle": "Not deleted",
-    "deleteError": "We couldn't delete the workout. Check your connection and try again."
+    "deleteError": "We couldn't delete the workout. Check your connection and try again.",
+    "exercise": {
+      "best": "BEST SET",
+      "volume": "VOLUME",
+      "totalReps": "TOTAL REPS",
+      "totalTime": "TOTAL TIME",
+      "totalDistance": "DISTANCE",
+      "reps": "{{count}} reps",
+      "setCount_one": "{{count}} set",
+      "setCount_other": "{{count}} sets"
+    }
   }
 }

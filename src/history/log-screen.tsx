@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { Icon, type IconName } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -12,6 +11,7 @@ import { useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { describeSet, setKindOf } from '@/sessions/fields';
+import type { SetValues } from '@/sessions/session';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
@@ -23,14 +23,9 @@ import {
   useLogSummary,
   type LoggedSet,
 } from './history';
+import { shortSet, summarizeSets } from './exercise-summary';
 
-type Stat = {
-  icon: IconName;
-  color: keyof ColorTokens;
-  tile: keyof ColorTokens;
-  value: string;
-  label: string;
-};
+type Stat = { color: keyof ColorTokens; value: string; label: string };
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
@@ -66,41 +61,17 @@ export function LogScreen({ id }: { id: number }) {
 
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
   const seconds = Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000);
+  const totalTime =
+    seconds < 3600
+      ? minutesAndSeconds(seconds)
+      : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`;
+  // The workout at a glance: each figure in the colour it has elsewhere in the app.
   const stats: Stat[] = [
-    {
-      icon: 'timer',
-      color: 'primaryText',
-      tile: 'selected',
-      value:
-        seconds < 3600
-          ? minutesAndSeconds(seconds)
-          : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`,
-      label: t('history.stats.time'),
-    },
-    {
-      icon: 'dumbbell',
-      color: 'info',
-      tile: 'infoBackground',
-      value: doneOf(log.sets, log.plannedSets),
-      label: t('history.stats.sets'),
-    },
-    {
-      icon: 'bolt',
-      color: 'fat',
-      tile: 'track',
-      value: `${format(Math.round(log.kilograms))} kg`,
-      label: t('history.stats.lifted'),
-    },
+    { color: 'primaryText', value: totalTime, label: t('history.stats.time') },
+    { color: 'info', value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
+    { color: 'fat', value: format(Math.round(log.kilograms)), label: 'kg' },
     ...(log.estimatedKcal !== null
-      ? [
-          {
-            icon: 'flame' as const,
-            color: 'primary' as const,
-            tile: 'iconBackground' as const,
-            value: `~${format(log.estimatedKcal)}`,
-            label: t('history.stats.kcal'),
-          },
-        ]
+      ? [{ color: 'primary' as const, value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
       : []),
   ];
 
@@ -145,50 +116,49 @@ export function LogScreen({ id }: { id: number }) {
         <Text color="textMuted">
           {`${formatDate(log.startedAt)} · ${time.format(log.startedAt)}–${time.format(log.finishedAt)}`}
         </Text>
-      </View>
-
-      <View style={[styles.stats, { gap: spacing.sm }]}>
-        {stats.map((stat) => (
-          <View
-            key={stat.label}
-            style={[
-              styles.stat,
-              {
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderRadius: radii.md,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
-            <View
-              style={[styles.tile, { borderRadius: radii.md, backgroundColor: colors[stat.tile] }]}
-            >
-              <Icon name={stat.icon} size={18} color={stat.color} />
-            </View>
-            <View>
-              <Text variant="headline" style={styles.tabular}>
+        <View style={[styles.stats, { columnGap: spacing.md, marginTop: spacing.xs }]}>
+          {stats.map((stat) => (
+            <Text key={stat.label} color="textMuted" style={styles.semibold}>
+              <Text color={stat.color} style={[styles.bold, styles.tabular]}>
                 {stat.value}
-              </Text>
-              <Text variant="caption" color="textMuted" style={styles.semibold}>
-                {stat.label}
-              </Text>
-            </View>
-          </View>
-        ))}
+              </Text>{' '}
+              {stat.label}
+            </Text>
+          ))}
+        </View>
       </View>
 
       {exercises.map((exercise, index) => {
         const info = library.data?.find((item) => item.id === exercise.exerciseId);
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
+        const { best, total } = summarizeSets(exercise.sets, kind);
+        const describe = (set: SetValues) => describeSet(set, kind);
+        const totals = {
+          volume: [
+            t('history.exercise.volume'),
+            `${format(Math.round(total.kind === 'volume' ? total.kilograms : 0))} kg`,
+          ],
+          reps: [
+            t('history.exercise.totalReps'),
+            t('history.exercise.reps', { count: total.kind === 'reps' ? total.reps : 0 }),
+          ],
+          time: [
+            t('history.exercise.totalTime'),
+            minutesAndSeconds(total.kind === 'time' ? total.seconds : 0),
+          ],
+          distance: [
+            t('history.exercise.totalDistance'),
+            `${format(total.kind === 'distance' ? total.meters : 0)} m`,
+          ],
+        } as const;
+        const [totalLabel, totalValue] = totals[total.kind];
         return (
           <View
             key={index}
             style={[
               styles.exercise,
               {
-                gap: spacing.xs,
+                gap: spacing.md,
                 padding: spacing.lg,
                 borderRadius: radii.lg,
                 borderColor: colors.border,
@@ -196,23 +166,38 @@ export function LogScreen({ id }: { id: number }) {
               },
             ]}
           >
-            <View style={[styles.row, { gap: spacing.md, marginBottom: spacing.xs }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} />
-              <Text variant="bodyStrong" style={[styles.bold, styles.flex]}>
-                {info?.name ?? ''}
-              </Text>
-            </View>
-            {exercise.sets.map((set, setIndex) => (
-              <View
-                key={setIndex}
-                style={[styles.row, { gap: spacing.md, paddingLeft: spacing.xs }]}
-              >
-                <Text variant="caption" color="textMuted" style={[styles.bold, styles.number]}>
-                  {setIndex + 1}
+            <View style={[styles.row, { gap: spacing.md }]}>
+              <ExerciseThumbnail path={info?.imagePaths[0]} size={44} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" style={styles.bold}>
+                  {info?.name ?? ''}
                 </Text>
-                <Text variant="bodyStrong">{describeSet(set, kind)}</Text>
+                <Text variant="caption" color="textMuted" style={styles.semibold}>
+                  {t('history.exercise.setCount', { count: exercise.sets.length })}
+                </Text>
               </View>
-            ))}
+            </View>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <View
+                style={[styles.box, { borderRadius: radii.md, backgroundColor: colors.selected }]}
+              >
+                <Text variant="caption" color="primaryText" style={styles.bold}>
+                  {t('history.exercise.best')}
+                </Text>
+                <Text variant="headline">{best ? describe(best) : '—'}</Text>
+              </View>
+              <View
+                style={[styles.box, { borderRadius: radii.md, backgroundColor: colors.background }]}
+              >
+                <Text variant="caption" color="textMuted" style={styles.bold}>
+                  {totalLabel}
+                </Text>
+                <Text variant="headline">{totalValue}</Text>
+              </View>
+            </View>
+            <Text color="textMuted" style={styles.semibold}>
+              {exercise.sets.map((set) => shortSet(set, kind, describe)).join(' · ')}
+            </Text>
           </View>
         );
       })}
@@ -253,24 +238,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  stat: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  tile: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   exercise: {
     borderWidth: 1,
   },
-  number: {
-    width: 20,
+  box: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   delete: {
     height: 48,
