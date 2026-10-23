@@ -586,7 +586,13 @@
       "records_other": "{{count}} new records"
     },
     "newRecord": "New record: {{kind}}, {{value}}",
-    "newRecords": "New records: {{kinds}}"
+    "newRecords": "New records: {{kinds}}",
+    "restOver": {
+      "title": "Rest is over",
+      "next": "Next up: {{name}}",
+      "body": "Time for your next set.",
+      "channel": "Rest timer"
+    }
   },
   "history": {
     "seeAll": "See all",

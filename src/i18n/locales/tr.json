@@ -586,7 +586,13 @@
       "records_other": "{{count}} yeni rekor"
     },
     "newRecord": "Yeni rekor: {{kind}}, {{value}}",
-    "newRecords": "Yeni rekorlar: {{kinds}}"
+    "newRecords": "Yeni rekorlar: {{kinds}}",
+    "restOver": {
+      "title": "Dinlenme bitti",
+      "next": "Sıradaki: {{name}}",
+      "body": "Sıradaki setin zamanı.",
+      "channel": "Dinlenme sayacı"
+    }
   },
   "history": {
     "seeAll": "Tümünü gör",

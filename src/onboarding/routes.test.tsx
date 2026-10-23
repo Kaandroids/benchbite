@@ -70,6 +70,10 @@ jest.mock('@/exercises/exercise-screen', () => {
   return { ExerciseScreen: ({ id }: { id: string }) => <MockText>{`Exercise ${id}`}</MockText> };
 });
 
+jest.mock('@/sessions/rest-alarm', () => ({
+  REST_NOTIFICATION_ID: 'rest-end',
+  RestAlarm: () => null,
+}));
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
