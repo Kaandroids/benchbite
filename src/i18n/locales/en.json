@@ -756,6 +756,17 @@
     "choosePhoto": "Choose from photos",
     "removePhoto": "Remove photo",
     "addPhoto": "Add the {{name}} photo",
-    "changePhoto": "Change the {{name}} photo"
+    "changePhoto": "Change the {{name}} photo",
+    "editTitle": "Edit exercise",
+    "save": "Save changes",
+    "logKindLocked": "It has been logged, so this stays.",
+    "archive": "Archive exercise",
+    "archiveNote": "It leaves the lists. Its history and records stay.",
+    "archiveTitle": "Archive this exercise?",
+    "archiveMessage": "It leaves the lists. Its history and records stay, and you can bring it back.",
+    "restore": "Bring back",
+    "archived": "Archived",
+    "archiveErrorTitle": "Not changed",
+    "archiveError": "We couldn't change the exercise. Check your connection and try again."
   }
 }

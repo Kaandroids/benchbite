@@ -756,6 +756,17 @@
     "choosePhoto": "Fotoğraflardan seç",
     "removePhoto": "Fotoğrafı kaldır",
     "addPhoto": "{{name}} fotoğrafını ekle",
-    "changePhoto": "{{name}} fotoğrafını değiştir"
+    "changePhoto": "{{name}} fotoğrafını değiştir",
+    "editTitle": "Hareketi düzenle",
+    "save": "Değişiklikleri kaydet",
+    "logKindLocked": "Kaydedildiği için bu değişmez.",
+    "archive": "Hareketi arşivle",
+    "archiveNote": "Listelerden kalkar. Geçmişi ve rekorları kalır.",
+    "archiveTitle": "Bu hareket arşivlensin mi?",
+    "archiveMessage": "Listelerden kalkar. Geçmişi ve rekorları kalır, istersen geri getirebilirsin.",
+    "restore": "Geri getir",
+    "archived": "Arşivlendi",
+    "archiveErrorTitle": "Değiştirilemedi",
+    "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene."
   }
 }
