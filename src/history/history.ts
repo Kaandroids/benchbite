@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { isoWeekday } from '@/i18n/dates';
+import { isoWeekday, toIsoDate } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { Workout } from '@/workouts/workouts';
@@ -107,6 +107,24 @@ export function useRecentLogs(count: number) {
   });
 }
 
+/** The dates as YYYY-MM-DD of the workouts finished in the week of `today`, for the Today tab. */
+export function useFinishedThisWeek(today: Date) {
+  const start = weekStart(today);
+  return useQuery({
+    queryKey: [...LOGS_KEY, 'week', start.getTime()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select('started_at')
+        .gte('started_at', start.toISOString());
+      if (error) {
+        throw error;
+      }
+      return data.map((row) => toIsoDate(new Date(row.started_at)));
+    },
+  });
+}
+
 /** One finished workout, or null when it does not exist. */
 export function useLogSummary(id: number) {
   return useQuery({
@@ -167,6 +185,7 @@ export function useDeleteLog() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'all'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
+        queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
       ]),
   });
 }
