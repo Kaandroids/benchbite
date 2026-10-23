@@ -2,11 +2,12 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 
-import { useLogSummaries, weekStart } from './history';
+import { useRecentLogs } from './history';
 import { LogRow } from './log-row';
 
 const SHOWN = 3;
@@ -15,10 +16,9 @@ const SHOWN = 3;
 export function RecentLogs() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const logs = useLogSummaries();
-  const thisWeek = weekStart(new Date()).getTime();
-  const all = logs.data ?? [];
-  const inWeek = all.filter((log) => log.startedAt.getTime() >= thisWeek).length;
+  const recent = useRecentLogs(SHOWN);
+  const all = recent.data?.latest ?? [];
+  const inWeek = recent.data?.thisWeek ?? 0;
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -44,7 +44,10 @@ export function RecentLogs() {
           </Pressable>
         ) : null}
       </View>
-      {all.length > 0 ? (
+      {/* While loading or after an error, never the empty card: the history is not gone. */}
+      {!allLoaded([recent]) ? (
+        <LoadState queries={[recent]} />
+      ) : all.length > 0 ? (
         <View
           style={[
             styles.list,
@@ -56,7 +59,7 @@ export function RecentLogs() {
             },
           ]}
         >
-          {all.slice(0, SHOWN).map((log, index) => (
+          {all.map((log, index) => (
             <LogRow key={log.id} log={log} divider={index > 0} />
           ))}
         </View>

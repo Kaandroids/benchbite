@@ -8,6 +8,8 @@ import {
   fetchLogSummaries,
   useDeleteLog,
   useLoggedSets,
+  useLogSummary,
+  useRecentLogs,
   weekStart,
   type LogSummary,
 } from './history';
@@ -57,6 +59,7 @@ describe('fetchLogSummaries', () => {
     });
     jest.mocked(supabase.from).mockReturnValue({ select: () => ({ order }) } as never);
     const [summary] = await fetchLogSummaries();
+    expect(order).toHaveBeenCalledTimes(1);
     expect(supabase.from).toHaveBeenCalledWith('workout_log_summaries');
     expect(order).toHaveBeenCalledWith('finished_at', { ascending: false });
     expect(summary).toEqual({
@@ -112,19 +115,52 @@ describe('useLoggedSets', () => {
 });
 
 describe('useDeleteLog', () => {
-  it('deletes the log and drops it from the list at once', async () => {
+  it('deletes the log and loads the lists again, not the log itself', async () => {
     const eq = jest.fn().mockResolvedValue({ error: null });
     jest.mocked(supabase.from).mockReturnValue({ delete: () => ({ eq }) } as never);
     const queryClient = createTestQueryClient();
-    queryClient.setQueryData(
-      ['workout-logs'],
-      [log(1, '2026-10-20T18:00', 50), log(2, '2026-10-21T18:00', 50)],
-    );
-    jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
     const { result } = await renderHook(() => useDeleteLog(), { queryClient });
     await act(() => result.current.mutateAsync(1));
     expect(eq).toHaveBeenCalledWith('id', 1);
-    expect(queryClient.getQueryData<LogSummary[]>(['workout-logs'])?.map((l) => l.id)).toEqual([2]);
+    expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
+      ['workout-logs', 'all'],
+      ['workout-logs', 'recent'],
+    ]);
+  });
+});
+
+describe('useRecentLogs', () => {
+  it('loads the latest logs and counts this week', async () => {
+    const limit = jest.fn().mockResolvedValue({ data: [], error: null });
+    const gte = jest.fn().mockResolvedValue({ count: 2, error: null });
+    jest
+      .mocked(supabase.from)
+      .mockImplementation(
+        (table: string) =>
+          (table === 'workout_logs'
+            ? { select: () => ({ gte }) }
+            : { select: () => ({ order: () => ({ limit }) }) }) as never,
+      );
+    const { result } = await renderHook(() => useRecentLogs(3), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current.data).toEqual({ latest: [], thisWeek: 2 }));
+    expect(limit).toHaveBeenCalledWith(3);
+  });
+});
+
+describe('useLogSummary', () => {
+  it('loads one log, or null', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const eq = jest.fn(() => ({ maybeSingle }));
+    jest.mocked(supabase.from).mockReturnValue({ select: () => ({ eq }) } as never);
+    const { result } = await renderHook(() => useLogSummary(9), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeNull();
+    expect(eq).toHaveBeenCalledWith('id', 9);
   });
 });
 

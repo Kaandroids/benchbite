@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { isoWeekday } from '@/i18n/dates';
+import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { Workout } from '@/workouts/workouts';
 
@@ -34,9 +35,14 @@ export type LoggedSet = {
   meters: number | null;
 };
 
+/** Whether less was done than planned. */
+export function isPartial(done: number, planned: number | null): planned is number {
+  return planned !== null && done < planned;
+}
+
 /** "7/8" when less was done than planned, else just what was done. */
 export function doneOf(done: number, planned: number | null): string {
-  return planned !== null && done < planned ? `${done}/${planned}` : String(done);
+  return isPartial(done, planned) ? `${done}/${planned}` : String(done);
 }
 
 /** Whole minutes between the start and the end of a workout. */
@@ -44,15 +50,10 @@ export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'
   return Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 60_000);
 }
 
-export async function fetchLogSummaries(): Promise<LogSummary[]> {
-  const { data, error } = await supabase
-    .from('workout_log_summaries')
-    .select('*')
-    .order('finished_at', { ascending: false });
-  if (error) {
-    throw error;
-  }
-  return data.map((row) => ({
+type SummaryRow = Database['public']['Views']['workout_log_summaries']['Row'];
+
+function toSummary(row: SummaryRow): LogSummary {
+  return {
     id: row.id ?? 0,
     workoutId: row.workout_id,
     name: row.name,
@@ -65,12 +66,63 @@ export async function fetchLogSummaries(): Promise<LogSummary[]> {
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
-  }));
+  };
 }
 
-/** The signed-in user's finished workouts, latest first. */
+/** Finished workouts, latest first; the latest `limit` of them when given. */
+export async function fetchLogSummaries(limit?: number): Promise<LogSummary[]> {
+  const query = supabase
+    .from('workout_log_summaries')
+    .select('*')
+    .order('finished_at', { ascending: false });
+  const { data, error } = await (limit === undefined ? query : query.limit(limit));
+  if (error) {
+    throw error;
+  }
+  return data.map(toSummary);
+}
+
+/** Every finished workout of the signed-in user, latest first. */
 export function useLogSummaries() {
-  return useQuery({ queryKey: LOGS_KEY, queryFn: fetchLogSummaries });
+  return useQuery({ queryKey: [...LOGS_KEY, 'all'], queryFn: () => fetchLogSummaries() });
+}
+
+/** The latest finished workouts and how many were done this week, for the Workout tab. */
+export function useRecentLogs(count: number) {
+  return useQuery({
+    queryKey: [...LOGS_KEY, 'recent', count],
+    queryFn: async () => {
+      const [latest, week] = await Promise.all([
+        fetchLogSummaries(count),
+        supabase
+          .from('workout_logs')
+          .select('id', { count: 'exact', head: true })
+          .gte('started_at', weekStart(new Date()).toISOString()),
+      ]);
+      if (week.error) {
+        throw week.error;
+      }
+      return { latest, thisWeek: week.count ?? 0 };
+    },
+  });
+}
+
+/** One finished workout, or null when it does not exist. */
+export function useLogSummary(id: number) {
+  return useQuery({
+    queryKey: [...LOGS_KEY, id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('workout_log_summaries')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) {
+        throw error;
+      }
+      return data ? toSummary(data) : null;
+    },
+  });
 }
 
 /** The sets of one finished workout, in the order they were done. */
@@ -109,13 +161,13 @@ export function useDeleteLog() {
         throw error;
       }
     },
-    // Removed from the list at once, so that the screen it was deleted from can close.
-    onSuccess: (_data, id) => {
-      queryClient.setQueryData<LogSummary[]>(LOGS_KEY, (logs) =>
-        logs?.filter((log) => log.id !== id),
-      );
-      void queryClient.invalidateQueries({ queryKey: LOGS_KEY });
-    },
+    // Only the lists are loaded again; the deleted workout's own screen closes and its data is
+    // dropped once nothing shows it, so that it never shows as not found meanwhile.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'all'] }),
+        queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
+      ]),
   });
 }
 
