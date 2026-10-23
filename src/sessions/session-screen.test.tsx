@@ -9,6 +9,7 @@ import { FinishScreen } from './finish-screen';
 import { useLogWorkout } from './logs';
 import {
   resetSessionStore,
+  startClock,
   startSession,
   toggleDone,
   updateSession,
@@ -217,6 +218,26 @@ describe('FinishScreen', () => {
     );
     expect(router.dismissAll).toHaveBeenCalled();
     expect(startWorkout).not.toHaveBeenCalled();
+  });
+
+  it('logs the set of a clock that still runs', async () => {
+    updateSession((session) => startClock(session, 1, 0));
+    await act(async () => {
+      jest.advanceTimersByTime(40_000);
+    });
+    await render(<FinishScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          { exerciseId: 'bench', sets: [] },
+          {
+            exerciseId: 'plank',
+            sets: [{ weightKg: null, reps: null, seconds: 40, meters: null }],
+          },
+        ],
+      }),
+    );
   });
 
   it('starts the next workout after saving', async () => {

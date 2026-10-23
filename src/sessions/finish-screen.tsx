@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +18,14 @@ import { useWorkouts } from '@/workouts/workouts';
 
 import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
-import { endSession, sessionTotals, toLog, useActiveSession } from './session';
+import {
+  endSession,
+  sessionTotals,
+  stopClock,
+  toLog,
+  updateSession,
+  useActiveSession,
+} from './session';
 import { useStartWorkout, useUserId } from './start';
 
 /**
@@ -38,6 +45,10 @@ export function FinishScreen({ next }: { next?: number }) {
   const { format } = useNumberFormat();
   // Taken once, so that the summary does not keep counting while the user looks at it.
   const [finishedAt] = useState(() => Date.now());
+  // A clock still running logs its set, which would otherwise be left out as not done.
+  useEffect(() => {
+    updateSession((current) => stopClock(current, finishedAt));
+  }, [finishedAt]);
 
   if (!session) {
     return (
