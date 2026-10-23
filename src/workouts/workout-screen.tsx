@@ -10,7 +10,6 @@ import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
-import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { BusySheet } from '@/sessions/busy-sheet';
@@ -209,21 +208,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         </Pressable>
       }
     >
-      <View style={[styles.header, { gap: spacing.md }]}>
-        <View style={styles.headerText}>
-          <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        </View>
-        <View style={[styles.switch, { gap: spacing.xs }]}>
-          <Switch
-            accessibilityLabel={t('workout.activeLabel', { name })}
-            value={workout.active}
-            onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
-          />
-          <Text variant="caption" color="textMuted">
-            {workout.active ? t('workout.active') : t('workout.inactive')}
-          </Text>
-        </View>
-      </View>
+      <DayChips weekdays={workout.weekdays} muted={!workout.active} />
 
       {/* One card of even columns, like a finished workout's figures. */}
       <View
@@ -261,6 +246,30 @@ export function WorkoutScreen({ id }: { id: number }) {
         </View>
       </Card>
 
+      {/* Switching a workout off moves it to the archive, and back. */}
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
+        style={({ pressed }) => [
+          styles.archive,
+          {
+            gap: spacing.sm,
+            borderRadius: radii.lg,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            opacity: pressed ? 0.6 : 1,
+          },
+        ]}
+      >
+        <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
+        <Text
+          variant="bodyStrong"
+          color={workout.active ? 'text' : 'primaryText'}
+          style={styles.bold}
+        >
+          {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
+        </Text>
+      </Pressable>
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
         <Text variant="bodyStrong" color="danger" style={styles.bold}>
           {t('editor.delete')}
@@ -297,21 +306,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  header: {
+  archive: {
+    height: 52,
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  headerText: {
-    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   delete: {
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  switch: {
-    alignItems: 'center',
-    paddingTop: 4,
   },
   stats: {
     flexDirection: 'row',

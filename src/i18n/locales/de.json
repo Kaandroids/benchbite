@@ -159,7 +159,9 @@
       "message": "Beende das Training, bevor du es änderst.",
       "resume": "Zurück zum Training"
     },
-    "startWorkout": "Training starten"
+    "startWorkout": "Training starten",
+    "toArchive": "Ins Archiv verschieben",
+    "fromArchive": "Aus dem Archiv holen"
   },
   "exercise": {
     "start": "Start",

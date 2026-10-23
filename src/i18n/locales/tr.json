@@ -159,7 +159,9 @@
       "message": "Değiştirmeden önce antrenmanı bitir.",
       "resume": "Antrenmana dön"
     },
-    "startWorkout": "Antrenmanı başlat"
+    "startWorkout": "Antrenmanı başlat",
+    "toArchive": "Arşive taşı",
+    "fromArchive": "Arşivden geri al"
   },
   "exercise": {
     "start": "Başlangıç",

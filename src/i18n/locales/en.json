@@ -159,7 +159,9 @@
       "message": "Finish the workout before changing it.",
       "resume": "Back to the workout"
     },
-    "startWorkout": "Start workout"
+    "startWorkout": "Start workout",
+    "toArchive": "Move to archive",
+    "fromArchive": "Bring back from the archive"
   },
   "exercise": {
     "start": "Start",

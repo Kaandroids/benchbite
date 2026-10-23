@@ -298,7 +298,6 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('12')).toBeTruthy();
     expect(screen.getByText('sets')).toBeTruthy();
     expect(screen.getByText('~50')).toBeTruthy();
-    expect(screen.getByText('Active')).toBeTruthy();
   });
 
   it('lists each exercise with its name, target and rest', async () => {
@@ -379,11 +378,16 @@ describe('WorkoutScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/session');
   });
 
-  it('switches the workout off', async () => {
+  it('moves the workout to the archive, and back', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
-    await fireEvent(screen.getByLabelText('Pull is active'), 'valueChange', false);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
     expect(mutate).toHaveBeenCalledWith({ id: 7, active: false });
+
+    mockWorkouts([{ ...pull, active: false }]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bring back from the archive' }));
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: true });
   });
 
   it('says when the workout does not exist', async () => {
