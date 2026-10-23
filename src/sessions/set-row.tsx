@@ -194,9 +194,8 @@ export function SetRow({
             field={field}
             value={set[field]}
             label={labels[field]}
-            placeholder={
-              field === 'weightKg' && kind.addedWeight ? t('session.optional') : undefined
-            }
+            // Added weight is optional; a short hint fits the narrow field.
+            placeholder={field === 'weightKg' && kind.addedWeight ? '0' : undefined}
             done={set.done}
             clock={field === 'seconds' && running ? clock : null}
             invalid={field === 'weightKg' && invalid}

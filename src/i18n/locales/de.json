@@ -523,7 +523,6 @@
       "meters": "M",
       "seconds": "ZEIT"
     },
-    "optional": "optional",
     "addSet": "+ Satz hinzufügen",
     "done": "Satz {{number}} erledigt",
     "startClock": "Uhr für Satz {{number}} starten",
