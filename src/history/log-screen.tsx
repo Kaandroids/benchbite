@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { HistoryButton } from '@/components/ui/history-button';
+import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -229,6 +231,10 @@ export function LogScreen({ id }: { id: number }) {
                     formatTotal(total),
                   ].join(' · ')}
                 </Text>
+              </View>
+              <View style={{ gap: spacing.sm }}>
+                <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+                <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
               </View>
             </View>
             {/* Every set, the best one picked out. */}
