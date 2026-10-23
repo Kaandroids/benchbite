@@ -69,7 +69,7 @@ describe('CreateExerciseScreen', () => {
       logKind: 'weightReps' as const,
       primaryMuscles: ['glutes' as const],
     };
-    await render(<CreateExerciseScreen editing={{ id: 'custom-1', form, logged: true }} />);
+    await render(<CreateExerciseScreen editing={{ id: 'custom-1', form, kindLock: 'logged' }} />);
     expect(screen.getByText('Edit exercise')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Reps' })).toBeDisabled();
     expect(screen.getByText('It has been logged, so this stays.')).toBeTruthy();
@@ -83,5 +83,18 @@ describe('CreateExerciseScreen', () => {
       before: [],
     });
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('says why what it records stays while a workout has it', async () => {
+    const form = { ...emptyForm('Hip thrust'), logKind: 'reps' as const };
+    await render(
+      <CreateExerciseScreen editing={{ id: 'custom-1', form, kindLock: 'inWorkout' }} />,
+    );
+    expect(screen.getByRole('radio', { name: 'Reps' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        'It is in a workout, so this stays. Remove it from your workouts to change it.',
+      ),
+    ).toBeTruthy();
   });
 });

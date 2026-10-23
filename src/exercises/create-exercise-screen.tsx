@@ -19,6 +19,7 @@ import {
   useCreateExercise,
   useEditExercise,
   type CustomExerciseForm,
+  type KindLock,
   type LogKind,
 } from './custom';
 import { isUserPhoto, pickPhoto, usePictureUrls } from './photos';
@@ -61,8 +62,8 @@ const MAX_STEPS = 20;
 type Editing = {
   id: string;
   form: CustomExerciseForm;
-  /** Once it has logged sets, what it records cannot change. */
-  logged: boolean;
+  /** Why what it records cannot change, if it cannot. */
+  kindLock: KindLock;
 };
 
 /**
@@ -116,7 +117,8 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           setCreatedExercise(exercise);
           setLeave(() => () => router.back());
         }, failed);
-  const kindLocked = editing?.logged ?? false;
+  const kindLock = editing?.kindLock ?? null;
+  const kindLocked = kindLock !== null;
 
   const label = (text: string) => (
     <Text variant="caption" color="textMuted" style={styles.label}>
@@ -259,7 +261,11 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           })}
         </View>
         <Text variant="caption" color="textMuted">
-          {kindLocked ? t('customExercise.logKindLocked') : t('customExercise.logKindFixed')}
+          {kindLock === 'logged'
+            ? t('customExercise.logKindLogged')
+            : kindLock === 'inWorkout'
+              ? t('customExercise.logKindInWorkout')
+              : t('customExercise.logKindFixed')}
         </Text>
       </View>
 
