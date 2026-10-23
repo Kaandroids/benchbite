@@ -15,7 +15,8 @@ import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useUserId } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
+import { summarizeSets } from '@/history/exercise-summary';
+import { useWorkoutName, workoutLength } from '@/workouts/format';
 import { useWorkouts } from '@/workouts/workouts';
 
 import { describeSet, setKindOf } from './fields';
@@ -71,10 +72,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const seconds = Math.max(0, Math.floor((finishedAt - session.startedAt) / 1000));
   const stats = [
     {
-      value:
-        seconds >= 3600
-          ? `${Math.floor(seconds / 3600)}:${minutesAndSeconds(seconds % 3600).padStart(5, '0')}`
-          : minutesAndSeconds(seconds),
+      value: workoutLength(seconds),
       label: t('session.summary.time'),
     },
     {
@@ -88,8 +86,8 @@ export function FinishScreen({ next }: { next?: number }) {
   const summary = session.exercises.map((exercise) => {
     const info = library.data?.find((item) => item.id === exercise.exerciseId);
     const done = exercise.sets.filter((s) => s.done);
-    const best = done[done.length - 1];
     const kind = setKindOf(info?.metrics, exercise.target);
+    const { best } = summarizeSets(done, kind);
     const sets =
       done.length === exercise.sets.length
         ? t('session.summary.sets', { count: done.length })

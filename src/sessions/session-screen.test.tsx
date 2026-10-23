@@ -300,6 +300,25 @@ describe('new records', () => {
 describe('FinishScreen', () => {
   const doFirstSet = () => updateSession((session) => toggleDone(session, 0, 0));
 
+  it('names the best set, not the last one', async () => {
+    updateSession((session) =>
+      toggleDone(
+        toggleDone(
+          setValues(setValues(session, 0, 0, { weightKg: 85, reps: 5 }), 0, 1, {
+            weightKg: 80,
+            reps: 8,
+          }),
+          0,
+          0,
+        ),
+        0,
+        1,
+      ),
+    );
+    await render(<FinishScreen />);
+    expect(screen.getByText('2 sets · 85 kg × 5')).toBeTruthy();
+  });
+
   it('sums up a workout finished early and saves it', async () => {
     doFirstSet();
     await act(async () => {

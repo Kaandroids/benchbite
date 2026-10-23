@@ -1,6 +1,5 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +13,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
+import { summarizeSets } from '@/history/exercise-summary';
 import { useUserId } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
 import {
@@ -57,14 +57,6 @@ export function SessionScreen() {
   const now = useNow(!!session, session?.clock?.startedAt);
   const permission = useNotificationPermission();
 
-  // A rest that is over ends; RestAlarm signals it.
-  const restOver = !!session?.rest && session.rest.endsAt <= now;
-  useEffect(() => {
-    if (restOver) {
-      updateSession((current) => ({ ...current, rest: null }));
-    }
-  }, [restOver]);
-
   if (!session) {
     return (
       <Screen onBack={() => router.back()}>
@@ -86,7 +78,7 @@ export function SessionScreen() {
     const kind = setKindOf(info?.metrics, exercise.target);
     const done = exercise.sets.filter((s) => s.done);
     const finished = isExerciseDone(exercise);
-    const best = done[done.length - 1];
+    const { best } = summarizeSets(done, kind);
     return (
       <Pressable
         key={index}
