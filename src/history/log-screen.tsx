@@ -15,12 +15,12 @@ import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
 import {
+  byExercise,
   doneOf,
   durationMinutes,
   useDeleteLog,
   useLoggedSets,
   useLogSummary,
-  type LoggedSet,
 } from './history';
 import { shortSet, summarizeSets } from './exercise-summary';
 
@@ -79,20 +79,7 @@ export function LogScreen({ id }: { id: number }) {
       : []),
   ];
 
-  // The sets of each exercise, in the order the exercises were done.
-  const exercises: { exerciseId: string; sets: LoggedSet[] }[] = [];
-  for (const set of sets.data ?? []) {
-    const last = exercises[exercises.length - 1];
-    if (
-      last &&
-      last.exerciseId === set.exerciseId &&
-      last.sets[0]?.exercisePosition === set.exercisePosition
-    ) {
-      last.sets.push(set);
-    } else {
-      exercises.push({ exerciseId: set.exerciseId, sets: [set] });
-    }
-  }
+  const exercises = byExercise(sets.data ?? []);
 
   const onDelete = () =>
     Alert.alert(t('history.deleteTitle'), t('history.deleteMessage'), [

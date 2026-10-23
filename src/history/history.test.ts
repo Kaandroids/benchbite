@@ -2,11 +2,13 @@ import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
+  byExercise,
   byWeek,
   doneOf,
   durationMinutes,
   fetchLogSummaries,
   useDeleteLog,
+  useEditLog,
   useLoggedSets,
   useLogSummary,
   useRecentLogs,
@@ -14,7 +16,7 @@ import {
   type LogSummary,
 } from './history';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 const log = (id: number, started: string, minutes: number): LogSummary => {
   const startedAt = new Date(started);
@@ -127,6 +129,54 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'all'],
       ['workout-logs', 'recent'],
       ['workout-logs', 'week'],
+    ]);
+  });
+});
+
+describe('useEditLog', () => {
+  it('replaces the sets and loads every log again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+    const { result } = await renderHook(() => useEditLog(), { queryClient });
+    const exercises = [
+      { exerciseId: 'Plank', sets: [{ weightKg: null, reps: null, seconds: 50, meters: null }] },
+    ];
+    await act(() => result.current.mutateAsync({ id: 7, exercises }));
+    expect(supabase.rpc).toHaveBeenCalledWith('edit_workout_log', {
+      log_id: 7,
+      log: { exercises },
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-logs'] });
+  });
+
+  it('fails when the edit is rejected', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: { code: 'BB010' } } as never);
+    const { result } = await renderHook(() => useEditLog());
+    await act(() =>
+      expect(result.current.mutateAsync({ id: 7, exercises: [] })).rejects.toEqual({
+        code: 'BB010',
+      }),
+    );
+  });
+});
+
+describe('byExercise', () => {
+  const set = (exercisePosition: number, exerciseId: string, reps: number) => ({
+    exercisePosition,
+    exerciseId,
+    weightKg: null,
+    reps,
+    seconds: null,
+    meters: null,
+  });
+
+  it('groups the sets by exercise, keeping an exercise done twice apart', () => {
+    const groups = byExercise([set(0, 'a', 1), set(0, 'a', 2), set(1, 'b', 3), set(2, 'a', 4)]);
+    expect(groups.map((group) => [group.exerciseId, group.sets.map((s) => s.reps)])).toEqual([
+      ['a', [1, 2]],
+      ['b', [3]],
+      ['a', [4]],
     ]);
   });
 });

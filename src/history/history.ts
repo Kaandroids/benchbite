@@ -35,6 +35,30 @@ export type LoggedSet = {
   meters: number | null;
 };
 
+/** The values of a set, without its place in the workout. */
+export type SetValues = Omit<LoggedSet, 'exercisePosition' | 'exerciseId'>;
+
+/** The sets of one exercise of a finished workout. */
+export type LoggedExercise = { exerciseId: string; sets: LoggedSet[] };
+
+/** The sets of a finished workout by exercise, in the order the exercises were done. */
+export function byExercise(sets: readonly LoggedSet[]): LoggedExercise[] {
+  const exercises: LoggedExercise[] = [];
+  for (const set of sets) {
+    const last = exercises[exercises.length - 1];
+    if (
+      last &&
+      last.exerciseId === set.exerciseId &&
+      last.sets[0]?.exercisePosition === set.exercisePosition
+    ) {
+      last.sets.push(set);
+    } else {
+      exercises.push({ exerciseId: set.exerciseId, sets: [set] });
+    }
+  }
+  return exercises;
+}
+
 /** Whether less was done than planned. */
 export function isPartial(done: number, planned: number | null): planned is number {
   return planned !== null && done < planned;
@@ -187,6 +211,26 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
       ]),
+  });
+}
+
+/** Replaces the sets of a finished workout; its time and calories stay as they were (ADR 0023). */
+export function useEditLog() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      exercises,
+    }: {
+      id: number;
+      exercises: { exerciseId: string; sets: SetValues[] }[];
+    }) => {
+      const { error } = await supabase.rpc('edit_workout_log', { log_id: id, log: { exercises } });
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: LOGS_KEY }),
   });
 }
 
