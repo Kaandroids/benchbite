@@ -5,7 +5,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { Workout } from '@/workouts/workouts';
 
-const LOGS_KEY = ['workout-logs'];
+export const LOGS_KEY = ['workout-logs'];
 
 /** A finished workout at a glance (workout_log_summaries). */
 export type LogSummary = {
@@ -236,6 +236,7 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'all'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
+        queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'exercise'] }),
       ]),
   });
 }
