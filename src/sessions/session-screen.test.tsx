@@ -164,6 +164,17 @@ describe('SessionScreen', () => {
     expect(screen.getByLabelText('Reps of set 1').props.value).toBe('999');
   });
 
+  it('needs reps before a set is done, as the log would refuse it', async () => {
+    await render(<SessionScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).not.toBeChecked();
+    expect(screen.getByLabelText('Reps of set 1').props['aria-invalid']).toBe(true);
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '8');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+  });
+
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
     startSession('user-a', PUSH, {}, {}, NOW.getTime());
@@ -367,6 +378,27 @@ describe('FinishScreen', () => {
         ],
       }),
     );
+  });
+
+  it('keeps a running clock running when the workout goes on', async () => {
+    updateSession((session) => startClock(session, 1, 0));
+    await render(<FinishScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
+    const { result } = await renderHook(() => useActiveSession('user-a'));
+    expect(result.current?.clock).toMatchObject({ exercise: 1, set: 0 });
+    expect(result.current?.exercises[1]?.sets[0]?.done).toBe(false);
+  });
+
+  it('saves once when Save is tapped twice', async () => {
+    doFirstSet();
+    let finish: (id: number) => void = () => undefined;
+    logWorkout.mockImplementationOnce(() => new Promise<number>((resolve) => (finish = resolve)));
+    await render(<FinishScreen />);
+    const save = screen.getByRole('button', { name: 'Save workout' });
+    await fireEvent.press(save);
+    await fireEvent.press(save);
+    expect(logWorkout).toHaveBeenCalledTimes(1);
+    await act(async () => finish(1));
   });
 
   it('starts the next workout after saving', async () => {

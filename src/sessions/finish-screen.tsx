@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,14 +22,7 @@ import { useWorkouts } from '@/workouts/workouts';
 import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
 import { newRecords } from './records';
-import {
-  endSession,
-  sessionTotals,
-  stopClock,
-  toLog,
-  updateSession,
-  useActiveSession,
-} from './session';
+import { endSession, sessionTotals, stopClock, toLog, useActiveSession } from './session';
 import { useStartWorkout } from './start';
 
 /**
@@ -39,7 +32,7 @@ import { useStartWorkout } from './start';
 export function FinishScreen({ next }: { next?: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const session = useActiveSession(useUserId());
+  const active = useActiveSession(useUserId());
   const library = useExerciseLibrary();
   const logWorkout = useLogWorkout();
   const workouts = useWorkouts();
@@ -50,12 +43,10 @@ export function FinishScreen({ next }: { next?: number }) {
   const formatRecord = useRecordFormat();
   // Taken once, so that the summary does not keep counting while the user looks at it.
   const [finishedAt] = useState(() => Date.now());
-  // A clock still running logs its set, which would otherwise be left out as not done.
-  useEffect(() => {
-    updateSession((current) => stopClock(current, finishedAt));
-  }, [finishedAt]);
+  // Only one save, also when Save is tapped twice before the button turns off.
+  const saving = useRef(false);
 
-  if (!session) {
+  if (!active) {
     return (
       <Screen onBack={() => router.back()}>
         <MessageView
@@ -67,6 +58,9 @@ export function FinishScreen({ next }: { next?: number }) {
     );
   }
 
+  // A clock still running logs its set, as it would on stopping it now. The workout itself keeps
+  // it running, so that "Keep going" goes on where it was.
+  const session = stopClock(active, finishedAt);
   const name = workoutName(session);
   const totals = sessionTotals(session);
   const seconds = Math.max(0, Math.floor((finishedAt - session.startedAt) / 1000));
@@ -112,6 +106,10 @@ export function FinishScreen({ next }: { next?: number }) {
   });
 
   const save = async () => {
+    if (saving.current) {
+      return;
+    }
+    saving.current = true;
     try {
       await logWorkout.mutateAsync(toLog(session, finishedAt));
       endSession();
@@ -121,6 +119,7 @@ export function FinishScreen({ next }: { next?: number }) {
         await startWorkout(following);
       }
     } catch (error) {
+      saving.current = false;
       console.warn('Could not save the workout', error);
       Alert.alert(t('session.summary.saveErrorTitle'), t('session.summary.saveError'));
     }

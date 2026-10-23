@@ -9,7 +9,7 @@ import type { RecordKind } from '@/history/record-kinds';
 import { useRecordFormat } from '@/history/record-format';
 import { fonts, useTheme } from '@/theme';
 
-import type { SetKind } from './fields';
+import type { SetField, SetKind } from './fields';
 import { recordValues } from './records';
 import type { SessionSet, SetValues } from './session';
 import { SetLine, setButtonStyle } from './set-table';
@@ -45,14 +45,22 @@ export function SetRow({
   const formatRecord = useRecordFormat();
   const running = clock !== null;
   const weightInput = useRef<TextInputInstance>(null);
-  // A set of an exercise that records weight is not done without one (#34).
-  const [missing, setMissing] = useState(false);
-  const needsWeight = kind.fields.includes('weightKg') && !kind.addedWeight;
+  // A set is not done without what it needs: a weight where the exercise records one (#34), and
+  // reps where it records reps, which the log would refuse without them.
+  const [checked, setChecked] = useState(false);
+  const missing: SetField[] = [
+    ...(kind.fields.includes('weightKg') && !kind.addedWeight && set.weightKg === null
+      ? (['weightKg'] as const)
+      : []),
+    ...(kind.fields.includes('reps') && set.reps === null ? (['reps'] as const) : []),
+  ];
   const toggle = () => {
-    if (!set.done && needsWeight && set.weightKg === null) {
-      setMissing(true);
+    if (!set.done && missing.length > 0) {
+      setChecked(true);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      weightInput.current?.focus();
+      if (missing.includes('weightKg')) {
+        weightInput.current?.focus();
+      }
       return;
     }
     onToggle();
@@ -86,7 +94,7 @@ export function SetRow({
       last={last}
       done={set.done}
       clock={clock}
-      invalid={missing && set.weightKg === null ? ['weightKg'] : []}
+      invalid={checked ? missing : []}
       weightRef={weightInput}
       onChange={onChange}
       note={

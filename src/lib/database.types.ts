@@ -390,6 +390,7 @@ export type Database = {
       };
       workout_logs: {
         Row: {
+          client_id: string | null;
           estimated_kcal: number | null;
           finished_at: string;
           id: number;
@@ -404,6 +405,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          client_id?: string | null;
           estimated_kcal?: number | null;
           finished_at: string;
           id?: never;
@@ -417,6 +419,7 @@ export type Database = {
           workout_id?: number | null;
         };
         Update: {
+          client_id?: string | null;
           estimated_kcal?: number | null;
           finished_at?: string;
           id?: never;

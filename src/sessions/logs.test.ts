@@ -71,6 +71,7 @@ describe('useLogWorkout', () => {
   it('saves the log and returns its id', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
     const log = {
+      clientId: '11111111-1111-1111-1111-111111111111',
       workoutId: 7,
       plannedExercises: 1,
       plannedSets: 3,
