@@ -8,6 +8,7 @@ export const ICONS = {
   archive: { ios: 'archivebox', android: 'inventory_2', web: 'inventory_2' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
+  bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
