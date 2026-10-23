@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
+import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import {
   filterExercises,
@@ -27,7 +28,10 @@ import { useWorkoutLimits } from './workouts';
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
 const ROW_HEIGHT = 73;
 
-/** Searches the library and adds the chosen exercises to the workout being edited. */
+/**
+ * Searches the library and the user's own exercises, and adds the chosen ones to the workout
+ * being edited. An exercise the library lacks can be created from here, and comes back chosen.
+ */
 export function PickerScreen() {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -40,10 +44,24 @@ export function PickerScreen() {
   // In the order they were chosen, which is the order they are added in.
   const [chosen, setChosen] = useState<LibraryExercise[]>([]);
   const results = library.data ? filterExercises(library.data, query, filter, i18n.language) : [];
+  const hasOwn = library.data?.some((exercise) => exercise.custom && !exercise.archived) ?? false;
 
   // How many more the workout has room for; the rest of the library waits until one is unchosen.
   const room = (limits.data?.exercises ?? 0) - (draft?.exercises.length ?? 0);
   const full = chosen.length >= room;
+
+  // An exercise just created on its own screen is chosen on coming back, if there is room.
+  useFocusEffect(
+    useCallback(() => {
+      const created = takeCreatedExercise();
+      if (created) {
+        setChosen((current) => (current.length < room ? [...current, created] : current));
+      }
+    }, [room]),
+  );
+
+  const openCreate = (name?: string) =>
+    router.push({ pathname: '/workout/exercise/new', params: name ? { name } : {} });
 
   const toggle = (exercise: LibraryExercise) =>
     setChosen((current) =>
@@ -95,7 +113,7 @@ export function PickerScreen() {
           onPress={() => toggle(item)}
           style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
         >
-          <ExerciseThumbnail path={item.imagePaths[0]} size={52} />
+          <ExerciseThumbnail path={item.imagePaths[0]} size={52} name={item.name} />
           <View style={styles.text}>
             <Text variant="bodyStrong" numberOfLines={2}>
               {item.name}
@@ -168,6 +186,7 @@ export function PickerScreen() {
           contentContainerStyle={{ gap: spacing.sm }}
         >
           {chip(null, t('picker.all'))}
+          {hasOwn ? chip('mine', t('picker.filters.mine')) : null}
           {FILTERS.map((value) => chip(value, t(`picker.filters.${value}`)))}
         </ScrollView>
       </View>
@@ -177,18 +196,75 @@ export function PickerScreen() {
           data={results}
           keyExtractor={(item) => item.id}
           renderItem={row}
+          // The row that creates an exercise is as tall as an exercise's, above the first.
           getItemLayout={(_data, index) => ({
             length: ROW_HEIGHT,
-            offset: ROW_HEIGHT * index,
+            offset: ROW_HEIGHT * (index + 1),
             index,
           })}
+          ListHeaderComponent={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('customExercise.createRow')}
+              accessibilityHint={t('customExercise.createRowHint')}
+              onPress={() => openCreate()}
+              style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}
+            >
+              <View style={styles.buttonsRoom} />
+              <View
+                style={[
+                  styles.createTile,
+                  { borderRadius: radii.md, backgroundColor: colors.iconBackground },
+                ]}
+              >
+                <Icon name="plus" size={24} color="primary" />
+              </View>
+              <View style={[styles.text, { marginLeft: spacing.xs }]}>
+                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                  {t('customExercise.createRow')}
+                </Text>
+                <Text variant="caption" color="textMuted">
+                  {t('customExercise.createRowHint')}
+                </Text>
+              </View>
+            </Pressable>
+          }
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingHorizontal: spacing.xl }}
           ListEmptyComponent={
-            <Text color="textMuted" align="center" style={{ marginTop: spacing.xl }}>
-              {t('picker.empty')}
-            </Text>
+            query.trim() ? (
+              <View style={[styles.none, { gap: spacing.md, marginTop: spacing.xl }]}>
+                <Text variant="headline" align="center">
+                  {t('customExercise.noneTitle')}
+                </Text>
+                <Text color="textMuted" align="center">
+                  {t('customExercise.noneMessage')}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => openCreate(query.trim())}
+                  style={[
+                    styles.createNamed,
+                    {
+                      gap: spacing.sm,
+                      borderRadius: radii.full,
+                      backgroundColor: colors.iconBackground,
+                      paddingHorizontal: spacing.lg,
+                    },
+                  ]}
+                >
+                  <Icon name="plus" size={18} color="primaryText" />
+                  <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                    {t('customExercise.createNamed', { name: query.trim() })}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Text color="textMuted" align="center" style={{ marginTop: spacing.xl }}>
+                {t('picker.empty')}
+              </Text>
+            )
           }
         />
       ) : (
@@ -227,6 +303,25 @@ export function PickerScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  // Where an exercise's info and history buttons are.
+  buttonsRoom: {
+    width: 32,
+  },
+  createTile: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  none: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  createNamed: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',

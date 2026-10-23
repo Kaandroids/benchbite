@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { setCreatedExercise } from '@/exercises/custom';
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { fireEvent, render, screen } from '@/test/render';
 
@@ -7,7 +8,14 @@ import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
 import { useWorkoutLimits } from './workouts';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual<typeof import('react')>('react');
+  return {
+    router: { back: jest.fn(), push: jest.fn() },
+    // Runs as the screen shows, as when coming back to it.
+    useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+  };
+});
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
@@ -84,7 +92,13 @@ describe('PickerScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Cardio' }));
     expect(screen.getByText('Rowing')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Search exercises'), 'bench');
-    expect(screen.getByText('No exercises found.')).toBeTruthy();
+    // Nothing found by a name offers to create it.
+    expect(screen.getByText('No exercise found')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Create “bench”' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/workout/exercise/new',
+      params: { name: 'bench' },
+    });
   });
 
   it('adds the chosen exercises in the order they were chosen', async () => {
@@ -131,5 +145,26 @@ describe('PickerScreen', () => {
       pathname: '/workout/exercise/[id]',
       params: { id: 'bench' },
     });
+  });
+
+  it('chooses an exercise just created on coming back', async () => {
+    setCreatedExercise(exercise('hip', 'Hip thrust', { custom: true }));
+    await render(<PickerScreen />);
+    expect(screen.getByRole('button', { name: 'Add 1 exercise' })).toBeTruthy();
+  });
+
+  it("creates an exercise and filters the user's own", async () => {
+    jest
+      .mocked(useExerciseLibrary)
+      .mockReturnValue(
+        loaded([BENCH, exercise('hip', 'Hip thrust', { custom: true, imagePaths: [] })]) as never,
+      );
+    await render(<PickerScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Create exercise' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/exercise/new', params: {} });
+    expect(screen.getByText('Mine · Chest · Barbell')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Mine' }));
+    expect(screen.queryByText('Bench press')).toBeNull();
+    expect(screen.getByText('Hip thrust')).toBeTruthy();
   });
 });
