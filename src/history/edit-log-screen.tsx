@@ -28,7 +28,7 @@ import {
 } from './history';
 
 type EditedSet = SetValues & { key: number };
-type EditedExercise = { exerciseId: string; sets: EditedSet[] };
+type EditedExercise = { place: number; exerciseId: string; sets: EditedSet[] };
 
 const EMPTY: SetValues = { weightKg: null, reps: null, seconds: null, meters: null };
 
@@ -71,12 +71,16 @@ export function EditLogScreen({ id }: { id: number }) {
     );
   }
   const log = summary.data;
-  // The exercises of the workout it was done from, so that a skipped one can be added afterwards.
+  // The exercises of the workout it was done from, so that a skipped one can be added afterwards;
+  // as many as it had then, leaving out those added since.
   const workout = workouts.data?.find((item) => item.id === log.workoutId);
+  const planned = (workout?.exercises ?? [])
+    .slice(0, log.plannedExercises ?? undefined)
+    .map((exercise) => exercise.exerciseId);
   return (
     <LogEditor
       log={log}
-      exercises={withSkipped(sets.data ?? [], workout?.exercises.map((e) => e.exerciseId) ?? [])}
+      exercises={withSkipped(sets.data ?? [], planned)}
       library={library.data ?? []}
     />
   );
@@ -99,6 +103,7 @@ function LogEditor({
   const [exercises, setExercises] = useState<EditedExercise[]>(() => {
     let key = 0;
     return initial.map((exercise) => ({
+      place: exercise.place,
       exerciseId: exercise.exerciseId,
       sets: exercise.sets.map(({ weightKg, reps, seconds, meters }) => ({
         weightKg,
@@ -136,8 +141,8 @@ function LogEditor({
     try {
       await edit.mutateAsync({
         id: log.id,
-        // Skipped exercises are sent too, without sets, so that the others keep their places.
         exercises: exercises.map((exercise) => ({
+          place: exercise.place,
           exerciseId: exercise.exerciseId,
           sets: exercise.sets.map(({ key: _key, ...values }) => values),
         })),

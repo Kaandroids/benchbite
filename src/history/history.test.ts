@@ -135,18 +135,33 @@ describe('useDeleteLog', () => {
 });
 
 describe('useEditLog', () => {
-  it('replaces the sets and loads every log again', async () => {
+  it('replaces the sets in their places and loads every log again', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ error: null } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
     const { result } = await renderHook(() => useEditLog(), { queryClient });
-    const exercises = [
-      { exerciseId: 'Plank', sets: [{ weightKg: null, reps: null, seconds: 50, meters: null }] },
-    ];
-    await act(() => result.current.mutateAsync({ id: 7, exercises }));
+    const hold = { weightKg: null, reps: null, seconds: 50, meters: null };
+    await act(() =>
+      result.current.mutateAsync({
+        id: 7,
+        exercises: [
+          { place: 0, exerciseId: 'Plank', sets: [hold] },
+          { place: 2, exerciseId: 'Pushups', sets: [] },
+          { place: 3, exerciseId: 'Plank', sets: [hold] },
+        ],
+      }),
+    );
+    // Place 1 had no exercise left to name, and stays a gap.
     expect(supabase.rpc).toHaveBeenCalledWith('edit_workout_log', {
       log_id: 7,
-      log: { exercises },
+      log: {
+        exercises: [
+          { exerciseId: 'Plank', sets: [hold] },
+          { exerciseId: null, sets: [] },
+          { exerciseId: 'Pushups', sets: [] },
+          { exerciseId: 'Plank', sets: [hold] },
+        ],
+      },
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-logs'] });
   });

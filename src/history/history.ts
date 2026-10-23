@@ -38,22 +38,18 @@ export type LoggedSet = {
 /** The values of a set, without its place in the workout. */
 export type SetValues = Omit<LoggedSet, 'exercisePosition' | 'exerciseId'>;
 
-/** The sets of one exercise of a finished workout. */
-export type LoggedExercise = { exerciseId: string; sets: LoggedSet[] };
+/** The sets of one exercise of a finished workout, and its place in the workout from 0. */
+export type LoggedExercise = { place: number; exerciseId: string; sets: LoggedSet[] };
 
 /** The sets of a finished workout by exercise, in the order the exercises were done. */
 export function byExercise(sets: readonly LoggedSet[]): LoggedExercise[] {
   const exercises: LoggedExercise[] = [];
   for (const set of sets) {
     const last = exercises[exercises.length - 1];
-    if (
-      last &&
-      last.exerciseId === set.exerciseId &&
-      last.sets[0]?.exercisePosition === set.exercisePosition
-    ) {
+    if (last && last.exerciseId === set.exerciseId && last.place === set.exercisePosition) {
       last.sets.push(set);
     } else {
-      exercises.push({ exerciseId: set.exerciseId, sets: [set] });
+      exercises.push({ place: set.exercisePosition, exerciseId: set.exerciseId, sets: [set] });
     }
   }
   return exercises;
@@ -69,12 +65,9 @@ export function withSkipped(
   planned: readonly string[],
 ): LoggedExercise[] {
   const logged = byExercise(sets);
-  const byPlace = new Map(logged.map((exercise) => [exercise.sets[0]?.exercisePosition, exercise]));
+  const byPlace = new Map(logged.map((exercise) => [exercise.place, exercise]));
   const loggedIds = new Set(logged.map((exercise) => exercise.exerciseId));
-  const places = Math.max(
-    planned.length,
-    ...logged.map((e) => (e.sets[0]?.exercisePosition ?? 0) + 1),
-  );
+  const places = Math.max(planned.length, ...logged.map((exercise) => exercise.place + 1));
   const exercises: LoggedExercise[] = [];
   for (let place = 0; place < places; place++) {
     const done = byPlace.get(place);
@@ -83,7 +76,7 @@ export function withSkipped(
       exercises.push(done);
     } else if (skipped !== undefined && !loggedIds.has(skipped)) {
       // An exercise done elsewhere in the log was moved in the workout since, not skipped.
-      exercises.push({ exerciseId: skipped, sets: [] });
+      exercises.push({ place, exerciseId: skipped, sets: [] });
     }
   }
   return exercises;
@@ -253,9 +246,19 @@ export function useEditLog() {
       exercises,
     }: {
       id: number;
-      exercises: { exerciseId: string; sets: SetValues[] }[];
+      exercises: { place: number; exerciseId: string; sets: SetValues[] }[];
     }) => {
-      const { error } = await supabase.rpc('edit_workout_log', { log_id: id, log: { exercises } });
+      // The function takes an exercise's place from its index, so every place up to the last is
+      // sent: exercises without sets, and gaps without an exercise, keep the others where they were.
+      const places = Math.max(0, ...exercises.map((exercise) => exercise.place + 1));
+      const byPlace = new Map(exercises.map((exercise) => [exercise.place, exercise]));
+      const log = {
+        exercises: Array.from({ length: places }, (_, place) => {
+          const exercise = byPlace.get(place);
+          return { exerciseId: exercise?.exerciseId ?? null, sets: exercise?.sets ?? [] };
+        }),
+      };
+      const { error } = await supabase.rpc('edit_workout_log', { log_id: id, log });
       if (error) {
         throw error;
       }

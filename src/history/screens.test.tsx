@@ -297,9 +297,9 @@ describe('EditLogScreen', () => {
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
-        { exerciseId: 'bench', sets: [bench(82.5, 8)] },
-        { exerciseId: 'row', sets: [] },
-        { exerciseId: 'plank', sets: [plank(50), plank(50)] },
+        { place: 0, exerciseId: 'bench', sets: [bench(82.5, 8)] },
+        { place: 1, exerciseId: 'row', sets: [] },
+        { place: 2, exerciseId: 'plank', sets: [plank(50), plank(50)] },
       ],
     });
     expect(router.back).toHaveBeenCalled();
@@ -320,18 +320,48 @@ describe('EditLogScreen', () => {
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
-        { exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
-        { exerciseId: 'row', sets: [bench(50, 10)] },
-        { exerciseId: 'plank', sets: [plank(50)] },
+        { place: 0, exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
+        { place: 1, exerciseId: 'row', sets: [bench(50, 10)] },
+        { place: 2, exerciseId: 'plank', sets: [plank(50)] },
       ],
     });
   });
 
-  it('shows only what was logged once the workout is gone', async () => {
+  it('shows only what was logged once the workout is gone, keeping the places', async () => {
     jest.mocked(useWorkouts).mockReturnValue(loaded([]) as never);
     await render(<EditLogScreen id={3} />);
     expect(screen.queryByText('Cable row')).toBeNull();
     expect(screen.getByText('Plank')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(editLog).toHaveBeenCalledWith({
+      id: 3,
+      exercises: [
+        { place: 0, exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
+        { place: 2, exerciseId: 'plank', sets: [plank(50)] },
+      ],
+    });
+  });
+
+  it('leaves out exercises added to the workout after it was done', async () => {
+    jest
+      .mocked(useLogSummary)
+      .mockReturnValue(loaded({ ...LOGS[0]!, plannedExercises: 3 }) as never);
+    jest.mocked(useWorkouts).mockReturnValue(
+      loaded([
+        {
+          id: 1,
+          exercises: [
+            { exerciseId: 'bench' },
+            { exerciseId: 'row' },
+            { exerciseId: 'plank' },
+            { exerciseId: 'curl' },
+          ],
+        },
+      ]) as never,
+    );
+    await render(<EditLogScreen id={3} />);
+    expect(screen.getByText('Cable row')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: '+ Add set' })).toHaveLength(3);
   });
 
   it('marks what is missing instead of saving', async () => {
