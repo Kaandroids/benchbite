@@ -124,6 +124,23 @@ describe('SessionScreen', () => {
     expect(screen.queryByText('REST')).toBeNull();
   });
 
+  it('needs a weight before a set is done, and carries it to the next sets', async () => {
+    resetSessionStore();
+    startSession('user-a', PUSH, {}, NOW.getTime());
+    await render(<SessionScreen />);
+    expect(screen.getByLabelText('Weight of set 1').props.value).toBe('');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).not.toBeChecked();
+    expect(screen.getByLabelText('Weight of set 1').props['aria-invalid']).toBe(true);
+
+    await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '44');
+    await fireEvent(screen.getByLabelText('Weight of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Weight of set 1').props['aria-invalid']).toBe(false);
+    expect(screen.getByLabelText('Weight of set 2').props.value).toBe('44');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+  });
+
   it('adds a set', async () => {
     await render(<SessionScreen />);
     await fireEvent.press(screen.getByRole('button', { name: '+ Add set' }));

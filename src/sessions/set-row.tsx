@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import * as Haptics from 'expo-haptics';
+import { useRef, useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -44,17 +45,33 @@ type SetInputProps = {
   done: boolean;
   /** The seconds a running clock shows instead of the value. */
   clock: number | null;
+  /** Marks a value that is needed before the set can be done. */
+  invalid?: boolean;
   onChange: (value: number | null) => void;
+  ref?: Ref<TextInputInstance>;
 };
 
-function SetInput({ field, value, label, placeholder, done, clock, onChange }: SetInputProps) {
+function SetInput({
+  field,
+  value,
+  label,
+  placeholder,
+  done,
+  clock,
+  invalid = false,
+  onChange,
+  ref,
+}: SetInputProps) {
   const { colors, radii } = useTheme();
   // Typed text is kept until editing ends, so that "1:" or "2." can be typed on the way.
   const [text, setText] = useState<string | null>(null);
   const running = clock !== null;
   return (
     <TextInput
+      ref={ref}
       accessibilityLabel={label}
+      accessibilityState={{ disabled: running }}
+      aria-invalid={invalid}
       value={running ? minutesAndSeconds(clock) : (text ?? show(field, value))}
       placeholder={placeholder}
       placeholderTextColor={colors.textMuted}
@@ -88,8 +105,8 @@ function SetInput({ field, value, label, placeholder, done, clock, onChange }: S
           : done
             ? { borderWidth: 0, backgroundColor: 'transparent', color: colors.text }
             : {
-                borderWidth: 1.5,
-                borderColor: colors.border,
+                borderWidth: invalid ? 2 : 1.5,
+                borderColor: invalid ? colors.danger : colors.border,
                 backgroundColor: colors.surface,
                 color: colors.textMuted,
               },
@@ -125,6 +142,20 @@ export function SetRow({
   const { colors, radii, spacing } = useTheme();
   const running = clock !== null;
   const width = fieldWidth(kind);
+  const weightInput = useRef<TextInputInstance>(null);
+  // A set of an exercise that records weight is not done without one (#34).
+  const [missing, setMissing] = useState(false);
+  const needsWeight = kind.fields.includes('weightKg') && !kind.addedWeight;
+  const invalid = missing && set.weightKg === null;
+  const toggle = () => {
+    if (!set.done && needsWeight && set.weightKg === null) {
+      setMissing(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      weightInput.current?.focus();
+      return;
+    }
+    onToggle();
+  };
   const labels: Record<SetField, string> = {
     weightKg: t('session.weightOf', { number }),
     reps: t('session.repsOf', { number }),
@@ -160,6 +191,8 @@ export function SetRow({
             }
             done={set.done}
             clock={field === 'seconds' && running ? clock : null}
+            invalid={field === 'weightKg' && invalid}
+            ref={field === 'weightKg' ? weightInput : undefined}
             onChange={(value) => onChange({ [field]: value })}
           />
         </View>
@@ -187,7 +220,7 @@ export function SetRow({
           accessibilityRole="checkbox"
           accessibilityState={{ checked: set.done }}
           accessibilityLabel={t('session.done', { number })}
-          onPress={onToggle}
+          onPress={toggle}
           style={[
             styles.button,
             set.done
