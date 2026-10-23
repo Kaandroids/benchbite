@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -85,6 +85,18 @@ select throws_ok(
   $$ select public.create_exercise(pg_temp.hip_thrust(jsonb_build_object('imagePaths',
        jsonb_build_array('00000000-0000-0000-0000-00000000000b/11111111-1111-1111-1111-111111111111.jpg')))) $$,
   'BB014', null, 'Photos come from the caller''s own folder'
+);
+create temp table end_only as select public.create_exercise(pg_temp.hip_thrust(jsonb_build_object(
+  'imagePaths', jsonb_build_array(
+    null, '00000000-0000-0000-0000-00000000000a/22222222-2222-2222-2222-222222222222.jpg')))) as id;
+select is(
+  (select image_paths from public.exercises x join end_only e on e.id = x.id),
+  '{NULL,00000000-0000-0000-0000-00000000000a/22222222-2222-2222-2222-222222222222.jpg}'::text[],
+  'A photo of the end alone stays second'
+);
+select throws_ok(
+  $$ select public.create_exercise(pg_temp.hip_thrust('{"imagePaths": [null]}')) $$,
+  'BB014', null, 'A missing photo stands only before the photo of the end'
 );
 
 select throws_ok(
