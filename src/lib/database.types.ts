@@ -534,6 +534,7 @@ export type Database = {
         Args: { exercise: Json };
         Returns: {
           equipment: Database['public']['Enums']['equipment'];
+          image_paths: string[];
           instructions: string[];
           level: Database['public']['Enums']['exercise_level'];
           metrics: Database['public']['Enums']['exercise_metric'][];
