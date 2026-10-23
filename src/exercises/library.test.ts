@@ -6,6 +6,8 @@ import {
   fetchLibrary,
   filterExercises,
   searchText,
+  thumbnailOf,
+  useExerciseDetails,
   useExerciseLibrary,
   type LibraryExercise,
 } from './library';
@@ -129,5 +131,23 @@ describe('filterExercises', () => {
   it('keeps everything without a query or a filter, but archived exercises', () => {
     expect(names('')).toHaveLength(5);
     expect(names('press')).toEqual(['Bench Press']);
+  });
+});
+
+describe('thumbnailOf', () => {
+  it('shows the start, or the end when there is no start', () => {
+    expect(thumbnailOf({ imagePaths: ['a/0.webp', 'a/1.webp'] })).toBe('a/0.webp');
+    expect(thumbnailOf({ imagePaths: [null, 'a/1.webp'] })).toBe('a/1.webp');
+    expect(thumbnailOf({ imagePaths: [] })).toBeUndefined();
+    expect(thumbnailOf(undefined)).toBeUndefined();
+  });
+});
+
+describe('useExerciseDetails', () => {
+  it('has no steps for an exercise that is gone, rather than failing', async () => {
+    eq.mockReturnValue({ maybeSingle: () => Promise.resolve({ data: null, error: null }) });
+    const { result } = await renderHook(() => useExerciseDetails('gone'));
+    await waitFor(() => expect(result.current.instructions.isSuccess).toBe(true));
+    expect(result.current.instructions.data).toEqual([]);
   });
 });

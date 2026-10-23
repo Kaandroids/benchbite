@@ -16,6 +16,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import {
   filterExercises,
   MUSCLE_GROUPS,
+  thumbnailOf,
   useExerciseLibrary,
   type ExerciseFilter,
   type LibraryExercise,
@@ -113,7 +114,7 @@ export function PickerScreen() {
           onPress={() => toggle(item)}
           style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
         >
-          <ExerciseThumbnail path={item.imagePaths[0]} size={52} name={item.name} />
+          <ExerciseThumbnail path={thumbnailOf(item)} size={52} name={item.name} />
           <View style={styles.text}>
             <Text variant="bodyStrong" numberOfLines={2}>
               {item.name}

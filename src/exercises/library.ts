@@ -18,12 +18,18 @@ export type LibraryExercise = {
   equipment: Enums['equipment'] | null;
   level: Enums['exercise_level'];
   category: Enums['exercise_category'];
-  imagePaths: string[];
+  /** The pictures of the start and the end of a rep; a missing start is null (ADR 0027). */
+  imagePaths: (string | null)[];
   /** Created by the user rather than from the library (ADR 0026). */
   custom: boolean;
   /** A custom exercise taken out of the lists; its history stays. */
   archived: boolean;
 };
+
+/** The picture that stands for an exercise in lists: its start, or else its end. */
+export function thumbnailOf(exercise: Pick<LibraryExercise, 'imagePaths'> | undefined) {
+  return exercise?.imagePaths.find((path) => path !== null) ?? undefined;
+}
 
 /** The muscle groups the exercise picker filters by, and the muscles each one includes. */
 export const MUSCLE_GROUPS = {
@@ -147,11 +153,12 @@ export function useExerciseDetails(id: string) {
         .from('exercises')
         .select('instructions')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       if (error) {
         throw error;
       }
-      return data.instructions;
+      // An exercise that is gone, or not the user's, is not found rather than failing to load.
+      return data?.instructions ?? [];
     },
     staleTime: Infinity,
   });

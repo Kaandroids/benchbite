@@ -8,7 +8,7 @@ import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import type { LibraryExercise } from '@/exercises/library';
+import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
@@ -161,7 +161,7 @@ export function ExerciseSheet({
         >
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           <View style={[styles.header, { gap: spacing.md }]}>
-            <ExerciseThumbnail path={details?.imagePaths[0]} size={64} name={details?.name} />
+            <ExerciseThumbnail path={thumbnailOf(details)} size={64} name={details?.name} />
             <View style={styles.title}>
               <Text variant="headline">{details?.name ?? ''}</Text>
               <Text variant="caption" color="textMuted">

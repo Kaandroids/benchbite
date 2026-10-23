@@ -4,12 +4,12 @@ import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
-import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 
 import { useArchiveExercise } from './custom';
+import { ExerciseNotFound } from './exercise-not-found';
 import { useExerciseDetails } from './library';
 import { usePictureUrls } from './photos';
 
@@ -22,8 +22,11 @@ export function ExerciseScreen({ id }: { id: string }) {
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
   const exercise = library.data?.find((candidate) => candidate.id === id);
-  const pictures = exercise?.imagePaths.slice(0, 2) ?? [];
-  const urls = usePictureUrls(pictures);
+  // Each picture with its place, as the start may be missing before the end.
+  const pictures = (exercise?.imagePaths.slice(0, 2) ?? []).flatMap((path, index) =>
+    path ? [{ path, end: index === 1 }] : [],
+  );
+  const urls = usePictureUrls(pictures.map((picture) => picture.path));
   const archive = useArchiveExercise(id);
 
   if (!allLoaded([library, instructions])) {
@@ -36,11 +39,7 @@ export function ExerciseScreen({ id }: { id: string }) {
   if (!exercise) {
     return (
       <Screen onBack={() => router.back()}>
-        <MessageView
-          icon="dumbbell"
-          title={t('exercise.notFound.title')}
-          message={t('exercise.notFound.message')}
-        />
+        <ExerciseNotFound />
       </Screen>
     );
   }
@@ -135,11 +134,11 @@ export function ExerciseScreen({ id }: { id: string }) {
       }
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
-        {pictures.map((path, index) => (
+        {pictures.map(({ path, end }) => (
           <View key={path} style={[styles.picture, { gap: spacing.xs }]}>
             <Image
               source={urls[path] ? { uri: urls[path] } : undefined}
-              accessibilityLabel={index === 0 ? t('exercise.start') : t('exercise.end')}
+              accessibilityLabel={end ? t('exercise.end') : t('exercise.start')}
               style={[
                 styles.image,
                 {
@@ -149,9 +148,10 @@ export function ExerciseScreen({ id }: { id: string }) {
                 },
               ]}
             />
-            {pictures.length > 1 ? (
+            {/* A single start is just the picture of the exercise; an end is always named. */}
+            {pictures.length > 1 || end ? (
               <Text variant="caption" color="textMuted" align="center" style={styles.chipText}>
-                {index === 0 ? t('exercise.start') : t('exercise.end')}
+                {end ? t('exercise.end') : t('exercise.start')}
               </Text>
             ) : null}
           </View>
