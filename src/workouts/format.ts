@@ -9,6 +9,18 @@ export function minutesAndSeconds(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
+/**
+ * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and
+ * minutes from an hour, such as 1:05 h.
+ */
+export function workoutLength(seconds: number): string {
+  if (seconds < 3600) {
+    return minutesAndSeconds(seconds);
+  }
+  const minutes = Math.round(seconds / 60);
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')} h`;
+}
+
 /** A workout's name, or the name of its type for workouts from the onboarding. */
 export function useWorkoutName() {
   const { t } = useTranslation();

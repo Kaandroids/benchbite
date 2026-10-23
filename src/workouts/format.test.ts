@@ -6,6 +6,7 @@ import {
   useRestFormat,
   useTargetFormat,
   useWorkoutName,
+  workoutLength,
 } from './format';
 import type { Workout, WorkoutExercise } from './workouts';
 
@@ -16,6 +17,14 @@ const exercise = (primaryMuscles: WorkoutExercise['primaryMuscles']): WorkoutExe
   restSeconds: 90,
   primaryMuscles,
   imagePath: null,
+});
+
+describe('workoutLength', () => {
+  it('shows minutes and seconds under an hour, and hours and minutes from an hour', () => {
+    expect(workoutLength(52 * 60)).toBe('52:00');
+    expect(workoutLength(3600 + 5 * 60 + 20)).toBe('1:05 h');
+    expect(workoutLength(2 * 3600 + 59 * 60 + 40)).toBe('3:00 h');
+  });
 });
 
 describe('minutesAndSeconds', () => {
