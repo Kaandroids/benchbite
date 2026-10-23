@@ -153,6 +153,11 @@
       "exercises_other": "{{count}} egzersiz",
       "minutes": "~{{minutes}} dk",
       "kcal": "~{{kcal}} kcal"
+    },
+    "running": {
+      "title": "{{name}} sürüyor",
+      "message": "Değiştirmeden önce antrenmanı bitir.",
+      "resume": "Antrenmana dön"
     }
   },
   "exercise": {

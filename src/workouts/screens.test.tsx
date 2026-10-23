@@ -336,6 +336,24 @@ describe('WorkoutScreen', () => {
     });
   });
 
+  it('cannot be edited while it is running, and goes back to it instead', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).not.toHaveBeenCalled();
+    expect(alert.mock.calls[0]?.slice(0, 2)).toEqual([
+      'Pull is running',
+      'Finish the workout before changing it.',
+    ]);
+    const resume = alert.mock.calls[0]?.[2]?.find(
+      (button) => button.text === 'Back to the workout',
+    );
+    resume?.onPress?.();
+    expect(router.push).toHaveBeenCalledWith('/session');
+  });
+
   it('switches the workout off', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);

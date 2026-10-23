@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { Screen } from '@/components/ui/screen';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { useActiveSession } from '@/sessions/session';
+import { useUserId } from '@/sessions/start';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 
@@ -26,6 +28,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
   const setActive = useSetWorkoutActive();
+  const session = useActiveSession(useUserId());
   const workout = workouts.data?.find((candidate) => candidate.id === id);
   const names = useExerciseNames(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
   const formatTarget = useTargetFormat();
@@ -98,9 +101,18 @@ export function WorkoutScreen({ id }: { id: number }) {
       action={
         <Pressable
           accessibilityRole="button"
-          onPress={() =>
-            router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } })
-          }
+          onPress={() => {
+            // A workout that is running cannot change under it, nor be deleted before it is
+            // saved; it is finished first.
+            if (session?.workoutId === workout.id) {
+              Alert.alert(t('workout.running.title', { name }), t('workout.running.message'), [
+                { text: t('editor.cancel'), style: 'cancel' },
+                { text: t('workout.running.resume'), onPress: () => router.push('/session') },
+              ]);
+              return;
+            }
+            router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
+          }}
           style={({ pressed }) => [
             styles.edit,
             {
