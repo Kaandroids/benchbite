@@ -6,6 +6,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { HistoryButton } from '@/components/ui/history-button';
 import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
@@ -104,10 +105,16 @@ export function WorkoutScreen({ id }: { id: number }) {
           {formatRest(exercise.restSeconds)}
         </Text>
       </View>
-      <InfoButton
-        exerciseId={exercise.exerciseId}
-        exerciseName={names[exercise.exerciseId] ?? ''}
-      />
+      <View style={{ gap: spacing.sm }}>
+        <InfoButton
+          exerciseId={exercise.exerciseId}
+          exerciseName={names[exercise.exerciseId] ?? ''}
+        />
+        <HistoryButton
+          exerciseId={exercise.exerciseId}
+          exerciseName={names[exercise.exerciseId] ?? ''}
+        />
+      </View>
     </View>
   );
 

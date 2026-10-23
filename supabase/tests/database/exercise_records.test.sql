@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -66,6 +66,19 @@ select results_eq(
             ('most_reps', 10.00, 70.00, 10, (now() - interval '10 days')::date),
             ('one_rep_max', 104.8, 85.00, 7, (now() - interval '5 days')::date) $$,
   'A weighted exercise has its heaviest set, one-rep max, best set and most reps, first reached'
+);
+select results_eq(
+  $$ select kind, exercise_position, set_position
+     from public.exercise_records('Barbell_Bench_Press_-_Medium_Grip') order by kind $$,
+  $$ values ('best_set', 0::smallint, 0::smallint), ('heaviest', 0::smallint, 2::smallint),
+            ('most_reps', 0::smallint, 0::smallint), ('one_rep_max', 0::smallint, 2::smallint) $$,
+  'A record names the place of its set in the workout'
+);
+select results_eq(
+  $$ select exercise_position, set_position from public.exercise_records('Plank')
+     where kind = 'most_time' $$,
+  $$ values (null::smallint, null::smallint) $$,
+  'The most time in a workout is no single set'
 );
 select results_eq(
   $$ select kind, value from public.exercise_records('Plank') order by kind $$,

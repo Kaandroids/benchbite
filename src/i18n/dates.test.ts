@@ -1,7 +1,14 @@
 import i18n from '@/i18n';
 import { act, renderHook } from '@/test/render';
 
-import { isoWeekday, toIsoDate, useDateFormat, useTimeFormat, useWeekdayFormat } from './dates';
+import {
+  isoWeekday,
+  toIsoDate,
+  useDateFormat,
+  useShortDateFormat,
+  useTimeFormat,
+  useWeekdayFormat,
+} from './dates';
 
 describe('toIsoDate', () => {
   it("writes the device's day, padded", () => {
@@ -114,5 +121,13 @@ describe('useDateFormat', () => {
     await act(() => i18n.changeLanguage(language));
     const { result } = await renderHook(() => useDateFormat(style));
     expect(result.current(new Date(2026, 9, 21))).toBe(expected);
+  });
+});
+
+describe('useShortDateFormat', () => {
+  it('leaves out the year only when it is the year of today', async () => {
+    const { result } = await renderHook(() => useShortDateFormat(new Date(2026, 9, 23)));
+    expect(result.current(new Date(2026, 9, 5))).toBe('Oct 5');
+    expect(result.current(new Date(2025, 9, 5))).toBe('Oct 5, 2025');
   });
 });

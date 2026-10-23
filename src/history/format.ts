@@ -1,6 +1,28 @@
 import { useTranslation } from 'react-i18next';
 
+import { useNumberFormat } from '@/i18n/units';
+import { minutesAndSeconds } from '@/workouts/format';
+
+import type { ExerciseTotal } from './exercise-summary';
 import { weekStart } from './history';
+
+/** What an exercise's sets add up to, such as "1,875 kg", "42 reps", "2:20" or "5,000 m". */
+export function useTotalFormat() {
+  const { t } = useTranslation();
+  const { format } = useNumberFormat();
+  return (total: ExerciseTotal) => {
+    switch (total.kind) {
+      case 'volume':
+        return `${format(Math.round(total.kilograms))} kg`;
+      case 'reps':
+        return t('history.exercise.reps', { count: total.reps });
+      case 'time':
+        return minutesAndSeconds(total.seconds);
+      case 'distance':
+        return `${format(total.meters)} m`;
+    }
+  };
+}
 
 /** A length of time in minutes, such as "52 min" or "2 h 41 min". */
 export function useDurationFormat() {

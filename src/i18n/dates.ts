@@ -39,3 +39,19 @@ export function useTimeFormat() {
   return (minutes: number) =>
     formatter.format(new Date(2024, 0, 1, Math.floor(minutes / 60), minutes % 60));
 }
+
+/**
+ * Formats a day in a few characters in the app language, such as "Oct 23", with the year when it
+ * is not the year of `today`, such as "Oct 23, 2025".
+ */
+export function useShortDateFormat(today: Date) {
+  const { i18n } = useTranslation();
+  const thisYear = new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' });
+  const otherYear = new Intl.DateTimeFormat(i18n.language, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  return (date: Date) =>
+    (date.getFullYear() === today.getFullYear() ? thisYear : otherYear).format(date);
+}

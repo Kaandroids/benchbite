@@ -23,6 +23,7 @@ import {
   useLogSummary,
 } from './history';
 import { shortSet, summarizeSets } from './exercise-summary';
+import { useTotalFormat } from './format';
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
@@ -34,6 +35,7 @@ export function LogScreen({ id }: { id: number }) {
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
   const { format } = useNumberFormat();
+  const formatTotal = useTotalFormat();
   const log = summary.data;
 
   if (!allLoaded([summary, sets, library])) {
@@ -201,12 +203,6 @@ export function LogScreen({ id }: { id: number }) {
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
         const { best, total } = summarizeSets(exercise.sets, kind);
         const describe = (set: SetValues) => describeSet(set, kind);
-        const totalValue = {
-          volume: () => `${format(Math.round(total.kind === 'volume' ? total.kilograms : 0))} kg`,
-          reps: () => t('history.exercise.reps', { count: total.kind === 'reps' ? total.reps : 0 }),
-          time: () => minutesAndSeconds(total.kind === 'time' ? total.seconds : 0),
-          distance: () => `${format(total.kind === 'distance' ? total.meters : 0)} m`,
-        }[total.kind]();
         return (
           <View
             key={index}
@@ -230,7 +226,7 @@ export function LogScreen({ id }: { id: number }) {
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
                   {[
                     t('history.exercise.setCount', { count: exercise.sets.length }),
-                    totalValue,
+                    formatTotal(total),
                   ].join(' · ')}
                 </Text>
               </View>

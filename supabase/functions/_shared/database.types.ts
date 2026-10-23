@@ -543,11 +543,13 @@ export type Database = {
         Args: { exercise_id: string };
         Returns: {
           achieved_at: string;
+          exercise_position: number;
           kind: string;
           log_id: number;
           meters: number;
           reps: number;
           seconds: number;
+          set_position: number;
           value: number;
           weight_kg: number;
         }[];
