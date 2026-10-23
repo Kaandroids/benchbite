@@ -71,12 +71,14 @@ export function EditLogScreen({ id }: { id: number }) {
     );
   }
   const log = summary.data;
-  // The exercises of the workout it was done from, so that a skipped one can be added afterwards;
-  // as many as it had then, leaving out those added since.
+  // The exercises the workout had, so that a skipped one can get sets afterwards. Logs saved before
+  // they were kept take them from the workout as it is now, as many as it had then.
   const workout = workouts.data?.find((item) => item.id === log.workoutId);
-  const planned = (workout?.exercises ?? [])
-    .slice(0, log.plannedExercises ?? undefined)
-    .map((exercise) => exercise.exerciseId);
+  const planned =
+    log.plannedExerciseIds ??
+    (workout?.exercises ?? [])
+      .slice(0, log.plannedExercises ?? undefined)
+      .map((exercise) => exercise.exerciseId);
   return (
     <LogEditor
       log={log}

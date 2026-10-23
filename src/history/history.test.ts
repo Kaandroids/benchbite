@@ -34,6 +34,7 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
     plannedSets: null,
     kilograms: 1000,
     estimatedKcal: 300,
+    plannedExerciseIds: null,
   };
 };
 
@@ -56,6 +57,7 @@ describe('fetchLogSummaries', () => {
           planned_sets: 24,
           kilograms: 6240.5,
           estimated_kcal: null,
+          planned_exercise_ids: ['curl', 'dips'],
         },
       ],
       error: null,
@@ -78,6 +80,7 @@ describe('fetchLogSummaries', () => {
       plannedSets: 24,
       kilograms: 6240.5,
       estimatedKcal: null,
+      plannedExerciseIds: ['curl', 'dips'],
     });
     expect(durationMinutes(summary!)).toBe(52);
   });

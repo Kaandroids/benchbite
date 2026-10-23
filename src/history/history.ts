@@ -23,6 +23,8 @@ export type LogSummary = {
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
   estimatedKcal: number | null;
+  /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
+  plannedExerciseIds: string[] | null;
 };
 
 /** A set of a finished workout. */
@@ -113,6 +115,7 @@ function toSummary(row: SummaryRow): LogSummary {
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
+    plannedExerciseIds: row.planned_exercise_ids,
   };
 }
 

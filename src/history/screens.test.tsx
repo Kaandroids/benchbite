@@ -60,6 +60,7 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   plannedSets: null,
   kilograms: 6240,
   estimatedKcal: 390,
+  plannedExerciseIds: null,
 });
 
 // A Friday.
@@ -343,6 +344,23 @@ describe('EditLogScreen', () => {
         { place: 2, exerciseId: 'plank', sets: [plank(50)] },
       ],
     });
+  });
+
+  it('names the skipped exercises from what the workout had then, however it changed since', async () => {
+    jest
+      .mocked(useLogSummary)
+      .mockReturnValue(
+        loaded({ ...LOGS[0]!, plannedExerciseIds: ['bench', 'row', 'plank'] }) as never,
+      );
+    // The workout was reordered and its row taken out since.
+    jest
+      .mocked(useWorkouts)
+      .mockReturnValue(
+        loaded([{ id: 1, exercises: [{ exerciseId: 'plank' }, { exerciseId: 'bench' }] }]) as never,
+      );
+    await render(<EditLogScreen id={3} />);
+    expect(screen.getByText('Cable row')).toBeTruthy();
+    expect(screen.getByText('Skipped')).toBeTruthy();
   });
 
   it('leaves out exercises added to the workout after it was done', async () => {
