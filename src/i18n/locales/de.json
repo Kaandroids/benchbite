@@ -586,7 +586,19 @@
       "records_other": "{{count}} neue Rekorde"
     },
     "newRecord": "Neuer Rekord: {{kind}}, {{value}}",
-    "newRecords": "Neue Rekorde: {{kinds}}"
+    "newRecords": "Neue Rekorde: {{kinds}}",
+    "restOver": {
+      "title": "Pause vorbei",
+      "next": "Weiter mit: {{name}}",
+      "body": "Zeit für deinen nächsten Satz.",
+      "channel": "Pausentimer"
+    },
+    "restAlarm": {
+      "title": "Bescheid geben, wenn die Pause vorbei ist?",
+      "message": "Wir melden uns, wenn sie endet, auch bei gesperrtem Handy.",
+      "allow": "Erlauben",
+      "notNow": "Jetzt nicht"
+    }
   },
   "history": {
     "seeAll": "Alle ansehen",

@@ -55,12 +55,11 @@ export function SessionScreen() {
   const formatRest = useRestFormat();
   const now = useNow(!!session, session?.clock?.startedAt);
 
-  // A rest that is over ends.
+  // A rest that is over ends; RestAlarm signals it.
   const restOver = !!session?.rest && session.rest.endsAt <= now;
   useEffect(() => {
     if (restOver) {
       updateSession((current) => ({ ...current, rest: null }));
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, [restOver]);
 

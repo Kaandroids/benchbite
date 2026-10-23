@@ -17,11 +17,12 @@ import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provid
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { showRemindersInForeground } from '@/reminders/reminders';
+import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
 import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
-showRemindersInForeground();
+showRemindersInForeground([REST_NOTIFICATION_ID]);
 
 export default function RootLayout() {
   return (
@@ -69,6 +70,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style="auto" />
+      {status === 'ready' ? <RestAlarm /> : null}
       {status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : (
