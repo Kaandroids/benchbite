@@ -523,6 +523,14 @@ export type Database = {
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
+      exercise_bests: {
+        Args: { exercise_ids: string[] };
+        Returns: {
+          exercise_id: string;
+          kind: string;
+          value: number;
+        }[];
+      };
       exercise_progress: {
         Args: { exercise_id: string };
         Returns: {
