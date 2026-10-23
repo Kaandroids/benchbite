@@ -151,7 +151,13 @@
     "edit": "Edit",
     "startLabel": "Start {{name}}",
     "limitTitle": "No room for another workout",
-    "limit": "You can have up to {{max}} workouts, archived ones included. Delete one to make room."
+    "limit": "You can have up to {{max}} workouts, archived ones included. Delete one to make room.",
+    "size": {
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "minutes": "~{{minutes}} min",
+      "kcal": "~{{kcal}} kcal"
+    }
   },
   "exercise": {
     "start": "Start",

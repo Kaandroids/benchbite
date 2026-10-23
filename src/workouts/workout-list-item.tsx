@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
-import { useSetWorkoutActive, type Workout } from './workouts';
+import { useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
 
 type WorkoutListItemProps = {
   workout: Workout;
@@ -34,6 +35,9 @@ export function WorkoutListItem({
   const { colors, radii, spacing } = useTheme();
   const setActive = useSetWorkoutActive();
   const name = useWorkoutName()(workout);
+  const { data: kcalPerMinute } = useKcalPerMinute();
+  const exercises = [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])];
+  const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
 
   return (
     <View
@@ -79,12 +83,33 @@ export function WorkoutListItem({
           ) : null}
         </View>
         <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        <Text variant="caption" color="textMuted">
-          {t('workout.session', {
-            count: workout.exercises.length,
-            minutes: workout.estimatedMinutes,
-          })}
-        </Text>
+        {/* Two even rows: what the workout holds, then how long and hard it is. */}
+        <View style={{ gap: 2 }}>
+          <View style={[styles.stats, { gap: spacing.md }]}>
+            <IconStat
+              icon="dumbbell"
+              color="info"
+              text={t('workout.size.exercises', { count: exercises.length })}
+            />
+            <IconStat icon="target" color="fat" text={t('history.sets', { count: sets })} />
+          </View>
+          <View style={[styles.stats, { gap: spacing.md }]}>
+            <IconStat
+              icon="timer"
+              color="primaryText"
+              text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
+            />
+            {kcalPerMinute ? (
+              <IconStat
+                icon="flame"
+                color="primary"
+                text={t('workout.size.kcal', {
+                  kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
+                })}
+              />
+            ) : null}
+          </View>
+        </View>
       </Pressable>
       {running ? (
         <View
@@ -136,6 +161,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  stats: {
+    flexDirection: 'row',
   },
   // Long names wrap and leave room for the Today pill instead of pushing it out.
   name: {

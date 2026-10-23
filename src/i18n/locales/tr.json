@@ -151,7 +151,13 @@
     "edit": "Düzenle",
     "startLabel": "{{name}} başlat",
     "limitTitle": "Yeni antrenmana yer yok",
-    "limit": "Arşivdekiler dahil en fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil."
+    "limit": "Arşivdekiler dahil en fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil.",
+    "size": {
+      "exercises_one": "{{count}} egzersiz",
+      "exercises_other": "{{count}} egzersiz",
+      "minutes": "~{{minutes}} dk",
+      "kcal": "~{{kcal}} kcal"
+    }
   },
   "exercise": {
     "start": "Başlangıç",

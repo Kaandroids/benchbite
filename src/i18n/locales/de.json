@@ -151,7 +151,13 @@
     "edit": "Bearbeiten",
     "startLabel": "{{name}} starten",
     "limitTitle": "Kein Platz für ein weiteres Training",
-    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen."
+    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen.",
+    "size": {
+      "exercises_one": "{{count}} Übung",
+      "exercises_other": "{{count}} Übungen",
+      "minutes": "~{{minutes}} Min.",
+      "kcal": "~{{kcal}} kcal"
+    }
   },
   "exercise": {
     "start": "Start",

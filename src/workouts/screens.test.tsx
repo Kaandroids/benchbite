@@ -17,6 +17,7 @@ jest.mock('./workouts', () => ({
   useWorkouts: jest.fn(),
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
+  useKcalPerMinute: () => ({ data: 7.5 }),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 jest.mock('@/sessions/start', () => ({ useUserId: () => 'user-a', useStartWorkout: jest.fn() }));
@@ -104,7 +105,11 @@ describe('WorkoutsScreen', () => {
     expect(screen.getByText('Wed')).toBeTruthy();
     expect(screen.getByText('Sat')).toBeTruthy();
     expect(screen.getByText('Any day')).toBeTruthy();
-    expect(screen.getAllByText('1 exercise · about 45 min')).toHaveLength(3);
+    // Each has one exercise of three sets, estimated at 45 minutes and 7.5 kcal a minute.
+    expect(screen.getAllByText('1 exercise')).toHaveLength(3);
+    expect(screen.getAllByText('3 sets')).toHaveLength(3);
+    expect(screen.getAllByText('~45 min')).toHaveLength(3);
+    expect(screen.getAllByText('~338 kcal')).toHaveLength(3);
     // Only the workout on Wednesday is today's.
     expect(screen.getAllByText('Today')).toHaveLength(1);
     // Inactive workouts are in the archive.
