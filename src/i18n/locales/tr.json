@@ -501,5 +501,69 @@
       "tomorrow": "Yarın",
       "start": "Başlayalım"
     }
+  },
+  "session": {
+    "columns": {
+      "set": "SET",
+      "last": "GEÇEN SEFER",
+      "kg": "KG",
+      "addedKg": "+KG",
+      "reps": "TEKRAR",
+      "meters": "M",
+      "seconds": "SÜRE"
+    },
+    "optional": "isteğe bağlı",
+    "addSet": "+ Set ekle",
+    "done": "Set {{number}} tamam",
+    "startClock": "Set {{number}} için sayacı başlat",
+    "stopClock": "Set {{number}} için sayacı durdur",
+    "weightOf": "Set {{number}} ağırlığı",
+    "repsOf": "Set {{number}} tekrarı",
+    "timeOf": "Set {{number}} süresi",
+    "metersOf": "Set {{number}} mesafesi",
+    "minimize": "Küçült, antrenman devam eder",
+    "finish": "Bitir",
+    "progress": "{{done}}/{{planned}} set",
+    "setsDone": "{{done}}/{{planned}} set",
+    "best": "en iyi {{set}}",
+    "rest": "DİNLENME",
+    "restLeft": "Dinlenme, {{time}} kaldı",
+    "restLess": "15 saniye az",
+    "restMore": "15 saniye fazla",
+    "skip": "Geç",
+    "none": {
+      "title": "Devam eden antrenman yok",
+      "message": "Antrenman sekmesinden bir antrenman başlat."
+    },
+    "inProgress": "DEVAM EDİYOR",
+    "resume": "Devam et",
+    "running": "Sürüyor",
+    "current": "{{done}}/{{planned}} set · {{exercise}}",
+    "busy": {
+      "title": "{{name}} hâlâ sürüyor",
+      "message_one": "{{minutes}} dakika önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
+      "message_other": "{{minutes}} dakika önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
+      "resume": "{{name}} antrenmanına dön",
+      "finish": "{{name}} bitir, sonra {{next}} başlat",
+      "discard": "{{name}} sil ve {{next}} başlat"
+    },
+    "summary": {
+      "title": "{{name}} tamam",
+      "early": "erken bitti",
+      "time": "süre",
+      "sets": "set",
+      "kilograms": "kg kaldırıldı",
+      "skipped": "Atlandı",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} set",
+      "save": "Antrenmanı kaydet",
+      "keepGoing": "Devam et",
+      "discard": "Sil",
+      "discardTitle": "Antrenman silinsin mi?",
+      "discardMessage": "Girdiğin setler kaydedilmez.",
+      "empty": "Kaydetmek için en az bir set gir.",
+      "saveErrorTitle": "Kaydedilemedi",
+      "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+    }
   }
 }

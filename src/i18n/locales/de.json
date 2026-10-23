@@ -501,5 +501,69 @@
       "tomorrow": "Morgen",
       "start": "Los geht's"
     }
+  },
+  "session": {
+    "columns": {
+      "set": "SATZ",
+      "last": "LETZTES MAL",
+      "kg": "KG",
+      "addedKg": "+KG",
+      "reps": "WDH.",
+      "meters": "M",
+      "seconds": "ZEIT"
+    },
+    "optional": "optional",
+    "addSet": "+ Satz hinzufügen",
+    "done": "Satz {{number}} erledigt",
+    "startClock": "Uhr für Satz {{number}} starten",
+    "stopClock": "Uhr für Satz {{number}} stoppen",
+    "weightOf": "Gewicht von Satz {{number}}",
+    "repsOf": "Wiederholungen von Satz {{number}}",
+    "timeOf": "Zeit von Satz {{number}}",
+    "metersOf": "Distanz von Satz {{number}}",
+    "minimize": "Minimieren, das Training läuft weiter",
+    "finish": "Beenden",
+    "progress": "{{done}} von {{planned}} Sätzen",
+    "setsDone": "{{done}} von {{planned}} Sätzen",
+    "best": "bester {{set}}",
+    "rest": "PAUSE",
+    "restLeft": "Pause, noch {{time}}",
+    "restLess": "15 Sekunden weniger",
+    "restMore": "15 Sekunden mehr",
+    "skip": "Überspringen",
+    "none": {
+      "title": "Kein Training läuft",
+      "message": "Starte ein Training im Tab Training."
+    },
+    "inProgress": "LÄUFT",
+    "resume": "Weiter",
+    "running": "Läuft",
+    "current": "{{done}} von {{planned}} Sätzen · {{exercise}}",
+    "busy": {
+      "title": "{{name}} läuft noch",
+      "message_one": "Du hast es vor {{minutes}} Minuten gestartet und {{count}} Satz eingetragen. Es kann immer nur ein Training laufen.",
+      "message_other": "Du hast es vor {{minutes}} Minuten gestartet und {{count}} Sätze eingetragen. Es kann immer nur ein Training laufen.",
+      "resume": "{{name}} fortsetzen",
+      "finish": "{{name}} beenden, dann {{next}} starten",
+      "discard": "{{name}} verwerfen und {{next}} starten"
+    },
+    "summary": {
+      "title": "{{name}} geschafft",
+      "early": "früher beendet",
+      "time": "Zeit",
+      "sets": "Sätze",
+      "kilograms": "kg bewegt",
+      "skipped": "Ausgelassen",
+      "sets_one": "{{count}} Satz",
+      "sets_other": "{{count}} Sätze",
+      "save": "Training speichern",
+      "keepGoing": "Weitermachen",
+      "discard": "Verwerfen",
+      "discardTitle": "Training verwerfen?",
+      "discardMessage": "Die eingetragenen Sätze werden nicht gespeichert.",
+      "empty": "Trage mindestens einen Satz ein, um das Training zu speichern.",
+      "saveErrorTitle": "Nicht gespeichert",
+      "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+    }
   }
 }
