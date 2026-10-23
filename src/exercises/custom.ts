@@ -164,19 +164,30 @@ export function useArchiveExercise(id: string) {
   });
 }
 
-/** Whether an exercise has logged sets, after which what it records cannot change. */
-export function useIsLogged(id: string) {
+/** Why what an exercise records cannot change: it has logged sets, or a workout has it. */
+export type KindLock = 'logged' | 'inWorkout' | null;
+
+const isUsedIn = async (table: 'logged_sets' | 'workout_exercises', id: string) => {
+  const { count, error } = await supabase
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq('exercise_id', id);
+  if (error) {
+    throw error;
+  }
+  return (count ?? 0) > 0;
+};
+
+/** Whether what an exercise records can still change, as edit_exercise() decides. */
+export function useKindLock(id: string) {
   return useQuery({
-    queryKey: ['workout-logs', 'exercise', id, 'logged'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('logged_sets')
-        .select('id', { count: 'exact', head: true })
-        .eq('exercise_id', id);
-      if (error) {
-        throw error;
-      }
-      return (count ?? 0) > 0;
+    queryKey: ['exercises', id, 'kind-lock'],
+    queryFn: async (): Promise<KindLock> => {
+      const [logged, inWorkout] = await Promise.all([
+        isUsedIn('logged_sets', id),
+        isUsedIn('workout_exercises', id),
+      ]);
+      return logged ? 'logged' : inWorkout ? 'inWorkout' : null;
     },
   });
 }
