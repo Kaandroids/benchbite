@@ -679,6 +679,15 @@
     },
     "oneRepMaxNote": "Tahmini 1RM, tek tekrarda kaldırabileceğin muhtemel en ağır yüktür; bir setin ağırlığı ve tekrarından hesaplanır. Kaldırdığın bir ağırlık değil, bir tahmindir.",
     "chartSummary_one": "{{metric}}, 1 antrenmanda, {{to}}: {{latest}}",
-    "chartSummary_other": "{{metric}}, {{from}} ile {{to}} arasında {{count}} antrenmanda: en düşük {{lowest}}, en yüksek {{highest}}, son {{latest}}"
+    "chartSummary_other": "{{metric}}, {{from}} ile {{to}} arasında {{count}} antrenmanda: en düşük {{lowest}}, en yüksek {{highest}}, son {{latest}}",
+    "ranges": {
+      "1m": "1A",
+      "3m": "3A",
+      "6m": "6A",
+      "1y": "1Y",
+      "all": "Tümü"
+    },
+    "rangeLabel": "Zaman aralığı",
+    "noWorkoutsInRange": "Bu aralıkta antrenman yok"
   }
 }
