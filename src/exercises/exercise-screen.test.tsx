@@ -1,11 +1,14 @@
 import { router } from 'expo-router';
+import { Alert, type AlertButton } from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
+import { useArchiveExercise } from './custom';
 import { ExerciseScreen } from './exercise-screen';
 import { useExerciseDetails, type LibraryExercise } from './library';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
+jest.mock('./custom', () => ({ useArchiveExercise: jest.fn() }));
 jest.mock('./library', () => ({ useExerciseDetails: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/workouts/workouts', () => ({
@@ -42,7 +45,15 @@ function mockDetails(exercises: LibraryExercise[] | undefined, steps: string[] |
   } as never);
 }
 
-beforeEach(() => jest.clearAllMocks());
+const archive = jest.fn();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.mocked(useArchiveExercise).mockReturnValue({
+    mutateAsync: archive.mockResolvedValue(undefined),
+    isPending: false,
+  } as never);
+});
 
 describe('ExerciseScreen', () => {
   it('shows the start and end pictures, the muscles, equipment and level', async () => {
@@ -91,5 +102,36 @@ describe('ExerciseScreen', () => {
     mockDetails(undefined, undefined);
     await render(<ExerciseScreen id="row" />);
     expect(screen.getByLabelText('Loading')).toBeTruthy();
+  });
+
+  it("edits and archives the user's own exercise, and leaves out equipment it has not", async () => {
+    mockDetails([{ ...ROW, custom: true, equipment: null, imagePaths: [] }], []);
+    jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons?: AlertButton[]) => {
+      buttons?.find((button) => button.text === 'Archive exercise')?.onPress?.();
+    });
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByText('Equipment')).toBeNull();
+    expect(screen.getByText('Mine')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/workout/exercise/edit',
+      params: { id: 'row' },
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Archive exercise' }));
+    expect(archive).toHaveBeenCalledWith(true);
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('brings an archived exercise back, and has no edit for library exercises', async () => {
+    mockDetails([{ ...ROW, custom: true, archived: true }], []);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Bring back' }));
+    expect(archive).toHaveBeenCalledWith(false);
+
+    mockDetails([ROW], []);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
   });
 });

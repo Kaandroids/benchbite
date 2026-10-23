@@ -3,17 +3,23 @@ import { act, createTestQueryClient, renderHook } from '@/test/render';
 
 import {
   emptyForm,
+  formOf,
   isComplete,
   setCreatedExercise,
   takeCreatedExercise,
   toExercise,
+  useArchiveExercise,
   useCreateExercise,
+  useEditExercise,
   type CustomExerciseForm,
 } from './custom';
+import { removePhotos } from './photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('./photos', () => ({
+  isUserPhoto: (path: string) => path.startsWith('0000000a-'),
   uploadPhoto: jest.fn((uri: string) => Promise.resolve(`u/${uri}`)),
+  removePhotos: jest.fn(() => Promise.resolve()),
 }));
 
 const HIP: CustomExerciseForm = {
@@ -95,5 +101,68 @@ describe('the exercise just created', () => {
     setCreatedExercise({ id: 'custom-1' } as never);
     expect(takeCreatedExercise()).toEqual({ id: 'custom-1' });
     expect(takeCreatedExercise()).toBeNull();
+  });
+});
+
+const OLD = '0000000a-0000-0000-0000-000000000000/old.jpg';
+const KEPT = '0000000a-0000-0000-0000-000000000000/kept.jpg';
+
+describe('formOf', () => {
+  it('fills the form with what an exercise has', () => {
+    expect(
+      formOf(
+        {
+          id: 'custom-1',
+          name: 'Hip thrust',
+          searchText: '',
+          metrics: ['distance', 'duration'],
+          primaryMuscles: ['glutes'],
+          secondaryMuscles: [],
+          equipment: null,
+          level: 'expert',
+          category: 'cardio',
+          imagePaths: [OLD],
+          custom: true,
+          archived: false,
+        },
+        ['Drive up.'],
+      ),
+    ).toMatchObject({ logKind: 'distanceTime', level: 'expert', photos: [OLD, null] });
+  });
+});
+
+describe('useEditExercise', () => {
+  it('uploads new photos, keeps the ones it has and removes the dropped ones', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
+    const { result } = await renderHook(() => useEditExercise('custom-1'), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({
+        form: { ...HIP, photos: [KEPT, 'file://new.jpg'] },
+        before: [OLD, KEPT],
+      });
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('edit_exercise', {
+      exercise_id: 'custom-1',
+      exercise: expect.objectContaining({ imagePaths: [KEPT, 'u/file://new.jpg'] }),
+    });
+    expect(removePhotos).toHaveBeenCalledWith([OLD]);
+  });
+});
+
+describe('useArchiveExercise', () => {
+  it('archives an exercise or brings it back', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
+    const { result } = await renderHook(() => useArchiveExercise('custom-1'), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await result.current.mutateAsync(true);
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('archive_exercise', {
+      exercise_id: 'custom-1',
+      archived: true,
+    });
   });
 });

@@ -756,6 +756,17 @@
     "choosePhoto": "Aus Fotos wählen",
     "removePhoto": "Foto entfernen",
     "addPhoto": "Foto „{{name}}“ hinzufügen",
-    "changePhoto": "Foto „{{name}}“ ändern"
+    "changePhoto": "Foto „{{name}}“ ändern",
+    "editTitle": "Übung bearbeiten",
+    "save": "Änderungen speichern",
+    "logKindLocked": "Sie wurde schon eingetragen, daher bleibt das so.",
+    "archive": "Übung archivieren",
+    "archiveNote": "Sie verschwindet aus den Listen. Verlauf und Rekorde bleiben.",
+    "archiveTitle": "Diese Übung archivieren?",
+    "archiveMessage": "Sie verschwindet aus den Listen. Verlauf und Rekorde bleiben, und du kannst sie zurückholen.",
+    "restore": "Zurückholen",
+    "archived": "Archiviert",
+    "archiveErrorTitle": "Nicht geändert",
+    "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal."
   }
 }
