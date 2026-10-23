@@ -749,6 +749,13 @@
     "createRowHint": "Add one the library does not have",
     "noneTitle": "No exercise found",
     "noneMessage": "The library does not have it yet. Add it as your own, and log it like any other.",
-    "createNamed": "Create “{{name}}”"
+    "createNamed": "Create “{{name}}”",
+    "photos": "Photos",
+    "photosHint": "The start and end of a rep, from your camera or your photos.",
+    "takePhoto": "Take a photo",
+    "choosePhoto": "Choose from photos",
+    "removePhoto": "Remove photo",
+    "addPhoto": "Add the {{name}} photo",
+    "changePhoto": "Change the {{name}} photo"
   }
 }

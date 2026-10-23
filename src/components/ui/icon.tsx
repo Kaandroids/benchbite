@@ -11,6 +11,7 @@ export const ICONS = {
   bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
+  camera: { ios: 'camera', android: 'photo_camera', web: 'photo_camera' },
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },

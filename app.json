@@ -33,7 +33,19 @@
       ],
       "expo-sqlite",
       "expo-localization",
-      ["expo-notifications", { "enableRemoteNotifications": false }]
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Benchbite uses your photos to show how your own exercises are done.",
+          "cameraPermission": "Benchbite uses the camera to take photos of how your own exercises are done."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

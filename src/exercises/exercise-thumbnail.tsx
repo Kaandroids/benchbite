@@ -2,10 +2,11 @@ import { Image, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
-import { exerciseImageUrl } from '@/workouts/workouts';
+
+import { usePictureUrls } from './photos';
 
 type ExerciseThumbnailProps = {
-  /** The exercise's first picture in the exercise-images bucket, if it has one. */
+  /** The exercise's first picture, of the library or the user's photo, if it has one. */
   path: string | null | undefined;
   size: number;
   /** Without a picture, as for the user's own exercises, its first letter stands in. */
@@ -15,6 +16,7 @@ type ExerciseThumbnailProps = {
 /** A square picture of an exercise, on white because the pictures are drawn on white. */
 export function ExerciseThumbnail({ path, size, name }: ExerciseThumbnailProps) {
   const { colors, radii } = useTheme();
+  const url = usePictureUrls(path ? [path] : [])[path ?? ''];
   return (
     <View
       style={[
@@ -30,7 +32,7 @@ export function ExerciseThumbnail({ path, size, name }: ExerciseThumbnailProps) 
     >
       {path ? (
         <Image
-          source={{ uri: exerciseImageUrl(path) }}
+          source={url ? { uri: url } : undefined}
           style={styles.fill}
           accessibilityIgnoresInvertColors
         />

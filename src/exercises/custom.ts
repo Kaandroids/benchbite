@@ -4,6 +4,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import type { LibraryExercise } from './library';
+import { uploadPhoto } from './photos';
 
 type Enums = Database['public']['Enums'];
 
@@ -26,6 +27,8 @@ export type CustomExerciseForm = {
   equipment: Enums['equipment'] | null;
   level: Enums['exercise_level'];
   instructions: string[];
+  /** The photos of the start and the end of a rep, as local URIs until they are uploaded. */
+  photos: [string | null, string | null];
 };
 
 export const emptyForm = (name = ''): CustomExerciseForm => ({
@@ -36,6 +39,7 @@ export const emptyForm = (name = ''): CustomExerciseForm => ({
   equipment: null,
   level: 'beginner',
   instructions: [],
+  photos: [null, null],
 });
 
 /** Whether the form has what an exercise needs: a name, a way of logging and a main muscle. */
@@ -43,8 +47,8 @@ export function isComplete(form: CustomExerciseForm): boolean {
   return form.name.trim() !== '' && form.logKind !== null && form.primaryMuscles.length > 0;
 }
 
-/** The exercise as create_exercise() takes it. */
-export function toExercise(form: CustomExerciseForm) {
+/** The exercise as create_exercise() takes it, with the paths of its uploaded photos. */
+export function toExercise(form: CustomExerciseForm, imagePaths: string[] = []) {
   return {
     name: form.name.trim(),
     metrics: form.logKind ? [...LOG_KINDS[form.logKind]] : [],
@@ -55,18 +59,20 @@ export function toExercise(form: CustomExerciseForm) {
     equipment: form.equipment,
     level: form.level,
     instructions: form.instructions.map((step) => step.trim()).filter(Boolean),
+    imagePaths,
   };
 }
 
 /**
- * Creates a custom exercise and loads the library again. Resolves to the exercise as the picker
- * lists it, so that it can be chosen straight away.
+ * Uploads the photos, then creates a custom exercise naming them, and loads the library again.
+ * Resolves to the exercise as the picker lists it, so that it can be chosen straight away.
  */
 export function useCreateExercise() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (form: CustomExerciseForm): Promise<LibraryExercise> => {
-      const exercise = toExercise(form);
+      const photos = form.photos.filter((photo): photo is string => photo !== null);
+      const exercise = toExercise(form, await Promise.all(photos.map(uploadPhoto)));
       const { data: id, error } = await supabase.rpc('create_exercise', { exercise });
       if (error) {
         throw error;
@@ -81,7 +87,7 @@ export function useCreateExercise() {
         equipment: exercise.equipment,
         level: exercise.level,
         category: exercise.metrics.includes('distance') ? 'cardio' : 'strength',
-        imagePaths: [],
+        imagePaths: exercise.imagePaths,
         custom: true,
         archived: false,
       };

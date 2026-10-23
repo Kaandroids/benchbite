@@ -749,6 +749,13 @@
     "createRowHint": "Eine, die die Bibliothek nicht hat",
     "noneTitle": "Keine Übung gefunden",
     "noneMessage": "Die Bibliothek hat sie noch nicht. Lege sie als deine eigene an und trage sie wie jede andere ein.",
-    "createNamed": "„{{name}}“ erstellen"
+    "createNamed": "„{{name}}“ erstellen",
+    "photos": "Fotos",
+    "photosHint": "Anfang und Ende einer Wiederholung, mit der Kamera oder aus deinen Fotos.",
+    "takePhoto": "Foto aufnehmen",
+    "choosePhoto": "Aus Fotos wählen",
+    "removePhoto": "Foto entfernen",
+    "addPhoto": "Foto „{{name}}“ hinzufügen",
+    "changePhoto": "Foto „{{name}}“ ändern"
   }
 }

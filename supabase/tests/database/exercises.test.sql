@@ -4,7 +4,10 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(9);
 
-select is((select count(*) from public.exercises)::integer, 876, 'The whole library is imported');
+select is(
+  (select count(*) from public.exercises where owner_id is null)::integer, 876,
+  'The whole library is imported'
+);
 
 select is(
   (select metrics from public.exercises where id = 'Barbell_Bench_Press_-_Medium_Grip'),

@@ -749,6 +749,13 @@
     "createRowHint": "Kütüphanede olmayan birini ekle",
     "noneTitle": "Hareket bulunamadı",
     "noneMessage": "Kütüphanede henüz yok. Kendi hareketin olarak ekle ve diğerleri gibi kaydet.",
-    "createNamed": "“{{name}}” oluştur"
+    "createNamed": "“{{name}}” oluştur",
+    "photos": "Fotoğraflar",
+    "photosHint": "Bir tekrarın başı ve sonu, kameradan ya da fotoğraflarından.",
+    "takePhoto": "Fotoğraf çek",
+    "choosePhoto": "Fotoğraflardan seç",
+    "removePhoto": "Fotoğrafı kaldır",
+    "addPhoto": "{{name}} fotoğrafını ekle",
+    "changePhoto": "{{name}} fotoğrafını değiştir"
   }
 }

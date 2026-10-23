@@ -8,9 +8,9 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
-import { exerciseImageUrl } from '@/workouts/workouts';
 
 import { useExerciseDetails } from './library';
+import { usePictureUrls } from './photos';
 
 /**
  * How to do an exercise: its start and end pictures, the muscles it works, its equipment and
@@ -21,6 +21,8 @@ export function ExerciseScreen({ id }: { id: string }) {
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
   const exercise = library.data?.find((candidate) => candidate.id === id);
+  const pictures = exercise?.imagePaths.slice(0, 2) ?? [];
+  const urls = usePictureUrls(pictures);
 
   if (!allLoaded([library, instructions])) {
     return (
@@ -41,7 +43,6 @@ export function ExerciseScreen({ id }: { id: string }) {
     );
   }
 
-  const pictures = exercise.imagePaths.slice(0, 2);
   const chip = (label: string, primary: boolean) => (
     <View
       key={label}
@@ -79,7 +80,7 @@ export function ExerciseScreen({ id }: { id: string }) {
         {pictures.map((path, index) => (
           <View key={path} style={[styles.picture, { gap: spacing.xs }]}>
             <Image
-              source={{ uri: exerciseImageUrl(path) }}
+              source={urls[path] ? { uri: urls[path] } : undefined}
               accessibilityLabel={index === 0 ? t('exercise.start') : t('exercise.end')}
               style={[
                 styles.image,
