@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { HistoryButton } from '@/components/ui/history-button';
+import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -24,6 +26,9 @@ import {
 } from './history';
 import { shortSet, summarizeSets } from './exercise-summary';
 import { useTotalFormat } from './format';
+
+// The width the buttons beside an exercise take, with the space before them.
+const BUTTON_ROOM = 40;
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
@@ -217,7 +222,12 @@ export function LogScreen({ id }: { id: number }) {
               },
             ]}
           >
-            <View style={[styles.row, { gap: spacing.md }]}>
+            {/* Beside the name and over the sets' edge, so that the card keeps its height. */}
+            <View style={[styles.buttons, { top: spacing.lg, right: spacing.lg, gap: spacing.sm }]}>
+              <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+              <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+            </View>
+            <View style={[styles.row, { gap: spacing.md, paddingRight: BUTTON_ROOM }]}>
               <ExerciseThumbnail path={info?.imagePaths[0]} size={44} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" style={styles.bold}>
@@ -232,7 +242,7 @@ export function LogScreen({ id }: { id: number }) {
               </View>
             </View>
             {/* Every set, the best one picked out. */}
-            <View style={[styles.chips, { gap: spacing.xs }]}>
+            <View style={[styles.chips, { gap: spacing.xs, paddingRight: BUTTON_ROOM }]}>
               {exercise.sets.map((set, setIndex) => {
                 const isBest = set === best;
                 return (
@@ -317,6 +327,9 @@ const styles = StyleSheet.create({
   },
   exercise: {
     borderWidth: 1,
+  },
+  buttons: {
+    position: 'absolute',
   },
   edit: {
     height: 40,

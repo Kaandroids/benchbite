@@ -211,6 +211,13 @@ describe('LogScreen', () => {
     expect(screen.getByText('2 sets · 1,200 kg')).toBeTruthy();
     expect(screen.getByText('80 × 7')).toBeTruthy();
     expect(screen.getByLabelText('BEST SET: 80 kg × 8')).toBeTruthy();
+    // Each exercise opens how to do it and its history.
+    await fireEvent.press(screen.getByRole('button', { name: 'History of Bench press' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/workout/exercise/history',
+      params: { id: 'bench' },
+    });
+    expect(screen.getByRole('button', { name: 'Details of Bench press' })).toBeTruthy();
     // The plank: one hold, its time as the total.
     expect(screen.getByText('1 set · 0:50')).toBeTruthy();
     expect(screen.getByLabelText('BEST SET: 0:50')).toBeTruthy();
