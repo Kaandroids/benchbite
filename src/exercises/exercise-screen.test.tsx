@@ -49,12 +49,10 @@ const archive = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  jest
-    .mocked(useArchiveExercise)
-    .mockReturnValue({
-      mutateAsync: archive.mockResolvedValue(undefined),
-      isPending: false,
-    } as never);
+  jest.mocked(useArchiveExercise).mockReturnValue({
+    mutateAsync: archive.mockResolvedValue(undefined),
+    isPending: false,
+  } as never);
 });
 
 describe('ExerciseScreen', () => {

@@ -22,12 +22,10 @@ const editAsync = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useCreateExercise).mockReturnValue({ mutateAsync, isPending: false } as never);
-  jest
-    .mocked(useEditExercise)
-    .mockReturnValue({
-      mutateAsync: editAsync.mockResolvedValue(undefined),
-      isPending: false,
-    } as never);
+  jest.mocked(useEditExercise).mockReturnValue({
+    mutateAsync: editAsync.mockResolvedValue(undefined),
+    isPending: false,
+  } as never);
 });
 
 describe('CreateExerciseScreen', () => {
