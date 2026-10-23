@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -58,10 +58,15 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ update public.profiles set birth_year = extract(year from current_date) - 17 $$,
+  $$ update public.profiles set birth_year = extract(year from now() at time zone 'Etc/GMT-14') - 17 $$,
   'BB002',
   'Benchbite is for people aged 18 and over',
   'Profiles do not allow users under 18'
+);
+-- Counted on the date where the new year begins first, as the app may already count it.
+select lives_ok(
+  $$ update public.profiles set birth_year = extract(year from now() at time zone 'Etc/GMT-14') - 18 $$,
+  'Users who turn 18 this year anywhere on Earth are allowed'
 );
 
 select lives_ok(

@@ -7,7 +7,10 @@ import { PlanStep } from './plan';
 
 let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
-jest.mock('@/onboarding/plan', () => ({ saveOnboarding: jest.fn() }));
+jest.mock('@/onboarding/plan', () => ({
+  ...jest.requireActual<typeof import('@/onboarding/plan')>('@/onboarding/plan'),
+  saveOnboarding: jest.fn(),
+}));
 
 const mockExercises = jest.fn();
 jest.mock('@/lib/supabase', () => ({
@@ -166,6 +169,24 @@ describe('PlanStep', () => {
     expect(saveOnboarding).toHaveBeenCalledTimes(2);
     expect(mockStep.next).toHaveBeenCalledTimes(1);
     expect(screen.queryByText(/We couldn't save your plan/)).toBeNull();
+    warn.mockRestore();
+  });
+
+  it('says which answer was refused and leads back to it instead of trying again', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.mocked(saveOnboarding).mockRejectedValueOnce({ code: 'BB002' });
+    await render(<PlanStep />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Start my plan' }));
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          'Benchbite is for people aged 18 and over. Go back to check your birth year.',
+        ),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
+    expect(mockStep.back).toHaveBeenCalled();
     warn.mockRestore();
   });
 

@@ -496,6 +496,11 @@
       "week": "Your week",
       "start": "Start my plan",
       "saveError": "We couldn't save your plan. Check your connection and try again.",
+      "refused": {
+        "tooYoung": "Benchbite is for people aged 18 and over. Go back to check your birth year.",
+        "noConsent": "Your consent to process your health data is missing. Go back to give it.",
+        "daysChanged": "Your plan no longer matches your training days. Go back and choose them again."
+      },
       "editLater": "You can change all of this later.",
       "today": "Today"
     },

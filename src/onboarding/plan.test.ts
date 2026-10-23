@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase';
 
-import { calculateTargets, generatePlan, saveOnboarding, type WorkoutPlan } from './plan';
+import {
+  calculateTargets,
+  generatePlan,
+  refusedAnswer,
+  saveOnboarding,
+  type WorkoutPlan,
+} from './plan';
 import type { OnboardingAnswers } from './types';
 
 jest.mock('@/lib/supabase', () => ({
@@ -210,5 +216,16 @@ describe('saveOnboarding', () => {
     const error = { code: '23514', message: 'check constraint violated' };
     rpc.mockResolvedValue({ data: null, error });
     await expect(saveOnboarding(ANSWERS, PLAN)).rejects.toBe(error);
+  });
+});
+
+describe('refusedAnswer', () => {
+  it('names the answer the server refused, and nothing for other errors', () => {
+    expect(refusedAnswer({ code: 'BB002' })).toBe('tooYoung');
+    expect(refusedAnswer({ code: 'BB003' })).toBe('noConsent');
+    expect(refusedAnswer({ code: 'BB004' })).toBe('daysChanged');
+    expect(refusedAnswer({ code: 'BB005' })).toBeNull();
+    expect(refusedAnswer(new Error('offline'))).toBeNull();
+    expect(refusedAnswer(null)).toBeNull();
   });
 });
