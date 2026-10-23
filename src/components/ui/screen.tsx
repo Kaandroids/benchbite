@@ -22,6 +22,8 @@ type ScreenProps = {
   action?: ReactNode;
   /** A title in the middle of the top bar, instead of a progress bar. */
   title?: ReactNode;
+  /** False for content that scrolls itself, such as a long virtualized list. */
+  scrolls?: boolean;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
@@ -33,6 +35,7 @@ export function Screen({
   footer,
   action,
   title,
+  scrolls = true,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
@@ -67,13 +70,20 @@ export function Screen({
           {action ?? (title && onBack ? <View style={styles.back} /> : null)}
         </View>
       ) : null}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={[styles.contentContainer, { padding: spacing.xl, gap: spacing.lg }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        {children}
-      </ScrollView>
+      {scrolls ? (
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { padding: spacing.xl, gap: spacing.lg },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={styles.content}>{children}</View>
+      )}
       {footer ? (
         <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.lg }}>{footer}</View>
       ) : null}
