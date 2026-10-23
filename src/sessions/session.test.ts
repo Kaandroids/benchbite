@@ -47,7 +47,7 @@ const PUSH = testWorkout(7, {
   ],
 });
 
-const start = (last = {}) => startSession('user-a', PUSH, last, NOW);
+const start = (last = {}) => startSession('user-a', PUSH, last, {}, NOW);
 
 beforeEach(() => {
   (Storage as unknown as { items: Map<string, string> }).items.clear();

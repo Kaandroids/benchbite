@@ -581,8 +581,12 @@
       "discardMessage": "Girdiğin setler kaydedilmez.",
       "empty": "Kaydetmek için en az bir set gir.",
       "saveErrorTitle": "Kaydedilemedi",
-      "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene."
-    }
+      "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "records_one": "{{count}} yeni rekor",
+      "records_other": "{{count}} yeni rekor"
+    },
+    "newRecord": "Yeni rekor: {{kind}}, {{value}}",
+    "newRecords": "Yeni rekorlar: {{kinds}}"
   },
   "history": {
     "seeAll": "Tümünü gör",

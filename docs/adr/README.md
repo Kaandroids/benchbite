@@ -40,3 +40,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0022](0022-no-finishers.md)                              | Workouts have no finisher                                                          | Accepted |
 | [0023](0023-edit-a-finished-workout.md)                   | Edit a finished workout by replacing its sets                                      | Accepted |
 | [0024](0024-records-calculated-from-logged-sets.md)       | Calculate records from the logged sets when they are read                          | Accepted |
+| [0025](0025-notice-new-records-on-the-device.md)          | Notice new records on the device while logging                                     | Accepted |

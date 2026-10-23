@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { RECORD_KINDS, type RecordKind } from '@/history/record-kinds';
 import { supabase } from '@/lib/supabase';
 
-import type { LastSets, toLog } from './session';
+import type { ExerciseBests, LastSets, toLog } from './session';
 
 /** The sets of each exercise's latest log, for filling in a new workout (last_sets()). */
 export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {
@@ -20,6 +21,21 @@ export async function fetchLastSets(exerciseIds: string[]): Promise<LastSets> {
     });
   }
   return sets;
+}
+
+/** Each exercise's records before a workout, for noticing new ones while logging (exercise_bests()). */
+export async function fetchBests(exerciseIds: string[]): Promise<ExerciseBests> {
+  const { data, error } = await supabase.rpc('exercise_bests', { exercise_ids: exerciseIds });
+  if (error) {
+    throw error;
+  }
+  const bests: ExerciseBests = {};
+  for (const row of data) {
+    if ((RECORD_KINDS as readonly string[]).includes(row.kind)) {
+      (bests[row.exercise_id] ??= {})[row.kind as RecordKind] = Number(row.value);
+    }
+  }
+  return bests;
 }
 
 /** Saves a finished workout with its sets (log_workout()), and returns the log's id. */

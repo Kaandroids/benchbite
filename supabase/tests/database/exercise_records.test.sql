@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -94,6 +94,15 @@ select results_eq(
   $$ select kind, value from public.exercise_records('Pushups') order by kind $$,
   $$ values ('heaviest', 10.00), ('most_reps', 20.00) $$,
   'A bodyweight exercise has its most reps and its heaviest added weight'
+);
+
+select results_eq(
+  $$ select exercise_id, kind, value
+     from public.exercise_bests(array['Plank', 'Pushups', 'Barbell_Curl'])
+     order by exercise_id, kind $$,
+  $$ values ('Plank', 'longest_time', 75::numeric), ('Plank', 'most_time', 140::numeric),
+            ('Pushups', 'heaviest', 10.00), ('Pushups', 'most_reps', 20.00) $$,
+  'The bests of several exercises at once, none for one never logged'
 );
 
 -- Other users have no records of the caller's sets, and anon cannot ask.

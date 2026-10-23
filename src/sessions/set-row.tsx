@@ -1,12 +1,16 @@
 import * as Haptics from 'expo-haptics';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, type TextInputInstance } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputInstance } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
-import { useTheme } from '@/theme';
+import { Text } from '@/components/ui/text';
+import type { RecordKind } from '@/history/record-kinds';
+import { useRecordFormat } from '@/history/record-format';
+import { fonts, useTheme } from '@/theme';
 
 import type { SetKind } from './fields';
+import { recordValues } from './records';
 import type { SessionSet, SetValues } from './session';
 import { SetLine, setButtonStyle } from './set-table';
 
@@ -20,6 +24,8 @@ type SetRowProps = {
   onChange: (values: Partial<SetValues>) => void;
   onToggle: () => void;
   onClock: () => void;
+  /** The kinds of record the set beat everything before it in. */
+  records?: readonly RecordKind[];
 };
 
 /** One set while logging: last time's values, the values to log and the button that logs it. */
@@ -32,9 +38,11 @@ export function SetRow({
   onChange,
   onToggle,
   onClock,
+  records = [],
 }: SetRowProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
+  const formatRecord = useRecordFormat();
   const running = clock !== null;
   const weightInput = useRef<TextInputInstance>(null);
   // A set of an exercise that records weight is not done without one (#34).
@@ -51,6 +59,23 @@ export function SetRow({
   };
   // A timed set is done with its clock, or with a tick once its time is typed by hand.
   const clockButton = kind.timed && !set.done && (running || set.seconds === null);
+  // One record names its value; several only their kinds, the set's values being beside them.
+  const [firstRecord] = records;
+  const values = recordValues(set, kind);
+  const recordText = !firstRecord
+    ? null
+    : records.length === 1
+      ? t('session.newRecord', {
+          kind: t(`exerciseHistory.kinds.${firstRecord}`),
+          value: formatRecord({
+            kind: firstRecord,
+            value: values[firstRecord as Exclude<RecordKind, 'most_time'>] ?? 0,
+            set,
+          }),
+        })
+      : t('session.newRecords', {
+          kinds: records.map((record) => t(`exerciseHistory.kinds.${record}`)).join(', '),
+        });
 
   return (
     <SetLine
@@ -64,6 +89,16 @@ export function SetRow({
       invalid={missing && set.weightKg === null ? ['weightKg'] : []}
       weightRef={weightInput}
       onChange={onChange}
+      note={
+        recordText ? (
+          <View style={[styles.record, { gap: spacing.xs }]}>
+            <Icon name="trophy" size={14} color="primaryText" />
+            <Text variant="caption" color="primaryText" style={styles.bold}>
+              {recordText}
+            </Text>
+          </View>
+        ) : null
+      }
       button={
         clockButton ? (
           <Pressable
@@ -103,3 +138,13 @@ export function SetRow({
     />
   );
 }
+
+const styles = StyleSheet.create({
+  record: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bold: {
+    fontFamily: fonts.extraBold,
+  },
+});

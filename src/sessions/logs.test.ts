@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import { fetchLastSets, useLogWorkout } from './logs';
+import { fetchBests, fetchLastSets, useLogWorkout } from './logs';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 
@@ -15,6 +15,28 @@ const row = (exerciseId: string, more: object) => ({
 });
 
 beforeEach(() => jest.clearAllMocks());
+
+describe('fetchBests', () => {
+  it('groups the bests by exercise and kind', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({
+      data: [
+        { exercise_id: 'bench', kind: 'heaviest', value: 85 },
+        { exercise_id: 'bench', kind: 'one_rep_max', value: 104.8 },
+        { exercise_id: 'plank', kind: 'most_time', value: 140 },
+        // A kind the app does not know yet is left out.
+        { exercise_id: 'plank', kind: 'slowest', value: 1 },
+      ],
+      error: null,
+    } as never);
+    await expect(fetchBests(['bench', 'plank'])).resolves.toEqual({
+      bench: { heaviest: 85, one_rep_max: 104.8 },
+      plank: { most_time: 140 },
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('exercise_bests', {
+      exercise_ids: ['bench', 'plank'],
+    });
+  });
+});
 
 describe('fetchLastSets', () => {
   it('groups the latest sets by exercise, in order', async () => {

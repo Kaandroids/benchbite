@@ -4,20 +4,7 @@ import { supabase } from '@/lib/supabase';
 import type { Workout } from '@/workouts/workouts';
 
 import { LOGS_KEY, type SetValues } from './history';
-
-/** The kinds of record, in the order they are shown (ADR 0024). */
-export const RECORD_KINDS = [
-  'heaviest',
-  'one_rep_max',
-  'best_set',
-  'most_reps',
-  'longest_time',
-  'most_time',
-  'longest_distance',
-  'best_pace',
-] as const;
-
-export type RecordKind = (typeof RECORD_KINDS)[number];
+import { RECORD_KINDS, type RecordKind } from './record-kinds';
 
 /** A set's place in its workout: the exercise's place, and the set's place within it, from 0. */
 export type SetPlace = { exercise: number; set: number };

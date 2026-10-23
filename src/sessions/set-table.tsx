@@ -201,6 +201,8 @@ type SetLineProps = {
   onChange: (values: Partial<SetValues>) => void;
   /** The button at the end of the line, such as the tick that logs the set. */
   button: ReactNode;
+  /** A line under the set, such as the records it set. */
+  note?: ReactNode;
 };
 
 /** One set: its number, last time's values when shown, its fields and a button. */
@@ -217,6 +219,7 @@ export function SetLine({
   weightRef,
   onChange,
   button,
+  note,
 }: SetLineProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -229,47 +232,49 @@ export function SetLine({
   return (
     <View
       style={[
-        styles.row,
         styles.line,
         {
-          gap: spacing.sm,
+          gap: spacing.xs,
           borderRadius: radii.md,
           backgroundColor: done ? colors.selected : 'transparent',
         },
       ]}
     >
-      <Text variant="bodyStrong" align="center" style={[styles.bold, { width: NUMBER_WIDTH }]}>
-        {number}
-      </Text>
-      {showLast ? (
-        <Text variant="caption" color="textMuted" numberOfLines={1} style={styles.flex}>
-          {last ? describeSet(last, kind) : '—'}
+      <View style={[styles.row, { gap: spacing.sm }]}>
+        <Text variant="bodyStrong" align="center" style={[styles.bold, { width: NUMBER_WIDTH }]}>
+          {number}
         </Text>
-      ) : null}
-      {kind.fields.map((field) => (
-        <View key={field} style={fieldStyle(kind, showLast)}>
-          <SetInput
-            field={field}
-            value={values[field]}
-            label={labels[field]}
-            // Added weight is optional, and a time is measured from zero; short hints fit the field.
-            placeholder={
-              field === 'weightKg' && kind.addedWeight
-                ? '0'
-                : field === 'seconds'
-                  ? minutesAndSeconds(0)
-                  : undefined
-            }
-            done={done}
-            clock={field === 'seconds' ? clock : null}
-            invalid={invalid.includes(field)}
-            muted={muted}
-            ref={field === 'weightKg' ? weightRef : undefined}
-            onChange={(value) => onChange({ [field]: value })}
-          />
-        </View>
-      ))}
-      {button}
+        {showLast ? (
+          <Text variant="caption" color="textMuted" numberOfLines={1} style={styles.flex}>
+            {last ? describeSet(last, kind) : '—'}
+          </Text>
+        ) : null}
+        {kind.fields.map((field) => (
+          <View key={field} style={fieldStyle(kind, showLast)}>
+            <SetInput
+              field={field}
+              value={values[field]}
+              label={labels[field]}
+              // Added weight is optional, and a time is measured from zero; short hints fit the field.
+              placeholder={
+                field === 'weightKg' && kind.addedWeight
+                  ? '0'
+                  : field === 'seconds'
+                    ? minutesAndSeconds(0)
+                    : undefined
+              }
+              done={done}
+              clock={field === 'seconds' ? clock : null}
+              invalid={invalid.includes(field)}
+              muted={muted}
+              ref={field === 'weightKg' ? weightRef : undefined}
+              onChange={(value) => onChange({ [field]: value })}
+            />
+          </View>
+        ))}
+        {button}
+      </View>
+      {note ? <View style={{ paddingLeft: NUMBER_WIDTH + spacing.sm }}>{note}</View> : null}
     </View>
   );
 }
