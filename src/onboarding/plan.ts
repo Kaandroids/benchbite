@@ -61,11 +61,22 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
 /** The SQLSTATE complete_onboarding raises when the onboarding was saved before. */
 const ALREADY_COMPLETED = 'BB001';
 
+/** Answers complete_onboarding refuses by their SQLSTATE, which saving again cannot change. */
+const REFUSED = { BB002: 'tooYoung', BB003: 'noConsent', BB004: 'daysChanged' } as const;
+
+export type RefusedAnswer = (typeof REFUSED)[keyof typeof REFUSED];
+
+/** The answer the server refused to save, or null when saving again may work. */
+export function refusedAnswer(error: unknown): RefusedAnswer | null {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' && code in REFUSED ? REFUSED[code as keyof typeof REFUSED] : null;
+}
+
 /**
  * Saves the onboarding in one transaction (complete_onboarding). Saving again after a save that
- * already went through, for example after going back from the next step, counts as saved.
+ * already went through, for example when the app closed before the next step opened, counts as
+ * saved. The answers cannot have changed since, as the steps after the save have no way back.
  */
-
 export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPlan) {
   // The calculated result is sent as the plan, not again as an answer.
   const { plan: _plan, targets: _targets, reminderMinutes: _reminder, ...onlyAnswers } = answers;
