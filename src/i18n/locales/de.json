@@ -151,7 +151,13 @@
     "edit": "Bearbeiten",
     "startLabel": "{{name}} starten",
     "limitTitle": "Kein Platz für ein weiteres Training",
-    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen."
+    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen.",
+    "size": {
+      "exercises_one": "{{count}} Übung",
+      "exercises_other": "{{count}} Übungen",
+      "minutes": "~{{minutes}} Min.",
+      "kcal": "~{{kcal}} kcal"
+    }
   },
   "exercise": {
     "start": "Start",
@@ -565,5 +571,39 @@
       "saveErrorTitle": "Nicht gespeichert",
       "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
     }
+  },
+  "history": {
+    "seeAll": "Alle ansehen",
+    "thisWeek_one": "{{count}} diese Woche",
+    "thisWeek_other": "{{count}} diese Woche",
+    "weekThis": "Diese Woche",
+    "weekLast": "Letzte Woche",
+    "weekTotal_one": "{{count}} Training · {{time}}",
+    "weekTotal_other": "{{count}} Trainings · {{time}}",
+    "minutes": "{{minutes}} Min.",
+    "hours": "{{hours}} Std. {{minutes}} Min.",
+    "sets_one": "{{count}} Satz",
+    "sets_other": "{{count}} Sätze",
+    "kcal": "~{{kcal}} kcal",
+    "open": "Öffnet das Training",
+    "stats": {
+      "time": "Zeit",
+      "sets": "Sätze",
+      "lifted": "bewegt",
+      "kcal": "kcal verbrannt"
+    },
+    "delete": "Aus dem Verlauf löschen",
+    "deleteTitle": "Dieses Training aus dem Verlauf löschen?",
+    "deleteMessage": "Seine Sätze werden mit gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "notFound": {
+      "title": "Training nicht gefunden",
+      "message": "Es wurde vielleicht gelöscht."
+    },
+    "exercisesOf_one": "{{done}} von {{count}} Übung",
+    "exercisesOf_other": "{{done}} von {{count}} Übungen",
+    "setsOf_one": "{{done}} von {{count}} Satz",
+    "setsOf_other": "{{done}} von {{count}} Sätzen",
+    "deleteErrorTitle": "Nicht gelöscht",
+    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut."
   }
 }

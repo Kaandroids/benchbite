@@ -196,6 +196,13 @@ export type Database = {
             foreignKeyName: 'logged_sets_log_id_fkey';
             columns: ['log_id'];
             isOneToOne: false;
+            referencedRelation: 'workout_log_summaries';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'logged_sets_log_id_fkey';
+            columns: ['log_id'];
+            isOneToOne: false;
             referencedRelation: 'workout_logs';
             referencedColumns: ['id'];
           },
@@ -380,9 +387,12 @@ export type Database = {
       };
       workout_logs: {
         Row: {
+          estimated_kcal: number | null;
           finished_at: string;
           id: number;
           name: string | null;
+          planned_exercises: number | null;
+          planned_sets: number | null;
           started_at: string;
           type: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
@@ -390,18 +400,24 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          estimated_kcal?: number | null;
           finished_at: string;
           id?: never;
           name?: string | null;
+          planned_exercises?: number | null;
+          planned_sets?: number | null;
           started_at: string;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
           workout_id?: number | null;
         };
         Update: {
+          estimated_kcal?: number | null;
           finished_at?: string;
           id?: never;
           name?: string | null;
+          planned_exercises?: number | null;
+          planned_sets?: number | null;
           started_at?: string;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id?: string;
@@ -453,7 +469,32 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      workout_log_summaries: {
+        Row: {
+          estimated_kcal: number | null;
+          exercises: number | null;
+          finished_at: string | null;
+          id: number | null;
+          kilograms: number | null;
+          name: string | null;
+          planned_exercises: number | null;
+          planned_sets: number | null;
+          sets: number | null;
+          started_at: string | null;
+          type: Database['public']['Enums']['workout_type'] | null;
+          workout_id: number | null;
+        };
+        ComputedFields: never;
+        Relationships: [
+          {
+            foreignKeyName: 'workout_logs_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Functions: {
       age_in_years: { Args: { birth_year: number }; Returns: number };
@@ -513,6 +554,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
@@ -536,6 +578,7 @@ export type Database = {
           weight_kg: number;
         }[];
       };
+      strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;

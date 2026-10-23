@@ -46,6 +46,8 @@ export type Session = {
   /** The rest after a set, until the time it ends. */
   rest: { endsAt: number; seconds: number } | null;
   clock: SetClock | null;
+  /** What the workout had when it started; sets added on the way do not count. */
+  planned: { exercises: number; sets: number };
 };
 
 /** Sets of an exercise's latest log, in order. */
@@ -53,7 +55,7 @@ export type LastSets = Record<string, SetValues[]>;
 
 const KEY = 'session.current';
 /** Raised when the session changes shape, so that an older one is dropped instead of misread. */
-const VERSION = 1;
+const VERSION = 2;
 
 let loaded = false;
 let session: Session | null = null;
@@ -174,6 +176,10 @@ export function startSession(
     current: 0,
     rest: null,
     clock: null,
+    planned: {
+      exercises: exercises.length,
+      sets: exercises.reduce((total, exercise) => total + exercise.sets, 0),
+    },
   };
   set(value);
   return value;
@@ -322,6 +328,9 @@ export function changeRest(value: Session, seconds: number, now = Date.now()): S
 export function toLog(value: Session, finishedAt = Date.now()) {
   return {
     workoutId: value.workoutId,
+    // What the workout had, so the history can say how much of it was done.
+    plannedExercises: value.planned.exercises,
+    plannedSets: value.planned.sets,
     startedAt: new Date(value.startedAt).toISOString(),
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => ({

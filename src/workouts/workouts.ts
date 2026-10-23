@@ -174,6 +174,24 @@ export type WorkoutDraft = {
   exercises: Pick<WorkoutExercise, 'exerciseId' | 'sets' | 'target' | 'restSeconds'>[];
 };
 
+/**
+ * The calories the user burns in a minute of strength training at their latest weight, for
+ * estimating a workout; null without a weight.
+ */
+export function useKcalPerMinute() {
+  return useQuery({
+    // Under the weights, so that a new weight updates it.
+    queryKey: ['weights', 'kcal-per-minute'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('my_strength_kcal_per_minute');
+      if (error) {
+        throw error;
+      }
+      return data === null ? null : Number(data);
+    },
+  });
+}
+
 /** How many workouts the user may have, and how many exercises each, which premium will raise (ADR 0018). */
 export function useWorkoutLimits() {
   return useQuery({

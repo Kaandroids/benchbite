@@ -48,7 +48,14 @@ describe('fetchLastSets', () => {
 describe('useLogWorkout', () => {
   it('saves the log and returns its id', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 12, error: null } as never);
-    const log = { workoutId: 7, startedAt: 'a', finishedAt: 'b', exercises: [] };
+    const log = {
+      workoutId: 7,
+      plannedExercises: 1,
+      plannedSets: 3,
+      startedAt: 'a',
+      finishedAt: 'b',
+      exercises: [],
+    };
     const { result } = await renderHook(() => useLogWorkout(), {
       queryClient: createTestQueryClient(),
     });
