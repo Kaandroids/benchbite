@@ -161,7 +161,8 @@
     },
     "startWorkout": "Start workout",
     "toArchive": "Move to archive",
-    "fromArchive": "Bring back from the archive"
+    "fromArchive": "Bring back from the archive",
+    "days": "Days"
   },
   "exercise": {
     "start": "Start",

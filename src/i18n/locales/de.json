@@ -161,7 +161,8 @@
     },
     "startWorkout": "Training starten",
     "toArchive": "Ins Archiv verschieben",
-    "fromArchive": "Aus dem Archiv holen"
+    "fromArchive": "Aus dem Archiv holen",
+    "days": "Tage"
   },
   "exercise": {
     "start": "Start",

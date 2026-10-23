@@ -161,7 +161,8 @@
     },
     "startWorkout": "Antrenmanı başlat",
     "toArchive": "Arşive taşı",
-    "fromArchive": "Arşivden geri al"
+    "fromArchive": "Arşivden geri al",
+    "days": "Günler"
   },
   "exercise": {
     "start": "Başlangıç",
