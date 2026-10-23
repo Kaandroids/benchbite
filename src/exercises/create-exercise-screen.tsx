@@ -1,7 +1,7 @@
 import { router, usePreventRemove } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
@@ -20,6 +20,7 @@ import {
   type CustomExerciseForm,
   type LogKind,
 } from './custom';
+import { pickPhoto } from './photos';
 
 type Enums = Database['public']['Enums'];
 
@@ -124,6 +125,35 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
       </Text>
     </Pressable>
   );
+
+  // A photo is taken or chosen from a short menu, and can be removed again.
+  const choosePhoto = (index: 0 | 1) => {
+    const set = (uri: string | null) =>
+      setForm((current) => {
+        const photos: CustomExerciseForm['photos'] = [...current.photos];
+        photos[index] = uri;
+        return { ...current, photos };
+      });
+    const take = (source: 'camera' | 'library') => () =>
+      void pickPhoto(source).then(
+        (uri) => uri && set(uri),
+        (error: unknown) => console.warn('Could not pick a photo', error),
+      );
+    Alert.alert(index === 0 ? t('exercise.start') : t('exercise.end'), undefined, [
+      { text: t('customExercise.takePhoto'), onPress: take('camera') },
+      { text: t('customExercise.choosePhoto'), onPress: take('library') },
+      ...(form.photos[index]
+        ? [
+            {
+              text: t('customExercise.removePhoto'),
+              style: 'destructive' as const,
+              onPress: () => set(null),
+            },
+          ]
+        : []),
+      { text: t('editor.cancel'), style: 'cancel' },
+    ]);
+  };
 
   const toggle = <T,>(list: T[], item: T) =>
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
@@ -247,6 +277,64 @@ export function CreateExerciseScreen({ name = '' }: { name?: string }) {
       </View>
 
       <View style={section}>
+        {label(t('customExercise.photos'))}
+        <View style={[styles.photos, { gap: spacing.sm }]}>
+          {([0, 1] as const).map((index) => {
+            const uri = form.photos[index];
+            const name = index === 0 ? t('exercise.start') : t('exercise.end');
+            return (
+              <Pressable
+                key={index}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  uri
+                    ? t('customExercise.changePhoto', { name })
+                    : t('customExercise.addPhoto', { name })
+                }
+                onPress={() => choosePhoto(index)}
+                style={[
+                  styles.photo,
+                  {
+                    borderRadius: radii.md,
+                    borderColor: uri ? colors.border : colors.placeholder,
+                    borderStyle: uri ? 'solid' : 'dashed',
+                    backgroundColor: colors.surface,
+                    gap: spacing.xs,
+                  },
+                ]}
+              >
+                {uri ? (
+                  <>
+                    <Image source={{ uri }} style={StyleSheet.absoluteFill} />
+                    <View
+                      style={[
+                        styles.photoName,
+                        { borderRadius: radii.sm, backgroundColor: colors.surface },
+                      ]}
+                    >
+                      <Text variant="caption" color="textMuted" style={styles.bold}>
+                        {name}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="camera" size={26} color="textMuted" />
+                    <Text variant="caption" color="textMuted" style={styles.bold}>
+                      {name}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text variant="caption" color="textMuted">
+          {t('customExercise.photosHint')}
+        </Text>
+      </View>
+
+      <View style={section}>
         {label(t('customExercise.otherMuscles'))}
         <View style={wrap}>
           {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) =>
@@ -358,6 +446,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     justifyContent: 'center',
     borderWidth: 1.5,
+  },
+  photos: {
+    flexDirection: 'row',
+  },
+  photo: {
+    flex: 1,
+    aspectRatio: 1,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoName: {
+    position: 'absolute',
+    left: 8,
+    bottom: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
   },
   divider: {
     flexDirection: 'row',

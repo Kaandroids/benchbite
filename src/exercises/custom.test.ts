@@ -12,6 +12,9 @@ import {
 } from './custom';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('./photos', () => ({
+  uploadPhoto: jest.fn((uri: string) => Promise.resolve(`u/${uri}`)),
+}));
 
 const HIP: CustomExerciseForm = {
   ...emptyForm(' Hip thrust '),
@@ -43,6 +46,7 @@ describe('toExercise', () => {
       equipment: 'machine',
       level: 'beginner',
       instructions: ['Sit on the bench.'],
+      imagePaths: [],
     });
     expect(toExercise({ ...HIP, logKind: 'distanceTime' }).metrics).toEqual([
       'distance',
@@ -52,6 +56,19 @@ describe('toExercise', () => {
 });
 
 describe('useCreateExercise', () => {
+  it('uploads the photos first and names them in the exercise', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 'custom-2', error: null } as never);
+    const { result } = await renderHook(() => useCreateExercise(), {
+      queryClient: createTestQueryClient(),
+    });
+    await act(async () => {
+      await result.current.mutateAsync({ ...HIP, photos: [null, 'end.jpg'] });
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith('create_exercise', {
+      exercise: expect.objectContaining({ imagePaths: ['u/end.jpg'] }),
+    });
+  });
+
   it('creates the exercise, loads the library again and gives it back as listed', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 'custom-1', error: null } as never);
     const queryClient = createTestQueryClient();
