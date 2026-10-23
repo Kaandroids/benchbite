@@ -1,5 +1,5 @@
--- A finished workout at a glance, for the history: its sets, the weight lifted and an estimate of
--- the calories burned. Calories are estimated from the time and the user's weight on that day
+-- A finished workout at a glance, for the history: its exercises and sets, the weight lifted and
+-- an estimate of the calories burned. Calories are estimated from the time and the user's weight on that day
 -- until a watch measures them (#85). Without a weight there is no estimate. Planned workouts get
 -- an estimate from the user's latest weight.
 
@@ -42,6 +42,7 @@ select
   l.type,
   l.started_at,
   l.finished_at,
+  s.exercises,
   s.sets,
   s.kilograms,
   round(
@@ -50,7 +51,10 @@ select
   )::integer as estimated_kcal
 from public.workout_logs l
 cross join lateral (
-  select count(*)::integer as sets, coalesce(sum(t.weight_kg * t.reps), 0)::numeric as kilograms
+  select
+    count(distinct t.exercise_position)::integer as exercises,
+    count(*)::integer as sets,
+    coalesce(sum(t.weight_kg * t.reps), 0)::numeric as kilograms
   from public.logged_sets t
   where t.log_id = l.id
 ) s

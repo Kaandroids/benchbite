@@ -463,6 +463,7 @@ export type Database = {
       workout_log_summaries: {
         Row: {
           estimated_kcal: number | null;
+          exercises: number | null;
           finished_at: string | null;
           id: number | null;
           kilograms: number | null;

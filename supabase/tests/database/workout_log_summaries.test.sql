@@ -33,9 +33,9 @@ values
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
-  $$ select id::integer, sets, kilograms, estimated_kcal from public.workout_log_summaries
+  $$ select id::integer, exercises, sets, kilograms, estimated_kcal from public.workout_log_summaries
      where id = 700 $$,
-  $$ values (700, 3, 1120.0000::numeric, 400) $$,
+  $$ values (700, 2, 3, 1120.0000::numeric, 400) $$,
   'A log adds up its sets and weight, and estimates calories from the weight on that day'
 );
 select results_eq(
