@@ -193,7 +193,6 @@ export function WorkoutScreen({ id }: { id: number }) {
           style={({ pressed }) => [
             styles.edit,
             {
-              gap: spacing.xs,
               borderRadius: radii.full,
               backgroundColor: colors.iconBackground,
               paddingHorizontal: spacing.md,
@@ -201,7 +200,6 @@ export function WorkoutScreen({ id }: { id: number }) {
             },
           ]}
         >
-          <Icon name="edit" size={16} color="primaryText" />
           <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
             {t('workout.edit')}
           </Text>
