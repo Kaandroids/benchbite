@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -90,6 +90,13 @@ select results_eq(
   $$ select sets, kilograms from public.workout_log_summaries $$,
   $$ values (3, 660::numeric) $$,
   'The summary follows the edit'
+);
+
+-- The check of the sets is only for the functions that save them.
+select throws_ok(
+  $$ select public.check_sets('{}') $$,
+  '42501', null,
+  'Users cannot call check_sets() themselves'
 );
 
 -- Other users cannot edit the log, and anon cannot call the function.
