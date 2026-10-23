@@ -125,10 +125,6 @@
     },
     "rest": "Dinlenme {{time}}",
     "noRest": "Dinlenme yok",
-    "finisher": {
-      "title": "Finisher",
-      "body": "biraz daha yakmak için"
-    },
     "muscles": {
       "abdominals": "Karın",
       "abductors": "Abdüktörler",

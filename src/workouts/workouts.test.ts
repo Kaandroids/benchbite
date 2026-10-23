@@ -30,7 +30,6 @@ const exerciseRow = (position: number, exerciseId: string, more: object = {}) =>
   target_seconds: null,
   target_meters: null,
   rest_seconds: 90,
-  is_finisher: false,
   exercises: { primary_muscles: ['quadriceps'], image_paths: [`${exerciseId}/0.webp`] },
   ...more,
 });
@@ -54,7 +53,6 @@ const workout = (id: number, weekdays: number[], active = true): Workout => ({
   active,
   estimatedMinutes: 45,
   exercises: [],
-  finisher: null,
 });
 
 beforeEach(() => {
@@ -63,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('fetchWorkouts', () => {
-  it('returns the workouts with their exercises in order and the finisher apart', async () => {
+  it('returns the workouts with their exercises in order', async () => {
     order.mockResolvedValue({
       data: [
         row(4, [5, 2], {
@@ -75,7 +73,6 @@ describe('fetchWorkouts', () => {
               target_reps_max: null,
               target_seconds: 300,
               rest_seconds: 0,
-              is_finisher: true,
               exercises: { primary_muscles: ['quadriceps'], image_paths: [] },
             }),
             exerciseRow(1, 'lunge', {
@@ -112,15 +109,15 @@ describe('fetchWorkouts', () => {
           primaryMuscles: ['glutes'],
           imagePath: 'lunge/0.webp',
         },
+        {
+          exerciseId: 'bike',
+          sets: 3,
+          target: { seconds: 300, meters: null },
+          restSeconds: 0,
+          primaryMuscles: ['quadriceps'],
+          imagePath: null,
+        },
       ],
-      finisher: {
-        exerciseId: 'bike',
-        sets: 3,
-        target: { seconds: 300, meters: null },
-        restSeconds: 0,
-        primaryMuscles: ['quadriceps'],
-        imagePath: null,
-      },
     });
     expect(supabase.from).toHaveBeenCalledWith('workouts');
     expect(order).toHaveBeenCalledWith('id');

@@ -62,7 +62,7 @@ describe('useWorkoutName', () => {
 });
 
 describe('mainMuscles', () => {
-  it('lists the muscles most exercises work, ties in order, ignoring the finisher', () => {
+  it('lists the muscles most exercises work, ties in order', () => {
     const workout: Workout = {
       id: 1,
       name: null,
@@ -76,7 +76,6 @@ describe('mainMuscles', () => {
         exercise(['biceps']),
         exercise(['traps']),
       ],
-      finisher: exercise(['quadriceps']),
     };
     expect(mainMuscles(workout)).toEqual(['lats', 'middle back', 'biceps']);
   });

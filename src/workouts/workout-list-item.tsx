@@ -36,7 +36,7 @@ export function WorkoutListItem({
   const setActive = useSetWorkoutActive();
   const name = useWorkoutName()(workout);
   const { data: kcalPerMinute } = useKcalPerMinute();
-  const exercises = [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])];
+  const { exercises } = workout;
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
 
   return (

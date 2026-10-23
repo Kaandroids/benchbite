@@ -125,10 +125,6 @@
     },
     "rest": "Rest {{time}}",
     "noRest": "No rest",
-    "finisher": {
-      "title": "Finisher",
-      "body": "to burn a little more"
-    },
     "muscles": {
       "abdominals": "Abs",
       "abductors": "Abductors",

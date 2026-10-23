@@ -26,7 +26,6 @@ export function testWorkout(id: number, more: Partial<Workout> = {}): Workout {
     active: true,
     estimatedMinutes: 45,
     exercises: [testExercise('squat')],
-    finisher: null,
     ...more,
   };
 }

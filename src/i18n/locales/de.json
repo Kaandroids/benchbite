@@ -125,10 +125,6 @@
     },
     "rest": "Pause {{time}}",
     "noRest": "Keine Pause",
-    "finisher": {
-      "title": "Finisher",
-      "body": "für etwas mehr Kalorienverbrauch"
-    },
     "muscles": {
       "abdominals": "Bauch",
       "abductors": "Abduktoren",

@@ -20,17 +20,14 @@ import { useSetWorkoutActive, useWorkouts, type WorkoutExercise } from './workou
 
 const IMAGE_SIZE = 60;
 
-/** A workout with every exercise's picture, target and rest, and its finisher. */
+/** A workout with every exercise's picture, target and rest. */
 export function WorkoutScreen({ id }: { id: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
   const setActive = useSetWorkoutActive();
   const workout = workouts.data?.find((candidate) => candidate.id === id);
-  const all = workout
-    ? [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])]
-    : [];
-  const names = useExerciseNames(all.map((exercise) => exercise.exerciseId));
+  const names = useExerciseNames(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
@@ -116,7 +113,7 @@ export function WorkoutScreen({ id }: { id: number }) {
           ]}
         >
           <Icon name="edit" size={16} color="primaryText" />
-          <Text variant="bodyStrong" color="primaryText" style={styles.finisherLabel}>
+          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
             {t('workout.edit')}
           </Text>
         </Pressable>
@@ -175,21 +172,6 @@ export function WorkoutScreen({ id }: { id: number }) {
           )}
         </View>
       </Card>
-
-      {workout.finisher ? (
-        <Card>
-          <View style={[styles.finisherTitle, { gap: spacing.sm }]}>
-            <Icon name="flame" size={20} color="primary" />
-            <Text variant="bodyStrong" style={styles.finisherLabel}>
-              {t('workout.finisher.title')}
-            </Text>
-            <Text variant="caption" color="textMuted">
-              {t('workout.finisher.body')}
-            </Text>
-          </View>
-          {row(workout.finisher, 'finisher', false)}
-        </Card>
-      ) : null}
     </Screen>
   );
 }
@@ -226,11 +208,7 @@ const styles = StyleSheet.create({
   exerciseText: {
     flex: 1,
   },
-  finisherTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  finisherLabel: {
+  bold: {
     fontFamily: fonts.extraBold,
   },
 });

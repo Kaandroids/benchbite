@@ -30,7 +30,6 @@ export type Workout = {
   active: boolean;
   estimatedMinutes: number;
   exercises: WorkoutExercise[];
-  finisher: WorkoutExercise | null;
 };
 
 /** A workout on one day of the week. */
@@ -51,7 +50,6 @@ type ExerciseRow = Pick<
   | 'target_seconds'
   | 'target_meters'
   | 'rest_seconds'
-  | 'is_finisher'
 > & {
   exercises: Pick<
     Database['public']['Tables']['exercises']['Row'],
@@ -82,7 +80,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       `id, name, weekdays, active, type, estimated_minutes,
       workout_exercises (
         position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
-        target_meters, rest_seconds, is_finisher,
+        target_meters, rest_seconds,
         exercises (primary_muscles, image_paths)
       )`,
     )
@@ -92,7 +90,6 @@ export async function fetchWorkouts(): Promise<Workout[]> {
   }
   return data.map((row) => {
     const rows = [...row.workout_exercises].sort((a, b) => a.position - b.position);
-    const finisher = rows.find((exercise) => exercise.is_finisher);
     return {
       id: row.id,
       name: row.name,
@@ -100,8 +97,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       weekdays: [...row.weekdays].sort((a, b) => a - b),
       active: row.active,
       estimatedMinutes: row.estimated_minutes,
-      exercises: rows.filter((exercise) => !exercise.is_finisher).map(workoutExercise),
-      finisher: finisher ? workoutExercise(finisher) : null,
+      exercises: rows.map(workoutExercise),
     };
   });
 }

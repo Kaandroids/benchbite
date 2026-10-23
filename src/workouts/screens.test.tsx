@@ -278,12 +278,12 @@ describe('WorkoutScreen', () => {
         primaryMuscles: ['biceps'],
         target: { reps: { min: 10, max: 10 } },
       }),
+      testExercise('rope', {
+        target: { seconds: 45, meters: null },
+        restSeconds: 30,
+        primaryMuscles: ['calves'],
+      }),
     ],
-    finisher: testExercise('rope', {
-      target: { seconds: 45, meters: null },
-      restSeconds: 30,
-      primaryMuscles: ['calves'],
-    }),
   });
 
   it('shows the workout with its days, muscles and size', async () => {
@@ -292,22 +292,22 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('Wed')).toBeTruthy();
     expect(screen.getByText('Lats · Middle back · Biceps')).toBeTruthy();
-    expect(screen.getByText('3')).toBeTruthy();
+    // The rope's conditioning counts like any exercise.
+    expect(screen.getByText('4')).toBeTruthy();
     expect(screen.getByText('exercises')).toBeTruthy();
-    expect(screen.getByText('9')).toBeTruthy();
+    expect(screen.getByText('12')).toBeTruthy();
     expect(screen.getByText('sets')).toBeTruthy();
     expect(screen.getByText('~50')).toBeTruthy();
     expect(screen.getByText('Active')).toBeTruthy();
   });
 
-  it('lists each exercise with its name, target and rest, and the finisher', async () => {
+  it('lists each exercise with its name, target and rest', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
     await waitFor(() => expect(screen.getByText('Name of pulldown')).toBeTruthy());
     expect(screen.getByText('4 × 8–12 reps')).toBeTruthy();
     expect(screen.getByText('Rest 1:15')).toBeTruthy();
     expect(screen.getByText('2 × 10 reps')).toBeTruthy();
-    expect(screen.getByText('Finisher')).toBeTruthy();
     expect(screen.getByText('Name of rope')).toBeTruthy();
     expect(screen.getByText('3 × 45 s')).toBeTruthy();
     expect(screen.getByText('Rest 0:30')).toBeTruthy();

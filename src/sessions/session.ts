@@ -156,7 +156,7 @@ export function startSession(
   last: LastSets,
   now = Date.now(),
 ): Session {
-  const exercises = [...workout.exercises, ...(workout.finisher ? [workout.finisher] : [])];
+  const { exercises } = workout;
   const value: Session = {
     userId,
     workoutId: workout.id,
