@@ -24,13 +24,11 @@ export type SessionExercise = {
   last: SetValues[];
 };
 
-/** A clock that runs for a timed set: down from the target time, or up without one. */
+/** A clock that counts up for a timed set, until it is stopped. */
 export type SetClock = {
   exercise: number;
   set: number;
   startedAt: number;
-  /** The seconds to count down from; null counts up. */
-  seconds: number | null;
 };
 
 export type Session = {
@@ -281,26 +279,19 @@ export function addSet(value: Session, exercise: number): Session {
   };
 }
 
-/** Starts the clock of a timed set: down from its target time, or up for a distance. */
+/** Starts the clock of a timed set; it counts up, so a set can run past its target time. */
 export function startClock(
   value: Session,
   exercise: number,
   index: number,
   now = Date.now(),
 ): Session {
-  const target = value.exercises[exercise]?.target;
-  const countdown = target && 'seconds' in target && target.meters === null ? target.seconds : null;
-  return {
-    ...value,
-    clock: { exercise, set: index, startedAt: now, seconds: countdown },
-    rest: null,
-  };
+  return { ...value, clock: { exercise, set: index, startedAt: now }, rest: null };
 }
 
-/** The seconds a clock has run, or has left when it counts down. */
+/** The seconds a clock has run. */
 export function clockSeconds(clock: SetClock, now = Date.now()): number {
-  const elapsed = Math.floor((now - clock.startedAt) / 1000);
-  return clock.seconds === null ? elapsed : Math.max(0, clock.seconds - elapsed);
+  return Math.floor((now - clock.startedAt) / 1000);
 }
 
 /** Stops the clock and marks its set done with the time it ran. */
@@ -309,8 +300,7 @@ export function stopClock(value: Session, now = Date.now()): Session {
   if (!clock) {
     return value;
   }
-  const elapsed = Math.max(1, Math.round((now - clock.startedAt) / 1000));
-  const seconds = clock.seconds === null ? elapsed : Math.min(clock.seconds, elapsed);
+  const seconds = Math.max(1, Math.round((now - clock.startedAt) / 1000));
   const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
   return toggleDone(next, clock.exercise, clock.set, now);
 }

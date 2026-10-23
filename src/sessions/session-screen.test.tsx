@@ -157,19 +157,22 @@ describe('SessionScreen', () => {
     expect(screen.getByText('0 of 4 sets')).toBeTruthy();
   });
 
-  it('times a held exercise with a clock that logs the set when it runs out', async () => {
+  it('times a held exercise with a clock that counts up until it is stopped', async () => {
     await render(<SessionScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Plank' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Start the clock of set 1' }));
     await act(async () => {
-      jest.advanceTimersByTime(13_000);
+      jest.advanceTimersByTime(50_000);
     });
-    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:32');
-    await act(async () => {
-      jest.advanceTimersByTime(33_000);
-    });
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:50');
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop the clock of set 1' }));
     expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
-    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:45');
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:50');
+
+    // The logged time can still be corrected by hand.
+    await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '0:48');
+    await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:48');
   });
 
   it('minimizes and finishes', async () => {
