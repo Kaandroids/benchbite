@@ -78,6 +78,17 @@ export async function uploadPhoto(uri: string): Promise<string> {
   return path;
 }
 
+/** Removes photos the user no longer uses. */
+export async function removePhotos(paths: string[]) {
+  if (paths.length === 0) {
+    return;
+  }
+  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  if (error) {
+    throw error;
+  }
+}
+
 /**
  * The URLs to show pictures by: library pictures as they are, the user's photos signed. Pictures
  * waiting for their signed URL are missing until it arrives.
