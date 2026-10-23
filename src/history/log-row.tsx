@@ -5,12 +5,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
-import { useWeekdayFormat } from '@/i18n/dates';
+import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { useDurationFormat } from './format';
-import { doneOf, durationMinutes, type LogSummary } from './history';
+import { doneOf, durationMinutes, isPartial, type LogSummary } from './history';
 
 type LogRowProps = {
   log: LogSummary;
@@ -26,11 +26,10 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const weekday = useWeekdayFormat('short');
   const workoutName = useWorkoutName();
   const duration = useDurationFormat();
-  const partly = (done: number, planned: number | null) => planned !== null && done < planned;
-  const exercisesLabel = partly(log.exercises, log.plannedExercises)
+  const exercisesLabel = isPartial(log.exercises, log.plannedExercises)
     ? t('history.exercisesOf', { done: log.exercises, count: log.plannedExercises })
     : t('workout.size.exercises', { count: log.exercises });
-  const setsLabel = partly(log.sets, log.plannedSets)
+  const setsLabel = isPartial(log.sets, log.plannedSets)
     ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
     : t('history.sets', { count: log.sets });
 
@@ -51,7 +50,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     >
       <View style={[styles.date, { borderRadius: radii.md, backgroundColor: colors.selected }]}>
         <Text variant="caption" color="primaryText" style={[styles.bold, styles.weekday]}>
-          {weekday(log.startedAt.getDay() || 7).toLocaleUpperCase()}
+          {weekday(isoWeekday(log.startedAt)).toLocaleUpperCase()}
         </Text>
         <Text variant="headline" style={styles.day}>
           {log.startedAt.getDate()}

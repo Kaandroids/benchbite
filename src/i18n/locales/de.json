@@ -602,6 +602,8 @@
     "exercisesOf_one": "{{done}} von {{count}} Übung",
     "exercisesOf_other": "{{done}} von {{count}} Übungen",
     "setsOf_one": "{{done}} von {{count}} Satz",
-    "setsOf_other": "{{done}} von {{count}} Sätzen"
+    "setsOf_other": "{{done}} von {{count}} Sätzen",
+    "deleteErrorTitle": "Nicht gelöscht",
+    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut."
   }
 }

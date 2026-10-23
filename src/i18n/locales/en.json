@@ -602,6 +602,8 @@
     "exercisesOf_one": "{{done}} of {{count}} exercise",
     "exercisesOf_other": "{{done}} of {{count}} exercises",
     "setsOf_one": "{{done}} of {{count}} set",
-    "setsOf_other": "{{done}} of {{count}} sets"
+    "setsOf_other": "{{done}} of {{count}} sets",
+    "deleteErrorTitle": "Not deleted",
+    "deleteError": "We couldn't delete the workout. Check your connection and try again."
   }
 }

@@ -4,7 +4,14 @@ import { Alert } from 'react-native';
 import { useExerciseLibrary } from '@/exercises/library';
 import { act, fireEvent, render, screen } from '@/test/render';
 
-import { useDeleteLog, useLoggedSets, useLogSummaries, type LogSummary } from './history';
+import {
+  useDeleteLog,
+  useLoggedSets,
+  useLogSummaries,
+  useLogSummary,
+  useRecentLogs,
+  type LogSummary,
+} from './history';
 import { HistoryScreen } from './history-screen';
 import { LogScreen } from './log-screen';
 import { RecentLogs } from './recent-logs';
@@ -18,6 +25,8 @@ jest.mock('@/exercises/library', () => ({
 jest.mock('./history', () => ({
   ...jest.requireActual<typeof import('./history')>('./history'),
   useLogSummaries: jest.fn(),
+  useLogSummary: jest.fn(),
+  useRecentLogs: jest.fn(),
   useLoggedSets: jest.fn(),
   useDeleteLog: jest.fn(),
 }));
@@ -59,6 +68,14 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: FRIDAY });
   jest.mocked(useLogSummaries).mockReturnValue(loaded(LOGS) as never);
+  jest
+    .mocked(useRecentLogs)
+    .mockReturnValue(loaded({ latest: LOGS.slice(0, 3), thisWeek: 2 }) as never);
+  jest
+    .mocked(useLogSummary)
+    .mockImplementation(
+      (id: number) => loaded(LOGS.find((item) => item.id === id) ?? null) as never,
+    );
   jest.mocked(useDeleteLog).mockReturnValue({
     mutateAsync: deleteLog.mockResolvedValue(undefined),
     isPending: false,
@@ -119,10 +136,23 @@ describe('RecentLogs', () => {
   });
 
   it('says when nothing was logged yet', async () => {
-    jest.mocked(useLogSummaries).mockReturnValue(loaded([]) as never);
+    jest.mocked(useRecentLogs).mockReturnValue(loaded({ latest: [], thisWeek: 0 }) as never);
     await render(<RecentLogs />);
     expect(screen.getByText('Your finished workouts will show here.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'See all' })).toBeNull();
+  });
+
+  it('does not look empty while loading or after an error', async () => {
+    jest.mocked(useRecentLogs).mockReturnValue({
+      data: undefined,
+      isPending: false,
+      isError: true,
+      isFetching: false,
+      refetch: jest.fn(),
+    } as never);
+    await render(<RecentLogs />);
+    expect(screen.queryByText('Your finished workouts will show here.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
   });
 });
 
@@ -166,6 +196,33 @@ describe('LogScreen', () => {
     await act(async () => confirm?.onPress?.());
     expect(deleteLog).toHaveBeenCalledWith(3);
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('says when deleting fails', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    deleteLog.mockRejectedValueOnce(new Error('offline'));
+    await render(<LogScreen id={3} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete from history' }));
+    const confirm = alert.mock.calls[0]?.[2]?.find((button) => button.style === 'destructive');
+    await act(async () => confirm?.onPress?.());
+    expect(alert).toHaveBeenLastCalledWith(
+      'Not deleted',
+      "We couldn't delete the workout. Check your connection and try again.",
+    );
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it('waits for the exercise library', async () => {
+    jest.mocked(useExerciseLibrary).mockReturnValue({
+      data: undefined,
+      isPending: true,
+      isError: false,
+      isFetching: true,
+      refetch: jest.fn(),
+    } as never);
+    await render(<LogScreen id={3} />);
+    expect(screen.queryByText('Push')).toBeNull();
   });
 
   it('says when the workout does not exist', async () => {

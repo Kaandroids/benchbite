@@ -602,6 +602,8 @@
     "exercisesOf_one": "{{count}} egzersizin {{done}} tanesi",
     "exercisesOf_other": "{{count}} egzersizin {{done}} tanesi",
     "setsOf_one": "{{count}} setin {{done}} tanesi",
-    "setsOf_other": "{{count}} setin {{done}} tanesi"
+    "setsOf_other": "{{count}} setin {{done}} tanesi",
+    "deleteErrorTitle": "Silinemedi",
+    "deleteError": "Antrenman silinemedi. Bağlantını kontrol edip tekrar dene."
   }
 }

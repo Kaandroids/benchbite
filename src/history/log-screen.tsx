@@ -20,7 +20,7 @@ import {
   durationMinutes,
   useDeleteLog,
   useLoggedSets,
-  useLogSummaries,
+  useLogSummary,
   type LoggedSet,
 } from './history';
 
@@ -36,19 +36,19 @@ type Stat = {
 export function LogScreen({ id }: { id: number }) {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const logs = useLogSummaries();
+  const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
   const formatDate = useDateFormat('full');
   const { format } = useNumberFormat();
-  const log = logs.data?.find((item) => item.id === id);
+  const log = summary.data;
 
-  if (!allLoaded([logs, sets])) {
+  if (!allLoaded([summary, sets, library])) {
     return (
       <Screen onBack={() => router.back()}>
-        <LoadState queries={[logs, sets]} />
+        <LoadState queries={[summary, sets, library]} />
       </Screen>
     );
   }
@@ -128,7 +128,10 @@ export function LogScreen({ id }: { id: number }) {
         onPress: () =>
           void remove.mutateAsync(id).then(
             () => router.back(),
-            (error: unknown) => console.warn('Could not delete the workout log', error),
+            (error: unknown) => {
+              console.warn('Could not delete the workout log', error);
+              Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
+            },
           ),
       },
     ]);
