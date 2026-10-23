@@ -517,6 +517,7 @@ export type Database = {
         };
       };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       last_sets: {
