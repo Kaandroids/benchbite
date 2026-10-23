@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { HistoryButton } from '@/components/ui/history-button';
 import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
@@ -81,7 +82,11 @@ export function PickerScreen() {
     const detail = caption(item);
     return (
       <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
-        <InfoButton exerciseId={item.id} exerciseName={item.name} />
+        {/* Two buttons fit the row's height only a little apart. */}
+        <View style={{ gap: spacing.xs }}>
+          <InfoButton exerciseId={item.id} exerciseName={item.name} />
+          <HistoryButton exerciseId={item.id} exerciseName={item.name} />
+        </View>
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected, disabled }}
