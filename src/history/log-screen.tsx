@@ -14,16 +14,9 @@ import { useNumberFormat } from '@/i18n/units';
 import { describeSet, setKindOf } from '@/sessions/fields';
 import type { SetValues } from '@/sessions/session';
 import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
+import { useWorkoutName, workoutLength } from '@/workouts/format';
 
-import {
-  byExercise,
-  doneOf,
-  durationMinutes,
-  useDeleteLog,
-  useLoggedSets,
-  useLogSummary,
-} from './history';
+import { byExercise, doneOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
 import { shortSet, summarizeSets } from './exercise-summary';
 import { useTotalFormat } from './format';
 
@@ -71,11 +64,9 @@ export function LogScreen({ id }: { id: number }) {
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
-  const seconds = Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000);
-  const totalTime =
-    seconds < 3600
-      ? minutesAndSeconds(seconds)
-      : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`;
+  const totalTime = workoutLength(
+    Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000),
+  );
   // The workout at a glance, quietly: the figures stand out by weight, not colour.
   const stats = [
     { value: totalTime, label: t('history.stats.time') },
