@@ -10,7 +10,7 @@ import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { useDurationFormat } from './format';
-import { durationMinutes, type LogSummary } from './history';
+import { doneOf, durationMinutes, type LogSummary } from './history';
 
 type LogRowProps = {
   log: LogSummary;
@@ -26,6 +26,13 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const weekday = useWeekdayFormat('short');
   const workoutName = useWorkoutName();
   const duration = useDurationFormat();
+  const partly = (done: number, planned: number | null) => planned !== null && done < planned;
+  const exercisesLabel = partly(log.exercises, log.plannedExercises)
+    ? t('history.exercisesOf', { done: log.exercises, count: log.plannedExercises })
+    : t('workout.size.exercises', { count: log.exercises });
+  const setsLabel = partly(log.sets, log.plannedSets)
+    ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
+    : t('history.sets', { count: log.sets });
 
   return (
     <Pressable
@@ -59,14 +66,14 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
             <IconStat
               icon="dumbbell"
               color="info"
-              text={String(log.exercises)}
-              label={t('workout.size.exercises', { count: log.exercises })}
+              text={doneOf(log.exercises, log.plannedExercises)}
+              label={exercisesLabel}
             />
             <IconStat
               icon="target"
               color="fat"
-              text={String(log.sets)}
-              label={t('history.sets', { count: log.sets })}
+              text={doneOf(log.sets, log.plannedSets)}
+              label={setsLabel}
             />
             <IconStat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
             {log.estimatedKcal !== null ? (

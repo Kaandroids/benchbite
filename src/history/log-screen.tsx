@@ -16,6 +16,7 @@ import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
 import {
+  doneOf,
   durationMinutes,
   useDeleteLog,
   useLoggedSets,
@@ -80,7 +81,7 @@ export function LogScreen({ id }: { id: number }) {
       icon: 'dumbbell',
       color: 'info',
       tile: 'infoBackground',
-      value: String(log.sets),
+      value: doneOf(log.sets, log.plannedSets),
       label: t('history.stats.sets'),
     },
     {

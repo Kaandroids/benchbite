@@ -15,7 +15,10 @@ export type LogSummary = {
   startedAt: Date;
   finishedAt: Date;
   exercises: number;
+  /** What the workout had when it started; null for logs saved before this was kept. */
+  plannedExercises: number | null;
   sets: number;
+  plannedSets: number | null;
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
   estimatedKcal: number | null;
@@ -30,6 +33,11 @@ export type LoggedSet = {
   seconds: number | null;
   meters: number | null;
 };
+
+/** "7/8" when less was done than planned, else just what was done. */
+export function doneOf(done: number, planned: number | null): string {
+  return planned !== null && done < planned ? `${done}/${planned}` : String(done);
+}
 
 /** Whole minutes between the start and the end of a workout. */
 export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'>): number {
@@ -52,7 +60,9 @@ export async function fetchLogSummaries(): Promise<LogSummary[]> {
     startedAt: new Date(row.started_at ?? 0),
     finishedAt: new Date(row.finished_at ?? 0),
     exercises: row.exercises ?? 0,
+    plannedExercises: row.planned_exercises,
     sets: row.sets ?? 0,
+    plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
   }));

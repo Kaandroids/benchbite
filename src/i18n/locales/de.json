@@ -598,6 +598,10 @@
     "notFound": {
       "title": "Training nicht gefunden",
       "message": "Es wurde vielleicht gelöscht."
-    }
+    },
+    "exercisesOf_one": "{{done}} von {{count}} Übung",
+    "exercisesOf_other": "{{done}} von {{count}} Übungen",
+    "setsOf_one": "{{done}} von {{count}} Satz",
+    "setsOf_other": "{{done}} von {{count}} Sätzen"
   }
 }

@@ -598,6 +598,10 @@
     "notFound": {
       "title": "Workout not found",
       "message": "It may have been deleted."
-    }
+    },
+    "exercisesOf_one": "{{done}} of {{count}} exercise",
+    "exercisesOf_other": "{{done}} of {{count}} exercises",
+    "setsOf_one": "{{done}} of {{count}} set",
+    "setsOf_other": "{{done}} of {{count}} sets"
   }
 }

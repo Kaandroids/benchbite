@@ -598,6 +598,10 @@
     "notFound": {
       "title": "Antrenman bulunamadı",
       "message": "Silinmiş olabilir."
-    }
+    },
+    "exercisesOf_one": "{{count}} egzersizin {{done}} tanesi",
+    "exercisesOf_other": "{{count}} egzersizin {{done}} tanesi",
+    "setsOf_one": "{{count}} setin {{done}} tanesi",
+    "setsOf_other": "{{count}} setin {{done}} tanesi"
   }
 }

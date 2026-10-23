@@ -3,6 +3,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
   byWeek,
+  doneOf,
   durationMinutes,
   fetchLogSummaries,
   useDeleteLog,
@@ -23,7 +24,9 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
     startedAt,
     finishedAt: new Date(startedAt.getTime() + minutes * 60_000),
     exercises: 6,
+    plannedExercises: null,
     sets: 10,
+    plannedSets: null,
     kilograms: 1000,
     estimatedKcal: 300,
   };
@@ -43,7 +46,9 @@ describe('fetchLogSummaries', () => {
           started_at: '2026-10-23T16:00:00Z',
           finished_at: '2026-10-23T16:52:00Z',
           exercises: 6,
+          planned_exercises: 8,
           sets: 17,
+          planned_sets: 24,
           kilograms: 6240.5,
           estimated_kcal: null,
         },
@@ -62,7 +67,9 @@ describe('fetchLogSummaries', () => {
       startedAt: new Date('2026-10-23T16:00:00Z'),
       finishedAt: new Date('2026-10-23T16:52:00Z'),
       exercises: 6,
+      plannedExercises: 8,
       sets: 17,
+      plannedSets: 24,
       kilograms: 6240.5,
       estimatedKcal: null,
     });
@@ -118,6 +125,15 @@ describe('useDeleteLog', () => {
     await act(() => result.current.mutateAsync(1));
     expect(eq).toHaveBeenCalledWith('id', 1);
     expect(queryClient.getQueryData<LogSummary[]>(['workout-logs'])?.map((l) => l.id)).toEqual([2]);
+  });
+});
+
+describe('doneOf', () => {
+  it('shows what was done of the plan, or only what was done when all of it was', () => {
+    expect(doneOf(7, 8)).toBe('7/8');
+    expect(doneOf(8, 8)).toBe('8');
+    expect(doneOf(9, 8)).toBe('9');
+    expect(doneOf(5, null)).toBe('5');
   });
 });
 

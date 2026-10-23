@@ -38,7 +38,9 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   startedAt: start,
   finishedAt: new Date(start.getTime() + minutes * 60_000),
   exercises: 6,
+  plannedExercises: null,
   sets: 17,
+  plannedSets: null,
   kilograms: 6240,
   estimatedKcal: 390,
 });
@@ -46,7 +48,7 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
 // A Friday.
 const FRIDAY = new Date(2026, 9, 23, 20, 0);
 const LOGS = [
-  log(3, 'push', new Date(2026, 9, 23, 18, 4), 52),
+  { ...log(3, 'push', new Date(2026, 9, 23, 18, 4), 52), plannedExercises: 8, plannedSets: 24 },
   log(2, 'legs', new Date(2026, 9, 21, 18, 0), 61),
   log(1, 'pull', new Date(2026, 9, 13, 18, 0), 54),
   log(0, 'legs', new Date(2026, 9, 6, 18, 0), 58),
@@ -134,8 +136,12 @@ describe('HistoryScreen', () => {
     expect(screen.getByText(/October 5/)).toBeTruthy();
     // With icons: the sets as a number that screen readers say in words.
     expect(screen.getByText('52 min')).toBeTruthy();
-    expect(screen.getAllByLabelText('6 exercises')).toHaveLength(4);
-    expect(screen.getAllByLabelText('17 sets')).toHaveLength(4);
+    // The first was finished early: 6 of 8 exercises, 17 of 24 sets.
+    expect(screen.getByText('6/8')).toBeTruthy();
+    expect(screen.getByLabelText('6 of 8 exercises')).toBeTruthy();
+    expect(screen.getByText('17/24')).toBeTruthy();
+    expect(screen.getAllByLabelText('6 exercises')).toHaveLength(3);
+    expect(screen.getAllByLabelText('17 sets')).toHaveLength(3);
   });
 });
 
