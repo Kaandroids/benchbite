@@ -732,7 +732,7 @@
     "name": "İsim",
     "namePlaceholder": "Örneğin Hip thrust makinesi",
     "logKind": "Ne kaydedeceksin",
-    "logKindFixed": "Bir kez kaydettikten sonra değiştirilemez.",
+    "logKindFixed": "Bir antrenmana eklendikten ya da kaydedildikten sonra değiştirilemez.",
     "logKinds": {
       "weightReps": {
         "title": "Ağırlık × tekrar",
@@ -776,7 +776,8 @@
     "changePhoto": "{{name}} fotoğrafını değiştir",
     "editTitle": "Hareketi düzenle",
     "save": "Değişiklikleri kaydet",
-    "logKindLocked": "Kaydedildiği için bu değişmez.",
+    "logKindLogged": "Kaydedildiği için bu değişmez.",
+    "logKindInWorkout": "Bir antrenmanda olduğu için bu değişmez. Değiştirmek için onu antrenmanlarından çıkar.",
     "archive": "Hareketi arşivle",
     "archiveNote": "Listelerden kalkar. Geçmişi ve rekorları kalır.",
     "archiveTitle": "Bu hareket arşivlensin mi?",

@@ -732,7 +732,7 @@
     "name": "Name",
     "namePlaceholder": "Zum Beispiel Hip-Thrust-Maschine",
     "logKind": "Was du einträgst",
-    "logKindFixed": "Lässt sich nicht mehr ändern, sobald du sie eingetragen hast.",
+    "logKindFixed": "Lässt sich nicht mehr ändern, sobald sie in einem Training ist oder eingetragen wurde.",
     "logKinds": {
       "weightReps": {
         "title": "Gewicht × Wdh.",
@@ -776,7 +776,8 @@
     "changePhoto": "Foto „{{name}}“ ändern",
     "editTitle": "Übung bearbeiten",
     "save": "Änderungen speichern",
-    "logKindLocked": "Sie wurde schon eingetragen, daher bleibt das so.",
+    "logKindLogged": "Sie wurde schon eingetragen, daher bleibt das so.",
+    "logKindInWorkout": "Sie ist in einem Training, daher bleibt das so. Entferne sie aus deinen Trainings, um es zu ändern.",
     "archive": "Übung archivieren",
     "archiveNote": "Sie verschwindet aus den Listen. Verlauf und Rekorde bleiben.",
     "archiveTitle": "Diese Übung archivieren?",

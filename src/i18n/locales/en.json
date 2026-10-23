@@ -732,7 +732,7 @@
     "name": "Name",
     "namePlaceholder": "Such as Hip thrust machine",
     "logKind": "What you log",
-    "logKindFixed": "It can't be changed once you have logged it.",
+    "logKindFixed": "It can't be changed once it is in a workout or logged.",
     "logKinds": {
       "weightReps": {
         "title": "Weight × reps",
@@ -776,7 +776,8 @@
     "changePhoto": "Change the {{name}} photo",
     "editTitle": "Edit exercise",
     "save": "Save changes",
-    "logKindLocked": "It has been logged, so this stays.",
+    "logKindLogged": "It has been logged, so this stays.",
+    "logKindInWorkout": "It is in a workout, so this stays. Remove it from your workouts to change it.",
     "archive": "Archive exercise",
     "archiveNote": "It leaves the lists. Its history and records stay.",
     "archiveTitle": "Archive this exercise?",

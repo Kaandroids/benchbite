@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -87,8 +87,22 @@ select throws_ok(
          select jsonb_agg(pg_temp.plan() #> '{sessions,0,exercises,0}') from generate_series(1, 13)
        ))
      ) $$,
-  'BB005', 'A session has too many exercises',
+  'BB005', 'A session needs 1 to 12 exercises',
   'A session with too many exercises is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(
+       pg_temp.answers(), jsonb_set(pg_temp.plan(), '{sessions,0,exercises}', '[]')
+     ) $$,
+  'BB005', 'A session needs 1 to 12 exercises',
+  'A session without exercises is rejected'
+);
+select throws_ok(
+  $$ select public.complete_onboarding(
+       pg_temp.answers(), jsonb_set(pg_temp.plan(), '{sessions,0,exercises,1,target}', '{"reps": {"min": 8, "max": 12}}')
+     ) $$,
+  'BB007', 'A target does not suit its exercise',
+  'A target that does not suit its exercise is rejected'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan('No_Such_Exercise')) $$,

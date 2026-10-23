@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { act, createTestQueryClient, renderHook } from '@/test/render';
+import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
   emptyForm,
@@ -11,11 +11,12 @@ import {
   useArchiveExercise,
   useCreateExercise,
   useEditExercise,
+  useKindLock,
   type CustomExerciseForm,
 } from './custom';
 import { removePhotos } from './photos';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn(), from: jest.fn() } }));
 jest.mock('./photos', () => ({
   isUserPhoto: (path: string) => path.startsWith('0000000a-'),
   uploadPhoto: jest.fn((uri: string) => Promise.resolve(`u/${uri}`)),
@@ -164,5 +165,31 @@ describe('useArchiveExercise', () => {
       exercise_id: 'custom-1',
       archived: true,
     });
+  });
+});
+
+describe('useKindLock', () => {
+  const counts = (used: Record<string, number>) =>
+    jest.mocked(supabase.from).mockImplementation(
+      (table) =>
+        ({
+          select: () => ({ eq: () => Promise.resolve({ count: used[table] ?? 0, error: null }) }),
+        }) as never,
+    );
+  const lock = async () => {
+    const { result } = await renderHook(() => useKindLock('custom-1'), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    return result.current.data;
+  };
+
+  it('locks what an exercise records once it is logged or a workout has it', async () => {
+    counts({});
+    expect(await lock()).toBeNull();
+    counts({ workout_exercises: 1 });
+    expect(await lock()).toBe('inWorkout');
+    counts({ workout_exercises: 1, logged_sets: 3 });
+    expect(await lock()).toBe('logged');
   });
 });
