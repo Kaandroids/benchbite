@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
 
+import { useFinishedThisWeek } from '@/history/history';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
-import { TodayScreen } from './today-screen';
+import { greetingOf, TodayScreen } from './today-screen';
 import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
+jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
@@ -97,13 +99,16 @@ function mockData({
   } | null),
   unit = loaded<'kg' | 'lb'>('kg'),
   log = { isError: false, isPending: false },
+  finished = loaded<string[]>([]),
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
   weight?: Query<{ weightKg: number; measuredOn: string } | null>;
   unit?: Query<'kg' | 'lb'>;
   log?: { isError: boolean; isPending: boolean };
+  finished?: Query<string[]>;
 } = {}) {
+  jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useLatestWeight).mockReturnValue(weight as never);
@@ -119,14 +124,18 @@ describe('TodayScreen', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('shows the date and the streak while loading', async () => {
+  it('shows the date and the streak once loaded, only the greeting while loading', async () => {
     mockData({ targets: pending() });
     await render(<TodayScreen />);
-    expect(screen.getByText('October 21, 2026')).toBeTruthy();
+    expect(screen.getByText('Good morning')).toBeTruthy();
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+    expect(screen.queryByText('Wednesday, October 21')).toBeNull();
+    expect(screen.queryByText('Your daily targets')).toBeNull();
+    mockData();
+    await screen.rerender(<TodayScreen />);
+    expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
     // Streaks are not recorded yet, so every user has none.
     expect(screen.getByLabelText('0-day streak')).toBeTruthy();
-    expect(screen.getByLabelText('Loading')).toBeTruthy();
-    expect(screen.queryByText('Your daily targets')).toBeNull();
   });
 
   it('shows an error and loads only what failed again', async () => {
@@ -138,11 +147,20 @@ describe('TodayScreen', () => {
     expect(plan.refetch).not.toHaveBeenCalled();
   });
 
-  it('highlights today and marks the workouts in the week', async () => {
+  it('greets the user for the time of day', async () => {
     mockData();
     await render(<TodayScreen />);
-    // No workout is finished until workouts can be logged.
-    expect(screen.getByLabelText('Mon 19, workout missed')).toBeTruthy();
+    expect(screen.getByText('Good morning')).toBeTruthy();
+    expect(greetingOf(new Date(2026, 9, 21, 14, 0))).toBe('afternoon');
+    expect(greetingOf(new Date(2026, 9, 21, 23, 0))).toBe('evening');
+    expect(greetingOf(new Date(2026, 9, 21, 3, 0))).toBe('evening');
+  });
+
+  it('highlights today and marks the workouts finished in the week', async () => {
+    mockData({ finished: loaded(['2026-10-19']) });
+    await render(<TodayScreen />);
+    expect(screen.getByText('1 of 3 workouts this week')).toBeTruthy();
+    expect(screen.getByLabelText('Mon 19, workout done')).toBeTruthy();
     expect(screen.getByLabelText('Wed 21, workout planned').props.accessibilityState).toEqual({
       selected: true,
     });

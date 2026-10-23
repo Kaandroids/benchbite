@@ -126,6 +126,7 @@ describe('useDeleteLog', () => {
     expect(invalidate.mock.calls.map(([filters]) => filters?.queryKey)).toEqual([
       ['workout-logs', 'all'],
       ['workout-logs', 'recent'],
+      ['workout-logs', 'week'],
     ]);
   });
 });

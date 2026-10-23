@@ -27,11 +27,18 @@
   },
   "today": {
     "loading": "Wird geladen",
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
     "targets": "Deine Tagesziele",
     "week": {
       "done": "Training erledigt",
       "missed": "Training verpasst",
-      "planned": "Training geplant"
+      "planned": "Training geplant",
+      "progress_one": "{{done}} von {{count}} Training diese Woche",
+      "progress_other": "{{done}} von {{count}} Trainings diese Woche"
     },
     "workout": {
       "title": "Heutiges Training",

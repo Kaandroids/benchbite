@@ -26,7 +26,7 @@ import { useOnboarding } from '@/providers/onboarding-provider';
 import { StreakBadge } from '@/streak/streak-badge';
 import { sampleStreak, showSampleStreak } from '@/streak/use-streak';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
-import { WeekStrip } from '@/today/week-strip';
+import { WeekCard } from '@/today/week-card';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },
@@ -160,11 +160,11 @@ export default function ComponentGallery() {
           <StreakBadge streak={{ count: 11, doneToday: false, days: {} }} />
           <StreakBadge streak={{ count: 0, doneToday: false, days: {} }} />
         </View>
-        <WeekStrip
+        <WeekCard
           today={new Date()}
-          days={sampleStreak(new Date(), true).days}
+          streak={sampleStreak(new Date(), true)}
           trainingDays={[1, 3, 5, 7]}
-          trainedOn={new Set(Object.keys(sampleStreak(new Date(), true).days))}
+          finished={Object.keys(sampleStreak(new Date(), true).days)}
         />
         <Text color="textMuted">Show a sample streak on the Today tab:</Text>
         <View style={[styles.row, { gap: spacing.sm }]}>

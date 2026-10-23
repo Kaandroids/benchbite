@@ -15,7 +15,10 @@ import { doneOf, durationMinutes, isPartial, type LogSummary } from './history';
 type LogRowProps = {
   log: LogSummary;
   divider: boolean;
-  /** Stats with coloured icons, as on the history screen; plain text beside the workouts. */
+  /**
+   * Stats with coloured icons and an orange date, as on the history screen; plain text and a grey
+   * date beside the workouts.
+   */
   icons?: boolean;
 };
 
@@ -47,7 +50,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
         },
       ]}
     >
-      <DateTile date={log.startedAt} />
+      <DateTile date={log.startedAt} tinted={icons} />
       <View style={[styles.flex, { gap: 2 }]}>
         <Text variant="bodyStrong" numberOfLines={1} style={styles.bold}>
           {workoutName(log)}

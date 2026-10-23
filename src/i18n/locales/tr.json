@@ -27,11 +27,18 @@
   },
   "today": {
     "loading": "Yükleniyor",
+    "greeting": {
+      "morning": "Günaydın",
+      "afternoon": "İyi günler",
+      "evening": "İyi akşamlar"
+    },
     "targets": "Günlük hedeflerin",
     "week": {
       "done": "antrenman yapıldı",
       "missed": "antrenman kaçırıldı",
-      "planned": "antrenman planlandı"
+      "planned": "antrenman planlandı",
+      "progress_one": "Bu hafta {{count}} antrenmandan {{done}}",
+      "progress_other": "Bu hafta {{count}} antrenmandan {{done}}"
     },
     "workout": {
       "title": "Bugünün antrenmanı",

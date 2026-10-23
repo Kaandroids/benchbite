@@ -1,4 +1,3 @@
-import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,37 +8,39 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Text } from '@/components/ui/text';
-import { useDateFormat } from '@/i18n/dates';
+import { useFinishedThisWeek } from '@/history/history';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
-import { StreakBadge } from '@/streak/streak-badge';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { useWeek } from '@/workouts/workouts';
 
-import { WeekStrip } from './week-strip';
+import { WeekCard } from './week-card';
 import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
 /** Meals are logged in the nutrition milestone; until then nothing is eaten. */
 const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
-/** Workouts are logged in #34; until then none is finished. */
-const NO_WORKOUTS: ReadonlySet<string> = new Set();
+/** A greeting for the time of day. */
+export function greetingOf(date: Date): 'morning' | 'afternoon' | 'evening' {
+  const hour = date.getHours();
+  return hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
+}
 
-/** The home tab: the week, today's workout, the daily targets and the weight. */
+/** The home tab: a greeting, the week, today's workout, the daily targets and the weight. */
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const formatDate = useDateFormat('long');
   const plan = useWeek();
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const streak = useStreak();
-  const queries = [plan, targets, latestWeight, weightUnit];
   const today = new Date();
+  const finished = useFinishedThisWeek(today);
+  const queries = [plan, targets, latestWeight, weightUnit, finished];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
@@ -78,11 +79,11 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekStrip
+        <WeekCard
           today={today}
-          days={streak.days}
+          streak={streak}
           trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
-          trainedOn={NO_WORKOUTS}
+          finished={finished.data ?? []}
         />
         {plan.data ? <WorkoutCard plan={plan.data} today={today} /> : null}
         {targets.data ? (
@@ -117,23 +118,10 @@ export function TodayScreen() {
           />
         }
       >
-        <View style={styles.header}>
-          <View style={styles.side} />
-          <Text variant="bodyStrong" accessibilityRole="header">
-            {formatDate(today)}
-          </Text>
-          <View style={[styles.side, styles.end]}>
-            <StreakBadge streak={streak} />
-          </View>
-        </View>
+        <Text variant="title" accessibilityRole="header">
+          {t(`today.greeting.${greetingOf(today)}`)}
+        </Text>
         {content}
-        {__DEV__ ? (
-          <Link href="/dev/components" style={styles.devLink}>
-            <Text variant="bodyStrong" color="primaryText">
-              Open the component gallery
-            </Text>
-          </Link>
-        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -146,21 +134,8 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  side: {
-    flex: 1,
-  },
-  end: {
-    alignItems: 'flex-end',
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
-  },
-  devLink: {
-    alignSelf: 'center',
   },
 });
