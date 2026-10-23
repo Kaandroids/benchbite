@@ -8,37 +8,39 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Text } from '@/components/ui/text';
-import { useDateFormat } from '@/i18n/dates';
+import { useFinishedThisWeek } from '@/history/history';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
-import { StreakBadge } from '@/streak/streak-badge';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { useWeek } from '@/workouts/workouts';
 
-import { WeekStrip } from './week-strip';
+import { WeekCard } from './week-card';
 import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
 /** Meals are logged in the nutrition milestone; until then nothing is eaten. */
 const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
-/** Workouts are logged in #34; until then none is finished. */
-const NO_WORKOUTS: ReadonlySet<string> = new Set();
+/** A greeting for the time of day. */
+export function greetingOf(date: Date): 'morning' | 'afternoon' | 'evening' {
+  const hour = date.getHours();
+  return hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
+}
 
-/** The home tab: the week, today's workout, the daily targets and the weight. */
+/** The home tab: a greeting, the week, today's workout, the daily targets and the weight. */
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const formatDate = useDateFormat('long');
   const plan = useWeek();
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const streak = useStreak();
-  const queries = [plan, targets, latestWeight, weightUnit];
   const today = new Date();
+  const finished = useFinishedThisWeek(today);
+  const queries = [plan, targets, latestWeight, weightUnit, finished];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
@@ -77,11 +79,11 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekStrip
+        <WeekCard
           today={today}
-          days={streak.days}
+          streak={streak}
           trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
-          trainedOn={NO_WORKOUTS}
+          finished={finished.data ?? []}
         />
         {plan.data ? <WorkoutCard plan={plan.data} today={today} /> : null}
         {targets.data ? (
@@ -116,12 +118,9 @@ export function TodayScreen() {
           />
         }
       >
-        <View style={styles.header}>
-          <Text variant="title" accessibilityRole="header" style={styles.title}>
-            {formatDate(today)}
-          </Text>
-          <StreakBadge streak={streak} />
-        </View>
+        <Text variant="title" accessibilityRole="header">
+          {t(`today.greeting.${greetingOf(today)}`)}
+        </Text>
         {content}
       </ScrollView>
     </SafeAreaView>
@@ -134,14 +133,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    flex: 1,
   },
   center: {
     flex: 1,
