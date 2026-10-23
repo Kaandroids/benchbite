@@ -1,4 +1,3 @@
-import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -118,22 +117,12 @@ export function TodayScreen() {
         }
       >
         <View style={styles.header}>
-          <View style={styles.side} />
-          <Text variant="bodyStrong" accessibilityRole="header">
+          <Text variant="title" accessibilityRole="header" style={styles.title}>
             {formatDate(today)}
           </Text>
-          <View style={[styles.side, styles.end]}>
-            <StreakBadge streak={streak} />
-          </View>
+          <StreakBadge streak={streak} />
         </View>
         {content}
-        {__DEV__ ? (
-          <Link href="/dev/components" style={styles.devLink}>
-            <Text variant="bodyStrong" color="primaryText">
-              Open the component gallery
-            </Text>
-          </Link>
-        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -149,18 +138,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  side: {
+  title: {
     flex: 1,
-  },
-  end: {
-    alignItems: 'flex-end',
   },
   center: {
     flex: 1,
     justifyContent: 'center',
-  },
-  devLink: {
-    alignSelf: 'center',
   },
 });
