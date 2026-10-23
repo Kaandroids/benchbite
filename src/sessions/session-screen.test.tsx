@@ -163,7 +163,7 @@ describe('SessionScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Plank' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Start the clock of set 1' }));
     await act(async () => {
-      jest.advanceTimersByTime(50_000);
+      jest.advanceTimersByTime(50_005);
     });
     expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:50');
     await fireEvent.press(screen.getByRole('button', { name: 'Stop the clock of set 1' }));

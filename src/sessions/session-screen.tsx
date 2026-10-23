@@ -50,7 +50,7 @@ export function SessionScreen() {
   const workoutName = useWorkoutName();
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
-  const now = useNow(!!session);
+  const now = useNow(!!session, session?.clock?.startedAt);
 
   // A rest that is over ends.
   const restOver = !!session?.rest && session.rest.endsAt <= now;

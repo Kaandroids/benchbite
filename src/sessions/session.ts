@@ -300,7 +300,8 @@ export function stopClock(value: Session, now = Date.now()): Session {
   if (!clock) {
     return value;
   }
-  const seconds = Math.max(1, Math.round((now - clock.startedAt) / 1000));
+  // Rounded down, as the clock shows it.
+  const seconds = Math.max(1, Math.floor((now - clock.startedAt) / 1000));
   const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
   return toggleDone(next, clock.exercise, clock.set, now);
 }
