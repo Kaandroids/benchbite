@@ -380,6 +380,27 @@ describe('FinishScreen', () => {
     );
   });
 
+  it('keeps a running clock running when the workout goes on', async () => {
+    updateSession((session) => startClock(session, 1, 0));
+    await render(<FinishScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
+    const { result } = await renderHook(() => useActiveSession('user-a'));
+    expect(result.current?.clock).toMatchObject({ exercise: 1, set: 0 });
+    expect(result.current?.exercises[1]?.sets[0]?.done).toBe(false);
+  });
+
+  it('saves once when Save is tapped twice', async () => {
+    doFirstSet();
+    let finish: (id: number) => void = () => undefined;
+    logWorkout.mockImplementationOnce(() => new Promise<number>((resolve) => (finish = resolve)));
+    await render(<FinishScreen />);
+    const save = screen.getByRole('button', { name: 'Save workout' });
+    await fireEvent.press(save);
+    await fireEvent.press(save);
+    expect(logWorkout).toHaveBeenCalledTimes(1);
+    await act(async () => finish(1));
+  });
+
   it('starts the next workout after saving', async () => {
     doFirstSet();
     await render(<FinishScreen next={5} />);
