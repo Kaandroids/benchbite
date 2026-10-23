@@ -5,10 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
-import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
+import { DateTile } from './date-tile';
 import { useDurationFormat } from './format';
 import { doneOf, durationMinutes, isPartial, type LogSummary } from './history';
 
@@ -22,8 +22,7 @@ type LogRowProps = {
 /** A finished workout in a list: its day, name, length, sets and calories. Opens the workout. */
 export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const weekday = useWeekdayFormat('short');
+  const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
   const duration = useDurationFormat();
   const exercisesLabel = isPartial(log.exercises, log.plannedExercises)
@@ -48,14 +47,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
         },
       ]}
     >
-      <View style={[styles.date, { borderRadius: radii.md, backgroundColor: colors.selected }]}>
-        <Text variant="caption" color="primaryText" style={[styles.bold, styles.weekday]}>
-          {weekday(isoWeekday(log.startedAt)).toLocaleUpperCase()}
-        </Text>
-        <Text variant="headline" style={styles.day}>
-          {log.startedAt.getDate()}
-        </Text>
-      </View>
+      <DateTile date={log.startedAt} />
       <View style={[styles.flex, { gap: 2 }]}>
         <Text variant="bodyStrong" numberOfLines={1} style={styles.bold}>
           {workoutName(log)}
@@ -114,19 +106,5 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontFamily: fonts.extraBold,
-  },
-  date: {
-    width: 48,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekday: {
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: 0.4,
-  },
-  day: {
-    lineHeight: 24,
   },
 });

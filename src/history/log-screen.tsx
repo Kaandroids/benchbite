@@ -22,6 +22,7 @@ import {
   useLogSummary,
   type LoggedSet,
 } from './history';
+import { DateTile } from './date-tile';
 import { shortSet, summarizeSets } from './exercise-summary';
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
@@ -55,11 +56,9 @@ export function LogScreen({ id }: { id: number }) {
     );
   }
 
-  // "Friday, October 23 · 18:04 – 18:56", with the year only when it is not this one.
-  const day = new Intl.DateTimeFormat(i18n.language, {
-    weekday: 'long',
+  // Beside the date tile: "October · 18:04 – 18:56", with the year only when it is not this one.
+  const month = new Intl.DateTimeFormat(i18n.language, {
     month: 'long',
-    day: 'numeric',
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
@@ -115,11 +114,14 @@ export function LogScreen({ id }: { id: number }) {
 
   return (
     <Screen onBack={() => router.back()}>
-      <View style={{ gap: 2 }}>
-        <Text variant="title" accessibilityRole="header">
-          {workoutName(log)}
-        </Text>
-        <Text color="textMuted">{`${day} · ${hours}`}</Text>
+      <View style={[styles.row, { gap: spacing.md }]}>
+        <DateTile date={log.startedAt} large />
+        <View style={[styles.flex, { gap: 2 }]}>
+          <Text variant="title" accessibilityRole="header" numberOfLines={2}>
+            {workoutName(log)}
+          </Text>
+          <Text color="textMuted">{`${month} · ${hours}`}</Text>
+        </View>
       </View>
 
       {/* Four even columns, like the figures on a workout's screen. */}
