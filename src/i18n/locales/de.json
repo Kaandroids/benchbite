@@ -153,6 +153,11 @@
       "exercises_other": "{{count}} Übungen",
       "minutes": "~{{minutes}} Min.",
       "kcal": "~{{kcal}} kcal"
+    },
+    "running": {
+      "title": "{{name}} läuft",
+      "message": "Beende das Training, bevor du es änderst.",
+      "resume": "Zurück zum Training"
     }
   },
   "exercise": {
