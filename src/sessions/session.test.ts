@@ -7,8 +7,11 @@ import {
   addSet,
   changeRest,
   clockSeconds,
-  MAX_SETS,
   endSession,
+  isLeftOpen,
+  lastActivity,
+  MAX_SETS,
+  MAX_WORKOUT_MS,
   resetSessionStore,
   sessionTotals,
   setValues,
@@ -17,9 +20,9 @@ import {
   stopClock,
   toggleDone,
   toLog,
+  type Session,
   updateSession,
   useActiveSession,
-  type Session,
 } from './session';
 
 // The test environment has no native crypto; each workout still gets an id of its own.
@@ -173,6 +176,23 @@ describe('the clock of a timed set', () => {
     let session = startClock(start(), 2, 0, NOW);
     session = stopClock(session, NOW + 490_000);
     expect(session.exercises[2]?.sets[0]).toMatchObject({ meters: 2000, seconds: 490, done: true });
+  });
+});
+
+describe('a workout left open', () => {
+  it('ends at its last done set, at most a workout length after the start', () => {
+    let session = toggleDone(start(), 0, 0, NOW + 10 * 60_000);
+    session = toggleDone(session, 0, 1, NOW + 20 * 60_000);
+    expect(lastActivity(session)).toBe(NOW + 20 * 60_000);
+    expect(lastActivity(start())).toBe(NOW);
+    expect(lastActivity(toggleDone(start(), 0, 0, NOW + 13 * 3600_000))).toBe(NOW + MAX_WORKOUT_MS);
+    // Undone sets do not count.
+    expect(lastActivity(toggleDone(session, 0, 1, NOW + 30 * 60_000))).toBe(NOW + 10 * 60_000);
+  });
+
+  it('is left open once it has run longer than a workout can be', () => {
+    expect(isLeftOpen(start(), NOW + MAX_WORKOUT_MS)).toBe(false);
+    expect(isLeftOpen(start(), NOW + MAX_WORKOUT_MS + 1)).toBe(true);
   });
 });
 

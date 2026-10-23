@@ -17,7 +17,14 @@ export type SetValues = {
   meters: number | null;
 };
 
-export type SessionSet = SetValues & { done: boolean };
+export type SessionSet = SetValues & {
+  done: boolean;
+  /** When it was done, as the end of a workout left open; missing in older workouts. */
+  doneAt?: number;
+};
+
+/** The longest a workout can be, as log_workout() accepts it. */
+export const MAX_WORKOUT_MS = 12 * 3600 * 1000;
 
 export type SessionExercise = {
   exerciseId: string;
@@ -265,7 +272,11 @@ export function toggleDone(
   now = Date.now(),
 ): Session {
   const wasDone = value.exercises[exercise]?.sets[index]?.done ?? false;
-  let next = changeSet(value, exercise, index, (s) => ({ ...s, done: !wasDone }));
+  let next = changeSet(value, exercise, index, (s) => ({
+    ...s,
+    done: !wasDone,
+    doneAt: wasDone ? undefined : now,
+  }));
   if (wasDone) {
     return next;
   }
@@ -330,6 +341,25 @@ export function stopClock(value: Session, now = Date.now()): Session {
   );
   const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
   return toggleDone(next, clock.exercise, clock.set, now);
+}
+
+/**
+ * When the workout was last worked on: the latest done set, at most as long after the start as a
+ * workout can be. A workout without done sets has its start.
+ */
+export function lastActivity(value: Session): number {
+  const latest = Math.max(
+    value.startedAt,
+    ...value.exercises.flatMap((exercise) =>
+      exercise.sets.flatMap((set) => (set.done && set.doneAt !== undefined ? [set.doneAt] : [])),
+    ),
+  );
+  return Math.min(latest, value.startedAt + MAX_WORKOUT_MS);
+}
+
+/** Whether a workout has been open longer than a workout can be, so it was left open. */
+export function isLeftOpen(value: Session, now = Date.now()): boolean {
+  return now - value.startedAt > MAX_WORKOUT_MS;
 }
 
 /** Lengthens or shortens the rest; a rest that is over ends. */
