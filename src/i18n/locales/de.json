@@ -606,6 +606,23 @@
       "offTitle": "Mitteilungen sind aus",
       "offMessage": "Schalte Mitteilungen für Benchbite in den Einstellungen deines Handys ein, um zu hören, wann deine Pause vorbei ist.",
       "openSettings": "Einstellungen öffnen"
+    },
+    "end": {
+      "title": "Wann warst du fertig?",
+      "hour": "Stunde",
+      "minute": "Minute",
+      "range": "Zwischen deinem letzten Satz, {{time}}, und jetzt.",
+      "done": "Fertig",
+      "change": "Beendet um {{time}}. Ändern",
+      "label": "Begonnen {{started}} · Beendet",
+      "changeLabel": "Ändern",
+      "hint": "Vergessen zu beenden? Stell ein, wann du wirklich aufgehört hast."
+    },
+    "leftOpen": {
+      "title": "{{name}} wurde gespeichert",
+      "message": "Du hattest es offen gelassen, also haben wir es mit deinem letzten Satz beendet, {{time}}.",
+      "view": "Ansehen",
+      "dismiss": "Schließen"
     }
   },
   "history": {

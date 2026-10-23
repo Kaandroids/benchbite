@@ -17,6 +17,7 @@ import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provid
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { showRemindersInForeground } from '@/reminders/reminders';
+import { LeftOpenSaver } from '@/sessions/left-open';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
 import { fonts, useTheme } from '@/theme';
 
@@ -94,6 +95,8 @@ function RootNavigator() {
           <Stack.Screen name="dev/components" />
         </Stack>
       )}
+      {/* Over every screen, as the app may open on any of them. */}
+      {status === 'ready' ? <LeftOpenSaver /> : null}
     </>
   );
 }

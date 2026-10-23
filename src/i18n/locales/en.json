@@ -606,6 +606,23 @@
       "offTitle": "Notifications are off",
       "offMessage": "Turn on notifications for Benchbite in your phone's settings to hear when your rest is over.",
       "openSettings": "Open settings"
+    },
+    "end": {
+      "title": "When did you finish?",
+      "hour": "Hour",
+      "minute": "Minute",
+      "range": "Between your last set, {{time}}, and now.",
+      "done": "Done",
+      "change": "Ended at {{time}}. Change",
+      "label": "Started {{started}} · Ended",
+      "changeLabel": "Change",
+      "hint": "Forgot to finish? Set when you really stopped."
+    },
+    "leftOpen": {
+      "title": "{{name}} was saved",
+      "message": "You left it open, so we saved it as finished at your last set, {{time}}.",
+      "view": "View",
+      "dismiss": "Dismiss"
     }
   },
   "history": {
