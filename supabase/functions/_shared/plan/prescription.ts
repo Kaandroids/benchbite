@@ -65,11 +65,11 @@ export function prescribe(
 }
 
 /**
- * A conditioning finisher of the given minutes: steady work on a cardio machine, or rounds of a
+ * A conditioning block of the given minutes at the end of a session: steady work on a cardio machine, or rounds of a
  * bodyweight exercise that take about a minute each, including a short rest. Both leave one
  * minute for getting set up, so the block takes the minutes it was given.
  */
-export function prescribeFinisher(metrics: Metric[], minutes: number): Prescription {
+export function prescribeConditioning(metrics: Metric[], minutes: number): Prescription {
   if (usesTimeTarget(metrics)) {
     return { sets: 1, target: { seconds: (minutes - 1) * 60 }, restSeconds: 0 };
   }

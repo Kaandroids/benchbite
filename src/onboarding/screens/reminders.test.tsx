@@ -19,7 +19,7 @@ jest.mock('@/reminders/reminders', () => ({
 
 const PLAN: WorkoutPlan = {
   sessions: [
-    { weekdays: [1, 5], type: 'push', exercises: [], finisher: null, estimatedMinutes: 45 },
+    { weekdays: [1, 5], type: 'push', exercises: [], estimatedMinutes: 45 },
     {
       weekdays: [3],
       type: 'pull',
@@ -30,7 +30,6 @@ const PLAN: WorkoutPlan = {
         target: { seconds: 30 },
         restSeconds: 60,
       })),
-      finisher: null,
       estimatedMinutes: 30,
     },
   ],

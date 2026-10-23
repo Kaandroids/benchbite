@@ -89,21 +89,20 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
     if (session.estimatedMinutes > answers.sessionMinutes) {
       found.push(`${session.type} takes ${session.estimatedMinutes} minutes`);
     }
-    const count = session.exercises.length + (session.finisher ? 1 : 0);
+    const count = session.exercises.length;
     if (session.exercises.length < 2 || count > FREE_WORKOUT_EXERCISES) {
       found.push(`${session.type} has ${count} exercises`);
     }
-    if ((answers.goal === 'lose_fat') !== (session.finisher !== null)) {
-      found.push(`${session.type} has the wrong finisher`);
+    const conditioning = session.exercises.filter((exercise) => exercise.slot === 'conditioning');
+    const endsWithConditioning = session.exercises.at(-1)?.slot === 'conditioning';
+    if (conditioning.length > 1 || (answers.goal === 'lose_fat') !== endsWithConditioning) {
+      found.push(`${session.type} has the wrong conditioning`);
     }
     const ids = session.exercises.map((exercise) => exercise.exerciseId);
     if (new Set(ids).size !== ids.length) {
       found.push(`${session.type} repeats an exercise`);
     }
-    for (const exercise of [
-      ...session.exercises,
-      ...(session.finisher ? [session.finisher] : []),
-    ]) {
+    for (const exercise of session.exercises) {
       const row = catalogue.find(
         (entry) => entry.slot === exercise.slot && entry.exercise_id === exercise.exerciseId,
       );

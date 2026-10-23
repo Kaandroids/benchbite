@@ -325,7 +325,6 @@ export type Database = {
         Row: {
           exercise_id: string;
           id: number;
-          is_finisher: boolean;
           position: number;
           rest_seconds: number;
           sets: number;
@@ -341,7 +340,6 @@ export type Database = {
         Insert: {
           exercise_id: string;
           id?: never;
-          is_finisher?: boolean;
           position: number;
           rest_seconds: number;
           sets: number;
@@ -356,7 +354,6 @@ export type Database = {
         Update: {
           exercise_id?: string;
           id?: never;
-          is_finisher?: boolean;
           position?: number;
           rest_seconds?: number;
           sets?: number;
