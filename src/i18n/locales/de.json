@@ -565,5 +565,33 @@
       "saveErrorTitle": "Nicht gespeichert",
       "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
     }
+  },
+  "history": {
+    "seeAll": "Alle ansehen",
+    "thisWeek_one": "{{count}} diese Woche",
+    "thisWeek_other": "{{count}} diese Woche",
+    "weekThis": "Diese Woche",
+    "weekLast": "Letzte Woche",
+    "weekTotal_one": "{{count}} Training · {{time}}",
+    "weekTotal_other": "{{count}} Trainings · {{time}}",
+    "minutes": "{{minutes}} Min.",
+    "hours": "{{hours}} Std. {{minutes}} Min.",
+    "sets_one": "{{count}} Satz",
+    "sets_other": "{{count}} Sätze",
+    "kcal": "~{{kcal}} kcal",
+    "open": "Öffnet das Training",
+    "stats": {
+      "time": "Zeit",
+      "sets": "Sätze",
+      "lifted": "bewegt",
+      "kcal": "kcal verbrannt"
+    },
+    "delete": "Aus dem Verlauf löschen",
+    "deleteTitle": "Dieses Training aus dem Verlauf löschen?",
+    "deleteMessage": "Seine Sätze werden mit gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "notFound": {
+      "title": "Training nicht gefunden",
+      "message": "Es wurde vielleicht gelöscht."
+    }
   }
 }

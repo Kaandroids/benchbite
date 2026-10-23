@@ -565,5 +565,33 @@
       "saveErrorTitle": "Not saved",
       "saveError": "We couldn't save the workout. Check your connection and try again."
     }
+  },
+  "history": {
+    "seeAll": "See all",
+    "thisWeek_one": "{{count}} this week",
+    "thisWeek_other": "{{count}} this week",
+    "weekThis": "This week",
+    "weekLast": "Last week",
+    "weekTotal_one": "{{count}} workout · {{time}}",
+    "weekTotal_other": "{{count}} workouts · {{time}}",
+    "minutes": "{{minutes}} min",
+    "hours": "{{hours}} h {{minutes}} min",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "kcal": "~{{kcal}} kcal",
+    "open": "Opens the workout",
+    "stats": {
+      "time": "time",
+      "sets": "sets",
+      "lifted": "lifted",
+      "kcal": "kcal burned"
+    },
+    "delete": "Delete from history",
+    "deleteTitle": "Delete this workout from your history?",
+    "deleteMessage": "Its sets are deleted with it. This cannot be undone.",
+    "notFound": {
+      "title": "Workout not found",
+      "message": "It may have been deleted."
+    }
   }
 }

@@ -565,5 +565,33 @@
       "saveErrorTitle": "Kaydedilemedi",
       "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene."
     }
+  },
+  "history": {
+    "seeAll": "Tümünü gör",
+    "thisWeek_one": "bu hafta {{count}}",
+    "thisWeek_other": "bu hafta {{count}}",
+    "weekThis": "Bu hafta",
+    "weekLast": "Geçen hafta",
+    "weekTotal_one": "{{count}} antrenman · {{time}}",
+    "weekTotal_other": "{{count}} antrenman · {{time}}",
+    "minutes": "{{minutes}} dk",
+    "hours": "{{hours}} sa {{minutes}} dk",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} set",
+    "kcal": "~{{kcal}} kcal",
+    "open": "Antrenmanı açar",
+    "stats": {
+      "time": "süre",
+      "sets": "set",
+      "lifted": "kaldırıldı",
+      "kcal": "kcal yakıldı"
+    },
+    "delete": "Geçmişten sil",
+    "deleteTitle": "Bu antrenman geçmişten silinsin mi?",
+    "deleteMessage": "Setleri de silinir. Bu geri alınamaz.",
+    "notFound": {
+      "title": "Antrenman bulunamadı",
+      "message": "Silinmiş olabilir."
+    }
   }
 }
