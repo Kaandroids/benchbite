@@ -35,3 +35,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0017](0017-save-workouts-through-a-function.md)       | Save workouts through a function that checks their targets                         | Accepted |
 | [0018](0018-per-user-limits-come-from-the-database.md) | Per-user limits come from the database                                             | Accepted |
 | [0019](0019-plans-repeat-workouts.md)                  | Plans repeat a workout on every day of its kind                                    | Accepted |
+| [0020](0020-log-finished-workouts.md)                  | Log a workout once it is finished                                                  | Accepted |

@@ -146,6 +146,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      logged_sets: {
+        Row: {
+          exercise_id: string;
+          exercise_position: number;
+          id: number;
+          log_id: number;
+          meters: number | null;
+          reps: number | null;
+          seconds: number | null;
+          set_position: number;
+          user_id: string;
+          weight_kg: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          exercise_id: string;
+          exercise_position: number;
+          id?: never;
+          log_id: number;
+          meters?: number | null;
+          reps?: number | null;
+          seconds?: number | null;
+          set_position: number;
+          user_id: string;
+          weight_kg?: number | null;
+        };
+        Update: {
+          exercise_id?: string;
+          exercise_position?: number;
+          id?: never;
+          log_id?: number;
+          meters?: number | null;
+          reps?: number | null;
+          seconds?: number | null;
+          set_position?: number;
+          user_id?: string;
+          weight_kg?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'logged_sets_exercise_id_fkey';
+            columns: ['exercise_id'];
+            isOneToOne: false;
+            referencedRelation: 'exercises';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'logged_sets_log_id_fkey';
+            columns: ['log_id'];
+            isOneToOne: false;
+            referencedRelation: 'workout_logs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       plan_slot_exercises: {
         Row: {
           exercise_id: string;
@@ -323,6 +378,45 @@ export type Database = {
           },
         ];
       };
+      workout_logs: {
+        Row: {
+          finished_at: string;
+          id: number;
+          name: string | null;
+          started_at: string;
+          type: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          finished_at: string;
+          id?: never;
+          name?: string | null;
+          started_at: string;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id?: number | null;
+        };
+        Update: {
+          finished_at?: string;
+          id?: never;
+          name?: string | null;
+          started_at?: string;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id?: string;
+          workout_id?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workout_logs_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       workouts: {
         Row: {
           active: boolean;
@@ -387,6 +481,28 @@ export type Database = {
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      last_sets: {
+        Args: { exercise_ids: string[] };
+        Returns: {
+          exercise_id: string;
+          exercise_position: number;
+          id: number;
+          log_id: number;
+          meters: number | null;
+          reps: number | null;
+          seconds: number | null;
+          set_position: number;
+          user_id: string;
+          weight_kg: number | null;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'logged_sets';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      log_workout: { Args: { log: Json }; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];
@@ -398,6 +514,28 @@ export type Database = {
         };
       };
       save_workout: { Args: { workout: Json }; Returns: number };
+      set_suits: {
+        Args: {
+          meters: number;
+          metrics: Database['public']['Enums']['exercise_metric'][];
+          reps: number;
+          seconds: number;
+          weight_kg: number;
+        };
+        Returns: boolean;
+      };
+      sets_of: {
+        Args: { log: Json };
+        Returns: {
+          exercise_id: string;
+          exercise_position: number;
+          meters: number;
+          reps: number;
+          seconds: number;
+          set_position: number;
+          weight_kg: number;
+        }[];
+      };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;
