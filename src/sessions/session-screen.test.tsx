@@ -380,6 +380,25 @@ describe('FinishScreen', () => {
     );
   });
 
+  it('ends a workout left open at its last set, and lets the end be changed', async () => {
+    updateSession((session) => toggleDone(session, 0, 0, NOW.getTime() + 40 * 60_000));
+    await act(async () => {
+      jest.advanceTimersByTime(13 * 3600_000);
+    });
+    await render(<FinishScreen />);
+    // 18:00 + 40 minutes.
+    expect(screen.getByRole('button', { name: 'Ended at 6:40 PM. Change' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Ended at 6:40 PM. Change' }));
+    expect(screen.getByText('When did you finish?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
+    expect(logWorkout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finishedAt: new Date(NOW.getTime() + 40 * 60_000).toISOString(),
+      }),
+    );
+  });
+
   it('keeps a running clock running when the workout goes on', async () => {
     updateSession((session) => startClock(session, 1, 0));
     await render(<FinishScreen />);

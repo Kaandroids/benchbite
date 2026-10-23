@@ -19,10 +19,20 @@ import { summarizeSets } from '@/history/exercise-summary';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 import { useWorkouts } from '@/workouts/workouts';
 
+import { EndSheet } from './end-sheet';
 import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
 import { newRecords } from './records';
-import { endSession, sessionTotals, stopClock, toLog, useActiveSession } from './session';
+import {
+  endSession,
+  isLeftOpen,
+  lastActivity,
+  MAX_WORKOUT_MS,
+  sessionTotals,
+  stopClock,
+  toLog,
+  useActiveSession,
+} from './session';
 import { useStartWorkout } from './start';
 
 /**
@@ -30,7 +40,7 @@ import { useStartWorkout } from './start';
  * starts afterwards.
  */
 export function FinishScreen({ next }: { next?: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const active = useActiveSession(useUserId());
   const library = useExerciseLibrary();
@@ -42,7 +52,10 @@ export function FinishScreen({ next }: { next?: number }) {
   const { format } = useNumberFormat();
   const formatRecord = useRecordFormat();
   // Taken once, so that the summary does not keep counting while the user looks at it.
-  const [finishedAt] = useState(() => Date.now());
+  const [openedAt] = useState(() => Date.now());
+  // When the workout ended, if the user changed it, as when they forgot to finish.
+  const [chosenEnd, setChosenEnd] = useState<number | null>(null);
+  const [choosingEnd, setChoosingEnd] = useState(false);
   // Only one save, also when Save is tapped twice before the button turns off.
   const saving = useRef(false);
 
@@ -58,8 +71,16 @@ export function FinishScreen({ next }: { next?: number }) {
     );
   }
 
-  // A clock still running logs its set, as it would on stopping it now. The workout itself keeps
-  // it running, so that "Keep going" goes on where it was.
+  // It ends now, or at its last set when it was left open longer than a workout can be. It can be
+  // set between its last set and now, within the longest a workout can be.
+  const lastSet = lastActivity(active);
+  const latestEnd = Math.min(openedAt, active.startedAt + MAX_WORKOUT_MS);
+  const earliestEnd = Math.min(Math.max(lastSet, active.startedAt + 60_000), latestEnd);
+  const finishedAt = chosenEnd ?? (isLeftOpen(active, openedAt) ? lastSet : openedAt);
+  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+
+  // A clock still running logs its set, as it would on stopping it when the workout ended. The
+  // workout itself keeps it running, so that "Keep going" goes on where it was.
   const session = stopClock(active, finishedAt);
   const name = workoutName(session);
   const totals = sessionTotals(session);
@@ -182,6 +203,39 @@ export function FinishScreen({ next }: { next?: number }) {
           ))}
         </View>
 
+        <View style={{ gap: spacing.xs }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('session.end.change', { time: time.format(finishedAt) })}
+            onPress={() => setChoosingEnd(true)}
+            style={[
+              styles.end,
+              {
+                gap: spacing.md,
+                paddingHorizontal: spacing.lg,
+                borderRadius: radii.md,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.flex}>
+              <Text variant="caption" color="textMuted">
+                {t('session.end.label', { started: time.format(session.startedAt) })}
+              </Text>
+              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+                {time.format(finishedAt)}
+              </Text>
+            </View>
+            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+              {t('session.end.changeLabel')}
+            </Text>
+          </Pressable>
+          <Text variant="caption" color="textMuted">
+            {t('session.end.hint')}
+          </Text>
+        </View>
+
         <View
           style={[
             styles.list,
@@ -257,6 +311,19 @@ export function FinishScreen({ next }: { next?: number }) {
           disabled={totals.done === 0 || logWorkout.isPending}
           onPress={() => void save()}
         />
+        {choosingEnd ? (
+          <EndSheet
+            value={finishedAt}
+            earliest={earliestEnd}
+            latest={latestEnd}
+            lastSet={time.format(lastSet)}
+            onDone={(end) => {
+              setChosenEnd(end);
+              setChoosingEnd(false);
+            }}
+            onClose={() => setChoosingEnd(false)}
+          />
+        ) : null}
         <View style={styles.actions}>
           <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.action}>
             <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
@@ -320,6 +387,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   list: {
+    borderWidth: 1,
+  },
+  end: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
   },
   item: {
