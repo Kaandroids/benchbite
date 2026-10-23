@@ -108,6 +108,18 @@ describe('logging sets', () => {
     expect(session.current).toBe(1);
   });
 
+  it('carries a weight to the later sets that have none', () => {
+    let session = setValues(start(), 0, 1, { weightKg: 60 });
+    session = addSet(session, 0);
+    session = setValues(session, 0, 0, { weightKg: 44 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([44, 60, 60]);
+    session = setValues(session, 0, 1, { weightKg: null });
+    session = toggleDone(session, 0, 2, NOW);
+    session = setValues(session, 0, 0, { weightKg: 50 });
+    // The emptied set takes it, the done one keeps its own.
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50, 60]);
+  });
+
   it('changes values and adds a set like the last one', () => {
     let session = setValues(start(), 0, 1, { weightKg: 82.5, reps: 6 });
     session = addSet(session, 0);

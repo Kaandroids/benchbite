@@ -195,14 +195,34 @@ function changeSet(
   };
 }
 
-/** Sets values of a set, for example what the user typed. */
+/**
+ * Sets values of a set, for example what the user typed. A weight also fills the later sets of the
+ * exercise that are not done and have none yet, since most sets use the same weight.
+ */
 export function setValues(
   value: Session,
   exercise: number,
   index: number,
   values: Partial<SetValues>,
 ): Session {
-  return changeSet(value, exercise, index, (s) => ({ ...s, ...values }));
+  const weightKg = values.weightKg;
+  return {
+    ...value,
+    exercises: value.exercises.map((item, i) =>
+      i === exercise
+        ? {
+            ...item,
+            sets: item.sets.map((s, j) =>
+              j === index
+                ? { ...s, ...values }
+                : j > index && weightKg != null && !s.done && s.weightKg === null
+                  ? { ...s, weightKg }
+                  : s,
+            ),
+          }
+        : item,
+    ),
+  };
 }
 
 /** Whether every set of the exercise is done. */
