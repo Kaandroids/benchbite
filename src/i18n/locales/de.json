@@ -654,7 +654,7 @@
     "kinds": {
       "heaviest": "Schwerster Satz",
       "heaviestAdded": "Meiste Zusatzlast",
-      "one_rep_max": "Geschätztes 1RM",
+      "one_rep_max": "Gesch. 1RM",
       "best_set": "Bester Satz",
       "most_reps": "Meiste Wdh.",
       "longest_time": "Längster Satz",
@@ -672,6 +672,7 @@
       "totalTime": "Zeit gesamt",
       "distance": "Strecke",
       "pace": "Tempo"
-    }
+    },
+    "oneRepMaxNote": "Das geschätzte 1RM ist das Gewicht, das du wahrscheinlich einmal heben könntest, berechnet aus Gewicht und Wiederholungen eines Satzes. Es ist eine Schätzung, kein Gewicht, das du gehoben hast."
   }
 }

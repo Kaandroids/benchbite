@@ -145,11 +145,19 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                   {formatRecord(record)}
                 </Text>
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
-                  {day.format(record.achievedAt)}
+                  {/* An estimate says which set it comes from. */}
+                  {record.kind === 'one_rep_max'
+                    ? `${shortSet(record.set, kind, (values) => describeSet(values, kind))} · ${day.format(record.achievedAt)}`
+                    : day.format(record.achievedAt)}
                 </Text>
               </View>
             ))}
           </View>
+          {records.some((record) => record.kind === 'one_rep_max') ? (
+            <Text variant="caption" color="textMuted">
+              {t('exerciseHistory.oneRepMaxNote')}
+            </Text>
+          ) : null}
         </View>
       ) : null}
 

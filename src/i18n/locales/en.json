@@ -654,7 +654,7 @@
     "kinds": {
       "heaviest": "Heaviest",
       "heaviestAdded": "Heaviest added",
-      "one_rep_max": "Est. one-rep max",
+      "one_rep_max": "Est. 1RM",
       "best_set": "Best set",
       "most_reps": "Most reps",
       "longest_time": "Longest set",
@@ -672,6 +672,7 @@
       "totalTime": "Total time",
       "distance": "Distance",
       "pace": "Pace"
-    }
+    },
+    "oneRepMaxNote": "Est. 1RM is the most you could likely lift for one rep, worked out from the weight and reps of a set. It is an estimate, not a weight you lifted."
   }
 }

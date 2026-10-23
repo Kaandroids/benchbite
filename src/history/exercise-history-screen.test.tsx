@@ -45,6 +45,13 @@ const point = (
 const HISTORY: ExerciseHistory = {
   records: [
     { kind: 'heaviest', value: 85, set: set(85, 7), logId: 2, achievedAt: new Date(2026, 9, 23) },
+    {
+      kind: 'one_rep_max',
+      value: 104.8,
+      set: set(85, 7),
+      logId: 2,
+      achievedAt: new Date(2026, 9, 23),
+    },
     { kind: 'most_reps', value: 10, set: set(70, 10), logId: 1, achievedAt: new Date(2026, 9, 12) },
   ],
   progress: [point(1, 12, 75, 1225), point(2, 23, 85, 1875)],
@@ -86,6 +93,10 @@ describe('ExerciseHistoryScreen', () => {
     expect(screen.getAllByText('Heaviest')).toHaveLength(2);
     expect(screen.getByText('85 kg')).toBeOnTheScreen();
     expect(screen.getByText('Most reps')).toBeOnTheScreen();
+    // The estimate says which set it comes from, and what it is.
+    expect(screen.getByText('105 kg')).toBeOnTheScreen();
+    expect(screen.getByText('85 × 7 · Oct 23')).toBeOnTheScreen();
+    expect(screen.getByText(/^Est\. 1RM is the most you could likely lift/)).toBeOnTheScreen();
     expect(screen.getByText('+10 kg since Oct 12')).toBeOnTheScreen();
     expect(screen.getByText('Sessions · 2')).toBeOnTheScreen();
     expect(screen.getByText(/^Chest day/)).toBeOnTheScreen();

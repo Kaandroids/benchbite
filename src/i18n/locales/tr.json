@@ -672,6 +672,7 @@
       "totalTime": "Toplam süre",
       "distance": "Mesafe",
       "pace": "Tempo"
-    }
+    },
+    "oneRepMaxNote": "Tahmini 1RM, tek tekrarda kaldırabileceğin muhtemel en ağır yüktür; bir setin ağırlığı ve tekrarından hesaplanır. Kaldırdığın bir ağırlık değil, bir tahmindir."
   }
 }
