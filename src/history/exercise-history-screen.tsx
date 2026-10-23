@@ -9,36 +9,38 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
-import { useNumberFormat } from '@/i18n/units';
+import { useShortDateFormat } from '@/i18n/dates';
 import { describeSet, setKindOf } from '@/sessions/fields';
 import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
+import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
 import { shortSet, summarizeSets } from './exercise-summary';
 import { recordSets, useExerciseHistory, type ExerciseRecord } from './exercise-history';
+import { useTotalFormat } from './format';
 import { ProgressChart } from './progress-chart';
 import {
   lowerIsBetter,
   metricsOf,
   pointsOf,
+  scaleOf,
   useMetricFormat,
   useRecordFormat,
   type ProgressMetric,
 } from './record-format';
 
-/** An exercise's records, a chart of its progress, and its sets in every workout it was done in. */
+/** An exercise's records, a chart of its progress, and its sets in the workouts it was done in. */
 export function ExerciseHistoryScreen({ id }: { id: string }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const history = useExerciseHistory(id);
   const library = useExerciseLibrary();
   const formatRecord = useRecordFormat();
   const formatMetric = useMetricFormat();
   const workoutName = useWorkoutName();
-  const { format } = useNumberFormat();
+  const formatTotal = useTotalFormat();
   const [chosen, setChosen] = useState<ProgressMetric | null>(null);
-  const day = new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' });
+  const day = useShortDateFormat(new Date());
 
   const exercise = library.data?.find((item) => item.id === id);
   const title = (
@@ -76,7 +78,14 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
     );
   }
 
-  const kind = setKindOf(exercise?.metrics, { reps: { min: 1, max: 1 } });
+  // An exercise no longer in the library is read from how its sets were logged.
+  const sample = sessions[0]?.sets[0];
+  const kind = setKindOf(
+    exercise?.metrics,
+    sample && sample.reps === null
+      ? { seconds: sample.seconds, meters: sample.meters }
+      : { reps: { min: 1, max: 1 } },
+  );
   const metrics = metricsOf(kind);
   const metric = chosen && metrics.includes(chosen) ? chosen : metrics[0];
   const points = pointsOf(progress, metric);
@@ -90,19 +99,23 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
       ? t('exerciseHistory.kinds.heaviestAdded')
       : t(`exerciseHistory.kinds.${record.kind}`);
 
-  const total = (sets: (typeof sessions)[number]['sets']) => {
-    const { total: sum } = summarizeSets(sets, kind);
-    switch (sum.kind) {
-      case 'volume':
-        return `${format(Math.round(sum.kilograms))} kg`;
-      case 'reps':
-        return t('history.exercise.reps', { count: sum.reps });
-      case 'time':
-        return minutesAndSeconds(sum.seconds);
-      case 'distance':
-        return `${format(sum.meters)} m`;
-    }
-  };
+  const total = (sets: (typeof sessions)[number]['sets']) =>
+    formatTotal(summarizeSets(sets, kind).total);
+
+  // The chart in a sentence for screen readers, however many workouts it shows.
+  const values = points.map((point) => point.value);
+  const description =
+    first && last
+      ? t('exerciseHistory.chartSummary', {
+          count: points.length,
+          metric: t(`exerciseHistory.metrics.${metric}`),
+          from: day(first.date),
+          to: day(last.date),
+          lowest: formatMetric.value(metric, Math.min(...values)),
+          highest: formatMetric.value(metric, Math.max(...values)),
+          latest: formatMetric.value(metric, last.value),
+        })
+      : '';
 
   const card = [
     styles.card,
@@ -147,8 +160,8 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
                   {/* An estimate says which set it comes from. */}
                   {record.kind === 'one_rep_max'
-                    ? `${shortSet(record.set, kind, (values) => describeSet(values, kind))} · ${day.format(record.achievedAt)}`
-                    : day.format(record.achievedAt)}
+                    ? `${shortSet(record.set, kind, (set) => describeSet(set, kind))} · ${day(record.achievedAt)}`
+                    : day(record.achievedAt)}
                 </Text>
               </View>
             ))}
@@ -172,7 +185,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
               <Text variant="caption" color="textMuted" style={styles.semibold}>
                 {t('exerciseHistory.since', {
                   change: `${change > 0 ? '+' : '−'}${formatMetric.value(metric, Math.abs(change))}`,
-                  date: day.format(first.date),
+                  date: day(first.date),
                 })}
               </Text>
             ) : null}
@@ -215,14 +228,15 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
             points={points}
             formatValue={(value) => formatMetric.value(metric, value)}
             formatTick={(value) => formatMetric.tick(metric, value)}
+            scale={scaleOf(metric)}
             inverted={lowerIsBetter(metric)}
-            label={t(`exerciseHistory.metrics.${metric}`)}
+            description={description}
           />
         </View>
       ) : null}
 
       <Text variant="bodyStrong" color="textMuted" style={[styles.bold, { paddingHorizontal: 4 }]}>
-        {t('exerciseHistory.sessions', { count: sessions.length })}
+        {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
       <View
         style={[

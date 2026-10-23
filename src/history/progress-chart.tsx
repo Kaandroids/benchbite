@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
+import { useShortDateFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 
 const HEIGHT = 150;
@@ -13,36 +13,51 @@ const END = 8;
 
 export type ChartPoint = { date: Date; value: number };
 
+/** How values step on the axis: by any round number, by whole numbers, or by round times. */
+export type Scale = 'decimal' | 'whole' | 'time';
+
+// Round steps of a time axis in seconds; longer ones are whole minutes.
+const TIME_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
+
 type ProgressChartProps = {
   points: readonly ChartPoint[];
   /** The value with its unit, above the last point and in the description. */
   formatValue: (value: number) => string;
   /** The short number on the axis. */
   formatTick: (value: number) => string;
+  scale: Scale;
   /** Draws lower values higher, for a metric where lower is better. */
   inverted?: boolean;
-  /** Says what the chart shows, for screen readers. */
-  label: string;
+  /** Says what the chart shows, in a sentence for screen readers. */
+  description: string;
 };
 
-/** The smallest of 1, 2, 2.5 and 5 times a power of ten that is at least `step`. */
-export function niceStep(step: number): number {
+/**
+ * The smallest round step that is at least `step`: 1, 2, 2.5 or 5 times a power of ten, without
+ * 2.5 below ten on a whole scale, or a round time.
+ */
+export function niceStep(step: number, scale: Scale): number {
+  if (scale === 'time') {
+    return TIME_STEPS.find((nice) => nice >= step) ?? 60 * niceStep(step / 60, 'whole');
+  }
   if (step <= 0) {
     return 1;
   }
   const power = 10 ** Math.floor(Math.log10(step));
-  return (
-    [1, 2, 2.5, 5, 10].map((factor) => factor * power).find((nice) => nice >= step - 1e-9) ??
-    10 * power
-  );
+  const nice =
+    [1, 2, 2.5, 5, 10]
+      .map((factor) => factor * power)
+      .filter((candidate) => scale === 'decimal' || Number.isInteger(candidate))
+      .find((candidate) => candidate >= step - 1e-9) ?? 10 * power;
+  return scale === 'whole' ? Math.max(1, nice) : nice;
 }
 
 /** Round values on the axis around the lowest and the highest, about three of them. */
-export function ticksOf(values: readonly number[]): number[] {
+export function ticksOf(values: readonly number[], scale: Scale): number[] {
   const min = Math.min(...values);
   const max = Math.max(...values);
   // A single value sits in the middle, a step from the lines above and below it.
-  const step = niceStep((max - min) / 2 || Math.max(1, Math.abs(max) / 10));
+  const step = niceStep((max - min) / 2 || Math.max(1, Math.abs(max) / 10), scale);
   const low = Math.floor((min === max ? min - step : min) / step) * step;
   const high = Math.ceil((min === max ? max + step : max) / step) * step;
   const ticks: number[] = [];
@@ -57,15 +72,18 @@ export function ProgressChart({
   points,
   formatValue,
   formatTick,
+  scale,
   inverted = false,
-  label,
+  description,
 }: ProgressChartProps) {
-  const { i18n } = useTranslation();
   const { colors } = useTheme();
   const [width, setWidth] = useState(0);
-  const day = new Intl.DateTimeFormat(i18n.language, { month: 'short', day: 'numeric' });
+  const day = useShortDateFormat(new Date());
 
-  const ticks = ticksOf(points.map((point) => point.value));
+  const ticks = ticksOf(
+    points.map((point) => point.value),
+    scale,
+  );
   const low = ticks[0] ?? 0;
   const high = ticks[ticks.length - 1] ?? low + 1;
   const y = (value: number) => {
@@ -98,9 +116,7 @@ export function ProgressChart({
     <View
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`${label}: ${points
-        .map((point) => `${day.format(point.date)} ${formatValue(point.value)}`)
-        .join(', ')}`}
+      accessibilityLabel={description}
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       style={{ height: HEIGHT }}
     >
@@ -127,10 +143,18 @@ export function ProgressChart({
               key={index}
               x={x(index)}
               y={HEIGHT - 6}
-              textAnchor={index === points.length - 1 && points.length > 1 ? 'end' : 'middle'}
+              textAnchor={
+                points.length === 1
+                  ? 'middle'
+                  : index === 0
+                    ? 'start'
+                    : index === points.length - 1
+                      ? 'end'
+                      : 'middle'
+              }
               {...font}
             >
-              {day.format(points[index]?.date ?? last.date)}
+              {day(points[index]?.date ?? last.date)}
             </SvgText>
           ))}
           {points.length > 1 ? (

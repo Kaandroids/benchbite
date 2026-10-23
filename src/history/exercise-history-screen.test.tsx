@@ -23,6 +23,10 @@ const loaded = <T,>(data: T) => ({
 });
 
 const set = (weightKg: number, reps: number) => ({ weightKg, reps, seconds: null, meters: null });
+const placed = (weightKg: number, reps: number, at: number) => ({
+  ...set(weightKg, reps),
+  place: { exercise: 0, set: at },
+});
 const point = (
   logId: number,
   day: number,
@@ -44,37 +48,56 @@ const point = (
 
 const HISTORY: ExerciseHistory = {
   records: [
-    { kind: 'heaviest', value: 85, set: set(85, 7), logId: 2, achievedAt: new Date(2026, 9, 23) },
+    {
+      kind: 'heaviest',
+      value: 85,
+      set: set(85, 7),
+      logId: 2,
+      achievedAt: new Date(2026, 9, 23),
+      place: { exercise: 0, set: 1 },
+    },
     {
       kind: 'one_rep_max',
       value: 104.8,
       set: set(85, 7),
       logId: 2,
       achievedAt: new Date(2026, 9, 23),
+      place: { exercise: 0, set: 1 },
     },
-    { kind: 'most_reps', value: 10, set: set(70, 10), logId: 1, achievedAt: new Date(2026, 9, 12) },
+    {
+      kind: 'most_reps',
+      value: 10,
+      set: set(70, 10),
+      logId: 1,
+      achievedAt: new Date(2025, 9, 12),
+      place: { exercise: 0, set: 0 },
+    },
   ],
-  progress: [point(1, 12, 75, 1225), point(2, 23, 85, 1875)],
+  progress: [
+    { ...point(1, 12, 75, 1225), startedAt: new Date(2025, 9, 12, 18) },
+    point(2, 23, 85, 1875),
+  ],
   sessions: [
     {
       logId: 2,
       startedAt: new Date(2026, 9, 23, 18),
       name: null,
       type: 'push',
-      sets: [set(80, 8), set(85, 7)],
+      sets: [placed(80, 8, 0), placed(85, 7, 1)],
     },
     {
       logId: 1,
-      startedAt: new Date(2026, 9, 12, 18),
+      startedAt: new Date(2025, 9, 12, 18),
       name: 'Chest day',
       type: null,
-      sets: [set(70, 10), set(75, 7)],
+      sets: [placed(70, 10, 0), placed(75, 7, 1)],
     },
   ],
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.useFakeTimers({ now: new Date(2026, 9, 24) });
   jest
     .mocked(useExerciseLibrary)
     .mockReturnValue(
@@ -97,7 +120,13 @@ describe('ExerciseHistoryScreen', () => {
     expect(screen.getByText('105 kg')).toBeOnTheScreen();
     expect(screen.getByText('85 × 7 · Oct 23')).toBeOnTheScreen();
     expect(screen.getByText(/^Est\. 1RM is the most you could likely lift/)).toBeOnTheScreen();
-    expect(screen.getByText('+10 kg since Oct 12')).toBeOnTheScreen();
+    expect(screen.getByText('+10 kg since Oct 12, 2025')).toBeOnTheScreen();
+    expect(screen.getByText('Oct 12, 2025')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText(
+        'Heaviest over 2 workouts from Oct 12, 2025 to Oct 23: lowest 75 kg, highest 85 kg, latest 85 kg',
+      ),
+    ).toBeOnTheScreen();
     expect(screen.getByText('Sessions · 2')).toBeOnTheScreen();
     expect(screen.getByText(/^Chest day/)).toBeOnTheScreen();
     expect(screen.getByLabelText('Record: 85 × 7')).toBeOnTheScreen();
@@ -108,7 +137,7 @@ describe('ExerciseHistoryScreen', () => {
   it('switches what the chart shows', async () => {
     await render(<ExerciseHistoryScreen id="bench" />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Volume' }));
-    expect(screen.getByText('+650 kg since Oct 12')).toBeOnTheScreen();
+    expect(screen.getByText('+650 kg since Oct 12, 2025')).toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Volume' })).toBeSelected();
   });
 
@@ -119,6 +148,29 @@ describe('ExerciseHistoryScreen', () => {
       pathname: '/workout/log/[id]',
       params: { id: '1' },
     });
+  });
+
+  it('reads an exercise no longer in the library from its sets', async () => {
+    jest.mocked(useExerciseLibrary).mockReturnValue(loaded([]) as never);
+    const held = { weightKg: null, reps: null, seconds: 75, meters: null };
+    jest.mocked(useExerciseHistory).mockReturnValue(
+      loaded({
+        records: [],
+        progress: [{ ...point(1, 12, 0, 0), heaviestKg: null, longestSeconds: 75 }],
+        sessions: [
+          {
+            logId: 1,
+            startedAt: new Date(2026, 9, 12, 18),
+            name: 'Core',
+            type: null,
+            sets: [{ ...held, place: { exercise: 0, set: 0 } }],
+          },
+        ],
+      }) as never,
+    );
+    await render(<ExerciseHistoryScreen id="gone" />);
+    expect(screen.getByRole('radio', { name: 'Longest set' })).toBeSelected();
+    expect(screen.getAllByText('1:15').length).toBeGreaterThan(0);
   });
 
   it('says so when the exercise was never logged', async () => {

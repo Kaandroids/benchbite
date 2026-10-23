@@ -1,7 +1,8 @@
 import { setKindOf } from '@/sessions/fields';
+import { renderHook } from '@/test/render';
 
 import type { ProgressPoint } from './exercise-history';
-import { metricsOf, pointsOf } from './record-format';
+import { metricsOf, pointsOf, scaleOf, useMetricFormat } from './record-format';
 
 const target = { reps: { min: 8, max: 12 } };
 
@@ -38,5 +39,23 @@ describe('pointsOf', () => {
       { date: new Date(2026, 9, 1), value: 70 },
       { date: new Date(2026, 9, 3), value: 75 },
     ]);
+  });
+});
+
+describe('scaleOf', () => {
+  it('steps counts by whole numbers and times by round times', () => {
+    expect(scaleOf('heaviest')).toBe('decimal');
+    expect(scaleOf('mostReps')).toBe('whole');
+    expect(scaleOf('pace')).toBe('time');
+  });
+});
+
+describe('useMetricFormat', () => {
+  it('shows the estimated one-rep max in whole kilograms, as on the records', async () => {
+    const { result } = await renderHook(() => useMetricFormat());
+    expect(result.current.value('oneRepMax', 103.3)).toBe('103 kg');
+    expect(result.current.value('heaviest', 72.5)).toBe('72.5 kg');
+    expect(result.current.value('pace', 220)).toBe('3:40 /km');
+    expect(result.current.tick('longest', 90)).toBe('1:30');
   });
 });

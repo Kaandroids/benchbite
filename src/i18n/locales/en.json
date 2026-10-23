@@ -673,6 +673,8 @@
       "distance": "Distance",
       "pace": "Pace"
     },
-    "oneRepMaxNote": "Est. 1RM is the most you could likely lift for one rep, worked out from the weight and reps of a set. It is an estimate, not a weight you lifted."
+    "oneRepMaxNote": "Est. 1RM is the most you could likely lift for one rep, worked out from the weight and reps of a set. It is an estimate, not a weight you lifted.",
+    "chartSummary_one": "{{metric}} in 1 workout, on {{to}}: {{latest}}",
+    "chartSummary_other": "{{metric}} over {{count}} workouts from {{from}} to {{to}}: lowest {{lowest}}, highest {{highest}}, latest {{latest}}"
   }
 }

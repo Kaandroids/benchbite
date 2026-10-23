@@ -673,6 +673,8 @@
       "distance": "Mesafe",
       "pace": "Tempo"
     },
-    "oneRepMaxNote": "Tahmini 1RM, tek tekrarda kaldırabileceğin muhtemel en ağır yüktür; bir setin ağırlığı ve tekrarından hesaplanır. Kaldırdığın bir ağırlık değil, bir tahmindir."
+    "oneRepMaxNote": "Tahmini 1RM, tek tekrarda kaldırabileceğin muhtemel en ağır yüktür; bir setin ağırlığı ve tekrarından hesaplanır. Kaldırdığın bir ağırlık değil, bir tahmindir.",
+    "chartSummary_one": "{{metric}}, 1 antrenmanda, {{to}}: {{latest}}",
+    "chartSummary_other": "{{metric}}, {{from}} ile {{to}} arasında {{count}} antrenmanda: en düşük {{lowest}}, en yüksek {{highest}}, son {{latest}}"
   }
 }

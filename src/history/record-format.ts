@@ -5,6 +5,7 @@ import type { SetKind } from '@/sessions/fields';
 import { minutesAndSeconds } from '@/workouts/format';
 
 import type { ExerciseRecord, ProgressPoint } from './exercise-history';
+import type { Scale } from './progress-chart';
 
 /** What the progress chart can show, depending on what the exercise records. */
 export type ProgressMetric =
@@ -49,6 +50,24 @@ export function pointsOf(progress: readonly ProgressPoint[], metric: ProgressMet
 /** Whether a lower value is the better one, as for a pace. */
 export const lowerIsBetter = (metric: ProgressMetric) => metric === 'pace';
 
+/** How a metric's values step on the chart's axis. */
+export function scaleOf(metric: ProgressMetric): Scale {
+  switch (metric) {
+    case 'heaviest':
+    case 'oneRepMax':
+    case 'volume':
+      return 'decimal';
+    case 'mostReps':
+    case 'totalReps':
+    case 'distance':
+      return 'whole';
+    case 'longest':
+    case 'totalTime':
+    case 'pace':
+      return 'time';
+  }
+}
+
 /**
  * Formats a metric's values: with their unit, such as "85 kg", "1:15" or "3:40 /km", and as the
  * short number on the chart's axis.
@@ -62,9 +81,11 @@ export function useMetricFormat() {
     value: (metric: ProgressMetric, value: number) => {
       switch (metric) {
         case 'heaviest':
-        case 'oneRepMax':
         case 'volume':
           return `${kilograms(value)} kg`;
+        // An estimate, in whole kilograms as on the records.
+        case 'oneRepMax':
+          return `${kilograms(Math.round(value))} kg`;
         case 'mostReps':
         case 'totalReps':
           return t('history.exercise.reps', { count: value });
@@ -78,7 +99,7 @@ export function useMetricFormat() {
       }
     },
     tick: (metric: ProgressMetric, value: number) =>
-      ['longest', 'totalTime', 'pace'].includes(metric) ? time(value) : kilograms(value),
+      scaleOf(metric) === 'time' ? time(value) : kilograms(value),
   };
 }
 
