@@ -140,7 +140,7 @@ export function EditorScreen({ id }: { id?: number }) {
         onPress={() => setEditing(exercise.key)}
         style={[styles.exercise, { gap: spacing.md }]}
       >
-        <ExerciseThumbnail path={info?.imagePaths[0]} size={52} />
+        <ExerciseThumbnail path={info?.imagePaths[0]} size={52} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}

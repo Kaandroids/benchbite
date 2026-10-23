@@ -21,6 +21,8 @@ const exercise = (id: string, metrics: LibraryExercise['metrics']): LibraryExerc
   level: 'beginner',
   category: 'strength',
   imagePaths: [],
+  custom: false,
+  archived: false,
 });
 
 afterEach(() => clearDraft());

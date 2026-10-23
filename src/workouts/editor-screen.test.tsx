@@ -41,6 +41,8 @@ const libraryExercise = (
   level: 'beginner',
   category: 'strength',
   imagePaths: [`${id}/0.webp`],
+  custom: false,
+  archived: false,
 });
 
 const LIBRARY = [

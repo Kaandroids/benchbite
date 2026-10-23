@@ -161,7 +161,7 @@ export function ExerciseSheet({
         >
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           <View style={[styles.header, { gap: spacing.md }]}>
-            <ExerciseThumbnail path={details?.imagePaths[0]} size={64} />
+            <ExerciseThumbnail path={details?.imagePaths[0]} size={64} name={details?.name} />
             <View style={styles.title}>
               <Text variant="headline">{details?.name ?? ''}</Text>
               <Text variant="caption" color="textMuted">

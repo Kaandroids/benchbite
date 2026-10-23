@@ -19,6 +19,10 @@ export type LibraryExercise = {
   level: Enums['exercise_level'];
   category: Enums['exercise_category'];
   imagePaths: string[];
+  /** Created by the user rather than from the library (ADR 0026). */
+  custom: boolean;
+  /** A custom exercise taken out of the lists; its history stays. */
+  archived: boolean;
 };
 
 /** The muscle groups the exercise picker filters by, and the muscles each one includes. */
@@ -31,8 +35,11 @@ export const MUSCLE_GROUPS = {
   core: ['abdominals'],
 } satisfies Record<string, Enums['muscle'][]>;
 
-/** A filter of the picker: a muscle group, or cardio, which is a category of its own. */
-export type ExerciseFilter = keyof typeof MUSCLE_GROUPS | 'cardio';
+/**
+ * A filter of the picker: a muscle group, cardio, which is a category of its own, or the user's
+ * own exercises.
+ */
+export type ExerciseFilter = keyof typeof MUSCLE_GROUPS | 'cardio' | 'mine';
 
 /** Lower case and without accents, so that "kniebeuge" finds "Kniebeuge" and "sinav" "şınav". */
 function searchable(text: string, language: string): string {
@@ -53,7 +60,7 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
     .from('exercises')
     .select(
       `id, name, metrics, primary_muscles, secondary_muscles, equipment, level, category,
-      image_paths, exercise_translations (language, name)`,
+      image_paths, owner_id, archived_at, exercise_translations (language, name)`,
     )
     .eq('exercise_translations.language', language);
   if (error) {
@@ -73,12 +80,17 @@ export async function fetchLibrary(language: string): Promise<LibraryExercise[]>
         level: row.level,
         category: row.category,
         imagePaths: row.image_paths,
+        custom: Boolean(row.owner_id),
+        archived: Boolean(row.archived_at),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, language));
 }
 
-/** Every exercise of the library, with names in the app language. It rarely changes. */
+/**
+ * Every exercise of the library and the user's own, with names in the app language. It changes
+ * only when the user creates, edits or archives one, which loads it again.
+ */
 export function useExerciseLibrary() {
   const { i18n } = useTranslation();
   return useQuery({
@@ -90,7 +102,7 @@ export function useExerciseLibrary() {
 
 /**
  * The exercises whose name, in the app language or in English, contains every word of the query,
- * within the filter.
+ * within the filter. Archived exercises are left out.
  */
 export function filterExercises(
   exercises: LibraryExercise[],
@@ -100,12 +112,19 @@ export function filterExercises(
 ): LibraryExercise[] {
   const words = searchable(query, language).split(/\s+/).filter(Boolean);
   return exercises.filter((exercise) => {
+    if (exercise.archived) {
+      return false;
+    }
+    if (filter === 'mine' && !exercise.custom) {
+      return false;
+    }
     if (filter === 'cardio' && exercise.category !== 'cardio') {
       return false;
     }
     if (
       filter &&
       filter !== 'cardio' &&
+      filter !== 'mine' &&
       !exercise.primaryMuscles.some((muscle) =>
         (MUSCLE_GROUPS[filter] as string[]).includes(muscle),
       )

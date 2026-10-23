@@ -95,7 +95,11 @@ export function WorkoutScreen({ id }: { id: number }) {
         },
       ]}
     >
-      <ExerciseThumbnail path={exercise.imagePath} size={IMAGE_SIZE} />
+      <ExerciseThumbnail
+        path={exercise.imagePath}
+        size={IMAGE_SIZE}
+        name={names[exercise.exerciseId]}
+      />
       <View style={[styles.exerciseText, { gap: 2 }]}>
         <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
         <Text variant="bodyStrong" color="primaryText">

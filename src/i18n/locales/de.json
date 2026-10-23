@@ -212,6 +212,7 @@
     "add_one": "{{count}} Übung hinzufügen",
     "add_other": "{{count}} Übungen hinzufügen",
     "filters": {
+      "mine": "Meine",
       "chest": "Brust",
       "back": "Rücken",
       "shoulders": "Schultern",
@@ -708,5 +709,46 @@
     },
     "rangeLabel": "Zeitraum",
     "noWorkoutsInRange": "Keine Trainings in diesem Zeitraum"
+  },
+  "customExercise": {
+    "title": "Neue Übung",
+    "name": "Name",
+    "namePlaceholder": "Zum Beispiel Hip-Thrust-Maschine",
+    "logKind": "Was du einträgst",
+    "logKindFixed": "Lässt sich nicht mehr ändern, sobald du sie eingetragen hast.",
+    "logKinds": {
+      "weightReps": {
+        "title": "Gewicht × Wdh.",
+        "example": "Wie Bankdrücken"
+      },
+      "reps": {
+        "title": "Wdh.",
+        "example": "Wie Klimmzüge"
+      },
+      "time": {
+        "title": "Zeit",
+        "example": "Wie ein Plank"
+      },
+      "distanceTime": {
+        "title": "Strecke & Zeit",
+        "example": "Wie Rudern"
+      }
+    },
+    "mainMuscles": "Hauptmuskeln",
+    "optional": "Optional",
+    "otherMuscles": "Weitere Muskeln",
+    "step": "Schritt {{number}}",
+    "removeStep": "Schritt {{number}} entfernen",
+    "addStep": "+ Schritt hinzufügen",
+    "create": "Übung erstellen",
+    "saveErrorTitle": "Nicht erstellt",
+    "saveError": "Wir konnten die Übung nicht erstellen. Prüfe deine Verbindung und versuche es noch einmal.",
+    "discardTitle": "Diese Übung verwerfen?",
+    "discardMessage": "Was du eingegeben hast, wird nicht gespeichert.",
+    "createRow": "Übung erstellen",
+    "createRowHint": "Eine, die die Bibliothek nicht hat",
+    "noneTitle": "Keine Übung gefunden",
+    "noneMessage": "Die Bibliothek hat sie noch nicht. Lege sie als deine eigene an und trage sie wie jede andere ein.",
+    "createNamed": "„{{name}}“ erstellen"
   }
 }
