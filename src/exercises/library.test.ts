@@ -6,6 +6,7 @@ import {
   fetchLibrary,
   filterExercises,
   searchText,
+  useExerciseDetails,
   useExerciseLibrary,
   type LibraryExercise,
 } from './library';
@@ -129,5 +130,14 @@ describe('filterExercises', () => {
   it('keeps everything without a query or a filter, but archived exercises', () => {
     expect(names('')).toHaveLength(5);
     expect(names('press')).toEqual(['Bench Press']);
+  });
+});
+
+describe('useExerciseDetails', () => {
+  it('has no steps for an exercise that is gone, rather than failing', async () => {
+    eq.mockReturnValue({ maybeSingle: () => Promise.resolve({ data: null, error: null }) });
+    const { result } = await renderHook(() => useExerciseDetails('gone'));
+    await waitFor(() => expect(result.current.instructions.isSuccess).toBe(true));
+    expect(result.current.instructions.data).toEqual([]);
   });
 });

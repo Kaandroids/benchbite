@@ -147,11 +147,12 @@ export function useExerciseDetails(id: string) {
         .from('exercises')
         .select('instructions')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       if (error) {
         throw error;
       }
-      return data.instructions;
+      // An exercise that is gone, or not the user's, is not found rather than failing to load.
+      return data?.instructions ?? [];
     },
     staleTime: Infinity,
   });

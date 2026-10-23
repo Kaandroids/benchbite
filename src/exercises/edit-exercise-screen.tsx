@@ -5,6 +5,7 @@ import { Screen } from '@/components/ui/screen';
 
 import { CreateExerciseScreen } from './create-exercise-screen';
 import { formOf, useKindLock } from './custom';
+import { ExerciseNotFound } from './exercise-not-found';
 import { useExerciseDetails } from './library';
 
 /** Edits the user's own exercise, filled in with what it has. */
@@ -13,10 +14,18 @@ export function EditExerciseScreen({ id }: { id: string }) {
   const kindLock = useKindLock(id);
   const exercise = library.data?.find((item) => item.id === id);
 
-  if (!allLoaded([library, instructions, kindLock]) || !exercise) {
+  if (!allLoaded([library, instructions, kindLock])) {
     return (
       <Screen onBack={() => router.back()} closes>
         <LoadState queries={[library, instructions, kindLock]} />
+      </Screen>
+    );
+  }
+  // Only the user's own exercises can be edited.
+  if (!exercise?.custom) {
+    return (
+      <Screen onBack={() => router.back()} closes>
+        <ExerciseNotFound />
       </Screen>
     );
   }

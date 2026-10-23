@@ -4,12 +4,12 @@ import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
-import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 
 import { useArchiveExercise } from './custom';
+import { ExerciseNotFound } from './exercise-not-found';
 import { useExerciseDetails } from './library';
 import { usePictureUrls } from './photos';
 
@@ -36,11 +36,7 @@ export function ExerciseScreen({ id }: { id: string }) {
   if (!exercise) {
     return (
       <Screen onBack={() => router.back()}>
-        <MessageView
-          icon="dumbbell"
-          title={t('exercise.notFound.title')}
-          message={t('exercise.notFound.message')}
-        />
+        <ExerciseNotFound />
       </Screen>
     );
   }

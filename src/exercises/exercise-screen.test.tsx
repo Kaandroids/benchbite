@@ -3,12 +3,13 @@ import { Alert, type AlertButton } from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
-import { useArchiveExercise } from './custom';
+import { useArchiveExercise, useKindLock } from './custom';
+import { EditExerciseScreen } from './edit-exercise-screen';
 import { ExerciseScreen } from './exercise-screen';
 import { useExerciseDetails, type LibraryExercise } from './library';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
-jest.mock('./custom', () => ({ useArchiveExercise: jest.fn() }));
+jest.mock('./custom', () => ({ useArchiveExercise: jest.fn(), useKindLock: jest.fn() }));
 jest.mock('./library', () => ({ useExerciseDetails: jest.fn() }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/workouts/workouts', () => ({
@@ -133,5 +134,16 @@ describe('ExerciseScreen', () => {
     mockDetails([ROW], []);
     await render(<ExerciseScreen id="row" />);
     expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
+  });
+});
+
+describe('EditExerciseScreen', () => {
+  it("says when the exercise is gone or not the user's, rather than loading on", async () => {
+    jest.mocked(useKindLock).mockReturnValue(query(null) as never);
+    mockDetails([ROW], []);
+    await render(<EditExerciseScreen id="gone" />);
+    expect(screen.getByText('Exercise not found')).toBeTruthy();
+    await render(<EditExerciseScreen id="row" />);
+    expect(screen.getByText('Exercise not found')).toBeTruthy();
   });
 });
