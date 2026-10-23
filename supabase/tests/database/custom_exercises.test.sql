@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -25,6 +25,12 @@ create function pg_temp.hip_thrust(more jsonb default '{}') returns jsonb langua
     'instructions', jsonb_build_array('Sit with your back on the pad.', ' ', 'Drive up.')
   ) || more;
 $$;
+
+select results_eq(
+  $$ select public, allowed_mime_types from storage.buckets where id = 'exercise-photos' $$,
+  $$ values (false, '{image/jpeg}'::text[]) $$,
+  'Exercise photos are private JPEGs'
+);
 
 -- A's exercise, its id kept for the tests below.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
@@ -65,6 +71,20 @@ select is(
   (select level from public.exercises x join plain on plain.id = x.id),
   'beginner'::public.exercise_level,
   'The level is beginner unless chosen'
+);
+
+create temp table photographed as select public.create_exercise(pg_temp.hip_thrust(jsonb_build_object(
+  'imagePaths', jsonb_build_array(
+    '00000000-0000-0000-0000-00000000000a/11111111-1111-1111-1111-111111111111.jpg')))) as id;
+select is(
+  (select image_paths from public.exercises x join photographed p on p.id = x.id),
+  '{00000000-0000-0000-0000-00000000000a/11111111-1111-1111-1111-111111111111.jpg}'::text[],
+  'An exercise keeps up to two photos'
+);
+select throws_ok(
+  $$ select public.create_exercise(pg_temp.hip_thrust(jsonb_build_object('imagePaths',
+       jsonb_build_array('00000000-0000-0000-0000-00000000000b/11111111-1111-1111-1111-111111111111.jpg')))) $$,
+  'BB014', null, 'Photos come from the caller''s own folder'
 );
 
 select throws_ok(
