@@ -141,6 +141,15 @@ describe('SessionScreen', () => {
     expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
   });
 
+  it('takes a typed weight before the keyboard closes', async () => {
+    resetSessionStore();
+    startSession('user-a', PUSH, {}, NOW.getTime());
+    await render(<SessionScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '55');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByRole('checkbox', { name: 'Set 1 done' })).toBeChecked();
+  });
+
   it('adds a set', async () => {
     await render(<SessionScreen />);
     await fireEvent.press(screen.getByRole('button', { name: '+ Add set' }));
