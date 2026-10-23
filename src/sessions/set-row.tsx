@@ -74,7 +74,7 @@ function SetInput({
       aria-invalid={invalid}
       value={running ? minutesAndSeconds(clock) : (text ?? show(field, value))}
       placeholder={placeholder}
-      placeholderTextColor={colors.textMuted}
+      placeholderTextColor={colors.placeholder}
       editable={!running}
       keyboardType={
         field === 'weightKg'

@@ -9,6 +9,8 @@ export type ColorTokens = {
   elevated: string;
   text: string;
   textMuted: string;
+  /** A hint in an empty field that stands in for a value, fainter than any value typed. */
+  placeholder: string;
   border: string;
   /** Unfilled part of progress bars and sliders, inactive segments. */
   track: string;
@@ -53,6 +55,7 @@ export const lightColors: ColorTokens = {
   elevated: '#FFFFFF',
   text: '#16171A', // 16.6:1 on background
   textMuted: '#676A72', // 5.0:1 on background
+  placeholder: '#B4B6BC',
   border: '#E3E4E8',
   track: '#ECEDF0',
   primary: '#FF6A10',
@@ -86,6 +89,7 @@ export const darkColors: ColorTokens = {
   elevated: '#3A3C42',
   text: '#F2F3F5', // 16.9:1 on background
   textMuted: '#9A9DA5', // 6.9:1 on background
+  placeholder: '#5C5F66',
   border: '#2B2D31',
   track: '#25272B',
   primary: '#FF7F26',
