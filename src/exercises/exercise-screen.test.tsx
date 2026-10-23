@@ -7,6 +7,7 @@ import { useExerciseDetails, type LibraryExercise } from './library';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('./library', () => ({ useExerciseDetails: jest.fn() }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/workouts/workouts', () => ({
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
