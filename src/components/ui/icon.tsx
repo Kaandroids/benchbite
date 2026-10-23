@@ -13,6 +13,7 @@ export const ICONS = {
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },
+  down: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
   dumbbell: { ios: 'dumbbell', android: 'fitness_center', web: 'fitness_center' },
   edit: { ios: 'pencil', android: 'edit', web: 'edit' },
   flame: { ios: 'flame', android: 'local_fire_department', web: 'local_fire_department' },
@@ -31,6 +32,7 @@ export const ICONS = {
   search: { ios: 'magnifyingglass', android: 'search', web: 'search' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },
   snowflake: { ios: 'snowflake', android: 'ac_unit', web: 'ac_unit' },
+  stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
