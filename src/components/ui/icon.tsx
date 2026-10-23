@@ -31,6 +31,7 @@ export const ICONS = {
   search: { ios: 'magnifyingglass', android: 'search', web: 'search' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },
   snowflake: { ios: 'snowflake', android: 'ac_unit', web: 'ac_unit' },
+  stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;

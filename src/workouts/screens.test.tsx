@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
-import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { endSession, useActiveSession, type Session } from '@/sessions/session';
+import { useStartWorkout } from '@/sessions/start';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ArchiveScreen } from './archive-screen';
 import { testExercise, testWorkout } from './test-data';
@@ -16,6 +18,12 @@ jest.mock('./workouts', () => ({
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
+jest.mock('@/sessions/start', () => ({ useUserId: () => 'user-a', useStartWorkout: jest.fn() }));
+jest.mock('@/sessions/session', () => ({
+  ...jest.requireActual<typeof import('@/sessions/session')>('@/sessions/session'),
+  useActiveSession: jest.fn(),
+  endSession: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -46,10 +54,38 @@ function mockWorkouts(data: Workout[] | undefined, state: { isError?: boolean } 
 // A Wednesday.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
 
+const startWorkout = jest.fn();
+
+/** Push in progress for 23 minutes, with one of its two sets done. */
+const RUNNING: Session = {
+  userId: 'user-a',
+  workoutId: 4,
+  name: null,
+  type: 'push',
+  startedAt: Date.now(),
+  exercises: [
+    {
+      exerciseId: 'bench',
+      target: { reps: { min: 8, max: 12 } },
+      restSeconds: 90,
+      last: [],
+      sets: [
+        { weightKg: 80, reps: 8, seconds: null, meters: null, done: true },
+        { weightKg: 80, reps: 8, seconds: null, meters: null, done: false },
+      ],
+    },
+  ],
+  current: 0,
+  rest: null,
+  clock: null,
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   jest.mocked(useSetWorkoutActive).mockReturnValue({ mutate } as never);
+  jest.mocked(useStartWorkout).mockReturnValue(startWorkout);
+  jest.mocked(useActiveSession).mockReturnValue(null);
   jest.mocked(useWorkoutLimits).mockReturnValue({ data: { exercises: 20, workouts: 2 } } as never);
 });
 afterEach(() => jest.useRealTimers());
@@ -119,8 +155,60 @@ describe('WorkoutsScreen', () => {
   it('offers to start active workouts instead of switching them off', async () => {
     mockWorkouts([testWorkout(5, { type: 'pull' })]);
     await render(<WorkoutsScreen />);
-    expect(screen.getByRole('button', { name: 'Start Pull' })).toBeTruthy();
     expect(screen.queryByLabelText('Pull is active')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
+    expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }));
+  });
+
+  describe('with a workout in progress', () => {
+    beforeEach(() => {
+      jest
+        .mocked(useActiveSession)
+        .mockReturnValue({ ...RUNNING, startedAt: Date.now() - 23 * 60_000 });
+      mockWorkouts([testWorkout(4, { type: 'push' }), testWorkout(5, { type: 'pull' })]);
+    });
+
+    it('shows it at the top and opens it again', async () => {
+      await render(<WorkoutsScreen />);
+      expect(screen.getByText('IN PROGRESS')).toBeTruthy();
+      expect(screen.getByText('23:00')).toBeTruthy();
+      expect(screen.getByText('Running')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Start Push' })).toBeNull();
+      await fireEvent.press(screen.getByRole('button', { name: 'IN PROGRESS: Push' }));
+      expect(router.push).toHaveBeenCalledWith('/session');
+    });
+
+    it('asks before starting another one', async () => {
+      await render(<WorkoutsScreen />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
+      expect(startWorkout).not.toHaveBeenCalled();
+      expect(screen.getByText('Push is still running')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'You started it 23 minutes ago and logged 1 set. Only one workout can run at a time.',
+        ),
+      ).toBeTruthy();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Finish Push, then start Pull' }));
+      expect(router.push).toHaveBeenCalledWith({
+        pathname: '/session/finish',
+        params: { next: '5' },
+      });
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Discard Push and start Pull' }));
+      expect(endSession).toHaveBeenCalled();
+      expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }));
+    });
+
+    it('goes back to it from the question', async () => {
+      await render(<WorkoutsScreen />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
+      await act(async () => {
+        await fireEvent.press(screen.getByRole('button', { name: 'Resume Push' }));
+      });
+      expect(router.push).toHaveBeenCalledWith('/session');
+    });
   });
 
   it('shows an error with a retry', async () => {

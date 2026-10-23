@@ -501,5 +501,69 @@
       "tomorrow": "Tomorrow",
       "start": "Let's go"
     }
+  },
+  "session": {
+    "columns": {
+      "set": "SET",
+      "last": "LAST TIME",
+      "kg": "KG",
+      "addedKg": "+KG",
+      "reps": "REPS",
+      "meters": "M",
+      "seconds": "TIME"
+    },
+    "optional": "optional",
+    "addSet": "+ Add set",
+    "done": "Set {{number}} done",
+    "startClock": "Start the clock of set {{number}}",
+    "stopClock": "Stop the clock of set {{number}}",
+    "weightOf": "Weight of set {{number}}",
+    "repsOf": "Reps of set {{number}}",
+    "timeOf": "Time of set {{number}}",
+    "metersOf": "Distance of set {{number}}",
+    "minimize": "Minimize, the workout keeps running",
+    "finish": "Finish",
+    "progress": "{{done}} of {{planned}} sets",
+    "setsDone": "{{done}} of {{planned}} sets",
+    "best": "best {{set}}",
+    "rest": "REST",
+    "restLeft": "Rest, {{time}} left",
+    "restLess": "15 seconds less",
+    "restMore": "15 seconds more",
+    "skip": "Skip",
+    "none": {
+      "title": "No workout in progress",
+      "message": "Start a workout from the Workout tab."
+    },
+    "inProgress": "IN PROGRESS",
+    "resume": "Resume",
+    "running": "Running",
+    "current": "{{done}} of {{planned}} sets · {{exercise}}",
+    "busy": {
+      "title": "{{name}} is still running",
+      "message_one": "You started it {{minutes}} minutes ago and logged {{count}} set. Only one workout can run at a time.",
+      "message_other": "You started it {{minutes}} minutes ago and logged {{count}} sets. Only one workout can run at a time.",
+      "resume": "Resume {{name}}",
+      "finish": "Finish {{name}}, then start {{next}}",
+      "discard": "Discard {{name}} and start {{next}}"
+    },
+    "summary": {
+      "title": "{{name}} done",
+      "early": "finished early",
+      "time": "time",
+      "sets": "sets",
+      "kilograms": "kg lifted",
+      "skipped": "Skipped",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "save": "Save workout",
+      "keepGoing": "Keep going",
+      "discard": "Discard",
+      "discardTitle": "Discard this workout?",
+      "discardMessage": "The sets you logged are not saved.",
+      "empty": "Log at least one set to save the workout.",
+      "saveErrorTitle": "Not saved",
+      "saveError": "We couldn't save the workout. Check your connection and try again."
+    }
   }
 }

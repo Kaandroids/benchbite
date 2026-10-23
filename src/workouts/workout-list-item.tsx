@@ -15,13 +15,21 @@ type WorkoutListItemProps = {
   workout: Workout;
   /** Whether the workout is planned for today, which is highlighted. */
   today?: boolean;
+  /** Whether this workout is in progress, which replaces its start button. */
+  running?: boolean;
+  onStart?: () => void;
 };
 
 /**
  * A workout in a list: its name, days and size, with a button to start it while it is active and a
  * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
  */
-export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps) {
+export function WorkoutListItem({
+  workout,
+  today = false,
+  running = false,
+  onStart,
+}: WorkoutListItemProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const setActive = useSetWorkoutActive();
@@ -78,11 +86,23 @@ export function WorkoutListItem({ workout, today = false }: WorkoutListItemProps
           })}
         </Text>
       </Pressable>
-      {workout.active ? (
-        // Starting a workout comes with logging it (#78).
+      {running ? (
+        <View
+          style={[
+            styles.pill,
+            styles.running,
+            { borderRadius: radii.full, backgroundColor: colors.track },
+          ]}
+        >
+          <Text variant="caption" color="textMuted" style={styles.pillText}>
+            {t('session.running')}
+          </Text>
+        </View>
+      ) : workout.active ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('workout.startLabel', { name })}
+          onPress={onStart}
           style={({ pressed }) => [
             styles.start,
             {
@@ -130,6 +150,10 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 8,
     paddingVertical: 1,
+  },
+  running: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   pillText: {
     fontFamily: fonts.extraBold,
