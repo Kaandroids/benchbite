@@ -72,12 +72,19 @@ const LOGS = [
   log(0, 'legs', new Date(2026, 9, 6, 18, 0), 58),
 ];
 const deleteLog = jest.fn();
+const fetchNextPage = jest.fn();
 const editLog = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: FRIDAY });
-  jest.mocked(useLogSummaries).mockReturnValue(loaded(LOGS) as never);
+  // Two pages, the second starting within this week, which still shows as one week.
+  jest.mocked(useLogSummaries).mockReturnValue({
+    ...loaded({ pages: [LOGS.slice(0, 1), LOGS.slice(1)] }),
+    hasNextPage: true,
+    isFetchingNextPage: false,
+    fetchNextPage,
+  } as never);
   jest
     .mocked(useRecentLogs)
     .mockReturnValue(loaded({ latest: LOGS.slice(0, 3), thisWeek: 2 }) as never);
@@ -196,6 +203,12 @@ describe('HistoryScreen', () => {
     expect(screen.getByText('17/24')).toBeTruthy();
     expect(screen.getAllByLabelText('6 exercises')).toHaveLength(3);
     expect(screen.getAllByLabelText('17 sets')).toHaveLength(3);
+  });
+
+  it('loads the next page at the end of the list', async () => {
+    await render(<HistoryScreen />);
+    await fireEvent(screen.getByTestId('history-list'), 'endReached');
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
   });
 });
 

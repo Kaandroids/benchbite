@@ -10,6 +10,7 @@ import {
   useDeleteLog,
   useEditLog,
   useLoggedSets,
+  useLogSummaries,
   useLogSummary,
   useRecentLogs,
   weekStart,
@@ -41,8 +42,8 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
 beforeEach(() => jest.clearAllMocks());
 
 describe('fetchLogSummaries', () => {
-  it('reads the summaries, latest first', async () => {
-    const order = jest.fn().mockResolvedValue({
+  it('reads a page of the summaries, latest first', async () => {
+    const range = jest.fn().mockResolvedValue({
       data: [
         {
           id: 7,
@@ -62,11 +63,17 @@ describe('fetchLogSummaries', () => {
       ],
       error: null,
     });
-    jest.mocked(supabase.from).mockReturnValue({ select: () => ({ order }) } as never);
-    const [summary] = await fetchLogSummaries();
-    expect(order).toHaveBeenCalledTimes(1);
+    const order = jest.fn();
+    const query = { order, range };
+    order.mockReturnValue(query);
+    jest.mocked(supabase.from).mockReturnValue({ select: () => query } as never);
+    const [summary] = await fetchLogSummaries(30, 60);
     expect(supabase.from).toHaveBeenCalledWith('workout_log_summaries');
-    expect(order).toHaveBeenCalledWith('finished_at', { ascending: false });
+    expect(order.mock.calls).toEqual([
+      ['finished_at', { ascending: false }],
+      ['id', { ascending: false }],
+    ]);
+    expect(range).toHaveBeenCalledWith(60, 89);
     expect(summary).toEqual({
       id: 7,
       workoutId: null,
@@ -230,23 +237,57 @@ describe('withSkipped', () => {
   });
 });
 
+describe('useLogSummaries', () => {
+  it('loads a page at a time until a page is short', async () => {
+    const log = (id: number) => ({
+      id,
+      started_at: '2026-10-23T16:00:00Z',
+      finished_at: '2026-10-23T17:00:00Z',
+    });
+    const range = jest
+      .fn()
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 30 }, (_, i) => log(100 - i)),
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [log(1)], error: null });
+    const summaries = { order: () => summaries, range };
+    jest.mocked(supabase.from).mockReturnValue({ select: () => summaries } as never);
+    const { result } = await renderHook(() => useLogSummaries(), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current.hasNextPage).toBe(true));
+    await act(async () => {
+      await result.current.fetchNextPage();
+    });
+    await waitFor(() => expect(result.current.data?.pages).toHaveLength(2));
+    expect(range.mock.calls).toEqual([
+      [0, 29],
+      [30, 59],
+    ]);
+    expect(result.current.data?.pages.flat()).toHaveLength(31);
+    expect(result.current.hasNextPage).toBe(false);
+  });
+});
+
 describe('useRecentLogs', () => {
   it('loads the latest logs and counts this week', async () => {
-    const limit = jest.fn().mockResolvedValue({ data: [], error: null });
+    const range = jest.fn().mockResolvedValue({ data: [], error: null });
     const gte = jest.fn().mockResolvedValue({ count: 2, error: null });
+    const summaries = { order: () => summaries, range };
     jest
       .mocked(supabase.from)
       .mockImplementation(
         (table: string) =>
           (table === 'workout_logs'
             ? { select: () => ({ gte }) }
-            : { select: () => ({ order: () => ({ limit }) }) }) as never,
+            : { select: () => summaries }) as never,
       );
     const { result } = await renderHook(() => useRecentLogs(3), {
       queryClient: createTestQueryClient(),
     });
     await waitFor(() => expect(result.current.data).toEqual({ latest: [], thisWeek: 2 }));
-    expect(limit).toHaveBeenCalledWith(3);
+    expect(range).toHaveBeenCalledWith(0, 2);
   });
 });
 

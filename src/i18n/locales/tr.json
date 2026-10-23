@@ -102,7 +102,8 @@
     "activeLabel": "{{name}} aktif",
     "history": {
       "title": "Geçmiş",
-      "empty": "Tamamladığın antrenmanlar burada görünecek."
+      "empty": "Tamamladığın antrenmanlar burada görünecek.",
+      "loadingMore": "Eski antrenmanlar yükleniyor"
     },
     "archive": {
       "title": "Arşiv",

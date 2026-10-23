@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { isoWeekday, toIsoDate } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
@@ -119,22 +119,34 @@ function toSummary(row: SummaryRow): LogSummary {
   };
 }
 
-/** Finished workouts, latest first; the latest `limit` of them when given. */
-export async function fetchLogSummaries(limit?: number): Promise<LogSummary[]> {
-  const query = supabase
+/** Finished workouts, latest first: `count` of them, after skipping the latest `offset`. */
+export async function fetchLogSummaries(count: number, offset = 0): Promise<LogSummary[]> {
+  const { data, error } = await supabase
     .from('workout_log_summaries')
     .select('*')
-    .order('finished_at', { ascending: false });
-  const { data, error } = await (limit === undefined ? query : query.limit(limit));
+    // By id too, so that pages do not overlap or miss workouts that finished at the same time.
+    .order('finished_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + count - 1);
   if (error) {
     throw error;
   }
   return data.map(toSummary);
 }
 
-/** Every finished workout of the signed-in user, latest first. */
+/** How many finished workouts a page of the history loads. */
+export const LOG_PAGE_SIZE = 30;
+
+/** The signed-in user's finished workouts, latest first, a page at a time. */
 export function useLogSummaries() {
-  return useQuery({ queryKey: [...LOGS_KEY, 'all'], queryFn: () => fetchLogSummaries() });
+  return useInfiniteQuery({
+    queryKey: [...LOGS_KEY, 'all'],
+    queryFn: ({ pageParam }) => fetchLogSummaries(LOG_PAGE_SIZE, pageParam),
+    initialPageParam: 0,
+    // A short page is the last one.
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length < LOG_PAGE_SIZE ? undefined : pages.length * LOG_PAGE_SIZE,
+  });
 }
 
 /** The latest finished workouts and how many were done this week, for the Workout tab. */
