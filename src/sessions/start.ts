@@ -2,18 +2,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useSession } from '@/providers/session-provider';
+import { useUserId } from '@/providers/session-provider';
 import type { Workout } from '@/workouts/workouts';
 
 import { fetchBests, fetchLastSets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
 import { startSession, type ExerciseBests, type LastSets } from './session';
-
-/** The signed-in user's id, once there is a session. */
-export function useUserId(): string | undefined {
-  const state = useSession();
-  return state.status === 'ready' ? state.session.user.id : undefined;
-}
 
 /**
  * Starts a workout, filled in from last time and with each exercise's records, and opens it.

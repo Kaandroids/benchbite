@@ -51,7 +51,7 @@ jest.mock('expo-haptics', () => ({
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/exercises/library', () => ({ useExerciseLibrary: jest.fn() }));
-jest.mock('./start', () => ({ useUserId: () => 'user-a' }));
+jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 
 const schedule = jest.mocked(scheduleNotificationAsync);
 const cancel = jest.mocked(cancelScheduledNotificationAsync);

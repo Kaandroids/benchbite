@@ -13,6 +13,7 @@ import { useExerciseLibrary } from '@/exercises/library';
 import { useRecordFormat } from '@/history/record-format';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { useUserId } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 import { useWorkouts } from '@/workouts/workouts';
@@ -28,7 +29,7 @@ import {
   updateSession,
   useActiveSession,
 } from './session';
-import { useStartWorkout, useUserId } from './start';
+import { useStartWorkout } from './start';
 
 /**
  * The summary of the workout in progress, where it is saved or discarded. With `next`, that workout

@@ -82,3 +82,9 @@ export function useSession(): SessionContextValue {
   }
   return value;
 }
+
+/** The signed-in user's id, once there is a session. */
+export function useUserId(): string | undefined {
+  const state = useSession();
+  return state.status === 'ready' ? state.session.user.id : undefined;
+}

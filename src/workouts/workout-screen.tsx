@@ -13,9 +13,10 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { endSession, useActiveSession } from '@/sessions/session';
-import { useStartWorkout, useUserId } from '@/sessions/start';
+import { useStartWorkout } from '@/sessions/start';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 

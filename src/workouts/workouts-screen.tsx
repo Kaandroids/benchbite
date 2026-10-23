@@ -9,10 +9,11 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { RecentLogs } from '@/history/recent-logs';
 import { isoWeekday } from '@/i18n/dates';
+import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { InProgressCard } from '@/sessions/in-progress-card';
 import { endSession, useActiveSession } from '@/sessions/session';
-import { useStartWorkout, useUserId } from '@/sessions/start';
+import { useStartWorkout } from '@/sessions/start';
 import { fonts, useTheme } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
