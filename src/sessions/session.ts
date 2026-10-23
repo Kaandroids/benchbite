@@ -20,6 +20,8 @@ export type SessionExercise = {
   target: WorkoutTarget;
   restSeconds: number;
   sets: SessionSet[];
+  /** The sets of the exercise's latest log, shown as "last time". */
+  last: SetValues[];
 };
 
 /** A clock that runs for a timed set: down from the target time, or up without one. */
@@ -163,6 +165,7 @@ export function startSession(
       exerciseId,
       target,
       restSeconds,
+      last: last[exerciseId] ?? [],
       sets: Array.from({ length: sets }, (_set, index) => ({
         ...startingValues(target, last[exerciseId] ?? [], index),
         done: false,
