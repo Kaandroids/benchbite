@@ -39,3 +39,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0021](0021-estimate-calories-when-a-workout-is-saved.md) | Estimate the calories of a workout when it is saved                                | Accepted |
 | [0022](0022-no-finishers.md)                              | Workouts have no finisher                                                          | Accepted |
 | [0023](0023-edit-a-finished-workout.md)                   | Edit a finished workout by replacing its sets                                      | Accepted |
+| [0024](0024-records-calculated-from-logged-sets.md)       | Calculate records from the logged sets when they are read                          | Accepted |
