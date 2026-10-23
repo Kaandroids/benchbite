@@ -32,16 +32,22 @@ export type Reminder = {
   body: string;
 };
 
-/** Shows reminders that arrive while the app is open, which the system would otherwise hide. */
-export function showRemindersInForeground() {
+/**
+ * Shows reminders that arrive while the app is open, which the system would otherwise hide. The
+ * notifications named in `hidden` stay hidden while the app is open, for those the app signals
+ * itself, such as the end of a rest.
+ */
+export function showRemindersInForeground(hidden: readonly string[] = []) {
   setNotificationHandler({
-    handleNotification: () =>
-      Promise.resolve({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
+    handleNotification: (notification) => {
+      const shown = !hidden.includes(notification.request.identifier);
+      return Promise.resolve({
+        shouldShowBanner: shown,
+        shouldShowList: shown,
+        shouldPlaySound: shown,
         shouldSetBadge: false,
-      }),
+      });
+    },
   });
 }
 

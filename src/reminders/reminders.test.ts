@@ -49,6 +49,11 @@ const scheduled = (...identifiers: string[]) =>
     ReturnType<typeof getAllScheduledNotificationsAsync>
   >;
 
+const notification = (identifier: string) =>
+  ({ request: { identifier } }) as Parameters<
+    NonNullable<Parameters<typeof setNotificationHandler>[0]>['handleNotification']
+  >[0];
+
 const originalOS = Platform.OS;
 
 function setPlatform(os: typeof Platform.OS) {
@@ -69,12 +74,21 @@ describe('showRemindersInForeground', () => {
     showRemindersInForeground();
     expect(setNotificationHandler).toHaveBeenCalledTimes(1);
     const handler = jest.mocked(setNotificationHandler).mock.calls[0]![0]!;
-    await expect(
-      handler.handleNotification({} as Parameters<typeof handler.handleNotification>[0]),
-    ).resolves.toEqual({
+    await expect(handler.handleNotification(notification('workout-reminder-1'))).resolves.toEqual({
       shouldShowBanner: true,
       shouldShowList: true,
       shouldPlaySound: true,
+      shouldSetBadge: false,
+    });
+  });
+
+  it('keeps the notifications the app signals itself hidden', async () => {
+    showRemindersInForeground(['rest-end']);
+    const handler = jest.mocked(setNotificationHandler).mock.calls[0]![0]!;
+    await expect(handler.handleNotification(notification('rest-end'))).resolves.toEqual({
+      shouldShowBanner: false,
+      shouldShowList: false,
+      shouldPlaySound: false,
       shouldSetBadge: false,
     });
   });
