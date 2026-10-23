@@ -20,9 +20,9 @@ import { useTranslation } from 'react-i18next';
 import { Alert, AppState, Linking, Platform } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
+import { useUserId } from '@/providers/session-provider';
 
 import { updateSession, useActiveSession } from './session';
-import { useUserId } from './start';
 
 /** The one notification for the end of the rest; a new rest replaces it. */
 export const REST_NOTIFICATION_ID = 'rest-end';

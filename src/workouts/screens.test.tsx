@@ -30,7 +30,8 @@ jest.mock('@/history/history', () => ({
     refetch: () => {},
   }),
 }));
-jest.mock('@/sessions/start', () => ({ useUserId: () => 'user-a', useStartWorkout: jest.fn() }));
+jest.mock('@/sessions/start', () => ({ useStartWorkout: jest.fn() }));
+jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('@/sessions/session', () => ({
   ...jest.requireActual<typeof import('@/sessions/session')>('@/sessions/session'),
   useActiveSession: jest.fn(),

@@ -14,6 +14,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
+import { useUserId } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
 import {
   minutesAndSeconds,
@@ -42,7 +43,6 @@ import {
 } from './session';
 import { SetRow } from './set-row';
 import { AddSetButton, SetHeader } from './set-table';
-import { useUserId } from './start';
 import { useNow } from './use-now';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
