@@ -5,9 +5,9 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { RecentLogs } from '@/history/recent-logs';
 import { isoWeekday } from '@/i18n/dates';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { InProgressCard } from '@/sessions/in-progress-card';
@@ -119,17 +119,9 @@ export function WorkoutsScreen() {
               <Text color="textMuted">{t('workout.noActive')}</Text>
             )}
 
-            <Text
-              variant="caption"
-              color="textMuted"
-              style={[styles.section, { marginTop: spacing.md }]}
-            >
-              {t('workout.history.title')}
-            </Text>
-            {/* Workouts are logged in #34; until then there is no history. */}
-            <Card>
-              <Text color="textMuted">{t('workout.history.empty')}</Text>
-            </Card>
+            <View style={{ marginTop: spacing.md }}>
+              <RecentLogs />
+            </View>
           </>
         ) : null}
       </ScrollView>
