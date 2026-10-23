@@ -158,7 +158,8 @@
       "title": "{{name}} sürüyor",
       "message": "Değiştirmeden önce antrenmanı bitir.",
       "resume": "Antrenmana dön"
-    }
+    },
+    "startWorkout": "Antrenmanı başlat"
   },
   "exercise": {
     "start": "Başlangıç",

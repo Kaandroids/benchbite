@@ -158,7 +158,8 @@
       "title": "{{name}} läuft",
       "message": "Beende das Training, bevor du es änderst.",
       "resume": "Zurück zum Training"
-    }
+    },
+    "startWorkout": "Training starten"
   },
   "exercise": {
     "start": "Start",

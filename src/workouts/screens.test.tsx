@@ -336,6 +336,31 @@ describe('WorkoutScreen', () => {
     });
   });
 
+  it('starts the workout, or resumes it while it runs', async () => {
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Start workout' }));
+    expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 7 }));
+
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Resume' }));
+    expect(router.push).toHaveBeenCalledWith('/session');
+  });
+
+  it('asks before deleting the workout, and not while it runs', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.calls[0]?.[0]).toBe('Delete this workout?');
+
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.calls[1]?.[0]).toBe('Pull is running');
+  });
+
   it('cannot be edited while it is running, and goes back to it instead', async () => {
     const alert = jest.spyOn(Alert, 'alert');
     jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });

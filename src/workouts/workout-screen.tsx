@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
@@ -11,17 +13,20 @@ import { Screen } from '@/components/ui/screen';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useActiveSession } from '@/sessions/session';
-import { useUserId } from '@/sessions/start';
+import { BusySheet } from '@/sessions/busy-sheet';
+import { endSession, useActiveSession } from '@/sessions/session';
+import { useStartWorkout, useUserId } from '@/sessions/start';
 import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import {
+  useDeleteWorkout,
   useKcalPerMinute,
   useSetWorkoutActive,
   useWorkouts,
+  type Workout,
   type WorkoutExercise,
 } from './workouts';
 
@@ -35,6 +40,9 @@ export function WorkoutScreen({ id }: { id: number }) {
   const setActive = useSetWorkoutActive();
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
+  const startWorkout = useStartWorkout();
+  const remove = useDeleteWorkout();
+  const [waiting, setWaiting] = useState<Workout | null>(null);
   const workout = workouts.data?.find((candidate) => candidate.id === id);
   const names = useExerciseNames(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
   const formatTarget = useTargetFormat();
@@ -104,20 +112,81 @@ export function WorkoutScreen({ id }: { id: number }) {
     </View>
   );
 
+  // A workout that is running cannot change under it, nor be deleted before it is saved; it is
+  // finished first.
+  const running = session?.workoutId === workout.id;
+  const askToFinish = () =>
+    Alert.alert(t('workout.running.title', { name }), t('workout.running.message'), [
+      { text: t('editor.cancel'), style: 'cancel' },
+      { text: t('workout.running.resume'), onPress: () => router.push('/session') },
+    ]);
+
+  const start = () => {
+    if (running) {
+      router.push('/session');
+    } else if (session) {
+      setWaiting(workout);
+    } else {
+      void startWorkout(workout);
+    }
+  };
+
+  const onDelete = () => {
+    if (running) {
+      askToFinish();
+      return;
+    }
+    Alert.alert(t('editor.deleteTitle'), t('editor.deleteMessage'), [
+      { text: t('editor.cancel'), style: 'cancel' },
+      {
+        text: t('editor.delete'),
+        style: 'destructive',
+        onPress: () => {
+          // Back first, so that the deleted workout never shows as not found.
+          router.back();
+          remove.mutateAsync(workout.id).catch((error: unknown) => {
+            console.warn('Could not delete the workout', error);
+            Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
+          });
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen
       onBack={() => router.back()}
+      title={
+        <>
+          <Text
+            variant="bodyStrong"
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={styles.bold}
+          >
+            {name}
+          </Text>
+          <Text variant="caption" color="textMuted" numberOfLines={1}>
+            {mainMuscles(workout)
+              .map((muscle) => t(`workout.muscles.${muscle}`))
+              .join(' · ')}
+          </Text>
+        </>
+      }
+      footer={
+        workout.active ? (
+          <Button
+            label={running ? t('session.resume') : t('workout.startWorkout')}
+            onPress={start}
+          />
+        ) : undefined
+      }
       action={
         <Pressable
           accessibilityRole="button"
           onPress={() => {
-            // A workout that is running cannot change under it, nor be deleted before it is
-            // saved; it is finished first.
-            if (session?.workoutId === workout.id) {
-              Alert.alert(t('workout.running.title', { name }), t('workout.running.message'), [
-                { text: t('editor.cancel'), style: 'cancel' },
-                { text: t('workout.running.resume'), onPress: () => router.push('/session') },
-              ]);
+            if (running) {
+              askToFinish();
               return;
             }
             router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
@@ -141,16 +210,8 @@ export function WorkoutScreen({ id }: { id: number }) {
       }
     >
       <View style={[styles.header, { gap: spacing.md }]}>
-        <View style={[styles.headerText, { gap: spacing.xs }]}>
-          <Text variant="title" accessibilityRole="header">
-            {name}
-          </Text>
+        <View style={styles.headerText}>
           <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-          <Text color="textMuted">
-            {mainMuscles(workout)
-              .map((muscle) => t(`workout.muscles.${muscle}`))
-              .join(' · ')}
-          </Text>
         </View>
         <View style={[styles.switch, { gap: spacing.xs }]}>
           <Switch
@@ -199,6 +260,33 @@ export function WorkoutScreen({ id }: { id: number }) {
           )}
         </View>
       </Card>
+
+      <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
+        <Text variant="bodyStrong" color="danger" style={styles.bold}>
+          {t('editor.delete')}
+        </Text>
+      </Pressable>
+
+      {session ? (
+        <BusySheet
+          session={session}
+          next={waiting}
+          onResume={() => {
+            setWaiting(null);
+            router.push('/session');
+          }}
+          onFinish={() => {
+            setWaiting(null);
+            router.push({ pathname: '/session/finish', params: { next: String(workout.id) } });
+          }}
+          onDiscard={() => {
+            setWaiting(null);
+            endSession();
+            void startWorkout(workout);
+          }}
+          onClose={() => setWaiting(null)}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -215,6 +303,11 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+  },
+  delete: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   switch: {
     alignItems: 'center',
