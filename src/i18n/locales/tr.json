@@ -623,6 +623,15 @@
       "setCount_other": "{{count}} set"
     },
     "started": "Başladı",
-    "ended": "Bitti"
+    "ended": "Bitti",
+    "edit": {
+      "title": "{{name}} düzenle",
+      "note": "Tarih, saat ve kaloriler olduğu gibi kalır.",
+      "removeSet": "{{number}}. seti kaldır",
+      "empty": "En az bir set bırak ya da antrenmanı sil.",
+      "missing": "Kaydetmek için işaretli değerleri doldur.",
+      "saveErrorTitle": "Kaydedilemedi",
+      "saveError": "Değişikliklerin kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+    }
   }
 }

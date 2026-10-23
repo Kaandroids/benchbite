@@ -623,6 +623,15 @@
       "setCount_other": "{{count}} Sätze"
     },
     "started": "Begonnen",
-    "ended": "Beendet"
+    "ended": "Beendet",
+    "edit": {
+      "title": "{{name}} bearbeiten",
+      "note": "Datum, Uhrzeit und Kalorien bleiben, wie sie waren.",
+      "removeSet": "Satz {{number}} entfernen",
+      "empty": "Behalte mindestens einen Satz oder lösche das Training.",
+      "missing": "Fülle die markierten Werte aus, um zu speichern.",
+      "saveErrorTitle": "Nicht gespeichert",
+      "saveError": "Deine Änderungen konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+    }
   }
 }

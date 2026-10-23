@@ -101,6 +101,27 @@ export function LogScreen({ id }: { id: number }) {
   return (
     <Screen
       onBack={() => router.back()}
+      action={
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            router.push({ pathname: '/workout/log/edit', params: { id: String(log.id) } })
+          }
+          style={({ pressed }) => [
+            styles.edit,
+            {
+              borderRadius: radii.full,
+              backgroundColor: colors.iconBackground,
+              paddingHorizontal: spacing.md,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            {t('workout.edit')}
+          </Text>
+        </Pressable>
+      }
       title={
         <>
           <Text
@@ -300,6 +321,10 @@ const styles = StyleSheet.create({
   },
   exercise: {
     borderWidth: 1,
+  },
+  edit: {
+    height: 40,
+    justifyContent: 'center',
   },
   delete: {
     height: 48,

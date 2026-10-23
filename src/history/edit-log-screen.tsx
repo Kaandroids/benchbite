@@ -1,0 +1,389 @@
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+
+import { allLoaded, LoadState } from '@/components/load-state';
+import { Icon } from '@/components/ui/icon';
+import { MessageView } from '@/components/ui/message-view';
+import { Screen } from '@/components/ui/screen';
+import { Text } from '@/components/ui/text';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { setKindOf, type SetField, type SetKind } from '@/sessions/fields';
+import { BUTTON_SIZE, NUMBER_WIDTH, SetInput } from '@/sessions/set-row';
+import { fonts, useTheme } from '@/theme';
+import { useWorkoutName } from '@/workouts/format';
+
+import {
+  byExercise,
+  useEditLog,
+  useLoggedSets,
+  useLogSummary,
+  type LoggedSet,
+  type LogSummary,
+  type SetValues,
+} from './history';
+
+type EditedSet = SetValues & { key: number };
+type EditedExercise = { exerciseId: string; sets: EditedSet[] };
+
+const EMPTY: SetValues = { weightKg: null, reps: null, seconds: null, meters: null };
+
+/** The values a set still needs before it can be saved, as its exercise records them. */
+export function missingFields(set: SetValues, kind: SetKind): SetField[] {
+  if (kind.fields.includes('reps')) {
+    return [
+      ...(set.weightKg === null && !kind.addedWeight ? (['weightKg'] as const) : []),
+      ...(set.reps === null ? (['reps'] as const) : []),
+    ];
+  }
+  // A time or a distance, whichever the exercise records.
+  return set.seconds === null && set.meters === null ? kind.fields : [];
+}
+
+/** Corrects the sets of a finished workout: their values, and which sets there were. */
+export function EditLogScreen({ id }: { id: number }) {
+  const { t } = useTranslation();
+  const summary = useLogSummary(id);
+  const sets = useLoggedSets(id);
+  const library = useExerciseLibrary();
+
+  if (!allLoaded([summary, sets, library])) {
+    return (
+      <Screen onBack={() => router.back()} closes>
+        <LoadState queries={[summary, sets, library]} />
+      </Screen>
+    );
+  }
+  if (!summary.data) {
+    return (
+      <Screen onBack={() => router.back()} closes>
+        <MessageView
+          icon="dumbbell"
+          title={t('history.notFound.title')}
+          message={t('history.notFound.message')}
+        />
+      </Screen>
+    );
+  }
+  return <LogEditor log={summary.data} sets={sets.data ?? []} library={library.data ?? []} />;
+}
+
+function LogEditor({
+  log,
+  sets,
+  library,
+}: {
+  log: LogSummary;
+  sets: LoggedSet[];
+  library: LibraryExercise[];
+}) {
+  const { t, i18n } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const workoutName = useWorkoutName();
+  const edit = useEditLog();
+  // Each set gets a key of its own, so that removing one keeps the others' inputs in place.
+  const [exercises, setExercises] = useState<EditedExercise[]>(() => {
+    let key = 0;
+    return byExercise(sets).map((exercise) => ({
+      exerciseId: exercise.exerciseId,
+      sets: exercise.sets.map(({ weightKg, reps, seconds, meters }) => ({
+        weightKg,
+        reps,
+        seconds,
+        meters,
+        key: key++,
+      })),
+    }));
+  });
+  // Missing values are marked once saving was tried.
+  const [checked, setChecked] = useState(false);
+
+  const details = (exerciseId: string) => library.find((item) => item.id === exerciseId);
+  const kindOf = (exerciseId: string) =>
+    setKindOf(details(exerciseId)?.metrics, { reps: { min: 1, max: 1 } });
+  const setCount = exercises.reduce((total, exercise) => total + exercise.sets.length, 0);
+  const incomplete = exercises.some((exercise) =>
+    exercise.sets.some((set) => missingFields(set, kindOf(exercise.exerciseId)).length > 0),
+  );
+
+  const changeSets = (index: number, change: (sets: EditedSet[]) => EditedSet[]) =>
+    setExercises((current) =>
+      current.map((exercise, i) =>
+        i === index ? { ...exercise, sets: change(exercise.sets) } : exercise,
+      ),
+    );
+
+  const onSave = async () => {
+    if (incomplete) {
+      setChecked(true);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+    try {
+      await edit.mutateAsync({
+        id: log.id,
+        exercises: exercises.map((exercise) => ({
+          exerciseId: exercise.exerciseId,
+          sets: exercise.sets.map(({ key: _key, ...values }) => values),
+        })),
+      });
+      router.back();
+    } catch (error) {
+      console.warn('Could not save the workout log', error);
+      Alert.alert(
+        t('history.edit.saveErrorTitle'),
+        (error as { code?: string }).code === 'BB013'
+          ? t('history.notFound.message')
+          : t('history.edit.saveError'),
+      );
+    }
+  };
+
+  const day = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+  }).format(log.startedAt);
+  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  const canSave = setCount > 0 && !edit.isPending;
+
+  return (
+    <Screen
+      onBack={() => router.back()}
+      closes
+      title={
+        <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>
+          {t('history.edit.title', { name: workoutName(log) })}
+        </Text>
+      }
+      action={
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canSave }}
+          disabled={!canSave}
+          onPress={() => void onSave()}
+          style={[
+            styles.save,
+            {
+              borderRadius: radii.full,
+              paddingHorizontal: spacing.lg,
+              backgroundColor: canSave ? colors.primaryButton : colors.track,
+            },
+          ]}
+        >
+          <Text
+            variant="bodyStrong"
+            color={canSave ? 'onPrimary' : 'textMuted'}
+            style={styles.bold}
+          >
+            {t('editor.save')}
+          </Text>
+        </Pressable>
+      }
+    >
+      <Text variant="caption" color="textMuted" style={styles.semibold}>
+        {`${day} · ${time.format(log.startedAt)}–${time.format(log.finishedAt)}. ${t('history.edit.note')}`}
+      </Text>
+      {setCount === 0 ? (
+        <Text color="danger" style={styles.semibold}>
+          {t('history.edit.empty')}
+        </Text>
+      ) : checked && incomplete ? (
+        <Text color="danger" style={styles.semibold}>
+          {t('history.edit.missing')}
+        </Text>
+      ) : null}
+
+      {exercises.map((exercise, index) => {
+        const info = details(exercise.exerciseId);
+        const kind = kindOf(exercise.exerciseId);
+        const columns = kind.fields.map((field) =>
+          field === 'weightKg'
+            ? kind.addedWeight
+              ? t('session.columns.addedKg')
+              : t('session.columns.kg')
+            : t(`session.columns.${field}`),
+        );
+        return (
+          <View
+            key={index}
+            style={[
+              styles.card,
+              {
+                gap: spacing.sm,
+                padding: spacing.md,
+                borderRadius: radii.lg,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              },
+            ]}
+          >
+            <View style={[styles.row, { gap: spacing.md }]}>
+              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} />
+              <Text variant="bodyStrong" style={[styles.bold, styles.flex]}>
+                {info?.name ?? ''}
+              </Text>
+            </View>
+            {exercise.sets.length > 0 ? (
+              <View style={[styles.row, { gap: spacing.sm, paddingHorizontal: 2 }]}>
+                <Text
+                  variant="caption"
+                  color="textMuted"
+                  align="center"
+                  style={[styles.bold, { width: NUMBER_WIDTH }]}
+                >
+                  {t('session.columns.set')}
+                </Text>
+                {columns.map((column) => (
+                  <Text
+                    key={column}
+                    variant="caption"
+                    color="textMuted"
+                    align="center"
+                    style={[styles.bold, styles.flex]}
+                  >
+                    {column}
+                  </Text>
+                ))}
+                <View style={{ width: BUTTON_SIZE }} />
+              </View>
+            ) : null}
+            {exercise.sets.map((set, setIndex) => {
+              const number = setIndex + 1;
+              const missing = checked ? missingFields(set, kind) : [];
+              const labels: Record<SetField, string> = {
+                weightKg: t('session.weightOf', { number }),
+                reps: t('session.repsOf', { number }),
+                seconds: t('session.timeOf', { number }),
+                meters: t('session.metersOf', { number }),
+              };
+              return (
+                <View
+                  key={set.key}
+                  style={[
+                    styles.row,
+                    { gap: spacing.sm, paddingVertical: 4, paddingHorizontal: 2 },
+                  ]}
+                >
+                  <Text
+                    variant="bodyStrong"
+                    align="center"
+                    style={[styles.bold, { width: NUMBER_WIDTH }]}
+                  >
+                    {number}
+                  </Text>
+                  {kind.fields.map((field) => (
+                    <View key={field} style={styles.flex}>
+                      <SetInput
+                        field={field}
+                        value={set[field]}
+                        label={labels[field]}
+                        placeholder={
+                          field === 'weightKg' && kind.addedWeight
+                            ? '0'
+                            : field === 'seconds'
+                              ? '0:00'
+                              : undefined
+                        }
+                        done={false}
+                        clock={null}
+                        muted={false}
+                        invalid={missing.includes(field)}
+                        onChange={(value) =>
+                          changeSets(index, (current) =>
+                            current.map((item) =>
+                              item.key === set.key ? { ...item, [field]: value } : item,
+                            ),
+                          )
+                        }
+                      />
+                    </View>
+                  ))}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('history.edit.removeSet', { number })}
+                    onPress={() =>
+                      changeSets(index, (current) => current.filter((item) => item.key !== set.key))
+                    }
+                    style={[styles.remove, { backgroundColor: colors.background }]}
+                  >
+                    <Icon name="minus" size={16} color="textMuted" />
+                  </Pressable>
+                </View>
+              );
+            })}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                setExercises((current) => {
+                  // A new set repeats the one before it, like during a workout.
+                  const key = Math.max(
+                    -1,
+                    ...current.flatMap((item) => item.sets.map((s) => s.key)),
+                  );
+                  return current.map((item, i) => {
+                    if (i !== index) {
+                      return item;
+                    }
+                    const { key: _key, ...values } = item.sets[item.sets.length - 1] ?? {
+                      ...EMPTY,
+                      key: 0,
+                    };
+                    return { ...item, sets: [...item.sets, { ...values, key: key + 1 }] };
+                  });
+                })
+              }
+              style={[
+                styles.addSet,
+                { borderRadius: radii.md, backgroundColor: colors.background },
+              ]}
+            >
+              <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                {t('session.addSet')}
+              </Text>
+            </Pressable>
+          </View>
+        );
+      })}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  bold: {
+    fontFamily: fonts.extraBold,
+  },
+  semibold: {
+    fontFamily: fonts.bold,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  card: {
+    borderWidth: 1,
+  },
+  save: {
+    height: 40,
+    justifyContent: 'center',
+  },
+  remove: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addSet: {
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

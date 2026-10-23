@@ -623,6 +623,15 @@
       "setCount_other": "{{count}} sets"
     },
     "started": "Started",
-    "ended": "Ended"
+    "ended": "Ended",
+    "edit": {
+      "title": "Edit {{name}}",
+      "note": "The date, time and calories stay as they were.",
+      "removeSet": "Remove set {{number}}",
+      "empty": "Keep at least one set, or delete the workout instead.",
+      "missing": "Fill in the marked values to save.",
+      "saveErrorTitle": "Not saved",
+      "saveError": "We couldn't save your changes. Check your connection and try again."
+    }
   }
 }
