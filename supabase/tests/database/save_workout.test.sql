@@ -112,12 +112,12 @@ select results_eq(
 );
 select results_eq(
   $$ select position::integer, exercise_id, target_reps_max::integer, target_seconds::integer,
-       target_meters, is_finisher
+       target_meters
      from public.workout_exercises
      where workout_id = current_setting('test.workout_id')::bigint order by position $$,
-  $$ values (0, 'Hammer_Curls', 12, null::integer, null::integer, false),
-            (1, 'Plank', null, 45, null, false),
-            (2, 'Rowing_Stationary', null, null, 2000, false) $$,
+  $$ values (0, 'Hammer_Curls', 12, null::integer, null::integer),
+            (1, 'Plank', null, 45, null),
+            (2, 'Rowing_Stationary', null, null, 2000) $$,
   'The exercises are saved in order with their targets'
 );
 select lives_ok(

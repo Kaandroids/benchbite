@@ -14,8 +14,8 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
--- Answers and a plan for three training days: a workout on two of them, and one with a finisher
--- on the third.
+-- Answers and a plan for three training days: a workout on two of them, and one that ends with
+-- conditioning on the third.
 create function pg_temp.answers(changes jsonb default '{}') returns jsonb language sql as $$
   select jsonb_build_object(
     'goal', 'lose_fat', 'consentedPolicyVersion', '2026-10-21', 'sex', 'female',
@@ -33,14 +33,13 @@ create function pg_temp.plan(exercise_id text default 'Barbell_Squat') returns j
         jsonb_build_object('exerciseId', exercise_id, 'slot', 'squat', 'sets', 3,
           'target', jsonb_build_object('reps', jsonb_build_object('min', 8, 'max', 12)), 'restSeconds', 75),
         jsonb_build_object('exerciseId', 'Plank', 'slot', 'core', 'sets', 2,
-          'target', jsonb_build_object('seconds', 30), 'restSeconds', 45)),
-      'finisher', null),
+          'target', jsonb_build_object('seconds', 30), 'restSeconds', 45))),
     jsonb_build_object('weekdays', jsonb_build_array(3), 'type', 'lower', 'estimatedMinutes', 45,
       'exercises', jsonb_build_array(
         jsonb_build_object('exerciseId', 'Leg_Press', 'slot', 'squat', 'sets', 3,
-          'target', jsonb_build_object('reps', jsonb_build_object('min', 8, 'max', 12)), 'restSeconds', 75)),
-      'finisher', jsonb_build_object('exerciseId', 'Rowing_Stationary', 'slot', 'conditioning', 'sets', 1,
-          'target', jsonb_build_object('seconds', 240), 'restSeconds', 0))
+          'target', jsonb_build_object('reps', jsonb_build_object('min', 8, 'max', 12)), 'restSeconds', 75),
+        jsonb_build_object('exerciseId', 'Rowing_Stationary', 'slot', 'conditioning', 'sets', 1,
+          'target', jsonb_build_object('seconds', 240), 'restSeconds', 0)))
   ));
 $$;
 
@@ -122,12 +121,12 @@ select results_eq(
   'Each session of the plan is saved as an active workout on its weekdays'
 );
 select results_eq(
-  $$ select w.weekdays[1]::integer, e.position::integer, e.exercise_id, e.is_finisher
+  $$ select w.weekdays[1]::integer, e.position::integer, e.exercise_id
      from public.workouts w join public.workout_exercises e on e.workout_id = w.id
      order by w.weekdays, e.position $$,
-  $$ values (1, 0, 'Barbell_Squat', false), (1, 1, 'Plank', false),
-            (3, 0, 'Leg_Press', false), (3, 1, 'Rowing_Stationary', true) $$,
-  'The exercises are saved in order, with the finisher last'
+  $$ values (1, 0, 'Barbell_Squat'), (1, 1, 'Plank'),
+            (3, 0, 'Leg_Press'), (3, 1, 'Rowing_Stationary') $$,
+  'The exercises are saved in order, conditioning last'
 );
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
