@@ -200,7 +200,8 @@
       "e-z curl bar": "EZ bar",
       "other": "Diğer"
     },
-    "details": "{{name}} detayları"
+    "details": "{{name}} detayları",
+    "history": "{{name}} geçmişi"
   },
   "picker": {
     "title": "Egzersiz ekle",
@@ -636,5 +637,44 @@
       "discardMessage": "Bu antrenmanda yaptığın değişiklikler kaydedilmeyecek.",
       "keepEditing": "Düzenlemeye devam et"
     }
+  },
+  "exerciseHistory": {
+    "subtitle": "Geçmiş",
+    "records": "Rekorlar",
+    "record": "Rekor",
+    "progress": "Gelişim",
+    "since": "{{date}} tarihinden beri {{change}}",
+    "metricsLabel": "Grafiğin gösterdiği",
+    "sessions": "Antrenmanlar · {{count}}",
+    "pace": "{{time}} /km",
+    "empty": {
+      "title": "Henüz geçmiş yok",
+      "message": "Bu hareketi bir antrenmanda yaptığında setlerin ve rekorların burada görünür."
+    },
+    "kinds": {
+      "heaviest": "En ağır",
+      "heaviestAdded": "En ağır ek yük",
+      "one_rep_max": "Tahmini 1RM",
+      "best_set": "En iyi set",
+      "most_reps": "En çok tekrar",
+      "longest_time": "En uzun set",
+      "most_time": "Bir antrenmanda en çok",
+      "longest_distance": "En uzun mesafe",
+      "best_pace": "En iyi tempo"
+    },
+    "metrics": {
+      "heaviest": "En ağır",
+      "oneRepMax": "Tahmini 1RM",
+      "volume": "Hacim",
+      "mostReps": "En çok tekrar",
+      "totalReps": "Toplam tekrar",
+      "longest": "En uzun set",
+      "totalTime": "Toplam süre",
+      "distance": "Mesafe",
+      "pace": "Tempo"
+    },
+    "oneRepMaxNote": "Tahmini 1RM, tek tekrarda kaldırabileceğin muhtemel en ağır yüktür; bir setin ağırlığı ve tekrarından hesaplanır. Kaldırdığın bir ağırlık değil, bir tahmindir.",
+    "chartSummary_one": "{{metric}}, 1 antrenmanda, {{to}}: {{latest}}",
+    "chartSummary_other": "{{metric}}, {{from}} ile {{to}} arasında {{count}} antrenmanda: en düşük {{lowest}}, en yüksek {{highest}}, son {{latest}}"
   }
 }

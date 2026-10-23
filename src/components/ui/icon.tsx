@@ -34,6 +34,8 @@ export const ICONS = {
   stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
+  trend: { ios: 'chart.line.uptrend.xyaxis', android: 'show_chart', web: 'show_chart' },
+  trophy: { ios: 'trophy', android: 'trophy', web: 'trophy' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
 
 export type IconName = keyof typeof ICONS;

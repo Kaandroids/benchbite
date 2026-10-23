@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
+import { HistoryButton } from '@/components/ui/history-button';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
@@ -161,7 +162,10 @@ export function SessionScreen() {
               ].join(' · ')}
             </Text>
           </View>
-          <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+          <View style={[styles.row, { gap: spacing.sm }]}>
+            <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+            <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+          </View>
         </View>
 
         <SetHeader kind={kind} showLast />
