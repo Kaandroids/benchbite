@@ -10,6 +10,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
+import { useRecordFormat } from '@/history/record-format';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { fonts, useTheme } from '@/theme';
@@ -18,6 +19,7 @@ import { useWorkouts } from '@/workouts/workouts';
 
 import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
+import { newRecords } from './records';
 import {
   endSession,
   sessionTotals,
@@ -43,6 +45,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const workoutName = useWorkoutName();
   const formatDate = useDateFormat('full');
   const { format } = useNumberFormat();
+  const formatRecord = useRecordFormat();
   // Taken once, so that the summary does not keep counting while the user looks at it.
   const [finishedAt] = useState(() => Date.now());
   // A clock still running logs its set, which would otherwise be left out as not done.
@@ -97,6 +100,16 @@ export function FinishScreen({ next }: { next?: number }) {
           ? t('session.summary.skipped')
           : [sets, best ? describeSet(best, kind) : null].filter(Boolean).join(' · '),
     };
+  });
+
+  // The best new record of each kind, for every exercise, in the workout's order.
+  const records = session.exercises.flatMap((exercise) => {
+    const info = library.data?.find((item) => item.id === exercise.exerciseId);
+    const kind = setKindOf(info?.metrics, exercise.target);
+    return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
+      name: `${info?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,
+      value: formatRecord(record),
+    }));
   });
 
   const save = async () => {
@@ -204,6 +217,38 @@ export function FinishScreen({ next }: { next?: number }) {
           ))}
         </View>
 
+        {records.length > 0 ? (
+          <View
+            style={[
+              styles.list,
+              {
+                gap: spacing.sm,
+                padding: spacing.lg,
+                borderRadius: radii.lg,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={[styles.item, styles.title, { gap: spacing.sm }]}>
+              <Icon name="trophy" size={18} color="primary" />
+              <Text variant="bodyStrong" style={styles.black}>
+                {t('session.summary.records', { count: records.length })}
+              </Text>
+            </View>
+            {records.map((record) => (
+              <View key={record.name} style={[styles.record, { gap: spacing.md }]}>
+                <Text variant="body" style={[styles.flex, styles.semibold]}>
+                  {record.name}
+                </Text>
+                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                  {record.value}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {totals.done === 0 ? (
           <Text color="textMuted" align="center">
             {t('session.summary.empty')}
@@ -243,6 +288,20 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontFamily: fonts.extraBold,
+  },
+  semibold: {
+    fontFamily: fonts.bold,
+  },
+  black: {
+    fontFamily: fonts.black,
+    fontSize: 17,
+  },
+  title: {
+    paddingVertical: 0,
+  },
+  record: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   tabular: {
     fontVariant: ['tabular-nums'],

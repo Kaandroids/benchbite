@@ -9,6 +9,7 @@ import { FinishScreen } from './finish-screen';
 import { useLogWorkout } from './logs';
 import {
   resetSessionStore,
+  setValues,
   startClock,
   startSession,
   toggleDone,
@@ -92,6 +93,7 @@ beforeEach(() => {
     'user-a',
     PUSH,
     { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
+    {},
     NOW.getTime(),
   );
 });
@@ -138,7 +140,7 @@ describe('SessionScreen', () => {
 
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
-    startSession('user-a', PUSH, {}, NOW.getTime());
+    startSession('user-a', PUSH, {}, {}, NOW.getTime());
     await render(<SessionScreen />);
     expect(screen.getByLabelText('Weight of set 1').props.value).toBe('');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
@@ -155,7 +157,7 @@ describe('SessionScreen', () => {
 
   it('takes a typed weight before the keyboard closes', async () => {
     resetSessionStore();
-    startSession('user-a', PUSH, {}, NOW.getTime());
+    startSession('user-a', PUSH, {}, {}, NOW.getTime());
     await render(<SessionScreen />);
     await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '55');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
@@ -211,6 +213,61 @@ describe('SessionScreen', () => {
     expect(router.back).toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Finish' }));
     expect(router.push).toHaveBeenCalledWith('/session/finish');
+  });
+});
+
+describe('new records', () => {
+  const BESTS = { bench: { heaviest: 80, one_rep_max: 101.3, best_set: 640, most_reps: 10 } };
+  const startWithBests = () => {
+    resetSessionStore();
+    startSession(
+      'user-a',
+      PUSH,
+      { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
+      BESTS,
+      NOW.getTime(),
+    );
+  };
+
+  it('shows the records a set beats under it while logging', async () => {
+    startWithBests();
+    await render(<SessionScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '85');
+    await fireEvent(screen.getByLabelText('Weight of set 1'), 'endEditing');
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '7');
+    await fireEvent(screen.getByLabelText('Reps of set 1'), 'endEditing');
+    expect(screen.queryByText(/^New record/)).toBeNull();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.getByText('New records: Heaviest, Est. 1RM')).toBeTruthy();
+  });
+
+  it('does not count equalling a record', async () => {
+    startWithBests();
+    await render(<SessionScreen />);
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(screen.queryByText(/^New record/)).toBeNull();
+  });
+
+  it('names one record with its value', async () => {
+    startWithBests();
+    updateSession((session) =>
+      toggleDone(setValues(session, 0, 0, { weightKg: 85, reps: 1 }), 0, 0),
+    );
+    await render(<SessionScreen />);
+    expect(screen.getByText('New record: Heaviest, 85 kg')).toBeTruthy();
+  });
+
+  it('lists the new records at the finish', async () => {
+    startWithBests();
+    updateSession((session) =>
+      toggleDone(setValues(session, 0, 0, { weightKg: 85, reps: 7 }), 0, 0),
+    );
+    await render(<FinishScreen />);
+    expect(screen.getByText('2 new records')).toBeTruthy();
+    expect(screen.getByText('Bench press · Heaviest')).toBeTruthy();
+    expect(screen.getByText('85 kg')).toBeTruthy();
+    expect(screen.getByText('Bench press · Est. 1RM')).toBeTruthy();
+    expect(screen.getByText('105 kg')).toBeTruthy();
   });
 });
 

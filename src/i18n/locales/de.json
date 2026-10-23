@@ -581,8 +581,12 @@
       "discardMessage": "Die eingetragenen Sätze werden nicht gespeichert.",
       "empty": "Trage mindestens einen Satz ein, um das Training zu speichern.",
       "saveErrorTitle": "Nicht gespeichert",
-      "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
-    }
+      "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "records_one": "{{count}} neuer Rekord",
+      "records_other": "{{count}} neue Rekorde"
+    },
+    "newRecord": "Neuer Rekord: {{kind}}, {{value}}",
+    "newRecords": "Neue Rekorde: {{kinds}}"
   },
   "history": {
     "seeAll": "Alle ansehen",
