@@ -18,10 +18,12 @@ type ScreenProps = {
   footer?: ReactNode;
   /** A button at the end of the top bar, such as Edit. */
   action?: ReactNode;
+  /** A title in the middle of the top bar, instead of a progress bar. */
+  title?: ReactNode;
 };
 
 /** The layout of a full-screen step: top bar, scrollable content and a fixed footer. */
-export function Screen({ children, progress, onBack, footer, action }: ScreenProps) {
+export function Screen({ children, progress, onBack, footer, action, title }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
   const hasTopBar = progress !== undefined || onBack !== undefined || action !== undefined;
@@ -49,9 +51,10 @@ export function Screen({ children, progress, onBack, footer, action }: ScreenPro
               <ProgressBar value={progress} />
             </View>
           ) : (
-            <View style={styles.progress} />
+            <View style={[styles.progress, styles.title]}>{title}</View>
           )}
-          {action}
+          {/* Keeps a title in the middle when there is a back button but no action. */}
+          {action ?? (title && onBack ? <View style={styles.back} /> : null)}
         </View>
       ) : null}
       <ScrollView
@@ -85,6 +88,9 @@ const styles = StyleSheet.create({
   },
   progress: {
     flex: 1,
+  },
+  title: {
+    alignItems: 'center',
   },
   content: {
     flex: 1,

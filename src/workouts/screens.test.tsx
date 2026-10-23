@@ -298,7 +298,6 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('12')).toBeTruthy();
     expect(screen.getByText('sets')).toBeTruthy();
     expect(screen.getByText('~50')).toBeTruthy();
-    expect(screen.getByText('Active')).toBeTruthy();
   });
 
   it('lists each exercise with its name, target and rest', async () => {
@@ -336,6 +335,31 @@ describe('WorkoutScreen', () => {
     });
   });
 
+  it('starts the workout, or resumes it while it runs', async () => {
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Start workout' }));
+    expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 7 }));
+
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Resume' }));
+    expect(router.push).toHaveBeenCalledWith('/session');
+  });
+
+  it('asks before deleting the workout, and not while it runs', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.calls[0]?.[0]).toBe('Delete this workout?');
+
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.calls[1]?.[0]).toBe('Pull is running');
+  });
+
   it('cannot be edited while it is running, and goes back to it instead', async () => {
     const alert = jest.spyOn(Alert, 'alert');
     jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
@@ -354,11 +378,16 @@ describe('WorkoutScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/session');
   });
 
-  it('switches the workout off', async () => {
+  it('moves the workout to the archive, and back', async () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
-    await fireEvent(screen.getByLabelText('Pull is active'), 'valueChange', false);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
     expect(mutate).toHaveBeenCalledWith({ id: 7, active: false });
+
+    mockWorkouts([{ ...pull, active: false }]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Bring back from the archive' }));
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: true });
   });
 
   it('says when the workout does not exist', async () => {

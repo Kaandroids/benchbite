@@ -158,7 +158,11 @@
       "title": "{{name}} sürüyor",
       "message": "Değiştirmeden önce antrenmanı bitir.",
       "resume": "Antrenmana dön"
-    }
+    },
+    "startWorkout": "Antrenmanı başlat",
+    "toArchive": "Arşive taşı",
+    "fromArchive": "Arşivden geri al",
+    "days": "Günler"
   },
   "exercise": {
     "start": "Başlangıç",
@@ -605,6 +609,14 @@
     "setsOf_one": "{{count}} setin {{done}} tanesi",
     "setsOf_other": "{{count}} setin {{done}} tanesi",
     "deleteErrorTitle": "Silinemedi",
-    "deleteError": "Antrenman silinemedi. Bağlantını kontrol edip tekrar dene."
+    "deleteError": "Antrenman silinemedi. Bağlantını kontrol edip tekrar dene.",
+    "exercise": {
+      "best": "EN İYİ SET",
+      "reps": "{{count}} tekrar",
+      "setCount_one": "{{count}} set",
+      "setCount_other": "{{count}} set"
+    },
+    "started": "Başladı",
+    "ended": "Bitti"
   }
 }

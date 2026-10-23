@@ -3,16 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { Icon, type IconName } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
-import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { describeSet, setKindOf } from '@/sessions/fields';
-import { fonts, useTheme, type ColorTokens } from '@/theme';
+import type { SetValues } from '@/sessions/session';
+import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
 import {
@@ -23,14 +22,7 @@ import {
   useLogSummary,
   type LoggedSet,
 } from './history';
-
-type Stat = {
-  icon: IconName;
-  color: keyof ColorTokens;
-  tile: keyof ColorTokens;
-  value: string;
-  label: string;
-};
+import { shortSet, summarizeSets } from './exercise-summary';
 
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
@@ -41,7 +33,6 @@ export function LogScreen({ id }: { id: number }) {
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
-  const formatDate = useDateFormat('full');
   const { format } = useNumberFormat();
   const log = summary.data;
 
@@ -64,43 +55,27 @@ export function LogScreen({ id }: { id: number }) {
     );
   }
 
+  // "Friday, October 23" under the name in the top bar, with the year only when it is not this
+  // one; when it started and ended is in the figures below.
+  const day = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+  }).format(log.startedAt);
   const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
   const seconds = Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000);
-  const stats: Stat[] = [
-    {
-      icon: 'timer',
-      color: 'primaryText',
-      tile: 'selected',
-      value:
-        seconds < 3600
-          ? minutesAndSeconds(seconds)
-          : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`,
-      label: t('history.stats.time'),
-    },
-    {
-      icon: 'dumbbell',
-      color: 'info',
-      tile: 'infoBackground',
-      value: doneOf(log.sets, log.plannedSets),
-      label: t('history.stats.sets'),
-    },
-    {
-      icon: 'bolt',
-      color: 'fat',
-      tile: 'track',
-      value: `${format(Math.round(log.kilograms))} kg`,
-      label: t('history.stats.lifted'),
-    },
+  const totalTime =
+    seconds < 3600
+      ? minutesAndSeconds(seconds)
+      : `${Math.floor(durationMinutes(log) / 60)}:${String(durationMinutes(log) % 60).padStart(2, '0')} h`;
+  // The workout at a glance, quietly: the figures stand out by weight, not colour.
+  const stats = [
+    { value: totalTime, label: t('history.stats.time') },
+    { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
+    { value: format(Math.round(log.kilograms)), label: 'kg' },
     ...(log.estimatedKcal !== null
-      ? [
-          {
-            icon: 'flame' as const,
-            color: 'primary' as const,
-            tile: 'iconBackground' as const,
-            value: `~${format(log.estimatedKcal)}`,
-            label: t('history.stats.kcal'),
-          },
-        ]
+      ? [{ value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
       : []),
   ];
 
@@ -137,58 +112,100 @@ export function LogScreen({ id }: { id: number }) {
     ]);
 
   return (
-    <Screen onBack={() => router.back()}>
-      <View style={{ gap: 2 }}>
-        <Text variant="title" accessibilityRole="header">
-          {workoutName(log)}
-        </Text>
-        <Text color="textMuted">
-          {`${formatDate(log.startedAt)} · ${time.format(log.startedAt)}–${time.format(log.finishedAt)}`}
-        </Text>
-      </View>
-
-      <View style={[styles.stats, { gap: spacing.sm }]}>
-        {stats.map((stat) => (
-          <View
-            key={stat.label}
-            style={[
-              styles.stat,
-              {
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderRadius: radii.md,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
+    <Screen
+      onBack={() => router.back()}
+      title={
+        <>
+          <Text
+            variant="bodyStrong"
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={styles.bold}
           >
+            {workoutName(log)}
+          </Text>
+          <Text variant="caption" color="textMuted" numberOfLines={1}>
+            {day}
+          </Text>
+        </>
+      }
+    >
+      {/* Four even columns, like the figures on a workout's screen, over when it started and ended. */}
+      <View
+        style={[
+          styles.card,
+          { borderRadius: radii.lg, borderColor: colors.border, backgroundColor: colors.surface },
+        ]}
+      >
+        <View style={[styles.row, { paddingVertical: spacing.md }]}>
+          {stats.map((stat, index) => (
             <View
-              style={[styles.tile, { borderRadius: radii.md, backgroundColor: colors[stat.tile] }]}
+              key={stat.label}
+              style={[
+                styles.stat,
+                { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
+              ]}
             >
-              <Icon name={stat.icon} size={18} color={stat.color} />
-            </View>
-            <View>
               <Text variant="headline" style={styles.tabular}>
                 {stat.value}
               </Text>
-              <Text variant="caption" color="textMuted" style={styles.semibold}>
+              <Text variant="caption" color="textMuted">
                 {stat.label}
               </Text>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
+        <View
+          style={[
+            styles.row,
+            { paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+          ]}
+        >
+          {[
+            [t('history.started'), log.startedAt],
+            [t('history.ended'), log.finishedAt],
+          ].map(([label, at], index) => (
+            <View
+              key={String(label)}
+              style={[
+                styles.stat,
+                styles.when,
+                {
+                  gap: spacing.xs,
+                  borderLeftWidth: index > 0 ? 1 : 0,
+                  borderLeftColor: colors.border,
+                },
+              ]}
+            >
+              <Text variant="caption" color="textMuted">
+                {String(label)}
+              </Text>
+              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+                {time.format(at as Date)}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {exercises.map((exercise, index) => {
         const info = library.data?.find((item) => item.id === exercise.exerciseId);
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
+        const { best, total } = summarizeSets(exercise.sets, kind);
+        const describe = (set: SetValues) => describeSet(set, kind);
+        const totalValue = {
+          volume: () => `${format(Math.round(total.kind === 'volume' ? total.kilograms : 0))} kg`,
+          reps: () => t('history.exercise.reps', { count: total.kind === 'reps' ? total.reps : 0 }),
+          time: () => minutesAndSeconds(total.kind === 'time' ? total.seconds : 0),
+          distance: () => `${format(total.kind === 'distance' ? total.meters : 0)} m`,
+        }[total.kind]();
         return (
           <View
             key={index}
             style={[
               styles.exercise,
               {
-                gap: spacing.xs,
+                gap: spacing.md,
                 padding: spacing.lg,
                 borderRadius: radii.lg,
                 borderColor: colors.border,
@@ -196,23 +213,49 @@ export function LogScreen({ id }: { id: number }) {
               },
             ]}
           >
-            <View style={[styles.row, { gap: spacing.md, marginBottom: spacing.xs }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} />
-              <Text variant="bodyStrong" style={[styles.bold, styles.flex]}>
-                {info?.name ?? ''}
-              </Text>
-            </View>
-            {exercise.sets.map((set, setIndex) => (
-              <View
-                key={setIndex}
-                style={[styles.row, { gap: spacing.md, paddingLeft: spacing.xs }]}
-              >
-                <Text variant="caption" color="textMuted" style={[styles.bold, styles.number]}>
-                  {setIndex + 1}
+            <View style={[styles.row, { gap: spacing.md }]}>
+              <ExerciseThumbnail path={info?.imagePaths[0]} size={44} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" style={styles.bold}>
+                  {info?.name ?? ''}
                 </Text>
-                <Text variant="bodyStrong">{describeSet(set, kind)}</Text>
+                <Text variant="caption" color="textMuted" style={styles.semibold}>
+                  {[
+                    t('history.exercise.setCount', { count: exercise.sets.length }),
+                    totalValue,
+                  ].join(' · ')}
+                </Text>
               </View>
-            ))}
+            </View>
+            {/* Every set, the best one picked out. */}
+            <View style={[styles.chips, { gap: spacing.xs }]}>
+              {exercise.sets.map((set, setIndex) => {
+                const isBest = set === best;
+                return (
+                  <View
+                    key={setIndex}
+                    accessibilityLabel={
+                      isBest ? `${t('history.exercise.best')}: ${describe(set)}` : undefined
+                    }
+                    style={[
+                      styles.chip,
+                      {
+                        borderRadius: radii.md,
+                        backgroundColor: isBest ? colors.selected : colors.background,
+                      },
+                    ]}
+                  >
+                    <Text
+                      variant="caption"
+                      color={isBest ? 'primaryText' : 'text'}
+                      style={[styles.bold, styles.tabular]}
+                    >
+                      {shortSet(set, kind, describe)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
           </View>
         );
       })}
@@ -249,28 +292,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  stats: {
+  card: {
+    borderWidth: 1,
+  },
+  when: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  stat: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  tile: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   exercise: {
     borderWidth: 1,
-  },
-  number: {
-    width: 20,
   },
   delete: {
     height: 48,

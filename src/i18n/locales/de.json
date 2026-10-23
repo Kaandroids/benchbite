@@ -158,7 +158,11 @@
       "title": "{{name}} läuft",
       "message": "Beende das Training, bevor du es änderst.",
       "resume": "Zurück zum Training"
-    }
+    },
+    "startWorkout": "Training starten",
+    "toArchive": "Ins Archiv verschieben",
+    "fromArchive": "Aus dem Archiv holen",
+    "days": "Tage"
   },
   "exercise": {
     "start": "Start",
@@ -605,6 +609,14 @@
     "setsOf_one": "{{done}} von {{count}} Satz",
     "setsOf_other": "{{done}} von {{count}} Sätzen",
     "deleteErrorTitle": "Nicht gelöscht",
-    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut."
+    "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
+    "exercise": {
+      "best": "BESTER SATZ",
+      "reps": "{{count}} Wdh.",
+      "setCount_one": "{{count}} Satz",
+      "setCount_other": "{{count}} Sätze"
+    },
+    "started": "Begonnen",
+    "ended": "Beendet"
   }
 }

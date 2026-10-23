@@ -158,7 +158,11 @@
       "title": "{{name}} is running",
       "message": "Finish the workout before changing it.",
       "resume": "Back to the workout"
-    }
+    },
+    "startWorkout": "Start workout",
+    "toArchive": "Move to archive",
+    "fromArchive": "Bring back from the archive",
+    "days": "Days"
   },
   "exercise": {
     "start": "Start",
@@ -605,6 +609,14 @@
     "setsOf_one": "{{done}} of {{count}} set",
     "setsOf_other": "{{done}} of {{count}} sets",
     "deleteErrorTitle": "Not deleted",
-    "deleteError": "We couldn't delete the workout. Check your connection and try again."
+    "deleteError": "We couldn't delete the workout. Check your connection and try again.",
+    "exercise": {
+      "best": "BEST SET",
+      "reps": "{{count}} reps",
+      "setCount_one": "{{count}} set",
+      "setCount_other": "{{count}} sets"
+    },
+    "started": "Started",
+    "ended": "Ended"
   }
 }

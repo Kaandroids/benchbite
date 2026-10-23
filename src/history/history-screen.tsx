@@ -20,10 +20,14 @@ export function HistoryScreen() {
   const duration = useDurationFormat();
 
   return (
-    <Screen onBack={() => router.back()}>
-      <Text variant="title" accessibilityRole="header">
-        {t('workout.history.title')}
-      </Text>
+    <Screen
+      onBack={() => router.back()}
+      title={
+        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+          {t('workout.history.title')}
+        </Text>
+      }
+    >
       <LoadState queries={[logs]} />
       {allLoaded([logs]) && logs.data?.length === 0 ? (
         <Text color="textMuted">{t('workout.history.empty')}</Text>
