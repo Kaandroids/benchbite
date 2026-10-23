@@ -161,6 +161,11 @@ describe('the clock of a timed set', () => {
 });
 
 describe('finishing', () => {
+  it('counts what was planned at the start, not the sets added on the way', () => {
+    const session = addSet(start(), 0);
+    expect(toLog(session, NOW + 60_000)).toMatchObject({ plannedExercises: 3, plannedSets: 4 });
+  });
+
   it('logs only the sets that were done, and adds them up', () => {
     let session: Session = toggleDone(start(), 0, 0, NOW);
     session = setValues(session, 0, 0, { weightKg: 80, reps: 8 });

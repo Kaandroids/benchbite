@@ -20,6 +20,16 @@ jest.mock('./workouts', () => ({
   useKcalPerMinute: () => ({ data: 7.5 }),
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
+jest.mock('@/history/history', () => ({
+  ...jest.requireActual<typeof import('@/history/history')>('@/history/history'),
+  useRecentLogs: () => ({
+    data: { latest: [], thisWeek: 0 },
+    isPending: false,
+    isError: false,
+    isFetching: false,
+    refetch: () => {},
+  }),
+}));
 jest.mock('@/sessions/start', () => ({ useUserId: () => 'user-a', useStartWorkout: jest.fn() }));
 jest.mock('@/sessions/session', () => ({
   ...jest.requireActual<typeof import('@/sessions/session')>('@/sessions/session'),
@@ -79,6 +89,7 @@ const RUNNING: Session = {
   current: 0,
   rest: null,
   clock: null,
+  planned: { exercises: 1, sets: 2 },
 };
 
 beforeEach(() => {
