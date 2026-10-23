@@ -18,11 +18,11 @@ $$;
 insert into public.weight_entries (user_id, weight_kg, measured_on) values
   ('00000000-0000-0000-0000-00000000000a', 80, '2026-10-01'),
   ('00000000-0000-0000-0000-00000000000a', 90, '2026-10-30');
-insert into public.workout_logs (id, user_id, type, started_at, finished_at)
+insert into public.workout_logs (id, user_id, type, started_at, finished_at, planned_exercises, planned_sets)
   overriding system value values
-  (700, '00000000-0000-0000-0000-00000000000a', 'push', '2026-10-20 18:00+00', '2026-10-20 19:00+00'),
-  (701, '00000000-0000-0000-0000-00000000000a', 'pull', '2026-09-20 18:00+00', '2026-09-20 18:30+00'),
-  (702, '00000000-0000-0000-0000-00000000000b', 'legs', '2026-10-20 18:00+00', '2026-10-20 19:00+00');
+  (700, '00000000-0000-0000-0000-00000000000a', 'push', '2026-10-20 18:00+00', '2026-10-20 19:00+00', 3, 6),
+  (701, '00000000-0000-0000-0000-00000000000a', 'pull', '2026-09-20 18:00+00', '2026-09-20 18:30+00', null, null),
+  (702, '00000000-0000-0000-0000-00000000000b', 'legs', '2026-10-20 18:00+00', '2026-10-20 19:00+00', 1, 1);
 insert into public.logged_sets (log_id, user_id, exercise_position, set_position, exercise_id, weight_kg, reps, seconds)
 values
   (700, '00000000-0000-0000-0000-00000000000a', 0, 0, 'Barbell_Bench_Press_-_Medium_Grip', 80, 8, null),
@@ -33,9 +33,10 @@ values
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
-  $$ select id::integer, exercises, sets, kilograms, estimated_kcal from public.workout_log_summaries
-     where id = 700 $$,
-  $$ values (700, 2, 3, 1120.0000::numeric, 400) $$,
+  $$ select id::integer, exercises, planned_exercises::integer, sets, planned_sets::integer,
+       kilograms, estimated_kcal
+     from public.workout_log_summaries where id = 700 $$,
+  $$ values (700, 2, 3, 3, 6, 1120.0000::numeric, 400) $$,
   'A log adds up its sets and weight, and estimates calories from the weight on that day'
 );
 select results_eq(

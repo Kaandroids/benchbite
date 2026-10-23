@@ -390,6 +390,8 @@ export type Database = {
           finished_at: string;
           id: number;
           name: string | null;
+          planned_exercises: number | null;
+          planned_sets: number | null;
           started_at: string;
           type: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
@@ -400,6 +402,8 @@ export type Database = {
           finished_at: string;
           id?: never;
           name?: string | null;
+          planned_exercises?: number | null;
+          planned_sets?: number | null;
           started_at: string;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
@@ -409,6 +413,8 @@ export type Database = {
           finished_at?: string;
           id?: never;
           name?: string | null;
+          planned_exercises?: number | null;
+          planned_sets?: number | null;
           started_at?: string;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id?: string;
@@ -468,6 +474,8 @@ export type Database = {
           id: number | null;
           kilograms: number | null;
           name: string | null;
+          planned_exercises: number | null;
+          planned_sets: number | null;
           sets: number | null;
           started_at: string | null;
           type: Database['public']['Enums']['workout_type'] | null;

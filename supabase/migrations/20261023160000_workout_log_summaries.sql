@@ -1,5 +1,5 @@
--- A finished workout at a glance, for the history: its exercises and sets, the weight lifted and
--- an estimate of the calories burned. Calories are estimated from the time and the user's weight on that day
+-- A finished workout at a glance, for the history: its exercises and sets, of how many planned,
+-- the weight lifted and an estimate of the calories burned. Calories are estimated from the time and the user's weight on that day
 -- until a watch measures them (#85). Without a weight there is no estimate. Planned workouts get
 -- an estimate from the user's latest weight.
 
@@ -43,7 +43,9 @@ select
   l.started_at,
   l.finished_at,
   s.exercises,
+  l.planned_exercises,
   s.sets,
+  l.planned_sets,
   s.kilograms,
   round(
     public.strength_kcal_per_minute(w.weight_kg)
