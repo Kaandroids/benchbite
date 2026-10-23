@@ -131,6 +131,9 @@ describe('HistoryScreen', () => {
     expect(screen.getByText('Last week')).toBeTruthy();
     expect(screen.getAllByText('1 workout · 54 min')).toHaveLength(1);
     expect(screen.getByText(/October 5/)).toBeTruthy();
+    // With icons: the sets as a number that screen readers say in words.
+    expect(screen.getByText('52 min')).toBeTruthy();
+    expect(screen.getAllByLabelText('17 sets')).toHaveLength(4);
   });
 });
 

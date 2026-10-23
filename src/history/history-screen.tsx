@@ -54,7 +54,7 @@ export function HistoryScreen() {
             ]}
           >
             {week.logs.map((log, index) => (
-              <LogRow key={log.id} log={log} divider={index > 0} />
+              <LogRow key={log.id} log={log} divider={index > 0} icons />
             ))}
           </View>
         </View>
