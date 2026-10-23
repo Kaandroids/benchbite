@@ -598,6 +598,12 @@
       "message": "Wir melden uns, wenn sie endet, auch bei gesperrtem Handy.",
       "allow": "Erlauben",
       "notNow": "Jetzt nicht"
+    },
+    "restAlerts": {
+      "turnOn": "Pausenhinweise einschalten",
+      "offTitle": "Mitteilungen sind aus",
+      "offMessage": "Schalte Mitteilungen für Benchbite in den Einstellungen deines Handys ein, um zu hören, wann deine Pause vorbei ist.",
+      "openSettings": "Einstellungen öffnen"
     }
   },
   "history": {

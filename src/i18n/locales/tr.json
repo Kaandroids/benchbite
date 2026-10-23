@@ -598,6 +598,12 @@
       "message": "Telefonun kilitliyken de dinlenmenin bittiğini bildiririz.",
       "allow": "İzin ver",
       "notNow": "Şimdi değil"
+    },
+    "restAlerts": {
+      "turnOn": "Dinlenme bildirimlerini aç",
+      "offTitle": "Bildirimler kapalı",
+      "offMessage": "Dinlenmenin bittiğini duymak için telefonunun ayarlarından Benchbite bildirimlerini aç.",
+      "openSettings": "Ayarları aç"
     }
   },
   "history": {

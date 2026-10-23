@@ -598,6 +598,12 @@
       "message": "We let you know when it ends, also when your phone is locked.",
       "allow": "Allow",
       "notNow": "Not now"
+    },
+    "restAlerts": {
+      "turnOn": "Turn on rest alerts",
+      "offTitle": "Notifications are off",
+      "offMessage": "Turn on notifications for Benchbite in your phone's settings to hear when your rest is over.",
+      "openSettings": "Open settings"
     }
   },
   "history": {

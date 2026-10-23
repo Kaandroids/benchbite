@@ -1,3 +1,7 @@
+import {
+  getPermissionsAsync,
+  requestPermissionsAsync,
+} from 'expo-notifications/build/NotificationPermissions';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -7,6 +11,7 @@ import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import { FinishScreen } from './finish-screen';
 import { useLogWorkout } from './logs';
+import { resetPermission } from './rest-alarm';
 import {
   resetSessionStore,
   setValues,
@@ -39,6 +44,10 @@ jest.mock('@/exercises/library', () => ({
 }));
 jest.mock('./start', () => ({ useUserId: () => 'user-a', useStartWorkout: jest.fn() }));
 jest.mock('./logs', () => ({ useLogWorkout: jest.fn() }));
+jest.mock('expo-notifications/build/NotificationPermissions', () => ({
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true, canAskAgain: true })),
+  requestPermissionsAsync: jest.fn(),
+}));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),
@@ -76,6 +85,8 @@ const startWorkout = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  resetPermission();
+  jest.mocked(getPermissionsAsync).mockResolvedValue({ granted: true, canAskAgain: true } as never);
   jest.useFakeTimers({ now: NOW });
   resetSessionStore();
   jest.mocked(useExerciseLibrary).mockReturnValue({
@@ -123,8 +134,20 @@ describe('SessionScreen', () => {
     expect(screen.getByText('1:30')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: '15 seconds more' }));
     expect(screen.getByText('1:45')).toBeTruthy();
+    // Alerts are allowed, so the rest bar has no bell.
+    expect(screen.queryByRole('button', { name: 'Turn on rest alerts' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.queryByText('REST')).toBeNull();
+  });
+
+  it('offers to turn rest alerts on from the rest bar while they are off', async () => {
+    jest
+      .mocked(getPermissionsAsync)
+      .mockResolvedValue({ granted: false, canAskAgain: true } as never);
+    await render(<SessionScreen />);
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Turn on rest alerts' }));
+    expect(requestPermissionsAsync).toHaveBeenCalled();
   });
 
   it('keeps typed values within what a set can hold', async () => {

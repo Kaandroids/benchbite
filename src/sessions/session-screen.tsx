@@ -24,6 +24,7 @@ import {
 
 import { describeSet, setKindOf } from './fields';
 import { newRecords } from './records';
+import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
 import {
   addSet,
@@ -54,6 +55,7 @@ export function SessionScreen() {
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const now = useNow(!!session, session?.clock?.startedAt);
+  const permission = useNotificationPermission();
 
   // A rest that is over ends; RestAlarm signals it.
   const restOver = !!session?.rest && session.rest.endsAt <= now;
@@ -277,6 +279,18 @@ export function SessionScreen() {
           total={session.rest.seconds}
           onChange={(seconds) => updateSession((current) => changeRest(current, seconds))}
           onSkip={() => updateSession((current) => ({ ...current, rest: null }))}
+          onTurnOnAlerts={
+            permission && !permission.granted
+              ? () =>
+                  void enableRestAlerts({
+                    channelName: t('session.restOver.channel'),
+                    offTitle: t('session.restAlerts.offTitle'),
+                    offMessage: t('session.restAlerts.offMessage'),
+                    openSettings: t('session.restAlerts.openSettings'),
+                    notNow: t('session.restAlarm.notNow'),
+                  }).catch((error: unknown) => console.warn('Could not turn on rest alerts', error))
+              : undefined
+          }
         />
       ) : null}
     </SafeAreaView>

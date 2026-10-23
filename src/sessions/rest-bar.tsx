@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds } from '@/workouts/format';
@@ -12,10 +13,12 @@ type RestBarProps = {
   total: number;
   onChange: (seconds: number) => void;
   onSkip: () => void;
+  /** Shows a muted bell that turns rest alerts on, while they cannot be delivered. */
+  onTurnOnAlerts?: () => void;
 };
 
 /** The rest between sets, counting down at the bottom of the screen. */
-export function RestBar({ left, total, onChange, onSkip }: RestBarProps) {
+export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestBarProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const insets = useSafeAreaInsets();
@@ -38,13 +41,26 @@ export function RestBar({ left, total, onChange, onSkip }: RestBarProps) {
       ]}
     >
       <View style={[styles.flex, { gap: 6 }]}>
-        <View style={styles.label}>
-          <Text variant="caption" style={[styles.bold, styles.muted]}>
-            {t('session.rest')}
-          </Text>
-          <Text variant="headline" style={[styles.bold, styles.light, styles.tabular]}>
-            {minutesAndSeconds(left)}
-          </Text>
+        <View style={styles.heading}>
+          <View style={styles.label}>
+            <Text variant="caption" style={[styles.bold, styles.muted]}>
+              {t('session.rest')}
+            </Text>
+            <Text variant="headline" style={[styles.bold, styles.light, styles.tabular]}>
+              {minutesAndSeconds(left)}
+            </Text>
+          </View>
+          {onTurnOnAlerts ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('session.restAlerts.turnOn')}
+              onPress={onTurnOnAlerts}
+              hitSlop={8}
+              style={({ pressed }) => [styles.bell, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Icon name="bellOff" size={15} color="placeholder" />
+            </Pressable>
+          ) : null}
         </View>
         <View style={styles.track}>
           <View
@@ -99,10 +115,23 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  heading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   label: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 8,
+  },
+  bell: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#2A2C31',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bold: {
     fontFamily: fonts.extraBold,
