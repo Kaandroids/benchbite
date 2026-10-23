@@ -9,7 +9,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { describeSet, setKindOf } from '@/sessions/fields';
 import type { SetValues } from '@/sessions/session';
@@ -219,7 +219,7 @@ export function LogScreen({ id }: { id: number }) {
               <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
             </View>
             <View style={[styles.row, { gap: spacing.md, paddingRight: BUTTON_ROOM }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={44} name={info?.name} />
+              <ExerciseThumbnail path={thumbnailOf(info)} size={44} name={info?.name} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" style={styles.bold}>
                   {info?.name ?? ''}

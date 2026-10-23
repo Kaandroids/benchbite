@@ -10,7 +10,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import { fonts, typography, useTheme } from '@/theme';
@@ -140,7 +140,7 @@ export function EditorScreen({ id }: { id?: number }) {
         onPress={() => setEditing(exercise.key)}
         style={[styles.exercise, { gap: spacing.md }]}
       >
-        <ExerciseThumbnail path={info?.imagePaths[0]} size={52} name={info?.name} />
+        <ExerciseThumbnail path={thumbnailOf(info)} size={52} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}

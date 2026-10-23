@@ -68,7 +68,7 @@ function workoutExercise(row: ExerciseRow): WorkoutExercise {
         : { seconds: row.target_seconds, meters: row.target_meters },
     restSeconds: row.rest_seconds,
     primaryMuscles: row.exercises.primary_muscles,
-    imagePath: row.exercises.image_paths[0] ?? null,
+    imagePath: row.exercises.image_paths.find((path) => path !== null) ?? null,
   };
 }
 

@@ -91,6 +91,14 @@ describe('ExerciseScreen', () => {
     expect(screen.queryByText('How to do it')).toBeNull();
   });
 
+  it('names a picture of the end alone as the end', async () => {
+    mockDetails([{ ...ROW, imagePaths: [null, 'row/1.webp'] }], []);
+    await render(<ExerciseScreen id="row" />);
+    expect(screen.getByLabelText('End')).toBeTruthy();
+    expect(screen.getByText('End')).toBeTruthy();
+    expect(screen.queryByLabelText('Start')).toBeNull();
+  });
+
   it('says when the exercise does not exist, and goes back', async () => {
     mockDetails([ROW], []);
     await render(<ExerciseScreen id="nothing" />);

@@ -10,7 +10,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { setKindOf, type SetField, type SetKind } from '@/sessions/fields';
 import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sessions/set-table';
 import { fonts, useTheme } from '@/theme';
@@ -255,7 +255,7 @@ function LogEditor({
             ]}
           >
             <View style={[styles.row, { gap: spacing.md }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} name={info?.name} />
+              <ExerciseThumbnail path={thumbnailOf(info)} size={40} name={info?.name} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" style={styles.bold}>
                   {info?.name ?? ''}

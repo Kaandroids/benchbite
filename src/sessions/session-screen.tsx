@@ -12,7 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { summarizeSets } from '@/history/exercise-summary';
 import { useUserId } from '@/providers/session-provider';
 import { fonts, useTheme } from '@/theme';
@@ -96,7 +96,7 @@ export function SessionScreen() {
           },
         ]}
       >
-        <ExerciseThumbnail path={info?.imagePaths[0]} size={48} name={info?.name} />
+        <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}
@@ -145,7 +145,7 @@ export function SessionScreen() {
         ]}
       >
         <View style={[styles.row, { gap: spacing.md }]}>
-          <ExerciseThumbnail path={info?.imagePaths[0]} size={48} name={info?.name} />
+          <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
           <View style={styles.flex}>
             <Text variant="bodyStrong" style={styles.bold}>
               {info?.name ?? ''}

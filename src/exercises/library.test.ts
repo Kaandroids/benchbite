@@ -6,6 +6,7 @@ import {
   fetchLibrary,
   filterExercises,
   searchText,
+  thumbnailOf,
   useExerciseDetails,
   useExerciseLibrary,
   type LibraryExercise,
@@ -130,6 +131,15 @@ describe('filterExercises', () => {
   it('keeps everything without a query or a filter, but archived exercises', () => {
     expect(names('')).toHaveLength(5);
     expect(names('press')).toEqual(['Bench Press']);
+  });
+});
+
+describe('thumbnailOf', () => {
+  it('shows the start, or the end when there is no start', () => {
+    expect(thumbnailOf({ imagePaths: ['a/0.webp', 'a/1.webp'] })).toBe('a/0.webp');
+    expect(thumbnailOf({ imagePaths: [null, 'a/1.webp'] })).toBe('a/1.webp');
+    expect(thumbnailOf({ imagePaths: [] })).toBeUndefined();
+    expect(thumbnailOf(undefined)).toBeUndefined();
   });
 });
 
