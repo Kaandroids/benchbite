@@ -23,6 +23,7 @@ import {
 } from '@/workouts/format';
 
 import { describeSet, setKindOf } from './fields';
+import { newRecords } from './records';
 import { RestBar } from './rest-bar';
 import {
   addSet,
@@ -135,6 +136,7 @@ export function SessionScreen() {
   const open = (exercise: SessionExercise, index: number) => {
     const info = details(exercise.exerciseId);
     const kind = setKindOf(info?.metrics, exercise.target);
+    const { bySet: records } = newRecords(exercise.sets, kind, exercise.bests);
     return (
       <View
         key={index}
@@ -183,6 +185,7 @@ export function SessionScreen() {
               kind={kind}
               last={exercise.last[setIndex]}
               clock={running}
+              records={records.get(setIndex)}
               onChange={(values) =>
                 updateSession((current) => setValues(current, index, setIndex, values))
               }

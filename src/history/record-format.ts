@@ -108,7 +108,7 @@ export function useRecordFormat() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   const kilograms = (value: number) => `${format(value, { maximumFractionDigits: 1 })} kg`;
-  return ({ kind, value, set }: ExerciseRecord) => {
+  return ({ kind, value, set }: Pick<ExerciseRecord, 'kind' | 'value' | 'set'>) => {
     switch (kind) {
       case 'heaviest':
         return kilograms(value);
