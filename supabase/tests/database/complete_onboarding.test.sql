@@ -47,7 +47,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 -- Rejected answers save nothing.
 select throws_ok(
-  $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('birthYear', extract(year from current_date)::integer - 17)), pg_temp.plan()) $$,
+  $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('birthYear', extract(year from now() at time zone 'Etc/GMT-14')::integer - 17)), pg_temp.plan()) $$,
   'BB002', 'Benchbite is for people aged 18 and over',
   'Users under 18 are rejected'
 );
