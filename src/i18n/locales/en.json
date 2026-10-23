@@ -200,7 +200,8 @@
       "e-z curl bar": "EZ bar",
       "other": "Other"
     },
-    "details": "Details of {{name}}"
+    "details": "Details of {{name}}",
+    "history": "History of {{name}}"
   },
   "picker": {
     "title": "Add exercises",
@@ -635,6 +636,42 @@
       "discardTitle": "Discard your changes?",
       "discardMessage": "Your changes to this workout are not saved.",
       "keepEditing": "Keep editing"
+    }
+  },
+  "exerciseHistory": {
+    "subtitle": "History",
+    "records": "Records",
+    "record": "Record",
+    "progress": "Progress",
+    "since": "{{change}} since {{date}}",
+    "metricsLabel": "What the chart shows",
+    "sessions": "Sessions · {{count}}",
+    "pace": "{{time}} /km",
+    "empty": {
+      "title": "No history yet",
+      "message": "Log this exercise in a workout and your sets and records show up here."
+    },
+    "kinds": {
+      "heaviest": "Heaviest",
+      "heaviestAdded": "Heaviest added",
+      "one_rep_max": "Est. one-rep max",
+      "best_set": "Best set",
+      "most_reps": "Most reps",
+      "longest_time": "Longest set",
+      "most_time": "Most in a workout",
+      "longest_distance": "Longest distance",
+      "best_pace": "Best pace"
+    },
+    "metrics": {
+      "heaviest": "Heaviest",
+      "oneRepMax": "Est. 1RM",
+      "volume": "Volume",
+      "mostReps": "Most reps",
+      "totalReps": "Total reps",
+      "longest": "Longest set",
+      "totalTime": "Total time",
+      "distance": "Distance",
+      "pace": "Pace"
     }
   }
 }

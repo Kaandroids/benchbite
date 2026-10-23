@@ -200,7 +200,8 @@
       "e-z curl bar": "SZ-Stange",
       "other": "Sonstiges"
     },
-    "details": "Details zu {{name}}"
+    "details": "Details zu {{name}}",
+    "history": "Verlauf von {{name}}"
   },
   "picker": {
     "title": "Übungen hinzufügen",
@@ -635,6 +636,42 @@
       "discardTitle": "Änderungen verwerfen?",
       "discardMessage": "Deine Änderungen an diesem Training werden nicht gespeichert.",
       "keepEditing": "Weiter bearbeiten"
+    }
+  },
+  "exerciseHistory": {
+    "subtitle": "Verlauf",
+    "records": "Rekorde",
+    "record": "Rekord",
+    "progress": "Fortschritt",
+    "since": "{{change}} seit {{date}}",
+    "metricsLabel": "Was das Diagramm zeigt",
+    "sessions": "Trainings · {{count}}",
+    "pace": "{{time}} /km",
+    "empty": {
+      "title": "Noch kein Verlauf",
+      "message": "Trainiere diese Übung in einem Workout, dann erscheinen hier deine Sätze und Rekorde."
+    },
+    "kinds": {
+      "heaviest": "Schwerster Satz",
+      "heaviestAdded": "Meiste Zusatzlast",
+      "one_rep_max": "Geschätztes 1RM",
+      "best_set": "Bester Satz",
+      "most_reps": "Meiste Wdh.",
+      "longest_time": "Längster Satz",
+      "most_time": "Meiste Zeit in einem Training",
+      "longest_distance": "Längste Strecke",
+      "best_pace": "Bestes Tempo"
+    },
+    "metrics": {
+      "heaviest": "Schwerster",
+      "oneRepMax": "Gesch. 1RM",
+      "volume": "Volumen",
+      "mostReps": "Meiste Wdh.",
+      "totalReps": "Wdh. gesamt",
+      "longest": "Längster Satz",
+      "totalTime": "Zeit gesamt",
+      "distance": "Strecke",
+      "pace": "Tempo"
     }
   }
 }
