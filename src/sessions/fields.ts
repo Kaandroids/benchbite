@@ -48,12 +48,31 @@ export function describeSet(values: SetValues, kind: SetKind): string {
   return time ?? '—';
 }
 
-/** Reads a time typed as "1:30" or "90"; null when it is not one. */
+/**
+ * The most a set can hold of each value, as the database allows it (logged_sets). The weight is
+ * the largest quarter kilogram below its limit of 999.99.
+ */
+export const SET_LIMITS: Record<SetField, number> = {
+  weightKg: 999.75,
+  reps: 999,
+  seconds: 86_400,
+  meters: 1_000_000,
+};
+
+/**
+ * Reads a time typed as "1:30" or as digits; null when it is not one. One or two digits are
+ * seconds, and more are read as on a clock, the last two being the seconds: "130" is 1:30 and
+ * "1111" is 11:11. A time is at most a day.
+ */
 export function parseTime(text: string): number | null {
   const match = /^(?:(\d+):)?(\d+)$/.exec(text.trim());
   if (!match) {
     return null;
   }
-  const seconds = Number(match[1] ?? 0) * 60 + Number(match[2]);
-  return seconds > 0 ? seconds : null;
+  const [, minutes, rest = ''] = match;
+  const seconds =
+    minutes === undefined && rest.length > 2
+      ? Number(rest.slice(0, -2)) * 60 + Number(rest.slice(-2))
+      : Number(minutes ?? 0) * 60 + Number(rest);
+  return seconds > 0 ? Math.min(seconds, SET_LIMITS.seconds) : null;
 }

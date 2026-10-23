@@ -5,6 +5,8 @@ import { useSyncExternalStore } from 'react';
 
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
+import { SET_LIMITS } from './fields';
+
 /** What a set records; a value the exercise does not record stays null. */
 export type SetValues = {
   weightKg: number | null;
@@ -303,8 +305,11 @@ export function stopClock(value: Session, now = Date.now()): Session {
   if (!clock) {
     return value;
   }
-  // Rounded down, as the clock shows it.
-  const seconds = Math.max(1, Math.floor((now - clock.startedAt) / 1000));
+  // Rounded down, as the clock shows it, and at most what a set can hold.
+  const seconds = Math.min(
+    SET_LIMITS.seconds,
+    Math.max(1, Math.floor((now - clock.startedAt) / 1000)),
+  );
   const next = setValues({ ...value, clock: null }, clock.exercise, clock.set, { seconds });
   return toggleDone(next, clock.exercise, clock.set, now);
 }

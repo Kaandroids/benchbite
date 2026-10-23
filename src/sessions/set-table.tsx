@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/text';
 import { fonts, typography, useTheme } from '@/theme';
 import { minutesAndSeconds } from '@/workouts/format';
 
-import { describeSet, parseTime, type SetField, type SetKind } from './fields';
+import { describeSet, parseTime, SET_LIMITS, type SetField, type SetKind } from './fields';
 import { MAX_SETS, type SetValues } from './session';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
@@ -36,8 +36,13 @@ function read(field: SetField, text: string): number | null {
   if (!text.trim() || !Number.isFinite(value) || value <= 0) {
     return null;
   }
-  return field === 'weightKg' ? Math.round(value * 4) / 4 : Math.round(value);
+  // Beyond what a set can hold, the value is the most it can be, so that the workout still saves.
+  const rounded = field === 'weightKg' ? Math.round(value * 4) / 4 : Math.round(value);
+  return Math.min(rounded, SET_LIMITS[field]);
 }
+
+// The characters a value needs at most, such as "999.75", "999", "1440:00" or "1000000".
+const MAX_LENGTH: Record<SetField, number> = { weightKg: 6, reps: 3, seconds: 7, meters: 7 };
 
 type SetHeaderProps = {
   kind: SetKind;
@@ -138,6 +143,7 @@ function SetInput({
             : 'number-pad'
       }
       selectTextOnFocus
+      maxLength={MAX_LENGTH[field]}
       onChangeText={(typed) => {
         setText(typed);
         // Saved as soon as it reads as a value or is cleared, so that the set can be ticked or

@@ -125,6 +125,17 @@ describe('SessionScreen', () => {
     expect(screen.queryByText('REST')).toBeNull();
   });
 
+  it('keeps typed values within what a set can hold', async () => {
+    await render(<SessionScreen />);
+    expect(screen.getByLabelText('Weight of set 1').props.maxLength).toBe(6);
+    await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '5000');
+    await fireEvent(screen.getByLabelText('Weight of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Weight of set 1').props.value).toBe('999.75');
+    await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '1500');
+    await fireEvent(screen.getByLabelText('Reps of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Reps of set 1').props.value).toBe('999');
+  });
+
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
     startSession('user-a', PUSH, {}, NOW.getTime());
@@ -174,6 +185,10 @@ describe('SessionScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '0:48');
     await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
     expect(screen.getByLabelText('Time of set 1').props.value).toBe('0:48');
+    // Digits alone read as on a clock.
+    await fireEvent.changeText(screen.getByLabelText('Time of set 1'), '1111');
+    await fireEvent(screen.getByLabelText('Time of set 1'), 'endEditing');
+    expect(screen.getByLabelText('Time of set 1').props.value).toBe('11:11');
   });
 
   it('ticks a timed set whose time is typed by hand', async () => {

@@ -157,6 +157,11 @@ describe('the clock of a timed set', () => {
     expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 52, done: true });
   });
 
+  it('logs at most a day, the most a set can hold', () => {
+    const session = stopClock(startClock(start(), 1, 0, NOW), NOW + 30 * 3600_000);
+    expect(session.exercises[1]?.sets[0]).toMatchObject({ seconds: 86_400 });
+  });
+
   it('keeps the distance of a set it times', () => {
     let session = startClock(start(), 2, 0, NOW);
     session = stopClock(session, NOW + 490_000);
