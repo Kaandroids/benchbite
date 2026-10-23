@@ -2,25 +2,14 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Icon, type IconName } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
-import { fonts, useTheme, type ColorTokens } from '@/theme';
+import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { useDurationFormat } from './format';
 import { durationMinutes, type LogSummary } from './history';
-
-function Stat({ icon, color, text }: { icon: IconName; color: keyof ColorTokens; text: string }) {
-  return (
-    <View style={styles.stat}>
-      <Icon name={icon} size={13} color={color} />
-      <Text variant="caption" color="textMuted" style={styles.semibold}>
-        {text}
-      </Text>
-    </View>
-  );
-}
 
 /** A finished workout in a list: its day, name, length, sets and calories. Opens the workout. */
 export function LogRow({ log, divider }: { log: LogSummary; divider: boolean }) {
@@ -57,17 +46,15 @@ export function LogRow({ log, divider }: { log: LogSummary; divider: boolean }) 
         <Text variant="bodyStrong" numberOfLines={1} style={styles.bold}>
           {workoutName(log)}
         </Text>
-        <View style={[styles.stats, { gap: spacing.md }]}>
-          <Stat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
-          <Stat icon="dumbbell" color="info" text={t('history.sets', { count: log.sets })} />
-          {log.estimatedKcal !== null ? (
-            <Stat
-              icon="flame"
-              color="primary"
-              text={t('history.kcal', { kcal: log.estimatedKcal })}
-            />
-          ) : null}
-        </View>
+        <Text variant="caption" color="textMuted" numberOfLines={1}>
+          {[
+            duration(durationMinutes(log)),
+            t('history.sets', { count: log.sets }),
+            log.estimatedKcal !== null ? t('history.kcal', { kcal: log.estimatedKcal }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
       </View>
       <Icon name="forward" size={18} color="textMuted" />
     </Pressable>
@@ -86,9 +73,6 @@ const styles = StyleSheet.create({
   bold: {
     fontFamily: fonts.extraBold,
   },
-  semibold: {
-    fontFamily: fonts.bold,
-  },
   date: {
     width: 48,
     height: 52,
@@ -102,14 +86,5 @@ const styles = StyleSheet.create({
   },
   day: {
     lineHeight: 24,
-  },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  stat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
 });

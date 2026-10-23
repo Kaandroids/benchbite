@@ -24,17 +24,13 @@ export function RecentLogs() {
     <View style={{ gap: spacing.sm }}>
       <View style={styles.header}>
         <Text variant="caption" color="textMuted" style={styles.bold}>
-          {t('workout.history.title')}
+          {[
+            t('workout.history.title'),
+            inWeek > 0 ? t('history.thisWeek', { count: inWeek }) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </Text>
-        {inWeek > 0 ? (
-          <View
-            style={[styles.chip, { borderRadius: radii.full, backgroundColor: colors.selected }]}
-          >
-            <Text variant="caption" color="primaryText" style={styles.bold}>
-              {t('history.thisWeek', { count: inWeek })}
-            </Text>
-          </View>
-        ) : null}
         <View style={styles.flex} />
         {all.length > 0 ? (
           <Pressable
@@ -84,10 +80,6 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontFamily: fonts.extraBold,
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
   },
   seeAll: {
     minHeight: 32,

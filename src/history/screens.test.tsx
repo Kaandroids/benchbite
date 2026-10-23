@@ -100,13 +100,11 @@ afterEach(() => jest.useRealTimers());
 describe('RecentLogs', () => {
   it('shows the latest three workouts and how many were this week', async () => {
     await render(<RecentLogs />);
-    expect(screen.getByText('2 this week')).toBeTruthy();
+    expect(screen.getByText('History · 2 this week')).toBeTruthy();
     expect(screen.getByText('FRI')).toBeTruthy();
     expect(screen.getByText('Push')).toBeTruthy();
-    expect(screen.getAllByText('17 sets')).toHaveLength(3);
-    expect(screen.getByText('52 min')).toBeTruthy();
-    expect(screen.getByText('1 h 1 min')).toBeTruthy();
-    expect(screen.getAllByText('~390 kcal')).toHaveLength(3);
+    expect(screen.getByText('52 min · 17 sets · ~390 kcal')).toBeTruthy();
+    expect(screen.getByText('1 h 1 min · 17 sets · ~390 kcal')).toBeTruthy();
     expect(screen.queryByText('Oct 6')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'See all' }));
     expect(router.push).toHaveBeenCalledWith('/workout/history');
