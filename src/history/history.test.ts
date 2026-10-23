@@ -13,6 +13,7 @@ import {
   useLogSummary,
   useRecentLogs,
   weekStart,
+  withSkipped,
   type LogSummary,
 } from './history';
 
@@ -177,6 +178,35 @@ describe('byExercise', () => {
       ['a', [1, 2]],
       ['b', [3]],
       ['a', [4]],
+    ]);
+  });
+});
+
+describe('withSkipped', () => {
+  const set = (exercisePosition: number, exerciseId: string) => ({
+    exercisePosition,
+    exerciseId,
+    weightKg: null,
+    reps: 8,
+    seconds: null,
+    meters: null,
+  });
+  const shape = (exercises: ReturnType<typeof withSkipped>) =>
+    exercises.map((exercise) => [exercise.exerciseId, exercise.sets.length]);
+
+  it('puts the skipped exercises of the workout in their places', () => {
+    expect(shape(withSkipped([set(0, 'a'), set(2, 'c')], ['a', 'b', 'c', 'd']))).toEqual([
+      ['a', 1],
+      ['b', 0],
+      ['c', 1],
+      ['d', 0],
+    ]);
+  });
+
+  it('leaves out an exercise logged in another place, and keeps what the workout lost', () => {
+    expect(shape(withSkipped([set(0, 'a'), set(3, 'x')], ['b', 'a']))).toEqual([
+      ['a', 1],
+      ['x', 1],
     ]);
   });
 });

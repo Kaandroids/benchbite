@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 
 import { useExerciseLibrary } from '@/exercises/library';
 import { act, fireEvent, render, screen } from '@/test/render';
+import { useWorkouts } from '@/workouts/workouts';
 
 import { EditLogScreen, missingFields } from './edit-log-screen';
 import {
@@ -24,6 +25,7 @@ jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
 }));
+jest.mock('@/workouts/workouts', () => ({ useWorkouts: jest.fn() }));
 jest.mock('./history', () => ({
   ...jest.requireActual<typeof import('./history')>('./history'),
   useLogSummaries: jest.fn(),
@@ -92,6 +94,16 @@ beforeEach(() => {
     loaded([
       { id: 'bench', name: 'Bench press', metrics: ['weight', 'reps'], imagePaths: [] },
       { id: 'plank', name: 'Plank', metrics: ['duration'], imagePaths: [] },
+      { id: 'row', name: 'Cable row', metrics: ['weight', 'reps'], imagePaths: [] },
+    ]) as never,
+  );
+  // The workout the logs were done from; its cable row was skipped.
+  jest.mocked(useWorkouts).mockReturnValue(
+    loaded([
+      {
+        id: 1,
+        exercises: [{ exerciseId: 'bench' }, { exerciseId: 'row' }, { exerciseId: 'plank' }],
+      },
     ]) as never,
   );
   jest.mocked(useLoggedSets).mockReturnValue(
@@ -280,16 +292,46 @@ describe('EditLogScreen', () => {
     await fireEvent(screen.getAllByLabelText('Weight of set 1')[0]!, 'endEditing');
     await fireEvent.press(screen.getAllByRole('button', { name: 'Remove set 2' })[0]!);
     // The plank gets a second hold like its first.
-    await fireEvent.press(screen.getAllByRole('button', { name: '+ Add set' })[1]!);
+    await fireEvent.press(screen.getAllByRole('button', { name: '+ Add set' })[2]!);
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
         { exerciseId: 'bench', sets: [bench(82.5, 8)] },
+        { exerciseId: 'row', sets: [] },
         { exerciseId: 'plank', sets: [plank(50), plank(50)] },
       ],
     });
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('adds sets to an exercise that was skipped', async () => {
+    await render(<EditLogScreen id={3} />);
+    expect(screen.getByText('Cable row')).toBeTruthy();
+    expect(screen.getByText('Skipped')).toBeTruthy();
+    await fireEvent.press(screen.getAllByRole('button', { name: '+ Add set' })[1]!);
+    expect(screen.queryByText('Skipped')).toBeNull();
+    // Bench press has sets 1 and 2; the row's new set is the next "set 1".
+    const weight = screen.getAllByLabelText('Weight of set 1')[1]!;
+    const reps = screen.getAllByLabelText('Reps of set 1')[1]!;
+    await fireEvent.changeText(weight, '50');
+    await fireEvent.changeText(reps, '10');
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(editLog).toHaveBeenCalledWith({
+      id: 3,
+      exercises: [
+        { exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
+        { exerciseId: 'row', sets: [bench(50, 10)] },
+        { exerciseId: 'plank', sets: [plank(50)] },
+      ],
+    });
+  });
+
+  it('shows only what was logged once the workout is gone', async () => {
+    jest.mocked(useWorkouts).mockReturnValue(loaded([]) as never);
+    await render(<EditLogScreen id={3} />);
+    expect(screen.queryByText('Cable row')).toBeNull();
+    expect(screen.getByText('Plank')).toBeTruthy();
   });
 
   it('marks what is missing instead of saving', async () => {

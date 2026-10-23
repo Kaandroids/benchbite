@@ -60,12 +60,14 @@ select throws_ok(
 );
 select is((select count(*)::integer from public.logged_sets), 3, 'Rejected edits keep the sets');
 
--- An edit replaces the sets: one bench press set changed, one removed, a plank set added.
+-- An edit replaces the sets: one bench press set changed, one removed, a plank set added. A
+-- skipped exercise in between keeps the plank in its place.
 select lives_ok(
   $$ select public.edit_workout_log(current_setting('test.log')::bigint, pg_temp.sets(
        jsonb_build_array(
          jsonb_build_object('exerciseId', 'Barbell_Bench_Press_-_Medium_Grip', 'sets',
            jsonb_build_array(jsonb_build_object('weightKg', 82.5, 'reps', 8))),
+         jsonb_build_object('exerciseId', 'Pushups', 'sets', '[]'::jsonb),
          jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
            jsonb_build_object('seconds', 50), jsonb_build_object('seconds', 45)))))) $$,
   'Owners edit their log'
@@ -75,8 +77,8 @@ select results_eq(
      from public.logged_sets order by exercise_position, set_position $$,
   $$ values
      (0::smallint, 0::smallint, 'Barbell_Bench_Press_-_Medium_Grip', 82.5::numeric, 8::smallint, null::integer),
-     (1::smallint, 0::smallint, 'Plank', null::numeric, null::smallint, 50),
-     (1::smallint, 1::smallint, 'Plank', null::numeric, null::smallint, 45) $$,
+     (2::smallint, 0::smallint, 'Plank', null::numeric, null::smallint, 50),
+     (2::smallint, 1::smallint, 'Plank', null::numeric, null::smallint, 45) $$,
   'The edit replaces the sets'
 );
 select results_eq(

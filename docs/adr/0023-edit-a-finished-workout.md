@@ -17,7 +17,9 @@ should be fixable.
 - **Only the sets change.** When the workout was done, what it had when it started and its
   estimated calories (ADR 0021) stay as they were.
 - **A log keeps at least one set.** Removing every set is rejected; the log is deleted instead.
-- **Exercises without sets are left out,** and the remaining ones keep their order.
+- **Skipped exercises can get sets afterwards.** A log keeps each exercise's place in the workout,
+  so the edit screen shows the workout's exercises that have no sets in their places. Exercises
+  without sets are sent too and save nothing, so the others keep their places.
 
 ## Alternatives considered
 

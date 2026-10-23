@@ -7,8 +7,8 @@
 
 -- Replaces the sets of one of the caller's logs, in log_workout()'s shape:
 --   {"exercises": [{"exerciseId": "Pushups", "sets": [{"weightKg": null, "reps": 12}]}]}
--- Exercises without sets are left out. A log keeps at least one set: one without any is deleted
--- instead.
+-- Exercises without sets save nothing but keep their places, so that a skipped exercise can get
+-- sets later. A log keeps at least one set: one without any is deleted instead.
 create function public.edit_workout_log(log_id bigint, log jsonb)
 returns void
 language plpgsql

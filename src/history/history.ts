@@ -59,6 +59,36 @@ export function byExercise(sets: readonly LoggedSet[]): LoggedExercise[] {
   return exercises;
 }
 
+/**
+ * The exercises of a finished workout and the ones it skipped, in the workout's order. A log keeps
+ * each exercise's place in the workout, so a place without sets is an exercise that was skipped;
+ * `planned` names the workout's exercises, as far as it still has them.
+ */
+export function withSkipped(
+  sets: readonly LoggedSet[],
+  planned: readonly string[],
+): LoggedExercise[] {
+  const logged = byExercise(sets);
+  const byPlace = new Map(logged.map((exercise) => [exercise.sets[0]?.exercisePosition, exercise]));
+  const loggedIds = new Set(logged.map((exercise) => exercise.exerciseId));
+  const places = Math.max(
+    planned.length,
+    ...logged.map((e) => (e.sets[0]?.exercisePosition ?? 0) + 1),
+  );
+  const exercises: LoggedExercise[] = [];
+  for (let place = 0; place < places; place++) {
+    const done = byPlace.get(place);
+    const skipped = planned[place];
+    if (done) {
+      exercises.push(done);
+    } else if (skipped !== undefined && !loggedIds.has(skipped)) {
+      // An exercise done elsewhere in the log was moved in the workout since, not skipped.
+      exercises.push({ exerciseId: skipped, sets: [] });
+    }
+  }
+  return exercises;
+}
+
 /** Whether less was done than planned. */
 export function isPartial(done: number, planned: number | null): planned is number {
   return planned !== null && done < planned;

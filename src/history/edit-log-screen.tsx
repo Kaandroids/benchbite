@@ -15,15 +15,16 @@ import { setKindOf, type SetField, type SetKind } from '@/sessions/fields';
 import { BUTTON_SIZE, NUMBER_WIDTH, SetInput } from '@/sessions/set-row';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
+import { useWorkouts } from '@/workouts/workouts';
 
 import {
-  byExercise,
   useEditLog,
   useLoggedSets,
   useLogSummary,
-  type LoggedSet,
+  type LoggedExercise,
   type LogSummary,
   type SetValues,
+  withSkipped,
 } from './history';
 
 type EditedSet = SetValues & { key: number };
@@ -49,11 +50,12 @@ export function EditLogScreen({ id }: { id: number }) {
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
   const library = useExerciseLibrary();
+  const workouts = useWorkouts();
 
-  if (!allLoaded([summary, sets, library])) {
+  if (!allLoaded([summary, sets, library, workouts])) {
     return (
       <Screen onBack={() => router.back()} closes>
-        <LoadState queries={[summary, sets, library]} />
+        <LoadState queries={[summary, sets, library, workouts]} />
       </Screen>
     );
   }
@@ -68,16 +70,25 @@ export function EditLogScreen({ id }: { id: number }) {
       </Screen>
     );
   }
-  return <LogEditor log={summary.data} sets={sets.data ?? []} library={library.data ?? []} />;
+  const log = summary.data;
+  // The exercises of the workout it was done from, so that a skipped one can be added afterwards.
+  const workout = workouts.data?.find((item) => item.id === log.workoutId);
+  return (
+    <LogEditor
+      log={log}
+      exercises={withSkipped(sets.data ?? [], workout?.exercises.map((e) => e.exerciseId) ?? [])}
+      library={library.data ?? []}
+    />
+  );
 }
 
 function LogEditor({
   log,
-  sets,
+  exercises: initial,
   library,
 }: {
   log: LogSummary;
-  sets: LoggedSet[];
+  exercises: LoggedExercise[];
   library: LibraryExercise[];
 }) {
   const { t, i18n } = useTranslation();
@@ -87,7 +98,7 @@ function LogEditor({
   // Each set gets a key of its own, so that removing one keeps the others' inputs in place.
   const [exercises, setExercises] = useState<EditedExercise[]>(() => {
     let key = 0;
-    return byExercise(sets).map((exercise) => ({
+    return initial.map((exercise) => ({
       exerciseId: exercise.exerciseId,
       sets: exercise.sets.map(({ weightKg, reps, seconds, meters }) => ({
         weightKg,
@@ -125,6 +136,7 @@ function LogEditor({
     try {
       await edit.mutateAsync({
         id: log.id,
+        // Skipped exercises are sent too, without sets, so that the others keep their places.
         exercises: exercises.map((exercise) => ({
           exerciseId: exercise.exerciseId,
           sets: exercise.sets.map(({ key: _key, ...values }) => values),
@@ -224,9 +236,16 @@ function LogEditor({
           >
             <View style={[styles.row, { gap: spacing.md }]}>
               <ExerciseThumbnail path={info?.imagePaths[0]} size={40} />
-              <Text variant="bodyStrong" style={[styles.bold, styles.flex]}>
-                {info?.name ?? ''}
-              </Text>
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" style={styles.bold}>
+                  {info?.name ?? ''}
+                </Text>
+                {exercise.sets.length === 0 ? (
+                  <Text variant="caption" color="textMuted" style={styles.semibold}>
+                    {t('session.summary.skipped')}
+                  </Text>
+                ) : null}
+              </View>
             </View>
             {exercise.sets.length > 0 ? (
               <View style={[styles.row, { gap: spacing.sm, paddingHorizontal: 2 }]}>
