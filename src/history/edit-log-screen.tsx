@@ -255,7 +255,7 @@ function LogEditor({
             ]}
           >
             <View style={[styles.row, { gap: spacing.md }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} />
+              <ExerciseThumbnail path={info?.imagePaths[0]} size={40} name={info?.name} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" style={styles.bold}>
                   {info?.name ?? ''}

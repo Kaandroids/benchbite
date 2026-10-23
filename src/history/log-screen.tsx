@@ -228,7 +228,7 @@ export function LogScreen({ id }: { id: number }) {
               <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
             </View>
             <View style={[styles.row, { gap: spacing.md, paddingRight: BUTTON_ROOM }]}>
-              <ExerciseThumbnail path={info?.imagePaths[0]} size={44} />
+              <ExerciseThumbnail path={info?.imagePaths[0]} size={44} name={info?.name} />
               <View style={styles.flex}>
                 <Text variant="bodyStrong" style={styles.bold}>
                   {info?.name ?? ''}
