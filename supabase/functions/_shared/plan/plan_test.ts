@@ -36,24 +36,40 @@ Deno.test('candidates respect the setup, the experience and the order', () => {
 Deno.test('sessions follow the training days in order', () => {
   const plan = buildPlan(input, CATALOGUE);
   assertEquals(
-    plan.sessions.map((session) => [session.weekday, session.type]),
+    plan.sessions.map((session) => [session.weekdays, session.type]),
     [
-      [1, 'push'],
-      [3, 'pull'],
-      [5, 'legs'],
+      [[1], 'push'],
+      [[3], 'pull'],
+      [[5], 'legs'],
     ],
   );
 });
 
-Deno.test('the same answers give the same plan', () => {
-  assertEquals(buildPlan(input, CATALOGUE), buildPlan(input, CATALOGUE));
+Deno.test('a repeated type is one session on each of its days', () => {
+  const sessionsOf = (trainingDays: number[], experience: PlanInput['experience']) =>
+    buildPlan({ ...input, experience, trainingDays }, CATALOGUE).sessions.map((session) => [
+      session.type,
+      session.weekdays,
+    ]);
+  assertEquals(sessionsOf([1, 3, 5], 'beginner'), [['full_body', [1, 3, 5]]]);
+  assertEquals(sessionsOf([1, 2, 4, 5], 'intermediate'), [
+    ['upper', [1, 4]],
+    ['lower', [2, 5]],
+  ]);
+  assertEquals(sessionsOf([1, 2, 3, 4, 5], 'intermediate'), [
+    ['upper', [1, 4]],
+    ['lower', [2, 5]],
+    ['full_body', [3]],
+  ]);
+  assertEquals(sessionsOf([1, 2, 3, 4, 5, 6], 'intermediate'), [
+    ['push', [1, 4]],
+    ['pull', [2, 5]],
+    ['legs', [3, 6]],
+  ]);
 });
 
-Deno.test('a repeated session type uses other exercises', () => {
-  const sessions = buildPlan({ ...input, trainingDays: [1, 2, 3, 4, 5, 6] }, CATALOGUE).sessions;
-  const [firstPush, , , secondPush] = sessions;
-  assertEquals([firstPush!.type, secondPush!.type], ['push', 'push']);
-  assertNotEquals(firstPush!.exercises[0]!.exerciseId, secondPush!.exercises[0]!.exerciseId);
+Deno.test('the same answers give the same plan', () => {
+  assertEquals(buildPlan(input, CATALOGUE), buildPlan(input, CATALOGUE));
 });
 
 Deno.test('no session repeats an exercise', () => {
@@ -145,7 +161,7 @@ Deno.test('hinges are only trained on leg and full body days', () => {
   }
 });
 
-Deno.test('no two days of a week are the same', () => {
+Deno.test('no two sessions of a week are the same', () => {
   for (let days = 2; days <= 6; days++) {
     for (const experience of ['beginner', 'intermediate'] as const) {
       const sessions = ids({
@@ -160,12 +176,14 @@ Deno.test('no two days of a week are the same', () => {
 });
 
 Deno.test('a slot that comes back later in the week takes the next exercise', () => {
-  const [upper, lower, push, , legs] = buildPlan(
+  const [upper, lower, fullBody] = buildPlan(
     { ...input, trainingDays: [1, 2, 3, 4, 5] },
     CATALOGUE,
   ).sessions;
-  assertNotEquals(upper!.exercises[0]!.exerciseId, push!.exercises[0]!.exerciseId);
-  assertNotEquals(lower!.exercises[0]!.exerciseId, legs!.exercises[0]!.exerciseId);
+  const first = (session: typeof upper, slot: string) =>
+    session!.exercises.find((exercise) => exercise.slot === slot)?.exerciseId;
+  assertNotEquals(first(upper, 'horizontal_push'), first(fullBody, 'horizontal_push'));
+  assertNotEquals(first(lower, 'squat'), first(fullBody, 'squat'));
 });
 
 Deno.test('when time runs out, the remaining slots are left out in order', () => {

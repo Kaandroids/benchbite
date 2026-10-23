@@ -16,6 +16,7 @@ import { useTheme } from '@/theme';
 
 import { projectedDate } from '../body';
 import { saveOnboarding } from '../plan';
+import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
 
@@ -109,7 +110,7 @@ export function PlanStep() {
 
       <Card entering={FadeInDown.delay(300).duration(400)}>
         <Text variant="headline">{t('onboarding.plan.week')}</Text>
-        {plan.sessions.map((session) => {
+        {planDays(plan).map((session) => {
           const exerciseNames = session.exercises.map(
             (exercise) => names[exercise.exerciseId] ?? '',
           );

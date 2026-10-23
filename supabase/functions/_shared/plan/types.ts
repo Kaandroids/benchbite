@@ -45,8 +45,10 @@ export type PlannedExercise = {
   restSeconds: number;
 };
 
+/** One workout of the plan, done on each of its weekdays. */
 export type Session = {
-  weekday: number;
+  /** ISO weekdays in order, 1 for Monday. A plan's sessions never share a weekday. */
+  weekdays: number[];
   type: SessionType;
   exercises: PlannedExercise[];
   /** A short conditioning block at the end, for fat loss. */

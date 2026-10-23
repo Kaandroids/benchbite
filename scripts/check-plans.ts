@@ -5,6 +5,7 @@
 import { Constants, type Database } from '../src/lib/database.types.ts';
 import {
   FREE_WORKOUT_EXERCISES,
+  FREE_WORKOUTS,
   MAX_TRAINING_DAYS,
   SESSION_MINUTES,
 } from '../supabase/functions/_shared/plan/limits.ts';
@@ -77,23 +78,27 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
   const setupRank = SETUPS.indexOf(answers.setup);
   const experienceRank = EXPERIENCES.indexOf(answers.experience);
 
-  if (sessions.length !== answers.trainingDays.length) {
-    found.push(`${sessions.length} sessions for ${answers.trainingDays.length} days`);
+  const days = sessions.flatMap((session) => session.weekdays).sort((a, b) => a - b);
+  if (days.join() !== [...answers.trainingDays].sort((a, b) => a - b).join()) {
+    found.push(`sessions on days ${days.join()} for ${answers.trainingDays.join()}`);
+  }
+  if (sessions.length > FREE_WORKOUTS) {
+    found.push(`${sessions.length} workouts`);
   }
   for (const session of sessions) {
     if (session.estimatedMinutes > answers.sessionMinutes) {
-      found.push(`day ${session.weekday} takes ${session.estimatedMinutes} minutes`);
+      found.push(`${session.type} takes ${session.estimatedMinutes} minutes`);
     }
     const count = session.exercises.length + (session.finisher ? 1 : 0);
     if (session.exercises.length < 2 || count > FREE_WORKOUT_EXERCISES) {
-      found.push(`day ${session.weekday} has ${count} exercises`);
+      found.push(`${session.type} has ${count} exercises`);
     }
     if ((answers.goal === 'lose_fat') !== (session.finisher !== null)) {
-      found.push(`day ${session.weekday} has the wrong finisher`);
+      found.push(`${session.type} has the wrong finisher`);
     }
     const ids = session.exercises.map((exercise) => exercise.exerciseId);
     if (new Set(ids).size !== ids.length) {
-      found.push(`day ${session.weekday} repeats an exercise`);
+      found.push(`${session.type} repeats an exercise`);
     }
     for (const exercise of [
       ...session.exercises,

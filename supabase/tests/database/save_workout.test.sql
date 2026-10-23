@@ -49,8 +49,8 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 5) $$,
-  'Users may have 5 workouts with 20 exercises each'
+  $$ values (20, 3) $$,
+  'Users may have 3 workouts with 20 exercises each'
 );
 
 -- Rejected workouts save nothing.
@@ -150,15 +150,15 @@ select results_eq(
   'The exercises are replaced'
 );
 
--- A sixth workout is rejected, archived ones counted; replacing one is still allowed.
+-- A fourth workout is rejected, archived ones counted.
 select lives_ok(
-  $$ select public.save_workout(pg_temp.valid()) from generate_series(1, 3) $$,
-  'Users can have up to 5 workouts'
+  $$ select public.save_workout(pg_temp.valid()) $$,
+  'Users can have up to 3 workouts'
 );
 select throws_ok(
   $$ select public.save_workout(pg_temp.valid()) $$,
-  'BB009', 'A user can have up to 5 workouts',
-  'A sixth workout is rejected, the inactive one counted'
+  'BB009', 'A user can have up to 3 workouts',
+  'A fourth workout is rejected, the inactive one counted'
 );
 delete from public.workouts where name = 'Arms';
 

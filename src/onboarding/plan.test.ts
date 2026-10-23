@@ -31,7 +31,7 @@ const ANSWERS: OnboardingAnswers = {
 const PLAN: WorkoutPlan = {
   sessions: [
     {
-      weekday: 1,
+      weekdays: [1],
       type: 'full_body',
       exercises: [
         {

@@ -14,3 +14,9 @@ export type SessionMinutes = (typeof SESSION_MINUTES)[number];
  * same limit in workout_limits(), and plans stay within it.
  */
 export const FREE_WORKOUT_EXERCISES = 20;
+
+/**
+ * The most workouts a user may have without premium, as in workout_limits(). A plan has at most
+ * this many, so that every user can start with the whole plan.
+ */
+export const FREE_WORKOUTS = 3;

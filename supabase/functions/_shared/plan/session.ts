@@ -163,7 +163,7 @@ function buildExercises(
 export function buildSession(
   input: PlanInput,
   catalogue: CatalogueEntry[],
-  weekday: number,
+  weekdays: number[],
   type: SessionType,
   slotUses: SlotUses,
 ): Session {
@@ -178,7 +178,7 @@ export function buildSession(
   );
   const seconds = exercises.reduce((total, e) => total + exerciseSeconds(e), fixedSeconds);
   return {
-    weekday,
+    weekdays,
     type,
     exercises,
     finisher,

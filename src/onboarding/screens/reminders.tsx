@@ -14,6 +14,7 @@ import {
 } from '@/reminders/reminders';
 import { useTheme } from '@/theme';
 
+import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
@@ -35,7 +36,7 @@ export function RemindersStep() {
   const { answers, progress, next, back } = useStep('reminders');
   const [minutes, setMinutes] = useState(answers.reminderMinutes ?? DEFAULT_TIME);
   const [enabling, setEnabling] = useState(false);
-  const sessions = answers.plan?.sessions ?? [];
+  const sessions = answers.plan ? planDays(answers.plan) : [];
 
   const enable = async () => {
     setEnabling(true);

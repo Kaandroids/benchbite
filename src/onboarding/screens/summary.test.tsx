@@ -10,7 +10,7 @@ jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 const TARGETS: NutritionTargets = { calories: 2200, proteinG: 150, carbsG: 250, fatG: 70 };
 
 const session = (weekday: number, type: WorkoutPlan['sessions'][number]['type']) => ({
-  weekday,
+  weekdays: [weekday],
   type,
   exercises: [],
   finisher: null,

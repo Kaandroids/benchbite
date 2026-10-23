@@ -39,14 +39,14 @@ const TARGETS: NutritionTargets = { calories: 2200, proteinG: 150, carbsG: 250, 
 const PLAN: WorkoutPlan = {
   sessions: [
     {
-      weekday: 1,
+      weekdays: [1],
       type: 'upper',
       exercises: ['bench', 'row', 'press', 'curl', 'dip', 'fly'].map(exercise),
       finisher: null,
       estimatedMinutes: 50,
     },
     {
-      weekday: 4,
+      weekdays: [4],
       type: 'lower',
       exercises: ['squat', 'deadlift'].map(exercise),
       finisher: null,

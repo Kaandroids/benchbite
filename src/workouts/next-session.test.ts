@@ -1,16 +1,8 @@
-import type { Plan, Session } from '@shared/plan/types';
-
 import { nextSession } from './next-session';
 
-const session = (weekday: number): Session => ({
-  weekday,
-  type: 'full_body',
-  exercises: [],
-  finisher: null,
-  estimatedMinutes: 45,
-});
+const session = (weekday: number) => ({ weekday, name: `Day ${weekday}` });
 
-const plan = (...weekdays: number[]): Plan => ({ sessions: weekdays.map(session) });
+const plan = (...weekdays: number[]) => ({ sessions: weekdays.map(session) });
 
 // A Wednesday.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);

@@ -15,6 +15,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { nextSession } from '@/workouts/next-session';
 import { useTheme } from '@/theme';
 
+import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 
 /**
@@ -29,7 +30,8 @@ export function SummaryStep() {
   const formatTime = useTimeFormat();
   const { answers, progress, next } = useStep('summary');
   const { targets, plan, reminderMinutes } = answers;
-  const upcoming = plan ? nextSession(plan, new Date()) : null;
+  const days = plan ? planDays(plan) : [];
+  const upcoming = plan ? nextSession({ sessions: days }, new Date()) : null;
 
   useEffect(() => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -48,7 +50,7 @@ export function SummaryStep() {
       ? [
           {
             icon: 'dumbbell' as const,
-            label: t('onboarding.summary.workouts', { count: plan.sessions.length }),
+            label: t('onboarding.summary.workouts', { count: days.length }),
           },
         ]
       : []),
