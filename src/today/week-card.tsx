@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -27,6 +27,8 @@ type WeekCardProps = {
   streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
+  /** Opens a day with workouts, or with workouts that moved away from it. */
+  onDayPress: (day: ScheduleDay) => void;
 };
 
 /** The weekday of a day as YYYY-MM-DD. */
@@ -154,7 +156,7 @@ function arc(radius: number, share: number): string {
  * which fills as they are done, and a dot for each rest day. Moved, missed, skipped and extra
  * workouts each have their own mark (ADR 0028).
  */
-export function WeekCard({ today, streak, schedule }: WeekCardProps) {
+export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps) {
   const { t } = useTranslation();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
@@ -197,13 +199,17 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
       <View style={styles.week}>
         {schedule.days.map((day) => {
           const isToday = day.date === todayOn;
+          const opens = day.workouts.length > 0 || day.movedAway.length > 0;
           return (
-            <View
+            <Pressable
               key={day.date}
               accessible
+              accessibilityRole={opens ? 'button' : undefined}
               accessibilityLabel={labelOf(day)}
+              accessibilityHint={opens ? t('today.week.open') : undefined}
               accessibilityState={{ selected: isToday }}
-              style={styles.day}
+              onPress={opens ? () => onDayPress(day) : undefined}
+              style={({ pressed }) => [styles.day, { opacity: pressed ? 0.6 : 1 }]}
             >
               <DayMark day={day} state={dayState(day, todayOn)} />
               <Text
@@ -213,7 +219,7 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
               >
                 {weekdayName(day.weekday)}
               </Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>

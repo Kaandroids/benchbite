@@ -1,4 +1,4 @@
-import { render, screen } from '@/test/render';
+import { fireEvent, render, screen } from '@/test/render';
 import { NO_STREAK } from '@/streak/streak';
 import { weekSchedule, type FinishedWorkout, type WorkoutMove } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
@@ -17,6 +17,8 @@ const session = (workoutId: number, weekday: number, type: WeekSession['type']):
   estimatedMinutes: 45,
 });
 
+const onDayPress = jest.fn();
+
 const renderWeek = (
   sessions: WeekSession[],
   moves: WorkoutMove[] = [],
@@ -27,6 +29,7 @@ const renderWeek = (
       today={WEDNESDAY}
       streak={NO_STREAK}
       schedule={weekSchedule(sessions, moves, finished, WEDNESDAY)}
+      onDayPress={onDayPress}
     />,
   );
 
@@ -98,5 +101,20 @@ describe('WeekCard', () => {
     expect(screen.getByLabelText('Thu 22, Legs, done, Upper body, planned')).toBeTruthy();
     // A day with several workouts and none done shows how many there are.
     expect(screen.getByText('2')).toBeTruthy();
+  });
+
+  it('opens a day with workouts, but not a rest day', async () => {
+    await renderWeek(
+      [session(1, 1, 'push')],
+      [{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' }],
+    );
+    // The day the workout moved away from opens too, to undo the move.
+    await fireEvent.press(screen.getByLabelText('Mon 19, Push, moved to Friday'));
+    expect(onDayPress).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-10-19' }));
+    expect(screen.getByLabelText('Fri 23, Push, moved from Monday, planned')).toHaveProp(
+      'accessibilityRole',
+      'button',
+    );
+    expect(screen.getByLabelText('Tue 20')).not.toHaveProp('accessibilityRole', 'button');
   });
 });
