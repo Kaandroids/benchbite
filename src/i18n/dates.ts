@@ -47,6 +47,17 @@ export function useDateFormat(style: NonNullable<Intl.DateTimeFormatOptions['dat
   return (date: Date) => formatter.format(date);
 }
 
+/** Formats a day of this year with its weekday, for example "Friday, October 23". */
+export function useDayFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+  return (date: Date) => formatter.format(date);
+}
+
 /** Formats a time of day, given in minutes after midnight, as the app language writes it. */
 export function useTimeFormat() {
   const { i18n } = useTranslation();

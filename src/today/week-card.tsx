@@ -6,7 +6,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
+import { fromIsoDate, isoWeekday, toIsoDate, useDayFormat, useWeekdayFormat } from '@/i18n/dates';
 import { StreakBadge } from '@/streak/streak-badge';
 import type { Streak } from '@/streak/streak';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
@@ -155,16 +155,12 @@ function arc(radius: number, share: number): string {
  * workouts each have their own mark (ADR 0028).
  */
 export function WeekCard({ today, streak, schedule }: WeekCardProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
   const workoutName = useWorkoutName();
   const todayOn = toIsoDate(today);
-  const date = new Intl.DateTimeFormat(i18n.language, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(today);
+  const formatDay = useDayFormat();
 
   const labelOf = (day: ScheduleDay) =>
     [
@@ -188,7 +184,7 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
       <View style={styles.header}>
         <View style={styles.flex}>
           <Text variant="headline" accessibilityRole="header">
-            {date}
+            {formatDay(today)}
           </Text>
           {schedule.planned > 0 ? (
             <Text variant="caption" color="textMuted" style={styles.bold}>
