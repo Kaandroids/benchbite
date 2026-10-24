@@ -9,6 +9,9 @@ import { EditorScreen } from './editor-screen';
 import { testExercise, testWorkout } from './test-data';
 import { useDeleteWorkout, useWorkoutLimits, useSaveWorkout, useWorkouts } from './workouts';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), dismiss: jest.fn() },
 }));
@@ -23,7 +26,6 @@ jest.mock('./workouts', () => ({
   useSaveWorkout: jest.fn(),
   useDeleteWorkout: jest.fn(),
   useWorkoutLimits: jest.fn(),
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 
 const libraryExercise = (

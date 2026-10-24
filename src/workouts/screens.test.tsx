@@ -11,6 +11,9 @@ import { WorkoutScreen } from './workout-screen';
 import { useSetWorkoutActive, useWorkoutLimits, useWorkouts, type Workout } from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
@@ -18,7 +21,6 @@ jest.mock('./workouts', () => ({
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
   useKcalPerMinute: () => ({ data: 7.5 }),
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 jest.mock('@/history/history', () => ({
   ...jest.requireActual<typeof import('@/history/history')>('@/history/history'),

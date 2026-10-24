@@ -3,6 +3,9 @@ import { createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { isUserPhoto, uploadPhoto, usePictureUrls } from './photos';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => '11111111-1111-1111-1111-111111111111' }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-image-manipulator', () => {
@@ -24,9 +27,6 @@ jest.mock('expo-image-manipulator', () => {
 });
 jest.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: jest.fn() }, storage: { from: jest.fn() } },
-}));
-jest.mock('@/workouts/workouts', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 
 const USER = '0000000a-0000-0000-0000-000000000000';
