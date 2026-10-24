@@ -8,19 +8,24 @@ Benchbite uses an AI-assisted workflow:
 
 1. The maintainer and [Claude Code](https://claude.com/claude-code) plan a change, usually as a GitHub issue.
 2. Claude implements it on a branch and opens a pull request as the `benchbite-bot` GitHub App.
-3. The maintainer reviews the pull request and leaves feedback.
-4. Claude addresses the feedback with new commits until the pull request is approved.
-5. The maintainer squash-merges it into `main`.
+3. Claude reviews the pull request for design, security, and logic and performance, posts the
+   findings on it and fixes the ones that hold.
+4. The maintainer reviews the pull request and leaves feedback.
+5. Claude addresses the feedback with new commits until the pull request is approved.
+6. The maintainer squash-merges it into `main`.
 
 The `main` branch is protected: changes require a pull request and an approving review.
 
-Every pull request runs the [CI workflow](.github/workflows/ci.yml), which checks types, lint and
-formatting. Run the same checks locally before pushing:
+Every pull request runs the [CI workflow](.github/workflows/ci.yml): types, lint, formatting, the
+app's tests, translations and Edge Functions, and on a local Supabase stack the database tests,
+the generated types and every generated plan. Run the main checks locally before pushing:
 
 ```bash
 pnpm typecheck
 pnpm lint
 pnpm format:check
+pnpm test
+pnpm supabase test db   # with the local stack running
 ```
 
 ## Conventions
