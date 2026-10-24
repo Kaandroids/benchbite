@@ -11,6 +11,8 @@ type ButtonProps = {
   label: string;
   onPress?: () => void;
   variant?: ButtonVariant;
+  /** A small button fits in a row beside text. */
+  size?: 'regular' | 'small';
   disabled?: boolean;
   /** Shows a spinner and ignores presses, for example while a request is running. */
   loading?: boolean;
@@ -49,6 +51,7 @@ export function Button({
   label,
   onPress,
   variant = 'primary',
+  size = 'regular',
   disabled = false,
   loading = false,
   accessibilityHint,
@@ -70,15 +73,19 @@ export function Button({
       borderRadius={radii.lg}
       style={style}
       faceStyle={[
-        styles.face,
-        { backgroundColor: face, paddingHorizontal: spacing.xl },
+        size === 'small' ? styles.small : styles.face,
+        { backgroundColor: face, paddingHorizontal: size === 'small' ? spacing.md : spacing.xl },
         border ? { borderWidth: 2, borderColor: border } : null,
       ]}
     >
       {loading ? (
         <ActivityIndicator color={colors[labelColor]} />
       ) : (
-        <Text variant="button" color={labelColor} numberOfLines={1}>
+        <Text
+          variant={size === 'small' ? 'bodyStrong' : 'button'}
+          color={labelColor}
+          numberOfLines={1}
+        >
           {label}
         </Text>
       )}
@@ -89,6 +96,11 @@ export function Button({
 const styles = StyleSheet.create({
   face: {
     minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  small: {
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
