@@ -52,7 +52,8 @@
       "extra_one": "zusätzliches Training",
       "extra_other": "{{count}} zusätzliche Trainings",
       "progress_one": "{{done}} von {{count}} Training diese Woche",
-      "progress_other": "{{done}} von {{count}} Trainings diese Woche"
+      "progress_other": "{{done}} von {{count}} Trainings diese Woche",
+      "open": "Zeigt die Workouts des Tages"
     },
     "workout": {
       "title": "Heutiges Training",
@@ -65,6 +66,35 @@
       "doneOf": "{{done}} von {{count}} erledigt",
       "movedFrom": "Verschoben von {{day}}",
       "finished": "Erledigt"
+    },
+    "missed": {
+      "missedOn": "Am {{day}} verpasst",
+      "hint": "{{session}}. Hol es an einem freien Tag dieser Woche nach, damit dein Plan aufgeht.",
+      "skip": "Auslassen",
+      "pickDay": "Tag wählen",
+      "skipError": "Das Workout konnte nicht ausgelassen werden. Prüfe deine Verbindung und versuche es erneut."
+    },
+    "pickDay": {
+      "title": "{{session}} vom {{day}} verschieben",
+      "subtitle": "Wähle einen Tag dieser Woche.",
+      "today": "Heute",
+      "rest": "Ruhetag",
+      "move": "Auf {{day}} verschieben",
+      "error": "Das Workout konnte nicht verschoben werden. Prüfe deine Verbindung und versuche es erneut.",
+      "taken": "Dieser Tag ist nicht mehr frei. Wähle einen anderen."
+    },
+    "dayMenu": {
+      "planned_zero": "Keine Workouts geplant",
+      "planned_one": "{{count}} Workout geplant",
+      "planned_other": "{{count}} Workouts geplant",
+      "move": "Auf anderen Tag",
+      "undo": "Rückgängig",
+      "undoSkip": "Rückgängig",
+      "skipped": "Ausgelassen",
+      "done": "Erledigt",
+      "movedTo": "Auf {{day}} verschoben",
+      "note": "Eine Verschiebung gilt nur für diese Woche. Nächste Woche sind deine Workouts wieder an ihren Tagen.",
+      "error": "Die Verschiebung konnte nicht rückgängig gemacht werden. Prüfe deine Verbindung und versuche es erneut."
     },
     "weight": {
       "title": "Gewicht",

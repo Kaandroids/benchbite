@@ -52,7 +52,8 @@
       "extra_one": "extra workout",
       "extra_other": "{{count}} extra workouts",
       "progress_one": "{{done}} of {{count}} workout this week",
-      "progress_other": "{{done}} of {{count}} workouts this week"
+      "progress_other": "{{done}} of {{count}} workouts this week",
+      "open": "Shows the day's workouts"
     },
     "workout": {
       "title": "Today's workout",
@@ -65,6 +66,35 @@
       "doneOf": "{{done}} of {{count}} done",
       "movedFrom": "Moved from {{day}}",
       "finished": "Done"
+    },
+    "missed": {
+      "missedOn": "Missed on {{day}}",
+      "hint": "{{session}}. Do it on a free day this week to keep your plan on track.",
+      "skip": "Skip",
+      "pickDay": "Pick a day",
+      "skipError": "We couldn't skip the workout. Check your connection and try again."
+    },
+    "pickDay": {
+      "title": "Move {{day}}'s {{session}}",
+      "subtitle": "Pick a day this week.",
+      "today": "Today",
+      "rest": "Rest day",
+      "move": "Move to {{day}}",
+      "error": "We couldn't move the workout. Check your connection and try again.",
+      "taken": "That day is no longer free. Pick another one."
+    },
+    "dayMenu": {
+      "planned_zero": "No workouts planned",
+      "planned_one": "{{count}} workout planned",
+      "planned_other": "{{count}} workouts planned",
+      "move": "Move to another day",
+      "undo": "Undo move",
+      "undoSkip": "Undo skip",
+      "skipped": "Skipped",
+      "done": "Done",
+      "movedTo": "Moved to {{day}}",
+      "note": "A move only changes this week. Next week your workouts are back on their days.",
+      "error": "We couldn't undo the move. Check your connection and try again."
     },
     "weight": {
       "title": "Weight",

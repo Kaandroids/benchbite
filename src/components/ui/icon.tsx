@@ -25,6 +25,7 @@ export const ICONS = {
   home: { ios: 'house', android: 'home', web: 'home' },
   info: { ios: 'info', android: 'info_i', web: 'info_i' },
   meal: { ios: 'fork.knife', android: 'restaurant', web: 'restaurant' },
+  missed: { ios: 'calendar.badge.exclamationmark', android: 'event_busy', web: 'event_busy' },
   minus: { ios: 'minus', android: 'remove', web: 'remove' },
   moon: { ios: 'moon', android: 'bedtime', web: 'bedtime' },
   offline: { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' },
@@ -40,6 +41,7 @@ export const ICONS = {
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
   trend: { ios: 'chart.line.uptrend.xyaxis', android: 'show_chart', web: 'show_chart' },
   trophy: { ios: 'trophy', android: 'trophy', web: 'trophy' },
+  undo: { ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
 
 export type IconName = keyof typeof ICONS;

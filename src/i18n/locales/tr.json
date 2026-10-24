@@ -52,7 +52,8 @@
       "extra_one": "ekstra antrenman",
       "extra_other": "{{count}} ekstra antrenman",
       "progress_one": "Bu hafta {{count}} antrenmandan {{done}}",
-      "progress_other": "Bu hafta {{count}} antrenmandan {{done}}"
+      "progress_other": "Bu hafta {{count}} antrenmandan {{done}}",
+      "open": "Günün antrenmanlarını gösterir"
     },
     "workout": {
       "title": "Bugünün antrenmanı",
@@ -65,6 +66,35 @@
       "doneOf": "{{count}} antrenmandan {{done}} tamamlandı",
       "movedFrom": "{{day}} gününden taşındı",
       "finished": "Tamamlandı"
+    },
+    "missed": {
+      "missedOn": "{{day}} günü kaçırıldı",
+      "hint": "{{session}}. Planına sadık kalmak için bu hafta boş bir günde yap.",
+      "skip": "Atla",
+      "pickDay": "Gün seç",
+      "skipError": "Antrenman atlanamadı. Bağlantını kontrol edip tekrar dene."
+    },
+    "pickDay": {
+      "title": "{{day}} günkü {{session}} antrenmanını taşı",
+      "subtitle": "Bu hafta bir gün seç.",
+      "today": "Bugün",
+      "rest": "Dinlenme günü",
+      "move": "{{day}} gününe taşı",
+      "error": "Antrenman taşınamadı. Bağlantını kontrol edip tekrar dene.",
+      "taken": "Bu gün artık boş değil. Başka bir gün seç."
+    },
+    "dayMenu": {
+      "planned_zero": "Planlanmış antrenman yok",
+      "planned_one": "{{count}} antrenman planlandı",
+      "planned_other": "{{count}} antrenman planlandı",
+      "move": "Başka güne taşı",
+      "undo": "Taşımayı geri al",
+      "undoSkip": "Atlamayı geri al",
+      "skipped": "Atlandı",
+      "done": "Yapıldı",
+      "movedTo": "{{day}} gününe taşındı",
+      "note": "Taşıma yalnızca bu haftayı değiştirir. Gelecek hafta antrenmanların yine kendi günlerinde.",
+      "error": "Taşıma geri alınamadı. Bağlantını kontrol edip tekrar dene."
     },
     "weight": {
       "title": "Kilo",
