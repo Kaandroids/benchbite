@@ -259,7 +259,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
         </View>
       ) : null}
 
-      <Text variant="label" color="textMuted" style={[{ paddingHorizontal: 4 }]}>
+      <Text variant="label" color="textMuted" style={{ paddingHorizontal: 4 }}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
       <Card list>

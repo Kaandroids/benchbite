@@ -43,7 +43,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
       <View style={[styles.flex, { gap: 6 }]}>
         <View style={styles.heading}>
           <View style={styles.label}>
-            <Text variant="captionStrong" style={[styles.muted]}>
+            <Text variant="captionStrong" style={styles.muted}>
               {t('session.rest')}
             </Text>
             <Text variant="headline" style={[styles.light, styles.tabular]}>
@@ -77,7 +77,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(-15)}
         style={button}
       >
-        <Text variant="captionStrong" style={[styles.light]}>
+        <Text variant="captionStrong" style={styles.light}>
           −15
         </Text>
       </Pressable>
@@ -87,7 +87,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(15)}
         style={button}
       >
-        <Text variant="captionStrong" style={[styles.light]}>
+        <Text variant="captionStrong" style={styles.light}>
           +15
         </Text>
       </Pressable>

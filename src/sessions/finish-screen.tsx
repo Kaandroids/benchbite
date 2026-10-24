@@ -224,7 +224,7 @@ export function FinishScreen({ next }: { next?: number }) {
               <Text variant="caption" color="textMuted">
                 {t('session.end.label', { started: time.format(session.startedAt) })}
               </Text>
-              <Text variant="label" style={[styles.tabular]}>
+              <Text variant="label" style={styles.tabular}>
                 {time.format(finishedAt)}
               </Text>
             </View>

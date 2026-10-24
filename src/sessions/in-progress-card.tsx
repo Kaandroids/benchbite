@@ -46,7 +46,7 @@ export function InProgressCard({ session }: { session: Session }) {
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
         <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-        <Text variant="captionStrong" style={[{ color: colors.planned }]}>
+        <Text variant="captionStrong" style={{ color: colors.planned }}>
           {t('session.inProgress')}
         </Text>
         <View style={styles.flex} />

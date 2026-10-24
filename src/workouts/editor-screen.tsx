@@ -179,7 +179,7 @@ export function EditorScreen({ id }: { id?: number }) {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text variant="label" accessibilityRole="header" style={[styles.flex]} align="center">
+        <Text variant="label" accessibilityRole="header" style={styles.flex} align="center">
           {id === undefined ? t('editor.newTitle') : t('editor.editTitle')}
         </Text>
         <PillButton

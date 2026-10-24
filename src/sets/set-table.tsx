@@ -68,12 +68,12 @@ export function SetHeader({ kind, showLast }: SetHeaderProps) {
         variant="captionStrong"
         color="textMuted"
         align="center"
-        style={[{ width: NUMBER_WIDTH }]}
+        style={{ width: NUMBER_WIDTH }}
       >
         {t('session.columns.set')}
       </Text>
       {showLast ? (
-        <Text variant="captionStrong" color="textMuted" style={[styles.flex]}>
+        <Text variant="captionStrong" color="textMuted" style={styles.flex}>
           {t('session.columns.last')}
         </Text>
       ) : null}
@@ -242,7 +242,7 @@ export function SetLine({
       ]}
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
-        <Text variant="label" align="center" style={[{ width: NUMBER_WIDTH }]}>
+        <Text variant="label" align="center" style={{ width: NUMBER_WIDTH }}>
           {number}
         </Text>
         {showLast ? (

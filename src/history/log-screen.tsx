@@ -146,7 +146,7 @@ export function LogScreen({ id }: { id: number }) {
                 <Text variant="caption" color="textMuted">
                   {String(label)}
                 </Text>
-                <Text variant="label" style={[styles.tabular]}>
+                <Text variant="label" style={styles.tabular}>
                   {time.format(at as Date)}
                 </Text>
               </View>

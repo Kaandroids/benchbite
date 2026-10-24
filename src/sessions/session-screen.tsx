@@ -213,7 +213,7 @@ export function SessionScreen() {
           <Text variant="label" accessibilityRole="header">
             {workoutName(session)}
           </Text>
-          <Text variant="captionStrong" color="textMuted" style={[styles.tabular]}>
+          <Text variant="captionStrong" color="textMuted" style={styles.tabular}>
             {minutesAndSeconds(elapsed)}
           </Text>
         </View>

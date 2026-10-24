@@ -88,7 +88,7 @@ export function HistoryScreen() {
                 { paddingBottom: spacing.sm, paddingTop: week === weeks[0] ? 0 : spacing.lg },
               ]}
             >
-              <Text variant="captionStrong" color="textMuted" style={[styles.flex]}>
+              <Text variant="captionStrong" color="textMuted" style={styles.flex}>
                 {weekTitle(week.start)}
               </Text>
               {week.complete ? (
