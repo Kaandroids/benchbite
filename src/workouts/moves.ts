@@ -7,12 +7,17 @@ import type { WorkoutMove } from './week-schedule';
 
 export const MOVES_KEY = ['workout-moves'];
 
+/** The query key of the moves of the week of `today`. */
+export function weekMovesKey(today: Date) {
+  return [...MOVES_KEY, toIsoDate(weekStart(today))];
+}
+
 /** This week's moves of the signed-in user's workouts, the week of `today` (ADR 0028). */
 export function useWeekMoves(today: Date) {
   const monday = weekStart(today);
   const sunday = addDays(monday, 6);
   return useQuery({
-    queryKey: [...MOVES_KEY, toIsoDate(monday)],
+    queryKey: weekMovesKey(today),
     queryFn: async (): Promise<WorkoutMove[]> => {
       const { data, error } = await supabase
         .from('workout_moves')

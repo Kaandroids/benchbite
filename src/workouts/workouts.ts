@@ -38,7 +38,7 @@ export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimat
   workoutId: number;
 };
 
-const WORKOUTS_KEY = ['workouts'];
+export const WORKOUTS_KEY = ['workouts'];
 
 type ExerciseRow = Pick<
   Database['public']['Tables']['workout_exercises']['Row'],
