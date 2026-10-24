@@ -1,4 +1,5 @@
 import { Constants } from '../database.types.ts';
+import { PLAN_WORKOUT_EXERCISES } from './limits.ts';
 import { prescribe, prescribeConditioning, type Prescription } from './prescription.ts';
 import { TEMPLATES } from './templates.ts';
 import type {
@@ -6,6 +7,7 @@ import type {
   Experience,
   PlanInput,
   PlannedExercise,
+  Role,
   Session,
   SessionType,
   Setup,
@@ -20,6 +22,8 @@ const TRANSITION_SECONDS = 60;
 const SECONDS_PER_REP = 3;
 const MIN_SECONDS_PER_SET = 20;
 const MIN_SETS = 2;
+/** The sets an exercise may gain when the session has time left: one more than prescribed. */
+const EXTRA_SETS = 1;
 /** Sessions this short take one set less of everything, so that more exercises fit. */
 const SHORT_SESSION_MINUTES = 30;
 
@@ -115,11 +119,20 @@ function buildConditioning(
   return planned(entry, prescribeConditioning(entry.metrics, minutes));
 }
 
+type Chosen = { exercise: PlannedExercise; role: Role; maxSets: number };
+
 /**
- * The session's exercises within the seconds left. Slots are filled in order of importance; a
- * slot that does not fit is tried with fewer sets, down to two. If it still does not fit, it and
- * every slot after it are left out, so a less important exercise never replaces a more important
- * one. Slots without a possible exercise for the setup are skipped.
+ * The session's exercises within the seconds left, in three rounds:
+ *
+ * 1. The template's slots in order of importance. A slot that does not fit is tried with fewer
+ *    sets, down to two. If it still does not fit, it and every slot after it are left out, so a
+ *    less important exercise never replaces a more important one.
+ * 2. With time left, each exercise in order gains a set, up to one more than prescribed.
+ * 3. With time still left, the slots in order take another of their exercises, as accessories,
+ *    for as long as one fits and the workout stays within what the onboarding saves.
+ *
+ * Slots without a possible exercise for the setup are skipped. `room` is how many exercises the
+ * session may have besides the conditioning.
  */
 function buildExercises(
   input: PlanInput,
@@ -127,33 +140,66 @@ function buildExercises(
   type: SessionType,
   slotUses: SlotUses,
   secondsLeft: number,
+  room: number,
 ): PlannedExercise[] {
-  const exercises: PlannedExercise[] = [];
+  const chosen: Chosen[] = [];
   const used = new Set<string>();
   let left = secondsLeft;
+  const candidates = (slot: Slot) => candidatesFor(catalogue, slot, input.setup, input.experience);
+  const prescribed = (role: Role, entry: CatalogueEntry) => {
+    const prescription = prescribe(input.goal, input.experience, role, entry.metrics);
+    if (input.sessionMinutes <= SHORT_SESSION_MINUTES) {
+      prescription.sets = Math.max(MIN_SETS, prescription.sets - 1);
+    }
+    return prescription;
+  };
+  const add = (entry: CatalogueEntry, role: Role, prescription: Prescription) => {
+    chosen.push({ exercise: planned(entry, prescription), role, maxSets: prescription.sets });
+    used.add(entry.exerciseId);
+    countUse(slotUses, entry.slot);
+    left -= exerciseSeconds(prescription);
+  };
+
+  let timeRanOut = false;
   for (const { slot, role } of TEMPLATES[type]) {
-    const entry = pick(
-      candidatesFor(catalogue, slot, input.setup, input.experience),
-      slotUses,
-      used,
-    );
+    const entry = pick(candidates(slot), slotUses, used);
     if (!entry) {
       continue;
     }
-    const prescribed = prescribe(input.goal, input.experience, role, entry.metrics);
-    if (input.sessionMinutes <= SHORT_SESSION_MINUTES) {
-      prescribed.sets = Math.max(MIN_SETS, prescribed.sets - 1);
-    }
-    const prescription = fit(prescribed, left);
-    if (!prescription) {
+    const prescription = fit(prescribed(role, entry), left);
+    if (!prescription || chosen.length >= room) {
+      timeRanOut = true;
       break;
     }
-    exercises.push(planned(entry, prescription));
-    used.add(entry.exerciseId);
-    countUse(slotUses, slot);
-    left -= exerciseSeconds(prescription);
+    add(entry, role, prescription);
   }
-  return exercises;
+
+  for (const item of chosen) {
+    const more = { ...item.exercise, sets: item.maxSets + EXTRA_SETS };
+    const extra = exerciseSeconds(more) - exerciseSeconds(item.exercise);
+    if (item.exercise.sets === item.maxSets && extra <= left) {
+      item.exercise = more;
+      left -= extra;
+    }
+  }
+
+  // Each round adds at most one more exercise for each slot: the first one not in the session
+  // yet, so that a gym keeps to its own equipment as long as it can.
+  for (let added = !timeRanOut; added;) {
+    added = false;
+    for (const { slot } of TEMPLATES[type]) {
+      const entry =
+        chosen.length < room
+          ? candidates(slot).find((candidate) => !used.has(candidate.exerciseId))
+          : undefined;
+      const prescription = entry && fit(prescribed('accessory', entry), left);
+      if (entry && prescription) {
+        add(entry, 'accessory', prescription);
+        added = true;
+      }
+    }
+  }
+  return chosen.map((item) => item.exercise);
 }
 
 /**
@@ -175,6 +221,7 @@ export function buildSession(
     type,
     slotUses,
     input.sessionMinutes * 60 - fixedSeconds,
+    PLAN_WORKOUT_EXERCISES - (conditioning ? 1 : 0),
   );
   const seconds = exercises.reduce((total, e) => total + exerciseSeconds(e), fixedSeconds);
   return {
