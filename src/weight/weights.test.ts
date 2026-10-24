@@ -22,6 +22,7 @@ beforeEach(() => {
     status: 'ready',
     session: { user: { id: 'user-1' } } as never,
     retry: jest.fn(),
+    startAgain: jest.fn(),
   });
 });
 

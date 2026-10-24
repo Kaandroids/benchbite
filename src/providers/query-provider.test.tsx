@@ -13,6 +13,7 @@ function signIn(userId: string) {
     status: 'ready',
     session: { user: { id: userId } } as never,
     retry: jest.fn(),
+    startAgain: jest.fn(),
   });
 }
 
