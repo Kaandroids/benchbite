@@ -103,7 +103,8 @@
     "history": {
       "title": "Verlauf",
       "empty": "Deine abgeschlossenen Workouts erscheinen hier.",
-      "loadingMore": "Ältere Trainings werden geladen"
+      "loadingMore": "Ältere Trainings werden geladen",
+      "loadMoreError": "Deine älteren Trainings konnten nicht geladen werden."
     },
     "archive": {
       "title": "Archiv",

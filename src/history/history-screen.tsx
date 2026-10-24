@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
@@ -46,7 +47,7 @@ export function HistoryScreen() {
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{ padding: spacing.xl }}
           onEndReached={() => {
-            if (logs.hasNextPage && !logs.isFetchingNextPage) {
+            if (logs.hasNextPage && !logs.isFetchingNextPage && !logs.isFetchNextPageError) {
               void logs.fetchNextPage();
             }
           }}
@@ -59,6 +60,17 @@ export function HistoryScreen() {
                 color={colors.textMuted}
                 style={{ marginTop: spacing.lg }}
               />
+            ) : logs.isFetchNextPageError ? (
+              <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                <Text color="textMuted" align="center">
+                  {t('workout.history.loadMoreError')}
+                </Text>
+                <Button
+                  variant="secondary"
+                  label={t('common.tryAgain')}
+                  onPress={() => void logs.fetchNextPage()}
+                />
+              </View>
             ) : undefined
           }
           renderSectionHeader={({ section: week }) => (
