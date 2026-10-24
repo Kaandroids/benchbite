@@ -193,6 +193,20 @@ describe('nextWorkouts', () => {
     });
   });
 
+  it('finds a workout skipped this week on its day next week', () => {
+    const sunday = new Date(2026, 9, 25, 9, 0);
+    const plan = [session(1, 6)];
+    const schedule = weekSchedule(
+      plan,
+      [{ workoutId: 1, fromOn: '2026-10-24', toOn: null }],
+      [],
+      sunday,
+    );
+    expect(nextWorkouts(schedule, plan, sunday)).toEqual({ inDays: 6, weekday: 6, sessions: plan });
+    const friday = new Date(2026, 9, 23, 9, 0);
+    expect(nextWorkouts(schedule, plan, friday)).toEqual({ inDays: 8, weekday: 6, sessions: plan });
+  });
+
   it('is null without a plan', () => {
     expect(nextWorkouts(weekSchedule([], [], [], WEDNESDAY), [], WEDNESDAY)).toBeNull();
   });
