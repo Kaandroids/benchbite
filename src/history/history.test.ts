@@ -13,7 +13,6 @@ import {
   useLogSummaries,
   useLogSummary,
   useRecentLogs,
-  weekStart,
   withSkipped,
   type LogSummary,
 } from './history';
@@ -329,11 +328,6 @@ describe('doneOf', () => {
 });
 
 describe('byWeek', () => {
-  it('starts weeks on Monday', () => {
-    expect(weekStart(new Date(2026, 9, 25, 20, 0))).toEqual(new Date(2026, 9, 19));
-    expect(weekStart(new Date(2026, 9, 19, 6, 0))).toEqual(new Date(2026, 9, 19));
-  });
-
   it('groups workouts by week, latest first, with their minutes', () => {
     const weeks = byWeek([
       log(3, '2026-10-23T18:00', 52),

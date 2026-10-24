@@ -20,7 +20,7 @@ import {
   type HeightUnit,
   type WeightUnit,
 } from '@/i18n/units';
-import { toIsoDate } from '@/i18n/dates';
+import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
@@ -378,11 +378,7 @@ function sampleWeek(today: Date) {
     exercises: [],
     estimatedMinutes: 45,
   });
-  const day = (weekday: number) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + weekday - (((today.getDay() + 6) % 7) + 1));
-    return toIsoDate(date);
-  };
+  const day = (weekday: number) => toIsoDate(addDays(weekStart(today), weekday - 1));
   return weekSchedule(
     [
       session(1, 1, 'push'),

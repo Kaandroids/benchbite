@@ -11,6 +11,21 @@ export function isoWeekday(date: Date): number {
   return ((date.getDay() + 6) % 7) + 1;
 }
 
+/** A day as YYYY-MM-DD read as local midnight, the reverse of `toIsoDate`. */
+export function fromIsoDate(date: string): Date {
+  return new Date(`${date}T00:00`);
+}
+
+/** The day `days` after a date, at midnight. */
+export function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+/** The Monday a week starts on, at midnight. */
+export function weekStart(date: Date): Date {
+  return addDays(date, 1 - isoWeekday(date));
+}
+
 /**
  * Names ISO weekdays in the app language, for example "Monday" or "Mon". Like numbers, they
  * follow the app language rather than the device region.
