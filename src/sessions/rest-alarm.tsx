@@ -157,22 +157,35 @@ export async function enableRestAlerts(texts: RestAlertsTexts) {
   ]);
 }
 
+// Scheduling waits for the permission and the channel first, so a cancel made meanwhile, as when
+// the rest is skipped or the workout finished, would run before it and leave the notification
+// behind. Scheduling and cancelling run one after the other instead, in the order they are made.
+let queue: Promise<unknown> = Promise.resolve();
+
+function inTurn<T>(task: () => Promise<T>): Promise<T> {
+  const turn = queue.then(task, task);
+  queue = turn.catch(() => undefined);
+  return turn;
+}
+
 /** Schedules the notification for the end of a rest, replacing the one before, when allowed. */
-export async function scheduleRestEnd(endsAt: number, content: RestNotification) {
-  if (!(await getPermissionsAsync()).granted) {
-    return;
-  }
-  await createChannel(content.channelName);
-  await scheduleNotificationAsync({
-    identifier: REST_NOTIFICATION_ID,
-    content: { title: content.title, body: content.body },
-    trigger: { type: SchedulableTriggerInputTypes.DATE, date: endsAt, channelId: CHANNEL_ID },
+export function scheduleRestEnd(endsAt: number, content: RestNotification) {
+  return inTurn(async () => {
+    if (!(await getPermissionsAsync()).granted) {
+      return;
+    }
+    await createChannel(content.channelName);
+    await scheduleNotificationAsync({
+      identifier: REST_NOTIFICATION_ID,
+      content: { title: content.title, body: content.body },
+      trigger: { type: SchedulableTriggerInputTypes.DATE, date: endsAt, channelId: CHANNEL_ID },
+    });
   });
 }
 
 /** Cancels the notification for the end of the rest, if one is scheduled. */
-export async function cancelRestEnd() {
-  await cancelScheduledNotificationAsync(REST_NOTIFICATION_ID);
+export function cancelRestEnd() {
+  return inTurn(() => cancelScheduledNotificationAsync(REST_NOTIFICATION_ID));
 }
 
 /**
