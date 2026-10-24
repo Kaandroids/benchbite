@@ -17,6 +17,10 @@ const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 const PARALLEL_REQUESTS = 8;
+// The local edge runtime turns a request away with 503 now and then while it is busy, which says
+// nothing about the plan, so such a request is tried again a few times before it counts.
+const BUSY_TRIES = 3;
+const BUSY_WAIT_MS = 500;
 
 // The enums are ordered: setups from the most equipment to the least, experience from beginner
 // to advanced.
@@ -142,8 +146,8 @@ if (unsigned.status !== 401) {
   failures.push(`without a session: HTTP ${unsigned.status}`);
 }
 
-async function worker() {
-  for (let answers = queue.shift(); answers !== undefined; answers = queue.shift()) {
+async function requestPlan(answers: PlanInput): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
     const response = await fetch(`${URL}/functions/v1/generate-plan`, {
       method: 'POST',
       headers: {
@@ -153,6 +157,16 @@ async function worker() {
       },
       body: JSON.stringify(answers),
     });
+    if (response.status !== 503 || attempt === BUSY_TRIES) {
+      return response;
+    }
+    await new Promise((resolve) => setTimeout(resolve, BUSY_WAIT_MS * attempt));
+  }
+}
+
+async function worker() {
+  for (let answers = queue.shift(); answers !== undefined; answers = queue.shift()) {
+    const response = await requestPlan(answers);
     const label = JSON.stringify(answers);
     if (!response.ok) {
       failures.push(`${label}: HTTP ${response.status}`);
