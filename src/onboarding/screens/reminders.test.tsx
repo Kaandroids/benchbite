@@ -75,7 +75,10 @@ describe('RemindersStep', () => {
     jest.mocked(requestReminderPermission).mockResolvedValue(false);
     await render(<RemindersStep />);
     await turnOn();
-    expect(saveReminderMinutes).not.toHaveBeenCalled();
+    // A time kept from before is removed with its reminders.
+    expect(saveReminderMinutes).toHaveBeenCalledWith(null);
+    expect(saveReminderMinutes).not.toHaveBeenCalledWith(expect.any(Number));
+    expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: undefined });
   });
 
@@ -84,6 +87,7 @@ describe('RemindersStep', () => {
     jest.mocked(requestReminderPermission).mockRejectedValue(new Error('no'));
     await render(<RemindersStep />);
     await turnOn();
+    expect(saveReminderMinutes).toHaveBeenCalledWith(null);
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: undefined });
     warn.mockRestore();
   });

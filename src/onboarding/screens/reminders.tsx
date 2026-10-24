@@ -35,11 +35,20 @@ export function RemindersStep() {
   const [enabling, setEnabling] = useState(false);
   const sessions = answers.plan ? planDays(answers.plan) : [];
 
+  // Reminders turned on before coming back to this step go too.
+  const withoutReminders = () => {
+    saveReminderMinutes(null);
+    void cancelReminders().catch((error: unknown) =>
+      console.warn('Could not cancel the reminders', error),
+    );
+    next({ reminderMinutes: undefined });
+  };
+
   const enable = async () => {
     setEnabling(true);
     try {
       if (!(await requestReminderPermission(t('reminders.channel')))) {
-        next({ reminderMinutes: undefined });
+        withoutReminders();
         return;
       }
       // The reminders are scheduled from the week once the app opens (ADR 0029).
@@ -48,19 +57,10 @@ export function RemindersStep() {
     } catch (error) {
       // Reminders are a convenience; failing to set them must not stop the onboarding.
       console.warn('Could not turn on the reminders', error);
-      next({ reminderMinutes: undefined });
+      withoutReminders();
     } finally {
       setEnabling(false);
     }
-  };
-
-  const skip = () => {
-    // Removes reminders turned on before coming back to this step.
-    saveReminderMinutes(null);
-    void cancelReminders().catch((error: unknown) =>
-      console.warn('Could not cancel the reminders', error),
-    );
-    next({ reminderMinutes: undefined });
   };
 
   return (
@@ -78,7 +78,7 @@ export function RemindersStep() {
             label={t('onboarding.reminders.skip')}
             variant="ghost"
             disabled={enabling}
-            onPress={skip}
+            onPress={withoutReminders}
           />
         </View>
       }
