@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { fromIsoDate, toIsoDate } from '@/i18n/dates';
-import { useWeekSchedule } from '@/workouts/use-week-schedule';
+import { useWeekSchedule } from '@/week/use-week-schedule';
 import { upcomingWorkouts } from '@/workouts/week-schedule';
 
 import { useReminderText } from './reminder-text';

@@ -14,8 +14,8 @@ import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
+import { useWeekSchedule } from '@/week/use-week-schedule';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
-import { useWeekSchedule } from '@/workouts/use-week-schedule';
 import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 

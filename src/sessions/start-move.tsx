@@ -9,8 +9,8 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
+import { useCachedWeekSchedule } from '@/week/use-week-schedule';
 import { useWorkoutName } from '@/workouts/format';
-import { useCachedWeekSchedule } from '@/workouts/use-week-schedule';
 import { startMove, type StartMove } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
 

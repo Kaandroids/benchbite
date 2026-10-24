@@ -1,9 +1,9 @@
 import { finishedWeekKey } from '@/history/history';
 import { createTestQueryClient, renderHook } from '@/test/render';
+import { weekMovesKey } from '@/workouts/moves';
+import { WORKOUTS_KEY, type Workout } from '@/workouts/workouts';
 
-import { weekMovesKey } from './moves';
 import { useCachedWeekSchedule } from './use-week-schedule';
-import { WORKOUTS_KEY, type Workout } from './workouts';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
