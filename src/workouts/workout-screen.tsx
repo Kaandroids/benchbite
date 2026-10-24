@@ -47,9 +47,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   const workout = workouts.data?.find((candidate) => candidate.id === id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
-  const names = Object.fromEntries(
-    (library.data ?? []).map((exercise) => [exercise.id, exercise.name]),
-  );
+  const nameOf = (exerciseId: string) =>
+    library.data?.find((item) => item.id === exerciseId)?.name ?? '';
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
@@ -103,10 +102,10 @@ export function WorkoutScreen({ id }: { id: number }) {
       <ExerciseThumbnail
         path={exercise.imagePath}
         size={IMAGE_SIZE}
-        name={names[exercise.exerciseId]}
+        name={nameOf(exercise.exerciseId)}
       />
       <View style={[styles.exerciseText, { gap: 2 }]}>
-        <Text variant="bodyStrong">{names[exercise.exerciseId] ?? ''}</Text>
+        <Text variant="bodyStrong">{nameOf(exercise.exerciseId)}</Text>
         <Text variant="bodyStrong" color="primaryText">
           {formatTarget(exercise.sets, exercise.target)}
         </Text>
@@ -115,13 +114,10 @@ export function WorkoutScreen({ id }: { id: number }) {
         </Text>
       </View>
       <View style={{ gap: spacing.sm }}>
-        <InfoButton
-          exerciseId={exercise.exerciseId}
-          exerciseName={names[exercise.exerciseId] ?? ''}
-        />
+        <InfoButton exerciseId={exercise.exerciseId} exerciseName={nameOf(exercise.exerciseId)} />
         <HistoryButton
           exerciseId={exercise.exerciseId}
-          exerciseName={names[exercise.exerciseId] ?? ''}
+          exerciseName={nameOf(exercise.exerciseId)}
         />
       </View>
     </View>
