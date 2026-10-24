@@ -558,8 +558,7 @@
       "body": "A short reminder on your training days, so no workout slips your mind.",
       "time": "Reminder time",
       "enable": "Turn on reminders",
-      "skip": "Not now",
-      "channel": "Workout reminders"
+      "skip": "Not now"
     },
     "summary": {
       "body": "Your plan is ready. Here's what we set up for you.",
@@ -855,6 +854,7 @@
     "moved": "{{name}} moved to {{place}} of {{count}}"
   },
   "reminders": {
+    "channel": "Workout reminders",
     "notification": {
       "title": "Today: {{session}}",
       "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",

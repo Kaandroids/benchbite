@@ -558,8 +558,7 @@
       "body": "Antrenman günlerinde kısa bir hatırlatma, böylece hiçbir antrenman aklından çıkmaz.",
       "time": "Hatırlatma saati",
       "enable": "Hatırlatmaları aç",
-      "skip": "Şimdi değil",
-      "channel": "Antrenman hatırlatmaları"
+      "skip": "Şimdi değil"
     },
     "summary": {
       "body": "Planın hazır. Senin için kurduklarımız:",
@@ -855,6 +854,7 @@
     "moved": "{{name}} artık {{count}} içinde {{place}}. sırada"
   },
   "reminders": {
+    "channel": "Antrenman hatırlatmaları",
     "notification": {
       "title": "Bugün: {{session}}",
       "body_one": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",

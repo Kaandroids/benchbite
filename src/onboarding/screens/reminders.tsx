@@ -38,7 +38,7 @@ export function RemindersStep() {
   const enable = async () => {
     setEnabling(true);
     try {
-      if (!(await requestReminderPermission(t('onboarding.reminders.channel')))) {
+      if (!(await requestReminderPermission(t('reminders.channel')))) {
         next({ reminderMinutes: undefined });
         return;
       }
