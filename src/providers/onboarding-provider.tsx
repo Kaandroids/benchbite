@@ -83,6 +83,15 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
   });
   const [draft, setDraft] = useState(() => loadDraft(userId) ?? EMPTY_DRAFT);
 
+  // Finishing the onboarding, here or as the server reports it: the answers are saved, so the draft
+  // with them goes.
+  const finish = useCallback(() => {
+    saveCompleted(userId, true);
+    clearDraft(userId);
+    setDraft(EMPTY_DRAFT);
+    setCompleted(true);
+  }, [userId]);
+
   // Someone who finished the onboarding on another device, after signing in to their account,
   // skips it here too. The server is asked once per user, and again whenever the app returns to
   // the foreground until it answers, so starting offline only delays the check. The answer can
@@ -103,11 +112,7 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
       }
       answered = true;
       if (data?.onboarding_completed_at) {
-        // The answers are saved on the server, so the draft with them goes.
-        saveCompleted(userId, true);
-        clearDraft(userId);
-        setDraft(EMPTY_DRAFT);
-        setCompleted(true);
+        finish();
       }
     };
     void check();
@@ -120,7 +125,7 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
       answered = true;
       subscription.remove();
     };
-  }, [userId]);
+  }, [userId, finish]);
 
   // Builds on the latest draft, so that answering and moving on in one handler both count. A
   // draft that did not change is neither saved nor rendered again. Once the onboarding is
@@ -154,12 +159,7 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
           ...current,
           answers: pruneAnswers({ ...current.answers, ...answers }),
         })),
-      complete: () => {
-        saveCompleted(userId, true);
-        clearDraft(userId);
-        setDraft(EMPTY_DRAFT);
-        setCompleted(true);
-      },
+      complete: finish,
       reset: () => {
         saveCompleted(userId, false);
         clearDraft(userId);
@@ -167,7 +167,7 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
         setCompleted(false);
       },
     }),
-    [update, userId],
+    [update, finish, userId],
   );
 
   const value = useMemo(
