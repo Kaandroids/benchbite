@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
@@ -73,26 +74,7 @@ export function PickerScreen() {
 
   const chip = (value: ExerciseFilter | null, label: string) => {
     const on = filter === value;
-    return (
-      <Pressable
-        key={label}
-        accessibilityRole="button"
-        accessibilityState={{ selected: on }}
-        onPress={() => setFilter(value)}
-        style={[
-          styles.chip,
-          {
-            borderRadius: radii.full,
-            backgroundColor: on ? colors.primaryButton : colors.surface,
-            borderColor: on ? colors.primaryButton : colors.border,
-          },
-        ]}
-      >
-        <Text variant="captionStrong" color={on ? 'onPrimary' : 'text'}>
-          {label}
-        </Text>
-      </Pressable>
-    );
+    return <Chip key={label} label={label} selected={on} onPress={() => setFilter(value)} />;
   };
 
   const row = ({ item }: { item: LibraryExercise }) => {
@@ -344,12 +326,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-  },
-  chip: {
-    height: 36,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderWidth: 1.5,
   },
   row: {
     height: ROW_HEIGHT,

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -127,26 +128,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
   );
 
   const chip = (key: string, text: string, on: boolean, onPress: () => void, disabled = false) => (
-    <Pressable
-      key={key}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[
-        styles.chip,
-        {
-          borderRadius: radii.full,
-          borderColor: on ? colors.primaryButton : colors.border,
-          backgroundColor: on ? colors.selected : colors.surface,
-          opacity: disabled ? 0.4 : 1,
-        },
-      ]}
-    >
-      <Text variant="captionStrong" color={on ? 'primaryText' : 'text'}>
-        {text}
-      </Text>
-    </Pressable>
+    <Chip key={key} label={text} selected={on} onPress={onPress} disabled={disabled} />
   );
 
   // A photo is taken or chosen from a short menu, and can be removed again.
@@ -468,12 +450,6 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  chip: {
-    height: 40,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderWidth: 1.5,
   },
   photos: {
     flexDirection: 'row',
