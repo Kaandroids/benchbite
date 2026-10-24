@@ -2,52 +2,36 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useFinishedThisWeek } from '@/history/history';
 import { toIsoDate } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
-import { useWorkoutName } from '@/workouts/format';
-import { useWeekMoves } from '@/workouts/moves';
-import { startMove, weekSchedule } from '@/workouts/week-schedule';
-import { useWeek, type Workout } from '@/workouts/workouts';
+import type { Workout } from '@/workouts/workouts';
 
 import { fetchBests, fetchLastSets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
-import { startSession, type ExerciseBests, type LastSets, type Session } from './session';
-import { askStartMove } from './start-move';
+import { startSession, type ExerciseBests, type LastSets } from './session';
+import { useStartMove } from './start-move';
 
 /**
  * Starts a workout, filled in from last time and with each exercise's records, and opens it.
  * Without a connection it starts from the targets instead, and notices no records. A workout not
  * planned today that has a missed or later day this week first asks whether it counts for that
- * day (ADR 0028). The first time, it offers to signal the end of rests.
+ * day (ADR 0028); `beforeStart` runs once it is sure to start, for example to end the workout it
+ * replaces. The first time, it offers to signal the end of rests.
  */
 export function useStartWorkout() {
   const { t } = useTranslation();
   const userId = useUserId();
   const queryClient = useQueryClient();
-  const workoutName = useWorkoutName();
-  const today = new Date();
-  const plan = useWeek();
-  const moves = useWeekMoves(today);
-  const finished = useFinishedThisWeek(today);
-  return async (workout: Workout) => {
+  const askMove = useStartMove();
+  return async (workout: Workout, { beforeStart }: { beforeStart?: () => void } = {}) => {
     if (!userId) {
       return;
     }
-    // Without the week, as offline before it ever loaded, the workout is an extra one.
-    let move: Session['move'];
-    const now = new Date();
-    if (plan.data && moves.data && finished.data) {
-      const schedule = weekSchedule(plan.data.sessions, moves.data, finished.data, now);
-      const from = startMove(schedule, workout.id, toIsoDate(now));
-      if (from) {
-        const answer = await askStartMove({ name: workoutName(workout), ...from });
-        if (answer === null) {
-          return;
-        }
-        move = answer === 'move' ? { from: from.fromOn, to: toIsoDate(now) } : undefined;
-      }
+    const choice = await askMove(workout, new Date());
+    if (!choice) {
+      return;
     }
+    beforeStart?.();
     const ids = workout.exercises.map((exercise) => exercise.exerciseId);
     const [last, bests] = await Promise.all([
       queryClient
@@ -71,7 +55,9 @@ export function useStartWorkout() {
           return {};
         }),
     ]);
-    startSession(userId, workout, last, bests, Date.now(), move);
+    const now = Date.now();
+    const move = choice.fromOn ? { from: choice.fromOn, to: toIsoDate(new Date(now)) } : undefined;
+    startSession(userId, workout, last, { bests, now, move });
     router.push('/session');
     await offerRestAlarm({
       title: t('session.restAlarm.title'),

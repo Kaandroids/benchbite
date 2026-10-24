@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,16 +7,15 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { RaisedPressable } from '@/components/ui/raised-pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { useWeekdayFormat, weekdayOf } from '@/i18n/dates';
+import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
+import { useWorkoutName } from '@/workouts/format';
+import { useCachedWeekSchedule } from '@/workouts/use-week-schedule';
+import { startMove, type StartMove } from '@/workouts/week-schedule';
+import type { Workout } from '@/workouts/workouts';
 
 /** A workout started on a day it is not planned, and the planned day it could count for. */
-export type StartMoveQuestion = {
-  name: string;
-  fromOn: string;
-  /** Whether the planned day was missed, or is still ahead. */
-  missed: boolean;
-};
+export type StartMoveQuestion = StartMove & { name: string };
 
 /** Moved to today, kept as an extra workout, or not started. */
 export type StartMoveAnswer = 'move' | 'extra' | null;
@@ -55,17 +54,39 @@ export function askStartMove(question: StartMoveQuestion): Promise<StartMoveAnsw
   });
 }
 
+/**
+ * For a workout about to start on `today`, asks whether it counts for a planned day this week, as
+ * the week is cached at the time. Resolves with the day it moves from, none for an extra workout or
+ * when there is nothing to ask, or null when it is not to start.
+ */
+export function useStartMove() {
+  const cachedWeek = useCachedWeekSchedule();
+  const workoutName = useWorkoutName();
+  return async (workout: Workout, today: Date): Promise<{ fromOn?: string } | null> => {
+    // Without the week, as offline before it ever loaded, the workout is an extra one.
+    const schedule = cachedWeek(today);
+    const move = schedule ? startMove(schedule, workout.id, toIsoDate(today)) : null;
+    if (!move) {
+      return {};
+    }
+    const answer = await askStartMove({ name: workoutName(workout), ...move });
+    return answer === null ? null : answer === 'move' ? { fromOn: move.fromOn } : {};
+  };
+}
+
 /** The sheet that asks `askStartMove`'s question, over every screen. */
 export function StartMoveSheet() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const current = useSyncExternalStore(subscribe, () => pending);
+  // A question left open when the sheet goes, as on signing out, is not answered later.
+  useEffect(() => () => pending?.answer(null), []);
   if (!current) {
     return null;
   }
   const { question, answer } = current;
-  const day = weekdayName(weekdayOf(question.fromOn));
+  const day = weekdayName(weekdayOf(question.on));
   const values = { name: question.name, day };
 
   return (
