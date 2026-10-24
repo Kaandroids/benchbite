@@ -309,7 +309,7 @@ export function EditorScreen({ id }: { id?: number }) {
                   items={draft.exercises}
                   keyOf={(exercise) => exercise.key}
                   rowHeight={ROW_HEIGHT}
-                  handleLabel={t('editor.reorder')}
+                  labelOf={(exercise) => details(exercise.exerciseId)?.name ?? ''}
                   onDragChange={setDragging}
                   onMove={(from, to) =>
                     setExercises((exercises) => {
