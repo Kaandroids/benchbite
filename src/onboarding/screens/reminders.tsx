@@ -7,11 +7,8 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
-import {
-  cancelReminders,
-  requestReminderPermission,
-  scheduleReminders,
-} from '@/reminders/reminders';
+import { cancelReminders, requestReminderPermission } from '@/reminders/reminders';
+import { saveReminderMinutes } from '@/reminders/settings';
 import { useTheme } from '@/theme';
 
 import { planDays } from '../plan-days';
@@ -45,23 +42,12 @@ export function RemindersStep() {
         next({ reminderMinutes: undefined });
         return;
       }
-      await scheduleReminders(
-        sessions.map((session) => ({
-          weekday: session.weekday,
-          title: t('onboarding.reminders.notification.title', {
-            session: t(`workout.sessionTypes.${session.type}`),
-          }),
-          body: t('onboarding.reminders.notification.body', {
-            count: session.exercises.length,
-            minutes: session.estimatedMinutes,
-          }),
-        })),
-        minutes,
-      );
+      // The reminders are scheduled from the week once the app opens (ADR 0029).
+      saveReminderMinutes(minutes);
       next({ reminderMinutes: minutes });
     } catch (error) {
       // Reminders are a convenience; failing to set them must not stop the onboarding.
-      console.warn('Could not schedule the reminders', error);
+      console.warn('Could not turn on the reminders', error);
       next({ reminderMinutes: undefined });
     } finally {
       setEnabling(false);
@@ -70,6 +56,7 @@ export function RemindersStep() {
 
   const skip = () => {
     // Removes reminders turned on before coming back to this step.
+    saveReminderMinutes(null);
     void cancelReminders().catch((error: unknown) =>
       console.warn('Could not cancel the reminders', error),
     );
