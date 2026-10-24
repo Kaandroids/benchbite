@@ -6,13 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
-import { HistoryButton } from '@/components/ui/history-button';
 import { Icon } from '@/components/ui/icon';
-import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
 import {
   filterExercises,
   MUSCLE_GROUPS,

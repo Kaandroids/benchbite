@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { HistoryButton } from '@/components/ui/history-button';
-import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';

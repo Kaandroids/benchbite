@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { RoundIconButton } from './round-icon-button';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 
 type HistoryButtonProps = {
   exerciseId: string;

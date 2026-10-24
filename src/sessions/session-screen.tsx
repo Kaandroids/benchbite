@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HistoryButton } from '@/components/ui/history-button';
 import { Icon } from '@/components/ui/icon';
-import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { summarizeSets } from '@/sets/exercise-summary';

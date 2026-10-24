@@ -2,12 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { InfoButton } from '@/components/ui/info-button';
 import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
