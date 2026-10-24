@@ -17,8 +17,9 @@ const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 const PARALLEL_REQUESTS = 8;
-// The local edge runtime turns a request away with 503 now and then while it is busy, which says
-// nothing about the plan, so such a request is tried again a few times before it counts.
+// The local edge runtime fails a request with a server error now and then while it is busy, a
+// 503 or a 500 from a worker it stopped, which says nothing about the plan. Such a request is
+// tried again a few times; one that fails every time counts, with what the response said.
 const BUSY_TRIES = 3;
 const BUSY_WAIT_MS = 500;
 
@@ -157,7 +158,7 @@ async function requestPlan(answers: PlanInput): Promise<Response> {
       },
       body: JSON.stringify(answers),
     });
-    if (response.status !== 503 || attempt === BUSY_TRIES) {
+    if (response.status < 500 || attempt === BUSY_TRIES) {
       return response;
     }
     await new Promise((resolve) => setTimeout(resolve, BUSY_WAIT_MS * attempt));
@@ -169,7 +170,7 @@ async function worker() {
     const response = await requestPlan(answers);
     const label = JSON.stringify(answers);
     if (!response.ok) {
-      failures.push(`${label}: HTTP ${response.status}`);
+      failures.push(`${label}: HTTP ${response.status} ${await response.text()}`);
       continue;
     }
     const { sessions } = (await response.json()) as { sessions: Session[] };
