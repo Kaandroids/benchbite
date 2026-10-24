@@ -17,6 +17,7 @@ import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
+import { ReminderSync } from '@/reminders/reminder-sync';
 import { showRemindersInForeground } from '@/reminders/reminders';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
@@ -109,6 +110,7 @@ function RootNavigator() {
       {/* Over every screen, as the app may open on any of them. */}
       {status === 'ready' ? <LeftOpenSaver /> : null}
       {status === 'ready' ? <StartMoveSheet /> : null}
+      {status === 'ready' && completed ? <ReminderSync /> : null}
     </>
   );
 }
