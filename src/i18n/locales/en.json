@@ -430,6 +430,7 @@
         "lose_fat": "To lose fat, your target has to be below your current weight.",
         "build_muscle": "To build muscle, your target has to be above your current weight."
       },
+      "tooClose": "This is too close to your current weight. Choose a target a little further away.",
       "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
       "useLowest": "Make {{weight}} {{unit}} my target",
       "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",

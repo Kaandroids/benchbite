@@ -61,6 +61,24 @@ describe('TargetWeightStep', () => {
     expect(continueButton()).toBeDisabled();
   });
 
+  it('says when a target in pounds is too close to be saved apart from the weight', async () => {
+    // 176.3 lb and 176.4 lb, both saved as 80.0 kg.
+    mockStep = createStep({
+      ...BODY,
+      weightUnit: 'lb',
+      weightKg: 79.97,
+      goal: 'build_muscle',
+      targetWeightKg: 80.01,
+    });
+    await render(<TargetWeightStep />);
+    expect(
+      screen.getByText(
+        'This is too close to your current weight. Choose a target a little further away.',
+      ),
+    ).toBeTruthy();
+    expect(continueButton()).toBeDisabled();
+  });
+
   it('blocks a target below a healthy weight and offers the lowest healthy one', async () => {
     mockStep = createStep({ ...BODY, goal: 'lose_fat', targetWeightKg: 59 });
     await render(<TargetWeightStep />);
