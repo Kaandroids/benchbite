@@ -1,33 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
+import { Tag } from '@/components/ui/tag';
 import { useWeekdayFormat, weekdayOf } from '@/i18n/dates';
-import { useTheme } from '@/theme';
 
 /** "Moved from Monday", for a workout moved to another day. */
 export function MovedFrom({ date }: { date: string }) {
   const { t } = useTranslation();
-  const { colors, radii } = useTheme();
   const weekdayName = useWeekdayFormat();
   return (
-    <View style={[styles.chip, { backgroundColor: colors.selected, borderRadius: radii.full }]}>
-      <Icon name="arrow" size={12} color="primaryText" />
-      <Text variant="captionStrong" color="primaryText">
-        {t('today.workout.movedFrom', { day: weekdayName(weekdayOf(date)) })}
-      </Text>
-    </View>
+    <Tag icon="arrow" label={t('today.workout.movedFrom', { day: weekdayName(weekdayOf(date)) })} />
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-  },
-});

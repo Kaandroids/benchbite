@@ -5,6 +5,7 @@ import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -91,19 +92,12 @@ export function HistoryScreen() {
                 {weekTitle(week.start)}
               </Text>
               {week.complete ? (
-                <View
-                  style={[
-                    styles.chip,
-                    { borderRadius: radii.full, backgroundColor: colors.selected },
-                  ]}
-                >
-                  <Text variant="captionStrong" color="primaryText">
-                    {t('history.weekTotal', {
-                      count: week.logs.length,
-                      time: duration(week.minutes),
-                    })}
-                  </Text>
-                </View>
+                <Tag
+                  label={t('history.weekTotal', {
+                    count: week.logs.length,
+                    time: duration(week.minutes),
+                  })}
+                />
               ) : null}
             </View>
           )}
@@ -145,10 +139,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
   },
   row: {
     borderLeftWidth: 1,
