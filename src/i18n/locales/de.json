@@ -10,6 +10,15 @@
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
   },
+  "sessionEnded": {
+    "title": "Deine Gast-Sitzung ist abgelaufen",
+    "message": "Dieses Gerät konnte sich nicht mehr mit deinem Gastprofil anmelden. Dein bisheriger Plan und deine Trainings lassen sich hier deshalb nicht mehr öffnen.\n\nDu startest neu mit einem neuen Gastprofil.",
+    "startAgain": "Neu starten",
+    "createAccount": "Konto erstellen",
+    "haveAccount": "Schon ein Konto?",
+    "logIn": "Anmelden",
+    "accountNote": "Mit einem Konto bleiben dein Plan und deine Trainings auf jedem Gerät bei dir."
+  },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
     "message": "Prüfe deine Verbindung und versuche es erneut."
