@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { InfoButton } from '@/components/ui/info-button';
+import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
@@ -139,115 +139,83 @@ export function ExerciseSheet({
   const detail = details ? caption(details) : '';
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={onClose}
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
+    <Sheet onClose={onClose}>
+      <View style={[styles.header, { gap: spacing.md }]}>
+        <ExerciseThumbnail path={thumbnailOf(details)} size={64} name={details?.name} />
+        <View style={styles.title}>
+          <Text variant="headline">{details?.name ?? ''}</Text>
+          <Text variant="caption" color="textMuted">
+            {detail}
+          </Text>
+        </View>
+        <InfoButton
+          exerciseId={exercise.exerciseId}
+          exerciseName={details?.name ?? ''}
+          onOpen={onClose}
         />
-        <SafeAreaView
-          edges={['bottom']}
-          style={[
-            {
-              backgroundColor: colors.background,
-              borderTopLeftRadius: radii.xl,
-              borderTopRightRadius: radii.xl,
-              padding: spacing.xl,
-              gap: spacing.lg,
-            },
-          ]}
-        >
-          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          <View style={[styles.header, { gap: spacing.md }]}>
-            <ExerciseThumbnail path={thumbnailOf(details)} size={64} name={details?.name} />
-            <View style={styles.title}>
-              <Text variant="headline">{details?.name ?? ''}</Text>
-              <Text variant="caption" color="textMuted">
-                {detail}
-              </Text>
-            </View>
-            <InfoButton
-              exerciseId={exercise.exerciseId}
-              exerciseName={details?.name ?? ''}
-              onOpen={onClose}
-            />
-          </View>
+      </View>
 
+      <View
+        style={[
+          styles.card,
+          {
+            borderRadius: radii.lg,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            paddingHorizontal: spacing.lg,
+          },
+        ]}
+      >
+        {rows.map((item, index) => (
           <View
+            key={item.label}
             style={[
-              styles.card,
+              styles.row,
               {
-                borderRadius: radii.lg,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-                paddingHorizontal: spacing.lg,
+                gap: spacing.md,
+                paddingVertical: spacing.sm,
+                borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
+                borderTopColor: colors.border,
               },
             ]}
           >
-            {rows.map((item, index) => (
-              <View
-                key={item.label}
-                style={[
-                  styles.row,
-                  {
-                    gap: spacing.md,
-                    paddingVertical: spacing.sm,
-                    borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
-                    borderTopColor: colors.border,
-                  },
-                ]}
-              >
-                <Text variant="bodyStrong" style={styles.label}>
-                  {item.label}
-                </Text>
-                <Text
-                  variant="headline"
-                  style={styles.value}
-                  accessibilityLabel={`${item.label} ${item.value}`}
-                >
-                  {item.value}
-                </Text>
-                <StepButtons
-                  size={44}
-                  onDecrease={item.decrease}
-                  onIncrease={item.increase}
-                  canDecrease={item.canDecrease}
-                  canIncrease={item.canIncrease}
-                  decreaseLabel={t('editor.less', { label: item.label })}
-                  increaseLabel={t('editor.more', { label: item.label })}
-                />
-              </View>
-            ))}
-          </View>
-
-          <View style={[styles.actions, { gap: spacing.md }]}>
-            <Button
-              variant="ghost"
-              label={t('editor.remove')}
-              onPress={onRemove}
-              style={styles.action}
+            <Text variant="bodyStrong" style={styles.label}>
+              {item.label}
+            </Text>
+            <Text
+              variant="headline"
+              style={styles.value}
+              accessibilityLabel={`${item.label} ${item.value}`}
+            >
+              {item.value}
+            </Text>
+            <StepButtons
+              size={44}
+              onDecrease={item.decrease}
+              onIncrease={item.increase}
+              canDecrease={item.canDecrease}
+              canIncrease={item.canIncrease}
+              decreaseLabel={t('editor.less', { label: item.label })}
+              increaseLabel={t('editor.more', { label: item.label })}
             />
-            <Button label={t('editor.done')} onPress={onClose} style={styles.action} />
           </View>
-        </SafeAreaView>
+        ))}
       </View>
-    </Modal>
+
+      <View style={[styles.actions, { gap: spacing.md }]}>
+        <Button
+          variant="ghost"
+          label={t('editor.remove')}
+          onPress={onRemove}
+          style={styles.action}
+        />
+        <Button label={t('editor.done')} onPress={onClose} style={styles.action} />
+      </View>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  grabber: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
