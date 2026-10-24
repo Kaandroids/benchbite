@@ -85,6 +85,27 @@ describe('useLogWeight', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
+  it('saves one weight at a time, in the order they were made', async () => {
+    let finishFirst = () => {};
+    upsert
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          finishFirst = () => resolve({ error: null });
+        }),
+      )
+      .mockResolvedValueOnce({ error: null });
+    const { result } = await renderHook(() => useLogWeight());
+    await act(async () => {
+      result.current.mutate(79.6);
+      result.current.mutate(79.7);
+    });
+    // The second waits for the first, so the first cannot reach the database last.
+    expect(upsert).toHaveBeenCalledTimes(1);
+    await act(async () => finishFirst());
+    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(2));
+    expect(upsert.mock.calls.map(([entry]) => entry.weight_kg)).toEqual([79.6, 79.7]);
+  });
+
   it('fails with the error the database returns', async () => {
     const error = { code: '23514', message: 'check violation' };
     upsert.mockResolvedValue({ error });

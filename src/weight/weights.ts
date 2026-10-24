@@ -52,6 +52,8 @@ export function useLogWeight() {
   const queryClient = useQueryClient();
   const session = useSession();
   return useMutation({
+    // One save at a time, so that on a slow connection an earlier weight cannot land last.
+    scope: { id: 'log-weight' },
     mutationFn: async (weightKg: number) => {
       if (session.status !== 'ready') {
         throw new Error('Not signed in');
