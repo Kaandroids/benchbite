@@ -23,7 +23,10 @@ export function HistoryScreen() {
   const weekTitle = useWeekTitle();
   const duration = useDurationFormat();
   // Grouped after the pages are joined, so that a week split between two pages shows as one.
-  const weeks = byWeek(logs.data?.pages.flat() ?? []).map((week) => ({ ...week, data: week.logs }));
+  const weeks = byWeek(logs.data?.pages.flatMap((page) => page.logs) ?? []).map((week) => ({
+    ...week,
+    data: week.logs,
+  }));
 
   return (
     <Screen

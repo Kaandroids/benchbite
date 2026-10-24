@@ -80,7 +80,7 @@ beforeEach(() => {
   jest.useFakeTimers({ now: FRIDAY });
   // Two pages, the second starting within this week, which still shows as one week.
   jest.mocked(useLogSummaries).mockReturnValue({
-    ...loaded({ pages: [LOGS.slice(0, 1), LOGS.slice(1)] }),
+    ...loaded({ pages: [{ logs: LOGS.slice(0, 1) }, { logs: LOGS.slice(1) }] }),
     hasNextPage: true,
     isFetchingNextPage: false,
     fetchNextPage,
@@ -213,7 +213,7 @@ describe('HistoryScreen', () => {
 
   it('keeps the list when the next page fails, and tries it again', async () => {
     jest.mocked(useLogSummaries).mockReturnValue({
-      ...loaded({ pages: [LOGS.slice(0, 1), LOGS.slice(1)] }),
+      ...loaded({ pages: [{ logs: LOGS.slice(0, 1) }, { logs: LOGS.slice(1) }] }),
       isError: true,
       isFetchNextPageError: true,
       hasNextPage: true,
