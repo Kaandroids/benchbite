@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -60,6 +60,19 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select isnt_empty(
   $$ delete from storage.objects where bucket_id = 'exercise-photos' returning 1 $$,
   'Users remove their own photos'
+);
+
+-- A folder holds up to 1000 photos.
+select set_config('role', 'postgres', true);
+insert into storage.objects (bucket_id, name)
+select 'exercise-photos', '00000000-0000-0000-0000-00000000000a/filler-' || n || '.jpg'
+from generate_series(1, 1000) n;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name)
+     values ('exercise-photos', '00000000-0000-0000-0000-00000000000a/one-more.jpg') $$,
+  '42501', null,
+  'A user has up to 1000 exercise photos'
 );
 
 select * from finish();

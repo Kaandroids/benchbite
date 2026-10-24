@@ -627,6 +627,7 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      own_exercise_photo_count: { Args: Record<PropertyKey, never>; Returns: number };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
