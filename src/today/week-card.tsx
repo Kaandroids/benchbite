@@ -1,15 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
+import { fromIsoDate, isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { StreakBadge } from '@/streak/streak-badge';
 import type { Streak } from '@/streak/streak';
-import { fonts, useTheme } from '@/theme';
+import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
   dayState,
@@ -29,15 +29,32 @@ type WeekCardProps = {
   schedule: WeekSchedule;
 };
 
-/** The weekday of a day as YYYY-MM-DD, read as local midnight. */
+/** The weekday of a day as YYYY-MM-DD. */
 function weekdayOf(date: string): number {
-  return isoWeekday(new Date(`${date}T00:00`));
+  return isoWeekday(fromIsoDate(date));
+}
+
+type RingState = Exclude<DayState, 'rest' | 'extra' | 'partial'>;
+
+/** The look of each ring: its fill or border, and the icon inside it. */
+function ringOf(state: RingState, colors: ColorTokens): { style: ViewStyle; icon?: IconName } {
+  const rings: Record<RingState, { style: ViewStyle; icon?: IconName }> = {
+    done: { style: { backgroundColor: colors.primaryButton }, icon: 'check' },
+    today: { style: { borderWidth: 3, borderColor: colors.primaryButton } },
+    planned: { style: { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.planned } },
+    missed: { style: { borderWidth: 2, borderColor: colors.border }, icon: 'close' },
+    skipped: { style: { backgroundColor: colors.track }, icon: 'minus' },
+    movedAway: {
+      style: { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.placeholder },
+      icon: 'arrow',
+    },
+  };
+  return rings[state];
 }
 
 /** The mark of a day: a ring for workout days, a dot for rest days, with a badge on top. */
 function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
   const { colors } = useTheme();
-  const done = day.workouts.filter((workout) => workout.status === 'done').length;
   const movedIn = day.workouts.some((workout) => workout.movedFrom !== null);
   const radius = (RING_SIZE - 3) / 2;
 
@@ -67,7 +84,7 @@ function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
               fill="none"
             />
             <Path
-              d={arc(radius, done / day.workouts.length)}
+              d={arc(radius, day.done / day.total)}
               stroke={colors.primaryButton}
               strokeWidth={3}
               strokeLinecap="round"
@@ -75,36 +92,25 @@ function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
             />
           </Svg>
           <Text color="primaryText" style={styles.fraction}>
-            {`${done}/${day.workouts.length}`}
+            {`${day.done}/${day.total}`}
           </Text>
         </View>
       );
       break;
-    default:
+    default: {
+      const ring = ringOf(state, colors);
       mark = (
-        <View
-          testID={`day-${state}`}
-          style={[
-            styles.ring,
-            state === 'done'
-              ? { backgroundColor: colors.primaryButton }
-              : state === 'today'
-                ? { borderWidth: 3, borderColor: colors.primaryButton }
-                : state === 'planned'
-                  ? { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.planned }
-                  : state === 'movedAway'
-                    ? { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.placeholder }
-                    : state === 'skipped'
-                      ? { backgroundColor: colors.track }
-                      : { borderWidth: 2, borderColor: colors.border },
-          ]}
-        >
-          {state === 'done' ? <Icon name="check" size={16} color="onPrimary" /> : null}
-          {state === 'missed' ? <Icon name="close" size={14} color="textMuted" /> : null}
-          {state === 'skipped' ? <Icon name="minus" size={14} color="textMuted" /> : null}
-          {state === 'movedAway' ? <Icon name="arrow" size={14} color="textMuted" /> : null}
+        <View testID={`day-${state}`} style={[styles.ring, ring.style]}>
+          {ring.icon ? (
+            <Icon
+              name={ring.icon}
+              size={state === 'done' ? 16 : 14}
+              color={state === 'done' ? 'onPrimary' : 'textMuted'}
+            />
+          ) : null}
         </View>
       );
+    }
   }
 
   return (

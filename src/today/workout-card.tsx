@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
+import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
@@ -35,7 +35,7 @@ function MovedFrom({ date }: { date: string }) {
       <Icon name="arrow" size={12} color="primaryText" />
       <Text variant="caption" color="primaryText" style={styles.bold}>
         {t('today.workout.movedFrom', {
-          day: weekdayName(isoWeekday(new Date(`${date}T00:00`))),
+          day: weekdayName(isoWeekday(fromIsoDate(date))),
         })}
       </Text>
     </View>
@@ -72,10 +72,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
             </Text>
             <Text color="textMuted">
               {t('today.workout.next', {
-                day:
-                  next.inDays === 1
-                    ? t('today.workout.tomorrow')
-                    : weekdayName(((isoWeekday(today) + next.inDays - 1) % 7) + 1),
+                day: next.inDays === 1 ? t('today.workout.tomorrow') : weekdayName(next.weekday),
                 session: next.sessions.map(workoutName).join(', '),
               })}
             </Text>
