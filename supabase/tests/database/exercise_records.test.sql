@@ -17,12 +17,18 @@ $$;
 insert into public.workouts (id, user_id, name, type, estimated_minutes)
   overriding system value values (900, '00000000-0000-0000-0000-00000000000a', null, 'push', 45);
 
+-- When the workout of days ago started, which its records are dated by. It started an hour before
+-- it finished, so shortly after midnight that is the day before.
+create function pg_temp.started(days integer) returns timestamptz language sql as $$
+  select now() - make_interval(days => days, mins => 60);
+$$;
+
 -- A workout days ago with one exercise and its sets.
 create function pg_temp.log(days integer, exercise_id text, sets jsonb) returns bigint
 language sql as $$
   select public.log_workout(jsonb_build_object(
     'workoutId', 900,
-    'startedAt', now() - make_interval(days => days, mins => 60),
+    'startedAt', pg_temp.started(days),
     'finishedAt', now() - make_interval(days => days),
     'exercises', jsonb_build_array(jsonb_build_object('exerciseId', exercise_id, 'sets', sets))
   ));
@@ -61,10 +67,10 @@ select results_eq(
 select results_eq(
   $$ select kind, value, weight_kg, reps, achieved_at::date
      from public.exercise_records('Barbell_Bench_Press_-_Medium_Grip') order by kind $$,
-  $$ values ('best_set', 700.00, 70.00, 10, (now() - interval '10 days')::date),
-            ('heaviest', 85.00, 85.00, 7, (now() - interval '5 days')::date),
-            ('most_reps', 10.00, 70.00, 10, (now() - interval '10 days')::date),
-            ('one_rep_max', 104.8, 85.00, 7, (now() - interval '5 days')::date) $$,
+  $$ values ('best_set', 700.00, 70.00, 10, pg_temp.started(10)::date),
+            ('heaviest', 85.00, 85.00, 7, pg_temp.started(5)::date),
+            ('most_reps', 10.00, 70.00, 10, pg_temp.started(10)::date),
+            ('one_rep_max', 104.8, 85.00, 7, pg_temp.started(5)::date) $$,
   'A weighted exercise has its heaviest set, one-rep max, best set and most reps, first reached'
 );
 select results_eq(
