@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { minutesAndSeconds } from '@/lib/time';
 import { typography, useTheme } from '@/theme';
-import { minutesAndSeconds } from '@/workouts/format';
 
 import { describeSet, parseTime, SET_LIMITS, type SetField, type SetKind } from './fields';
 import { MAX_SETS, type SetValues } from './values';

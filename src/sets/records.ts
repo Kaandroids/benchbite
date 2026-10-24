@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { useNumberFormat } from '@/i18n/units';
-import { minutesAndSeconds } from '@/workouts/format';
+import { minutesAndSeconds } from '@/lib/time';
 
 import type { SetValues } from './values';
 

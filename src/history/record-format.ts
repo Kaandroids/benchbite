@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
 import { useNumberFormat } from '@/i18n/units';
+import { minutesAndSeconds } from '@/lib/time';
 import type { SetKind } from '@/sets/fields';
-import { minutesAndSeconds } from '@/workouts/format';
 
 import type { ProgressPoint } from './exercise-history';
 import type { Scale } from './progress-chart';

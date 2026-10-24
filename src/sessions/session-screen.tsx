@@ -13,17 +13,13 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { minutesAndSeconds } from '@/lib/time';
 import { useUserId } from '@/providers/session-provider';
 import { summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
 import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
-import {
-  minutesAndSeconds,
-  useRestFormat,
-  useTargetFormat,
-  useWorkoutName,
-} from '@/workouts/format';
+import { useRestFormat, useTargetFormat, useWorkoutName } from '@/workouts/format';
 
 import { newRecords } from './records';
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';

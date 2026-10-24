@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
-import { minutesAndSeconds } from '@/workouts/format';
 
 type RestBarProps = {
   /** Seconds of rest left, and of the whole rest. */

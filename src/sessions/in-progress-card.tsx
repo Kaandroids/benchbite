@@ -4,8 +4,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { minutesAndSeconds } from '@/lib/time';
 import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
+import { useWorkoutName } from '@/workouts/format';
 
 import { sessionTotals, type Session } from './session';
 import { useNow } from './use-now';

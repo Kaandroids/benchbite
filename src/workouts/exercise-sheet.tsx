@@ -12,10 +12,10 @@ import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
+import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
-import { minutesAndSeconds } from './format';
 
 const LIMITS = {
   sets: { min: 1, max: 10, step: 1 },

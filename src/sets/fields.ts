@@ -1,5 +1,5 @@
 import type { LibraryExercise } from '@/exercises/library';
-import { minutesAndSeconds } from '@/workouts/format';
+import { minutesAndSeconds } from '@/lib/time';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
 import type { SetValues } from './values';
