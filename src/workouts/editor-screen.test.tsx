@@ -87,6 +87,18 @@ beforeEach(() => {
 afterEach(() => clearDraft());
 
 describe('EditorScreen', () => {
+  it('keeps the changes when loading again fails and is tried again', async () => {
+    const { rerender } = await render(<EditorScreen id={5} />);
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Chest day');
+    jest
+      .mocked(useWorkoutLimits)
+      .mockReturnValue({ ...loaded({ exercises: 10, workouts: 5 }), isError: true } as never);
+    await rerender(<EditorScreen id={5} />);
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 10, workouts: 5 }) as never);
+    await rerender(<EditorScreen id={5} />);
+    expect(screen.getByLabelText('Name').props.value).toBe('Chest day');
+  });
+
   it('starts a new workout empty, and saves only with a name and an exercise', async () => {
     await render(<EditorScreen />);
     expect(screen.getByText('New workout')).toBeTruthy();

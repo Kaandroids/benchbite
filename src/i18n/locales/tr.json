@@ -103,7 +103,8 @@
     "history": {
       "title": "Geçmiş",
       "empty": "Tamamladığın antrenmanlar burada görünecek.",
-      "loadingMore": "Eski antrenmanlar yükleniyor"
+      "loadingMore": "Eski antrenmanlar yükleniyor",
+      "loadMoreError": "Eski antrenmanların yüklenemedi."
     },
     "archive": {
       "title": "Arşiv",

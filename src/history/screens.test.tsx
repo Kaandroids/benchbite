@@ -210,6 +210,25 @@ describe('HistoryScreen', () => {
     await fireEvent(screen.getByTestId('history-list'), 'endReached');
     expect(fetchNextPage).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the list when the next page fails, and tries it again', async () => {
+    jest.mocked(useLogSummaries).mockReturnValue({
+      ...loaded({ pages: [LOGS.slice(0, 1), LOGS.slice(1)] }),
+      isError: true,
+      isFetchNextPageError: true,
+      hasNextPage: true,
+      isFetchingNextPage: false,
+      fetchNextPage,
+    } as never);
+    await render(<HistoryScreen />);
+    expect(screen.getByText('This week')).toBeTruthy();
+    expect(screen.getByText("We couldn't load your older workouts.")).toBeTruthy();
+    // Not again on its own at the end of the list, only when asked.
+    await fireEvent(screen.getByTestId('history-list'), 'endReached');
+    expect(fetchNextPage).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('LogScreen', () => {

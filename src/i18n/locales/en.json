@@ -103,7 +103,8 @@
     "history": {
       "title": "History",
       "empty": "Your finished workouts will show here.",
-      "loadingMore": "Loading older workouts"
+      "loadingMore": "Loading older workouts",
+      "loadMoreError": "We couldn't load your older workouts."
     },
     "archive": {
       "title": "Archive",
