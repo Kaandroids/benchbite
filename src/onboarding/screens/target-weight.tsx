@@ -65,6 +65,9 @@ export function TargetWeightStep() {
   }
 
   const wrongDirection = !isTargetInGoalDirection(goal, weightKg, targetKg);
+  // In the goal's direction as shown, but saved as the current weight, as from pounds.
+  const tooClose =
+    wrongDirection && (goal === 'lose_fat' ? targetKg < weightKg : targetKg > weightKg);
   const belowHealthy = goal === 'lose_fat' && targetKg < lowestKg;
   const differenceKg = targetKg - weightKg;
   const sign = differenceKg > 0 ? '+' : differenceKg < 0 ? '−' : '';
@@ -87,7 +90,9 @@ export function TargetWeightStep() {
           <>
             {wrongDirection ? (
               <Text color="danger" align="center">
-                {t(`onboarding.targetWeight.wrongDirection.${goal}`)}
+                {tooClose
+                  ? t('onboarding.targetWeight.tooClose')
+                  : t(`onboarding.targetWeight.wrongDirection.${goal}`)}
               </Text>
             ) : belowHealthy ? (
               <View style={{ gap: spacing.sm }}>

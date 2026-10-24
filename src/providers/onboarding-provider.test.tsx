@@ -164,6 +164,10 @@ describe('OnboardingProvider', () => {
   });
 
   it('marks the onboarding completed when the server says it was finished', async () => {
+    stored.set(
+      'onboarding.user-1.draft',
+      JSON.stringify({ version: 1, step: 'weight', answers: { weightKg: 80 } }),
+    );
     maybeSingle.mockResolvedValue({
       data: { onboarding_completed_at: '2026-10-01T10:00:00Z' },
       error: null,
@@ -173,6 +177,9 @@ describe('OnboardingProvider', () => {
     expect(supabase.from).toHaveBeenCalledWith('profiles');
     expect(eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(stored.get('onboarding.user-1.completed')).toBe('true');
+    // The answers are on the server, so the draft with health data goes.
+    expect(storedDraft('user-1')).toBeNull();
+    expect(result.current.draft.answers).toEqual({});
   });
 
   it('never undoes a finished onboarding from the server', async () => {

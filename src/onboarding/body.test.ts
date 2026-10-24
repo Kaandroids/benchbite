@@ -10,6 +10,7 @@ import {
   minHealthyWeightKg,
   paceLevel,
   projectedDate,
+  snapPace,
 } from './body';
 
 describe('body rules', () => {
@@ -62,6 +63,22 @@ describe('body rules', () => {
   it('rejects a target equal to the current weight', () => {
     expect(isTargetInGoalDirection('lose_fat', 80, 80)).toBe(false);
     expect(isTargetInGoalDirection('build_muscle', 80, 80)).toBe(false);
+  });
+
+  it('rejects a target the database would store as the current weight', () => {
+    // 176.3 lb and 176.4 lb are 79.97 kg and 80.01 kg, both 80.0 kg in the database.
+    expect(isTargetInGoalDirection('build_muscle', 79.97, 80.01)).toBe(false);
+    expect(isTargetInGoalDirection('lose_fat', 80.01, 79.97)).toBe(false);
+    expect(isTargetInGoalDirection('build_muscle', 79.97, 80.06)).toBe(true);
+  });
+
+  it('puts a pace back on the slider’s steps after the trip through kilograms', () => {
+    // 1 lb is saved as 0.45 kg, which reads back as 0.99 lb.
+    expect(snapPace(0.99, PACE_RANGES.lb.lose_fat)).toBe(1);
+    expect(snapPace(2.01, PACE_RANGES.lb.lose_fat)).toBe(2);
+    expect(snapPace(0.44, PACE_RANGES.lb.build_muscle)).toBe(0.45);
+    expect(snapPace(0.5, PACE_RANGES.kg.lose_fat)).toBe(0.5);
+    expect(snapPace(5, PACE_RANGES.kg.lose_fat)).toBe(0.9);
   });
 
   it('offers paces up to about two pounds a week for losing and one for gaining', () => {

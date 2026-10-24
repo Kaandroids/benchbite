@@ -24,7 +24,7 @@ const KG_PER_LB = 0.45359237;
 const CM_PER_INCH = 2.54;
 
 /** Rounds to one decimal, the precision weights and heights are stored with. */
-const toTenth = (value: number) => Math.round(value * 10) / 10;
+export const toTenth = (value: number) => Math.round(value * 10) / 10;
 
 /** A weight in kilograms, shown in the given unit with one decimal. */
 export function weightIn(unit: WeightUnit, kg: number): number {

@@ -1,5 +1,8 @@
 // Rules for the body data steps. They only decide what the onboarding shows and allows; the
 // calorie targets themselves are calculated in the database (ADR 0009).
+import { toTenth } from '@/i18n/units';
+import { clamp } from '@/lib/math';
+
 import type { OnboardingAnswers } from './types';
 
 /** Benchbite is for adults (#48). */
@@ -29,10 +32,24 @@ type Goal = NonNullable<OnboardingAnswers['goal']>;
 
 /** Whether the target lies in the goal's direction: below for losing fat, above for muscle. */
 export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: number): boolean {
-  return goal === 'lose_fat' ? targetKg < weightKg : targetKg > weightKg;
+  // Compared as the database stores them, so that two weights a few hundredths apart, as from
+  // pounds, are not saved as the same.
+  const weight = toTenth(weightKg);
+  const target = toTenth(targetKg);
+  return goal === 'lose_fat' ? target < weight : target > weight;
 }
 
 type PaceRange = { min: number; max: number; step: number; default: number };
+
+/**
+ * A pace on the slider's steps and within its range. A pace in pounds comes back from kilograms
+ * a hundredth off, such as 1 lb as 0.45 kg and then 0.99 lb, which no step of the slider is.
+ */
+export function snapPace(value: number, range: PaceRange): number {
+  const steps = Math.round((value - range.min) / range.step);
+  const snapped = Math.round((range.min + steps * range.step) * 100) / 100;
+  return clamp(snapped, range.min, range.max);
+}
 
 /**
  * The weekly paces the slider offers, in the user's unit. The fastest pace matches what the
