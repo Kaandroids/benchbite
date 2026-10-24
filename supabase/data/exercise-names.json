@@ -59,6 +59,10 @@
     "de": "Ergometer",
     "tr": "Sabit Bisiklet"
   },
+  "Body_Tricep_Press": {
+    "de": "Trizepsdrücken mit Körpergewicht",
+    "tr": "Vücut Ağırlığıyla Triceps Press"
+  },
   "Bodyweight_Squat": {
     "de": "Kniebeuge (Körpergewicht)",
     "tr": "Squat (Vücut Ağırlığı)"
@@ -163,6 +167,10 @@
     "de": "Farmer’s Walk",
     "tr": "Farmer’s Walk"
   },
+  "Freehand_Jump_Squat": {
+    "de": "Sprungkniebeuge",
+    "tr": "Zıplamalı Squat"
+  },
   "Front_Dumbbell_Raise": {
     "de": "Frontheben (Kurzhantel)",
     "tr": "Ön Kaldırış (Dambıl)"
@@ -191,6 +199,10 @@
     "de": "Hammer-Curls",
     "tr": "Hammer Curl"
   },
+  "Handstand_Push-Ups": {
+    "de": "Handstand-Liegestütz",
+    "tr": "Amuda Kalkarak Şınav"
+  },
   "Hanging_Leg_Raise": {
     "de": "Beinheben hängend",
     "tr": "Barda Bacak Kaldırma"
@@ -206,6 +218,10 @@
   "Incline_Push-Up": {
     "de": "Liegestütze (Hände erhöht)",
     "tr": "Eller Yüksekte Şınav"
+  },
+  "Incline_Push-Up_Close-Grip": {
+    "de": "Enge Schrägliegestütze",
+    "tr": "Dar Tutuşlu Eğimli Şınav"
   },
   "Inverted_Row": {
     "de": "Rudern hängend (Inverted Row)",
@@ -255,9 +271,17 @@
     "de": "Klimmzüge",
     "tr": "Barfiks"
   },
+  "Push-Up_Wide": {
+    "de": "Breite Liegestütze",
+    "tr": "Geniş Şınav"
+  },
   "Push-Ups_-_Close_Triceps_Position": {
     "de": "Enge Liegestütze",
     "tr": "Dar Şınav"
+  },
+  "Push-Ups_With_Feet_Elevated": {
+    "de": "Liegestütze mit erhöhten Füßen",
+    "tr": "Ayaklar Yüksekte Şınav"
   },
   "Pushups": {
     "de": "Liegestütze",
