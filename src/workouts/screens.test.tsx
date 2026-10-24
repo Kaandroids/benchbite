@@ -211,8 +211,14 @@ describe('WorkoutsScreen', () => {
 
       await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
       await fireEvent.press(screen.getByRole('button', { name: 'Discard Push and start Pull' }));
-      expect(endSession).toHaveBeenCalled();
-      expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }));
+      // The running workout ends only once Pull is sure to start, after any question about it.
+      expect(endSession).not.toHaveBeenCalled();
+      // It starts once the sheet has closed, as iOS cannot open the question before.
+      await waitFor(() =>
+        expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }), {
+          beforeStart: endSession,
+        }),
+      );
     });
 
     it('goes back to it from the question', async () => {
