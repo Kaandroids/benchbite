@@ -23,7 +23,8 @@ Material Symbols on Android). The typeface is Nunito.
 The palette was chosen from rendered previews: a vivid orange (`#FF6A10`) on neutral greys,
 with a graphite dark mode. Every text colour meets WCAG AA for its use; filled buttons use a
 slightly deeper orange (`#F25A00`) so that their white, bold 19 px labels reach the 3:1
-ratio WCAG allows for large text.
+ratio WCAG allows for large text. In light mode, icons and other orange marks use `#E05300`, so that
+they reach the 3:1 that WCAG asks of icons also on the light orange tiles behind them.
 
 ## Alternatives considered
 
