@@ -166,6 +166,20 @@ describe('RestAlarm', () => {
     expect(cancel).toHaveBeenCalledWith('rest-end');
   });
 
+  it('cancels it also when the rest is skipped while it is being scheduled', async () => {
+    // The permission comes only after the skip, so scheduling finishes after the cancel is made.
+    let allow = (_permission: object) => {};
+    await render(<RestAlarm />);
+    getPermissions.mockImplementationOnce(() => new Promise((resolve) => (allow = resolve)));
+    await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
+    await act(async () => updateSession((session) => ({ ...session, rest: null })));
+    await act(async () => allow({ granted: true, canAskAgain: true }));
+    expect(schedule).toHaveBeenCalledTimes(1);
+    expect(cancel.mock.invocationCallOrder.at(-1)).toBeGreaterThan(
+      schedule.mock.invocationCallOrder[0]!,
+    );
+  });
+
   it('vibrates and ends the rest when it is over while the app is open', async () => {
     await render(<RestAlarm />);
     await act(async () => updateSession((session) => toggleDone(session, 0, 0, NOW)));
