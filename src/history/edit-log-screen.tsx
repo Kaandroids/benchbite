@@ -168,7 +168,7 @@ function LogEditor({
     } catch (error) {
       console.warn('Could not save the workout log', error);
       Alert.alert(
-        t('history.edit.saveErrorTitle'),
+        t('common.notSaved'),
         isDbError(error, 'logNotFound')
           ? t('history.notFound.message')
           : t('history.edit.saveError'),

@@ -33,7 +33,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     : t('workout.size.exercises', { count: log.exercises });
   const setsLabel = isPartial(log.sets, log.plannedSets)
     ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
-    : t('history.sets', { count: log.sets });
+    : t('common.sets', { count: log.sets });
 
   return (
     <Pressable
@@ -82,7 +82,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
           <Text variant="caption" color="textMuted" numberOfLines={1}>
             {[
               duration(durationMinutes(log)),
-              t('history.sets', { count: log.sets }),
+              t('common.sets', { count: log.sets }),
               log.estimatedKcal !== null ? t('history.kcal', { kcal: log.estimatedKcal }) : null,
             ]
               .filter(Boolean)

@@ -105,7 +105,7 @@ export function EditorScreen({ id }: { id?: number }) {
       console.warn('Could not save the workout', error);
       // The limits can change after they were loaded, or another device can add a workout.
       Alert.alert(
-        t('editor.saveErrorTitle'),
+        t('common.notSaved'),
         isDbError(error, 'exerciseLimit')
           ? t('editor.limit', { max })
           : isDbError(error, 'workoutLimit')

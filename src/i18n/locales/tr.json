@@ -4,7 +4,10 @@
     "tryAgain": "Tekrar dene",
     "continue": "Devam",
     "loading": "Yükleniyor",
-    "close": "Kapat"
+    "close": "Kapat",
+    "notSaved": "Kaydedilemedi",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} set"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
@@ -112,9 +115,7 @@
   },
   "streak": {
     "label_one": "{{count}} günlük seri",
-    "label_other": "{{count}} günlük seri",
-    "done": "seri sürdü",
-    "frozen": "seri donduruldu"
+    "label_other": "{{count}} günlük seri"
   },
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
@@ -301,8 +302,7 @@
     "done": "Tamam",
     "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
     "overLimit_one": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
-    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
-    "saveErrorTitle": "Kaydedilemedi"
+    "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir."
   },
   "onboarding": {
     "steps": {
@@ -625,15 +625,12 @@
       "sets": "set",
       "kilograms": "kg kaldırıldı",
       "skipped": "Atlandı",
-      "sets_one": "{{count}} set",
-      "sets_other": "{{count}} set",
       "save": "Antrenmanı kaydet",
       "keepGoing": "Devam et",
       "discard": "Sil",
       "discardTitle": "Antrenman silinsin mi?",
       "discardMessage": "Girdiğin setler kaydedilmez.",
       "empty": "Kaydetmek için en az bir set gir.",
-      "saveErrorTitle": "Kaydedilemedi",
       "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
       "records_one": "{{count}} yeni rekor",
       "records_other": "{{count}} yeni rekor"
@@ -696,15 +693,11 @@
     "weekTotal_other": "{{count}} antrenman · {{time}}",
     "minutes": "{{minutes}} dk",
     "hours": "{{hours}} sa {{minutes}} dk",
-    "sets_one": "{{count}} set",
-    "sets_other": "{{count}} set",
     "kcal": "~{{kcal}} kcal",
     "open": "Antrenmanı açar",
     "stats": {
       "time": "süre",
-      "sets": "set",
-      "lifted": "kaldırıldı",
-      "kcal": "kcal yakıldı"
+      "sets": "set"
     },
     "delete": "Geçmişten sil",
     "deleteTitle": "Bu antrenman geçmişten silinsin mi?",
@@ -722,9 +715,7 @@
     "exercise": {
       "best": "EN İYİ SET",
       "reps_one": "{{count}} tekrar",
-      "reps_other": "{{count}} tekrar",
-      "setCount_one": "{{count}} set",
-      "setCount_other": "{{count}} set"
+      "reps_other": "{{count}} tekrar"
     },
     "started": "Başladı",
     "ended": "Bitti",
@@ -734,7 +725,6 @@
       "removeSet": "{{number}}. seti kaldır",
       "empty": "En az bir set bırak ya da antrenmanı sil.",
       "missing": "Kaydetmek için işaretli değerleri doldur.",
-      "saveErrorTitle": "Kaydedilemedi",
       "saveError": "Değişikliklerin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
       "discardTitle": "Değişiklikler silinsin mi?",
       "discardMessage": "Bu antrenmanda yaptığın değişiklikler kaydedilmeyecek.",

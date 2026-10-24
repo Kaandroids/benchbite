@@ -106,7 +106,7 @@ export function FinishScreen({ next }: { next?: number }) {
     const { best } = summarizeSets(done, kind);
     const sets =
       done.length === exercise.sets.length
-        ? t('session.summary.sets', { count: done.length })
+        ? t('common.sets', { count: done.length })
         : t('session.setsDone', { done: done.length, count: exercise.sets.length });
     return {
       name: info?.name ?? '',
@@ -143,7 +143,7 @@ export function FinishScreen({ next }: { next?: number }) {
     } catch (error) {
       saving.current = false;
       console.warn('Could not save the workout', error);
-      Alert.alert(t('session.summary.saveErrorTitle'), t('session.summary.saveError'));
+      Alert.alert(t('common.notSaved'), t('session.summary.saveError'));
     }
   };
 
