@@ -64,7 +64,8 @@ describe('weekSchedule', () => {
     expect(days[0]).toMatchObject({ workouts: [], movedAway: ['1>2026-10-21'] });
     expect(days[2]).toMatchObject({ workouts: ['1:done<2026-10-19'] });
     expect(days[5]).toMatchObject({ workouts: ['3:skipped'] });
-    expect(schedule).toMatchObject({ done: 1, planned: 5 });
+    // The skipped workout no longer counts towards the week.
+    expect(schedule).toMatchObject({ done: 1, planned: 4 });
   });
 
   it('counts a workout not planned on its day as an extra', () => {
@@ -82,6 +83,35 @@ describe('weekSchedule', () => {
     expect(days[1]).toMatchObject({ workouts: ['2:done'], extras: 1 });
     expect(days[2]).toMatchObject({ workouts: [], extras: 1 });
     expect(schedule).toMatchObject({ done: 1, planned: 5 });
+  });
+
+  it('moves a workout to a day on which it was skipped', () => {
+    const moves: WorkoutMove[] = [
+      { workoutId: 1, fromOn: '2026-10-22', toOn: null },
+      { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-22' },
+    ];
+    const schedule = weekSchedule(
+      SESSIONS,
+      moves,
+      [{ workoutId: 1, startedOn: '2026-10-22' }],
+      WEDNESDAY,
+    );
+    const days = summary(schedule);
+    expect(days[0]).toMatchObject({ workouts: [], movedAway: ['1>2026-10-22'] });
+    // The workout done on Thursday is the one moved there, not the one skipped.
+    expect(days[3]).toMatchObject({ workouts: ['1:skipped', '3:planned', '1:done<2026-10-19'] });
+  });
+
+  it('leaves skipped workouts out of what the day and the week count', () => {
+    const schedule = weekSchedule(
+      SESSIONS,
+      [{ workoutId: 1, fromOn: '2026-10-22', toOn: null }],
+      [{ workoutId: 3, startedOn: '2026-10-22' }],
+      WEDNESDAY,
+    );
+    expect(schedule.days[3]).toMatchObject({ done: 1, total: 1 });
+    expect(dayState(schedule.days[3]!, '2026-10-21')).toBe('done');
+    expect(schedule).toMatchObject({ done: 1, planned: 4 });
   });
 
   it('ignores moves that no longer fit the plan', () => {
@@ -132,6 +162,7 @@ describe('nextWorkouts', () => {
     const schedule = weekSchedule(SESSIONS, [], [], WEDNESDAY);
     expect(nextWorkouts(schedule, SESSIONS, WEDNESDAY)).toEqual({
       inDays: 1,
+      weekday: 4,
       sessions: [session(1, 4), session(3, 4)],
     });
   });
@@ -146,6 +177,7 @@ describe('nextWorkouts', () => {
     );
     expect(nextWorkouts(schedule, SESSIONS, saturday)).toEqual({
       inDays: 2,
+      weekday: 1,
       sessions: [session(1, 1)],
     });
   });

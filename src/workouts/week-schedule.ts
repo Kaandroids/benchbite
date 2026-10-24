@@ -1,4 +1,4 @@
-import { isoWeekday, toIsoDate } from '@/i18n/dates';
+import { isoWeekday, toIsoDate, weekStart, addDays } from '@/i18n/dates';
 
 import type { WeekSession } from './workouts';
 
@@ -30,18 +30,21 @@ export type ScheduleDay = {
   movedAway: { session: WeekSession; toOn: string }[];
   /** Finished workouts that were not planned on this day. */
   extras: number;
+  /** How many of the day's workouts are done. */
+  done: number;
+  /** How many of the day's workouts count: all but those skipped and not done anyway. */
+  total: number;
 };
 
-/** The days of a week from Monday, and how many of its planned workouts are done. */
+/**
+ * The days of a week from Monday, and how many of its planned workouts are done. A skipped workout
+ * does not count, so a week can be complete without it.
+ */
 export type WeekSchedule = { days: ScheduleDay[]; done: number; planned: number };
 
 /** How a day shows on the week card. */
 export type DayState =
   'done' | 'partial' | 'today' | 'planned' | 'missed' | 'skipped' | 'movedAway' | 'extra' | 'rest';
-
-function addDays(date: Date, days: number): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
 
 type Entry = { session: WeekSession; movedFrom: string | null; skipped: boolean };
 
@@ -57,7 +60,7 @@ export function weekSchedule(
   finished: readonly FinishedWorkout[],
   today: Date,
 ): WeekSchedule {
-  const monday = addDays(today, 1 - isoWeekday(today));
+  const monday = weekStart(today);
   const dates = Array.from({ length: 7 }, (_, index) => toIsoDate(addDays(monday, index)));
   const todayOn = toIsoDate(today);
   const moveOf = new Map(moves.map((move) => [`${move.workoutId}|${move.fromOn}`, move]));
@@ -79,8 +82,11 @@ export function weekSchedule(
     }
   });
   // A move to a day the workout is already on no longer fits, so the workout stays where it was.
+  // A day on which it was skipped is free.
   for (const { session, from, to } of moving) {
-    if (entries[to]!.some((entry) => entry.session.workoutId === session.workoutId)) {
+    if (
+      entries[to]!.some((entry) => entry.session.workoutId === session.workoutId && !entry.skipped)
+    ) {
       entries[from]!.push({ session, movedFrom: null, skipped: false });
     } else {
       entries[to]!.push({ session, movedFrom: dates[from]!, skipped: false });
@@ -92,70 +98,92 @@ export function weekSchedule(
   let planned = 0;
   const days = dates.map((date, index): ScheduleDay => {
     const logs = finished.filter((log) => log.startedOn === date).map((log) => log.workoutId);
-    const workouts = entries[index]!.map(({ session, movedFrom, skipped }): PlannedWorkout => {
+    const finishedOne = ({ session }: Entry) => {
       const log = logs.indexOf(session.workoutId);
       if (log >= 0) {
         logs.splice(log, 1);
       }
-      const status: PlannedStatus =
-        log >= 0 ? 'done' : skipped ? 'skipped' : date < todayOn ? 'missed' : 'planned';
-      return { session, status, movedFrom };
+      return log >= 0;
+    };
+    // A workout that is on the day takes its log before one of it that was skipped there.
+    const dayEntries = entries[index]!;
+    const finishedEntries = new Set([
+      ...dayEntries.filter((entry) => !entry.skipped && finishedOne(entry)),
+      ...dayEntries.filter((entry) => entry.skipped && finishedOne(entry)),
+    ]);
+    const workouts = dayEntries.map((entry): PlannedWorkout => {
+      const status: PlannedStatus = finishedEntries.has(entry)
+        ? 'done'
+        : entry.skipped
+          ? 'skipped'
+          : date < todayOn
+            ? 'missed'
+            : 'planned';
+      return { session: entry.session, status, movedFrom: entry.movedFrom };
     });
-    done += workouts.filter((workout) => workout.status === 'done').length;
-    planned += workouts.length;
+    const total = workouts.filter((workout) => workout.status !== 'skipped').length;
+    done += finishedEntries.size;
+    planned += total;
     return {
       date,
       weekday: index + 1,
       workouts,
       movedAway: movedAway[index]!,
       extras: logs.length,
+      done: finishedEntries.size,
+      total,
     };
   });
   return { days, done, planned };
 }
 
-/** How a day shows on the week card, as seen on `today` as YYYY-MM-DD. */
+/**
+ * How a day shows on the week card, as seen on `today` as YYYY-MM-DD. Skipped workouts do not
+ * count, so a day with the others done is done.
+ */
 export function dayState(day: ScheduleDay, today: string): DayState {
-  const { workouts } = day;
-  if (workouts.length === 0) {
+  if (day.workouts.length === 0) {
     return day.extras > 0 ? 'extra' : day.movedAway.length > 0 ? 'movedAway' : 'rest';
   }
-  const done = workouts.filter((workout) => workout.status === 'done').length;
-  if (done === workouts.length) {
+  if (day.total === 0) {
+    return 'skipped';
+  }
+  if (day.done === day.total) {
     return 'done';
   }
-  if (done > 0) {
+  if (day.done > 0) {
     return 'partial';
-  }
-  if (workouts.every((workout) => workout.status === 'skipped')) {
-    return 'skipped';
   }
   if (day.date === today) {
     return 'today';
   }
-  return workouts.some((workout) => workout.status === 'missed') ? 'missed' : 'planned';
+  return day.workouts.some((workout) => workout.status === 'missed') ? 'missed' : 'planned';
 }
 
 /**
  * The next day after `today` with workouts still planned, in this week after its moves and after
- * it on the plan's weekdays, and how many days away it is; null without any.
+ * it on the plan's weekdays, with its weekday and how many days away it is; null without any.
  */
 export function nextWorkouts(
   schedule: WeekSchedule,
   sessions: readonly WeekSession[],
   today: Date,
-): { inDays: number; sessions: WeekSession[] } | null {
+): { inDays: number; weekday: number; sessions: WeekSession[] } | null {
   const weekday = isoWeekday(today);
   for (const day of schedule.days.slice(weekday)) {
     const ahead = day.workouts.filter((workout) => workout.status === 'planned');
     if (ahead.length > 0) {
-      return { inDays: day.weekday - weekday, sessions: ahead.map((workout) => workout.session) };
+      return {
+        inDays: day.weekday - weekday,
+        weekday: day.weekday,
+        sessions: ahead.map((workout) => workout.session),
+      };
     }
   }
   for (let next = 1; next <= 7; next++) {
     const ahead = sessions.filter((session) => session.weekday === next);
     if (ahead.length > 0) {
-      return { inDays: 7 - weekday + next, sessions: ahead };
+      return { inDays: 7 - weekday + next, weekday: next, sessions: ahead };
     }
   }
   return null;
