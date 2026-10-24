@@ -16,6 +16,11 @@ export function fromIsoDate(date: string): Date {
   return new Date(`${date}T00:00`);
 }
 
+/** The ISO weekday of a day as YYYY-MM-DD. */
+export function weekdayOf(date: string): number {
+  return isoWeekday(fromIsoDate(date));
+}
+
 /** The day `days` after a date, at midnight. */
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);

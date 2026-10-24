@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import {
   fromIsoDate,
-  isoWeekday,
   toIsoDate,
   useShortDateFormat,
   useWeekdayFormat,
+  weekdayOf,
 } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -60,7 +60,7 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
       <View style={styles.header}>
         <Text variant="headline" accessibilityRole="header">
           {t('today.pickDay.title', {
-            day: longWeekday(isoWeekday(fromIsoDate(fromOn))),
+            day: longWeekday(weekdayOf(fromOn)),
             session: workoutName(session),
           })}
         </Text>
