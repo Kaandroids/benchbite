@@ -7,12 +7,17 @@ import { Text } from './text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
+/** The height, side padding and label of each size; a small button fits in a row beside text. */
+const SIZES = {
+  regular: { minHeight: 54, padding: 'xl', label: 'button' },
+  small: { minHeight: 44, padding: 'md', label: 'bodyStrong' },
+} as const;
+
 type ButtonProps = {
   label: string;
   onPress?: () => void;
   variant?: ButtonVariant;
-  /** A small button fits in a row beside text. */
-  size?: 'regular' | 'small';
+  size?: keyof typeof SIZES;
   disabled?: boolean;
   /** Shows a spinner and ignores presses, for example while a request is running. */
   loading?: boolean;
@@ -73,19 +78,19 @@ export function Button({
       borderRadius={radii.lg}
       style={style}
       faceStyle={[
-        size === 'small' ? styles.small : styles.face,
-        { backgroundColor: face, paddingHorizontal: size === 'small' ? spacing.md : spacing.xl },
+        styles.face,
+        {
+          minHeight: SIZES[size].minHeight,
+          backgroundColor: face,
+          paddingHorizontal: spacing[SIZES[size].padding],
+        },
         border ? { borderWidth: 2, borderColor: border } : null,
       ]}
     >
       {loading ? (
         <ActivityIndicator color={colors[labelColor]} />
       ) : (
-        <Text
-          variant={size === 'small' ? 'bodyStrong' : 'button'}
-          color={labelColor}
-          numberOfLines={1}
-        >
+        <Text variant={SIZES[size].label} color={labelColor} numberOfLines={1}>
           {label}
         </Text>
       )}
@@ -95,12 +100,6 @@ export function Button({
 
 const styles = StyleSheet.create({
   face: {
-    minHeight: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  small: {
-    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
