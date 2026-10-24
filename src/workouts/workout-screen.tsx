@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -11,16 +10,14 @@ import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { StatColumns } from '@/components/ui/stat-columns';
-import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
-import { BusySheet } from '@/sessions/busy-sheet';
-import { endSession, useActiveSession } from '@/sessions/session';
-import { useStartWorkout } from '@/sessions/start';
+import { useActiveSession } from '@/sessions/session';
+import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
@@ -30,7 +27,6 @@ import {
   useKcalPerMinute,
   useSetWorkoutActive,
   useWorkouts,
-  type Workout,
   type WorkoutExercise,
   findWorkout,
 } from './workouts';
@@ -45,9 +41,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   const setActive = useSetWorkoutActive();
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
-  const startWorkout = useStartWorkout();
+  const { start, sheet: startSheet } = useStartOrAsk();
   const remove = useDeleteWorkout();
-  const [waiting, setWaiting] = useState<Workout | null>(null);
   const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
@@ -135,16 +130,6 @@ export function WorkoutScreen({ id }: { id: number }) {
       { text: t('workout.running.resume'), onPress: () => router.push('/session') },
     ]);
 
-  const start = () => {
-    if (running) {
-      router.push('/session');
-    } else if (session) {
-      setWaiting(workout);
-    } else {
-      void startWorkout(workout);
-    }
-  };
-
   const onDelete = () => {
     if (running) {
       askToFinish();
@@ -186,7 +171,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         workout.active ? (
           <Button
             label={running ? t('session.resume') : t('workout.startWorkout')}
-            onPress={start}
+            onPress={() => start(workout)}
           />
         ) : undefined
       }
@@ -251,26 +236,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         </Text>
       </Pressable>
 
-      {session ? (
-        <BusySheet
-          session={session}
-          next={waiting}
-          onResume={() => {
-            setWaiting(null);
-            router.push('/session');
-          }}
-          onFinish={() => {
-            setWaiting(null);
-            router.push({ pathname: '/session/finish', params: { next: String(workout.id) } });
-          }}
-          onDiscard={() => {
-            setWaiting(null);
-            // The running workout ends only once the new one is sure to start, which may ask first.
-            afterSheetCloses(() => void startWorkout(workout, { beforeStart: endSession }));
-          }}
-          onClose={() => setWaiting(null)}
-        />
-      ) : null}
+      {startSheet}
     </Screen>
   );
 }
