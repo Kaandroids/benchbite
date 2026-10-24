@@ -1,9 +1,23 @@
--- What clients may call and touch beyond row level security: internal helpers are no API
--- endpoints, and anon has no access to the workout log tables.
+-- What clients may call and touch beyond row level security: every table has row level security
+-- and every view reads with the caller's rights, internal helpers are no API endpoints, and anon
+-- has no access to the workout log tables.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(10);
+
+-- A new table or view without them would be open to every client.
+select is_empty(
+  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relrowsecurity $$,
+  'Every table has row level security'
+);
+select is_empty(
+  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'v'
+       and not coalesce('security_invoker=true' = any(c.reloptions), false) $$,
+  'Every view reads with the rights of its caller'
+);
 
 select ok(
   not bool_or(has_function_privilege(role, p.oid, 'execute')),

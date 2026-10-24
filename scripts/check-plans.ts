@@ -4,9 +4,9 @@
 
 import { Constants, type Database } from '../src/lib/database.types.ts';
 import {
-  FREE_WORKOUT_EXERCISES,
   FREE_WORKOUTS,
   MAX_TRAINING_DAYS,
+  PLAN_WORKOUT_EXERCISES,
   SESSION_MINUTES,
 } from '../supabase/functions/_shared/plan/limits.ts';
 import { usesTimeTarget } from '../supabase/functions/_shared/plan/prescription.ts';
@@ -90,7 +90,7 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
       found.push(`${session.type} takes ${session.estimatedMinutes} minutes`);
     }
     const count = session.exercises.length;
-    if (session.exercises.length < 2 || count > FREE_WORKOUT_EXERCISES) {
+    if (session.exercises.length < 2 || count > PLAN_WORKOUT_EXERCISES) {
       found.push(`${session.type} has ${count} exercises`);
     }
     const conditioning = session.exercises.filter((exercise) => exercise.slot === 'conditioning');
@@ -131,6 +131,16 @@ const catalogue = await loadCatalogue(token);
 const queue = allAnswers();
 const failures: string[] = [];
 let checked = 0;
+
+// Only signed-in users get a plan.
+const unsigned = await fetch(`${URL}/functions/v1/generate-plan`, {
+  method: 'POST',
+  headers: { apikey: KEY, 'Content-Type': 'application/json' },
+  body: JSON.stringify(queue[0]),
+});
+if (unsigned.status !== 401) {
+  failures.push(`without a session: HTTP ${unsigned.status}`);
+}
 
 async function worker() {
   for (let answers = queue.shift(); answers !== undefined; answers = queue.shift()) {
