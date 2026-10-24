@@ -10,9 +10,6 @@ import { upcomingWorkouts } from '@/workouts/week-schedule';
 import { REMINDER_DAYS, scheduleReminders, type Reminder } from './reminders';
 import { loadReminderMinutes } from './settings';
 
-/** The reminders being scheduled, so that a newer schedule never runs into an older one. */
-let scheduling: Promise<void> = Promise.resolve();
-
 /**
  * Keeps the workout reminders of the coming weeks in line with the week as it is (ADR 0029):
  * schedules them again whenever the workouts, this week's moves or the finished workouts change,
@@ -67,9 +64,9 @@ export function ReminderSync() {
     if (key === null || minutes === null) {
       return;
     }
-    scheduling = scheduling
-      .then(() => scheduleReminders(JSON.parse(key) as Reminder[], minutes))
-      .catch((error: unknown) => console.warn('Could not schedule the reminders', error));
+    scheduleReminders(JSON.parse(key) as Reminder[], minutes).catch((error: unknown) =>
+      console.warn('Could not schedule the reminders', error),
+    );
   }, [key]);
 
   return null;

@@ -78,14 +78,27 @@ export async function requestReminderPermission(channelName: string): Promise<bo
   return requested.granted;
 }
 
-/** Removes the workout reminders scheduled on this device. */
-export async function cancelReminders() {
+/** The changes to the reminders, one after another, so that a newer one never runs into an older. */
+let queue: Promise<unknown> = Promise.resolve();
+
+function enqueue<T>(change: () => Promise<T>): Promise<T> {
+  const run = queue.then(change, change);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+async function cancelAll() {
   const scheduled = await getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
       .filter((notification) => notification.identifier.startsWith(ID_PREFIX))
       .map((notification) => cancelScheduledNotificationAsync(notification.identifier)),
   );
+}
+
+/** Removes the workout reminders scheduled on this device. */
+export function cancelReminders(): Promise<void> {
+  return enqueue(cancelAll);
 }
 
 /**
@@ -103,18 +116,24 @@ function timeOn(date: string, minutes: number): number {
  * midnight; a day whose time has passed gets none. Delivery may be a few minutes late on Android,
  * which does not matter for a reminder and avoids the exact alarm permission.
  */
-export async function scheduleReminders(reminders: Reminder[], minutes: number, now = Date.now()) {
-  await cancelReminders();
-  await Promise.all(
-    reminders
-      .map((reminder) => ({ reminder, at: timeOn(reminder.date, minutes) }))
-      .filter(({ at }) => at > now)
-      .map(({ reminder, at }) =>
-        scheduleNotificationAsync({
-          identifier: `${ID_PREFIX}${reminder.date}`,
-          content: { title: reminder.title, body: reminder.body },
-          trigger: { type: SchedulableTriggerInputTypes.DATE, channelId: CHANNEL_ID, date: at },
-        }),
-      ),
-  );
+export function scheduleReminders(
+  reminders: Reminder[],
+  minutes: number,
+  now = Date.now(),
+): Promise<void> {
+  return enqueue(async () => {
+    await cancelAll();
+    await Promise.all(
+      reminders
+        .map((reminder) => ({ reminder, at: timeOn(reminder.date, minutes) }))
+        .filter(({ at }) => at > now)
+        .map(({ reminder, at }) =>
+          scheduleNotificationAsync({
+            identifier: `${ID_PREFIX}${reminder.date}`,
+            content: { title: reminder.title, body: reminder.body },
+            trigger: { type: SchedulableTriggerInputTypes.DATE, channelId: CHANNEL_ID, date: at },
+          }),
+        ),
+    );
+  });
 }

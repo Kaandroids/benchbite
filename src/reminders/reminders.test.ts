@@ -207,6 +207,24 @@ describe('scheduleReminders', () => {
     }
   });
 
+  it('runs one change to the reminders at a time, in order', async () => {
+    let release: () => void = () => undefined;
+    getAll.mockImplementationOnce(
+      () => new Promise((resolve) => (release = () => resolve(scheduled()))),
+    );
+    const scheduling = scheduleReminders([reminder('2026-10-22')], 18 * 60, NOW);
+    const cancelling = cancelReminders();
+    await Promise.resolve();
+    // The cancel waits for the reminders being scheduled, so it does not leave them behind.
+    expect(getAll).toHaveBeenCalledTimes(1);
+    release();
+    await Promise.all([scheduling, cancelling]);
+    expect(getAll).toHaveBeenCalledTimes(2);
+    expect(getAll.mock.invocationCallOrder[1]).toBeGreaterThan(
+      schedule.mock.invocationCallOrder[0]!,
+    );
+  });
+
   it('only cancels when there are no days', async () => {
     getAll.mockResolvedValue(scheduled('workout-reminder-2026-10-22'));
     await scheduleReminders([], 18 * 60, NOW);
