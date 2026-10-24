@@ -530,6 +530,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       create_exercise: { Args: { exercise: Json }; Returns: string };
@@ -546,6 +547,7 @@ export type Database = {
           secondary_muscles: Database['public']['Enums']['muscle'][];
         }[];
       };
+      custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
@@ -610,6 +612,7 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       metrics_valid: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][] };

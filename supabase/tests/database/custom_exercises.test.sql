@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -65,6 +65,10 @@ select throws_ok(
 select throws_ok(
   $$ select public.create_exercise(pg_temp.hip_thrust('{"primaryMuscles": ["wings"]}')) $$,
   'BB014', null, 'Muscles come from the list'
+);
+select throws_ok(
+  $$ select public.create_exercise(pg_temp.hip_thrust('{"primaryMuscles": [null]}')) $$,
+  'BB014', null, 'A muscle is not null'
 );
 create temp table plain as select public.create_exercise(pg_temp.hip_thrust() - 'level' - 'equipment') as id;
 select is(
@@ -193,6 +197,10 @@ select results_eq(
      from public.exercises x join made on made.id = x.id $$,
   $$ values (true, 1::bigint) $$,
   'An archived exercise keeps its logged sets'
+);
+select throws_ok(
+  $$ select public.archive_exercise((select id from made), null) $$,
+  'BB014', null, 'Archiving takes true or false, not null'
 );
 select throws_ok(
   $$ select public.archive_exercise('Plank', true) $$,

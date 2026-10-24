@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(8);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -35,6 +35,18 @@ select results_eq(
   $$ select weight_kg from public.weight_entries where measured_on = '2026-10-21' $$,
   $$ values (79.5::numeric(4, 1)) $$,
   'Logging again on the same day corrects the entry'
+);
+-- The app's upsert sets every column it sends again.
+select lives_ok(
+  $$ insert into public.weight_entries (user_id, weight_kg, measured_on)
+     values ('00000000-0000-0000-0000-00000000000a', 79.4, '2026-10-21')
+     on conflict (user_id, measured_on) do update
+     set user_id = excluded.user_id, measured_on = excluded.measured_on, weight_kg = excluded.weight_kg $$,
+  'The app''s upsert still corrects the entry'
+);
+select throws_ok(
+  $$ update public.weight_entries set created_at = now() - interval '1 year' $$,
+  '42501', null, 'When an entry was created cannot be changed'
 );
 
 insert into public.weight_entries (user_id, weight_kg, measured_on)

@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -104,6 +104,18 @@ select throws_ok(
   'BB007', 'A target does not suit its exercise',
   'A target that does not suit its exercise is rejected'
 );
+-- Workouts saved before finishing the onboarding count toward the limit too.
+create temp table early_workouts as
+select public.save_workout(jsonb_build_object('name', 'Early ' || n, 'weekdays', '[]'::jsonb,
+  'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank', 'sets', 2,
+    'target', '{"seconds": 30}'::jsonb, 'restSeconds', 45)))) as id
+from generate_series(1, 2) n;
+select throws_ok(
+  $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
+  'BB009', null,
+  'A plan does not take a user past the workout limit with the workouts saved before'
+);
+delete from public.workouts where id in (select id from early_workouts);
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan('No_Such_Exercise')) $$,
   '23503', null,
