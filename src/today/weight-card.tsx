@@ -10,8 +10,8 @@ import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat } from '@/i18n/dates';
 import { useWeightFormat, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
-import { WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useTheme } from '@/theme';
+import { WEIGHT_RANGE_KG } from '@/weight/range';
 import { useLogWeight, type WeightEntry } from '@/weight/weights';
 
 /**
