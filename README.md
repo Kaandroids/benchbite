@@ -48,7 +48,7 @@ src/                   components, hooks and other app code, by feature
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
-scripts/               the exercise import and the plan check
+scripts/               the exercise import, the locale check and the plan check
 docs/adr/              Architecture Decision Records
 ```
 
@@ -171,9 +171,8 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
-Every pull request runs the same checks in CI: types, lint, formatting, the app's tests, the
-translations and the Edge Functions, and against a local Supabase stack the database tests,
-whether the generated types are up to date, and every generated plan.
+CI runs most of these on every pull request; [CONTRIBUTING.md](CONTRIBUTING.md) lists what it
+checks.
 
 ## Development workflow
 
@@ -182,8 +181,6 @@ This project uses an AI-assisted workflow. Features are planned together with
 in pull requests, and reviewed and merged by the maintainer. Each pull request Claude opens is
 first reviewed automatically for design, security, and logic and performance, with the skills in
 [`.claude/skills/`](.claude/skills/).
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [CLAUDE.md](CLAUDE.md) for the full set of conventions.
 
 ## Documentation
 
