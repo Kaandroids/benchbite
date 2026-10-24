@@ -14,3 +14,15 @@ describe('Card', () => {
     expect(card).toHaveStyle({ borderWidth: 1 });
   });
 });
+
+describe('Card with a style', () => {
+  it('lets the style change its padding and layout', async () => {
+    await render(
+      <Card style={{ padding: 0, flexDirection: 'row' }}>
+        <Text>Sets</Text>
+      </Card>,
+    );
+    const card = screen.getByText('Sets').parent!;
+    expect(card).toHaveStyle({ borderWidth: 1, padding: 0, flexDirection: 'row' });
+  });
+});
