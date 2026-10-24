@@ -103,7 +103,10 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
       }
       answered = true;
       if (data?.onboarding_completed_at) {
+        // The answers are saved on the server, so the draft with them goes.
         saveCompleted(userId, true);
+        clearDraft(userId);
+        setDraft(EMPTY_DRAFT);
         setCompleted(true);
       }
     };
