@@ -7,11 +7,13 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
-import { fonts, useTheme } from '@/theme';
+import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
+import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
+
+import { MovedFrom } from './moved-from';
 
 type WorkoutCardProps = {
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
@@ -23,23 +25,6 @@ type WorkoutCardProps = {
 
 function openWorkout(session: WeekSession) {
   router.push({ pathname: '/workout/[id]', params: { id: String(session.workoutId) } });
-}
-
-/** "Moved from Monday", for a workout moved to today. */
-function MovedFrom({ date }: { date: string }) {
-  const { t } = useTranslation();
-  const { colors, radii } = useTheme();
-  const weekdayName = useWeekdayFormat();
-  return (
-    <View style={[styles.chip, { backgroundColor: colors.selected, borderRadius: radii.full }]}>
-      <Icon name="arrow" size={12} color="primaryText" />
-      <Text variant="caption" color="primaryText" style={styles.bold}>
-        {t('today.workout.movedFrom', {
-          day: weekdayName(isoWeekday(fromIsoDate(date))),
-        })}
-      </Text>
-    </View>
-  );
 }
 
 /**
@@ -187,17 +172,6 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: 2,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
   },
   doneMark: {
     width: 40,
