@@ -235,7 +235,6 @@
     "daysHint": "Days only plan your week. You can do any workout on any day.",
     "exercises_one": "Exercises · {{count}}",
     "exercises_other": "Exercises · {{count}}",
-    "reorder": "Drag to reorder",
     "delete": "Delete workout",
     "deleteTitle": "Delete this workout?",
     "deleteMessage": "It is removed with its exercises. This cannot be undone.",
@@ -793,5 +792,12 @@
     "archived": "Archived",
     "archiveErrorTitle": "Not changed",
     "archiveError": "We couldn't change the exercise. Check your connection and try again."
+  },
+  "reorder": {
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "place": "{{place}} of {{count}}",
+    "hint": "Drag, or use the actions, to change the order.",
+    "moved": "{{name}} moved to {{place}} of {{count}}"
   }
 }

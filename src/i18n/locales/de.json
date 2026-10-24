@@ -235,7 +235,6 @@
     "daysHint": "Tage planen nur deine Woche. Du kannst jedes Workout an jedem Tag machen.",
     "exercises_one": "Übungen · {{count}}",
     "exercises_other": "Übungen · {{count}}",
-    "reorder": "Zum Sortieren ziehen",
     "delete": "Workout löschen",
     "deleteTitle": "Dieses Workout löschen?",
     "deleteMessage": "Es wird mit seinen Übungen gelöscht. Das kann nicht rückgängig gemacht werden.",
@@ -793,5 +792,12 @@
     "archived": "Archiviert",
     "archiveErrorTitle": "Nicht geändert",
     "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal."
+  },
+  "reorder": {
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "place": "{{place}} von {{count}}",
+    "hint": "Ziehen oder die Aktionen nutzen, um die Reihenfolge zu ändern.",
+    "moved": "{{name}} ist jetzt an Stelle {{place}} von {{count}}"
   }
 }
