@@ -107,8 +107,7 @@ beforeEach(() => {
     'user-a',
     PUSH,
     { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
-    {},
-    NOW.getTime(),
+    { now: NOW.getTime() },
   );
 });
 afterEach(() => jest.useRealTimers());
@@ -177,7 +176,7 @@ describe('SessionScreen', () => {
 
   it('needs a weight before a set is done, and carries it to the next sets', async () => {
     resetSessionStore();
-    startSession('user-a', PUSH, {}, {}, NOW.getTime());
+    startSession('user-a', PUSH, {}, { now: NOW.getTime() });
     await render(<SessionScreen />);
     expect(screen.getByLabelText('Weight of set 1').props.value).toBe('');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
@@ -194,7 +193,7 @@ describe('SessionScreen', () => {
 
   it('takes a typed weight before the keyboard closes', async () => {
     resetSessionStore();
-    startSession('user-a', PUSH, {}, {}, NOW.getTime());
+    startSession('user-a', PUSH, {}, { now: NOW.getTime() });
     await render(<SessionScreen />);
     await fireEvent.changeText(screen.getByLabelText('Weight of set 1'), '55');
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
@@ -261,8 +260,7 @@ describe('new records', () => {
       'user-a',
       PUSH,
       { bench: [{ weightKg: 80, reps: 8, seconds: null, meters: null }] },
-      BESTS,
-      NOW.getTime(),
+      { bests: BESTS, now: NOW.getTime() },
     );
   };
 

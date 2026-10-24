@@ -36,7 +36,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: NOW });
   resetSessionStore();
-  startSession('user-a', PUSH, {}, {}, NOW);
+  startSession('user-a', PUSH, {}, { now: NOW });
   jest.mocked(useLogWorkout).mockReturnValue({ mutateAsync: logWorkout } as never);
   logWorkout.mockResolvedValue(42);
 });
@@ -67,7 +67,7 @@ describe('LeftOpenSaver', () => {
     expect(logWorkout).not.toHaveBeenCalled();
 
     resetSessionStore();
-    startSession('user-a', PUSH, {}, {}, NOW);
+    startSession('user-a', PUSH, {}, { now: NOW });
     jest.setSystemTime(NOW + MAX_WORKOUT_MS + 60_000);
     await render(<LeftOpenSaver />);
     await act(async () => undefined);

@@ -72,7 +72,7 @@ beforeEach(() => {
     data: [{ id: 'bench', name: 'Bench press' }],
   } as never);
   resetSessionStore();
-  startSession('user-a', PUSH, {}, {}, NOW);
+  startSession('user-a', PUSH, {}, { now: NOW });
   Storage.removeItemSync('rest-alarm.asked');
   resetPermission();
 });

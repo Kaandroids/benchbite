@@ -181,9 +181,11 @@ export function startSession(
   userId: string,
   workout: Workout,
   last: LastSets,
-  bests: ExerciseBests = {},
-  now = Date.now(),
-  move?: Session['move'],
+  {
+    bests = {},
+    now = Date.now(),
+    move,
+  }: { bests?: ExerciseBests; now?: number; move?: Session['move'] } = {},
 ): Session {
   const { exercises } = workout;
   const value: Session = {

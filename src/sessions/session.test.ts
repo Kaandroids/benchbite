@@ -57,7 +57,7 @@ const PUSH = testWorkout(7, {
   ],
 });
 
-const start = (last = {}) => startSession('user-a', PUSH, last, {}, NOW);
+const start = (last = {}) => startSession('user-a', PUSH, last, { now: NOW });
 
 beforeEach(() => {
   (Storage as unknown as { items: Map<string, string> }).items.clear();
@@ -223,7 +223,9 @@ describe('finishing', () => {
 
   it('sends the planned day the workout counts for, only when it moves', () => {
     const move = { from: '2026-10-19', to: '2026-10-21' };
-    expect(toLog(startSession('user-a', PUSH, {}, {}, NOW, move), NOW + 60_000).move).toEqual(move);
+    expect(toLog(startSession('user-a', PUSH, {}, { now: NOW, move }), NOW + 60_000).move).toEqual(
+      move,
+    );
     expect(toLog(start(), NOW + 60_000)).not.toHaveProperty('move');
   });
 
