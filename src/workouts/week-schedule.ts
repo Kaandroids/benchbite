@@ -289,3 +289,28 @@ export function startMove(
       : moveTargets(schedule, workoutId, fromOn, today).some((day) => day.date === today);
   return days.find((day) => day.missed && fits(day)) ?? days.find(fits) ?? null;
 }
+
+/**
+ * The days from `today` on, `count` of them, with the workouts still to do on each: this week
+ * after its moves, without those done or skipped, and the plan's weekdays after it. Days without
+ * any are left out.
+ */
+export function upcomingWorkouts(
+  schedule: WeekSchedule,
+  sessions: readonly WeekSession[],
+  today: Date,
+  count: number,
+): { date: string; sessions: WeekSession[] }[] {
+  return Array.from({ length: count }, (_, index) => {
+    const date = addDays(today, index);
+    const day = schedule.days.find((item) => item.date === toIsoDate(date));
+    return {
+      date: toIsoDate(date),
+      sessions: day
+        ? day.workouts
+            .filter((workout) => workout.status === 'planned')
+            .map((workout) => workout.session)
+        : sessions.filter((session) => session.weekday === isoWeekday(date)),
+    };
+  }).filter((day) => day.sessions.length > 0);
+}
