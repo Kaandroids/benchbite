@@ -4,6 +4,8 @@ import { useFinishedThisWeek } from '@/history/history';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
+import { useWeekMoves } from '@/workouts/moves';
+import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
 import { greetingOf, TodayScreen } from './today-screen';
@@ -11,6 +13,7 @@ import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
+jest.mock('@/workouts/moves', () => ({ useWeekMoves: jest.fn() }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
@@ -87,6 +90,10 @@ const PLAN: Plan = { sessions: [session(1, 'push'), session(3, 'pull', 6), sessi
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
 const THURSDAY = new Date(2026, 9, 22, 9, 0);
 
+// The sessions of the test week use their weekday as the workout's id.
+const finishedOn = (...dates: string[]): FinishedWorkout[] =>
+  dates.map((date) => ({ workoutId: new Date(`${date}T00:00`).getDay() || 7, startedOn: date }));
+
 const mutate = jest.fn();
 const reset = jest.fn();
 
@@ -99,16 +106,19 @@ function mockData({
   } | null),
   unit = loaded<'kg' | 'lb'>('kg'),
   log = { isError: false, isPending: false },
-  finished = loaded<string[]>([]),
+  finished = loaded<FinishedWorkout[]>([]),
+  moves = loaded<WorkoutMove[]>([]),
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
   weight?: Query<{ weightKg: number; measuredOn: string } | null>;
   unit?: Query<'kg' | 'lb'>;
   log?: { isError: boolean; isPending: boolean };
-  finished?: Query<string[]>;
+  finished?: Query<FinishedWorkout[]>;
+  moves?: Query<WorkoutMove[]>;
 } = {}) {
   jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
+  jest.mocked(useWeekMoves).mockReturnValue(moves as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useLatestWeight).mockReturnValue(weight as never);
@@ -157,14 +167,14 @@ describe('TodayScreen', () => {
   });
 
   it('highlights today and marks the workouts finished in the week', async () => {
-    mockData({ finished: loaded(['2026-10-19']) });
+    mockData({ finished: loaded(finishedOn('2026-10-19')) });
     await render(<TodayScreen />);
     expect(screen.getByText('1 of 3 workouts this week')).toBeTruthy();
-    expect(screen.getByLabelText('Mon 19, workout done')).toBeTruthy();
-    expect(screen.getByLabelText('Wed 21, workout planned').props.accessibilityState).toEqual({
+    expect(screen.getByLabelText('Mon 19, Push, done')).toBeTruthy();
+    expect(screen.getByLabelText('Wed 21, Pull, planned').props.accessibilityState).toEqual({
       selected: true,
     });
-    expect(screen.getByLabelText('Fri 23, workout planned')).toBeTruthy();
+    expect(screen.getByLabelText('Fri 23, Legs, planned')).toBeTruthy();
     expect(screen.getByLabelText('Sun 25')).toBeTruthy();
   });
 
@@ -194,7 +204,7 @@ describe('TodayScreen', () => {
   });
 
   it("shows the next workout once today's is done", async () => {
-    mockData({ finished: loaded(['2026-10-19', '2026-10-21']) });
+    mockData({ finished: loaded(finishedOn('2026-10-19', '2026-10-21')) });
     await render(<TodayScreen />);
     expect(screen.queryByText("Today's workout")).toBeNull();
     expect(screen.getByText('Done for today')).toBeTruthy();
@@ -204,10 +214,37 @@ describe('TodayScreen', () => {
   it('names the same weekday when the only workout of the week is done', async () => {
     mockData({
       plan: loaded<Plan | null>({ sessions: [session(3, 'pull')] }),
-      finished: loaded(['2026-10-21']),
+      finished: loaded(finishedOn('2026-10-21')),
     });
     await render(<TodayScreen />);
     expect(screen.getByText('Next: Wednesday · Pull')).toBeTruthy();
+  });
+
+  it('shows a workout moved to today, and the moves on the week', async () => {
+    jest.setSystemTime(THURSDAY);
+    mockData({
+      moves: loaded<WorkoutMove[]>([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-22' }]),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText("Today's workout")).toBeTruthy();
+    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getByText('Moved from Monday')).toBeTruthy();
+    expect(screen.getByLabelText('Mon 19, Push, moved to Thursday')).toBeTruthy();
+  });
+
+  it("lists today's workouts when there are several, each done or to open", async () => {
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(3, 'pull', 6), { ...session(3, 'legs'), workoutId: 30 }],
+      }),
+      finished: loaded<FinishedWorkout[]>([{ workoutId: 30, startedOn: '2026-10-21' }]),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText("Today's workouts")).toBeTruthy();
+    expect(screen.getByText('1 of 2 done')).toBeTruthy();
+    expect(screen.getByText('Done')).toBeTruthy();
+    await fireEvent.press(screen.getByHintText('Opens the workout'));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
   });
 
   it('keeps showing what loaded when refreshing fails', async () => {

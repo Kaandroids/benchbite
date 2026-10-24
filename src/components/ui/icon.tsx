@@ -6,6 +6,7 @@ import { useTheme, type ColorTokens } from '@/theme';
 // Outlined variants on both, because Material Symbols render outlined by default.
 export const ICONS = {
   archive: { ios: 'archivebox', android: 'inventory_2', web: 'inventory_2' },
+  arrow: { ios: 'arrow.right', android: 'arrow_forward', web: 'arrow_forward' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },

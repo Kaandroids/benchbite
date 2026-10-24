@@ -20,6 +20,7 @@ import {
   type HeightUnit,
   type WeightUnit,
 } from '@/i18n/units';
+import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
@@ -27,6 +28,8 @@ import { StreakBadge } from '@/streak/streak-badge';
 import { sampleStreak, showSampleStreak } from '@/streak/use-streak';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 import { WeekCard } from '@/today/week-card';
+import { weekSchedule } from '@/workouts/week-schedule';
+import type { WeekSession } from '@/workouts/workouts';
 
 const GOALS = [
   { id: 'lose', icon: 'flame', title: 'Lose fat', description: 'Calorie deficit, higher reps' },
@@ -163,8 +166,7 @@ export default function ComponentGallery() {
         <WeekCard
           today={new Date()}
           streak={sampleStreak(new Date(), true)}
-          trainingDays={[1, 3, 5, 7]}
-          finished={Object.keys(sampleStreak(new Date(), true).days)}
+          schedule={sampleWeek(new Date())}
         />
         <Text color="textMuted">Show a sample streak on the Today tab:</Text>
         <View style={[styles.row, { gap: spacing.sm }]}>
@@ -360,6 +362,40 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <Text variant="headline">{title}</Text>
       {children}
     </View>
+  );
+}
+
+/**
+ * A week with every mark of the week card: a moved workout, a skipped one, two on one day with
+ * one done, and an extra workout on Sunday.
+ */
+function sampleWeek(today: Date) {
+  const session = (workoutId: number, weekday: number, type: WeekSession['type']): WeekSession => ({
+    workoutId,
+    weekday,
+    name: null,
+    type,
+    exercises: [],
+    estimatedMinutes: 45,
+  });
+  const day = (weekday: number) => toIsoDate(addDays(weekStart(today), weekday - 1));
+  return weekSchedule(
+    [
+      session(1, 1, 'push'),
+      session(2, 2, 'pull'),
+      session(3, 4, 'legs'),
+      session(4, 4, 'upper'),
+      session(4, 6, 'upper'),
+    ],
+    [
+      { workoutId: 1, fromOn: day(1), toOn: day(3) },
+      { workoutId: 4, fromOn: day(6), toOn: null },
+    ],
+    [
+      { workoutId: 3, startedOn: day(4) },
+      { workoutId: 2, startedOn: day(7) },
+    ],
+    today,
   );
 }
 
