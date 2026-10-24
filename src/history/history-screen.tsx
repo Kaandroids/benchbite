@@ -86,19 +86,22 @@ export function HistoryScreen() {
               <Text variant="caption" color="textMuted" style={[styles.bold, styles.flex]}>
                 {weekTitle(week.start)}
               </Text>
-              <View
-                style={[
-                  styles.chip,
-                  { borderRadius: radii.full, backgroundColor: colors.selected },
-                ]}
-              >
-                <Text variant="caption" color="primaryText" style={styles.bold}>
-                  {t('history.weekTotal', {
-                    count: week.logs.length,
-                    time: duration(week.minutes),
-                  })}
-                </Text>
-              </View>
+              {/* The last week may go on in the next page, so its total waits until it has loaded. */}
+              {logs.hasNextPage && week === weeks[weeks.length - 1] ? null : (
+                <View
+                  style={[
+                    styles.chip,
+                    { borderRadius: radii.full, backgroundColor: colors.selected },
+                  ]}
+                >
+                  <Text variant="caption" color="primaryText" style={styles.bold}>
+                    {t('history.weekTotal', {
+                      count: week.logs.length,
+                      time: duration(week.minutes),
+                    })}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
           // A week's workouts in one card: the first row rounds its top, the last its bottom.

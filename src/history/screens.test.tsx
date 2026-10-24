@@ -203,6 +203,19 @@ describe('HistoryScreen', () => {
     expect(screen.getByText('17/24')).toBeTruthy();
     expect(screen.getAllByLabelText('6 exercises')).toHaveLength(3);
     expect(screen.getAllByLabelText('17 sets')).toHaveLength(3);
+    // The last week may go on in the next page, so it has no total yet.
+    expect(screen.queryByText('1 workout · 58 min')).toBeNull();
+  });
+
+  it('totals the last week once there are no more pages', async () => {
+    jest.mocked(useLogSummaries).mockReturnValue({
+      ...loaded({ pages: [{ logs: LOGS }] }),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage,
+    } as never);
+    await render(<HistoryScreen />);
+    expect(screen.getByText('1 workout · 58 min')).toBeTruthy();
   });
 
   it('loads the next page at the end of the list', async () => {
