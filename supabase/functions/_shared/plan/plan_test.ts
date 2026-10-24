@@ -1,5 +1,6 @@
 import { assert, assertEquals, assertNotEquals, assertThrows } from '@std/assert';
 
+import { PLAN_WORKOUT_EXERCISES } from './limits.ts';
 import { buildPlan } from './plan.ts';
 import { candidatesFor, conditioningMinutes, exerciseSeconds } from './session.ts';
 import { TEMPLATES } from './templates.ts';
@@ -190,6 +191,7 @@ Deno.test('a slot that comes back later in the week takes the next exercise', ()
 });
 
 Deno.test('when time runs out, the remaining slots are left out in order', () => {
+  // Only when every slot is in may a slot take another exercise.
   for (const setup of ['gym', 'dumbbells', 'bodyweight'] as const)
     for (const experience of ['beginner', 'intermediate', 'advanced'] as const)
       for (const goal of ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'] as const)
@@ -209,9 +211,85 @@ Deno.test('when time runs out, the remaining slots are left out in order', () =>
               const slots = session.exercises
                 .map((exercise) => exercise.slot)
                 .filter((slot) => slot !== 'conditioning');
-              assertEquals(slots, possible.slice(0, slots.length), JSON.stringify(answers));
+              const template = slots.slice(0, possible.length);
+              assertEquals(template, possible.slice(0, template.length), JSON.stringify(answers));
+              if (slots.length > possible.length) {
+                assertEquals(template, possible, JSON.stringify(answers));
+                for (const slot of slots.slice(possible.length)) {
+                  assert(possible.includes(slot), `${slot} in ${JSON.stringify(answers)}`);
+                }
+              }
             }
           }
+});
+
+const longSession = (experience: PlanInput['experience']) =>
+  buildPlan({ ...input, experience, trainingDays: [1], sessionMinutes: 75 }, CATALOGUE)
+    .sessions[0]!;
+
+Deno.test('with time left, each exercise gains one set more than prescribed', () => {
+  const sets = (session: { exercises: PlannedExercise[] }) =>
+    Object.fromEntries(session.exercises.map((exercise) => [exercise.exerciseId, exercise.sets]));
+  // A beginner's main exercises take 3 sets and accessories 2, an intermediate's 4 and 3.
+  assertEquals(sets(longSession('beginner')).Barbell_Squat, 4);
+  assertEquals(sets(longSession('beginner')).Lat_Pulldown, 3);
+  assertEquals(sets(longSession('intermediate')).Barbell_Squat, 5);
+});
+
+Deno.test('with time still left, the slots take another of their exercises', () => {
+  const session = longSession('beginner');
+  const template = TEMPLATES.full_body.length;
+  assert(session.exercises.length > template, `${session.exercises.length} exercises`);
+  // The first candidate not in the session yet, so the gym keeps to its own equipment.
+  assertEquals(session.exercises[template], {
+    exerciseId: 'Goblet_Squat',
+    slot: 'squat',
+    sets: 2,
+    target: { reps: { min: 10, max: 15 } },
+    restSeconds: 75,
+  });
+  assert(session.estimatedMinutes <= 75);
+});
+
+Deno.test('a workout has no more exercises than the onboarding saves', () => {
+  // Many short core exercises, more than a long session would take without the limit.
+  const cores = Array.from({ length: 30 }, (_, index) => ({
+    slot: 'core' as const,
+    exerciseId: `Core_${index}`,
+    requires: 'bodyweight' as const,
+    minExperience: 'beginner' as const,
+    priority: index + 1,
+    metrics: ['reps' as const],
+  }));
+  const plan = buildPlan(
+    {
+      ...input,
+      experience: 'beginner',
+      setup: 'bodyweight',
+      sessionMinutes: 75,
+      trainingDays: [1],
+    },
+    [...CATALOGUE, ...cores],
+  );
+  assertEquals(plan.sessions[0]!.exercises.length, PLAN_WORKOUT_EXERCISES);
+
+  for (const setup of ['gym', 'dumbbells', 'bodyweight'] as const)
+    for (const goal of ['lose_fat', 'build_muscle'] as const)
+      for (const days of [1, 3, 6]) {
+        const plan = buildPlan(
+          {
+            ...input,
+            setup,
+            goal,
+            sessionMinutes: 75,
+            trainingDays: [1, 2, 3, 4, 5, 6].slice(0, days),
+          },
+          CATALOGUE,
+        );
+        for (const session of plan.sessions) {
+          assert(session.exercises.length <= PLAN_WORKOUT_EXERCISES, `${setup} ${goal} ${days}`);
+        }
+      }
 });
 
 Deno.test('repeated training days are rejected', () => {
