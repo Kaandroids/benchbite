@@ -73,6 +73,7 @@ jest.mock('@/exercises/exercise-screen', () => {
 jest.mock('@/sessions/left-open', () => ({ LeftOpenSaver: () => null }));
 jest.mock('@/sessions/start-move', () => ({ StartMoveSheet: () => null }));
 jest.mock('@/reminders/reminder-sync', () => ({ ReminderSync: () => null }));
+jest.mock('@/history/recent-logs', () => ({ RecentLogs: () => null }));
 jest.mock('@/sessions/rest-alarm', () => ({
   REST_NOTIFICATION_ID: 'rest-end',
   RestAlarm: () => null,

@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 
 import { endSession, useActiveSession, type Session } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
+import { RecentLogs } from '@/history/recent-logs';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ArchiveScreen } from './archive-screen';
@@ -131,7 +132,7 @@ describe('WorkoutsScreen', () => {
 
   it('shows the empty history until workouts can be logged', async () => {
     mockWorkouts([testWorkout(1)]);
-    await render(<WorkoutsScreen />);
+    await render(<WorkoutsScreen history={<RecentLogs />} />);
     expect(screen.getByText('History')).toBeTruthy();
     expect(screen.getByText('Your finished workouts will show here.')).toBeTruthy();
   });
