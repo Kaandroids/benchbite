@@ -1,5 +1,6 @@
 // Calculating and saving the onboarding's result: the nutrition targets, the workout plan and
 // the save that completes the onboarding. The rules live on the server (ADR 0009, ADR 0010).
+import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { targetsFrom, type NutritionTargets } from '@/nutrition/targets';
 import type { Plan } from '@shared/plan/types';
@@ -58,18 +59,14 @@ export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutP
   return data;
 }
 
-/** The SQLSTATE complete_onboarding raises when the onboarding was saved before. */
-const ALREADY_COMPLETED = 'BB001';
+/** Answers complete_onboarding refuses, which saving again cannot change. */
+const REFUSED = ['tooYoung', 'noConsent', 'daysChanged'] as const;
 
-/** Answers complete_onboarding refuses by their SQLSTATE, which saving again cannot change. */
-const REFUSED = { BB002: 'tooYoung', BB003: 'noConsent', BB004: 'daysChanged' } as const;
-
-export type RefusedAnswer = (typeof REFUSED)[keyof typeof REFUSED];
+export type RefusedAnswer = (typeof REFUSED)[number];
 
 /** The answer the server refused to save, or null when saving again may work. */
 export function refusedAnswer(error: unknown): RefusedAnswer | null {
-  const code = (error as { code?: unknown } | null)?.code;
-  return typeof code === 'string' && code in REFUSED ? REFUSED[code as keyof typeof REFUSED] : null;
+  return REFUSED.find((answer) => isDbError(error, answer)) ?? null;
 }
 
 /**
@@ -81,7 +78,8 @@ export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPl
   // The calculated result is sent as the plan, not again as an answer.
   const { plan: _plan, targets: _targets, reminderMinutes: _reminder, ...onlyAnswers } = answers;
   const { error } = await supabase.rpc('complete_onboarding', { answers: onlyAnswers, plan });
-  if (error && error.code !== ALREADY_COMPLETED) {
+  // Saved before, for example by a request whose answer was lost.
+  if (error && !isDbError(error, 'onboardingCompleted')) {
     throw error;
   }
 }

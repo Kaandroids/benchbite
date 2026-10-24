@@ -13,6 +13,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { isDbError } from '@/lib/errors';
 import { setKindOf, type SetField, type SetKind } from '@/sets/fields';
 import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-table';
 import type { SetValues } from '@/sets/values';
@@ -176,7 +177,7 @@ function LogEditor({
       console.warn('Could not save the workout log', error);
       Alert.alert(
         t('history.edit.saveErrorTitle'),
-        (error as { code?: string }).code === 'BB013'
+        isDbError(error, 'logNotFound')
           ? t('history.notFound.message')
           : t('history.edit.saveError'),
       );

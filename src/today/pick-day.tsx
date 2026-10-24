@@ -11,14 +11,12 @@ import {
   useWeekdayFormat,
   weekdayOf,
 } from '@/i18n/dates';
+import { isDbError } from '@/lib/errors';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { useMoveWorkout } from '@/workouts/moves';
 import { moveTargets, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
-
-/** The refusal of a move that no longer fits, for example because the day was taken elsewhere. */
-const REFUSED = 'BB019';
 
 type PickDayProps = {
   schedule: WeekSchedule;
@@ -53,7 +51,8 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
       { onSuccess: onDone },
     );
   };
-  const refused = (moveWorkout.error as { code?: string } | null)?.code === REFUSED;
+  // The day may have been taken elsewhere since the week loaded.
+  const refused = isDbError(moveWorkout.error, 'moveDoesNotFit');
 
   return (
     <>
