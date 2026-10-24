@@ -43,4 +43,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0025](0025-notice-new-records-on-the-device.md)             | Notice new records on the device while logging                                     | Accepted |
 | [0026](0026-custom-exercises-live-in-the-exercises-table.md) | Keep custom exercises in the exercises table, with an owner                        | Accepted |
 | [0027](0027-private-exercise-photos.md)                      | Keep the photos of custom exercises private, shown through signed URLs             | Accepted |
-| [0028](0028-move-workouts-within-their-week.md)              | Move workouts within their week, with several workouts a day                       | Proposed |
+| [0028](0028-move-workouts-within-their-week.md)              | Move workouts within their week, with several workouts a day                       | Accepted |

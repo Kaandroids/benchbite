@@ -1,6 +1,6 @@
 # 0028. Move workouts within their week, with several workouts a day
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-24
 
 ## Context
