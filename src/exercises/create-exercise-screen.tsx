@@ -1,5 +1,5 @@
-import { router, usePreventRemove } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
+import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
 import { fonts, typography, useTheme } from '@/theme';
 
@@ -89,18 +90,11 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 
   // Leaving with something typed asks first; after creating, the screen just closes.
   const changed = JSON.stringify(form) !== JSON.stringify(initial);
-  const [leave, setLeave] = useState<(() => void) | null>(null);
-  usePreventRemove(changed && leave === null, ({ repeat }) =>
-    Alert.alert(t('customExercise.discardTitle'), t('customExercise.discardMessage'), [
-      { text: t('history.edit.keepEditing'), style: 'cancel' },
-      {
-        text: t('session.summary.discard'),
-        style: 'destructive',
-        onPress: () => setLeave(() => repeat),
-      },
-    ]),
+  const leaveWithoutAsking = useLeavePrompt(
+    changed,
+    t('customExercise.discardTitle'),
+    t('customExercise.discardMessage'),
   );
-  useEffect(() => leave?.(), [leave]);
 
   const failed = (error: unknown) => {
     console.warn('Could not save the exercise', error);
@@ -113,10 +107,10 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
             form,
             before: editing.form.photos.filter((photo): photo is string => photo !== null),
           })
-          .then(() => setLeave(() => () => router.back()), failed)
+          .then(() => leaveWithoutAsking(() => router.back()), failed)
       : create.mutateAsync(form).then((exercise) => {
           setCreatedExercise(exercise);
-          setLeave(() => () => router.back());
+          leaveWithoutAsking(() => router.back());
         }, failed);
   const kindLock = editing?.kindLock ?? null;
   const kindLocked = kindLock !== null;
