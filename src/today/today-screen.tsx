@@ -55,7 +55,8 @@ export function TodayScreen() {
   };
 
   let content;
-  if (queries.some((query) => query.isError)) {
+  // A query that loaded and then failed to refresh keeps showing what it has.
+  if (queries.some((query) => query.isError && query.data === undefined)) {
     content = (
       <View style={[styles.center, { gap: spacing.xl }]}>
         <MessageView
@@ -85,7 +86,9 @@ export function TodayScreen() {
           trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
           finished={finished.data ?? []}
         />
-        {plan.data ? <WorkoutCard plan={plan.data} today={today} /> : null}
+        {plan.data ? (
+          <WorkoutCard plan={plan.data} today={today} finished={finished.data ?? []} />
+        ) : null}
         {targets.data ? (
           <Card entering={FadeInDown.delay(200).duration(400)}>
             <Text variant="headline">{t('today.targets')}</Text>

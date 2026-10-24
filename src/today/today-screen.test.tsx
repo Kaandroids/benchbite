@@ -193,6 +193,30 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Next: tomorrow · Legs')).toBeTruthy();
   });
 
+  it("shows the next workout once today's is done", async () => {
+    mockData({ finished: loaded(['2026-10-19', '2026-10-21']) });
+    await render(<TodayScreen />);
+    expect(screen.queryByText("Today's workout")).toBeNull();
+    expect(screen.getByText('Done for today')).toBeTruthy();
+    expect(screen.getByText('Next: Friday · Legs')).toBeTruthy();
+  });
+
+  it('names the same weekday when the only workout of the week is done', async () => {
+    mockData({
+      plan: loaded<Plan | null>({ sessions: [session(3, 'pull')] }),
+      finished: loaded(['2026-10-21']),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('Next: Wednesday · Pull')).toBeTruthy();
+  });
+
+  it('keeps showing what loaded when refreshing fails', async () => {
+    mockData({ targets: { ...loaded<NutritionTargets | null>(TARGETS), isError: true } });
+    await render(<TodayScreen />);
+    expect(screen.getByText("Today's workout")).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
   it('names the weekday of a later workout', async () => {
     jest.setSystemTime(THURSDAY);
     mockData({ plan: loaded<Plan | null>({ sessions: [session(1, 'push')] }) });

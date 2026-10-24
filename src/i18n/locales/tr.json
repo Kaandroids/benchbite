@@ -43,6 +43,7 @@
     "workout": {
       "title": "Bugünün antrenmanı",
       "restDay": "Dinlenme günü",
+      "done": "Bugünlük tamam",
       "next": "Sıradaki: {{day}} · {{session}}",
       "tomorrow": "yarın",
       "open": "Antrenmanı açar"
