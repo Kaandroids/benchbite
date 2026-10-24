@@ -7,10 +7,9 @@ import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
 import { paceIn, paceToKg, useNumberFormat, useWeightFormat } from '@/i18n/units';
-import { clamp } from '@/lib/math';
 import type { ColorTokens } from '@/theme';
 
-import { PACE_RANGES, paceLevel, projectedDate, type PaceLevel } from '../body';
+import { PACE_RANGES, paceLevel, projectedDate, snapPace, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
@@ -36,7 +35,7 @@ export function PaceStep() {
   const [pace, setPace] = useState(() =>
     answers.weeklyPaceKg === undefined
       ? paceRange.default
-      : clamp(paceIn(unit, answers.weeklyPaceKg), paceRange.min, paceRange.max),
+      : snapPace(paceIn(unit, answers.weeklyPaceKg), paceRange),
   );
   const paceKg = paceToKg(unit, pace);
   const level = paceLevel(goal, weightKg, paceKg);
