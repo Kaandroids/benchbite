@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { RECORD_KINDS, type RecordKind } from '@/history/record-kinds';
 import { supabase } from '@/lib/supabase';
+import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import { MOVES_KEY } from '@/workouts/moves';
 
 import type { ExerciseBests, LastSets, toLog } from './session';

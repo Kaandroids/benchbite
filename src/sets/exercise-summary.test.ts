@@ -1,7 +1,6 @@
-import { setKindOf } from '@/sessions/fields';
-import type { SetValues } from '@/sessions/session';
-
 import { shortSet, summarizeSets } from './exercise-summary';
+import { setKindOf } from './fields';
+import type { SetValues } from './values';
 
 const set = (values: Partial<SetValues>): SetValues => ({
   weightKg: null,

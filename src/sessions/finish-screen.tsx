@@ -5,22 +5,23 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
-import { useRecordFormat } from '@/history/record-format';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useUserId } from '@/providers/session-provider';
+import { summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
-import { summarizeSets } from '@/history/exercise-summary';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
-import { useWorkouts } from '@/workouts/workouts';
+import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
-import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
 import { newRecords } from './records';
 import {
@@ -99,7 +100,7 @@ export function FinishScreen({ next }: { next?: number }) {
   ];
 
   const summary = session.exercises.map((exercise) => {
-    const info = library.data?.find((item) => item.id === exercise.exerciseId);
+    const info = findExercise(library.data, exercise.exerciseId);
     const done = exercise.sets.filter((s) => s.done);
     const kind = setKindOf(info?.metrics, exercise.target);
     const { best } = summarizeSets(done, kind);
@@ -118,7 +119,7 @@ export function FinishScreen({ next }: { next?: number }) {
 
   // The best new record of each kind, for every exercise, in the workout's order.
   const records = session.exercises.flatMap((exercise) => {
-    const info = library.data?.find((item) => item.id === exercise.exerciseId);
+    const info = findExercise(library.data, exercise.exerciseId);
     const kind = setKindOf(info?.metrics, exercise.target);
     return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
       name: `${info?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,
@@ -135,7 +136,7 @@ export function FinishScreen({ next }: { next?: number }) {
       await logWorkout.mutateAsync(toLog(session, finishedAt));
       endSession();
       router.dismissAll();
-      const following = workouts.data?.find((workout) => workout.id === next);
+      const following = findWorkout(workouts.data, next);
       if (following) {
         await startWorkout(following);
       }
@@ -223,11 +224,11 @@ export function FinishScreen({ next }: { next?: number }) {
               <Text variant="caption" color="textMuted">
                 {t('session.end.label', { started: time.format(session.startedAt) })}
               </Text>
-              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+              <Text variant="label" style={styles.tabular}>
                 {time.format(finishedAt)}
               </Text>
             </View>
-            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            <Text variant="label" color="primaryText">
               {t('session.end.changeLabel')}
             </Text>
           </Pressable>
@@ -236,17 +237,7 @@ export function FinishScreen({ next }: { next?: number }) {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.list,
-            {
-              borderRadius: radii.lg,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              paddingHorizontal: spacing.lg,
-            },
-          ]}
-        >
+        <Card list>
           {summary.map((item, index) => (
             <View
               key={index}
@@ -262,26 +253,15 @@ export function FinishScreen({ next }: { next?: number }) {
               <Text variant="bodyStrong" style={styles.flex} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text variant="caption" color="textMuted" style={styles.bold}>
+              <Text variant="captionStrong" color="textMuted">
                 {item.text}
               </Text>
             </View>
           ))}
-        </View>
+        </Card>
 
         {records.length > 0 ? (
-          <View
-            style={[
-              styles.list,
-              {
-                gap: spacing.sm,
-                padding: spacing.lg,
-                borderRadius: radii.lg,
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
+          <Card style={{ padding: spacing.lg, gap: spacing.sm }}>
             <View style={[styles.item, styles.title, { gap: spacing.sm }]}>
               <Icon name="trophy" size={18} color="primary" />
               <Text variant="bodyStrong" style={styles.black}>
@@ -293,12 +273,12 @@ export function FinishScreen({ next }: { next?: number }) {
                 <Text variant="body" style={[styles.flex, styles.semibold]}>
                   {record.name}
                 </Text>
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {record.value}
                 </Text>
               </View>
             ))}
-          </View>
+          </Card>
         ) : null}
 
         {totals.done === 0 ? (
@@ -326,12 +306,12 @@ export function FinishScreen({ next }: { next?: number }) {
         ) : null}
         <View style={styles.actions}>
           <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.action}>
-            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            <Text variant="label" color="primaryText">
               {t('session.summary.keepGoing')}
             </Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={discard} style={styles.action}>
-            <Text variant="bodyStrong" color="danger" style={styles.bold}>
+            <Text variant="label" color="danger">
               {t('session.summary.discard')}
             </Text>
           </Pressable>
@@ -350,9 +330,6 @@ const styles = StyleSheet.create({
   },
   center: {
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,
@@ -384,9 +361,6 @@ const styles = StyleSheet.create({
   stat: {
     flex: 1,
     alignItems: 'center',
-    borderWidth: 1,
-  },
-  list: {
     borderWidth: 1,
   },
   end: {

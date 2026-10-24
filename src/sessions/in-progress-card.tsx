@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { minutesAndSeconds } from '@/lib/time';
 import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
+import { useWorkoutName } from '@/workouts/format';
 
 import { sessionTotals, type Session } from './session';
 import { useNow } from './use-now';
@@ -24,7 +25,7 @@ export function InProgressCard({ session }: { session: Session }) {
   const now = useNow(true);
   const totals = sessionTotals(session);
   const current = session.exercises[session.current];
-  const exercise = library.data?.find((item) => item.id === current?.exerciseId)?.name ?? '';
+  const exercise = findExercise(library.data, current?.exerciseId)?.name ?? '';
   const elapsed = Math.max(0, Math.floor((now - session.startedAt) / 1000));
 
   return (
@@ -45,11 +46,11 @@ export function InProgressCard({ session }: { session: Session }) {
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
         <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-        <Text variant="caption" style={[styles.bold, { color: colors.planned }]}>
+        <Text variant="captionStrong" style={{ color: colors.planned }}>
           {t('session.inProgress')}
         </Text>
         <View style={styles.flex} />
-        <Text variant="headline" style={[styles.bold, styles.light, styles.tabular]}>
+        <Text variant="headline" style={[styles.light, styles.tabular]}>
           {minutesAndSeconds(elapsed)}
         </Text>
       </View>
@@ -68,7 +69,7 @@ export function InProgressCard({ session }: { session: Session }) {
             { borderRadius: radii.full, backgroundColor: colors.primaryButton },
           ]}
         >
-          <Text variant="bodyStrong" color="onPrimary" style={styles.bold}>
+          <Text variant="label" color="onPrimary">
             {t('session.resume')}
           </Text>
         </View>
@@ -103,9 +104,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

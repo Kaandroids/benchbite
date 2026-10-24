@@ -5,20 +5,28 @@ import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
-import { fonts, typography, useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
 import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useDeleteWorkout, useWorkoutLimits, useSaveWorkout, useWorkouts } from './workouts';
+import {
+  useDeleteWorkout,
+  useWorkoutLimits,
+  useSaveWorkout,
+  useWorkouts,
+  findWorkout,
+} from './workouts';
 
 const ROW_HEIGHT = 76;
 
@@ -39,7 +47,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const longWeekdayName = useWeekdayFormat('long');
   const [editing, setEditing] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
+  const workout = findWorkout(workouts.data, id);
   // A workout from the plan builder is named by its type until the user gives it a name.
   const typeName = workout && workout.name === null ? workoutName(workout) : null;
   const loaded = allLoaded([workouts, library, limits]);
@@ -70,7 +78,7 @@ export function EditorScreen({ id }: { id?: number }) {
 
   useEffect(() => clearDraft, []);
 
-  const details = (exerciseId: string) => library.data?.find((item) => item.id === exerciseId);
+  const details = (exerciseId: string) => findExercise(library.data, exerciseId);
   const close = () => router.back();
   const max = limits.data?.exercises ?? 0;
   const over = draft ? draft.exercises.length - max : 0;
@@ -145,7 +153,7 @@ export function EditorScreen({ id }: { id?: number }) {
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}
           </Text>
-          <Text variant="caption" color="primaryText" style={styles.bold}>
+          <Text variant="captionStrong" color="primaryText">
             {formatTarget(exercise.sets, exercise.target)}
           </Text>
           <Text variant="caption" color="textMuted">
@@ -171,35 +179,15 @@ export function EditorScreen({ id }: { id?: number }) {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text
-          variant="bodyStrong"
-          accessibilityRole="header"
-          style={[styles.bold, styles.flex]}
-          align="center"
-        >
+        <Text variant="label" accessibilityRole="header" style={styles.flex} align="center">
           {id === undefined ? t('editor.newTitle') : t('editor.editTitle')}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSave || save.isPending }}
+        <PillButton
+          variant="primary"
+          label={t('editor.save')}
           disabled={!canSave || save.isPending}
           onPress={() => void onSave()}
-          style={[
-            styles.save,
-            {
-              borderRadius: radii.full,
-              backgroundColor: canSave ? colors.primaryButton : colors.track,
-            },
-          ]}
-        >
-          <Text
-            variant="bodyStrong"
-            color={canSave ? 'onPrimary' : 'textMuted'}
-            style={styles.bold}
-          >
-            {t('editor.save')}
-          </Text>
-        </Pressable>
+        />
       </View>
 
       {loaded && id !== undefined && !workout && !draft ? (
@@ -219,7 +207,7 @@ export function EditorScreen({ id }: { id?: number }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.name')}
             </Text>
             <TextInput
@@ -244,7 +232,7 @@ export function EditorScreen({ id }: { id?: number }) {
           </View>
 
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.days')}
             </Text>
             <View style={[styles.days, { gap: spacing.xs }]}>
@@ -273,11 +261,7 @@ export function EditorScreen({ id }: { id?: number }) {
                       },
                     ]}
                   >
-                    <Text
-                      variant="bodyStrong"
-                      color={on ? 'onPrimary' : 'text'}
-                      style={styles.bold}
-                    >
+                    <Text variant="label" color={on ? 'onPrimary' : 'text'}>
                       {weekdayName(weekday)}
                     </Text>
                   </Pressable>
@@ -290,21 +274,11 @@ export function EditorScreen({ id }: { id?: number }) {
           </View>
 
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.exercises', { count: draft.exercises.length })}
             </Text>
             {draft.exercises.length > 0 ? (
-              <View
-                style={[
-                  styles.card,
-                  {
-                    borderRadius: radii.lg,
-                    borderColor: colors.border,
-                    backgroundColor: colors.surface,
-                    paddingHorizontal: spacing.md,
-                  },
-                ]}
-              >
+              <Card list style={{ paddingHorizontal: spacing.md }}>
                 <ReorderList
                   items={draft.exercises}
                   keyOf={(exercise) => exercise.key}
@@ -323,7 +297,7 @@ export function EditorScreen({ id }: { id?: number }) {
                   }
                   renderItem={exerciseRow}
                 />
-              </View>
+              </Card>
             ) : null}
             {over > 0 ? (
               <Text variant="caption" color="danger">
@@ -349,7 +323,7 @@ export function EditorScreen({ id }: { id?: number }) {
                 ]}
               >
                 <Icon name="plus" size={20} color="primaryText" />
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {t('picker.title')}
                 </Text>
               </Pressable>
@@ -364,7 +338,7 @@ export function EditorScreen({ id }: { id?: number }) {
               onPress={onDelete}
               style={[styles.delete, { opacity: remove.isPending ? 0.4 : 1 }]}
             >
-              <Text variant="bodyStrong" color="danger" style={styles.bold}>
+              <Text variant="label" color="danger">
                 {t('editor.delete')}
               </Text>
             </Pressable>
@@ -394,9 +368,6 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -406,11 +377,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  save: {
-    height: 40,
-    paddingHorizontal: 16,
     justifyContent: 'center',
   },
   input: {
@@ -426,9 +392,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  card: {
-    borderWidth: 1,
   },
   exercise: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,23 +8,22 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { RecentLogs } from '@/history/recent-logs';
 import { isoWeekday } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { InProgressCard } from '@/sessions/in-progress-card';
 import { endSession, useActiveSession } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
 import { useWorkoutLimits, useWorkouts, type Workout } from './workouts';
 
 /**
- * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below.
- * Inactive workouts are kept in the archive.
+ * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below,
+ * which the tab passes in as `history`. Inactive workouts are kept in the archive.
  */
-export function WorkoutsScreen() {
+export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const workouts = useWorkouts();
@@ -104,7 +103,7 @@ export function WorkoutsScreen() {
         {allLoaded([workouts]) ? (
           <>
             {session ? <InProgressCard session={session} /> : null}
-            <Text variant="caption" color="textMuted" style={styles.section}>
+            <Text variant="captionStrong" color="textMuted">
               {t('workout.activeCount', { count: active.length })}
             </Text>
             {active.length > 0 ? (
@@ -121,9 +120,7 @@ export function WorkoutsScreen() {
               <Text color="textMuted">{t('workout.noActive')}</Text>
             )}
 
-            <View style={{ marginTop: spacing.md }}>
-              <RecentLogs />
-            </View>
+            {history ? <View style={{ marginTop: spacing.md }}>{history}</View> : null}
           </>
         ) : null}
       </ScrollView>
@@ -176,8 +173,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  section: {
-    fontFamily: fonts.extraBold,
   },
 });

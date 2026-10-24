@@ -127,6 +127,14 @@ export function useWorkouts() {
   return useQuery({ queryKey: WORKOUTS_KEY, queryFn: fetchWorkouts });
 }
 
+/** A workout by its id; undefined while the workouts load or without one. */
+export function findWorkout(
+  workouts: readonly Workout[] | undefined,
+  id: number | null | undefined,
+): Workout | undefined {
+  return workouts?.find((workout) => workout.id === id);
+}
+
 /** The week of the signed-in user, or null if they have no workouts at all. */
 export function useWeek() {
   return useQuery({
@@ -236,9 +244,4 @@ export function useDeleteWorkout() {
       void queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY });
     },
   });
-}
-
-/** The URL of an exercise picture in the public exercise-images bucket. */
-export function exerciseImageUrl(path: string): string {
-  return supabase.storage.from('exercise-images').getPublicUrl(path).data.publicUrl;
 }

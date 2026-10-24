@@ -2,11 +2,12 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
@@ -40,14 +41,11 @@ export function WorkoutListItem({
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
 
   return (
-    <View
+    <Card
       style={[
         styles.card,
         {
-          gap: spacing.md,
           padding: spacing.lg,
-          borderRadius: radii.lg,
-          backgroundColor: colors.surface,
           borderColor: today ? colors.primary : colors.border,
           borderWidth: today ? 2 : 1,
         },
@@ -76,7 +74,7 @@ export function WorkoutListItem({
                 { borderRadius: radii.full, backgroundColor: colors.primaryButton },
               ]}
             >
-              <Text variant="caption" color="onPrimary" style={styles.pillText}>
+              <Text variant="captionStrong" color="onPrimary">
                 {t('workout.today')}
               </Text>
             </View>
@@ -121,7 +119,7 @@ export function WorkoutListItem({
             { borderRadius: radii.full, backgroundColor: colors.track },
           ]}
         >
-          <Text variant="caption" color="textMuted" style={styles.pillText}>
+          <Text variant="captionStrong" color="textMuted">
             {t('session.running')}
           </Text>
         </View>
@@ -148,7 +146,7 @@ export function WorkoutListItem({
           onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
         />
       )}
-    </View>
+    </Card>
   );
 }
 
@@ -184,8 +182,5 @@ const styles = StyleSheet.create({
   running: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-  },
-  pillText: {
-    fontFamily: fonts.extraBold,
   },
 });

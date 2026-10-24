@@ -2,9 +2,8 @@ import { useTranslation } from 'react-i18next';
 
 import { weekStart } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { minutesAndSeconds } from '@/workouts/format';
-
-import type { ExerciseTotal } from './exercise-summary';
+import { minutesAndSeconds } from '@/lib/time';
+import type { ExerciseTotal } from '@/sets/exercise-summary';
 
 /** What an exercise's sets add up to, such as "1,875 kg", "42 reps", "2:20" or "5,000 m". */
 export function useTotalFormat() {

@@ -6,13 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
-import { HistoryButton } from '@/components/ui/history-button';
+import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
-import { InfoButton } from '@/components/ui/info-button';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
 import {
   filterExercises,
   MUSCLE_GROUPS,
@@ -21,7 +22,7 @@ import {
   type ExerciseFilter,
   type LibraryExercise,
 } from '@/exercises/library';
-import { fonts, typography, useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 
 import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
@@ -73,26 +74,7 @@ export function PickerScreen() {
 
   const chip = (value: ExerciseFilter | null, label: string) => {
     const on = filter === value;
-    return (
-      <Pressable
-        key={label}
-        accessibilityRole="button"
-        accessibilityState={{ selected: on }}
-        onPress={() => setFilter(value)}
-        style={[
-          styles.chip,
-          {
-            borderRadius: radii.full,
-            backgroundColor: on ? colors.primaryButton : colors.surface,
-            borderColor: on ? colors.primaryButton : colors.border,
-          },
-        ]}
-      >
-        <Text variant="caption" color={on ? 'onPrimary' : 'text'} style={styles.bold}>
-          {label}
-        </Text>
-      </Pressable>
-    );
+    return <Chip key={label} label={label} selected={on} onPress={() => setFilter(value)} />;
   };
 
   const row = ({ item }: { item: LibraryExercise }) => {
@@ -152,7 +134,7 @@ export function PickerScreen() {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {t('picker.title')}
         </Text>
       </View>
@@ -221,7 +203,7 @@ export function PickerScreen() {
                 <Icon name="plus" size={24} color="primary" />
               </View>
               <View style={[styles.text, { marginLeft: spacing.xs }]}>
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {t('customExercise.createRow')}
                 </Text>
                 <Text variant="caption" color="textMuted">
@@ -256,7 +238,7 @@ export function PickerScreen() {
                   ]}
                 >
                   <Icon name="plus" size={18} color="primaryText" />
-                  <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                  <Text variant="label" color="primaryText">
                     {t('customExercise.createNamed', { name: query.trim() })}
                   </Text>
                 </Pressable>
@@ -335,9 +317,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -347,12 +326,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-  },
-  chip: {
-    height: 36,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderWidth: 1.5,
   },
   row: {
     height: ROW_HEIGHT,

@@ -2,19 +2,20 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { InfoButton } from '@/components/ui/info-button';
+import { Card } from '@/components/ui/card';
 import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
+import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import type { DraftExercise } from './draft';
-import { minutesAndSeconds } from './format';
 
 const LIMITS = {
   sets: { min: 1, max: 10, step: 1 },
@@ -41,7 +42,7 @@ export function ExerciseSheet({
   onClose,
 }: ExerciseSheetProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const caption = useExerciseCaption();
   const { format } = useNumberFormat();
 
@@ -155,17 +156,7 @@ export function ExerciseSheet({
         />
       </View>
 
-      <View
-        style={[
-          styles.card,
-          {
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            paddingHorizontal: spacing.lg,
-          },
-        ]}
-      >
+      <Card list>
         {rows.map((item, index) => (
           <View
             key={item.label}
@@ -200,7 +191,7 @@ export function ExerciseSheet({
             />
           </View>
         ))}
-      </View>
+      </Card>
 
       <View style={[styles.actions, { gap: spacing.md }]}>
         <Button
@@ -222,9 +213,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  card: {
-    borderWidth: 1,
   },
   row: {
     flexDirection: 'row',

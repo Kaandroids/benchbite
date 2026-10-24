@@ -1,9 +1,10 @@
+import { WEIGHT_RANGE_KG } from '@/weight/range';
+
 import {
   HEIGHT_RANGE_CM,
   MIN_AGE,
   MIN_HEALTHY_BMI,
   PACE_RANGES,
-  WEIGHT_RANGE_KG,
   ageIn,
   bmi,
   isTargetInGoalDirection,

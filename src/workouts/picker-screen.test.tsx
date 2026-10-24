@@ -8,6 +8,9 @@ import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
 import { useWorkoutLimits } from './workouts';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual<typeof import('react')>('react');
   return {
@@ -23,7 +26,6 @@ jest.mock('@/exercises/library', () => ({
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./draft', () => ({ addExercises: jest.fn(), useDraft: jest.fn() }));
 jest.mock('./workouts', () => ({
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
   useWorkoutLimits: jest.fn(),
 }));
 

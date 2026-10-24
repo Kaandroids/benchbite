@@ -1,4 +1,5 @@
-import { setKindOf } from './fields';
+import { setKindOf } from '@/sets/fields';
+
 import { newRecords, oneRepMax, recordValues } from './records';
 
 const weighted = setKindOf(['weight', 'reps'], { reps: { min: 8, max: 12 } });

@@ -5,25 +5,22 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
-import { HistoryButton } from '@/components/ui/history-button';
-import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
-import { Screen } from '@/components/ui/screen';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
-import { summarizeSets } from '@/history/exercise-summary';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
+import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { minutesAndSeconds } from '@/lib/time';
 import { useUserId } from '@/providers/session-provider';
+import { summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
-import {
-  minutesAndSeconds,
-  useRestFormat,
-  useTargetFormat,
-  useWorkoutName,
-} from '@/workouts/format';
+import { useRestFormat, useTargetFormat, useWorkoutName } from '@/workouts/format';
 
-import { describeSet, setKindOf } from './fields';
 import { newRecords } from './records';
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
@@ -42,7 +39,6 @@ import {
   type SessionExercise,
 } from './session';
 import { SetRow } from './set-row';
-import { AddSetButton, SetHeader } from './set-table';
 import { useNow } from './use-now';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
@@ -69,7 +65,7 @@ export function SessionScreen() {
     );
   }
 
-  const details = (id: string) => library.data?.find((exercise) => exercise.id === id);
+  const details = (id: string) => findExercise(library.data, id);
   const totals = sessionTotals(session);
   const elapsed = Math.max(0, Math.floor((now - session.startedAt) / 1000));
 
@@ -147,10 +143,8 @@ export function SessionScreen() {
         <View style={[styles.row, { gap: spacing.md }]}>
           <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
           <View style={styles.flex}>
-            <Text variant="bodyStrong" style={styles.bold}>
-              {info?.name ?? ''}
-            </Text>
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="label">{info?.name ?? ''}</Text>
+            <Text variant="captionStrong" color="primaryText">
               {[
                 formatTarget(exercise.sets.length, exercise.target),
                 formatRest(exercise.restSeconds),
@@ -216,10 +210,10 @@ export function SessionScreen() {
           <Icon name="back" color="textMuted" />
         </Pressable>
         <View style={[styles.flex, styles.center]}>
-          <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+          <Text variant="label" accessibilityRole="header">
             {workoutName(session)}
           </Text>
-          <Text variant="caption" color="textMuted" style={[styles.bold, styles.tabular]}>
+          <Text variant="captionStrong" color="textMuted" style={styles.tabular}>
             {minutesAndSeconds(elapsed)}
           </Text>
         </View>
@@ -231,7 +225,7 @@ export function SessionScreen() {
             { borderRadius: radii.full, backgroundColor: colors.primaryButton },
           ]}
         >
-          <Text variant="bodyStrong" color="onPrimary" style={styles.bold}>
+          <Text variant="label" color="onPrimary">
             {t('session.finish')}
           </Text>
         </Pressable>
@@ -246,7 +240,7 @@ export function SessionScreen() {
         <View style={styles.flex}>
           <ProgressBar value={totals.planned ? totals.done / totals.planned : 0} />
         </View>
-        <Text variant="caption" color="textMuted" style={styles.bold}>
+        <Text variant="captionStrong" color="textMuted">
           {t('session.setsDone', { done: totals.done, count: totals.planned })}
         </Text>
       </View>
@@ -298,9 +292,6 @@ const styles = StyleSheet.create({
   },
   center: {
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

@@ -10,6 +10,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
+import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import {
   defaultUnits,
   feetAndInchesToCm,
@@ -20,14 +21,14 @@ import {
   type HeightUnit,
   type WeightUnit,
 } from '@/i18n/units';
-import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { range } from '@/lib/math';
-import { HEIGHT_RANGE_CM, WEIGHT_RANGE_KG } from '@/onboarding/body';
+import { HEIGHT_RANGE_CM } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { StreakBadge } from '@/streak/streak-badge';
 import { sampleStreak, showSampleStreak } from '@/streak/use-streak';
 import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
 import { WeekCard } from '@/today/week-card';
+import { WEIGHT_RANGE_KG } from '@/weight/range';
 import { weekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 

@@ -4,18 +4,11 @@ import { randomUUID } from 'expo-crypto';
 import { Storage } from 'expo-sqlite/kv-store';
 import { useSyncExternalStore } from 'react';
 
+import { SET_LIMITS } from '@/sets/fields';
+import { MAX_SETS, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
-import { SET_LIMITS } from './fields';
 import type { Bests } from './records';
-
-/** What a set records; a value the exercise does not record stays null. */
-export type SetValues = {
-  weightKg: number | null;
-  reps: number | null;
-  seconds: number | null;
-  meters: number | null;
-};
 
 export type SessionSet = SetValues & {
   done: boolean;
@@ -307,9 +300,6 @@ export function toggleDone(
   }
   return next;
 }
-
-/** The most sets an exercise can have in a log (logged_sets.set_position). */
-export const MAX_SETS = 20;
 
 /** Adds a set to an exercise, with the values of its last set but its time. */
 export function addSet(value: Session, exercise: number): Session {

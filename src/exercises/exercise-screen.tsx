@@ -4,13 +4,14 @@ import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { useArchiveExercise } from './custom';
 import { ExerciseNotFound } from './exercise-not-found';
-import { useExerciseDetails } from './library';
+import { useExerciseDetails, findExercise } from './library';
 import { usePictureUrls } from './photos';
 
 /**
@@ -21,7 +22,7 @@ export function ExerciseScreen({ id }: { id: string }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
-  const exercise = library.data?.find((candidate) => candidate.id === id);
+  const exercise = findExercise(library.data, id);
   // Each picture with its place, as the start may be missing before the end.
   const pictures = (exercise?.imagePaths.slice(0, 2) ?? []).flatMap((path, index) =>
     path ? [{ path, end: index === 1 }] : [],
@@ -55,7 +56,7 @@ export function ExerciseScreen({ id }: { id: string }) {
         },
       ]}
     >
-      <Text variant="caption" color={primary ? 'primaryText' : 'textMuted'} style={styles.chipText}>
+      <Text variant="captionStrong" color={primary ? 'primaryText' : 'textMuted'}>
         {label}
       </Text>
     </View>
@@ -99,36 +100,17 @@ export function ExerciseScreen({ id }: { id: string }) {
       onBack={() => router.back()}
       action={
         exercise.custom && !exercise.archived ? (
-          <Pressable
-            accessibilityRole="button"
+          <PillButton
+            label={t('workout.edit')}
             onPress={() =>
               router.push({ pathname: '/workout/exercise/edit', params: { id: exercise.id } })
             }
-            style={({ pressed }) => [
-              styles.edit,
-              {
-                borderRadius: radii.full,
-                backgroundColor: colors.iconBackground,
-                paddingHorizontal: spacing.md,
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text variant="bodyStrong" color="primaryText" style={styles.title}>
-              {t('workout.edit')}
-            </Text>
-          </Pressable>
+          />
         ) : undefined
       }
       // In the top bar, as on the other screens; long names take a second line.
       title={
-        <Text
-          variant="bodyStrong"
-          accessibilityRole="header"
-          align="center"
-          numberOfLines={2}
-          style={styles.title}
-        >
+        <Text variant="label" accessibilityRole="header" align="center" numberOfLines={2}>
           {exercise.name}
         </Text>
       }
@@ -150,7 +132,7 @@ export function ExerciseScreen({ id }: { id: string }) {
             />
             {/* A single start is just the picture of the exercise; an end is always named. */}
             {pictures.length > 1 || end ? (
-              <Text variant="caption" color="textMuted" align="center" style={styles.chipText}>
+              <Text variant="captionStrong" color="textMuted" align="center">
                 {end ? t('exercise.end') : t('exercise.start')}
               </Text>
             ) : null}
@@ -193,7 +175,7 @@ export function ExerciseScreen({ id }: { id: string }) {
           {instructions.data.map((step, index) => (
             <View key={index} style={[styles.step, { gap: spacing.md }]}>
               <View style={[styles.number, { backgroundColor: colors.iconBackground }]}>
-                <Text variant="caption" color="primaryText" style={styles.chipText}>
+                <Text variant="captionStrong" color="primaryText">
                   {index + 1}
                 </Text>
               </View>
@@ -212,11 +194,7 @@ export function ExerciseScreen({ id }: { id: string }) {
             onPress={() => (exercise.archived ? setArchived(false) : askToArchive())}
             style={styles.archiveButton}
           >
-            <Text
-              variant="bodyStrong"
-              color={exercise.archived ? 'primaryText' : 'danger'}
-              style={styles.title}
-            >
+            <Text variant="label" color={exercise.archived ? 'primaryText' : 'danger'}>
               {exercise.archived ? t('customExercise.restore') : t('customExercise.archive')}
             </Text>
           </Pressable>
@@ -232,13 +210,6 @@ export function ExerciseScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontFamily: fonts.extraBold,
-  },
-  edit: {
-    height: 40,
-    justifyContent: 'center',
-  },
   archive: {
     alignItems: 'center',
   },
@@ -264,9 +235,6 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 3,
-  },
-  chipText: {
-    fontFamily: fonts.extraBold,
   },
   fact: {
     flex: 1,

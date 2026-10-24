@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@/test/render';
 
 import {
   fetchLibrary,
+  findExercise,
   filterExercises,
   searchText,
   thumbnailOf,
@@ -149,5 +150,34 @@ describe('useExerciseDetails', () => {
     const { result } = await renderHook(() => useExerciseDetails('gone'));
     await waitFor(() => expect(result.current.instructions.isSuccess).toBe(true));
     expect(result.current.instructions.data).toEqual([]);
+  });
+});
+
+describe('findExercise', () => {
+  const exercise = (
+    name: string,
+    more: Partial<LibraryExercise> = {},
+    englishName = name,
+  ): LibraryExercise => ({
+    id: name,
+    name,
+    searchText: searchText([name, englishName], 'tr'),
+    metrics: ['weight', 'reps'],
+    primaryMuscles: ['chest'],
+    secondaryMuscles: [],
+    equipment: null,
+    level: 'beginner',
+    category: 'strength',
+    imagePaths: [],
+    custom: false,
+    archived: false,
+    ...more,
+  });
+  it('finds an exercise of the library by its id', () => {
+    const library = [exercise('Bench Press'), exercise('Squat')];
+    expect(findExercise(library, 'Squat')?.name).toBe('Squat');
+    expect(findExercise(library, 'Deadlift')).toBeUndefined();
+    expect(findExercise(library, undefined)).toBeUndefined();
+    expect(findExercise(undefined, 'Squat')).toBeUndefined();
   });
 });

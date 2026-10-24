@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { fonts, typography, useTheme } from '@/theme';
-import { minutesAndSeconds } from '@/workouts/format';
+import { minutesAndSeconds } from '@/lib/time';
+import { typography, useTheme } from '@/theme';
 
 import { describeSet, parseTime, SET_LIMITS, type SetField, type SetKind } from './fields';
-import { MAX_SETS, type SetValues } from './session';
+import { MAX_SETS, type SetValues } from './values';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
 // header, a line for each set and a button that adds one.
@@ -65,25 +65,25 @@ export function SetHeader({ kind, showLast }: SetHeaderProps) {
   return (
     <View style={[styles.row, { gap: spacing.sm, paddingHorizontal: 2 }]}>
       <Text
-        variant="caption"
+        variant="captionStrong"
         color="textMuted"
         align="center"
-        style={[styles.bold, { width: NUMBER_WIDTH }]}
+        style={{ width: NUMBER_WIDTH }}
       >
         {t('session.columns.set')}
       </Text>
       {showLast ? (
-        <Text variant="caption" color="textMuted" style={[styles.bold, styles.flex]}>
+        <Text variant="captionStrong" color="textMuted" style={styles.flex}>
           {t('session.columns.last')}
         </Text>
       ) : null}
       {columns.map((column) => (
         <Text
           key={column}
-          variant="caption"
+          variant="captionStrong"
           color="textMuted"
           align="center"
-          style={[styles.bold, fieldStyle(kind, showLast)]}
+          style={[fieldStyle(kind, showLast)]}
         >
           {column}
         </Text>
@@ -242,7 +242,7 @@ export function SetLine({
       ]}
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
-        <Text variant="bodyStrong" align="center" style={[styles.bold, { width: NUMBER_WIDTH }]}>
+        <Text variant="label" align="center" style={{ width: NUMBER_WIDTH }}>
           {number}
         </Text>
         {showLast ? (
@@ -293,7 +293,7 @@ export function AddSetButton({ count, onPress }: { count: number; onPress: () =>
       onPress={onPress}
       style={[styles.addSet, { borderRadius: radii.md, backgroundColor: colors.background }]}
     >
-      <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+      <Text variant="label" color="primaryText">
         {t('session.addSet')}
       </Text>
     </Pressable>
@@ -312,9 +312,6 @@ export const setButtonStyle = {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   row: {
     flexDirection: 'row',

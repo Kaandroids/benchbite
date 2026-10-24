@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 
 import { endSession, useActiveSession, type Session } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
+import { RecentLogs } from '@/history/recent-logs';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ArchiveScreen } from './archive-screen';
@@ -11,6 +12,9 @@ import { WorkoutScreen } from './workout-screen';
 import { useSetWorkoutActive, useWorkoutLimits, useWorkouts, type Workout } from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
@@ -18,7 +22,6 @@ jest.mock('./workouts', () => ({
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
   useKcalPerMinute: () => ({ data: 7.5 }),
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 jest.mock('@/history/history', () => ({
   ...jest.requireActual<typeof import('@/history/history')>('@/history/history'),
@@ -39,6 +42,7 @@ jest.mock('@/sessions/session', () => ({
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: () => ({
     data: ['pulldown', 'rope', 'row', 'bench', 'squat'].map((id) => ({
       id,
@@ -128,7 +132,7 @@ describe('WorkoutsScreen', () => {
 
   it('shows the empty history until workouts can be logged', async () => {
     mockWorkouts([testWorkout(1)]);
-    await render(<WorkoutsScreen />);
+    await render(<WorkoutsScreen history={<RecentLogs />} />);
     expect(screen.getByText('History')).toBeTruthy();
     expect(screen.getByText('Your finished workouts will show here.')).toBeTruthy();
   });

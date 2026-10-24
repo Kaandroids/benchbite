@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { useRecentLogs } from './history';
 import { LogRow } from './log-row';
@@ -15,7 +15,7 @@ const SHOWN = 3;
 /** The latest finished workouts on the Workout tab, with a way to all of them. */
 export function RecentLogs() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const recent = useRecentLogs(SHOWN);
   const all = recent.data?.latest ?? [];
   const inWeek = recent.data?.thisWeek ?? 0;
@@ -23,7 +23,7 @@ export function RecentLogs() {
   return (
     <View style={{ gap: spacing.sm }}>
       <View style={styles.header}>
-        <Text variant="caption" color="textMuted" style={styles.bold}>
+        <Text variant="captionStrong" color="textMuted">
           {[
             t('workout.history.title'),
             inWeek > 0 ? t('history.thisWeek', { count: inWeek }) : null,
@@ -38,7 +38,7 @@ export function RecentLogs() {
             onPress={() => router.push('/workout/history')}
             style={styles.seeAll}
           >
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="captionStrong" color="primaryText">
               {t('history.seeAll')}
             </Text>
           </Pressable>
@@ -48,21 +48,11 @@ export function RecentLogs() {
       {!allLoaded([recent]) ? (
         <LoadState queries={[recent]} />
       ) : all.length > 0 ? (
-        <View
-          style={[
-            styles.list,
-            {
-              borderRadius: radii.lg,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: spacing.lg,
-            },
-          ]}
-        >
+        <Card list>
           {all.map((log, index) => (
             <LogRow key={log.id} log={log} divider={index > 0} />
           ))}
-        </View>
+        </Card>
       ) : (
         <Card>
           <Text color="textMuted">{t('workout.history.empty')}</Text>
@@ -81,14 +71,8 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   seeAll: {
     minHeight: 32,
     justifyContent: 'center',
-  },
-  list: {
-    borderWidth: 1,
   },
 });

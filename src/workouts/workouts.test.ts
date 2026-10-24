@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
+import { testWorkout } from '@/workouts/test-data';
 
 import {
+  findWorkout,
   fetchWorkouts,
   useDeleteWorkout,
   useSaveWorkout,
@@ -238,5 +240,15 @@ describe('useDeleteWorkout', () => {
     expect(eq).toHaveBeenCalledWith('id', 4);
     expect(queryClient.getQueryData(['workouts'])).toEqual([{ id: 5 }]);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+  });
+});
+
+describe('findWorkout', () => {
+  it('finds a workout by its id', () => {
+    const workouts = [testWorkout(1), testWorkout(2)];
+    expect(findWorkout(workouts, 2)?.id).toBe(2);
+    expect(findWorkout(workouts, 3)).toBeUndefined();
+    expect(findWorkout(workouts, null)).toBeUndefined();
+    expect(findWorkout(undefined, 1)).toBeUndefined();
   });
 });

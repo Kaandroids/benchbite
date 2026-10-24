@@ -1,11 +1,11 @@
 import { act, fireEvent, render, screen } from '@/test/render';
-import { useCachedWeekSchedule } from '@/workouts/use-week-schedule';
+import { useCachedWeekSchedule } from '@/week/use-week-schedule';
 import { weekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession, Workout } from '@/workouts/workouts';
 
 import { askStartMove, StartMoveSheet, useStartMove } from './start-move';
 
-jest.mock('@/workouts/use-week-schedule', () => ({ useCachedWeekSchedule: jest.fn() }));
+jest.mock('@/week/use-week-schedule', () => ({ useCachedWeekSchedule: jest.fn() }));
 
 // Wednesday, October 21.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);

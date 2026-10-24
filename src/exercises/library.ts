@@ -106,6 +106,14 @@ export function useExerciseLibrary() {
   });
 }
 
+/** An exercise of the library by its id; undefined while the library loads or without one. */
+export function findExercise(
+  library: readonly LibraryExercise[] | undefined,
+  id: string | undefined,
+): LibraryExercise | undefined {
+  return library?.find((exercise) => exercise.id === id);
+}
+
 /**
  * The exercises whose name, in the app language or in English, contains every word of the query,
  * within the filter. Archived exercises are left out.

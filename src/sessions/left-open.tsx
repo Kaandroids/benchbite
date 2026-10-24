@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useUserId } from '@/providers/session-provider';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { useLogWorkout } from './logs';
@@ -98,9 +98,7 @@ export function LeftOpenSaver() {
         <Icon name="check" size={20} color="primary" />
       </View>
       <View style={[styles.flex, { gap: spacing.xs }]}>
-        <Text variant="bodyStrong" style={styles.bold}>
-          {t('session.leftOpen.title', { name: saved.name })}
-        </Text>
+        <Text variant="label">{t('session.leftOpen.title', { name: saved.name })}</Text>
         <Text variant="caption" color="textMuted">
           {t('session.leftOpen.message', { time })}
         </Text>
@@ -113,12 +111,12 @@ export function LeftOpenSaver() {
               router.push({ pathname: '/workout/log/[id]', params: { id: String(saved.logId) } });
             }}
           >
-            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            <Text variant="label" color="primaryText">
               {t('session.leftOpen.view')}
             </Text>
           </Pressable>
           <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setSaved(null)}>
-            <Text variant="bodyStrong" color="textMuted" style={styles.bold}>
+            <Text variant="label" color="textMuted">
               {t('session.leftOpen.dismiss')}
             </Text>
           </Pressable>
@@ -147,9 +145,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   actions: {
     flexDirection: 'row',

@@ -1,10 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { finishedWeekKey, useFinishedThisWeek } from '@/history/history';
-
-import { useWeekMoves, weekMovesKey } from './moves';
-import { weekSchedule, type FinishedWorkout, type WorkoutMove } from './week-schedule';
-import { useWeek, weekOf, WORKOUTS_KEY, type Workout } from './workouts';
+import { useWeekMoves, weekMovesKey } from '@/workouts/moves';
+import { weekSchedule, type FinishedWorkout, type WorkoutMove } from '@/workouts/week-schedule';
+import { useWeek, weekOf, WORKOUTS_KEY, type Workout } from '@/workouts/workouts';
 
 /**
  * The week of `today` after its moves, with the workouts finished in it (ADR 0028), and the

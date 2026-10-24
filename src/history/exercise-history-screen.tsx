@@ -4,19 +4,22 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useShortDateFormat } from '@/i18n/dates';
-import { describeSet, setKindOf } from '@/sessions/fields';
+import { shortSet, summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { useRecordFormat } from '@/sets/records';
+import { SetChips } from '@/sets/set-chips';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
-import { shortSet, summarizeSets } from './exercise-summary';
 import { recordSets, useExerciseHistory, type ExerciseRecord } from './exercise-history';
 import { useTotalFormat } from './format';
 import { ProgressChart } from './progress-chart';
@@ -29,7 +32,6 @@ import {
   scaleOf,
   TIME_RANGES,
   useMetricFormat,
-  useRecordFormat,
   type ProgressMetric,
   type TimeRange,
 } from './record-format';
@@ -49,10 +51,10 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
   const today = new Date();
   const day = useShortDateFormat(today);
 
-  const exercise = library.data?.find((item) => item.id === id);
+  const exercise = findExercise(library.data, id);
   const title = (
     <>
-      <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>
+      <Text variant="label" accessibilityRole="header" numberOfLines={1}>
         {exercise?.name ?? ''}
       </Text>
       <Text variant="caption" color="textMuted" numberOfLines={1}>
@@ -160,7 +162,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                   },
                 ]}
               >
-                <Text variant="caption" color="textMuted" style={styles.bold}>
+                <Text variant="captionStrong" color="textMuted">
                   {recordLabel(record)}
                 </Text>
                 <Text variant="headline" style={styles.tabular}>
@@ -222,11 +224,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                     },
                   ]}
                 >
-                  <Text
-                    variant="caption"
-                    color={selected ? 'surface' : 'textMuted'}
-                    style={styles.bold}
-                  >
+                  <Text variant="captionStrong" color={selected ? 'surface' : 'textMuted'}>
                     {t(`exerciseHistory.metrics.${option}`)}
                   </Text>
                 </Pressable>
@@ -261,20 +259,10 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
         </View>
       ) : null}
 
-      <Text variant="bodyStrong" color="textMuted" style={[styles.bold, { paddingHorizontal: 4 }]}>
+      <Text variant="label" color="textMuted" style={{ paddingHorizontal: 4 }}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
-      <View
-        style={[
-          styles.card,
-          {
-            paddingHorizontal: spacing.lg,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-          },
-        ]}
-      >
+      <Card list>
         {sessions.map((session, index) => (
           <Pressable
             key={session.logId}
@@ -299,45 +287,23 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
           >
             <DateTile date={session.startedAt} tinted={false} />
             <View style={[styles.flex, { gap: spacing.xs }]}>
-              <Text variant="bodyStrong" style={styles.bold} numberOfLines={1}>
+              <Text variant="label" numberOfLines={1}>
                 {workoutName(session)}
                 <Text variant="bodyStrong" color="textMuted" style={styles.semibold}>
                   {` · ${total(session.sets)}`}
                 </Text>
               </Text>
-              <View style={[styles.chips, { gap: spacing.xs }]}>
-                {session.sets.map((set, setIndex) => {
-                  const record = marked.get(session.logId)?.has(setIndex) ?? false;
-                  const text = shortSet(set, kind, (values) => describeSet(values, kind));
-                  return (
-                    <View
-                      key={setIndex}
-                      accessibilityLabel={
-                        record ? `${t('exerciseHistory.record')}: ${text}` : undefined
-                      }
-                      style={[
-                        styles.chip,
-                        {
-                          borderRadius: radii.md,
-                          backgroundColor: record ? colors.selected : colors.background,
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="caption"
-                        color={record ? 'primaryText' : 'text'}
-                        style={[styles.bold, styles.tabular]}
-                      >
-                        {text}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
+              <SetChips
+                sets={session.sets.map((set) => ({
+                  text: shortSet(set, kind, (values) => describeSet(values, kind)),
+                }))}
+                marked={(index) => marked.get(session.logId)?.has(index) ?? false}
+                markLabel={t('exerciseHistory.record')}
+              />
             </View>
           </Pressable>
         ))}
-      </View>
+      </Card>
     </Screen>
   );
 }
@@ -345,9 +311,6 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,
@@ -386,13 +349,5 @@ const styles = StyleSheet.create({
   },
   session: {
     flexDirection: 'row',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
 });

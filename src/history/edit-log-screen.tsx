@@ -5,17 +5,20 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { setKindOf, type SetField, type SetKind } from '@/sessions/fields';
-import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sessions/set-table';
+import { setKindOf, type SetField, type SetKind } from '@/sets/fields';
+import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-table';
+import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
-import { useWorkouts } from '@/workouts/workouts';
+import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import {
   useEditLog,
@@ -23,7 +26,6 @@ import {
   useLogSummary,
   type LoggedExercise,
   type LogSummary,
-  type SetValues,
   withSkipped,
 } from './history';
 
@@ -73,7 +75,7 @@ export function EditLogScreen({ id }: { id: number }) {
   const log = summary.data;
   // The exercises the workout had, so that a skipped one can get sets afterwards. Logs saved before
   // they were kept take them from the workout as it is now, as many as it had then.
-  const workout = workouts.data?.find((item) => item.id === log.workoutId);
+  const workout = findWorkout(workouts.data, log.workoutId);
   const planned =
     log.plannedExerciseIds ??
     (workout?.exercises ?? [])
@@ -98,7 +100,7 @@ function LogEditor({
   library: LibraryExercise[];
 }) {
   const { t, i18n } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
   const edit = useEditLog();
   // Each set gets a key of its own, so that removing one keeps the others' inputs in place.
@@ -195,33 +197,17 @@ function LogEditor({
       onBack={() => router.back()}
       closes
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>
+        <Text variant="label" accessibilityRole="header" numberOfLines={1}>
           {t('history.edit.title', { name: workoutName(log) })}
         </Text>
       }
       action={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSave }}
+        <PillButton
+          variant="primary"
+          label={t('editor.save')}
           disabled={!canSave}
           onPress={() => void onSave()}
-          style={[
-            styles.save,
-            {
-              borderRadius: radii.full,
-              paddingHorizontal: spacing.lg,
-              backgroundColor: canSave ? colors.primaryButton : colors.track,
-            },
-          ]}
-        >
-          <Text
-            variant="bodyStrong"
-            color={canSave ? 'onPrimary' : 'textMuted'}
-            style={styles.bold}
-          >
-            {t('editor.save')}
-          </Text>
-        </Pressable>
+        />
       }
     >
       <Text variant="caption" color="textMuted" style={styles.semibold}>
@@ -241,25 +227,11 @@ function LogEditor({
         const info = details(exercise.exerciseId);
         const kind = kindOf(exercise.exerciseId);
         return (
-          <View
-            key={index}
-            style={[
-              styles.card,
-              {
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderRadius: radii.lg,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
+          <Card key={index} style={{ padding: spacing.md, gap: spacing.sm }}>
             <View style={[styles.row, { gap: spacing.md }]}>
               <ExerciseThumbnail path={thumbnailOf(info)} size={40} name={info?.name} />
               <View style={styles.flex}>
-                <Text variant="bodyStrong" style={styles.bold}>
-                  {info?.name ?? ''}
-                </Text>
+                <Text variant="label">{info?.name ?? ''}</Text>
                 {exercise.sets.length === 0 ? (
                   <Text variant="caption" color="textMuted" style={styles.semibold}>
                     {t('session.summary.skipped')}
@@ -317,7 +289,7 @@ function LogEditor({
                 })
               }
             />
-          </View>
+          </Card>
         );
       })}
     </Screen>
@@ -328,21 +300,11 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   semibold: {
     fontFamily: fonts.bold,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  card: {
-    borderWidth: 1,
-  },
-  save: {
-    height: 40,
-    justifyContent: 'center',
   },
 });

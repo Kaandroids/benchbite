@@ -24,6 +24,9 @@ import {
 import { SessionScreen } from './session-screen';
 import { useStartWorkout } from './start';
 
+jest.mock('@/exercises/images', () => ({
+  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
+}));
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), dismissAll: jest.fn() },
 }));
@@ -52,7 +55,6 @@ jest.mock('expo-notifications/build/NotificationPermissions', () => ({
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),
-  exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
 
 const exercise = (

@@ -10,8 +10,7 @@ export const MIN_AGE = 18;
 /** The lower end of a healthy body mass index. Targets below it are not allowed. */
 export const MIN_HEALTHY_BMI = 18.5;
 
-/** Weights and heights the database accepts. */
-export const WEIGHT_RANGE_KG = { min: 30, max: 300 };
+/** Heights the database accepts. */
 export const HEIGHT_RANGE_CM = { min: 100, max: 250 };
 
 /** The age reached this year, as the database calculates it. */

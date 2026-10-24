@@ -1,13 +1,9 @@
 import { useTranslation } from 'react-i18next';
 
 import { useNumberFormat } from '@/i18n/units';
+import { minutesAndSeconds } from '@/lib/time';
 
 import type { Muscle, Workout, WorkoutTarget } from './workouts';
-
-/** A time in seconds as minutes and seconds, such as 1:30. */
-export function minutesAndSeconds(seconds: number): string {
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-}
 
 /**
  * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and

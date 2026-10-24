@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
-import { minutesAndSeconds } from '@/workouts/format';
+import { minutesAndSeconds } from '@/lib/time';
+import { useTheme } from '@/theme';
 
 type RestBarProps = {
   /** Seconds of rest left, and of the whole rest. */
@@ -43,10 +43,10 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
       <View style={[styles.flex, { gap: 6 }]}>
         <View style={styles.heading}>
           <View style={styles.label}>
-            <Text variant="caption" style={[styles.bold, styles.muted]}>
+            <Text variant="captionStrong" style={styles.muted}>
               {t('session.rest')}
             </Text>
-            <Text variant="headline" style={[styles.bold, styles.light, styles.tabular]}>
+            <Text variant="headline" style={[styles.light, styles.tabular]}>
               {minutesAndSeconds(left)}
             </Text>
           </View>
@@ -77,7 +77,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(-15)}
         style={button}
       >
-        <Text variant="caption" style={[styles.bold, styles.light]}>
+        <Text variant="captionStrong" style={styles.light}>
           −15
         </Text>
       </Pressable>
@@ -87,7 +87,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(15)}
         style={button}
       >
-        <Text variant="caption" style={[styles.bold, styles.light]}>
+        <Text variant="captionStrong" style={styles.light}>
           +15
         </Text>
       </Pressable>
@@ -96,7 +96,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={onSkip}
         style={[styles.button, { borderRadius: radii.full, backgroundColor: colors.primaryButton }]}
       >
-        <Text variant="caption" color="onPrimary" style={styles.bold}>
+        <Text variant="captionStrong" color="onPrimary">
           {t('session.skip')}
         </Text>
       </Pressable>
@@ -132,9 +132,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2C31',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   light: {
     color: '#FFFFFF',

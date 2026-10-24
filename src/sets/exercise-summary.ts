@@ -1,5 +1,5 @@
-import type { SetKind } from '@/sessions/fields';
-import type { SetValues } from '@/sessions/session';
+import type { SetKind } from './fields';
+import type { SetValues } from './values';
 
 /** What an exercise's sets add up to, depending on what it records. */
 export type ExerciseTotal =

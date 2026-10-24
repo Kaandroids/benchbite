@@ -6,20 +6,22 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { HistoryButton } from '@/components/ui/history-button';
 import { Icon } from '@/components/ui/icon';
-import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
+import { StatColumns } from '@/components/ui/stat-columns';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { useExerciseLibrary } from '@/exercises/library';
+import { HistoryButton } from '@/exercises/history-button';
+import { InfoButton } from '@/exercises/info-button';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { endSession, useActiveSession } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
@@ -30,6 +32,7 @@ import {
   useWorkouts,
   type Workout,
   type WorkoutExercise,
+  findWorkout,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -45,11 +48,10 @@ export function WorkoutScreen({ id }: { id: number }) {
   const startWorkout = useStartWorkout();
   const remove = useDeleteWorkout();
   const [waiting, setWaiting] = useState<Workout | null>(null);
-  const workout = workouts.data?.find((candidate) => candidate.id === id);
+  const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
-  const nameOf = (exerciseId: string) =>
-    library.data?.find((item) => item.id === exerciseId)?.name ?? '';
+  const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
@@ -170,12 +172,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       onBack={() => router.back()}
       title={
         <>
-          <Text
-            variant="bodyStrong"
-            accessibilityRole="header"
-            numberOfLines={1}
-            style={styles.bold}
-          >
+          <Text variant="label" accessibilityRole="header" numberOfLines={1}>
             {name}
           </Text>
           <Text variant="caption" color="textMuted" numberOfLines={1}>
@@ -194,8 +191,8 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : undefined
       }
       action={
-        <Pressable
-          accessibilityRole="button"
+        <PillButton
+          label={t('workout.edit')}
           onPress={() => {
             if (running) {
               askToFinish();
@@ -203,63 +200,22 @@ export function WorkoutScreen({ id }: { id: number }) {
             }
             router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
           }}
-          style={({ pressed }) => [
-            styles.edit,
-            {
-              borderRadius: radii.full,
-              backgroundColor: colors.iconBackground,
-              paddingHorizontal: spacing.md,
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
-            {t('workout.edit')}
-          </Text>
-        </Pressable>
+        />
       }
     >
       {/* One card of even columns over the workout's days, like a finished workout's figures over
           when it started and ended. */}
-      <View
-        style={[
-          styles.card,
-          { borderRadius: radii.lg, backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <View style={[styles.stats, { paddingVertical: spacing.md }]}>
-          {stats.map((stat, index) => (
-            <View
-              key={stat.label}
-              style={[
-                styles.stat,
-                { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-              ]}
-            >
-              <Text variant="headline">{stat.value}</Text>
-              <Text variant="caption" color="textMuted">
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <View
-          style={[
-            styles.days,
-            {
-              gap: spacing.sm,
-              paddingVertical: spacing.sm,
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-            },
-          ]}
-        >
-          <Text variant="caption" color="textMuted">
-            {t('workout.days')}
-          </Text>
-          <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        </View>
-      </View>
+      <StatColumns
+        stats={stats}
+        footer={
+          <View style={[styles.days, { gap: spacing.sm }]}>
+            <Text variant="caption" color="textMuted">
+              {t('workout.days')}
+            </Text>
+            <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+          </View>
+        }
+      />
 
       <Card>
         <View>
@@ -285,16 +241,12 @@ export function WorkoutScreen({ id }: { id: number }) {
         ]}
       >
         <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
-        <Text
-          variant="bodyStrong"
-          color={workout.active ? 'text' : 'primaryText'}
-          style={styles.bold}
-        >
+        <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
           {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
         </Text>
       </Pressable>
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
-        <Text variant="bodyStrong" color="danger" style={styles.bold}>
+        <Text variant="label" color="danger">
           {t('editor.delete')}
         </Text>
       </Pressable>
@@ -324,11 +276,6 @@ export function WorkoutScreen({ id }: { id: number }) {
 }
 
 const styles = StyleSheet.create({
-  edit: {
-    height: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   archive: {
     height: 52,
     flexDirection: 'row',
@@ -341,20 +288,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
-    borderWidth: 1,
-  },
-  stats: {
-    flexDirection: 'row',
-  },
   days: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
   },
   exercise: {
     flexDirection: 'row',
@@ -362,8 +299,5 @@ const styles = StyleSheet.create({
   },
   exerciseText: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
 });

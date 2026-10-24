@@ -11,7 +11,8 @@ import {
 } from 'expo-image-picker';
 
 import { supabase } from '@/lib/supabase';
-import { exerciseImageUrl } from '@/workouts/workouts';
+
+import { exerciseImageUrl } from './images';
 
 const BUCKET = 'exercise-photos';
 const MAX_WIDTH = 1080;

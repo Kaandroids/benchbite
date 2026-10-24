@@ -1,7 +1,6 @@
-import { RECORD_KINDS, type RecordKind } from '@/history/record-kinds';
-
-import type { SetKind } from './fields';
-import type { SetValues } from './session';
+import type { SetKind } from '@/sets/fields';
+import { RECORD_KINDS, type RecordKind } from '@/sets/records';
+import type { SetValues } from '@/sets/values';
 
 /** An exercise's best value of each kind of record before the workout (exercise_bests()). */
 export type Bests = Partial<Record<RecordKind, number>>;

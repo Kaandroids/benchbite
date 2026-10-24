@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -127,26 +128,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
   );
 
   const chip = (key: string, text: string, on: boolean, onPress: () => void, disabled = false) => (
-    <Pressable
-      key={key}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[
-        styles.chip,
-        {
-          borderRadius: radii.full,
-          borderColor: on ? colors.primaryButton : colors.border,
-          backgroundColor: on ? colors.selected : colors.surface,
-          opacity: disabled ? 0.4 : 1,
-        },
-      ]}
-    >
-      <Text variant="caption" color={on ? 'primaryText' : 'text'} style={styles.bold}>
-        {text}
-      </Text>
-    </Pressable>
+    <Chip key={key} label={text} selected={on} onPress={onPress} disabled={disabled} />
   );
 
   // A photo is taken or chosen from a short menu, and can be removed again.
@@ -200,7 +182,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       onBack={() => router.back()}
       closes
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {editing ? t('customExercise.editTitle') : t('customExercise.title')}
         </Text>
       }
@@ -221,7 +203,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           maxLength={80}
           placeholder={t('customExercise.namePlaceholder')}
           placeholderTextColor={colors.placeholder}
-          style={[field, styles.bold]}
+          style={[field, { fontFamily: typography.label.fontFamily }]}
         />
       </View>
 
@@ -250,9 +232,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                   },
                 ]}
               >
-                <Text variant="bodyStrong" style={styles.bold}>
-                  {t(`customExercise.logKinds.${kind}.title`)}
-                </Text>
+                <Text variant="label">{t(`customExercise.logKinds.${kind}.title`)}</Text>
                 <Text variant="caption" color="textMuted">
                   {t(`customExercise.logKinds.${kind}.example`)}
                 </Text>
@@ -342,7 +322,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                         { borderRadius: radii.sm, backgroundColor: colors.surface },
                       ]}
                     >
-                      <Text variant="caption" color="textMuted" style={styles.bold}>
+                      <Text variant="captionStrong" color="textMuted">
                         {name}
                       </Text>
                     </View>
@@ -350,7 +330,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                 ) : (
                   <>
                     <Icon name="camera" size={26} color="textMuted" />
-                    <Text variant="caption" color="textMuted" style={styles.bold}>
+                    <Text variant="captionStrong" color="textMuted">
                       {name}
                     </Text>
                   </>
@@ -394,7 +374,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         {form.instructions.map((step, index) => (
           <View key={index} style={[styles.step, { gap: spacing.sm }]}>
             <View style={[styles.number, { backgroundColor: colors.iconBackground }]}>
-              <Text variant="caption" color="primaryText" style={styles.bold}>
+              <Text variant="captionStrong" color="primaryText">
                 {index + 1}
               </Text>
             </View>
@@ -436,7 +416,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
               },
             ]}
           >
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="captionStrong" color="primaryText">
               {t('customExercise.addStep')}
             </Text>
           </Pressable>
@@ -447,9 +427,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 }
 
 const styles = StyleSheet.create({
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   label: {
     fontFamily: fonts.extraBold,
     letterSpacing: 0.4,
@@ -470,12 +447,6 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  chip: {
-    height: 40,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderWidth: 1.5,
   },
   photos: {
     flexDirection: 'row',

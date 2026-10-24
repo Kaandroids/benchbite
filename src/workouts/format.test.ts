@@ -2,7 +2,6 @@ import { renderHook } from '@/test/render';
 
 import {
   mainMuscles,
-  minutesAndSeconds,
   useRestFormat,
   useTargetFormat,
   useWorkoutName,
@@ -24,17 +23,6 @@ describe('workoutLength', () => {
     expect(workoutLength(52 * 60)).toBe('52:00');
     expect(workoutLength(3600 + 5 * 60 + 20)).toBe('1:05 h');
     expect(workoutLength(2 * 3600 + 59 * 60 + 40)).toBe('3:00 h');
-  });
-});
-
-describe('minutesAndSeconds', () => {
-  it.each([
-    [0, '0:00'],
-    [45, '0:45'],
-    [90, '1:30'],
-    [600, '10:00'],
-  ])('writes %i seconds as %s', (seconds, text) => {
-    expect(minutesAndSeconds(seconds)).toBe(text);
   });
 });
 
