@@ -1,6 +1,6 @@
 # 0012. Remind people to train with local notifications
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0029](0029-schedule-reminders-from-the-week.md)
 - **Date:** 2026-10-21
 
 ## Context

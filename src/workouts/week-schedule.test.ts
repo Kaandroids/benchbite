@@ -7,6 +7,7 @@ import {
   nextWorkouts,
   originOf,
   startMove,
+  upcomingWorkouts,
   weekSchedule,
   type WorkoutMove,
 } from './week-schedule';
@@ -192,6 +193,20 @@ describe('nextWorkouts', () => {
     });
   });
 
+  it('finds a workout skipped this week on its day next week', () => {
+    const sunday = new Date(2026, 9, 25, 9, 0);
+    const plan = [session(1, 6)];
+    const schedule = weekSchedule(
+      plan,
+      [{ workoutId: 1, fromOn: '2026-10-24', toOn: null }],
+      [],
+      sunday,
+    );
+    expect(nextWorkouts(schedule, plan, sunday)).toEqual({ inDays: 6, weekday: 6, sessions: plan });
+    const friday = new Date(2026, 9, 23, 9, 0);
+    expect(nextWorkouts(schedule, plan, friday)).toEqual({ inDays: 8, weekday: 6, sessions: plan });
+  });
+
   it('is null without a plan', () => {
     expect(nextWorkouts(weekSchedule([], [], [], WEDNESDAY), [], WEDNESDAY)).toBeNull();
   });
@@ -337,5 +352,41 @@ describe('startMove', () => {
     expect(moveOf(3, moves)).toBeNull();
     expect(moveOf(2, [], [{ workoutId: 2, startedOn: '2026-10-20' }])).toBeNull();
     expect(moveOf(9)).toBeNull();
+  });
+});
+
+describe('upcomingWorkouts', () => {
+  it('follows this week as it is, and the plan after it', () => {
+    const schedule = weekSchedule(
+      SESSIONS,
+      [
+        { workoutId: 1, fromOn: '2026-10-22', toOn: '2026-10-23' },
+        { workoutId: 3, fromOn: '2026-10-24', toOn: null },
+      ],
+      [{ workoutId: 2, startedOn: '2026-10-20' }],
+      WEDNESDAY,
+    );
+    const days = upcomingWorkouts(schedule, SESSIONS, WEDNESDAY, 9).map(
+      (day) => `${day.date}:${day.sessions.map((session) => session.workoutId).join('+')}`,
+    );
+    // Push moved from Thursday to Friday and Cardio skipped on Saturday, for this week only.
+    expect(days).toEqual([
+      '2026-10-22:3',
+      '2026-10-23:1',
+      '2026-10-26:1',
+      '2026-10-27:2',
+      '2026-10-29:1+3',
+    ]);
+  });
+
+  it('leaves out today once its workouts are done', () => {
+    const schedule = weekSchedule(
+      SESSIONS,
+      [],
+      [{ workoutId: 1, startedOn: '2026-10-22' }],
+      WEDNESDAY,
+    );
+    const thursday = new Date(2026, 9, 22, 9, 0);
+    expect(upcomingWorkouts(schedule, SESSIONS, thursday, 1)[0]?.sessions).toEqual([session(3, 4)]);
   });
 });

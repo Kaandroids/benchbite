@@ -1,9 +1,6 @@
 import type { WorkoutPlan } from '@/onboarding/plan';
-import {
-  cancelReminders,
-  requestReminderPermission,
-  scheduleReminders,
-} from '@/reminders/reminders';
+import { cancelReminders, requestReminderPermission } from '@/reminders/reminders';
+import { saveReminderMinutes } from '@/reminders/settings';
 import { createStep } from '@/test/step-mock';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
@@ -14,8 +11,8 @@ jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 jest.mock('@/reminders/reminders', () => ({
   cancelReminders: jest.fn(),
   requestReminderPermission: jest.fn(),
-  scheduleReminders: jest.fn(),
 }));
+jest.mock('@/reminders/settings', () => ({ saveReminderMinutes: jest.fn() }));
 
 const PLAN: WorkoutPlan = {
   sessions: [
@@ -41,7 +38,6 @@ describe('RemindersStep', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(cancelReminders).mockResolvedValue();
-    jest.mocked(scheduleReminders).mockResolvedValue();
     mockStep = createStep({ plan: PLAN });
   });
 
@@ -52,7 +48,7 @@ describe('RemindersStep', () => {
     expect(screen.getByText(/^6:00\sPM$/)).toBeTruthy();
   });
 
-  it('asks for permission and schedules one reminder per training day at the chosen time', async () => {
+  it('asks for permission and keeps the chosen time, for the app to schedule the reminders', async () => {
     jest.mocked(requestReminderPermission).mockResolvedValue(true);
     await render(<RemindersStep />);
     await fireEvent(
@@ -63,26 +59,7 @@ describe('RemindersStep', () => {
     await turnOn();
 
     expect(requestReminderPermission).toHaveBeenCalledWith('Workout reminders');
-    expect(scheduleReminders).toHaveBeenCalledWith(
-      [
-        {
-          weekday: 1,
-          title: 'Today: Push',
-          body: "0 exercises, about 45 min. You've got this!",
-        },
-        {
-          weekday: 3,
-          title: 'Today: Pull',
-          body: "1 exercise, about 30 min. You've got this!",
-        },
-        {
-          weekday: 5,
-          title: 'Today: Push',
-          body: "0 exercises, about 45 min. You've got this!",
-        },
-      ],
-      18 * 60 + 15,
-    );
+    expect(saveReminderMinutes).toHaveBeenCalledWith(18 * 60 + 15);
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: 18 * 60 + 15 });
   });
 
@@ -91,23 +68,26 @@ describe('RemindersStep', () => {
     mockStep = createStep({ plan: PLAN, reminderMinutes: 7 * 60 });
     await render(<RemindersStep />);
     await turnOn();
-    expect(scheduleReminders).toHaveBeenCalledWith(expect.any(Array), 7 * 60);
+    expect(saveReminderMinutes).toHaveBeenCalledWith(7 * 60);
   });
 
   it('moves on without reminders when permission is denied', async () => {
     jest.mocked(requestReminderPermission).mockResolvedValue(false);
     await render(<RemindersStep />);
     await turnOn();
-    expect(scheduleReminders).not.toHaveBeenCalled();
+    // A time kept from before is removed with its reminders.
+    expect(saveReminderMinutes).toHaveBeenCalledWith(null);
+    expect(saveReminderMinutes).not.toHaveBeenCalledWith(expect.any(Number));
+    expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: undefined });
   });
 
-  it('moves on without reminders when scheduling fails', async () => {
+  it('moves on without reminders when asking for permission fails', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.mocked(requestReminderPermission).mockResolvedValue(true);
-    jest.mocked(scheduleReminders).mockRejectedValue(new Error('no'));
+    jest.mocked(requestReminderPermission).mockRejectedValue(new Error('no'));
     await render(<RemindersStep />);
     await turnOn();
+    expect(saveReminderMinutes).toHaveBeenCalledWith(null);
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: undefined });
     warn.mockRestore();
   });
@@ -115,6 +95,7 @@ describe('RemindersStep', () => {
   it('cancels earlier reminders and moves on with Not now', async () => {
     await render(<RemindersStep />);
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+    expect(saveReminderMinutes).toHaveBeenCalledWith(null);
     expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(requestReminderPermission).not.toHaveBeenCalled();
     expect(mockStep.next).toHaveBeenCalledWith({ reminderMinutes: undefined });

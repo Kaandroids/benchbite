@@ -7,11 +7,8 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
-import {
-  cancelReminders,
-  requestReminderPermission,
-  scheduleReminders,
-} from '@/reminders/reminders';
+import { cancelReminders, requestReminderPermission } from '@/reminders/reminders';
+import { saveReminderMinutes } from '@/reminders/settings';
 import { useTheme } from '@/theme';
 
 import { planDays } from '../plan-days';
@@ -38,42 +35,32 @@ export function RemindersStep() {
   const [enabling, setEnabling] = useState(false);
   const sessions = answers.plan ? planDays(answers.plan) : [];
 
-  const enable = async () => {
-    setEnabling(true);
-    try {
-      if (!(await requestReminderPermission(t('onboarding.reminders.channel')))) {
-        next({ reminderMinutes: undefined });
-        return;
-      }
-      await scheduleReminders(
-        sessions.map((session) => ({
-          weekday: session.weekday,
-          title: t('onboarding.reminders.notification.title', {
-            session: t(`workout.sessionTypes.${session.type}`),
-          }),
-          body: t('onboarding.reminders.notification.body', {
-            count: session.exercises.length,
-            minutes: session.estimatedMinutes,
-          }),
-        })),
-        minutes,
-      );
-      next({ reminderMinutes: minutes });
-    } catch (error) {
-      // Reminders are a convenience; failing to set them must not stop the onboarding.
-      console.warn('Could not schedule the reminders', error);
-      next({ reminderMinutes: undefined });
-    } finally {
-      setEnabling(false);
-    }
-  };
-
-  const skip = () => {
-    // Removes reminders turned on before coming back to this step.
+  // Reminders turned on before coming back to this step go too.
+  const withoutReminders = () => {
+    saveReminderMinutes(null);
     void cancelReminders().catch((error: unknown) =>
       console.warn('Could not cancel the reminders', error),
     );
     next({ reminderMinutes: undefined });
+  };
+
+  const enable = async () => {
+    setEnabling(true);
+    try {
+      if (!(await requestReminderPermission(t('reminders.channel')))) {
+        withoutReminders();
+        return;
+      }
+      // The reminders are scheduled from the week once the app opens (ADR 0029).
+      saveReminderMinutes(minutes);
+      next({ reminderMinutes: minutes });
+    } catch (error) {
+      // Reminders are a convenience; failing to set them must not stop the onboarding.
+      console.warn('Could not turn on the reminders', error);
+      withoutReminders();
+    } finally {
+      setEnabling(false);
+    }
   };
 
   return (
@@ -91,7 +78,7 @@ export function RemindersStep() {
             label={t('onboarding.reminders.skip')}
             variant="ghost"
             disabled={enabling}
-            onPress={skip}
+            onPress={withoutReminders}
           />
         </View>
       }

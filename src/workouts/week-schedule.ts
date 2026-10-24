@@ -161,32 +161,23 @@ export function dayState(day: ScheduleDay, today: string): DayState {
 }
 
 /**
- * The next day after `today` with workouts still planned, in this week after its moves and after
- * it on the plan's weekdays, with its weekday and how many days away it is; null without any.
+ * The next day after `today` with workouts still to do, as `upcomingWorkouts` sees the coming days,
+ * with its weekday and how many days away it is; null without any.
  */
 export function nextWorkouts(
   schedule: WeekSchedule,
   sessions: readonly WeekSession[],
   today: Date,
 ): { inDays: number; weekday: number; sessions: WeekSession[] } | null {
-  const weekday = isoWeekday(today);
-  for (const day of schedule.days.slice(weekday)) {
-    const ahead = day.workouts.filter((workout) => workout.status === 'planned');
-    if (ahead.length > 0) {
-      return {
-        inDays: day.weekday - weekday,
-        weekday: day.weekday,
-        sessions: ahead.map((workout) => workout.session),
-      };
-    }
-  }
-  for (let next = 1; next <= 7; next++) {
-    const ahead = sessions.filter((session) => session.weekday === next);
-    if (ahead.length > 0) {
-      return { inDays: 7 - weekday + next, weekday: next, sessions: ahead };
-    }
-  }
-  return null;
+  // Two weeks, so that a workout skipped this week is found on its day next week.
+  const [next] = upcomingWorkouts(schedule, sessions, addDays(today, 1), 14);
+  return next
+    ? {
+        inDays: next.inDays + 1,
+        weekday: isoWeekday(addDays(today, next.inDays + 1)),
+        sessions: next.sessions,
+      }
+    : null;
 }
 
 /** The day a planned workout is on in the plan, which its move or skip is saved from. */
@@ -288,4 +279,30 @@ export function startMove(
       ? canUndo(schedule, workoutId, today)
       : moveTargets(schedule, workoutId, fromOn, today).some((day) => day.date === today);
   return days.find((day) => day.missed && fits(day)) ?? days.find(fits) ?? null;
+}
+
+/**
+ * The days from `today` on, `count` of them, with how many days away each is and the workouts
+ * still to do on it: this week after its moves, without those done or skipped, and the plan's
+ * weekdays after it. Days without any are left out.
+ */
+export function upcomingWorkouts(
+  schedule: WeekSchedule,
+  sessions: readonly WeekSession[],
+  today: Date,
+  count: number,
+): { date: string; inDays: number; sessions: WeekSession[] }[] {
+  return Array.from({ length: count }, (_, index) => {
+    const date = addDays(today, index);
+    const day = schedule.days.find((item) => item.date === toIsoDate(date));
+    return {
+      date: toIsoDate(date),
+      inDays: index,
+      sessions: day
+        ? day.workouts
+            .filter((workout) => workout.status === 'planned')
+            .map((workout) => workout.session)
+        : sessions.filter((session) => session.weekday === isoWeekday(date)),
+    };
+  }).filter((day) => day.sessions.length > 0);
 }

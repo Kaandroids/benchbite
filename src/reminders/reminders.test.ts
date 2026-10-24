@@ -154,61 +154,81 @@ describe('cancelReminders', () => {
 });
 
 describe('scheduleReminders', () => {
-  const reminder = (weekday: number) => ({ weekday, title: 'Workout', body: `Day ${weekday}` });
+  // Wednesday, October 21, at 9:00.
+  const NOW = new Date(2026, 9, 21, 9, 0).getTime();
+  const reminder = (date: string) => ({ date, title: 'Workout', body: `On ${date}` });
 
   it('cancels the previous reminders before scheduling new ones', async () => {
-    getAll.mockResolvedValue(scheduled('workout-reminder-2'));
-    await scheduleReminders([reminder(1)], 18 * 60);
-    expect(cancel).toHaveBeenCalledWith('workout-reminder-2');
+    getAll.mockResolvedValue(scheduled('workout-reminder-2026-10-20'));
+    await scheduleReminders([reminder('2026-10-22')], 18 * 60, NOW);
+    expect(cancel).toHaveBeenCalledWith('workout-reminder-2026-10-20');
     expect(cancel.mock.invocationCallOrder[0]).toBeLessThan(schedule.mock.invocationCallOrder[0]!);
   });
 
-  it('schedules a weekly reminder per day at the given time', async () => {
-    await scheduleReminders([reminder(1), reminder(4)], 18 * 60 + 30);
+  it('schedules one reminder per day at the given time', async () => {
+    await scheduleReminders([reminder('2026-10-22'), reminder('2026-11-02')], 18 * 60 + 30, NOW);
     expect(schedule).toHaveBeenCalledTimes(2);
     expect(schedule).toHaveBeenCalledWith({
-      identifier: 'workout-reminder-1',
-      content: { title: 'Workout', body: 'Day 1' },
+      identifier: 'workout-reminder-2026-10-22',
+      content: { title: 'Workout', body: 'On 2026-10-22' },
       trigger: {
-        type: 'weekly',
+        type: 'date',
         channelId: 'workout-reminders',
-        weekday: 2,
-        hour: 18,
-        minute: 30,
+        date: new Date(2026, 9, 22, 18, 30).getTime(),
       },
     });
     expect(schedule).toHaveBeenCalledWith(
       expect.objectContaining({
-        identifier: 'workout-reminder-4',
-        trigger: expect.objectContaining({ weekday: 5 }),
+        identifier: 'workout-reminder-2026-11-02',
+        trigger: expect.objectContaining({ date: new Date(2026, 10, 2, 18, 30).getTime() }),
       }),
     );
   });
 
-  it('counts the trigger weekdays from Sunday', async () => {
-    await scheduleReminders([1, 2, 3, 4, 5, 6, 7].map(reminder), 0);
-    const weekdays = schedule.mock.calls.map(
-      ([request]) => (request.trigger as { weekday: number }).weekday,
-    );
-    // Monday to Sunday in ISO order.
-    expect(weekdays).toEqual([2, 3, 4, 5, 6, 7, 1]);
+  it('schedules today only while its time is still ahead', async () => {
+    await scheduleReminders([reminder('2026-10-21')], 8 * 60 + 45, NOW);
+    expect(schedule).not.toHaveBeenCalled();
+    await scheduleReminders([reminder('2026-10-21')], 9 * 60 + 15, NOW);
+    expect(schedule).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    [0, 0, 0],
-    [7 * 60 + 5, 7, 5],
-    [23 * 60 + 59, 23, 59],
-  ])('splits %i minutes after midnight into %i:%i', async (minutes, hour, minute) => {
-    await scheduleReminders([reminder(1)], minutes);
-    expect(schedule).toHaveBeenCalledWith(
-      expect.objectContaining({ trigger: expect.objectContaining({ hour, minute }) }),
+  it('keeps the time on the days the clocks change', async () => {
+    const zone = process.env.TZ;
+    process.env.TZ = 'Europe/Berlin';
+    try {
+      // The clocks go back on October 25 and forward on March 28.
+      await scheduleReminders([reminder('2026-10-25'), reminder('2027-03-28')], 8 * 60, 0);
+      const hours = schedule.mock.calls.map(([request]) =>
+        new Date((request.trigger as { date: number }).date).getHours(),
+      );
+      expect(hours).toEqual([8, 8]);
+    } finally {
+      process.env.TZ = zone;
+    }
+  });
+
+  it('runs one change to the reminders at a time, in order', async () => {
+    let release: () => void = () => undefined;
+    getAll.mockImplementationOnce(
+      () => new Promise((resolve) => (release = () => resolve(scheduled()))),
+    );
+    const scheduling = scheduleReminders([reminder('2026-10-22')], 18 * 60, NOW);
+    const cancelling = cancelReminders();
+    await Promise.resolve();
+    // The cancel waits for the reminders being scheduled, so it does not leave them behind.
+    expect(getAll).toHaveBeenCalledTimes(1);
+    release();
+    await Promise.all([scheduling, cancelling]);
+    expect(getAll).toHaveBeenCalledTimes(2);
+    expect(getAll.mock.invocationCallOrder[1]).toBeGreaterThan(
+      schedule.mock.invocationCallOrder[0]!,
     );
   });
 
   it('only cancels when there are no days', async () => {
-    getAll.mockResolvedValue(scheduled('workout-reminder-3'));
-    await scheduleReminders([], 18 * 60);
-    expect(cancel).toHaveBeenCalledWith('workout-reminder-3');
+    getAll.mockResolvedValue(scheduled('workout-reminder-2026-10-22'));
+    await scheduleReminders([], 18 * 60, NOW);
+    expect(cancel).toHaveBeenCalledWith('workout-reminder-2026-10-22');
     expect(schedule).not.toHaveBeenCalled();
   });
 });

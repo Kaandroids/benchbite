@@ -558,13 +558,7 @@
       "body": "Eine kurze Erinnerung an deinen Trainingstagen, damit kein Workout untergeht.",
       "time": "Uhrzeit der Erinnerung",
       "enable": "Erinnerungen aktivieren",
-      "skip": "Nicht jetzt",
-      "channel": "Trainingserinnerungen",
-      "notification": {
-        "title": "Heute: {{session}}",
-        "body_one": "{{count}} Übung, etwa {{minutes}} Min. Du schaffst das!",
-        "body_other": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!"
-      }
+      "skip": "Nicht jetzt"
     },
     "summary": {
       "body": "Dein Plan ist fertig. Das haben wir für dich eingerichtet.",
@@ -858,5 +852,14 @@
     "place": "{{place}} von {{count}}",
     "hint": "Ziehen oder die Aktionen nutzen, um die Reihenfolge zu ändern.",
     "moved": "{{name}} ist jetzt an Stelle {{place}} von {{count}}"
+  },
+  "reminders": {
+    "channel": "Trainingserinnerungen",
+    "notification": {
+      "title": "Heute: {{session}}",
+      "body_one": "{{count}} Übung, etwa {{minutes}} Min. Du schaffst das!",
+      "body_other": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!",
+      "bodyMany": "{{count}} Workouts, insgesamt etwa {{minutes}} Min. Du schaffst das!"
+    }
   }
 }
