@@ -4,12 +4,53 @@
 
 A mobile app for tracking workouts and nutrition in one place.
 
-> **Status:** Early development. The app currently shows a blank start screen.
+> **Status:** In development. Onboarding and workout tracking work end to end; nutrition
+> tracking and the Progress tab come next. There is no release yet.
+
+## Features
+
+- **Start without an account.** People use the app as a guest; the session lives on the device
+  ([ADR 0005](docs/adr/0005-guest-first-accounts.md)). Creating an account and logging in are
+  planned in the [Accounts milestone](https://github.com/Kaandroids/benchbite/milestone/6).
+- **Onboarding** asks for the goal, body data and training preferences, then calculates daily
+  calorie and macro targets and builds a weekly workout plan that fits the chosen session length
+  ([ADR 0009](docs/adr/0009-nutrition-targets.md),
+  [ADR 0010](docs/adr/0010-plan-builder-edge-function.md)).
+- **Today** shows the week's workouts, today's workout or the next one, the daily targets and the
+  weight.
+- **Workouts** can be edited, reordered, archived and created from scratch, from a library of
+  about 870 exercises or the user's own exercises with private photos.
+- **Logging a workout:** sets with weight, reps, time or distance, a rest timer that notifies in
+  the background, and a summary with estimated calories at the end. A workout left open is saved
+  on its own after 12 hours.
+- **History and records:** every finished workout by week, editable afterwards, and per exercise
+  its progress chart and records such as the heaviest set and the estimated one-rep max.
+- **English, German and Turkish**, light and dark mode.
 
 ## Tech stack
 
-- **Mobile:** React Native with Expo
-- **Backend:** Supabase (Postgres, Row Level Security, Auth, Storage, Edge Functions)
+| Layer             | Technology                                                                |
+| ----------------- | ------------------------------------------------------------------------- |
+| Mobile            | React Native with Expo, Expo Router, TanStack Query, i18next              |
+| Backend           | Supabase: Postgres with row level security, Auth, Storage, Edge Functions |
+| Server-side logic | Postgres functions and triggers; Edge Functions in Deno and TypeScript    |
+| Tests             | Jest and React Native Testing Library, pgTAP, Deno test                   |
+
+There is no separate backend server: the app talks to Supabase directly, row level security
+decides what each user may read and write, and anything atomic or multi-table runs in Postgres
+functions ([ADR 0001](docs/adr/0001-react-native-and-supabase.md)).
+
+## Project structure
+
+```
+src/app/               Expo Router screens and layouts only
+src/                   components, hooks and other app code, by feature
+supabase/migrations/   the database schema, changed only through migrations
+supabase/tests/        pgTAP tests of tables, policies and functions
+supabase/functions/    Edge Functions, with shared code in _shared/
+scripts/               the exercise import and the plan check
+docs/adr/              Architecture Decision Records
+```
 
 ## Getting started
 
@@ -130,17 +171,25 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
+Every pull request runs the same checks in CI: types, lint, formatting, the app's tests, the
+translations and the Edge Functions, and against a local Supabase stack the database tests,
+whether the generated types are up to date, and every generated plan.
+
 ## Development workflow
 
 This project uses an AI-assisted workflow. Features are planned together with
 [Claude Code](https://claude.com/claude-code), implemented by the `benchbite-bot` GitHub App
-in pull requests, and reviewed and merged by the maintainer.
+in pull requests, and reviewed and merged by the maintainer. Each pull request Claude opens is
+first reviewed automatically for design, security, and logic and performance, with the skills in
+[`.claude/skills/`](.claude/skills/).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [CLAUDE.md](CLAUDE.md) for the full set of conventions.
 
 ## Documentation
 
-- [Architecture Decision Records](docs/adr/README.md)
+- [Architecture Decision Records](docs/adr/README.md): why the app is built the way it is
+- [CLAUDE.md](CLAUDE.md): the conventions every change follows
+- [CONTRIBUTING.md](CONTRIBUTING.md): how changes get into the project
 
 ## Acknowledgements
 
