@@ -278,7 +278,12 @@ export function toggleDone(
     doneAt: wasDone ? undefined : now,
   }));
   if (wasDone) {
-    return next;
+    // Undoing the set done last, as when it was ticked by mistake, also ends the rest it started.
+    const undone = value.exercises[exercise]?.sets[index]?.doneAt;
+    const latest = Math.max(
+      ...value.exercises.flatMap((item) => item.sets.map((set) => set.doneAt ?? 0)),
+    );
+    return undone !== undefined && undone === latest ? { ...next, rest: null } : next;
   }
   const item = next.exercises[exercise];
   if (item && item.restSeconds > 0) {

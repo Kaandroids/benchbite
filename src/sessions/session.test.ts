@@ -109,6 +109,13 @@ describe('logging sets', () => {
     expect(toggleDone(session, 0, 0, NOW).exercises[0]?.sets[0]?.done).toBe(false);
   });
 
+  it('ends the rest when the set done last is undone, but not for an earlier set', () => {
+    const first = toggleDone(start(), 0, 0, NOW);
+    expect(toggleDone(first, 0, 0, NOW + 1000).rest).toBeNull();
+    const second = toggleDone(first, 0, 1, NOW + 60_000);
+    expect(toggleDone(second, 0, 0, NOW + 61_000).rest).toEqual(second.rest);
+  });
+
   it('opens the next exercise after the last set', () => {
     let session = toggleDone(start(), 0, 0, NOW);
     expect(session.current).toBe(0);
