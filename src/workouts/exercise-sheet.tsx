@@ -156,7 +156,7 @@ export function ExerciseSheet({
         />
       </View>
 
-      <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
+      <Card list>
         {rows.map((item, index) => (
           <View
             key={item.label}

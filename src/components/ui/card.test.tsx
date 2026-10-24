@@ -26,3 +26,14 @@ describe('Card with a style', () => {
     expect(card).toHaveStyle({ borderWidth: 1, padding: 0, flexDirection: 'row' });
   });
 });
+
+describe('Card as a list', () => {
+  it('leaves the space above, below and between its rows to the rows', async () => {
+    await render(
+      <Card list>
+        <Text>Bench press</Text>
+      </Card>,
+    );
+    expect(screen.getByText('Bench press').parent!).toHaveStyle({ paddingVertical: 0, gap: 0 });
+  });
+});

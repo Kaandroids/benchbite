@@ -5,12 +5,14 @@ import Animated from 'react-native-reanimated';
 import { useTheme } from '@/theme';
 
 type CardProps = Pick<ComponentProps<typeof Animated.View>, 'entering' | 'children'> & {
-  /** Changes the padding, the gap or the layout, such as a row or a list without padding. */
+  /** A list of rows, which space themselves: no padding above and below, and no gap. */
+  list?: boolean;
+  /** Changes the padding, the gap or the layout, such as a row. */
   style?: StyleProp<ViewStyle>;
 };
 
 /** A bordered surface that groups related content, such as a section of a summary. */
-export function Card({ entering, children, style }: CardProps) {
+export function Card({ entering, children, list = false, style }: CardProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <Animated.View
@@ -24,6 +26,7 @@ export function Card({ entering, children, style }: CardProps) {
           padding: spacing.lg,
           gap: spacing.md,
         },
+        list ? styles.list : null,
         style,
       ]}
     >
@@ -35,5 +38,9 @@ export function Card({ entering, children, style }: CardProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
+  },
+  list: {
+    paddingVertical: 0,
+    gap: 0,
   },
 });

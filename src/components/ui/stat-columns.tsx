@@ -18,7 +18,7 @@ type StatColumnsProps = {
 export function StatColumns({ stats, footer }: StatColumnsProps) {
   const { colors, spacing } = useTheme();
   return (
-    <Card style={styles.card}>
+    <Card list style={styles.card}>
       <View style={[styles.row, { paddingVertical: spacing.md }]}>
         {stats.map((stat, index) => (
           <View
@@ -54,8 +54,7 @@ export function StatColumns({ stats, footer }: StatColumnsProps) {
 
 const styles = StyleSheet.create({
   card: {
-    padding: 0,
-    gap: 0,
+    paddingHorizontal: 0,
   },
   row: {
     flexDirection: 'row',

@@ -237,7 +237,7 @@ export function FinishScreen({ next }: { next?: number }) {
           </Text>
         </View>
 
-        <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
+        <Card list>
           {summary.map((item, index) => (
             <View
               key={index}

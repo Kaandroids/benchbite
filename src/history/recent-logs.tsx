@@ -48,7 +48,7 @@ export function RecentLogs() {
       {!allLoaded([recent]) ? (
         <LoadState queries={[recent]} />
       ) : all.length > 0 ? (
-        <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
+        <Card list>
           {all.map((log, index) => (
             <LogRow key={log.id} log={log} divider={index > 0} />
           ))}

@@ -262,7 +262,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
       <Text variant="label" color="textMuted" style={[{ paddingHorizontal: 4 }]}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
-      <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
+      <Card list>
         {sessions.map((session, index) => (
           <Pressable
             key={session.logId}

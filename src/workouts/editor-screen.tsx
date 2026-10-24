@@ -272,7 +272,7 @@ export function EditorScreen({ id }: { id?: number }) {
               {t('editor.exercises', { count: draft.exercises.length })}
             </Text>
             {draft.exercises.length > 0 ? (
-              <Card style={{ paddingHorizontal: spacing.md, paddingVertical: 0, gap: 0 }}>
+              <Card list style={{ paddingHorizontal: spacing.md }}>
                 <ReorderList
                   items={draft.exercises}
                   keyOf={(exercise) => exercise.key}
