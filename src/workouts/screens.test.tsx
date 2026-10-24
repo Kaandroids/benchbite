@@ -41,6 +41,7 @@ jest.mock('@/sessions/session', () => ({
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: () => ({
     data: ['pulldown', 'rope', 'row', 'bench', 'squat'].map((id) => ({
       id,

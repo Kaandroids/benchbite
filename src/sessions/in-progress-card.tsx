@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { fonts, useTheme } from '@/theme';
 import { minutesAndSeconds, useWorkoutName } from '@/workouts/format';
 
@@ -24,7 +24,7 @@ export function InProgressCard({ session }: { session: Session }) {
   const now = useNow(true);
   const totals = sessionTotals(session);
   const current = session.exercises[session.current];
-  const exercise = library.data?.find((item) => item.id === current?.exerciseId)?.name ?? '';
+  const exercise = findExercise(library.data, current?.exerciseId)?.name ?? '';
   const elapsed = Math.max(0, Math.floor((now - session.startedAt) / 1000));
 
   return (

@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useUserId } from '@/providers/session-provider';
@@ -99,7 +99,7 @@ export function FinishScreen({ next }: { next?: number }) {
   ];
 
   const summary = session.exercises.map((exercise) => {
-    const info = library.data?.find((item) => item.id === exercise.exerciseId);
+    const info = findExercise(library.data, exercise.exerciseId);
     const done = exercise.sets.filter((s) => s.done);
     const kind = setKindOf(info?.metrics, exercise.target);
     const { best } = summarizeSets(done, kind);
@@ -118,7 +118,7 @@ export function FinishScreen({ next }: { next?: number }) {
 
   // The best new record of each kind, for every exercise, in the workout's order.
   const records = session.exercises.flatMap((exercise) => {
-    const info = library.data?.find((item) => item.id === exercise.exerciseId);
+    const info = findExercise(library.data, exercise.exerciseId);
     const kind = setKindOf(info?.metrics, exercise.target);
     return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
       name: `${info?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,

@@ -9,7 +9,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useShortDateFormat } from '@/i18n/dates';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
@@ -49,7 +49,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
   const today = new Date();
   const day = useShortDateFormat(today);
 
-  const exercise = library.data?.find((item) => item.id === id);
+  const exercise = findExercise(library.data, id);
   const title = (
     <>
       <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>

@@ -50,7 +50,10 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Success: 'success' },
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/exercises/library', () => ({ useExerciseLibrary: jest.fn() }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
+  useExerciseLibrary: jest.fn(),
+}));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 
 const schedule = jest.mocked(scheduleNotificationAsync);

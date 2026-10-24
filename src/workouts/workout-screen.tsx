@@ -14,7 +14,7 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { endSession, useActiveSession } from '@/sessions/session';
@@ -48,8 +48,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const workout = workouts.data?.find((candidate) => candidate.id === id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
-  const nameOf = (exerciseId: string) =>
-    library.data?.find((item) => item.id === exerciseId)?.name ?? '';
+  const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();

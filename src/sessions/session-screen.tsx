@@ -12,7 +12,7 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
-import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
@@ -69,7 +69,7 @@ export function SessionScreen() {
     );
   }
 
-  const details = (id: string) => library.data?.find((exercise) => exercise.id === id);
+  const details = (id: string) => findExercise(library.data, id);
   const totals = sessionTotals(session);
   const elapsed = Math.max(0, Math.floor((now - session.startedAt) / 1000));
 

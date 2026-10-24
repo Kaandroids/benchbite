@@ -10,7 +10,7 @@ import { fonts, useTheme } from '@/theme';
 
 import { useArchiveExercise } from './custom';
 import { ExerciseNotFound } from './exercise-not-found';
-import { useExerciseDetails } from './library';
+import { useExerciseDetails, findExercise } from './library';
 import { usePictureUrls } from './photos';
 
 /**
@@ -21,7 +21,7 @@ export function ExerciseScreen({ id }: { id: string }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
-  const exercise = library.data?.find((candidate) => candidate.id === id);
+  const exercise = findExercise(library.data, id);
   // Each picture with its place, as the start may be missing before the end.
   const pictures = (exercise?.imagePaths.slice(0, 2) ?? []).flatMap((path, index) =>
     path ? [{ path, end: index === 1 }] : [],

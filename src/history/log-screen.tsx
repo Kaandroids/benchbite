@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
-import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
@@ -195,7 +195,7 @@ export function LogScreen({ id }: { id: number }) {
       </View>
 
       {exercises.map((exercise, index) => {
-        const info = library.data?.find((item) => item.id === exercise.exerciseId);
+        const info = findExercise(library.data, exercise.exerciseId);
         const kind = setKindOf(info?.metrics, { reps: { min: 1, max: 1 } });
         const { best, total } = summarizeSets(exercise.sets, kind);
         const describe = (set: SetValues) => describeSet(set, kind);

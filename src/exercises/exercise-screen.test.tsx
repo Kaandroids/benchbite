@@ -13,7 +13,10 @@ jest.mock('@/exercises/images', () => ({
 }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('./custom', () => ({ useArchiveExercise: jest.fn(), useKindLock: jest.fn() }));
-jest.mock('./library', () => ({ useExerciseDetails: jest.fn() }));
+jest.mock('./library', () => ({
+  ...jest.requireActual<typeof import('./library')>('./library'),
+  useExerciseDetails: jest.fn(),
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 const ROW: LibraryExercise = {

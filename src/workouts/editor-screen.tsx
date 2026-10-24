@@ -10,7 +10,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
+import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import { fonts, typography, useTheme } from '@/theme';
@@ -70,7 +70,7 @@ export function EditorScreen({ id }: { id?: number }) {
 
   useEffect(() => clearDraft, []);
 
-  const details = (exerciseId: string) => library.data?.find((item) => item.id === exerciseId);
+  const details = (exerciseId: string) => findExercise(library.data, exerciseId);
   const close = () => router.back();
   const max = limits.data?.exercises ?? 0;
   const over = draft ? draft.exercises.length - max : 0;

@@ -8,7 +8,10 @@ import { ExerciseHistoryScreen } from './exercise-history-screen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/exercises/library', () => ({ useExerciseLibrary: jest.fn() }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
+  useExerciseLibrary: jest.fn(),
+}));
 jest.mock('./exercise-history', () => ({
   ...jest.requireActual<typeof import('./exercise-history')>('./exercise-history'),
   useExerciseHistory: jest.fn(),

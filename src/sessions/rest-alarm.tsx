@@ -19,7 +19,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, Linking, Platform } from 'react-native';
 
-import { useExerciseLibrary } from '@/exercises/library';
+import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 
 import { updateSession, useActiveSession } from './session';
@@ -198,7 +198,7 @@ export function RestAlarm() {
   const library = useExerciseLibrary();
   const endsAt = session?.rest?.endsAt;
   const exerciseId = session?.exercises[session.current]?.exerciseId;
-  const name = library.data?.find((item) => item.id === exerciseId)?.name;
+  const name = findExercise(library.data, exerciseId)?.name;
   // Scheduled again once notifications are allowed, also during a rest.
   const granted = useNotificationPermission()?.granted ?? false;
 
