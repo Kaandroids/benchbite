@@ -132,6 +132,16 @@ const queue = allAnswers();
 const failures: string[] = [];
 let checked = 0;
 
+// Only signed-in users get a plan.
+const unsigned = await fetch(`${URL}/functions/v1/generate-plan`, {
+  method: 'POST',
+  headers: { apikey: KEY, 'Content-Type': 'application/json' },
+  body: JSON.stringify(queue[0]),
+});
+if (unsigned.status !== 401) {
+  failures.push(`without a session: HTTP ${unsigned.status}`);
+}
+
 async function worker() {
   for (let answers = queue.shift(); answers !== undefined; answers = queue.shift()) {
     const response = await fetch(`${URL}/functions/v1/generate-plan`, {
