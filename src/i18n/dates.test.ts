@@ -2,12 +2,15 @@ import i18n from '@/i18n';
 import { act, renderHook } from '@/test/render';
 
 import {
+  addDays,
+  fromIsoDate,
   isoWeekday,
   toIsoDate,
   useDateFormat,
   useShortDateFormat,
   useTimeFormat,
   useWeekdayFormat,
+  weekStart,
 } from './dates';
 
 describe('toIsoDate', () => {
@@ -33,6 +36,27 @@ describe('isoWeekday', () => {
   it('ignores the time of day', () => {
     expect(isoWeekday(new Date(2026, 9, 11, 0, 0))).toBe(7);
     expect(isoWeekday(new Date(2026, 9, 11, 23, 59))).toBe(7);
+  });
+});
+
+describe('fromIsoDate', () => {
+  it('reads a day as local midnight', () => {
+    expect(fromIsoDate('2026-10-21')).toEqual(new Date(2026, 9, 21));
+    expect(toIsoDate(fromIsoDate('2026-03-29'))).toBe('2026-03-29');
+  });
+});
+
+describe('addDays', () => {
+  it('counts days across months, at midnight', () => {
+    expect(addDays(new Date(2026, 9, 30, 20, 0), 3)).toEqual(new Date(2026, 10, 2));
+    expect(addDays(new Date(2026, 9, 1), -1)).toEqual(new Date(2026, 8, 30));
+  });
+});
+
+describe('weekStart', () => {
+  it('starts weeks on Monday', () => {
+    expect(weekStart(new Date(2026, 9, 25, 20, 0))).toEqual(new Date(2026, 9, 19));
+    expect(weekStart(new Date(2026, 9, 19, 6, 0))).toEqual(new Date(2026, 9, 19));
   });
 });
 

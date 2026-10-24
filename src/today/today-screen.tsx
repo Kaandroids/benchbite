@@ -14,6 +14,8 @@ import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets'
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
+import { useWeekMoves } from '@/workouts/moves';
+import { weekSchedule } from '@/workouts/week-schedule';
 import { useWeek } from '@/workouts/workouts';
 
 import { WeekCard } from './week-card';
@@ -40,7 +42,8 @@ export function TodayScreen() {
   const streak = useStreak();
   const today = new Date();
   const finished = useFinishedThisWeek(today);
-  const queries = [plan, targets, latestWeight, weightUnit, finished];
+  const moves = useWeekMoves(today);
+  const queries = [plan, targets, latestWeight, weightUnit, finished, moves];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
@@ -53,6 +56,13 @@ export function TodayScreen() {
       setRefreshing(false);
     }
   };
+
+  const schedule = weekSchedule(
+    plan.data?.sessions ?? [],
+    moves.data ?? [],
+    finished.data ?? [],
+    today,
+  );
 
   let content;
   // A query that loaded and then failed to refresh keeps showing what it has.
@@ -80,14 +90,9 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekCard
-          today={today}
-          streak={streak}
-          trainingDays={plan.data?.sessions.map((session) => session.weekday) ?? []}
-          finished={finished.data ?? []}
-        />
+        <WeekCard today={today} streak={streak} schedule={schedule} />
         {plan.data ? (
-          <WorkoutCard plan={plan.data} today={today} finished={finished.data ?? []} />
+          <WorkoutCard schedule={schedule} sessions={plan.data.sessions} today={today} />
         ) : null}
         {targets.data ? (
           <Card entering={FadeInDown.delay(200).duration(400)}>
