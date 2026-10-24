@@ -43,6 +43,7 @@
     "workout": {
       "title": "Today's workout",
       "restDay": "Rest day",
+      "done": "Done for today",
       "next": "Next: {{day}} · {{session}}",
       "tomorrow": "tomorrow",
       "open": "Opens the workout"

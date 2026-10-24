@@ -43,6 +43,7 @@
     "workout": {
       "title": "Heutiges Training",
       "restDay": "Ruhetag",
+      "done": "Für heute geschafft",
       "next": "Nächstes: {{day}} · {{session}}",
       "tomorrow": "morgen",
       "open": "Öffnet das Workout"
