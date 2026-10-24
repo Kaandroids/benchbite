@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(14);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -28,7 +28,7 @@ join pg_namespace n on n.oid = p.pronamespace and n.nspname = 'public'
 cross join (values ('anon'), ('authenticated')) roles (role)
 where p.proname in (
   'metrics_valid', 'custom_exercise_fields', 'target_suits', 'exercise_seconds', 'set_suits',
-  'sets_of', 'custom_exercise_limit', 'lock_user_limits', 'move_fits'
+  'sets_of', 'custom_exercise_limit', 'lock_user_limits', 'move_fits', 'save_move'
 )
 group by p.proname
 order by p.proname;

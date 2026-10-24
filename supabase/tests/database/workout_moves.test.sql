@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -21,11 +21,22 @@ create function pg_temp.day(weekday integer) returns date language sql as $$
   select date_trunc('week', current_date)::date + weekday - 1;
 $$;
 
--- User a's workouts: one on Mondays and Thursdays, one archived on Mondays.
+-- A day next to three days ago in the same week, on which workout 912 is planned.
+create function pg_temp.late_planned() returns date language sql as $$
+  select case when extract(isodow from current_date - 3) = 1 then current_date - 2
+    else current_date - 4 end;
+$$;
+
+-- User a's workouts: one on Mondays and Thursdays, one archived on Mondays, one on weekends, and
+-- one on the day next to three days ago.
 insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes)
   overriding system value values
   (910, '00000000-0000-0000-0000-00000000000a', 'Push', '{1,4}', true, 45),
-  (911, '00000000-0000-0000-0000-00000000000a', 'Old', '{1}', false, 30);
+  (911, '00000000-0000-0000-0000-00000000000a', 'Old', '{1}', false, 30),
+  (912, '00000000-0000-0000-0000-00000000000a', 'Late', '{}', true, 30),
+  (913, '00000000-0000-0000-0000-00000000000a', 'Weekend', '{6,7}', true, 30);
+update public.workouts set weekdays = array[extract(isodow from pg_temp.late_planned())::smallint]
+where id = 912;
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
@@ -86,6 +97,18 @@ select throws_ok(
   'An archived workout does not move'
 );
 
+-- A weekday the workout moved away from is free for another of its days.
+select throws_ok(
+  $$ select public.move_workout(913, pg_temp.day(6), pg_temp.day(7)) $$,
+  'BB019', 'The move does not fit the plan',
+  'A workout cannot move to another of its days'
+);
+select public.move_workout(913, pg_temp.day(7), null);
+select lives_ok(
+  $$ select public.move_workout(913, pg_temp.day(6), pg_temp.day(7)) $$,
+  'A workout can move to one of its days once that day is skipped'
+);
+
 select lives_ok(
   $$ select public.move_workout(910, pg_temp.day(4), null) $$,
   'A workout can be skipped on one of its days'
@@ -133,6 +156,21 @@ select is(
   'A move that does not fit is left out of the log'
 );
 
+-- A log saved days later, as after being left open, keeps the move of the day it started.
+select public.log_workout(jsonb_build_object(
+  'workoutId', 912,
+  'startedAt', now() - interval '3 days',
+  'finishedAt', now() - interval '3 days' + interval '50 minutes',
+  'exercises', jsonb_build_array(jsonb_build_object(
+    'exerciseId', 'Plank', 'sets', jsonb_build_array(jsonb_build_object('seconds', 60)))),
+  'move', jsonb_build_object('from', pg_temp.late_planned(), 'to', (now() - interval '3 days')::date)
+));
+select results_eq(
+  $$ select from_on, to_on from public.workout_moves where workout_id = 912 $$,
+  $$ values (pg_temp.late_planned(), (now() - interval '3 days')::date) $$,
+  'A log saved days later keeps its move'
+);
+
 -- Other users neither move nor see another user's workouts and moves.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
@@ -149,13 +187,13 @@ delete from public.workout_moves;
 -- Undoing a move deletes it.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
-  (select count(*)::integer from public.workout_moves),
+  (select count(*)::integer from public.workout_moves where workout_id = 910),
   2,
   'Another user cannot undo the moves'
 );
-delete from public.workout_moves where from_on = pg_temp.day(1);
+delete from public.workout_moves where workout_id = 910 and from_on = pg_temp.day(1);
 select results_eq(
-  $$ select from_on from public.workout_moves $$,
+  $$ select from_on from public.workout_moves where workout_id = 910 $$,
   $$ values (pg_temp.day(4)) $$,
   'A user undoes their own move'
 );

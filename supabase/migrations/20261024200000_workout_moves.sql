@@ -18,9 +18,9 @@ create table public.workout_moves (
   to_on date,
   created_at timestamptz not null default now(),
   -- A workout's day moves once; moving it again changes the target.
-  unique (workout_id, from_on),
+  constraint workout_moves_from_key unique (workout_id, from_on),
   -- A workout is on a day at most once.
-  unique (workout_id, to_on),
+  constraint workout_moves_to_key unique (workout_id, to_on),
   check (
     to_on is null
     or (to_on <> from_on and date_trunc('week', to_on) = date_trunc('week', from_on))
@@ -43,12 +43,13 @@ create policy "Users delete their own workout moves"
 revoke all on public.workout_moves from anon, authenticated;
 grant select, delete on public.workout_moves to authenticated;
 
--- Whether a workout may move from from_on to to_on, or be skipped on from_on when to_on is null:
---   - the workout is active and from_on is one of its weekdays, in this week;
---   - the target is in the same week, today or later, and not a day the workout is already on,
---     by its weekdays or by another move.
--- "This week" and "today" allow a day either way for the device's time zone.
-create function public.move_fits(source public.workouts, from_on date, to_on date)
+-- Whether a workout may move from from_on to to_on, or be skipped on from_on when to_on is null,
+-- as seen on the day `on_day`:
+--   - the workout is active and from_on is one of its weekdays, in on_day's week;
+--   - the target is in the same week, on_day or later, and not a day the workout is already on:
+--     one of its weekdays that did not move away, or the target of another move.
+-- The week and the day allow a day either way for the device's time zone.
+create function public.move_fits(source public.workouts, from_on date, to_on date, on_day date)
 returns boolean
 language sql
 stable
@@ -57,14 +58,20 @@ as $$
   select source.active
     and extract(isodow from from_on)::smallint = any(source.weekdays)
     and date_trunc('week', from_on)
-      between date_trunc('week', current_date - 1) and date_trunc('week', current_date + 1)
+      between date_trunc('week', on_day - 1) and date_trunc('week', on_day + 1)
     and (
       to_on is null
       or (
         to_on <> from_on
         and date_trunc('week', to_on) = date_trunc('week', from_on)
-        and to_on >= current_date - 1
-        and not extract(isodow from to_on)::smallint = any(source.weekdays)
+        and to_on >= on_day - 1
+        and not (
+          extract(isodow from to_on)::smallint = any(source.weekdays)
+          and not exists (
+            select 1 from public.workout_moves m
+            where m.workout_id = source.id and m.from_on = move_fits.to_on
+          )
+        )
         and not exists (
           select 1 from public.workout_moves m
           where m.workout_id = source.id and m.to_on = move_fits.to_on
@@ -74,8 +81,33 @@ as $$
     );
 $$;
 
-revoke execute on function public.move_fits(public.workouts, date, date)
-  from public, anon, authenticated;
+-- Saves a move of the workout when it fits as seen on `on_day`, and returns whether it did. A move
+-- made at the same time on another device that takes the same target wins, and this one is not
+-- saved.
+create function public.save_move(source public.workouts, from_on date, to_on date, on_day date)
+returns boolean
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if from_on is null or not public.move_fits(source, from_on, to_on, on_day) then
+    return false;
+  end if;
+
+  insert into public.workout_moves (user_id, workout_id, from_on, to_on)
+  values (source.user_id, source.id, save_move.from_on, save_move.to_on)
+  on conflict on constraint workout_moves_from_key do update set to_on = excluded.to_on;
+  return true;
+exception
+  when unique_violation then
+    return false;
+end;
+$$;
+
+revoke execute on function
+  public.move_fits(public.workouts, date, date, date),
+  public.save_move(public.workouts, date, date, date)
+from public, anon, authenticated;
 
 -- Moves one of the caller's workouts from from_on to to_on this week, or skips it on from_on when
 -- to_on is null. Moving a day that already moved changes its target.
@@ -100,14 +132,9 @@ begin
     raise exception 'Workout not found' using errcode = 'BB006';
   end if;
 
-  if from_on is null or not public.move_fits(source, from_on, to_on) then
+  if not public.save_move(source, from_on, to_on, current_date) then
     raise exception 'The move does not fit the plan' using errcode = 'BB019';
   end if;
-
-  insert into public.workout_moves (user_id, workout_id, from_on, to_on)
-  values (caller_id, source.id, move_workout.from_on, move_workout.to_on)
-  on conflict on constraint workout_moves_workout_id_from_on_key
-  do update set to_on = excluded.to_on, created_at = now();
 end;
 $$;
 
@@ -116,8 +143,9 @@ grant execute on function public.move_workout(bigint, date, date) to authenticat
 
 -- Unchanged apart from the move: a workout started on another day than planned can say which
 -- day it replaces, {"move": {"from": "2026-10-20", "to": "2026-10-22"}}, and the move is saved
--- with the log. A move that no longer fits, as when the plan changed during the workout, is left
--- out rather than losing the log.
+-- with the log. It is judged on the day the workout started, so a log saved days later, after
+-- being left open or offline, keeps its move. A move that no longer fits, as when the plan changed
+-- during the workout, is left out rather than losing the log.
 create or replace function public.log_workout(log jsonb)
 returns bigint
 language plpgsql
@@ -195,12 +223,9 @@ begin
     seconds, meters
   from public.sets_of(log);
 
-  if move_from is not null and move_to is not null
-    and public.move_fits(source, move_from, move_to) then
-    insert into public.workout_moves (user_id, workout_id, from_on, to_on)
-    values (caller_id, source.id, move_from, move_to)
-    on conflict on constraint workout_moves_workout_id_from_on_key
-    do update set to_on = excluded.to_on, created_at = now();
+  -- The move's target is the day the workout started, within a day for the time zone.
+  if move_to is not null and abs(move_to - started::date) <= 1 then
+    perform public.save_move(source, move_from, move_to, started::date);
   end if;
 
   return new_log_id;
