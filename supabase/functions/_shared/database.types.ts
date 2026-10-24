@@ -657,6 +657,7 @@ export type Database = {
       move_fits: {
         Args: {
           from_on: string;
+          on_day: string;
           source: Omit<
             Database['public']['Tables']['workouts']['Row'],
             Database['public']['Tables']['workouts']['ComputedFields']
@@ -681,6 +682,18 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      save_move: {
+        Args: {
+          from_on: string;
+          on_day: string;
+          source: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+          to_on: string;
+        };
+        Returns: boolean;
+      };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
