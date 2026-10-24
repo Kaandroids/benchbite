@@ -4,9 +4,9 @@
 
 import { Constants, type Database } from '../src/lib/database.types.ts';
 import {
-  FREE_WORKOUT_EXERCISES,
   FREE_WORKOUTS,
   MAX_TRAINING_DAYS,
+  PLAN_WORKOUT_EXERCISES,
   SESSION_MINUTES,
 } from '../supabase/functions/_shared/plan/limits.ts';
 import { usesTimeTarget } from '../supabase/functions/_shared/plan/prescription.ts';
@@ -90,7 +90,7 @@ function problems(answers: PlanInput, sessions: Session[], catalogue: CatalogueR
       found.push(`${session.type} takes ${session.estimatedMinutes} minutes`);
     }
     const count = session.exercises.length;
-    if (session.exercises.length < 2 || count > FREE_WORKOUT_EXERCISES) {
+    if (session.exercises.length < 2 || count > PLAN_WORKOUT_EXERCISES) {
       found.push(`${session.type} has ${count} exercises`);
     }
     const conditioning = session.exercises.filter((exercise) => exercise.slot === 'conditioning');
