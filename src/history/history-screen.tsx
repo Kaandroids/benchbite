@@ -22,11 +22,15 @@ export function HistoryScreen() {
   const logs = useLogSummaries();
   const weekTitle = useWeekTitle();
   const duration = useDurationFormat();
-  // Grouped after the pages are joined, so that a week split between two pages shows as one.
-  const weeks = byWeek(logs.data?.pages.flatMap((page) => page.logs) ?? []).map((week) => ({
-    ...week,
-    data: week.logs,
-  }));
+  // Grouped after the pages are joined, so that a week split between two pages shows as one. The
+  // last week may go on in the next page, so it is complete only once there are no more pages.
+  const weeks = byWeek(logs.data?.pages.flatMap((page) => page.logs) ?? []).map(
+    (week, index, all) => ({
+      ...week,
+      data: week.logs,
+      complete: !logs.hasNextPage || index < all.length - 1,
+    }),
+  );
 
   return (
     <Screen
@@ -86,8 +90,7 @@ export function HistoryScreen() {
               <Text variant="caption" color="textMuted" style={[styles.bold, styles.flex]}>
                 {weekTitle(week.start)}
               </Text>
-              {/* The last week may go on in the next page, so its total waits until it has loaded. */}
-              {logs.hasNextPage && week === weeks[weeks.length - 1] ? null : (
+              {week.complete ? (
                 <View
                   style={[
                     styles.chip,
@@ -101,7 +104,7 @@ export function HistoryScreen() {
                     })}
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
           )}
           // A week's workouts in one card: the first row rounds its top, the last its bottom.
