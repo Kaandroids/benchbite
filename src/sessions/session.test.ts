@@ -109,11 +109,21 @@ describe('logging sets', () => {
     expect(toggleDone(session, 0, 0, NOW).exercises[0]?.sets[0]?.done).toBe(false);
   });
 
-  it('ends the rest when the set done last is undone, but not for an earlier set', () => {
+  it('ends the running rest when a set is ticked, starting its own if its exercise has one', () => {
+    const benched = toggleDone(start(), 0, 0, NOW);
+    // The plank has no rest, so the bench press's ends with nothing after it.
+    expect(toggleDone(benched, 1, 0, NOW + 60_000).rest).toBeNull();
+    expect(toggleDone(benched, 0, 1, NOW + 60_000).rest).toEqual({
+      endsAt: NOW + 150_000,
+      seconds: 90,
+    });
+  });
+
+  it('ends the running rest when a set is unticked', () => {
     const first = toggleDone(start(), 0, 0, NOW);
     expect(toggleDone(first, 0, 0, NOW + 1000).rest).toBeNull();
     const second = toggleDone(first, 0, 1, NOW + 60_000);
-    expect(toggleDone(second, 0, 0, NOW + 61_000).rest).toEqual(second.rest);
+    expect(toggleDone(second, 0, 0, NOW + 61_000).rest).toBeNull();
   });
 
   it('opens the next exercise after the last set', () => {
