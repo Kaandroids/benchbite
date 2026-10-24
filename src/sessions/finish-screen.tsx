@@ -223,11 +223,11 @@ export function FinishScreen({ next }: { next?: number }) {
               <Text variant="caption" color="textMuted">
                 {t('session.end.label', { started: time.format(session.startedAt) })}
               </Text>
-              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+              <Text variant="label" style={[styles.tabular]}>
                 {time.format(finishedAt)}
               </Text>
             </View>
-            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            <Text variant="label" color="primaryText">
               {t('session.end.changeLabel')}
             </Text>
           </Pressable>
@@ -262,7 +262,7 @@ export function FinishScreen({ next }: { next?: number }) {
               <Text variant="bodyStrong" style={styles.flex} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text variant="caption" color="textMuted" style={styles.bold}>
+              <Text variant="captionStrong" color="textMuted">
                 {item.text}
               </Text>
             </View>
@@ -293,7 +293,7 @@ export function FinishScreen({ next }: { next?: number }) {
                 <Text variant="body" style={[styles.flex, styles.semibold]}>
                   {record.name}
                 </Text>
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {record.value}
                 </Text>
               </View>
@@ -326,12 +326,12 @@ export function FinishScreen({ next }: { next?: number }) {
         ) : null}
         <View style={styles.actions}>
           <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.action}>
-            <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+            <Text variant="label" color="primaryText">
               {t('session.summary.keepGoing')}
             </Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={discard} style={styles.action}>
-            <Text variant="bodyStrong" color="danger" style={styles.bold}>
+            <Text variant="label" color="danger">
               {t('session.summary.discard')}
             </Text>
           </Pressable>
@@ -350,9 +350,6 @@ const styles = StyleSheet.create({
   },
   center: {
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

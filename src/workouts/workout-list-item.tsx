@@ -6,7 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
@@ -76,7 +76,7 @@ export function WorkoutListItem({
                 { borderRadius: radii.full, backgroundColor: colors.primaryButton },
               ]}
             >
-              <Text variant="caption" color="onPrimary" style={styles.pillText}>
+              <Text variant="captionStrong" color="onPrimary">
                 {t('workout.today')}
               </Text>
             </View>
@@ -121,7 +121,7 @@ export function WorkoutListItem({
             { borderRadius: radii.full, backgroundColor: colors.track },
           ]}
         >
-          <Text variant="caption" color="textMuted" style={styles.pillText}>
+          <Text variant="captionStrong" color="textMuted">
             {t('session.running')}
           </Text>
         </View>
@@ -184,8 +184,5 @@ const styles = StyleSheet.create({
   running: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-  },
-  pillText: {
-    fontFamily: fonts.extraBold,
   },
 });

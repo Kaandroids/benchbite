@@ -147,10 +147,8 @@ export function SessionScreen() {
         <View style={[styles.row, { gap: spacing.md }]}>
           <ExerciseThumbnail path={thumbnailOf(info)} size={48} name={info?.name} />
           <View style={styles.flex}>
-            <Text variant="bodyStrong" style={styles.bold}>
-              {info?.name ?? ''}
-            </Text>
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="label">{info?.name ?? ''}</Text>
+            <Text variant="captionStrong" color="primaryText">
               {[
                 formatTarget(exercise.sets.length, exercise.target),
                 formatRest(exercise.restSeconds),
@@ -216,10 +214,10 @@ export function SessionScreen() {
           <Icon name="back" color="textMuted" />
         </Pressable>
         <View style={[styles.flex, styles.center]}>
-          <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+          <Text variant="label" accessibilityRole="header">
             {workoutName(session)}
           </Text>
-          <Text variant="caption" color="textMuted" style={[styles.bold, styles.tabular]}>
+          <Text variant="captionStrong" color="textMuted" style={[styles.tabular]}>
             {minutesAndSeconds(elapsed)}
           </Text>
         </View>
@@ -231,7 +229,7 @@ export function SessionScreen() {
             { borderRadius: radii.full, backgroundColor: colors.primaryButton },
           ]}
         >
-          <Text variant="bodyStrong" color="onPrimary" style={styles.bold}>
+          <Text variant="label" color="onPrimary">
             {t('session.finish')}
           </Text>
         </Pressable>
@@ -246,7 +244,7 @@ export function SessionScreen() {
         <View style={styles.flex}>
           <ProgressBar value={totals.planned ? totals.done / totals.planned : 0} />
         </View>
-        <Text variant="caption" color="textMuted" style={styles.bold}>
+        <Text variant="captionStrong" color="textMuted">
           {t('session.setsDone', { done: totals.done, count: totals.planned })}
         </Text>
       </View>
@@ -298,9 +296,6 @@ const styles = StyleSheet.create({
   },
   center: {
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

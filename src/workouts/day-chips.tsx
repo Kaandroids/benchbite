@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 type DayChipsProps = {
   /** ISO weekdays, 1 for Monday to 7 for Sunday; none means any day. */
@@ -32,7 +32,7 @@ export function DayChips({ weekdays, muted = false }: DayChipsProps) {
             },
           ]}
         >
-          <Text variant="caption" color={muted ? 'textMuted' : 'primaryText'} style={styles.label}>
+          <Text variant="captionStrong" color={muted ? 'textMuted' : 'primaryText'}>
             {label}
           </Text>
         </View>
@@ -49,8 +49,5 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-  },
-  label: {
-    fontFamily: fonts.extraBold,
   },
 });

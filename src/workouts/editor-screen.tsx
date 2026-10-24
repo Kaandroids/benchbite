@@ -13,7 +13,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
-import { fonts, typography, useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
@@ -145,7 +145,7 @@ export function EditorScreen({ id }: { id?: number }) {
           <Text variant="bodyStrong" numberOfLines={1}>
             {info?.name ?? ''}
           </Text>
-          <Text variant="caption" color="primaryText" style={styles.bold}>
+          <Text variant="captionStrong" color="primaryText">
             {formatTarget(exercise.sets, exercise.target)}
           </Text>
           <Text variant="caption" color="textMuted">
@@ -171,12 +171,7 @@ export function EditorScreen({ id }: { id?: number }) {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text
-          variant="bodyStrong"
-          accessibilityRole="header"
-          style={[styles.bold, styles.flex]}
-          align="center"
-        >
+        <Text variant="label" accessibilityRole="header" style={[styles.flex]} align="center">
           {id === undefined ? t('editor.newTitle') : t('editor.editTitle')}
         </Text>
         <Pressable
@@ -192,11 +187,7 @@ export function EditorScreen({ id }: { id?: number }) {
             },
           ]}
         >
-          <Text
-            variant="bodyStrong"
-            color={canSave ? 'onPrimary' : 'textMuted'}
-            style={styles.bold}
-          >
+          <Text variant="label" color={canSave ? 'onPrimary' : 'textMuted'}>
             {t('editor.save')}
           </Text>
         </Pressable>
@@ -219,7 +210,7 @@ export function EditorScreen({ id }: { id?: number }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.name')}
             </Text>
             <TextInput
@@ -244,7 +235,7 @@ export function EditorScreen({ id }: { id?: number }) {
           </View>
 
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.days')}
             </Text>
             <View style={[styles.days, { gap: spacing.xs }]}>
@@ -273,11 +264,7 @@ export function EditorScreen({ id }: { id?: number }) {
                       },
                     ]}
                   >
-                    <Text
-                      variant="bodyStrong"
-                      color={on ? 'onPrimary' : 'text'}
-                      style={styles.bold}
-                    >
+                    <Text variant="label" color={on ? 'onPrimary' : 'text'}>
                       {weekdayName(weekday)}
                     </Text>
                   </Pressable>
@@ -290,7 +277,7 @@ export function EditorScreen({ id }: { id?: number }) {
           </View>
 
           <View style={{ gap: spacing.sm }}>
-            <Text variant="caption" color="textMuted" style={styles.bold}>
+            <Text variant="captionStrong" color="textMuted">
               {t('editor.exercises', { count: draft.exercises.length })}
             </Text>
             {draft.exercises.length > 0 ? (
@@ -349,7 +336,7 @@ export function EditorScreen({ id }: { id?: number }) {
                 ]}
               >
                 <Icon name="plus" size={20} color="primaryText" />
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {t('picker.title')}
                 </Text>
               </Pressable>
@@ -364,7 +351,7 @@ export function EditorScreen({ id }: { id?: number }) {
               onPress={onDelete}
               style={[styles.delete, { opacity: remove.isPending ? 0.4 : 1 }]}
             >
-              <Text variant="bodyStrong" color="danger" style={styles.bold}>
+              <Text variant="label" color="danger">
                 {t('editor.delete')}
               </Text>
             </Pressable>
@@ -393,9 +380,6 @@ export function EditorScreen({ id }: { id?: number }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   header: {
     flexDirection: 'row',

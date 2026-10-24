@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { useRecentLogs } from './history';
 import { LogRow } from './log-row';
@@ -23,7 +23,7 @@ export function RecentLogs() {
   return (
     <View style={{ gap: spacing.sm }}>
       <View style={styles.header}>
-        <Text variant="caption" color="textMuted" style={styles.bold}>
+        <Text variant="captionStrong" color="textMuted">
           {[
             t('workout.history.title'),
             inWeek > 0 ? t('history.thisWeek', { count: inWeek }) : null,
@@ -38,7 +38,7 @@ export function RecentLogs() {
             onPress={() => router.push('/workout/history')}
             style={styles.seeAll}
           >
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="captionStrong" color="primaryText">
               {t('history.seeAll')}
             </Text>
           </Pressable>
@@ -80,9 +80,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   seeAll: {
     minHeight: 32,

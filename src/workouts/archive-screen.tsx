@@ -1,11 +1,9 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { fonts } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
 import { useWorkouts } from './workouts';
@@ -20,7 +18,7 @@ export function ArchiveScreen() {
     <Screen
       onBack={() => router.back()}
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {t('workout.archive.title')}
         </Text>
       }
@@ -37,9 +35,3 @@ export function ArchiveScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
-});

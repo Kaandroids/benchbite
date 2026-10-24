@@ -115,19 +115,14 @@ export function LogScreen({ id }: { id: number }) {
             },
           ]}
         >
-          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+          <Text variant="label" color="primaryText">
             {t('workout.edit')}
           </Text>
         </Pressable>
       }
       title={
         <>
-          <Text
-            variant="bodyStrong"
-            accessibilityRole="header"
-            numberOfLines={1}
-            style={styles.bold}
-          >
+          <Text variant="label" accessibilityRole="header" numberOfLines={1}>
             {workoutName(log)}
           </Text>
           <Text variant="caption" color="textMuted" numberOfLines={1}>
@@ -186,7 +181,7 @@ export function LogScreen({ id }: { id: number }) {
               <Text variant="caption" color="textMuted">
                 {String(label)}
               </Text>
-              <Text variant="bodyStrong" style={[styles.bold, styles.tabular]}>
+              <Text variant="label" style={[styles.tabular]}>
                 {time.format(at as Date)}
               </Text>
             </View>
@@ -221,9 +216,7 @@ export function LogScreen({ id }: { id: number }) {
             <View style={[styles.row, { gap: spacing.md, paddingRight: BUTTON_ROOM }]}>
               <ExerciseThumbnail path={thumbnailOf(info)} size={44} name={info?.name} />
               <View style={styles.flex}>
-                <Text variant="bodyStrong" style={styles.bold}>
-                  {info?.name ?? ''}
-                </Text>
+                <Text variant="label">{info?.name ?? ''}</Text>
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
                   {[
                     t('history.exercise.setCount', { count: exercise.sets.length }),
@@ -251,9 +244,9 @@ export function LogScreen({ id }: { id: number }) {
                     ]}
                   >
                     <Text
-                      variant="caption"
+                      variant="captionStrong"
                       color={isBest ? 'primaryText' : 'text'}
-                      style={[styles.bold, styles.tabular]}
+                      style={[styles.tabular]}
                     >
                       {shortSet(set, kind, describe)}
                     </Text>
@@ -272,7 +265,7 @@ export function LogScreen({ id }: { id: number }) {
         onPress={onDelete}
         style={styles.delete}
       >
-        <Text variant="bodyStrong" color="danger" style={styles.bold}>
+        <Text variant="label" color="danger">
           {t('history.delete')}
         </Text>
       </Pressable>
@@ -283,9 +276,6 @@ export function LogScreen({ id }: { id: number }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

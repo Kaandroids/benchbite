@@ -10,7 +10,7 @@ import type { RecordKind } from '@/sets/records';
 import { useRecordFormat } from '@/sets/records';
 import { SetLine, setButtonStyle } from '@/sets/set-table';
 import type { SetValues } from '@/sets/values';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { recordValues } from './records';
 import type { SessionSet } from './session';
@@ -102,7 +102,7 @@ export function SetRow({
         recordText ? (
           <View style={[styles.record, { gap: spacing.xs }]}>
             <Icon name="trophy" size={14} color="primaryText" />
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="captionStrong" color="primaryText">
               {recordText}
             </Text>
           </View>
@@ -152,8 +152,5 @@ const styles = StyleSheet.create({
   record: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
 });

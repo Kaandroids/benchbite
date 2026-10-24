@@ -21,7 +21,7 @@ import {
   type ExerciseFilter,
   type LibraryExercise,
 } from '@/exercises/library';
-import { fonts, typography, useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 
 import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
@@ -88,7 +88,7 @@ export function PickerScreen() {
           },
         ]}
       >
-        <Text variant="caption" color={on ? 'onPrimary' : 'text'} style={styles.bold}>
+        <Text variant="captionStrong" color={on ? 'onPrimary' : 'text'}>
           {label}
         </Text>
       </Pressable>
@@ -152,7 +152,7 @@ export function PickerScreen() {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {t('picker.title')}
         </Text>
       </View>
@@ -221,7 +221,7 @@ export function PickerScreen() {
                 <Icon name="plus" size={24} color="primary" />
               </View>
               <View style={[styles.text, { marginLeft: spacing.xs }]}>
-                <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                <Text variant="label" color="primaryText">
                   {t('customExercise.createRow')}
                 </Text>
                 <Text variant="caption" color="textMuted">
@@ -256,7 +256,7 @@ export function PickerScreen() {
                   ]}
                 >
                   <Icon name="plus" size={18} color="primaryText" />
-                  <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+                  <Text variant="label" color="primaryText">
                     {t('customExercise.createNamed', { name: query.trim() })}
                   </Text>
                 </Pressable>
@@ -334,9 +334,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   search: {
     flexDirection: 'row',

@@ -143,7 +143,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         },
       ]}
     >
-      <Text variant="caption" color={on ? 'primaryText' : 'text'} style={styles.bold}>
+      <Text variant="captionStrong" color={on ? 'primaryText' : 'text'}>
         {text}
       </Text>
     </Pressable>
@@ -200,7 +200,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       onBack={() => router.back()}
       closes
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {editing ? t('customExercise.editTitle') : t('customExercise.title')}
         </Text>
       }
@@ -250,9 +250,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                   },
                 ]}
               >
-                <Text variant="bodyStrong" style={styles.bold}>
-                  {t(`customExercise.logKinds.${kind}.title`)}
-                </Text>
+                <Text variant="label">{t(`customExercise.logKinds.${kind}.title`)}</Text>
                 <Text variant="caption" color="textMuted">
                   {t(`customExercise.logKinds.${kind}.example`)}
                 </Text>
@@ -342,7 +340,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                         { borderRadius: radii.sm, backgroundColor: colors.surface },
                       ]}
                     >
-                      <Text variant="caption" color="textMuted" style={styles.bold}>
+                      <Text variant="captionStrong" color="textMuted">
                         {name}
                       </Text>
                     </View>
@@ -350,7 +348,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
                 ) : (
                   <>
                     <Icon name="camera" size={26} color="textMuted" />
-                    <Text variant="caption" color="textMuted" style={styles.bold}>
+                    <Text variant="captionStrong" color="textMuted">
                       {name}
                     </Text>
                   </>
@@ -394,7 +392,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         {form.instructions.map((step, index) => (
           <View key={index} style={[styles.step, { gap: spacing.sm }]}>
             <View style={[styles.number, { backgroundColor: colors.iconBackground }]}>
-              <Text variant="caption" color="primaryText" style={styles.bold}>
+              <Text variant="captionStrong" color="primaryText">
                 {index + 1}
               </Text>
             </View>
@@ -436,7 +434,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
               },
             ]}
           >
-            <Text variant="caption" color="primaryText" style={styles.bold}>
+            <Text variant="captionStrong" color="primaryText">
               {t('customExercise.addStep')}
             </Text>
           </Pressable>

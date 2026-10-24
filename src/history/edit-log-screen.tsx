@@ -195,7 +195,7 @@ function LogEditor({
       onBack={() => router.back()}
       closes
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>
+        <Text variant="label" accessibilityRole="header" numberOfLines={1}>
           {t('history.edit.title', { name: workoutName(log) })}
         </Text>
       }
@@ -214,11 +214,7 @@ function LogEditor({
             },
           ]}
         >
-          <Text
-            variant="bodyStrong"
-            color={canSave ? 'onPrimary' : 'textMuted'}
-            style={styles.bold}
-          >
+          <Text variant="label" color={canSave ? 'onPrimary' : 'textMuted'}>
             {t('editor.save')}
           </Text>
         </Pressable>
@@ -257,9 +253,7 @@ function LogEditor({
             <View style={[styles.row, { gap: spacing.md }]}>
               <ExerciseThumbnail path={thumbnailOf(info)} size={40} name={info?.name} />
               <View style={styles.flex}>
-                <Text variant="bodyStrong" style={styles.bold}>
-                  {info?.name ?? ''}
-                </Text>
+                <Text variant="label">{info?.name ?? ''}</Text>
                 {exercise.sets.length === 0 ? (
                   <Text variant="caption" color="textMuted" style={styles.semibold}>
                     {t('session.summary.skipped')}
@@ -327,9 +321,6 @@ function LogEditor({
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,

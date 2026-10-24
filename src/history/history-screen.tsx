@@ -6,7 +6,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { useDurationFormat, useWeekTitle } from './format';
 import { byWeek, useLogSummaries } from './history';
@@ -37,7 +37,7 @@ export function HistoryScreen() {
       onBack={() => router.back()}
       scrolls={false}
       title={
-        <Text variant="bodyStrong" accessibilityRole="header" style={styles.bold}>
+        <Text variant="label" accessibilityRole="header">
           {t('workout.history.title')}
         </Text>
       }
@@ -87,7 +87,7 @@ export function HistoryScreen() {
                 { paddingBottom: spacing.sm, paddingTop: week === weeks[0] ? 0 : spacing.lg },
               ]}
             >
-              <Text variant="caption" color="textMuted" style={[styles.bold, styles.flex]}>
+              <Text variant="captionStrong" color="textMuted" style={[styles.flex]}>
                 {weekTitle(week.start)}
               </Text>
               {week.complete ? (
@@ -97,7 +97,7 @@ export function HistoryScreen() {
                     { borderRadius: radii.full, backgroundColor: colors.selected },
                   ]}
                 >
-                  <Text variant="caption" color="primaryText" style={styles.bold}>
+                  <Text variant="captionStrong" color="primaryText">
                     {t('history.weekTotal', {
                       count: week.logs.length,
                       time: duration(week.minutes),
@@ -145,9 +145,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   chip: {
     paddingHorizontal: 10,

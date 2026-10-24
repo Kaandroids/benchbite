@@ -19,7 +19,7 @@ import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { endSession, useActiveSession } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
@@ -169,12 +169,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       onBack={() => router.back()}
       title={
         <>
-          <Text
-            variant="bodyStrong"
-            accessibilityRole="header"
-            numberOfLines={1}
-            style={styles.bold}
-          >
+          <Text variant="label" accessibilityRole="header" numberOfLines={1}>
             {name}
           </Text>
           <Text variant="caption" color="textMuted" numberOfLines={1}>
@@ -212,7 +207,7 @@ export function WorkoutScreen({ id }: { id: number }) {
             },
           ]}
         >
-          <Text variant="bodyStrong" color="primaryText" style={styles.bold}>
+          <Text variant="label" color="primaryText">
             {t('workout.edit')}
           </Text>
         </Pressable>
@@ -284,16 +279,12 @@ export function WorkoutScreen({ id }: { id: number }) {
         ]}
       >
         <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
-        <Text
-          variant="bodyStrong"
-          color={workout.active ? 'text' : 'primaryText'}
-          style={styles.bold}
-        >
+        <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
           {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
         </Text>
       </Pressable>
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
-        <Text variant="bodyStrong" color="danger" style={styles.bold}>
+        <Text variant="label" color="danger">
           {t('editor.delete')}
         </Text>
       </Pressable>
@@ -361,8 +352,5 @@ const styles = StyleSheet.create({
   },
   exerciseText: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
 });

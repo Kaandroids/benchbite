@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
@@ -52,7 +52,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     >
       <DateTile date={log.startedAt} tinted={icons} />
       <View style={[styles.flex, { gap: 2 }]}>
-        <Text variant="bodyStrong" numberOfLines={1} style={styles.bold}>
+        <Text variant="label" numberOfLines={1}>
           {workoutName(log)}
         </Text>
         {icons ? (
@@ -106,8 +106,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
 });

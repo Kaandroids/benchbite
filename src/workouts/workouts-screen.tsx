@@ -15,7 +15,7 @@ import { BusySheet } from '@/sessions/busy-sheet';
 import { InProgressCard } from '@/sessions/in-progress-card';
 import { endSession, useActiveSession } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
 import { useWorkoutLimits, useWorkouts, type Workout } from './workouts';
@@ -104,7 +104,7 @@ export function WorkoutsScreen() {
         {allLoaded([workouts]) ? (
           <>
             {session ? <InProgressCard session={session} /> : null}
-            <Text variant="caption" color="textMuted" style={styles.section}>
+            <Text variant="captionStrong" color="textMuted">
               {t('workout.activeCount', { count: active.length })}
             </Text>
             {active.length > 0 ? (
@@ -176,8 +176,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  section: {
-    fontFamily: fonts.extraBold,
   },
 });

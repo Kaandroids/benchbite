@@ -52,7 +52,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
   const exercise = findExercise(library.data, id);
   const title = (
     <>
-      <Text variant="bodyStrong" accessibilityRole="header" numberOfLines={1} style={styles.bold}>
+      <Text variant="label" accessibilityRole="header" numberOfLines={1}>
         {exercise?.name ?? ''}
       </Text>
       <Text variant="caption" color="textMuted" numberOfLines={1}>
@@ -160,7 +160,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                   },
                 ]}
               >
-                <Text variant="caption" color="textMuted" style={styles.bold}>
+                <Text variant="captionStrong" color="textMuted">
                   {recordLabel(record)}
                 </Text>
                 <Text variant="headline" style={styles.tabular}>
@@ -222,11 +222,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                     },
                   ]}
                 >
-                  <Text
-                    variant="caption"
-                    color={selected ? 'surface' : 'textMuted'}
-                    style={styles.bold}
-                  >
+                  <Text variant="captionStrong" color={selected ? 'surface' : 'textMuted'}>
                     {t(`exerciseHistory.metrics.${option}`)}
                   </Text>
                 </Pressable>
@@ -261,7 +257,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
         </View>
       ) : null}
 
-      <Text variant="bodyStrong" color="textMuted" style={[styles.bold, { paddingHorizontal: 4 }]}>
+      <Text variant="label" color="textMuted" style={[{ paddingHorizontal: 4 }]}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
       <View
@@ -299,7 +295,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
           >
             <DateTile date={session.startedAt} tinted={false} />
             <View style={[styles.flex, { gap: spacing.xs }]}>
-              <Text variant="bodyStrong" style={styles.bold} numberOfLines={1}>
+              <Text variant="label" numberOfLines={1}>
                 {workoutName(session)}
                 <Text variant="bodyStrong" color="textMuted" style={styles.semibold}>
                   {` · ${total(session.sets)}`}
@@ -324,9 +320,9 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                       ]}
                     >
                       <Text
-                        variant="caption"
+                        variant="captionStrong"
                         color={record ? 'primaryText' : 'text'}
-                        style={[styles.bold, styles.tabular]}
+                        style={[styles.tabular]}
                       >
                         {text}
                       </Text>
@@ -345,9 +341,6 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
   semibold: {
     fontFamily: fonts.bold,
