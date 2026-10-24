@@ -2,7 +2,7 @@ import type { LibraryExercise } from '@/exercises/library';
 import { minutesAndSeconds } from '@/workouts/format';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
-import type { SetValues } from './session';
+import type { SetValues } from './values';
 
 export type SetField = keyof SetValues;
 

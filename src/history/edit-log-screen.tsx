@@ -11,8 +11,9 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { setKindOf, type SetField, type SetKind } from '@/sessions/fields';
-import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sessions/set-table';
+import { setKindOf, type SetField, type SetKind } from '@/sets/fields';
+import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-table';
+import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { useWorkouts } from '@/workouts/workouts';
@@ -23,7 +24,6 @@ import {
   useLogSummary,
   type LoggedExercise,
   type LogSummary,
-  type SetValues,
   withSkipped,
 } from './history';
 

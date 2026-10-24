@@ -4,17 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Icon } from '@/components/ui/icon';
 import { HistoryButton } from '@/components/ui/history-button';
+import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
-import { Screen } from '@/components/ui/screen';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
-import { summarizeSets } from '@/history/exercise-summary';
 import { useUserId } from '@/providers/session-provider';
+import { summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { AddSetButton, SetHeader } from '@/sets/set-table';
 import { fonts, useTheme } from '@/theme';
 import {
   minutesAndSeconds,
@@ -23,7 +25,6 @@ import {
   useWorkoutName,
 } from '@/workouts/format';
 
-import { describeSet, setKindOf } from './fields';
 import { newRecords } from './records';
 import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
@@ -42,7 +43,6 @@ import {
   type SessionExercise,
 } from './session';
 import { SetRow } from './set-row';
-import { AddSetButton, SetHeader } from './set-table';
 import { useNow } from './use-now';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */

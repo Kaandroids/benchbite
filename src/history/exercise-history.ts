@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
+import { RECORD_KINDS, type RecordKind } from '@/sets/records';
+import type { SetValues } from '@/sets/values';
 import type { Workout } from '@/workouts/workouts';
 
-import { LOGS_KEY, type SetValues } from './history';
-import { RECORD_KINDS, type RecordKind } from './record-kinds';
+import { LOGS_KEY } from './history';
 
 /** A set's place in its workout: the exercise's place, and the set's place within it, from 0. */
 export type SetPlace = { exercise: number; set: number };

@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
 import { useNumberFormat } from '@/i18n/units';
-import type { SetKind } from '@/sessions/fields';
+import type { SetKind } from '@/sets/fields';
 import { minutesAndSeconds } from '@/workouts/format';
 
-import type { ExerciseRecord, ProgressPoint } from './exercise-history';
+import type { ProgressPoint } from './exercise-history';
 import type { Scale } from './progress-chart';
 
 /** What the progress chart can show, depending on what the exercise records. */
@@ -131,31 +131,5 @@ export function useMetricFormat() {
     },
     tick: (metric: ProgressMetric, value: number) =>
       scaleOf(metric) === 'time' ? time(value) : kilograms(value),
-  };
-}
-
-/** A record's value, such as "85 kg", "80 kg × 8", "1:15" or "3:40 /km". */
-export function useRecordFormat() {
-  const { t } = useTranslation();
-  const { format } = useNumberFormat();
-  const kilograms = (value: number) => `${format(value, { maximumFractionDigits: 1 })} kg`;
-  return ({ kind, value, set }: Pick<ExerciseRecord, 'kind' | 'value' | 'set'>) => {
-    switch (kind) {
-      case 'heaviest':
-        return kilograms(value);
-      case 'one_rep_max':
-        return kilograms(Math.round(value));
-      case 'best_set':
-        return `${kilograms(set.weightKg ?? 0)} × ${set.reps ?? 0}`;
-      case 'most_reps':
-        return format(value);
-      case 'longest_time':
-      case 'most_time':
-        return minutesAndSeconds(value);
-      case 'longest_distance':
-        return `${format(value)} m`;
-      case 'best_pace':
-        return t('exerciseHistory.pace', { time: minutesAndSeconds(Math.round(value)) });
-    }
   };
 }

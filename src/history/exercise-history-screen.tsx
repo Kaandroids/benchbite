@@ -11,12 +11,13 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
 import { useShortDateFormat } from '@/i18n/dates';
-import { describeSet, setKindOf } from '@/sessions/fields';
+import { shortSet, summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
-import { shortSet, summarizeSets } from './exercise-summary';
 import { recordSets, useExerciseHistory, type ExerciseRecord } from './exercise-history';
 import { useTotalFormat } from './format';
 import { ProgressChart } from './progress-chart';
@@ -29,7 +30,6 @@ import {
   scaleOf,
   TIME_RANGES,
   useMetricFormat,
-  useRecordFormat,
   type ProgressMetric,
   type TimeRange,
 } from './record-format';

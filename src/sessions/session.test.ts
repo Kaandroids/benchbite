@@ -1,5 +1,6 @@
 import { Storage } from 'expo-sqlite/kv-store';
 
+import { MAX_SETS } from '@/sets/values';
 import { act, renderHook } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
@@ -10,7 +11,6 @@ import {
   endSession,
   isLeftOpen,
   lastActivity,
-  MAX_SETS,
   MAX_WORKOUT_MS,
   resetSessionStore,
   sessionTotals,

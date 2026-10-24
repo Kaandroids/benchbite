@@ -7,7 +7,7 @@ import { fonts, typography, useTheme } from '@/theme';
 import { minutesAndSeconds } from '@/workouts/format';
 
 import { describeSet, parseTime, SET_LIMITS, type SetField, type SetKind } from './fields';
-import { MAX_SETS, type SetValues } from './session';
+import { MAX_SETS, type SetValues } from './values';
 
 // The table of an exercise's sets, while logging a workout and when editing a finished one: a
 // header, a line for each set and a button that adds one.

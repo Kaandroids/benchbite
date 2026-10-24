@@ -11,14 +11,14 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary } from '@/exercises/library';
 import { useNumberFormat } from '@/i18n/units';
-import { describeSet, setKindOf } from '@/sessions/fields';
-import type { SetValues } from '@/sessions/session';
+import { shortSet, summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 
-import { byExercise, doneOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
-import { shortSet, summarizeSets } from './exercise-summary';
 import { useTotalFormat } from './format';
+import { byExercise, doneOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
 
 // The width the buttons beside an exercise take, with the space before them.
 const BUTTON_ROOM = 40;

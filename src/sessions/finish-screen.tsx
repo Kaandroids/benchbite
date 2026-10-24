@@ -10,17 +10,17 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useExerciseLibrary } from '@/exercises/library';
-import { useRecordFormat } from '@/history/record-format';
 import { useDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useUserId } from '@/providers/session-provider';
+import { summarizeSets } from '@/sets/exercise-summary';
+import { describeSet, setKindOf } from '@/sets/fields';
+import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
-import { summarizeSets } from '@/history/exercise-summary';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 import { useWorkouts } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
-import { describeSet, setKindOf } from './fields';
 import { useLogWorkout } from './logs';
 import { newRecords } from './records';
 import {

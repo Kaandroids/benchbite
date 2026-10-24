@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import type { SetValues } from '@/sets/values';
 import type { FinishedWorkout } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
 
@@ -29,17 +30,7 @@ export type LogSummary = {
 };
 
 /** A set of a finished workout. */
-export type LoggedSet = {
-  exercisePosition: number;
-  exerciseId: string;
-  weightKg: number | null;
-  reps: number | null;
-  seconds: number | null;
-  meters: number | null;
-};
-
-/** The values of a set, without its place in the workout. */
-export type SetValues = Omit<LoggedSet, 'exercisePosition' | 'exerciseId'>;
+export type LoggedSet = SetValues & { exercisePosition: number; exerciseId: string };
 
 /** The sets of one exercise of a finished workout, and its place in the workout from 0. */
 export type LoggedExercise = { place: number; exerciseId: string; sets: LoggedSet[] };

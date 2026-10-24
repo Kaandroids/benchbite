@@ -1,4 +1,4 @@
-import { setKindOf } from '@/sessions/fields';
+import { setKindOf } from '@/sets/fields';
 import { renderHook } from '@/test/render';
 
 import type { ProgressPoint } from './exercise-history';
