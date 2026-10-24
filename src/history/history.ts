@@ -119,19 +119,42 @@ function toSummary(row: SummaryRow): LogSummary {
   };
 }
 
-/** Finished workouts, latest first: `count` of them, after skipping the latest `offset`. */
-export async function fetchLogSummaries(count: number, offset = 0): Promise<LogSummary[]> {
-  const { data, error } = await supabase
-    .from('workout_log_summaries')
-    .select('*')
-    // By id too, so that pages do not overlap or miss workouts that finished at the same time.
+/**
+ * Where a page of finished workouts ends: the last one's finish time as the database has it, which
+ * is finer than a `Date` keeps, and its id.
+ */
+export type LogCursor = { finishedAt: string; id: number };
+
+/** A page of finished workouts, and where the next one starts unless this one was the last. */
+export type LogPage = { logs: LogSummary[]; next?: LogCursor };
+
+/** The latest `count` finished workouts, or the `count` before `after`, latest first. */
+export async function fetchLogSummaries(count: number, after?: LogCursor): Promise<LogPage> {
+  let query = supabase.from('workout_log_summaries').select('*');
+  if (after) {
+    // After the last workout shown rather than after a number of them, so that a workout saved or
+    // deleted on another device meanwhile does not shift the pages.
+    query = query.or(
+      `finished_at.lt."${after.finishedAt}",and(finished_at.eq."${after.finishedAt}",id.lt.${after.id})`,
+    );
+  }
+  const { data, error } = await query
+    // By id too, so that workouts that finished at the same time have an order.
     .order('finished_at', { ascending: false })
     .order('id', { ascending: false })
-    .range(offset, offset + count - 1);
+    .limit(count);
   if (error) {
     throw error;
   }
-  return data.map(toSummary);
+  const last = data[data.length - 1];
+  return {
+    logs: data.map(toSummary),
+    // A short page is the last one.
+    next:
+      last && data.length === count
+        ? { finishedAt: last.finished_at ?? '', id: last.id ?? 0 }
+        : undefined,
+  };
 }
 
 /** How many finished workouts a page of the history loads. */
@@ -142,10 +165,8 @@ export function useLogSummaries() {
   return useInfiniteQuery({
     queryKey: [...LOGS_KEY, 'all'],
     queryFn: ({ pageParam }) => fetchLogSummaries(LOG_PAGE_SIZE, pageParam),
-    initialPageParam: 0,
-    // A short page is the last one.
-    getNextPageParam: (lastPage, pages) =>
-      lastPage.length < LOG_PAGE_SIZE ? undefined : pages.length * LOG_PAGE_SIZE,
+    initialPageParam: undefined as LogCursor | undefined,
+    getNextPageParam: (lastPage) => lastPage.next,
   });
 }
 
@@ -155,7 +176,7 @@ export function useRecentLogs(count: number) {
     queryKey: [...LOGS_KEY, 'recent', count],
     queryFn: async () => {
       const [latest, week] = await Promise.all([
-        fetchLogSummaries(count),
+        fetchLogSummaries(count).then((page) => page.logs),
         supabase
           .from('workout_logs')
           .select('id', { count: 'exact', head: true })

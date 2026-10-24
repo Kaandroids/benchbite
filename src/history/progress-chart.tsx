@@ -58,7 +58,9 @@ export function ticksOf(values: readonly number[], scale: Scale): number[] {
   const max = Math.max(...values);
   // A single value sits in the middle, a step from the lines above and below it.
   const step = niceStep((max - min) / 2 || Math.max(1, Math.abs(max) / 10), scale);
-  const low = Math.floor((min === max ? min - step : min) / step) * step;
+  const below = Math.floor((min === max ? min - step : min) / step) * step;
+  // Not below zero for values that cannot be negative, such as a small weight or distance.
+  const low = min >= 0 ? Math.max(0, below) : below;
   const high = Math.ceil((min === max ? max + step : max) / step) * step;
   const ticks: number[] = [];
   for (let tick = low; tick <= high + step / 2; tick += step) {

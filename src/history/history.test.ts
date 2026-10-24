@@ -43,7 +43,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('fetchLogSummaries', () => {
   it('reads a page of the summaries, latest first', async () => {
-    const range = jest.fn().mockResolvedValue({
+    const limit = jest.fn().mockResolvedValue({
       data: [
         {
           id: 7,
@@ -64,16 +64,27 @@ describe('fetchLogSummaries', () => {
       error: null,
     });
     const order = jest.fn();
-    const query = { order, range };
+    const or = jest.fn();
+    const query = { or, order, limit };
     order.mockReturnValue(query);
+    or.mockReturnValue(query);
     jest.mocked(supabase.from).mockReturnValue({ select: () => query } as never);
-    const [summary] = await fetchLogSummaries(30, 60);
+    const {
+      logs: [summary],
+      next,
+    } = await fetchLogSummaries(30, { finishedAt: '2026-10-24T10:00:00.123456+00:00', id: 9 });
     expect(supabase.from).toHaveBeenCalledWith('workout_log_summaries');
+    expect(or).toHaveBeenCalledWith(
+      'finished_at.lt."2026-10-24T10:00:00.123456+00:00",' +
+        'and(finished_at.eq."2026-10-24T10:00:00.123456+00:00",id.lt.9)',
+    );
     expect(order.mock.calls).toEqual([
       ['finished_at', { ascending: false }],
       ['id', { ascending: false }],
     ]);
-    expect(range).toHaveBeenCalledWith(60, 89);
+    expect(limit).toHaveBeenCalledWith(30);
+    // A short page is the last one.
+    expect(next).toBeUndefined();
     expect(summary).toEqual({
       id: 7,
       workoutId: null,
@@ -238,43 +249,46 @@ describe('withSkipped', () => {
 });
 
 describe('useLogSummaries', () => {
-  it('loads a page at a time until a page is short', async () => {
+  it('loads each page after the last workout of the one before, until a page is short', async () => {
     const log = (id: number) => ({
       id,
       started_at: '2026-10-23T16:00:00Z',
-      finished_at: '2026-10-23T17:00:00Z',
+      finished_at: `2026-10-23T17:00:00.${String(id).padStart(6, '0')}+00:00`,
     });
-    const range = jest
+    const limit = jest
       .fn()
       .mockResolvedValueOnce({
         data: Array.from({ length: 30 }, (_, i) => log(100 - i)),
         error: null,
       })
       .mockResolvedValueOnce({ data: [log(1)], error: null });
-    const summaries = { order: () => summaries, range };
+    const or = jest.fn();
+    const summaries = { order: () => summaries, or, limit };
+    or.mockReturnValue(summaries);
     jest.mocked(supabase.from).mockReturnValue({ select: () => summaries } as never);
     const { result } = await renderHook(() => useLogSummaries(), {
       queryClient: createTestQueryClient(),
     });
     await waitFor(() => expect(result.current.hasNextPage).toBe(true));
+    expect(or).not.toHaveBeenCalled();
     await act(async () => {
       await result.current.fetchNextPage();
     });
     await waitFor(() => expect(result.current.data?.pages).toHaveLength(2));
-    expect(range.mock.calls).toEqual([
-      [0, 29],
-      [30, 59],
-    ]);
-    expect(result.current.data?.pages.flat()).toHaveLength(31);
+    expect(or).toHaveBeenCalledWith(
+      'finished_at.lt."2026-10-23T17:00:00.000071+00:00",' +
+        'and(finished_at.eq."2026-10-23T17:00:00.000071+00:00",id.lt.71)',
+    );
+    expect(result.current.data?.pages.flatMap((page) => page.logs)).toHaveLength(31);
     expect(result.current.hasNextPage).toBe(false);
   });
 });
 
 describe('useRecentLogs', () => {
   it('loads the latest logs and counts this week', async () => {
-    const range = jest.fn().mockResolvedValue({ data: [], error: null });
+    const limit = jest.fn().mockResolvedValue({ data: [], error: null });
     const gte = jest.fn().mockResolvedValue({ count: 2, error: null });
-    const summaries = { order: () => summaries, range };
+    const summaries = { order: () => summaries, limit };
     jest
       .mocked(supabase.from)
       .mockImplementation(
@@ -287,7 +301,7 @@ describe('useRecentLogs', () => {
       queryClient: createTestQueryClient(),
     });
     await waitFor(() => expect(result.current.data).toEqual({ latest: [], thisWeek: 2 }));
-    expect(range).toHaveBeenCalledWith(0, 2);
+    expect(limit).toHaveBeenCalledWith(3);
   });
 });
 

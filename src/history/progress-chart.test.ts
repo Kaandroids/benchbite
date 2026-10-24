@@ -37,4 +37,10 @@ describe('ticksOf', () => {
     expect(ticksOf([80], 'decimal')).toEqual([70, 80, 90]);
     expect(ticksOf([2], 'whole')).toEqual([1, 2, 3]);
   });
+
+  it('does not go below zero for values that are not negative', () => {
+    expect(ticksOf([0.5], 'decimal')).toEqual([0, 1, 2]);
+    expect(ticksOf([0], 'whole')).toEqual([0, 1]);
+    expect(ticksOf([-5, 5], 'decimal')).toEqual([-5, 0, 5]);
+  });
 });
