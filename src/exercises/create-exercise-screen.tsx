@@ -203,7 +203,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           maxLength={80}
           placeholder={t('customExercise.namePlaceholder')}
           placeholderTextColor={colors.placeholder}
-          style={[field, styles.bold]}
+          style={[field, { fontFamily: typography.label.fontFamily }]}
         />
       </View>
 
@@ -427,9 +427,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 }
 
 const styles = StyleSheet.create({
-  bold: {
-    fontFamily: fonts.extraBold,
-  },
   label: {
     fontFamily: fonts.extraBold,
     letterSpacing: 0.4,

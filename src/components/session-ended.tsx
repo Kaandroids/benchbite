@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 type SessionEndedProps = {
   onStartAgain: () => Promise<void>;
@@ -45,7 +45,7 @@ export function SessionEnded({ onStartAgain }: SessionEndedProps) {
           <View style={styles.login}>
             <Text color="textMuted">{t('sessionEnded.haveAccount')} </Text>
             <Pressable accessibilityRole="button" hitSlop={8} onPress={() => {}}>
-              <Text color="primaryText" style={styles.bold}>
+              <Text variant="label" color="primaryText">
                 {t('sessionEnded.logIn')}
               </Text>
             </Pressable>
@@ -71,8 +71,5 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  bold: {
-    fontFamily: fonts.extraBold,
   },
 });

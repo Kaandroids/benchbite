@@ -209,9 +209,9 @@ export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps)
             >
               <DayMark day={day} state={dayState(day, todayOn)} />
               <Text
-                variant="caption"
+                variant={isToday ? 'captionStrong' : 'caption'}
                 color={isToday ? 'primaryText' : 'textMuted'}
-                style={isToday ? styles.today : styles.bold}
+                style={isToday ? null : styles.bold}
               >
                 {weekdayName(day.weekday)}
               </Text>
@@ -234,9 +234,6 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontFamily: fonts.bold,
-  },
-  today: {
-    fontFamily: fonts.extraBold,
   },
   week: {
     flexDirection: 'row',
