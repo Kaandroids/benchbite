@@ -10,6 +10,15 @@
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
   },
+  "sessionEnded": {
+    "title": "Misafir oturumun sona erdi",
+    "message": "Bu cihaz artık misafir profilinle giriş yapamadı, bu yüzden önceki planın ve antrenmanların burada açılamıyor.\n\nYeni bir misafir profiliyle baştan başlayacaksın.",
+    "startAgain": "Baştan başla",
+    "createAccount": "Hesap oluştur",
+    "haveAccount": "Zaten hesabın var mı?",
+    "logIn": "Giriş yap",
+    "accountNote": "Bir hesapla planın ve antrenmanların her cihazda seninle kalır."
+  },
   "loadError": {
     "title": "Yüklenemedi",
     "message": "Bağlantını kontrol edip tekrar dene."

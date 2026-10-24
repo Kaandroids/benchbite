@@ -151,6 +151,7 @@ beforeEach(() => {
     status: 'ready',
     session: { user: { id: 'user-1' } } as never,
     retry: jest.fn(),
+    startAgain: jest.fn(),
   });
 });
 
@@ -222,6 +223,7 @@ describe('root layout', () => {
       status: 'error',
       error: new Error('offline'),
       retry: jest.fn(),
+      startAgain: jest.fn(),
     });
     setOnboarding('welcome');
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
@@ -230,7 +232,9 @@ describe('root layout', () => {
   });
 
   it('shows nothing while the session is loading', async () => {
-    jest.mocked(useSession).mockReturnValue({ status: 'loading', retry: jest.fn() });
+    jest
+      .mocked(useSession)
+      .mockReturnValue({ status: 'loading', retry: jest.fn(), startAgain: jest.fn() });
     setOnboarding('welcome');
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();

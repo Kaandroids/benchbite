@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
+import { Storage } from 'expo-sqlite/kv-store';
 import {
   createContext,
   use,
@@ -11,12 +12,42 @@ import {
 import { supabase } from '@/lib/supabase';
 
 type SessionState =
-  { status: 'loading' } | { status: 'ready'; session: Session } | { status: 'error'; error: Error };
+  | { status: 'loading' }
+  | { status: 'ready'; session: Session }
+  | { status: 'error'; error: Error }
+  /** The session of the user who used this device ended, and with it the way to their data. */
+  | { status: 'ended' };
 
 type SessionContextValue = SessionState & {
   /** Tries the anonymous sign-in again after it failed. */
   retry: () => Promise<void>;
+  /** After a session ended, starts over as a new guest. */
+  startAgain: () => Promise<void>;
 };
+
+/** The id of the user signed in on this device last, to tell a first start from a lost session. */
+const LAST_USER_KEY = 'session.last-user';
+
+function lastUser(): string | null {
+  try {
+    return Storage.getItemSync(LAST_USER_KEY);
+  } catch (error) {
+    console.warn('Could not read the last user', error);
+    return null;
+  }
+}
+
+function rememberUser(userId: string | null) {
+  try {
+    if (userId) {
+      Storage.setItemSync(LAST_USER_KEY, userId);
+    } else {
+      Storage.removeItemSync(LAST_USER_KEY);
+    }
+  } catch (error) {
+    console.warn('Could not save the last user', error);
+  }
+}
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
@@ -38,7 +69,9 @@ function signInAnonymously(): Promise<void> {
 
 /**
  * Makes sure there is always a signed-in user. People can use the app without an account, so
- * when no session is stored, a new anonymous user is created.
+ * when no session is stored, a new anonymous user is created. When the session of a user who
+ * used this device ends, as when it can no longer be refreshed, their data is out of reach: the
+ * app says so first instead of quietly starting over as someone new.
  */
 export function SessionProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
@@ -60,7 +93,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
+        rememberUser(session.user.id);
         setState({ status: 'ready', session });
+        return;
+      }
+      if (lastUser()) {
+        setState({ status: 'ended' });
         return;
       }
       // There is no stored session (first launch) or the session ended. Calling Supabase inside
@@ -70,8 +108,16 @@ export function SessionProvider({ children }: PropsWithChildren) {
     return () => subscription.unsubscribe();
   }, [startAnonymousSession]);
 
+  const startAgain = useCallback(async () => {
+    rememberUser(null);
+    setState({ status: 'loading' });
+    await startAnonymousSession();
+  }, [startAnonymousSession]);
+
   return (
-    <SessionContext value={{ ...state, retry: startAnonymousSession }}>{children}</SessionContext>
+    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain }}>
+      {children}
+    </SessionContext>
   );
 }
 

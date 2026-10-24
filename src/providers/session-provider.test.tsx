@@ -1,10 +1,22 @@
 import type { Session } from '@supabase/supabase-js';
+import { Storage } from 'expo-sqlite/kv-store';
 
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
 import { SessionProvider, useSession } from './session-provider';
 
+jest.mock('expo-sqlite/kv-store', () => {
+  const items = new Map<string, string>();
+  return {
+    Storage: {
+      getItemSync: (key: string) => items.get(key) ?? null,
+      setItemSync: (key: string, value: string) => void items.set(key, value),
+      removeItemSync: (key: string) => void items.delete(key),
+      clearSync: () => items.clear(),
+    },
+  };
+});
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
@@ -36,6 +48,7 @@ function renderSession() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (Storage as unknown as { clearSync: () => void }).clearSync();
   listeners = [];
   auth.onAuthStateChange.mockImplementation((listener) => {
     listeners.push(listener as AuthListener);
@@ -109,6 +122,35 @@ describe('SessionProvider', () => {
     auth.signInAnonymously.mockResolvedValue({ data: {}, error: null } as never);
     await act(() => result.current.retry());
     expect(auth.signInAnonymously).toHaveBeenCalledTimes(2);
+  });
+
+  it('says so when the session of the last user ends, instead of signing in as someone new', async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await emit(null);
+    expect(result.current.status).toBe('ended');
+    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    expect(auth.signInAnonymously).not.toHaveBeenCalled();
+  });
+
+  it('remembers the last user across starts of the app', async () => {
+    const first = await renderSession();
+    await emit(SESSION);
+    await first.unmount();
+    listeners = [];
+    const { result } = await renderSession();
+    await emit(null);
+    expect(result.current.status).toBe('ended');
+  });
+
+  it('starts over as a new guest when asked, and then signs in quietly again', async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await emit(null);
+    await act(() => result.current.startAgain());
+    expect(auth.signInAnonymously).toHaveBeenCalledTimes(1);
+    await emit({ ...SESSION, user: { id: 'user-2' } } as Session);
+    expect(result.current.status).toBe('ready');
   });
 
   it('unsubscribes from auth changes on unmount', async () => {

@@ -37,13 +37,16 @@ let appStateListener: ((state: AppStateStatus) => void) | undefined;
 const removeAppStateListener = jest.fn();
 
 function signIn(userId: string | null) {
-  jest
-    .mocked(useSession)
-    .mockReturnValue(
-      userId
-        ? { status: 'ready', session: { user: { id: userId } } as Session, retry: jest.fn() }
-        : { status: 'loading', retry: jest.fn() },
-    );
+  jest.mocked(useSession).mockReturnValue(
+    userId
+      ? {
+          status: 'ready',
+          session: { user: { id: userId } } as Session,
+          retry: jest.fn(),
+          startAgain: jest.fn(),
+        }
+      : { status: 'loading', retry: jest.fn(), startAgain: jest.fn() },
+  );
 }
 
 function storedDraft(userId: string) {
