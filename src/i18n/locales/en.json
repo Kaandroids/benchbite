@@ -60,7 +60,11 @@
       "done": "Done for today",
       "next": "Next: {{day}} · {{session}}",
       "tomorrow": "tomorrow",
-      "open": "Opens the workout"
+      "open": "Opens the workout",
+      "titleMany": "Today's workouts",
+      "doneOf": "{{done}} of {{count}} done",
+      "movedFrom": "Moved from {{day}}",
+      "finished": "Done"
     },
     "weight": {
       "title": "Weight",

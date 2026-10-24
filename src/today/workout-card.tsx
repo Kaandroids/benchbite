@@ -7,46 +7,61 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { toIsoDate, useWeekdayFormat } from '@/i18n/dates';
-import { useTheme } from '@/theme';
+import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
+import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
-import { nextSession } from '@/workouts/next-session';
+import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
 type WorkoutCardProps = {
-  plan: { sessions: WeekSession[] };
+  /** The week after its moves, with the workouts finished in it (ADR 0028). */
+  schedule: WeekSchedule;
+  /** The plan's sessions, for the next workout after this week. */
+  sessions: WeekSession[];
   today: Date;
-  /** The days of the workouts finished this week, as ISO dates. */
-  finished: string[];
 };
 
-/** The session after today, for a day whose workout is done. */
-function sessionAfter<S extends { weekday: number }>(plan: { sessions: S[] }, today: Date) {
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const next = nextSession(plan, tomorrow);
-  return next && { session: next.session, inDays: next.inDays + 1 };
+function openWorkout(session: WeekSession) {
+  router.push({ pathname: '/workout/[id]', params: { id: String(session.workoutId) } });
+}
+
+/** "Moved from Monday", for a workout moved to today. */
+function MovedFrom({ date }: { date: string }) {
+  const { t } = useTranslation();
+  const { colors, radii } = useTheme();
+  const weekdayName = useWeekdayFormat();
+  return (
+    <View style={[styles.chip, { backgroundColor: colors.selected, borderRadius: radii.full }]}>
+      <Icon name="arrow" size={12} color="primaryText" />
+      <Text variant="caption" color="primaryText" style={styles.bold}>
+        {t('today.workout.movedFrom', {
+          day: weekdayName(isoWeekday(new Date(`${date}T00:00`))),
+        })}
+      </Text>
+    </View>
+  );
 }
 
 /**
- * Today's workout with its size, which opens the workout. On a rest day, or once a workout is
- * done today, it says when the next one is.
+ * Today's workouts. One still to do shows with its size and opens the workout; several show as a
+ * list, each done or to open. On a rest day, or once today's are done, it says when the next ones
+ * are.
  */
-export function WorkoutCard({ plan, today, finished }: WorkoutCardProps) {
+export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
-  const done = finished.includes(toIsoDate(today));
-  const upcoming = done ? sessionAfter(plan, today) : nextSession(plan, today);
-  const session = upcoming?.inDays === 0 ? upcoming.session : null;
+  const day = schedule.days[isoWeekday(today) - 1];
+  const todays = day?.workouts.filter((workout) => workout.status !== 'skipped') ?? [];
+  const ahead = todays.filter((workout) => workout.status === 'planned');
 
-  if (!upcoming) {
-    return null;
-  }
-
-  if (!session) {
-    const { inDays, session: next } = upcoming;
+  if (ahead.length === 0) {
+    const next = nextWorkouts(schedule, sessions, today);
+    if (!next) {
+      return null;
+    }
+    const done = todays.length > 0;
     return (
       <Card entering={FadeInDown.delay(100).duration(400)}>
         <View style={[styles.row, { gap: spacing.md }]}>
@@ -57,8 +72,11 @@ export function WorkoutCard({ plan, today, finished }: WorkoutCardProps) {
             </Text>
             <Text color="textMuted">
               {t('today.workout.next', {
-                day: inDays === 1 ? t('today.workout.tomorrow') : weekdayName(next.weekday),
-                session: workoutName(next),
+                day:
+                  next.inDays === 1
+                    ? t('today.workout.tomorrow')
+                    : weekdayName(((isoWeekday(today) + next.inDays - 1) % 7) + 1),
+                session: next.sessions.map(workoutName).join(', '),
               })}
             </Text>
           </View>
@@ -67,34 +85,95 @@ export function WorkoutCard({ plan, today, finished }: WorkoutCardProps) {
     );
   }
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityHint={t('today.workout.open')}
-      onPress={() =>
-        router.push({ pathname: '/workout/[id]', params: { id: String(session.workoutId) } })
-      }
-      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-    >
-      <Card entering={FadeInDown.delay(100).duration(400)}>
-        <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile name="dumbbell" />
-          <View style={styles.text}>
-            <Text variant="caption" color="primaryText">
-              {t('today.workout.title')}
-            </Text>
-            <Text variant="headline">{workoutName(session)}</Text>
+  if (todays.length === 1) {
+    const [{ session, movedFrom }] = ahead as [PlannedWorkout];
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint={t('today.workout.open')}
+        onPress={() => openWorkout(session)}
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+      >
+        <Card entering={FadeInDown.delay(100).duration(400)}>
+          <View style={[styles.row, { gap: spacing.md }]}>
+            <IconTile name="dumbbell" />
+            <View style={styles.text}>
+              <Text variant="caption" color="primaryText">
+                {t('today.workout.title')}
+              </Text>
+              <Text variant="headline">{workoutName(session)}</Text>
+            </View>
+            <Icon name="forward" color="textMuted" />
           </View>
-          <Icon name="forward" color="textMuted" />
-        </View>
-        <Text color="textMuted">
-          {t('workout.session', {
-            count: session.exercises.length,
-            minutes: session.estimatedMinutes,
-          })}
+          <View style={[styles.wrap, { gap: spacing.sm }]}>
+            {movedFrom ? <MovedFrom date={movedFrom} /> : null}
+            <Text color="textMuted">
+              {t('workout.session', {
+                count: session.exercises.length,
+                minutes: session.estimatedMinutes,
+              })}
+            </Text>
+          </View>
+        </Card>
+      </Pressable>
+    );
+  }
+
+  const done = todays.length - ahead.length;
+  return (
+    <Card entering={FadeInDown.delay(100).duration(400)}>
+      <View style={styles.text}>
+        <Text variant="caption" color="primaryText">
+          {t('today.workout.titleMany')}
         </Text>
-      </Card>
-    </Pressable>
+        <Text variant="headline">{t('today.workout.doneOf', { done, count: todays.length })}</Text>
+      </View>
+      {todays.map(({ session, status, movedFrom }) => {
+        const content = (
+          <View
+            style={[
+              styles.row,
+              { gap: spacing.md, paddingTop: spacing.md, borderTopWidth: 1 },
+              { borderTopColor: colors.border },
+            ]}
+          >
+            {status === 'done' ? (
+              <View style={[styles.doneMark, { backgroundColor: colors.primaryButton }]}>
+                <Icon name="check" size={18} color="onPrimary" />
+              </View>
+            ) : (
+              <IconTile name="dumbbell" />
+            )}
+            <View style={styles.text}>
+              <Text variant="bodyStrong">{workoutName(session)}</Text>
+              {movedFrom && status !== 'done' ? <MovedFrom date={movedFrom} /> : null}
+              <Text variant="caption" color="textMuted">
+                {status === 'done'
+                  ? t('today.workout.finished')
+                  : t('workout.session', {
+                      count: session.exercises.length,
+                      minutes: session.estimatedMinutes,
+                    })}
+              </Text>
+            </View>
+            {status === 'done' ? null : <Icon name="forward" color="textMuted" />}
+          </View>
+        );
+        return status === 'done' ? (
+          <View key={session.workoutId}>{content}</View>
+        ) : (
+          <Pressable
+            key={session.workoutId}
+            accessibilityRole="button"
+            accessibilityHint={t('today.workout.open')}
+            onPress={() => openWorkout(session)}
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          >
+            {content}
+          </Pressable>
+        );
+      })}
+    </Card>
   );
 }
 
@@ -103,8 +182,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  wrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
   text: {
     flex: 1,
     gap: 2,
+  },
+  bold: {
+    fontFamily: fonts.extraBold,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  doneMark: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

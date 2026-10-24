@@ -60,7 +60,11 @@
       "done": "Bugünlük tamam",
       "next": "Sıradaki: {{day}} · {{session}}",
       "tomorrow": "yarın",
-      "open": "Antrenmanı açar"
+      "open": "Antrenmanı açar",
+      "titleMany": "Bugünün antrenmanları",
+      "doneOf": "{{count}} antrenmandan {{done}} tamamlandı",
+      "movedFrom": "{{day}} gününden taşındı",
+      "finished": "Tamamlandı"
     },
     "weight": {
       "title": "Kilo",

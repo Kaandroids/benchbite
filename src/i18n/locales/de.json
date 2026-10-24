@@ -60,7 +60,11 @@
       "done": "Für heute geschafft",
       "next": "Nächstes: {{day}} · {{session}}",
       "tomorrow": "morgen",
-      "open": "Öffnet das Workout"
+      "open": "Öffnet das Workout",
+      "titleMany": "Heutige Trainings",
+      "doneOf": "{{done}} von {{count}} erledigt",
+      "movedFrom": "Verschoben von {{day}}",
+      "finished": "Erledigt"
     },
     "weight": {
       "title": "Gewicht",
