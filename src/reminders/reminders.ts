@@ -89,6 +89,16 @@ export async function cancelReminders() {
 }
 
 /**
+ * The time on a day, YYYY-MM-DD, at `minutes` after midnight on the clock. Set from the clock's
+ * fields rather than added to midnight, so that it stays right on the days the clocks change.
+ */
+function timeOn(date: string, minutes: number): number {
+  const day = fromIsoDate(date);
+  day.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return day.getTime();
+}
+
+/**
  * Replaces the workout reminders with one for each given day, at the given time in minutes after
  * midnight; a day whose time has passed gets none. Delivery may be a few minutes late on Android,
  * which does not matter for a reminder and avoids the exact alarm permission.
@@ -97,10 +107,7 @@ export async function scheduleReminders(reminders: Reminder[], minutes: number, 
   await cancelReminders();
   await Promise.all(
     reminders
-      .map((reminder) => ({
-        reminder,
-        at: fromIsoDate(reminder.date).getTime() + minutes * 60_000,
-      }))
+      .map((reminder) => ({ reminder, at: timeOn(reminder.date, minutes) }))
       .filter(({ at }) => at > now)
       .map(({ reminder, at }) =>
         scheduleNotificationAsync({

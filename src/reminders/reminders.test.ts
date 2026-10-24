@@ -192,6 +192,21 @@ describe('scheduleReminders', () => {
     expect(schedule).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the time on the days the clocks change', async () => {
+    const zone = process.env.TZ;
+    process.env.TZ = 'Europe/Berlin';
+    try {
+      // The clocks go back on October 25 and forward on March 28.
+      await scheduleReminders([reminder('2026-10-25'), reminder('2027-03-28')], 8 * 60, 0);
+      const hours = schedule.mock.calls.map(([request]) =>
+        new Date((request.trigger as { date: number }).date).getHours(),
+      );
+      expect(hours).toEqual([8, 8]);
+    } finally {
+      process.env.TZ = zone;
+    }
+  });
+
   it('only cancels when there are no days', async () => {
     getAll.mockResolvedValue(scheduled('workout-reminder-2026-10-22'));
     await scheduleReminders([], 18 * 60, NOW);
