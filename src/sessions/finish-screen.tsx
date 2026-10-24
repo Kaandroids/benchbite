@@ -19,7 +19,7 @@ import { describeSet, setKindOf } from '@/sets/fields';
 import { useRecordFormat } from '@/sets/records';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
-import { useWorkouts } from '@/workouts/workouts';
+import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
 import { useLogWorkout } from './logs';
@@ -136,7 +136,7 @@ export function FinishScreen({ next }: { next?: number }) {
       await logWorkout.mutateAsync(toLog(session, finishedAt));
       endSession();
       router.dismissAll();
-      const following = workouts.data?.find((workout) => workout.id === next);
+      const following = findWorkout(workouts.data, next);
       if (following) {
         await startWorkout(following);
       }

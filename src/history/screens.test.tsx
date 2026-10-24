@@ -28,7 +28,10 @@ jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
 }));
-jest.mock('@/workouts/workouts', () => ({ useWorkouts: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({
+  ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
+  useWorkouts: jest.fn(),
+}));
 jest.mock('./history', () => ({
   ...jest.requireActual<typeof import('./history')>('./history'),
   useLogSummaries: jest.fn(),

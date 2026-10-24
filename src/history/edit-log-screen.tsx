@@ -18,7 +18,7 @@ import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-tab
 import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
-import { useWorkouts } from '@/workouts/workouts';
+import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import {
   useEditLog,
@@ -75,7 +75,7 @@ export function EditLogScreen({ id }: { id: number }) {
   const log = summary.data;
   // The exercises the workout had, so that a skipped one can get sets afterwards. Logs saved before
   // they were kept take them from the workout as it is now, as many as it had then.
-  const workout = workouts.data?.find((item) => item.id === log.workoutId);
+  const workout = findWorkout(workouts.data, log.workoutId);
   const planned =
     log.plannedExerciseIds ??
     (workout?.exercises ?? [])

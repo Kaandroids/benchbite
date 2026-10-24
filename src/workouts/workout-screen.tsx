@@ -32,6 +32,7 @@ import {
   useWorkouts,
   type Workout,
   type WorkoutExercise,
+  findWorkout,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -47,7 +48,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const startWorkout = useStartWorkout();
   const remove = useDeleteWorkout();
   const [waiting, setWaiting] = useState<Workout | null>(null);
-  const workout = workouts.data?.find((candidate) => candidate.id === id);
+  const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
   const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';

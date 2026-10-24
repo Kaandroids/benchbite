@@ -20,7 +20,13 @@ import { typography, useTheme } from '@/theme';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { ExerciseSheet } from './exercise-sheet';
 import { useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { useDeleteWorkout, useWorkoutLimits, useSaveWorkout, useWorkouts } from './workouts';
+import {
+  useDeleteWorkout,
+  useWorkoutLimits,
+  useSaveWorkout,
+  useWorkouts,
+  findWorkout,
+} from './workouts';
 
 const ROW_HEIGHT = 76;
 
@@ -41,7 +47,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const longWeekdayName = useWeekdayFormat('long');
   const [editing, setEditing] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const workout = id === undefined ? undefined : workouts.data?.find((item) => item.id === id);
+  const workout = findWorkout(workouts.data, id);
   // A workout from the plan builder is named by its type until the user gives it a name.
   const typeName = workout && workout.name === null ? workoutName(workout) : null;
   const loaded = allLoaded([workouts, library, limits]);
