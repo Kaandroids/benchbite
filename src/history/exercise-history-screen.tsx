@@ -15,6 +15,7 @@ import { useShortDateFormat } from '@/i18n/dates';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
 import { useRecordFormat } from '@/sets/records';
+import { SetChips } from '@/sets/set-chips';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
@@ -292,35 +293,13 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
                   {` · ${total(session.sets)}`}
                 </Text>
               </Text>
-              <View style={[styles.chips, { gap: spacing.xs }]}>
-                {session.sets.map((set, setIndex) => {
-                  const record = marked.get(session.logId)?.has(setIndex) ?? false;
-                  const text = shortSet(set, kind, (values) => describeSet(values, kind));
-                  return (
-                    <View
-                      key={setIndex}
-                      accessibilityLabel={
-                        record ? `${t('exerciseHistory.record')}: ${text}` : undefined
-                      }
-                      style={[
-                        styles.chip,
-                        {
-                          borderRadius: radii.md,
-                          backgroundColor: record ? colors.selected : colors.background,
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="captionStrong"
-                        color={record ? 'primaryText' : 'text'}
-                        style={[styles.tabular]}
-                      >
-                        {text}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
+              <SetChips
+                sets={session.sets.map((set) => ({
+                  text: shortSet(set, kind, (values) => describeSet(values, kind)),
+                }))}
+                marked={(index) => marked.get(session.logId)?.has(index) ?? false}
+                markLabel={t('exerciseHistory.record')}
+              />
             </View>
           </Pressable>
         ))}
@@ -370,13 +349,5 @@ const styles = StyleSheet.create({
   },
   session: {
     flexDirection: 'row',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
 });

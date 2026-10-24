@@ -16,6 +16,7 @@ import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/libra
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
+import { SetChips } from '@/sets/set-chips';
 import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
@@ -29,7 +30,7 @@ const BUTTON_ROOM = 40;
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
   const { t, i18n } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
   const library = useExerciseLibrary();
@@ -179,34 +180,15 @@ export function LogScreen({ id }: { id: number }) {
               </View>
             </View>
             {/* Every set, the best one picked out. */}
-            <View style={[styles.chips, { gap: spacing.xs, paddingRight: BUTTON_ROOM }]}>
-              {exercise.sets.map((set, setIndex) => {
-                const isBest = set === best;
-                return (
-                  <View
-                    key={setIndex}
-                    accessibilityLabel={
-                      isBest ? `${t('history.exercise.best')}: ${describe(set)}` : undefined
-                    }
-                    style={[
-                      styles.chip,
-                      {
-                        borderRadius: radii.md,
-                        backgroundColor: isBest ? colors.selected : colors.background,
-                      },
-                    ]}
-                  >
-                    <Text
-                      variant="captionStrong"
-                      color={isBest ? 'primaryText' : 'text'}
-                      style={[styles.tabular]}
-                    >
-                      {shortSet(set, kind, describe)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+            <SetChips
+              sets={exercise.sets.map((set) => ({
+                text: shortSet(set, kind, describe),
+                spoken: describe(set),
+              }))}
+              marked={(index) => exercise.sets[index] === best}
+              markLabel={t('history.exercise.best')}
+              style={{ paddingRight: BUTTON_ROOM }}
+            />
           </Card>
         );
       })}
@@ -247,14 +229,6 @@ const styles = StyleSheet.create({
   stat: {
     flex: 1,
     alignItems: 'center',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
   },
   buttons: {
     position: 'absolute',
