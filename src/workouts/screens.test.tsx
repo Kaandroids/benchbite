@@ -199,7 +199,7 @@ describe('WorkoutsScreen', () => {
       expect(screen.getByText('Push is still running')).toBeTruthy();
       expect(
         screen.getByText(
-          'You started it 23 minutes ago and logged 1 set. Only one workout can run at a time.',
+          'You started it 23 min ago and logged 1 set. Only one workout can run at a time.',
         ),
       ).toBeTruthy();
 

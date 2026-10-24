@@ -63,6 +63,8 @@ describe('useMetricFormat', () => {
     expect(result.current.value('oneRepMax', 103.3)).toBe('103 kg');
     expect(result.current.value('heaviest', 72.5)).toBe('72.5 kg');
     expect(result.current.value('pace', 220)).toBe('3:40 /km');
+    expect(result.current.value('mostReps', 1)).toBe('1 rep');
+    expect(result.current.value('totalReps', 24)).toBe('24 reps');
     expect(result.current.tick('longest', 90)).toBe('1:30');
   });
 });

@@ -58,7 +58,7 @@ export const lightColors: ColorTokens = {
   placeholder: '#B4B6BC',
   border: '#E3E4E8',
   track: '#ECEDF0',
-  primary: '#FF6A10',
+  primary: '#E05300', // 3.4:1 on iconBackground, the lowest of its pairs
   primaryText: '#C2410C', // 4.8:1 on background
   primaryButton: '#F25A00', // 3.4:1 with white
   primaryButtonLedge: '#C24800',

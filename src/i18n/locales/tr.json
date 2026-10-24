@@ -173,7 +173,8 @@
     },
     "target": {
       "repRange": "{{sets}} × {{min}}–{{max}} tekrar",
-      "reps": "{{sets}} × {{reps}} tekrar",
+      "reps_one": "{{sets}} × {{count}} tekrar",
+      "reps_other": "{{sets}} × {{count}} tekrar",
       "sets": "{{sets}} × {{target}}",
       "seconds": "{{seconds}} sn",
       "minutes": "{{minutes}} dk",
@@ -592,8 +593,8 @@
     "metersOf": "Set {{number}} mesafesi",
     "minimize": "Küçült, antrenman devam eder",
     "finish": "Bitir",
-    "progress": "{{done}}/{{planned}} set",
-    "setsDone": "{{done}}/{{planned}} set",
+    "setsDone_one": "{{done}}/{{count}} set",
+    "setsDone_other": "{{done}}/{{count}} set",
     "best": "en iyi {{set}}",
     "rest": "DİNLENME",
     "restLeft": "Dinlenme, {{time}} kaldı",
@@ -607,11 +608,12 @@
     "inProgress": "DEVAM EDİYOR",
     "resume": "Devam et",
     "running": "Sürüyor",
-    "current": "{{done}}/{{planned}} set · {{exercise}}",
+    "current_one": "{{done}}/{{count}} set · {{exercise}}",
+    "current_other": "{{done}}/{{count}} set · {{exercise}}",
     "busy": {
       "title": "{{name}} hâlâ sürüyor",
-      "message_one": "{{minutes}} dakika önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
-      "message_other": "{{minutes}} dakika önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
+      "message_one": "{{minutes}} dk önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
+      "message_other": "{{minutes}} dk önce başladın ve {{count}} set girdin. Aynı anda tek antrenman sürebilir.",
       "resume": "{{name}} antrenmanına dön",
       "finish": "{{name}} bitir, sonra {{next}} başlat",
       "discard": "{{name}} sil ve {{next}} başlat"
@@ -719,7 +721,8 @@
     "deleteError": "Antrenman silinemedi. Bağlantını kontrol edip tekrar dene.",
     "exercise": {
       "best": "EN İYİ SET",
-      "reps": "{{count}} tekrar",
+      "reps_one": "{{count}} tekrar",
+      "reps_other": "{{count}} tekrar",
       "setCount_one": "{{count}} set",
       "setCount_other": "{{count}} set"
     },

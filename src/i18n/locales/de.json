@@ -173,7 +173,8 @@
     },
     "target": {
       "repRange": "{{sets}} × {{min}}–{{max}} Wdh.",
-      "reps": "{{sets}} × {{reps}} Wdh.",
+      "reps_one": "{{sets}} × {{count}} Wdh.",
+      "reps_other": "{{sets}} × {{count}} Wdh.",
       "sets": "{{sets}} × {{target}}",
       "seconds": "{{seconds}} s",
       "minutes": "{{minutes}} min",
@@ -592,8 +593,8 @@
     "metersOf": "Distanz von Satz {{number}}",
     "minimize": "Minimieren, das Training läuft weiter",
     "finish": "Beenden",
-    "progress": "{{done}} von {{planned}} Sätzen",
-    "setsDone": "{{done}} von {{planned}} Sätzen",
+    "setsDone_one": "{{done}} von {{count}} Satz",
+    "setsDone_other": "{{done}} von {{count}} Sätzen",
     "best": "bester {{set}}",
     "rest": "PAUSE",
     "restLeft": "Pause, noch {{time}}",
@@ -607,11 +608,12 @@
     "inProgress": "LÄUFT",
     "resume": "Weiter",
     "running": "Läuft",
-    "current": "{{done}} von {{planned}} Sätzen · {{exercise}}",
+    "current_one": "{{done}} von {{count}} Satz · {{exercise}}",
+    "current_other": "{{done}} von {{count}} Sätzen · {{exercise}}",
     "busy": {
       "title": "{{name}} läuft noch",
-      "message_one": "Du hast es vor {{minutes}} Minuten gestartet und {{count}} Satz eingetragen. Es kann immer nur ein Training laufen.",
-      "message_other": "Du hast es vor {{minutes}} Minuten gestartet und {{count}} Sätze eingetragen. Es kann immer nur ein Training laufen.",
+      "message_one": "Du hast es vor {{minutes}} Min. gestartet und {{count}} Satz eingetragen. Es kann immer nur ein Training laufen.",
+      "message_other": "Du hast es vor {{minutes}} Min. gestartet und {{count}} Sätze eingetragen. Es kann immer nur ein Training laufen.",
       "resume": "{{name}} fortsetzen",
       "finish": "{{name}} beenden, dann {{next}} starten",
       "discard": "{{name}} verwerfen und {{next}} starten"
@@ -719,7 +721,8 @@
     "deleteError": "Das Training konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
     "exercise": {
       "best": "BESTER SATZ",
-      "reps": "{{count}} Wdh.",
+      "reps_one": "{{count}} Wdh.",
+      "reps_other": "{{count}} Wdh.",
       "setCount_one": "{{count}} Satz",
       "setCount_other": "{{count}} Sätze"
     },

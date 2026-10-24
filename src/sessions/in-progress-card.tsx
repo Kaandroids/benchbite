@@ -59,7 +59,7 @@ export function InProgressCard({ session }: { session: Session }) {
             {workoutName(session)}
           </Text>
           <Text variant="caption" numberOfLines={1} style={[styles.semibold, { color: MUTED }]}>
-            {t('session.current', { done: totals.done, planned: totals.planned, exercise })}
+            {t('session.current', { done: totals.done, count: totals.planned, exercise })}
           </Text>
         </View>
         <View
