@@ -224,3 +224,27 @@ export function missedWorkouts(
       .map((workout) => ({ workout, day })),
   );
 }
+
+/** Whether a day has workouts on it, or workouts that moved away from it. */
+export function hasWorkouts(day: ScheduleDay): boolean {
+  return day.workouts.length > 0 || day.movedAway.length > 0;
+}
+
+/**
+ * Whether the move or skip of a workout from its day `fromOn` can be undone: not once the workout
+ * is done, nor while another move of it is on that day, which the undo would push out (ADR 0028).
+ */
+export function canUndo(schedule: WeekSchedule, workoutId: number, fromOn: string): boolean {
+  const ofWorkout = (workout: PlannedWorkout) => workout.session.workoutId === workoutId;
+  const origin = schedule.days.find((day) => day.date === fromOn);
+  return (
+    origin !== undefined &&
+    !origin.workouts.some((workout) => ofWorkout(workout) && workout.status !== 'skipped') &&
+    !schedule.days.some((day) =>
+      day.workouts.some(
+        (workout) =>
+          ofWorkout(workout) && workout.movedFrom === fromOn && workout.status === 'done',
+      ),
+    )
+  );
+}

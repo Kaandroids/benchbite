@@ -4,11 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, isoWeekday, toIsoDate, useDayFormat, useWeekdayFormat } from '@/i18n/dates';
+import { fromIsoDate, toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { useUndoMove } from '@/workouts/moves';
 import {
+  canUndo,
   moveTargets,
   originOf,
   type ScheduleDay,
@@ -44,15 +45,16 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
       {text}
     </Text>
   );
-  const undo = (session: WeekSession, fromOn: string, label: string) => (
-    <Button
-      variant="secondary"
-      size="small"
-      label={label}
-      disabled={undoMove.isPending}
-      onPress={() => undoMove.mutate({ workoutId: session.workoutId, fromOn })}
-    />
-  );
+  const undo = (session: WeekSession, fromOn: string, label: string) =>
+    canUndo(schedule, session.workoutId, fromOn) ? (
+      <Button
+        variant="secondary"
+        size="small"
+        label={label}
+        disabled={undoMove.isPending}
+        onPress={() => undoMove.mutate({ workoutId: session.workoutId, fromOn })}
+      />
+    ) : null;
 
   const rows: { key: string; session: WeekSession; detail: ReactNode; action: ReactNode }[] = [
     ...day.workouts.map((workout, index) => {
@@ -85,25 +87,12 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
       }
       return { key: `planned-${index}`, session, detail, action };
     }),
-    ...day.movedAway.map((away, index) => {
-      // The move can be undone until the workout is done on the day it moved to.
-      const done = schedule.days
-        .find((other) => other.date === away.toOn)
-        ?.workouts.some(
-          (workout) =>
-            workout.session.workoutId === away.session.workoutId &&
-            workout.movedFrom === day.date &&
-            workout.status === 'done',
-        );
-      return {
-        key: `away-${index}`,
-        session: away.session,
-        detail: caption(
-          t('today.dayMenu.movedTo', { day: weekdayName(isoWeekday(fromIsoDate(away.toOn))) }),
-        ),
-        action: done ? null : undo(away.session, day.date, t('today.dayMenu.undo')),
-      };
-    }),
+    ...day.movedAway.map((away, index) => ({
+      key: `away-${index}`,
+      session: away.session,
+      detail: caption(t('today.dayMenu.movedTo', { day: weekdayName(weekdayOf(away.toOn)) })),
+      action: undo(away.session, day.date, t('today.dayMenu.undo')),
+    })),
   ];
 
   return (

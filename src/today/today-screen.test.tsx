@@ -389,6 +389,37 @@ describe('moving workouts', () => {
     expect(screen.queryByRole('button', { name: 'Undo move' })).toBeNull();
   });
 
+  it('does not undo a move while another move of the workout is on its day', async () => {
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(1, 'push'), { ...session(3, 'push'), workoutId: 1 }],
+      }),
+      moves: loaded([
+        { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' },
+        { workoutId: 1, fromOn: '2026-10-21', toOn: '2026-10-19' },
+      ]),
+    });
+    await render(<TodayScreen />);
+    await fireEvent.press(
+      screen.getByLabelText('Mon 19, Push, moved from Wednesday, missed, Push, moved to Friday'),
+    );
+    // Only the move onto Monday can be undone; undoing the other would push it out.
+    expect(screen.getAllByRole('button', { name: 'Undo move' })).toHaveLength(1);
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo move' }));
+    expect(undo).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-21' });
+  });
+
+  it('closes a day once it has nothing left to show', async () => {
+    mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-22' }]) });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Thu 22, Push, moved from Monday, planned'));
+    expect(screen.getByText('Thursday, October 22')).toBeTruthy();
+    // The move was undone.
+    mockData();
+    await screen.rerender(<TodayScreen />);
+    expect(screen.queryByText('Thursday, October 22')).toBeNull();
+  });
+
   it('undoes a skip', async () => {
     mockData({ moves: loaded([{ workoutId: 5, fromOn: '2026-10-23', toOn: null }]) });
     await render(<TodayScreen />);

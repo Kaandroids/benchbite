@@ -6,13 +6,14 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, isoWeekday, toIsoDate, useDayFormat, useWeekdayFormat } from '@/i18n/dates';
+import { toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { StreakBadge } from '@/streak/streak-badge';
 import type { Streak } from '@/streak/streak';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
   dayState,
+  hasWorkouts,
   type DayState,
   type ScheduleDay,
   type WeekSchedule,
@@ -30,11 +31,6 @@ type WeekCardProps = {
   /** Opens a day with workouts, or with workouts that moved away from it. */
   onDayPress: (day: ScheduleDay) => void;
 };
-
-/** The weekday of a day as YYYY-MM-DD. */
-function weekdayOf(date: string): number {
-  return isoWeekday(fromIsoDate(date));
-}
 
 type RingState = Exclude<DayState, 'rest' | 'extra' | 'partial'>;
 
@@ -199,7 +195,7 @@ export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps)
       <View style={styles.week}>
         {schedule.days.map((day) => {
           const isToday = day.date === todayOn;
-          const opens = day.workouts.length > 0 || day.movedAway.length > 0;
+          const opens = hasWorkouts(day);
           return (
             <Pressable
               key={day.date}
