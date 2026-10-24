@@ -10,14 +10,20 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useFinishedThisWeek } from '@/history/history';
+import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useStreak } from '@/streak/use-streak';
-import { toIsoDate } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { useWeekMoves } from '@/workouts/moves';
-import { missedWorkouts, moveTargets, originOf, weekSchedule } from '@/workouts/week-schedule';
+import {
+  hasWorkouts,
+  missedWorkouts,
+  moveTargets,
+  originOf,
+  weekSchedule,
+} from '@/workouts/week-schedule';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
 import { DayMenu } from './day-menu';
@@ -75,7 +81,13 @@ export function TodayScreen() {
   );
   const todayOn = toIsoDate(today);
   const sheetDay =
-    sheet?.kind === 'day' ? schedule.days.find((day) => day.date === sheet.date) : null;
+    sheet?.kind === 'day'
+      ? schedule.days.find((day) => day.date === sheet.date && hasWorkouts(day))
+      : undefined;
+  // A day left with nothing to show, for example after undoing the only move to it, closes.
+  if (sheet?.kind === 'day' && !sheetDay) {
+    setSheet(null);
+  }
 
   let content;
   // A query that loaded and then failed to refresh keeps showing what it has.
