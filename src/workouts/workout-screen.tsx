@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { StatColumns } from '@/components/ui/stat-columns';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -215,45 +216,17 @@ export function WorkoutScreen({ id }: { id: number }) {
     >
       {/* One card of even columns over the workout's days, like a finished workout's figures over
           when it started and ended. */}
-      <View
-        style={[
-          styles.card,
-          { borderRadius: radii.lg, backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <View style={[styles.stats, { paddingVertical: spacing.md }]}>
-          {stats.map((stat, index) => (
-            <View
-              key={stat.label}
-              style={[
-                styles.stat,
-                { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-              ]}
-            >
-              <Text variant="headline">{stat.value}</Text>
-              <Text variant="caption" color="textMuted">
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <View
-          style={[
-            styles.days,
-            {
-              gap: spacing.sm,
-              paddingVertical: spacing.sm,
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-            },
-          ]}
-        >
-          <Text variant="caption" color="textMuted">
-            {t('workout.days')}
-          </Text>
-          <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        </View>
-      </View>
+      <StatColumns
+        stats={stats}
+        footer={
+          <View style={[styles.days, { gap: spacing.sm }]}>
+            <Text variant="caption" color="textMuted">
+              {t('workout.days')}
+            </Text>
+            <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+          </View>
+        }
+      />
 
       <Card>
         <View>
@@ -331,20 +304,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
-    borderWidth: 1,
-  },
-  stats: {
-    flexDirection: 'row',
-  },
   days: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
   },
   exercise: {
     flexDirection: 'row',

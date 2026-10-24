@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
@@ -132,62 +133,37 @@ export function LogScreen({ id }: { id: number }) {
       }
     >
       {/* Four even columns, like the figures on a workout's screen, over when it started and ended. */}
-      <View
-        style={[
-          styles.card,
-          { borderRadius: radii.lg, borderColor: colors.border, backgroundColor: colors.surface },
-        ]}
-      >
-        <View style={[styles.row, { paddingVertical: spacing.md }]}>
-          {stats.map((stat, index) => (
-            <View
-              key={stat.label}
-              style={[
-                styles.stat,
-                { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-              ]}
-            >
-              <Text variant="headline" style={styles.tabular}>
-                {stat.value}
-              </Text>
-              <Text variant="caption" color="textMuted">
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <View
-          style={[
-            styles.row,
-            { paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-          ]}
-        >
-          {[
-            [t('history.started'), log.startedAt],
-            [t('history.ended'), log.finishedAt],
-          ].map(([label, at], index) => (
-            <View
-              key={String(label)}
-              style={[
-                styles.stat,
-                styles.when,
-                {
-                  gap: spacing.xs,
-                  borderLeftWidth: index > 0 ? 1 : 0,
-                  borderLeftColor: colors.border,
-                },
-              ]}
-            >
-              <Text variant="caption" color="textMuted">
-                {String(label)}
-              </Text>
-              <Text variant="label" style={[styles.tabular]}>
-                {time.format(at as Date)}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
+      <StatColumns
+        stats={stats}
+        footer={
+          <View style={styles.row}>
+            {[
+              [t('history.started'), log.startedAt],
+              [t('history.ended'), log.finishedAt],
+            ].map(([label, at], index) => (
+              <View
+                key={String(label)}
+                style={[
+                  styles.stat,
+                  styles.when,
+                  {
+                    gap: spacing.xs,
+                    borderLeftWidth: index > 0 ? 1 : 0,
+                    borderLeftColor: colors.border,
+                  },
+                ]}
+              >
+                <Text variant="caption" color="textMuted">
+                  {String(label)}
+                </Text>
+                <Text variant="label" style={[styles.tabular]}>
+                  {time.format(at as Date)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        }
+      />
 
       {exercises.map((exercise, index) => {
         const info = findExercise(library.data, exercise.exerciseId);
@@ -286,9 +262,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  card: {
-    borderWidth: 1,
   },
   when: {
     flexDirection: 'row',
