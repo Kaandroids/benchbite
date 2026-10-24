@@ -7,23 +7,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
+import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useFinishedThisWeek } from '@/history/history';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useStreak } from '@/streak/use-streak';
+import { toIsoDate } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { useWeekMoves } from '@/workouts/moves';
-import { weekSchedule } from '@/workouts/week-schedule';
-import { useWeek } from '@/workouts/workouts';
+import { missedWorkouts, moveTargets, originOf, weekSchedule } from '@/workouts/week-schedule';
+import { useWeek, type WeekSession } from '@/workouts/workouts';
 
+import { DayMenu } from './day-menu';
+import { MissedCard } from './missed-card';
+import { PickDay } from './pick-day';
 import { WeekCard } from './week-card';
 import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
 /** Meals are logged in the nutrition milestone; until then nothing is eaten. */
 const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+
+/** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
+type SheetContent =
+  { kind: 'day'; date: string } | { kind: 'pick'; session: WeekSession; fromOn: string };
 
 /** A greeting for the time of day. */
 export function greetingOf(date: Date): 'morning' | 'afternoon' | 'evening' {
@@ -48,6 +57,7 @@ export function TodayScreen() {
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
   const [refreshing, setRefreshing] = useState(false);
+  const [sheet, setSheet] = useState<SheetContent | null>(null);
   const refresh = async () => {
     setRefreshing(true);
     try {
@@ -63,6 +73,9 @@ export function TodayScreen() {
     finished.data ?? [],
     today,
   );
+  const todayOn = toIsoDate(today);
+  const sheetDay =
+    sheet?.kind === 'day' ? schedule.days.find((day) => day.date === sheet.date) : null;
 
   let content;
   // A query that loaded and then failed to refresh keeps showing what it has.
@@ -90,7 +103,24 @@ export function TodayScreen() {
   } else {
     content = (
       <>
-        <WeekCard today={today} streak={streak} schedule={schedule} />
+        <WeekCard
+          today={today}
+          streak={streak}
+          schedule={schedule}
+          onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
+        />
+        {missedWorkouts(schedule).map(({ workout, day }) => {
+          const fromOn = originOf(workout, day);
+          return (
+            <MissedCard
+              key={`${workout.session.workoutId}-${fromOn}`}
+              workout={workout}
+              day={day}
+              canMove={moveTargets(schedule, workout.session.workoutId, fromOn, todayOn).length > 0}
+              onPickDay={() => setSheet({ kind: 'pick', session: workout.session, fromOn })}
+            />
+          );
+        })}
         {plan.data ? (
           <WorkoutCard schedule={schedule} sessions={plan.data.sessions} today={today} />
         ) : null}
@@ -131,6 +161,27 @@ export function TodayScreen() {
         </Text>
         {content}
       </ScrollView>
+      {/* One sheet whose content changes, as a modal cannot open while another one closes. */}
+      {sheet ? (
+        <Sheet onClose={() => setSheet(null)}>
+          {sheet.kind === 'pick' ? (
+            <PickDay
+              schedule={schedule}
+              session={sheet.session}
+              fromOn={sheet.fromOn}
+              today={today}
+              onDone={() => setSheet(null)}
+            />
+          ) : sheetDay ? (
+            <DayMenu
+              schedule={schedule}
+              day={sheetDay}
+              today={today}
+              onMove={(session, fromOn) => setSheet({ kind: 'pick', session, fromOn })}
+            />
+          ) : null}
+        </Sheet>
+      ) : null}
     </SafeAreaView>
   );
 }
