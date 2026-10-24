@@ -42,6 +42,7 @@ describe('useTargetFormat', () => {
   it.each([
     [{ reps: { min: 8, max: 12 } }, '3 × 8–12 reps'],
     [{ reps: { min: 10, max: 10 } }, '3 × 10 reps'],
+    [{ reps: { min: 1, max: 1 } }, '3 × 1 rep'],
     [{ seconds: 45, meters: null }, '3 × 45 s'],
     [{ seconds: 240, meters: null }, '3 × 4 min'],
     [{ seconds: 90, meters: null }, '3 × 1:30 min'],

@@ -106,7 +106,7 @@ export function FinishScreen({ next }: { next?: number }) {
     const sets =
       done.length === exercise.sets.length
         ? t('session.summary.sets', { count: done.length })
-        : t('session.setsDone', { done: done.length, planned: exercise.sets.length });
+        : t('session.setsDone', { done: done.length, count: exercise.sets.length });
     return {
       name: info?.name ?? '',
       text:

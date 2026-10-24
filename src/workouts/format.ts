@@ -48,7 +48,7 @@ export function useTargetFormat() {
     if ('reps' in target) {
       const { min, max } = target.reps;
       return min === max
-        ? t('workout.target.reps', { sets, reps: min })
+        ? t('workout.target.reps', { sets, count: min })
         : t('workout.target.repRange', { sets, min, max });
     }
     const parts = [

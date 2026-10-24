@@ -105,7 +105,7 @@ export function SessionScreen() {
             {done.length === 0
               ? formatTarget(exercise.sets.length, exercise.target)
               : [
-                  t('session.setsDone', { done: done.length, planned: exercise.sets.length }),
+                  t('session.setsDone', { done: done.length, count: exercise.sets.length }),
                   best ? t('session.best', { set: describeSet(best, kind) }) : null,
                 ]
                   .filter(Boolean)
@@ -247,7 +247,7 @@ export function SessionScreen() {
           <ProgressBar value={totals.planned ? totals.done / totals.planned : 0} />
         </View>
         <Text variant="caption" color="textMuted" style={styles.bold}>
-          {t('session.progress', { done: totals.done, planned: totals.planned })}
+          {t('session.progress', { done: totals.done, count: totals.planned })}
         </Text>
       </View>
 

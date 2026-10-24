@@ -173,7 +173,8 @@
     },
     "target": {
       "repRange": "{{sets}} × {{min}}–{{max}} reps",
-      "reps": "{{sets}} × {{reps}} reps",
+      "reps_one": "{{sets}} × {{count}} rep",
+      "reps_other": "{{sets}} × {{count}} reps",
       "sets": "{{sets}} × {{target}}",
       "seconds": "{{seconds}} s",
       "minutes": "{{minutes}} min",
@@ -592,8 +593,10 @@
     "metersOf": "Distance of set {{number}}",
     "minimize": "Minimize, the workout keeps running",
     "finish": "Finish",
-    "progress": "{{done}} of {{planned}} sets",
-    "setsDone": "{{done}} of {{planned}} sets",
+    "progress_one": "{{done}} of {{count}} set",
+    "progress_other": "{{done}} of {{count}} sets",
+    "setsDone_one": "{{done}} of {{count}} set",
+    "setsDone_other": "{{done}} of {{count}} sets",
     "best": "best {{set}}",
     "rest": "REST",
     "restLeft": "Rest, {{time}} left",
@@ -607,11 +610,12 @@
     "inProgress": "IN PROGRESS",
     "resume": "Resume",
     "running": "Running",
-    "current": "{{done}} of {{planned}} sets · {{exercise}}",
+    "current_one": "{{done}} of {{count}} set · {{exercise}}",
+    "current_other": "{{done}} of {{count}} sets · {{exercise}}",
     "busy": {
       "title": "{{name}} is still running",
-      "message_one": "You started it {{minutes}} minutes ago and logged {{count}} set. Only one workout can run at a time.",
-      "message_other": "You started it {{minutes}} minutes ago and logged {{count}} sets. Only one workout can run at a time.",
+      "message_one": "You started it {{minutes}} min ago and logged {{count}} set. Only one workout can run at a time.",
+      "message_other": "You started it {{minutes}} min ago and logged {{count}} sets. Only one workout can run at a time.",
       "resume": "Resume {{name}}",
       "finish": "Finish {{name}}, then start {{next}}",
       "discard": "Discard {{name}} and start {{next}}"
@@ -719,7 +723,8 @@
     "deleteError": "We couldn't delete the workout. Check your connection and try again.",
     "exercise": {
       "best": "BEST SET",
-      "reps": "{{count}} reps",
+      "reps_one": "{{count}} rep",
+      "reps_other": "{{count}} reps",
       "setCount_one": "{{count}} set",
       "setCount_other": "{{count}} sets"
     },
