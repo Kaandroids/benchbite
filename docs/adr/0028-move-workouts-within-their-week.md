@@ -30,7 +30,8 @@ started on in the user's time zone.
 - **A day can hold several workouts.** A planned workout is done when a log of that workout
   started on that day. A day is done when all its workouts are, and progress counts planned
   workouts, not days. A log of a workout that is not planned that day is an extra workout: it
-  shows, but does not count towards the week.
+  shows, but does not count towards the week. A skipped workout does not count either, so a day
+  or a week can be complete without it; it still shows as skipped, apart from a missed one.
 - **The database enforces what a move may be.** `move_workout()` checks that the original day is
   one of the workout's weekdays, that the target is in the same week, not in the past and does not
   already have the same workout. A move is undone by deleting it, which the database allows at
