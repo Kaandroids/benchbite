@@ -1,10 +1,10 @@
 -- What clients may call and touch beyond row level security: every table has row level security
 -- and every view reads with the caller's rights, internal helpers are no API endpoints, and anon
--- has no access to the workout log tables.
+-- has no access to the workout log tables or the moves.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -28,7 +28,7 @@ join pg_namespace n on n.oid = p.pronamespace and n.nspname = 'public'
 cross join (values ('anon'), ('authenticated')) roles (role)
 where p.proname in (
   'metrics_valid', 'custom_exercise_fields', 'target_suits', 'exercise_seconds', 'set_suits',
-  'sets_of', 'custom_exercise_limit', 'lock_user_limits'
+  'sets_of', 'custom_exercise_limit', 'lock_user_limits', 'move_fits', 'save_move'
 )
 group by p.proname
 order by p.proname;
@@ -43,9 +43,9 @@ select ok(
   not exists (
     select 1 from information_schema.role_table_grants
     where grantee = 'anon' and table_schema = 'public'
-      and table_name in ('workout_logs', 'logged_sets', 'workout_log_summaries')
+      and table_name in ('workout_logs', 'logged_sets', 'workout_log_summaries', 'workout_moves')
   ),
-  'Anon has no access to the workout log tables'
+  'Anon has no access to the workout log tables or the moves'
 );
 
 select * from finish();

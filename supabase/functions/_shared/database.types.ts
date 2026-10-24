@@ -442,6 +442,42 @@ export type Database = {
           },
         ];
       };
+      workout_moves: {
+        Row: {
+          created_at: string;
+          from_on: string;
+          id: number;
+          to_on: string | null;
+          user_id: string;
+          workout_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          from_on: string;
+          id?: never;
+          to_on?: string | null;
+          user_id: string;
+          workout_id: number;
+        };
+        Update: {
+          created_at?: string;
+          from_on?: string;
+          id?: never;
+          to_on?: string | null;
+          user_id?: string;
+          workout_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workout_moves_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       workouts: {
         Row: {
           active: boolean;
@@ -618,6 +654,22 @@ export type Database = {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
         Returns: boolean;
       };
+      move_fits: {
+        Args: {
+          from_on: string;
+          on_day: string;
+          source: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+          to_on: string;
+        };
+        Returns: boolean;
+      };
+      move_workout: {
+        Args: { from_on: string; to_on: string; workout_id: number };
+        Returns: undefined;
+      };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];
@@ -630,6 +682,18 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      save_move: {
+        Args: {
+          from_on: string;
+          on_day: string;
+          source: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+          to_on: string;
+        };
+        Returns: boolean;
+      };
       save_workout: { Args: { workout: Json }; Returns: number };
       set_suits: {
         Args: {
