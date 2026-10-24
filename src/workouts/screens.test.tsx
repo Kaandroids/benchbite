@@ -37,17 +37,14 @@ jest.mock('@/sessions/session', () => ({
   useActiveSession: jest.fn(),
   endSession: jest.fn(),
 }));
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        in: (_column: string, ids: string[]) =>
-          Promise.resolve({
-            data: ids.map((id) => ({ id, name: `Name of ${id}`, exercise_translations: [] })),
-          }),
-      }),
-    }),
-  },
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/exercises/library', () => ({
+  useExerciseLibrary: () => ({
+    data: ['pulldown', 'rope', 'row', 'bench', 'squat'].map((id) => ({
+      id,
+      name: `Name of ${id}`,
+    })),
+  }),
 }));
 
 const mutate = jest.fn();

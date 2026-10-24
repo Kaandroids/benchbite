@@ -13,11 +13,11 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { useExerciseLibrary } from '@/exercises/library';
 import { useUserId } from '@/providers/session-provider';
 import { BusySheet } from '@/sessions/busy-sheet';
 import { endSession, useActiveSession } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
-import { useExerciseNames } from '@/exercises/use-exercise-names';
 import { fonts, useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
@@ -45,7 +45,11 @@ export function WorkoutScreen({ id }: { id: number }) {
   const remove = useDeleteWorkout();
   const [waiting, setWaiting] = useState<Workout | null>(null);
   const workout = workouts.data?.find((candidate) => candidate.id === id);
-  const names = useExerciseNames(workout?.exercises.map((exercise) => exercise.exerciseId) ?? []);
+  // From the library, which loads again when the user renames an exercise of their own.
+  const library = useExerciseLibrary();
+  const names = Object.fromEntries(
+    (library.data ?? []).map((exercise) => [exercise.id, exercise.name]),
+  );
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
