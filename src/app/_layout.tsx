@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { SessionEnded } from '@/components/session-ended';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
@@ -19,6 +20,7 @@ import { SessionProvider, useSession } from '@/providers/session-provider';
 import { showRemindersInForeground } from '@/reminders/reminders';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
+import { endSession } from '@/sessions/session';
 import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
@@ -41,7 +43,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { status, retry } = useSession();
+  const { status, retry, startAgain } = useSession();
   const { completed } = useOnboarding();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
@@ -74,6 +76,14 @@ function RootNavigator() {
       {status === 'ready' ? <RestAlarm /> : null}
       {status === 'error' ? (
         <SessionError onRetry={retry} />
+      ) : status === 'ended' ? (
+        <SessionEnded
+          onStartAgain={() => {
+            // The workout in progress was the previous guest's.
+            endSession();
+            return startAgain();
+          }}
+        />
       ) : (
         <Stack
           screenOptions={{
