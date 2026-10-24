@@ -559,12 +559,7 @@
       "time": "Reminder time",
       "enable": "Turn on reminders",
       "skip": "Not now",
-      "channel": "Workout reminders",
-      "notification": {
-        "title": "Today: {{session}}",
-        "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",
-        "body_other": "{{count}} exercises, about {{minutes}} min. You've got this!"
-      }
+      "channel": "Workout reminders"
     },
     "summary": {
       "body": "Your plan is ready. Here's what we set up for you.",
@@ -858,5 +853,13 @@
     "place": "{{place}} of {{count}}",
     "hint": "Drag, or use the actions, to change the order.",
     "moved": "{{name}} moved to {{place}} of {{count}}"
+  },
+  "reminders": {
+    "notification": {
+      "title": "Today: {{session}}",
+      "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",
+      "body_other": "{{count}} exercises, about {{minutes}} min. You've got this!",
+      "bodyMany": "{{count}} workouts, about {{minutes}} min in all. You've got this!"
+    }
   }
 }

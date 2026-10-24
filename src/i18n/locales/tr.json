@@ -559,12 +559,7 @@
       "time": "Hatırlatma saati",
       "enable": "Hatırlatmaları aç",
       "skip": "Şimdi değil",
-      "channel": "Antrenman hatırlatmaları",
-      "notification": {
-        "title": "Bugün: {{session}}",
-        "body_one": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
-        "body_other": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!"
-      }
+      "channel": "Antrenman hatırlatmaları"
     },
     "summary": {
       "body": "Planın hazır. Senin için kurduklarımız:",
@@ -858,5 +853,13 @@
     "place": "{{count}} içinde {{place}}.",
     "hint": "Sırayı değiştirmek için sürükle ya da eylemleri kullan.",
     "moved": "{{name}} artık {{count}} içinde {{place}}. sırada"
+  },
+  "reminders": {
+    "notification": {
+      "title": "Bugün: {{session}}",
+      "body_one": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
+      "body_other": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
+      "bodyMany": "{{count}} antrenman, toplam yaklaşık {{minutes}} dk. Başarabilirsin!"
+    }
   }
 }
