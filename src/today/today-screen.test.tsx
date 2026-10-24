@@ -4,7 +4,7 @@ import { useFinishedThisWeek } from '@/history/history';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
-import { useWeekMoves } from '@/workouts/moves';
+import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
 import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
@@ -13,7 +13,11 @@ import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
-jest.mock('@/workouts/moves', () => ({ useWeekMoves: jest.fn() }));
+jest.mock('@/workouts/moves', () => ({
+  useWeekMoves: jest.fn(),
+  useMoveWorkout: jest.fn(),
+  useUndoMove: jest.fn(),
+}));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
@@ -96,6 +100,8 @@ const finishedOn = (...dates: string[]): FinishedWorkout[] =>
 
 const mutate = jest.fn();
 const reset = jest.fn();
+const move = jest.fn();
+const undo = jest.fn();
 
 function mockData({
   plan = loaded<Plan | null>(PLAN),
@@ -108,6 +114,8 @@ function mockData({
   log = { isError: false, isPending: false },
   finished = loaded<FinishedWorkout[]>([]),
   moves = loaded<WorkoutMove[]>([]),
+  moving = { isError: false, isPending: false, error: null as unknown },
+  undoing = { isError: false, isPending: false },
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
@@ -116,7 +124,11 @@ function mockData({
   log?: { isError: boolean; isPending: boolean };
   finished?: Query<FinishedWorkout[]>;
   moves?: Query<WorkoutMove[]>;
+  moving?: { isError: boolean; isPending: boolean; error: unknown };
+  undoing?: { isError: boolean; isPending: boolean };
 } = {}) {
+  jest.mocked(useMoveWorkout).mockReturnValue({ mutate: move, ...moving } as never);
+  jest.mocked(useUndoMove).mockReturnValue({ mutate: undo, ...undoing } as never);
   jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
   jest.mocked(useWeekMoves).mockReturnValue(moves as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
@@ -288,6 +300,132 @@ describe('TodayScreen', () => {
     for (const query of [plan, targets, weight, unit]) {
       expect(query.refetch).toHaveBeenCalled();
     }
+  });
+});
+
+describe('moving workouts', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('offers to skip a missed workout or to move it to a free day', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    expect(screen.getByText('Missed on Monday')).toBeTruthy();
+    expect(
+      screen.getByText(
+        '0 exercises · about 45 min. Do it on a free day this week to keep your plan on track.',
+      ),
+    ).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    expect(move).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-19', toOn: null });
+  });
+
+  it('has no missed card once the workout is done or skipped', async () => {
+    mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: null }]) });
+    await render(<TodayScreen />);
+    expect(screen.queryByText('Missed on Monday')).toBeNull();
+  });
+
+  it('moves a missed workout to the day picked, today first', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Pick a day' }));
+    expect(screen.getByText("Move Monday's Push")).toBeTruthy();
+    // Today and the days after it, but not Friday: Push is not on it, Legs is.
+    const days = screen.getAllByRole('radio');
+    expect(days).toHaveLength(5);
+    expect(days[0]).toHaveAccessibleName('Wed Today Pull');
+    expect(days[0]).toBeChecked();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Sat Oct 24 Rest day' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to Saturday' }));
+    expect(move).toHaveBeenCalledWith(
+      { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-24' },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+    // The sheet closes once the move is saved.
+    await act(() => move.mock.calls[0][1].onSuccess());
+    expect(screen.queryByText("Move Monday's Push")).toBeNull();
+  });
+
+  it('says when the day picked is no longer free', async () => {
+    mockData({ moving: { isError: true, isPending: false, error: { code: 'BB019' } } });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Pick a day' }));
+    expect(screen.getByText('That day is no longer free. Pick another one.')).toBeTruthy();
+  });
+
+  it("opens a day's workouts from the week card and moves one from there", async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Fri 23, Legs, planned'));
+    expect(screen.getByText('Friday, October 23')).toBeTruthy();
+    expect(screen.getByText('1 workout planned')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to another day' }));
+    expect(screen.getByText("Move Friday's Legs")).toBeTruthy();
+  });
+
+  it('undoes a move until the workout is done', async () => {
+    mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' }]) });
+    await render(<TodayScreen />);
+    await fireEvent.press(
+      screen.getByLabelText('Fri 23, Legs, planned, Push, moved from Monday, planned'),
+    );
+    expect(screen.getByText('Moved from Monday')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo move' }));
+    expect(undo).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-19' });
+  });
+
+  it('cannot undo a move once the workout is done', async () => {
+    mockData({
+      moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-21' }]),
+      finished: loaded([{ workoutId: 1, startedOn: '2026-10-21' }]),
+    });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Mon 19, Push, moved to Wednesday'));
+    expect(screen.getByText('Moved to Wednesday')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Undo move' })).toBeNull();
+  });
+
+  it('does not undo a move while another move of the workout is on its day', async () => {
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(1, 'push'), { ...session(3, 'push'), workoutId: 1 }],
+      }),
+      moves: loaded([
+        { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' },
+        { workoutId: 1, fromOn: '2026-10-21', toOn: '2026-10-19' },
+      ]),
+    });
+    await render(<TodayScreen />);
+    await fireEvent.press(
+      screen.getByLabelText('Mon 19, Push, moved from Wednesday, missed, Push, moved to Friday'),
+    );
+    // Only the move onto Monday can be undone; undoing the other would push it out.
+    expect(screen.getAllByRole('button', { name: 'Undo move' })).toHaveLength(1);
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo move' }));
+    expect(undo).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-21' });
+  });
+
+  it('closes a day once it has nothing left to show', async () => {
+    mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-22' }]) });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Thu 22, Push, moved from Monday, planned'));
+    expect(screen.getByText('Thursday, October 22')).toBeTruthy();
+    // The move was undone.
+    mockData();
+    await screen.rerender(<TodayScreen />);
+    expect(screen.queryByText('Thursday, October 22')).toBeNull();
+  });
+
+  it('undoes a skip', async () => {
+    mockData({ moves: loaded([{ workoutId: 5, fromOn: '2026-10-23', toOn: null }]) });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Fri 23, Legs, skipped'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo skip' }));
+    expect(undo).toHaveBeenCalledWith({ workoutId: 5, fromOn: '2026-10-23' });
   });
 });
 

@@ -16,6 +16,11 @@ export function fromIsoDate(date: string): Date {
   return new Date(`${date}T00:00`);
 }
 
+/** The ISO weekday of a day as YYYY-MM-DD. */
+export function weekdayOf(date: string): number {
+  return isoWeekday(fromIsoDate(date));
+}
+
 /** The day `days` after a date, at midnight. */
 export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
@@ -44,6 +49,17 @@ export function useWeekdayFormat(width: 'long' | 'short' | 'narrow' = 'long') {
 export function useDateFormat(style: NonNullable<Intl.DateTimeFormatOptions['dateStyle']>) {
   const { i18n } = useTranslation();
   const formatter = new Intl.DateTimeFormat(i18n.language, { dateStyle: style });
+  return (date: Date) => formatter.format(date);
+}
+
+/** Formats a day of this year with its weekday, for example "Friday, October 23". */
+export function useDayFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
   return (date: Date) => formatter.format(date);
 }
 

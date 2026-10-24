@@ -167,6 +167,7 @@ export default function ComponentGallery() {
           today={new Date()}
           streak={sampleStreak(new Date(), true)}
           schedule={sampleWeek(new Date())}
+          onDayPress={() => undefined}
         />
         <Text color="textMuted">Show a sample streak on the Today tab:</Text>
         <View style={[styles.row, { gap: spacing.sm }]}>

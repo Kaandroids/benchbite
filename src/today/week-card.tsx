@@ -1,18 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
+import { toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { StreakBadge } from '@/streak/streak-badge';
 import type { Streak } from '@/streak/streak';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
   dayState,
+  hasWorkouts,
   type DayState,
   type ScheduleDay,
   type WeekSchedule,
@@ -27,12 +28,9 @@ type WeekCardProps = {
   streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
+  /** Opens a day with workouts, or with workouts that moved away from it. */
+  onDayPress: (day: ScheduleDay) => void;
 };
-
-/** The weekday of a day as YYYY-MM-DD. */
-function weekdayOf(date: string): number {
-  return isoWeekday(fromIsoDate(date));
-}
 
 type RingState = Exclude<DayState, 'rest' | 'extra' | 'partial'>;
 
@@ -154,17 +152,13 @@ function arc(radius: number, share: number): string {
  * which fills as they are done, and a dot for each rest day. Moved, missed, skipped and extra
  * workouts each have their own mark (ADR 0028).
  */
-export function WeekCard({ today, streak, schedule }: WeekCardProps) {
-  const { t, i18n } = useTranslation();
+export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps) {
+  const { t } = useTranslation();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
   const workoutName = useWorkoutName();
   const todayOn = toIsoDate(today);
-  const date = new Intl.DateTimeFormat(i18n.language, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(today);
+  const formatDay = useDayFormat();
 
   const labelOf = (day: ScheduleDay) =>
     [
@@ -188,7 +182,7 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
       <View style={styles.header}>
         <View style={styles.flex}>
           <Text variant="headline" accessibilityRole="header">
-            {date}
+            {formatDay(today)}
           </Text>
           {schedule.planned > 0 ? (
             <Text variant="caption" color="textMuted" style={styles.bold}>
@@ -201,13 +195,17 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
       <View style={styles.week}>
         {schedule.days.map((day) => {
           const isToday = day.date === todayOn;
+          const opens = hasWorkouts(day);
           return (
-            <View
+            <Pressable
               key={day.date}
               accessible
+              accessibilityRole={opens ? 'button' : undefined}
               accessibilityLabel={labelOf(day)}
+              accessibilityHint={opens ? t('today.week.open') : undefined}
               accessibilityState={{ selected: isToday }}
-              style={styles.day}
+              onPress={opens ? () => onDayPress(day) : undefined}
+              style={({ pressed }) => [styles.day, { opacity: pressed ? 0.6 : 1 }]}
             >
               <DayMark day={day} state={dayState(day, todayOn)} />
               <Text
@@ -217,7 +215,7 @@ export function WeekCard({ today, streak, schedule }: WeekCardProps) {
               >
                 {weekdayName(day.weekday)}
               </Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>

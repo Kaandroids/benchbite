@@ -44,8 +44,10 @@ started on in the user's time zone.
 - **The device works out the week.** `weekSchedule()` combines the plan, this week's moves and logs
   into each day's workouts and their states, in the device's time zone. Today, the week card and
   the next workout all use it. Moves that no longer fit the plan, because the workout's weekdays
-  changed or it was archived, are ignored. The app offers to undo a move only until its workout
-  is done, as only the device knows which day a workout counts for.
+  changed or it was archived, are ignored; the database deletes them from this week on when the
+  workout changes, so they do not keep holding a day. The app offers to undo a move only until its
+  workout is done, as only the device knows which day a workout counts for, and only while the
+  workout's own day is free, so an undo never pushes out another move.
 
 ## Alternatives considered
 

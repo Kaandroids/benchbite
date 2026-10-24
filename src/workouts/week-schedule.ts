@@ -188,3 +188,63 @@ export function nextWorkouts(
   }
   return null;
 }
+
+/** The day a planned workout is on in the plan, which its move or skip is saved from. */
+export function originOf(workout: PlannedWorkout, day: ScheduleDay): string {
+  return workout.movedFrom ?? day.date;
+}
+
+/**
+ * The days a workout can move to as seen on `today` as YYYY-MM-DD: from today to Sunday, but not
+ * the day it is on in the plan nor a day it is already on (ADR 0028).
+ */
+export function moveTargets(
+  schedule: WeekSchedule,
+  workoutId: number,
+  fromOn: string,
+  today: string,
+): ScheduleDay[] {
+  return schedule.days.filter(
+    (day) =>
+      day.date >= today &&
+      day.date !== fromOn &&
+      !day.workouts.some(
+        (workout) => workout.session.workoutId === workoutId && workout.status !== 'skipped',
+      ),
+  );
+}
+
+/** This week's missed workouts, with the day each was missed on, earliest first. */
+export function missedWorkouts(
+  schedule: WeekSchedule,
+): { workout: PlannedWorkout; day: ScheduleDay }[] {
+  return schedule.days.flatMap((day) =>
+    day.workouts
+      .filter((workout) => workout.status === 'missed')
+      .map((workout) => ({ workout, day })),
+  );
+}
+
+/** Whether a day has workouts on it, or workouts that moved away from it. */
+export function hasWorkouts(day: ScheduleDay): boolean {
+  return day.workouts.length > 0 || day.movedAway.length > 0;
+}
+
+/**
+ * Whether the move or skip of a workout from its day `fromOn` can be undone: not once the workout
+ * is done, nor while another move of it is on that day, which the undo would push out (ADR 0028).
+ */
+export function canUndo(schedule: WeekSchedule, workoutId: number, fromOn: string): boolean {
+  const ofWorkout = (workout: PlannedWorkout) => workout.session.workoutId === workoutId;
+  const origin = schedule.days.find((day) => day.date === fromOn);
+  return (
+    origin !== undefined &&
+    !origin.workouts.some((workout) => ofWorkout(workout) && workout.status !== 'skipped') &&
+    !schedule.days.some((day) =>
+      day.workouts.some(
+        (workout) =>
+          ofWorkout(workout) && workout.movedFrom === fromOn && workout.status === 'done',
+      ),
+    )
+  );
+}

@@ -1,5 +1,14 @@
 import type { WeekSession } from './workouts';
-import { dayState, nextWorkouts, weekSchedule, type WorkoutMove } from './week-schedule';
+import {
+  canUndo,
+  dayState,
+  missedWorkouts,
+  moveTargets,
+  nextWorkouts,
+  originOf,
+  weekSchedule,
+  type WorkoutMove,
+} from './week-schedule';
 
 const session = (workoutId: number, weekday: number): WeekSession => ({
   workoutId,
@@ -184,5 +193,100 @@ describe('nextWorkouts', () => {
 
   it('is null without a plan', () => {
     expect(nextWorkouts(weekSchedule([], [], [], WEDNESDAY), [], WEDNESDAY)).toBeNull();
+  });
+});
+
+describe('moveTargets', () => {
+  const datesOf = (moves: WorkoutMove[], workoutId: number, fromOn: string) =>
+    moveTargets(weekSchedule(SESSIONS, moves, [], WEDNESDAY), workoutId, fromOn, '2026-10-21').map(
+      (day) => day.date,
+    );
+
+  it('is today to Sunday, without the days the workout is already on', () => {
+    // Push is on Thursday.
+    expect(datesOf([], 1, '2026-10-19')).toEqual([
+      '2026-10-21',
+      '2026-10-23',
+      '2026-10-24',
+      '2026-10-25',
+    ]);
+  });
+
+  it('leaves out a day a workout moved to, and frees a day it was skipped on', () => {
+    const moves: WorkoutMove[] = [
+      { workoutId: 1, fromOn: '2026-10-22', toOn: null },
+      { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' },
+    ];
+    expect(datesOf(moves, 3, '2026-10-24')).toEqual(['2026-10-21', '2026-10-23', '2026-10-25']);
+    expect(datesOf(moves, 1, '2026-10-19')).toEqual([
+      '2026-10-21',
+      '2026-10-22',
+      '2026-10-24',
+      '2026-10-25',
+    ]);
+  });
+});
+
+describe('missedWorkouts', () => {
+  it('lists the missed workouts with the day they were missed on and the day they are from', () => {
+    const thursday = new Date(2026, 9, 22, 9, 0);
+    const schedule = weekSchedule(
+      SESSIONS,
+      [{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-21' }],
+      [],
+      thursday,
+    );
+    const missed = missedWorkouts(schedule);
+    expect(
+      missed.map(({ workout, day }) => [
+        workout.session.workoutId,
+        day.date,
+        originOf(workout, day),
+      ]),
+    ).toEqual([
+      [2, '2026-10-20', '2026-10-20'],
+      [1, '2026-10-21', '2026-10-19'],
+    ]);
+  });
+});
+
+describe('canUndo', () => {
+  const undoable = (
+    moves: WorkoutMove[],
+    finished: { workoutId: number; startedOn: string }[] = [],
+  ) =>
+    moves.map((move) =>
+      canUndo(weekSchedule(SESSIONS, moves, finished, WEDNESDAY), move.workoutId, move.fromOn),
+    );
+
+  it('undoes a move or a skip until the workout is done', () => {
+    const moves: WorkoutMove[] = [
+      { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-21' },
+      { workoutId: 3, fromOn: '2026-10-24', toOn: null },
+    ];
+    expect(undoable(moves)).toEqual([true, true]);
+    expect(
+      undoable(moves, [
+        { workoutId: 1, startedOn: '2026-10-21' },
+        { workoutId: 3, startedOn: '2026-10-24' },
+      ]),
+    ).toEqual([false, false]);
+  });
+
+  it('does not undo a move while another move of the workout is on its day', () => {
+    // Push moved from Monday to Friday, then from Thursday to Monday.
+    expect(
+      undoable([
+        { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' },
+        { workoutId: 1, fromOn: '2026-10-22', toOn: '2026-10-19' },
+      ]),
+    ).toEqual([false, true]);
+    // Push skipped on Thursday, then moved there from Monday.
+    expect(
+      undoable([
+        { workoutId: 1, fromOn: '2026-10-22', toOn: null },
+        { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-22' },
+      ]),
+    ).toEqual([false, true]);
   });
 });

@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -42,72 +42,42 @@ export function BusySheet({
   const minutes = Math.max(1, Math.round((now - session.startedAt) / 60_000));
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={onClose}
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-        />
-        <SafeAreaView
-          edges={['bottom']}
-          style={{
-            backgroundColor: colors.background,
-            borderTopLeftRadius: radii.xl,
-            borderTopRightRadius: radii.xl,
-            padding: spacing.xl,
-            gap: spacing.lg,
-          }}
-        >
-          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          <View style={{ gap: spacing.xs }}>
-            <Text variant="headline" accessibilityRole="header">
-              {t('session.busy.title', { name })}
-            </Text>
-            <Text color="textMuted">
-              {t('session.busy.message', { minutes, count: sessionTotals(session).done })}
-            </Text>
-          </View>
-          <Button label={t('session.busy.resume', { name })} onPress={onResume} />
-          <Pressable
-            accessibilityRole="button"
-            onPress={onFinish}
-            style={[
-              styles.option,
-              {
-                borderRadius: radii.lg,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
-            <Text variant="bodyStrong" style={styles.bold}>
-              {t('session.busy.finish', { name, next: nextName })}
-            </Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={onDiscard} style={styles.discard}>
-            <Text variant="bodyStrong" color="danger" style={styles.bold}>
-              {t('session.busy.discard', { name, next: nextName })}
-            </Text>
-          </Pressable>
-        </SafeAreaView>
+    <Sheet onClose={onClose}>
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="headline" accessibilityRole="header">
+          {t('session.busy.title', { name })}
+        </Text>
+        <Text color="textMuted">
+          {t('session.busy.message', { minutes, count: sessionTotals(session).done })}
+        </Text>
       </View>
-    </Modal>
+      <Button label={t('session.busy.resume', { name })} onPress={onResume} />
+      <Pressable
+        accessibilityRole="button"
+        onPress={onFinish}
+        style={[
+          styles.option,
+          {
+            borderRadius: radii.lg,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
+        <Text variant="bodyStrong" style={styles.bold}>
+          {t('session.busy.finish', { name, next: nextName })}
+        </Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={onDiscard} style={styles.discard}>
+        <Text variant="bodyStrong" color="danger" style={styles.bold}>
+          {t('session.busy.discard', { name, next: nextName })}
+        </Text>
+      </Pressable>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  grabber: {
-    alignSelf: 'center',
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-  },
   bold: {
     fontFamily: fonts.extraBold,
   },

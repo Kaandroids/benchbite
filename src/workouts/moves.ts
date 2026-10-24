@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
@@ -28,5 +28,49 @@ export function useWeekMoves(today: Date) {
         toOn: row.to_on,
       }));
     },
+  });
+}
+
+/**
+ * Moves a workout from one of its days to another day of the same week, or skips it there. The
+ * database checks the move against the plan and refuses one that does not fit with BB019.
+ */
+export function useMoveWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    // One move at a time, so that on a slow connection an earlier move cannot land last.
+    scope: { id: 'workout-moves' },
+    mutationFn: async ({ workoutId, fromOn, toOn }: WorkoutMove) => {
+      const { error } = await supabase.rpc('move_workout', {
+        workout_id: workoutId,
+        from_on: fromOn,
+        // The generated types do not know that the day may be null, for a skip.
+        to_on: toOn as string,
+      });
+      if (error) {
+        throw error;
+      }
+    },
+    // A refused move means the week changed elsewhere, so it is loaded again either way.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+  });
+}
+
+/** Undoes a move or a skip, so the workout is back on its own day. */
+export function useUndoMove() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    scope: { id: 'workout-moves' },
+    mutationFn: async ({ workoutId, fromOn }: Pick<WorkoutMove, 'workoutId' | 'fromOn'>) => {
+      const { error } = await supabase
+        .from('workout_moves')
+        .delete()
+        .eq('workout_id', workoutId)
+        .eq('from_on', fromOn);
+      if (error) {
+        throw error;
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
   });
 }
