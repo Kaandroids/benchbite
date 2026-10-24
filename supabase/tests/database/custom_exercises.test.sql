@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -197,6 +197,28 @@ select results_eq(
 select throws_ok(
   $$ select public.archive_exercise('Plank', true) $$,
   'BB015', null, 'Library exercises cannot be archived'
+);
+
+-- Anon cannot create one, and a user has up to 500.
+select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role": "anon"}', true);
+select throws_ok(
+  $$ select public.create_exercise(pg_temp.hip_thrust()) $$,
+  '42501', null, 'Anon cannot create an exercise'
+);
+select set_config('role', 'postgres', true);
+insert into public.exercises (
+  id, owner_id, name, level, category, primary_muscles, secondary_muscles, instructions,
+  image_paths, metrics
+)
+select 'custom-filler-' || n, '00000000-0000-0000-0000-00000000000a', 'Filler', 'beginner',
+  'strength', '{glutes}', '{}', '{}', '{}', '{reps}'
+from generate_series(1, 500 - (
+  select count(*) from public.exercises where owner_id = '00000000-0000-0000-0000-00000000000a'
+)) n;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ select public.create_exercise(pg_temp.hip_thrust()) $$,
+  'BB017', null, 'A user has up to 500 custom exercises'
 );
 
 select * from finish();
