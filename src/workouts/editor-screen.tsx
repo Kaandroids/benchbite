@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { ReorderList } from '@/components/ui/reorder-list';
@@ -281,17 +282,7 @@ export function EditorScreen({ id }: { id?: number }) {
               {t('editor.exercises', { count: draft.exercises.length })}
             </Text>
             {draft.exercises.length > 0 ? (
-              <View
-                style={[
-                  styles.card,
-                  {
-                    borderRadius: radii.lg,
-                    borderColor: colors.border,
-                    backgroundColor: colors.surface,
-                    paddingHorizontal: spacing.md,
-                  },
-                ]}
-              >
+              <Card style={{ paddingHorizontal: spacing.md, paddingVertical: 0, gap: 0 }}>
                 <ReorderList
                   items={draft.exercises}
                   keyOf={(exercise) => exercise.key}
@@ -310,7 +301,7 @@ export function EditorScreen({ id }: { id?: number }) {
                   }
                   renderItem={exerciseRow}
                 />
-              </View>
+              </Card>
             ) : null}
             {over > 0 ? (
               <Text variant="caption" color="danger">
@@ -410,9 +401,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  card: {
-    borderWidth: 1,
   },
   exercise: {
     flexDirection: 'row',

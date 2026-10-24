@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
@@ -40,14 +41,11 @@ export function WorkoutListItem({
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
 
   return (
-    <View
+    <Card
       style={[
         styles.card,
         {
-          gap: spacing.md,
           padding: spacing.lg,
-          borderRadius: radii.lg,
-          backgroundColor: colors.surface,
           borderColor: today ? colors.primary : colors.border,
           borderWidth: today ? 2 : 1,
         },
@@ -148,7 +146,7 @@ export function WorkoutListItem({
           onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
         />
       )}
-    </View>
+    </Card>
   );
 }
 

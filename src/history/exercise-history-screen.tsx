@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
@@ -260,17 +261,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
       <Text variant="label" color="textMuted" style={[{ paddingHorizontal: 4 }]}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
-      <View
-        style={[
-          styles.card,
-          {
-            paddingHorizontal: spacing.lg,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-          },
-        ]}
-      >
+      <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
         {sessions.map((session, index) => (
           <Pressable
             key={session.logId}
@@ -333,7 +324,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
             </View>
           </Pressable>
         ))}
-      </View>
+      </Card>
     </Screen>
   );
 }

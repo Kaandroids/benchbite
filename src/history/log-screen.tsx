@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { StatColumns } from '@/components/ui/stat-columns';
@@ -171,19 +172,7 @@ export function LogScreen({ id }: { id: number }) {
         const { best, total } = summarizeSets(exercise.sets, kind);
         const describe = (set: SetValues) => describeSet(set, kind);
         return (
-          <View
-            key={index}
-            style={[
-              styles.exercise,
-              {
-                gap: spacing.md,
-                padding: spacing.lg,
-                borderRadius: radii.lg,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
+          <Card key={index} style={{ padding: spacing.lg, gap: spacing.md }}>
             {/* Beside the name and over the sets' edge, so that the card keeps its height. */}
             <View style={[styles.buttons, { top: spacing.lg, right: spacing.lg, gap: spacing.sm }]}>
               <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
@@ -230,7 +219,7 @@ export function LogScreen({ id }: { id: number }) {
                 );
               })}
             </View>
-          </View>
+          </Card>
         );
       })}
 
@@ -278,9 +267,6 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-  },
-  exercise: {
-    borderWidth: 1,
   },
   buttons: {
     position: 'absolute',

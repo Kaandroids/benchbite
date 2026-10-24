@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
@@ -236,17 +237,7 @@ export function FinishScreen({ next }: { next?: number }) {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.list,
-            {
-              borderRadius: radii.lg,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              paddingHorizontal: spacing.lg,
-            },
-          ]}
-        >
+        <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
           {summary.map((item, index) => (
             <View
               key={index}
@@ -267,21 +258,10 @@ export function FinishScreen({ next }: { next?: number }) {
               </Text>
             </View>
           ))}
-        </View>
+        </Card>
 
         {records.length > 0 ? (
-          <View
-            style={[
-              styles.list,
-              {
-                gap: spacing.sm,
-                padding: spacing.lg,
-                borderRadius: radii.lg,
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
+          <Card style={{ padding: spacing.lg, gap: spacing.sm }}>
             <View style={[styles.item, styles.title, { gap: spacing.sm }]}>
               <Icon name="trophy" size={18} color="primary" />
               <Text variant="bodyStrong" style={styles.black}>
@@ -298,7 +278,7 @@ export function FinishScreen({ next }: { next?: number }) {
                 </Text>
               </View>
             ))}
-          </View>
+          </Card>
         ) : null}
 
         {totals.done === 0 ? (
@@ -381,9 +361,6 @@ const styles = StyleSheet.create({
   stat: {
     flex: 1,
     alignItems: 'center',
-    borderWidth: 1,
-  },
-  list: {
     borderWidth: 1,
   },
   end: {

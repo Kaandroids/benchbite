@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
@@ -41,7 +42,7 @@ export function ExerciseSheet({
   onClose,
 }: ExerciseSheetProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const caption = useExerciseCaption();
   const { format } = useNumberFormat();
 
@@ -155,17 +156,7 @@ export function ExerciseSheet({
         />
       </View>
 
-      <View
-        style={[
-          styles.card,
-          {
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            paddingHorizontal: spacing.lg,
-          },
-        ]}
-      >
+      <Card style={{ paddingHorizontal: spacing.lg, paddingVertical: 0, gap: 0 }}>
         {rows.map((item, index) => (
           <View
             key={item.label}
@@ -200,7 +191,7 @@ export function ExerciseSheet({
             />
           </View>
         ))}
-      </View>
+      </Card>
 
       <View style={[styles.actions, { gap: spacing.md }]}>
         <Button
@@ -222,9 +213,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  card: {
-    borderWidth: 1,
   },
   row: {
     flexDirection: 'row',

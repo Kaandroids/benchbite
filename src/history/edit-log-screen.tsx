@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
@@ -237,19 +238,7 @@ function LogEditor({
         const info = details(exercise.exerciseId);
         const kind = kindOf(exercise.exerciseId);
         return (
-          <View
-            key={index}
-            style={[
-              styles.card,
-              {
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderRadius: radii.lg,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
+          <Card key={index} style={{ padding: spacing.md, gap: spacing.sm }}>
             <View style={[styles.row, { gap: spacing.md }]}>
               <ExerciseThumbnail path={thumbnailOf(info)} size={40} name={info?.name} />
               <View style={styles.flex}>
@@ -311,7 +300,7 @@ function LogEditor({
                 })
               }
             />
-          </View>
+          </Card>
         );
       })}
     </Screen>
@@ -328,9 +317,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  card: {
-    borderWidth: 1,
   },
   save: {
     height: 40,

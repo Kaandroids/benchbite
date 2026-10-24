@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
@@ -33,7 +34,7 @@ type DayMenuProps = {
  */
 export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const formatDay = useDayFormat();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
@@ -105,26 +106,13 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
       </View>
       <View style={{ gap: spacing.sm }}>
         {rows.map(({ key, session, detail, action }) => (
-          <View
-            key={key}
-            style={[
-              styles.row,
-              {
-                gap: spacing.md,
-                padding: spacing.md,
-                borderRadius: radii.lg,
-                borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-              },
-            ]}
-          >
+          <Card key={key} style={[styles.row, { gap: spacing.md, padding: spacing.md }]}>
             <View style={styles.text}>
               <Text variant="bodyStrong">{workoutName(session)}</Text>
               {detail}
             </View>
             {action}
-          </View>
+          </Card>
         ))}
       </View>
       {undoMove.isError ? (
