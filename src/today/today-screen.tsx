@@ -9,22 +9,15 @@ import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { useFinishedThisWeek } from '@/history/history';
 import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
-import { useWeekMoves } from '@/workouts/moves';
-import {
-  hasWorkouts,
-  missedWorkouts,
-  moveTargets,
-  originOf,
-  weekSchedule,
-} from '@/workouts/week-schedule';
-import { useWeek, type WeekSession } from '@/workouts/workouts';
+import { useWeekSchedule } from '@/workouts/use-week-schedule';
+import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
+import type { WeekSession } from '@/workouts/workouts';
 
 import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
@@ -50,14 +43,12 @@ export function greetingOf(date: Date): 'morning' | 'afternoon' | 'evening' {
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const plan = useWeek();
   const targets = useNutritionTargets();
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const streak = useStreak();
   const today = new Date();
-  const finished = useFinishedThisWeek(today);
-  const moves = useWeekMoves(today);
+  const { schedule, plan, moves, finished } = useWeekSchedule(today);
   const queries = [plan, targets, latestWeight, weightUnit, finished, moves];
 
   const refetchFailed = () =>
@@ -73,12 +64,6 @@ export function TodayScreen() {
     }
   };
 
-  const schedule = weekSchedule(
-    plan.data?.sessions ?? [],
-    moves.data ?? [],
-    finished.data ?? [],
-    today,
-  );
   const todayOn = toIsoDate(today);
   const sheetDay =
     sheet?.kind === 'day'

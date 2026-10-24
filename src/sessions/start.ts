@@ -2,26 +2,36 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { toIsoDate } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
 import type { Workout } from '@/workouts/workouts';
 
 import { fetchBests, fetchLastSets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
 import { startSession, type ExerciseBests, type LastSets } from './session';
+import { useStartMove } from './start-move';
 
 /**
  * Starts a workout, filled in from last time and with each exercise's records, and opens it.
- * Without a connection it starts from the targets instead, and notices no records. The first
- * time, it offers to signal the end of rests.
+ * Without a connection it starts from the targets instead, and notices no records. A workout not
+ * planned today that has a missed or later day this week first asks whether it counts for that
+ * day (ADR 0028); `beforeStart` runs once it is sure to start, for example to end the workout it
+ * replaces. The first time, it offers to signal the end of rests.
  */
 export function useStartWorkout() {
   const { t } = useTranslation();
   const userId = useUserId();
   const queryClient = useQueryClient();
-  return async (workout: Workout) => {
+  const askMove = useStartMove();
+  return async (workout: Workout, { beforeStart }: { beforeStart?: () => void } = {}) => {
     if (!userId) {
       return;
     }
+    const choice = await askMove(workout, new Date());
+    if (!choice) {
+      return;
+    }
+    beforeStart?.();
     const ids = workout.exercises.map((exercise) => exercise.exerciseId);
     const [last, bests] = await Promise.all([
       queryClient
@@ -45,7 +55,9 @@ export function useStartWorkout() {
           return {};
         }),
     ]);
-    startSession(userId, workout, last, bests);
+    const now = Date.now();
+    const move = choice.fromOn ? { from: choice.fromOn, to: toIsoDate(new Date(now)) } : undefined;
+    startSession(userId, workout, last, { bests, now, move });
     router.push('/session');
     await offerRestAlarm({
       title: t('session.restAlarm.title'),

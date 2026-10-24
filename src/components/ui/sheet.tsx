@@ -1,9 +1,24 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
+
+/** How long iOS takes to close a sheet, during which it cannot present another one. */
+const CLOSE_MS = 400;
+
+/**
+ * Runs `action` once a sheet closing now has closed, for an action that may open another sheet,
+ * which iOS would otherwise not show.
+ */
+export function afterSheetCloses(action: () => void) {
+  if (Platform.OS === 'ios') {
+    setTimeout(action, CLOSE_MS);
+  } else {
+    action();
+  }
+}
 
 type SheetProps = {
   onClose: () => void;

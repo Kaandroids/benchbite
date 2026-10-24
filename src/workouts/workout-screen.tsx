@@ -11,6 +11,7 @@ import { Icon } from '@/components/ui/icon';
 import { InfoButton } from '@/components/ui/info-button';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { useExerciseLibrary } from '@/exercises/library';
@@ -312,8 +313,8 @@ export function WorkoutScreen({ id }: { id: number }) {
           }}
           onDiscard={() => {
             setWaiting(null);
-            endSession();
-            void startWorkout(workout);
+            // The running workout ends only once the new one is sure to start, which may ask first.
+            afterSheetCloses(() => void startWorkout(workout, { beforeStart: endSession }));
           }}
           onClose={() => setWaiting(null)}
         />

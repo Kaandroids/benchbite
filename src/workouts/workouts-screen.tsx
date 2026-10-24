@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
+import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { RecentLogs } from '@/history/recent-logs';
 import { isoWeekday } from '@/i18n/dates';
@@ -142,9 +143,9 @@ export function WorkoutsScreen() {
           onDiscard={() => {
             const next = waiting;
             setWaiting(null);
-            endSession();
+            // The running workout ends only once the new one is sure to start, which may ask first.
             if (next) {
-              void startWorkout(next);
+              afterSheetCloses(() => void startWorkout(next, { beforeStart: endSession }));
             }
           }}
           onClose={() => setWaiting(null)}

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -169,6 +169,18 @@ select results_eq(
   $$ select from_on, to_on from public.workout_moves where workout_id = 912 $$,
   $$ values (pg_temp.late_planned(), (now() - interval '3 days')::date) $$,
   'A log saved days later keeps its move'
+);
+select public.log_workout(jsonb_build_object(
+  'workoutId', 912,
+  'startedAt', pg_temp.late_planned() + time '12:00',
+  'finishedAt', pg_temp.late_planned() + time '12:40',
+  'exercises', jsonb_build_array(jsonb_build_object(
+    'exerciseId', 'Plank', 'sets', jsonb_build_array(jsonb_build_object('seconds', 60)))),
+  'move', jsonb_build_object('from', pg_temp.late_planned(), 'to', pg_temp.late_planned())
+));
+select is_empty(
+  $$ select 1 from public.workout_moves where workout_id = 912 $$,
+  'A log on the day a workout moved away from undoes the move'
 );
 
 -- Other users neither move nor see another user's workouts and moves.

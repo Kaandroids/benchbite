@@ -40,7 +40,8 @@ started on in the user's time zone.
   today asks whether it replaces a missed or a later planned day. The answer stays with the session
   on the device and `log_workout()` writes the move in the same transaction, so it works offline
   and an abandoned session leaves no move behind. The move is judged on the day the workout
-  started, so a log saved days later keeps it.
+  started, so a log saved days later keeps it. A workout moved away from today and done today
+  after all sends a move from today to today, which undoes the move.
 - **The device works out the week.** `weekSchedule()` combines the plan, this week's moves and logs
   into each day's workouts and their states, in the device's time zone. Today, the week card and
   the next workout all use it. Moves that no longer fit the plan, because the workout's weekdays

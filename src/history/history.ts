@@ -191,11 +191,16 @@ export function useRecentLogs(count: number) {
   });
 }
 
+/** The query key of the workouts finished in the week of `today`. */
+export function finishedWeekKey(today: Date) {
+  return [...LOGS_KEY, 'week', weekStart(today).getTime()];
+}
+
 /** The workouts finished in the week of `today`, with the day each started, for the Today tab. */
 export function useFinishedThisWeek(today: Date) {
   const start = weekStart(today);
   return useQuery({
-    queryKey: [...LOGS_KEY, 'week', start.getTime()],
+    queryKey: finishedWeekKey(today),
     queryFn: async (): Promise<FinishedWorkout[]> => {
       const { data, error } = await supabase
         .from('workout_logs')

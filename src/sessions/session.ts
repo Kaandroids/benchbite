@@ -67,6 +67,11 @@ export type Session = {
   clock: SetClock | null;
   /** What the workout had when it started; sets added on the way do not count. */
   planned: { exercises: number; sets: number };
+  /**
+   * The planned day the workout counts for instead of today, saved with the log (ADR 0028), as
+   * YYYY-MM-DD: from that day to the day it started.
+   */
+  move?: { from: string; to: string };
 };
 
 /** Sets of an exercise's latest log, in order. */
@@ -171,13 +176,16 @@ function startingValues(target: WorkoutTarget, last: SetValues[], index: number)
   return { weightKg: null, reps: null, seconds: null, meters: target.meters };
 }
 
-/** Starts a workout, its sets filled in from last time. */
+/** Starts a workout, its sets filled in from last time, counting for a planned day when it moves. */
 export function startSession(
   userId: string,
   workout: Workout,
   last: LastSets,
-  bests: ExerciseBests = {},
-  now = Date.now(),
+  {
+    bests = {},
+    now = Date.now(),
+    move,
+  }: { bests?: ExerciseBests; now?: number; move?: Session['move'] } = {},
 ): Session {
   const { exercises } = workout;
   const value: Session = {
@@ -205,6 +213,7 @@ export function startSession(
       exercises: exercises.length,
       sets: exercises.reduce((total, exercise) => total + exercise.sets, 0),
     },
+    ...(move ? { move } : {}),
   };
   set(value);
   return value;
@@ -393,6 +402,7 @@ export function toLog(value: Session, finishedAt = Date.now()) {
         .filter((s) => s.done)
         .map(({ weightKg, reps, seconds, meters }) => ({ weightKg, reps, seconds, meters })),
     })),
+    ...(value.move ? { move: value.move } : {}),
   };
 }
 
