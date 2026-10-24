@@ -55,7 +55,8 @@ export function TodayScreen() {
   };
 
   let content;
-  if (queries.some((query) => query.isError)) {
+  // A query that loaded and then failed to refresh keeps showing what it has.
+  if (queries.some((query) => query.isError && query.data === undefined)) {
     content = (
       <View style={[styles.center, { gap: spacing.xl }]}>
         <MessageView

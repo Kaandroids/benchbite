@@ -210,6 +210,13 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Next: Wednesday · Pull')).toBeTruthy();
   });
 
+  it('keeps showing what loaded when refreshing fails', async () => {
+    mockData({ targets: { ...loaded<NutritionTargets | null>(TARGETS), isError: true } });
+    await render(<TodayScreen />);
+    expect(screen.getByText("Today's workout")).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
   it('names the weekday of a later workout', async () => {
     jest.setSystemTime(THURSDAY);
     mockData({ plan: loaded<Plan | null>({ sessions: [session(1, 'push')] }) });
