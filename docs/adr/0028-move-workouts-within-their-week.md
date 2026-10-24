@@ -33,15 +33,18 @@ started on in the user's time zone.
   shows, but does not count towards the week.
 - **The database enforces what a move may be.** `move_workout()` checks that the original day is
   one of the workout's weekdays, that the target is in the same week, not in the past and does not
-  already have the same workout. A move can be undone by deleting it, until the workout is done.
+  already have the same workout. A move is undone by deleting it, which the database allows at
+  any time.
 - **A move chosen when starting is saved with the log.** Starting a workout that is not planned
   today asks whether it replaces a missed or a later planned day. The answer stays with the session
   on the device and `log_workout()` writes the move in the same transaction, so it works offline
-  and an abandoned session leaves no move behind.
+  and an abandoned session leaves no move behind. The move is judged on the day the workout
+  started, so a log saved days later keeps it.
 - **The device works out the week.** `weekSchedule()` combines the plan, this week's moves and logs
   into each day's workouts and their states, in the device's time zone. Today, the week card and
   the next workout all use it. Moves that no longer fit the plan, because the workout's weekdays
-  changed or it was archived, are ignored.
+  changed or it was archived, are ignored. The app offers to undo a move only until its workout
+  is done, as only the device knows which day a workout counts for.
 
 ## Alternatives considered
 
