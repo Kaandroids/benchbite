@@ -4,6 +4,7 @@ import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
@@ -99,25 +100,12 @@ export function ExerciseScreen({ id }: { id: string }) {
       onBack={() => router.back()}
       action={
         exercise.custom && !exercise.archived ? (
-          <Pressable
-            accessibilityRole="button"
+          <PillButton
+            label={t('workout.edit')}
             onPress={() =>
               router.push({ pathname: '/workout/exercise/edit', params: { id: exercise.id } })
             }
-            style={({ pressed }) => [
-              styles.edit,
-              {
-                borderRadius: radii.full,
-                backgroundColor: colors.iconBackground,
-                paddingHorizontal: spacing.md,
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text variant="label" color="primaryText">
-              {t('workout.edit')}
-            </Text>
-          </Pressable>
+          />
         ) : undefined
       }
       // In the top bar, as on the other screens; long names take a second line.
@@ -222,10 +210,6 @@ export function ExerciseScreen({ id }: { id: string }) {
 }
 
 const styles = StyleSheet.create({
-  edit: {
-    height: 40,
-    justifyContent: 'center',
-  },
   archive: {
     alignItems: 'center',
   },

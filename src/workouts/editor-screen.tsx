@@ -8,6 +8,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -175,23 +176,12 @@ export function EditorScreen({ id }: { id?: number }) {
         <Text variant="label" accessibilityRole="header" style={[styles.flex]} align="center">
           {id === undefined ? t('editor.newTitle') : t('editor.editTitle')}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSave || save.isPending }}
+        <PillButton
+          variant="primary"
+          label={t('editor.save')}
           disabled={!canSave || save.isPending}
           onPress={() => void onSave()}
-          style={[
-            styles.save,
-            {
-              borderRadius: radii.full,
-              backgroundColor: canSave ? colors.primaryButton : colors.track,
-            },
-          ]}
-        >
-          <Text variant="label" color={canSave ? 'onPrimary' : 'textMuted'}>
-            {t('editor.save')}
-          </Text>
-        </Pressable>
+        />
       </View>
 
       {loaded && id !== undefined && !workout && !draft ? (
@@ -381,11 +371,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  save: {
-    height: 40,
-    paddingHorizontal: 16,
     justifyContent: 'center',
   },
   input: {

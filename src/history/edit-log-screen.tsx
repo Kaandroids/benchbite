@@ -8,6 +8,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -99,7 +100,7 @@ function LogEditor({
   library: LibraryExercise[];
 }) {
   const { t, i18n } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
   const edit = useEditLog();
   // Each set gets a key of its own, so that removing one keeps the others' inputs in place.
@@ -201,24 +202,12 @@ function LogEditor({
         </Text>
       }
       action={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canSave }}
+        <PillButton
+          variant="primary"
+          label={t('editor.save')}
           disabled={!canSave}
           onPress={() => void onSave()}
-          style={[
-            styles.save,
-            {
-              borderRadius: radii.full,
-              paddingHorizontal: spacing.lg,
-              backgroundColor: canSave ? colors.primaryButton : colors.track,
-            },
-          ]}
-        >
-          <Text variant="label" color={canSave ? 'onPrimary' : 'textMuted'}>
-            {t('editor.save')}
-          </Text>
-        </Pressable>
+        />
       }
     >
       <Text variant="caption" color="textMuted" style={styles.semibold}>
@@ -317,9 +306,5 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  save: {
-    height: 40,
-    justifyContent: 'center',
   },
 });

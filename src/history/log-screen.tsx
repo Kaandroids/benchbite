@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
@@ -102,25 +103,12 @@ export function LogScreen({ id }: { id: number }) {
     <Screen
       onBack={() => router.back()}
       action={
-        <Pressable
-          accessibilityRole="button"
+        <PillButton
+          label={t('workout.edit')}
           onPress={() =>
             router.push({ pathname: '/workout/log/edit', params: { id: String(log.id) } })
           }
-          style={({ pressed }) => [
-            styles.edit,
-            {
-              borderRadius: radii.full,
-              backgroundColor: colors.iconBackground,
-              paddingHorizontal: spacing.md,
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text variant="label" color="primaryText">
-            {t('workout.edit')}
-          </Text>
-        </Pressable>
+        />
       }
       title={
         <>
@@ -270,10 +258,6 @@ const styles = StyleSheet.create({
   },
   buttons: {
     position: 'absolute',
-  },
-  edit: {
-    height: 40,
-    justifyContent: 'center',
   },
   delete: {
     height: 48,

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { afterSheetCloses } from '@/components/ui/sheet';
@@ -189,8 +190,8 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : undefined
       }
       action={
-        <Pressable
-          accessibilityRole="button"
+        <PillButton
+          label={t('workout.edit')}
           onPress={() => {
             if (running) {
               askToFinish();
@@ -198,20 +199,7 @@ export function WorkoutScreen({ id }: { id: number }) {
             }
             router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
           }}
-          style={({ pressed }) => [
-            styles.edit,
-            {
-              borderRadius: radii.full,
-              backgroundColor: colors.iconBackground,
-              paddingHorizontal: spacing.md,
-              opacity: pressed ? 0.6 : 1,
-            },
-          ]}
-        >
-          <Text variant="label" color="primaryText">
-            {t('workout.edit')}
-          </Text>
-        </Pressable>
+        />
       }
     >
       {/* One card of even columns over the workout's days, like a finished workout's figures over
@@ -287,11 +275,6 @@ export function WorkoutScreen({ id }: { id: number }) {
 }
 
 const styles = StyleSheet.create({
-  edit: {
-    height: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   archive: {
     height: 52,
     flexDirection: 'row',
