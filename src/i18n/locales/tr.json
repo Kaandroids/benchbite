@@ -235,7 +235,6 @@
     "daysHint": "Günler sadece haftanı planlar. Her antrenmanı her gün yapabilirsin.",
     "exercises_one": "Egzersizler · {{count}}",
     "exercises_other": "Egzersizler · {{count}}",
-    "reorder": "Sıralamak için sürükle",
     "delete": "Antrenmanı sil",
     "deleteTitle": "Bu antrenman silinsin mi?",
     "deleteMessage": "Egzersizleriyle birlikte silinir. Bu geri alınamaz.",
@@ -793,5 +792,12 @@
     "archived": "Arşivlendi",
     "archiveErrorTitle": "Değiştirilemedi",
     "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene."
+  },
+  "reorder": {
+    "moveUp": "Yukarı taşı",
+    "moveDown": "Aşağı taşı",
+    "place": "{{count}} içinde {{place}}.",
+    "hint": "Sırayı değiştirmek için sürükle ya da eylemleri kullan.",
+    "moved": "{{name}} artık {{count}} içinde {{place}}. sırada"
   }
 }

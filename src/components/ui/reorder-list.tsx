@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { AccessibilityInfo, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedReaction,
@@ -25,7 +26,8 @@ type ReorderListProps<T> = {
   rowHeight: number;
   onMove: (from: number, to: number) => void;
   renderItem: (item: T, index: number) => ReactNode;
-  handleLabel: string;
+  /** What screen readers call a row's handle, such as the exercise's name. */
+  labelOf: (item: T) => string;
   /** Called when a drag starts and ends, for example to stop the page from scrolling meanwhile. */
   onDragChange?: (dragging: boolean) => void;
 };
@@ -59,7 +61,8 @@ function moved(places: Places, key: string, to: number): Places {
 /**
  * Rows that are reordered by dragging the handle at their start. The dragged row follows the finger
  * and the others make room as it passes them. The new order is reported when the row is let go,
- * by which time every row is already where the new order puts it.
+ * by which time every row is already where the new order puts it. Screen readers, which cannot
+ * drag, move a row a place up or down with the handle's actions instead.
  */
 export function ReorderList<T>({
   items,
@@ -67,9 +70,10 @@ export function ReorderList<T>({
   rowHeight,
   onMove,
   renderItem,
-  handleLabel,
+  labelOf,
   onDragChange,
 }: ReorderListProps<T>) {
+  const { t } = useTranslation();
   const keys = items.map(keyOf);
   const places = useSharedValue(placesOf(keys));
 
@@ -92,7 +96,13 @@ export function ReorderList<T>({
           rowHeight={rowHeight}
           onMove={onMove}
           onDragChange={onDragChange}
-          handleLabel={handleLabel}
+          label={labelOf(item)}
+          onStep={(to) => {
+            onMove(index, to);
+            AccessibilityInfo.announceForAccessibility(
+              t('reorder.moved', { name: labelOf(item), place: to + 1, count: items.length }),
+            );
+          }}
         >
           {renderItem(item, index)}
         </ReorderRow>
@@ -109,7 +119,9 @@ type ReorderRowProps = {
   rowHeight: number;
   onMove: (from: number, to: number) => void;
   onDragChange: ((dragging: boolean) => void) | undefined;
-  handleLabel: string;
+  label: string;
+  /** Moves the row to the place, as a screen reader's action does. */
+  onStep: (to: number) => void;
   children: ReactNode;
 };
 
@@ -121,9 +133,11 @@ function ReorderRow({
   rowHeight,
   onMove,
   onDragChange,
-  handleLabel,
+  label,
+  onStep,
   children,
 }: ReorderRowProps) {
+  const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const top = useSharedValue(index * rowHeight);
   const dragging = useSharedValue(false);
@@ -187,6 +201,13 @@ function ReorderRow({
     shadowOpacity: lifted.get() * 0.15,
   }));
 
+  const actions = [
+    ...(index > 0 ? [{ name: 'moveUp', label: t('reorder.moveUp') }] : []),
+    ...(index < count - 1 ? [{ name: 'moveDown', label: t('reorder.moveDown') }] : []),
+  ];
+  const act = ({ nativeEvent }: AccessibilityActionEvent) =>
+    onStep(nativeEvent.actionName === 'moveUp' ? index - 1 : index + 1);
+
   return (
     <Animated.View
       style={[
@@ -196,7 +217,16 @@ function ReorderRow({
       ]}
     >
       <GestureDetector gesture={pan}>
-        <View accessible accessibilityLabel={handleLabel} style={styles.handle} hitSlop={8}>
+        <View
+          accessible
+          accessibilityLabel={label}
+          accessibilityValue={{ text: t('reorder.place', { place: index + 1, count }) }}
+          accessibilityHint={t('reorder.hint')}
+          accessibilityActions={actions}
+          onAccessibilityAction={act}
+          style={styles.handle}
+          hitSlop={8}
+        >
           <Icon name="drag" size={20} color="textMuted" />
         </View>
       </GestureDetector>
