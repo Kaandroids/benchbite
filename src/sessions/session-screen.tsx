@@ -247,7 +247,7 @@ export function SessionScreen() {
           <ProgressBar value={totals.planned ? totals.done / totals.planned : 0} />
         </View>
         <Text variant="caption" color="textMuted" style={styles.bold}>
-          {t('session.progress', { done: totals.done, count: totals.planned })}
+          {t('session.setsDone', { done: totals.done, count: totals.planned })}
         </Text>
       </View>
 

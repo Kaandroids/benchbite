@@ -95,7 +95,7 @@ describe('plural forms', () => {
     const de = i18n.getFixedT('de');
     expect(en('session.setsDone', { done: 0, count: 1 })).toBe('0 of 1 set');
     expect(en('session.setsDone', { done: 1, count: 3 })).toBe('1 of 3 sets');
-    expect(de('session.progress', { done: 1, count: 1 })).toBe('1 von 1 Satz');
+    expect(de('session.setsDone', { done: 1, count: 1 })).toBe('1 von 1 Satz');
     expect(en('session.busy.message', { minutes: 1, count: 2 })).toBe(
       'You started it 1 min ago and logged 2 sets. Only one workout can run at a time.',
     );

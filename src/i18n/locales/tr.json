@@ -593,8 +593,6 @@
     "metersOf": "Set {{number}} mesafesi",
     "minimize": "Küçült, antrenman devam eder",
     "finish": "Bitir",
-    "progress_one": "{{done}}/{{count}} set",
-    "progress_other": "{{done}}/{{count}} set",
     "setsDone_one": "{{done}}/{{count}} set",
     "setsDone_other": "{{done}}/{{count}} set",
     "best": "en iyi {{set}}",

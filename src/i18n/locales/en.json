@@ -593,8 +593,6 @@
     "metersOf": "Distance of set {{number}}",
     "minimize": "Minimize, the workout keeps running",
     "finish": "Finish",
-    "progress_one": "{{done}} of {{count}} set",
-    "progress_other": "{{done}} of {{count}} sets",
     "setsDone_one": "{{done}} of {{count}} set",
     "setsDone_other": "{{done}} of {{count}} sets",
     "best": "best {{set}}",

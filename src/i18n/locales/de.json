@@ -593,8 +593,6 @@
     "metersOf": "Distanz von Satz {{number}}",
     "minimize": "Minimieren, das Training läuft weiter",
     "finish": "Beenden",
-    "progress_one": "{{done}} von {{count}} Satz",
-    "progress_other": "{{done}} von {{count}} Sätzen",
     "setsDone_one": "{{done}} von {{count}} Satz",
     "setsDone_other": "{{done}} von {{count}} Sätzen",
     "best": "bester {{set}}",
