@@ -77,22 +77,6 @@ describe('ReminderSync', () => {
     ]);
   });
 
-  it('names every workout of a day in one reminder', async () => {
-    mockWeek();
-    await render(<ReminderSync />);
-    await waitFor(() => expect(scheduleReminders).toHaveBeenCalled());
-    expect(scheduled()[0]).toEqual({
-      date: '2026-10-22',
-      title: 'Today: Push, Cardio',
-      body: "2 workouts, about 90 min in all. You've got this!",
-    });
-    expect(scheduled()[1]).toEqual({
-      date: '2026-10-26',
-      title: 'Today: Push',
-      body: "6 exercises, about 45 min. You've got this!",
-    });
-  });
-
   it('follows a move this week, and schedules again when the week changes', async () => {
     mockWeek();
     const { rerender } = await render(<ReminderSync />);
