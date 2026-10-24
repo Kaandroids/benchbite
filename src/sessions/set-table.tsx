@@ -28,7 +28,8 @@ function show(field: SetField, value: number | null): string {
   return field === 'seconds' ? minutesAndSeconds(value) : String(value);
 }
 
-function read(field: SetField, text: string): number | null {
+/** Reads a typed value; null when it is none, also when it rounds to nothing, such as "0.4" reps. */
+export function readSetValue(field: SetField, text: string): number | null {
   if (field === 'seconds') {
     return parseTime(text);
   }
@@ -38,7 +39,7 @@ function read(field: SetField, text: string): number | null {
   }
   // Beyond what a set can hold, the value is the most it can be, so that the workout still saves.
   const rounded = field === 'weightKg' ? Math.round(value * 4) / 4 : Math.round(value);
-  return Math.min(rounded, SET_LIMITS[field]);
+  return rounded > 0 ? Math.min(rounded, SET_LIMITS[field]) : null;
 }
 
 // The characters a value needs at most, such as "999.75", "999", "1440:00" or "1000000".
@@ -148,14 +149,14 @@ function SetInput({
         setText(typed);
         // Saved as soon as it reads as a value or is cleared, so that the set can be ticked or
         // saved while the keyboard is still up; "1:" or "2." wait until editing ends.
-        const value = read(field, typed);
+        const value = readSetValue(field, typed);
         if (value !== null || typed.trim() === '') {
           onChange(value);
         }
       }}
       onEndEditing={() => {
         if (text !== null) {
-          onChange(read(field, text));
+          onChange(readSetValue(field, text));
           setText(null);
         }
       }}

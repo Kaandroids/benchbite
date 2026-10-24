@@ -277,13 +277,19 @@ export function toggleDone(
     done: !wasDone,
     doneAt: wasDone ? undefined : now,
   }));
+  // A set ticked or unticked ends the rest that was running: after a set there is only its own
+  // rest, if its exercise has one, and a set unticked was most likely ticked by mistake.
   if (wasDone) {
-    return next;
+    return { ...next, rest: null };
   }
   const item = next.exercises[exercise];
-  if (item && item.restSeconds > 0) {
-    next = { ...next, rest: { endsAt: now + item.restSeconds * 1000, seconds: item.restSeconds } };
-  }
+  next = {
+    ...next,
+    rest:
+      item && item.restSeconds > 0
+        ? { endsAt: now + item.restSeconds * 1000, seconds: item.restSeconds }
+        : null,
+  };
   if (item && isExerciseDone(item)) {
     const following = next.exercises.findIndex((e, i) => i > exercise && !isExerciseDone(e));
     if (following >= 0) {
