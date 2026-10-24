@@ -1,5 +1,13 @@
 import type { WeekSession } from './workouts';
-import { dayState, nextWorkouts, weekSchedule, type WorkoutMove } from './week-schedule';
+import {
+  dayState,
+  missedWorkouts,
+  moveTargets,
+  nextWorkouts,
+  originOf,
+  weekSchedule,
+  type WorkoutMove,
+} from './week-schedule';
 
 const session = (workoutId: number, weekday: number): WeekSession => ({
   workoutId,
@@ -184,5 +192,59 @@ describe('nextWorkouts', () => {
 
   it('is null without a plan', () => {
     expect(nextWorkouts(weekSchedule([], [], [], WEDNESDAY), [], WEDNESDAY)).toBeNull();
+  });
+});
+
+describe('moveTargets', () => {
+  const datesOf = (moves: WorkoutMove[], workoutId: number, fromOn: string) =>
+    moveTargets(weekSchedule(SESSIONS, moves, [], WEDNESDAY), workoutId, fromOn, '2026-10-21').map(
+      (day) => day.date,
+    );
+
+  it('is today to Sunday, without the days the workout is already on', () => {
+    // Push is on Thursday.
+    expect(datesOf([], 1, '2026-10-19')).toEqual([
+      '2026-10-21',
+      '2026-10-23',
+      '2026-10-24',
+      '2026-10-25',
+    ]);
+  });
+
+  it('leaves out a day a workout moved to, and frees a day it was skipped on', () => {
+    const moves: WorkoutMove[] = [
+      { workoutId: 1, fromOn: '2026-10-22', toOn: null },
+      { workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-23' },
+    ];
+    expect(datesOf(moves, 3, '2026-10-24')).toEqual(['2026-10-21', '2026-10-23', '2026-10-25']);
+    expect(datesOf(moves, 1, '2026-10-19')).toEqual([
+      '2026-10-21',
+      '2026-10-22',
+      '2026-10-24',
+      '2026-10-25',
+    ]);
+  });
+});
+
+describe('missedWorkouts', () => {
+  it('lists the missed workouts with the day they were missed on and the day they are from', () => {
+    const thursday = new Date(2026, 9, 22, 9, 0);
+    const schedule = weekSchedule(
+      SESSIONS,
+      [{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-21' }],
+      [],
+      thursday,
+    );
+    const missed = missedWorkouts(schedule);
+    expect(
+      missed.map(({ workout, day }) => [
+        workout.session.workoutId,
+        day.date,
+        originOf(workout, day),
+      ]),
+    ).toEqual([
+      [2, '2026-10-20', '2026-10-20'],
+      [1, '2026-10-21', '2026-10-19'],
+    ]);
   });
 });

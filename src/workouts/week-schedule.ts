@@ -188,3 +188,39 @@ export function nextWorkouts(
   }
   return null;
 }
+
+/** The day a planned workout is on in the plan, which its move or skip is saved from. */
+export function originOf(workout: PlannedWorkout, day: ScheduleDay): string {
+  return workout.movedFrom ?? day.date;
+}
+
+/**
+ * The days a workout can move to as seen on `today` as YYYY-MM-DD: from today to Sunday, but not
+ * the day it is on in the plan nor a day it is already on (ADR 0028).
+ */
+export function moveTargets(
+  schedule: WeekSchedule,
+  workoutId: number,
+  fromOn: string,
+  today: string,
+): ScheduleDay[] {
+  return schedule.days.filter(
+    (day) =>
+      day.date >= today &&
+      day.date !== fromOn &&
+      !day.workouts.some(
+        (workout) => workout.session.workoutId === workoutId && workout.status !== 'skipped',
+      ),
+  );
+}
+
+/** This week's missed workouts, with the day each was missed on, earliest first. */
+export function missedWorkouts(
+  schedule: WeekSchedule,
+): { workout: PlannedWorkout; day: ScheduleDay }[] {
+  return schedule.days.flatMap((day) =>
+    day.workouts
+      .filter((workout) => workout.status === 'missed')
+      .map((workout) => ({ workout, day })),
+  );
+}
