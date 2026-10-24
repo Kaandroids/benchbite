@@ -43,9 +43,14 @@
     },
     "targets": "Günlük hedeflerin",
     "week": {
-      "done": "antrenman yapıldı",
-      "missed": "antrenman kaçırıldı",
-      "planned": "antrenman planlandı",
+      "done": "yapıldı",
+      "missed": "kaçırıldı",
+      "planned": "planlandı",
+      "skipped": "atlandı",
+      "movedFrom": "{{day}} gününden taşındı",
+      "movedTo": "{{day}} gününe taşındı",
+      "extra_one": "ekstra antrenman",
+      "extra_other": "{{count}} ekstra antrenman",
       "progress_one": "Bu hafta {{count}} antrenmandan {{done}}",
       "progress_other": "Bu hafta {{count}} antrenmandan {{done}}"
     },

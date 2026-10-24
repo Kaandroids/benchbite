@@ -43,9 +43,14 @@
     },
     "targets": "Deine Tagesziele",
     "week": {
-      "done": "Training erledigt",
-      "missed": "Training verpasst",
-      "planned": "Training geplant",
+      "done": "erledigt",
+      "missed": "verpasst",
+      "planned": "geplant",
+      "skipped": "übersprungen",
+      "movedFrom": "verschoben von {{day}}",
+      "movedTo": "verschoben auf {{day}}",
+      "extra_one": "zusätzliches Training",
+      "extra_other": "{{count}} zusätzliche Trainings",
       "progress_one": "{{done}} von {{count}} Training diese Woche",
       "progress_other": "{{done}} von {{count}} Trainings diese Woche"
     },

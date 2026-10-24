@@ -43,9 +43,14 @@
     },
     "targets": "Your daily targets",
     "week": {
-      "done": "workout done",
-      "missed": "workout missed",
-      "planned": "workout planned",
+      "done": "done",
+      "missed": "missed",
+      "planned": "planned",
+      "skipped": "skipped",
+      "movedFrom": "moved from {{day}}",
+      "movedTo": "moved to {{day}}",
+      "extra_one": "extra workout",
+      "extra_other": "{{count}} extra workouts",
       "progress_one": "{{done}} of {{count}} workout this week",
       "progress_other": "{{done}} of {{count}} workouts this week"
     },
