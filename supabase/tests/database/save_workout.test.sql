@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -191,6 +191,23 @@ select is_empty(
   $$ select 1 from public.workout_exercises
      where workout_id = current_setting('test.workout_id')::bigint $$,
   'Its exercises are deleted with it'
+);
+
+-- The same workout as 'estimates a workout as save_workout() does' in
+-- supabase/functions/_shared/plan/session_test.ts, which the plan builder estimates. Change both
+-- together (ADR 0017).
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select set_config('test.same_id', public.save_workout(
+  pg_temp.workout(jsonb_build_array(
+    pg_temp.exercise('Hammer_Curls', '{"reps": {"min": 10, "max": 12}}'),
+    pg_temp.exercise('Plank', '{"seconds": 45, "meters": null}', 2)
+  ), '{"name": "Same as the plan builder"}')
+)::text, true);
+select is(
+  (select estimated_minutes::integer from public.workouts
+   where id = current_setting('test.same_id')::bigint),
+  14,
+  'A workout of reps and a time takes as long as in the plan builder'
 );
 
 select * from finish();
