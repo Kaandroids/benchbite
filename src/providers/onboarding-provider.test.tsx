@@ -36,12 +36,12 @@ const select = jest.fn(() => ({ eq }));
 let appStateListener: ((state: AppStateStatus) => void) | undefined;
 const removeAppStateListener = jest.fn();
 
-function signIn(userId: string | null) {
+function signIn(userId: string | null, isAnonymous = true) {
   jest.mocked(useSession).mockReturnValue(
     userId
       ? {
           status: 'ready',
-          session: { user: { id: userId } } as Session,
+          session: { user: { id: userId, is_anonymous: isAnonymous } } as Session,
           retry: jest.fn(),
           startAgain: jest.fn(),
           signOut: jest.fn(),
@@ -210,6 +210,43 @@ describe('OnboardingProvider', () => {
 
     await act(async () => appStateListener?.('active'));
     expect(maybeSingle).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not wait for the server for a guest', async () => {
+    const { result } = await renderOnboarding();
+    expect(result.current.checking).toBe(false);
+  });
+
+  it('waits for the server for an account that has not finished the onboarding here', async () => {
+    signIn('user-1', false);
+    let answer: (value: unknown) => void = () => {};
+    maybeSingle.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+    const { result } = await renderOnboarding();
+    expect(result.current).toMatchObject({ checking: true, completed: false });
+    await act(async () =>
+      answer({ data: { onboarding_completed_at: '2026-10-01T10:00:00Z' }, error: null }),
+    );
+    expect(result.current.checking).toBe(false);
+    expect(result.current.completed).toBe(true);
+  });
+
+  it('shows the onboarding to an account when the server does not answer', async () => {
+    signIn('user-1', false);
+    maybeSingle.mockResolvedValue({ data: null, error: new Error('offline') });
+    const { result } = await renderOnboarding();
+    await waitFor(() => expect(result.current.checking).toBe(false));
+    expect(result.current.completed).toBe(false);
+  });
+
+  it('does not wait for an account that finished the onboarding here', async () => {
+    signIn('user-1', false);
+    stored.set('onboarding.user-1.completed', 'true');
+    const { result } = await renderOnboarding();
+    expect(result.current.checking).toBe(false);
   });
 
   it('stops listening for the foreground on unmount', async () => {

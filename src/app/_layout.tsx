@@ -46,7 +46,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status, retry, startAgain } = useSession();
-  const { completed } = useOnboarding();
+  const { completed, checking } = useOnboarding();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
   const [fontsLoaded, fontError] = useFonts({
@@ -55,7 +55,7 @@ function RootNavigator() {
     [fonts.extraBold]: Nunito_800ExtraBold,
     [fonts.black]: Nunito_900Black,
   });
-  const isReady = (fontsLoaded || fontError !== null) && status !== 'loading';
+  const isReady = (fontsLoaded || fontError !== null) && status !== 'loading' && !checking;
 
   // The root view shows through during screen transitions and keyboard animations.
   useEffect(() => {

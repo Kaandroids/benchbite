@@ -104,6 +104,7 @@ const listeners = new Set<() => void>();
 function setOnboarding(step: Step, answers: OnboardingAnswers = {}, completed = false) {
   onboarding = {
     completed,
+    checking: false,
     draft: { step, answers },
     setStep: jest.fn(),
     answer: jest.fn(),
@@ -237,15 +238,21 @@ describe('root layout', () => {
   });
 
   it('shows nothing while the session is loading', async () => {
-    jest
-      .mocked(useSession)
-      .mockReturnValue({
-        status: 'loading',
-        retry: jest.fn(),
-        startAgain: jest.fn(),
-        signOut: jest.fn(),
-      });
+    jest.mocked(useSession).mockReturnValue({
+      status: 'loading',
+      retry: jest.fn(),
+      startAgain: jest.fn(),
+      signOut: jest.fn(),
+    });
     setOnboarding('welcome');
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+  });
+
+  it('shows nothing while it waits for the server to say whether the onboarding was finished', async () => {
+    setOnboarding('welcome');
+    onboarding = { ...onboarding, checking: true };
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
     expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();

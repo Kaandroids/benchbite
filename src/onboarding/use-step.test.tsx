@@ -29,6 +29,7 @@ const removeBackHandler = jest.fn();
 function renderStep(step: Step, answers: OnboardingAnswers = {}) {
   jest.mocked(useOnboarding).mockReturnValue({
     completed: false,
+    checking: false,
     draft: { step, answers },
     setStep,
     answer,

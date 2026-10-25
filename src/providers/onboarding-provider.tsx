@@ -27,6 +27,11 @@ import { useSession } from './session-provider';
 type OnboardingContextValue = {
   /** Whether the onboarding was finished. The app's screens are only available then. */
   completed: boolean;
+  /**
+   * Whether the app waits for the server to say if an account that signed in on this device
+   * finished the onboarding elsewhere, so the onboarding does not flash up before it skips.
+   */
+  checking: boolean;
   /** The step the user is on and the answers so far. */
   draft: Draft;
   /** Records the step on screen, so that the onboarding resumes there. */
@@ -46,6 +51,7 @@ const EMPTY_DRAFT: Draft = { step: 'welcome', answers: {} };
 /** Used until the session is ready; the app shows nothing before that. */
 const LOADING: OnboardingContextValue = {
   completed: false,
+  checking: false,
   draft: EMPTY_DRAFT,
   setStep: () => {},
   answer: () => {},
@@ -60,13 +66,13 @@ const LOADING: OnboardingContextValue = {
  */
 export function OnboardingProvider({ children }: PropsWithChildren) {
   const sessionState = useSession();
-  const userId = sessionState.status === 'ready' ? sessionState.session.user.id : null;
+  const user = sessionState.status === 'ready' ? sessionState.session.user : null;
 
-  if (!userId) {
+  if (!user) {
     return <OnboardingContext value={LOADING}>{children}</OnboardingContext>;
   }
   return (
-    <UserOnboardingProvider key={userId} userId={userId}>
+    <UserOnboardingProvider key={user.id} userId={user.id} isAccount={user.is_anonymous === false}>
       {children}
     </UserOnboardingProvider>
   );
@@ -76,11 +82,18 @@ export function OnboardingProvider({ children }: PropsWithChildren) {
  * The server decides whether the onboarding was finished; the copy on the device answers
  * immediately and while offline.
  */
-function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId: string }>) {
+function UserOnboardingProvider({
+  userId,
+  isAccount,
+  children,
+}: PropsWithChildren<{ userId: string; isAccount: boolean }>) {
   const [completed, setCompleted] = useState(() => {
     forgetOtherUsers(userId);
     return loadCompleted(userId);
   });
+  // A guest always starts on this device. An account that has not finished the onboarding here was
+  // most likely signed in to after finishing it elsewhere.
+  const [checking, setChecking] = useState(() => isAccount && !completed);
   const [draft, setDraft] = useState(() => loadDraft(userId) ?? EMPTY_DRAFT);
 
   // Finishing the onboarding, here or as the server reports it: the answers are saved, so the draft
@@ -107,13 +120,19 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
         .select('onboarding_completed_at')
         .eq('user_id', userId)
         .maybeSingle();
-      if (error || answered) {
+      if (answered) {
+        return;
+      }
+      // Without an answer, the onboarding shows; it still skips once the server answers.
+      if (error) {
+        setChecking(false);
         return;
       }
       answered = true;
       if (data?.onboarding_completed_at) {
         finish();
       }
+      setChecking(false);
     };
     void check();
     const subscription = AppState.addEventListener('change', (state) => {
@@ -171,8 +190,8 @@ function UserOnboardingProvider({ userId, children }: PropsWithChildren<{ userId
   );
 
   const value = useMemo(
-    (): OnboardingContextValue => ({ completed, draft, ...actions }),
-    [completed, draft, actions],
+    (): OnboardingContextValue => ({ completed, checking, draft, ...actions }),
+    [completed, checking, draft, actions],
   );
 
   return <OnboardingContext value={value}>{children}</OnboardingContext>;
