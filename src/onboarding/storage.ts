@@ -6,6 +6,8 @@
 // onboarding again, which is better than an app that crashes on launch.
 import { Storage } from 'expo-sqlite/kv-store';
 
+import { readItem, writeItem } from '@/lib/device-storage';
+
 import { isStep, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
 
@@ -18,29 +20,8 @@ export type Draft = { step: Step; answers: OnboardingAnswers };
 const draftKey = (userId: string) => `${PREFIX}${userId}.draft`;
 const completedKey = (userId: string) => `${PREFIX}${userId}.completed`;
 
-function read(key: string): string | null {
-  try {
-    return Storage.getItemSync(key);
-  } catch (error) {
-    console.warn(`Could not read ${key}`, error);
-    return null;
-  }
-}
-
-function write(key: string, value: string | null) {
-  try {
-    if (value === null) {
-      Storage.removeItemSync(key);
-    } else {
-      Storage.setItemSync(key, value);
-    }
-  } catch (error) {
-    console.warn(`Could not write ${key}`, error);
-  }
-}
-
 export function loadDraft(userId: string): Draft | null {
-  const stored = read(draftKey(userId));
+  const stored = readItem(draftKey(userId));
   if (!stored) {
     return null;
   }
@@ -57,19 +38,19 @@ export function loadDraft(userId: string): Draft | null {
 }
 
 export function saveDraft(userId: string, draft: Draft) {
-  write(draftKey(userId), JSON.stringify({ version: DRAFT_VERSION, ...draft }));
+  writeItem(draftKey(userId), JSON.stringify({ version: DRAFT_VERSION, ...draft }));
 }
 
 export function clearDraft(userId: string) {
-  write(draftKey(userId), null);
+  writeItem(draftKey(userId), null);
 }
 
 export function loadCompleted(userId: string): boolean {
-  return read(completedKey(userId)) === 'true';
+  return readItem(completedKey(userId)) === 'true';
 }
 
 export function saveCompleted(userId: string, completed: boolean) {
-  write(completedKey(userId), completed ? 'true' : null);
+  writeItem(completedKey(userId), completed ? 'true' : null);
 }
 
 /**
