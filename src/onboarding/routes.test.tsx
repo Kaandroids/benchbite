@@ -22,7 +22,7 @@ import OnboardingStep from '@/app/onboarding/[step]';
 import OnboardingLayout from '@/app/onboarding/_layout';
 import OnboardingIndex from '@/app/onboarding/index';
 import { useOnboarding } from '@/providers/onboarding-provider';
-import { useSession } from '@/providers/session-provider';
+import { useIsAccount, useSession } from '@/providers/session-provider';
 import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
 import type { Step } from './steps';
@@ -112,6 +112,7 @@ jest.mock('@/providers/session-provider', () => ({
   SessionProvider: ({ children }: PropsWithChildren) => children,
   useSession: jest.fn(),
   useUserId: jest.fn(),
+  useIsAccount: jest.fn(),
 }));
 
 // The root layout's native setup: fonts load at once and the splash screen and reminders do
@@ -173,6 +174,7 @@ beforeEach(() => {
     .mocked(useOnboarding)
     .mockImplementation(() => useSyncExternalStore(subscribe, () => onboarding));
   jest.mocked(useSession).mockReturnValue(sessionValue('user-1'));
+  jest.mocked(useIsAccount).mockReturnValue(false);
 });
 
 describe('onboarding routes', () => {
@@ -281,6 +283,17 @@ describe('account screens', () => {
     await act(() => router.push('/account/login'));
     expect(screen.getByText('Log in with guest data')).toBeOnTheScreen();
   });
+
+  it.each(['/account/create', '/account/login'] as const)(
+    'turns an account away from %s, also when a link opens it',
+    async (path) => {
+      jest.mocked(useIsAccount).mockReturnValue(true);
+      setOnboarding('welcome', {}, true);
+      const app = await renderRouter(APP_ROUTES, { initialUrl: path });
+      expect(app.getPathname()).toBe('/');
+      expect(screen.queryByText('Create account screen')).not.toBeOnTheScreen();
+    },
+  );
 
   it('goes on to Today once the account is created', async () => {
     setOnboarding('welcome', {}, true);
