@@ -22,7 +22,7 @@ import {
 import { pruneAnswers, type Step } from '@/onboarding/steps';
 import type { OnboardingAnswers } from '@/onboarding/types';
 
-import { useSession } from './session-provider';
+import { useIsAccount, useSession } from './session-provider';
 
 type OnboardingContextValue = {
   /** Whether the onboarding was finished. The app's screens are only available then. */
@@ -70,12 +70,13 @@ const LOADING: OnboardingContextValue = {
 export function OnboardingProvider({ children }: PropsWithChildren) {
   const sessionState = useSession();
   const user = sessionState.status === 'ready' ? sessionState.session.user : null;
+  const isAccount = useIsAccount();
 
   if (!user) {
     return <OnboardingContext value={LOADING}>{children}</OnboardingContext>;
   }
   return (
-    <UserOnboardingProvider key={user.id} userId={user.id} isAccount={user.is_anonymous === false}>
+    <UserOnboardingProvider key={user.id} userId={user.id} isAccount={isAccount}>
       {children}
     </UserOnboardingProvider>
   );

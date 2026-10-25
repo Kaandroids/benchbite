@@ -6,7 +6,7 @@ import { sessionValue } from '@/test/context-mocks';
 import { act, renderHook, waitFor } from '@/test/render';
 
 import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
-import { useSession } from './session-provider';
+import { useIsAccount, useSession } from './session-provider';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -23,7 +23,7 @@ jest.mock('expo-sqlite/kv-store', () => {
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
-jest.mock('./session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('./session-provider', () => ({ useSession: jest.fn(), useIsAccount: jest.fn() }));
 
 const { items: stored } = jest.requireMock<{ Storage: { items: Map<string, string> } }>(
   'expo-sqlite/kv-store',
@@ -40,6 +40,7 @@ function signIn(userId: string | null, isAnonymous = true) {
   jest
     .mocked(useSession)
     .mockReturnValue(sessionValue(userId ?? { status: 'loading' }, { isAnonymous }));
+  jest.mocked(useIsAccount).mockReturnValue(userId !== null && !isAnonymous);
 }
 
 function storedDraft(userId: string) {

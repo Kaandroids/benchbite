@@ -142,3 +142,9 @@ export function useUserId(): string | undefined {
   const state = useSession();
   return state.status === 'ready' ? state.session.user.id : undefined;
 }
+
+/** Whether the signed-in user has an account, as opposed to being a guest (ADR 0031). */
+export function useIsAccount(): boolean {
+  const state = useSession();
+  return state.status === 'ready' && state.session.user.is_anonymous === false;
+}

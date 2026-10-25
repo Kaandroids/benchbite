@@ -4,7 +4,7 @@ import { Storage } from 'expo-sqlite/kv-store';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { SessionProvider, useSession } from './session-provider';
+import { SessionProvider, useIsAccount, useSession } from './session-provider';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -220,6 +220,17 @@ describe('SessionProvider', () => {
     expect(unsubscribe).not.toHaveBeenCalled();
     await unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useIsAccount', () => {
+  it('tells an account apart from a guest', async () => {
+    const { result } = await renderHook(() => useIsAccount(), { wrapper: SessionProvider });
+    expect(result.current).toBe(false);
+    await emit({ ...SESSION, user: { id: 'user-1', is_anonymous: true } } as Session);
+    expect(result.current).toBe(false);
+    await emit({ ...SESSION, user: { id: 'user-1', is_anonymous: false } } as Session);
+    expect(result.current).toBe(true);
   });
 });
 
