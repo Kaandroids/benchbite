@@ -24,6 +24,18 @@
     "logIn": "Log in",
     "accountNote": "With an account, your plan and workouts stay yours on any device."
   },
+  "account": {
+    "errors": {
+      "invalidCredentials": "That email and password don’t match an account.",
+      "emailTaken": "There’s already an account with this email. Log in instead.",
+      "invalidEmail": "Enter a valid email address.",
+      "weakPassword": "Use a password with at least 6 characters.",
+      "passwordTooLong": "Use a password with at most 72 characters.",
+      "rateLimited": "Too many tries. Wait a moment and try again.",
+      "offline": "No connection. Check your internet and try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
   "loadError": {
     "title": "This couldn't load",
     "message": "Check your connection and try again."

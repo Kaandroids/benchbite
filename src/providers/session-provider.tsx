@@ -11,7 +11,7 @@ import {
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 
-type SessionState =
+export type SessionState =
   | { status: 'loading' }
   | { status: 'ready'; session: Session }
   | { status: 'error'; error: Error }
@@ -23,6 +23,8 @@ type SessionContextValue = SessionState & {
   retry: () => Promise<void>;
   /** After a session ended, starts over as a new guest. */
   startAgain: () => Promise<void>;
+  /** Signs the account out on this device and starts over as a new guest. */
+  signOut: () => Promise<void>;
 };
 
 /** The id of the user signed in on this device last, to tell a first start from a lost session. */
@@ -96,8 +98,32 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await startAnonymousSession();
   }, [startAnonymousSession]);
 
+  const signOut = useCallback(async () => {
+    // Signing out needs a session that is still valid. One that cannot be refreshed, as offline,
+    // fails here and stays signed in, rather than in the middle of signing out.
+    const { error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      throw sessionError;
+    }
+    // Forgetting the user first makes the session that ends start a new guest, instead of saying
+    // that it ended. Only this device signs out; the account stays signed in elsewhere.
+    rememberUser(null);
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (!error) {
+      return;
+    }
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      // It did not sign out, so the user is still the one to remember.
+      rememberUser(data.session.user.id);
+      throw error;
+    }
+    // The session on the device is gone; only revoking it on the server failed.
+    console.warn('Could not revoke the session', error);
+  }, []);
+
   return (
-    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain }}>
+    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain, signOut }}>
       {children}
     </SessionContext>
   );
@@ -115,4 +141,10 @@ export function useSession(): SessionContextValue {
 export function useUserId(): string | undefined {
   const state = useSession();
   return state.status === 'ready' ? state.session.user.id : undefined;
+}
+
+/** Whether the signed-in user has an account, as opposed to being a guest (ADR 0031). */
+export function useIsAccount(): boolean {
+  const state = useSession();
+  return state.status === 'ready' && state.session.user.is_anonymous === false;
 }

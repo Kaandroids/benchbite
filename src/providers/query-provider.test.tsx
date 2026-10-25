@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
 import { render, screen } from '@/test/render';
+import { sessionValue } from '@/test/context-mocks';
 
 import { QueryProvider } from './query-provider';
 import { useSession } from './session-provider';
@@ -9,12 +10,7 @@ import { useSession } from './session-provider';
 jest.mock('./session-provider', () => ({ useSession: jest.fn() }));
 
 function signIn(userId: string) {
-  jest.mocked(useSession).mockReturnValue({
-    status: 'ready',
-    session: { user: { id: userId } } as never,
-    retry: jest.fn(),
-    startAgain: jest.fn(),
-  });
+  jest.mocked(useSession).mockReturnValue(sessionValue(userId));
 }
 
 /** Shows whose data the cache holds; each user loads their own name once. */

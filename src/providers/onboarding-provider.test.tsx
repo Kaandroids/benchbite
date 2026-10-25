@@ -1,12 +1,12 @@
-import type { Session } from '@supabase/supabase-js';
 import type { PropsWithChildren } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
+import { sessionValue } from '@/test/context-mocks';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { OnboardingProvider, useOnboarding } from './onboarding-provider';
-import { useSession } from './session-provider';
+import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
+import { useIsAccount, useSession } from './session-provider';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -23,7 +23,7 @@ jest.mock('expo-sqlite/kv-store', () => {
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
-jest.mock('./session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('./session-provider', () => ({ useSession: jest.fn(), useIsAccount: jest.fn() }));
 
 const { items: stored } = jest.requireMock<{ Storage: { items: Map<string, string> } }>(
   'expo-sqlite/kv-store',
@@ -36,17 +36,11 @@ const select = jest.fn(() => ({ eq }));
 let appStateListener: ((state: AppStateStatus) => void) | undefined;
 const removeAppStateListener = jest.fn();
 
-function signIn(userId: string | null) {
-  jest.mocked(useSession).mockReturnValue(
-    userId
-      ? {
-          status: 'ready',
-          session: { user: { id: userId } } as Session,
-          retry: jest.fn(),
-          startAgain: jest.fn(),
-        }
-      : { status: 'loading', retry: jest.fn(), startAgain: jest.fn() },
-  );
+function signIn(userId: string | null, isAnonymous = true) {
+  jest
+    .mocked(useSession)
+    .mockReturnValue(sessionValue(userId ?? { status: 'loading' }, { isAnonymous }));
+  jest.mocked(useIsAccount).mockReturnValue(userId !== null && !isAnonymous);
 }
 
 function storedDraft(userId: string) {
@@ -209,6 +203,66 @@ describe('OnboardingProvider', () => {
 
     await act(async () => appStateListener?.('active'));
     expect(maybeSingle).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not wait for the server for a guest', async () => {
+    const { result } = await renderOnboarding();
+    expect(result.current.checking).toBe(false);
+  });
+
+  it('waits for the server for an account that has not finished the onboarding here', async () => {
+    signIn('user-1', false);
+    let answer: (value: unknown) => void = () => {};
+    maybeSingle.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+    const { result } = await renderOnboarding();
+    expect(result.current).toMatchObject({ checking: true, completed: false });
+    await act(async () =>
+      answer({ data: { onboarding_completed_at: '2026-10-01T10:00:00Z' }, error: null }),
+    );
+    expect(result.current.checking).toBe(false);
+    expect(result.current.completed).toBe(true);
+  });
+
+  it('shows the onboarding to an account when the server does not answer', async () => {
+    signIn('user-1', false);
+    maybeSingle.mockResolvedValue({ data: null, error: new Error('offline') });
+    const { result } = await renderOnboarding();
+    await waitFor(() => expect(result.current.checking).toBe(false));
+    expect(result.current.completed).toBe(false);
+  });
+
+  it('stops waiting for a server that does not answer in time, and still skips once it does', async () => {
+    jest.useFakeTimers();
+    try {
+      signIn('user-1', false);
+      let answer: (value: unknown) => void = () => {};
+      maybeSingle.mockReturnValue(
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+      );
+      const { result } = await renderOnboarding();
+      expect(result.current.checking).toBe(true);
+      await act(async () => jest.advanceTimersByTime(CHECK_TIMEOUT_MS));
+      expect(result.current).toMatchObject({ checking: false, completed: false });
+      await act(async () =>
+        answer({ data: { onboarding_completed_at: '2026-10-01T10:00:00Z' }, error: null }),
+      );
+      expect(result.current.completed).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not wait for an account that finished the onboarding here', async () => {
+    signIn('user-1', false);
+    stored.set('onboarding.user-1.completed', 'true');
+    const { result } = await renderOnboarding();
+    expect(result.current.checking).toBe(false);
   });
 
   it('stops listening for the foreground on unmount', async () => {

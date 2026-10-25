@@ -24,6 +24,18 @@
     "logIn": "Giriş yap",
     "accountNote": "Bir hesapla planın ve antrenmanların her cihazda seninle kalır."
   },
+  "account": {
+    "errors": {
+      "invalidCredentials": "Bu e-posta ve şifreyle eşleşen bir hesap yok.",
+      "emailTaken": "Bu e-postayla zaten bir hesap var. Bunun yerine giriş yap.",
+      "invalidEmail": "Geçerli bir e-posta adresi gir.",
+      "weakPassword": "Şifren en az 6 karakter olmalı.",
+      "passwordTooLong": "Şifren en fazla 72 karakter olabilir.",
+      "rateLimited": "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.",
+      "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
+      "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene."
+    }
+  },
   "loadError": {
     "title": "Yüklenemedi",
     "message": "Bağlantını kontrol edip tekrar dene."

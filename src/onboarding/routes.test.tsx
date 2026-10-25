@@ -20,6 +20,7 @@ import OnboardingLayout from '@/app/onboarding/_layout';
 import OnboardingIndex from '@/app/onboarding/index';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { useSession } from '@/providers/session-provider';
+import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
 import type { Step } from './steps';
 import type { OnboardingAnswers } from './types';
@@ -86,6 +87,7 @@ jest.mock('@/providers/onboarding-provider', () => ({
 jest.mock('@/providers/session-provider', () => ({
   SessionProvider: ({ children }: PropsWithChildren) => children,
   useSession: jest.fn(),
+  useUserId: jest.fn(),
 }));
 
 // The root layout's native setup: fonts load at once and the splash screen and reminders do
@@ -102,14 +104,7 @@ const listeners = new Set<() => void>();
 
 /** Sets what useOnboarding returns, and renders the screens that use it again. */
 function setOnboarding(step: Step, answers: OnboardingAnswers = {}, completed = false) {
-  onboarding = {
-    completed,
-    draft: { step, answers },
-    setStep: jest.fn(),
-    answer: jest.fn(),
-    complete: jest.fn(),
-    reset: jest.fn(),
-  };
+  onboarding = onboardingValue({ completed, draft: { step, answers } });
   for (const listener of listeners) {
     listener();
   }
@@ -150,12 +145,7 @@ beforeEach(() => {
   jest
     .mocked(useOnboarding)
     .mockImplementation(() => useSyncExternalStore(subscribe, () => onboarding));
-  jest.mocked(useSession).mockReturnValue({
-    status: 'ready',
-    session: { user: { id: 'user-1' } } as never,
-    retry: jest.fn(),
-    startAgain: jest.fn(),
-  });
+  jest.mocked(useSession).mockReturnValue(sessionValue('user-1'));
 });
 
 describe('onboarding routes', () => {
@@ -222,12 +212,9 @@ describe('root layout', () => {
   });
 
   it('shows the connection error when the sign-in failed', async () => {
-    jest.mocked(useSession).mockReturnValue({
-      status: 'error',
-      error: new Error('offline'),
-      retry: jest.fn(),
-      startAgain: jest.fn(),
-    });
+    jest
+      .mocked(useSession)
+      .mockReturnValue(sessionValue({ status: 'error', error: new Error('offline') }));
     setOnboarding('welcome');
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
     expect(screen.getByText('Couldn’t connect')).toBeOnTheScreen();
@@ -235,11 +222,18 @@ describe('root layout', () => {
   });
 
   it('shows nothing while the session is loading', async () => {
-    jest
-      .mocked(useSession)
-      .mockReturnValue({ status: 'loading', retry: jest.fn(), startAgain: jest.fn() });
+    jest.mocked(useSession).mockReturnValue(sessionValue({ status: 'loading' }));
     setOnboarding('welcome');
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
+    expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+  });
+
+  it('shows it is loading while it waits for the server to say whether the onboarding was finished', async () => {
+    setOnboarding('welcome');
+    onboarding = { ...onboarding, checking: true };
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.getByLabelText('Loading')).toBeOnTheScreen();
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
     expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
   });

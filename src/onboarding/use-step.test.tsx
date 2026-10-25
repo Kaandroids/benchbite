@@ -3,6 +3,7 @@ import { BackHandler } from 'react-native';
 
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { act, renderHook } from '@/test/render';
+import { onboardingValue } from '@/test/context-mocks';
 
 import type { Step } from './steps';
 import type { OnboardingAnswers } from './types';
@@ -27,14 +28,9 @@ let hardwareBack: (() => boolean | null | undefined) | undefined;
 const removeBackHandler = jest.fn();
 
 function renderStep(step: Step, answers: OnboardingAnswers = {}) {
-  jest.mocked(useOnboarding).mockReturnValue({
-    completed: false,
-    draft: { step, answers },
-    setStep,
-    answer,
-    complete,
-    reset: jest.fn(),
-  });
+  jest
+    .mocked(useOnboarding)
+    .mockReturnValue(onboardingValue({ draft: { step, answers }, setStep, answer, complete }));
   return renderHook(() => useStep(step));
 }
 

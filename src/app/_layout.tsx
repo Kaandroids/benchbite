@@ -8,9 +8,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { useClaimDevice } from '@/account/device-owner';
 import { SessionEnded } from '@/components/session-ended';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
@@ -22,7 +24,6 @@ import { showRemindersInForeground } from '@/reminders/reminders';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
-import { endSession } from '@/sessions/session';
 import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
@@ -46,7 +47,9 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status, retry, startAgain } = useSession();
-  const { completed } = useOnboarding();
+  const { completed, checking } = useOnboarding();
+  useClaimDevice();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
   const [fontsLoaded, fontError] = useFonts({
@@ -79,13 +82,11 @@ function RootNavigator() {
       {status === 'error' ? (
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
-        <SessionEnded
-          onStartAgain={() => {
-            // The workout in progress was the previous guest's.
-            endSession();
-            return startAgain();
-          }}
-        />
+        <SessionEnded onStartAgain={startAgain} />
+      ) : checking ? (
+        <View style={[styles.root, styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />
+        </View>
       ) : (
         <Stack
           screenOptions={{
@@ -118,5 +119,9 @@ function RootNavigator() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
