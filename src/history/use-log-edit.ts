@@ -7,27 +7,13 @@ import { Alert } from 'react-native';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import { findExercise, type LibraryExercise } from '@/exercises/library';
 import { isDbError } from '@/lib/errors';
-import { setKindOf, type SetField, type SetKind } from '@/sets/fields';
-import type { SetValues } from '@/sets/values';
+import { setKindOf } from '@/sets/fields';
+import { EMPTY_SET, missingFields, type SetValues } from '@/sets/values';
 
 import { useEditLog, type LoggedExercise, type LogSummary } from './history';
 
 export type EditedSet = SetValues & { key: number };
 export type EditedExercise = { place: number; exerciseId: string; sets: EditedSet[] };
-
-const EMPTY: SetValues = { weightKg: null, reps: null, seconds: null, meters: null };
-
-/** The values a set still needs before it can be saved, as its exercise records them. */
-export function missingFields(set: SetValues, kind: SetKind): SetField[] {
-  if (kind.fields.includes('reps')) {
-    return [
-      ...(set.weightKg === null && !kind.addedWeight ? (['weightKg'] as const) : []),
-      ...(set.reps === null ? (['reps'] as const) : []),
-    ];
-  }
-  // A time or a distance, whichever the exercise records.
-  return set.seconds === null && set.meters === null ? kind.fields : [];
-}
 
 /**
  * The sets of a finished workout being corrected, with the changes to them, what still misses, and
@@ -86,7 +72,10 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
         if (i !== index) {
           return item;
         }
-        const { key: _key, ...values } = item.sets[item.sets.length - 1] ?? { ...EMPTY, key: 0 };
+        const { key: _key, ...values } = item.sets[item.sets.length - 1] ?? {
+          ...EMPTY_SET,
+          key: 0,
+        };
         return { ...item, sets: [...item.sets, { ...values, key: key + 1 }] };
       });
     });

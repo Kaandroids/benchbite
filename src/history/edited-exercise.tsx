@@ -8,9 +8,10 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import type { SetKind } from '@/sets/fields';
 import { AddSetButton, SetHeader, SetLine, setButtonStyle } from '@/sets/set-table';
+import { missingFields } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
 
-import { missingFields, type EditedExercise, type EditedSet } from './use-log-edit';
+import type { EditedExercise, EditedSet } from './use-log-edit';
 
 type EditedExerciseCardProps = {
   exercise: EditedExercise;
