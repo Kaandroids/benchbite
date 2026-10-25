@@ -5,21 +5,21 @@
 //
 // Imported from the package's modules rather than its index, as in src/reminders/reminders.ts.
 import * as Haptics from 'expo-haptics';
-import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
 import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import {
   getPermissionsAsync,
   requestPermissionsAsync,
 } from 'expo-notifications/build/NotificationPermissions';
 import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
+import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
 import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
 import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
-import { Storage } from 'expo-sqlite/kv-store';
 import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, Linking, Platform } from 'react-native';
 
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
 
 import { updateSession, useActiveSession } from './session';
@@ -113,10 +113,10 @@ async function createChannel(name: string) {
  */
 export async function offerRestAlarm(offer: RestAlarmOffer) {
   const permission = await getPermissionsAsync();
-  if (permission.granted || !permission.canAskAgain || Storage.getItemSync(ASKED_KEY)) {
+  if (permission.granted || !permission.canAskAgain || readItem(ASKED_KEY)) {
     return;
   }
-  Storage.setItemSync(ASKED_KEY, 'true');
+  writeItem(ASKED_KEY, 'true');
   const allowed = await new Promise<boolean>((resolve) =>
     Alert.alert(
       offer.title,

@@ -93,7 +93,7 @@ export function WorkoutListItem({
             icon="target"
             color="fat"
             text={String(sets)}
-            label={t('history.sets', { count: sets })}
+            label={t('common.sets', { count: sets })}
           />
           <IconStat
             icon="timer"

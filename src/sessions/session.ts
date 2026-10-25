@@ -1,9 +1,9 @@
 // The workout in progress (ADR 0020). It lives on the device until it is finished, so that a lost
 // connection or a closed app loses nothing; only one workout runs at a time.
 import { randomUUID } from 'expo-crypto';
-import { Storage } from 'expo-sqlite/kv-store';
 import { useSyncExternalStore } from 'react';
 
+import { readItem, writeItem } from '@/lib/device-storage';
 import { SET_LIMITS } from '@/sets/fields';
 import { MAX_SETS, type SetValues } from '@/sets/values';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -82,11 +82,11 @@ let session: Session | null = null;
 const listeners = new Set<() => void>();
 
 function load(): Session | null {
+  const stored = readItem(KEY);
+  if (!stored) {
+    return null;
+  }
   try {
-    const stored = Storage.getItemSync(KEY);
-    if (!stored) {
-      return null;
-    }
     const parsed = JSON.parse(stored) as { version?: number; session?: Session };
     return parsed.version === VERSION && parsed.session ? parsed.session : null;
   } catch (error) {
@@ -96,15 +96,7 @@ function load(): Session | null {
 }
 
 function store(value: Session | null) {
-  try {
-    if (value) {
-      Storage.setItemSync(KEY, JSON.stringify({ version: VERSION, session: value }));
-    } else {
-      Storage.removeItemSync(KEY);
-    }
-  } catch (error) {
-    console.warn('Could not save the workout in progress', error);
-  }
+  writeItem(KEY, value ? JSON.stringify({ version: VERSION, session: value }) : null);
 }
 
 function current(): Session | null {

@@ -1,5 +1,4 @@
 import type { Session } from '@supabase/supabase-js';
-import { Storage } from 'expo-sqlite/kv-store';
 import {
   createContext,
   use,
@@ -9,6 +8,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 
+import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 
 type SessionState =
@@ -28,26 +28,8 @@ type SessionContextValue = SessionState & {
 /** The id of the user signed in on this device last, to tell a first start from a lost session. */
 const LAST_USER_KEY = 'session.last-user';
 
-function lastUser(): string | null {
-  try {
-    return Storage.getItemSync(LAST_USER_KEY);
-  } catch (error) {
-    console.warn('Could not read the last user', error);
-    return null;
-  }
-}
-
-function rememberUser(userId: string | null) {
-  try {
-    if (userId) {
-      Storage.setItemSync(LAST_USER_KEY, userId);
-    } else {
-      Storage.removeItemSync(LAST_USER_KEY);
-    }
-  } catch (error) {
-    console.warn('Could not save the last user', error);
-  }
-}
+const lastUser = () => readItem(LAST_USER_KEY);
+const rememberUser = (userId: string | null) => writeItem(LAST_USER_KEY, userId);
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 

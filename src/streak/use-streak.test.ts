@@ -1,7 +1,8 @@
 import { act, renderHook } from '@/test/render';
 
 import { NO_STREAK } from './streak';
-import { sampleStreak, showSampleStreak, useStreak } from './use-streak';
+import { sampleStreak } from './sample-streak';
+import { showSampleStreak, useStreak } from './use-streak';
 
 // A Thursday.
 const THURSDAY = new Date(2026, 9, 22, 9, 0);

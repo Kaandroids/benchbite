@@ -1,23 +1,21 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
-import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { isoWeekday } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
-import { BusySheet } from '@/sessions/busy-sheet';
 import { InProgressCard } from '@/sessions/in-progress-card';
-import { endSession, useActiveSession } from '@/sessions/session';
-import { useStartWorkout } from '@/sessions/start';
+import { useActiveSession } from '@/sessions/session';
+import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
 import { WorkoutListItem } from './workout-list-item';
-import { useWorkoutLimits, useWorkouts, type Workout } from './workouts';
+import { useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
  * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below,
@@ -29,9 +27,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const workouts = useWorkouts();
   const limits = useWorkoutLimits();
   const session = useActiveSession(useUserId());
-  const startWorkout = useStartWorkout();
-  // The workout to start once the user says what happens to the one in progress.
-  const [waiting, setWaiting] = useState<Workout | null>(null);
+  const { start, sheet: startSheet } = useStartOrAsk();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
   const today = isoWeekday(new Date());
   // Archived workouts count too (ADR 0018).
@@ -43,14 +39,6 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
       return;
     }
     router.push('/workout/edit');
-  };
-
-  const start = (workout: Workout) => {
-    if (session) {
-      setWaiting(workout);
-    } else {
-      void startWorkout(workout);
-    }
   };
 
   return (
@@ -124,30 +112,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
           </>
         ) : null}
       </ScrollView>
-      {session ? (
-        <BusySheet
-          session={session}
-          next={waiting}
-          onResume={() => {
-            setWaiting(null);
-            router.push('/session');
-          }}
-          onFinish={() => {
-            const next = waiting;
-            setWaiting(null);
-            router.push({ pathname: '/session/finish', params: { next: String(next?.id) } });
-          }}
-          onDiscard={() => {
-            const next = waiting;
-            setWaiting(null);
-            // The running workout ends only once the new one is sure to start, which may ask first.
-            if (next) {
-              afterSheetCloses(() => void startWorkout(next, { beforeStart: endSession }));
-            }
-          }}
-          onClose={() => setWaiting(null)}
-        />
-      ) : null}
+      {startSheet}
     </SafeAreaView>
   );
 }

@@ -172,10 +172,9 @@ export function LogScreen({ id }: { id: number }) {
               <View style={styles.flex}>
                 <Text variant="label">{info?.name ?? ''}</Text>
                 <Text variant="caption" color="textMuted" style={styles.semibold}>
-                  {[
-                    t('history.exercise.setCount', { count: exercise.sets.length }),
-                    formatTotal(total),
-                  ].join(' · ')}
+                  {[t('common.sets', { count: exercise.sets.length }), formatTotal(total)].join(
+                    ' · ',
+                  )}
                 </Text>
               </View>
             </View>

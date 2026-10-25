@@ -13,6 +13,7 @@ import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { isDbError } from '@/lib/errors';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { range } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
@@ -103,12 +104,11 @@ export function EditorScreen({ id }: { id?: number }) {
     } catch (error) {
       console.warn('Could not save the workout', error);
       // The limits can change after they were loaded, or another device can add a workout.
-      const code = (error as { code?: string }).code;
       Alert.alert(
-        t('editor.saveErrorTitle'),
-        code === 'BB008'
+        t('common.notSaved'),
+        isDbError(error, 'exerciseLimit')
           ? t('editor.limit', { max })
-          : code === 'BB009'
+          : isDbError(error, 'workoutLimit')
             ? t('workout.limit', { max: limits.data?.workouts ?? 0 })
             : t('editor.saveError'),
       );

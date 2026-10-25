@@ -106,7 +106,7 @@ export function FinishScreen({ next }: { next?: number }) {
     const { best } = summarizeSets(done, kind);
     const sets =
       done.length === exercise.sets.length
-        ? t('session.summary.sets', { count: done.length })
+        ? t('common.sets', { count: done.length })
         : t('session.setsDone', { done: done.length, count: exercise.sets.length });
     return {
       name: info?.name ?? '',
@@ -143,7 +143,7 @@ export function FinishScreen({ next }: { next?: number }) {
     } catch (error) {
       saving.current = false;
       console.warn('Could not save the workout', error);
-      Alert.alert(t('session.summary.saveErrorTitle'), t('session.summary.saveError'));
+      Alert.alert(t('common.notSaved'), t('session.summary.saveError'));
     }
   };
 
@@ -151,7 +151,7 @@ export function FinishScreen({ next }: { next?: number }) {
     Alert.alert(t('session.summary.discardTitle'), t('session.summary.discardMessage'), [
       { text: t('editor.cancel'), style: 'cancel' },
       {
-        text: t('session.summary.discard'),
+        text: t('common.discard'),
         style: 'destructive',
         onPress: () => {
           endSession();
@@ -312,7 +312,7 @@ export function FinishScreen({ next }: { next?: number }) {
           </Pressable>
           <Pressable accessibilityRole="button" onPress={discard} style={styles.action}>
             <Text variant="label" color="danger">
-              {t('session.summary.discard')}
+              {t('common.discard')}
             </Text>
           </Pressable>
         </View>

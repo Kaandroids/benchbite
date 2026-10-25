@@ -4,7 +4,12 @@
     "tryAgain": "Try again",
     "continue": "Continue",
     "loading": "Loading",
-    "close": "Close"
+    "close": "Close",
+    "notSaved": "Not saved",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "keepEditing": "Keep editing",
+    "discard": "Discard"
   },
   "sessionError": {
     "title": "Couldn’t connect",
@@ -112,9 +117,7 @@
   },
   "streak": {
     "label_one": "{{count}}-day streak",
-    "label_other": "{{count}}-day streak",
-    "done": "streak kept",
-    "frozen": "streak frozen"
+    "label_other": "{{count}}-day streak"
   },
   "nutrition": {
     "calories": "{{calories}} kcal a day",
@@ -301,8 +304,7 @@
     "done": "Done",
     "limit": "Workouts can have up to {{max}} exercises.",
     "overLimit_one": "Remove {{count}} exercise to save. Workouts can have up to {{max}}.",
-    "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}.",
-    "saveErrorTitle": "Not saved"
+    "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}."
   },
   "onboarding": {
     "steps": {
@@ -625,15 +627,11 @@
       "sets": "sets",
       "kilograms": "kg lifted",
       "skipped": "Skipped",
-      "sets_one": "{{count}} set",
-      "sets_other": "{{count}} sets",
       "save": "Save workout",
       "keepGoing": "Keep going",
-      "discard": "Discard",
       "discardTitle": "Discard this workout?",
       "discardMessage": "The sets you logged are not saved.",
       "empty": "Log at least one set to save the workout.",
-      "saveErrorTitle": "Not saved",
       "saveError": "We couldn't save the workout. Check your connection and try again.",
       "records_one": "{{count}} new record",
       "records_other": "{{count}} new records"
@@ -696,15 +694,11 @@
     "weekTotal_other": "{{count}} workouts · {{time}}",
     "minutes": "{{minutes}} min",
     "hours": "{{hours}} h {{minutes}} min",
-    "sets_one": "{{count}} set",
-    "sets_other": "{{count}} sets",
     "kcal": "~{{kcal}} kcal",
     "open": "Opens the workout",
     "stats": {
       "time": "time",
-      "sets": "sets",
-      "lifted": "lifted",
-      "kcal": "kcal burned"
+      "sets": "sets"
     },
     "delete": "Delete from history",
     "deleteTitle": "Delete this workout from your history?",
@@ -722,9 +716,7 @@
     "exercise": {
       "best": "BEST SET",
       "reps_one": "{{count}} rep",
-      "reps_other": "{{count}} reps",
-      "setCount_one": "{{count}} set",
-      "setCount_other": "{{count}} sets"
+      "reps_other": "{{count}} reps"
     },
     "started": "Started",
     "ended": "Ended",
@@ -734,11 +726,9 @@
       "removeSet": "Remove set {{number}}",
       "empty": "Keep at least one set, or delete the workout instead.",
       "missing": "Fill in the marked values to save.",
-      "saveErrorTitle": "Not saved",
       "saveError": "We couldn't save your changes. Check your connection and try again.",
       "discardTitle": "Discard your changes?",
-      "discardMessage": "Your changes to this workout are not saved.",
-      "keepEditing": "Keep editing"
+      "discardMessage": "Your changes to this workout are not saved."
     }
   },
   "exerciseHistory": {

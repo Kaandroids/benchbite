@@ -12,9 +12,6 @@ import { sessionTotals, type Session } from './session';
 import { useNow } from './use-now';
 
 // Dark in both themes, like the rest timer, so that the workout in progress stands out.
-const CARD = '#16171A';
-const MUTED = '#C9CBD1';
-const TRACK = '#3A3C42';
 
 /** The workout in progress, at the top of the Workout tab, which opens it again. */
 export function InProgressCard({ session }: { session: Session }) {
@@ -35,8 +32,8 @@ export function InProgressCard({ session }: { session: Session }) {
       accessibilityHint={t('session.resume')}
       onPress={() => router.push('/session')}
       style={({ pressed }) => [
-        styles.card,
         {
+          backgroundColor: colors.inverseSurface,
           gap: spacing.md,
           padding: spacing.lg,
           borderRadius: radii.lg,
@@ -50,16 +47,16 @@ export function InProgressCard({ session }: { session: Session }) {
           {t('session.inProgress')}
         </Text>
         <View style={styles.flex} />
-        <Text variant="headline" style={[styles.light, styles.tabular]}>
+        <Text variant="headline" color="onInverse" style={styles.tabular}>
           {minutesAndSeconds(elapsed)}
         </Text>
       </View>
       <View style={[styles.row, { gap: spacing.md }]}>
         <View style={styles.flex}>
-          <Text variant="headline" style={styles.light}>
+          <Text variant="headline" color="onInverse">
             {workoutName(session)}
           </Text>
-          <Text variant="caption" numberOfLines={1} style={[styles.semibold, { color: MUTED }]}>
+          <Text variant="caption" numberOfLines={1} color="onInverseMuted" style={styles.semibold}>
             {t('session.current', { done: totals.done, count: totals.planned, exercise })}
           </Text>
         </View>
@@ -74,7 +71,7 @@ export function InProgressCard({ session }: { session: Session }) {
           </Text>
         </View>
       </View>
-      <View style={styles.track}>
+      <View style={[styles.track, { backgroundColor: colors.inverseTrack }]}>
         <View
           style={[
             styles.fill,
@@ -90,9 +87,6 @@ export function InProgressCard({ session }: { session: Session }) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: CARD,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -108,9 +102,6 @@ const styles = StyleSheet.create({
   semibold: {
     fontFamily: fonts.bold,
   },
-  light: {
-    color: '#FFFFFF',
-  },
   tabular: {
     fontVariant: ['tabular-nums'],
   },
@@ -122,7 +113,6 @@ const styles = StyleSheet.create({
   track: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: TRACK,
     overflow: 'hidden',
   },
   fill: {
