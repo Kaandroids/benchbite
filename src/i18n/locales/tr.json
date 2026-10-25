@@ -46,7 +46,12 @@
     "create": "Hesap oluştur",
     "haveAccount": "Zaten hesabın var mı?",
     "logIn": "Giriş yap",
-    "logInInstead": "Bunun yerine giriş yap"
+    "logInInstead": "Bunun yerine giriş yap",
+    "logInTitle": "Giriş yap",
+    "logInSubtitle": "Tekrar hoş geldin. Planın ve antrenmanların seni bekliyor.",
+    "noAccount": "Henüz hesabın yok mu?",
+    "createOne": "Hesap oluştur",
+    "guestDataStays": "Bu telefonda misafir olarak kaydettiklerin bu hesaba taşınmaz. Saklamak istiyorsan bunun yerine hesap oluştur."
   },
   "loadError": {
     "title": "Yüklenemedi",

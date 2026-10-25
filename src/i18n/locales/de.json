@@ -46,7 +46,12 @@
     "create": "Konto erstellen",
     "haveAccount": "Du hast schon ein Konto?",
     "logIn": "Anmelden",
-    "logInInstead": "Stattdessen anmelden"
+    "logInInstead": "Stattdessen anmelden",
+    "logInTitle": "Anmelden",
+    "logInSubtitle": "Willkommen zurück. Dein Plan und deine Workouts warten.",
+    "noAccount": "Noch kein Konto?",
+    "createOne": "Erstelle eins",
+    "guestDataStays": "Was du als Gast auf diesem Handy gespeichert hast, kommt nicht in dieses Konto. Um es zu behalten, erstelle stattdessen ein Konto."
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",

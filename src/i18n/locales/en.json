@@ -46,7 +46,12 @@
     "create": "Create account",
     "haveAccount": "Already have an account?",
     "logIn": "Log in",
-    "logInInstead": "Log in instead"
+    "logInInstead": "Log in instead",
+    "logInTitle": "Log in",
+    "logInSubtitle": "Welcome back. Your plan and workouts are waiting.",
+    "noAccount": "No account yet?",
+    "createOne": "Create one",
+    "guestDataStays": "What you saved as a guest on this phone won’t move to this account. To keep it, create an account instead."
   },
   "loadError": {
     "title": "This couldn't load",
