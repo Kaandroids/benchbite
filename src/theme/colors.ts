@@ -30,6 +30,10 @@ export type ColorTokens = {
   success: string;
   warning: string;
   danger: string;
+  /** Behind a note that warns before an action, with `text` and a `warning` icon on it. */
+  warningBackground: string;
+  /** Behind an error message, with `text` and a `danger` icon on it. */
+  dangerBackground: string;
   protein: string;
   carbs: string;
   fat: string;
@@ -77,6 +81,8 @@ export const lightColors: ColorTokens = {
   success: '#15803D',
   warning: '#B45309',
   danger: '#DC2626',
+  warningBackground: '#FEF3C7',
+  dangerBackground: '#FEE2E2',
   protein: '#FF6A10',
   carbs: '#F5B800',
   fat: '#6E5BD8',
@@ -116,6 +122,8 @@ export const darkColors: ColorTokens = {
   success: '#4ADE80',
   warning: '#FBBF24',
   danger: '#F87171',
+  warningBackground: '#2E2410',
+  dangerBackground: '#3A1C1C',
   protein: '#FF7F26',
   carbs: '#FFD23F',
   fat: '#9F8CFF',

@@ -13,7 +13,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useClaimDevice } from '@/account/device-owner';
-import { SessionEnded } from '@/components/session-ended';
+import { SessionEnded } from '@/account/session-ended';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
@@ -104,7 +104,11 @@ function RootNavigator() {
             {/* The workout in progress covers the tabs, so nothing but the workout is in reach. */}
             <Stack.Screen name="session/index" />
             <Stack.Screen name="session/finish" />
+            <Stack.Screen name="settings" />
           </Stack.Protected>
+          {/* Reachable from the onboarding's first step and from the settings. */}
+          <Stack.Screen name="account/create" />
+          <Stack.Screen name="account/login" />
           <Stack.Screen name="dev/components" />
         </Stack>
       )}

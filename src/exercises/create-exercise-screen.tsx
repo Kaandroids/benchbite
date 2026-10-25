@@ -5,6 +5,7 @@ import { Alert, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
@@ -21,13 +22,7 @@ import {
   type CustomExerciseForm,
   type KindLock,
 } from './custom';
-import {
-  FieldLabel,
-  LogKindField,
-  PhotosField,
-  StepsField,
-  useFieldStyle,
-} from './exercise-form-fields';
+import { LogKindField, PhotosField, StepsField } from './exercise-form-fields';
 
 type Enums = Database['public']['Enums'];
 

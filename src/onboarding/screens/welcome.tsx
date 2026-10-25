@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
@@ -7,7 +8,9 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
+import { LinkPrompt } from '@/components/ui/link-prompt';
 
 import { useStep } from '../use-step';
 
@@ -22,9 +25,24 @@ export function WelcomeStep() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { next } = useStep('welcome');
+  const isAccount = useIsAccount();
 
   return (
-    <Screen footer={<Button label={t('onboarding.welcome.start')} onPress={() => next()} />}>
+    <Screen
+      footer={
+        <View style={{ gap: spacing.lg }}>
+          <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
+          {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
+          {isAccount ? null : (
+            <LinkPrompt
+              question={t('account.haveAccount')}
+              action={t('account.logIn')}
+              onPress={() => router.push('/account/login')}
+            />
+          )}
+        </View>
+      }
+    >
       <View style={[styles.hero, { gap: spacing.md, marginTop: spacing.xxl }]}>
         {/* A placeholder until the logo exists (#45). */}
         <Animated.View

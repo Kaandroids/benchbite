@@ -80,6 +80,16 @@ describe('useCreateAccount', () => {
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 
+  it('refuses an account, whose own email and password it would replace', async () => {
+    jest
+      .mocked(useSession)
+      .mockReturnValue(sessionValue('user-1', { isAnonymous: false, signOut }));
+    const { result } = await renderHook(useCreateAccount);
+    await expect(act(() => result.current.mutateAsync(CREDENTIALS))).rejects.toThrow();
+    expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(auth.signUp).not.toHaveBeenCalled();
+  });
+
   it('fails with the error Supabase answers', async () => {
     auth.updateUser.mockResolvedValue({ data: {}, error: apiError('email_exists') } as never);
     const { result } = await renderHook(useCreateAccount);
