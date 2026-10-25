@@ -163,9 +163,9 @@ site_url = "benchbite://"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-# Development builds open the app through its `benchbite://` scheme; Expo Go uses `exp://` URLs
-# that contain the dev machine's IP address, so both are allowed with wildcards.
-additional_redirect_urls = ["benchbite://**", "exp://**"]
+# The app opens through its `benchbite://` scheme. This file is pushed to the hosted project
+# (ADR 0030), so Expo Go's `exp://` URLs are not allowed: any Expo Go project could receive a token.
+additional_redirect_urls = ["benchbite://**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

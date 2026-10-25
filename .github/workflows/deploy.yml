@@ -1,0 +1,87 @@
+name: Deploy
+
+# Deploys the database, its settings and the Edge Functions to the hosted Supabase project
+# (ADR 0030). It runs only when started by hand for now; it will follow main once trusted.
+on:
+  workflow_dispatch:
+    inputs:
+      upload_images:
+        description: Upload the exercise images to storage (the first time, or when they change)
+        type: boolean
+        default: false
+
+# One deploy at a time, and a started deploy is never cancelled halfway.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  supabase:
+    name: Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Only main is deployed. The production environment holds the secrets, allows only main and
+    # waits for the maintainer's approval.
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      # Actions are pinned to commit SHAs because tags can be moved to point at different code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      # The Supabase CLI is a dev dependency, so the deploy uses the version the checks use. The
+      # secrets are given only to the steps that deploy, not to the install and its scripts.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Link the project
+        run: pnpm supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      # Auth and API settings come from supabase/config.toml, such as guest sign-ins and email
+      # sign-ups without confirmation. Only what the file declares is changed.
+      - name: Push the settings
+        run: pnpm supabase config push --yes
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      # Applies only the migrations the project does not have yet. A migration dated before the
+      # newest one applied is refused, which the checks prevent (ADR 0030).
+      - name: Apply the migrations
+        run: pnpm supabase db push --yes
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Deploy the Edge Functions
+        run: pnpm supabase functions deploy
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      # seed buckets ignores the linked project, so it is given the project ref.
+      - name: Upload the exercise images
+        if: ${{ inputs.upload_images }}
+        run: pnpm supabase seed buckets --project-ref "$SUPABASE_PROJECT_ID" --yes
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
