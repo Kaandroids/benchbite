@@ -1,8 +1,8 @@
-import type { Session } from '@supabase/supabase-js';
 import type { PropsWithChildren } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
+import { sessionValue } from '@/test/context-mocks';
 import { act, renderHook, waitFor } from '@/test/render';
 
 import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
@@ -37,17 +37,9 @@ let appStateListener: ((state: AppStateStatus) => void) | undefined;
 const removeAppStateListener = jest.fn();
 
 function signIn(userId: string | null, isAnonymous = true) {
-  jest.mocked(useSession).mockReturnValue(
-    userId
-      ? {
-          status: 'ready',
-          session: { user: { id: userId, is_anonymous: isAnonymous } } as Session,
-          retry: jest.fn(),
-          startAgain: jest.fn(),
-          signOut: jest.fn(),
-        }
-      : { status: 'loading', retry: jest.fn(), startAgain: jest.fn(), signOut: jest.fn() },
-  );
+  jest
+    .mocked(useSession)
+    .mockReturnValue(sessionValue(userId ?? { status: 'loading' }, { isAnonymous }));
 }
 
 function storedDraft(userId: string) {

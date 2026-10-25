@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
+import { sessionValue } from '@/test/context-mocks';
 
 import { useLatestWeight, useLogWeight, useWeightUnit } from './weights';
 
@@ -18,13 +19,7 @@ const upsert = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(supabase.from).mockReturnValue({ select, upsert } as never);
-  jest.mocked(useSession).mockReturnValue({
-    status: 'ready',
-    session: { user: { id: 'user-1' } } as never,
-    retry: jest.fn(),
-    startAgain: jest.fn(),
-    signOut: jest.fn(),
-  });
+  jest.mocked(useSession).mockReturnValue(sessionValue('user-1'));
 });
 
 describe('useWeightUnit', () => {

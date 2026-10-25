@@ -11,7 +11,7 @@ import {
 import { readItem, writeItem } from '@/lib/device-storage';
 import { supabase } from '@/lib/supabase';
 
-type SessionState =
+export type SessionState =
   | { status: 'loading' }
   | { status: 'ready'; session: Session }
   | { status: 'error'; error: Error }

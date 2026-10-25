@@ -2,7 +2,8 @@ import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
-import { act, createTestQueryClient, renderHook } from '@/test/render';
+import { act, renderHook } from '@/test/render';
+import { sessionValue } from '@/test/context-mocks';
 
 import { accountError, useCreateAccount, useSignIn, useSignOut } from './account';
 
@@ -19,16 +20,9 @@ const CREDENTIALS = { email: ' kaan@example.com ', password: 'secret12' };
 const TRIMMED = { email: 'kaan@example.com', password: 'secret12' };
 
 function given(status: 'ready' | 'ended') {
-  jest.mocked(useSession).mockReturnValue({
-    ...(status === 'ready' ? { status, session: { user: { id: 'guest' } } as never } : { status }),
-    retry: jest.fn(),
-    startAgain: jest.fn(),
-    signOut,
-  });
-}
-
-function render<T>(hook: () => T) {
-  return renderHook(hook, { queryClient: createTestQueryClient() });
+  jest
+    .mocked(useSession)
+    .mockReturnValue(sessionValue(status === 'ready' ? 'guest' : { status }, { signOut }));
 }
 
 const apiError = (code: string) => new AuthApiError('refused', 422, code);
@@ -72,7 +66,7 @@ describe('accountError', () => {
 
 describe('useCreateAccount', () => {
   it('adds the email and password to the guest, keeping their data', async () => {
-    const { result } = await render(useCreateAccount);
+    const { result } = await renderHook(useCreateAccount);
     await act(() => result.current.mutateAsync(CREDENTIALS));
     expect(auth.updateUser).toHaveBeenCalledWith(TRIMMED);
     expect(auth.signUp).not.toHaveBeenCalled();
@@ -80,7 +74,7 @@ describe('useCreateAccount', () => {
 
   it('creates a new user when the guest session ended', async () => {
     given('ended');
-    const { result } = await render(useCreateAccount);
+    const { result } = await renderHook(useCreateAccount);
     await act(() => result.current.mutateAsync(CREDENTIALS));
     expect(auth.signUp).toHaveBeenCalledWith(TRIMMED);
     expect(auth.updateUser).not.toHaveBeenCalled();
@@ -88,7 +82,7 @@ describe('useCreateAccount', () => {
 
   it('fails with the error Supabase answers', async () => {
     auth.updateUser.mockResolvedValue({ data: {}, error: apiError('email_exists') } as never);
-    const { result } = await render(useCreateAccount);
+    const { result } = await renderHook(useCreateAccount);
     await expect(act(() => result.current.mutateAsync(CREDENTIALS))).rejects.toMatchObject({
       code: 'email_exists',
     });
@@ -97,7 +91,7 @@ describe('useCreateAccount', () => {
 
 describe('useSignIn', () => {
   it('signs in', async () => {
-    const { result } = await render(useSignIn);
+    const { result } = await renderHook(useSignIn);
     await act(() => result.current.mutateAsync(CREDENTIALS));
     expect(auth.signInWithPassword).toHaveBeenCalledWith(TRIMMED);
   });
@@ -107,7 +101,7 @@ describe('useSignIn', () => {
       data: {},
       error: apiError('invalid_credentials'),
     } as never);
-    const { result } = await render(useSignIn);
+    const { result } = await renderHook(useSignIn);
     await expect(act(() => result.current.mutateAsync(CREDENTIALS))).rejects.toMatchObject({
       code: 'invalid_credentials',
     });
@@ -116,7 +110,7 @@ describe('useSignIn', () => {
 
 describe('useSignOut', () => {
   it('signs out', async () => {
-    const { result } = await render(useSignOut);
+    const { result } = await renderHook(useSignOut);
     await act(() => result.current.mutateAsync());
     expect(signOut).toHaveBeenCalled();
   });
