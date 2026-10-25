@@ -24,6 +24,17 @@
     "logIn": "Anmelden",
     "accountNote": "Mit einem Konto bleiben dein Plan und deine Trainings auf jedem Gerät bei dir."
   },
+  "account": {
+    "errors": {
+      "invalidCredentials": "E-Mail und Passwort passen zu keinem Konto.",
+      "emailTaken": "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.",
+      "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
+      "weakPassword": "Dein Passwort braucht mindestens 6 Zeichen.",
+      "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
+      "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
+      "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal."
+    }
+  },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
     "message": "Prüfe deine Verbindung und versuche es erneut."
