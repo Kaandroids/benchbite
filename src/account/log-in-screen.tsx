@@ -10,6 +10,7 @@ import { Note } from '@/components/ui/note';
 import { accountError, useSignIn } from './account';
 import { EmailField, PasswordField } from './account-fields';
 import { AccountForm } from './account-form';
+import { PASSWORD_LIMITS } from './passwords';
 
 type LogInScreenProps = {
   onClose: () => void;
@@ -46,7 +47,9 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       onClose={onClose}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {reason ? <Note tone="danger">{t(`account.errors.${reason}`)}</Note> : null}
+          {reason ? (
+            <Note tone="danger">{t(`account.errors.${reason}`, PASSWORD_LIMITS)}</Note>
+          ) : null}
           <Button
             label={t('account.logIn')}
             disabled={email.trim() === '' || password === ''}

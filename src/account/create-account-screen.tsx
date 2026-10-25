@@ -11,7 +11,7 @@ import { Note } from '@/components/ui/note';
 import { accountError, errorField, useCreateAccount } from './account';
 import { EmailField, PasswordField } from './account-fields';
 import { AccountForm } from './account-form';
-import { MIN_PASSWORD_LENGTH } from './passwords';
+import { MIN_PASSWORD_LENGTH, PASSWORD_LIMITS } from './passwords';
 
 type CreateAccountScreenProps = {
   onClose: () => void;
@@ -30,7 +30,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
   const create = useCreateAccount();
   const reason = create.error ? accountError(create.error) : null;
   const field = reason ? errorField(reason) : null;
-  const message = reason ? t(`account.errors.${reason}`) : null;
+  const message = reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null;
   const ready = email.trim() !== '' && password.length >= MIN_PASSWORD_LENGTH;
 
   // A new attempt starts without the last one's error.

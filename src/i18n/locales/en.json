@@ -26,8 +26,8 @@
       "invalidCredentials": "That email and password don’t match an account.",
       "emailTaken": "There’s already an account with this email.",
       "invalidEmail": "Enter a valid email address.",
-      "weakPassword": "Use a password with at least 6 characters.",
-      "passwordTooLong": "Use a password with at most 72 characters.",
+      "weakPassword": "Use a password with at least {{min}} characters.",
+      "passwordTooLong": "Use a password with at most {{max}} characters.",
       "rateLimited": "Too many tries. Wait a moment and try again.",
       "offline": "No connection. Check your internet and try again.",
       "unknown": "Something went wrong. Please try again."

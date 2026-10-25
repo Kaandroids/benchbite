@@ -70,6 +70,17 @@ describe('CreateAccountScreen', () => {
     expect(onCreated).not.toHaveBeenCalled();
   });
 
+  it('names the password limit in its error', async () => {
+    auth.updateUser.mockResolvedValue({
+      data: {},
+      error: new AuthApiError('weak', 422, 'weak_password'),
+    } as never);
+    await renderScreen();
+    await fill('kaan@example.com', 'secret12');
+    await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    expect(await screen.findByText('Use a password with at least 6 characters.')).toBeOnTheScreen();
+  });
+
   it('shows an error that is not about a field above the button, until the next change', async () => {
     auth.updateUser.mockResolvedValue({
       data: {},

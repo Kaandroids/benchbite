@@ -26,8 +26,8 @@
       "invalidCredentials": "E-Mail und Passwort passen zu keinem Konto.",
       "emailTaken": "Mit dieser E-Mail gibt es schon ein Konto.",
       "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
-      "weakPassword": "Dein Passwort braucht mindestens 6 Zeichen.",
-      "passwordTooLong": "Dein Passwort darf höchstens 72 Zeichen haben.",
+      "weakPassword": "Dein Passwort braucht mindestens {{min}} Zeichen.",
+      "passwordTooLong": "Dein Passwort darf höchstens {{max}} Zeichen haben.",
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
       "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal."
