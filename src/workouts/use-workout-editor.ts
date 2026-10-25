@@ -19,7 +19,8 @@ import {
 
 /**
  * The draft of the workout with the id, or of a new one, started once the workouts load, with
- * whether it can be saved and the actions that save or delete it.
+ * whether it can be saved, the changes that can be made to it, and the actions that save or delete
+ * it.
  */
 export function useWorkoutEditor(id: number | undefined) {
   const { t } = useTranslation();
@@ -118,6 +119,23 @@ export function useWorkoutEditor(id: number | undefined) {
 
   const setExercises = (change: (exercises: DraftExercise[]) => DraftExercise[]) =>
     updateDraft((current) => ({ ...current, exercises: change(current.exercises) }));
+  const setName = (name: string) => updateDraft((current) => ({ ...current, name }));
+  const setWeekdays = (weekdays: number[]) => updateDraft((current) => ({ ...current, weekdays }));
+  const moveExercise = (from: number, to: number) =>
+    setExercises((exercises) => {
+      const next = [...exercises];
+      const [moved] = next.splice(from, 1);
+      if (moved) {
+        next.splice(to, 0, moved);
+      }
+      return next;
+    });
+  const replaceExercise = (changed: DraftExercise) =>
+    setExercises((exercises) =>
+      exercises.map((exercise) => (exercise.key === changed.key ? changed : exercise)),
+    );
+  const removeExercise = (key: string) =>
+    setExercises((exercises) => exercises.filter((exercise) => exercise.key !== key));
 
   return {
     draft,
@@ -133,6 +151,10 @@ export function useWorkoutEditor(id: number | undefined) {
     deleting: remove.isPending,
     onSave,
     onDelete,
-    setExercises,
+    setName,
+    setWeekdays,
+    moveExercise,
+    replaceExercise,
+    removeExercise,
   };
 }

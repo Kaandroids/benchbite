@@ -12,7 +12,6 @@ import { Text } from '@/components/ui/text';
 import { findExercise } from '@/exercises/library';
 import { typography, useTheme } from '@/theme';
 
-import { updateDraft } from './draft';
 import { EditorExercises } from './editor-exercises';
 import { ExerciseSheet } from './exercise-sheet';
 import { useWorkoutEditor } from './use-workout-editor';
@@ -23,7 +22,7 @@ export function EditorScreen({ id }: { id?: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const editor = useWorkoutEditor(id);
-  const { draft, workout, typeName, library, loaded, max, over, setExercises } = editor;
+  const { draft, workout, typeName, library, loaded, max, over } = editor;
   const [editing, setEditing] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const details = (exerciseId: string) => findExercise(library.data, exerciseId);
@@ -77,7 +76,7 @@ export function EditorScreen({ id }: { id?: number }) {
             <TextInput
               accessibilityLabel={t('editor.name')}
               value={draft.name}
-              onChangeText={(name) => updateDraft((current) => ({ ...current, name }))}
+              onChangeText={editor.setName}
               placeholder={typeName ?? t('editor.namePlaceholder')}
               placeholderTextColor={colors.textMuted}
               maxLength={60}
@@ -99,10 +98,7 @@ export function EditorScreen({ id }: { id?: number }) {
             <Text variant="captionStrong" color="textMuted">
               {t('editor.days')}
             </Text>
-            <WeekdayPicker
-              value={draft.weekdays}
-              onChange={(weekdays) => updateDraft((current) => ({ ...current, weekdays }))}
-            />
+            <WeekdayPicker value={draft.weekdays} onChange={editor.setWeekdays} />
             <Text variant="caption" color="textMuted">
               {t('editor.daysHint')}
             </Text>
@@ -115,16 +111,7 @@ export function EditorScreen({ id }: { id?: number }) {
             over={over}
             onOpen={setEditing}
             onDragChange={setDragging}
-            onMove={(from, to) =>
-              setExercises((exercises) => {
-                const next = [...exercises];
-                const [moved] = next.splice(from, 1);
-                if (moved) {
-                  next.splice(to, 0, moved);
-                }
-                return next;
-              })
-            }
+            onMove={editor.moveExercise}
           />
 
           {draft.id !== undefined ? (
@@ -146,13 +133,11 @@ export function EditorScreen({ id }: { id?: number }) {
       <ExerciseSheet
         exercise={editingExercise}
         details={editingExercise ? details(editingExercise.exerciseId) : undefined}
-        onChange={(changed) =>
-          setExercises((exercises) =>
-            exercises.map((exercise) => (exercise.key === changed.key ? changed : exercise)),
-          )
-        }
+        onChange={editor.replaceExercise}
         onRemove={() => {
-          setExercises((exercises) => exercises.filter((exercise) => exercise.key !== editing));
+          if (editing) {
+            editor.removeExercise(editing);
+          }
           setEditing(null);
         }}
         onClose={() => setEditing(null)}
