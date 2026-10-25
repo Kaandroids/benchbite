@@ -1,0 +1,101 @@
+import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
+import { useMutation } from '@tanstack/react-query';
+
+import { supabase } from '@/lib/supabase';
+import { useSession } from '@/providers/session-provider';
+import { endSession } from '@/sessions/session';
+
+export type Credentials = { email: string; password: string };
+
+/** Why creating an account or signing in failed, as far as the app tells the reasons apart. */
+export type AccountError =
+  | 'invalidCredentials'
+  | 'emailTaken'
+  | 'invalidEmail'
+  | 'weakPassword'
+  | 'rateLimited'
+  | 'offline'
+  | 'unknown';
+
+// The codes Supabase Auth answers with, by what they mean to the user.
+const AUTH_ERRORS: Record<string, AccountError> = {
+  invalid_credentials: 'invalidCredentials',
+  email_exists: 'emailTaken',
+  user_already_exists: 'emailTaken',
+  email_address_invalid: 'invalidEmail',
+  validation_failed: 'invalidEmail',
+  weak_password: 'weakPassword',
+  over_request_rate_limit: 'rateLimited',
+  over_email_send_rate_limit: 'rateLimited',
+};
+
+/** The reason a request to Supabase Auth failed. */
+export function accountError(error: unknown): AccountError {
+  if (isAuthRetryableFetchError(error)) {
+    return 'offline';
+  }
+  if (isAuthApiError(error) && error.code) {
+    return AUTH_ERRORS[error.code] ?? 'unknown';
+  }
+  return 'unknown';
+}
+
+const normalized = ({ email, password }: Credentials): Credentials => ({
+  email: email.trim(),
+  password,
+});
+
+/**
+ * Creates an account with an email address and a password. A guest's account is created by adding
+ * them to the guest user, so the id and all data stay the same (ADR 0005). Without a session, as
+ * after a guest session ended, a new user is created instead.
+ */
+export function useCreateAccount() {
+  const signedIn = useSession().status === 'ready';
+  return useMutation({
+    mutationFn: async (credentials: Credentials) => {
+      if (signedIn) {
+        const { error } = await supabase.auth.updateUser(normalized(credentials));
+        if (error) {
+          throw error;
+        }
+        return;
+      }
+      const { error } = await supabase.auth.signUp(normalized(credentials));
+      if (error) {
+        throw error;
+      }
+      // A workout in progress was the previous guest's.
+      endSession();
+    },
+  });
+}
+
+/**
+ * Signs in to an account. A guest who signs in leaves their guest data behind for good, so the
+ * screens warn about it first.
+ */
+export function useSignIn() {
+  return useMutation({
+    mutationFn: async (credentials: Credentials) => {
+      const { error } = await supabase.auth.signInWithPassword(normalized(credentials));
+      if (error) {
+        throw error;
+      }
+      // A workout in progress was the previous user's.
+      endSession();
+    },
+  });
+}
+
+/** Signs the account out on this device; the app starts over as a new guest. */
+export function useSignOut() {
+  const { signOut } = useSession();
+  return useMutation({
+    mutationFn: async () => {
+      // The workout in progress stays with the account, not on a device it signed out of.
+      endSession();
+      await signOut();
+    },
+  });
+}
