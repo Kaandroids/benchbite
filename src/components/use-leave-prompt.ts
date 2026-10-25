@@ -13,9 +13,9 @@ export function useLeavePrompt(changed: boolean, title: string, message: string)
   const [leave, setLeave] = useState<(() => void) | null>(null);
   usePreventRemove(changed && leave === null, ({ repeat }) =>
     Alert.alert(title, message, [
-      { text: t('history.edit.keepEditing'), style: 'cancel' },
+      { text: t('common.keepEditing'), style: 'cancel' },
       {
-        text: t('session.summary.discard'),
+        text: t('common.discard'),
         style: 'destructive',
         onPress: () => setLeave(() => repeat),
       },

@@ -7,7 +7,9 @@
     "close": "Kapat",
     "notSaved": "Kaydedilemedi",
     "sets_one": "{{count}} set",
-    "sets_other": "{{count}} set"
+    "sets_other": "{{count}} set",
+    "keepEditing": "Düzenlemeye devam et",
+    "discard": "Sil"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
@@ -627,7 +629,6 @@
       "skipped": "Atlandı",
       "save": "Antrenmanı kaydet",
       "keepGoing": "Devam et",
-      "discard": "Sil",
       "discardTitle": "Antrenman silinsin mi?",
       "discardMessage": "Girdiğin setler kaydedilmez.",
       "empty": "Kaydetmek için en az bir set gir.",
@@ -727,8 +728,7 @@
       "missing": "Kaydetmek için işaretli değerleri doldur.",
       "saveError": "Değişikliklerin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
       "discardTitle": "Değişiklikler silinsin mi?",
-      "discardMessage": "Bu antrenmanda yaptığın değişiklikler kaydedilmeyecek.",
-      "keepEditing": "Düzenlemeye devam et"
+      "discardMessage": "Bu antrenmanda yaptığın değişiklikler kaydedilmeyecek."
     }
   },
   "exerciseHistory": {

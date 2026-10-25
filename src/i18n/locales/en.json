@@ -7,7 +7,9 @@
     "close": "Close",
     "notSaved": "Not saved",
     "sets_one": "{{count}} set",
-    "sets_other": "{{count}} sets"
+    "sets_other": "{{count}} sets",
+    "keepEditing": "Keep editing",
+    "discard": "Discard"
   },
   "sessionError": {
     "title": "Couldn’t connect",
@@ -627,7 +629,6 @@
       "skipped": "Skipped",
       "save": "Save workout",
       "keepGoing": "Keep going",
-      "discard": "Discard",
       "discardTitle": "Discard this workout?",
       "discardMessage": "The sets you logged are not saved.",
       "empty": "Log at least one set to save the workout.",
@@ -727,8 +728,7 @@
       "missing": "Fill in the marked values to save.",
       "saveError": "We couldn't save your changes. Check your connection and try again.",
       "discardTitle": "Discard your changes?",
-      "discardMessage": "Your changes to this workout are not saved.",
-      "keepEditing": "Keep editing"
+      "discardMessage": "Your changes to this workout are not saved."
     }
   },
   "exerciseHistory": {

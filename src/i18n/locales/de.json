@@ -7,7 +7,9 @@
     "close": "Schließen",
     "notSaved": "Nicht gespeichert",
     "sets_one": "{{count}} Satz",
-    "sets_other": "{{count}} Sätze"
+    "sets_other": "{{count}} Sätze",
+    "keepEditing": "Weiter bearbeiten",
+    "discard": "Verwerfen"
   },
   "sessionError": {
     "title": "Keine Verbindung",
@@ -627,7 +629,6 @@
       "skipped": "Ausgelassen",
       "save": "Training speichern",
       "keepGoing": "Weitermachen",
-      "discard": "Verwerfen",
       "discardTitle": "Training verwerfen?",
       "discardMessage": "Die eingetragenen Sätze werden nicht gespeichert.",
       "empty": "Trage mindestens einen Satz ein, um das Training zu speichern.",
@@ -727,8 +728,7 @@
       "missing": "Fülle die markierten Werte aus, um zu speichern.",
       "saveError": "Deine Änderungen konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
       "discardTitle": "Änderungen verwerfen?",
-      "discardMessage": "Deine Änderungen an diesem Training werden nicht gespeichert.",
-      "keepEditing": "Weiter bearbeiten"
+      "discardMessage": "Deine Änderungen an diesem Training werden nicht gespeichert."
     }
   },
   "exerciseHistory": {

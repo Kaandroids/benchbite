@@ -151,7 +151,7 @@ export function FinishScreen({ next }: { next?: number }) {
     Alert.alert(t('session.summary.discardTitle'), t('session.summary.discardMessage'), [
       { text: t('editor.cancel'), style: 'cancel' },
       {
-        text: t('session.summary.discard'),
+        text: t('common.discard'),
         style: 'destructive',
         onPress: () => {
           endSession();
@@ -312,7 +312,7 @@ export function FinishScreen({ next }: { next?: number }) {
           </Pressable>
           <Pressable accessibilityRole="button" onPress={discard} style={styles.action}>
             <Text variant="label" color="danger">
-              {t('session.summary.discard')}
+              {t('common.discard')}
             </Text>
           </Pressable>
         </View>
