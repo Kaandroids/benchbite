@@ -27,7 +27,7 @@
   "account": {
     "errors": {
       "invalidCredentials": "E-Mail und Passwort passen zu keinem Konto.",
-      "emailTaken": "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.",
+      "emailTaken": "Mit dieser E-Mail gibt es schon ein Konto.",
       "invalidEmail": "Gib eine gültige E-Mail-Adresse ein.",
       "weakPassword": "Dein Passwort braucht mindestens 6 Zeichen.",
       "passwordTooLong": "Dein Passwort darf höchstens 72 Zeichen haben.",
@@ -39,7 +39,14 @@
     "emailPlaceholder": "du@beispiel.de",
     "password": "Passwort",
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort verbergen"
+    "hidePassword": "Passwort verbergen",
+    "createTitle": "Erstelle dein Konto",
+    "createSubtitle": "Dein Plan und deine Workouts bleiben deine, auch auf einem neuen Handy.",
+    "passwordHint": "Mindestens {{min}} Zeichen.",
+    "create": "Konto erstellen",
+    "haveAccount": "Du hast schon ein Konto?",
+    "logIn": "Anmelden",
+    "logInInstead": "Stattdessen anmelden"
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",

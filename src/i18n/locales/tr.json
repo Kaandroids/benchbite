@@ -27,7 +27,7 @@
   "account": {
     "errors": {
       "invalidCredentials": "Bu e-posta ve şifreyle eşleşen bir hesap yok.",
-      "emailTaken": "Bu e-postayla zaten bir hesap var. Bunun yerine giriş yap.",
+      "emailTaken": "Bu e-postayla zaten bir hesap var.",
       "invalidEmail": "Geçerli bir e-posta adresi gir.",
       "weakPassword": "Şifren en az 6 karakter olmalı.",
       "passwordTooLong": "Şifren en fazla 72 karakter olabilir.",
@@ -39,7 +39,14 @@
     "emailPlaceholder": "sen@ornek.com",
     "password": "Şifre",
     "showPassword": "Şifreyi göster",
-    "hidePassword": "Şifreyi gizle"
+    "hidePassword": "Şifreyi gizle",
+    "createTitle": "Hesabını oluştur",
+    "createSubtitle": "Planın ve antrenmanların sende kalır, yeni bir telefonda da.",
+    "passwordHint": "En az {{min}} karakter.",
+    "create": "Hesap oluştur",
+    "haveAccount": "Zaten hesabın var mı?",
+    "logIn": "Giriş yap",
+    "logInInstead": "Bunun yerine giriş yap"
   },
   "loadError": {
     "title": "Yüklenemedi",

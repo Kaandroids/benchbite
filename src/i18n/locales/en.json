@@ -27,7 +27,7 @@
   "account": {
     "errors": {
       "invalidCredentials": "That email and password don’t match an account.",
-      "emailTaken": "There’s already an account with this email. Log in instead.",
+      "emailTaken": "There’s already an account with this email.",
       "invalidEmail": "Enter a valid email address.",
       "weakPassword": "Use a password with at least 6 characters.",
       "passwordTooLong": "Use a password with at most 72 characters.",
@@ -39,7 +39,14 @@
     "emailPlaceholder": "you@example.com",
     "password": "Password",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "createTitle": "Create your account",
+    "createSubtitle": "Your plan and workouts stay yours, also on a new phone.",
+    "passwordHint": "At least {{min}} characters.",
+    "create": "Create account",
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "logInInstead": "Log in instead"
   },
   "loadError": {
     "title": "This couldn't load",
