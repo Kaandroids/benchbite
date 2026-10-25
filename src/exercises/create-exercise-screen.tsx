@@ -1,30 +1,33 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
-import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
-import { fonts, typography, useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 
 import {
   emptyForm,
   isComplete,
-  LOG_KINDS,
   setCreatedExercise,
   useCreateExercise,
   useEditExercise,
   type CustomExerciseForm,
   type KindLock,
-  type LogKind,
 } from './custom';
-import { isUserPhoto, pickPhoto, usePictureUrls } from './photos';
+import {
+  FieldLabel,
+  LogKindField,
+  PhotosField,
+  StepsField,
+  useFieldStyle,
+} from './exercise-form-fields';
 
 type Enums = Database['public']['Enums'];
 
@@ -59,7 +62,6 @@ const EQUIPMENT: Enums['equipment'][] = [
 ];
 const LEVELS: Enums['exercise_level'][] = ['beginner', 'intermediate', 'expert'];
 const MAX_MAIN_MUSCLES = 5;
-const MAX_STEPS = 20;
 
 type Editing = {
   id: string;
@@ -75,16 +77,12 @@ type Editing = {
  */
 export function CreateExerciseScreen({ name = '', editing }: { name?: string; editing?: Editing }) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const create = useCreateExercise();
   const edit = useEditExercise(editing?.id ?? '');
   const initial = editing?.form ?? emptyForm(name);
   const [form, setForm] = useState<CustomExerciseForm>(initial);
   const saving = create.isPending || edit.isPending;
-  // Photos the exercise already has are shown through their signed URLs.
-  const urls = usePictureUrls(
-    form.photos.filter((photo): photo is string => !!photo && isUserPhoto(photo)),
-  );
   const change = (fields: Partial<CustomExerciseForm>) =>
     setForm((current) => ({ ...current, ...fields }));
 
@@ -113,63 +111,17 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           leaveWithoutAsking(() => router.back());
         }, failed);
   const kindLock = editing?.kindLock ?? null;
-  const kindLocked = kindLock !== null;
-
-  const label = (text: string) => (
-    <Text variant="caption" color="textMuted" style={styles.label}>
-      {text.toLocaleUpperCase()}
-    </Text>
-  );
 
   const chip = (key: string, text: string, on: boolean, onPress: () => void, disabled = false) => (
     <Chip key={key} label={text} selected={on} onPress={onPress} disabled={disabled} />
   );
-
-  // A photo is taken or chosen from a short menu, and can be removed again.
-  const choosePhoto = (index: 0 | 1) => {
-    const set = (uri: string | null) =>
-      setForm((current) => {
-        const photos: CustomExerciseForm['photos'] = [...current.photos];
-        photos[index] = uri;
-        return { ...current, photos };
-      });
-    const take = (source: 'camera' | 'library') => () =>
-      void pickPhoto(source).then(
-        (uri) => uri && set(uri),
-        (error: unknown) => console.warn('Could not pick a photo', error),
-      );
-    Alert.alert(index === 0 ? t('exercise.start') : t('exercise.end'), undefined, [
-      { text: t('customExercise.takePhoto'), onPress: take('camera') },
-      { text: t('customExercise.choosePhoto'), onPress: take('library') },
-      ...(form.photos[index]
-        ? [
-            {
-              text: t('customExercise.removePhoto'),
-              style: 'destructive' as const,
-              onPress: () => set(null),
-            },
-          ]
-        : []),
-      { text: t('editor.cancel'), style: 'cancel' },
-    ]);
-  };
 
   const toggle = <T,>(list: T[], item: T) =>
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
 
   const section = { gap: spacing.sm };
   const wrap = [styles.wrap, { gap: spacing.sm }];
-  const field = [
-    styles.field,
-    typography.body,
-    {
-      borderRadius: radii.md,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      color: colors.text,
-      paddingHorizontal: spacing.md,
-    },
-  ];
+  const field = useFieldStyle();
 
   return (
     <Screen
@@ -189,7 +141,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       }
     >
       <View style={section}>
-        {label(t('customExercise.name'))}
+        <FieldLabel text={t('customExercise.name')} />
         <TextInput
           accessibilityLabel={t('customExercise.name')}
           value={form.name}
@@ -202,49 +154,16 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        {label(t('customExercise.logKind'))}
-        <View accessibilityRole="radiogroup" style={[styles.grid, { gap: spacing.sm }]}>
-          {(Object.keys(LOG_KINDS) as LogKind[]).map((kind) => {
-            const on = form.logKind === kind;
-            return (
-              <Pressable
-                key={kind}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: on, disabled: kindLocked }}
-                accessibilityLabel={t(`customExercise.logKinds.${kind}.title`)}
-                disabled={kindLocked}
-                onPress={() => change({ logKind: kind })}
-                style={[
-                  styles.kind,
-                  {
-                    borderRadius: radii.md,
-                    padding: spacing.md,
-                    borderWidth: on ? 2 : 1.5,
-                    borderColor: on ? colors.primaryButton : colors.border,
-                    backgroundColor: on ? colors.selected : colors.surface,
-                    opacity: kindLocked && !on ? 0.4 : 1,
-                  },
-                ]}
-              >
-                <Text variant="label">{t(`customExercise.logKinds.${kind}.title`)}</Text>
-                <Text variant="caption" color="textMuted">
-                  {t(`customExercise.logKinds.${kind}.example`)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text variant="caption" color="textMuted">
-          {kindLock === 'logged'
-            ? t('customExercise.logKindLogged')
-            : kindLock === 'inWorkout'
-              ? t('customExercise.logKindInWorkout')
-              : t('customExercise.logKindFixed')}
-        </Text>
+        <FieldLabel text={t('customExercise.logKind')} />
+        <LogKindField
+          value={form.logKind}
+          lock={kindLock}
+          onChange={(logKind) => change({ logKind })}
+        />
       </View>
 
       <View style={section}>
-        {label(t('customExercise.mainMuscles'))}
+        <FieldLabel text={t('customExercise.mainMuscles')} />
         <View style={wrap}>
           {MUSCLES.map((muscle) => {
             const on = form.primaryMuscles.includes(muscle);
@@ -264,7 +183,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        {label(t('exercise.level'))}
+        <FieldLabel text={t('exercise.level')} />
         <SegmentedControl
           options={LEVELS.map((level) => ({ value: level, label: t(`exercise.levels.${level}`) }))}
           value={form.level}
@@ -275,71 +194,26 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 
       <View style={[styles.divider, { gap: spacing.sm, marginTop: spacing.sm }]}>
         <View style={[styles.line, { backgroundColor: colors.border }]} />
-        {label(t('customExercise.optional'))}
+        <FieldLabel text={t('customExercise.optional')} />
         <View style={[styles.line, { backgroundColor: colors.border }]} />
       </View>
 
       <View style={section}>
-        {label(t('customExercise.photos'))}
-        <View style={[styles.photos, { gap: spacing.sm }]}>
-          {([0, 1] as const).map((index) => {
-            const photo = form.photos[index];
-            const uri = photo && isUserPhoto(photo) ? urls[photo] : photo;
-            const name = index === 0 ? t('exercise.start') : t('exercise.end');
-            return (
-              <Pressable
-                key={index}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  photo
-                    ? t('customExercise.changePhoto', { name })
-                    : t('customExercise.addPhoto', { name })
-                }
-                onPress={() => choosePhoto(index)}
-                style={[
-                  styles.photo,
-                  {
-                    borderRadius: radii.md,
-                    borderColor: photo ? colors.border : colors.placeholder,
-                    borderStyle: photo ? 'solid' : 'dashed',
-                    backgroundColor: colors.surface,
-                    gap: spacing.xs,
-                  },
-                ]}
-              >
-                {photo ? (
-                  <>
-                    {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} /> : null}
-                    <View
-                      style={[
-                        styles.photoName,
-                        { borderRadius: radii.sm, backgroundColor: colors.surface },
-                      ]}
-                    >
-                      <Text variant="captionStrong" color="textMuted">
-                        {name}
-                      </Text>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Icon name="camera" size={26} color="textMuted" />
-                    <Text variant="captionStrong" color="textMuted">
-                      {name}
-                    </Text>
-                  </>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text variant="caption" color="textMuted">
-          {t('customExercise.photosHint')}
-        </Text>
+        <FieldLabel text={t('customExercise.photos')} />
+        <PhotosField
+          photos={form.photos}
+          onChange={(index, uri) =>
+            setForm((current) => {
+              const photos: CustomExerciseForm['photos'] = [...current.photos];
+              photos[index] = uri;
+              return { ...current, photos };
+            })
+          }
+        />
       </View>
 
       <View style={section}>
-        {label(t('customExercise.otherMuscles'))}
+        <FieldLabel text={t('customExercise.otherMuscles')} />
         <View style={wrap}>
           {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) =>
             chip(
@@ -353,7 +227,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        {label(t('exercise.equipment'))}
+        <FieldLabel text={t('exercise.equipment')} />
         <View style={wrap}>
           {EQUIPMENT.map((item) =>
             chip(item, t(`exercise.equipmentKinds.${item}`), form.equipment === item, () =>
@@ -364,101 +238,20 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        {label(t('exercise.howTo'))}
-        {form.instructions.map((step, index) => (
-          <View key={index} style={[styles.step, { gap: spacing.sm }]}>
-            <View style={[styles.number, { backgroundColor: colors.iconBackground }]}>
-              <Text variant="captionStrong" color="primaryText">
-                {index + 1}
-              </Text>
-            </View>
-            <TextInput
-              accessibilityLabel={t('customExercise.step', { number: index + 1 })}
-              value={step}
-              multiline
-              maxLength={500}
-              onChangeText={(text) =>
-                change({
-                  instructions: form.instructions.map((item, i) => (i === index ? text : item)),
-                })
-              }
-              style={[field, styles.stepInput]}
-            />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('customExercise.removeStep', { number: index + 1 })}
-              onPress={() =>
-                change({ instructions: form.instructions.filter((_, i) => i !== index) })
-              }
-              hitSlop={6}
-              style={styles.remove}
-            >
-              <Icon name="close" size={18} color="textMuted" />
-            </Pressable>
-          </View>
-        ))}
-        {form.instructions.length < MAX_STEPS ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => change({ instructions: [...form.instructions, ''] })}
-            style={[
-              styles.addStep,
-              {
-                borderRadius: radii.full,
-                backgroundColor: colors.iconBackground,
-                paddingHorizontal: spacing.md,
-              },
-            ]}
-          >
-            <Text variant="captionStrong" color="primaryText">
-              {t('customExercise.addStep')}
-            </Text>
-          </Pressable>
-        ) : null}
+        <FieldLabel text={t('exercise.howTo')} />
+        <StepsField
+          steps={form.instructions}
+          onChange={(instructions) => change({ instructions })}
+        />
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  label: {
-    fontFamily: fonts.extraBold,
-    letterSpacing: 0.4,
-  },
-  field: {
-    minHeight: 52,
-    borderWidth: 1.5,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  kind: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    gap: 2,
-  },
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  photos: {
-    flexDirection: 'row',
-  },
-  photo: {
-    flex: 1,
-    aspectRatio: 1,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoName: {
-    position: 'absolute',
-    left: 8,
-    bottom: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
   },
   divider: {
     flexDirection: 'row',
@@ -467,33 +260,5 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  number: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginTop: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepInput: {
-    flex: 1,
-    paddingVertical: 12,
-    textAlignVertical: 'top',
-  },
-  remove: {
-    width: 32,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addStep: {
-    alignSelf: 'flex-start',
-    height: 40,
-    justifyContent: 'center',
   },
 });
