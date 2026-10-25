@@ -6,6 +6,20 @@ import { useSession } from '@/providers/session-provider';
 
 export type Credentials = { email: string; password: string };
 
+/** Where a form shows each reason: under the field it is about, or above the button. */
+export function errorField(reason: AccountError): 'email' | 'password' | null {
+  switch (reason) {
+    case 'emailTaken':
+    case 'invalidEmail':
+      return 'email';
+    case 'weakPassword':
+    case 'passwordTooLong':
+      return 'password';
+    default:
+      return null;
+  }
+}
+
 /** Why creating an account or signing in failed, as far as the app tells the reasons apart. */
 export type AccountError =
   | 'invalidCredentials'

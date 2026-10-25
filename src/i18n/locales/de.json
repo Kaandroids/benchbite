@@ -34,7 +34,12 @@
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
       "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal."
-    }
+    },
+    "email": "E-Mail",
+    "emailPlaceholder": "du@beispiel.de",
+    "password": "Passwort",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",

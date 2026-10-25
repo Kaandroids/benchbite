@@ -34,7 +34,12 @@
       "rateLimited": "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.",
       "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
       "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene."
-    }
+    },
+    "email": "E-posta",
+    "emailPlaceholder": "sen@ornek.com",
+    "password": "Şifre",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle"
   },
   "loadError": {
     "title": "Yüklenemedi",
