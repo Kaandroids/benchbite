@@ -1,0 +1,3 @@
+import { SettingsScreen } from '@/settings/settings-screen';
+
+export default SettingsScreen;

@@ -104,6 +104,7 @@ function RootNavigator() {
             {/* The workout in progress covers the tabs, so nothing but the workout is in reach. */}
             <Stack.Screen name="session/index" />
             <Stack.Screen name="session/finish" />
+            <Stack.Screen name="settings" />
           </Stack.Protected>
           {/* Reachable from the onboarding's first step and from the settings. */}
           <Stack.Screen name="account/create" />

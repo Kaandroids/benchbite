@@ -15,6 +15,7 @@ import PickExercises from '@/app/(app)/workout/pick';
 import EditWorkout from '@/app/(app)/workout/edit';
 import WorkoutTab from '@/app/(app)/workout/index';
 import CreateAccountRoute from '@/app/account/create';
+import SettingsRoute from '@/app/settings';
 import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
 import OnboardingStep from '@/app/onboarding/[step]';
@@ -90,6 +91,10 @@ jest.mock('@/account/create-account-screen', () => {
     ),
   };
 });
+jest.mock('@/settings/settings-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { SettingsScreen: () => <MockText>Settings screen</MockText> };
+});
 jest.mock('@/sessions/left-open', () => ({ LeftOpenSaver: () => null }));
 jest.mock('@/sessions/start-move', () => ({ StartMoveSheet: () => null }));
 jest.mock('@/reminders/reminder-sync', () => ({ ReminderSync: () => null }));
@@ -156,6 +161,7 @@ const APP_ROUTES = {
   '(app)/workout/edit': EditWorkout,
   '(app)/nutrition': NutritionTab,
   '(app)/progress': ProgressTab,
+  settings: SettingsRoute,
   'account/create': CreateAccountRoute,
   'account/login': LogInRoute,
   'dev/components': () => <Text>Component gallery</Text>,
@@ -330,6 +336,13 @@ describe('app tabs', () => {
     expect(app.getPathname()).toBe(path.split('?')[0]);
     expect(screen.getByText(text)).toBeOnTheScreen();
     expect(tabs().filter((tab) => tab.focused)).toEqual([{ title: 'Workout', focused: true }]);
+  });
+
+  it('opens the settings from the Progress tab', async () => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/progress' });
+    await act(() => fireEvent.press(screen.getByRole('button', { name: 'Settings' })));
+    expect(app.getPathname()).toBe('/settings');
+    expect(screen.getByText('Settings screen')).toBeOnTheScreen();
   });
 
   it('links to the component gallery in development', async () => {

@@ -53,6 +53,20 @@
     "createOne": "Hesap oluştur",
     "guestDataStays": "Bu telefonda misafir olarak kaydettiklerin bu hesaba taşınmaz. Saklamak istiyorsan bunun yerine hesap oluştur."
   },
+  "settings": {
+    "title": "Ayarlar",
+    "open": "Ayarlar",
+    "account": "Hesap",
+    "guestTitle": "Benchbite'ı misafir olarak kullanıyorsun",
+    "guestMessage": "Planın ve antrenmanların sende kalsın diye bir hesap oluştur, yeni bir telefonda da.",
+    "createAccount": "Hesap oluştur",
+    "haveOne": "Zaten hesabın var mı?",
+    "signedInAs": "Giriş yapılan hesap",
+    "logOut": "Çıkış yap",
+    "logOutTitle": "Çıkış yapılsın mı?",
+    "logOutMessage": "Planın ve antrenmanların hesabında kalır. Bu telefon yeni bir misafirle baştan başlar.",
+    "logOutFailed": "Çıkış yapılamadı"
+  },
   "loadError": {
     "title": "Yüklenemedi",
     "message": "Bağlantını kontrol edip tekrar dene."

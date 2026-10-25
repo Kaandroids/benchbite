@@ -53,6 +53,20 @@
     "createOne": "Create one",
     "guestDataStays": "What you saved as a guest on this phone won’t move to this account. To keep it, create an account instead."
   },
+  "settings": {
+    "title": "Settings",
+    "open": "Settings",
+    "account": "Account",
+    "guestTitle": "You’re using Benchbite as a guest",
+    "guestMessage": "Create an account so your plan and workouts stay yours, also on a new phone.",
+    "createAccount": "Create an account",
+    "haveOne": "Already have one?",
+    "signedInAs": "Signed in as",
+    "logOut": "Log out",
+    "logOutTitle": "Log out?",
+    "logOutMessage": "Your plan and workouts stay in your account. This phone starts over as a new guest.",
+    "logOutFailed": "Couldn’t log out"
+  },
   "loadError": {
     "title": "This couldn't load",
     "message": "Check your connection and try again."

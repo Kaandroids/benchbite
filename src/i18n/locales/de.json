@@ -53,6 +53,20 @@
     "createOne": "Erstelle eins",
     "guestDataStays": "Was du als Gast auf diesem Handy gespeichert hast, kommt nicht in dieses Konto. Um es zu behalten, erstelle stattdessen ein Konto."
   },
+  "settings": {
+    "title": "Einstellungen",
+    "open": "Einstellungen",
+    "account": "Konto",
+    "guestTitle": "Du nutzt Benchbite als Gast",
+    "guestMessage": "Erstelle ein Konto, damit dein Plan und deine Workouts deine bleiben, auch auf einem neuen Handy.",
+    "createAccount": "Konto erstellen",
+    "haveOne": "Du hast schon eins?",
+    "signedInAs": "Angemeldet als",
+    "logOut": "Abmelden",
+    "logOutTitle": "Abmelden?",
+    "logOutMessage": "Dein Plan und deine Workouts bleiben in deinem Konto. Dieses Handy startet neu als neuer Gast.",
+    "logOutFailed": "Abmelden fehlgeschlagen"
+  },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
     "message": "Prüfe deine Verbindung und versuche es erneut."
