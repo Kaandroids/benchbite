@@ -22,6 +22,7 @@ jest.mock('@/lib/supabase', () => ({
     auth: {
       onAuthStateChange: jest.fn(),
       signInAnonymously: jest.fn(),
+      signOut: jest.fn(),
     },
   },
 }));
@@ -55,6 +56,10 @@ beforeEach(() => {
     return { data: { subscription: { id: 'id', callback: jest.fn(), unsubscribe } } };
   });
   auth.signInAnonymously.mockResolvedValue({ data: {}, error: null } as never);
+  auth.signOut.mockImplementation(async () => {
+    await emit(null);
+    return { error: null };
+  });
 });
 
 describe('SessionProvider', () => {
@@ -151,6 +156,27 @@ describe('SessionProvider', () => {
     expect(auth.signInAnonymously).toHaveBeenCalledTimes(1);
     await emit({ ...SESSION, user: { id: 'user-2' } } as Session);
     expect(result.current.status).toBe('ready');
+  });
+
+  it('signs out on this device only and starts over as a new guest', async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await act(() => result.current.signOut());
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    await waitFor(() => expect(auth.signInAnonymously).toHaveBeenCalledTimes(1));
+    expect(result.current.status).not.toBe('ended');
+  });
+
+  it('still starts over when the session could not be revoked on the server', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    auth.signOut.mockImplementationOnce(async () => {
+      await emit(null);
+      return { error: new Error('offline') } as never;
+    });
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await act(() => result.current.signOut());
+    await waitFor(() => expect(auth.signInAnonymously).toHaveBeenCalledTimes(1));
   });
 
   it('unsubscribes from auth changes on unmount', async () => {

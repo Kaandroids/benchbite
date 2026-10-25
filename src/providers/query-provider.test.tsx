@@ -14,6 +14,7 @@ function signIn(userId: string) {
     session: { user: { id: userId } } as never,
     retry: jest.fn(),
     startAgain: jest.fn(),
+    signOut: jest.fn(),
   });
 }
 

@@ -44,8 +44,9 @@ function signIn(userId: string | null) {
           session: { user: { id: userId } } as Session,
           retry: jest.fn(),
           startAgain: jest.fn(),
+          signOut: jest.fn(),
         }
-      : { status: 'loading', retry: jest.fn(), startAgain: jest.fn() },
+      : { status: 'loading', retry: jest.fn(), startAgain: jest.fn(), signOut: jest.fn() },
   );
 }
 

@@ -23,6 +23,8 @@ type SessionContextValue = SessionState & {
   retry: () => Promise<void>;
   /** After a session ended, starts over as a new guest. */
   startAgain: () => Promise<void>;
+  /** Signs the account out on this device and starts over as a new guest. */
+  signOut: () => Promise<void>;
 };
 
 /** The id of the user signed in on this device last, to tell a first start from a lost session. */
@@ -96,8 +98,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await startAnonymousSession();
   }, [startAnonymousSession]);
 
+  const signOut = useCallback(async () => {
+    // Forgetting the user first makes the session that ends start a new guest, instead of saying
+    // that it ended. Only this device signs out; the account stays signed in elsewhere.
+    rememberUser(null);
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    // The session on the device is gone either way; only revoking it on the server failed.
+    if (error) {
+      console.warn('Could not revoke the session', error);
+    }
+  }, []);
+
   return (
-    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain }}>
+    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain, signOut }}>
       {children}
     </SessionContext>
   );
