@@ -2,9 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
+import { CardHeading } from '@/components/ui/card-heading';
 import { Text } from '@/components/ui/text';
-import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import type { LibraryExercise } from '@/exercises/library';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { summarizeSets } from '@/sets/exercise-summary';
@@ -14,14 +14,24 @@ import { fonts, useTheme } from '@/theme';
 import { workoutLength } from '@/workouts/format';
 
 import { newRecords } from './records';
-import { sessionTotals, type Session } from './session';
+import type { sessionTotals, Session } from './session';
+
+/** Looks an exercise of the workout up in the library. */
+type Details = (exerciseId: string) => LibraryExercise | undefined;
 
 /** How long the workout took, its sets and the weight lifted, in three boxes. */
-export function FinishStats({ session, finishedAt }: { session: Session; finishedAt: number }) {
+export function FinishStats({
+  session,
+  totals,
+  finishedAt,
+}: {
+  session: Session;
+  totals: ReturnType<typeof sessionTotals>;
+  finishedAt: number;
+}) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const totals = sessionTotals(session);
   const seconds = Math.max(0, Math.floor((finishedAt - session.startedAt) / 1000));
   const stats = [
     { value: workoutLength(seconds), label: t('session.summary.time') },
@@ -109,14 +119,13 @@ export function EndTime({
 }
 
 /** Each exercise of the workout with its sets done and the best of them, or that it was skipped. */
-export function ExerciseSummary({ session }: { session: Session }) {
+export function ExerciseSummary({ session, details }: { session: Session; details: Details }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const library = useExerciseLibrary();
   return (
     <Card list>
       {session.exercises.map((exercise, index) => {
-        const info = findExercise(library.data, exercise.exerciseId);
+        const info = details(exercise.exerciseId);
         const done = exercise.sets.filter((s) => s.done);
         const kind = setKindOf(info?.metrics, exercise.target);
         const { best } = summarizeSets(done, kind);
@@ -148,13 +157,12 @@ export function ExerciseSummary({ session }: { session: Session }) {
 }
 
 /** The best new record of each kind for every exercise, in the workout's order; none without. */
-export function NewRecords({ session }: { session: Session }) {
+export function NewRecords({ session, details }: { session: Session; details: Details }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const library = useExerciseLibrary();
   const formatRecord = useRecordFormat();
   const records = session.exercises.flatMap((exercise) => {
-    const info = findExercise(library.data, exercise.exerciseId);
+    const info = details(exercise.exerciseId);
     const kind = setKindOf(info?.metrics, exercise.target);
     return newRecords(exercise.sets, kind, exercise.bests).records.map((record) => ({
       name: `${info?.name ?? ''} · ${t(`exerciseHistory.kinds.${record.kind}`)}`,
@@ -166,12 +174,7 @@ export function NewRecords({ session }: { session: Session }) {
   }
   return (
     <Card style={{ padding: spacing.lg, gap: spacing.sm }}>
-      <View style={[styles.item, styles.title, { gap: spacing.sm }]}>
-        <Icon name="trophy" size={18} color="primary" />
-        <Text variant="bodyStrong" style={styles.black}>
-          {t('session.summary.records', { count: records.length })}
-        </Text>
-      </View>
+      <CardHeading icon="trophy" title={t('session.summary.records', { count: records.length })} />
       {records.map((record) => (
         <View key={record.name} style={[styles.record, { gap: spacing.md }]}>
           <Text variant="body" style={[styles.flex, styles.semibold]}>
@@ -212,18 +215,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
   },
-  title: {
-    paddingVertical: 0,
-  },
   record: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   semibold: {
     fontFamily: fonts.bold,
-  },
-  black: {
-    fontFamily: fonts.black,
-    fontSize: 17,
   },
 });

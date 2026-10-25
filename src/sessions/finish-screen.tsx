@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
@@ -16,7 +17,7 @@ import { useWorkoutName } from '@/workouts/format';
 import { useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
-import { EndTime, ExerciseSummary, FinishStats, NewRecords } from './finish-parts';
+import { EndTime, ExerciseSummary, FinishStats, NewRecords } from './finish-sections';
 import { useLogWorkout } from './logs';
 import {
   endSession,
@@ -39,6 +40,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const time = useClockFormat();
   const { colors, spacing } = useTheme();
   const active = useActiveSession(useUserId());
+  const library = useExerciseLibrary();
   const logWorkout = useLogWorkout();
   const workouts = useWorkouts();
   const startWorkout = useStartWorkout();
@@ -76,6 +78,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const session = stopClock(active, finishedAt);
   const name = workoutName(session);
   const totals = sessionTotals(session);
+  const details = (id: string) => findExercise(library.data, id);
 
   const save = async () => {
     if (saving.current) {
@@ -130,14 +133,14 @@ export function FinishScreen({ next }: { next?: number }) {
           </Text>
         </View>
 
-        <FinishStats session={session} finishedAt={finishedAt} />
+        <FinishStats session={session} totals={totals} finishedAt={finishedAt} />
         <EndTime
           startedAt={session.startedAt}
           finishedAt={finishedAt}
           onChange={() => setChoosingEnd(true)}
         />
-        <ExerciseSummary session={session} />
-        <NewRecords session={session} />
+        <ExerciseSummary session={session} details={details} />
+        <NewRecords session={session} details={details} />
 
         {totals.done === 0 ? (
           <Text color="textMuted" align="center">

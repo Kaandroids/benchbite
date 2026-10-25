@@ -9,7 +9,7 @@ import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { setKindOf } from '@/sets/fields';
 
 import { useExerciseHistory } from './exercise-history';
-import { ProgressCard, RecordsCard, SessionList } from './exercise-history-parts';
+import { ProgressCard, RecordsCard, SessionList } from './exercise-history-sections';
 
 /** An exercise's records, a chart of its progress, and its sets in the workouts it was done in. */
 export function ExerciseHistoryScreen({ id }: { id: string }) {

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { CardHeading } from '@/components/ui/card-heading';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useShortDateFormat } from '@/i18n/dates';
@@ -37,28 +37,6 @@ import {
   type TimeRange,
 } from './record-format';
 
-/** A card's heading with its icon. */
-function Heading({
-  icon,
-  text,
-  children,
-}: {
-  icon: IconName;
-  text: string;
-  children?: React.ReactNode;
-}) {
-  const { spacing } = useTheme();
-  return (
-    <View style={[styles.row, { gap: spacing.sm }]}>
-      <Icon name={icon} size={18} color="primary" />
-      <Text variant="headline" style={[styles.heading, styles.flex]}>
-        {text}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
 /** The exercise's records, each with when it was set. */
 export function RecordsCard({ records, kind }: { records: ExerciseRecord[]; kind: SetKind }) {
   const { t } = useTranslation();
@@ -71,7 +49,7 @@ export function RecordsCard({ records, kind }: { records: ExerciseRecord[]; kind
       : t(`exerciseHistory.kinds.${record.kind}`);
   return (
     <Card>
-      <Heading icon="trophy" text={t('exerciseHistory.records')} />
+      <CardHeading icon="trophy" title={t('exerciseHistory.records')} />
       <View style={[styles.grid, { gap: spacing.sm }]}>
         {records.map((record) => (
           <View
@@ -147,7 +125,7 @@ export function ProgressCard({ progress, kind }: { progress: ProgressPoint[]; ki
 
   return (
     <Card>
-      <Heading icon="trend" text={t('exerciseHistory.progress')}>
+      <CardHeading icon="trend" title={t('exerciseHistory.progress')}>
         {change !== 0 && first ? (
           <Text variant="caption" color="textMuted" style={styles.semibold}>
             {t('exerciseHistory.since', {
@@ -156,7 +134,7 @@ export function ProgressCard({ progress, kind }: { progress: ProgressPoint[]; ki
             })}
           </Text>
         ) : null}
-      </Heading>
+      </CardHeading>
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={t('exerciseHistory.metricsLabel')}
@@ -283,11 +261,6 @@ const styles = StyleSheet.create({
   },
   tabular: {
     fontVariant: ['tabular-nums'],
-  },
-  heading: {
-    fontFamily: fonts.black,
-    fontSize: 17,
-    lineHeight: 22,
   },
   row: {
     flexDirection: 'row',
