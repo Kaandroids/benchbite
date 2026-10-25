@@ -12,6 +12,12 @@ import {
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
+// An RPC's answer that can also be read a page at a time, as a long one is.
+const pageable = <T>(answer: T) => {
+  const page = { order: () => page, range: () => Promise.resolve(answer) };
+  return Object.assign(Promise.resolve(answer), page);
+};
+
 const row = (
   logId: number,
   startedAt: string,
@@ -115,7 +121,7 @@ describe('useExerciseHistory', () => {
   it('reads the sets of the latest workouts only', async () => {
     const progressRow = (logId: number) => ({ log_id: logId, started_at: '2026-10-12T16:00:00Z' });
     jest.mocked(supabase.rpc).mockImplementation(((name: string) =>
-      Promise.resolve({
+      pageable({
         data:
           name === 'exercise_records'
             ? []
@@ -138,7 +144,7 @@ describe('useExerciseHistory', () => {
 
   it('loads the records in order, the progress and the sessions', async () => {
     jest.mocked(supabase.rpc).mockImplementation(((name: string) =>
-      Promise.resolve(
+      pageable(
         name === 'exercise_records'
           ? {
               data: [
@@ -222,7 +228,7 @@ describe('useExerciseHistory', () => {
   it('fails when a part does not load', async () => {
     jest
       .mocked(supabase.rpc)
-      .mockResolvedValue({ data: null, error: new Error('offline') } as never);
+      .mockImplementation((() => pageable({ data: null, error: new Error('offline') })) as never);
     jest.mocked(supabase.from).mockReturnValue({
       select: () => ({ eq: () => ({ in: () => Promise.resolve({ data: [], error: null }) }) }),
     } as never);

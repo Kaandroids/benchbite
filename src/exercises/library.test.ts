@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+import { PAGE_SIZE } from '@/lib/paging';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
@@ -29,10 +30,12 @@ const row = (id: string, name: string, more: object = {}) => ({
   ...more,
 });
 
+const range = jest.fn();
 const eq = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  eq.mockReturnValue({ order: () => ({ range }) });
   jest.mocked(supabase.from).mockReturnValue({ select: () => ({ eq }) } as never);
 });
 
@@ -42,7 +45,7 @@ afterEach(async () => {
 
 describe('fetchLibrary', () => {
   it('names the exercises in the language, falling back to English, sorted by that name', async () => {
-    eq.mockResolvedValue({
+    range.mockResolvedValue({
       data: [
         row('squat', 'Barbell Squat', {
           exercise_translations: [{ language: 'de', name: 'Kniebeuge' }],
@@ -53,6 +56,8 @@ describe('fetchLibrary', () => {
     });
     const library = await fetchLibrary('de');
     expect(eq).toHaveBeenCalledWith('exercise_translations.language', 'de');
+    // Read a page at a time, as a user's own exercises can make it longer than one request.
+    expect(range).toHaveBeenCalledWith(0, PAGE_SIZE - 1);
     expect(library.map((exercise) => [exercise.name, exercise.searchText])).toEqual([
       ['Barbell Row', 'barbell row barbell row'],
       ['Kniebeuge', 'kniebeuge barbell squat'],
@@ -67,14 +72,14 @@ describe('fetchLibrary', () => {
 
   it('fails with the error the database returns', async () => {
     const error = { code: '500', message: 'boom' };
-    eq.mockResolvedValue({ data: null, error });
+    range.mockResolvedValue({ data: null, error });
     await expect(fetchLibrary('en')).rejects.toBe(error);
   });
 });
 
 describe('useExerciseLibrary', () => {
   it('loads the library in the app language', async () => {
-    eq.mockResolvedValue({ data: [row('squat', 'Barbell Squat')], error: null });
+    range.mockResolvedValue({ data: [row('squat', 'Barbell Squat')], error: null });
     const { result } = await renderHook(() => useExerciseLibrary());
     await waitFor(() => expect(result.current.data).toHaveLength(1));
   });
