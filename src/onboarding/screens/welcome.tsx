@@ -1,7 +1,9 @@
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
+import { OtherForm } from '@/account/account-form';
 import { Button } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
@@ -24,7 +26,18 @@ export function WelcomeStep() {
   const { next } = useStep('welcome');
 
   return (
-    <Screen footer={<Button label={t('onboarding.welcome.start')} onPress={() => next()} />}>
+    <Screen
+      footer={
+        <View style={{ gap: spacing.lg }}>
+          <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
+          <OtherForm
+            question={t('account.haveAccount')}
+            action={t('account.logIn')}
+            onPress={() => router.push('/account/login')}
+          />
+        </View>
+      }
+    >
       <View style={[styles.hero, { gap: spacing.md, marginTop: spacing.xxl }]}>
         {/* A placeholder until the logo exists (#45). */}
         <Animated.View
