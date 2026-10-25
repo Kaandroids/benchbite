@@ -29,8 +29,9 @@ The first way to create an account is an email address with a password.
   new guest replaces one, the previous user's workout and reminders go. The same user signing in
   again keeps them. This is done in one place (`src/account/device-owner.ts`), so each new way to
   sign in gets it without extra work.
-- **The onboarding** of an account that has not finished it on this device waits for the server's
-  answer, because the account most likely finished it elsewhere. Guests never wait.
+- **The onboarding** of an account that has not finished it on this device waits up to 3 seconds
+  for the server's answer behind a loading view, because the account most likely finished it
+  elsewhere. A later answer still skips it. Guests never wait.
 - For now, email addresses are not confirmed and passwords need 6 characters
   (`supabase/config.toml`).
 

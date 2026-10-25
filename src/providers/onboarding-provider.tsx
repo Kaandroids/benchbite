@@ -46,6 +46,9 @@ type OnboardingContextValue = {
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
+/** How long the app waits for the server's answer before it shows the onboarding anyway. */
+export const CHECK_TIMEOUT_MS = 3000;
+
 const EMPTY_DRAFT: Draft = { step: 'welcome', answers: {} };
 
 /** Used until the session is ready; the app shows nothing before that. */
@@ -145,6 +148,15 @@ function UserOnboardingProvider({
       subscription.remove();
     };
   }, [userId, finish]);
+
+  // A slow answer does not hold the app up: the onboarding shows, and still skips once it comes.
+  useEffect(() => {
+    if (!checking) {
+      return;
+    }
+    const timeout = setTimeout(() => setChecking(false), CHECK_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [checking]);
 
   // Builds on the latest draft, so that answering and moving on in one handler both count. A
   // draft that did not change is neither saved nor rendered again. Once the onboarding is

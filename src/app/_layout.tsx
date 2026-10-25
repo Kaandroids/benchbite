@@ -8,7 +8,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useClaimDevice } from '@/account/device-owner';
@@ -48,6 +49,7 @@ function RootNavigator() {
   const { status, retry, startAgain } = useSession();
   const { completed, checking } = useOnboarding();
   useClaimDevice();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   // Keys must match the family names in `fonts`. If loading fails, text falls back to the system font.
   const [fontsLoaded, fontError] = useFonts({
@@ -56,7 +58,7 @@ function RootNavigator() {
     [fonts.extraBold]: Nunito_800ExtraBold,
     [fonts.black]: Nunito_900Black,
   });
-  const isReady = (fontsLoaded || fontError !== null) && status !== 'loading' && !checking;
+  const isReady = (fontsLoaded || fontError !== null) && status !== 'loading';
 
   // The root view shows through during screen transitions and keyboard animations.
   useEffect(() => {
@@ -81,6 +83,10 @@ function RootNavigator() {
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
         <SessionEnded onStartAgain={startAgain} />
+      ) : checking ? (
+        <View style={[styles.root, styles.center, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />
+        </View>
       ) : (
         <Stack
           screenOptions={{
@@ -113,5 +119,9 @@ function RootNavigator() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

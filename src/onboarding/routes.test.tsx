@@ -251,10 +251,11 @@ describe('root layout', () => {
     expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
   });
 
-  it('shows nothing while it waits for the server to say whether the onboarding was finished', async () => {
+  it('shows it is loading while it waits for the server to say whether the onboarding was finished', async () => {
     setOnboarding('welcome');
     onboarding = { ...onboarding, checking: true };
     await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    expect(screen.getByLabelText('Loading')).toBeOnTheScreen();
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
     expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
   });

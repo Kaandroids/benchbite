@@ -5,7 +5,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { OnboardingProvider, useOnboarding } from './onboarding-provider';
+import { CHECK_TIMEOUT_MS, OnboardingProvider, useOnboarding } from './onboarding-provider';
 import { useSession } from './session-provider';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -240,6 +240,29 @@ describe('OnboardingProvider', () => {
     const { result } = await renderOnboarding();
     await waitFor(() => expect(result.current.checking).toBe(false));
     expect(result.current.completed).toBe(false);
+  });
+
+  it('stops waiting for a server that does not answer in time, and still skips once it does', async () => {
+    jest.useFakeTimers();
+    try {
+      signIn('user-1', false);
+      let answer: (value: unknown) => void = () => {};
+      maybeSingle.mockReturnValue(
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+      );
+      const { result } = await renderOnboarding();
+      expect(result.current.checking).toBe(true);
+      await act(async () => jest.advanceTimersByTime(CHECK_TIMEOUT_MS));
+      expect(result.current).toMatchObject({ checking: false, completed: false });
+      await act(async () =>
+        answer({ data: { onboarding_completed_at: '2026-10-01T10:00:00Z' }, error: null }),
+      );
+      expect(result.current.completed).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('does not wait for an account that finished the onboarding here', async () => {
