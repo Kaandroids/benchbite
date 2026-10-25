@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(16);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -29,7 +29,7 @@ cross join (values ('anon'), ('authenticated')) roles (role)
 where p.proname in (
   'metrics_valid', 'custom_exercise_fields', 'target_suits', 'exercise_seconds', 'set_suits',
   'sets_of', 'custom_exercise_limit', 'lock_user_limits', 'move_fits', 'save_move',
-  'drop_stale_moves'
+  'drop_stale_moves', 'insert_workout_exercises'
 )
 group by p.proname
 order by p.proname;

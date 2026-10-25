@@ -627,6 +627,10 @@ export type Database = {
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      insert_workout_exercises: {
+        Args: { items: Json; user_id: string; workout_id: number };
+        Returns: undefined;
+      };
       last_sets: {
         Args: { exercise_ids: string[] };
         Returns: {
