@@ -16,10 +16,12 @@ type FieldProps = {
   error?: string | null;
   /** A link after the error, such as one to log in instead. */
   errorAction?: ReactNode;
+  /** False while what was typed is being sent. */
+  editable?: boolean;
 };
 
 /** The email address of an account. */
-export function EmailField({ value, onChange, error, errorAction }: FieldProps) {
+export function EmailField({ value, onChange, error, errorAction, editable = true }: FieldProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
@@ -30,6 +32,7 @@ export function EmailField({ value, onChange, error, errorAction }: FieldProps) 
         accessibilityLabel={t('account.email')}
         value={value}
         onChangeText={onChange}
+        editable={editable}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -51,6 +54,7 @@ export function PasswordField({
   error,
   hint,
   isNew = false,
+  editable = true,
 }: FieldProps & { hint?: string; isNew?: boolean }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -64,6 +68,7 @@ export function PasswordField({
           accessibilityLabel={t('account.password')}
           value={value}
           onChangeText={onChange}
+          editable={editable}
           secureTextEntry={!shown}
           autoCapitalize="none"
           autoCorrect={false}

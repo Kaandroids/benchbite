@@ -1,7 +1,7 @@
 import { AuthApiError } from '@supabase/supabase-js';
 
 import { supabase } from '@/lib/supabase';
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { LogInScreen } from './log-in-screen';
 
@@ -59,6 +59,29 @@ describe('LogInScreen', () => {
     );
     await fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
     expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
+  });
+
+  it('keeps what is being sent, and shows its error', async () => {
+    let answer: (value: unknown) => void = () => {};
+    auth.signInWithPassword.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }) as never,
+    );
+    await renderScreen();
+    await fill('kaan@example.com', 'wrong12');
+    await fireEvent.press(screen.getByRole('button', { name: 'Log in' }));
+    await waitFor(() => expect(screen.getByLabelText('Password')).toHaveProp('editable', false));
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret12');
+    await act(async () =>
+      answer({
+        data: {},
+        error: new AuthApiError('Invalid login credentials', 400, 'invalid_credentials'),
+      }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'That email and password don’t match an account.',
+    );
   });
 
   it('warns a guest with data that it stays behind', async () => {

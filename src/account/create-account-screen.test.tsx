@@ -3,7 +3,7 @@ import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import { sessionValue } from '@/test/context-mocks';
-import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { CreateAccountScreen } from './create-account-screen';
 
@@ -83,6 +83,23 @@ describe('CreateAccountScreen', () => {
     );
     await fireEvent.changeText(screen.getByLabelText('Password'), 'secret123');
     expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
+  });
+
+  it('keeps what is being sent, and reports the answer', async () => {
+    let answer: (value: unknown) => void = () => {};
+    auth.updateUser.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }) as never,
+    );
+    await renderScreen();
+    await fill('kaan@example.com', 'secret12');
+    await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    await waitFor(() => expect(screen.getByLabelText('Password')).toHaveProp('editable', false));
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'secret123');
+    await act(async () => answer({ data: {}, error: null }));
+    expect(onCreated).toHaveBeenCalled();
+    expect(auth.updateUser).toHaveBeenCalledTimes(1);
   });
 
   it('closes, and switches to logging in', async () => {

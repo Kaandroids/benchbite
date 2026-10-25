@@ -34,7 +34,10 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
   // A new attempt starts without the last one's error.
   const change = (set: (value: string) => void) => (value: string) => {
     set(value);
-    create.reset();
+    // Resetting a running request would leave this screen without its answer.
+    if (!create.isPending) {
+      create.reset();
+    }
   };
 
   return (
@@ -62,6 +65,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
       <EmailField
         value={email}
         onChange={change(setEmail)}
+        editable={!create.isPending}
         error={field === 'email' ? message : null}
         errorAction={
           reason === 'emailTaken' ? (
@@ -76,6 +80,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
       <PasswordField
         value={password}
         onChange={change(setPassword)}
+        editable={!create.isPending}
         error={field === 'password' ? message : null}
         hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
         isNew

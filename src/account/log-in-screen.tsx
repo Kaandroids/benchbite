@@ -31,7 +31,10 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
 
   const change = (set: (value: string) => void) => (value: string) => {
     set(value);
-    signIn.reset();
+    // Resetting a running request would leave this screen without its answer.
+    if (!signIn.isPending) {
+      signIn.reset();
+    }
   };
 
   return (
@@ -57,8 +60,8 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       }
     >
       {leavesGuestData ? <FormNote tone="warning">{t('account.guestDataStays')}</FormNote> : null}
-      <EmailField value={email} onChange={change(setEmail)} />
-      <PasswordField value={password} onChange={change(setPassword)} />
+      <EmailField value={email} onChange={change(setEmail)} editable={!signIn.isPending} />
+      <PasswordField value={password} onChange={change(setPassword)} editable={!signIn.isPending} />
     </AccountForm>
   );
 }
