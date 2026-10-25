@@ -13,7 +13,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useClaimDevice } from '@/account/device-owner';
-import { SessionEnded } from '@/components/session-ended';
+import { SessionEnded } from '@/account/session-ended';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';

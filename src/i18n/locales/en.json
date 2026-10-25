@@ -19,9 +19,6 @@
     "title": "Your guest session ended",
     "message": "This device could no longer sign in as your guest profile, so your plan and workouts from before can’t be opened here anymore.\n\nYou’ll start fresh with a new guest profile.",
     "startAgain": "Start again",
-    "createAccount": "Create an account",
-    "haveAccount": "Already have an account?",
-    "logIn": "Log in",
     "accountNote": "With an account, your plan and workouts stay yours on any device."
   },
   "account": {
@@ -60,7 +57,6 @@
     "guestTitle": "You’re using Benchbite as a guest",
     "guestMessage": "Create an account so your plan and workouts stay yours, also on a new phone.",
     "createAccount": "Create an account",
-    "haveOne": "Already have one?",
     "signedInAs": "Signed in as",
     "logOut": "Log out",
     "logOutTitle": "Log out?",

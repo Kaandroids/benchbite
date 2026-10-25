@@ -34,7 +34,7 @@ function Guest() {
       </View>
       <Button label={t('settings.createAccount')} onPress={() => router.push('/account/create')} />
       <LinkPrompt
-        question={t('settings.haveOne')}
+        question={t('account.haveAccount')}
         action={t('account.logIn')}
         onPress={() => router.push('/account/login')}
       />

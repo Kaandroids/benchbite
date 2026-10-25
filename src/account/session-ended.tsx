@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { CreateAccountScreen } from '@/account/create-account-screen';
-import { LogInScreen } from '@/account/log-in-screen';
 import { Button } from '@/components/ui/button';
+import { LinkPrompt } from '@/components/ui/link-prompt';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+
+import { CreateAccountScreen } from './create-account-screen';
+import { LogInScreen } from './log-in-screen';
 
 type SessionEndedProps = {
   onStartAgain: () => Promise<void>;
@@ -59,17 +61,14 @@ export function SessionEnded({ onStartAgain }: SessionEndedProps) {
           />
           <Button
             variant="secondary"
-            label={t('sessionEnded.createAccount')}
+            label={t('settings.createAccount')}
             onPress={() => setForm('create')}
           />
-          <View style={styles.login}>
-            <Text color="textMuted">{t('sessionEnded.haveAccount')} </Text>
-            <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setForm('logIn')}>
-              <Text variant="label" color="primaryText">
-                {t('sessionEnded.logIn')}
-              </Text>
-            </Pressable>
-          </View>
+          <LinkPrompt
+            question={t('account.haveAccount')}
+            action={t('account.logIn')}
+            onPress={() => setForm('logIn')}
+          />
           <Text variant="caption" color="textMuted" align="center">
             {t('sessionEnded.accountNote')}
           </Text>
@@ -84,12 +83,3 @@ export function SessionEnded({ onStartAgain }: SessionEndedProps) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  login: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
