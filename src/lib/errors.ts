@@ -1,6 +1,6 @@
 // The codes the database raises for requests it refuses (BB001 to BB019 in the migrations), named
 // by what they mean, for the ones the app tells apart.
-export const DB_ERRORS = {
+const DB_ERRORS = {
   onboardingCompleted: 'BB001',
   tooYoung: 'BB002',
   noConsent: 'BB003',
@@ -11,7 +11,7 @@ export const DB_ERRORS = {
   moveDoesNotFit: 'BB019',
 } as const;
 
-export type DbError = keyof typeof DB_ERRORS;
+type DbError = keyof typeof DB_ERRORS;
 
 /** Whether a failed request was refused by the database with the given error. */
 export function isDbError(error: unknown, name: DbError): boolean {
