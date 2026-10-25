@@ -5,7 +5,7 @@ import { useExerciseLibrary } from '@/exercises/library';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useWorkouts } from '@/workouts/workouts';
 
-import { EditLogScreen, missingFields } from './edit-log-screen';
+import { EditLogScreen } from './edit-log-screen';
 import {
   useDeleteLog,
   useEditLog,
@@ -18,6 +18,7 @@ import {
 import { HistoryScreen } from './history-screen';
 import { LogScreen } from './log-screen';
 import { RecentLogs } from './recent-logs';
+import { missingFields } from './use-log-edit';
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
