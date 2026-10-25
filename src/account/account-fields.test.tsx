@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@/test/render';
 
-import { EmailField, FormNote, PasswordField } from './account-fields';
+import { EmailField, PasswordField } from './account-fields';
 
 describe('EmailField', () => {
   it('reports what is typed and shows an error with its action', async () => {
@@ -44,12 +44,5 @@ describe('PasswordField', () => {
   it('offers a new password to the password manager as one', async () => {
     await render(<PasswordField value="" onChange={jest.fn()} isNew />);
     expect(screen.getByLabelText('Password')).toHaveProp('autoComplete', 'new-password');
-  });
-});
-
-describe('FormNote', () => {
-  it('announces an error', async () => {
-    await render(<FormNote tone="danger">No connection.</FormNote>);
-    expect(screen.getByRole('alert')).toHaveTextContent('No connection.');
   });
 });

@@ -9,9 +9,9 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
+import { LinkPrompt } from '@/components/ui/link-prompt';
 
 import { accountError, useSignOut } from './account';
-import { OtherForm } from './account-form';
 
 /** The settings' account section: a guest is offered an account, an account can log out. */
 export function AccountSection() {
@@ -33,7 +33,7 @@ function Guest() {
         </View>
       </View>
       <Button label={t('settings.createAccount')} onPress={() => router.push('/account/create')} />
-      <OtherForm
+      <LinkPrompt
         question={t('settings.haveOne')}
         action={t('account.logIn')}
         onPress={() => router.push('/account/login')}

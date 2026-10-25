@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -37,36 +37,8 @@ export function AccountForm({ title, subtitle, onClose, children, footer }: Acco
   );
 }
 
-/** "Already have an account? Log in": a question and a link to the other form. */
-export function OtherForm({
-  question,
-  action,
-  onPress,
-}: {
-  question: string;
-  action: string;
-  onPress: () => void;
-}) {
-  return (
-    <View style={styles.other}>
-      <Text color="textMuted">{question} </Text>
-      <Pressable accessibilityRole="button" hitSlop={8} onPress={onPress}>
-        <Text variant="label" color="primaryText">
-          {action}
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  other: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

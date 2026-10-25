@@ -5,10 +5,12 @@ import { Pressable, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { LinkPrompt } from '@/components/ui/link-prompt';
+import { Note } from '@/components/ui/note';
 
 import { accountError, errorField, useCreateAccount } from './account';
-import { EmailField, FormNote, PasswordField } from './account-fields';
-import { AccountForm, OtherForm } from './account-form';
+import { EmailField, PasswordField } from './account-fields';
+import { AccountForm } from './account-form';
 import { MIN_PASSWORD_LENGTH } from './passwords';
 
 type CreateAccountScreenProps = {
@@ -47,14 +49,14 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
       onClose={onClose}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {reason && !field ? <FormNote tone="danger">{message ?? ''}</FormNote> : null}
+          {reason && !field ? <Note tone="danger">{message ?? ''}</Note> : null}
           <Button
             label={t('account.create')}
             disabled={!ready}
             loading={create.isPending}
             onPress={() => create.mutate({ email, password }, { onSuccess: onCreated })}
           />
-          <OtherForm
+          <LinkPrompt
             question={t('account.haveAccount')}
             action={t('account.logIn')}
             onPress={onLogIn}

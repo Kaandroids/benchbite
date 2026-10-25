@@ -112,34 +112,6 @@ function FieldError({ message, action }: { message: string; action?: ReactNode }
   );
 }
 
-/**
- * A message in a tinted box: a warning before an action, or an error that is not about one
- * field.
- */
-export function FormNote({ tone, children }: { tone: 'warning' | 'danger'; children: string }) {
-  const { colors, radii, spacing } = useTheme();
-  return (
-    <View
-      accessible
-      accessibilityRole={tone === 'danger' ? 'alert' : undefined}
-      style={[
-        styles.note,
-        {
-          backgroundColor: tone === 'warning' ? colors.warningBackground : colors.dangerBackground,
-          borderRadius: radii.md,
-          padding: spacing.md,
-          gap: spacing.sm,
-        },
-      ]}
-    >
-      <Icon name={tone === 'warning' ? 'warning' : 'error'} size={20} color={tone} />
-      <Text variant="bodyStrong" style={styles.flex}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   field: {
     gap: 8,
@@ -162,10 +134,6 @@ const styles = StyleSheet.create({
   error: {
     flexDirection: 'row',
     gap: 6,
-    alignItems: 'flex-start',
-  },
-  note: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
   },
   flex: {

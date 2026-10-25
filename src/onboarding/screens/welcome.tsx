@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
-import { OtherForm } from '@/account/account-form';
 import { Button } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
@@ -11,6 +10,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
+import { LinkPrompt } from '@/components/ui/link-prompt';
 
 import { useStep } from '../use-step';
 
@@ -34,7 +34,7 @@ export function WelcomeStep() {
           <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
           {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
           {isAccount ? null : (
-            <OtherForm
+            <LinkPrompt
               question={t('account.haveAccount')}
               action={t('account.logIn')}
               onPress={() => router.push('/account/login')}

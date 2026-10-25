@@ -4,10 +4,12 @@ import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/theme';
+import { LinkPrompt } from '@/components/ui/link-prompt';
+import { Note } from '@/components/ui/note';
 
 import { accountError, useSignIn } from './account';
-import { EmailField, FormNote, PasswordField } from './account-fields';
-import { AccountForm, OtherForm } from './account-form';
+import { EmailField, PasswordField } from './account-fields';
+import { AccountForm } from './account-form';
 
 type LogInScreenProps = {
   onClose: () => void;
@@ -44,14 +46,14 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       onClose={onClose}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {reason ? <FormNote tone="danger">{t(`account.errors.${reason}`)}</FormNote> : null}
+          {reason ? <Note tone="danger">{t(`account.errors.${reason}`)}</Note> : null}
           <Button
             label={t('account.logIn')}
             disabled={email.trim() === '' || password === ''}
             loading={signIn.isPending}
             onPress={() => signIn.mutate({ email, password })}
           />
-          <OtherForm
+          <LinkPrompt
             question={t('account.noAccount')}
             action={t('account.createOne')}
             onPress={onCreateAccount}
@@ -59,7 +61,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
         </View>
       }
     >
-      {leavesGuestData ? <FormNote tone="warning">{t('account.guestDataStays')}</FormNote> : null}
+      {leavesGuestData ? <Note tone="warning">{t('account.guestDataStays')}</Note> : null}
       <EmailField value={email} onChange={change(setEmail)} editable={!signIn.isPending} />
       <PasswordField value={password} onChange={change(setPassword)} editable={!signIn.isPending} />
     </AccountForm>
