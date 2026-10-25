@@ -140,7 +140,11 @@ export function useExerciseHistory(exerciseId: string) {
         supabase.rpc('exercise_records', { exercise_id: exerciseId }),
         // One row per workout, from the earliest, so a long history would lose the latest (#159).
         fetchAllPages((from, to) =>
-          supabase.rpc('exercise_progress', { exercise_id: exerciseId }).range(from, to),
+          supabase
+            .rpc('exercise_progress', { exercise_id: exerciseId })
+            .order('started_at')
+            .order('log_id')
+            .range(from, to),
         ),
       ]);
       if (records.error) {

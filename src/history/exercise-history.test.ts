@@ -13,8 +13,10 @@ import {
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 // An RPC's answer that can also be read a page at a time, as a long one is.
-const pageable = <T>(answer: T) =>
-  Object.assign(Promise.resolve(answer), { range: () => Promise.resolve(answer) });
+const pageable = <T>(answer: T) => {
+  const page = { order: () => page, range: () => Promise.resolve(answer) };
+  return Object.assign(Promise.resolve(answer), page);
+};
 
 const row = (
   logId: number,
