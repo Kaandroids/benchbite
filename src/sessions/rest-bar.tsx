@@ -23,7 +23,10 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
   const { colors, radii, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   // Dark in both themes, so that it stands out from the cards behind it.
-  const button = [styles.button, { borderRadius: radii.full, backgroundColor: '#2A2C31' }];
+  const button = [
+    styles.button,
+    { borderRadius: radii.full, backgroundColor: colors.inverseRaised },
+  ];
   return (
     <View
       accessibilityRole="timer"
@@ -31,6 +34,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
       style={[
         styles.bar,
         {
+          backgroundColor: colors.inverseSurface,
           bottom: insets.bottom + spacing.md,
           left: spacing.md,
           right: spacing.md,
@@ -43,10 +47,10 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
       <View style={[styles.flex, { gap: 6 }]}>
         <View style={styles.heading}>
           <View style={styles.label}>
-            <Text variant="captionStrong" style={styles.muted}>
+            <Text variant="captionStrong" color="onInverseMuted">
               {t('session.rest')}
             </Text>
-            <Text variant="headline" style={[styles.light, styles.tabular]}>
+            <Text variant="headline" color="onInverse" style={styles.tabular}>
               {minutesAndSeconds(left)}
             </Text>
           </View>
@@ -56,13 +60,16 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
               accessibilityLabel={t('session.restAlerts.turnOn')}
               onPress={onTurnOnAlerts}
               hitSlop={8}
-              style={({ pressed }) => [styles.bell, { opacity: pressed ? 0.6 : 1 }]}
+              style={({ pressed }) => [
+                styles.bell,
+                { backgroundColor: colors.inverseRaised, opacity: pressed ? 0.6 : 1 },
+              ]}
             >
               <Icon name="bellOff" size={15} color="placeholder" />
             </Pressable>
           ) : null}
         </View>
-        <View style={styles.track}>
+        <View style={[styles.track, { backgroundColor: colors.inverseTrack }]}>
           <View
             style={[
               styles.fill,
@@ -77,7 +84,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(-15)}
         style={button}
       >
-        <Text variant="captionStrong" style={styles.light}>
+        <Text variant="captionStrong" color="onInverse">
           −15
         </Text>
       </Pressable>
@@ -87,7 +94,7 @@ export function RestBar({ left, total, onChange, onSkip, onTurnOnAlerts }: RestB
         onPress={() => onChange(15)}
         style={button}
       >
-        <Text variant="captionStrong" style={styles.light}>
+        <Text variant="captionStrong" color="onInverse">
           +15
         </Text>
       </Pressable>
@@ -110,7 +117,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#16171A',
   },
   flex: {
     flex: 1,
@@ -129,15 +135,8 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2A2C31',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  light: {
-    color: '#FFFFFF',
-  },
-  muted: {
-    color: '#C9CBD1',
   },
   tabular: {
     fontVariant: ['tabular-nums'],
@@ -145,7 +144,6 @@ const styles = StyleSheet.create({
   track: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#3A3C42',
     overflow: 'hidden',
   },
   fill: {

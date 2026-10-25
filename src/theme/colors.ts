@@ -47,6 +47,15 @@ export type ColorTokens = {
   /** The "i" that opens an exercise's details, on `infoBackground`. */
   info: string;
   infoBackground: string;
+  /**
+   * A dark surface that stands out in both themes, such as the rest bar and the workout in
+   * progress, with what sits on it.
+   */
+  inverseSurface: string;
+  inverseRaised: string;
+  inverseTrack: string;
+  onInverse: string;
+  onInverseMuted: string;
 };
 
 export const lightColors: ColorTokens = {
@@ -79,6 +88,11 @@ export const lightColors: ColorTokens = {
   scrim: 'rgba(22, 23, 26, 0.45)',
   info: '#4F83E0',
   infoBackground: '#EAF1FD',
+  inverseSurface: '#16171A',
+  inverseRaised: '#2A2C31',
+  inverseTrack: '#3A3C42',
+  onInverse: '#FFFFFF',
+  onInverseMuted: '#C9CBD1', // 11.1:1 on inverseSurface
 };
 
 // Orange tints over a dark surface turn brown, so selection in dark mode is carried by the orange
@@ -113,4 +127,9 @@ export const darkColors: ColorTokens = {
   scrim: 'rgba(0, 0, 0, 0.6)',
   info: '#86AEE0',
   infoBackground: '#1C2C40',
+  inverseSurface: '#16171A',
+  inverseRaised: '#2A2C31',
+  inverseTrack: '#3A3C42',
+  onInverse: '#FFFFFF',
+  onInverseMuted: '#C9CBD1', // 11.1:1 on inverseSurface
 };
