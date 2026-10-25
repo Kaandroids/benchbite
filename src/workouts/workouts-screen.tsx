@@ -28,7 +28,6 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const limits = useWorkoutLimits();
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
-  // The workout to start once the user says what happens to the one in progress.
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
   const today = isoWeekday(new Date());
   // Archived workouts count too (ADR 0018).
