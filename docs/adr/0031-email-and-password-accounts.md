@@ -21,8 +21,9 @@ The first way to create an account is an email address with a password.
   good; it is not merged into the account. The screens warn about this before the sign-in.
 - **Signing out** is offered to accounts only. It signs out this device alone (`scope: 'local'`)
   and starts over as a new guest, so the app always has a signed-in user. The device forgets the
-  last user first, so the app does not report the session as lost (ADR 0005). Revoking the session
-  on the server can fail while offline; the session on the device is removed either way.
+  last user first, so the app does not report the session as lost (ADR 0005). Signing out needs a
+  session that is still valid: offline with an expired one, it fails and the account stays signed
+  in. When only revoking the session on the server fails, it is removed from the device anyway.
 - **What the device keeps for its user**, the workout in progress and the workout reminders,
   belongs to one user. The device records that user as its owner. When another user signs in, or a
   new guest replaces one, the previous user's workout and reminders go. The same user signing in

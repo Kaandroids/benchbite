@@ -23,6 +23,7 @@ jest.mock('@/lib/supabase', () => ({
       onAuthStateChange: jest.fn(),
       signInAnonymously: jest.fn(),
       signOut: jest.fn(),
+      getSession: jest.fn(),
     },
   },
 }));
@@ -56,6 +57,7 @@ beforeEach(() => {
     return { data: { subscription: { id: 'id', callback: jest.fn(), unsubscribe } } };
   });
   auth.signInAnonymously.mockResolvedValue({ data: {}, error: null } as never);
+  auth.getSession.mockResolvedValue({ data: { session: null }, error: null } as never);
   auth.signOut.mockImplementation(async () => {
     await emit(null);
     return { error: null };
@@ -165,6 +167,40 @@ describe('SessionProvider', () => {
     expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     await waitFor(() => expect(auth.signInAnonymously).toHaveBeenCalledTimes(1));
     expect(result.current.status).not.toBe('ended');
+  });
+
+  it('stays signed in when the session cannot be refreshed, as offline', async () => {
+    auth.getSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: new Error('offline'),
+    } as never);
+    const { result } = await renderSession();
+    await emit(SESSION);
+    let failure: unknown;
+    await act(async () => {
+      failure = await result.current.signOut().catch((error: unknown) => error);
+    });
+    expect(failure).toEqual(new Error('offline'));
+    expect(auth.signOut).not.toHaveBeenCalled();
+    // A session that ends later is still reported as lost.
+    await emit(null);
+    expect(result.current.status).toBe('ended');
+  });
+
+  it('stays signed in and remembers the user when signing out left the session', async () => {
+    auth.getSession
+      .mockResolvedValueOnce({ data: { session: SESSION }, error: null } as never)
+      .mockResolvedValueOnce({ data: { session: SESSION }, error: null } as never);
+    auth.signOut.mockResolvedValueOnce({ error: new Error('locked') } as never);
+    const { result } = await renderSession();
+    await emit(SESSION);
+    let failure: unknown;
+    await act(async () => {
+      failure = await result.current.signOut().catch((error: unknown) => error);
+    });
+    expect(failure).toEqual(new Error('locked'));
+    await emit(null);
+    expect(result.current.status).toBe('ended');
   });
 
   it('still starts over when the session could not be revoked on the server', async () => {

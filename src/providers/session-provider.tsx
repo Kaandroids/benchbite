@@ -99,14 +99,27 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, [startAnonymousSession]);
 
   const signOut = useCallback(async () => {
+    // Signing out needs a session that is still valid. One that cannot be refreshed, as offline,
+    // fails here and stays signed in, rather than in the middle of signing out.
+    const { error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      throw sessionError;
+    }
     // Forgetting the user first makes the session that ends start a new guest, instead of saying
     // that it ended. Only this device signs out; the account stays signed in elsewhere.
     rememberUser(null);
     const { error } = await supabase.auth.signOut({ scope: 'local' });
-    // The session on the device is gone either way; only revoking it on the server failed.
-    if (error) {
-      console.warn('Could not revoke the session', error);
+    if (!error) {
+      return;
     }
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      // It did not sign out, so the user is still the one to remember.
+      rememberUser(data.session.user.id);
+      throw error;
+    }
+    // The session on the device is gone; only revoking it on the server failed.
+    console.warn('Could not revoke the session', error);
   }, []);
 
   return (
