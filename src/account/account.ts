@@ -13,6 +13,7 @@ export type AccountError =
   | 'emailTaken'
   | 'invalidEmail'
   | 'weakPassword'
+  | 'passwordTooLong'
   | 'rateLimited'
   | 'offline'
   | 'unknown';
@@ -23,7 +24,6 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   email_exists: 'emailTaken',
   user_already_exists: 'emailTaken',
   email_address_invalid: 'invalidEmail',
-  validation_failed: 'invalidEmail',
   weak_password: 'weakPassword',
   over_request_rate_limit: 'rateLimited',
   over_email_send_rate_limit: 'rateLimited',
@@ -33,6 +33,14 @@ const AUTH_ERRORS: Record<string, AccountError> = {
 export function accountError(error: unknown): AccountError {
   if (isAuthRetryableFetchError(error)) {
     return 'offline';
+  }
+  if (isAuthApiError(error) && error.code === 'validation_failed') {
+    // One code for any input Auth refuses; only the message says which.
+    return /email/i.test(error.message)
+      ? 'invalidEmail'
+      : /longer than/i.test(error.message)
+        ? 'passwordTooLong'
+        : 'unknown';
   }
   if (isAuthApiError(error) && error.code) {
     return AUTH_ERRORS[error.code] ?? 'unknown';

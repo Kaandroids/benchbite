@@ -30,6 +30,7 @@
       "emailTaken": "There’s already an account with this email. Log in instead.",
       "invalidEmail": "Enter a valid email address.",
       "weakPassword": "Use a password with at least 6 characters.",
+      "passwordTooLong": "Use a password with at most 72 characters.",
       "rateLimited": "Too many tries. Wait a moment and try again.",
       "offline": "No connection. Check your internet and try again.",
       "unknown": "Something went wrong. Please try again."

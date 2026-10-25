@@ -48,12 +48,19 @@ describe('accountError', () => {
     ['invalid_credentials', 'invalidCredentials'],
     ['email_exists', 'emailTaken'],
     ['user_already_exists', 'emailTaken'],
-    ['validation_failed', 'invalidEmail'],
     ['weak_password', 'weakPassword'],
     ['over_request_rate_limit', 'rateLimited'],
     ['something_new', 'unknown'],
   ])('reads %s as %s', (code, reason) => {
     expect(accountError(apiError(code))).toBe(reason);
+  });
+
+  it.each([
+    ['Unable to validate email address: invalid format', 'invalidEmail'],
+    ['Password cannot be longer than 72 characters', 'passwordTooLong'],
+    ['Something else is missing', 'unknown'],
+  ])('reads a failed validation with "%s" as %s', (message, reason) => {
+    expect(accountError(new AuthApiError(message, 400, 'validation_failed'))).toBe(reason);
   });
 
   it('tells a missing connection apart', () => {
