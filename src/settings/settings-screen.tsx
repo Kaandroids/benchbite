@@ -12,10 +12,14 @@ export function SettingsScreen() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   return (
-    <Screen onBack={() => router.back()}>
-      <Text variant="title" accessibilityRole="header">
-        {t('settings.title')}
-      </Text>
+    <Screen
+      onBack={() => router.back()}
+      title={
+        <Text variant="label" accessibilityRole="header">
+          {t('settings.title')}
+        </Text>
+      }
+    >
       <View style={{ gap: spacing.sm }}>
         <Text variant="captionStrong" color="textMuted" accessibilityRole="header">
           {t('settings.account').toLocaleUpperCase()}
