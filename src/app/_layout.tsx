@@ -105,6 +105,9 @@ function RootNavigator() {
             <Stack.Screen name="session/index" />
             <Stack.Screen name="session/finish" />
           </Stack.Protected>
+          {/* Reachable from the onboarding's first step and from the settings. */}
+          <Stack.Screen name="account/create" />
+          <Stack.Screen name="account/login" />
           <Stack.Screen name="dev/components" />
         </Stack>
       )}

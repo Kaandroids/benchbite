@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { renderRouter, screen, act } from 'expo-router/testing-library';
+import { renderRouter, screen, act, fireEvent } from 'expo-router/testing-library';
 import { useSyncExternalStore, type PropsWithChildren } from 'react';
 import { Text } from 'react-native';
 
@@ -14,6 +14,8 @@ import ExerciseDetails from '@/app/(app)/workout/exercise/[id]';
 import PickExercises from '@/app/(app)/workout/pick';
 import EditWorkout from '@/app/(app)/workout/edit';
 import WorkoutTab from '@/app/(app)/workout/index';
+import CreateAccountRoute from '@/app/account/create';
+import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
 import OnboardingStep from '@/app/onboarding/[step]';
 import OnboardingLayout from '@/app/onboarding/_layout';
@@ -71,6 +73,23 @@ jest.mock('@/exercises/exercise-screen', () => {
   return { ExerciseScreen: ({ id }: { id: string }) => <MockText>{`Exercise ${id}`}</MockText> };
 });
 
+// The account screens show what the routes give them, and report success with a button.
+jest.mock('@/account/log-in-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    LogInScreen: ({ leavesGuestData }: { leavesGuestData: boolean }) => (
+      <MockText>{`Log in ${leavesGuestData ? 'with' : 'without'} guest data`}</MockText>
+    ),
+  };
+});
+jest.mock('@/account/create-account-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    CreateAccountScreen: ({ onCreated }: { onCreated: () => void }) => (
+      <MockText onPress={onCreated}>Create account screen</MockText>
+    ),
+  };
+});
 jest.mock('@/sessions/left-open', () => ({ LeftOpenSaver: () => null }));
 jest.mock('@/sessions/start-move', () => ({ StartMoveSheet: () => null }));
 jest.mock('@/reminders/reminder-sync', () => ({ ReminderSync: () => null }));
@@ -137,6 +156,8 @@ const APP_ROUTES = {
   '(app)/workout/edit': EditWorkout,
   '(app)/nutrition': NutritionTab,
   '(app)/progress': ProgressTab,
+  'account/create': CreateAccountRoute,
+  'account/login': LogInRoute,
   'dev/components': () => <Text>Component gallery</Text>,
 };
 
@@ -236,6 +257,31 @@ describe('root layout', () => {
     expect(screen.getByLabelText('Loading')).toBeOnTheScreen();
     expect(screen.queryByText('Step welcome')).not.toBeOnTheScreen();
     expect(screen.queryByText(TODAY)).not.toBeOnTheScreen();
+  });
+});
+
+describe('account screens', () => {
+  it('lets the onboarding open the log in, without guest data to leave behind', async () => {
+    setOnboarding('welcome');
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.push('/account/login'));
+    expect(app.getPathname()).toBe('/account/login');
+    expect(screen.getByText('Log in without guest data')).toBeOnTheScreen();
+  });
+
+  it('warns a guest who finished the onboarding that their data stays behind', async () => {
+    setOnboarding('welcome', {}, true);
+    await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.push('/account/login'));
+    expect(screen.getByText('Log in with guest data')).toBeOnTheScreen();
+  });
+
+  it('goes on to Today once the account is created', async () => {
+    setOnboarding('welcome', {}, true);
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/progress' });
+    await act(() => router.push('/account/create'));
+    await act(() => fireEvent.press(screen.getByText('Create account screen')));
+    expect(app.getPathname()).toBe('/');
   });
 });
 
