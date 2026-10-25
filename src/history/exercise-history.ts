@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { fetchAllPages } from '@/lib/paging';
 import { supabase } from '@/lib/supabase';
 import { RECORD_KINDS, type RecordKind } from '@/sets/records';
 import type { SetValues } from '@/sets/values';
@@ -137,15 +138,15 @@ export function useExerciseHistory(exerciseId: string) {
     queryFn: async (): Promise<ExerciseHistory> => {
       const [records, progress] = await Promise.all([
         supabase.rpc('exercise_records', { exercise_id: exerciseId }),
-        supabase.rpc('exercise_progress', { exercise_id: exerciseId }),
+        // One row per workout, from the earliest, so a long history would lose the latest (#159).
+        fetchAllPages((from, to) =>
+          supabase.rpc('exercise_progress', { exercise_id: exerciseId }).range(from, to),
+        ),
       ]);
       if (records.error) {
         throw records.error;
       }
-      if (progress.error) {
-        throw progress.error;
-      }
-      const latest = progress.data.slice(-SESSION_LIMIT).map((row) => row.log_id);
+      const latest = progress.slice(-SESSION_LIMIT).map((row) => row.log_id);
       const sets = await supabase
         .from('logged_sets')
         .select(
@@ -178,7 +179,7 @@ export function useExerciseHistory(exerciseId: string) {
                 ? null
                 : { exercise: row.exercise_position, set: row.set_position },
           })),
-        progress: progress.data.map((row) => ({
+        progress: progress.map((row) => ({
           logId: row.log_id,
           startedAt: new Date(row.started_at),
           heaviestKg: numberOrNull(row.heaviest_kg),
