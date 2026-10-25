@@ -1,7 +1,7 @@
 # 0030. Deploy Supabase from GitHub Actions
 
 - **Status:** Accepted
-- **Date:** 2026-10-26
+- **Date:** 2026-10-25
 
 ## Context
 
@@ -22,9 +22,18 @@ Supabase CLI from the repository's dev dependencies, the same version the checks
 4. deploys the Edge Functions,
 5. on request, uploads the exercise images to storage (`seed buckets`).
 
-It needs three secrets, kept in the `production` environment of the repository so that only this
-job can read them: an access token scoped to the project, the project id and the database password.
-The `service_role` key is not needed and is not stored.
+It needs three secrets, kept in the `production` environment of the repository: an access token
+scoped to the project, the project id and the database password. The `service_role` key is not
+needed and is not stored. The environment allows deployments from `main` only and waits for the
+maintainer's approval, without a bypass for administrators, and the job itself runs only on `main`.
+Only the deploying steps get the secrets, not the install of the dependencies.
+
+`db push` refuses a migration dated before the newest one already applied. So that pull requests
+made in parallel cannot block a deploy, the checks fail when a pull request adds a migration that
+does not sort after every migration on the branch it merges into; it is renamed before merging.
+
+Because `supabase/config.toml` is pushed, it holds only values that are safe in production. Expo
+Go's `exp://` redirects are not allowed, as any Expo Go project could then receive a sign-in token.
 
 For now the workflow runs only when started by hand. Once it has deployed reliably, it will run on
 every push to `main` after the checks pass, optionally with an approval on the environment.
@@ -40,6 +49,8 @@ of the repository in an untracked env file for local builds.
   settings or upload storage files, and its steps are less visible than a workflow in the repository.
 - **Repository secrets instead of an environment:** simpler, but every workflow, including the checks
   of pull requests, could read them.
+- **`db push --include-all`** to apply out-of-order migrations: it would hide that a migration was
+  written against an older schema than production has.
 
 ## Consequences
 
@@ -48,3 +59,4 @@ of the repository in an untracked env file for local builds.
   stay harmless when pushed.
 - The access token expires and has to be renewed in the environment.
 - A migration that fails halfway stops the deploy; the next run applies what is left.
+- Each deploy needs the maintainer's approval in GitHub before it starts.
