@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useExerciseNames } from '@/exercises/use-exercise-names';
+import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useWeightFormat } from '@/i18n/units';
 import { MacroTargets } from '@/nutrition/macro-targets';
@@ -35,9 +35,7 @@ export function PlanStep() {
   const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
   const { targets, plan } = answers;
-  const names = useExerciseNames(
-    plan?.sessions.flatMap((session) => session.exercises.map((e) => e.exerciseId)) ?? [],
-  );
+  const library = useExerciseLibrary();
   const [saving, setSaving] = useState(false);
   // Why saving failed: the connection, or an answer the server refused.
   const [failure, setFailure] = useState<RefusedAnswer | 'connection' | null>(null);
@@ -120,7 +118,7 @@ export function PlanStep() {
         <Text variant="headline">{t('onboarding.plan.week')}</Text>
         {planDays(plan).map((session) => {
           const exerciseNames = session.exercises.map(
-            (exercise) => names[exercise.exerciseId] ?? '',
+            (exercise) => findExercise(library.data, exercise.exerciseId)?.name ?? '',
           );
           const shown = exerciseNames.slice(0, NAMES_SHOWN).filter(Boolean).join(' · ');
           const hidden = exerciseNames.length - NAMES_SHOWN;

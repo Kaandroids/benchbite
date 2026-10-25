@@ -1,7 +1,8 @@
+import { useExerciseLibrary } from '@/exercises/library';
 import { saveOnboarding, type NutritionTargets, type WorkoutPlan } from '@/onboarding/plan';
 import type { OnboardingAnswers } from '@/onboarding/types';
-import { createStep } from '@/test/step-mock';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { createStep } from '@/test/step-mock';
 
 import { PlanStep } from './plan';
 
@@ -12,13 +13,10 @@ jest.mock('@/onboarding/plan', () => ({
   saveOnboarding: jest.fn(),
 }));
 
-const mockExercises = jest.fn();
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({ in: (_column: string, ids: string[]) => mockExercises(ids) }),
-    }),
-  },
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/exercises/library', () => ({
+  ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
+  useExerciseLibrary: jest.fn(),
 }));
 
 jest.mock('expo-router', () => {
@@ -79,15 +77,9 @@ const ANSWERS: OnboardingAnswers = {
 describe('PlanStep', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExercises.mockImplementation((ids: string[]) =>
-      Promise.resolve({
-        data: ids.map((id) => ({
-          id,
-          name: NAMES[id],
-          exercise_translations: [{ language: 'de', name: `German ${NAMES[id]}` }],
-        })),
-      }),
-    );
+    jest.mocked(useExerciseLibrary).mockReturnValue({
+      data: Object.entries(NAMES).map(([id, name]) => ({ id, name })),
+    } as never);
     mockStep = createStep(ANSWERS);
   });
 
@@ -113,16 +105,6 @@ describe('PlanStep', () => {
       await screen.findByText('Bench press · Barbell row · Overhead press · Biceps curl +2 more'),
     ).toBeTruthy();
     expect(screen.getByText('Squat · Deadlift')).toBeTruthy();
-    expect(mockExercises).toHaveBeenCalledWith([
-      'bench',
-      'row',
-      'press',
-      'curl',
-      'dip',
-      'fly',
-      'squat',
-      'deadlift',
-    ]);
   });
 
   it('shows the weight card for losing fat and building muscle only', async () => {
@@ -194,7 +176,6 @@ describe('PlanStep', () => {
     mockStep = createStep({ ...ANSWERS, plan: undefined });
     await render(<PlanStep />);
     expect(screen.getByText('Redirected to building')).toBeTruthy();
-    expect(mockExercises).not.toHaveBeenCalled();
   });
 
   it('builds the plan again when the targets are missing', async () => {
