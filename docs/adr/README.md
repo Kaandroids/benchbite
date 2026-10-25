@@ -46,3 +46,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0028](0028-move-workouts-within-their-week.md)              | Move workouts within their week, with several workouts a day                       | Accepted               |
 | [0029](0029-schedule-reminders-from-the-week.md)             | Schedule workout reminders from the week as it is                                  | Accepted               |
 | [0030](0030-deploy-supabase-from-github-actions.md)          | Deploy Supabase from GitHub Actions                                                | Accepted               |
+| [0031](0031-email-and-password-accounts.md)                  | Create accounts with an email address and a password                               | Accepted               |
