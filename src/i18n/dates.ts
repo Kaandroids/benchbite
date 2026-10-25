@@ -63,6 +63,13 @@ export function useDayFormat() {
   return (date: Date) => formatter.format(date);
 }
 
+/** Formats the time of day of a moment, such as 18:30 or 6:30 PM, as the app language writes it. */
+export function useClockFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  return (moment: Date | number) => formatter.format(moment);
+}
+
 /** Formats a time of day, given in minutes after midnight, as the app language writes it. */
 export function useTimeFormat() {
   const { i18n } = useTranslation();

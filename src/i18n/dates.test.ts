@@ -8,6 +8,7 @@ import {
   toIsoDate,
   useDateFormat,
   useShortDateFormat,
+  useClockFormat,
   useTimeFormat,
   useWeekdayFormat,
   weekStart,
@@ -153,5 +154,20 @@ describe('useShortDateFormat', () => {
     const { result } = await renderHook(() => useShortDateFormat(new Date(2026, 9, 23)));
     expect(result.current(new Date(2026, 9, 5))).toBe('Oct 5');
     expect(result.current(new Date(2025, 9, 5))).toBe('Oct 5, 2025');
+  });
+});
+
+describe('useClockFormat', () => {
+  afterEach(async () => {
+    await act(() => i18n.changeLanguage('en'));
+  });
+
+  it('writes the time of day of a moment as the app language does', async () => {
+    const evening = new Date(2026, 9, 21, 18, 30);
+    const { result } = await renderHook(() => useClockFormat());
+    expect(result.current(evening)).toMatch(/^6:30\sPM$/);
+    await act(() => i18n.changeLanguage('de'));
+    const { result: german } = await renderHook(() => useClockFormat());
+    expect(german.current(evening.getTime())).toBe('18:30');
   });
 });

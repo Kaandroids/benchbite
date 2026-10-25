@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useDateFormat } from '@/i18n/dates';
+import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -35,7 +35,8 @@ import { useStartWorkout } from './start';
  * starts afterwards.
  */
 export function FinishScreen({ next }: { next?: number }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const time = useClockFormat();
   const { colors, spacing } = useTheme();
   const active = useActiveSession(useUserId());
   const logWorkout = useLogWorkout();
@@ -69,7 +70,6 @@ export function FinishScreen({ next }: { next?: number }) {
   const latestEnd = Math.min(openedAt, active.startedAt + MAX_WORKOUT_MS);
   const earliestEnd = Math.min(Math.max(lastSet, active.startedAt + 60_000), latestEnd);
   const finishedAt = chosenEnd ?? (isLeftOpen(active, openedAt) ? lastSet : openedAt);
-  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
 
   // A clock still running logs its set, as it would on stopping it when the workout ended. The
   // workout itself keeps it running, so that "Keep going" goes on where it was.
@@ -154,7 +154,7 @@ export function FinishScreen({ next }: { next?: number }) {
             value={finishedAt}
             earliest={earliestEnd}
             latest={latestEnd}
-            lastSet={time.format(lastSet)}
+            lastSet={time(lastSet)}
             onDone={(end) => {
               setChosenEnd(end);
               setChoosingEnd(false);

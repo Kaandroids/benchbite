@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
@@ -68,14 +69,14 @@ export function EndTime({
   finishedAt: number;
   onChange: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  const time = useClockFormat();
   return (
     <View style={{ gap: spacing.xs }}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={t('session.end.change', { time: time.format(finishedAt) })}
+        accessibilityLabel={t('session.end.change', { time: time(finishedAt) })}
         onPress={onChange}
         style={[
           styles.end,
@@ -90,10 +91,10 @@ export function EndTime({
       >
         <View style={styles.flex}>
           <Text variant="caption" color="textMuted">
-            {t('session.end.label', { started: time.format(startedAt) })}
+            {t('session.end.label', { started: time(startedAt) })}
           </Text>
           <Text variant="label" style={styles.tabular}>
-            {time.format(finishedAt)}
+            {time(finishedAt)}
           </Text>
         </View>
         <Text variant="label" color="primaryText">

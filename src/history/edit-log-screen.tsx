@@ -8,6 +8,7 @@ import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
+import { useClockFormat } from '@/i18n/dates';
 import { fonts } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { findWorkout, useWorkouts } from '@/workouts/workouts';
@@ -85,7 +86,7 @@ function LogEditor({
     day: 'numeric',
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
-  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
+  const time = useClockFormat();
 
   return (
     <Screen
@@ -106,7 +107,7 @@ function LogEditor({
       }
     >
       <Text variant="caption" color="textMuted" style={styles.semibold}>
-        {`${day} · ${time.format(log.startedAt)}–${time.format(log.finishedAt)}. ${t('history.edit.note')}`}
+        {`${day} · ${time(log.startedAt)}–${time(log.finishedAt)}. ${t('history.edit.note')}`}
       </Text>
       {editor.setCount === 0 ? (
         <Text color="danger" style={styles.semibold}>

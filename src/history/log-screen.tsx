@@ -13,6 +13,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
@@ -30,6 +31,7 @@ const BUTTON_ROOM = 40;
 /** One finished workout: when, how long and how hard, and every set that was done. */
 export function LogScreen({ id }: { id: number }) {
   const { t, i18n } = useTranslation();
+  const time = useClockFormat();
   const { colors, spacing } = useTheme();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
@@ -67,7 +69,6 @@ export function LogScreen({ id }: { id: number }) {
     day: 'numeric',
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
-  const time = new Intl.DateTimeFormat(i18n.language, { timeStyle: 'short' });
   const totalTime = workoutLength(
     Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000),
   );
@@ -147,7 +148,7 @@ export function LogScreen({ id }: { id: number }) {
                   {String(label)}
                 </Text>
                 <Text variant="label" style={styles.tabular}>
-                  {time.format(at as Date)}
+                  {time(at as Date)}
                 </Text>
               </View>
             ))}
