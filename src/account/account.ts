@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
-import { endSession } from '@/sessions/session';
 
 export type Credentials = { email: string; password: string };
 
@@ -62,19 +61,12 @@ export function useCreateAccount() {
   const signedIn = useSession().status === 'ready';
   return useMutation({
     mutationFn: async (credentials: Credentials) => {
-      if (signedIn) {
-        const { error } = await supabase.auth.updateUser(normalized(credentials));
-        if (error) {
-          throw error;
-        }
-        return;
-      }
-      const { error } = await supabase.auth.signUp(normalized(credentials));
+      const { error } = signedIn
+        ? await supabase.auth.updateUser(normalized(credentials))
+        : await supabase.auth.signUp(normalized(credentials));
       if (error) {
         throw error;
       }
-      // A workout in progress was the previous guest's.
-      endSession();
     },
   });
 }
@@ -90,8 +82,6 @@ export function useSignIn() {
       if (error) {
         throw error;
       }
-      // A workout in progress was the previous user's.
-      endSession();
     },
   });
 }
@@ -99,11 +89,5 @@ export function useSignIn() {
 /** Signs the account out on this device; the app starts over as a new guest. */
 export function useSignOut() {
   const { signOut } = useSession();
-  return useMutation({
-    mutationFn: async () => {
-      // The workout in progress stays with the account, not on a device it signed out of.
-      endSession();
-      await signOut();
-    },
-  });
+  return useMutation({ mutationFn: signOut });
 }

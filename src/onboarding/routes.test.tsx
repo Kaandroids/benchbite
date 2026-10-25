@@ -86,6 +86,7 @@ jest.mock('@/providers/onboarding-provider', () => ({
 jest.mock('@/providers/session-provider', () => ({
   SessionProvider: ({ children }: PropsWithChildren) => children,
   useSession: jest.fn(),
+  useUserId: jest.fn(),
 }));
 
 // The root layout's native setup: fonts load at once and the splash screen and reminders do

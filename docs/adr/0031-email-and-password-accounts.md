@@ -23,8 +23,11 @@ The first way to create an account is an email address with a password.
   and starts over as a new guest, so the app always has a signed-in user. The device forgets the
   last user first, so the app does not report the session as lost (ADR 0005). Revoking the session
   on the server can fail while offline; the session on the device is removed either way.
-- **A workout in progress** belongs to the user who started it. It ends when another user signs in
-  on the device, and when the account signs out.
+- **What the device keeps for its user**, the workout in progress and the workout reminders,
+  belongs to one user. The device records that user as its owner. When another user signs in, or a
+  new guest replaces one, the previous user's workout and reminders go. The same user signing in
+  again keeps them. This is done in one place (`src/account/device-owner.ts`), so each new way to
+  sign in gets it without extra work.
 - **The onboarding** of an account that has not finished it on this device waits for the server's
   answer, because the account most likely finished it elsewhere. Guests never wait.
 - For now, email addresses are not confirmed and passwords need 6 characters
