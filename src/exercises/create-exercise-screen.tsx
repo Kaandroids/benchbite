@@ -112,10 +112,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         }, failed);
   const kindLock = editing?.kindLock ?? null;
 
-  const chip = (key: string, text: string, on: boolean, onPress: () => void, disabled = false) => (
-    <Chip key={key} label={text} selected={on} onPress={onPress} disabled={disabled} />
-  );
-
   const toggle = <T,>(list: T[], item: T) =>
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
 
@@ -167,16 +163,19 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         <View style={wrap}>
           {MUSCLES.map((muscle) => {
             const on = form.primaryMuscles.includes(muscle);
-            return chip(
-              muscle,
-              t(`workout.muscles.${muscle}`),
-              on,
-              () =>
-                change({
-                  primaryMuscles: toggle(form.primaryMuscles, muscle),
-                  secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
-                }),
-              !on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES,
+            return (
+              <Chip
+                key={muscle}
+                label={t(`workout.muscles.${muscle}`)}
+                selected={on}
+                disabled={!on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
+                onPress={() =>
+                  change({
+                    primaryMuscles: toggle(form.primaryMuscles, muscle),
+                    secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
+                  })
+                }
+              />
             );
           })}
         </View>
@@ -215,25 +214,28 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       <View style={section}>
         <FieldLabel text={t('customExercise.otherMuscles')} />
         <View style={wrap}>
-          {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) =>
-            chip(
-              muscle,
-              t(`workout.muscles.${muscle}`),
-              form.secondaryMuscles.includes(muscle),
-              () => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) }),
-            ),
-          )}
+          {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) => (
+            <Chip
+              key={muscle}
+              label={t(`workout.muscles.${muscle}`)}
+              selected={form.secondaryMuscles.includes(muscle)}
+              onPress={() => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })}
+            />
+          ))}
         </View>
       </View>
 
       <View style={section}>
         <FieldLabel text={t('exercise.equipment')} />
         <View style={wrap}>
-          {EQUIPMENT.map((item) =>
-            chip(item, t(`exercise.equipmentKinds.${item}`), form.equipment === item, () =>
-              change({ equipment: form.equipment === item ? null : item }),
-            ),
-          )}
+          {EQUIPMENT.map((item) => (
+            <Chip
+              key={item}
+              label={t(`exercise.equipmentKinds.${item}`)}
+              selected={form.equipment === item}
+              onPress={() => change({ equipment: form.equipment === item ? null : item })}
+            />
+          ))}
         </View>
       </View>
 
