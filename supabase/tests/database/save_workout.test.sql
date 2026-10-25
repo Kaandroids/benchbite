@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -47,6 +47,8 @@ select throws_ok(
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
+-- FREE_WORKOUT_EXERCISES and FREE_WORKOUTS in supabase/functions/_shared/plan/limits.ts hold the
+-- same numbers for the plan builder; change them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
   $$ values (20, 3) $$,
@@ -191,6 +193,47 @@ select is_empty(
   $$ select 1 from public.workout_exercises
      where workout_id = current_setting('test.workout_id')::bigint $$,
   'Its exercises are deleted with it'
+);
+
+-- The same workout as 'estimates a workout as save_workout() does' in
+-- supabase/functions/_shared/plan/session_test.ts, which the plan builder estimates. Change both
+-- together (ADR 0017).
+reset role;
+select is(
+  public.exercise_seconds(pg_temp.exercise('Hammer_Curls', '{"reps": {"min": 10, "max": 12}}')),
+  288,
+  'Sets of reps take as long as in the plan builder'
+);
+select is(
+  public.exercise_seconds(pg_temp.exercise('Plank', '{"seconds": 45, "meters": null}', 2)),
+  210,
+  'Timed sets take as long as in the plan builder'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select set_config('test.same_id', public.save_workout(
+  pg_temp.workout(jsonb_build_array(
+    pg_temp.exercise('Hammer_Curls', '{"reps": {"min": 10, "max": 12}}'),
+    pg_temp.exercise('Plank', '{"seconds": 45, "meters": null}', 2)
+  ), '{"name": "Same as the plan builder"}')
+)::text, true);
+select is(
+  (select estimated_minutes::integer from public.workouts
+   where id = current_setting('test.same_id')::bigint),
+  14,
+  'A workout of reps and a time takes as long as in the plan builder'
+);
+
+-- A hand-made workout has no slot, even when one is sent.
+select set_config('test.slot_id', public.save_workout(
+  pg_temp.workout(jsonb_build_array(
+    pg_temp.exercise('Plank', '{"seconds": 45, "meters": null}') || '{"slot": "core"}'
+  ), '{"name": "With a slot"}')
+)::text, true);
+select is(
+  (select slot::text from public.workout_exercises
+   where workout_id = current_setting('test.slot_id')::bigint),
+  null,
+  'A slot sent with a hand-made workout is not saved'
 );
 
 select * from finish();

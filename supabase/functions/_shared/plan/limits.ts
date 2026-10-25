@@ -23,6 +23,7 @@ export const PLAN_WORKOUT_EXERCISES = 12;
 
 /**
  * The most workouts a user may have without premium, as in workout_limits(). A plan has at most
- * this many, so that every user can start with the whole plan.
+ * this many, so that every user can start with the whole plan; complete_onboarding() refuses more
+ * (BB009).
  */
 export const FREE_WORKOUTS = 3;
