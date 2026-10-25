@@ -26,4 +26,4 @@ export const PLAN_WORKOUT_EXERCISES = 12;
  * this many, so that every user can start with the whole plan; complete_onboarding() refuses more
  * (BB009).
  */
-export const FREE_WORKOUTS = 5;
+export const FREE_WORKOUTS = 3;
