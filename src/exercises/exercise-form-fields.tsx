@@ -1,39 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { Alert, Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { useFieldStyle } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fonts, typography, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { LOG_KINDS, type CustomExerciseForm, type KindLock, type LogKind } from './custom';
 import { isUserPhoto, pickPhoto, usePictureUrls } from './photos';
 
 const MAX_STEPS = 20;
-
-/** A field's small upper-case label. */
-export function FieldLabel({ text }: { text: string }) {
-  return (
-    <Text variant="caption" color="textMuted" style={styles.label}>
-      {text.toLocaleUpperCase()}
-    </Text>
-  );
-}
-
-/** The look of the form's text inputs. */
-export function useFieldStyle() {
-  const { colors, radii, spacing } = useTheme();
-  return [
-    styles.field,
-    typography.body,
-    {
-      borderRadius: radii.md,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      color: colors.text,
-      paddingHorizontal: spacing.md,
-    },
-  ];
-}
 
 /** How the exercise is logged, as cards, with why it cannot change when it cannot. */
 export function LogKindField({
@@ -254,14 +230,6 @@ export function StepsField({
 }
 
 const styles = StyleSheet.create({
-  label: {
-    fontFamily: fonts.extraBold,
-    letterSpacing: 0.4,
-  },
-  field: {
-    minHeight: 52,
-    borderWidth: 1.5,
-  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
