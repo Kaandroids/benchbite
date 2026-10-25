@@ -10,10 +10,22 @@ type RoundIconButtonProps = {
   background: keyof ColorTokens;
   label: string;
   onPress: () => void;
+  /** The width and height; the icon is half of it. */
+  size?: number;
+  /** Outlines the button, for one that stands on the screen's background. */
+  bordered?: boolean;
 };
 
-/** A small round button with an icon, such as the "i" beside an exercise. */
-export function RoundIconButton({ icon, color, background, label, onPress }: RoundIconButtonProps) {
+/** A round button with an icon, such as the "i" beside an exercise. */
+export function RoundIconButton({
+  icon,
+  color,
+  background,
+  label,
+  onPress,
+  size = 32,
+  bordered = false,
+}: RoundIconButtonProps) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -23,19 +35,23 @@ export function RoundIconButton({ icon, color, background, label, onPress }: Rou
       hitSlop={6}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: colors[background], opacity: pressed ? 0.6 : 1 },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: colors[background],
+          opacity: pressed ? 0.6 : 1,
+        },
+        bordered ? { borderWidth: 1.5, borderColor: colors.border } : null,
       ]}
     >
-      <Icon name={icon} size={16} color={color} />
+      <Icon name={icon} size={size / 2} color={color} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

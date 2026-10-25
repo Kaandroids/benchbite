@@ -5,10 +5,10 @@ import { Alert, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
-import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
 import { typography, useTheme } from '@/theme';
