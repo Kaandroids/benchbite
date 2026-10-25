@@ -45,3 +45,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0027](0027-private-exercise-photos.md)                      | Keep the photos of custom exercises private, shown through signed URLs             | Accepted               |
 | [0028](0028-move-workouts-within-their-week.md)              | Move workouts within their week, with several workouts a day                       | Accepted               |
 | [0029](0029-schedule-reminders-from-the-week.md)             | Schedule workout reminders from the week as it is                                  | Accepted               |
+| [0030](0030-deploy-supabase-from-github-actions.md)          | Deploy Supabase from GitHub Actions                                                | Accepted               |

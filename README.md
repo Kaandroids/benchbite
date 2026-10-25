@@ -182,6 +182,15 @@ in pull requests, and reviewed and merged by the maintainer. Each pull request C
 first reviewed automatically for design, security, and logic and performance, with the skills in
 [`.claude/skills/`](.claude/skills/).
 
+## Deployment
+
+The hosted Supabase project is deployed by the **Deploy** workflow in GitHub Actions
+([ADR 0030](docs/adr/0030-deploy-supabase-from-github-actions.md)). It links the project, pushes the
+settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
+the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
+`SUPABASE_DB_PASSWORD` from the repository's `production` environment. Start it from the Actions tab
+with **Run workflow**.
+
 ## Documentation
 
 - [Architecture Decision Records](docs/adr/README.md): why the app is built the way it is
