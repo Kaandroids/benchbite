@@ -9,6 +9,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
 import { useStep } from '../use-step';
@@ -24,17 +25,21 @@ export function WelcomeStep() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { next } = useStep('welcome');
+  const isAccount = useIsAccount();
 
   return (
     <Screen
       footer={
         <View style={{ gap: spacing.lg }}>
           <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
-          <OtherForm
-            question={t('account.haveAccount')}
-            action={t('account.logIn')}
-            onPress={() => router.push('/account/login')}
-          />
+          {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
+          {isAccount ? null : (
+            <OtherForm
+              question={t('account.haveAccount')}
+              action={t('account.logIn')}
+              onPress={() => router.push('/account/login')}
+            />
+          )}
         </View>
       }
     >
