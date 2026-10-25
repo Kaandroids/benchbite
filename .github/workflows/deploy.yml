@@ -63,4 +63,4 @@ jobs:
 
       - name: Upload the exercise images
         if: ${{ inputs.upload_images }}
-        run: pnpm supabase seed buckets --linked --yes
+        run: pnpm supabase seed buckets --project-ref "$SUPABASE_PROJECT_ID" --yes
