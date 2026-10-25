@@ -96,7 +96,15 @@ begin
     delete from public.workout_exercises where workout_id = saved_id;
   end if;
 
-  perform public.insert_workout_exercises(saved_id, caller_id, items);
+  -- A slot belongs to a plan's exercises only, so one sent with a hand-made workout is dropped.
+  perform public.insert_workout_exercises(
+    saved_id,
+    caller_id,
+    (
+      select coalesce(jsonb_agg(e.value - 'slot' order by e.ordinality), '[]'::jsonb)
+      from jsonb_array_elements(items) with ordinality e
+    )
+  );
 
   return saved_id;
 end;
@@ -215,6 +223,7 @@ begin
     )
     returning id into new_workout_id;
 
+    -- The exercises in order; conditioning for fat loss is the last of them.
     perform public.insert_workout_exercises(new_workout_id, caller_id, session -> 'exercises');
   end loop;
 end;
