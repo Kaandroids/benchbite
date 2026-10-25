@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 
@@ -8,10 +7,11 @@ import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
 
-import { accountError, errorField, useCreateAccount } from './account';
+import { errorField, useCreateAccount } from './account';
 import { EmailField, PasswordField } from './account-fields';
 import { AccountForm } from './account-form';
-import { MIN_PASSWORD_LENGTH, PASSWORD_LIMITS } from './passwords';
+import { MIN_PASSWORD_LENGTH } from './passwords';
+import { useCredentialsForm } from './use-credentials-form';
 
 type CreateAccountScreenProps = {
   onClose: () => void;
@@ -25,22 +25,10 @@ type CreateAccountScreenProps = {
 export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccountScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const create = useCreateAccount();
-  const reason = create.error ? accountError(create.error) : null;
+  const { email, password, setEmail, setPassword, reason, message } = useCredentialsForm(create);
   const field = reason ? errorField(reason) : null;
-  const message = reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null;
   const ready = email.trim() !== '' && password.length >= MIN_PASSWORD_LENGTH;
-
-  // A new attempt starts without the last one's error.
-  const change = (set: (value: string) => void) => (value: string) => {
-    set(value);
-    // Resetting a running request would leave this screen without its answer.
-    if (!create.isPending) {
-      create.reset();
-    }
-  };
 
   return (
     <AccountForm
@@ -66,7 +54,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
     >
       <EmailField
         value={email}
-        onChange={change(setEmail)}
+        onChange={setEmail}
         editable={!create.isPending}
         error={field === 'email' ? message : null}
         errorAction={
@@ -81,7 +69,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
       />
       <PasswordField
         value={password}
-        onChange={change(setPassword)}
+        onChange={setPassword}
         editable={!create.isPending}
         error={field === 'password' ? message : null}
         hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
