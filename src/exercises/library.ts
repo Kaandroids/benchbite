@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import type { Database } from '@/lib/database.types';
+import { fetchAllPages } from '@/lib/paging';
 import { supabase } from '@/lib/supabase';
 
 type Enums = Database['public']['Enums'];
@@ -62,16 +63,18 @@ export function searchText(names: string[], language: string): string {
 }
 
 export async function fetchLibrary(language: string): Promise<LibraryExercise[]> {
-  const { data, error } = await supabase
-    .from('exercises')
-    .select(
-      `id, name, metrics, primary_muscles, secondary_muscles, equipment, level, category,
-      image_paths, owner_id, archived_at, exercise_translations (language, name)`,
-    )
-    .eq('exercise_translations.language', language);
-  if (error) {
-    throw error;
-  }
+  // With a user's own exercises, the library can be longer than one request returns (#158).
+  const data = await fetchAllPages((from, to) =>
+    supabase
+      .from('exercises')
+      .select(
+        `id, name, metrics, primary_muscles, secondary_muscles, equipment, level, category,
+        image_paths, owner_id, archived_at, exercise_translations (language, name)`,
+      )
+      .eq('exercise_translations.language', language)
+      .order('id')
+      .range(from, to),
+  );
   return data
     .map((row) => {
       const name = row.exercise_translations[0]?.name ?? row.name;
