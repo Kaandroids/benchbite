@@ -34,7 +34,7 @@ const SQUATS: { week: number; weight: ExampleWeight }[] = [
   { week: 1, weight: { kg: 60, lb: 135 } },
   { week: 4, weight: { kg: 67.5, lb: 150 } },
   { week: 8, weight: { kg: 75, lb: 165 } },
-  { week: 12, weight: { kg: 82.5, lb: 185 } },
+  { week: 12, weight: { kg: 82.5, lb: 180 } },
 ];
 const SQUAT_STEP: ExampleWeight = { kg: 2.5, lb: 5 };
 /** The days of a week with a workout, as ISO weekdays. */
