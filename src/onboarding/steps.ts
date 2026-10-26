@@ -40,6 +40,13 @@ export function isIncluded(step: Step, answers: OnboardingAnswers): boolean {
   return true;
 }
 
+/** The steps of the flow for these answers between two steps, not counting either. */
+export function stepsBetween(from: Step, to: Step, answers: OnboardingAnswers): Step[] {
+  return STEPS.slice(STEPS.indexOf(from) + 1, STEPS.indexOf(to)).filter((step) =>
+    isIncluded(step, answers),
+  );
+}
+
 /** The answers each conditional step collects. */
 const ANSWERS_OF: Partial<Record<Step, (keyof OnboardingAnswers)[]>> = {
   'target-weight': ['targetWeightKg'],

@@ -395,7 +395,7 @@
         "title": "Wie aktiv bist du außerhalb des Trainings?"
       },
       "training-intro": {
-        "title": "Jetzt passen wir dein Training an"
+        "title": "Gut gemacht. Jetzt dein Training."
       },
       "experience": {
         "title": "Wie viel Trainingserfahrung hast du?"
@@ -496,21 +496,78 @@
       }
     },
     "goalInsight": {
+      "how": "So bringen wir dich dahin:",
       "lose_fat": {
-        "title": "Beim Abnehmen zählt Beständigkeit",
-        "body": "Ein moderates Kaloriendefizit und Krafttraining lassen dich Fett verlieren und Muskeln behalten. Wir legen dein tägliches Ziel und einen Plan fest, den du durchhältst."
+        "title": "Fett verlieren heißt dranbleiben",
+        "titleNamed": "{{name}}, Fett verlieren heißt dranbleiben",
+        "from": "Heute",
+        "to": "Dein Ziel",
+        "first": {
+          "title": "Ein moderates Kaloriendefizit",
+          "body": "Genug für Fortschritt, ohne zu hungern."
+        },
+        "second": {
+          "title": "Krafttraining",
+          "body": "Damit du Fett verlierst, keine Muskeln."
+        },
+        "third": {
+          "title": "Ein Tempo, das du hältst",
+          "body": "Kleine, stetige Schritte schlagen jede Crash-Diät."
+        }
       },
       "build_muscle": {
-        "title": "Muskeln wachsen mit Zeit und Protein",
-        "body": "Training nah an deiner Grenze, genug Protein und ein kleiner Kalorienüberschuss bauen Woche für Woche Muskeln auf. Wir berechnen genau, was du brauchst."
+        "title": "Muskeln wachsen Woche für Woche",
+        "titleNamed": "{{name}}, Muskeln wachsen Woche für Woche",
+        "from": "Woche 1",
+        "to": "Woche 12",
+        "first": {
+          "title": "Ein kleiner Kalorienüberschuss",
+          "body": "Genug zum Aufbauen, ohne Fett anzusetzen."
+        },
+        "second": {
+          "title": "Jede Woche ein bisschen mehr",
+          "body": "Gewicht oder Wiederholungen steigen Schritt für Schritt."
+        },
+        "third": {
+          "title": "Protein jeden Tag",
+          "body": "Daraus werden neue Muskeln gebaut."
+        }
       },
       "get_stronger": {
-        "title": "Kraft entsteht durch Steigerung",
-        "body": "Schwere Grundübungen mit genug Pause und mit der Zeit etwas mehr Gewicht machen dich stärker. Dein Plan wird darauf aufgebaut."
+        "title": "Kraft wächst Schritt für Schritt",
+        "titleNamed": "{{name}}, Kraft wächst Schritt für Schritt",
+        "from": "Heute",
+        "to": "Schwerere Gewichte",
+        "first": {
+          "title": "Schwerer, mit weniger Wiederholungen",
+          "body": "Das macht dich stärker."
+        },
+        "second": {
+          "title": "Längere Pausen",
+          "body": "Damit jeder Satz deine volle Kraft bekommt."
+        },
+        "third": {
+          "title": "Genug Essen zur Erholung",
+          "body": "Kalorien, die dein Gewicht halten."
+        }
       },
       "stay_healthy": {
-        "title": "Kleine Gewohnheiten, großer Unterschied",
-        "body": "Regelmäßiges Training und ausgewogene Mahlzeiten halten dich fit und voller Energie. Wir bringen beides in deine Woche."
+        "title": "Gesund bleiben heißt Balance",
+        "titleNamed": "{{name}}, gesund bleiben heißt Balance",
+        "from": "Jede Woche",
+        "to": "Über Jahre",
+        "first": {
+          "title": "Kalorien, die dein Gewicht halten",
+          "body": "Kein Defizit, kein Überschuss."
+        },
+        "second": {
+          "title": "Krafttraining",
+          "body": "Ein paar Mal pro Woche hält dich stark."
+        },
+        "third": {
+          "title": "Gewohnheiten, die bleiben",
+          "body": "Kleine, stetige Routinen, die dir Spaß machen."
+        }
       }
     },
     "consent": {
@@ -585,7 +642,13 @@
       }
     },
     "trainingIntro": {
-      "body": "Erzähl uns, wie du trainierst, und wir erstellen einen Plan, der zu deiner Woche, deiner Ausrüstung und deiner Zeit passt."
+      "halfway": "Halb geschafft",
+      "titleNamed": "Gut gemacht, {{name}}. Jetzt dein Training.",
+      "body_one": "Eine kurze Frage zu deinem Training, dann steht dein Plan.",
+      "body_other": "{{count}} kurze Fragen zu deinem Training, dann steht dein Plan.",
+      "aboutYou": "Über dich",
+      "yourTraining": "Dein Training",
+      "progress": "Über dich ist erledigt. Als Nächstes dein Training."
     },
     "experience": {
       "descriptions": {

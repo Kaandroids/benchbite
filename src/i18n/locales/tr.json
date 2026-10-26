@@ -395,7 +395,7 @@
         "title": "Antrenman dışında ne kadar aktifsin?"
       },
       "training-intro": {
-        "title": "Şimdi antrenmanını sana göre ayarlayalım"
+        "title": "Harika. Şimdi antrenmanın."
       },
       "experience": {
         "title": "Ne kadar deneyimlisin?"
@@ -496,21 +496,78 @@
       }
     },
     "goalInsight": {
+      "how": "Seni oraya şöyle götüreceğiz:",
       "lose_fat": {
-        "title": "Yağ yakmanın sırrı istikrar",
-        "body": "Ölçülü bir kalori açığı ve kuvvet antrenmanıyla kasını korurken yağ yakarsın. Günlük hedefini ve sürdürebileceğin bir planı birlikte belirleyeceğiz."
+        "title": "Yağ kaybı istikrar ister",
+        "titleNamed": "{{name}}, yağ kaybı istikrar ister",
+        "from": "Bugün",
+        "to": "Hedefin",
+        "first": {
+          "title": "Ölçülü bir kalori açığı",
+          "body": "İlerleme görecek kadar, aç kalmadan."
+        },
+        "second": {
+          "title": "Kuvvet antrenmanı",
+          "body": "Kaybettiğin kilo kas değil yağ olsun diye."
+        },
+        "third": {
+          "title": "Sürdürebileceğin bir tempo",
+          "body": "Küçük, düzenli adımlar şok diyetten iyidir."
+        }
       },
       "build_muscle": {
-        "title": "Kas, zamanla ve proteinle büyür",
-        "body": "Sınırına yakın antrenman, yeterli protein ve hafif bir kalori fazlası haftadan haftaya kas yapar. İhtiyacın olanı tam olarak hesaplayacağız."
+        "title": "Kas hafta hafta gelişir",
+        "titleNamed": "{{name}}, kas hafta hafta gelişir",
+        "from": "1. hafta",
+        "to": "12. hafta",
+        "first": {
+          "title": "Küçük bir kalori fazlası",
+          "body": "Kas yapacak kadar, yağlanmadan."
+        },
+        "second": {
+          "title": "Her hafta biraz daha",
+          "body": "Ağırlık ya da tekrar adım adım artar."
+        },
+        "third": {
+          "title": "Her gün protein",
+          "body": "Yeni kas ondan yapılır."
+        }
       },
       "get_stronger": {
-        "title": "Güç, ilerlemeyle gelir",
-        "body": "Yeterli dinlenmeyle yapılan ağır temel hareketler ve zamanla biraz daha fazla ağırlık seni güçlendirir. Planın bunların üzerine kurulacak."
+        "title": "Güç adım adım artar",
+        "titleNamed": "{{name}}, güç adım adım artar",
+        "from": "Bugün",
+        "to": "Daha ağır",
+        "first": {
+          "title": "Daha ağır, daha az tekrar",
+          "body": "Seni güçlendiren bu."
+        },
+        "second": {
+          "title": "Daha uzun dinlenme",
+          "body": "Her sete tüm gücünle gir diye."
+        },
+        "third": {
+          "title": "Toparlanmaya yetecek yemek",
+          "body": "Kilonu sabit tutan kalori."
+        }
       },
       "stay_healthy": {
-        "title": "Küçük alışkanlıklar, büyük fark",
-        "body": "Düzenli antrenman ve dengeli öğünler seni formda ve enerjik tutar. İkisini de haftana yerleştireceğiz."
+        "title": "Sağlıklı kalmak dengeyle olur",
+        "titleNamed": "{{name}}, sağlıklı kalmak dengeyle olur",
+        "from": "Her hafta",
+        "to": "Yıllarca",
+        "first": {
+          "title": "Kilonu koruyan kalori",
+          "body": "Ne açık ne fazla."
+        },
+        "second": {
+          "title": "Kuvvet antrenmanı",
+          "body": "Haftada birkaç kez seni güçlü tutar."
+        },
+        "third": {
+          "title": "Kalıcı alışkanlıklar",
+          "body": "Sevdiğin küçük, düzenli rutinler."
+        }
       }
     },
     "consent": {
@@ -585,7 +642,13 @@
       }
     },
     "trainingIntro": {
-      "body": "Nasıl antrenman yaptığını anlat, haftana, ekipmanına ve zamanına uyan bir plan hazırlayalım."
+      "halfway": "Yarıyı geçtin",
+      "titleNamed": "Harika, {{name}}. Şimdi antrenmanın.",
+      "body_one": "Nasıl antrenman yaptığına dair kısa bir soru, sonra planın hazır.",
+      "body_other": "Nasıl antrenman yaptığına dair {{count}} kısa soru, sonra planın hazır.",
+      "aboutYou": "Seni tanıyalım",
+      "yourTraining": "Antrenmanın",
+      "progress": "Seni tanıma kısmı bitti. Sırada antrenmanın var."
     },
     "experience": {
       "descriptions": {
