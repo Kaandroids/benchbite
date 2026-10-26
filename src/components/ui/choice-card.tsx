@@ -9,18 +9,15 @@ import Animated, {
 
 import { useTheme } from '@/theme';
 
+import { CheckBox } from './check-box';
 import { Icon, type IconName } from './icon';
 import { RaisedPressable } from './raised-pressable';
 import { Text } from './text';
 
-/**
- * The sizes of a card: its least height, its icon tile and icon, and its vertical padding. A
- * small card keeps its ledge grey when chosen, so a long list with many chosen stays calm.
- */
+/** The sizes of a card: its least height, its icon tile and icon, and its vertical padding. */
 const SIZES = {
-  regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md', quietLedge: false },
-  compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm', quietLedge: false },
-  small: { minHeight: 48, tile: 32, icon: 16, padding: 'xs', quietLedge: true },
+  regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
+  compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
 } as const;
 
 type ChoiceCardProps = {
@@ -31,10 +28,7 @@ type ChoiceCardProps = {
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
   type?: 'radio' | 'checkbox';
-  /**
-   * `compact` for a list that shares the screen with more below it, `small` for a long list of
-   * short answers, such as the days of the week.
-   */
+  /** `compact` for a list that shares the screen with more below it. */
   size?: keyof typeof SIZES;
 };
 
@@ -76,7 +70,7 @@ export function ChoiceCard({
         accessibilityState={{ checked: selected }}
         onPress={onPress}
         haptic="selection"
-        ledgeColor={selected && !size.quietLedge ? colors.primary : colors.border}
+        ledgeColor={selected ? colors.primary : colors.border}
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
@@ -113,20 +107,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {type === 'checkbox' ? (
-          <View
-            style={[
-              styles.checkbox,
-              {
-                borderRadius: radii.sm,
-                borderColor: selected ? colors.primary : colors.border,
-                backgroundColor: selected ? colors.primary : 'transparent',
-              },
-            ]}
-          >
-            {selected ? <Icon name="check" size={16} color="onPrimary" /> : null}
-          </View>
-        ) : null}
+        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
       </RaisedPressable>
     </Animated.View>
   );
@@ -145,12 +126,5 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: 2,
-  },
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
