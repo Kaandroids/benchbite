@@ -14,6 +14,7 @@ import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
 import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
+import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
@@ -98,12 +99,10 @@ export function ConsentStep() {
         </View>
       }
     >
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="title" accessibilityRole="header">
-          {t('onboarding.steps.consent.title')}
-        </Text>
-        <Text color="textMuted">{t('onboarding.consent.intro')}</Text>
-      </View>
+      <StepHeading
+        title={t('onboarding.steps.consent.title')}
+        intro={t('onboarding.consent.intro')}
+      />
       <Card list>
         {POINTS.map(({ key, icon }, index) => (
           <View

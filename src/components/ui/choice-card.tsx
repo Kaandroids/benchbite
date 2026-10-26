@@ -9,11 +9,12 @@ import Animated, {
 
 import { useTheme } from '@/theme';
 
+import { CheckBox } from './check-box';
 import { Icon, type IconName } from './icon';
 import { RaisedPressable } from './raised-pressable';
 import { Text } from './text';
 
-/** The two sizes of a card: its least height, its icon tile and icon, and its vertical padding. */
+/** The sizes of a card: its least height, its icon tile and icon, and its vertical padding. */
 const SIZES = {
   regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
   compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
@@ -27,8 +28,8 @@ type ChoiceCardProps = {
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
   type?: 'radio' | 'checkbox';
-  /** Smaller, for a list that shares the screen with more below it. */
-  compact?: boolean;
+  /** `compact` for a list that shares the screen with more below it. */
+  size?: keyof typeof SIZES;
 };
 
 export function ChoiceCard({
@@ -38,10 +39,10 @@ export function ChoiceCard({
   selected,
   onPress,
   type = 'radio',
-  compact = false,
+  size: sizeName = 'regular',
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
-  const size = SIZES[compact ? 'compact' : 'regular'];
+  const size = SIZES[sizeName];
   const scale = useSharedValue(1);
   const isFirstRender = useRef(true);
 
@@ -106,20 +107,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {type === 'checkbox' ? (
-          <View
-            style={[
-              styles.checkbox,
-              {
-                borderRadius: radii.sm,
-                borderColor: selected ? colors.primary : colors.border,
-                backgroundColor: selected ? colors.primary : 'transparent',
-              },
-            ]}
-          >
-            {selected ? <Icon name="check" size={16} color="onPrimary" /> : null}
-          </View>
-        ) : null}
+        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
       </RaisedPressable>
     </Animated.View>
   );
@@ -138,12 +126,5 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: 2,
-  },
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

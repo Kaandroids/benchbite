@@ -668,11 +668,13 @@
       }
     },
     "trainingDays": {
+      "intro": "We picked days for your experience. Tap a day to change them.",
       "count_one": "{{count}} day a week",
       "count_other": "{{count}} days a week",
-      "recommended": "Recommended for your experience",
       "maxReached": "Keep at least one rest day a week.",
-      "minReached": "Choose at least one day."
+      "minReached": "Choose at least one day.",
+      "restAfter": "A rest day after each workout",
+      "backToBack": "{{days}} back to back"
     },
     "setup": {
       "descriptions": {
@@ -682,13 +684,26 @@
       }
     },
     "sessionLength": {
+      "intro": "We fit every workout into this time, warm-up included.",
       "longest": "75+ min",
       "descriptions": {
         "30": "Short and focused on the main lifts",
         "45": "The main lifts and a few extras",
         "60": "A complete workout",
         "75": "Time for extra volume"
-      }
+      },
+      "workout": "Your workout",
+      "warmUp": "Warm-up",
+      "main": "Main lifts",
+      "extras": "Extras",
+      "conditioning": "Conditioning",
+      "unavailable": "Connect to the internet to see what fits.",
+      "choose": "Workout length",
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "rest": "≈ {{minutes}} min rest"
     },
     "building": {
       "steps": {
@@ -728,6 +743,10 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "start": "Let's go"
+    },
+    "sex": {
+      "intro": "It changes how many calories your body burns, so your targets fit you.",
+      "unspecified": "We'll use an average"
     }
   },
   "session": {

@@ -1,4 +1,4 @@
-import { MAX_TRAINING_DAYS, RECOMMENDED_DAYS, SESSION_MINUTES } from './training';
+import { backToBackRuns, MAX_TRAINING_DAYS, RECOMMENDED_DAYS, SESSION_MINUTES } from './training';
 
 describe('training rules', () => {
   it('keeps at least one rest day a week', () => {
@@ -31,5 +31,16 @@ describe('training rules', () => {
 
   it('offers sessions from half an hour to an hour and a quarter', () => {
     expect(SESSION_MINUTES).toEqual([30, 45, 60, 75]);
+  });
+
+  it('finds the runs of training days that follow each other', () => {
+    expect(backToBackRuns([1, 3, 5])).toEqual([]);
+    expect(backToBackRuns([1, 2, 4, 5])).toEqual([
+      [1, 2],
+      [4, 5],
+    ]);
+    // Sunday is followed by Monday, so a run can wrap around the week.
+    expect(backToBackRuns([1, 6, 7])).toEqual([[6, 7, 1]]);
+    expect(backToBackRuns([1, 2, 3, 4, 5, 6])).toEqual([[1, 2, 3, 4, 5, 6]]);
   });
 });

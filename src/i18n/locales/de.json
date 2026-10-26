@@ -668,11 +668,13 @@
       }
     },
     "trainingDays": {
+      "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",
       "count_one": "{{count}} Tag pro Woche",
       "count_other": "{{count}} Tage pro Woche",
-      "recommended": "Für deine Erfahrung empfohlen",
       "maxReached": "Plane mindestens einen Ruhetag pro Woche ein.",
-      "minReached": "Wähle mindestens einen Tag."
+      "minReached": "Wähle mindestens einen Tag.",
+      "restAfter": "Nach jedem Workout ein Ruhetag",
+      "backToBack": "{{days}} direkt hintereinander"
     },
     "setup": {
       "descriptions": {
@@ -682,13 +684,26 @@
       }
     },
     "sessionLength": {
+      "intro": "Wir passen jedes Workout in diese Zeit ein, Aufwärmen inklusive.",
       "longest": "75+ Min.",
       "descriptions": {
         "30": "Kurz und auf die Grundübungen konzentriert",
         "45": "Grundübungen und ein paar Extras",
         "60": "Ein komplettes Training",
         "75": "Zeit für zusätzliches Volumen"
-      }
+      },
+      "workout": "Dein Workout",
+      "warmUp": "Aufwärmen",
+      "main": "Grundübungen",
+      "extras": "Extras",
+      "conditioning": "Ausdauer",
+      "unavailable": "Verbinde dich mit dem Internet, um zu sehen, was hineinpasst.",
+      "choose": "Workout-Dauer",
+      "exercises_one": "{{count}} Übung",
+      "exercises_other": "{{count}} Übungen",
+      "sets_one": "{{count}} Satz",
+      "sets_other": "{{count}} Sätze",
+      "rest": "≈ {{minutes}} Min. Pause"
     },
     "building": {
       "steps": {
@@ -728,6 +743,10 @@
       "today": "Heute",
       "tomorrow": "Morgen",
       "start": "Los geht's"
+    },
+    "sex": {
+      "intro": "Es beeinflusst, wie viele Kalorien dein Körper verbrennt, damit deine Ziele zu dir passen.",
+      "unspecified": "Wir nehmen einen Durchschnitt"
     }
   },
   "session": {

@@ -28,11 +28,14 @@ export const ICONS = {
   heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
   home: { ios: 'house', android: 'home', web: 'home' },
   info: { ios: 'info', android: 'info_i', web: 'info_i' },
+  layers: { ios: 'square.stack.3d.up', android: 'layers', web: 'layers' },
   logOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
+  man: { ios: 'figure.stand', android: 'man', web: 'man' },
   meal: { ios: 'fork.knife', android: 'restaurant', web: 'restaurant' },
   minus: { ios: 'minus', android: 'remove', web: 'remove' },
   missed: { ios: 'calendar.badge.exclamationmark', android: 'event_busy', web: 'event_busy' },
   moon: { ios: 'moon', android: 'bedtime', web: 'bedtime' },
+  notSaid: { ios: 'minus.circle', android: 'do_not_disturb_on', web: 'do_not_disturb_on' },
   offline: { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' },
   person: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
   personOff: { ios: 'person.crop.circle.badge.xmark', android: 'person_off', web: 'person_off' },
@@ -49,6 +52,7 @@ export const ICONS = {
   trophy: { ios: 'trophy', android: 'trophy', web: 'trophy' },
   undo: { ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' },
   warning: { ios: 'exclamationmark.triangle', android: 'warning', web: 'warning' },
+  woman: { ios: 'figure.stand.dress', android: 'woman', web: 'woman' },
 } satisfies Record<string, Extract<SymbolViewProps['name'], object>>;
 
 export type IconName = keyof typeof ICONS;

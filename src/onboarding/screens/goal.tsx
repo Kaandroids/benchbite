@@ -54,7 +54,7 @@ export function GoalStep() {
             // The chosen goal is saved already.
             if (goal !== option) answer({ goal: option });
           }}
-          compact
+          size="compact"
         />
       ))}
       <View style={[styles.flex, { marginTop: spacing.sm }]}>

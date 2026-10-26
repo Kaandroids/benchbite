@@ -668,11 +668,13 @@
       }
     },
     "trainingDays": {
+      "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",
       "count_one": "Haftada {{count}} gün",
       "count_other": "Haftada {{count}} gün",
-      "recommended": "Deneyimine göre önerilen",
       "maxReached": "Haftada en az bir dinlenme günü bırak.",
-      "minReached": "En az bir gün seç."
+      "minReached": "En az bir gün seç.",
+      "restAfter": "Her antrenmandan sonra dinlenme",
+      "backToBack": "{{days}} arka arkaya"
     },
     "setup": {
       "descriptions": {
@@ -682,13 +684,26 @@
       }
     },
     "sessionLength": {
+      "intro": "Her antrenmanı ısınma dahil bu süreye sığdırırız.",
       "longest": "75+ dk",
       "descriptions": {
         "30": "Kısa ve temel hareketlere odaklı",
         "45": "Temel hareketler ve birkaç ek hareket",
         "60": "Eksiksiz bir antrenman",
         "75": "Ek hacim için zaman"
-      }
+      },
+      "workout": "Antrenmanın",
+      "warmUp": "Isınma",
+      "main": "Ana hareketler",
+      "extras": "Ek hareketler",
+      "conditioning": "Kondisyon",
+      "unavailable": "Neyin sığdığını görmek için internete bağlan.",
+      "choose": "Antrenman süresi",
+      "exercises_one": "{{count}} egzersiz",
+      "exercises_other": "{{count}} egzersiz",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} set",
+      "rest": "≈ {{minutes}} dk dinlenme"
     },
     "building": {
       "steps": {
@@ -728,6 +743,10 @@
       "today": "Bugün",
       "tomorrow": "Yarın",
       "start": "Başlayalım"
+    },
+    "sex": {
+      "intro": "Vücudunun ne kadar kalori yaktığını etkiler, böylece hedeflerin sana uyar.",
+      "unspecified": "Ortalama bir değer kullanırız"
     }
   },
   "session": {

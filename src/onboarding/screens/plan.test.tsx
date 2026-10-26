@@ -44,12 +44,16 @@ const PLAN: WorkoutPlan = {
       type: 'upper',
       exercises: ['bench', 'row', 'press', 'curl', 'dip', 'fly'].map(exercise),
       estimatedMinutes: 50,
+      time: { warmUp: 300, main: 2100, extras: 600, conditioning: 0 },
+      work: { exercises: 0, sets: 0, rest: 0 },
     },
     {
       weekdays: [4],
       type: 'lower',
       exercises: ['squat', 'deadlift'].map(exercise),
       estimatedMinutes: 40,
+      time: { warmUp: 300, main: 1800, extras: 300, conditioning: 0 },
+      work: { exercises: 0, sets: 0, rest: 0 },
     },
   ],
 };

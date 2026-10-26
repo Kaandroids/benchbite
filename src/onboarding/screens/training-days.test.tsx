@@ -16,7 +16,8 @@ describe('TrainingDaysStep', () => {
     mockStep = createStep({ experience: 'intermediate' });
     await render(<TrainingDaysStep />);
     expect(selectedDays()).toEqual(['Monday', 'Tuesday', 'Thursday', 'Friday']);
-    expect(screen.getByText('4 days a week · Recommended for your experience')).toBeTruthy();
+    expect(screen.getByText('4 days a week')).toBeTruthy();
+    expect(screen.getByText('Mon–Tue, Thu–Fri back to back')).toBeTruthy();
   });
 
   it('follows a changed experience until the user picks days', async () => {
@@ -38,6 +39,7 @@ describe('TrainingDaysStep', () => {
     await render(<TrainingDaysStep />);
     expect(selectedDays()).toEqual(['Tuesday', 'Thursday']);
     expect(screen.getByText('2 days a week')).toBeTruthy();
+    expect(screen.getByText('A rest day after each workout')).toBeTruthy();
   });
 
   it('saves the recommended days as not chosen', async () => {
@@ -57,6 +59,7 @@ describe('TrainingDaysStep', () => {
     await fireEvent.press(day('Tuesday'));
     await fireEvent.press(day('Monday'));
     expect(screen.getByText('4 days a week')).toBeTruthy();
+    expect(screen.getByText('Tue–Wed back to back')).toBeTruthy();
     await pressContinue();
     expect(mockStep.next).toHaveBeenCalledWith({
       trainingDays: [2, 3, 5, 7],
