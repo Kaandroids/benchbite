@@ -252,6 +252,7 @@ export type Database = {
           activity_level: Database['public']['Enums']['activity_level'];
           birth_year: number;
           created_at: string;
+          display_name: string | null;
           experience: Database['public']['Enums']['experience'];
           height_cm: number;
           height_unit: Database['public']['Enums']['height_unit'];
@@ -270,6 +271,7 @@ export type Database = {
           activity_level: Database['public']['Enums']['activity_level'];
           birth_year: number;
           created_at?: string;
+          display_name?: string | null;
           experience: Database['public']['Enums']['experience'];
           height_cm: number;
           height_unit: Database['public']['Enums']['height_unit'];
@@ -287,6 +289,7 @@ export type Database = {
           activity_level?: Database['public']['Enums']['activity_level'];
           birth_year?: number;
           created_at?: string;
+          display_name?: string | null;
           experience?: Database['public']['Enums']['experience'];
           height_cm?: number;
           height_unit?: Database['public']['Enums']['height_unit'];

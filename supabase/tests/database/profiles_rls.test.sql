@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -73,6 +73,25 @@ select lives_ok(
   $$ update public.profiles set height_cm = 181, training_days = '{2,4}';
      update public.goals set kind = 'lose_fat', target_weight_kg = 75, weekly_pace_kg = 0.5; $$,
   'Users can change their answers'
+);
+
+select lives_ok(
+  $$ update public.profiles set display_name = 'Kaan' $$,
+  'Users can change their name'
+);
+select throws_ok(
+  $$ update public.profiles set display_name = ' Kaan' $$,
+  '23514', null,
+  'Names are saved without spaces around them'
+);
+select throws_ok(
+  $$ update public.profiles set display_name = repeat('x', 31) $$,
+  '23514', null,
+  'Names are at most 30 characters'
+);
+select lives_ok(
+  $$ update public.profiles set display_name = null $$,
+  'Users can remove their name'
 );
 
 select throws_ok(
