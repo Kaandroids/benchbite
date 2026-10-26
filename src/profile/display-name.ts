@@ -8,9 +8,13 @@ export const MAX_DISPLAY_NAME_LENGTH = 30;
 
 const QUERY_KEY = ['profile', 'display-name'];
 
-/** The name to save for what was typed: without the spaces around it, or none if nothing is left. */
+/**
+ * The name to save for what was typed: without the spaces around it, or none if nothing is left.
+ * The column refuses control characters, which a pasted tab or line break would bring, so they
+ * become spaces.
+ */
 export function displayNameOf(text: string): string | null {
-  const name = text.trim();
+  const name = text.replace(/\p{Cc}+/gu, ' ').trim();
   return name === '' ? null : name;
 }
 
