@@ -581,18 +581,18 @@
       }
     },
     "consent": {
-      "intro": "Planın birkaç sağlık bilgisinden oluşur. Bunları kullanmak için onayın gerekiyor.",
+      "intro": "Birkaç sağlık bilgisini kullanmak için onayın gerekiyor.",
       "what": {
         "title": "Ne topluyoruz",
-        "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın."
+        "body": "Cinsiyet, yaş, boy, kilo, aktivite ve antrenman."
       },
       "why": {
         "title": "Ne için",
-        "body": "Sadece kalori hedeflerini ve antrenman planını hesaplamak için."
+        "body": "Sadece kalori hedeflerin ve antrenman planın."
       },
       "control": {
         "title": "Kontrol sende",
-        "body": "Güvenle saklanır ve sadece sen görürsün. Onayını istediğin zaman geri çekip verilerini silebilirsin."
+        "body": "Sadece sen görürsün. İstediğin an geri çek."
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
       "policy": "Gizlilik politikasını oku",

@@ -581,18 +581,18 @@
       }
     },
     "consent": {
-      "intro": "Dein Plan entsteht aus ein paar Gesundheitsdaten. Dafür brauchen wir dein Okay.",
+      "intro": "Wir brauchen dein Okay für ein paar Gesundheitsdaten.",
       "what": {
         "title": "Was wir erfassen",
-        "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
+        "body": "Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
       },
       "why": {
         "title": "Wofür",
-        "body": "Nur um deine Kalorienziele und deinen Trainingsplan zu berechnen."
+        "body": "Nur für deine Kalorienziele und deinen Trainingsplan."
       },
       "control": {
         "title": "Deine Kontrolle",
-        "body": "Sicher gespeichert und nur für dich sichtbar. Widerrufe deine Einwilligung und lösche deine Daten jederzeit."
+        "body": "Nur du siehst sie. Jederzeit widerrufbar."
       },
       "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
       "policy": "Datenschutzerklärung lesen",

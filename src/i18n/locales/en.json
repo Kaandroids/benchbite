@@ -581,18 +581,18 @@
       }
     },
     "consent": {
-      "intro": "Your plan is built from a few health details. We need your OK to use them.",
+      "intro": "We need your OK to use a few health details.",
       "what": {
         "title": "What we collect",
-        "body": "Your sex, age, height, weight, activity and training."
+        "body": "Sex, age, height, weight, activity and training."
       },
       "why": {
-        "title": "Why",
-        "body": "Only to calculate your calorie targets and your workout plan."
+        "title": "Used for",
+        "body": "Only your calorie targets and workout plan."
       },
       "control": {
         "title": "Your control",
-        "body": "Stored securely and only visible to you. Withdraw your consent and delete your data any time."
+        "body": "Only you see it. Withdraw any time."
       },
       "agree": "I agree that Benchbite processes my health data for these purposes.",
       "policy": "Read the privacy policy",

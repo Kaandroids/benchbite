@@ -60,22 +60,33 @@ export function ConsentStep() {
       onBack={back}
       footer={
         <View style={{ gap: spacing.sm }}>
+          {/* The consent sits by Continue, as the one thing to do here. */}
+          <ChoiceCard
+            type="checkbox"
+            title={t('onboarding.consent.agree')}
+            selected={agreed}
+            onPress={() => {
+              // Unticking withdraws a consent given earlier in this onboarding.
+              if (agreed) answer({ consentedPolicyVersion: undefined });
+              setAgreed(!agreed);
+            }}
+          />
+          <TextLink
+            label={t('onboarding.consent.policy')}
+            color="primaryText"
+            onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+          />
           <Button
             label={t('common.continue')}
             disabled={!agreed}
             onPress={() => next({ consentedPolicyVersion: PRIVACY_POLICY_VERSION })}
           />
           {/* Quiet, so it does not compete with Continue: it only explains. */}
-          <Pressable
-            accessibilityRole="button"
-            hitSlop={12}
+          <TextLink
+            label={t('onboarding.consent.whyLink')}
+            color="textMuted"
             onPress={() => setExplaining(true)}
-            style={({ pressed }) => [styles.whyLink, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Text variant="captionStrong" color="textMuted">
-              {t('onboarding.consent.whyLink')}
-            </Text>
-          </Pressable>
+          />
         </View>
       }
     >
@@ -109,28 +120,36 @@ export function ConsentStep() {
           </View>
         ))}
       </Card>
-      <ChoiceCard
-        type="checkbox"
-        title={t('onboarding.consent.agree')}
-        selected={agreed}
-        onPress={() => {
-          // Unticking withdraws a consent given earlier in this onboarding.
-          if (agreed) answer({ consentedPolicyVersion: undefined });
-          setAgreed(!agreed);
-        }}
-      />
-      <Button
-        variant="ghost"
-        size="small"
-        label={t('onboarding.consent.policy')}
-        onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
-      />
     </Screen>
   );
 }
 
+/** A small link under the consent, in the given colour. */
+function TextLink({
+  label,
+  color,
+  onPress,
+}: {
+  label: string;
+  color: 'primaryText' | 'textMuted';
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={12}
+      onPress={onPress}
+      style={({ pressed }) => [styles.link, { opacity: pressed ? 0.6 : 1 }]}
+    >
+      <Text variant="captionStrong" color={color}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  whyLink: {
+  link: {
     alignSelf: 'center',
     paddingVertical: 8,
   },
