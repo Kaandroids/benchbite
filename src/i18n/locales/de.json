@@ -690,7 +690,16 @@
         "45": "Grundübungen und ein paar Extras",
         "60": "Ein komplettes Training",
         "75": "Zeit für zusätzliches Volumen"
-      }
+      },
+      "workout": "Dein Workout",
+      "counts_one": "{{count}} Übung · {{sets}} Sätze",
+      "counts_other": "{{count}} Übungen · {{sets}} Sätze",
+      "warmUp": "Aufwärmen",
+      "main": "Grundübungen",
+      "extras": "Extras",
+      "conditioning": "Ausdauer",
+      "unavailable": "Verbinde dich mit dem Internet, um zu sehen, was hineinpasst.",
+      "choose": "Workout-Dauer"
     },
     "building": {
       "steps": {

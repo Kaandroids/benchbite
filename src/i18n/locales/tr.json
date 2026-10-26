@@ -690,7 +690,16 @@
         "45": "Temel hareketler ve birkaç ek hareket",
         "60": "Eksiksiz bir antrenman",
         "75": "Ek hacim için zaman"
-      }
+      },
+      "workout": "Antrenmanın",
+      "counts_one": "{{count}} egzersiz · {{sets}} set",
+      "counts_other": "{{count}} egzersiz · {{sets}} set",
+      "warmUp": "Isınma",
+      "main": "Ana hareketler",
+      "extras": "Ek hareketler",
+      "conditioning": "Kondisyon",
+      "unavailable": "Neyin sığdığını görmek için internete bağlan.",
+      "choose": "Antrenman süresi"
     },
     "building": {
       "steps": {

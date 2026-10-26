@@ -17,8 +17,8 @@ type SegmentedControlProps<T extends string> = {
 };
 
 /**
- * A compact row of options with one selected, for settings that change how a screen works
- * rather than answering its question, such as the unit of a value.
+ * A compact row of options with one selected, for settings that change how a screen works, such
+ * as the unit of a value, or a short answer whose result shows below it, such as a workout length.
  */
 export function SegmentedControl<T extends string>({
   options,

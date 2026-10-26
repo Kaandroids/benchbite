@@ -1,129 +1,148 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 
-import { RaisedPressable } from '@/components/ui/raised-pressable';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
+import { useUpperCase } from '@/i18n/case';
+import { type ColorTokens, useTheme } from '@/theme';
+import type { SessionMinutes } from '@shared/plan/limits';
+import type { SessionTime } from '@shared/plan/types';
 
+import { useLengthPreviews, type LengthPreview } from '../length-preview';
 import { SESSION_MINUTES } from '../training';
 import { useStep } from '../use-step';
 
-/** The minutes a full ring stands for, so the longest choice nearly closes it. */
-const FULL_RING_MINUTES = 90;
-const RING = { size: 64, stroke: 8 };
-const RADIUS = (RING.size - RING.stroke) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+/** The length chosen until the user picks one: the middle of the range. */
+const DEFAULT_MINUTES: SessionMinutes = 45;
+const LONGEST = SESSION_MINUTES.at(-1)!;
+
+/** The parts of a workout in order, each with its colour in the strip. */
+const PARTS: { key: keyof SessionTime; color: keyof ColorTokens; opacity: number }[] = [
+  { key: 'warmUp', color: 'textMuted', opacity: 0.35 },
+  { key: 'main', color: 'primary', opacity: 1 },
+  { key: 'extras', color: 'primary', opacity: 0.45 },
+  { key: 'conditioning', color: 'info', opacity: 1 },
+];
 
 /**
- * How long a workout may take, as four cards in a grid, each with a ring that fills with its
- * length; the plan builder fits each session into it.
+ * How long a workout may take, and what the plan builder fits into that length for the user's
+ * answers: a strip of the workout's parts to scale, and how many exercises and sets.
  */
 export function SessionLengthStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, choose } = useStep('session-length');
+  const { answers, progress, back, next } = useStep('session-length');
+  const [minutes, setMinutes] = useState<SessionMinutes>(answers.sessionMinutes ?? DEFAULT_MINUTES);
+  const preview = useLengthPreviews(answers)(minutes);
+  const label = (value: SessionMinutes) =>
+    value === LONGEST
+      ? t('onboarding.sessionLength.longest')
+      : t('onboarding.minutes', { count: value });
 
   return (
-    <Screen progress={progress} onBack={back}>
+    <Screen
+      progress={progress}
+      onBack={back}
+      footer={
+        <Button label={t('common.continue')} onPress={() => next({ sessionMinutes: minutes })} />
+      }
+    >
       <Text variant="title" accessibilityRole="header">
         {t('onboarding.steps.session-length.title')}
       </Text>
-      <View style={[styles.grid, { gap: spacing.md }]}>
-        {SESSION_MINUTES.map((sessionMinutes) => (
-          <LengthCard
-            key={sessionMinutes}
-            minutes={sessionMinutes}
-            title={
-              sessionMinutes === 75
-                ? t('onboarding.sessionLength.longest')
-                : t('onboarding.minutes', { count: sessionMinutes })
-            }
-            description={t(`onboarding.sessionLength.descriptions.${sessionMinutes}`)}
-            selected={answers.sessionMinutes === sessionMinutes}
-            onPress={() => choose({ sessionMinutes })}
-          />
-        ))}
+      <SegmentedControl
+        accessibilityLabel={t('onboarding.sessionLength.choose')}
+        options={SESSION_MINUTES.map((value) => ({
+          value: String(value),
+          label: value === LONGEST ? `${value}+` : String(value),
+        }))}
+        value={String(minutes)}
+        onChange={(value) => setMinutes(Number(value) as SessionMinutes)}
+      />
+      <View style={[styles.center, { gap: spacing.xs }]} accessibilityLiveRegion="polite">
+        <Text variant="display">{label(minutes)}</Text>
+        <Text color="textMuted">
+          {preview.data
+            ? t('onboarding.sessionLength.counts', {
+                count: preview.data.exercises,
+                sets: preview.data.sets,
+              })
+            : t(`onboarding.sessionLength.descriptions.${minutes}`)}
+        </Text>
       </View>
+      <WorkoutCard preview={preview.data} failed={preview.isError || preview.data === null} />
     </Screen>
   );
 }
 
-type LengthCardProps = {
-  minutes: number;
-  title: string;
-  description: string;
-  selected: boolean;
-  onPress: () => void;
-};
-
-/** One length: a ring filled in proportion to it, the length and what fits in it. */
-function LengthCard({ minutes, title, description, selected, onPress }: LengthCardProps) {
+/** The workout's parts as a strip to scale, with their minutes; a note when it is not known. */
+function WorkoutCard({ preview, failed }: { preview?: LengthPreview | null; failed: boolean }) {
+  const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const filled = (CIRCUMFERENCE * minutes) / FULL_RING_MINUTES;
+  const upperCase = useUpperCase();
+  const parts = preview ? PARTS.filter(({ key }) => preview.time[key] > 0) : [];
   return (
-    <RaisedPressable
-      accessibilityRole="radio"
-      accessibilityLabel={`${title}, ${description}`}
-      accessibilityState={{ checked: selected }}
-      onPress={onPress}
-      haptic="selection"
-      ledgeColor={selected ? colors.primary : colors.border}
-      borderRadius={radii.lg}
-      style={styles.cell}
-      faceStyle={[
-        styles.face,
-        {
-          gap: spacing.sm,
-          padding: spacing.lg,
-          backgroundColor: selected ? colors.selected : colors.surface,
-          borderColor: selected ? colors.primary : colors.border,
-        },
-      ]}
-    >
-      <Svg width={RING.size} height={RING.size} accessible={false}>
-        <Circle
-          cx={RING.size / 2}
-          cy={RING.size / 2}
-          r={RADIUS}
-          fill="none"
-          stroke={colors.track}
-          strokeWidth={RING.stroke}
-        />
-        <Circle
-          cx={RING.size / 2}
-          cy={RING.size / 2}
-          r={RADIUS}
-          fill="none"
-          stroke={colors.primary}
-          strokeWidth={RING.stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${filled} ${CIRCUMFERENCE}`}
-          transform={`rotate(-90 ${RING.size / 2} ${RING.size / 2})`}
-        />
-      </Svg>
-      <Text variant="headline">{title}</Text>
-      <Text variant="caption" color="textMuted" align="center">
-        {description}
+    <Card style={{ gap: spacing.md }}>
+      <Text variant="captionStrong" color="textMuted">
+        {upperCase(t('onboarding.sessionLength.workout'))}
       </Text>
-    </RaisedPressable>
+      {preview ? (
+        <>
+          <View style={[styles.strip, { gap: 2, borderRadius: radii.sm }]} accessible={false}>
+            {parts.map(({ key, color, opacity }) => (
+              <View
+                key={key}
+                style={{ flex: preview.time[key], backgroundColor: colors[color], opacity }}
+              />
+            ))}
+          </View>
+          <View style={{ gap: spacing.sm }}>
+            {parts.map(({ key, color, opacity }) => (
+              <View key={key} style={[styles.row, { gap: spacing.sm }]}>
+                <View style={[styles.swatch, { backgroundColor: colors[color], opacity }]} />
+                <Text variant="bodyStrong" style={styles.flex}>
+                  {t(`onboarding.sessionLength.${key}`)}
+                </Text>
+                <Text color="textMuted">
+                  {t('onboarding.minutes', { count: Math.round(preview.time[key] / 60) })}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : failed ? (
+        <Text color="textMuted">{t('onboarding.sessionLength.unavailable')}</Text>
+      ) : (
+        // Room for the strip while the plan builder answers, so nothing moves when it does.
+        <View style={[styles.strip, { borderRadius: radii.sm, backgroundColor: colors.track }]} />
+      )}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  // Two to a row, the gap between them shared.
-  cell: {
-    flexBasis: '45%',
-    flexGrow: 1,
-  },
-  face: {
-    flexGrow: 1,
+  center: {
     alignItems: 'center',
-    borderWidth: 2,
+  },
+  strip: {
+    flexDirection: 'row',
+    height: 24,
+    overflow: 'hidden',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swatch: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+  },
+  flex: {
+    flex: 1,
   },
 });

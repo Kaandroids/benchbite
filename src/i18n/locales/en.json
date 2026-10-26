@@ -690,7 +690,16 @@
         "45": "The main lifts and a few extras",
         "60": "A complete workout",
         "75": "Time for extra volume"
-      }
+      },
+      "workout": "Your workout",
+      "counts_one": "{{count}} exercise · {{sets}} sets",
+      "counts_other": "{{count}} exercises · {{sets}} sets",
+      "warmUp": "Warm-up",
+      "main": "Main lifts",
+      "extras": "Extras",
+      "conditioning": "Conditioning",
+      "unavailable": "Connect to the internet to see what fits.",
+      "choose": "Workout length"
     },
     "building": {
       "steps": {
