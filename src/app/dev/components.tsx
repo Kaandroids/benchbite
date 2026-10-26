@@ -1,7 +1,8 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 
+import { AnimatedSplash } from '@/brand/animated-splash';
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -27,7 +28,7 @@ import { useOnboarding } from '@/providers/onboarding-provider';
 import { StreakBadge } from '@/streak/streak-badge';
 import { sampleStreak } from '@/streak/sample-streak';
 import { showSampleStreak } from '@/streak/use-streak';
-import { useTheme, type ColorTokens, type TypographyVariant } from '@/theme';
+import { useTheme, type ColorScheme, type ColorTokens, type TypographyVariant } from '@/theme';
 import { WeekCard } from '@/today/week-card';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
 import { weekSchedule } from '@/workouts/week-schedule';
@@ -109,6 +110,7 @@ export default function ComponentGallery() {
   const [heightUnit, setHeightUnit] = useState<HeightUnit>(() => defaultUnits().height);
   const [centimetres, setCentimetres] = useState(178);
   const [pace, setPace] = useState(0.5);
+  const [splash, setSplash] = useState<ColorScheme | null>(null);
 
   if (!__DEV__) {
     return <Redirect href="/" />;
@@ -157,6 +159,17 @@ export default function ComponentGallery() {
             router.back();
           }}
         />
+      </Section>
+
+      <Section title="Splash screen">
+        <Text color="textMuted">Play the splash that takes over from the native one:</Text>
+        <View style={[styles.row, { gap: spacing.sm }]}>
+          <Button variant="secondary" label="Light" onPress={() => setSplash('light')} />
+          <Button variant="secondary" label="Dark" onPress={() => setSplash('dark')} />
+        </View>
+        <Modal visible={splash !== null} transparent animationType="none" statusBarTranslucent>
+          {splash ? <AnimatedSplash scheme={splash} onDone={() => setSplash(null)} /> : null}
+        </Modal>
       </Section>
 
       <Section title="Streak">
