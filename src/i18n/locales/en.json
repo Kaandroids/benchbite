@@ -364,9 +364,6 @@
   },
   "onboarding": {
     "steps": {
-      "welcome": {
-        "title": "Welcome to Benchbite"
-      },
       "nickname": {
         "title": "What should we call you?"
       },
@@ -456,13 +453,35 @@
     },
     "minutes": "{{count}} min",
     "welcome": {
-      "tagline": "Train and eat for your goal.",
-      "points": {
-        "plan": "A workout plan made for you",
-        "nutrition": "Calories and macros for your goal",
-        "together": "Training and nutrition in one app"
-      },
-      "start": "Let's get started"
+      "start": "Get started for free",
+      "slide": "{{current}} of {{count}}",
+      "slides": {
+        "plan": {
+          "title": "A plan made <accent>for you</accent>",
+          "body": "Built around your goal, your days and your gear.",
+          "lost_one": "−{{weight}} in the last week",
+          "lost_other": "−{{weight}} in the last {{count}} weeks"
+        },
+        "sets": {
+          "title": "Every set <accent>counts</accent>",
+          "body": "Log as you lift and watch your records fall.",
+          "exercise": "Bench press",
+          "record": "New record!",
+          "detail": "{{count}} sets · rest 1:30",
+          "recordDetail": "Your heaviest {{set}} yet"
+        },
+        "food": {
+          "title": "Eat for <accent>your goal</accent>",
+          "body": "Calories and macros that fit your training.",
+          "of": "of {{total}} kcal"
+        },
+        "progress": {
+          "title": "See your <accent>progress</accent>",
+          "body": "Your weight, streak and records, week by week.",
+          "weight": "Your weight",
+          "week": "Week {{week}}"
+        }
+      }
     },
     "nickname": {
       "subtitle": "A first name or a nickname. Only you see it.",

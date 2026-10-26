@@ -364,9 +364,6 @@
   },
   "onboarding": {
     "steps": {
-      "welcome": {
-        "title": "Willkommen bei Benchbite"
-      },
       "nickname": {
         "title": "Wie sollen wir dich nennen?"
       },
@@ -456,13 +453,35 @@
     },
     "minutes": "{{count}} Min.",
     "welcome": {
-      "tagline": "Trainiere und iss für dein Ziel.",
-      "points": {
-        "plan": "Ein Trainingsplan nur für dich",
-        "nutrition": "Kalorien und Makros für dein Ziel",
-        "together": "Training und Ernährung in einer App"
-      },
-      "start": "Los geht's"
+      "start": "Kostenlos loslegen",
+      "slide": "{{current}} von {{count}}",
+      "slides": {
+        "plan": {
+          "title": "Ein Plan, <accent>gemacht für dich</accent>",
+          "body": "Passend zu deinem Ziel, deinen Tagen und deiner Ausrüstung.",
+          "lost_one": "−{{weight}} in der letzten Woche",
+          "lost_other": "−{{weight}} in den letzten {{count}} Wochen"
+        },
+        "sets": {
+          "title": "Jeder Satz <accent>zählt</accent>",
+          "body": "Notiere beim Training und sieh deine Rekorde fallen.",
+          "exercise": "Bankdrücken",
+          "record": "Neuer Rekord!",
+          "detail": "{{count}} Sätze · 1:30 Pause",
+          "recordDetail": "Dein bisher schwerster Satz: {{set}}"
+        },
+        "food": {
+          "title": "Iss für <accent>dein Ziel</accent>",
+          "body": "Kalorien und Makros, die zu deinem Training passen.",
+          "of": "von {{total}} kcal"
+        },
+        "progress": {
+          "title": "Sieh deinen <accent>Fortschritt</accent>",
+          "body": "Gewicht, Serie und Rekorde, Woche für Woche.",
+          "weight": "Dein Gewicht",
+          "week": "Woche {{week}}"
+        }
+      }
     },
     "nickname": {
       "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",

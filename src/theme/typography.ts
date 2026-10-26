@@ -11,11 +11,15 @@ export const fonts = {
 export const typography = {
   /** Big numbers, such as the daily calorie target. */
   display: { fontFamily: fonts.black, fontSize: 40, lineHeight: 44 },
+  /** The headline of a screen that introduces, such as a welcome slide. */
+  hero: { fontFamily: fonts.black, fontSize: 32, lineHeight: 38 },
   /** Screen titles and onboarding questions. */
   title: { fontFamily: fonts.extraBold, fontSize: 28, lineHeight: 34 },
   headline: { fontFamily: fonts.extraBold, fontSize: 20, lineHeight: 26 },
   body: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22 },
   bodyStrong: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 22 },
+  /** A short text that goes with a hero headline. */
+  lead: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24 },
   /** Names and short labels that stand out, such as a list item's title. */
   label: { fontFamily: fonts.extraBold, fontSize: 16, lineHeight: 22 },
   caption: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },

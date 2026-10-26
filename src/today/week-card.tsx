@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
@@ -30,6 +31,8 @@ type WeekCardProps = {
   schedule: WeekSchedule;
   /** Opens a day with workouts, or with workouts that moved away from it. */
   onDayPress: (day: ScheduleDay) => void;
+  /** Shown under the days, inside the card. */
+  children?: ReactNode;
 };
 
 type RingState = Exclude<DayState, 'rest' | 'extra' | 'partial'>;
@@ -152,7 +155,7 @@ function arc(radius: number, share: number): string {
  * which fills as they are done, and a dot for each rest day. Moved, missed, skipped and extra
  * workouts each have their own mark (ADR 0028).
  */
-export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps) {
+export function WeekCard({ today, streak, schedule, onDayPress, children }: WeekCardProps) {
   const { t } = useTranslation();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
@@ -219,6 +222,7 @@ export function WeekCard({ today, streak, schedule, onDayPress }: WeekCardProps)
           );
         })}
       </View>
+      {children}
     </Card>
   );
 }
