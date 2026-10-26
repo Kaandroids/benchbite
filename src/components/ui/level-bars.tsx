@@ -15,8 +15,6 @@ type LevelBarsProps = {
 export function LevelBars({ value, of, inverse = false }: LevelBarsProps) {
   const { colors } = useTheme();
   const on = inverse ? colors.onPrimary : colors.primary;
-  // The border colour, as the track disappears on a chosen card's tint.
-  const off = inverse ? colors.onPrimary : colors.border;
   return (
     <View style={styles.bars} accessible={false}>
       {Array.from({ length: of }, (_, index) => (
@@ -26,8 +24,9 @@ export function LevelBars({ value, of, inverse = false }: LevelBarsProps) {
             styles.bar,
             {
               height: 5 + (index * 9) / Math.max(1, of - 1),
-              backgroundColor: index < value ? on : off,
-              opacity: inverse && index >= value ? 0.35 : 1,
+              backgroundColor: on,
+              // Empty bars are the same colour, faint, so they show on any card or tile.
+              opacity: index < value ? 1 : 0.3,
             },
           ]}
         />
