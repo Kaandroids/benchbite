@@ -645,12 +645,17 @@
       }
     },
     "activity": {
+      "intro": "Your job and getting around. Workouts are counted separately.",
       "descriptions": {
         "sedentary": "Desk job, little walking",
         "light": "On your feet some of the day",
         "moderate": "On your feet most of the day",
         "active": "Physical work all day"
-      }
+      },
+      "calories": "Your daily calories",
+      "more": "{{percent}} more than mostly sitting",
+      "base": "The starting point for your calories",
+      "note": "Your workouts are added on top."
     },
     "trainingIntro": {
       "halfway": "Halfway there",

@@ -645,12 +645,17 @@
       }
     },
     "activity": {
+      "intro": "Dein Job und deine Wege. Workouts zählen wir extra.",
       "descriptions": {
         "sedentary": "Bürojob, wenig Bewegung",
         "light": "Einen Teil des Tages auf den Beinen",
         "moderate": "Den größten Teil des Tages auf den Beinen",
         "active": "Den ganzen Tag körperliche Arbeit"
-      }
+      },
+      "calories": "Deine täglichen Kalorien",
+      "more": "{{percent}} mehr als überwiegend sitzend",
+      "base": "Der Ausgangspunkt für deine Kalorien",
+      "note": "Deine Workouts kommen noch dazu."
     },
     "trainingIntro": {
       "halfway": "Halb geschafft",

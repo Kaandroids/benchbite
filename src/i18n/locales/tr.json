@@ -645,12 +645,17 @@
       }
     },
     "activity": {
+      "intro": "İşin ve gün içindeki hareketin. Antrenmanları ayrıca sayarız.",
       "descriptions": {
         "sedentary": "Masa başı iş, az yürüyüş",
         "light": "Günün bir kısmında ayakta",
         "moderate": "Günün çoğunda ayakta",
         "active": "Gün boyu fiziksel iş"
-      }
+      },
+      "calories": "Günlük kalorin",
+      "more": "Çoğunlukla oturana göre {{percent}} fazla",
+      "base": "Kalorinin başlangıç noktası",
+      "note": "Antrenmanların bunun üstüne eklenir."
     },
     "trainingIntro": {
       "halfway": "Yarıyı geçtin",
