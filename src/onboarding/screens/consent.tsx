@@ -100,23 +100,26 @@ export function ConsentStep() {
             <IconTile name={icon} size={40} />
             <View style={styles.pointText}>
               <Text variant="label">{t(`onboarding.consent.${key}.title`)}</Text>
-              <Text variant="body" color="textMuted">
+              <Text variant="caption" color="textMuted">
                 {t(`onboarding.consent.${key}.body`)}
               </Text>
             </View>
           </View>
         ))}
       </Card>
-      <ChoiceCard
-        type="checkbox"
-        title={t('onboarding.consent.agree')}
-        selected={agreed}
-        onPress={() => {
-          // Unticking withdraws a consent given earlier in this onboarding.
-          if (agreed) answer({ consentedPolicyVersion: undefined });
-          setAgreed(!agreed);
-        }}
-      />
+      {/* A little apart from the points, as the step's one answer. */}
+      <View style={{ marginTop: spacing.sm }}>
+        <ChoiceCard
+          type="checkbox"
+          title={t('onboarding.consent.agree')}
+          selected={agreed}
+          onPress={() => {
+            // Unticking withdraws a consent given earlier in this onboarding.
+            if (agreed) answer({ consentedPolicyVersion: undefined });
+            setAgreed(!agreed);
+          }}
+        />
+      </View>
       <TextLink
         label={t('onboarding.consent.policy')}
         color="primaryText"
@@ -126,7 +129,7 @@ export function ConsentStep() {
   );
 }
 
-/** A small link under the consent, in the given colour. */
+/** A small link, in the brand colour or, quieter, in grey. */
 function TextLink({
   label,
   color,
@@ -153,7 +156,7 @@ function TextLink({
 const styles = StyleSheet.create({
   link: {
     alignSelf: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   point: {
     flexDirection: 'row',
