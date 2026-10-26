@@ -20,6 +20,8 @@ import { useStep } from '../use-step';
 
 /** A tap on this share of the slide's width, from the left, goes back; the rest goes on. */
 const BACK_ZONE = 0.35;
+/** The stage's tint: the primary colour at about 10 % opacity, as a hex alpha. */
+const STAGE_TINT = '1A';
 
 /**
  * The first screen: what the app does, as slides to tap or swipe through like stories, then on to
@@ -58,9 +60,6 @@ export function WelcomeStep() {
       scrolls={false}
       footer={
         <View style={{ gap: spacing.lg }}>
-          <Text variant="caption" color="textMuted" align="center">
-            {t('onboarding.welcome.free')}
-          </Text>
           <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
           {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
           {isAccount ? null : (
@@ -110,7 +109,12 @@ export function WelcomeStep() {
             <View
               style={[
                 styles.stage,
-                { borderRadius: radii.xl, backgroundColor: colors.selected, padding: spacing.lg },
+                {
+                  borderRadius: radii.xl,
+                  // A faint wash of the brand colour, under the cards in both themes.
+                  backgroundColor: `${colors.primary}${STAGE_TINT}`,
+                  padding: spacing.lg,
+                },
               ]}
             >
               <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
@@ -142,9 +146,11 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  // Centred, like everything under it.
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   wordmark: {
     fontFamily: fonts.black,
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   body: {
-    fontFamily: fonts.bold,
+    fontFamily: fonts.medium,
     fontSize: 17,
     lineHeight: 24,
   },

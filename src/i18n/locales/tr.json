@@ -456,8 +456,7 @@
     },
     "minutes": "{{count}} dk",
     "welcome": {
-      "start": "Başlayalım",
-      "free": "Ücretsiz başla, hesap gerekmez.",
+      "start": "Ücretsiz başla",
       "slide": "{{current}} / {{count}}",
       "slides": {
         "plan": {

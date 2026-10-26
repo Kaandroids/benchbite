@@ -26,8 +26,7 @@ describe('WelcomeStep', () => {
     mockStep = createStep();
     await render(<WelcomeStep />);
     expect(screen.getByLabelText('Benchbite')).toBeTruthy();
-    expect(screen.getByText('Free to start, no account needed.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: "Let's get started" }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Get started for free' }));
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });
 

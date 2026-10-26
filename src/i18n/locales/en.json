@@ -456,8 +456,7 @@
     },
     "minutes": "{{count}} min",
     "welcome": {
-      "start": "Let's get started",
-      "free": "Free to start, no account needed.",
+      "start": "Get started for free",
       "slide": "{{current}} of {{count}}",
       "slides": {
         "plan": {
