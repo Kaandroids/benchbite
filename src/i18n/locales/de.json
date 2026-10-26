@@ -655,7 +655,8 @@
       "calories": "Deine täglichen Kalorien",
       "more": "{{percent}} mehr als überwiegend sitzend",
       "base": "Der Ausgangspunkt für deine Kalorien",
-      "note": "Deine Workouts kommen noch dazu."
+      "note": "Deine Workouts kommen noch dazu.",
+      "noteActive": "Körperliche Arbeit zählt schon mehr, als Workouts dazugeben."
     },
     "trainingIntro": {
       "titleNamed": "Halbzeit, {{name}}.",

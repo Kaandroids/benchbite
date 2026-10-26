@@ -1,9 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Caption } from '@/components/ui/caption';
-import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -13,6 +11,7 @@ import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
 import { activityShare } from '../body';
+import { ChoiceInsight } from '../choice-insight';
 import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -34,7 +33,6 @@ const LEVELS = Constants.public.Enums.activity_level;
  */
 export function ActivityStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { answers, progress, back, select, next } = useStep('activity');
   const level = answers.activityLevel;
 
@@ -60,26 +58,24 @@ export function ActivityStep() {
           size="compact"
         />
       ))}
-      {level ? (
-        <Card style={{ gap: spacing.xs, marginTop: spacing.xs }}>
-          <Caption>{t('onboarding.activity.calories')}</Caption>
-          <CaloriesLine level={level} />
-          <Text variant="caption" color="textMuted">
-            {t('onboarding.activity.note')}
-          </Text>
-        </Card>
-      ) : null}
+      <ChoiceInsight title={t('onboarding.activity.calories')} choice={level}>
+        {level ? <CaloriesLine level={level} /> : null}
+      </ChoiceInsight>
     </Screen>
   );
 }
 
-/** What the level adds to the calories, against mostly sitting; keyed so it fades in anew. */
+/**
+ * What the level adds to the calories, against mostly sitting. Workouts raise the level in the
+ * calculation, up to the highest, so they add nothing to the highest level itself.
+ */
 function CaloriesLine({ level }: { level: ActivityLevel }) {
   const { t } = useTranslation();
+  const { spacing } = useTheme();
   const { format } = useNumberFormat();
   const share = activityShare(level);
   return (
-    <Animated.View key={level} entering={FadeIn.duration(250)} accessibilityLiveRegion="polite">
+    <View style={{ gap: spacing.xs }}>
       <Text variant="bodyStrong" color={share > 0 ? 'primaryText' : 'text'}>
         {share > 0
           ? t('onboarding.activity.more', {
@@ -90,6 +86,9 @@ function CaloriesLine({ level }: { level: ActivityLevel }) {
             })
           : t('onboarding.activity.base')}
       </Text>
-    </Animated.View>
+      <Text variant="caption" color="textMuted">
+        {t(level === 'active' ? 'onboarding.activity.noteActive' : 'onboarding.activity.note')}
+      </Text>
+    </View>
   );
 }

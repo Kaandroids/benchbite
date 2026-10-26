@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 select is(
   public.calculate_nutrition_targets('male', 30, 180, 80, 'moderate', 0, 'stay_healthy'),
@@ -32,6 +32,13 @@ select is(
   ),
   array[2140, 2450, 2760, 3070],
   'The activity levels multiply the BMR by 1.2, 1.375, 1.55 and 1.725'
+);
+
+-- The activity step tells a very active user that workouts add nothing: the level is capped.
+select is(
+  public.calculate_nutrition_targets('male', 30, 180, 80, 'active', 4, 'stay_healthy'),
+  public.calculate_nutrition_targets('male', 30, 180, 80, 'active', 0, 'stay_healthy'),
+  'Training days do not raise the highest activity level'
 );
 
 select is(

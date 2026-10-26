@@ -36,4 +36,13 @@ describe('ActivityStep', () => {
     await render(<ActivityStep />);
     expect(screen.getByText('The starting point for your calories')).toBeTruthy();
   });
+
+  it('says workouts add nothing to the highest level', async () => {
+    mockStep = createStep({ activityLevel: 'active' });
+    await render(<ActivityStep />);
+    expect(screen.queryByText('Your workouts are added on top.')).toBeNull();
+    expect(
+      screen.getByText('Hard work all day already counts for more than workouts add.'),
+    ).toBeTruthy();
+  });
 });

@@ -655,7 +655,8 @@
       "calories": "Günlük kalorin",
       "more": "Çoğunlukla oturana göre {{percent}} fazla",
       "base": "Kalorinin başlangıç noktası",
-      "note": "Antrenmanların bunun üstüne eklenir."
+      "note": "Antrenmanların bunun üstüne eklenir.",
+      "noteActive": "Gün boyu ağır iş, antrenmanların ekleyeceğinden zaten fazla sayılır."
     },
     "trainingIntro": {
       "titleNamed": "Yarıyı geçtin, {{name}}.",

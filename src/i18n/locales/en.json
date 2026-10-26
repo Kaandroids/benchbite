@@ -655,7 +655,8 @@
       "calories": "Your daily calories",
       "more": "{{percent}} more than mostly sitting",
       "base": "The starting point for your calories",
-      "note": "Your workouts are added on top."
+      "note": "Your workouts are added on top.",
+      "noteActive": "Hard work all day already counts for more than workouts add."
     },
     "trainingIntro": {
       "titleNamed": "Halfway there, {{name}}.",
