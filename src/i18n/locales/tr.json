@@ -61,7 +61,18 @@
     "logOut": "Çıkış yap",
     "logOutTitle": "Çıkış yapılsın mı?",
     "logOutMessage": "Planın ve antrenmanların hesabında kalır. Bu telefon yeni bir misafirle baştan başlar.",
-    "logOutFailed": "Çıkış yapılamadı"
+    "logOutFailed": "Çıkış yapılamadı",
+    "appearance": "Görünüm",
+    "themes": {
+      "system": "Sistem",
+      "light": "Açık",
+      "dark": "Koyu"
+    },
+    "themeNote": "Sistem, telefonunun açık ya da koyu ayarını izler.",
+    "language": "Dil",
+    "languageHint": "Seçilebilecek dilleri açar",
+    "phoneLanguage": "Telefonun dili",
+    "phoneLanguageNow": "Şu an {{language}}"
   },
   "loadError": {
     "title": "Yüklenemedi",

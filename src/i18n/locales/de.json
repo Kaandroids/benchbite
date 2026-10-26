@@ -61,7 +61,18 @@
     "logOut": "Abmelden",
     "logOutTitle": "Abmelden?",
     "logOutMessage": "Dein Plan und deine Workouts bleiben in deinem Konto. Dieses Handy startet neu als neuer Gast.",
-    "logOutFailed": "Abmelden fehlgeschlagen"
+    "logOutFailed": "Abmelden fehlgeschlagen",
+    "appearance": "Darstellung",
+    "themes": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "themeNote": "System folgt der hellen oder dunklen Einstellung deines Handys.",
+    "language": "Sprache",
+    "languageHint": "Öffnet die Sprachen zur Auswahl",
+    "phoneLanguage": "Sprache des Handys",
+    "phoneLanguageNow": "Gerade {{language}}"
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
