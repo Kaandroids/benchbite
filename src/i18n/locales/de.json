@@ -53,6 +53,7 @@
   "settings": {
     "title": "Einstellungen",
     "open": "Einstellungen",
+    "profile": "Profil",
     "account": "Konto",
     "guestTitle": "Du nutzt Benchbite als Gast",
     "guestMessage": "Erstelle ein Konto, damit dein Plan und deine Workouts deine bleiben, auch auf einem neuen Handy.",
@@ -95,6 +96,11 @@
       "morning": "Guten Morgen",
       "afternoon": "Guten Tag",
       "evening": "Guten Abend"
+    },
+    "greetingWithName": {
+      "morning": "Guten Morgen, {{name}}",
+      "afternoon": "Guten Tag, {{name}}",
+      "evening": "Guten Abend, {{name}}"
     },
     "targets": "Deine Tagesziele",
     "week": {
@@ -361,6 +367,9 @@
       "welcome": {
         "title": "Willkommen bei Benchbite"
       },
+      "nickname": {
+        "title": "Wie sollen wir dich nennen?"
+      },
       "goal": {
         "title": "Was ist dein Hauptziel?"
       },
@@ -454,6 +463,10 @@
         "together": "Training und Ernährung in einer App"
       },
       "start": "Los geht's"
+    },
+    "nickname": {
+      "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",
+      "skip": "Überspringen"
     },
     "goal": {
       "descriptions": {
@@ -904,5 +917,13 @@
       "body_other": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!",
       "bodyMany": "{{count}} Workouts, insgesamt etwa {{minutes}} Min. Du schaffst das!"
     }
+  },
+  "profile": {
+    "name": "Name",
+    "namePlaceholder": "Dein Name oder Spitzname",
+    "nameHint": "Öffnet den Namen zum Ändern",
+    "nameMessage": "So begrüßt dich Benchbite. Lass das Feld leer, um ohne Namen begrüßt zu werden.",
+    "save": "Speichern",
+    "notSaved": "Der Name konnte nicht gespeichert werden. Versuch es noch einmal."
   }
 }

@@ -11,6 +11,7 @@ import { useUpperCase } from '@/i18n/case';
 
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
+import { ProfileSection } from './profile-section';
 
 /** The app's settings, one section per topic. */
 export function SettingsScreen() {
@@ -24,6 +25,9 @@ export function SettingsScreen() {
         </Text>
       }
     >
+      <Section title={t('settings.profile')}>
+        <ProfileSection />
+      </Section>
       <Section title={t('settings.account')}>
         <AccountSection />
       </Section>

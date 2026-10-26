@@ -6,10 +6,10 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
+import { FormScreen } from '@/components/ui/form-screen';
 
 import { errorField, useCreateAccount } from './account';
 import { EmailField, PasswordField } from './account-fields';
-import { AccountForm } from './account-form';
 import { MIN_PASSWORD_LENGTH } from './passwords';
 import { useCredentialsForm } from './use-credentials-form';
 
@@ -31,10 +31,11 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
   const ready = email.trim() !== '' && password.length >= MIN_PASSWORD_LENGTH;
 
   return (
-    <AccountForm
+    <FormScreen
       title={t('account.createTitle')}
       subtitle={t('account.createSubtitle')}
-      onClose={onClose}
+      onBack={onClose}
+      closes
       footer={
         <View style={{ gap: spacing.lg }}>
           {reason && !field ? <Note tone="danger">{message ?? ''}</Note> : null}
@@ -75,6 +76,6 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
         hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
         isNew
       />
-    </AccountForm>
+    </FormScreen>
   );
 }

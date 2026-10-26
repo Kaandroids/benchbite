@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
 
+import { KeyboardAvoiding } from './keyboard-avoiding';
+
 /** How long iOS takes to close a sheet, during which it cannot present another one. */
 const CLOSE_MS = 400;
 
@@ -31,7 +33,8 @@ export function Sheet({ onClose, children }: SheetProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
+      {/* A field in the sheet stays above the keyboard. */}
+      <KeyboardAvoiding style={styles.root}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.close')}
@@ -51,7 +54,7 @@ export function Sheet({ onClose, children }: SheetProps) {
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           {children}
         </SafeAreaView>
-      </View>
+      </KeyboardAvoiding>
     </Modal>
   );
 }

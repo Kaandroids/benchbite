@@ -8,6 +8,7 @@ import { GoalInsightStep } from './goal-insight';
 import { ActivityStep } from './activity';
 import { BirthYearStep } from './birth-year';
 import { HeightStep } from './height';
+import { NicknameStep } from './nickname';
 import { PaceStep } from './pace';
 import { ExperienceStep } from './experience';
 import { PlanStep } from './plan';
@@ -25,6 +26,7 @@ import { WelcomeStep } from './welcome';
 /** The screen of every onboarding step. */
 export const STEP_SCREENS: Record<Step, ComponentType> = {
   welcome: WelcomeStep,
+  nickname: NicknameStep,
   goal: GoalStep,
   'goal-insight': GoalInsightStep,
   consent: ConsentStep,

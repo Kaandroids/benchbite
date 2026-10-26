@@ -3,6 +3,7 @@ import type { OnboardingAnswers } from './types';
 /** Every step of the onboarding in order. Each one is a route in src/app/onboarding/. */
 export const STEPS = [
   'welcome',
+  'nickname',
   'goal',
   'goal-insight',
   'consent',

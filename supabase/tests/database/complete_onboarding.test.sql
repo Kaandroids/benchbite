@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -121,15 +121,21 @@ select throws_ok(
   '23503', null,
   'A plan with an unknown exercise is rejected'
 );
+select throws_ok(
+  $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('displayName', repeat('x', 31))), pg_temp.plan()) $$,
+  '23514', null,
+  'A name longer than 30 characters is rejected'
+);
 select is_empty($$ select 1 from public.profiles $$, 'A failed save leaves no profile');
 select is_empty($$ select 1 from public.weight_entries $$, 'A failed save leaves no weight');
 select is_empty($$ select 1 from public.workouts $$, 'A failed save leaves no workouts');
 
 -- A valid save writes everything.
 select lives_ok(
-  $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
+  $$ select public.complete_onboarding(pg_temp.answers('{"displayName": "  Kaan "}'), pg_temp.plan()) $$,
   'Valid answers and plan are saved'
 );
+select is((select display_name from public.profiles), 'Kaan', 'The name is saved without the spaces around it');
 select isnt(
   (select onboarding_completed_at from public.profiles),
   null,
