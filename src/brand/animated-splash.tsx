@@ -15,27 +15,26 @@ import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { fonts, type ColorScheme } from '@/theme';
+import { darkColors, lightColors } from '@/theme/colors';
 
 import {
   BITE,
   biteCircles,
-  BRAND_BACKGROUND_DARK,
   BRAND_ORANGE,
-  BRAND_ORANGE_DARK,
   CRUMBS,
   HOLE,
   MARK_BOX,
   PLATE,
   RING,
+  SPLASH_PLATE_WIDTH,
 } from './mark';
 
-/** The plate's width in the native splash screen: `imageWidth` in app.json. */
-const SPLASH_PLATE_WIDTH = 140;
 const MARK_SIZE = (SPLASH_PLATE_WIDTH / (PLATE.r * 2)) * MARK_BOX;
 
+// Light, the native splash is brand orange; dark, it is the app's own background.
 const COLORS: Record<ColorScheme, { background: string; mark: string; word: string }> = {
-  light: { background: BRAND_ORANGE, mark: '#FFFFFF', word: '#FFFFFF' },
-  dark: { background: BRAND_BACKGROUND_DARK, mark: BRAND_ORANGE_DARK, word: '#F2F3F5' },
+  light: { background: BRAND_ORANGE, mark: lightColors.onPrimary, word: lightColors.onPrimary },
+  dark: { background: darkColors.background, mark: darkColors.primary, word: darkColors.text },
 };
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
