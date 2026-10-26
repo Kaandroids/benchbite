@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
+import { FormScreen } from '@/components/ui/form-screen';
 
 import { useSignIn } from './account';
 import { EmailField, PasswordField } from './account-fields';
-import { AccountForm } from './account-form';
 import { useCredentialsForm } from './use-credentials-form';
 
 type LogInScreenProps = {
@@ -30,10 +30,11 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   const { email, password, setEmail, setPassword, message } = useCredentialsForm(signIn);
 
   return (
-    <AccountForm
+    <FormScreen
       title={t('account.logInTitle')}
       subtitle={t('account.logInSubtitle')}
-      onClose={onClose}
+      onBack={onClose}
+      closes
       footer={
         <View style={{ gap: spacing.lg }}>
           {message ? <Note tone="danger">{message}</Note> : null}
@@ -54,6 +55,6 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       {leavesGuestData ? <Note tone="warning">{t('account.guestDataStays')}</Note> : null}
       <EmailField value={email} onChange={setEmail} editable={!signIn.isPending} />
       <PasswordField value={password} onChange={setPassword} editable={!signIn.isPending} />
-    </AccountForm>
+    </FormScreen>
   );
 }

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
+
+import { KeyboardAvoiding } from './keyboard-avoiding';
 
 /** How long iOS takes to close a sheet, during which it cannot present another one. */
 const CLOSE_MS = 400;
@@ -31,11 +33,8 @@ export function Sheet({ onClose, children }: SheetProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      {/* A field in the sheet stays above the keyboard; Android resizes the window instead. */}
-      <KeyboardAvoidingView
-        style={styles.root}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* A field in the sheet stays above the keyboard. */}
+      <KeyboardAvoiding style={styles.root}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.close')}
@@ -55,7 +54,7 @@ export function Sheet({ onClose, children }: SheetProps) {
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           {children}
         </SafeAreaView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoiding>
     </Modal>
   );
 }

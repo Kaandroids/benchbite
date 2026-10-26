@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
+import { FormScreen } from '@/components/ui/form-screen';
 import { displayNameOf } from '@/profile/display-name';
 import { NameField } from '@/profile/name-field';
 import { useTheme } from '@/theme';
@@ -24,37 +23,19 @@ export function NicknameStep() {
   const save = () => (name ? next({ nickname: name }) : skip());
 
   return (
-    // The keyboard would cover the buttons at the bottom; Android resizes the window instead.
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <FormScreen
+      title={t('onboarding.steps.nickname.title')}
+      subtitle={t('onboarding.nickname.subtitle')}
+      progress={progress}
+      onBack={back}
+      footer={
+        <View style={{ gap: spacing.md }}>
+          <Button label={t('common.continue')} disabled={!name} onPress={save} />
+          <Button variant="ghost" label={t('onboarding.nickname.skip')} onPress={skip} />
+        </View>
+      }
     >
-      <Screen
-        progress={progress}
-        onBack={back}
-        footer={
-          <View style={{ gap: spacing.md }}>
-            <Button label={t('common.continue')} disabled={!name} onPress={save} />
-            <Button variant="ghost" label={t('onboarding.nickname.skip')} onPress={skip} />
-          </View>
-        }
-      >
-        <View style={{ gap: spacing.xs }}>
-          <Text variant="title" accessibilityRole="header">
-            {t('onboarding.steps.nickname.title')}
-          </Text>
-          <Text color="textMuted">{t('onboarding.nickname.subtitle')}</Text>
-        </View>
-        <View style={{ marginTop: spacing.sm }}>
-          <NameField value={text} onChange={setText} onSubmit={save} />
-        </View>
-      </Screen>
-    </KeyboardAvoidingView>
+      <NameField value={text} onChange={setText} onSubmit={save} />
+    </FormScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-});
