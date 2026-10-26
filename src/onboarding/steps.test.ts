@@ -1,5 +1,4 @@
 import {
-  STEPS,
   canGoBackFrom,
   isIncluded,
   isPassing,
@@ -9,6 +8,8 @@ import {
   progressOf,
   pruneAnswers,
   type Step,
+  STEPS,
+  stepsBetween,
 } from './steps';
 
 describe('steps', () => {
@@ -118,5 +119,19 @@ describe('steps', () => {
     expect(progressOf('goal')).toBeCloseTo(2 / 20);
     expect(progressOf('target-weight')).toBeCloseTo(9 / 20);
     expect(progressOf('activity')).toBeGreaterThan(progressOf('weight'));
+  });
+
+  it('lists the steps of the flow between two steps', () => {
+    expect(stepsBetween('training-intro', 'building', {})).toEqual([
+      'experience',
+      'training-days',
+      'setup',
+      'session-length',
+    ]);
+    expect(stepsBetween('weight', 'activity', { goal: 'stay_healthy' })).toEqual([]);
+    expect(stepsBetween('weight', 'activity', { goal: 'lose_fat' })).toEqual([
+      'target-weight',
+      'pace',
+    ]);
   });
 });
