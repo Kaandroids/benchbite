@@ -485,7 +485,8 @@
     },
     "nickname": {
       "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",
-      "skip": "Überspringen"
+      "skip": "Erst mal überspringen",
+      "preview": "Auf Heute"
     },
     "goal": {
       "descriptions": {

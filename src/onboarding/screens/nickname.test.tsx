@@ -24,8 +24,15 @@ describe('NicknameStep', () => {
     mockStep = createStep({ displayName: 'Kaan' });
     await render(<NicknameStep />);
     expect(field()).toHaveDisplayValue('Kaan');
-    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip for now' }));
     expect(mockStep.next).toHaveBeenCalledWith({ displayName: undefined });
+  });
+
+  it('shows the greeting with the name as it is typed', async () => {
+    mockStep = createStep();
+    await render(<NicknameStep />);
+    await fireEvent.changeText(field(), 'Kaan');
+    expect(screen.getByText(/, Kaan$/)).toBeTruthy();
   });
 
   it('does not move on with only spaces', async () => {

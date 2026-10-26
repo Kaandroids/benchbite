@@ -485,7 +485,8 @@
     },
     "nickname": {
       "subtitle": "A first name or a nickname. Only you see it.",
-      "skip": "Skip"
+      "skip": "Skip for now",
+      "preview": "On Today"
     },
     "goal": {
       "descriptions": {

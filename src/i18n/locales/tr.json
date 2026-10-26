@@ -485,7 +485,8 @@
     },
     "nickname": {
       "subtitle": "Adın ya da bir takma ad. Sadece sen görürsün.",
-      "skip": "Geç"
+      "skip": "Şimdilik geç",
+      "preview": "Bugün ekranında"
     },
     "goal": {
       "descriptions": {
