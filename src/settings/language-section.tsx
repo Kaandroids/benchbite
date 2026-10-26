@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
@@ -92,8 +92,7 @@ function Option({
         {
           gap: spacing.md,
           paddingVertical: spacing.sm,
-          borderTopWidth: first ? 0 : StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
+          ...listDivider(first, colors.border),
           opacity: pressed ? 0.6 : 1,
         },
       ]}

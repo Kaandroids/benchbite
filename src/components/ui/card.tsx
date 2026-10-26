@@ -35,6 +35,11 @@ export function Card({ entering, children, list = false, style }: CardProps) {
   );
 }
 
+/** The thin line above each row of a list card but the first. */
+export function listDivider(first: boolean, color: string): ViewStyle {
+  return { borderTopWidth: first ? 0 : StyleSheet.hairlineWidth, borderTopColor: color };
+}
+
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,

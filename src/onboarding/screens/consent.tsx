@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { BackHandler, Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
@@ -114,8 +114,7 @@ export function ConsentStep() {
                 gap: spacing.md,
                 // Roomier than a list's usual rows, as the points are what the screen is about.
                 paddingVertical: spacing.lg + spacing.xs,
-                borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
-                borderTopColor: colors.border,
+                ...listDivider(index === 0, colors.border),
               },
             ]}
           >

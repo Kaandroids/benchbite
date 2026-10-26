@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import { Sheet } from '@/components/ui/sheet';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
@@ -165,8 +165,7 @@ export function ExerciseSheet({
               {
                 gap: spacing.md,
                 paddingVertical: spacing.sm,
-                borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
-                borderTopColor: colors.border,
+                ...listDivider(index === 0, colors.border),
               },
             ]}
           >
