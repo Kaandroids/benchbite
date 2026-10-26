@@ -3,7 +3,7 @@
 import { toTenth } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 
-import type { Goal } from './types';
+import type { Goal, OnboardingAnswers } from './types';
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
@@ -88,4 +88,18 @@ export function projectedDate(
   const date = new Date(from);
   date.setDate(date.getDate() + Math.ceil(weeks * 7));
   return date;
+}
+
+/**
+ * The weight the user aims for and the weekly pace, for a goal that changes the weight, or null
+ * for one that keeps it.
+ */
+export function weightGoal(
+  answers: OnboardingAnswers,
+): { goal: 'lose_fat' | 'build_muscle'; targetKg: number; paceKg: number } | null {
+  const { goal, targetWeightKg, weeklyPaceKg } = answers;
+  if ((goal !== 'lose_fat' && goal !== 'build_muscle') || !targetWeightKg || !weeklyPaceKg) {
+    return null;
+  }
+  return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg };
 }
