@@ -132,8 +132,12 @@ export function OpenExercise({
           </Text>
         </View>
         <View style={[styles.row, { gap: spacing.sm }]}>
-          <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
-          <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+          <HistoryButton
+            exerciseId={exercise.exerciseId}
+            exerciseName={info?.name ?? ''}
+            inSession
+          />
+          <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} inSession />
         </View>
       </View>
 

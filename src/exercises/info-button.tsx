@@ -6,12 +6,22 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 type InfoButtonProps = {
   exerciseId: string;
   exerciseName: string;
+  /**
+   * Opens it over the workout in progress, whose screen covers the Workout tab, so that going back
+   * returns to the workout.
+   */
+  inSession?: boolean;
   /** Called before the details open, for example to close a sheet. */
   onOpen?: () => void;
 };
 
 /** A small blue "i" that opens how to do an exercise. */
-export function InfoButton({ exerciseId, exerciseName, onOpen }: InfoButtonProps) {
+export function InfoButton({
+  exerciseId,
+  exerciseName,
+  inSession = false,
+  onOpen,
+}: InfoButtonProps) {
   const { t } = useTranslation();
   return (
     <RoundIconButton
@@ -21,7 +31,10 @@ export function InfoButton({ exerciseId, exerciseName, onOpen }: InfoButtonProps
       label={t('exercise.details', { name: exerciseName })}
       onPress={() => {
         onOpen?.();
-        router.push({ pathname: '/workout/exercise/[id]', params: { id: exerciseId } });
+        router.push({
+          pathname: inSession ? '/session/exercise/[id]' : '/workout/exercise/[id]',
+          params: { id: exerciseId },
+        });
       }}
     />
   );

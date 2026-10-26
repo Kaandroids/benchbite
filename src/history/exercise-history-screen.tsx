@@ -11,8 +11,17 @@ import { setKindOf } from '@/sets/fields';
 import { useExerciseHistory } from './exercise-history';
 import { ProgressCard, RecordsCard, SessionList } from './exercise-history-sections';
 
-/** An exercise's records, a chart of its progress, and its sets in the workouts it was done in. */
-export function ExerciseHistoryScreen({ id }: { id: string }) {
+/**
+ * An exercise's records, a chart of its progress, and its sets in the workouts it was done in.
+ * During a workout, the workouts do not open their logs.
+ */
+export function ExerciseHistoryScreen({
+  id,
+  opensLogs = true,
+}: {
+  id: string;
+  opensLogs?: boolean;
+}) {
   const { t } = useTranslation();
   const history = useExerciseHistory(id);
   const library = useExerciseLibrary();
@@ -68,7 +77,7 @@ export function ExerciseHistoryScreen({ id }: { id: string }) {
       <Text variant="label" color="textMuted" style={{ paddingHorizontal: 4 }}>
         {t('exerciseHistory.sessions', { count: progress.length })}
       </Text>
-      <SessionList sessions={sessions} records={records} kind={kind} />
+      <SessionList sessions={sessions} records={records} kind={kind} opensLogs={opensLogs} />
     </Screen>
   );
 }

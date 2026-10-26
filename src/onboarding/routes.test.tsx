@@ -15,6 +15,8 @@ import PickExercises from '@/app/(app)/workout/pick';
 import EditWorkout from '@/app/(app)/workout/edit';
 import WorkoutTab from '@/app/(app)/workout/index';
 import CreateAccountRoute from '@/app/account/create';
+import SessionExerciseDetails from '@/app/session/exercise/[id]';
+import SessionExerciseHistory from '@/app/session/exercise/history';
 import SettingsRoute from '@/app/settings';
 import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
@@ -91,6 +93,14 @@ jest.mock('@/account/create-account-screen', () => {
     ),
   };
 });
+jest.mock('@/history/exercise-history-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    ExerciseHistoryScreen: ({ id, opensLogs }: { id: string; opensLogs: boolean }) => (
+      <MockText>{`History ${id}${opensLogs ? '' : ' without logs'}`}</MockText>
+    ),
+  };
+});
 jest.mock('@/settings/settings-screen', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SettingsScreen: () => <MockText>Settings screen</MockText> };
@@ -163,6 +173,9 @@ const APP_ROUTES = {
   '(app)/nutrition': NutritionTab,
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
+  'session/index': () => <Text>Workout in progress</Text>,
+  'session/exercise/[id]': SessionExerciseDetails,
+  'session/exercise/history': SessionExerciseHistory,
   'account/create': CreateAccountRoute,
   'account/login': LogInRoute,
   'dev/components': () => <Text>Component gallery</Text>,
@@ -356,6 +369,19 @@ describe('app tabs', () => {
     await act(() => fireEvent.press(screen.getByRole('button', { name: 'Settings' })));
     expect(app.getPathname()).toBe('/settings');
     expect(screen.getByText('Settings screen')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['/session/exercise/Plank', 'Exercise Plank'],
+    ['/session/exercise/history?id=Plank', 'History Plank without logs'],
+  ] as const)('opens %s over the workout in progress, and goes back to it', async (path, text) => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => router.push('/session'));
+    await act(() => router.push(path));
+    expect(screen.getByText(text)).toBeOnTheScreen();
+    await act(() => router.back());
+    expect(app.getPathname()).toBe('/session');
+    expect(screen.getByText('Workout in progress')).toBeOnTheScreen();
   });
 
   it('links to the component gallery in development', async () => {

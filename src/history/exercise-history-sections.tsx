@@ -199,10 +199,13 @@ export function SessionList({
   sessions,
   records,
   kind,
+  opensLogs,
 }: {
   sessions: ExerciseSession[];
   records: ExerciseRecord[];
   kind: SetKind;
+  /** Whether a workout opens its log; not during a workout, whose screen would be left. */
+  opensLogs: boolean;
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -214,8 +217,9 @@ export function SessionList({
       {sessions.map((session, index) => (
         <Pressable
           key={session.logId}
-          accessibilityRole="button"
-          accessibilityHint={t('history.open')}
+          accessibilityRole={opensLogs ? 'button' : undefined}
+          accessibilityHint={opensLogs ? t('history.open') : undefined}
+          disabled={!opensLogs}
           onPress={() =>
             router.push({ pathname: '/workout/log/[id]', params: { id: String(session.logId) } })
           }
