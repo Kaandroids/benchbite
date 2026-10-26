@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -14,23 +14,47 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
-import { useWeekdayFormat } from '@/i18n/dates';
-import { defaultUnits, useNumberFormat } from '@/i18n/units';
+import { addDays, toIsoDate, useDateFormat, weekStart } from '@/i18n/dates';
+import { defaultUnits, useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { StreakBadge } from '@/streak/streak-badge';
+import { WeekCard } from '@/today/week-card';
 import { useTheme } from '@/theme';
+import { weekSchedule } from '@/workouts/week-schedule';
+import type { WeekSession } from '@/workouts/workouts';
 
 // Example data that shows what the app does; none of it is the user's.
-const TRAINING_DAYS = [1, 3, 5];
-const SETS_KG = [
+const EXAMPLE_SETS = [
   { kg: 60, lb: 135, reps: 10 },
   { kg: 62.5, lb: 140, reps: 8 },
   { kg: 65, lb: 145, reps: 6 },
 ];
 const EATEN_KCAL = 920;
 const TARGET_KCAL = 1390;
-const MACRO_SHARES = { protein: 0.7, carbs: 0.5, fat: 0.4 } as const;
+const RING_SIZE = 140;
+// One weigh-in a week, drawn in a chart box of this size.
+const WEIGH_INS_KG = [82, 81.4, 80.9, 80.1, 79.4, 78.5];
+const CHART = { width: 300, height: 100 };
+const WEIGH_IN_POINTS = WEIGH_INS_KG.map((kg, index) => ({
+  x: 12 + (index * (CHART.width - 24)) / (WEIGH_INS_KG.length - 1),
+  y: 14 + ((82.5 - kg) / 4.5) * (CHART.height - 28),
+}));
+const WEIGH_IN_PATH = WEIGH_IN_POINTS.map(
+  (point, index) => `${index ? 'L' : 'M'}${point.x} ${point.y}`,
+).join(' ');
+const WEIGH_IN_LENGTH = WEIGH_IN_POINTS.slice(1).reduce(
+  (length, point, index) =>
+    length + Math.hypot(point.x - WEIGH_IN_POINTS[index]!.x, point.y - WEIGH_IN_POINTS[index]!.y),
+  0,
+);
+const EXAMPLE_MACROS = [
+  { key: 'protein', eaten: 105, target: 150 },
+  { key: 'carbs', eaten: 76, target: 152 },
+  { key: 'fat', eaten: 16, target: 39 },
+] as const;
 
 /** Delay between the parts of an illustration appearing. */
 const STEP_MS = 180;
@@ -48,119 +72,169 @@ export const SLIDES: { key: SlideKey; Illustration: () => ReactNode }[] = [
   { key: 'progress', Illustration: ProgressIllustration },
 ];
 
-/** A week with the training days filling in, and today's workout. */
+/**
+ * A week as Today shows it, on a Friday: workouts done, one moved and done the day after, one
+ * skipped, and today's still to come. Under it, the weight lost since the plan began.
+ */
 function PlanIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const weekday = useWeekdayFormat('narrow');
-  const upperCase = useUpperCase();
-  return (
-    <Card>
-      <Text variant="captionStrong" color="textMuted">
-        {upperCase(t('onboarding.welcome.slides.plan.week'))}
-      </Text>
-      <View style={styles.week}>
-        {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-          <View key={day} style={[styles.day, { gap: spacing.xs }]}>
-            <Text variant="captionStrong" color="textMuted">
-              {weekday(day)}
-            </Text>
-            <View style={[styles.dot, { backgroundColor: colors.track }]}>
-              {TRAINING_DAYS.includes(day) ? (
-                <Animated.View
-                  entering={ZoomIn.delay(STEP_MS * (TRAINING_DAYS.indexOf(day) + 1))}
-                  style={[
-                    StyleSheet.absoluteFill,
-                    styles.round,
-                    { backgroundColor: colors.primary },
-                  ]}
-                />
-              ) : null}
-            </View>
-          </View>
-        ))}
-      </View>
-      <Animated.View
-        entering={FadeInDown.delay(STEP_MS * 5)}
-        style={{
-          borderRadius: radii.md,
-          backgroundColor: colors.selected,
-          padding: spacing.md,
-        }}
-      >
-        <Text variant="captionStrong" color="primaryText">
-          {upperCase(t('onboarding.welcome.slides.plan.today'))}
-        </Text>
-        <Text variant="label">
-          {t('onboarding.welcome.slides.plan.workout', {
-            workout: t('workout.sessionTypes.upper'),
-            minutes: 45,
-          })}
-        </Text>
-      </Animated.View>
-    </Card>
-  );
-}
-
-/** A workout's sets being ticked off, ending in a new record. */
-function SetsIllustration() {
-  const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const { format } = useNumberFormat();
+  const weight = useWeightFormat();
+  const dateFormat = useDateFormat('medium');
   const unit = defaultUnits().weight;
+  const [friday] = useState(() => addDays(weekStart(new Date()), 4));
+  const started = addDays(friday, -7 * (WEIGH_INS_KG.length - 1));
   return (
-    <View>
-      <Card>
-        <Text variant="label">{t('onboarding.welcome.slides.sets.exercise')}</Text>
-        {SETS_KG.map((set, index) => (
-          <Animated.View
-            key={index}
-            entering={FadeInDown.delay(STEP_MS * index)}
-            style={[
-              styles.set,
-              {
-                gap: spacing.md,
-                borderRadius: radii.md,
-                backgroundColor: colors.background,
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-              },
-            ]}
-          >
-            <Text variant="captionStrong" color="textMuted">
-              {index + 1}
-            </Text>
-            <Text variant="bodyStrong" style={styles.flex}>
-              {`${format(unit === 'lb' ? set.lb : set.kg)} ${unit} × ${set.reps}`}
-            </Text>
-            <Animated.View
-              entering={ZoomIn.delay(STEP_MS * (index + 2))}
-              style={[styles.tick, { backgroundColor: colors.primary }]}
-            >
-              <Icon name="check" size={14} color="onPrimary" />
-            </Animated.View>
-          </Animated.View>
-        ))}
-      </Card>
+    <WeekCard
+      today={friday}
+      streak={{ count: 12, doneToday: true, days: {} }}
+      schedule={sampleSchedule(friday)}
+      onDayPress={() => undefined}
+    >
       <Animated.View
-        entering={ZoomIn.delay(STEP_MS * 6)}
+        entering={FadeInDown.delay(STEP_MS * 3)}
         style={[
-          styles.record,
+          styles.row,
           {
-            gap: spacing.xs,
+            gap: spacing.sm,
             borderRadius: radii.md,
-            backgroundColor: colors.inverseSurface,
+            backgroundColor: colors.selected,
             paddingHorizontal: spacing.md,
             paddingVertical: spacing.sm,
           },
         ]}
       >
-        <Icon name="trophy" size={16} color="primary" />
-        <Text variant="captionStrong" color="onInverse">
-          {t('onboarding.welcome.slides.sets.record')}
+        <Icon name="trend" size={16} color="primary" />
+        <Text variant="captionStrong" color="primaryText">
+          {t('onboarding.welcome.slides.plan.lost', {
+            weight: `${weight(WEIGH_INS_KG[0]! - WEIGH_INS_KG.at(-1)!, unit)} ${unit}`,
+            date: dateFormat(started),
+          })}
         </Text>
       </Animated.View>
-    </View>
+    </WeekCard>
+  );
+}
+
+/**
+ * Example workouts from Monday to Saturday: Monday done, Tuesday's moved to Wednesday and done
+ * there, Thursday's skipped, Friday's today and Saturday's to come.
+ */
+function sampleSchedule(friday: Date) {
+  const day = (weekday: number) => toIsoDate(addDays(weekStart(friday), weekday - 1));
+  const session = (workoutId: number, weekday: number, type: WeekSession['type']) => ({
+    workoutId,
+    weekday,
+    name: null,
+    type,
+    exercises: [],
+    estimatedMinutes: 45,
+  });
+  return weekSchedule(
+    [
+      session(1, 1, 'upper'),
+      session(2, 2, 'lower'),
+      session(3, 4, 'full_body'),
+      session(4, 5, 'upper'),
+      session(5, 6, 'lower'),
+    ],
+    [
+      { workoutId: 2, fromOn: day(2), toOn: day(3) },
+      { workoutId: 3, fromOn: day(4), toOn: null },
+    ],
+    [
+      { workoutId: 1, startedOn: day(1) },
+      { workoutId: 2, startedOn: day(3) },
+    ],
+    friday,
+  );
+}
+
+/** A workout's sets being ticked off, the last a new record. */
+function SetsIllustration() {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const { format } = useNumberFormat();
+  const unit = defaultUnits().weight;
+  const weightOf = (set: (typeof EXAMPLE_SETS)[number]) =>
+    `${format(unit === 'lb' ? set.lb : set.kg)} ${unit}`;
+  const best = EXAMPLE_SETS.at(-1)!;
+  return (
+    <Card>
+      <View style={[styles.row, { gap: spacing.md }]}>
+        <IconTile name="dumbbell" size={40} />
+        <View style={styles.flex}>
+          <Text variant="label">{t('onboarding.welcome.slides.sets.exercise')}</Text>
+          <Text variant="caption" color="textMuted">
+            {t('onboarding.welcome.slides.sets.detail', { count: EXAMPLE_SETS.length })}
+          </Text>
+        </View>
+      </View>
+      <View style={{ gap: spacing.xs }}>
+        {EXAMPLE_SETS.map((set, index) => {
+          const record = index === EXAMPLE_SETS.length - 1;
+          return (
+            <Animated.View
+              key={index}
+              entering={FadeInDown.delay(STEP_MS * index)}
+              style={[
+                styles.row,
+                {
+                  gap: spacing.md,
+                  borderRadius: radii.md,
+                  borderWidth: 1.5,
+                  borderColor: record ? colors.primary : 'transparent',
+                  backgroundColor: record ? colors.selected : colors.background,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.sm,
+                },
+              ]}
+            >
+              <Text variant="captionStrong" color="textMuted">
+                {index + 1}
+              </Text>
+              <Text variant="bodyStrong" style={styles.flex}>
+                {weightOf(set)}
+              </Text>
+              <Text variant="bodyStrong" color="textMuted">
+                {`× ${set.reps}`}
+              </Text>
+              <Animated.View
+                entering={ZoomIn.delay(STEP_MS * (index + 2))}
+                style={[styles.tick, { backgroundColor: colors.primary }]}
+              >
+                <Icon name={record ? 'trophy' : 'check'} size={14} color="onPrimary" />
+              </Animated.View>
+            </Animated.View>
+          );
+        })}
+      </View>
+      {/* The record, as the app announces one: a strip that slides in under the sets. */}
+      <Animated.View
+        entering={FadeInDown.delay(STEP_MS * 6).springify()}
+        style={[
+          styles.row,
+          {
+            gap: spacing.md,
+            borderRadius: radii.md,
+            backgroundColor: colors.primaryButton,
+            padding: spacing.md,
+          },
+        ]}
+      >
+        <Icon name="trophy" size={24} color="onPrimary" />
+        <View style={styles.flex}>
+          <Text variant="label" color="onPrimary">
+            {t('onboarding.welcome.slides.sets.record')}
+          </Text>
+          <Text variant="caption" color="onPrimary">
+            {t('onboarding.welcome.slides.sets.recordDetail', {
+              set: `${weightOf(best)} × ${best.reps}`,
+            })}
+          </Text>
+        </View>
+      </Animated.View>
+    </Card>
   );
 }
 
@@ -170,7 +244,7 @@ function FoodIllustration() {
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const ring = useDrawn(STEP_MS);
-  const radius = 44;
+  const radius = 58;
   const circumference = 2 * Math.PI * radius;
   const ringProps = useAnimatedProps(() => ({
     strokeDashoffset: circumference * (1 - (EATEN_KCAL / TARGET_KCAL) * ring.get()),
@@ -178,43 +252,38 @@ function FoodIllustration() {
   return (
     <Card style={[styles.row, { gap: spacing.lg }]}>
       <View style={styles.ring}>
-        <Svg width={110} height={110} viewBox="0 0 110 110">
-          <Circle cx={55} cy={55} r={radius} fill="none" stroke={colors.track} strokeWidth={12} />
+        <Svg width={RING_SIZE} height={RING_SIZE} viewBox="0 0 140 140">
+          <Circle cx={70} cy={70} r={radius} fill="none" stroke={colors.track} strokeWidth={14} />
           <AnimatedCircle
             animatedProps={ringProps}
-            cx={55}
-            cy={55}
+            cx={70}
+            cy={70}
             r={radius}
             fill="none"
             stroke={colors.primary}
-            strokeWidth={12}
+            strokeWidth={14}
             strokeLinecap="round"
             strokeDasharray={`${circumference} ${circumference}`}
-            transform="rotate(-90 55 55)"
+            transform="rotate(-90 70 70)"
           />
         </Svg>
         <View style={[StyleSheet.absoluteFill, styles.center]}>
-          <Text variant="label">{format(EATEN_KCAL)}</Text>
-          <Text variant="caption" color="textMuted">
+          <Text variant="headline">{format(EATEN_KCAL)}</Text>
+          <Text variant="captionStrong" color="textMuted">
             {t('onboarding.welcome.slides.food.of', { total: format(TARGET_KCAL) })}
           </Text>
         </View>
       </View>
       <View style={[styles.flex, { gap: spacing.sm }]}>
-        {(Object.keys(MACRO_SHARES) as (keyof typeof MACRO_SHARES)[]).map((macro, index) => (
-          <View key={macro} style={{ gap: spacing.xs }}>
-            <Text variant="captionStrong" color="textMuted">
-              {t(`nutrition.macros.${macro}`)}
-            </Text>
-            <View style={[styles.bar, { backgroundColor: colors.track }]}>
-              <Animated.View
-                entering={FadeInDown.delay(STEP_MS * (index + 2))}
-                style={[
-                  styles.bar,
-                  { width: `${MACRO_SHARES[macro] * 100}%`, backgroundColor: colors[macro] },
-                ]}
-              />
+        {EXAMPLE_MACROS.map(({ key, eaten, target }) => (
+          <View key={key} style={{ gap: spacing.xs }}>
+            <View style={[styles.row, styles.between]}>
+              <Text variant="captionStrong" color="textMuted">
+                {t(`nutrition.macros.${key}`)}
+              </Text>
+              <Text variant="captionStrong">{`${format(eaten)} / ${format(target)} g`}</Text>
             </View>
+            <ProgressBar value={eaten / target} color={key} />
           </View>
         ))}
       </View>
@@ -222,44 +291,100 @@ function FoodIllustration() {
   );
 }
 
-/** The weight going down over the weeks, a streak and the days trained. */
+/** Weekly weigh-ins going down, the change since the first and a streak. */
 function ProgressIllustration() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const upperCase = useUpperCase();
+  const weight = useWeightFormat();
+  const unit = defaultUnits().weight;
   const line = useDrawn(STEP_MS);
-  const length = 320;
-  const lineProps = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - line.get()) }));
+  const lineProps = useAnimatedProps(() => ({
+    strokeDashoffset: WEIGH_IN_LENGTH * (1 - line.get()),
+  }));
+  const areaProps = useAnimatedProps(() => ({ fillOpacity: 0.16 * line.get() }));
+  const first = WEIGH_INS_KG[0]!;
+  const last = WEIGH_INS_KG[WEIGH_INS_KG.length - 1]!;
   return (
     <Card>
       <View style={[styles.row, styles.between]}>
         <Text variant="captionStrong" color="textMuted" style={styles.flex}>
           {upperCase(t('onboarding.welcome.slides.progress.weight'))}
         </Text>
-        <Animated.View entering={ZoomIn.delay(STEP_MS * 6)}>
+        <Animated.View entering={ZoomIn.delay(STEP_MS * 7)}>
           <StreakBadge streak={{ count: 12, doneToday: true, days: {} }} />
         </Animated.View>
       </View>
-      <Svg width="100%" height={110} viewBox="0 0 300 110" preserveAspectRatio="none">
-        <Path d="M0 104 H300" stroke={colors.track} strokeWidth={2} />
-        <AnimatedPath
-          animatedProps={lineProps}
-          d="M8 22 C 50 26, 70 40, 100 46 S 150 54, 180 68 S 250 84, 292 88"
-          fill="none"
-          stroke={colors.primary}
-          strokeWidth={4}
-          strokeLinecap="round"
-          strokeDasharray={`${length} ${length}`}
-        />
-      </Svg>
-      <View style={[styles.row, { gap: spacing.xs }]}>
-        {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-          <Animated.View
-            key={day}
-            entering={ZoomIn.delay(STEP_MS * 2 + day * 60)}
-            style={[styles.done, { backgroundColor: day === 5 ? colors.track : colors.primary }]}
+      <View style={[styles.row, { gap: spacing.sm }]}>
+        <Text variant="headline">{`${weight(last, unit)} ${unit}`}</Text>
+        <Animated.View
+          entering={ZoomIn.delay(STEP_MS * 6)}
+          style={{
+            borderRadius: radii.full,
+            backgroundColor: colors.selected,
+            paddingHorizontal: spacing.sm,
+            paddingVertical: 2,
+          }}
+        >
+          <Text variant="captionStrong" color="primaryText">
+            {`−${weight(first - last, unit)} ${unit}`}
+          </Text>
+        </Animated.View>
+      </View>
+      <Svg width="100%" height={CHART.height} viewBox={`0 0 ${CHART.width} ${CHART.height}`}>
+        {[0.25, 0.5, 0.75].map((share) => (
+          <Path
+            key={share}
+            d={`M0 ${CHART.height * share} H${CHART.width}`}
+            stroke={colors.track}
+            strokeWidth={1.5}
+            strokeDasharray="4 6"
           />
         ))}
+        <AnimatedPath
+          animatedProps={areaProps}
+          d={`${WEIGH_IN_PATH} L${WEIGH_IN_POINTS.at(-1)!.x} ${CHART.height} L${WEIGH_IN_POINTS[0]!.x} ${CHART.height} Z`}
+          fill={colors.primary}
+        />
+        <AnimatedPath
+          animatedProps={lineProps}
+          d={WEIGH_IN_PATH}
+          fill="none"
+          stroke={colors.primary}
+          strokeWidth={3.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={`${WEIGH_IN_LENGTH} ${WEIGH_IN_LENGTH}`}
+        />
+      </Svg>
+      {/* The weigh-ins, as dots over the line, in a row of their own so they can pop in. */}
+      <View
+        style={[styles.points, { height: CHART.height, marginTop: -CHART.height - spacing.md }]}
+      >
+        {WEIGH_IN_POINTS.map((point, index) => (
+          <Animated.View
+            key={index}
+            entering={ZoomIn.delay(STEP_MS * (index + 1))}
+            style={[
+              styles.point,
+              {
+                left: `${(point.x / CHART.width) * 100}%`,
+                top: point.y,
+                borderColor: colors.primary,
+                backgroundColor:
+                  index === WEIGH_IN_POINTS.length - 1 ? colors.primary : colors.surface,
+              },
+            ]}
+          />
+        ))}
+      </View>
+      <View style={[styles.row, styles.between]}>
+        <Text variant="caption" color="textMuted">
+          {t('onboarding.welcome.slides.progress.week', { week: 1 })}
+        </Text>
+        <Text variant="caption" color="textMuted">
+          {t('onboarding.welcome.slides.progress.week', { week: WEIGH_INS_KG.length })}
+        </Text>
       </View>
     </Card>
   );
@@ -277,39 +402,12 @@ function useDrawn(delay: number) {
 }
 
 const styles = StyleSheet.create({
-  week: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  day: {
-    alignItems: 'center',
-  },
-  dot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  round: {
-    borderRadius: 16,
-  },
-  set: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   tick: {
     width: 24,
     height: 24,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  record: {
-    position: 'absolute',
-    right: -8,
-    top: -16,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   row: {
     flexDirection: 'row',
@@ -319,21 +417,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   ring: {
-    width: 110,
-    height: 110,
+    width: RING_SIZE,
+    height: RING_SIZE,
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bar: {
-    height: 8,
-    borderRadius: 4,
+  points: {
+    position: 'relative',
   },
-  done: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
+  point: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    marginLeft: -6,
+    marginTop: -6,
+    borderRadius: 6,
+    borderWidth: 3,
   },
   flex: {
     flex: 1,

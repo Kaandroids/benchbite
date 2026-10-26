@@ -463,25 +463,26 @@
         "plan": {
           "title": "Ein Plan, gemacht für dich",
           "body": "Abgestimmt auf dein Ziel, deine Tage und deine Ausrüstung, in etwa 2 Minuten.",
-          "week": "Deine Woche",
-          "today": "Heute",
-          "workout": "{{workout}} · {{minutes}} Min."
+          "lost": "−{{weight}} seit {{date}}"
         },
         "sets": {
           "title": "Jeder Satz zählt",
           "body": "Notiere beim Training, pausiere mit Timer und sieh deine Rekorde fallen.",
           "exercise": "Bankdrücken",
-          "record": "Neuer Rekord!"
+          "record": "Neuer Rekord!",
+          "detail": "{{count}} Sätze · 1:30 Pause",
+          "recordDetail": "Dein bisher schwerster Satz: {{set}}"
         },
         "food": {
           "title": "Iss für dein Ziel",
           "body": "Kalorien und Makros, die zu deinem Training passen, jeden Tag.",
-          "of": "von {{total}}"
+          "of": "von {{total}} kcal"
         },
         "progress": {
           "title": "Sieh deinen Fortschritt",
           "body": "Dein Gewicht, deine Serie und deine Rekorde, Woche für Woche.",
-          "weight": "Dein Gewicht"
+          "weight": "Dein Gewicht",
+          "week": "Woche {{week}}"
         }
       }
     },

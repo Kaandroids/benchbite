@@ -463,25 +463,26 @@
         "plan": {
           "title": "Sana özel bir plan",
           "body": "Hedefine, günlerine ve ekipmanına göre, yaklaşık 2 dakikada.",
-          "week": "Haftan",
-          "today": "Bugün",
-          "workout": "{{workout}} · {{minutes}} dk"
+          "lost": "{{date}} tarihinden beri −{{weight}}"
         },
         "sets": {
           "title": "Her set önemli",
           "body": "Kaldırırken kaydet, zamanlayıcıyla dinlen, rekorlarını kır.",
           "exercise": "Bench press",
-          "record": "Yeni rekor!"
+          "record": "Yeni rekor!",
+          "detail": "{{count}} set · 1:30 dinlenme",
+          "recordDetail": "Şimdiye kadarki en ağır setin: {{set}}"
         },
         "food": {
           "title": "Hedefine göre beslen",
           "body": "Antrenmanına uyan kalori ve makrolar, her gün.",
-          "of": "/ {{total}}"
+          "of": "/ {{total}} kcal"
         },
         "progress": {
           "title": "Gelişimini gör",
           "body": "Kilon, serin ve rekorların, hafta hafta.",
-          "weight": "Kilon"
+          "weight": "Kilon",
+          "week": "{{week}}. hafta"
         }
       }
     },

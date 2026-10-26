@@ -463,25 +463,26 @@
         "plan": {
           "title": "A plan made for you",
           "body": "Built around your goal, your days and your gear, in about 2 minutes.",
-          "week": "Your week",
-          "today": "Today",
-          "workout": "{{workout}} · {{minutes}} min"
+          "lost": "−{{weight}} since {{date}}"
         },
         "sets": {
           "title": "Every set counts",
           "body": "Log as you lift, rest with a timer, and see your records fall.",
           "exercise": "Bench press",
-          "record": "New record!"
+          "record": "New record!",
+          "detail": "{{count}} sets · rest 1:30",
+          "recordDetail": "Your heaviest {{set}} yet"
         },
         "food": {
           "title": "Eat for your goal",
           "body": "Calories and macros that fit your training, every day.",
-          "of": "of {{total}}"
+          "of": "of {{total}} kcal"
         },
         "progress": {
           "title": "See your progress",
           "body": "Your weight, your streak and your records, week after week.",
-          "weight": "Your weight"
+          "weight": "Your weight",
+          "week": "Week {{week}}"
         }
       }
     },
