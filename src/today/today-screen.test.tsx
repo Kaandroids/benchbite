@@ -9,7 +9,8 @@ import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
 import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
-import { greetingOf, TodayScreen } from './today-screen';
+import { greetingOf } from './greeting';
+import { TodayScreen } from './today-screen';
 import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));

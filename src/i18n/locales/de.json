@@ -485,7 +485,8 @@
     },
     "nickname": {
       "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",
-      "skip": "Überspringen"
+      "skip": "Erst mal überspringen",
+      "preview": "Auf Heute"
     },
     "goal": {
       "descriptions": {
@@ -493,80 +494,89 @@
         "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
         "get_stronger": "Schritt für Schritt schwerer heben",
         "stay_healthy": "Fit fühlen und in Balance bleiben"
+      },
+      "effects": {
+        "title": "Dein Plan mit diesem Ziel",
+        "empty": "Wähle ein Ziel, um zu sehen, was es in deinem Plan festlegt.",
+        "calories": "Kalorien",
+        "training": "Training",
+        "progress": "Fortschritt",
+        "lose_fat": {
+          "calories": "Ein moderates Defizit",
+          "training": "Kraft, um Muskeln zu halten",
+          "progress": "Stetig und machbar"
+        },
+        "build_muscle": {
+          "calories": "Ein kleiner Überschuss",
+          "training": "Jede Woche etwas mehr",
+          "progress": "Woche für Woche mehr"
+        },
+        "get_stronger": {
+          "calories": "Hält dein Gewicht",
+          "training": "Schwer, mit langen Pausen",
+          "progress": "Alle paar Wochen stärker"
+        },
+        "stay_healthy": {
+          "calories": "Hält dein Gewicht",
+          "training": "Ein ausgewogener Mix",
+          "progress": "Gewohnheiten, die bleiben"
+        }
       }
     },
     "goalInsight": {
-      "how": "So bringen wir dich dahin:",
+      "week": "Woche {{week}}",
       "lose_fat": {
-        "title": "Fett verlieren heißt dranbleiben",
-        "titleNamed": "{{name}}, Fett verlieren heißt dranbleiben",
-        "from": "Heute",
-        "to": "Dein Ziel",
-        "first": {
-          "title": "Ein moderates Kaloriendefizit",
-          "body": "Genug für Fortschritt, ohne zu hungern."
+        "title": "Fett verlieren heißt <accent>dranbleiben</accent>",
+        "titleNamed": "{{name}}, Fett verlieren heißt <accent>dranbleiben</accent>",
+        "scene": {
+          "label": "Gewicht",
+          "detail": "Tägliches Wiegen und der Wochentrend",
+          "chip": "−{{weight}} pro Woche im Schnitt"
         },
-        "second": {
-          "title": "Krafttraining",
-          "body": "Damit du Fett verlierst, keine Muskeln."
-        },
-        "third": {
-          "title": "Ein Tempo, das du hältst",
-          "body": "Kleine, stetige Schritte schlagen jede Crash-Diät."
+        "tips": {
+          "trend": "<strong>Schwankungen sind normal.</strong> Wir folgen dem Trend.",
+          "time": "Erste Veränderungen nach <strong>3–4 Wochen</strong>.",
+          "weighIn": "<strong>Wiege dich</strong> ein paarmal pro Woche für einen klaren Trend."
         }
       },
       "build_muscle": {
-        "title": "Muskeln wachsen Woche für Woche",
-        "titleNamed": "{{name}}, Muskeln wachsen Woche für Woche",
-        "from": "Woche 1",
-        "to": "Woche 12",
-        "first": {
-          "title": "Ein kleiner Kalorienüberschuss",
-          "body": "Genug zum Aufbauen, ohne Fett anzusetzen."
+        "title": "Muskeln wachsen <accent>Woche für Woche</accent>",
+        "titleNamed": "{{name}}, Muskeln wachsen <accent>Woche für Woche</accent>",
+        "scene": {
+          "label": "Bankdrücken",
+          "detail": "Bester Satz, alle 4 Wochen"
         },
-        "second": {
-          "title": "Jede Woche ein bisschen mehr",
-          "body": "Gewicht oder Wiederholungen steigen Schritt für Schritt."
-        },
-        "third": {
-          "title": "Protein jeden Tag",
-          "body": "Daraus werden neue Muskeln gebaut."
+        "tips": {
+          "sleep": "Im <strong>Schlaf</strong> wachsen Muskeln: 7–9 Stunden sind ideal.",
+          "more": "<strong>Steigere</strong> Gewicht oder Wiederholungen, wenn es leicht fällt.",
+          "time": "Sichtbare Erfolge brauchen <strong>8–12 Wochen</strong>."
         }
       },
       "get_stronger": {
-        "title": "Kraft wächst Schritt für Schritt",
-        "titleNamed": "{{name}}, Kraft wächst Schritt für Schritt",
-        "from": "Heute",
-        "to": "Schwerere Gewichte",
-        "first": {
-          "title": "Schwerer, mit weniger Wiederholungen",
-          "body": "Das macht dich stärker."
+        "title": "Kraft wächst <accent>Schritt für Schritt</accent>",
+        "titleNamed": "{{name}}, Kraft wächst <accent>Schritt für Schritt</accent>",
+        "scene": {
+          "label": "Kniebeuge",
+          "detail": "Schwerster Satz mit 5 Wiederholungen",
+          "chip": "+{{weight}} pro Schritt"
         },
-        "second": {
-          "title": "Längere Pausen",
-          "body": "Damit jeder Satz deine volle Kraft bekommt."
-        },
-        "third": {
-          "title": "Genug Essen zur Erholung",
-          "body": "Kalorien, die dein Gewicht halten."
+        "tips": {
+          "steps": "<strong>Kleine Sprünge</strong> ergeben große Gewichte.",
+          "lighter": "Alle 4–6 Wochen eine <strong>leichtere Woche</strong>.",
+          "records": "Jede <strong>neue Bestleistung</strong> wird markiert."
         }
       },
       "stay_healthy": {
-        "title": "Gesund bleiben heißt Balance",
-        "titleNamed": "{{name}}, gesund bleiben heißt Balance",
-        "from": "Jede Woche",
-        "to": "Über Jahre",
-        "first": {
-          "title": "Kalorien, die dein Gewicht halten",
-          "body": "Kein Defizit, kein Überschuss."
+        "title": "Gesund bleiben heißt <accent>Balance</accent>",
+        "titleNamed": "{{name}}, gesund bleiben heißt <accent>Balance</accent>",
+        "scene": {
+          "label": "Diese Woche",
+          "detail": "3 von 3 Workouts erledigt"
         },
-        "second": {
-          "title": "Krafttraining",
-          "body": "Ein paar Mal pro Woche hält dich stark."
-        },
-        "third": {
-          "title": "Gewohnheiten, die bleiben",
-          "body": "Kleine, stetige Routinen, die dir Spaß machen."
+        "tips": {
+          "enough": "<strong>2–3 Workouts</strong> pro Woche reichen.",
+          "moved": "Einen Tag verpasst? <strong>Verschieb das Workout</strong> einfach.",
+          "habits": "Kleine Gewohnheiten <strong>summieren sich</strong>."
         }
       }
     },

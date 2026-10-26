@@ -5,6 +5,9 @@ import type { NutritionTargets, WorkoutPlan } from './plan';
 
 type Enums = Database['public']['Enums'];
 
+/** What the user wants to achieve, which shapes both the training and the calories. */
+export type Goal = Enums['goal_kind'];
+
 /**
  * The answers collected during the onboarding. Every field is optional until its step is
  * answered. Measurements are metric, whatever unit the user picked.
@@ -12,7 +15,7 @@ type Enums = Database['public']['Enums'];
 export type OnboardingAnswers = {
   /** What to call the user, without spaces around it; none if they skipped it. */
   displayName?: string;
-  goal?: Enums['goal_kind'];
+  goal?: Goal;
   /** The privacy policy version the user consented to for health data. */
   consentedPolicyVersion?: string;
   sex?: Enums['sex'];
