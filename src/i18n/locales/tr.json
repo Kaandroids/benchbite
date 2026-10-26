@@ -668,11 +668,14 @@
       }
     },
     "trainingDays": {
+      "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",
       "count_one": "Haftada {{count}} gün",
       "count_other": "Haftada {{count}} gün",
       "recommended": "Deneyimine göre önerilen",
       "maxReached": "Haftada en az bir dinlenme günü bırak.",
-      "minReached": "En az bir gün seç."
+      "minReached": "En az bir gün seç.",
+      "week": "Haftan",
+      "restAfter": "Her antrenmandan sonra bir dinlenme günü"
     },
     "setup": {
       "descriptions": {

@@ -668,11 +668,14 @@
       }
     },
     "trainingDays": {
+      "intro": "We picked days for your experience. Tap a day to change them.",
       "count_one": "{{count}} day a week",
       "count_other": "{{count}} days a week",
       "recommended": "Recommended for your experience",
       "maxReached": "Keep at least one rest day a week.",
-      "minReached": "Choose at least one day."
+      "minReached": "Choose at least one day.",
+      "week": "Your week",
+      "restAfter": "A rest day after each workout"
     },
     "setup": {
       "descriptions": {

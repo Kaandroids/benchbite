@@ -668,11 +668,14 @@
       }
     },
     "trainingDays": {
+      "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",
       "count_one": "{{count}} Tag pro Woche",
       "count_other": "{{count}} Tage pro Woche",
       "recommended": "Für deine Erfahrung empfohlen",
       "maxReached": "Plane mindestens einen Ruhetag pro Woche ein.",
-      "minReached": "Wähle mindestens einen Tag."
+      "minReached": "Wähle mindestens einen Tag.",
+      "week": "Deine Woche",
+      "restAfter": "Ein Ruhetag nach jedem Workout"
     },
     "setup": {
       "descriptions": {
