@@ -9,7 +9,12 @@ import { WelcomeStep } from './welcome';
 
 let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+  // The welcome is in focus the whole test.
+  useFocusEffect: (effect: () => void) =>
+    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
+}));
 jest.mock('@/providers/session-provider', () => ({ useIsAccount: jest.fn(() => false) }));
 
 const slides = () => screen.getByRole('adjustable');
@@ -37,14 +42,16 @@ describe('WelcomeStep', () => {
     expect(screen.getByText('A plan made for you')).toBeTruthy();
   });
 
-  it('plays the slides once and stops on the last', async () => {
+  it('plays the slides and starts again after the last', async () => {
     jest.useFakeTimers();
     await render(<WelcomeStep />);
-    for (let step = 0; step < 5; step++) {
+    for (let step = 0; step < 3; step++) {
       await act(() => jest.advanceTimersByTime(SLIDE_MS));
     }
     expect(screen.getByText('See your progress')).toBeTruthy();
     expect(slides()).toHaveAccessibilityValue({ text: '4 of 4' });
+    await act(() => jest.advanceTimersByTime(SLIDE_MS));
+    expect(screen.getByText('A plan made for you')).toBeTruthy();
   });
 
   it('opens the log in for someone who has an account', async () => {
