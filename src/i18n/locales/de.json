@@ -494,6 +494,33 @@
         "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
         "get_stronger": "Schritt für Schritt schwerer heben",
         "stay_healthy": "Fit fühlen und in Balance bleiben"
+      },
+      "effects": {
+        "title": "Dein Plan mit diesem Ziel",
+        "empty": "Wähle ein Ziel, um zu sehen, was es in deinem Plan festlegt.",
+        "calories": "Kalorien",
+        "training": "Training",
+        "progress": "Fortschritt",
+        "lose_fat": {
+          "calories": "Ein moderates Defizit",
+          "training": "Krafttraining, um deine Muskeln zu halten",
+          "progress": "Stetiger Verlust, den du durchhältst"
+        },
+        "build_muscle": {
+          "calories": "Ein kleiner Überschuss",
+          "training": "Jede Woche etwas mehr Gewicht oder Wiederholungen",
+          "progress": "Sauberer Aufbau, Woche für Woche"
+        },
+        "get_stronger": {
+          "calories": "Genug, um dein Gewicht zu halten",
+          "training": "Schwere Grundübungen mit langen Pausen",
+          "progress": "Alle paar Wochen stärker"
+        },
+        "stay_healthy": {
+          "calories": "Genug, um dein Gewicht zu halten",
+          "training": "Eine ausgewogene Mischung, ein paar Mal pro Woche",
+          "progress": "Gewohnheiten, die bleiben"
+        }
       }
     },
     "goalInsight": {

@@ -494,6 +494,33 @@
         "build_muscle": "Gain muscle with a small surplus",
         "get_stronger": "Lift heavier, step by step",
         "stay_healthy": "Feel fit and keep a balance"
+      },
+      "effects": {
+        "title": "Your plan with this goal",
+        "empty": "Pick a goal to see what it sets in your plan.",
+        "calories": "Calories",
+        "training": "Training",
+        "progress": "Progress",
+        "lose_fat": {
+          "calories": "A moderate deficit",
+          "training": "Strength training to keep your muscle",
+          "progress": "Steady loss you can keep"
+        },
+        "build_muscle": {
+          "calories": "A small surplus",
+          "training": "A little more weight or reps each week",
+          "progress": "Lean gain, week by week"
+        },
+        "get_stronger": {
+          "calories": "Enough to keep your weight",
+          "training": "Heavy main lifts with long rests",
+          "progress": "Stronger every few weeks"
+        },
+        "stay_healthy": {
+          "calories": "Enough to keep your weight",
+          "training": "A balanced mix, a few times a week",
+          "progress": "Habits that last"
+        }
       }
     },
     "goalInsight": {
