@@ -13,6 +13,12 @@ import { Icon, type IconName } from './icon';
 import { RaisedPressable } from './raised-pressable';
 import { Text } from './text';
 
+/** The two sizes of a card: its least height, its icon tile and icon, and its vertical padding. */
+const SIZES = {
+  regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
+  compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
+} as const;
+
 type ChoiceCardProps = {
   title: string;
   description?: string;
@@ -35,6 +41,7 @@ export function ChoiceCard({
   compact = false,
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
+  const size = SIZES[compact ? 'compact' : 'regular'];
   const scale = useSharedValue(1);
   const isFirstRender = useRef(true);
 
@@ -66,10 +73,10 @@ export function ChoiceCard({
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
-          compact ? styles.compactFace : null,
           {
+            minHeight: size.minHeight,
             gap: spacing.md,
-            padding: compact ? spacing.sm : spacing.md,
+            paddingVertical: spacing[size.padding],
             paddingHorizontal: spacing.md,
             backgroundColor: selected ? colors.selected : colors.surface,
             borderColor: selected ? colors.primary : colors.border,
@@ -79,14 +86,16 @@ export function ChoiceCard({
         {icon ? (
           <View
             style={[
-              compact ? styles.compactIconTile : styles.iconTile,
+              styles.iconTile,
               {
+                width: size.tile,
+                height: size.tile,
                 borderRadius: radii.md,
                 backgroundColor: selected ? colors.primary : colors.iconBackground,
               },
             ]}
           >
-            <Icon name={icon} size={compact ? 18 : 22} color={selected ? 'onPrimary' : 'primary'} />
+            <Icon name={icon} size={size.icon} color={selected ? 'onPrimary' : 'primary'} />
           </View>
         ) : null}
         <View style={styles.text}>
@@ -121,20 +130,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 2,
-    minHeight: 68,
-  },
-  compactFace: {
-    minHeight: 56,
-  },
-  compactIconTile: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   iconTile: {
-    width: 44,
-    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
