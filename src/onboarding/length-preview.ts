@@ -23,6 +23,28 @@ export function previewOf(plan: Plan): LengthPreview | null {
 }
 
 /**
+ * The minutes of each part, rounded so that together they make the rounded whole: each part is
+ * the difference between rounded running totals, so the strip never adds up to more than the
+ * workout takes.
+ */
+export function partMinutes(time: SessionTime): SessionTime {
+  let seconds = 0;
+  let shown = 0;
+  const minutes = (part: number) => {
+    seconds += part;
+    const rounded = Math.round(seconds / 60) - shown;
+    shown += rounded;
+    return rounded;
+  };
+  return {
+    warmUp: minutes(time.warmUp),
+    main: minutes(time.main),
+    extras: minutes(time.extras),
+    conditioning: minutes(time.conditioning),
+  };
+}
+
+/**
  * What the given length holds for the user's answers. The plan builder is asked about every
  * length at once when the step opens, so switching between them shows the answer straight away;
  * the answers it depends on are fixed by then. It is not asked again on failure: the preview is

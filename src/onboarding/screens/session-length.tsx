@@ -13,7 +13,7 @@ import { type ColorTokens, useTheme } from '@/theme';
 import type { SessionMinutes } from '@shared/plan/limits';
 import type { SessionTime } from '@shared/plan/types';
 
-import { useLengthPreview, type LengthPreview } from '../length-preview';
+import { partMinutes, useLengthPreview, type LengthPreview } from '../length-preview';
 import { SESSION_MINUTES } from '../training';
 import { useStep } from '../use-step';
 
@@ -140,6 +140,7 @@ function WorkoutCard({ preview, failed }: { preview?: LengthPreview | null; fail
   const { colors, radii, spacing } = useTheme();
   const upperCase = useUpperCase();
   const parts = preview ? PARTS.filter(({ key }) => preview.time[key] > 0) : [];
+  const minutes = preview ? partMinutes(preview.time) : null;
   return (
     <Card style={{ gap: spacing.md }}>
       <Text variant="captionStrong" color="textMuted">
@@ -162,9 +163,7 @@ function WorkoutCard({ preview, failed }: { preview?: LengthPreview | null; fail
                 <Text variant="bodyStrong" style={styles.flex}>
                   {t(`onboarding.sessionLength.${key}`)}
                 </Text>
-                <Text color="textMuted">
-                  {t('onboarding.minutes', { count: Math.round(preview.time[key] / 60) })}
-                </Text>
+                <Text color="textMuted">{t('onboarding.minutes', { count: minutes![key] })}</Text>
               </View>
             ))}
           </View>
@@ -180,9 +179,6 @@ function WorkoutCard({ preview, failed }: { preview?: LengthPreview | null; fail
 }
 
 const styles = StyleSheet.create({
-  center: {
-    alignItems: 'center',
-  },
   strip: {
     flexDirection: 'row',
     height: 24,
