@@ -3,18 +3,20 @@ import Svg, { Circle, Defs, Mask, Rect } from 'react-native-svg';
 
 import { useTheme } from '@/theme';
 
-import { BITE_CIRCLES, BRAND_ORANGE, BRAND_ORANGE_DARK, HOLE, MARK_BOX, PLATE, RING } from './mark';
+import { BITE_CIRCLES, HOLE, MARK_BOX, PLATE, RING } from './mark';
 
 type BrandMarkProps = {
   /** The width and height of the mark's box; the plate takes about two thirds of it. */
   size: number;
-  /** Defaults to the brand orange of the current theme. */
-  color?: string;
 };
 
-/** The Benchbite mark, the bitten plate, cut out so that any background shows through. */
-export function BrandMark({ size, color }: BrandMarkProps) {
-  const { scheme } = useTheme();
+/**
+ * The Benchbite mark, the bitten plate, cut out so that any background shows through. In the app
+ * it takes the theme's orange, which keeps at least 3:1 with the background; the brighter brand
+ * orange of the icon and the splash would not on the light background.
+ */
+export function BrandMark({ size }: BrandMarkProps) {
+  const { colors } = useTheme();
   // Each mark needs its own mask, as several can be on screen at once.
   // React's ids contain colons, which do not work in an SVG url().
   const maskId = `brand-mark-${useId().replace(/[^\w-]/g, '')}`;
@@ -49,12 +51,7 @@ export function BrandMark({ size, color }: BrandMarkProps) {
           ))}
         </Mask>
       </Defs>
-      <Rect
-        width={MARK_BOX}
-        height={MARK_BOX}
-        fill={color ?? (scheme === 'dark' ? BRAND_ORANGE_DARK : BRAND_ORANGE)}
-        mask={`url(#${maskId})`}
-      />
+      <Rect width={MARK_BOX} height={MARK_BOX} fill={colors.primary} mask={`url(#${maskId})`} />
     </Svg>
   );
 }
