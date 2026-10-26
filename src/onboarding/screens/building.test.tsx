@@ -82,6 +82,19 @@ describe('BuildingStep', () => {
     expect(seeMyPlan()).toBeTruthy();
   });
 
+  it.each([
+    [{ goal: 'build_muscle', weeklyPaceKg: 0.25, weightUnit: 'kg' }, 'gaining 0.25 kg'],
+    // 0.25 lb is stored as 0.11 kg and read back as the pace step offers it.
+    [{ goal: 'build_muscle', weeklyPaceKg: 0.11, weightUnit: 'lb' }, 'gaining 0.25 lb'],
+    [{ goal: 'lose_fat', weeklyPaceKg: 0.45, weightUnit: 'lb' }, 'losing 1 lb'],
+  ] as const)('repeats the pace as it was picked: %o', async (answers, line) => {
+    mockStep = createStep({ ...answers, setup: 'gym', trainingDays: [1] });
+    jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
+    jest.mocked(generatePlan).mockResolvedValue(PLAN);
+    await render(<BuildingStep />);
+    expect(screen.getByText(`Calories for ${line} a week`)).toBeTruthy();
+  });
+
   it('says what the calories are for when the weight stays', async () => {
     mockStep = createStep({ goal: 'get_stronger', setup: 'bodyweight', trainingDays: [2] });
     jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
