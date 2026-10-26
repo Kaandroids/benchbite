@@ -584,7 +584,7 @@
       "intro": "Wir brauchen dein Okay für ein paar Gesundheitsdaten.",
       "what": {
         "title": "Was wir erfassen",
-        "body": "Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
+        "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
       },
       "why": {
         "title": "Wofür",
@@ -592,7 +592,7 @@
       },
       "control": {
         "title": "Deine Kontrolle",
-        "body": "Nur du siehst sie. Jederzeit widerrufbar."
+        "body": "Nur du kannst sie sehen. Widerrufe jederzeit."
       },
       "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
       "policy": "Datenschutzerklärung lesen",

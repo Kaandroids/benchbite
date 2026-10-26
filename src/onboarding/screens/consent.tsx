@@ -21,6 +21,9 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
   { key: 'control', icon: 'shield' },
 ];
 
+/** The space above and below each point, between the theme's medium and large. */
+const ROW_PADDING = 20;
+
 /**
  * Explicit consent to process health data (GDPR Article 9), before any body data is asked. The
  * box starts unticked; leaving it unticked is how to decline, and a link explains why the
@@ -59,7 +62,7 @@ export function ConsentStep() {
       progress={progress}
       onBack={back}
       footer={
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.md }}>
           <Button
             label={t('common.continue')}
             disabled={!agreed}
@@ -88,16 +91,16 @@ export function ConsentStep() {
               styles.point,
               {
                 gap: spacing.md,
-                paddingVertical: spacing.md,
+                paddingVertical: ROW_PADDING,
                 borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
                 borderTopColor: colors.border,
               },
             ]}
           >
-            <IconTile name={icon} size={36} />
+            <IconTile name={icon} size={40} />
             <View style={styles.pointText}>
               <Text variant="label">{t(`onboarding.consent.${key}.title`)}</Text>
-              <Text variant="caption" color="textMuted">
+              <Text variant="body" color="textMuted">
                 {t(`onboarding.consent.${key}.body`)}
               </Text>
             </View>

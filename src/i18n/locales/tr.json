@@ -584,15 +584,15 @@
       "intro": "Birkaç sağlık bilgisini kullanmak için onayın gerekiyor.",
       "what": {
         "title": "Ne topluyoruz",
-        "body": "Cinsiyet, yaş, boy, kilo, aktivite ve antrenman."
+        "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın."
       },
       "why": {
         "title": "Ne için",
-        "body": "Sadece kalori hedeflerin ve antrenman planın."
+        "body": "Sadece kalori hedeflerin ve antrenman planın için."
       },
       "control": {
         "title": "Kontrol sende",
-        "body": "Sadece sen görürsün. İstediğin an geri çek."
+        "body": "Sadece sen görebilirsin. Onayını istediğin an geri çek."
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
       "policy": "Gizlilik politikasını oku",

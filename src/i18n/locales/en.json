@@ -584,15 +584,15 @@
       "intro": "We need your OK to use a few health details.",
       "what": {
         "title": "What we collect",
-        "body": "Sex, age, height, weight, activity and training."
+        "body": "Your sex, age, height, weight, activity and training."
       },
       "why": {
         "title": "Used for",
-        "body": "Only your calorie targets and workout plan."
+        "body": "Only to set your calorie targets and build your workout plan."
       },
       "control": {
         "title": "Your control",
-        "body": "Only you see it. Withdraw any time."
+        "body": "Only you can see it. Withdraw your consent any time."
       },
       "agree": "I agree that Benchbite processes my health data for these purposes.",
       "policy": "Read the privacy policy",
