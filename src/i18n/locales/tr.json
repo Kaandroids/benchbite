@@ -461,28 +461,32 @@
       "slide": "{{current}} / {{count}}",
       "slides": {
         "plan": {
-          "title": "Sana özel bir plan",
-          "body": "Hedefine, günlerine ve ekipmanına göre, yaklaşık 2 dakikada.",
-          "lost": "{{date}} tarihinden beri −{{weight}}"
+          "title": "Sana özel",
+          "body": "Hedefine, günlerine ve ekipmanına göre.",
+          "lost": "{{date}} tarihinden beri −{{weight}}",
+          "accent": "bir plan"
         },
         "sets": {
-          "title": "Her set önemli",
-          "body": "Kaldırırken kaydet, zamanlayıcıyla dinlen, rekorlarını kır.",
+          "title": "Her set",
+          "body": "Kaldırırken kaydet, rekorlarının kırılışını izle.",
           "exercise": "Bench press",
           "record": "Yeni rekor!",
           "detail": "{{count}} set · 1:30 dinlenme",
-          "recordDetail": "Şimdiye kadarki en ağır setin: {{set}}"
+          "recordDetail": "Şimdiye kadarki en ağır setin: {{set}}",
+          "accent": "önemli"
         },
         "food": {
-          "title": "Hedefine göre beslen",
-          "body": "Antrenmanına uyan kalori ve makrolar, her gün.",
-          "of": "/ {{total}} kcal"
+          "title": "Hedefine göre",
+          "body": "Antrenmanına uyan kalori ve makrolar.",
+          "of": "/ {{total}} kcal",
+          "accent": "beslen"
         },
         "progress": {
-          "title": "Gelişimini gör",
+          "title": "Gelişimini",
           "body": "Kilon, serin ve rekorların, hafta hafta.",
           "weight": "Kilon",
-          "week": "{{week}}. hafta"
+          "week": "{{week}}. hafta",
+          "accent": "gör"
         }
       }
     },

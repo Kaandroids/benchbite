@@ -33,13 +33,13 @@ describe('WelcomeStep', () => {
 
   it('steps through the slides', async () => {
     await render(<WelcomeStep />);
-    expect(screen.getByText('A plan made for you')).toBeTruthy();
+    expect(screen.getByRole('header', { name: /you/ })).toBeTruthy();
     expect(slides()).toHaveAccessibilityValue({ text: '1 of 4' });
 
     await fireEvent(slides(), 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
-    expect(screen.getByText('Every set counts')).toBeTruthy();
+    expect(screen.getByRole('header', { name: /counts/ })).toBeTruthy();
     await fireEvent(slides(), 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
-    expect(screen.getByText('A plan made for you')).toBeTruthy();
+    expect(screen.getByRole('header', { name: /you/ })).toBeTruthy();
   });
 
   it('plays the slides and starts again after the last', async () => {
@@ -48,10 +48,10 @@ describe('WelcomeStep', () => {
     for (let step = 0; step < 3; step++) {
       await act(() => jest.advanceTimersByTime(SLIDE_MS));
     }
-    expect(screen.getByText('See your progress')).toBeTruthy();
+    expect(screen.getByRole('header', { name: /progress/ })).toBeTruthy();
     expect(slides()).toHaveAccessibilityValue({ text: '4 of 4' });
     await act(() => jest.advanceTimersByTime(SLIDE_MS));
-    expect(screen.getByText('A plan made for you')).toBeTruthy();
+    expect(screen.getByRole('header', { name: /you/ })).toBeTruthy();
   });
 
   it('opens the log in for someone who has an account', async () => {

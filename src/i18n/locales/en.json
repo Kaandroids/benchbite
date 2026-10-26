@@ -461,28 +461,32 @@
       "slide": "{{current}} of {{count}}",
       "slides": {
         "plan": {
-          "title": "A plan made for you",
-          "body": "Built around your goal, your days and your gear, in about 2 minutes.",
-          "lost": "−{{weight}} since {{date}}"
+          "title": "A plan made",
+          "body": "Built around your goal, your days and your gear.",
+          "lost": "−{{weight}} since {{date}}",
+          "accent": "for you"
         },
         "sets": {
-          "title": "Every set counts",
-          "body": "Log as you lift, rest with a timer, and see your records fall.",
+          "title": "Every set",
+          "body": "Log as you lift and watch your records fall.",
           "exercise": "Bench press",
           "record": "New record!",
           "detail": "{{count}} sets · rest 1:30",
-          "recordDetail": "Your heaviest {{set}} yet"
+          "recordDetail": "Your heaviest {{set}} yet",
+          "accent": "counts"
         },
         "food": {
-          "title": "Eat for your goal",
-          "body": "Calories and macros that fit your training, every day.",
-          "of": "of {{total}} kcal"
+          "title": "Eat for",
+          "body": "Calories and macros that fit your training.",
+          "of": "of {{total}} kcal",
+          "accent": "your goal"
         },
         "progress": {
-          "title": "See your progress",
-          "body": "Your weight, your streak and your records, week after week.",
+          "title": "See your",
+          "body": "Your weight, streak and records, week by week.",
           "weight": "Your weight",
-          "week": "Week {{week}}"
+          "week": "Week {{week}}",
+          "accent": "progress"
         }
       }
     },

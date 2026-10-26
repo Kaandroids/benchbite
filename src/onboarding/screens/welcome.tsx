@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 
 import { BrandMark } from '@/brand/brand-mark';
 import { Button } from '@/components/ui/button';
@@ -27,12 +27,17 @@ const BACK_ZONE = 0.35;
  */
 export function WelcomeStep() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const { next } = useStep('welcome');
   const isAccount = useIsAccount();
   const stories = useStories(SLIDES.length);
   const [width, setWidth] = useState(0);
   const slide = SLIDES[stories.index]!;
+  const titleStart = t(`onboarding.welcome.slides.${slide.key}.title`);
+  const titleAccent = t(`onboarding.welcome.slides.${slide.key}.accent`);
+  const body = t(`onboarding.welcome.slides.${slide.key}.body`);
+  // The new slide comes in from the side it was reached from, as when swiping.
+  const SlideIn = stories.direction === 'back' ? FadeInLeft : FadeInRight;
 
   const gesture = Gesture.Race(
     Gesture.Fling().direction(1).runOnJS(true).onEnd(stories.previous),
@@ -85,7 +90,7 @@ export function WelcomeStep() {
           <View
             accessible
             accessibilityRole="adjustable"
-            accessibilityLabel={`${t(`onboarding.welcome.slides.${slide.key}.title`)}. ${t(`onboarding.welcome.slides.${slide.key}.body`)}`}
+            accessibilityLabel={`${titleStart} ${titleAccent}. ${body}`}
             accessibilityValue={{
               text: t('onboarding.welcome.slide', {
                 current: stories.index + 1,
@@ -97,21 +102,34 @@ export function WelcomeStep() {
               event.nativeEvent.actionName === 'increment' ? stories.next() : stories.previous()
             }
             onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-            style={[styles.flex, styles.slide, { gap: spacing.xxl }]}
+            style={[styles.flex, { gap: spacing.xl }]}
           >
-            {/* Keyed by the slide, so its illustration plays again whenever it shows. */}
-            <Animated.View key={slide.key} entering={FadeIn.duration(250)}>
-              <slide.Illustration />
-            </Animated.View>
+            {/* A tinted stage of fixed size for the picture, so the words below stay in one place
+                from slide to slide. Keyed by the slide, so its picture plays again whenever it
+                shows. */}
+            <View
+              style={[
+                styles.stage,
+                { borderRadius: radii.xl, backgroundColor: colors.selected, padding: spacing.lg },
+              ]}
+            >
+              <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
+                <slide.Illustration />
+              </Animated.View>
+            </View>
             <Animated.View
               key={`${slide.key}-text`}
-              entering={FadeInDown.duration(400)}
-              style={{ gap: spacing.sm }}
+              entering={FadeIn.duration(300)}
+              style={[styles.words, { gap: spacing.sm }]}
             >
-              <Text variant="title" accessibilityRole="header">
-                {t(`onboarding.welcome.slides.${slide.key}.title`)}
+              {/* Centred, with the point of the slide in the brand orange. */}
+              <Text style={styles.title} align="center" accessibilityRole="header">
+                {titleStart}{' '}
+                <Text style={[styles.title, { color: colors.primaryText }]}>{titleAccent}</Text>
               </Text>
-              <Text color="textMuted">{t(`onboarding.welcome.slides.${slide.key}.body`)}</Text>
+              <Text color="textMuted" align="center" style={styles.body}>
+                {body}
+              </Text>
             </Animated.View>
           </View>
         </GestureDetector>
@@ -132,7 +150,22 @@ const styles = StyleSheet.create({
     fontFamily: fonts.black,
     fontSize: 20,
   },
-  slide: {
+  stage: {
+    flex: 1,
     justifyContent: 'center',
+  },
+  // Room for a two-line title and a two-line text, the same on every slide.
+  words: {
+    minHeight: 140,
+  },
+  title: {
+    fontFamily: fonts.black,
+    fontSize: 32,
+    lineHeight: 38,
+  },
+  body: {
+    fontFamily: fonts.bold,
+    fontSize: 17,
+    lineHeight: 24,
   },
 });

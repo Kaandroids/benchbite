@@ -17,6 +17,8 @@ export function useStories(count: number) {
   const [screenReader, setScreenReader] = useState(false);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Which way the last step went, for the slide to come in from that side.
+  const [direction, setDirection] = useState<'on' | 'back'>('on');
   const [focused, setFocused] = useState(true);
   const autoplay = !reduceMotion && !screenReader;
   const playing = autoplay && !paused && focused;
@@ -46,10 +48,10 @@ export function useStories(count: number) {
       return;
     }
     const startedAt = Date.now();
-    const timeout = setTimeout(
-      () => setIndex((current) => (current + 1) % count),
-      remaining.current,
-    );
+    const timeout = setTimeout(() => {
+      setDirection('on');
+      setIndex((current) => (current + 1) % count);
+    }, remaining.current);
     return () => {
       clearTimeout(timeout);
       remaining.current -= Date.now() - startedAt;
@@ -61,8 +63,15 @@ export function useStories(count: number) {
     /** Whether the slides move on by themselves, for the progress bar. */
     autoplay,
     paused: paused || !focused,
-    next: () => setIndex((current) => (current + 1) % count),
-    previous: () => setIndex((current) => Math.max(0, current - 1)),
+    direction,
+    next: () => {
+      setDirection('on');
+      setIndex((current) => (current + 1) % count);
+    },
+    previous: () => {
+      setDirection('back');
+      setIndex((current) => Math.max(0, current - 1));
+    },
     pause: () => setPaused(true),
     resume: () => setPaused(false),
   };

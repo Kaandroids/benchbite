@@ -461,28 +461,32 @@
       "slide": "{{current}} von {{count}}",
       "slides": {
         "plan": {
-          "title": "Ein Plan, gemacht für dich",
-          "body": "Abgestimmt auf dein Ziel, deine Tage und deine Ausrüstung, in etwa 2 Minuten.",
-          "lost": "−{{weight}} seit {{date}}"
+          "title": "Ein Plan,",
+          "body": "Passend zu deinem Ziel, deinen Tagen und deiner Ausrüstung.",
+          "lost": "−{{weight}} seit {{date}}",
+          "accent": "gemacht für dich"
         },
         "sets": {
-          "title": "Jeder Satz zählt",
-          "body": "Notiere beim Training, pausiere mit Timer und sieh deine Rekorde fallen.",
+          "title": "Jeder Satz",
+          "body": "Notiere beim Training und sieh deine Rekorde fallen.",
           "exercise": "Bankdrücken",
           "record": "Neuer Rekord!",
           "detail": "{{count}} Sätze · 1:30 Pause",
-          "recordDetail": "Dein bisher schwerster Satz: {{set}}"
+          "recordDetail": "Dein bisher schwerster Satz: {{set}}",
+          "accent": "zählt"
         },
         "food": {
-          "title": "Iss für dein Ziel",
-          "body": "Kalorien und Makros, die zu deinem Training passen, jeden Tag.",
-          "of": "von {{total}} kcal"
+          "title": "Iss für",
+          "body": "Kalorien und Makros, die zu deinem Training passen.",
+          "of": "von {{total}} kcal",
+          "accent": "dein Ziel"
         },
         "progress": {
-          "title": "Sieh deinen Fortschritt",
-          "body": "Dein Gewicht, deine Serie und deine Rekorde, Woche für Woche.",
+          "title": "Sieh deinen",
+          "body": "Gewicht, Serie und Rekorde, Woche für Woche.",
           "weight": "Dein Gewicht",
-          "week": "Woche {{week}}"
+          "week": "Woche {{week}}",
+          "accent": "Fortschritt"
         }
       }
     },
