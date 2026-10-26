@@ -462,8 +462,9 @@
         "plan": {
           "title": "Sana özel",
           "body": "Hedefine, günlerine ve ekipmanına göre.",
-          "lost": "{{date}} tarihinden beri −{{weight}}",
-          "accent": "bir plan"
+          "accent": "bir plan",
+          "lost_one": "Son haftada −{{weight}}",
+          "lost_other": "Son {{count}} haftada −{{weight}}"
         },
         "sets": {
           "title": "Her set",

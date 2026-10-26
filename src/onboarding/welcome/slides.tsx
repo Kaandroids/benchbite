@@ -18,7 +18,7 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
-import { addDays, toIsoDate, useDateFormat, weekStart } from '@/i18n/dates';
+import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { defaultUnits, useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { StreakBadge } from '@/streak/streak-badge';
 import { WeekCard } from '@/today/week-card';
@@ -36,6 +36,8 @@ const EATEN_KCAL = 920;
 const TARGET_KCAL = 1390;
 const RING_SIZE = 140;
 // One weigh-in a week, drawn in a chart box of this size.
+/** How many of the last weeks the plan slide's weight loss covers. */
+const RECENT_WEEKS = 2;
 const WEIGH_INS_KG = [82, 81.4, 80.9, 80.1, 79.4, 78.5];
 const CHART = { width: 300, height: 100 };
 const WEIGH_IN_POINTS = WEIGH_INS_KG.map((kg, index) => ({
@@ -74,16 +76,14 @@ export const SLIDES: { key: SlideKey; Illustration: () => ReactNode }[] = [
 
 /**
  * A week as Today shows it, on a Friday: workouts done, one moved and done the day after, one
- * skipped, and today's still to come. Under it, the weight lost since the plan began.
+ * skipped, and today's still to come. Under it, the weight lost in the last weeks.
  */
 function PlanIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const weight = useWeightFormat();
-  const dateFormat = useDateFormat('medium');
   const unit = defaultUnits().weight;
   const [friday] = useState(() => addDays(weekStart(new Date()), 4));
-  const started = addDays(friday, -7 * (WEIGH_INS_KG.length - 1));
   return (
     <WeekCard
       today={friday}
@@ -107,8 +107,8 @@ function PlanIllustration() {
         <Icon name="trend" size={16} color="primary" />
         <Text variant="captionStrong" color="primaryText">
           {t('onboarding.welcome.slides.plan.lost', {
-            weight: `${weight(WEIGH_INS_KG[0]! - WEIGH_INS_KG.at(-1)!, unit)} ${unit}`,
-            date: dateFormat(started),
+            weight: `${weight(WEIGH_INS_KG.at(-1 - RECENT_WEEKS)! - WEIGH_INS_KG.at(-1)!, unit)} ${unit}`,
+            count: RECENT_WEEKS,
           })}
         </Text>
       </Animated.View>

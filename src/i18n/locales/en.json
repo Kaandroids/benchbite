@@ -462,8 +462,9 @@
         "plan": {
           "title": "A plan made",
           "body": "Built around your goal, your days and your gear.",
-          "lost": "−{{weight}} since {{date}}",
-          "accent": "for you"
+          "accent": "for you",
+          "lost_one": "−{{weight}} in the last week",
+          "lost_other": "−{{weight}} in the last {{count}} weeks"
         },
         "sets": {
           "title": "Every set",

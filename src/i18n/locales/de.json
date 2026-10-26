@@ -462,8 +462,9 @@
         "plan": {
           "title": "Ein Plan,",
           "body": "Passend zu deinem Ziel, deinen Tagen und deiner Ausrüstung.",
-          "lost": "−{{weight}} seit {{date}}",
-          "accent": "gemacht für dich"
+          "accent": "gemacht für dich",
+          "lost_one": "−{{weight}} in der letzten Woche",
+          "lost_other": "−{{weight}} in den letzten {{count}} Wochen"
         },
         "sets": {
           "title": "Jeder Satz",

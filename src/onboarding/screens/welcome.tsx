@@ -160,9 +160,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  // Room for a two-line title and a two-line text, the same on every slide.
+  // Room for a one-line title and a two-line text, the same on every slide, so the words stay in
+  // one place without leaving a gap above the button. A longer title only makes the stage smaller.
   words: {
-    minHeight: 140,
+    minHeight: 104,
   },
   title: {
     fontFamily: fonts.black,
