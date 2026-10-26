@@ -691,11 +691,13 @@
       "backToBack": "{{days}} direkt hintereinander"
     },
     "setup": {
+      "intro": "Wir wählen nur Übungen, die du dort machen kannst.",
       "descriptions": {
         "gym": "Geräte, Langhanteln und Kurzhanteln",
-        "dumbbells": "Ein Paar Kurzhanteln genügt, keine Bank nötig",
+        "dumbbells": "Ein Paar genügt, keine Bank nötig",
         "bodyweight": "Keine Ausrüstung, ein Stuhl und ein stabiler Tisch"
-      }
+      },
+      "examples": "Übungen, die du machst"
     },
     "sessionLength": {
       "intro": "Wir passen jedes Workout in diese Zeit ein, Aufwärmen inklusive.",

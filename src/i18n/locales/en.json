@@ -691,11 +691,13 @@
       "backToBack": "{{days}} back to back"
     },
     "setup": {
+      "intro": "We only pick exercises you can do there.",
       "descriptions": {
         "gym": "Machines, barbells and dumbbells",
-        "dumbbells": "A pair of dumbbells is enough, no bench needed",
+        "dumbbells": "A pair is enough, no bench needed",
         "bodyweight": "No equipment, a chair and a sturdy table"
-      }
+      },
+      "examples": "Exercises you'll do"
     },
     "sessionLength": {
       "intro": "We fit every workout into this time, warm-up included.",

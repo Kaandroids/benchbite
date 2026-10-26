@@ -691,11 +691,13 @@
       "backToBack": "{{days}} arka arkaya"
     },
     "setup": {
+      "intro": "Sadece orada yapabileceğin egzersizleri seçeriz.",
       "descriptions": {
         "gym": "Makineler, halterler ve dambıllar",
-        "dumbbells": "Bir çift dambıl yeterli, bench gerekmiyor",
+        "dumbbells": "Bir çift yeterli, bench gerekmiyor",
         "bodyweight": "Ekipman yok, bir sandalye ve sağlam bir masa"
-      }
+      },
+      "examples": "Yapacağın egzersizler"
     },
     "sessionLength": {
       "intro": "Her antrenmanı ısınma dahil bu süreye sığdırırız.",
