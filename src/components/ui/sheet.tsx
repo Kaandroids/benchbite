@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
@@ -31,7 +31,11 @@ export function Sheet({ onClose, children }: SheetProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
+      {/* A field in the sheet stays above the keyboard; Android resizes the window instead. */}
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.close')}
@@ -51,7 +55,7 @@ export function Sheet({ onClose, children }: SheetProps) {
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
           {children}
         </SafeAreaView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
