@@ -2,6 +2,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 
+/** The shortest and the tallest bar; the ones between rise evenly. */
+const MIN_BAR = 5;
+const MAX_BAR = 14;
+
 type LevelBarsProps = {
   /** How many bars are filled, from 1. */
   value: number;
@@ -23,7 +27,7 @@ export function LevelBars({ value, of, inverse = false }: LevelBarsProps) {
           style={[
             styles.bar,
             {
-              height: 5 + (index * 9) / Math.max(1, of - 1),
+              height: MIN_BAR + ((MAX_BAR - MIN_BAR) * index) / Math.max(1, of - 1),
               backgroundColor: on,
               // Empty bars are the same colour, faint, so they show on any card or tile.
               opacity: index < value ? 1 : 0.3,
@@ -40,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 2,
-    height: 14,
+    height: MAX_BAR,
   },
   bar: {
     width: 4,

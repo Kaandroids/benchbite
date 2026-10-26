@@ -675,8 +675,8 @@
       "days_one": "{{count}} day · {{types}}",
       "days_other": "{{count}} days · {{types}}",
       "main": "Main lifts",
-      "sets_one": "{{count}} set each",
-      "sets_other": "{{count}} sets each"
+      "sets_one": "about {{count}} set each",
+      "sets_other": "about {{count}} sets each"
     },
     "trainingDays": {
       "intro": "We picked days for your experience. Tap a day to change them.",

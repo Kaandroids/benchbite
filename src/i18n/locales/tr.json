@@ -675,8 +675,8 @@
       "days_one": "{{count}} gün · {{types}}",
       "days_other": "{{count}} gün · {{types}}",
       "main": "Ana hareketler",
-      "sets_one": "Her biri {{count}} set",
-      "sets_other": "Her biri {{count}} set"
+      "sets_one": "Her biri yaklaşık {{count}} set",
+      "sets_other": "Her biri yaklaşık {{count}} set"
     },
     "trainingDays": {
       "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",

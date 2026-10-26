@@ -20,9 +20,9 @@ describe('ExperienceStep', () => {
   });
 
   it.each([
-    ['beginner', '3 days · Full body', '3 sets each'],
-    ['intermediate', '4 days · Upper body, Lower body', '4 sets each'],
-    ['advanced', '5 days · Upper body, Lower body, Full body', '4 sets each'],
+    ['beginner', '3 days · Full body', 'about 3 sets each'],
+    ['intermediate', '4 days · Upper body, Lower body', 'about 4 sets each'],
+    ['advanced', '5 days · Upper body, Lower body, Full body', 'about 4 sets each'],
   ] as const)('shows what %s sets in the plan', async (experience, week, sets) => {
     mockStep = createStep({ goal: 'build_muscle', experience });
     await render(<ExperienceStep />);
@@ -33,7 +33,7 @@ describe('ExperienceStep', () => {
   it('counts the extra set of advanced strength training', async () => {
     mockStep = createStep({ goal: 'get_stronger', experience: 'advanced' });
     await render(<ExperienceStep />);
-    expect(screen.getByText('5 sets each')).toBeTruthy();
+    expect(screen.getByText('about 5 sets each')).toBeTruthy();
   });
 
   it('moves on with Continue', async () => {

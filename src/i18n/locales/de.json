@@ -675,8 +675,8 @@
       "days_one": "{{count}} Tag · {{types}}",
       "days_other": "{{count}} Tage · {{types}}",
       "main": "Grundübungen",
-      "sets_one": "je {{count}} Satz",
-      "sets_other": "je {{count}} Sätze"
+      "sets_one": "je etwa {{count}} Satz",
+      "sets_other": "je etwa {{count}} Sätze"
     },
     "trainingDays": {
       "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",
