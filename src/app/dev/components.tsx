@@ -132,10 +132,13 @@ export default function ComponentGallery() {
       current.includes(day) ? current.filter((d) => d !== day) : [...current, day],
     );
 
+  // Opened by a link, the gallery has no screen below it, so it goes to the home screen instead.
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
   return (
     <Screen
       progress={progress}
-      onBack={() => router.back()}
+      onBack={leave}
       footer={
         <Button
           label="Simulate a request"
@@ -156,7 +159,7 @@ export default function ComponentGallery() {
           onPress={() => {
             reset();
             // Back to the home screen, which is no longer allowed and redirects to the onboarding.
-            router.back();
+            leave();
           }}
         />
       </Section>
