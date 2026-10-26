@@ -40,26 +40,31 @@ export function WelcomeStep() {
     Gesture.Tap()
       .runOnJS(true)
       .onEnd((event) => (event.x < width * BACK_ZONE ? stories.previous() : stories.next())),
-    // Holding the slide pauses it, as with stories, to read it at leisure.
-    Gesture.LongPress()
-      .minDuration(250)
-      .runOnJS(true)
-      .onStart(stories.pause)
-      .onFinalize(stories.resume),
   );
 
   return (
-    // The footer is part of the content rather than the screen's own, so that the button lines up
-    // with the slides, which use a narrower margin than other screens to give the cards room.
-    <Screen scrolls={false}>
-      <View style={[styles.flex, { paddingHorizontal: spacing.lg, gap: spacing.md }]}>
+    <Screen
+      scrolls={false}
+      footer={
+        <View style={{ gap: spacing.lg }}>
+          <Text variant="caption" color="textMuted" align="center">
+            {t('onboarding.welcome.free')}
+          </Text>
+          <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
+          {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
+          {isAccount ? null : (
+            <LinkPrompt
+              question={t('account.haveAccount')}
+              action={t('account.logIn')}
+              onPress={() => router.push('/account/login')}
+            />
+          )}
+        </View>
+      }
+    >
+      <View style={[styles.flex, { paddingHorizontal: spacing.xl, gap: spacing.md }]}>
         <View style={{ paddingTop: spacing.md }}>
-          <StoryProgress
-            count={SLIDES.length}
-            index={stories.index}
-            autoplay={stories.autoplay}
-            paused={stories.paused}
-          />
+          <StoryProgress count={SLIDES.length} index={stories.index} playing={stories.playing} />
         </View>
         <View style={[styles.brand, { gap: spacing.sm }]}>
           <BrandMark size={32} />
@@ -99,20 +104,6 @@ export function WelcomeStep() {
             </Animated.View>
           </View>
         </GestureDetector>
-        <View style={{ gap: spacing.lg, paddingVertical: spacing.lg }}>
-          <Text variant="caption" color="textMuted" align="center">
-            {t('onboarding.welcome.free')}
-          </Text>
-          <Button label={t('onboarding.welcome.start')} onPress={() => next()} />
-          {/* An account that logged in before finishing the onboarding has nothing to log in to. */}
-          {isAccount ? null : (
-            <LinkPrompt
-              question={t('account.haveAccount')}
-              action={t('account.logIn')}
-              onPress={() => router.push('/account/login')}
-            />
-          )}
-        </View>
       </View>
     </Screen>
   );
