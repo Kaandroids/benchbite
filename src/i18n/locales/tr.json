@@ -684,6 +684,7 @@
       }
     },
     "sessionLength": {
+      "intro": "Her antrenmanı ısınma dahil bu süreye sığdırırız.",
       "longest": "75+ dk",
       "descriptions": {
         "30": "Kısa ve temel hareketlere odaklı",
@@ -692,14 +693,17 @@
         "75": "Ek hacim için zaman"
       },
       "workout": "Antrenmanın",
-      "counts_one": "{{count}} egzersiz · {{sets}} set",
-      "counts_other": "{{count}} egzersiz · {{sets}} set",
       "warmUp": "Isınma",
       "main": "Ana hareketler",
       "extras": "Ek hareketler",
       "conditioning": "Kondisyon",
       "unavailable": "Neyin sığdığını görmek için internete bağlan.",
-      "choose": "Antrenman süresi"
+      "choose": "Antrenman süresi",
+      "exercises_one": "{{count}} egzersiz",
+      "exercises_other": "{{count}} egzersiz",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} set",
+      "rest": "≈ {{minutes}} dk dinlenme"
     },
     "building": {
       "steps": {

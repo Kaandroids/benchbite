@@ -684,6 +684,7 @@
       }
     },
     "sessionLength": {
+      "intro": "Wir passen jedes Workout in diese Zeit ein, Aufwärmen inklusive.",
       "longest": "75+ Min.",
       "descriptions": {
         "30": "Kurz und auf die Grundübungen konzentriert",
@@ -692,14 +693,17 @@
         "75": "Zeit für zusätzliches Volumen"
       },
       "workout": "Dein Workout",
-      "counts_one": "{{count}} Übung · {{sets}} Sätze",
-      "counts_other": "{{count}} Übungen · {{sets}} Sätze",
       "warmUp": "Aufwärmen",
       "main": "Grundübungen",
       "extras": "Extras",
       "conditioning": "Ausdauer",
       "unavailable": "Verbinde dich mit dem Internet, um zu sehen, was hineinpasst.",
-      "choose": "Workout-Dauer"
+      "choose": "Workout-Dauer",
+      "exercises_one": "{{count}} Übung",
+      "exercises_other": "{{count}} Übungen",
+      "sets_one": "{{count}} Satz",
+      "sets_other": "{{count}} Sätze",
+      "rest": "≈ {{minutes}} Min. Pause"
     },
     "building": {
       "steps": {

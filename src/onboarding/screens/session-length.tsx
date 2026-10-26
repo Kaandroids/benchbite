@@ -4,8 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
 import { type ColorTokens, useTheme } from '@/theme';
@@ -51,31 +52,85 @@ export function SessionLengthStep() {
         <Button label={t('common.continue')} onPress={() => next({ sessionMinutes: minutes })} />
       }
     >
-      <Text variant="title" accessibilityRole="header">
-        {t('onboarding.steps.session-length.title')}
-      </Text>
-      <SegmentedControl
-        accessibilityLabel={t('onboarding.sessionLength.choose')}
-        options={SESSION_MINUTES.map((value) => ({
-          value: String(value),
-          label: value === LONGEST ? `${value}+` : String(value),
-        }))}
-        value={String(minutes)}
-        onChange={(value) => setMinutes(Number(value) as SessionMinutes)}
-      />
-      <View style={[styles.center, { gap: spacing.xs }]} accessibilityLiveRegion="polite">
-        <Text variant="display">{label(minutes)}</Text>
-        <Text color="textMuted">
-          {preview.data
-            ? t('onboarding.sessionLength.counts', {
-                count: preview.data.exercises,
-                sets: preview.data.sets,
-              })
-            : t(`onboarding.sessionLength.descriptions.${minutes}`)}
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="title" accessibilityRole="header">
+          {t('onboarding.steps.session-length.title')}
         </Text>
+        <Text color="textMuted">{t('onboarding.sessionLength.intro')}</Text>
       </View>
+      {/* Apart from the title, so the question and its answer do not run together. */}
+      <View style={{ marginTop: spacing.sm }}>
+        <SegmentedControl
+          accessibilityLabel={t('onboarding.sessionLength.choose')}
+          options={SESSION_MINUTES.map((value) => ({
+            value: String(value),
+            label: value === LONGEST ? `${value}+` : String(value),
+          }))}
+          value={String(minutes)}
+          onChange={(value) => setMinutes(Number(value) as SessionMinutes)}
+        />
+      </View>
+      <SummaryCard
+        minutes={label(minutes)}
+        description={t(`onboarding.sessionLength.descriptions.${minutes}`)}
+        preview={preview.data}
+      />
       <WorkoutCard preview={preview.data} failed={preview.isError || preview.data === null} />
     </Screen>
+  );
+}
+
+/** The length large, and beside it how many exercises and sets it holds and how much rest. */
+function SummaryCard({
+  minutes,
+  description,
+  preview,
+}: {
+  minutes: string;
+  description: string;
+  preview?: LengthPreview | null;
+}) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  return (
+    <Card style={[styles.row, { gap: spacing.lg }]}>
+      <Text variant="hero" style={styles.flex} align="center">
+        {minutes}
+      </Text>
+      <View style={[styles.flex, { gap: spacing.sm }]} accessibilityLiveRegion="polite">
+        {preview ? (
+          <>
+            <Fact
+              icon="dumbbell"
+              label={t('onboarding.sessionLength.exercises', { count: preview.exercises })}
+            />
+            <Fact
+              icon="layers"
+              label={t('onboarding.sessionLength.sets', { count: preview.sets })}
+            />
+            <Fact
+              icon="timer"
+              label={t('onboarding.sessionLength.rest', {
+                minutes: Math.round(preview.rest / 60),
+              })}
+            />
+          </>
+        ) : (
+          <Text color="textMuted">{description}</Text>
+        )}
+      </View>
+    </Card>
+  );
+}
+
+/** One thing a workout holds, with its icon. */
+function Fact({ icon, label }: { icon: IconName; label: string }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.row, { gap: spacing.sm }]}>
+      <Icon name={icon} size={18} color="primary" />
+      <Text variant="bodyStrong">{label}</Text>
+    </View>
   );
 }
 

@@ -684,6 +684,7 @@
       }
     },
     "sessionLength": {
+      "intro": "We fit every workout into this time, warm-up included.",
       "longest": "75+ min",
       "descriptions": {
         "30": "Short and focused on the main lifts",
@@ -692,14 +693,17 @@
         "75": "Time for extra volume"
       },
       "workout": "Your workout",
-      "counts_one": "{{count}} exercise · {{sets}} sets",
-      "counts_other": "{{count}} exercises · {{sets}} sets",
       "warmUp": "Warm-up",
       "main": "Main lifts",
       "extras": "Extras",
       "conditioning": "Conditioning",
       "unavailable": "Connect to the internet to see what fits.",
-      "choose": "Workout length"
+      "choose": "Workout length",
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "rest": "≈ {{minutes}} min rest"
     },
     "building": {
       "steps": {

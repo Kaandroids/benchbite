@@ -52,8 +52,11 @@ describe('SessionLengthStep', () => {
 
   it('starts at 45 minutes and shows what fits', async () => {
     await render(<SessionLengthStep />);
-    expect(screen.getByText('45 min')).toBeTruthy();
-    expect(await screen.findByText('8 exercises · 24 sets')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: '45' })).toBeChecked();
+    expect(await screen.findByText('8 exercises')).toBeTruthy();
+    expect(screen.getByText('24 sets')).toBeTruthy();
+    // Each exercise rests between its three sets: 8 × 2 × 90 s.
+    expect(screen.getByText('≈ 24 min rest')).toBeTruthy();
     expect(screen.getByText('Main lifts')).toBeTruthy();
     expect(screen.getByText('26 min')).toBeTruthy();
     expect(screen.getByText('14 min')).toBeTruthy();
@@ -65,7 +68,8 @@ describe('SessionLengthStep', () => {
     await render(<SessionLengthStep />);
     await fireEvent.press(screen.getByRole('radio', { name: '75+' }));
     expect(screen.getByText('75+ min')).toBeTruthy();
-    expect(await screen.findByText('11 exercises · 33 sets')).toBeTruthy();
+    expect(await screen.findByText('11 exercises')).toBeTruthy();
+    expect(screen.getByText('33 sets')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(mockStep.next).toHaveBeenCalledWith({ sessionMinutes: 75 });
   });
