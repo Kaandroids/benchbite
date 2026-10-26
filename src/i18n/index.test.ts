@@ -89,6 +89,42 @@ describe('the app language', () => {
   });
 });
 
+describe('a chosen language', () => {
+  function loadI18n() {
+    let module: typeof import('@/i18n') | undefined;
+    jest.isolateModules(() => {
+      module = jest.requireActual<typeof import('@/i18n')>('@/i18n');
+    });
+    return module!;
+  }
+
+  afterEach(() => {
+    mockedGetLocales.mockReturnValue([{ languageCode: 'en' }]);
+    jest.restoreAllMocks();
+  });
+
+  it('replaces the device language, and stays when the device language changes', async () => {
+    let onChange: ((state: AppStateStatus) => void) | undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+      onChange = listener;
+      return { remove: jest.fn() };
+    });
+    const { default: instance, chooseLanguage } = loadI18n();
+    chooseLanguage('tr');
+    await Promise.resolve();
+    expect(instance.language).toBe('tr');
+
+    mockedGetLocales.mockReturnValue([{ languageCode: 'de' }]);
+    onChange!('active');
+    await Promise.resolve();
+    expect(instance.language).toBe('tr');
+
+    chooseLanguage(null);
+    await Promise.resolve();
+    expect(instance.language).toBe('de');
+  });
+});
+
 describe('plural forms', () => {
   it('chooses the form by the number it counts, also with a second number', () => {
     const en = i18n.getFixedT('en');

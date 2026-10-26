@@ -43,10 +43,20 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-// Android can change the device language while the app runs; iOS restarts the app instead.
+/** The language the user chose in the settings, or null to follow the device. */
+let chosen: Language | null = null;
+
+/** Uses the given language instead of the device's, or the device's again with null. */
+export function chooseLanguage(language: Language | null) {
+  chosen = language;
+  void i18n.changeLanguage(language ?? deviceLanguage());
+}
+
+// Android can change the device language while the app runs; iOS restarts the app instead. A
+// language the user chose stays.
 AppState.addEventListener('change', (state) => {
   const language = deviceLanguage();
-  if (state === 'active' && language !== i18n.language) {
+  if (state === 'active' && chosen === null && language !== i18n.language) {
     void i18n.changeLanguage(language);
   }
 });
