@@ -10,11 +10,11 @@ import { deviceLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, type Language } fr
 import { useTheme } from '@/theme';
 
 import { setLanguageChoice, useLanguageChoice, type LanguageChoice } from './preferences';
+import { SettingRow } from './setting-row';
 
 /** The app's language in a row, chosen in a sheet: one of its languages, or the phone's. */
 export function LanguageSection() {
   const { t, i18n } = useTranslation();
-  const { spacing } = useTheme();
   const choice = useLanguageChoice();
   const [open, setOpen] = useState(false);
   const current = LANGUAGE_NAMES[i18n.language as Language] ?? i18n.language;
@@ -26,22 +26,12 @@ export function LanguageSection() {
 
   return (
     <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint={t('settings.languageHint')}
+      <SettingRow
+        label={t('settings.language')}
+        value={current}
+        hint={t('settings.languageHint')}
         onPress={() => setOpen(true)}
-        style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-      >
-        <Card style={[styles.row, { gap: spacing.md }]}>
-          <Text variant="label" style={styles.flex}>
-            {t('settings.language')}
-          </Text>
-          <Text variant="bodyStrong" color="textMuted">
-            {current}
-          </Text>
-          <Icon name="forward" size={18} color="textMuted" />
-        </Card>
-      </Pressable>
+      />
       {open ? (
         <Sheet onClose={() => setOpen(false)}>
           <Text variant="headline" accessibilityRole="header">
