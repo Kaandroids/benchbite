@@ -494,7 +494,9 @@
         "build_muscle": "Gain muscle with a small surplus",
         "get_stronger": "Lift heavier, step by step",
         "stay_healthy": "Feel fit and keep a balance"
-      }
+      },
+      "titleNamed": "What’s your main goal, {{name}}?",
+      "subtitle": "It shapes your whole plan: your calories and your training."
     },
     "goalInsight": {
       "lose_fat": {

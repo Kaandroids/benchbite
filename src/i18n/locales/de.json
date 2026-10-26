@@ -494,7 +494,9 @@
         "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
         "get_stronger": "Schritt für Schritt schwerer heben",
         "stay_healthy": "Fit fühlen und in Balance bleiben"
-      }
+      },
+      "titleNamed": "Was ist dein Hauptziel, {{name}}?",
+      "subtitle": "Es prägt deinen ganzen Plan: deine Kalorien und dein Training."
     },
     "goalInsight": {
       "lose_fat": {

@@ -494,7 +494,9 @@
         "build_muscle": "Hafif bir kalori fazlasıyla kas kazan",
         "get_stronger": "Adım adım daha ağır kaldır",
         "stay_healthy": "Formda hisset, dengeni koru"
-      }
+      },
+      "titleNamed": "Ana hedefin ne, {{name}}?",
+      "subtitle": "Tüm planını şekillendirir: kalorini ve antrenmanını."
     },
     "goalInsight": {
       "lose_fat": {

@@ -26,4 +26,10 @@ describe('GoalStep', () => {
       screen.getByRole('radio', { name: 'Build muscle, Gain muscle with a small surplus' }),
     ).not.toBeChecked();
   });
+
+  it('asks the user by name', async () => {
+    mockStep = createStep({ displayName: 'Kaan' });
+    await render(<GoalStep />);
+    expect(screen.getByRole('header', { name: 'What’s your main goal, Kaan?' })).toBeTruthy();
+  });
 });
