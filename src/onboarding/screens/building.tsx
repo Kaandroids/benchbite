@@ -32,6 +32,8 @@ import { useStep } from '../use-step';
 
 /** Each line about the plan shows at least this long, so the work is seen being done. */
 const LINE_MS = 1100;
+/** How full the plate starts: the training intro shows it half full. */
+const START_SHARE = 0.5;
 /** How far the ring fills while the lines show; the rest fills once the work is done. */
 const WORKING_SHARE = 0.9;
 const SIZE = 200;
@@ -103,7 +105,8 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
   // The lines shown while the plan is being built; the last one waits for the work.
   const count = lines.length;
   const [line, setLine] = useState(0);
-  const filled = useSharedValue(0);
+  // From half, where the training intro's plate left off.
+  const filled = useSharedValue(START_SHARE);
   const bite = useSharedValue(0);
   const crumbs = useSharedValue(0);
   // Read when the attempt starts and ends, so that changes to them do not start it again.
