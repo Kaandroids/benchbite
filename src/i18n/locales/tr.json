@@ -53,6 +53,7 @@
   "settings": {
     "title": "Ayarlar",
     "open": "Ayarlar",
+    "profile": "Profil",
     "account": "Hesap",
     "guestTitle": "Benchbite'ı misafir olarak kullanıyorsun",
     "guestMessage": "Planın ve antrenmanların sende kalsın diye bir hesap oluştur, yeni bir telefonda da.",
@@ -95,6 +96,11 @@
       "morning": "Günaydın",
       "afternoon": "İyi günler",
       "evening": "İyi akşamlar"
+    },
+    "greetingWithName": {
+      "morning": "Günaydın, {{name}}",
+      "afternoon": "İyi günler, {{name}}",
+      "evening": "İyi akşamlar, {{name}}"
     },
     "targets": "Günlük hedeflerin",
     "week": {
@@ -361,6 +367,9 @@
       "welcome": {
         "title": "Benchbite'a hoş geldin"
       },
+      "nickname": {
+        "title": "Sana nasıl hitap edelim?"
+      },
       "goal": {
         "title": "Ana hedefin ne?"
       },
@@ -454,6 +463,10 @@
         "together": "Antrenman ve beslenme tek uygulamada"
       },
       "start": "Başlayalım"
+    },
+    "nickname": {
+      "subtitle": "Adın ya da bir takma ad. Sadece sen görürsün.",
+      "skip": "Geç"
     },
     "goal": {
       "descriptions": {
@@ -904,5 +917,13 @@
       "body_other": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
       "bodyMany": "{{count}} antrenman, toplam yaklaşık {{minutes}} dk. Başarabilirsin!"
     }
+  },
+  "profile": {
+    "name": "Ad",
+    "namePlaceholder": "Adın ya da takma adın",
+    "nameHint": "Adı değiştirmek için açar",
+    "nameMessage": "Benchbite seni böyle selamlar. Adsız selamlanmak için boş bırak.",
+    "save": "Kaydet",
+    "notSaved": "Ad kaydedilemedi. Tekrar dene."
   }
 }
