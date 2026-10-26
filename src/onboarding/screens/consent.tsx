@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -65,12 +65,17 @@ export function ConsentStep() {
             disabled={!agreed}
             onPress={() => next({ consentedPolicyVersion: PRIVACY_POLICY_VERSION })}
           />
-          <Button
-            variant="ghost"
-            size="small"
-            label={t('onboarding.consent.whyLink')}
+          {/* Quiet, so it does not compete with Continue: it only explains. */}
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={12}
             onPress={() => setExplaining(true)}
-          />
+            style={({ pressed }) => [styles.whyLink, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text variant="captionStrong" color="textMuted">
+              {t('onboarding.consent.whyLink')}
+            </Text>
+          </Pressable>
         </View>
       }
     >
@@ -125,6 +130,10 @@ export function ConsentStep() {
 }
 
 const styles = StyleSheet.create({
+  whyLink: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+  },
   point: {
     flexDirection: 'row',
     alignItems: 'center',
