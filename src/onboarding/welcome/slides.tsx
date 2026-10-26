@@ -1,13 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
   FadeInDown,
   useAnimatedProps,
-  useSharedValue,
-  withDelay,
-  withTiming,
   ZoomIn,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -27,6 +23,8 @@ import { WeekCard } from '@/today/week-card';
 import { useTheme } from '@/theme';
 import { weekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
+
+import { useDrawn } from '../use-drawn';
 
 // Example data that shows what the app does; none of it is the user's.
 const EXAMPLE_SETS = [
@@ -413,17 +411,6 @@ function useExampleWeight() {
   const weight = useWeightFormat();
   const unit = defaultUnits().weight;
   return (kg: number) => `${weight(kg, unit)} ${unit}`;
-}
-
-/** Goes from 0 to 1 after a moment, for a line or a ring that draws itself. */
-function useDrawn() {
-  const progress = useSharedValue(0);
-  useEffect(() => {
-    progress.set(
-      withDelay(STEP_MS, withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) })),
-    );
-  }, [progress]);
-  return progress;
 }
 
 const styles = StyleSheet.create({
