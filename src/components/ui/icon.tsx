@@ -12,6 +12,7 @@ export const ICONS = {
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
+  calendar: { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' },
   camera: { ios: 'camera', android: 'photo_camera', web: 'photo_camera' },
   chair: { ios: 'chair', android: 'chair', web: 'chair' },
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },

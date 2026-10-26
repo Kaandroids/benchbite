@@ -667,11 +667,19 @@
       "progress": "Über dich ist erledigt. Als Nächstes dein Training."
     },
     "experience": {
+      "intro": "Mit Krafttraining, etwa Kniebeugen und Drücken.",
       "descriptions": {
         "beginner": "Neu im Krafttraining oder nach langer Pause zurück",
         "intermediate": "Seit mindestens sechs Monaten regelmäßig im Training",
         "advanced": "Seit Jahren im Training und sicher bei den Grundübungen"
-      }
+      },
+      "plan": "Dein Plan auf diesem Level",
+      "week": "Vorgeschlagene Woche",
+      "days_one": "{{count}} Tag · {{types}}",
+      "days_other": "{{count}} Tage · {{types}}",
+      "main": "Grundübungen",
+      "sets_one": "je {{count}} Satz",
+      "sets_other": "je {{count}} Sätze"
     },
     "trainingDays": {
       "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",

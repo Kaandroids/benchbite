@@ -667,11 +667,19 @@
       "progress": "About you is done. Your training is next."
     },
     "experience": {
+      "intro": "With strength training, such as squats and presses.",
       "descriptions": {
         "beginner": "New to strength training, or back after a long break",
         "intermediate": "Training regularly for at least six months",
         "advanced": "Training for years and confident with the main lifts"
-      }
+      },
+      "plan": "Your plan at this level",
+      "week": "Suggested week",
+      "days_one": "{{count}} day · {{types}}",
+      "days_other": "{{count}} days · {{types}}",
+      "main": "Main lifts",
+      "sets_one": "{{count}} set each",
+      "sets_other": "{{count}} sets each"
     },
     "trainingDays": {
       "intro": "We picked days for your experience. Tap a day to change them.",

@@ -667,11 +667,19 @@
       "progress": "Seni tanıma kısmı bitti. Sırada antrenmanın var."
     },
     "experience": {
+      "intro": "Squat ve press gibi kuvvet antrenmanlarında.",
       "descriptions": {
         "beginner": "Ağırlık antrenmanına yeni başlıyorsun ya da uzun bir aradan dönüyorsun",
         "intermediate": "En az altı aydır düzenli antrenman yapıyorsun",
         "advanced": "Yıllardır antrenman yapıyorsun, temel hareketlere hâkimsin"
-      }
+      },
+      "plan": "Bu seviyede planın",
+      "week": "Önerilen hafta",
+      "days_one": "{{count}} gün · {{types}}",
+      "days_other": "{{count}} gün · {{types}}",
+      "main": "Ana hareketler",
+      "sets_one": "Her biri {{count}} set",
+      "sets_other": "Her biri {{count}} set"
     },
     "trainingDays": {
       "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",
