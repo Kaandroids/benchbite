@@ -14,6 +14,8 @@ export type LengthPreview = {
   exercises: number;
   /** Their sets. */
   sets: number;
+  /** The rest between their sets, in seconds. */
+  rest: number;
   time: SessionTime;
 };
 
@@ -28,6 +30,7 @@ export function previewOf(plan: Plan): LengthPreview | null {
   return {
     exercises: lifts.length,
     sets: lifts.reduce((total, exercise) => total + exercise.sets, 0),
+    rest: lifts.reduce((total, exercise) => total + (exercise.sets - 1) * exercise.restSeconds, 0),
     time: session.time,
   };
 }
