@@ -75,7 +75,8 @@ describe('steps', () => {
     expect(nextStep('summary', {})).toBeNull();
     expect(previousStep('welcome', {})).toBeNull();
     expect(nextStep('reminders', {})).toBe('summary');
-    expect(previousStep('goal', {})).toBe('welcome');
+    expect(previousStep('goal', {})).toBe('nickname');
+    expect(previousStep('nickname', {})).toBe('welcome');
   });
 
   // Regression: going back from the plan showed the finished building screen, which had nothing
@@ -114,8 +115,8 @@ describe('steps', () => {
   it('measures progress from 0 on the first step to 1 on the last', () => {
     expect(progressOf('welcome')).toBe(0);
     expect(progressOf('summary')).toBe(1);
-    expect(progressOf('goal')).toBeCloseTo(1 / 19);
-    expect(progressOf('target-weight')).toBeCloseTo(8 / 19);
+    expect(progressOf('goal')).toBeCloseTo(2 / 20);
+    expect(progressOf('target-weight')).toBeCloseTo(9 / 20);
     expect(progressOf('activity')).toBeGreaterThan(progressOf('weight'));
   });
 });

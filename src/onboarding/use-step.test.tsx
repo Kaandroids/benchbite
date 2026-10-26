@@ -53,7 +53,7 @@ describe('useStep', () => {
   it('returns the answers so far and the progress', async () => {
     const { result } = await renderStep('goal', { goal: 'lose_fat' });
     expect(result.current.answers).toEqual({ goal: 'lose_fat' });
-    expect(result.current.progress).toBeCloseTo(1 / 19);
+    expect(result.current.progress).toBeCloseTo(2 / 20);
 
     const { result: last } = await renderStep('summary');
     expect(last.current.progress).toBe(1);
