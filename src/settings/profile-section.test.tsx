@@ -52,6 +52,19 @@ describe('ProfileSection', () => {
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
   });
 
+  it('does not remove a name that loaded after the sheet opened', async () => {
+    jest.mocked(useDisplayName).mockReturnValue({ data: undefined } as never);
+    jest
+      .mocked(useSetDisplayName)
+      .mockReturnValue({ mutate, isPending: false, isError: false } as never);
+    await render(<ProfileSection />);
+    await openSheet();
+    mockName('Kaan');
+    await screen.rerender(<ProfileSection />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
   it('says when the name could not be saved', async () => {
     mockName('Kaan', { isPending: false, isError: true });
     await render(<ProfileSection />);

@@ -31,6 +31,9 @@ export function ProfileSection() {
 function NameSheet({ name, onClose }: { name: string | null; onClose: () => void }) {
   const { t } = useTranslation();
   const setDisplayName = useSetDisplayName();
+  // Compared with the name the field started from, not one that loaded while the sheet was open:
+  // saving an untouched empty field must not remove it.
+  const [openedWith] = useState(name);
   const [text, setText] = useState(name ?? '');
 
   const save = () => {
@@ -38,7 +41,7 @@ function NameSheet({ name, onClose }: { name: string | null; onClose: () => void
       return;
     }
     const changed = displayNameOf(text);
-    if (changed === name) {
+    if (changed === openedWith) {
       onClose();
       return;
     }
