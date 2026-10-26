@@ -27,6 +27,8 @@ export type ColorTokens = {
   selected: string;
   /** Background of the icon tile on an unselected card. */
   iconBackground: string;
+  /** A faint wash of the brand colour behind a picture, which cards stand out from. */
+  primaryWash: string;
   success: string;
   warning: string;
   danger: string;
@@ -78,6 +80,7 @@ export const lightColors: ColorTokens = {
   onPrimary: '#FFFFFF',
   selected: '#FFF2E9',
   iconBackground: '#FFEDE2',
+  primaryWash: 'rgba(255, 106, 16, 0.1)',
   success: '#15803D',
   warning: '#B45309',
   danger: '#DC2626',
@@ -119,6 +122,7 @@ export const darkColors: ColorTokens = {
   onPrimary: '#1C0C00',
   selected: '#24262B',
   iconBackground: '#2A2C31',
+  primaryWash: 'rgba(255, 127, 38, 0.1)',
   success: '#4ADE80',
   warning: '#FBBF24',
   danger: '#F87171',
