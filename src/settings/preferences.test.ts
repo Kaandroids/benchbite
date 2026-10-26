@@ -6,8 +6,8 @@ import {
   applyStoredPreferences,
   loadLanguageChoice,
   loadThemeChoice,
-  saveLanguageChoice,
-  saveThemeChoice,
+  setLanguageChoice,
+  setThemeChoice,
 } from './preferences';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -36,14 +36,14 @@ beforeEach(() => {
 describe('the theme', () => {
   it('follows the system until another one is chosen', () => {
     expect(loadThemeChoice()).toBe('system');
-    saveThemeChoice('dark');
+    setThemeChoice('dark');
     expect(loadThemeChoice()).toBe('dark');
     expect(Appearance.setColorScheme).toHaveBeenLastCalledWith('dark');
   });
 
   it('follows the system again when it is chosen', () => {
-    saveThemeChoice('light');
-    saveThemeChoice('system');
+    setThemeChoice('light');
+    setThemeChoice('system');
     expect(loadThemeChoice()).toBe('system');
     expect(Appearance.setColorScheme).toHaveBeenLastCalledWith('unspecified');
   });
@@ -52,10 +52,10 @@ describe('the theme', () => {
 describe('the language', () => {
   it('follows the device until another one is chosen', () => {
     expect(loadLanguageChoice()).toBe('system');
-    saveLanguageChoice('tr');
+    setLanguageChoice('tr');
     expect(loadLanguageChoice()).toBe('tr');
     expect(chooseLanguage).toHaveBeenLastCalledWith('tr');
-    saveLanguageChoice('system');
+    setLanguageChoice('system');
     expect(loadLanguageChoice()).toBe('system');
     expect(chooseLanguage).toHaveBeenLastCalledWith(null);
   });
@@ -63,8 +63,8 @@ describe('the language', () => {
 
 describe('applyStoredPreferences', () => {
   it('applies what was chosen before', () => {
-    saveThemeChoice('dark');
-    saveLanguageChoice('de');
+    setThemeChoice('dark');
+    setLanguageChoice('de');
     jest.clearAllMocks();
     applyStoredPreferences();
     expect(Appearance.setColorScheme).toHaveBeenCalledWith('dark');

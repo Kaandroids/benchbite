@@ -1,17 +1,21 @@
-import { fireEvent, render, screen } from '@/test/render';
+import i18n from '@/i18n';
+import { act, fireEvent, render, screen } from '@/test/render';
 
 import { LanguageSection } from './language-section';
-import { loadLanguageChoice, saveLanguageChoice } from './preferences';
+import { loadLanguageChoice, setLanguageChoice } from './preferences';
 
-jest.mock('./preferences', () => ({
-  loadLanguageChoice: jest.fn(),
-  saveLanguageChoice: jest.fn(),
-}));
-
-beforeEach(() => {
-  jest.clearAllMocks();
-  jest.mocked(loadLanguageChoice).mockReturnValue('system');
+jest.mock('expo-sqlite/kv-store', () => {
+  const items = new Map<string, string>();
+  return {
+    Storage: {
+      getItemSync: (key: string) => items.get(key) ?? null,
+      setItemSync: (key: string, value: string) => void items.set(key, value),
+      removeItemSync: (key: string) => void items.delete(key),
+    },
+  };
 });
+
+afterEach(() => act(() => setLanguageChoice('system')));
 
 describe('LanguageSection', () => {
   it('shows the language in use, and opens the choices', async () => {
@@ -23,11 +27,20 @@ describe('LanguageSection', () => {
     expect(screen.getByRole('radio', { name: 'Türkçe' })).not.toBeChecked();
   });
 
-  it('keeps the language chosen and closes the choices', async () => {
+  it('keeps the language chosen, switches to it and closes the choices', async () => {
     await render(<LanguageSection />);
     await fireEvent.press(screen.getByRole('button', { name: /Language/ }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Deutsch' }));
-    expect(saveLanguageChoice).toHaveBeenCalledWith('de');
+    expect(loadLanguageChoice()).toBe('de');
+    expect(i18n.language).toBe('de');
     expect(screen.queryByRole('radio', { name: 'Deutsch' })).not.toBeOnTheScreen();
+    expect(screen.getByText('Deutsch')).toBeOnTheScreen();
+  });
+
+  it('shows a language chosen elsewhere', async () => {
+    await render(<LanguageSection />);
+    await act(() => setLanguageChoice('tr'));
+    await fireEvent.press(screen.getByRole('button', { name: /Dil/ }));
+    expect(screen.getByRole('radio', { name: 'Türkçe' })).toBeChecked();
   });
 });

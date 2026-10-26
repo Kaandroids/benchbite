@@ -9,20 +9,19 @@ import { Text } from '@/components/ui/text';
 import { deviceLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, type Language } from '@/i18n';
 import { useTheme } from '@/theme';
 
-import { loadLanguageChoice, saveLanguageChoice, type LanguageChoice } from './preferences';
+import { setLanguageChoice, useLanguageChoice, type LanguageChoice } from './preferences';
 
 /** The app's language in a row, chosen in a sheet: one of its languages, or the phone's. */
 export function LanguageSection() {
   const { t, i18n } = useTranslation();
   const { spacing } = useTheme();
-  const [choice, setChoice] = useState(loadLanguageChoice);
+  const choice = useLanguageChoice();
   const [open, setOpen] = useState(false);
   const current = LANGUAGE_NAMES[i18n.language as Language] ?? i18n.language;
 
   const choose = (value: LanguageChoice) => {
-    setChoice(value);
     setOpen(false);
-    saveLanguageChoice(value);
+    setLanguageChoice(value);
   };
 
   return (
@@ -102,6 +101,7 @@ function Option({
         styles.option,
         {
           gap: spacing.md,
+          paddingVertical: spacing.sm,
           borderTopWidth: first ? 0 : StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           opacity: pressed ? 0.6 : 1,
@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
   },
   option: {
     minHeight: 52,
-    paddingVertical: 8,
   },
   flex: {
     flex: 1,
