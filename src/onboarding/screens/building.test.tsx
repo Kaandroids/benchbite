@@ -10,27 +10,21 @@ jest.mock('@/onboarding/plan', () => ({ calculateTargets: jest.fn(), generatePla
 
 const TARGETS = { calories: 2200, proteinG: 150, carbsG: 250, fatG: 70 };
 const PLAN: WorkoutPlan = { sessions: [] };
+const ANSWERS = {
+  goal: 'lose_fat',
+  weeklyPaceKg: 0.5,
+  weightUnit: 'kg',
+  setup: 'gym',
+  trainingDays: [1, 3, 5],
+  displayName: 'Kaan',
+} as const;
 const LINES = [
-  'Calculating your calories',
-  'Choosing your exercises',
-  'Putting your week together',
+  'Calories for losing 0.5 kg a week',
+  'Exercises for the gym',
+  '3 workouts: Mon, Wed, Fri',
 ];
-
-/**
- * Whether a line of the checklist is done, in progress or still to come. The lines expose no
- * accessibility state, so this looks at the marker next to the text: a check icon or a spinner.
- */
-function lineState(text: string): 'done' | 'current' | 'pending' {
-  const line = screen.getByText(text).parent!;
-  const has = (type: string) => line.queryAll((node) => node.type === type).length > 0;
-  return has('ViewManagerAdapter_SymbolModule')
-    ? 'done'
-    : has('ActivityIndicator')
-      ? 'current'
-      : 'pending';
-}
-
-const states = () => LINES.map(lineState);
+const READY = 'Your plan is ready';
+const seeMyPlan = () => screen.queryByRole('button', { name: 'See my plan' });
 
 const advance = (ms: number) => act(() => jest.advanceTimersByTimeAsync(ms));
 
@@ -38,7 +32,7 @@ describe('BuildingStep', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
-    mockStep = createStep({ goal: 'lose_fat' });
+    mockStep = createStep({ ...ANSWERS, trainingDays: [...ANSWERS.trainingDays] });
   });
 
   afterEach(() => jest.useRealTimers());
@@ -47,27 +41,28 @@ describe('BuildingStep', () => {
     jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
     jest.mocked(generatePlan).mockResolvedValue(PLAN);
     await render(<BuildingStep />);
-    expect(calculateTargets).toHaveBeenCalledWith({ goal: 'lose_fat' });
-    expect(generatePlan).toHaveBeenCalledWith({ goal: 'lose_fat' });
+    expect(calculateTargets).toHaveBeenCalledWith(mockStep.answers);
+    expect(generatePlan).toHaveBeenCalledWith(mockStep.answers);
+    expect(screen.getByText('Just a few seconds, Kaan.')).toBeTruthy();
   });
 
-  it('ticks the checklist, then moves on with the result', async () => {
+  it('shows a line about the plan at a time, then offers to see it', async () => {
     jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
     jest.mocked(generatePlan).mockResolvedValue(PLAN);
     await render(<BuildingStep />);
-    expect(states()).toEqual(['current', 'pending', 'pending']);
+    expect(screen.getByText(LINES[0]!)).toBeTruthy();
 
-    await advance(900);
-    expect(states()).toEqual(['done', 'current', 'pending']);
+    await advance(1100);
+    expect(screen.getByText(LINES[1]!)).toBeTruthy();
+    await advance(1100);
+    expect(screen.getByText(LINES[2]!)).toBeTruthy();
+    expect(seeMyPlan()).toBeNull();
 
-    await advance(900);
-    expect(states()).toEqual(['done', 'done', 'current']);
-
-    await advance(900);
-    expect(states()).toEqual(['done', 'done', 'done']);
+    await advance(1500);
+    expect(screen.getByText(READY)).toBeTruthy();
+    // It waits for the user rather than moving on by itself.
     expect(mockStep.next).not.toHaveBeenCalled();
-
-    await advance(450);
+    await fireEvent.press(seeMyPlan()!);
     expect(mockStep.next).toHaveBeenCalledWith({ targets: TARGETS, plan: PLAN });
   });
 
@@ -78,12 +73,26 @@ describe('BuildingStep', () => {
     await render(<BuildingStep />);
 
     await advance(10_000);
-    expect(states()).toEqual(['done', 'done', 'current']);
-    expect(mockStep.next).not.toHaveBeenCalled();
+    expect(screen.getByText(LINES[2]!)).toBeTruthy();
+    expect(seeMyPlan()).toBeNull();
 
     await act(async () => finish(PLAN));
-    await advance(450);
-    expect(mockStep.next).toHaveBeenCalledWith({ targets: TARGETS, plan: PLAN });
+    await advance(400);
+    expect(screen.getByText(READY)).toBeTruthy();
+    expect(seeMyPlan()).toBeTruthy();
+  });
+
+  it('says what the calories are for when the weight stays', async () => {
+    mockStep = createStep({ goal: 'get_stronger', setup: 'bodyweight', trainingDays: [2] });
+    jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
+    jest.mocked(generatePlan).mockResolvedValue(PLAN);
+    await render(<BuildingStep />);
+    expect(screen.getByText('Calories to keep your weight')).toBeTruthy();
+    expect(screen.getByText('Just a few seconds.')).toBeTruthy();
+    await advance(1100);
+    expect(screen.getByText('Exercises with your bodyweight')).toBeTruthy();
+    await advance(1100);
+    expect(screen.getByText('1 workout: Tue')).toBeTruthy();
   });
 
   it('shows an error on failure and tries again', async () => {
@@ -93,22 +102,21 @@ describe('BuildingStep', () => {
     await render(<BuildingStep />);
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
 
-    await advance(2700);
+    await advance(3300);
     expect(
       screen.getByText("We couldn't build your plan. Check your connection and try again."),
     ).toBeTruthy();
     expect(warn).toHaveBeenCalled();
-    expect(mockStep.next).not.toHaveBeenCalled();
+    expect(seeMyPlan()).toBeNull();
 
     jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
     await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
     expect(calculateTargets).toHaveBeenCalledTimes(2);
-    expect(generatePlan).toHaveBeenCalledTimes(2);
     expect(screen.queryByText(/We couldn't build your plan/)).toBeNull();
-    expect(states()).toEqual(['current', 'pending', 'pending']);
+    expect(screen.getByText(LINES[0]!)).toBeTruthy();
 
-    await advance(3150);
-    expect(mockStep.next).toHaveBeenCalledWith({ targets: TARGETS, plan: PLAN });
+    await advance(3700);
+    expect(seeMyPlan()).toBeTruthy();
     warn.mockRestore();
   });
 });

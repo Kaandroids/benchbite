@@ -706,12 +706,23 @@
       "rest": "≈ {{minutes}} Min. Pause"
     },
     "building": {
-      "steps": {
-        "calories": "Deine Kalorien werden berechnet",
-        "exercises": "Deine Übungen werden ausgewählt",
-        "week": "Deine Woche wird zusammengestellt"
+      "error": "Wir konnten deinen Plan nicht erstellen. Prüfe deine Verbindung und versuche es erneut.",
+      "wait": "Nur ein paar Sekunden.",
+      "waitNamed": "Nur ein paar Sekunden, {{name}}.",
+      "lines": {
+        "losing": "Kalorien, um {{pace}} pro Woche abzunehmen",
+        "gaining": "Kalorien, um {{pace}} pro Woche zuzunehmen",
+        "keeping": "Kalorien, um dein Gewicht zu halten",
+        "exercises": {
+          "gym": "Übungen fürs Fitnessstudio",
+          "dumbbells": "Übungen mit Kurzhanteln zu Hause",
+          "bodyweight": "Übungen mit deinem Körpergewicht"
+        },
+        "week_one": "{{count}} Workout: {{days}}",
+        "week_other": "{{count}} Workouts: {{days}}",
+        "ready": "Dein Plan ist fertig"
       },
-      "error": "Wir konnten deinen Plan nicht erstellen. Prüfe deine Verbindung und versuche es erneut."
+      "see": "Meinen Plan ansehen"
     },
     "plan": {
       "nutrition": "Deine täglichen Ziele",
