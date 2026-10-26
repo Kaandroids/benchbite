@@ -524,77 +524,59 @@
       }
     },
     "goalInsight": {
-      "how": "Seni oraya şöyle götüreceğiz:",
+      "week": "{{week}}. hafta",
       "lose_fat": {
-        "title": "Yağ kaybı istikrar ister",
-        "titleNamed": "{{name}}, yağ kaybı istikrar ister",
-        "from": "Bugün",
-        "to": "Hedefin",
-        "first": {
-          "title": "Ölçülü bir kalori açığı",
-          "body": "İlerleme görecek kadar, aç kalmadan."
+        "title": "Yağ kaybı <accent>istikrar</accent> ister",
+        "titleNamed": "{{name}}, yağ kaybı <accent>istikrar</accent> ister",
+        "scene": {
+          "label": "Kilo",
+          "detail": "Günlük tartılar ve haftalık eğilim",
+          "chip": "Haftada ortalama −{{weight}}"
         },
-        "second": {
-          "title": "Kuvvet antrenmanı",
-          "body": "Kaybettiğin kilo kas değil yağ olsun diye."
-        },
-        "third": {
-          "title": "Sürdürebileceğin bir tempo",
-          "body": "Küçük, düzenli adımlar şok diyetten iyidir."
+        "tips": {
+          "trend": "<strong>Günlük iniş çıkışlar normal.</strong> Eğilime bakarız.",
+          "time": "İlk değişimler <strong>3–4 haftada</strong> görünür.",
+          "weighIn": "Net bir eğilim için haftada birkaç kez <strong>tartıl</strong>."
         }
       },
       "build_muscle": {
-        "title": "Kas hafta hafta gelişir",
-        "titleNamed": "{{name}}, kas hafta hafta gelişir",
-        "from": "1. hafta",
-        "to": "12. hafta",
-        "first": {
-          "title": "Küçük bir kalori fazlası",
-          "body": "Kas yapacak kadar, yağlanmadan."
+        "title": "Kas <accent>hafta hafta</accent> gelişir",
+        "titleNamed": "{{name}}, kas <accent>hafta hafta</accent> gelişir",
+        "scene": {
+          "label": "Bench press",
+          "detail": "En iyi set, 4 haftada bir"
         },
-        "second": {
-          "title": "Her hafta biraz daha",
-          "body": "Ağırlık ya da tekrar adım adım artar."
-        },
-        "third": {
-          "title": "Her gün protein",
-          "body": "Yeni kas ondan yapılır."
+        "tips": {
+          "sleep": "Kas <strong>uykuda</strong> gelişir: 7–9 saat hedefle.",
+          "more": "Setler kolaylaşınca <strong>biraz ağırlık ya da tekrar ekle</strong>.",
+          "time": "Görünür sonuç <strong>8–12 hafta</strong> sürer."
         }
       },
       "get_stronger": {
-        "title": "Güç adım adım artar",
-        "titleNamed": "{{name}}, güç adım adım artar",
-        "from": "Bugün",
-        "to": "Daha ağır",
-        "first": {
-          "title": "Daha ağır, daha az tekrar",
-          "body": "Seni güçlendiren bu."
+        "title": "Güç <accent>adım adım</accent> artar",
+        "titleNamed": "{{name}}, güç <accent>adım adım</accent> artar",
+        "scene": {
+          "label": "Squat",
+          "detail": "5 tekrarlık en ağır set",
+          "chip": "Her seferinde +{{weight}}"
         },
-        "second": {
-          "title": "Daha uzun dinlenme",
-          "body": "Her sete tüm gücünle gir diye."
-        },
-        "third": {
-          "title": "Toparlanmaya yetecek yemek",
-          "body": "Kilonu sabit tutan kalori."
+        "tips": {
+          "steps": "<strong>Küçük artışlar</strong> büyük ağırlıklara götürür.",
+          "lighter": "4–6 haftada bir <strong>hafif bir hafta</strong>.",
+          "records": "Her <strong>yeni rekor</strong> işaretlenir."
         }
       },
       "stay_healthy": {
-        "title": "Sağlıklı kalmak dengeyle olur",
-        "titleNamed": "{{name}}, sağlıklı kalmak dengeyle olur",
-        "from": "Her hafta",
-        "to": "Yıllarca",
-        "first": {
-          "title": "Kilonu koruyan kalori",
-          "body": "Ne açık ne fazla."
+        "title": "Sağlıklı kalmak <accent>dengeyle</accent> olur",
+        "titleNamed": "{{name}}, sağlıklı kalmak <accent>dengeyle</accent> olur",
+        "scene": {
+          "label": "Bu hafta",
+          "detail": "3 antrenmanın 3’ü tamam"
         },
-        "second": {
-          "title": "Kuvvet antrenmanı",
-          "body": "Haftada birkaç kez seni güçlü tutar."
-        },
-        "third": {
-          "title": "Kalıcı alışkanlıklar",
-          "body": "Sevdiğin küçük, düzenli rutinler."
+        "tips": {
+          "enough": "Haftada <strong>2–3 antrenman</strong> yeterli.",
+          "moved": "Bir günü kaçırdın mı? <strong>Antrenmanı başka güne kaydır</strong>.",
+          "habits": "Küçük alışkanlıklar zamanla <strong>birikir</strong>."
         }
       }
     },

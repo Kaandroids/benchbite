@@ -524,77 +524,59 @@
       }
     },
     "goalInsight": {
-      "how": "Here’s how we’ll get you there:",
+      "week": "Week {{week}}",
       "lose_fat": {
-        "title": "Losing fat is about consistency",
-        "titleNamed": "{{name}}, losing fat is about consistency",
-        "from": "Today",
-        "to": "Your goal",
-        "first": {
-          "title": "A moderate calorie deficit",
-          "body": "Enough to see progress, never starving."
+        "title": "Losing fat is about <accent>consistency</accent>",
+        "titleNamed": "{{name}}, losing fat is about <accent>consistency</accent>",
+        "scene": {
+          "label": "Weight",
+          "detail": "Daily weigh-ins and the weekly trend",
+          "chip": "−{{weight}} a week on average"
         },
-        "second": {
-          "title": "Strength training",
-          "body": "So the weight you lose is fat, not muscle."
-        },
-        "third": {
-          "title": "A pace you can keep",
-          "body": "Small, steady steps beat a crash diet."
+        "tips": {
+          "trend": "<strong>Daily ups and downs are normal.</strong> We follow the trend.",
+          "time": "First changes show in <strong>3–4 weeks</strong>.",
+          "weighIn": "<strong>Weigh in</strong> a few times a week for a clear trend."
         }
       },
       "build_muscle": {
-        "title": "Muscle is built week by week",
-        "titleNamed": "{{name}}, muscle is built week by week",
-        "from": "Week 1",
-        "to": "Week 12",
-        "first": {
-          "title": "A small calorie surplus",
-          "body": "Enough to build, not to gain fat."
+        "title": "Muscle is built <accent>week by week</accent>",
+        "titleNamed": "{{name}}, muscle is built <accent>week by week</accent>",
+        "scene": {
+          "label": "Bench press",
+          "detail": "Best set, every 4 weeks"
         },
-        "second": {
-          "title": "A little more each week",
-          "body": "Weight or reps go up step by step."
-        },
-        "third": {
-          "title": "Protein every day",
-          "body": "It is what new muscle is made of."
+        "tips": {
+          "sleep": "<strong>Sleep</strong> is when muscle grows: aim for 7–9 hours.",
+          "more": "<strong>Add a little</strong> weight or reps when sets feel easy.",
+          "time": "Visible gains take <strong>8–12 weeks</strong>."
         }
       },
       "get_stronger": {
-        "title": "Strength grows one step at a time",
-        "titleNamed": "{{name}}, strength grows one step at a time",
-        "from": "Today",
-        "to": "Heavier lifts",
-        "first": {
-          "title": "Heavier weights, fewer reps",
-          "body": "That is what makes you stronger."
+        "title": "Strength grows <accent>one step</accent> at a time",
+        "titleNamed": "{{name}}, strength grows <accent>one step</accent> at a time",
+        "scene": {
+          "label": "Squat",
+          "detail": "Top set of 5 reps",
+          "chip": "+{{weight}} at a time"
         },
-        "second": {
-          "title": "Longer rests",
-          "body": "So every set gets your full strength."
-        },
-        "third": {
-          "title": "Enough food to recover",
-          "body": "Calories that keep your weight steady."
+        "tips": {
+          "steps": "<strong>Small jumps</strong> add up to big lifts.",
+          "lighter": "A <strong>lighter week</strong> every 4–6 weeks.",
+          "records": "Every <strong>new best</strong> is marked."
         }
       },
       "stay_healthy": {
-        "title": "Staying healthy is about balance",
-        "titleNamed": "{{name}}, staying healthy is about balance",
-        "from": "Every week",
-        "to": "For years",
-        "first": {
-          "title": "Calories to keep your weight",
-          "body": "No deficit, no surplus."
+        "title": "Staying healthy is about <accent>balance</accent>",
+        "titleNamed": "{{name}}, staying healthy is about <accent>balance</accent>",
+        "scene": {
+          "label": "This week",
+          "detail": "3 of 3 workouts done"
         },
-        "second": {
-          "title": "Strength training",
-          "body": "A few times a week keeps you strong."
-        },
-        "third": {
-          "title": "Habits that last",
-          "body": "Small, steady routines you enjoy."
+        "tips": {
+          "enough": "<strong>2–3 workouts</strong> a week are enough.",
+          "moved": "Missed a day? <strong>Move the workout</strong> to another.",
+          "habits": "Small habits <strong>add up</strong> over time."
         }
       }
     },
