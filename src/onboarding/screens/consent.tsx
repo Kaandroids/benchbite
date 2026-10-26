@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, View } from 'react-native';
+import { BackHandler, Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,11 +37,22 @@ export function ConsentStep() {
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [explaining, setExplaining] = useState(false);
 
+  // Android's back button closes the explanation, as its back arrow does, rather than leaving the
+  // step and the tick not saved yet. Added after the step's own handler, so it is asked first.
+  useEffect(() => {
+    if (!explaining) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setExplaining(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [explaining]);
+
   if (explaining) {
     return (
       <Screen
         progress={progress}
-        onBack={back}
+        onBack={() => setExplaining(false)}
         footer={
           <Button
             label={t('onboarding.consent.needed.back')}

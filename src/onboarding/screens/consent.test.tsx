@@ -76,6 +76,15 @@ describe('ConsentStep', () => {
     expect(mockStep.answer).not.toHaveBeenCalled();
   });
 
+  it('closes the explanation with its back arrow, keeping the tick', async () => {
+    await render(<ConsentStep />);
+    await fireEvent.press(agreeBox());
+    await fireEvent.press(screen.getByRole('button', { name: 'Why is this needed?' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(agreeBox()).toBeChecked();
+    expect(mockStep.back).not.toHaveBeenCalled();
+  });
+
   it('opens the privacy policy', async () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     await render(<ConsentStep />);
