@@ -22,9 +22,6 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
   { key: 'control', icon: 'shield' },
 ];
 
-/** The space above and below each point, between the theme's medium and large. */
-const ROW_PADDING = 20;
-
 /**
  * Explicit consent to process health data (GDPR Article 9), before any body data is asked. The
  * box starts unticked; leaving it unticked is how to decline, and a link explains why the
@@ -115,7 +112,8 @@ export function ConsentStep() {
               styles.point,
               {
                 gap: spacing.md,
-                paddingVertical: ROW_PADDING,
+                // Roomier than a list's usual rows, as the points are what the screen is about.
+                paddingVertical: spacing.lg + spacing.xs,
                 borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
                 borderTopColor: colors.border,
               },
