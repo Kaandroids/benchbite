@@ -7,7 +7,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Appearance, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -67,7 +67,7 @@ function RootNavigator() {
   });
   const isReady = (fontsLoaded || fontError !== null) && status !== 'loading';
   const [splashDone, setSplashDone] = useState(false);
-  const endSplash = useCallback(() => setSplashDone(true), []);
+  const endSplash = () => setSplashDone(true);
 
   // The root view shows through during screen transitions and keyboard animations.
   useEffect(() => {
