@@ -29,4 +29,16 @@ describe('ChoiceCard', () => {
     await render(<ChoiceCard type="checkbox" title="Monday" selected onPress={jest.fn()} />);
     expect(screen.getByRole('checkbox', { name: 'Monday' })).toBeChecked();
   });
+
+  it('shows a level as bars and keeps its title', async () => {
+    await render(
+      <ChoiceCard
+        title="Beginner"
+        level={{ value: 1, of: 3 }}
+        selected={false}
+        onPress={jest.fn()}
+      />,
+    );
+    expect(screen.getByRole('radio', { name: 'Beginner' })).toBeTruthy();
+  });
 });
