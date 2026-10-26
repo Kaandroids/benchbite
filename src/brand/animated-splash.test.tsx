@@ -26,7 +26,7 @@ describe('AnimatedSplash', () => {
     await render(<AnimatedSplash scheme="light" onDone={onDone} />);
     expect(screen.getByText('benchbite')).toBeTruthy();
 
-    await act(() => jest.advanceTimersByTime(1000));
+    await act(() => jest.advanceTimersByTime(2000));
     expect(onDone).not.toHaveBeenCalled();
     await act(() => jest.advanceTimersByTime(1000));
     expect(onDone).toHaveBeenCalledTimes(1);
@@ -37,7 +37,7 @@ describe('AnimatedSplash', () => {
     const onDone = jest.fn();
     await render(<AnimatedSplash scheme="dark" onDone={onDone} />);
 
-    await act(() => jest.advanceTimersByTime(800));
+    await act(() => jest.advanceTimersByTime(1500));
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 });

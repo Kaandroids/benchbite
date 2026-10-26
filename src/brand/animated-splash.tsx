@@ -71,40 +71,44 @@ export function AnimatedSplash({ scheme, onDone }: AnimatedSplashProps) {
     if (reduceMotion) {
       bite.set(1);
       word.set(1);
-      opacity.set(withDelay(400, withTiming(0, { duration: 250 }, finish)));
+      opacity.set(withDelay(900, withTiming(0, { duration: 300 }, finish)));
       return;
     }
     const ease = { easing: Easing.out(Easing.quad) };
     // Draws back, then snaps forward as the bite is taken.
     plateScale.set(
       withDelay(
-        120,
+        200,
         withSequence(
-          withTiming(0.93, { duration: 140 }),
-          withTiming(1.05, { duration: 120 }),
-          withTiming(1, { duration: 160 }),
+          withTiming(0.93, { duration: 210 }),
+          withTiming(1.05, { duration: 180 }),
+          withTiming(1, { duration: 240 }),
         ),
       ),
     );
     plateTurn.set(
       withDelay(
-        120,
+        200,
         withSequence(
-          withTiming(-4, { duration: 140 }),
-          withTiming(3, { duration: 120 }),
-          withTiming(0, { duration: 160 }),
+          withTiming(-4, { duration: 210 }),
+          withTiming(3, { duration: 180 }),
+          withTiming(0, { duration: 240 }),
         ),
       ),
     );
     bite.set(
       withDelay(
-        260,
-        withSequence(withTiming(1.08, { duration: 90, ...ease }), withTiming(1, { duration: 80 })),
+        410,
+        withSequence(
+          withTiming(1.08, { duration: 130, ...ease }),
+          withTiming(1, { duration: 120 }),
+        ),
       ),
     );
-    crumbs.set(withDelay(270, withTiming(1, { duration: 450, ...ease })));
-    word.set(withDelay(450, withTiming(1, { duration: 300, ...ease })));
-    opacity.set(withDelay(1250, withTiming(0, { duration: 250 }, finish)));
+    crumbs.set(withDelay(420, withTiming(1, { duration: 650, ...ease })));
+    word.set(withDelay(700, withTiming(1, { duration: 450, ...ease })));
+    // The name stays for about a second, long enough to read.
+    opacity.set(withDelay(2100, withTiming(0, { duration: 300 }, finish)));
   }, [reduceMotion, onDone, plateScale, plateTurn, bite, crumbs, word, opacity]);
 
   const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
