@@ -15,6 +15,7 @@ import type { SessionTime } from '@shared/plan/types';
 
 import { partMinutes, useLengthPreview, type LengthPreview } from '../length-preview';
 import { SESSION_MINUTES } from '../training';
+import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 /** The length chosen until the user picks one: the middle of the range. */
@@ -52,12 +53,10 @@ export function SessionLengthStep() {
         <Button label={t('common.continue')} onPress={() => next({ sessionMinutes: minutes })} />
       }
     >
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="title" accessibilityRole="header">
-          {t('onboarding.steps.session-length.title')}
-        </Text>
-        <Text color="textMuted">{t('onboarding.sessionLength.intro')}</Text>
-      </View>
+      <StepHeading
+        title={t('onboarding.steps.session-length.title')}
+        intro={t('onboarding.sessionLength.intro')}
+      />
       {/* Apart from the title, so the question and its answer do not run together. */}
       <View style={{ marginTop: spacing.sm }}>
         <SegmentedControl

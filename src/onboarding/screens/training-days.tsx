@@ -12,6 +12,7 @@ import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { backToBackRuns, MAX_TRAINING_DAYS, RECOMMENDED_DAYS } from '../training';
+import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
@@ -64,12 +65,10 @@ export function TrainingDaysStep() {
         />
       }
     >
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="title" accessibilityRole="header">
-          {t('onboarding.steps.training-days.title')}
-        </Text>
-        <Text color="textMuted">{t('onboarding.trainingDays.intro')}</Text>
-      </View>
+      <StepHeading
+        title={t('onboarding.steps.training-days.title')}
+        intro={t('onboarding.trainingDays.intro')}
+      />
       {/* The week as one list, so it reads as a whole rather than seven separate cards. */}
       <Card list style={[styles.week, { marginTop: spacing.sm }]}>
         {WEEKDAYS.map((weekday) => (
