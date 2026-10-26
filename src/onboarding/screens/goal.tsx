@@ -53,6 +53,7 @@ export function GoalStep() {
           description={t(`onboarding.goal.descriptions.${option}`)}
           selected={goal === option}
           onPress={() => answer({ goal: option })}
+          compact
         />
       ))}
       <View style={[styles.flex, { marginTop: spacing.sm }]}>

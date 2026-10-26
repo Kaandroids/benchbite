@@ -21,6 +21,8 @@ type ChoiceCardProps = {
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
   type?: 'radio' | 'checkbox';
+  /** Smaller, for a list that shares the screen with more below it. */
+  compact?: boolean;
 };
 
 export function ChoiceCard({
@@ -30,6 +32,7 @@ export function ChoiceCard({
   selected,
   onPress,
   type = 'radio',
+  compact = false,
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
   const scale = useSharedValue(1);
@@ -63,9 +66,11 @@ export function ChoiceCard({
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
+          compact ? styles.compactFace : null,
           {
             gap: spacing.md,
-            padding: spacing.md,
+            padding: compact ? spacing.sm : spacing.md,
+            paddingHorizontal: spacing.md,
             backgroundColor: selected ? colors.selected : colors.surface,
             borderColor: selected ? colors.primary : colors.border,
           },
@@ -74,14 +79,14 @@ export function ChoiceCard({
         {icon ? (
           <View
             style={[
-              styles.iconTile,
+              compact ? styles.compactIconTile : styles.iconTile,
               {
                 borderRadius: radii.md,
                 backgroundColor: selected ? colors.primary : colors.iconBackground,
               },
             ]}
           >
-            <Icon name={icon} size={22} color={selected ? 'onPrimary' : 'primary'} />
+            <Icon name={icon} size={compact ? 18 : 22} color={selected ? 'onPrimary' : 'primary'} />
           </View>
         ) : null}
         <View style={styles.text}>
@@ -117,6 +122,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     minHeight: 68,
+  },
+  compactFace: {
+    minHeight: 56,
+  },
+  compactIconTile: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconTile: {
     width: 44,
