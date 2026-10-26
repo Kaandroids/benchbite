@@ -28,10 +28,10 @@ const CONFETTI = Array.from({ length: PIECES }, (_, index) => {
 });
 
 /**
- * A burst of confetti from both sides of the screen, once, to celebrate. It lies over the
+ * A burst of confetti from both sides of the screen, once, after `delay`, to celebrate. It lies over the
  * content without catching touches, and is left out when the system asks to reduce motion.
  */
-export function Confetti() {
+export function Confetti({ delay = 0 }: { delay?: number }) {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
   // The brand orange and a few festive colours that read on both themes.
@@ -42,7 +42,7 @@ export function Confetti() {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {CONFETTI.map((piece, index) => (
-        <Piece key={index} {...piece} color={palette[piece.color]!} />
+        <Piece key={index} {...piece} delay={delay + piece.delay} color={palette[piece.color]!} />
       ))}
     </View>
   );
@@ -61,7 +61,8 @@ function Piece({ fromLeft, top, dx, dy, delay, color }: PieceProps) {
     );
   }, [flown, delay]);
   const style = useAnimatedStyle(() => ({
-    opacity: 1 - flown.get(),
+    // Hidden at the edge until it flies.
+    opacity: flown.get() === 0 ? 0 : 1 - flown.get(),
     transform: [
       { translateX: dx * flown.get() },
       { translateY: dy * flown.get() },
