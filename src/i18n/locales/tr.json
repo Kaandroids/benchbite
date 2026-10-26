@@ -693,7 +693,27 @@
         "dumbbells": "Bir çift yeterli, bench gerekmiyor",
         "bodyweight": "Ekipman yok, bir sandalye ve sağlam bir masa"
       },
-      "examples": "Yapacağın egzersizler"
+      "means": "Bu ne demek",
+      "need": "İhtiyacın olan",
+      "exercises": "Egzersizlerin",
+      "progress": "İlerlemek için",
+      "facts": {
+        "gym": {
+          "need": "Bir spor salonuna erişim",
+          "exercises": "Halter, makine ve kablo hareketleri",
+          "progress": "Her seferinde biraz ağırlık ekle"
+        },
+        "dumbbells": {
+          "need": "Bir çift dambıl",
+          "exercises": "Dambıl ve vücut ağırlığı hareketleri",
+          "progress": "Önce daha çok tekrar, sonra daha ağır dambıl"
+        },
+        "bodyweight": {
+          "need": "Sadece bir sandalye ve sağlam bir masa",
+          "exercises": "Sadece vücut ağırlığı hareketleri",
+          "progress": "Daha çok tekrar, sonra daha zor versiyonlar"
+        }
+      }
     },
     "sessionLength": {
       "intro": "Her antrenmanı ısınma dahil bu süreye sığdırırız.",

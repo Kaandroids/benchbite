@@ -10,11 +10,9 @@ import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
-import { useSetupExamples } from '../setup-examples';
 import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -25,8 +23,16 @@ const ICONS: Record<NonNullable<OnboardingAnswers['setup']>, IconName> = {
   bodyweight: 'person',
 };
 
+/** What a setup means for the plan, one row each. */
+const FACTS: { key: 'need' | 'exercises' | 'progress'; icon: IconName }[] = [
+  { key: 'need', icon: 'dumbbell' },
+  { key: 'exercises', icon: 'layers' },
+  { key: 'progress', icon: 'trend' },
+];
+
 /**
- * Where the user trains, and a card with the first exercises the plan gives there. The
+ * Where the user trains, and a card on what it means: what is needed, which kinds of exercises
+ * the plan uses (a setup's own equipment and less), and how to progress with it. The
  * descriptions say what the plan builder assumes for each setup, such as dumbbells without a
  * bench. Choosing saves the answer, and Continue moves on.
  */
@@ -35,9 +41,6 @@ export function SetupStep() {
   const { spacing } = useTheme();
   const { answers, progress, back, answer, next } = useStep('setup');
   const setup = answers.setup;
-  const examples = useSetupExamples(answers, setup);
-  const library = useExerciseLibrary();
-  const names = examples.flatMap((id) => findExercise(library.data, id)?.name ?? []);
 
   return (
     <Screen
@@ -59,22 +62,25 @@ export function SetupStep() {
           size="compact"
         />
       ))}
-      {names.length > 0 ? (
-        <Card style={{ gap: spacing.sm, marginTop: spacing.xs }}>
-          <Caption>{t('onboarding.setup.examples')}</Caption>
-          {/* Keyed by the setup, so the list fades in anew when it changes. */}
+      {setup ? (
+        <Card style={{ gap: spacing.md, marginTop: spacing.xs }}>
+          <Caption>{t('onboarding.setup.means')}</Caption>
+          {/* Keyed by the setup, so the rows fade in anew when it changes. */}
           <Animated.View
             key={setup}
             entering={FadeIn.duration(250)}
             accessibilityLiveRegion="polite"
-            style={{ gap: spacing.sm }}
+            style={{ gap: spacing.md }}
           >
-            {names.map((name) => (
-              <View key={name} style={[styles.row, { gap: spacing.md }]}>
-                <IconTile name="dumbbell" size={32} />
-                <Text variant="bodyStrong" style={styles.flex}>
-                  {name}
-                </Text>
+            {FACTS.map(({ key, icon }) => (
+              <View key={key} style={[styles.row, { gap: spacing.md }]}>
+                <IconTile name={icon} size={36} />
+                <View style={styles.flex}>
+                  <Text variant="caption" color="textMuted">
+                    {t(`onboarding.setup.${key}`)}
+                  </Text>
+                  <Text variant="bodyStrong">{t(`onboarding.setup.facts.${setup}.${key}`)}</Text>
+                </View>
               </View>
             ))}
           </Animated.View>

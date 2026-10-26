@@ -693,7 +693,27 @@
         "dumbbells": "A pair is enough, no bench needed",
         "bodyweight": "No equipment, a chair and a sturdy table"
       },
-      "examples": "Exercises you'll do"
+      "means": "What this means",
+      "need": "You'll need",
+      "exercises": "Your exercises",
+      "progress": "To progress",
+      "facts": {
+        "gym": {
+          "need": "Access to a gym",
+          "exercises": "Barbell, machine and cable lifts",
+          "progress": "Add a little weight each time"
+        },
+        "dumbbells": {
+          "need": "A pair of dumbbells",
+          "exercises": "Dumbbell and bodyweight moves",
+          "progress": "More reps first, then a heavier pair"
+        },
+        "bodyweight": {
+          "need": "Just a chair and a sturdy table",
+          "exercises": "Bodyweight moves only",
+          "progress": "More reps, then harder versions"
+        }
+      }
     },
     "sessionLength": {
       "intro": "We fit every workout into this time, warm-up included.",

@@ -693,7 +693,27 @@
         "dumbbells": "Ein Paar genügt, keine Bank nötig",
         "bodyweight": "Keine Ausrüstung, ein Stuhl und ein stabiler Tisch"
       },
-      "examples": "Übungen, die du machst"
+      "means": "Was das bedeutet",
+      "need": "Du brauchst",
+      "exercises": "Deine Übungen",
+      "progress": "Um besser zu werden",
+      "facts": {
+        "gym": {
+          "need": "Zugang zu einem Fitnessstudio",
+          "exercises": "Langhantel, Maschinen und Kabelzug",
+          "progress": "Jedes Mal etwas mehr Gewicht"
+        },
+        "dumbbells": {
+          "need": "Ein Paar Kurzhanteln",
+          "exercises": "Kurzhantel- und Körpergewichtsübungen",
+          "progress": "Erst mehr Wiederholungen, dann schwerere Hanteln"
+        },
+        "bodyweight": {
+          "need": "Nur einen Stuhl und einen stabilen Tisch",
+          "exercises": "Nur Körpergewichtsübungen",
+          "progress": "Mehr Wiederholungen, dann schwerere Varianten"
+        }
+      }
     },
     "sessionLength": {
       "intro": "Wir passen jedes Workout in diese Zeit ein, Aufwärmen inklusive.",
