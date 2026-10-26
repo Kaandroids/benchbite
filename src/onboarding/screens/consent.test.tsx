@@ -54,6 +54,7 @@ describe('ConsentStep', () => {
     await render(<ConsentStep />);
     expect(agreeBox()).not.toBeChecked();
     expect(continueButton()).toBeDisabled();
+    expect(mockStep.answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
   });
 
   it('withdraws a consent given earlier when unticking', async () => {

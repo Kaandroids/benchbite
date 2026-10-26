@@ -29,6 +29,10 @@ const ROW_PADDING = 20;
  * Explicit consent to process health data (GDPR Article 9), before any body data is asked. The
  * box starts unticked; leaving it unticked is how to decline, and a link explains why the
  * onboarding cannot go on without it.
+ *
+ * The consent is saved only by Continue, with the current policy version. Unticking, or a saved
+ * consent to an older policy, clears it at once, so no consent stays saved that the box does not
+ * show.
  */
 export function ConsentStep() {
   const { t } = useTranslation();
@@ -36,6 +40,14 @@ export function ConsentStep() {
   const { answers, progress, answer, next, back } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [explaining, setExplaining] = useState(false);
+  const saved = answers.consentedPolicyVersion;
+
+  // A consent to an older policy no longer counts; the box shows it unticked, so clear it too.
+  useEffect(() => {
+    if (saved !== undefined && saved !== PRIVACY_POLICY_VERSION) {
+      answer({ consentedPolicyVersion: undefined });
+    }
+  }, [saved, answer]);
 
   // Android's back button closes the explanation, as its back arrow does, rather than leaving the
   // step and the tick not saved yet. Added after the step's own handler, so it is asked first.
