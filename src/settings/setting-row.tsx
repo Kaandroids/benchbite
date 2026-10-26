@@ -7,8 +7,8 @@ import { useTheme } from '@/theme';
 
 type SettingRowProps = {
   label: string;
-  /** The current setting, after the label. */
-  value?: string;
+  /** The current setting, after the label; nothing when there is none. */
+  value?: string | null;
   /** What pressing the row does, for screen readers. */
   hint: string;
   onPress: () => void;

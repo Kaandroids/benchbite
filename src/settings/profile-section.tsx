@@ -19,7 +19,7 @@ export function ProfileSection() {
     <>
       <SettingRow
         label={t('profile.name')}
-        value={name ?? undefined}
+        value={name}
         hint={t('profile.nameHint')}
         onPress={() => setOpen(true)}
       />
