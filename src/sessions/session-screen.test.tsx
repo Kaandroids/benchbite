@@ -3,7 +3,7 @@ import {
   requestPermissionsAsync,
 } from 'expo-notifications/build/NotificationPermissions';
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
+import { Alert, Keyboard } from 'react-native';
 
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { act, fireEvent, render, renderHook, screen } from '@/test/render';
@@ -163,6 +163,13 @@ describe('SessionScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Reps of set 1'), '1500');
     await fireEvent(screen.getByLabelText('Reps of set 1'), 'endEditing');
     expect(screen.getByLabelText('Reps of set 1').props.value).toBe('999');
+  });
+
+  it('closes the keyboard when a set is done', async () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    await render(<SessionScreen />);
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Set 1 done' }));
+    expect(dismiss).toHaveBeenCalled();
   });
 
   it('needs reps before a set is done, as the log would refuse it', async () => {
