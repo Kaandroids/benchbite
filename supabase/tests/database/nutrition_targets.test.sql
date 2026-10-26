@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(16);
 
 select is(
   public.calculate_nutrition_targets('male', 30, 180, 80, 'moderate', 0, 'stay_healthy'),
@@ -21,6 +21,17 @@ select is(
   (public.calculate_nutrition_targets('unspecified', 30, 180, 80, 'moderate', 0, 'stay_healthy')).calories,
   2630,
   'Prefer not to say uses the midpoint of the sex constants'
+);
+
+-- The onboarding's activity step shows these factors too (ACTIVITY_FACTORS in
+-- src/onboarding/body.ts): 1.2, 1.375, 1.55 and 1.725. Change both.
+select is(
+  array(
+    select (public.calculate_nutrition_targets('male', 30, 180, 80, level, 0, 'stay_healthy')).calories
+    from unnest(enum_range(null::public.activity_level)) level
+  ),
+  array[2140, 2450, 2760, 3070],
+  'The activity levels multiply the BMR by 1.2, 1.375, 1.55 and 1.725'
 );
 
 select is(
