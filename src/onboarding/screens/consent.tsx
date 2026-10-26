@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
 import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
@@ -71,7 +72,7 @@ export function ConsentStep() {
           {/* Quiet, so it does not compete with Continue: it only explains. */}
           <TextLink
             label={t('onboarding.consent.whyLink')}
-            color="textMuted"
+            tone="muted"
             onPress={() => setExplaining(true)}
           />
         </View>
@@ -122,42 +123,13 @@ export function ConsentStep() {
       </View>
       <TextLink
         label={t('onboarding.consent.policy')}
-        color="primaryText"
         onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
       />
     </Screen>
   );
 }
 
-/** A small link, in the brand colour or, quieter, in grey. */
-function TextLink({
-  label,
-  color,
-  onPress,
-}: {
-  label: string;
-  color: 'primaryText' | 'textMuted';
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      hitSlop={12}
-      onPress={onPress}
-      style={({ pressed }) => [styles.link, { opacity: pressed ? 0.6 : 1 }]}
-    >
-      <Text variant="captionStrong" color={color}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  link: {
-    alignSelf: 'center',
-    paddingVertical: 4,
-  },
   point: {
     flexDirection: 'row',
     alignItems: 'center',
