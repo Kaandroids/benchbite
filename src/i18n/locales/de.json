@@ -185,7 +185,8 @@
     },
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
-    "gramTarget": "/ {{target}} g"
+    "gramTarget": "/ {{target}} g",
+    "macroGrams": "{{grams}} g {{macro}}"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
@@ -745,15 +746,12 @@
       "skip": "Nicht jetzt"
     },
     "summary": {
-      "body": "Dein Plan ist fertig.",
+      "body": "Das haben wir für dich eingerichtet.",
       "remindersOn": "Erinnerungen um {{time}}",
       "remindersOff": "Keine Erinnerungen · in den Einstellungen einschalten",
       "start": "Los geht's",
       "titleNamed": "Alles bereit, {{name}}!",
       "target": "Tagesziel",
-      "protein": "{{grams}} g Protein",
-      "carbs": "{{grams}} g Kohlenhydrate",
-      "fat": "{{grams}} g Fett",
       "workoutsTile": "Workouts",
       "perWeek": "{{count}} pro Woche",
       "goalTile": "Ziel",

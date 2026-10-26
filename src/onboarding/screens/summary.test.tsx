@@ -36,6 +36,8 @@ describe('SummaryStep', () => {
     await render(<SummaryStep />);
     expect(screen.getByText('2,200 kcal a day')).toBeTruthy();
     expect(screen.getByText('150 g protein')).toBeTruthy();
+    expect(screen.getByText('250 g carbs')).toBeTruthy();
+    expect(screen.getByText("Here's everything we set up for you.")).toBeTruthy();
     expect(screen.getByText('3 a week')).toBeTruthy();
     expect(screen.getByText('Mon · Wed · Fri')).toBeTruthy();
     expect(screen.getByText(/^Reminders at 6:00\sPM$/)).toBeTruthy();
@@ -86,6 +88,7 @@ describe('SummaryStep', () => {
   it('greets by name and shows when the goal weight is reached', async () => {
     mockStep = createStep({
       displayName: 'Kaan',
+      goal: 'lose_fat',
       targets: TARGETS,
       plan: plan(session(1, 'push')),
       weightUnit: 'kg',

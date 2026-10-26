@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
@@ -12,17 +12,20 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useShortDateFormat, useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
-import { useNumberFormat, useWeightFormat } from '@/i18n/units';
+import { useNumberFormat, useWeightLabel } from '@/i18n/units';
+import { MACROS } from '@/nutrition/macro-targets';
 import { nextSession } from '@/workouts/next-session';
 import { useTheme } from '@/theme';
 
-import { projectedDate } from '../body';
+import { projectedDate, weightGoal } from '../body';
 import { Confetti } from '../confetti';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 
 /** Delay between the parts of the screen appearing. */
 const STEP_MS = 120;
+/** The confetti waits for the last part to appear. */
+const CONFETTI_DELAY_MS = STEP_MS * 7 + 400;
 
 /**
  * The end of the onboarding: confetti, what was set up, a card each, and the first workout.
@@ -32,7 +35,7 @@ export function SummaryStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const weight = useWeightFormat();
+  const weightLabel = useWeightLabel();
   const weekdayName = useWeekdayFormat();
   const shortWeekday = useWeekdayFormat('short');
   const formatTime = useTimeFormat();
@@ -44,9 +47,10 @@ export function SummaryStep() {
   const upcoming = plan ? nextSession({ sessions: days }, today) : null;
   const weekdays = days.map((day) => day.weekday).sort((a, b) => a - b);
   const unit = answers.weightUnit ?? 'kg';
+  const aim = weightGoal(answers);
   const goalDate =
-    answers.weightKg && answers.targetWeightKg && answers.weeklyPaceKg
-      ? projectedDate(answers.weightKg, answers.targetWeightKg, answers.weeklyPaceKg, today)
+    aim && answers.weightKg
+      ? projectedDate(answers.weightKg, aim.targetKg, aim.paceKg, today)
       : null;
 
   useEffect(() => {
@@ -58,7 +62,8 @@ export function SummaryStep() {
       progress={progress}
       footer={<Button label={t('onboarding.summary.start')} onPress={() => next()} />}
     >
-      <Confetti />
+      {/* Once the cards are in, so the burst comes as the result shows. */}
+      <Confetti delay={CONFETTI_DELAY_MS} />
       <View style={[styles.center, { gap: spacing.sm, marginBottom: spacing.sm }]}>
         <Animated.View entering={ZoomIn.springify().delay(100)}>
           <View style={[styles.badge, { backgroundColor: colors.primary }]}>
@@ -84,15 +89,12 @@ export function SummaryStep() {
             {t('nutrition.calories', { calories: format(targets.calories) })}
           </Text>
           <View style={[styles.row, styles.wrap, { gap: spacing.md }]}>
-            {(
-              [
-                ['protein', targets.proteinG],
-                ['carbs', targets.carbsG],
-                ['fat', targets.fatG],
-              ] as const
-            ).map(([macro, grams]) => (
-              <Text key={macro} variant="captionStrong" color="textMuted">
-                {t(`onboarding.summary.${macro}`, { grams: format(grams) })}
+            {MACROS.map(({ key, grams }) => (
+              <Text key={key} variant="captionStrong" color="textMuted">
+                {t('nutrition.macroGrams', {
+                  grams: format(targets[grams]),
+                  macro: t(`nutrition.macros.${key}`).toLowerCase(),
+                })}
               </Text>
             ))}
           </View>
@@ -107,11 +109,11 @@ export function SummaryStep() {
             value={t('onboarding.summary.perWeek', { count: days.length })}
             detail={weekdays.map((day) => shortWeekday(day)).join(' · ')}
           />
-          {goalDate && answers.targetWeightKg ? (
+          {aim && goalDate ? (
             <Tile
               delay={STEP_MS * 5}
               caption={t('onboarding.summary.goalTile')}
-              value={`${weight(answers.targetWeightKg, unit)} ${unit}`}
+              value={weightLabel(aim.targetKg, unit)}
               detail={t('onboarding.summary.by', { date: shortDate(goalDate) })}
             />
           ) : answers.sessionMinutes ? (
@@ -166,7 +168,7 @@ export function SummaryStep() {
   );
 }
 
-type TileProps = { delay: number; caption: string; value: string; detail?: ReactNode };
+type TileProps = { delay: number; caption: string; value: string; detail?: string };
 
 /** One of two cards side by side: what it is, its value large, and a detail. */
 function Tile({ delay, caption, value, detail }: TileProps) {

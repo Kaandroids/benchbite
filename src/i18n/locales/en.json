@@ -185,7 +185,8 @@
     },
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
-    "gramTarget": "/ {{target}} g"
+    "gramTarget": "/ {{target}} g",
+    "macroGrams": "{{grams}} g {{macro}}"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",
@@ -745,15 +746,12 @@
       "skip": "Not now"
     },
     "summary": {
-      "body": "Your plan is ready.",
+      "body": "Here's everything we set up for you.",
       "remindersOn": "Reminders at {{time}}",
       "remindersOff": "No reminders · turn them on in Settings",
       "start": "Let's go",
       "titleNamed": "You're all set, {{name}}!",
       "target": "Daily target",
-      "protein": "{{grams}} g protein",
-      "carbs": "{{grams}} g carbs",
-      "fat": "{{grams}} g fat",
       "workoutsTile": "Workouts",
       "perWeek": "{{count}} a week",
       "goalTile": "Goal",
