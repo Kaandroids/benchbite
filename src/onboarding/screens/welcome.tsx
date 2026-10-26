@@ -40,6 +40,12 @@ export function WelcomeStep() {
     Gesture.Tap()
       .runOnJS(true)
       .onEnd((event) => (event.x < width * BACK_ZONE ? stories.previous() : stories.next())),
+    // Holding the slide pauses it, as with stories, to read it at leisure.
+    Gesture.LongPress()
+      .minDuration(250)
+      .runOnJS(true)
+      .onStart(stories.pause)
+      .onFinalize(stories.resume),
   );
 
   return (
@@ -64,7 +70,12 @@ export function WelcomeStep() {
     >
       <View style={[styles.flex, { paddingHorizontal: spacing.xl, gap: spacing.md }]}>
         <View style={{ paddingTop: spacing.md }}>
-          <StoryProgress count={SLIDES.length} index={stories.index} playing={stories.playing} />
+          <StoryProgress
+            count={SLIDES.length}
+            index={stories.index}
+            autoplay={stories.autoplay}
+            paused={stories.paused}
+          />
         </View>
         <View style={[styles.brand, { gap: spacing.sm }]}>
           <BrandMark size={32} />
