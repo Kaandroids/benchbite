@@ -11,7 +11,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Rect } from 'react-native-svg';
 
-import { HOLE, MARK_BOX, PLATE, RING } from '@/brand/mark';
+import { PlateCuts } from '@/brand/bitten-plate';
+import { MARK_BOX, PLATE } from '@/brand/mark';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -92,15 +93,7 @@ function HalfPlate() {
         fill={colors.primary}
         clipPath="url(#training-intro-plate)"
       />
-      <Circle
-        cx={PLATE.cx}
-        cy={PLATE.cy}
-        r={RING.r}
-        fill="none"
-        stroke={colors.background}
-        strokeWidth={RING.width}
-      />
-      <Circle cx={PLATE.cx} cy={PLATE.cy} r={HOLE.r} fill={colors.background} />
+      <PlateCuts background={colors.background} />
     </Svg>
   );
 }

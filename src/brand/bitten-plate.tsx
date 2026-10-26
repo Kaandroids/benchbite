@@ -22,15 +22,7 @@ export function BittenPlate({ size, color, background, bite, crumbs }: BittenPla
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${MARK_BOX} ${MARK_BOX}`} accessible={false}>
       <Circle cx={PLATE.cx} cy={PLATE.cy} r={PLATE.r} fill={color} />
-      <Circle
-        cx={PLATE.cx}
-        cy={PLATE.cy}
-        r={RING.r}
-        fill="none"
-        stroke={background}
-        strokeWidth={RING.width}
-      />
-      <Circle cx={PLATE.cx} cy={PLATE.cy} r={HOLE.r} fill={background} />
+      <PlateCuts background={background} />
       {BITE_CIRCLES.map((circle) => (
         <BiteCircle
           key={`${circle.cx},${circle.cy}`}
@@ -43,6 +35,26 @@ export function BittenPlate({ size, color, background, bite, crumbs }: BittenPla
         <Crumb key={`${crumb.cx},${crumb.cy}`} crumb={crumb} progress={crumbs} color={color} />
       ))}
     </Svg>
+  );
+}
+
+/**
+ * The groove and the hole that make a disc read as the weight plate, drawn in the colour behind
+ * it over whatever fills the plate.
+ */
+export function PlateCuts({ background }: { background: string }) {
+  return (
+    <>
+      <Circle
+        cx={PLATE.cx}
+        cy={PLATE.cy}
+        r={RING.r}
+        fill="none"
+        stroke={background}
+        strokeWidth={RING.width}
+      />
+      <Circle cx={PLATE.cx} cy={PLATE.cy} r={HOLE.r} fill={background} />
+    </>
   );
 }
 
