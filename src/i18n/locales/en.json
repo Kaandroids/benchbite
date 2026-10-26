@@ -763,7 +763,10 @@
     },
     "sex": {
       "intro": "It changes how many calories your body burns, so your targets fit you.",
-      "unspecified": "We'll use an average"
+      "unspecified": "We'll use an average",
+      "why": "Why we ask",
+      "burn": "Men and women burn a different number of calories at rest.",
+      "only": "Only your calorie targets use it. Your training does not change."
     }
   },
   "session": {

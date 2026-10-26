@@ -763,7 +763,10 @@
     },
     "sex": {
       "intro": "Vücudunun ne kadar kalori yaktığını etkiler, böylece hedeflerin sana uyar.",
-      "unspecified": "Ortalama bir değer kullanırız"
+      "unspecified": "Ortalama bir değer kullanırız",
+      "why": "Neden soruyoruz",
+      "burn": "Kadınlar ve erkekler dinlenirken farklı miktarda kalori yakar.",
+      "only": "Sadece kalori hedeflerin bunu kullanır. Antrenmanın değişmez."
     }
   },
   "session": {
