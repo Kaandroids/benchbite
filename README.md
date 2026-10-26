@@ -168,6 +168,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm check:locales`    | Check that all translations have the same keys        |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
+| `pnpm icons`            | Draw the app icons and the splash image from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
