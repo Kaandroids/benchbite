@@ -503,22 +503,22 @@
         "progress": "Progress",
         "lose_fat": {
           "calories": "A moderate deficit",
-          "training": "Strength training to keep your muscle",
+          "training": "Strength to keep your muscle",
           "progress": "Steady loss you can keep"
         },
         "build_muscle": {
           "calories": "A small surplus",
-          "training": "A little more weight or reps each week",
+          "training": "A bit more each week",
           "progress": "Lean gain, week by week"
         },
         "get_stronger": {
           "calories": "Enough to keep your weight",
-          "training": "Heavy main lifts with long rests",
+          "training": "Heavy lifts, long rests",
           "progress": "Stronger every few weeks"
         },
         "stay_healthy": {
           "calories": "Enough to keep your weight",
-          "training": "A balanced mix, a few times a week",
+          "training": "A balanced weekly mix",
           "progress": "Habits that last"
         }
       }

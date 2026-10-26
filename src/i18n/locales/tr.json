@@ -503,22 +503,22 @@
         "progress": "İlerleme",
         "lose_fat": {
           "calories": "Ölçülü bir açık",
-          "training": "Kasını korumak için kuvvet antrenmanı",
-          "progress": "Sürdürebileceğin düzenli kayıp"
+          "training": "Kası korumak için kuvvet",
+          "progress": "Sürdürülebilir kayıp"
         },
         "build_muscle": {
           "calories": "Küçük bir fazla",
-          "training": "Her hafta biraz daha ağırlık ya da tekrar",
+          "training": "Her hafta biraz daha",
           "progress": "Hafta hafta temiz kazanım"
         },
         "get_stronger": {
           "calories": "Kilonu koruyacak kadar",
-          "training": "Uzun dinlenmeli ağır temel hareketler",
+          "training": "Ağır, uzun dinlenmeli",
           "progress": "Birkaç haftada bir daha güçlü"
         },
         "stay_healthy": {
           "calories": "Kilonu koruyacak kadar",
-          "training": "Haftada birkaç kez dengeli bir karışım",
+          "training": "Dengeli bir karışım",
           "progress": "Kalıcı alışkanlıklar"
         }
       }

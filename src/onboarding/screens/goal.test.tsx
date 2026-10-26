@@ -28,7 +28,7 @@ describe('GoalStep', () => {
       screen.getByRole('radio', { name: 'Lose fat, Burn fat and keep your muscle' }),
     ).toBeChecked();
     expect(screen.getByText('A moderate deficit')).toBeTruthy();
-    expect(screen.getByText('Strength training to keep your muscle')).toBeTruthy();
+    expect(screen.getByText('Strength to keep your muscle')).toBeTruthy();
     await fireEvent.press(continueButton());
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });

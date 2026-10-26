@@ -503,22 +503,22 @@
         "progress": "Fortschritt",
         "lose_fat": {
           "calories": "Ein moderates Defizit",
-          "training": "Krafttraining, um deine Muskeln zu halten",
-          "progress": "Stetiger Verlust, den du durchhältst"
+          "training": "Kraft, um Muskeln zu halten",
+          "progress": "Stetig und machbar"
         },
         "build_muscle": {
           "calories": "Ein kleiner Überschuss",
-          "training": "Jede Woche etwas mehr Gewicht oder Wiederholungen",
-          "progress": "Sauberer Aufbau, Woche für Woche"
+          "training": "Jede Woche etwas mehr",
+          "progress": "Woche für Woche mehr"
         },
         "get_stronger": {
-          "calories": "Genug, um dein Gewicht zu halten",
-          "training": "Schwere Grundübungen mit langen Pausen",
+          "calories": "Hält dein Gewicht",
+          "training": "Schwer, mit langen Pausen",
           "progress": "Alle paar Wochen stärker"
         },
         "stay_healthy": {
-          "calories": "Genug, um dein Gewicht zu halten",
-          "training": "Eine ausgewogene Mischung, ein paar Mal pro Woche",
+          "calories": "Hält dein Gewicht",
+          "training": "Ein ausgewogener Mix",
           "progress": "Gewohnheiten, die bleiben"
         }
       }
