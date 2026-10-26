@@ -1,17 +1,18 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, type ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 
 import { BrandMark } from '@/brand/brand-mark';
+import { Wordmark } from '@/brand/wordmark';
 import { Button } from '@/components/ui/button';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useIsAccount } from '@/providers/session-provider';
-import { fonts, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { SLIDES } from '../welcome/slides';
 import { StoryProgress } from '../welcome/story-progress';
@@ -20,8 +21,6 @@ import { useStep } from '../use-step';
 
 /** A tap on this share of the slide's width, from the left, goes back; the rest goes on. */
 const BACK_ZONE = 0.35;
-/** The stage's tint: the primary colour at about 10 % opacity, as a hex alpha. */
-const STAGE_TINT = '1A';
 
 /**
  * The first screen: what the app does, as slides to tap or swipe through like stories, then on to
@@ -35,8 +34,7 @@ export function WelcomeStep() {
   const stories = useStories(SLIDES.length);
   const [width, setWidth] = useState(0);
   const slide = SLIDES[stories.index]!;
-  const titleStart = t(`onboarding.welcome.slides.${slide.key}.title`);
-  const titleAccent = t(`onboarding.welcome.slides.${slide.key}.accent`);
+  const titleKey = `onboarding.welcome.slides.${slide.key}.title` as const;
   const body = t(`onboarding.welcome.slides.${slide.key}.body`);
   // The new slide comes in from the side it was reached from, as when swiping.
   const SlideIn = stories.direction === 'back' ? FadeInLeft : FadeInRight;
@@ -83,13 +81,13 @@ export function WelcomeStep() {
         </View>
         <View style={[styles.brand, { gap: spacing.sm }]}>
           <BrandMark size={32} />
-          <Text style={[styles.wordmark, { color: colors.primaryText }]}>benchbite</Text>
+          <Wordmark size={20} color={colors.primaryText} />
         </View>
         <GestureDetector gesture={gesture}>
           <View
             accessible
             accessibilityRole="adjustable"
-            accessibilityLabel={`${titleStart} ${titleAccent}. ${body}`}
+            accessibilityLabel={`${plainText(t(titleKey))}. ${body}`}
             accessibilityValue={{
               text: t('onboarding.welcome.slide', {
                 current: stories.index + 1,
@@ -111,15 +109,16 @@ export function WelcomeStep() {
                 styles.stage,
                 {
                   borderRadius: radii.xl,
-                  // A faint wash of the brand colour, under the cards in both themes.
-                  backgroundColor: `${colors.primary}${STAGE_TINT}`,
+                  backgroundColor: colors.primaryWash,
                   padding: spacing.lg,
                 },
               ]}
             >
-              <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
-                <slide.Illustration />
-              </Animated.View>
+              <FitInside>
+                <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
+                  <slide.Illustration />
+                </Animated.View>
+              </FitInside>
             </View>
             <Animated.View
               key={`${slide.key}-text`}
@@ -127,11 +126,13 @@ export function WelcomeStep() {
               style={[styles.words, { gap: spacing.sm }]}
             >
               {/* Centred, with the point of the slide in the brand orange. */}
-              <Text style={styles.title} align="center" accessibilityRole="header">
-                {titleStart}{' '}
-                <Text style={[styles.title, { color: colors.primaryText }]}>{titleAccent}</Text>
+              <Text variant="hero" align="center" accessibilityRole="header">
+                <Trans
+                  i18nKey={titleKey}
+                  components={{ accent: <Text variant="hero" color="primaryText" /> }}
+                />
               </Text>
-              <Text color="textMuted" align="center" style={styles.body}>
+              <Text variant="lead" color="textMuted" align="center">
                 {body}
               </Text>
             </Animated.View>
@@ -140,6 +141,34 @@ export function WelcomeStep() {
       </View>
     </Screen>
   );
+}
+
+/**
+ * Shrinks its content to fit the space it is given, never growing it: on a small screen, or with
+ * a large font, a picture taller than the stage stays inside it.
+ */
+function FitInside({ children }: { children: ReactNode }) {
+  const [space, setSpace] = useState(0);
+  const [content, setContent] = useState(0);
+  const scale = space > 0 && content > space ? space / content : 1;
+  return (
+    <View
+      onLayout={(event) => setSpace(event.nativeEvent.layout.height)}
+      style={[styles.flex, styles.fit]}
+    >
+      <View
+        onLayout={(event) => setContent(event.nativeEvent.layout.height)}
+        style={{ transform: [{ scale }] }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** A translation without its markup, for screen readers. */
+function plainText(text: string) {
+  return text.replace(/<\/?\w+>/g, '');
 }
 
 const styles = StyleSheet.create({
@@ -152,27 +181,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  wordmark: {
-    fontFamily: fonts.black,
-    fontSize: 20,
-  },
   stage: {
     flex: 1,
+    overflow: 'hidden',
+  },
+  fit: {
     justifyContent: 'center',
   },
   // Room for a one-line title and a two-line text, the same on every slide, so the words stay in
   // one place without leaving a gap above the button. A longer title only makes the stage smaller.
   words: {
     minHeight: 104,
-  },
-  title: {
-    fontFamily: fonts.black,
-    fontSize: 32,
-    lineHeight: 38,
-  },
-  body: {
-    fontFamily: fonts.medium,
-    fontSize: 17,
-    lineHeight: 24,
   },
 });
