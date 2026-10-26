@@ -7,7 +7,8 @@ import { useTheme, type ColorTokens } from '@/theme';
 
 import type { NutritionTargets } from './targets';
 
-const MACROS: {
+/** The macros in their usual order, with the target each one reads and its colour. */
+export const MACROS: {
   key: 'protein' | 'carbs' | 'fat';
   grams: keyof NutritionTargets;
   color: keyof ColorTokens;
