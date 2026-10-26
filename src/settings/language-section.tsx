@@ -6,15 +6,10 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { deviceLanguage, SUPPORTED_LANGUAGES, type Language } from '@/i18n';
+import { deviceLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, type Language } from '@/i18n';
 import { useTheme } from '@/theme';
 
-import {
-  LANGUAGE_NAMES,
-  loadLanguageChoice,
-  saveLanguageChoice,
-  type LanguageChoice,
-} from './preferences';
+import { loadLanguageChoice, saveLanguageChoice, type LanguageChoice } from './preferences';
 
 /** The app's language in a row, chosen in a sheet: one of its languages, or the phone's. */
 export function LanguageSection() {

@@ -12,13 +12,6 @@ export type LanguageChoice = Language | 'system';
 const THEME_KEY = 'settings.theme';
 const LANGUAGE_KEY = 'settings.language';
 
-/** Each language's name in itself, so that someone who chose a language they cannot read finds theirs. */
-export const LANGUAGE_NAMES: Record<Language, string> = {
-  en: 'English',
-  de: 'Deutsch',
-  tr: 'Türkçe',
-};
-
 export function loadThemeChoice(): ThemeChoice {
   const stored = readItem(THEME_KEY);
   return stored === 'light' || stored === 'dark' ? stored : 'system';

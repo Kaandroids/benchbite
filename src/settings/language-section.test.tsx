@@ -4,7 +4,6 @@ import { LanguageSection } from './language-section';
 import { loadLanguageChoice, saveLanguageChoice } from './preferences';
 
 jest.mock('./preferences', () => ({
-  ...jest.requireActual<object>('./preferences'),
   loadLanguageChoice: jest.fn(),
   saveLanguageChoice: jest.fn(),
 }));
