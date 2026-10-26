@@ -42,6 +42,7 @@ export const ICONS = {
   settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
   shield: { ios: 'lock.shield', android: 'shield', web: 'shield' },
   snowflake: { ios: 'snowflake', android: 'ac_unit', web: 'ac_unit' },
+  sparkles: { ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' },
   stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
