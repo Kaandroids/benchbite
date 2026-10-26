@@ -7,10 +7,22 @@ let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 
 describe('GoalInsightStep', () => {
-  it('explains the chosen goal', async () => {
+  it('explains the chosen goal with its three points', async () => {
     mockStep = createStep({ goal: 'build_muscle' });
     await render(<GoalInsightStep />);
-    expect(screen.getByText('Muscle grows with time and protein')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Muscle is built week by week' })).toBeTruthy();
+    expect(screen.getByText('A small calorie surplus')).toBeTruthy();
+    expect(screen.getByText('A little more each week')).toBeTruthy();
+    expect(screen.getByText('Protein every day')).toBeTruthy();
+    expect(screen.getByText('Week 12')).toBeTruthy();
+  });
+
+  it('speaks to the user by name', async () => {
+    mockStep = createStep({ goal: 'lose_fat', displayName: 'Kaan' });
+    await render(<GoalInsightStep />);
+    expect(
+      screen.getByRole('header', { name: 'Kaan, losing fat is about consistency' }),
+    ).toBeTruthy();
   });
 
   it('moves on with Continue', async () => {
