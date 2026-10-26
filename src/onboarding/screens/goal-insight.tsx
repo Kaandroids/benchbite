@@ -12,10 +12,8 @@ import { useTheme } from '@/theme';
 import { AccentTitle } from '../accent-title';
 import { GoalScene } from '../goal-scene';
 import { Stage } from '../stage';
-import type { OnboardingAnswers } from '../types';
+import type { Goal } from '../types';
 import { useStep } from '../use-step';
-
-type Goal = NonNullable<OnboardingAnswers['goal']>;
 
 /** The tips of each goal, in order, with their icons. */
 const TIPS = {

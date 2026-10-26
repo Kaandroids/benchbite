@@ -3,7 +3,7 @@
 import { toTenth } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 
-import type { OnboardingAnswers } from './types';
+import type { Goal } from './types';
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
@@ -26,8 +26,6 @@ export function bmi(weightKg: number, heightCm: number): number {
 export function minHealthyWeightKg(heightCm: number): number {
   return Math.ceil(MIN_HEALTHY_BMI * (heightCm / 100) ** 2 * 10) / 10;
 }
-
-type Goal = NonNullable<OnboardingAnswers['goal']>;
 
 /** Whether the target lies in the goal's direction: below for losing fat, above for muscle. */
 export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: number): boolean {

@@ -20,10 +20,8 @@ import type { Streak } from '@/streak/streak';
 import { StreakBadge } from '@/streak/streak-badge';
 import { useTheme } from '@/theme';
 
-import type { OnboardingAnswers } from './types';
+import type { Goal } from './types';
 import { useDrawn } from './use-drawn';
-
-type Goal = NonNullable<OnboardingAnswers['goal']>;
 
 // Example data that shows what the goal looks like in the app; none of it is the user's.
 /** A weight in both units, rounded the way each is lifted or weighed. */

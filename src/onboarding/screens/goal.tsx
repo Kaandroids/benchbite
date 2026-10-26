@@ -14,10 +14,8 @@ import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
 import { GOAL_ICONS } from '../goal-icons';
-import type { OnboardingAnswers } from '../types';
+import type { Goal } from '../types';
 import { useStep } from '../use-step';
-
-type Goal = NonNullable<OnboardingAnswers['goal']>;
 
 /** What a goal sets in the plan, one row each. */
 const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] = [
