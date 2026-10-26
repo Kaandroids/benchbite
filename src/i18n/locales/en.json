@@ -396,7 +396,7 @@
         "title": "How active are you outside workouts?"
       },
       "training-intro": {
-        "title": "Nice work. Now your training."
+        "title": "Halfway there."
       },
       "experience": {
         "title": "How experienced are you?"
@@ -658,13 +658,9 @@
       "note": "Your workouts are added on top."
     },
     "trainingIntro": {
-      "halfway": "Halfway there",
-      "titleNamed": "Nice work, {{name}}. Now your training.",
-      "body_one": "One quick question about how you train, and your plan is ready.",
-      "body_other": "{{count}} quick questions about how you train, and your plan is ready.",
-      "aboutYou": "About you",
-      "yourTraining": "Your training",
-      "progress": "About you is done. Your training is next."
+      "titleNamed": "Halfway there, {{name}}.",
+      "body_one": "The other half is your training: one quick question.",
+      "body_other": "The other half is your training: {{count}} quick questions."
     },
     "experience": {
       "intro": "With strength training, such as squats and presses.",

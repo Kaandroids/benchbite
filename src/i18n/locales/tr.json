@@ -396,7 +396,7 @@
         "title": "Antrenman dışında ne kadar aktifsin?"
       },
       "training-intro": {
-        "title": "Harika. Şimdi antrenmanın."
+        "title": "Yarıyı geçtin."
       },
       "experience": {
         "title": "Ne kadar deneyimlisin?"
@@ -658,13 +658,9 @@
       "note": "Antrenmanların bunun üstüne eklenir."
     },
     "trainingIntro": {
-      "halfway": "Yarıyı geçtin",
-      "titleNamed": "Harika, {{name}}. Şimdi antrenmanın.",
-      "body_one": "Nasıl antrenman yaptığına dair kısa bir soru, sonra planın hazır.",
-      "body_other": "Nasıl antrenman yaptığına dair {{count}} kısa soru, sonra planın hazır.",
-      "aboutYou": "Seni tanıyalım",
-      "yourTraining": "Antrenmanın",
-      "progress": "Seni tanıma kısmı bitti. Sırada antrenmanın var."
+      "titleNamed": "Yarıyı geçtin, {{name}}.",
+      "body_one": "Diğer yarısı antrenmanın: tek kısa bir soru.",
+      "body_other": "Diğer yarısı antrenmanın: {{count}} kısa soru."
     },
     "experience": {
       "intro": "Squat ve press gibi kuvvet antrenmanlarında.",

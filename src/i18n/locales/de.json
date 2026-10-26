@@ -396,7 +396,7 @@
         "title": "Wie aktiv bist du außerhalb des Trainings?"
       },
       "training-intro": {
-        "title": "Gut gemacht. Jetzt dein Training."
+        "title": "Halbzeit."
       },
       "experience": {
         "title": "Wie viel Trainingserfahrung hast du?"
@@ -658,13 +658,9 @@
       "note": "Deine Workouts kommen noch dazu."
     },
     "trainingIntro": {
-      "halfway": "Halb geschafft",
-      "titleNamed": "Gut gemacht, {{name}}. Jetzt dein Training.",
-      "body_one": "Eine kurze Frage zu deinem Training, dann steht dein Plan.",
-      "body_other": "{{count}} kurze Fragen zu deinem Training, dann steht dein Plan.",
-      "aboutYou": "Über dich",
-      "yourTraining": "Dein Training",
-      "progress": "Über dich ist erledigt. Als Nächstes dein Training."
+      "titleNamed": "Halbzeit, {{name}}.",
+      "body_one": "Die andere Hälfte ist dein Training: eine kurze Frage.",
+      "body_other": "Die andere Hälfte ist dein Training: {{count}} kurze Fragen."
     },
     "experience": {
       "intro": "Mit Krafttraining, etwa Kniebeugen und Drücken.",
