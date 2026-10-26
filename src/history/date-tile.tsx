@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
+import { useUpperCase } from '@/i18n/case';
 
 type DateTileProps = {
   date: Date;
@@ -15,6 +16,7 @@ type DateTileProps = {
 export function DateTile({ date, large = false, tinted = true }: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');
+  const upperCase = useUpperCase();
   return (
     <View
       style={[
@@ -27,7 +29,7 @@ export function DateTile({ date, large = false, tinted = true }: DateTileProps) 
       ]}
     >
       <Text variant="caption" color="primaryText" style={styles.weekday}>
-        {weekday(isoWeekday(date)).toLocaleUpperCase()}
+        {upperCase(weekday(isoWeekday(date)))}
       </Text>
       <Text variant={large ? 'title' : 'headline'} style={large ? styles.largeDay : styles.day}>
         {date.getDate()}

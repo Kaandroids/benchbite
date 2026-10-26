@@ -24,11 +24,14 @@ import { showRemindersInForeground } from '@/reminders/reminders';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
+import { applyStoredPreferences } from '@/settings/preferences';
 import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
 showRemindersInForeground([REST_NOTIFICATION_ID]);
+// The look and language chosen in the settings, before the first screen shows.
+applyStoredPreferences();
 
 export default function RootLayout() {
   return (

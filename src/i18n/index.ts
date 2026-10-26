@@ -14,6 +14,13 @@ import tr from './locales/tr.json';
 export const SUPPORTED_LANGUAGES = ['en', 'de', 'tr'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
+/** Each language's name in itself, so that someone who chose a language they cannot read finds theirs. */
+export const LANGUAGE_NAMES: Record<Language, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  tr: 'Türkçe',
+};
+
 // English is the source: every key is added there first, and the other locales must match it.
 export const resources = {
   en: { translation: en },
@@ -43,10 +50,20 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-// Android can change the device language while the app runs; iOS restarts the app instead.
+/** The language the user chose in the settings, or null to follow the device. */
+let chosen: Language | null = null;
+
+/** Uses the given language instead of the device's, or the device's again with null. */
+export function chooseLanguage(language: Language | null) {
+  chosen = language;
+  void i18n.changeLanguage(language ?? deviceLanguage());
+}
+
+// Android can change the device language while the app runs; iOS restarts the app instead. A
+// language the user chose stays.
 AppState.addEventListener('change', (state) => {
   const language = deviceLanguage();
-  if (state === 'active' && language !== i18n.language) {
+  if (state === 'active' && chosen === null && language !== i18n.language) {
     void i18n.changeLanguage(language);
   }
 });

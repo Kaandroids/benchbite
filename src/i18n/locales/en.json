@@ -61,7 +61,18 @@
     "logOut": "Log out",
     "logOutTitle": "Log out?",
     "logOutMessage": "Your plan and workouts stay in your account. This phone starts over as a new guest.",
-    "logOutFailed": "Couldn’t log out"
+    "logOutFailed": "Couldn’t log out",
+    "appearance": "Appearance",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "themeNote": "System follows your phone’s light or dark setting.",
+    "language": "Language",
+    "languageHint": "Opens the languages to choose from",
+    "phoneLanguage": "Phone’s language",
+    "phoneLanguageNow": "{{language}} now"
   },
   "loadError": {
     "title": "This couldn't load",
