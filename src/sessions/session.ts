@@ -222,7 +222,9 @@ function changeSet(
 
 /**
  * Sets values of a set, for example what the user typed. A weight also fills the later sets of the
- * exercise that are not done and have none yet, since most sets use the same weight.
+ * exercise that are not done and have none yet, since most sets use the same weight. The weight is
+ * saved as it is typed, so later sets that hold the set's weight from before change with it:
+ * typing 50 fills them with 50, not with the 5 typed first.
  */
 export function setValues(
   value: Session,
@@ -233,20 +235,24 @@ export function setValues(
   const weightKg = values.weightKg;
   return {
     ...value,
-    exercises: value.exercises.map((item, i) =>
-      i === exercise
-        ? {
-            ...item,
-            sets: item.sets.map((s, j) =>
-              j === index
-                ? { ...s, ...values }
-                : j > index && weightKg != null && !s.done && s.weightKg === null
-                  ? { ...s, weightKg }
-                  : s,
-            ),
-          }
-        : item,
-    ),
+    exercises: value.exercises.map((item, i) => {
+      if (i !== exercise) {
+        return item;
+      }
+      const before = item.sets[index]?.weightKg ?? null;
+      const follows = (s: SessionSet) =>
+        !s.done && (s.weightKg === null || (before !== null && s.weightKg === before));
+      return {
+        ...item,
+        sets: item.sets.map((s, j) =>
+          j === index
+            ? { ...s, ...values }
+            : j > index && weightKg != null && follows(s)
+              ? { ...s, weightKg }
+              : s,
+        ),
+      };
+    }),
   };
 }
 

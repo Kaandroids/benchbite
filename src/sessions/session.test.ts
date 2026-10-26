@@ -145,6 +145,19 @@ describe('logging sets', () => {
     expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50, 60]);
   });
 
+  it('carries the weight as it is typed, digit by digit', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 5 });
+    session = setValues(session, 0, 0, { weightKg: 50 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50]);
+  });
+
+  it('keeps a later set that has a weight of its own', () => {
+    let session = setValues(start(), 0, 1, { weightKg: 60 });
+    session = setValues(session, 0, 0, { weightKg: 5 });
+    session = setValues(session, 0, 0, { weightKg: 50 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 60]);
+  });
+
   it('adds sets up to as many as a log can keep', () => {
     let session = start();
     for (let added = 0; added < MAX_SETS; added++) {
