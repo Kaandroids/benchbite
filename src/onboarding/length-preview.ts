@@ -3,36 +3,22 @@
 import { useQueries } from '@tanstack/react-query';
 
 import type { SessionMinutes } from '@shared/plan/limits';
-import type { Plan, SessionTime } from '@shared/plan/types';
+import type { Plan, SessionTime, SessionWork } from '@shared/plan/types';
 
 import { generatePlan } from './plan';
 import { SESSION_MINUTES } from './training';
 import type { OnboardingAnswers } from './types';
 
-export type LengthPreview = {
-  /** The exercises of the first workout, without the conditioning at the end. */
-  exercises: number;
-  /** Their sets. */
-  sets: number;
-  /** The rest between their sets, in seconds. */
-  rest: number;
-  time: SessionTime;
-};
+export type LengthPreview = { work: SessionWork; time: SessionTime };
 
 /** The first workout of a plan, as the length step shows it. */
 export function previewOf(plan: Plan): LengthPreview | null {
   const session = plan.sessions[0];
-  // A plan builder deployed before it said where the time goes leaves `time` out.
-  if (!session?.time) {
+  // A plan builder deployed before it said where the time goes leaves these out.
+  if (!session?.time || !session.work) {
     return null;
   }
-  const lifts = session.exercises.filter((exercise) => exercise.slot !== 'conditioning');
-  return {
-    exercises: lifts.length,
-    sets: lifts.reduce((total, exercise) => total + exercise.sets, 0),
-    rest: lifts.reduce((total, exercise) => total + (exercise.sets - 1) * exercise.restSeconds, 0),
-    time: session.time,
-  };
+  return { work: session.work, time: session.time };
 }
 
 /**

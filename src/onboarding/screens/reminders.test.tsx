@@ -22,6 +22,7 @@ const PLAN: WorkoutPlan = {
       exercises: [],
       estimatedMinutes: 45,
       time: { warmUp: 300, main: 2100, extras: 300, conditioning: 0 },
+      work: { exercises: 0, sets: 0, rest: 0 },
     },
     {
       weekdays: [3],
@@ -35,6 +36,7 @@ const PLAN: WorkoutPlan = {
       })),
       estimatedMinutes: 30,
       time: { warmUp: 300, main: 1200, extras: 300, conditioning: 0 },
+      work: { exercises: 0, sets: 0, rest: 0 },
     },
   ],
 };

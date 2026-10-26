@@ -39,9 +39,15 @@ function workSeconds(target: Target): number {
     : Math.max(MIN_SECONDS_PER_SET, target.reps.max * SECONDS_PER_REP);
 }
 
+/** The rest between an exercise's sets. */
+function restBetweenSets({ sets, restSeconds }: Prescription): number {
+  return (sets - 1) * restSeconds;
+}
+
 /** The time an exercise takes: its sets, the rest between them and the move to the next. */
-export function exerciseSeconds({ sets, target, restSeconds }: Prescription): number {
-  return sets * workSeconds(target) + (sets - 1) * restSeconds + TRANSITION_SECONDS;
+export function exerciseSeconds(prescription: Prescription): number {
+  const { sets, target } = prescription;
+  return sets * workSeconds(target) + restBetweenSets(prescription) + TRANSITION_SECONDS;
 }
 
 /** The candidates for a slot that the user's setup and experience allow, in order. */
@@ -235,12 +241,19 @@ export function buildSession(
   };
   const exercises = chosen.map((item) => item.exercise);
   const seconds = time.warmUp + time.main + time.extras + time.conditioning;
+  // The lifting, without the conditioning, whose sets are rounds of a circuit.
+  const work = {
+    exercises: exercises.length,
+    sets: exercises.reduce((total, exercise) => total + exercise.sets, 0),
+    rest: exercises.reduce((total, exercise) => total + restBetweenSets(exercise), 0),
+  };
   return {
     weekdays,
     type,
     exercises: conditioning ? [...exercises, conditioning] : exercises,
     estimatedMinutes: Math.ceil(seconds / 60),
     time,
+    work,
   };
 }
 

@@ -102,16 +102,16 @@ function SummaryCard({
           <>
             <Fact
               icon="dumbbell"
-              label={t('onboarding.sessionLength.exercises', { count: preview.exercises })}
+              label={t('onboarding.sessionLength.exercises', { count: preview.work.exercises })}
             />
             <Fact
               icon="layers"
-              label={t('onboarding.sessionLength.sets', { count: preview.sets })}
+              label={t('onboarding.sessionLength.sets', { count: preview.work.sets })}
             />
             <Fact
               icon="timer"
               label={t('onboarding.sessionLength.rest', {
-                minutes: Math.round(preview.rest / 60),
+                minutes: Math.round(preview.work.rest / 60),
               })}
             />
           </>

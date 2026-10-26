@@ -51,6 +51,9 @@ export type PlannedExercise = {
  */
 export type SessionTime = { warmUp: number; main: number; extras: number; conditioning: number };
 
+/** A session's lifting, without the conditioning: its exercises, sets, and rest in seconds. */
+export type SessionWork = { exercises: number; sets: number; rest: number };
+
 /** One workout of the plan, done on each of its weekdays. */
 export type Session = {
   /** ISO weekdays in order, 1 for Monday. A plan's sessions never share a weekday. */
@@ -59,6 +62,7 @@ export type Session = {
   exercises: PlannedExercise[];
   estimatedMinutes: number;
   time: SessionTime;
+  work: SessionWork;
 };
 
 export type Plan = { sessions: Session[] };

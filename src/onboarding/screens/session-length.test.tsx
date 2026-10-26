@@ -29,6 +29,7 @@ function planOf(exercises: number, setsEach: number, main: number, extras: numbe
         })),
         estimatedMinutes: 5 + Math.ceil((main + extras) / 60),
         time: { warmUp: 300, main, extras, conditioning: 0 },
+        work: { exercises, sets: exercises * setsEach, rest: exercises * (setsEach - 1) * 90 },
       },
     ],
   };

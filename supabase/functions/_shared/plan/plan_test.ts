@@ -2,7 +2,7 @@ import { assert, assertEquals, assertNotEquals, assertThrows } from '@std/assert
 
 import { PLAN_WORKOUT_EXERCISES } from './limits.ts';
 import { buildPlan } from './plan.ts';
-import { candidatesFor, conditioningMinutes, exerciseSeconds } from './session.ts';
+import { candidatesFor, conditioningMinutes, exerciseSeconds, WARM_UP_SECONDS } from './session.ts';
 import { TEMPLATES } from './templates.ts';
 import { CATALOGUE } from './test-catalogue.ts';
 import type { PlanInput, PlannedExercise } from './types.ts';
@@ -100,11 +100,18 @@ Deno.test('every session fits into the chosen length', () => {
         for (const session of plan.sessions) {
           assert(session.estimatedMinutes <= sessionMinutes, `${goal} ${sessionMinutes} min`);
           assert(session.exercises.length >= 2, `${goal} ${sessionMinutes} min has exercises`);
+          // Counted again from the exercises, apart from how the session adds up its time.
           const { warmUp, main, extras, conditioning } = session.time;
           assertEquals(
-            Math.ceil((warmUp + main + extras + conditioning) / 60),
-            session.estimatedMinutes,
+            warmUp + main + extras + conditioning,
+            WARM_UP_SECONDS + session.exercises.reduce((total, e) => total + exerciseSeconds(e), 0),
             `${goal} ${sessionMinutes} min: its time adds up`,
+          );
+          const lifts = session.exercises.filter((e) => e.slot !== 'conditioning');
+          assertEquals(session.work.exercises, lifts.length);
+          assertEquals(
+            session.work.sets,
+            lifts.reduce((total, e) => total + e.sets, 0),
           );
           assert(main > 0, `${goal} ${sessionMinutes} min has main lifts`);
           assertEquals(conditioning > 0, goal === 'lose_fat', `${goal} conditioning`);

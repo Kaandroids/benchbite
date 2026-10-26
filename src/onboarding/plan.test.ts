@@ -50,6 +50,7 @@ const PLAN: WorkoutPlan = {
       ],
       estimatedMinutes: 40,
       time: { warmUp: 300, main: 1800, extras: 300, conditioning: 0 },
+      work: { exercises: 0, sets: 0, rest: 0 },
     },
   ],
 };
