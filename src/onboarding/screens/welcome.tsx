@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
@@ -14,6 +14,8 @@ import { Text } from '@/components/ui/text';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
+import { AccentTitle, plainText } from '../accent-title';
+import { Stage } from '../stage';
 import { SLIDES } from '../welcome/slides';
 import { StoryProgress } from '../welcome/story-progress';
 import { useStories } from '../welcome/use-stories';
@@ -28,7 +30,7 @@ const BACK_ZONE = 0.35;
  */
 export function WelcomeStep() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { next } = useStep('welcome');
   const isAccount = useIsAccount();
   const stories = useStories(SLIDES.length);
@@ -101,37 +103,19 @@ export function WelcomeStep() {
             onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
             style={[styles.flex, { gap: spacing.xl }]}
           >
-            {/* A tinted stage of fixed size for the picture, so the words below stay in one place
-                from slide to slide. Keyed by the slide, so its picture plays again whenever it
-                shows. */}
-            <View
-              style={[
-                styles.stage,
-                {
-                  borderRadius: radii.xl,
-                  backgroundColor: colors.primaryWash,
-                  padding: spacing.lg,
-                },
-              ]}
-            >
-              <FitInside>
-                <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
-                  <slide.Illustration />
-                </Animated.View>
-              </FitInside>
-            </View>
+            {/* The stage keeps its size from slide to slide, so the words below stay in one place.
+                Keyed by the slide, so its picture plays again whenever it shows. */}
+            <Stage>
+              <Animated.View key={slide.key} entering={SlideIn.duration(300)}>
+                <slide.Illustration />
+              </Animated.View>
+            </Stage>
             <Animated.View
               key={`${slide.key}-text`}
               entering={FadeIn.duration(300)}
               style={[styles.words, { gap: spacing.sm }]}
             >
-              {/* Centred, with the point of the slide in the brand orange. */}
-              <Text variant="hero" align="center" accessibilityRole="header">
-                <Trans
-                  i18nKey={titleKey}
-                  components={{ accent: <Text variant="hero" color="primaryText" /> }}
-                />
-              </Text>
+              <AccentTitle>{t(titleKey)}</AccentTitle>
               <Text variant="lead" color="textMuted" align="center">
                 {body}
               </Text>
@@ -143,34 +127,6 @@ export function WelcomeStep() {
   );
 }
 
-/**
- * Shrinks its content to fit the space it is given, never growing it: on a small screen, or with
- * a large font, a picture taller than the stage stays inside it.
- */
-function FitInside({ children }: { children: ReactNode }) {
-  const [space, setSpace] = useState(0);
-  const [content, setContent] = useState(0);
-  const scale = space > 0 && content > space ? space / content : 1;
-  return (
-    <View
-      onLayout={(event) => setSpace(event.nativeEvent.layout.height)}
-      style={[styles.flex, styles.fit]}
-    >
-      <View
-        onLayout={(event) => setContent(event.nativeEvent.layout.height)}
-        style={{ transform: [{ scale }] }}
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
-
-/** A slide title without its accent markers, for screen readers. */
-function plainText(title: string) {
-  return title.replaceAll('<accent>', '').replaceAll('</accent>', '');
-}
-
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
@@ -179,13 +135,6 @@ const styles = StyleSheet.create({
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stage: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  fit: {
     justifyContent: 'center',
   },
   // Room for a one-line title and a two-line text, the same on every slide, so the words stay in
