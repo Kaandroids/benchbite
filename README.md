@@ -191,6 +191,38 @@ the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJ
 `SUPABASE_DB_PASSWORD` from the repository's `production` environment. Start it from the Actions tab
 with **Run workflow**.
 
+### Install on an iPhone
+
+A release build runs on its own, without the dev server, against the hosted project. It needs a Mac
+with Xcode and an Apple Developer account added in Xcode's settings.
+
+> [!WARNING]
+> Benchbite is still in development. The hosted database may be reset at any time, and with it every
+> account, plan and workout logged in a build that uses it.
+
+1. Create `.env.production.local` (ignored by Git) with the hosted project's values, from the
+   Supabase dashboard's project settings:
+
+   ```bash
+   EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+   ```
+
+   The URL is the project's root, without `/rest/v1`. This file takes precedence over `.env.local`,
+   which still points at the local stack. Never put a secret key in it: everything in it ends up in
+   the app.
+
+2. Connect the iPhone, trust the Mac, and turn on **Developer Mode** (Settings → Privacy & Security).
+3. Find the iPhone's UDID with `xcrun devicectl list devices`, then build and install:
+
+   ```bash
+   pnpm expo run:ios --device <udid> --configuration Release
+   ```
+
+   The first build generates the `ios/` folder (ignored by Git). If it changes the `ios` and
+   `android` scripts in `package.json`, undo that change. Run the command again to install a newer
+   version.
+
 ## Documentation
 
 - [Architecture Decision Records](docs/adr/README.md): why the app is built the way it is

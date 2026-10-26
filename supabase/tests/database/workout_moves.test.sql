@@ -27,16 +27,26 @@ create function pg_temp.late_planned() returns date language sql as $$
     else current_date - 4 end;
 $$;
 
--- User a's workouts: one on Mondays and Thursdays, one archived on Mondays, one on weekends, and
--- one on the day next to three days ago.
+-- A day next to today in the same week, on which workout 914 is planned, so that a log started
+-- today can carry its move to today, whatever day the tests run on.
+create function pg_temp.next_to_today() returns date language sql as $$
+  select case when extract(isodow from current_date) = 7 then current_date - 1
+    else current_date + 1 end;
+$$;
+
+-- User a's workouts: one on Mondays and Thursdays, one archived on Mondays, one on weekends, one
+-- on the day next to three days ago, and one on the day next to today.
 insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes)
   overriding system value values
   (910, '00000000-0000-0000-0000-00000000000a', 'Push', '{1,4}', true, 45),
   (911, '00000000-0000-0000-0000-00000000000a', 'Old', '{1}', false, 30),
   (912, '00000000-0000-0000-0000-00000000000a', 'Late', '{}', true, 30),
-  (913, '00000000-0000-0000-0000-00000000000a', 'Weekend', '{6,7}', true, 30);
+  (913, '00000000-0000-0000-0000-00000000000a', 'Weekend', '{6,7}', true, 30),
+  (914, '00000000-0000-0000-0000-00000000000a', 'Soon', '{}', true, 30);
 update public.workouts set weekdays = array[extract(isodow from pg_temp.late_planned())::smallint]
 where id = 912;
+update public.workouts set weekdays = array[extract(isodow from pg_temp.next_to_today())::smallint]
+where id = 914;
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
@@ -126,10 +136,11 @@ select throws_ok(
   'Moves are not written directly'
 );
 
--- A move that comes with a log is saved with it when it fits, and left out when it does not.
-create function pg_temp.log(move jsonb) returns jsonb language sql as $$
+-- A move that comes with a log is saved with it when it fits, and left out when it does not. Its
+-- target is the day the workout started, today.
+create function pg_temp.log(workout_id integer, move jsonb) returns jsonb language sql as $$
   select jsonb_build_object(
-    'workoutId', 910,
+    'workoutId', workout_id,
     'startedAt', now() - interval '1 hour',
     'finishedAt', now() - interval '10 minutes',
     'exercises', jsonb_build_array(jsonb_build_object(
@@ -138,20 +149,22 @@ create function pg_temp.log(move jsonb) returns jsonb language sql as $$
   );
 $$;
 
-select public.log_workout(pg_temp.log(jsonb_build_object('from', pg_temp.day(4), 'to', pg_temp.day(7))));
+select public.log_workout(pg_temp.log(914,
+  jsonb_build_object('from', pg_temp.next_to_today(), 'to', current_date)));
 select results_eq(
-  $$ select to_on from public.workout_moves where workout_id = 910 and from_on = pg_temp.day(4) $$,
-  $$ values (pg_temp.day(7)) $$,
+  $$ select from_on, to_on from public.workout_moves where workout_id = 914 $$,
+  $$ values (pg_temp.next_to_today(), current_date) $$,
   'A log saves the move it comes with'
 );
 
 select isnt(
-  public.log_workout(pg_temp.log(jsonb_build_object('from', pg_temp.day(2), 'to', pg_temp.day(3)))),
+  public.log_workout(pg_temp.log(910, jsonb_build_object('from', pg_temp.day(2), 'to', current_date))),
   null,
   'A log whose move does not fit is still saved'
 );
 select is(
-  (select count(*)::integer from public.workout_moves where from_on = pg_temp.day(2)),
+  (select count(*)::integer from public.workout_moves
+   where workout_id = 910 and from_on = pg_temp.day(2)),
   0,
   'A move that does not fit is left out of the log'
 );
