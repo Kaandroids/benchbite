@@ -58,24 +58,15 @@ function markSvg({ size, color, background, bitten, scale }: Drawing): string {
 // The splash image is only the plate, so `imageWidth` in app.json is the plate's width.
 const PLATE_ONLY = MARK_BOX / (PLATE.r * 2);
 
+// iOS needs an opaque square; the system rounds the corners. The three variants differ only in
+// colour, so they share the rest.
+const IOS_ICON = { size: 1024, bitten: true, scale: 0.85 };
+
 const images: Record<string, Drawing> = {
-  // iOS needs an opaque square; the system rounds the corners.
-  'icon.png': { size: 1024, color: WHITE, background: BRAND_ORANGE, bitten: true, scale: 0.85 },
-  'ios-icon-dark.png': {
-    size: 1024,
-    color: BRAND_ORANGE_DARK,
-    background: BRAND_SURFACE_DARK,
-    bitten: true,
-    scale: 0.85,
-  },
+  'icon.png': { ...IOS_ICON, color: WHITE, background: BRAND_ORANGE },
+  'ios-icon-dark.png': { ...IOS_ICON, color: BRAND_ORANGE_DARK, background: BRAND_SURFACE_DARK },
   // iOS tints the grey levels of this one in the tinted home screen style.
-  'ios-icon-tinted.png': {
-    size: 1024,
-    color: WHITE,
-    background: '#000000',
-    bitten: true,
-    scale: 0.85,
-  },
+  'ios-icon-tinted.png': { ...IOS_ICON, color: WHITE, background: '#000000' },
   // Launchers crop the adaptive icon to the middle two thirds, so the mark stays well inside.
   // Android 13 also uses it as the monochrome layer for themed icons.
   'android-icon-foreground.png': { size: 1024, color: WHITE, bitten: true, scale: 0.6 },
