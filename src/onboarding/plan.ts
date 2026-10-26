@@ -5,21 +5,13 @@ import { supabase } from '@/lib/supabase';
 import { targetsFrom, type NutritionTargets } from '@/nutrition/targets';
 import type { Plan } from '@shared/plan/types';
 
+import { planRequest, required } from './plan-request';
 import type { OnboardingAnswers } from './types';
 
 /** The generate-plan Edge Function's response. */
 export type WorkoutPlan = Plan;
 
 export type { NutritionTargets };
-
-/** Answers the result needs; the steps before guarantee them. */
-function required<K extends keyof OnboardingAnswers>(answers: OnboardingAnswers, key: K) {
-  const value = answers[key];
-  if (value === undefined) {
-    throw new Error(`The onboarding answer ${key} is missing`);
-  }
-  return value as NonNullable<OnboardingAnswers[K]>;
-}
 
 export async function calculateTargets(answers: OnboardingAnswers): Promise<NutritionTargets> {
   const { data, error } = await supabase.rpc('calculate_nutrition_targets', {
@@ -45,13 +37,7 @@ export async function calculateTargets(answers: OnboardingAnswers): Promise<Nutr
 
 export async function generatePlan(answers: OnboardingAnswers): Promise<WorkoutPlan> {
   const { data, error } = await supabase.functions.invoke<WorkoutPlan>('generate-plan', {
-    body: {
-      goal: required(answers, 'goal'),
-      experience: required(answers, 'experience'),
-      trainingDays: required(answers, 'trainingDays'),
-      setup: required(answers, 'setup'),
-      sessionMinutes: required(answers, 'sessionMinutes'),
-    },
+    body: planRequest(answers),
   });
   if (error || !data) {
     throw error ?? new Error('The plan builder returned nothing');
