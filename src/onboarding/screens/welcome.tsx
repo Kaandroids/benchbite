@@ -166,9 +166,9 @@ function FitInside({ children }: { children: ReactNode }) {
   );
 }
 
-/** A translation without its markup, for screen readers. */
-function plainText(text: string) {
-  return text.replace(/<\/?\w+>/g, '');
+/** A slide title without its accent markers, for screen readers. */
+function plainText(title: string) {
+  return title.replaceAll('<accent>', '').replaceAll('</accent>', '');
 }
 
 const styles = StyleSheet.create({

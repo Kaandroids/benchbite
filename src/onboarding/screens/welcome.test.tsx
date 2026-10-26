@@ -34,6 +34,10 @@ describe('WelcomeStep', () => {
     await render(<WelcomeStep />);
     expect(screen.getByRole('header', { name: /you/ })).toBeTruthy();
     expect(slides()).toHaveAccessibilityValue({ text: '1 of 4' });
+    expect(slides()).toHaveProp(
+      'accessibilityLabel',
+      'A plan made for you. Built around your goal, your days and your gear.',
+    );
 
     await fireEvent(slides(), 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
     expect(screen.getByRole('header', { name: /counts/ })).toBeTruthy();
