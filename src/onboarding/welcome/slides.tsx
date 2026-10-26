@@ -9,6 +9,7 @@ import Animated, {
   withDelay,
   withTiming,
   ZoomIn,
+  type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -20,6 +21,7 @@ import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { defaultUnits, useNumberFormat, useWeightFormat } from '@/i18n/units';
+import type { Streak } from '@/streak/streak';
 import { StreakBadge } from '@/streak/streak-badge';
 import { WeekCard } from '@/today/week-card';
 import { useTheme } from '@/theme';
@@ -36,10 +38,12 @@ const EATEN_KCAL = 920;
 const TARGET_KCAL = 1390;
 const RING_SIZE = 140;
 // One weigh-in a week, drawn in a chart box of this size.
-/** How many of the last weeks the plan slide's weight loss covers. */
-const RECENT_WEEKS = 2;
 const WEIGH_INS_KG = [82, 81.4, 80.9, 80.1, 79.4, 78.5];
 const CHART = { width: 300, height: 100 };
+/** How many of the last weeks the plan slide's weight loss covers. */
+const RECENT_WEEKS = 2;
+/** The streak both the week and the progress slides show. */
+const EXAMPLE_STREAK: Streak = { count: 12, doneToday: true, days: {} };
 const WEIGH_IN_POINTS = WEIGH_INS_KG.map((kg, index) => ({
   x: 12 + (index * (CHART.width - 24)) / (WEIGH_INS_KG.length - 1),
   y: 14 + ((82.5 - kg) / 4.5) * (CHART.height - 28),
@@ -81,13 +85,12 @@ export const SLIDES: { key: SlideKey; Illustration: () => ReactNode }[] = [
 function PlanIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const weight = useWeightFormat();
-  const unit = defaultUnits().weight;
+  const weight = useExampleWeight();
   const [friday] = useState(() => addDays(weekStart(new Date()), 4));
   return (
     <WeekCard
       today={friday}
-      streak={{ count: 12, doneToday: true, days: {} }}
+      streak={EXAMPLE_STREAK}
       schedule={sampleSchedule(friday)}
       onDayPress={() => undefined}
     >
@@ -107,7 +110,7 @@ function PlanIllustration() {
         <Icon name="trend" size={16} color="primary" />
         <Text variant="captionStrong" color="primaryText">
           {t('onboarding.welcome.slides.plan.lost', {
-            weight: `${weight(WEIGH_INS_KG.at(-1 - RECENT_WEEKS)! - WEIGH_INS_KG.at(-1)!, unit)} ${unit}`,
+            weight: weight(WEIGH_INS_KG.at(-1 - RECENT_WEEKS)! - WEIGH_INS_KG.at(-1)!),
             count: RECENT_WEEKS,
           })}
         </Text>
@@ -243,7 +246,7 @@ function FoodIllustration() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const ring = useDrawn(STEP_MS);
+  const ring = useDrawn();
   const radius = 58;
   const circumference = 2 * Math.PI * radius;
   const ringProps = useAnimatedProps(() => ({
@@ -296,9 +299,8 @@ function ProgressIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const upperCase = useUpperCase();
-  const weight = useWeightFormat();
-  const unit = defaultUnits().weight;
-  const line = useDrawn(STEP_MS);
+  const weight = useExampleWeight();
+  const line = useDrawn();
   const lineProps = useAnimatedProps(() => ({
     strokeDashoffset: WEIGH_IN_LENGTH * (1 - line.get()),
   }));
@@ -312,11 +314,11 @@ function ProgressIllustration() {
           {upperCase(t('onboarding.welcome.slides.progress.weight'))}
         </Text>
         <Animated.View entering={ZoomIn.delay(STEP_MS * 7)}>
-          <StreakBadge streak={{ count: 12, doneToday: true, days: {} }} />
+          <StreakBadge streak={EXAMPLE_STREAK} />
         </Animated.View>
       </View>
       <View style={[styles.row, { gap: spacing.sm }]}>
-        <Text variant="headline">{`${weight(last, unit)} ${unit}`}</Text>
+        <Text variant="headline">{weight(last)}</Text>
         <Animated.View
           entering={ZoomIn.delay(STEP_MS * 6)}
           style={{
@@ -327,7 +329,7 @@ function ProgressIllustration() {
           }}
         >
           <Text variant="captionStrong" color="primaryText">
-            {`−${weight(first - last, unit)} ${unit}`}
+            {`−${weight(first - last)}`}
           </Text>
         </Animated.View>
       </View>
@@ -356,28 +358,18 @@ function ProgressIllustration() {
           strokeLinejoin="round"
           strokeDasharray={`${WEIGH_IN_LENGTH} ${WEIGH_IN_LENGTH}`}
         />
-      </Svg>
-      {/* The weigh-ins, as dots over the line, in a row of their own so they can pop in. */}
-      <View
-        style={[styles.points, { height: CHART.height, marginTop: -CHART.height - spacing.md }]}
-      >
         {WEIGH_IN_POINTS.map((point, index) => (
-          <Animated.View
+          <WeighIn
             key={index}
-            entering={ZoomIn.delay(STEP_MS * (index + 1))}
-            style={[
-              styles.point,
-              {
-                left: `${(point.x / CHART.width) * 100}%`,
-                top: point.y,
-                borderColor: colors.primary,
-                backgroundColor:
-                  index === WEIGH_IN_POINTS.length - 1 ? colors.primary : colors.surface,
-              },
-            ]}
+            x={point.x}
+            y={point.y}
+            last={index === WEIGH_IN_POINTS.length - 1}
+            // Each dot shows as the line reaches it.
+            at={(point.x - WEIGH_IN_POINTS[0]!.x) / (CHART.width - 2 * WEIGH_IN_POINTS[0]!.x)}
+            progress={line}
           />
         ))}
-      </View>
+      </Svg>
       <View style={[styles.row, styles.between]}>
         <Text variant="caption" color="textMuted">
           {t('onboarding.welcome.slides.progress.week', { week: 1 })}
@@ -390,14 +382,47 @@ function ProgressIllustration() {
   );
 }
 
-/** Goes from 0 to 1 after a delay, for a line or a ring that draws itself. */
-function useDrawn(delay: number) {
+type WeighInProps = {
+  x: number;
+  y: number;
+  /** The latest weigh-in, filled in. */
+  last: boolean;
+  /** How far along the line, from 0 to 1, the dot is. */
+  at: number;
+  progress: SharedValue<number>;
+};
+
+/** A weigh-in on the chart, which pops up as the line is drawn through it. */
+function WeighIn({ x, y, last, at, progress }: WeighInProps) {
+  const { colors } = useTheme();
+  const props = useAnimatedProps(() => ({ r: progress.get() >= at - 0.001 ? 5 : 0 }));
+  return (
+    <AnimatedCircle
+      animatedProps={props}
+      cx={x}
+      cy={y}
+      fill={last ? colors.primary : colors.surface}
+      stroke={colors.primary}
+      strokeWidth={3}
+    />
+  );
+}
+
+/** Formats kilograms in the device's default unit, with the unit after them. */
+function useExampleWeight() {
+  const weight = useWeightFormat();
+  const unit = defaultUnits().weight;
+  return (kg: number) => `${weight(kg, unit)} ${unit}`;
+}
+
+/** Goes from 0 to 1 after a moment, for a line or a ring that draws itself. */
+function useDrawn() {
   const progress = useSharedValue(0);
   useEffect(() => {
     progress.set(
-      withDelay(delay, withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) })),
+      withDelay(STEP_MS, withTiming(1, { duration: 1200, easing: Easing.out(Easing.cubic) })),
     );
-  }, [delay, progress]);
+  }, [progress]);
   return progress;
 }
 
@@ -423,18 +448,6 @@ const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  points: {
-    position: 'relative',
-  },
-  point: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    marginLeft: -6,
-    marginTop: -6,
-    borderRadius: 6,
-    borderWidth: 3,
   },
   flex: {
     flex: 1,
