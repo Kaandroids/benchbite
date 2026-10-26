@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInDown,
   useAnimatedProps,
   ZoomIn,
@@ -15,29 +14,31 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
-import { defaultUnits, useNumberFormat } from '@/i18n/units';
-import type { Streak } from '@/streak/streak';
 import { StreakBadge } from '@/streak/streak-badge';
 import { useTheme } from '@/theme';
 
 import type { Goal } from './types';
+import {
+  EXAMPLE_STREAK,
+  type ExampleWeight,
+  SceneNote,
+  STEP_MS,
+  useExampleWeight,
+} from './example';
 import { useDrawn } from './use-drawn';
 
 // Example data that shows what the goal looks like in the app; none of it is the user's.
-/** A weight in both units, rounded the way each is lifted or weighed. */
-type Weight = { kg: number; lb: number };
-const WEEKLY_LOSS: Weight = { kg: 0.5, lb: 1 };
+const WEEKLY_LOSS: ExampleWeight = { kg: 0.5, lb: 1 };
 /** The top set of the squat, every four weeks. */
-const SQUATS: { week: number; weight: Weight }[] = [
+const SQUATS: { week: number; weight: ExampleWeight }[] = [
   { week: 1, weight: { kg: 60, lb: 135 } },
   { week: 4, weight: { kg: 67.5, lb: 150 } },
   { week: 8, weight: { kg: 75, lb: 165 } },
   { week: 12, weight: { kg: 82.5, lb: 185 } },
 ];
-const SQUAT_STEP: Weight = { kg: 2.5, lb: 5 };
+const SQUAT_STEP: ExampleWeight = { kg: 2.5, lb: 5 };
 /** The days of a week with a workout, as ISO weekdays. */
 const WORKOUT_DAYS = [1, 3, 5];
-const EXAMPLE_STREAK: Streak = { count: 12, doneToday: true, days: {} };
 
 /** The drawing box of the charts, stretched to the card's width. */
 const BOX = { width: 300, height: 120 };
@@ -60,9 +61,6 @@ const DAILY = [22, 32, 18, 38, 30, 46, 40, 58, 52, 68, 62, 80, 74, 92, 86, 100]
   .join(' ');
 /** The best set growing every four weeks: the bars' heights as shares of the box. */
 const BARS = [0.3, 0.45, 0.65, 0.9];
-
-/** Delay between the parts of a scene appearing. */
-const STEP_MS = 180;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
@@ -124,9 +122,9 @@ function LoseFatScene() {
           fill={colors.primary}
         />
       </Svg>
-      <Chip delay={STEP_MS * 7}>
+      <SceneNote delay={STEP_MS * 7}>
         {t('onboarding.goalInsight.lose_fat.scene.chip', { weight: weight(WEEKLY_LOSS) })}
-      </Chip>
+      </SceneNote>
     </Card>
   );
 }
@@ -212,9 +210,9 @@ function GetStrongerScene() {
           );
         })}
       </View>
-      <Chip delay={STEP_MS * 6}>
+      <SceneNote delay={STEP_MS * 6}>
         {t('onboarding.goalInsight.get_stronger.scene.chip', { weight: weight(SQUAT_STEP) })}
-      </Chip>
+      </SceneNote>
     </Card>
   );
 }
@@ -276,29 +274,6 @@ function SceneHeader({ goal, icon }: { goal: Goal; icon: IconName }) {
   );
 }
 
-/** A tinted note under a scene, which pops in once the rest has played. */
-function Chip({ delay, children }: { delay: number; children: string }) {
-  const { colors, radii, spacing } = useTheme();
-  return (
-    <Animated.View
-      entering={FadeIn.delay(delay)}
-      style={[
-        styles.chip,
-        {
-          borderRadius: radii.md,
-          backgroundColor: colors.selected,
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
-        },
-      ]}
-    >
-      <Text variant="captionStrong" color="primaryText">
-        {children}
-      </Text>
-    </Animated.View>
-  );
-}
-
 type BarProps = {
   x: number;
   width: number;
@@ -327,13 +302,6 @@ function Bar({ x, width, height, start, shade, progress }: BarProps) {
   );
 }
 
-/** Formats an example weight in the device's default unit, with the unit after it. */
-function useExampleWeight() {
-  const { format } = useNumberFormat();
-  const unit = defaultUnits().weight;
-  return (weight: Weight) => `${format(weight[unit])} ${unit}`;
-}
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -354,8 +322,5 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  chip: {
-    alignSelf: 'flex-start',
   },
 });

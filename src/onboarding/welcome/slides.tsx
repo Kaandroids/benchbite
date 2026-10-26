@@ -16,14 +16,14 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
-import { defaultUnits, useNumberFormat, useWeightFormat } from '@/i18n/units';
-import type { Streak } from '@/streak/streak';
+import { useNumberFormat } from '@/i18n/units';
 import { StreakBadge } from '@/streak/streak-badge';
 import { WeekCard } from '@/today/week-card';
 import { useTheme } from '@/theme';
 import { weekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
+import { EXAMPLE_STREAK, SceneNote, STEP_MS, useExampleWeight } from '../example';
 import { useDrawn } from '../use-drawn';
 
 // Example data that shows what the app does; none of it is the user's.
@@ -40,8 +40,6 @@ const WEIGH_INS_KG = [82, 81.4, 80.9, 80.1, 79.4, 78.5];
 const CHART = { width: 300, height: 100 };
 /** How many of the last weeks the plan slide's weight loss covers. */
 const RECENT_WEEKS = 2;
-/** The streak both the week and the progress slides show. */
-const EXAMPLE_STREAK: Streak = { count: 12, doneToday: true, days: {} };
 const WEIGH_IN_POINTS = WEIGH_INS_KG.map((kg, index) => ({
   x: 12 + (index * (CHART.width - 24)) / (WEIGH_INS_KG.length - 1),
   y: 14 + ((82.5 - kg) / 4.5) * (CHART.height - 28),
@@ -59,9 +57,6 @@ const EXAMPLE_MACROS = [
   { key: 'carbs', eaten: 76, target: 152 },
   { key: 'fat', eaten: 16, target: 39 },
 ] as const;
-
-/** Delay between the parts of an illustration appearing. */
-const STEP_MS = 180;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -82,7 +77,6 @@ export const SLIDES: { key: SlideKey; Illustration: () => ReactNode }[] = [
  */
 function PlanIllustration() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
   const weight = useExampleWeight();
   const [friday] = useState(() => addDays(weekStart(new Date()), 4));
   return (
@@ -92,27 +86,12 @@ function PlanIllustration() {
       schedule={sampleSchedule(friday)}
       onDayPress={() => undefined}
     >
-      <Animated.View
-        entering={FadeInDown.delay(STEP_MS * 3)}
-        style={[
-          styles.row,
-          {
-            gap: spacing.sm,
-            borderRadius: radii.md,
-            backgroundColor: colors.selected,
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.sm,
-          },
-        ]}
-      >
-        <Icon name="trend" size={16} color="primary" />
-        <Text variant="captionStrong" color="primaryText">
-          {t('onboarding.welcome.slides.plan.lost', {
-            weight: weight(WEIGH_INS_KG.at(-1 - RECENT_WEEKS)! - WEIGH_INS_KG.at(-1)!),
-            count: RECENT_WEEKS,
-          })}
-        </Text>
-      </Animated.View>
+      <SceneNote icon="trend" delay={STEP_MS * 3}>
+        {t('onboarding.welcome.slides.plan.lost', {
+          weight: weight(WEIGH_INS_KG.at(-1 - RECENT_WEEKS)! - WEIGH_INS_KG.at(-1)!),
+          count: RECENT_WEEKS,
+        })}
+      </SceneNote>
     </WeekCard>
   );
 }
@@ -155,10 +134,7 @@ function sampleSchedule(friday: Date) {
 function SetsIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const { format } = useNumberFormat();
-  const unit = defaultUnits().weight;
-  const weightOf = (set: (typeof EXAMPLE_SETS)[number]) =>
-    `${format(unit === 'lb' ? set.lb : set.kg)} ${unit}`;
+  const weight = useExampleWeight();
   const best = EXAMPLE_SETS.at(-1)!;
   return (
     <Card>
@@ -195,7 +171,7 @@ function SetsIllustration() {
                 {index + 1}
               </Text>
               <Text variant="bodyStrong" style={styles.flex}>
-                {weightOf(set)}
+                {weight(set)}
               </Text>
               <Text variant="bodyStrong" color="textMuted">
                 {`× ${set.reps}`}
@@ -230,7 +206,7 @@ function SetsIllustration() {
           </Text>
           <Text variant="caption" color="onPrimary">
             {t('onboarding.welcome.slides.sets.recordDetail', {
-              set: `${weightOf(best)} × ${best.reps}`,
+              set: `${weight(best)} × ${best.reps}`,
             })}
           </Text>
         </View>
@@ -404,13 +380,6 @@ function WeighIn({ x, y, last, at, progress }: WeighInProps) {
       strokeWidth={3}
     />
   );
-}
-
-/** Formats kilograms in the device's default unit, with the unit after them. */
-function useExampleWeight() {
-  const weight = useWeightFormat();
-  const unit = defaultUnits().weight;
-  return (kg: number) => `${weight(kg, unit)} ${unit}`;
 }
 
 const styles = StyleSheet.create({
