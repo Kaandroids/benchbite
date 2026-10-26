@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -170,6 +170,10 @@ select is_empty(
   'Users cannot update other profiles'
 );
 select is_empty(
+  $$ update public.profiles set display_name = 'Someone' returning 1 $$,
+  'Users cannot change the name on other profiles'
+);
+select is_empty(
   $$ update public.goals set kind = 'lose_fat' returning 1 $$,
   'Users cannot update other goals'
 );
@@ -178,6 +182,12 @@ select is_empty(
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 
 select throws_ok($$ select * from public.profiles $$, '42501', null, 'Anon cannot read profiles');
+select throws_ok(
+  $$ update public.profiles set display_name = 'Someone' $$,
+  '42501',
+  null,
+  'Anon cannot change names'
+);
 select throws_ok(
   $$ select public.my_nutrition_targets() $$,
   '42501',
