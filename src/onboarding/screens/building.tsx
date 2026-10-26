@@ -219,7 +219,8 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
  * again as the ring fills, not the whole step.
  */
 function Percent({ filled }: { filled: SharedValue<number> }) {
-  const [percent, setPercent] = useState(0);
+  // Starts where the plate starts, so it never reads 0 % for a moment.
+  const [percent, setPercent] = useState(() => Math.round(filled.get() * 100));
   useAnimatedReaction(
     () => Math.round(filled.get() * 100),
     (now, before) => {
