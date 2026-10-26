@@ -459,10 +459,14 @@
       "tagline": "Train and eat for your goal.",
       "points": {
         "plan": "A workout plan made for you",
-        "nutrition": "Calories and macros for your goal",
-        "together": "Training and nutrition in one app"
+        "logging": "Every set logged, with a rest timer",
+        "records": "Records and progress for each exercise",
+        "nutrition": "Calories and macros for your goal"
       },
-      "start": "Let's get started"
+      "soon": "COMING SOON",
+      "coach": "An AI coach that adapts your plan",
+      "start": "Let's get started",
+      "free": "Free to start, no account needed."
     },
     "nickname": {
       "subtitle": "A first name or a nickname. Only you see it.",

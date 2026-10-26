@@ -459,10 +459,14 @@
       "tagline": "Hedefine göre antrenman yap ve beslen.",
       "points": {
         "plan": "Sana özel bir antrenman planı",
-        "nutrition": "Hedefine göre kalori ve makrolar",
-        "together": "Antrenman ve beslenme tek uygulamada"
+        "logging": "Her set kayıtlı, dinlenme zamanlayıcısıyla",
+        "records": "Her hareket için rekorlar ve gelişim",
+        "nutrition": "Hedefine göre kalori ve makrolar"
       },
-      "start": "Başlayalım"
+      "soon": "YAKINDA",
+      "coach": "Planını sana göre uyarlayan bir yapay zekâ koçu",
+      "start": "Başlayalım",
+      "free": "Ücretsiz başla, hesap gerekmez."
     },
     "nickname": {
       "subtitle": "Adın ya da bir takma ad. Sadece sen görürsün.",

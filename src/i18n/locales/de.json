@@ -458,11 +458,15 @@
     "welcome": {
       "tagline": "Trainiere und iss für dein Ziel.",
       "points": {
-        "plan": "Ein Trainingsplan nur für dich",
-        "nutrition": "Kalorien und Makros für dein Ziel",
-        "together": "Training und Ernährung in einer App"
+        "plan": "Ein Trainingsplan, gemacht für dich",
+        "logging": "Jeder Satz notiert, mit Pausentimer",
+        "records": "Rekorde und Fortschritt für jede Übung",
+        "nutrition": "Kalorien und Makros für dein Ziel"
       },
-      "start": "Los geht's"
+      "soon": "BALD",
+      "coach": "Ein KI-Coach, der deinen Plan anpasst",
+      "start": "Los geht's",
+      "free": "Kostenlos starten, ohne Konto."
     },
     "nickname": {
       "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",

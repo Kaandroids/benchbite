@@ -20,6 +20,15 @@ describe('WelcomeStep', () => {
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });
 
+  it('shows what the app does and marks the coach as coming', async () => {
+    await render(<WelcomeStep />);
+    expect(screen.getByLabelText('Benchbite')).toBeTruthy();
+    expect(screen.getByText('Every set logged, with a rest timer')).toBeTruthy();
+    expect(screen.getByText('COMING SOON')).toBeTruthy();
+    expect(screen.getByText('An AI coach that adapts your plan')).toBeTruthy();
+    expect(screen.getByText('Free to start, no account needed.')).toBeTruthy();
+  });
+
   it('opens the log in for someone who has an account', async () => {
     await render(<WelcomeStep />);
     await fireEvent.press(screen.getByRole('button', { name: 'Log in' }));
