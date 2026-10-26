@@ -395,7 +395,7 @@
         "title": "How active are you outside workouts?"
       },
       "training-intro": {
-        "title": "Now let's tailor your training"
+        "title": "Nice work. Now your training."
       },
       "experience": {
         "title": "How experienced are you?"
@@ -496,21 +496,78 @@
       }
     },
     "goalInsight": {
+      "how": "Here’s how we’ll get you there:",
       "lose_fat": {
         "title": "Losing fat is about consistency",
-        "body": "A moderate calorie deficit and strength training let you lose fat while keeping your muscle. We'll set your daily target and a plan you can stick to."
+        "titleNamed": "{{name}}, losing fat is about consistency",
+        "from": "Today",
+        "to": "Your goal",
+        "first": {
+          "title": "A moderate calorie deficit",
+          "body": "Enough to see progress, never starving."
+        },
+        "second": {
+          "title": "Strength training",
+          "body": "So the weight you lose is fat, not muscle."
+        },
+        "third": {
+          "title": "A pace you can keep",
+          "body": "Small, steady steps beat a crash diet."
+        }
       },
       "build_muscle": {
-        "title": "Muscle grows with time and protein",
-        "body": "Training close to your limit, enough protein and a small calorie surplus build muscle week by week. We'll calculate exactly what you need."
+        "title": "Muscle is built week by week",
+        "titleNamed": "{{name}}, muscle is built week by week",
+        "from": "Week 1",
+        "to": "Week 12",
+        "first": {
+          "title": "A small calorie surplus",
+          "body": "Enough to build, not to gain fat."
+        },
+        "second": {
+          "title": "A little more each week",
+          "body": "Weight or reps go up step by step."
+        },
+        "third": {
+          "title": "Protein every day",
+          "body": "It is what new muscle is made of."
+        }
       },
       "get_stronger": {
-        "title": "Strength comes from progression",
-        "body": "Heavy compound lifts with enough rest, and a little more weight over time, make you stronger. Your plan will be built around them."
+        "title": "Strength grows one step at a time",
+        "titleNamed": "{{name}}, strength grows one step at a time",
+        "from": "Today",
+        "to": "Heavier lifts",
+        "first": {
+          "title": "Heavier weights, fewer reps",
+          "body": "That is what makes you stronger."
+        },
+        "second": {
+          "title": "Longer rests",
+          "body": "So every set gets your full strength."
+        },
+        "third": {
+          "title": "Enough food to recover",
+          "body": "Calories that keep your weight steady."
+        }
       },
       "stay_healthy": {
-        "title": "Small habits, big difference",
-        "body": "Regular training and balanced meals keep you fit and full of energy. We'll make both fit into your week."
+        "title": "Staying healthy is about balance",
+        "titleNamed": "{{name}}, staying healthy is about balance",
+        "from": "Every week",
+        "to": "For years",
+        "first": {
+          "title": "Calories to keep your weight",
+          "body": "No deficit, no surplus."
+        },
+        "second": {
+          "title": "Strength training",
+          "body": "A few times a week keeps you strong."
+        },
+        "third": {
+          "title": "Habits that last",
+          "body": "Small, steady routines you enjoy."
+        }
       }
     },
     "consent": {
@@ -585,7 +642,13 @@
       }
     },
     "trainingIntro": {
-      "body": "Tell us how you train, and we'll build a plan that fits your week, your equipment and your time."
+      "halfway": "Halfway there",
+      "titleNamed": "Nice work, {{name}}. Now your training.",
+      "body_one": "One quick question about how you train, and your plan is ready.",
+      "body_other": "{{count}} quick questions about how you train, and your plan is ready.",
+      "aboutYou": "About you",
+      "yourTraining": "Your training",
+      "progress": "About you is done. Your training is next."
     },
     "experience": {
       "descriptions": {
