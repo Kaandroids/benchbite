@@ -12,6 +12,7 @@ const TARGETS = { calories: 2200, proteinG: 150, carbsG: 250, fatG: 70 };
 const PLAN: WorkoutPlan = { sessions: [] };
 const ANSWERS = {
   goal: 'lose_fat',
+  targetWeightKg: 70,
   weeklyPaceKg: 0.5,
   weightUnit: 'kg',
   setup: 'gym',
@@ -88,7 +89,7 @@ describe('BuildingStep', () => {
     [{ goal: 'build_muscle', weeklyPaceKg: 0.11, weightUnit: 'lb' }, 'gaining 0.25 lb'],
     [{ goal: 'lose_fat', weeklyPaceKg: 0.45, weightUnit: 'lb' }, 'losing 1 lb'],
   ] as const)('repeats the pace as it was picked: %o', async (answers, line) => {
-    mockStep = createStep({ ...answers, setup: 'gym', trainingDays: [1] });
+    mockStep = createStep({ ...answers, targetWeightKg: 70, setup: 'gym', trainingDays: [1] });
     jest.mocked(calculateTargets).mockResolvedValue(TARGETS);
     jest.mocked(generatePlan).mockResolvedValue(PLAN);
     await render(<BuildingStep />);

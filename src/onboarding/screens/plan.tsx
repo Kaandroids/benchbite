@@ -10,11 +10,11 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
-import { useWeightFormat } from '@/i18n/units';
+import { useWeightLabel } from '@/i18n/units';
 import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
-import { projectedDate } from '../body';
+import { projectedDate, weightGoal } from '../body';
 import { refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
@@ -30,7 +30,7 @@ const NAMES_SHOWN = 4;
 export function PlanStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const formatWeight = useWeightFormat();
+  const weightLabel = useWeightLabel();
   const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
   const { answers, progress, next, back } = useStep('plan');
@@ -47,11 +47,8 @@ export function PlanStep() {
 
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 0;
-  const targetKg = answers.targetWeightKg;
-  const pace = answers.weeklyPaceKg;
-  const changesWeight =
-    (answers.goal === 'lose_fat' || answers.goal === 'build_muscle') && targetKg && pace;
-  const showWeight = (kg: number) => `${formatWeight(kg, unit)} ${unit}`;
+  const aim = weightGoal(answers);
+  const showWeight = (kg: number) => weightLabel(kg, unit);
 
   const save = async () => {
     setSaving(true);
@@ -95,15 +92,15 @@ export function PlanStep() {
     >
       <Text variant="title">{t('onboarding.steps.plan.title')}</Text>
 
-      {changesWeight ? (
+      {aim ? (
         <Card entering={FadeInDown.duration(400)}>
           <Text variant="headline">{t('onboarding.plan.weight')}</Text>
           <WeightChart
-            falling={targetKg < weightKg}
+            falling={aim.targetKg < weightKg}
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
-              value: showWeight(targetKg),
-              label: formatDate(projectedDate(weightKg, targetKg, pace, new Date())),
+              value: showWeight(aim.targetKg),
+              label: formatDate(projectedDate(weightKg, aim.targetKg, aim.paceKg, new Date())),
             }}
           />
         </Card>

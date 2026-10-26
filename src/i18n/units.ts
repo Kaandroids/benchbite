@@ -81,3 +81,9 @@ export function useWeightFormat() {
   const { format } = useNumberFormat();
   return (kg: number, unit: WeightUnit) => format(weightIn(unit, kg), { maximumFractionDigits: 1 });
 }
+
+/** Formats a weight in kilograms in the unit, with the unit after it, such as "75 kg". */
+export function useWeightLabel() {
+  const weight = useWeightFormat();
+  return (kg: number, unit: WeightUnit) => `${weight(kg, unit)} ${unit}`;
+}

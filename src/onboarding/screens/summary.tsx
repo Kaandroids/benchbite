@@ -1,82 +1,80 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
-import { useNumberFormat } from '@/i18n/units';
+import { useShortDateFormat, useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
+import { useNumberFormat, useWeightLabel } from '@/i18n/units';
+import { MACROS } from '@/nutrition/macro-targets';
 import { nextSession } from '@/workouts/next-session';
 import { useTheme } from '@/theme';
 
+import { projectedDate, weightGoal } from '../body';
+import { Confetti } from '../confetti';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
 
+/** Delay between the parts of the screen appearing. */
+const STEP_MS = 120;
+/** The confetti waits for the last part to appear. */
+const CONFETTI_DELAY_MS = STEP_MS * 7 + 400;
+
 /**
- * The end of the onboarding: a short celebration, what was set up, and the first workout.
+ * The end of the onboarding: confetti, what was set up, a card each, and the first workout.
  * Everything is already saved, so there is no way back; continuing opens the app.
  */
 export function SummaryStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
+  const weightLabel = useWeightLabel();
   const weekdayName = useWeekdayFormat();
+  const shortWeekday = useWeekdayFormat('short');
   const formatTime = useTimeFormat();
+  const [today] = useState(() => new Date());
+  const shortDate = useShortDateFormat(today);
   const { answers, progress, next } = useStep('summary');
   const { targets, plan, reminderMinutes } = answers;
   const days = plan ? planDays(plan) : [];
-  const upcoming = plan ? nextSession({ sessions: days }, new Date()) : null;
+  const upcoming = plan ? nextSession({ sessions: days }, today) : null;
+  const weekdays = days.map((day) => day.weekday).sort((a, b) => a - b);
+  const unit = answers.weightUnit ?? 'kg';
+  const aim = weightGoal(answers);
+  const goalDate =
+    aim && answers.weightKg
+      ? projectedDate(answers.weightKg, aim.targetKg, aim.paceKg, today)
+      : null;
 
   useEffect(() => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, []);
-
-  const rows: { icon: IconName; label: string }[] = [
-    ...(targets
-      ? [
-          {
-            icon: 'flame' as const,
-            label: t('nutrition.calories', { calories: format(targets.calories) }),
-          },
-        ]
-      : []),
-    ...(plan
-      ? [
-          {
-            icon: 'dumbbell' as const,
-            label: t('onboarding.summary.workouts', { count: days.length }),
-          },
-        ]
-      : []),
-    {
-      icon: 'bell',
-      label:
-        reminderMinutes === undefined
-          ? t('onboarding.summary.remindersOff')
-          : t('onboarding.summary.remindersOn', { time: formatTime(reminderMinutes) }),
-    },
-  ];
 
   return (
     <Screen
       progress={progress}
       footer={<Button label={t('onboarding.summary.start')} onPress={() => next()} />}
     >
-      <View style={[styles.hero, { gap: spacing.md, paddingTop: spacing.xl }]}>
+      {/* Once the cards are in, so the burst comes as the result shows. */}
+      <Confetti delay={CONFETTI_DELAY_MS} />
+      <View style={[styles.center, { gap: spacing.sm, marginBottom: spacing.sm }]}>
         <Animated.View entering={ZoomIn.springify().delay(100)}>
           <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-            <Icon name="check" size={48} color="onPrimary" />
+            <Icon name="check" size={40} color="onPrimary" />
           </View>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ gap: spacing.sm }}>
-          <Text variant="title" align="center">
-            {t('onboarding.steps.summary.title')}
+        <Animated.View entering={FadeInDown.delay(STEP_MS * 2).duration(400)}>
+          <Text variant="hero" align="center" accessibilityRole="header">
+            {answers.displayName
+              ? t('onboarding.summary.titleNamed', { name: answers.displayName })
+              : t('onboarding.steps.summary.title')}
           </Text>
           <Text color="textMuted" align="center">
             {t('onboarding.summary.body')}
@@ -84,33 +82,68 @@ export function SummaryStep() {
         </Animated.View>
       </View>
 
-      <Card entering={FadeInDown.delay(450).duration(400)}>
-        {rows.map((row) => (
-          <View key={row.icon} style={[styles.row, { gap: spacing.md }]}>
-            <IconTile name={row.icon} size={40} />
-            <Text variant="bodyStrong" style={styles.rowLabel}>
-              {row.label}
-            </Text>
+      {targets ? (
+        <Card entering={FadeInDown.delay(STEP_MS * 3).duration(400)} style={{ gap: spacing.xs }}>
+          <Caption>{t('onboarding.summary.target')}</Caption>
+          <Text variant="hero" color="primaryText">
+            {t('nutrition.calories', { calories: format(targets.calories) })}
+          </Text>
+          <View style={[styles.row, styles.wrap, { gap: spacing.md }]}>
+            {MACROS.map(({ key, grams }) => (
+              <Text key={key} variant="captionStrong" color="textMuted">
+                {t('nutrition.macroGrams', {
+                  grams: format(targets[grams]),
+                  macro: t(`nutrition.macros.${key}`).toLowerCase(),
+                })}
+              </Text>
+            ))}
           </View>
-        ))}
-      </Card>
+        </Card>
+      ) : null}
+
+      {plan ? (
+        <View style={[styles.tiles, { gap: spacing.md }]}>
+          <Tile
+            delay={STEP_MS * 4}
+            caption={t('onboarding.summary.workoutsTile')}
+            value={t('onboarding.summary.perWeek', { count: days.length })}
+            detail={weekdays.map((day) => shortWeekday(day)).join(' · ')}
+          />
+          {aim && goalDate ? (
+            <Tile
+              delay={STEP_MS * 5}
+              caption={t('onboarding.summary.goalTile')}
+              value={weightLabel(aim.targetKg, unit)}
+              detail={t('onboarding.summary.by', { date: shortDate(goalDate) })}
+            />
+          ) : answers.sessionMinutes ? (
+            <Tile
+              delay={STEP_MS * 5}
+              caption={t('onboarding.summary.lengthTile')}
+              value={t('onboarding.minutes', { count: answers.sessionMinutes })}
+            />
+          ) : null}
+        </View>
+      ) : null}
 
       {upcoming ? (
-        <Card entering={FadeInDown.delay(600).duration(400)}>
-          <Text variant="caption" color="primaryText">
-            {t('onboarding.summary.next')}
-          </Text>
-          <View style={{ gap: 2 }}>
-            <Text variant="headline">
+        <Card
+          entering={FadeInDown.delay(STEP_MS * 6).duration(400)}
+          style={[styles.row, { gap: spacing.md, borderColor: colors.primary, borderWidth: 2 }]}
+        >
+          <IconTile name="dumbbell" size={44} />
+          <View style={styles.flex}>
+            <Text variant="captionStrong" color="primaryText">
               {upcoming.inDays === 0
-                ? t('onboarding.summary.today')
+                ? t('onboarding.summary.firstToday')
                 : upcoming.inDays === 1
-                  ? t('onboarding.summary.tomorrow')
-                  : weekdayName(upcoming.session.weekday)}
-              {' · '}
-              {t(`workout.sessionTypes.${upcoming.session.type}`)}
+                  ? t('onboarding.summary.firstTomorrow')
+                  : t('onboarding.summary.firstOn', {
+                      day: weekdayName(upcoming.session.weekday),
+                    })}
             </Text>
-            <Text color="textMuted">
+            <Text variant="headline">{t(`workout.sessionTypes.${upcoming.session.type}`)}</Text>
+            <Text variant="caption" color="textMuted">
               {t('workout.session', {
                 count: upcoming.session.exercises.length,
                 minutes: upcoming.session.estimatedMinutes,
@@ -119,18 +152,53 @@ export function SummaryStep() {
           </View>
         </Card>
       ) : null}
+
+      <Animated.View
+        entering={FadeInDown.delay(STEP_MS * 7).duration(400)}
+        style={[styles.row, { gap: spacing.sm, paddingHorizontal: spacing.xs }]}
+      >
+        <Icon name="bell" size={18} color="textMuted" />
+        <Text variant="captionStrong" color="textMuted" style={styles.flex}>
+          {reminderMinutes === undefined
+            ? t('onboarding.summary.remindersOff')
+            : t('onboarding.summary.remindersOn', { time: formatTime(reminderMinutes) })}
+        </Text>
+      </Animated.View>
     </Screen>
   );
 }
 
+type TileProps = { delay: number; caption: string; value: string; detail?: string };
+
+/** One of two cards side by side: what it is, its value large, and a detail. */
+function Tile({ delay, caption, value, detail }: TileProps) {
+  const { spacing } = useTheme();
+  return (
+    <View style={styles.flex}>
+      <Card
+        entering={FadeInDown.delay(delay).duration(400)}
+        style={[styles.flex, { gap: spacing.xs }]}
+      >
+        <Caption>{caption}</Caption>
+        <Text variant="headline">{value}</Text>
+        {detail ? (
+          <Text variant="caption" color="textMuted">
+            {detail}
+          </Text>
+        ) : null}
+      </Card>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  hero: {
+  center: {
     alignItems: 'center',
   },
   badge: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -138,7 +206,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  rowLabel: {
+  wrap: {
+    flexWrap: 'wrap',
+  },
+  // Side by side and as tall as the taller one.
+  tiles: {
+    flexDirection: 'row',
+  },
+  flex: {
     flex: 1,
   },
 });

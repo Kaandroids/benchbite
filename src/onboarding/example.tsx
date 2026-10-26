@@ -3,7 +3,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { defaultUnits, useNumberFormat, useWeightFormat } from '@/i18n/units';
+import { defaultUnits, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import type { Streak } from '@/streak/streak';
 import { useTheme } from '@/theme';
 
@@ -25,12 +25,10 @@ export const STEP_MS = 180;
  */
 export function useExampleWeight() {
   const { format } = useNumberFormat();
-  const weightFormat = useWeightFormat();
+  const weightLabel = useWeightLabel();
   const unit = defaultUnits().weight;
   return (weight: ExampleWeight | number) =>
-    typeof weight === 'number'
-      ? `${weightFormat(weight, unit)} ${unit}`
-      : `${format(weight[unit])} ${unit}`;
+    typeof weight === 'number' ? weightLabel(weight, unit) : `${format(weight[unit])} ${unit}`;
 }
 
 type SceneNoteProps = {

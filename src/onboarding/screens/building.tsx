@@ -25,7 +25,7 @@ import { useWeekdayFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { PACE_RANGES, snapPace } from '../body';
+import { PACE_RANGES, snapPace, weightGoal } from '../body';
 import { calculateTargets, generatePlan, type NutritionTargets, type WorkoutPlan } from '../plan';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -232,18 +232,17 @@ function usePlanLines(answers: OnboardingAnswers): string[] {
   const { format } = useNumberFormat();
   const weekday = useWeekdayFormat('short');
   const unit = answers.weightUnit ?? 'kg';
-  const goal = answers.goal;
+  const aim = weightGoal(answers);
   // Read back as the pace step shows it, on the slider's steps, so the line repeats the choice.
   const pace =
-    (goal === 'lose_fat' || goal === 'build_muscle') && answers.weeklyPaceKg
-      ? `${format(snapPace(paceIn(unit, answers.weeklyPaceKg), PACE_RANGES[unit][goal]), {
-          maximumFractionDigits: 2,
-        })} ${unit}`
-      : null;
+    aim &&
+    `${format(snapPace(paceIn(unit, aim.paceKg), PACE_RANGES[unit][aim.goal]), {
+      maximumFractionDigits: 2,
+    })} ${unit}`;
   const days = answers.trainingDays ?? [];
   return [
-    pace
-      ? t(`onboarding.building.lines.${goal === 'lose_fat' ? 'losing' : 'gaining'}`, { pace })
+    aim
+      ? t(`onboarding.building.lines.${aim.goal === 'lose_fat' ? 'losing' : 'gaining'}`, { pace })
       : t('onboarding.building.lines.keeping'),
     t(`onboarding.building.lines.exercises.${answers.setup ?? 'gym'}`),
     t('onboarding.building.lines.week', {

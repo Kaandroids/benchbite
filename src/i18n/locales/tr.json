@@ -185,7 +185,8 @@
     },
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
-    "gramTarget": "/ {{target}} g"
+    "gramTarget": "/ {{target}} g",
+    "macroGrams": "{{grams}} g {{macro}}"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
@@ -745,15 +746,20 @@
       "skip": "Şimdi değil"
     },
     "summary": {
-      "body": "Planın hazır. Senin için kurduklarımız:",
-      "workouts_one": "Haftada {{count}} antrenman",
-      "workouts_other": "Haftada {{count}} antrenman",
+      "body": "Senin için hazırladıklarımız burada.",
       "remindersOn": "Hatırlatma saati: {{time}}",
-      "remindersOff": "Hatırlatma yok",
-      "next": "İlk antrenmanın",
-      "today": "Bugün",
-      "tomorrow": "Yarın",
-      "start": "Başlayalım"
+      "remindersOff": "Hatırlatma yok · Ayarlar’dan açabilirsin",
+      "start": "Başlayalım",
+      "titleNamed": "Her şey hazır, {{name}}!",
+      "target": "Günlük hedef",
+      "workoutsTile": "Antrenmanlar",
+      "perWeek": "Haftada {{count}}",
+      "goalTile": "Hedef",
+      "by": "{{date}} tarihine kadar",
+      "lengthTile": "Antrenman başına",
+      "firstToday": "İlk antrenman · Bugün",
+      "firstTomorrow": "İlk antrenman · Yarın",
+      "firstOn": "İlk antrenman · {{day}}"
     },
     "sex": {
       "intro": "Vücudunun ne kadar kalori yaktığını etkiler, böylece hedeflerin sana uyar.",

@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { type ColorTokens, useTheme } from '@/theme';
 import type { SessionMinutes } from '@shared/plan/limits';
 import type { SessionTime } from '@shared/plan/types';
@@ -137,14 +137,11 @@ function Fact({ icon, label }: { icon: IconName; label: string }) {
 function WorkoutCard({ preview, failed }: { preview?: LengthPreview | null; failed: boolean }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const upperCase = useUpperCase();
   const parts = preview ? PARTS.filter(({ key }) => preview.time[key] > 0) : [];
   const minutes = preview ? partMinutes(preview.time) : null;
   return (
     <Card style={{ gap: spacing.md }}>
-      <Text variant="captionStrong" color="textMuted">
-        {upperCase(t('onboarding.sessionLength.workout'))}
-      </Text>
+      <Caption>{t('onboarding.sessionLength.workout')}</Caption>
       {preview ? (
         <>
           <View style={[styles.strip, { gap: 2, borderRadius: radii.sm }]} accessible={false}>

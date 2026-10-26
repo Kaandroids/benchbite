@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { FormScreen } from '@/components/ui/form-screen';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { displayNameOf } from '@/profile/display-name';
 import { NameField } from '@/profile/name-field';
 import { useGreeting } from '@/today/greeting';
@@ -21,7 +21,6 @@ import { useStep } from '../use-step';
 export function NicknameStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const upperCase = useUpperCase();
   const greeting = useGreeting();
   const { answers, progress, next, back } = useStep('nickname');
   const [text, setText] = useState(answers.displayName ?? '');
@@ -55,9 +54,7 @@ export function NicknameStep() {
       />
       {/* Where the name shows: Today's greeting, as it will read. */}
       <Card style={{ gap: spacing.xs }}>
-        <Text variant="captionStrong" color="textMuted">
-          {upperCase(t('onboarding.nickname.preview'))}
-        </Text>
+        <Caption>{t('onboarding.nickname.preview')}</Caption>
         <Text variant="headline">{greeting(now, name)}</Text>
       </Card>
     </FormScreen>

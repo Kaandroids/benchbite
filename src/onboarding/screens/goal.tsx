@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
@@ -68,12 +68,9 @@ export function GoalStep() {
 function GoalEffects({ goal }: { goal: Goal | undefined }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const upperCase = useUpperCase();
   return (
     <Card style={{ gap: spacing.md }}>
-      <Text variant="captionStrong" color="textMuted">
-        {upperCase(t('onboarding.goal.effects.title'))}
-      </Text>
+      <Caption>{t('onboarding.goal.effects.title')}</Caption>
       {goal ? (
         // Keyed by the goal, so the rows fade in again when it changes.
         <Animated.View

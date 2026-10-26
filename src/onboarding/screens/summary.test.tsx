@@ -35,21 +35,26 @@ describe('SummaryStep', () => {
     });
     await render(<SummaryStep />);
     expect(screen.getByText('2,200 kcal a day')).toBeTruthy();
-    expect(screen.getByText('3 workouts a week')).toBeTruthy();
+    expect(screen.getByText('150 g protein')).toBeTruthy();
+    expect(screen.getByText('250 g carbs')).toBeTruthy();
+    expect(screen.getByText("Here's everything we set up for you.")).toBeTruthy();
+    expect(screen.getByText('3 a week')).toBeTruthy();
+    expect(screen.getByText('Mon · Wed · Fri')).toBeTruthy();
     expect(screen.getByText(/^Reminders at 6:00\sPM$/)).toBeTruthy();
   });
 
   it('says when there are no reminders, and counts a single workout', async () => {
     mockStep = createStep({ targets: TARGETS, plan: plan(session(1, 'full_body')) });
     await render(<SummaryStep />);
-    expect(screen.getByText('No reminders')).toBeTruthy();
-    expect(screen.getByText('1 workout a week')).toBeTruthy();
+    expect(screen.getByText('No reminders · turn them on in Settings')).toBeTruthy();
+    expect(screen.getByText('1 a week')).toBeTruthy();
   });
 
   it('shows a workout today as Today', async () => {
     mockStep = createStep({ plan: plan(session(1, 'push'), session(3, 'pull')) });
     await render(<SummaryStep />);
-    expect(screen.getByText('Today · Pull')).toBeTruthy();
+    expect(screen.getByText('First workout · Today')).toBeTruthy();
+    expect(screen.getByText('Pull')).toBeTruthy();
     expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
   });
 
@@ -69,13 +74,40 @@ describe('SummaryStep', () => {
   it('shows a workout tomorrow as Tomorrow', async () => {
     mockStep = createStep({ plan: plan(session(1, 'push'), session(4, 'legs')) });
     await render(<SummaryStep />);
-    expect(screen.getByText('Tomorrow · Legs')).toBeTruthy();
+    expect(screen.getByText('First workout · Tomorrow')).toBeTruthy();
+    expect(screen.getByText('Legs')).toBeTruthy();
   });
 
   it('names the weekday of a later workout, also in the next week', async () => {
     mockStep = createStep({ plan: plan(session(1, 'upper'), session(2, 'lower')) });
     await render(<SummaryStep />);
-    expect(screen.getByText('Monday · Upper body')).toBeTruthy();
+    expect(screen.getByText('First workout · Monday')).toBeTruthy();
+    expect(screen.getByText('Upper body')).toBeTruthy();
+  });
+
+  it('greets by name and shows when the goal weight is reached', async () => {
+    mockStep = createStep({
+      displayName: 'Kaan',
+      goal: 'lose_fat',
+      targets: TARGETS,
+      plan: plan(session(1, 'push')),
+      weightUnit: 'kg',
+      weightKg: 80,
+      targetWeightKg: 75,
+      weeklyPaceKg: 0.5,
+    });
+    await render(<SummaryStep />);
+    expect(screen.getByRole('header', { name: "You're all set, Kaan!" })).toBeTruthy();
+    expect(screen.getByText('75 kg')).toBeTruthy();
+    // 5 kg at 0.5 kg a week: ten weeks from the Wednesday.
+    expect(screen.getByText('by Dec 30')).toBeTruthy();
+  });
+
+  it('shows the length of a workout when there is no goal weight', async () => {
+    mockStep = createStep({ plan: plan(session(1, 'push')), sessionMinutes: 60 });
+    await render(<SummaryStep />);
+    expect(screen.getByText('EACH WORKOUT')).toBeTruthy();
+    expect(screen.getByText('60 min')).toBeTruthy();
   });
 
   it('opens the app with Let’s go', async () => {
