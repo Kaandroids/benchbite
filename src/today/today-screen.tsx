@@ -13,6 +13,7 @@ import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useStreak } from '@/streak/use-streak';
+import { useDisplayName } from '@/profile/display-name';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
@@ -47,6 +48,7 @@ export function TodayScreen() {
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const streak = useStreak();
+  const name = useDisplayName().data;
   const today = new Date();
   const { schedule, plan, moves, finished } = useWeekSchedule(today);
   const queries = [plan, targets, latestWeight, weightUnit, finished, moves];
@@ -154,7 +156,9 @@ export function TodayScreen() {
         }
       >
         <Text variant="title" accessibilityRole="header">
-          {t(`today.greeting.${greetingOf(today)}`)}
+          {name
+            ? t(`today.greetingWithName.${greetingOf(today)}`, { name })
+            : t(`today.greeting.${greetingOf(today)}`)}
         </Text>
         {content}
       </ScrollView>

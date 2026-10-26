@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 
 import { useFinishedThisWeek } from '@/history/history';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
+import { useDisplayName } from '@/profile/display-name';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
 import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
@@ -19,6 +20,7 @@ jest.mock('@/workouts/moves', () => ({
   useUndoMove: jest.fn(),
 }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
+jest.mock('@/profile/display-name', () => ({ useDisplayName: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
   useLogWeight: jest.fn(),
@@ -116,6 +118,7 @@ function mockData({
   moves = loaded<WorkoutMove[]>([]),
   moving = { isError: false, isPending: false, error: null as unknown },
   undoing = { isError: false, isPending: false },
+  name = null,
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
@@ -126,7 +129,9 @@ function mockData({
   moves?: Query<WorkoutMove[]>;
   moving?: { isError: boolean; isPending: boolean; error: unknown };
   undoing?: { isError: boolean; isPending: boolean };
+  name?: string | null;
 } = {}) {
+  jest.mocked(useDisplayName).mockReturnValue({ data: name } as never);
   jest.mocked(useMoveWorkout).mockReturnValue({ mutate: move, ...moving } as never);
   jest.mocked(useUndoMove).mockReturnValue({ mutate: undo, ...undoing } as never);
   jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
@@ -176,6 +181,12 @@ describe('TodayScreen', () => {
     expect(greetingOf(new Date(2026, 9, 21, 14, 0))).toBe('afternoon');
     expect(greetingOf(new Date(2026, 9, 21, 23, 0))).toBe('evening');
     expect(greetingOf(new Date(2026, 9, 21, 3, 0))).toBe('evening');
+  });
+
+  it('greets the user by the name they gave', async () => {
+    mockData({ name: 'Kaan' });
+    await render(<TodayScreen />);
+    expect(screen.getByRole('header', { name: 'Good morning, Kaan' })).toBeTruthy();
   });
 
   it('highlights today and marks the workouts finished in the week', async () => {
