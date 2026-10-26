@@ -103,3 +103,20 @@ export function weightGoal(
   }
   return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg };
 }
+
+/**
+ * How much each level of daily movement multiplies the calories burnt at rest. They mirror
+ * `activity_factors` in calculate_nutrition_targets(), which nutrition_targets.test.sql pins to
+ * the same values; change both.
+ */
+export const ACTIVITY_FACTORS: Record<NonNullable<OnboardingAnswers['activityLevel']>, number> = {
+  sedentary: 1.2,
+  light: 1.375,
+  moderate: 1.55,
+  active: 1.725,
+};
+
+/** How many more calories a level of daily movement burns than mostly sitting, as a share. */
+export function activityShare(level: NonNullable<OnboardingAnswers['activityLevel']>): number {
+  return ACTIVITY_FACTORS[level] / ACTIVITY_FACTORS.sedentary - 1;
+}

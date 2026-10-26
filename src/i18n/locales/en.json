@@ -396,7 +396,7 @@
         "title": "How active are you outside workouts?"
       },
       "training-intro": {
-        "title": "Nice work. Now your training."
+        "title": "Halfway there."
       },
       "experience": {
         "title": "How experienced are you?"
@@ -645,28 +645,38 @@
       }
     },
     "activity": {
+      "intro": "Your job and getting around. Workouts are counted separately.",
       "descriptions": {
         "sedentary": "Desk job, little walking",
         "light": "On your feet some of the day",
         "moderate": "On your feet most of the day",
         "active": "Physical work all day"
-      }
+      },
+      "calories": "Your daily calories",
+      "more": "{{percent}} more than mostly sitting",
+      "base": "The starting point for your calories",
+      "note": "Your workouts are added on top.",
+      "noteActive": "Hard work all day already counts for more than workouts add."
     },
     "trainingIntro": {
-      "halfway": "Halfway there",
-      "titleNamed": "Nice work, {{name}}. Now your training.",
-      "body_one": "One quick question about how you train, and your plan is ready.",
-      "body_other": "{{count}} quick questions about how you train, and your plan is ready.",
-      "aboutYou": "About you",
-      "yourTraining": "Your training",
-      "progress": "About you is done. Your training is next."
+      "titleNamed": "Halfway there, {{name}}.",
+      "body_one": "The other half is your training: one quick question.",
+      "body_other": "The other half is your training: {{count}} quick questions."
     },
     "experience": {
+      "intro": "With strength training, such as squats and presses.",
       "descriptions": {
         "beginner": "New to strength training, or back after a long break",
         "intermediate": "Training regularly for at least six months",
         "advanced": "Training for years and confident with the main lifts"
-      }
+      },
+      "plan": "Your plan at this level",
+      "week": "Suggested week",
+      "days_one": "{{count}} day · {{types}}",
+      "days_other": "{{count}} days · {{types}}",
+      "main": "Main lifts",
+      "sets_one": "about {{count}} set each",
+      "sets_other": "about {{count}} sets each"
     },
     "trainingDays": {
       "intro": "We picked days for your experience. Tap a day to change them.",
@@ -678,10 +688,32 @@
       "backToBack": "{{days}} back to back"
     },
     "setup": {
+      "intro": "We only pick exercises you can do there.",
       "descriptions": {
         "gym": "Machines, barbells and dumbbells",
-        "dumbbells": "A pair of dumbbells is enough, no bench needed",
+        "dumbbells": "A pair is enough, no bench needed",
         "bodyweight": "No equipment, a chair and a sturdy table"
+      },
+      "means": "What this means",
+      "need": "You'll need",
+      "exercises": "Your exercises",
+      "progress": "To progress",
+      "facts": {
+        "gym": {
+          "need": "Access to a gym",
+          "exercises": "Barbell, machine and cable lifts",
+          "progress": "Add a little weight each time"
+        },
+        "dumbbells": {
+          "need": "A pair of dumbbells",
+          "exercises": "Dumbbell and bodyweight moves",
+          "progress": "More reps first, then a heavier pair"
+        },
+        "bodyweight": {
+          "need": "Just a chair and a sturdy table",
+          "exercises": "Bodyweight moves only",
+          "progress": "More reps, then harder versions"
+        }
       }
     },
     "sessionLength": {
@@ -763,7 +795,10 @@
     },
     "sex": {
       "intro": "It changes how many calories your body burns, so your targets fit you.",
-      "unspecified": "We'll use an average"
+      "unspecified": "We'll use an average",
+      "why": "Why we ask",
+      "burn": "Men and women burn a different number of calories at rest.",
+      "only": "Only your calorie targets use it. Your training does not change."
     }
   },
   "session": {

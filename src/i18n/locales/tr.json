@@ -396,7 +396,7 @@
         "title": "Antrenman dışında ne kadar aktifsin?"
       },
       "training-intro": {
-        "title": "Harika. Şimdi antrenmanın."
+        "title": "Yarıyı geçtin."
       },
       "experience": {
         "title": "Ne kadar deneyimlisin?"
@@ -645,28 +645,38 @@
       }
     },
     "activity": {
+      "intro": "İşin ve gün içindeki hareketin. Antrenmanları ayrıca sayarız.",
       "descriptions": {
         "sedentary": "Masa başı iş, az yürüyüş",
         "light": "Günün bir kısmında ayakta",
         "moderate": "Günün çoğunda ayakta",
         "active": "Gün boyu fiziksel iş"
-      }
+      },
+      "calories": "Günlük kalorin",
+      "more": "Çoğunlukla oturana göre {{percent}} fazla",
+      "base": "Kalorinin başlangıç noktası",
+      "note": "Antrenmanların bunun üstüne eklenir.",
+      "noteActive": "Gün boyu ağır iş, antrenmanların ekleyeceğinden zaten fazla sayılır."
     },
     "trainingIntro": {
-      "halfway": "Yarıyı geçtin",
-      "titleNamed": "Harika, {{name}}. Şimdi antrenmanın.",
-      "body_one": "Nasıl antrenman yaptığına dair kısa bir soru, sonra planın hazır.",
-      "body_other": "Nasıl antrenman yaptığına dair {{count}} kısa soru, sonra planın hazır.",
-      "aboutYou": "Seni tanıyalım",
-      "yourTraining": "Antrenmanın",
-      "progress": "Seni tanıma kısmı bitti. Sırada antrenmanın var."
+      "titleNamed": "Yarıyı geçtin, {{name}}.",
+      "body_one": "Diğer yarısı antrenmanın: tek kısa bir soru.",
+      "body_other": "Diğer yarısı antrenmanın: {{count}} kısa soru."
     },
     "experience": {
+      "intro": "Squat ve press gibi kuvvet antrenmanlarında.",
       "descriptions": {
         "beginner": "Ağırlık antrenmanına yeni başlıyorsun ya da uzun bir aradan dönüyorsun",
         "intermediate": "En az altı aydır düzenli antrenman yapıyorsun",
         "advanced": "Yıllardır antrenman yapıyorsun, temel hareketlere hâkimsin"
-      }
+      },
+      "plan": "Bu seviyede planın",
+      "week": "Önerilen hafta",
+      "days_one": "{{count}} gün · {{types}}",
+      "days_other": "{{count}} gün · {{types}}",
+      "main": "Ana hareketler",
+      "sets_one": "Her biri yaklaşık {{count}} set",
+      "sets_other": "Her biri yaklaşık {{count}} set"
     },
     "trainingDays": {
       "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",
@@ -678,10 +688,32 @@
       "backToBack": "{{days}} arka arkaya"
     },
     "setup": {
+      "intro": "Sadece orada yapabileceğin egzersizleri seçeriz.",
       "descriptions": {
         "gym": "Makineler, halterler ve dambıllar",
-        "dumbbells": "Bir çift dambıl yeterli, bench gerekmiyor",
+        "dumbbells": "Bir çift yeterli, bench gerekmiyor",
         "bodyweight": "Ekipman yok, bir sandalye ve sağlam bir masa"
+      },
+      "means": "Bu ne demek",
+      "need": "İhtiyacın olan",
+      "exercises": "Egzersizlerin",
+      "progress": "İlerlemek için",
+      "facts": {
+        "gym": {
+          "need": "Bir spor salonuna erişim",
+          "exercises": "Halter, makine ve kablo hareketleri",
+          "progress": "Her seferinde biraz ağırlık ekle"
+        },
+        "dumbbells": {
+          "need": "Bir çift dambıl",
+          "exercises": "Dambıl ve vücut ağırlığı hareketleri",
+          "progress": "Önce daha çok tekrar, sonra daha ağır dambıl"
+        },
+        "bodyweight": {
+          "need": "Sadece bir sandalye ve sağlam bir masa",
+          "exercises": "Sadece vücut ağırlığı hareketleri",
+          "progress": "Daha çok tekrar, sonra daha zor versiyonlar"
+        }
       }
     },
     "sessionLength": {
@@ -763,7 +795,10 @@
     },
     "sex": {
       "intro": "Vücudunun ne kadar kalori yaktığını etkiler, böylece hedeflerin sana uyar.",
-      "unspecified": "Ortalama bir değer kullanırız"
+      "unspecified": "Ortalama bir değer kullanırız",
+      "why": "Neden soruyoruz",
+      "burn": "Kadınlar ve erkekler dinlenirken farklı miktarda kalori yakar.",
+      "only": "Sadece kalori hedeflerin bunu kullanır. Antrenmanın değişmez."
     }
   },
   "session": {

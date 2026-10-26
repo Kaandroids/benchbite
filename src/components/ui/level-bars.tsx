@@ -1,0 +1,53 @@
+import { StyleSheet, View } from 'react-native';
+
+import { useTheme } from '@/theme';
+
+/** The shortest and the tallest bar; the ones between rise evenly. */
+const MIN_BAR = 5;
+const MAX_BAR = 14;
+
+type LevelBarsProps = {
+  /** How many bars are filled, from 1. */
+  value: number;
+  /** How many bars there are. */
+  of: number;
+  /** On a filled tile, the bars take its foreground colour. */
+  inverse?: boolean;
+};
+
+/** A level as rising bars, some filled, like a signal meter. Decorative. */
+export function LevelBars({ value, of, inverse = false }: LevelBarsProps) {
+  const { colors } = useTheme();
+  const on = inverse ? colors.onPrimary : colors.primary;
+  return (
+    <View style={styles.bars} accessible={false}>
+      {Array.from({ length: of }, (_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.bar,
+            {
+              height: MIN_BAR + ((MAX_BAR - MIN_BAR) * index) / Math.max(1, of - 1),
+              backgroundColor: on,
+              // Empty bars are the same colour, faint, so they show on any card or tile.
+              opacity: index < value ? 1 : 0.3,
+            },
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  bars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 2,
+    height: MAX_BAR,
+  },
+  bar: {
+    width: 4,
+    borderRadius: 1,
+  },
+});

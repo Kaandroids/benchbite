@@ -396,7 +396,7 @@
         "title": "Wie aktiv bist du außerhalb des Trainings?"
       },
       "training-intro": {
-        "title": "Gut gemacht. Jetzt dein Training."
+        "title": "Halbzeit."
       },
       "experience": {
         "title": "Wie viel Trainingserfahrung hast du?"
@@ -645,28 +645,38 @@
       }
     },
     "activity": {
+      "intro": "Dein Job und deine Wege. Workouts zählen wir extra.",
       "descriptions": {
         "sedentary": "Bürojob, wenig Bewegung",
         "light": "Einen Teil des Tages auf den Beinen",
         "moderate": "Den größten Teil des Tages auf den Beinen",
         "active": "Den ganzen Tag körperliche Arbeit"
-      }
+      },
+      "calories": "Deine täglichen Kalorien",
+      "more": "{{percent}} mehr als überwiegend sitzend",
+      "base": "Der Ausgangspunkt für deine Kalorien",
+      "note": "Deine Workouts kommen noch dazu.",
+      "noteActive": "Körperliche Arbeit zählt schon mehr, als Workouts dazugeben."
     },
     "trainingIntro": {
-      "halfway": "Halb geschafft",
-      "titleNamed": "Gut gemacht, {{name}}. Jetzt dein Training.",
-      "body_one": "Eine kurze Frage zu deinem Training, dann steht dein Plan.",
-      "body_other": "{{count}} kurze Fragen zu deinem Training, dann steht dein Plan.",
-      "aboutYou": "Über dich",
-      "yourTraining": "Dein Training",
-      "progress": "Über dich ist erledigt. Als Nächstes dein Training."
+      "titleNamed": "Halbzeit, {{name}}.",
+      "body_one": "Die andere Hälfte ist dein Training: eine kurze Frage.",
+      "body_other": "Die andere Hälfte ist dein Training: {{count}} kurze Fragen."
     },
     "experience": {
+      "intro": "Mit Krafttraining, etwa Kniebeugen und Drücken.",
       "descriptions": {
         "beginner": "Neu im Krafttraining oder nach langer Pause zurück",
         "intermediate": "Seit mindestens sechs Monaten regelmäßig im Training",
         "advanced": "Seit Jahren im Training und sicher bei den Grundübungen"
-      }
+      },
+      "plan": "Dein Plan auf diesem Level",
+      "week": "Vorgeschlagene Woche",
+      "days_one": "{{count}} Tag · {{types}}",
+      "days_other": "{{count}} Tage · {{types}}",
+      "main": "Grundübungen",
+      "sets_one": "je etwa {{count}} Satz",
+      "sets_other": "je etwa {{count}} Sätze"
     },
     "trainingDays": {
       "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",
@@ -678,10 +688,32 @@
       "backToBack": "{{days}} direkt hintereinander"
     },
     "setup": {
+      "intro": "Wir wählen nur Übungen, die du dort machen kannst.",
       "descriptions": {
         "gym": "Geräte, Langhanteln und Kurzhanteln",
-        "dumbbells": "Ein Paar Kurzhanteln genügt, keine Bank nötig",
+        "dumbbells": "Ein Paar genügt, keine Bank nötig",
         "bodyweight": "Keine Ausrüstung, ein Stuhl und ein stabiler Tisch"
+      },
+      "means": "Was das bedeutet",
+      "need": "Du brauchst",
+      "exercises": "Deine Übungen",
+      "progress": "Um besser zu werden",
+      "facts": {
+        "gym": {
+          "need": "Zugang zu einem Fitnessstudio",
+          "exercises": "Langhantel, Maschinen und Kabelzug",
+          "progress": "Jedes Mal etwas mehr Gewicht"
+        },
+        "dumbbells": {
+          "need": "Ein Paar Kurzhanteln",
+          "exercises": "Kurzhantel- und Körpergewichtsübungen",
+          "progress": "Erst mehr Wiederholungen, dann schwerere Hanteln"
+        },
+        "bodyweight": {
+          "need": "Nur einen Stuhl und einen stabilen Tisch",
+          "exercises": "Nur Körpergewichtsübungen",
+          "progress": "Mehr Wiederholungen, dann schwerere Varianten"
+        }
       }
     },
     "sessionLength": {
@@ -763,7 +795,10 @@
     },
     "sex": {
       "intro": "Es beeinflusst, wie viele Kalorien dein Körper verbrennt, damit deine Ziele zu dir passen.",
-      "unspecified": "Wir nehmen einen Durchschnitt"
+      "unspecified": "Wir nehmen einen Durchschnitt",
+      "why": "Warum wir fragen",
+      "burn": "Männer und Frauen verbrennen in Ruhe unterschiedlich viele Kalorien.",
+      "only": "Nur deine Kalorienziele nutzen das. Dein Training ändert sich nicht."
     }
   },
   "session": {

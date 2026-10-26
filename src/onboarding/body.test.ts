@@ -2,6 +2,7 @@ import { WEIGHT_RANGE_KG } from '@/weight/range';
 
 import {
   HEIGHT_RANGE_CM,
+  activityShare,
   MIN_AGE,
   MIN_HEALTHY_BMI,
   PACE_RANGES,
@@ -142,5 +143,14 @@ describe('body rules', () => {
     const from = new Date(2026, 0, 1);
     projectedDate(80, 75, 0.5, from);
     expect(from).toEqual(new Date(2026, 0, 1));
+  });
+});
+
+describe('activity factors', () => {
+  it('says how much more each level burns than mostly sitting', () => {
+    expect(activityShare('sedentary')).toBe(0);
+    expect(Math.round(activityShare('light') * 100)).toBe(15);
+    expect(Math.round(activityShare('moderate') * 100)).toBe(29);
+    expect(Math.round(activityShare('active') * 100)).toBe(44);
   });
 });

@@ -4,19 +4,17 @@ import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
-  useAnimatedStyle,
+  useAnimatedProps,
   useSharedValue,
   withDelay,
-  withRepeat,
-  withSequence,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
+import Svg, { Circle, ClipPath, Defs, Rect } from 'react-native-svg';
 
+import { PlateCuts } from '@/brand/bitten-plate';
+import { MARK_BOX, PLATE } from '@/brand/mark';
 import { Button } from '@/components/ui/button';
-import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
-import { Caption } from '@/components/ui/caption';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -24,7 +22,13 @@ import { stepsBetween } from '../steps';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
-/** The turn from body data to training: half of the onboarding is done, and how much is left. */
+const SIZE = 180;
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+
+/**
+ * The turn from body data to training: the Benchbite plate filled to half, as the building step
+ * fills it the rest of the way, and how many questions are left.
+ */
 export function TrainingIntroStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -40,132 +44,62 @@ export function TrainingIntroStep() {
       footer={<Button label={t('common.continue')} onPress={() => next()} />}
     >
       <CenteredContent>
-        <View style={{ gap: spacing.xxl }}>
-          <Halfway />
-          <View style={{ gap: spacing.sm }}>
-            <Animated.View entering={FadeInDown.delay(500).duration(400)}>
-              <Caption color="primaryText">{t('onboarding.trainingIntro.halfway')}</Caption>
-            </Animated.View>
-            <Animated.View entering={FadeInDown.delay(600).duration(400)}>
-              <Text variant="title" accessibilityRole="header">
-                {name
-                  ? t('onboarding.trainingIntro.titleNamed', { name })
-                  : t('onboarding.steps.training-intro.title')}
-              </Text>
-            </Animated.View>
-            <Animated.View entering={FadeInDown.delay(700).duration(400)}>
-              <Text color="textMuted">
-                {t('onboarding.trainingIntro.body', { count: questions })}
-              </Text>
-            </Animated.View>
-          </View>
+        <View style={[styles.center, { gap: spacing.xl }]}>
+          <HalfPlate />
+          <Animated.View
+            entering={FadeInDown.delay(700).duration(400)}
+            style={[styles.center, { gap: spacing.sm }]}
+          >
+            <Text variant="hero" align="center" accessibilityRole="header">
+              {name
+                ? t('onboarding.trainingIntro.titleNamed', { name })
+                : t('onboarding.steps.training-intro.title')}
+            </Text>
+            <Text color="textMuted" align="center">
+              {t('onboarding.trainingIntro.body', { count: questions })}
+            </Text>
+          </Animated.View>
         </View>
       </CenteredContent>
     </Screen>
   );
 }
 
-/** The two parts of the onboarding: the first done, the line to the second filling, the second next. */
-function Halfway() {
-  const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
-  const line = useSharedValue(0);
-
+/** The plate, filling up from the bottom to half, like a glass. */
+function HalfPlate() {
+  const { colors } = useTheme();
+  const level = useSharedValue(0);
   useEffect(() => {
-    line.set(withDelay(300, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) })));
-  }, [line]);
-
-  const lineStyle = useAnimatedStyle(() => ({ width: `${line.get() * 100}%` }));
-
+    level.set(withDelay(200, withTiming(0.5, { duration: 900, easing: Easing.out(Easing.cubic) })));
+  }, [level]);
+  // The fill rises from the plate's bottom edge.
+  const bottom = PLATE.cy + PLATE.r;
+  const fillProps = useAnimatedProps(() => {
+    const height = PLATE.r * 2 * level.get();
+    return { y: bottom - height, height };
+  });
   return (
-    <View
-      accessible
-      accessibilityLabel={t('onboarding.trainingIntro.progress')}
-      style={[styles.row, { gap: spacing.sm }]}
-    >
-      <Part label={t('onboarding.trainingIntro.aboutYou')} icon="check" state="done" />
-      <View style={[styles.track, { backgroundColor: colors.track }]}>
-        <Animated.View style={[styles.fill, { backgroundColor: colors.primary }, lineStyle]} />
-      </View>
-      <Part label={t('onboarding.trainingIntro.yourTraining')} icon="dumbbell" state="next" />
-    </View>
-  );
-}
-
-type PartProps = {
-  label: string;
-  icon: IconName;
-  /** A done part is filled in; the next one pulses. */
-  state: 'done' | 'next';
-};
-
-function Part({ label, icon, state }: PartProps) {
-  const { colors, spacing } = useTheme();
-  const done = state === 'done';
-  const pulse = useSharedValue(1);
-
-  useEffect(() => {
-    if (state === 'next') {
-      pulse.set(
-        withDelay(
-          800,
-          withRepeat(
-            withSequence(withTiming(1.12, { duration: 600 }), withTiming(1, { duration: 600 })),
-            -1,
-          ),
-        ),
-      );
-    }
-  }, [state, pulse]);
-
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.get() }] }));
-  return (
-    <View style={[styles.part, { gap: spacing.sm }]}>
-      <Animated.View
-        entering={done ? ZoomIn.duration(400) : undefined}
-        style={[
-          styles.circle,
-          done
-            ? { backgroundColor: colors.primary }
-            : { borderWidth: 3, borderColor: colors.primary, backgroundColor: colors.surface },
-          pulseStyle,
-        ]}
-      >
-        <Icon name={icon} size={24} color={done ? 'onPrimary' : 'primary'} />
-      </Animated.View>
-      <Text variant="captionStrong" color={done ? 'text' : 'primaryText'} align="center">
-        {label}
-      </Text>
-    </View>
+    <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${MARK_BOX} ${MARK_BOX}`} accessible={false}>
+      <Defs>
+        <ClipPath id="training-intro-plate">
+          <Circle cx={PLATE.cx} cy={PLATE.cy} r={PLATE.r} />
+        </ClipPath>
+      </Defs>
+      <Circle cx={PLATE.cx} cy={PLATE.cy} r={PLATE.r} fill={colors.track} />
+      <AnimatedRect
+        animatedProps={fillProps}
+        x={PLATE.cx - PLATE.r}
+        width={PLATE.r * 2}
+        fill={colors.primary}
+        clipPath="url(#training-intro-plate)"
+      />
+      <PlateCuts background={colors.background} />
+    </Svg>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  part: {
-    width: 104,
+  center: {
     alignItems: 'center',
-  },
-  circle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // In line with the middle of the circles.
-  track: {
-    flex: 1,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 25,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: 6,
-    borderRadius: 3,
   },
 });
