@@ -48,9 +48,7 @@ export const CRUMBS = [
 ] as const;
 
 /** The circles cut out by the bite: the round cut and each tooth mark. */
-export function biteCircles(): { cx: number; cy: number; r: number }[] {
-  return [
-    { cx: BITE.cx, cy: BITE.cy, r: BITE.r },
-    ...BITE.teeth.map(([cx, cy]) => ({ cx, cy, r: BITE.toothRadius })),
-  ];
-}
+export const BITE_CIRCLES: readonly { cx: number; cy: number; r: number }[] = [
+  { cx: BITE.cx, cy: BITE.cy, r: BITE.r },
+  ...BITE.teeth.map(([cx, cy]) => ({ cx, cy, r: BITE.toothRadius })),
+];

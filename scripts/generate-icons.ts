@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 import {
-  biteCircles,
+  BITE_CIRCLES,
   BRAND_ORANGE,
   BRAND_ORANGE_DARK,
   BRAND_SURFACE_DARK,
@@ -38,7 +38,7 @@ function markSvg({ size, color, background, bitten, scale }: Drawing): string {
   const cuts = [
     `<circle cx="${cx}" cy="${cy}" r="${RING.r}" fill="none" stroke="#000" stroke-width="${RING.width}"/>`,
     circle(cx, cy, HOLE.r, '#000'),
-    ...(bitten ? biteCircles().map((bite) => circle(bite.cx, bite.cy, bite.r, '#000')) : []),
+    ...(bitten ? BITE_CIRCLES.map((bite) => circle(bite.cx, bite.cy, bite.r, '#000')) : []),
   ];
   const offset = (MARK_BOX * (1 - scale)) / 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${MARK_BOX} ${MARK_BOX}">

@@ -19,7 +19,7 @@ import { darkColors, lightColors } from '@/theme/colors';
 
 import {
   BITE,
-  biteCircles,
+  BITE_CIRCLES,
   BRAND_ORANGE,
   CRUMBS,
   HOLE,
@@ -143,7 +143,7 @@ export function AnimatedSplash({ scheme, onDone }: AnimatedSplashProps) {
               strokeWidth={RING.width}
             />
             <Circle cx={PLATE.cx} cy={PLATE.cy} r={HOLE.r} fill={colors.background} />
-            {biteCircles().map((circle) => (
+            {BITE_CIRCLES.map((circle) => (
               <BiteCircle
                 key={`${circle.cx},${circle.cy}`}
                 circle={circle}
