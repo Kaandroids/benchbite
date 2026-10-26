@@ -88,7 +88,6 @@ function CaloriesLine({ level }: { level: ActivityLevel }) {
               percent: format(share, {
                 style: 'percent',
                 maximumFractionDigits: 0,
-                signDisplay: 'always',
               }),
             })
           : t('onboarding.activity.base')}

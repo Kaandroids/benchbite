@@ -26,7 +26,7 @@ describe('ActivityStep', () => {
     expect(
       screen.getByRole('radio', { name: 'Lightly active, On your feet some of the day' }),
     ).toBeChecked();
-    expect(screen.getByText('+15% more than mostly sitting')).toBeTruthy();
+    expect(screen.getByText('15% more than mostly sitting')).toBeTruthy();
     await fireEvent.press(continueButton());
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });
