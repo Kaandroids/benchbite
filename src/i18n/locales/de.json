@@ -728,6 +728,10 @@
       "today": "Heute",
       "tomorrow": "Morgen",
       "start": "Los geht's"
+    },
+    "sex": {
+      "intro": "Es beeinflusst, wie viele Kalorien dein Körper verbrennt, damit deine Ziele zu dir passen.",
+      "unspecified": "Wir nehmen einen Durchschnitt"
     }
   },
   "session": {

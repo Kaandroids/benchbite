@@ -728,6 +728,10 @@
       "today": "Bugün",
       "tomorrow": "Yarın",
       "start": "Başlayalım"
+    },
+    "sex": {
+      "intro": "Vücudunun ne kadar kalori yaktığını etkiler, böylece hedeflerin sana uyar.",
+      "unspecified": "Ortalama bir değer kullanırız"
     }
   },
   "session": {
