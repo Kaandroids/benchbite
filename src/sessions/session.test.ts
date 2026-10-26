@@ -145,6 +145,51 @@ describe('logging sets', () => {
     expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50, 60]);
   });
 
+  it('carries the weight as it is typed, digit by digit', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 5 });
+    session = setValues(session, 0, 0, { weightKg: 50 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 50]);
+  });
+
+  it('keeps a later set that has a weight of its own', () => {
+    let session = setValues(start(), 0, 1, { weightKg: 60 });
+    session = setValues(session, 0, 0, { weightKg: 5 });
+    session = setValues(session, 0, 0, { weightKg: 50 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([50, 60]);
+  });
+
+  it('lets the sets it filled follow a weight that is deleted and typed again', () => {
+    const typed = (session: Session, weightKg: number | null) =>
+      setValues(session, 0, 0, { weightKg });
+    let session = typed(start(), 60);
+    for (const weightKg of [6, null, 7, 70]) {
+      session = typed(session, weightKg);
+    }
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([70, 70]);
+  });
+
+  it('keeps a weight from last time while another one is typed', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 10 });
+    session = setValues(session, 0, 1, { weightKg: 12 });
+    for (const weightKg of [1, 12, 12.5]) {
+      session = setValues(session, 0, 0, { weightKg });
+    }
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([12.5, 12]);
+  });
+
+  it('empties the sets it filled when the weight is cleared', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 60 });
+    session = setValues(session, 0, 0, { weightKg: null });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([null, null]);
+  });
+
+  it('does not carry anything for a change of reps', () => {
+    let session = setValues(start(), 0, 0, { weightKg: 60 });
+    session = setValues(session, 0, 1, { weightKg: 70 });
+    session = setValues(session, 0, 0, { reps: 8 });
+    expect(session.exercises[0]?.sets.map((s) => s.weightKg)).toEqual([60, 70]);
+  });
+
   it('adds sets up to as many as a log can keep', () => {
     let session = start();
     for (let added = 0; added < MAX_SETS; added++) {

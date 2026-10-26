@@ -157,4 +157,11 @@ describe('EditExerciseScreen', () => {
     await render(<EditExerciseScreen id="row" />);
     expect(screen.getByText('Exercise not found')).toBeTruthy();
   });
+
+  it('neither edits nor archives during a workout, which it would leave', async () => {
+    mockDetails([{ ...ROW, custom: true }], []);
+    await render(<ExerciseScreen id="row" canEdit={false} />);
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Archive exercise' })).toBeNull();
+  });
 });

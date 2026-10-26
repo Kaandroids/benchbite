@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -132,8 +132,12 @@ export function OpenExercise({
           </Text>
         </View>
         <View style={[styles.row, { gap: spacing.sm }]}>
-          <HistoryButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
-          <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} />
+          <HistoryButton
+            exerciseId={exercise.exerciseId}
+            exerciseName={info?.name ?? ''}
+            inSession
+          />
+          <InfoButton exerciseId={exercise.exerciseId} exerciseName={info?.name ?? ''} inSession />
         </View>
       </View>
 
@@ -155,6 +159,8 @@ export function OpenExercise({
               updateSession((current) => setValues(current, index, setIndex, values))
             }
             onToggle={() => {
+              // The set is finished with, so the keyboard used for it goes.
+              Keyboard.dismiss();
               void Haptics.selectionAsync();
               updateSession((current) => toggleDone(current, index, setIndex));
             }}

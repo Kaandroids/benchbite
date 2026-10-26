@@ -16,9 +16,17 @@ import { usePictureUrls } from './photos';
 
 /**
  * How to do an exercise: its start and end pictures, the muscles it works, its equipment and
- * level, and the steps. The user's own exercises are edited and archived from here.
+ * level, and the steps. The user's own exercises are edited and archived from here, but not during
+ * a workout, whose screen the editor would leave.
  */
-export function ExerciseScreen({ id }: { id: string }) {
+export function ExerciseScreen({
+  id,
+  canEdit = true,
+}: {
+  id: string;
+  /** Whether the user's own exercise can be edited and archived here. */
+  canEdit?: boolean;
+}) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { library, instructions } = useExerciseDetails(id);
@@ -99,7 +107,7 @@ export function ExerciseScreen({ id }: { id: string }) {
     <Screen
       onBack={() => router.back()}
       action={
-        exercise.custom && !exercise.archived ? (
+        canEdit && exercise.custom && !exercise.archived ? (
           <PillButton
             label={t('workout.edit')}
             onPress={() =>
@@ -185,7 +193,7 @@ export function ExerciseScreen({ id }: { id: string }) {
         </Card>
       ) : null}
 
-      {exercise.custom ? (
+      {canEdit && exercise.custom ? (
         <View style={[styles.archive, { gap: spacing.xs }]}>
           <Pressable
             accessibilityRole="button"

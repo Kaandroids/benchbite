@@ -14,6 +14,8 @@ export type SessionSet = SetValues & {
   done: boolean;
   /** When it was done, as the end of a workout left open; missing in older workouts. */
   doneAt?: number;
+  /** Whether the weight was filled in from an earlier set of the workout, not typed or from last time. */
+  carried?: boolean;
 };
 
 /** The longest a workout can be, as log_workout() accepts it. */
@@ -222,7 +224,9 @@ function changeSet(
 
 /**
  * Sets values of a set, for example what the user typed. A weight also fills the later sets of the
- * exercise that are not done and have none yet, since most sets use the same weight.
+ * exercise that are not done and have none yet, since most sets use the same weight. The weight is
+ * saved as it is typed, so the sets it filled follow every change, also when it is cleared: typing
+ * 50 fills them with 50, not with the 5 typed first. A weight typed or from last time stays.
  */
 export function setValues(
   value: Session,
@@ -230,7 +234,16 @@ export function setValues(
   index: number,
   values: Partial<SetValues>,
 ): Session {
-  const weightKg = values.weightKg;
+  const typedWeight = 'weightKg' in values;
+  const weightKg = values.weightKg ?? null;
+  const follow = (s: SessionSet): SessionSet => {
+    if (s.done || (s.weightKg !== null && !s.carried)) {
+      return s;
+    }
+    return weightKg === null
+      ? { ...s, weightKg: null, carried: undefined }
+      : { ...s, weightKg, carried: true };
+  };
   return {
     ...value,
     exercises: value.exercises.map((item, i) =>
@@ -239,9 +252,9 @@ export function setValues(
             ...item,
             sets: item.sets.map((s, j) =>
               j === index
-                ? { ...s, ...values }
-                : j > index && weightKg != null && !s.done && s.weightKg === null
-                  ? { ...s, weightKg }
+                ? { ...s, ...values, ...(typedWeight ? { carried: undefined } : {}) }
+                : j > index && typedWeight
+                  ? follow(s)
                   : s,
             ),
           }
