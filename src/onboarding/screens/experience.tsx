@@ -32,7 +32,7 @@ const LEVELS = Constants.public.Enums.experience;
 export function ExperienceStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, answer, next } = useStep('experience');
+  const { answers, progress, back, select, next } = useStep('experience');
   const experience = answers.experience;
 
   return (
@@ -52,9 +52,7 @@ export function ExperienceStep() {
           description={t(`onboarding.experience.descriptions.${level}`)}
           level={{ value: index + 1, of: LEVELS.length }}
           selected={experience === level}
-          onPress={() => {
-            if (experience !== level) answer({ experience: level });
-          }}
+          onPress={() => select({ experience: level })}
           size="compact"
         />
       ))}

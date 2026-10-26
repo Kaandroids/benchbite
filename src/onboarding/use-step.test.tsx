@@ -123,50 +123,13 @@ describe('useStep', () => {
     });
   });
 
-  describe('choose', () => {
-    beforeEach(() => jest.useFakeTimers());
-    afterEach(() => jest.useRealTimers());
-
-    it('saves the choice right away and opens the next step after a moment', async () => {
-      const { result } = await renderStep('goal');
-      await act(() => result.current.choose({ goal: 'lose_fat' }));
-      expect(answer).toHaveBeenCalledWith({ goal: 'lose_fat' });
-      expect(router.push).not.toHaveBeenCalled();
-
-      await act(() => jest.runAllTimers());
-      expect(router.push).toHaveBeenCalledWith({
-        pathname: '/onboarding/[step]',
-        params: { step: 'goal-insight' },
-      });
-    });
-
-    // Regression: a second choice within the delay was saved, but the first one decided the
-    // next step and was saved again after it.
-    it('ignores further choices until the next step opens', async () => {
-      const { result } = await renderStep('weight', { goal: 'lose_fat' });
-      await act(() => {
-        result.current.choose({ goal: 'lose_fat' });
-        result.current.choose({ goal: 'stay_healthy' });
-        result.current.next({ goal: 'stay_healthy' });
-      });
-      await act(() => jest.runAllTimers());
-      expect(answer).toHaveBeenCalledTimes(2);
-      expect(answer).not.toHaveBeenCalledWith({ goal: 'stay_healthy' });
-      expect(router.push).toHaveBeenCalledTimes(1);
-      expect(router.push).toHaveBeenCalledWith({
-        pathname: '/onboarding/[step]',
-        params: { step: 'target-weight' },
-      });
-    });
-
-    // Regression: the next step opened on top of the step the user had gone back to.
-    it('does not move on when the screen is left before the delay', async () => {
-      const { result, unmount } = await renderStep('goal');
-      await act(() => result.current.choose({ goal: 'lose_fat' }));
-      await unmount();
-      await act(() => jest.runAllTimers());
-      expect(router.push).not.toHaveBeenCalled();
-    });
+  it('selects an answer only when it changes', async () => {
+    const { result } = await renderStep('goal', { goal: 'lose_fat' });
+    await act(() => result.current.select({ goal: 'lose_fat' }));
+    expect(answer).not.toHaveBeenCalled();
+    await act(() => result.current.select({ goal: 'build_muscle' }));
+    expect(answer).toHaveBeenCalledWith({ goal: 'build_muscle' });
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it('goes back in the history when it can', async () => {

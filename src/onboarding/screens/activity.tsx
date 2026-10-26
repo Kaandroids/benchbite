@@ -35,7 +35,7 @@ const LEVELS = Constants.public.Enums.activity_level;
 export function ActivityStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, answer, next } = useStep('activity');
+  const { answers, progress, back, select, next } = useStep('activity');
   const level = answers.activityLevel;
 
   return (
@@ -56,9 +56,7 @@ export function ActivityStep() {
           description={t(`onboarding.activity.descriptions.${activityLevel}`)}
           level={{ value: index + 1, of: LEVELS.length }}
           selected={level === activityLevel}
-          onPress={() => {
-            if (level !== activityLevel) answer({ activityLevel });
-          }}
+          onPress={() => select({ activityLevel })}
           size="compact"
         />
       ))}

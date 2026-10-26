@@ -31,7 +31,7 @@ const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] =
 export function GoalStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, answer, next } = useStep('goal');
+  const { answers, progress, back, select, next } = useStep('goal');
   const goal = answers.goal;
 
   return (
@@ -50,10 +50,7 @@ export function GoalStep() {
           title={t(`onboarding.options.goal.${option}`)}
           description={t(`onboarding.goal.descriptions.${option}`)}
           selected={goal === option}
-          onPress={() => {
-            // The chosen goal is saved already.
-            if (goal !== option) answer({ goal: option });
-          }}
+          onPress={() => select({ goal: option })}
           size="compact"
         />
       ))}

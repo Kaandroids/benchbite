@@ -29,10 +29,7 @@ const PAIR: { sex: Sex; icon: IconName }[] = [
 export function SexStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, answer, next } = useStep('sex');
-  const choose = (sex: Sex) => {
-    if (answers.sex !== sex) answer({ sex });
-  };
+  const { answers, progress, back, select, next } = useStep('sex');
 
   return (
     <Screen
@@ -50,7 +47,7 @@ export function SexStep() {
               icon={icon}
               title={t(`onboarding.options.sex.${sex}`)}
               selected={answers.sex === sex}
-              onPress={() => choose(sex)}
+              onPress={() => select({ sex })}
               size="tile"
             />
           </View>
@@ -61,7 +58,7 @@ export function SexStep() {
         title={t('onboarding.options.sex.unspecified')}
         description={t('onboarding.sex.unspecified')}
         selected={answers.sex === 'unspecified'}
-        onPress={() => choose('unspecified')}
+        onPress={() => select({ sex: 'unspecified' })}
         size="compact"
       />
       <Card style={{ gap: spacing.sm, marginTop: spacing.xs }}>

@@ -7,9 +7,6 @@ import { useOnboarding } from '@/providers/onboarding-provider';
 import { canGoBackFrom, isPassing, nextStep, previousStep, progressOf, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
 
-/** Long enough for a choice card's pop to show before the next step slides in. */
-const CHOICE_DELAY_MS = 250;
-
 /**
  * What a step's screen needs: its answers so far, the progress, and moving on or back. The step
  * is recorded whenever its screen is focused, including after a back swipe, so the onboarding
@@ -19,15 +16,11 @@ export function useStep(step: Step) {
   const { draft, setStep, answer, complete } = useOnboarding();
   // Set while the next step opens, so a quick second tap does not open it twice.
   const leaving = useRef(false);
-  // The move to the next step after a choice, until it happens.
-  const choice = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useFocusEffect(
     useCallback(() => {
       leaving.current = false;
       setStep(step);
-      // A choice made just before leaving the screen backwards does not move on afterwards.
-      return () => clearTimeout(choice.current);
     }, [setStep, step]),
   );
 
@@ -96,16 +89,16 @@ export function useStep(step: Step) {
     next,
     back: previous ? back : undefined,
     /**
-     * For single-choice steps: selects the answer right away, so its card can pop, then moves on
-     * without a Continue button. Further choices are ignored until the next step opens.
+     * For a step's choice: saves the answer when it differs from the one saved, so tapping the
+     * chosen card again does nothing. Continue then moves on.
      */
-    choose: (answers: OnboardingAnswers) => {
-      if (leaving.current) {
-        return;
+    select: (choice: OnboardingAnswers) => {
+      const changed = (Object.keys(choice) as (keyof OnboardingAnswers)[]).some(
+        (key) => choice[key] !== draft.answers[key],
+      );
+      if (changed) {
+        answer(choice);
       }
-      leaving.current = true;
-      answer(answers);
-      choice.current = setTimeout(() => moveOn(answers), CHOICE_DELAY_MS);
     },
   };
 }

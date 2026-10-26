@@ -39,7 +39,7 @@ const FACTS: { key: 'need' | 'exercises' | 'progress'; icon: IconName }[] = [
 export function SetupStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, answer, next } = useStep('setup');
+  const { answers, progress, back, select, next } = useStep('setup');
   const setup = answers.setup;
 
   return (
@@ -56,9 +56,7 @@ export function SetupStep() {
           title={t(`onboarding.options.setup.${option}`)}
           description={t(`onboarding.setup.descriptions.${option}`)}
           selected={setup === option}
-          onPress={() => {
-            if (setup !== option) answer({ setup: option });
-          }}
+          onPress={() => select({ setup: option })}
           size="compact"
         />
       ))}
