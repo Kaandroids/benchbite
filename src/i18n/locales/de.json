@@ -745,15 +745,23 @@
       "skip": "Nicht jetzt"
     },
     "summary": {
-      "body": "Dein Plan ist fertig. Das haben wir für dich eingerichtet.",
-      "workouts_one": "{{count}} Training pro Woche",
-      "workouts_other": "{{count}} Trainings pro Woche",
+      "body": "Dein Plan ist fertig.",
       "remindersOn": "Erinnerungen um {{time}}",
-      "remindersOff": "Keine Erinnerungen",
-      "next": "Dein erstes Training",
-      "today": "Heute",
-      "tomorrow": "Morgen",
-      "start": "Los geht's"
+      "remindersOff": "Keine Erinnerungen · in den Einstellungen einschalten",
+      "start": "Los geht's",
+      "titleNamed": "Alles bereit, {{name}}!",
+      "target": "Tagesziel",
+      "protein": "{{grams}} g Protein",
+      "carbs": "{{grams}} g Kohlenhydrate",
+      "fat": "{{grams}} g Fett",
+      "workoutsTile": "Workouts",
+      "perWeek": "{{count}} pro Woche",
+      "goalTile": "Ziel",
+      "by": "bis {{date}}",
+      "lengthTile": "Pro Workout",
+      "firstToday": "Erstes Workout · Heute",
+      "firstTomorrow": "Erstes Workout · Morgen",
+      "firstOn": "Erstes Workout · {{day}}"
     },
     "sex": {
       "intro": "Es beeinflusst, wie viele Kalorien dein Körper verbrennt, damit deine Ziele zu dir passen.",

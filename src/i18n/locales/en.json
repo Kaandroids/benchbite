@@ -745,15 +745,23 @@
       "skip": "Not now"
     },
     "summary": {
-      "body": "Your plan is ready. Here's what we set up for you.",
-      "workouts_one": "{{count}} workout a week",
-      "workouts_other": "{{count}} workouts a week",
+      "body": "Your plan is ready.",
       "remindersOn": "Reminders at {{time}}",
-      "remindersOff": "No reminders",
-      "next": "Your first workout",
-      "today": "Today",
-      "tomorrow": "Tomorrow",
-      "start": "Let's go"
+      "remindersOff": "No reminders · turn them on in Settings",
+      "start": "Let's go",
+      "titleNamed": "You're all set, {{name}}!",
+      "target": "Daily target",
+      "protein": "{{grams}} g protein",
+      "carbs": "{{grams}} g carbs",
+      "fat": "{{grams}} g fat",
+      "workoutsTile": "Workouts",
+      "perWeek": "{{count}} a week",
+      "goalTile": "Goal",
+      "by": "by {{date}}",
+      "lengthTile": "Each workout",
+      "firstToday": "First workout · Today",
+      "firstTomorrow": "First workout · Tomorrow",
+      "firstOn": "First workout · {{day}}"
     },
     "sex": {
       "intro": "It changes how many calories your body burns, so your targets fit you.",
