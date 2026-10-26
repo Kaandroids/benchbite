@@ -24,6 +24,14 @@ describe('GoalInsightStep', () => {
     ).toBeTruthy();
   });
 
+  it('shows a name with markup in it as it was typed', async () => {
+    mockStep = createStep({ goal: 'lose_fat', displayName: '<accent>$&' });
+    await render(<GoalInsightStep />);
+    expect(
+      screen.getByRole('header', { name: '<accent>$&, losing fat is about consistency' }),
+    ).toBeTruthy();
+  });
+
   it.each(['lose_fat', 'get_stronger', 'stay_healthy'] as const)(
     'has a scene for %s',
     async (goal) => {

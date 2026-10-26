@@ -9,7 +9,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { AccentTitle } from '../accent-title';
+import { AccentTitle, NAME_SLOT } from '../accent-title';
 import { GoalScene } from '../goal-scene';
 import { Stage } from '../stage';
 import type { Goal } from '../types';
@@ -64,9 +64,9 @@ export function GoalInsightStep() {
           <GoalScene goal={goal} />
         </Stage>
         <Animated.View entering={FadeInDown.delay(TITLE_MS).duration(400)}>
-          <AccentTitle>
+          <AccentTitle name={name}>
             {name
-              ? t(`onboarding.goalInsight.${goal}.titleNamed`, { name })
+              ? t(`onboarding.goalInsight.${goal}.titleNamed`, { name: NAME_SLOT })
               : t(`onboarding.goalInsight.${goal}.title`)}
           </AccentTitle>
         </Animated.View>
