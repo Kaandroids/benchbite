@@ -1,14 +1,6 @@
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedProps,
-  useSharedValue,
-  withDelay,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedProps, type SharedValue } from 'react-native-reanimated';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { Card } from '@/components/ui/card';
@@ -16,6 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import type { OnboardingAnswers } from './types';
+import { useDrawn } from './use-drawn';
 
 type Goal = NonNullable<OnboardingAnswers['goal']>;
 
@@ -26,19 +19,32 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 /** The drawing box, stretched to the card's width. */
 const BOX = { width: 300, height: 140 };
 const BASELINE = BOX.height - 6;
-// Longer than any of the lines, so each draws itself from start to end.
-const LINE_LENGTH = 1000;
+/** The space left and right of the drawing. */
+const INSET = 10;
+const RIGHT = BOX.width - INSET;
 
-/** Each line chart and the point it ends on, which gets a dot. */
+/**
+ * Each line chart, the point it ends on, which gets a dot, and its length, measured, so that the
+ * line, its dot and the area under it finish drawing together.
+ */
 const LINES = {
   /** The weight going down steadily, for fat loss. */
-  lose_fat: { d: 'M10 26 C 90 30, 150 72, 200 96 S 280 116, 290 118', end: [290, 118] },
+  lose_fat: {
+    d: `M${INSET} 26 C 90 30, 150 72, 200 96 S 280 116, ${RIGHT} 118`,
+    end: [RIGHT, 118],
+    length: 300,
+  },
   /** A little more each week, for strength. */
-  get_stronger: { d: 'M10 122 H66 V100 H122 V78 H178 V54 H234 V30 H290', end: [290, 30] },
+  get_stronger: {
+    d: `M${INSET} 122 H66 V100 H122 V78 H178 V54 H234 V30 H${RIGHT}`,
+    end: [RIGHT, 30],
+    length: 372,
+  },
   /** A steady heartbeat, for staying healthy. */
   stay_healthy: {
-    d: 'M10 80 H70 L84 50 L98 112 L112 30 L126 96 L140 80 H190 L204 56 L218 104 L232 40 L246 92 L260 80 H290',
-    end: [290, 80],
+    d: `M${INSET} 80 H70 L84 50 L98 112 L112 30 L126 96 L140 80 H190 L204 56 L218 104 L232 40 L246 92 L260 80 H${RIGHT}`,
+    end: [RIGHT, 80],
+    length: 624,
   },
 } as const;
 /** Muscle growing week by week: the bars' heights as shares of the box. */
@@ -57,7 +63,7 @@ export function GoalChart({ goal }: { goal: Goal }) {
         viewBox={`0 0 ${BOX.width} ${BOX.height}`}
         accessible={false}
       >
-        <Path d={`M10 ${BASELINE} H${BOX.width - 10}`} stroke={colors.track} strokeWidth={2} />
+        <Path d={`M${INSET} ${BASELINE} H${RIGHT}`} stroke={colors.track} strokeWidth={2} />
         {goal === 'build_muscle' ? (
           <Bars progress={progress} />
         ) : (
@@ -79,15 +85,16 @@ export function GoalChart({ goal }: { goal: Goal }) {
 type LineProps = {
   d: string;
   end: readonly [number, number];
+  length: number;
   /** Shades the area under the line. */
   area: boolean;
   progress: SharedValue<number>;
 };
 
-function Line({ d, end, area, progress }: LineProps) {
+function Line({ d, end, length, area, progress }: LineProps) {
   const { colors } = useTheme();
   const lineProps = useAnimatedProps(() => ({
-    strokeDashoffset: LINE_LENGTH * (1 - progress.get()),
+    strokeDashoffset: length * (1 - progress.get()),
   }));
   const areaProps = useAnimatedProps(() => ({ fillOpacity: 0.16 * progress.get() }));
   const endProps = useAnimatedProps(() => ({ r: progress.get() > 0.98 ? 7 : 0 }));
@@ -96,7 +103,7 @@ function Line({ d, end, area, progress }: LineProps) {
       {area ? (
         <AnimatedPath
           animatedProps={areaProps}
-          d={`${d} L290 ${BASELINE} L10 ${BASELINE} Z`}
+          d={`${d} L${end[0]} ${BASELINE} L${INSET} ${BASELINE} Z`}
           fill={colors.primary}
         />
       ) : null}
@@ -108,7 +115,7 @@ function Line({ d, end, area, progress }: LineProps) {
         strokeWidth={4}
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray={`${LINE_LENGTH} ${LINE_LENGTH}`}
+        strokeDasharray={`${length} ${length}`}
       />
       <AnimatedCircle animatedProps={endProps} cx={end[0]} cy={end[1]} fill={colors.primary} />
     </>
@@ -117,15 +124,15 @@ function Line({ d, end, area, progress }: LineProps) {
 
 function Bars({ progress }: { progress: SharedValue<number> }) {
   const width = 36;
-  const gap = (BOX.width - 20 - BARS.length * width) / (BARS.length - 1);
+  const gap = (RIGHT - INSET - BARS.length * width) / (BARS.length - 1);
   return (
     <>
       {BARS.map((share, index) => (
         <Bar
           key={index}
-          x={10 + index * (width + gap)}
+          x={INSET + index * (width + gap)}
           width={width}
-          height={share * (BASELINE - 10)}
+          height={share * (BASELINE - INSET)}
           // Each bar grows a little after the one before it.
           start={index / (BARS.length + 1)}
           shade={index / (BARS.length - 1)}
@@ -162,17 +169,6 @@ function Bar({ x, width, height, start, shade, progress }: BarProps) {
       fillOpacity={0.35 + 0.65 * shade}
     />
   );
-}
-
-/** Goes from 0 to 1 after a moment, for a chart that draws itself. */
-function useDrawn() {
-  const progress = useSharedValue(0);
-  useEffect(() => {
-    progress.set(
-      withDelay(200, withTiming(1, { duration: 1400, easing: Easing.out(Easing.cubic) })),
-    );
-  }, [progress]);
-  return progress;
 }
 
 const styles = StyleSheet.create({
