@@ -7,6 +7,7 @@ import { AccountSection } from '@/account/account-section';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { useUpperCase } from '@/i18n/case';
 
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
@@ -38,10 +39,11 @@ export function SettingsScreen() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const { spacing } = useTheme();
+  const upperCase = useUpperCase();
   return (
     <View style={{ gap: spacing.sm }}>
       <Text variant="captionStrong" color="textMuted" accessibilityRole="header">
-        {title.toLocaleUpperCase()}
+        {upperCase(title)}
       </Text>
       {children}
     </View>

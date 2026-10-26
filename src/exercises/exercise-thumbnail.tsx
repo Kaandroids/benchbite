@@ -2,6 +2,7 @@ import { Image, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme } from '@/theme';
+import { useUpperCase } from '@/i18n/case';
 
 import { usePictureUrls } from './photos';
 
@@ -15,6 +16,7 @@ type ExerciseThumbnailProps = {
 
 /** A square picture of an exercise, on white because the pictures are drawn on white. */
 export function ExerciseThumbnail({ path, size, name }: ExerciseThumbnailProps) {
+  const upperCase = useUpperCase();
   const { colors, radii } = useTheme();
   const url = usePictureUrls(path ? [path] : [])[path ?? ''];
   return (
@@ -42,7 +44,7 @@ export function ExerciseThumbnail({ path, size, name }: ExerciseThumbnailProps) 
           importantForAccessibility="no"
           style={[styles.initial, { fontSize: size * 0.4, lineHeight: size * 0.5 }]}
         >
-          {name.trim().charAt(0).toLocaleUpperCase()}
+          {upperCase(name.trim().charAt(0))}
         </Text>
       ) : null}
     </View>

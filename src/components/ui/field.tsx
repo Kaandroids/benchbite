@@ -1,14 +1,16 @@
 import { StyleSheet } from 'react-native';
 
 import { fonts, typography, useTheme } from '@/theme';
+import { useUpperCase } from '@/i18n/case';
 
 import { Text } from './text';
 
 /** A field's small upper-case label. */
 export function FieldLabel({ text }: { text: string }) {
+  const upperCase = useUpperCase();
   return (
     <Text variant="caption" color="textMuted" style={styles.label}>
-      {text.toLocaleUpperCase()}
+      {upperCase(text)}
     </Text>
   );
 }
