@@ -20,6 +20,7 @@ import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
+import { useGreeting } from './greeting';
 import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PickDay } from './pick-day';
@@ -34,12 +35,6 @@ const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, f
 type SheetContent =
   { kind: 'day'; date: string } | { kind: 'pick'; session: WeekSession; fromOn: string };
 
-/** A greeting for the time of day. */
-export function greetingOf(date: Date): 'morning' | 'afternoon' | 'evening' {
-  const hour = date.getHours();
-  return hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
-}
-
 /** The home tab: a greeting, the week, today's workout, the daily targets and the weight. */
 export function TodayScreen() {
   const { t } = useTranslation();
@@ -49,6 +44,7 @@ export function TodayScreen() {
   const weightUnit = useWeightUnit();
   const streak = useStreak();
   const name = useDisplayName().data;
+  const greeting = useGreeting();
   const today = new Date();
   const { schedule, plan, moves, finished } = useWeekSchedule(today);
   const queries = [plan, targets, latestWeight, weightUnit, finished, moves];
@@ -156,9 +152,7 @@ export function TodayScreen() {
         }
       >
         <Text variant="title" accessibilityRole="header">
-          {name
-            ? t(`today.greetingWithName.${greetingOf(today)}`, { name })
-            : t(`today.greeting.${greetingOf(today)}`)}
+          {greeting(today, name)}
         </Text>
         {content}
       </ScrollView>
