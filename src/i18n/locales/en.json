@@ -364,9 +364,6 @@
   },
   "onboarding": {
     "steps": {
-      "welcome": {
-        "title": "Welcome to Benchbite"
-      },
       "nickname": {
         "title": "What should we call you?"
       },
@@ -460,33 +457,29 @@
       "slide": "{{current}} of {{count}}",
       "slides": {
         "plan": {
-          "title": "A plan made",
+          "title": "A plan made <accent>for you</accent>",
           "body": "Built around your goal, your days and your gear.",
-          "accent": "for you",
           "lost_one": "−{{weight}} in the last week",
           "lost_other": "−{{weight}} in the last {{count}} weeks"
         },
         "sets": {
-          "title": "Every set",
+          "title": "Every set <accent>counts</accent>",
           "body": "Log as you lift and watch your records fall.",
           "exercise": "Bench press",
           "record": "New record!",
           "detail": "{{count}} sets · rest 1:30",
-          "recordDetail": "Your heaviest {{set}} yet",
-          "accent": "counts"
+          "recordDetail": "Your heaviest {{set}} yet"
         },
         "food": {
-          "title": "Eat for",
+          "title": "Eat for <accent>your goal</accent>",
           "body": "Calories and macros that fit your training.",
-          "of": "of {{total}} kcal",
-          "accent": "your goal"
+          "of": "of {{total}} kcal"
         },
         "progress": {
-          "title": "See your",
+          "title": "See your <accent>progress</accent>",
           "body": "Your weight, streak and records, week by week.",
           "weight": "Your weight",
-          "week": "Week {{week}}",
-          "accent": "progress"
+          "week": "Week {{week}}"
         }
       }
     },

@@ -364,9 +364,6 @@
   },
   "onboarding": {
     "steps": {
-      "welcome": {
-        "title": "Benchbite'a hoş geldin"
-      },
       "nickname": {
         "title": "Sana nasıl hitap edelim?"
       },
@@ -460,33 +457,29 @@
       "slide": "{{current}} / {{count}}",
       "slides": {
         "plan": {
-          "title": "Sana özel",
+          "title": "Sana özel <accent>bir plan</accent>",
           "body": "Hedefine, günlerine ve ekipmanına göre.",
-          "accent": "bir plan",
           "lost_one": "Son haftada −{{weight}}",
           "lost_other": "Son {{count}} haftada −{{weight}}"
         },
         "sets": {
-          "title": "Her set",
+          "title": "Her set <accent>önemli</accent>",
           "body": "Kaldırırken kaydet, rekorlarının kırılışını izle.",
           "exercise": "Bench press",
           "record": "Yeni rekor!",
           "detail": "{{count}} set · 1:30 dinlenme",
-          "recordDetail": "Şimdiye kadarki en ağır setin: {{set}}",
-          "accent": "önemli"
+          "recordDetail": "Şimdiye kadarki en ağır setin: {{set}}"
         },
         "food": {
-          "title": "Hedefine göre",
+          "title": "Hedefine göre <accent>beslen</accent>",
           "body": "Antrenmanına uyan kalori ve makrolar.",
-          "of": "/ {{total}} kcal",
-          "accent": "beslen"
+          "of": "/ {{total}} kcal"
         },
         "progress": {
-          "title": "Gelişimini",
+          "title": "Gelişimini <accent>gör</accent>",
           "body": "Kilon, serin ve rekorların, hafta hafta.",
           "weight": "Kilon",
-          "week": "{{week}}. hafta",
-          "accent": "gör"
+          "week": "{{week}}. hafta"
         }
       }
     },
