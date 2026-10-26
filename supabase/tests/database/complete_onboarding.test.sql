@@ -122,7 +122,7 @@ select throws_ok(
   'A plan with an unknown exercise is rejected'
 );
 select throws_ok(
-  $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('nickname', repeat('x', 31))), pg_temp.plan()) $$,
+  $$ select public.complete_onboarding(pg_temp.answers(jsonb_build_object('displayName', repeat('x', 31))), pg_temp.plan()) $$,
   '23514', null,
   'A name longer than 30 characters is rejected'
 );
@@ -132,7 +132,7 @@ select is_empty($$ select 1 from public.workouts $$, 'A failed save leaves no wo
 
 -- A valid save writes everything.
 select lives_ok(
-  $$ select public.complete_onboarding(pg_temp.answers('{"nickname": "  Kaan "}'), pg_temp.plan()) $$,
+  $$ select public.complete_onboarding(pg_temp.answers('{"displayName": "  Kaan "}'), pg_temp.plan()) $$,
   'Valid answers and plan are saved'
 );
 select is((select display_name from public.profiles), 'Kaan', 'The name is saved without the spaces around it');

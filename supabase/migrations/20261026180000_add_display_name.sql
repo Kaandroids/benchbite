@@ -95,7 +95,7 @@ begin
     training_days,
     (answers ->> 'sessionMinutes')::smallint,
     -- Optional: a skipped or blank name is no name. The table checks the rest.
-    nullif(btrim(answers ->> 'nickname'), ''),
+    nullif(btrim(answers ->> 'displayName'), ''),
     now()
   );
 

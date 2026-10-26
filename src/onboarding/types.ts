@@ -11,7 +11,7 @@ type Enums = Database['public']['Enums'];
  */
 export type OnboardingAnswers = {
   /** What to call the user, without spaces around it; none if they skipped it. */
-  nickname?: string;
+  displayName?: string;
   goal?: Enums['goal_kind'];
   /** The privacy policy version the user consented to for health data. */
   consentedPolicyVersion?: string;

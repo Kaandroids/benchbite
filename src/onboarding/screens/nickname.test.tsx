@@ -17,15 +17,15 @@ describe('NicknameStep', () => {
     expect(continueButton()).toBeDisabled();
     await fireEvent.changeText(field(), '  Kaan ');
     await fireEvent.press(continueButton());
-    expect(mockStep.next).toHaveBeenCalledWith({ nickname: 'Kaan' });
+    expect(mockStep.next).toHaveBeenCalledWith({ displayName: 'Kaan' });
   });
 
   it('can be skipped, which drops a name given before', async () => {
-    mockStep = createStep({ nickname: 'Kaan' });
+    mockStep = createStep({ displayName: 'Kaan' });
     await render(<NicknameStep />);
     expect(field()).toHaveDisplayValue('Kaan');
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-    expect(mockStep.next).toHaveBeenCalledWith({ nickname: undefined });
+    expect(mockStep.next).toHaveBeenCalledWith({ displayName: undefined });
   });
 
   it('does not move on with only spaces', async () => {

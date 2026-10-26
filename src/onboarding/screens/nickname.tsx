@@ -15,12 +15,12 @@ export function NicknameStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { answers, progress, next, back } = useStep('nickname');
-  const [text, setText] = useState(answers.nickname ?? '');
+  const [text, setText] = useState(answers.displayName ?? '');
   const name = displayNameOf(text);
 
   // Skipping also drops a name typed before going back.
-  const skip = () => next({ nickname: undefined });
-  const save = () => (name ? next({ nickname: name }) : skip());
+  const skip = () => next({ displayName: undefined });
+  const save = () => (name ? next({ displayName: name }) : skip());
 
   return (
     <FormScreen
