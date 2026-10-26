@@ -54,19 +54,36 @@ describe('ConsentStep', () => {
     await render(<ConsentStep />);
     expect(agreeBox()).not.toBeChecked();
     expect(continueButton()).toBeDisabled();
+    expect(mockStep.answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
   });
 
-  it('withdraws the consent when declining and explains why it is needed', async () => {
+  it('withdraws a consent given earlier when unticking', async () => {
     mockStep = createStep({ consentedPolicyVersion: PRIVACY_POLICY_VERSION });
     await render(<ConsentStep />);
-    await fireEvent.press(screen.getByRole('button', { name: "I don't agree" }));
+    await fireEvent.press(agreeBox());
     expect(mockStep.answer).toHaveBeenCalledWith({ consentedPolicyVersion: undefined });
+    expect(continueButton()).toBeDisabled();
+  });
+
+  it('explains why the consent is needed and goes back to it', async () => {
+    await render(<ConsentStep />);
+    await fireEvent.press(agreeBox());
+    await fireEvent.press(screen.getByRole('button', { name: 'Why is this needed?' }));
     expect(screen.getByText('A personal plan needs your consent')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Review the consent' }));
-    expect(agreeBox()).not.toBeChecked();
-    expect(continueButton()).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back to the consent' }));
+    expect(agreeBox()).toBeChecked();
+    expect(mockStep.answer).not.toHaveBeenCalled();
+  });
+
+  it('closes the explanation with its back arrow, keeping the tick', async () => {
+    await render(<ConsentStep />);
+    await fireEvent.press(agreeBox());
+    await fireEvent.press(screen.getByRole('button', { name: 'Why is this needed?' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(agreeBox()).toBeChecked();
+    expect(mockStep.back).not.toHaveBeenCalled();
   });
 
   it('opens the privacy policy', async () => {
