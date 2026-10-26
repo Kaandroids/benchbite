@@ -456,17 +456,34 @@
     },
     "minutes": "{{count}} min",
     "welcome": {
-      "tagline": "Train and eat for your goal.",
-      "points": {
-        "plan": "A workout plan made for you",
-        "logging": "Every set logged, with a rest timer",
-        "records": "Records and progress for each exercise",
-        "nutrition": "Calories and macros for your goal"
-      },
-      "soon": "COMING SOON",
-      "coach": "An AI coach that adapts your plan",
       "start": "Let's get started",
-      "free": "Free to start, no account needed."
+      "free": "Free to start, no account needed.",
+      "slide": "{{current}} of {{count}}",
+      "slides": {
+        "plan": {
+          "title": "A plan made for you",
+          "body": "Built around your goal, your days and your gear, in about 2 minutes.",
+          "week": "Your week",
+          "today": "Today",
+          "workout": "{{workout}} · {{minutes}} min"
+        },
+        "sets": {
+          "title": "Every set counts",
+          "body": "Log as you lift, rest with a timer, and see your records fall.",
+          "exercise": "Bench press",
+          "record": "New record!"
+        },
+        "food": {
+          "title": "Eat for your goal",
+          "body": "Calories and macros that fit your training, every day.",
+          "of": "of {{total}}"
+        },
+        "progress": {
+          "title": "See your progress",
+          "body": "Your weight, your streak and your records, week after week.",
+          "weight": "Your weight"
+        }
+      }
     },
     "nickname": {
       "subtitle": "A first name or a nickname. Only you see it.",

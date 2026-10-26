@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 
 import { useIsAccount } from '@/providers/session-provider';
 import { createStep } from '@/test/step-mock';
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen } from '@/test/render';
 
+import { SLIDE_MS } from '../welcome/use-stories';
 import { WelcomeStep } from './welcome';
 
 let mockStep = createStep();
@@ -11,22 +12,39 @@ jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/providers/session-provider', () => ({ useIsAccount: jest.fn(() => false) }));
 
+const slides = () => screen.getByRole('adjustable');
+
 describe('WelcomeStep', () => {
+  afterEach(() => jest.useRealTimers());
+
   it('moves on when the user starts', async () => {
     mockStep = createStep();
     await render(<WelcomeStep />);
-    expect(screen.getByText('Welcome to Benchbite')).toBeTruthy();
+    expect(screen.getByLabelText('Benchbite')).toBeTruthy();
+    expect(screen.getByText('Free to start, no account needed.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: "Let's get started" }));
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });
 
-  it('shows what the app does and marks the coach as coming', async () => {
+  it('steps through the slides', async () => {
     await render(<WelcomeStep />);
-    expect(screen.getByLabelText('Benchbite')).toBeTruthy();
-    expect(screen.getByText('Every set logged, with a rest timer')).toBeTruthy();
-    expect(screen.getByText('COMING SOON')).toBeTruthy();
-    expect(screen.getByText('An AI coach that adapts your plan')).toBeTruthy();
-    expect(screen.getByText('Free to start, no account needed.')).toBeTruthy();
+    expect(screen.getByText('A plan made for you')).toBeTruthy();
+    expect(slides()).toHaveAccessibilityValue({ text: '1 of 4' });
+
+    await fireEvent(slides(), 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+    expect(screen.getByText('Every set counts')).toBeTruthy();
+    await fireEvent(slides(), 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
+    expect(screen.getByText('A plan made for you')).toBeTruthy();
+  });
+
+  it('plays the slides once and stops on the last', async () => {
+    jest.useFakeTimers();
+    await render(<WelcomeStep />);
+    for (let step = 0; step < 5; step++) {
+      await act(() => jest.advanceTimersByTime(SLIDE_MS));
+    }
+    expect(screen.getByText('See your progress')).toBeTruthy();
+    expect(slides()).toHaveAccessibilityValue({ text: '4 of 4' });
   });
 
   it('opens the log in for someone who has an account', async () => {

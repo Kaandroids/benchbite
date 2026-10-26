@@ -456,17 +456,34 @@
     },
     "minutes": "{{count}} Min.",
     "welcome": {
-      "tagline": "Trainiere und iss für dein Ziel.",
-      "points": {
-        "plan": "Ein Trainingsplan, gemacht für dich",
-        "logging": "Jeder Satz notiert, mit Pausentimer",
-        "records": "Rekorde und Fortschritt für jede Übung",
-        "nutrition": "Kalorien und Makros für dein Ziel"
-      },
-      "soon": "BALD",
-      "coach": "Ein KI-Coach, der deinen Plan anpasst",
       "start": "Los geht's",
-      "free": "Kostenlos starten, ohne Konto."
+      "free": "Kostenlos starten, ohne Konto.",
+      "slide": "{{current}} von {{count}}",
+      "slides": {
+        "plan": {
+          "title": "Ein Plan, gemacht für dich",
+          "body": "Abgestimmt auf dein Ziel, deine Tage und deine Ausrüstung, in etwa 2 Minuten.",
+          "week": "Deine Woche",
+          "today": "Heute",
+          "workout": "{{workout}} · {{minutes}} Min."
+        },
+        "sets": {
+          "title": "Jeder Satz zählt",
+          "body": "Notiere beim Training, pausiere mit Timer und sieh deine Rekorde fallen.",
+          "exercise": "Bankdrücken",
+          "record": "Neuer Rekord!"
+        },
+        "food": {
+          "title": "Iss für dein Ziel",
+          "body": "Kalorien und Makros, die zu deinem Training passen, jeden Tag.",
+          "of": "von {{total}}"
+        },
+        "progress": {
+          "title": "Sieh deinen Fortschritt",
+          "body": "Dein Gewicht, deine Serie und deine Rekorde, Woche für Woche.",
+          "weight": "Dein Gewicht"
+        }
+      }
     },
     "nickname": {
       "subtitle": "Ein Vorname oder ein Spitzname. Nur du siehst ihn.",

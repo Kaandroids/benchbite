@@ -456,17 +456,34 @@
     },
     "minutes": "{{count}} dk",
     "welcome": {
-      "tagline": "Hedefine göre antrenman yap ve beslen.",
-      "points": {
-        "plan": "Sana özel bir antrenman planı",
-        "logging": "Her set kayıtlı, dinlenme zamanlayıcısıyla",
-        "records": "Her hareket için rekorlar ve gelişim",
-        "nutrition": "Hedefine göre kalori ve makrolar"
-      },
-      "soon": "YAKINDA",
-      "coach": "Planını sana göre uyarlayan bir yapay zekâ koçu",
       "start": "Başlayalım",
-      "free": "Ücretsiz başla, hesap gerekmez."
+      "free": "Ücretsiz başla, hesap gerekmez.",
+      "slide": "{{current}} / {{count}}",
+      "slides": {
+        "plan": {
+          "title": "Sana özel bir plan",
+          "body": "Hedefine, günlerine ve ekipmanına göre, yaklaşık 2 dakikada.",
+          "week": "Haftan",
+          "today": "Bugün",
+          "workout": "{{workout}} · {{minutes}} dk"
+        },
+        "sets": {
+          "title": "Her set önemli",
+          "body": "Kaldırırken kaydet, zamanlayıcıyla dinlen, rekorlarını kır.",
+          "exercise": "Bench press",
+          "record": "Yeni rekor!"
+        },
+        "food": {
+          "title": "Hedefine göre beslen",
+          "body": "Antrenmanına uyan kalori ve makrolar, her gün.",
+          "of": "/ {{total}}"
+        },
+        "progress": {
+          "title": "Gelişimini gör",
+          "body": "Kilon, serin ve rekorların, hafta hafta.",
+          "weight": "Kilon"
+        }
+      }
     },
     "nickname": {
       "subtitle": "Adın ya da bir takma ad. Sadece sen görürsün.",
