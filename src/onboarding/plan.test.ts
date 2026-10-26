@@ -49,6 +49,7 @@ const PLAN: WorkoutPlan = {
         },
       ],
       estimatedMinutes: 40,
+      time: { warmUp: 300, main: 1800, extras: 300, conditioning: 0 },
     },
   ],
 };

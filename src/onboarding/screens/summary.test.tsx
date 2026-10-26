@@ -14,6 +14,7 @@ const session = (weekday: number, type: WorkoutPlan['sessions'][number]['type'])
   type,
   exercises: [],
   estimatedMinutes: 45,
+  time: { warmUp: 300, main: 2100, extras: 300, conditioning: 0 },
 });
 
 const plan = (...sessions: WorkoutPlan['sessions']): WorkoutPlan => ({ sessions });

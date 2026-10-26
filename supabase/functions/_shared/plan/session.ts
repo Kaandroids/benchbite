@@ -141,7 +141,7 @@ function buildExercises(
   slotUses: SlotUses,
   secondsLeft: number,
   room: number,
-): PlannedExercise[] {
+): Chosen[] {
   const chosen: Chosen[] = [];
   const used = new Set<string>();
   let left = secondsLeft;
@@ -199,7 +199,7 @@ function buildExercises(
       }
     }
   }
-  return chosen.map((item) => item.exercise);
+  return chosen;
 }
 
 /**
@@ -215,7 +215,7 @@ export function buildSession(
 ): Session {
   const conditioning = buildConditioning(input, catalogue, slotUses);
   const fixedSeconds = WARM_UP_SECONDS + (conditioning ? exerciseSeconds(conditioning) : 0);
-  const exercises = buildExercises(
+  const chosen = buildExercises(
     input,
     catalogue,
     type,
@@ -223,12 +223,24 @@ export function buildSession(
     input.sessionMinutes * 60 - fixedSeconds,
     PLAN_WORKOUT_EXERCISES - (conditioning ? 1 : 0),
   );
-  const seconds = exercises.reduce((total, e) => total + exerciseSeconds(e), fixedSeconds);
+  const secondsOf = (role: Role) =>
+    chosen
+      .filter((item) => item.role === role)
+      .reduce((total, item) => total + exerciseSeconds(item.exercise), 0);
+  const time = {
+    warmUp: WARM_UP_SECONDS,
+    main: secondsOf('main'),
+    extras: secondsOf('accessory'),
+    conditioning: conditioning ? exerciseSeconds(conditioning) : 0,
+  };
+  const exercises = chosen.map((item) => item.exercise);
+  const seconds = time.warmUp + time.main + time.extras + time.conditioning;
   return {
     weekdays,
     type,
     exercises: conditioning ? [...exercises, conditioning] : exercises,
     estimatedMinutes: Math.ceil(seconds / 60),
+    time,
   };
 }
 

@@ -16,7 +16,13 @@ jest.mock('@/reminders/settings', () => ({ saveReminderMinutes: jest.fn() }));
 
 const PLAN: WorkoutPlan = {
   sessions: [
-    { weekdays: [1, 5], type: 'push', exercises: [], estimatedMinutes: 45 },
+    {
+      weekdays: [1, 5],
+      type: 'push',
+      exercises: [],
+      estimatedMinutes: 45,
+      time: { warmUp: 300, main: 2100, extras: 300, conditioning: 0 },
+    },
     {
       weekdays: [3],
       type: 'pull',
@@ -28,6 +34,7 @@ const PLAN: WorkoutPlan = {
         restSeconds: 60,
       })),
       estimatedMinutes: 30,
+      time: { warmUp: 300, main: 1200, extras: 300, conditioning: 0 },
     },
   ],
 };

@@ -100,6 +100,14 @@ Deno.test('every session fits into the chosen length', () => {
         for (const session of plan.sessions) {
           assert(session.estimatedMinutes <= sessionMinutes, `${goal} ${sessionMinutes} min`);
           assert(session.exercises.length >= 2, `${goal} ${sessionMinutes} min has exercises`);
+          const { warmUp, main, extras, conditioning } = session.time;
+          assertEquals(
+            Math.ceil((warmUp + main + extras + conditioning) / 60),
+            session.estimatedMinutes,
+            `${goal} ${sessionMinutes} min: its time adds up`,
+          );
+          assert(main > 0, `${goal} ${sessionMinutes} min has main lifts`);
+          assertEquals(conditioning > 0, goal === 'lose_fat', `${goal} conditioning`);
         }
       }
     }
