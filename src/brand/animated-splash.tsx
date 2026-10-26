@@ -2,32 +2,20 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
-  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withSequence,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { type ColorScheme } from '@/theme';
 import { darkColors, lightColors } from '@/theme/colors';
 
-import {
-  BITE,
-  BITE_CIRCLES,
-  BRAND_ORANGE,
-  CRUMBS,
-  HOLE,
-  MARK_BOX,
-  PLATE,
-  RING,
-  SPLASH_PLATE_WIDTH,
-} from './mark';
+import { BittenPlate } from './bitten-plate';
+import { BRAND_ORANGE, MARK_BOX, PLATE, SPLASH_PLATE_WIDTH } from './mark';
 import { Wordmark } from './wordmark';
 
 const MARK_SIZE = (SPLASH_PLATE_WIDTH / (PLATE.r * 2)) * MARK_BOX;
@@ -37,8 +25,6 @@ const COLORS: Record<ColorScheme, { background: string; mark: string; word: stri
   light: { background: BRAND_ORANGE, mark: lightColors.onPrimary, word: lightColors.onPrimary },
   dark: { background: darkColors.background, mark: darkColors.primary, word: darkColors.text },
 };
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 type AnimatedSplashProps = {
   /** The scheme the native splash screen was drawn in, so the two match. */
@@ -132,35 +118,13 @@ export function AnimatedSplash({ scheme, onDone }: AnimatedSplashProps) {
     >
       <View style={styles.markBox}>
         <Animated.View style={plateStyle}>
-          {/* The background is one colour, so the cuts are drawn in it rather than masked. */}
-          <Svg width={MARK_SIZE} height={MARK_SIZE} viewBox={`0 0 ${MARK_BOX} ${MARK_BOX}`}>
-            <Circle cx={PLATE.cx} cy={PLATE.cy} r={PLATE.r} fill={colors.mark} />
-            <Circle
-              cx={PLATE.cx}
-              cy={PLATE.cy}
-              r={RING.r}
-              fill="none"
-              stroke={colors.background}
-              strokeWidth={RING.width}
-            />
-            <Circle cx={PLATE.cx} cy={PLATE.cy} r={HOLE.r} fill={colors.background} />
-            {BITE_CIRCLES.map((circle) => (
-              <BiteCircle
-                key={`${circle.cx},${circle.cy}`}
-                circle={circle}
-                progress={bite}
-                color={colors.background}
-              />
-            ))}
-            {CRUMBS.map((crumb) => (
-              <Crumb
-                key={`${crumb.cx},${crumb.cy}`}
-                crumb={crumb}
-                progress={crumbs}
-                color={colors.mark}
-              />
-            ))}
-          </Svg>
+          <BittenPlate
+            size={MARK_SIZE}
+            color={colors.mark}
+            background={colors.background}
+            bite={bite}
+            crumbs={crumbs}
+          />
         </Animated.View>
         <Animated.View style={[styles.word, wordStyle]}>
           <Wordmark size={40} color={colors.word} />
@@ -168,44 +132,6 @@ export function AnimatedSplash({ scheme, onDone }: AnimatedSplashProps) {
       </View>
     </Animated.View>
   );
-}
-
-type BiteCircleProps = {
-  circle: { cx: number; cy: number; r: number };
-  progress: SharedValue<number>;
-  color: string;
-};
-
-/** One circle of the bite, growing out of the bite's centre. */
-function BiteCircle({ circle, progress, color }: BiteCircleProps) {
-  const animatedProps = useAnimatedProps(() => {
-    const size = progress.get();
-    return {
-      cx: BITE.cx + (circle.cx - BITE.cx) * size,
-      cy: BITE.cy + (circle.cy - BITE.cy) * size,
-      r: circle.r * size,
-    };
-  });
-  return <AnimatedCircle animatedProps={animatedProps} fill={color} />;
-}
-
-type CrumbProps = {
-  crumb: (typeof CRUMBS)[number];
-  progress: SharedValue<number>;
-  color: string;
-};
-
-/** A crumb that flies off the bite and fades. */
-function Crumb({ crumb, progress, color }: CrumbProps) {
-  const animatedProps = useAnimatedProps(() => {
-    const flown = progress.get();
-    return {
-      cx: crumb.cx + crumb.dx * flown,
-      cy: crumb.cy + crumb.dy * flown,
-      opacity: flown === 0 ? 0 : Math.min(1, (1 - flown) * 2),
-    };
-  });
-  return <AnimatedCircle animatedProps={animatedProps} r={crumb.r} fill={color} />;
 }
 
 const styles = StyleSheet.create({

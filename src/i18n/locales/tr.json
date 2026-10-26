@@ -706,12 +706,23 @@
       "rest": "≈ {{minutes}} dk dinlenme"
     },
     "building": {
-      "steps": {
-        "calories": "Kalorilerin hesaplanıyor",
-        "exercises": "Egzersizlerin seçiliyor",
-        "week": "Haftan hazırlanıyor"
+      "error": "Planını oluşturamadık. Bağlantını kontrol edip tekrar dene.",
+      "wait": "Sadece birkaç saniye.",
+      "waitNamed": "Sadece birkaç saniye, {{name}}.",
+      "lines": {
+        "losing": "Haftada {{pace}} vermek için kalori",
+        "gaining": "Haftada {{pace}} almak için kalori",
+        "keeping": "Kilonu korumak için kalori",
+        "exercises": {
+          "gym": "Spor salonu için egzersizler",
+          "dumbbells": "Evde dambılla egzersizler",
+          "bodyweight": "Vücut ağırlığınla egzersizler"
+        },
+        "week_one": "{{count}} antrenman: {{days}}",
+        "week_other": "{{count}} antrenman: {{days}}",
+        "ready": "Planın hazır"
       },
-      "error": "Planını oluşturamadık. Bağlantını kontrol edip tekrar dene."
+      "see": "Planımı gör"
     },
     "plan": {
       "nutrition": "Günlük hedeflerin",

@@ -706,12 +706,23 @@
       "rest": "≈ {{minutes}} min rest"
     },
     "building": {
-      "steps": {
-        "calories": "Calculating your calories",
-        "exercises": "Choosing your exercises",
-        "week": "Putting your week together"
+      "error": "We couldn't build your plan. Check your connection and try again.",
+      "wait": "Just a few seconds.",
+      "waitNamed": "Just a few seconds, {{name}}.",
+      "lines": {
+        "losing": "Calories for losing {{pace}} a week",
+        "gaining": "Calories for gaining {{pace}} a week",
+        "keeping": "Calories to keep your weight",
+        "exercises": {
+          "gym": "Exercises for the gym",
+          "dumbbells": "Exercises with dumbbells at home",
+          "bodyweight": "Exercises with your bodyweight"
+        },
+        "week_one": "{{count}} workout: {{days}}",
+        "week_other": "{{count}} workouts: {{days}}",
+        "ready": "Your plan is ready"
       },
-      "error": "We couldn't build your plan. Check your connection and try again."
+      "see": "See my plan"
     },
     "plan": {
       "nutrition": "Your daily targets",
