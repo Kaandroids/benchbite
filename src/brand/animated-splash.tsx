@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -14,7 +14,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { fonts, type ColorScheme } from '@/theme';
+import { type ColorScheme } from '@/theme';
 import { darkColors, lightColors } from '@/theme/colors';
 
 import {
@@ -28,6 +28,7 @@ import {
   RING,
   SPLASH_PLATE_WIDTH,
 } from './mark';
+import { Wordmark } from './wordmark';
 
 const MARK_SIZE = (SPLASH_PLATE_WIDTH / (PLATE.r * 2)) * MARK_BOX;
 
@@ -162,9 +163,7 @@ export function AnimatedSplash({ scheme, onDone }: AnimatedSplashProps) {
           </Svg>
         </Animated.View>
         <Animated.View style={[styles.word, wordStyle]}>
-          <Text allowFontScaling={false} style={[styles.wordText, { color: colors.word }]}>
-            benchbite
-          </Text>
+          <Wordmark size={40} color={colors.word} />
         </Animated.View>
       </View>
     </Animated.View>
@@ -226,10 +225,5 @@ const styles = StyleSheet.create({
     left: -MARK_SIZE,
     right: -MARK_SIZE,
     alignItems: 'center',
-  },
-  wordText: {
-    fontFamily: fonts.black,
-    fontSize: 40,
-    letterSpacing: -0.5,
   },
 });
