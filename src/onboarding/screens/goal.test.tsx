@@ -32,4 +32,13 @@ describe('GoalStep', () => {
     await fireEvent.press(continueButton());
     expect(mockStep.next).toHaveBeenCalledTimes(1);
   });
+
+  it('does not save the chosen goal again', async () => {
+    mockStep = createStep({ goal: 'lose_fat' });
+    await render(<GoalStep />);
+    await fireEvent.press(
+      screen.getByRole('radio', { name: 'Lose fat, Burn fat and keep your muscle' }),
+    );
+    expect(mockStep.answer).not.toHaveBeenCalled();
+  });
 });

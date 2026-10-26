@@ -50,7 +50,10 @@ export function GoalStep() {
           title={t(`onboarding.options.goal.${option}`)}
           description={t(`onboarding.goal.descriptions.${option}`)}
           selected={goal === option}
-          onPress={() => answer({ goal: option })}
+          onPress={() => {
+            // The chosen goal is saved already.
+            if (goal !== option) answer({ goal: option });
+          }}
           compact
         />
       ))}
