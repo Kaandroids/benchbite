@@ -20,12 +20,9 @@ import { Text } from '@/components/ui/text';
 import { useUpperCase } from '@/i18n/case';
 import { useTheme } from '@/theme';
 
-import { STEPS } from '../steps';
+import { stepsBetween } from '../steps';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
-
-/** The training questions: the steps between this one and building the plan. */
-const TRAINING_QUESTIONS = STEPS.indexOf('building') - STEPS.indexOf('training-intro') - 1;
 
 /** The turn from body data to training: half of the onboarding is done, and how much is left. */
 export function TrainingIntroStep() {
@@ -34,6 +31,8 @@ export function TrainingIntroStep() {
   const upperCase = useUpperCase();
   const { answers, progress, next, back } = useStep('training-intro');
   const name = answers.displayName;
+  // The training questions: the steps of the flow between this one and building the plan.
+  const questions = stepsBetween('training-intro', 'building', answers).length;
 
   return (
     <Screen
@@ -59,7 +58,7 @@ export function TrainingIntroStep() {
             </Animated.View>
             <Animated.View entering={FadeInDown.delay(700).duration(400)}>
               <Text color="textMuted">
-                {t('onboarding.trainingIntro.body', { count: TRAINING_QUESTIONS })}
+                {t('onboarding.trainingIntro.body', { count: questions })}
               </Text>
             </Animated.View>
           </View>
@@ -87,11 +86,11 @@ function Halfway() {
       accessibilityLabel={t('onboarding.trainingIntro.progress')}
       style={[styles.row, { gap: spacing.sm }]}
     >
-      <Part label={t('onboarding.trainingIntro.aboutYou')} icon="check" done />
+      <Part label={t('onboarding.trainingIntro.aboutYou')} icon="check" state="done" />
       <View style={[styles.track, { backgroundColor: colors.track }]}>
         <Animated.View style={[styles.fill, { backgroundColor: colors.primary }, lineStyle]} />
       </View>
-      <Part label={t('onboarding.trainingIntro.yourTraining')} icon="dumbbell" pulses />
+      <Part label={t('onboarding.trainingIntro.yourTraining')} icon="dumbbell" state="next" />
     </View>
   );
 }
@@ -99,17 +98,17 @@ function Halfway() {
 type PartProps = {
   label: string;
   icon: IconName;
-  done?: boolean;
-  /** Pulses, for the part that is next. */
-  pulses?: boolean;
+  /** A done part is filled in; the next one pulses. */
+  state: 'done' | 'next';
 };
 
-function Part({ label, icon, done = false, pulses = false }: PartProps) {
+function Part({ label, icon, state }: PartProps) {
   const { colors, spacing } = useTheme();
+  const done = state === 'done';
   const pulse = useSharedValue(1);
 
   useEffect(() => {
-    if (pulses) {
+    if (state === 'next') {
       pulse.set(
         withDelay(
           800,
@@ -120,7 +119,7 @@ function Part({ label, icon, done = false, pulses = false }: PartProps) {
         ),
       );
     }
-  }, [pulses, pulse]);
+  }, [state, pulse]);
 
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.get() }] }));
   return (
