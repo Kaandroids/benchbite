@@ -38,6 +38,8 @@ const TIPS = {
     { key: 'onboarding.goalInsight.stay_healthy.tips.habits', icon: 'heart' },
   ],
 } as const satisfies Record<Goal, readonly { key: string; icon: IconName }[]>;
+/** The stage's least height: about the tallest scene at three quarters of its size. */
+const STAGE_MIN_HEIGHT = 240;
 /** When the title shows, after the scene has started; each tip follows a moment later. */
 const TITLE_MS = 400;
 const TIP_MS = 150;
@@ -60,7 +62,7 @@ export function GoalInsightStep() {
       footer={<Button label={t('common.continue')} onPress={() => next()} />}
     >
       <View style={[styles.flex, { gap: spacing.xl }]}>
-        <Stage>
+        <Stage minHeight={STAGE_MIN_HEIGHT}>
           <GoalScene goal={goal} />
         </Stage>
         <Animated.View entering={FadeInDown.delay(TITLE_MS).duration(400)}>

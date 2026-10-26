@@ -7,13 +7,27 @@ import { useTheme } from '@/theme';
  * A tinted stage for a picture of the app, filling the space it is given. The picture shrinks to
  * fit it, so the words under the stage stay in place on a small screen or with a large font.
  */
-export function Stage({ children }: { children: ReactNode }) {
+type StageProps = {
+  children: ReactNode;
+  /**
+   * On a screen that scrolls, the least height the stage keeps, so that long words below it make
+   * the screen scroll rather than squeeze the picture away.
+   */
+  minHeight?: number;
+};
+
+export function Stage({ children, minHeight }: StageProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <View
       style={[
         styles.stage,
-        { borderRadius: radii.xl, backgroundColor: colors.primaryWash, padding: spacing.lg },
+        {
+          borderRadius: radii.xl,
+          backgroundColor: colors.primaryWash,
+          padding: spacing.lg,
+          minHeight,
+        },
       ]}
     >
       <FitInside>{children}</FitInside>
