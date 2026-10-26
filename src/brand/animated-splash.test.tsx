@@ -37,7 +37,10 @@ describe('AnimatedSplash', () => {
     const onDone = jest.fn();
     await render(<AnimatedSplash scheme="dark" onDone={onDone} />);
 
-    await act(() => jest.advanceTimersByTime(1500));
+    // The finished mark and the name stay long enough to read before the fade.
+    await act(() => jest.advanceTimersByTime(800));
+    expect(onDone).not.toHaveBeenCalled();
+    await act(() => jest.advanceTimersByTime(700));
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
