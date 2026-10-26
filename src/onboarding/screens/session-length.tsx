@@ -13,7 +13,7 @@ import { type ColorTokens, useTheme } from '@/theme';
 import type { SessionMinutes } from '@shared/plan/limits';
 import type { SessionTime } from '@shared/plan/types';
 
-import { useLengthPreviews, type LengthPreview } from '../length-preview';
+import { useLengthPreview, type LengthPreview } from '../length-preview';
 import { SESSION_MINUTES } from '../training';
 import { useStep } from '../use-step';
 
@@ -38,7 +38,7 @@ export function SessionLengthStep() {
   const { spacing } = useTheme();
   const { answers, progress, back, next } = useStep('session-length');
   const [minutes, setMinutes] = useState<SessionMinutes>(answers.sessionMinutes ?? DEFAULT_MINUTES);
-  const preview = useLengthPreviews(answers)(minutes);
+  const preview = useLengthPreview(answers, minutes);
   const label = (value: SessionMinutes) =>
     value === LONGEST
       ? t('onboarding.sessionLength.longest')

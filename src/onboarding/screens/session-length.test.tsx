@@ -44,7 +44,12 @@ const PLANS: Record<number, Plan> = {
 
 describe('SessionLengthStep', () => {
   beforeEach(() => {
-    mockStep = createStep({ goal: 'build_muscle', experience: 'beginner', setup: 'gym' });
+    mockStep = createStep({
+      goal: 'build_muscle',
+      experience: 'beginner',
+      setup: 'gym',
+      trainingDays: [1, 3, 5],
+    });
     mockGeneratePlan.mockReset();
     mockGeneratePlan.mockImplementation(async ({ sessionMinutes }: { sessionMinutes: number }) =>
       Promise.resolve(PLANS[sessionMinutes]),
@@ -76,7 +81,13 @@ describe('SessionLengthStep', () => {
   });
 
   it('keeps the length chosen before', async () => {
-    mockStep = createStep({ sessionMinutes: 30 });
+    mockStep = createStep({
+      goal: 'build_muscle',
+      experience: 'beginner',
+      setup: 'gym',
+      trainingDays: [1, 3, 5],
+      sessionMinutes: 30,
+    });
     await render(<SessionLengthStep />);
     expect(screen.getByText('30 min')).toBeTruthy();
   });

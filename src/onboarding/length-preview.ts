@@ -6,6 +6,7 @@ import type { SessionMinutes } from '@shared/plan/limits';
 import type { Plan, SessionTime, SessionWork } from '@shared/plan/types';
 
 import { generatePlan } from './plan';
+import { planRequest } from './plan-request';
 import { SESSION_MINUTES } from './training';
 import type { OnboardingAnswers } from './types';
 
@@ -22,24 +23,22 @@ export function previewOf(plan: Plan): LengthPreview | null {
 }
 
 /**
- * Asks the plan builder about every length at once when the step opens, so switching between
- * them shows the answer straight away. The answers it depends on are fixed by then.
+ * What the given length holds for the user's answers. The plan builder is asked about every
+ * length at once when the step opens, so switching between them shows the answer straight away;
+ * the answers it depends on are fixed by then. It is not asked again on failure: the preview is
+ * only a hint, and the length can be chosen without it.
  */
-export function useLengthPreviews(answers: OnboardingAnswers) {
+export function useLengthPreview(answers: OnboardingAnswers, sessionMinutes: SessionMinutes) {
   const results = useQueries({
-    queries: SESSION_MINUTES.map((sessionMinutes) => ({
-      queryKey: [
-        'onboarding',
-        'length-preview',
-        answers.goal,
-        answers.experience,
-        answers.setup,
-        answers.trainingDays?.join(),
-        sessionMinutes,
-      ],
-      queryFn: async () => previewOf(await generatePlan({ ...answers, sessionMinutes })),
-      staleTime: Infinity,
-    })),
+    queries: SESSION_MINUTES.map((minutes) => {
+      const request = planRequest({ ...answers, sessionMinutes: minutes });
+      return {
+        queryKey: ['onboarding', 'length-preview', request],
+        queryFn: async () => previewOf(await generatePlan(request)),
+        staleTime: Infinity,
+        retry: false,
+      };
+    }),
   });
-  return (sessionMinutes: SessionMinutes) => results[SESSION_MINUTES.indexOf(sessionMinutes)]!;
+  return results[SESSION_MINUTES.indexOf(sessionMinutes)]!;
 }
