@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { ChoiceCard } from '@/components/ui/choice-card';
+import { Card, listDivider } from '@/components/ui/card';
+import { CheckBox } from '@/components/ui/check-box';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
@@ -15,8 +17,8 @@ import { useStep } from '../use-step';
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 /**
- * The days of the week to train, starting on Monday, as small cards with a line under them on
- * the week. Until the user picks days, the recommendation for their experience is selected, so
+ * The days of the week to train, starting on Monday, as one list with what the days make under
+ * it. Until the user picks days, the recommendation for their experience is selected, so
  * it follows a change of experience.
  */
 export function TrainingDaysStep() {
@@ -62,44 +64,100 @@ export function TrainingDaysStep() {
         />
       }
     >
-      <Text variant="title" accessibilityRole="header">
-        {t('onboarding.steps.training-days.title')}
-      </Text>
-      <View style={{ gap: spacing.md }}>
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="title" accessibilityRole="header">
+          {t('onboarding.steps.training-days.title')}
+        </Text>
+        <Text color="textMuted">{t('onboarding.trainingDays.intro')}</Text>
+      </View>
+      {/* The week as one list, so it reads as a whole rather than seven separate cards. */}
+      <Card list style={[styles.week, { marginTop: spacing.sm }]}>
         {WEEKDAYS.map((weekday) => (
-          <ChoiceCard
+          <DayRow
             key={weekday}
-            type="checkbox"
-            title={weekdayName(weekday)}
+            name={weekdayName(weekday)}
+            first={weekday === WEEKDAYS[0]}
             selected={days.includes(weekday)}
             onPress={() => toggle(weekday)}
-            size="small"
           />
         ))}
+      </Card>
+      {/* What the days make; a limit just hit takes the place of the second line. */}
+      <View style={{ gap: spacing.xs, marginTop: spacing.sm }} accessibilityLiveRegion="polite">
+        <Text variant="bodyStrong" align="center">
+          {t('onboarding.trainingDays.count', { count: days.length })}
+        </Text>
+        <Text variant="caption" color={limit ? 'warning' : 'textMuted'} align="center">
+          {limit
+            ? t(
+                limit === 'max'
+                  ? 'onboarding.trainingDays.maxReached'
+                  : 'onboarding.trainingDays.minReached',
+              )
+            : runs.length > 0
+              ? t('onboarding.trainingDays.backToBack', {
+                  days: runs
+                    .map((run) => `${shortName(run[0]!)}–${shortName(run.at(-1)!)}`)
+                    .join(', '),
+                })
+              : t('onboarding.trainingDays.restAfter')}
+        </Text>
       </View>
-      {/* One line on the week; a limit just hit takes its place, so nothing below moves. */}
-      <Text
-        variant="bodyStrong"
-        color={limit ? 'warning' : 'textMuted'}
-        align="center"
-        accessibilityLiveRegion="polite"
-      >
-        {limit
-          ? t(
-              limit === 'max'
-                ? 'onboarding.trainingDays.maxReached'
-                : 'onboarding.trainingDays.minReached',
-            )
-          : `${t('onboarding.trainingDays.count', { count: days.length })} · ${
-              runs.length > 0
-                ? t('onboarding.trainingDays.backToBack', {
-                    days: runs
-                      .map((run) => `${shortName(run[0]!)}–${shortName(run.at(-1)!)}`)
-                      .join(', '),
-                  })
-                : t('onboarding.trainingDays.restAfter')
-            }`}
-      </Text>
     </Screen>
   );
 }
+
+type DayRowProps = {
+  name: string;
+  /** The first row, without a line above it. */
+  first: boolean;
+  selected: boolean;
+  onPress: () => void;
+};
+
+/** One day of the week, tinted and ticked when it is a training day; the tick alone is orange. */
+function DayRow({ name, first, selected, onPress }: DayRowProps) {
+  const { colors, spacing } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityLabel={name}
+      accessibilityState={{ checked: selected }}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.day,
+        listDivider(first, colors.border),
+        {
+          gap: spacing.md,
+          paddingHorizontal: spacing.lg,
+          backgroundColor: selected ? colors.selected : colors.surface,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Text variant="bodyStrong" style={styles.flex}>
+        {name}
+      </Text>
+      <CheckBox checked={selected} />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  // Rows reach the card's edges, and the card's corners clip their tint.
+  week: {
+    paddingHorizontal: 0,
+    overflow: 'hidden',
+  },
+  day: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 56,
+  },
+  flex: {
+    flex: 1,
+  },
+});

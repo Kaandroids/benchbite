@@ -401,7 +401,7 @@
         "title": "Wie viel Trainingserfahrung hast du?"
       },
       "training-days": {
-        "title": "Deine Trainingstage"
+        "title": "An welchen Tagen möchtest du trainieren?"
       },
       "setup": {
         "title": "Wo trainierst du?"
@@ -668,11 +668,12 @@
       }
     },
     "trainingDays": {
+      "intro": "Wir haben Tage passend zu deiner Erfahrung gewählt. Tippe auf einen Tag, um sie zu ändern.",
       "count_one": "{{count}} Tag pro Woche",
       "count_other": "{{count}} Tage pro Woche",
       "maxReached": "Plane mindestens einen Ruhetag pro Woche ein.",
       "minReached": "Wähle mindestens einen Tag.",
-      "restAfter": "nach jedem ein Ruhetag",
+      "restAfter": "Nach jedem Workout ein Ruhetag",
       "backToBack": "{{days}} direkt hintereinander"
     },
     "setup": {

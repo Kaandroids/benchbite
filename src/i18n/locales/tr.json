@@ -401,7 +401,7 @@
         "title": "Ne kadar deneyimlisin?"
       },
       "training-days": {
-        "title": "Antrenman günlerin"
+        "title": "Hangi günler antrenman yapmak istersin?"
       },
       "setup": {
         "title": "Nerede antrenman yapıyorsun?"
@@ -668,11 +668,12 @@
       }
     },
     "trainingDays": {
+      "intro": "Deneyimine göre günleri seçtik. Değiştirmek için bir güne dokun.",
       "count_one": "Haftada {{count}} gün",
       "count_other": "Haftada {{count}} gün",
       "maxReached": "Haftada en az bir dinlenme günü bırak.",
       "minReached": "En az bir gün seç.",
-      "restAfter": "her birinden sonra dinlenme",
+      "restAfter": "Her antrenmandan sonra dinlenme",
       "backToBack": "{{days}} arka arkaya"
     },
     "setup": {

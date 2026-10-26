@@ -401,7 +401,7 @@
         "title": "How experienced are you?"
       },
       "training-days": {
-        "title": "Your training days"
+        "title": "Which days do you want to train?"
       },
       "setup": {
         "title": "Where do you train?"
@@ -668,11 +668,12 @@
       }
     },
     "trainingDays": {
+      "intro": "We picked days for your experience. Tap a day to change them.",
       "count_one": "{{count}} day a week",
       "count_other": "{{count}} days a week",
       "maxReached": "Keep at least one rest day a week.",
       "minReached": "Choose at least one day.",
-      "restAfter": "a rest day after each",
+      "restAfter": "A rest day after each workout",
       "backToBack": "{{days}} back to back"
     },
     "setup": {
