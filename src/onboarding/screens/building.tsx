@@ -32,11 +32,11 @@ import { useStep } from '../use-step';
 
 /** Each line about the plan shows at least this long, so the work is seen being done. */
 const LINE_MS = 1100;
-/** The lines shown while the plan is being built; the last one waits for the work. */
-const LINES = 3;
 /** How far the ring fills while the lines show; the rest fills once the work is done. */
 const WORKING_SHARE = 0.9;
 const SIZE = 200;
+/** The ring around the plate, in the plate's 100-unit box. */
+const CENTER = 50;
 const RING = { r: 46, width: 4 };
 const CIRCUMFERENCE = 2 * Math.PI * RING.r;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -100,8 +100,9 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const lines = usePlanLines(answers);
+  // The lines shown while the plan is being built; the last one waits for the work.
+  const count = lines.length;
   const [line, setLine] = useState(0);
-  const [percent, setPercent] = useState(0);
   const filled = useSharedValue(0);
   const bite = useSharedValue(0);
   const crumbs = useSharedValue(0);
@@ -112,13 +113,6 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
   const finish = useEffectEvent(onDone);
   const fail = useEffectEvent(onFail);
 
-  useAnimatedReaction(
-    () => Math.round(filled.get() * 100),
-    (now, before) => {
-      if (now !== before) scheduleOnRN(setPercent, now);
-    },
-  );
-
   useEffect(() => {
     let cancelled = false;
     const work = build();
@@ -126,10 +120,10 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
     // a quick failure would also be reported as an unhandled rejection.
     work.catch(() => {});
     filled.set(
-      withTiming(WORKING_SHARE, { duration: LINES * LINE_MS, easing: Easing.out(Easing.quad) }),
+      withTiming(WORKING_SHARE, { duration: count * LINE_MS, easing: Easing.out(Easing.quad) }),
     );
     void (async () => {
-      for (let next = 1; next < LINES; next++) {
+      for (let next = 1; next < count; next++) {
         await wait(LINE_MS);
         if (cancelled) return;
         setLine(next);
@@ -145,7 +139,7 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
           withSequence(withTiming(1.08, { duration: 130 }), withTiming(1, { duration: 120 })),
         );
         crumbs.set(withTiming(1, { duration: 650 }));
-        setLine(LINES);
+        setLine(count);
         finish({ targets, plan });
       } catch (error) {
         console.warn('Could not build the plan', error);
@@ -155,10 +149,10 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
     return () => {
       cancelled = true;
     };
-    // Runs once per attempt; a retry mounts a new one. The shared values never change.
-  }, [filled, bite, crumbs]);
+    // Runs once per attempt; a retry mounts a new one. The count and shared values never change.
+  }, [count, filled, bite, crumbs]);
 
-  const ready = line === LINES;
+  const ready = line === count;
   return (
     <View style={[styles.center, { gap: spacing.xl, paddingTop: spacing.xl }]}>
       <View style={[styles.center, { gap: spacing.xs }]}>
@@ -172,10 +166,15 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
         </Text>
       </View>
       <View style={styles.plate} accessible={false}>
-        <Svg width={SIZE} height={SIZE} viewBox="0 0 100 100" style={StyleSheet.absoluteFill}>
+        <Svg
+          width={SIZE}
+          height={SIZE}
+          viewBox={`0 0 ${CENTER * 2} ${CENTER * 2}`}
+          style={StyleSheet.absoluteFill}
+        >
           <Circle
-            cx={50}
-            cy={50}
+            cx={CENTER}
+            cy={CENTER}
             r={RING.r}
             fill="none"
             stroke={colors.track}
@@ -193,7 +192,7 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
           />
         </FillingPlate>
       </View>
-      <Text variant="display">{`${percent}%`}</Text>
+      <Percent filled={filled} />
       {/* Keyed by the line, so each one fades in as the one before fades out. */}
       <View style={styles.lineBox} accessibilityLiveRegion="polite">
         {failed ? (
@@ -210,6 +209,21 @@ function Building({ answers, failed, onDone, onFail }: BuildingProps) {
       </View>
     </View>
   );
+}
+
+/**
+ * How far the plan is built, as a whole percentage. On its own, so that only this text renders
+ * again as the ring fills, not the whole step.
+ */
+function Percent({ filled }: { filled: SharedValue<number> }) {
+  const [percent, setPercent] = useState(0);
+  useAnimatedReaction(
+    () => Math.round(filled.get() * 100),
+    (now, before) => {
+      if (now !== before) scheduleOnRN(setPercent, now);
+    },
+  );
+  return <Text variant="display">{`${percent}%`}</Text>;
 }
 
 /** The lines about the plan, from the user's answers: the calories, the exercises, the week. */
@@ -247,15 +261,15 @@ function Ring({ filled, color }: { filled: SharedValue<number>; color: string })
   return (
     <AnimatedCircle
       animatedProps={animatedProps}
-      cx={50}
-      cy={50}
+      cx={CENTER}
+      cy={CENTER}
       r={RING.r}
       fill="none"
       stroke={color}
       strokeWidth={RING.width}
       strokeLinecap="round"
       strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-      transform="rotate(-90 50 50)"
+      transform={`rotate(-90 ${CENTER} ${CENTER})`}
     />
   );
 }
