@@ -16,8 +16,8 @@ import Animated, {
 import { Button } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
+import { Caption } from '@/components/ui/caption';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { useTheme } from '@/theme';
 
 import { stepsBetween } from '../steps';
@@ -28,7 +28,6 @@ import { CenteredContent } from './centered-content';
 export function TrainingIntroStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const upperCase = useUpperCase();
   const { answers, progress, next, back } = useStep('training-intro');
   const name = answers.displayName;
   // The training questions: the steps of the flow between this one and building the plan.
@@ -45,9 +44,7 @@ export function TrainingIntroStep() {
           <Halfway />
           <View style={{ gap: spacing.sm }}>
             <Animated.View entering={FadeInDown.delay(500).duration(400)}>
-              <Text variant="captionStrong" color="primaryText">
-                {upperCase(t('onboarding.trainingIntro.halfway'))}
-              </Text>
+              <Caption color="primaryText">{t('onboarding.trainingIntro.halfway')}</Caption>
             </Animated.View>
             <Animated.View entering={FadeInDown.delay(600).duration(400)}>
               <Text variant="title" accessibilityRole="header">

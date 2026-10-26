@@ -5,12 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { useShortDateFormat, useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat, useWeightFormat } from '@/i18n/units';
 import { nextSession } from '@/workouts/next-session';
@@ -163,16 +163,6 @@ export function SummaryStep() {
         </Text>
       </Animated.View>
     </Screen>
-  );
-}
-
-/** A small label over a card's content, in capitals. */
-function Caption({ children }: { children: string }) {
-  const upperCase = useUpperCase();
-  return (
-    <Text variant="captionStrong" color="textMuted">
-      {upperCase(children)}
-    </Text>
   );
 }
 

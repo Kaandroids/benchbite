@@ -9,12 +9,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
-import { useUpperCase } from '@/i18n/case';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { StreakBadge } from '@/streak/streak-badge';
@@ -272,7 +272,6 @@ function FoodIllustration() {
 function ProgressIllustration() {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const upperCase = useUpperCase();
   const weight = useExampleWeight();
   const line = useDrawn();
   const lineProps = useAnimatedProps(() => ({
@@ -284,9 +283,7 @@ function ProgressIllustration() {
   return (
     <Card>
       <View style={[styles.row, styles.between]}>
-        <Text variant="captionStrong" color="textMuted" style={styles.flex}>
-          {upperCase(t('onboarding.welcome.slides.progress.weight'))}
-        </Text>
+        <Caption style={styles.flex}>{t('onboarding.welcome.slides.progress.weight')}</Caption>
         <Animated.View entering={ZoomIn.delay(STEP_MS * 7)}>
           <StreakBadge streak={EXAMPLE_STREAK} />
         </Animated.View>
