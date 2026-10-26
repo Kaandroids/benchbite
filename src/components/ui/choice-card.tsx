@@ -13,10 +13,14 @@ import { Icon, type IconName } from './icon';
 import { RaisedPressable } from './raised-pressable';
 import { Text } from './text';
 
-/** The two sizes of a card: its least height, its icon tile and icon, and its vertical padding. */
+/**
+ * The sizes of a card: its least height, its icon tile and icon, and its vertical padding. A
+ * small card keeps its ledge grey when chosen, so a long list with many chosen stays calm.
+ */
 const SIZES = {
-  regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
-  compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
+  regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md', quietLedge: false },
+  compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm', quietLedge: false },
+  small: { minHeight: 48, tile: 32, icon: 16, padding: 'xs', quietLedge: true },
 } as const;
 
 type ChoiceCardProps = {
@@ -27,8 +31,11 @@ type ChoiceCardProps = {
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
   type?: 'radio' | 'checkbox';
-  /** Smaller, for a list that shares the screen with more below it. */
-  compact?: boolean;
+  /**
+   * `compact` for a list that shares the screen with more below it, `small` for a long list of
+   * short answers, such as the days of the week.
+   */
+  size?: keyof typeof SIZES;
 };
 
 export function ChoiceCard({
@@ -38,10 +45,10 @@ export function ChoiceCard({
   selected,
   onPress,
   type = 'radio',
-  compact = false,
+  size: sizeName = 'regular',
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
-  const size = SIZES[compact ? 'compact' : 'regular'];
+  const size = SIZES[sizeName];
   const scale = useSharedValue(1);
   const isFirstRender = useRef(true);
 
@@ -69,7 +76,7 @@ export function ChoiceCard({
         accessibilityState={{ checked: selected }}
         onPress={onPress}
         haptic="selection"
-        ledgeColor={selected ? colors.primary : colors.border}
+        ledgeColor={selected && !size.quietLedge ? colors.primary : colors.border}
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
