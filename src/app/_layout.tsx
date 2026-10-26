@@ -7,13 +7,14 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Appearance, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useClaimDevice } from '@/account/device-owner';
 import { SessionEnded } from '@/account/session-ended';
+import { AnimatedSplash } from '@/brand/animated-splash';
 import { SessionError } from '@/components/session-error';
 import '@/i18n';
 import { OnboardingProvider, useOnboarding } from '@/providers/onboarding-provider';
@@ -29,6 +30,9 @@ import { fonts, useTheme } from '@/theme';
 
 // Keeps the native splash screen visible until the fonts and the session are ready.
 void SplashScreen.preventAutoHideAsync();
+// The native splash screen follows the system's light or dark setting. Read it before the stored
+// theme overrides it, so the animated splash that takes over matches.
+const launchScheme = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
 showRemindersInForeground([REST_NOTIFICATION_ID]);
 // The look and language chosen in the settings, before the first screen shows.
 applyStoredPreferences();
@@ -62,6 +66,8 @@ function RootNavigator() {
     [fonts.black]: Nunito_900Black,
   });
   const isReady = (fontsLoaded || fontError !== null) && status !== 'loading';
+  const [splashDone, setSplashDone] = useState(false);
+  const endSplash = useCallback(() => setSplashDone(true), []);
 
   // The root view shows through during screen transitions and keyboard animations.
   useEffect(() => {
@@ -121,6 +127,8 @@ function RootNavigator() {
       {status === 'ready' ? <LeftOpenSaver /> : null}
       {status === 'ready' ? <StartMoveSheet /> : null}
       {status === 'ready' && completed ? <ReminderSync /> : null}
+      {/* Drawn in the same frame the native splash screen hides, over the first screen. */}
+      {splashDone ? null : <AnimatedSplash scheme={launchScheme} onDone={endSplash} />}
     </>
   );
 }
