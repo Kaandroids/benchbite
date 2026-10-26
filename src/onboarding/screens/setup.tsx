@@ -1,18 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
-import { Caption } from '@/components/ui/caption';
-import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
-import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
 import { Constants } from '@/lib/database.types';
-import { useTheme } from '@/theme';
 
+import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -38,7 +32,6 @@ const FACTS: { key: 'need' | 'exercises' | 'progress'; icon: IconName }[] = [
  */
 export function SetupStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { answers, progress, back, select, next } = useStep('setup');
   const setup = answers.setup;
 
@@ -60,40 +53,18 @@ export function SetupStep() {
           size="compact"
         />
       ))}
-      {setup ? (
-        <Card style={{ gap: spacing.md, marginTop: spacing.xs }}>
-          <Caption>{t('onboarding.setup.means')}</Caption>
-          {/* Keyed by the setup, so the rows fade in anew when it changes. */}
-          <Animated.View
-            key={setup}
-            entering={FadeIn.duration(250)}
-            accessibilityLiveRegion="polite"
-            style={{ gap: spacing.md }}
-          >
-            {FACTS.map(({ key, icon }) => (
-              <View key={key} style={[styles.row, { gap: spacing.md }]}>
-                <IconTile name={icon} size={36} />
-                <View style={styles.flex}>
-                  <Text variant="caption" color="textMuted">
-                    {t(`onboarding.setup.${key}`)}
-                  </Text>
-                  <Text variant="bodyStrong">{t(`onboarding.setup.facts.${setup}.${key}`)}</Text>
-                </View>
-              </View>
-            ))}
-          </Animated.View>
-        </Card>
-      ) : null}
+      <ChoiceInsight title={t('onboarding.setup.means')} choice={setup}>
+        {setup
+          ? FACTS.map(({ key, icon }) => (
+              <InsightRow
+                key={key}
+                icon={icon}
+                label={t(`onboarding.setup.${key}`)}
+                value={t(`onboarding.setup.facts.${setup}.${key}`)}
+              />
+            ))
+          : null}
+      </ChoiceInsight>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flex: {
-    flex: 1,
-  },
-});

@@ -1,20 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
-import { Caption } from '@/components/ui/caption';
-import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { type IconName } from '@/components/ui/icon';
-import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Constants } from '@/lib/database.types';
-import { useTheme } from '@/theme';
 
+import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { GOAL_ICONS } from '../goal-icons';
-import type { Goal } from '../types';
 import { useStep } from '../use-step';
 
 /** What a goal sets in the plan, one row each. */
@@ -30,7 +24,6 @@ const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] =
  */
 export function GoalStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { answers, progress, back, select, next } = useStep('goal');
   const goal = answers.goal;
 
@@ -54,53 +47,22 @@ export function GoalStep() {
           size="compact"
         />
       ))}
-      <View style={[styles.flex, { marginTop: spacing.sm }]}>
-        <GoalEffects goal={goal} />
-      </View>
+      <ChoiceInsight
+        title={t('onboarding.goal.effects.title')}
+        choice={goal}
+        empty={<Text color="textMuted">{t('onboarding.goal.effects.empty')}</Text>}
+      >
+        {goal
+          ? EFFECTS.map(({ key, icon }) => (
+              <InsightRow
+                key={key}
+                icon={icon}
+                label={t(`onboarding.goal.effects.${key}`)}
+                value={t(`onboarding.goal.effects.${goal}.${key}`)}
+              />
+            ))
+          : null}
+      </ChoiceInsight>
     </Screen>
   );
 }
-
-/** What the chosen goal sets in the plan, changing with the choice; a hint before there is one. */
-function GoalEffects({ goal }: { goal: Goal | undefined }) {
-  const { t } = useTranslation();
-  const { spacing } = useTheme();
-  return (
-    <Card style={{ gap: spacing.md }}>
-      <Caption>{t('onboarding.goal.effects.title')}</Caption>
-      {goal ? (
-        // Keyed by the goal, so the rows fade in again when it changes.
-        <Animated.View
-          key={goal}
-          entering={FadeIn.duration(250)}
-          accessibilityLiveRegion="polite"
-          style={{ gap: spacing.md }}
-        >
-          {EFFECTS.map(({ key, icon }) => (
-            <View key={key} style={[styles.row, { gap: spacing.md }]}>
-              <IconTile name={icon} size={36} />
-              <View style={styles.flex}>
-                <Text variant="caption" color="textMuted">
-                  {t(`onboarding.goal.effects.${key}`)}
-                </Text>
-                <Text variant="bodyStrong">{t(`onboarding.goal.effects.${goal}.${key}`)}</Text>
-              </View>
-            </View>
-          ))}
-        </Animated.View>
-      ) : (
-        <Text color="textMuted">{t('onboarding.goal.effects.empty')}</Text>
-      )}
-    </Card>
-  );
-}
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flex: {
-    flex: 1,
-  },
-});

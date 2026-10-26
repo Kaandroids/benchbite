@@ -11,7 +11,7 @@ const continueButton = () => screen.getByRole('button', { name: 'Continue' });
 
 describe('ExperienceStep', () => {
   it('saves the tapped answer without moving on', async () => {
-    mockStep = createStep();
+    mockStep = createStep({ goal: 'lose_fat' });
     await render(<ExperienceStep />);
     expect(continueButton()).toBeDisabled();
     await fireEvent.press(screen.getByRole('radio', { name: ADVANCED }));
@@ -37,7 +37,7 @@ describe('ExperienceStep', () => {
   });
 
   it('moves on with Continue', async () => {
-    mockStep = createStep({ experience: 'beginner' });
+    mockStep = createStep({ goal: 'lose_fat', experience: 'beginner' });
     await render(<ExperienceStep />);
     await fireEvent.press(continueButton());
     expect(mockStep.next).toHaveBeenCalledTimes(1);
