@@ -477,6 +477,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      removed_meal_entries: {
+        Row: {
+          carbs_per_100g: number;
+          created_at: string;
+          day: string;
+          fat_per_100g: number;
+          food_id: string;
+          grams: number;
+          id: number;
+          kcal_per_100g: number;
+          meal: Database['public']['Enums']['meal'];
+          portion_count: number | null;
+          portion_unit: Database['public']['Enums']['portion_unit'] | null;
+          protein_per_100g: number;
+          removed_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          carbs_per_100g: number;
+          created_at: string;
+          day: string;
+          fat_per_100g: number;
+          food_id: string;
+          grams: number;
+          id: number;
+          kcal_per_100g: number;
+          meal: Database['public']['Enums']['meal'];
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_per_100g: number;
+          removed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          carbs_per_100g?: number;
+          created_at?: string;
+          day?: string;
+          fat_per_100g?: number;
+          food_id?: string;
+          grams?: number;
+          id?: number;
+          kcal_per_100g?: number;
+          meal?: Database['public']['Enums']['meal'];
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_per_100g?: number;
+          removed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'removed_meal_entries_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       weight_entries: {
         Row: {
           created_at: string;
@@ -862,6 +922,7 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
           from_on: string;
