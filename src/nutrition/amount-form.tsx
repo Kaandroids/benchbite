@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
+import { Screen } from '@/components/ui/screen';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
@@ -34,10 +38,12 @@ function typedGrams(text: string): number | null {
 }
 
 type AmountFormProps = {
-  /** The food's name, shown as the title. */
+  /** The food's name, in the top bar. */
   title: string;
   /** Under the title, such as the calories per 100 g. */
   subtitle: string;
+  /** At the end of the top bar, such as Edit. */
+  action?: ReactNode;
   per100g: Totals;
   /** The food's portions, the default first; none leaves grams only. */
   portions: Portion[];
@@ -53,6 +59,8 @@ type AmountFormProps = {
   /** Why the last submit failed, if it did. */
   error?: ReactNode;
   onSubmit: (amount: Amount) => void;
+  /** Under the form, such as a button that removes an entry. */
+  children?: ReactNode;
 };
 
 /** The index of the portion an amount was picked in, or null for grams. */
@@ -71,6 +79,7 @@ function portionIndexOf(portions: Portion[], initial?: Amount): number | null {
 export function AmountForm({
   title,
   subtitle,
+  action,
   per100g,
   portions,
   initial,
@@ -81,6 +90,7 @@ export function AmountForm({
   submitting,
   error,
   onSubmit,
+  children,
 }: AmountFormProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -123,20 +133,20 @@ export function AmountForm({
     onSubmit({ grams: amount, portion: portion ? { unit: portion.unit, count } : null });
 
   return (
-    <>
-      <ScrollView
-        contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.xs, gap: spacing.lg }}
-        keyboardShouldPersistTaps="handled"
+    <KeyboardAvoiding>
+      <Screen
+        onBack={() => router.back()}
+        title={<ScreenTitle title={title} subtitle={subtitle} />}
+        action={action}
+        footer={
+          <Button
+            label={submitLabel}
+            loading={submitting}
+            disabled={invalidGrams}
+            onPress={submit}
+          />
+        }
       >
-        <View>
-          <Text variant="title" accessibilityRole="header">
-            {title}
-          </Text>
-          <Text variant="bodyStrong" color="textMuted">
-            {subtitle}
-          </Text>
-        </View>
-
         <View style={{ gap: spacing.sm }}>
           <Text variant="captionStrong" color="textMuted">
             {t('nutrition.amount.portion')}
@@ -286,11 +296,9 @@ export function AmountForm({
           </Text>
         ) : null}
         {error}
-      </ScrollView>
-      <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
-        <Button label={submitLabel} loading={submitting} disabled={invalidGrams} onPress={submit} />
-      </View>
-    </>
+        {children}
+      </Screen>
+    </KeyboardAvoiding>
   );
 }
 

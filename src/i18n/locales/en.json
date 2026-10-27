@@ -329,7 +329,7 @@
       "delete": "Delete food",
       "deleteError": "The food could not be deleted. Check your connection and try again.",
       "create": "New food",
-      "edit": "Edit {{name}}"
+      "editButton": "Edit"
     }
   },
   "workout": {

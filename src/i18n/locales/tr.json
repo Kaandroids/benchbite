@@ -329,7 +329,7 @@
       "delete": "Besini sil",
       "deleteError": "Besin silinemedi. Bağlantını kontrol edip tekrar dene.",
       "create": "Yeni besin",
-      "edit": "{{name}} düzenle"
+      "editButton": "Düzenle"
     }
   },
   "workout": {

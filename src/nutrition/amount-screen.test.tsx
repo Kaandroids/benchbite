@@ -148,13 +148,14 @@ describe('AmountScreen', () => {
     await render(
       <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
     );
-    expect(screen.queryByLabelText(/^Edit/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
 
     jest
       .mocked(useFood)
       .mockReturnValue(loaded({ ...YOGHURT, ref: { kind: 'custom', id: 12 }, name: 'My yoghurt' }));
     await render(<AmountScreen food={{ kind: 'custom', id: 12 }} meal="lunch" day="2026-10-27" />);
-    await fireEvent.press(screen.getByLabelText('Edit My yoghurt'));
+    expect(screen.getByText('My yoghurt')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/nutrition/edit-food/[id]',
       params: { id: '12', meal: 'lunch', day: '2026-10-27' },

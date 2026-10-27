@@ -329,7 +329,7 @@
       "delete": "Lebensmittel löschen",
       "deleteError": "Das Lebensmittel konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
       "create": "Neues Lebensmittel",
-      "edit": "{{name}} bearbeiten"
+      "editButton": "Bearbeiten"
     }
   },
   "workout": {

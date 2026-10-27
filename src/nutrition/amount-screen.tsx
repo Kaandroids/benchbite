@@ -1,14 +1,11 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { BackBar } from '@/components/ui/back-bar';
-import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
+import { PillButton } from '@/components/ui/pill-button';
+import { Screen } from '@/components/ui/screen';
 import { useNumberFormat } from '@/i18n/units';
-import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
@@ -28,7 +25,6 @@ type AmountScreenProps = {
 /** Picks how much of a food was eaten for a meal, showing what that adds to the day. */
 export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const food = useFood(ref);
   const addEntry = useAddEntry();
@@ -36,20 +32,25 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const targets = useNutritionTargets();
   const queries = [food, entries, targets];
 
-  let content;
-  if (food.data === null) {
-    content = (
-      <MessageView
-        icon="meal"
-        title={t('nutrition.amount.notFound.title')}
-        message={t('nutrition.amount.notFound.message')}
-      />
-    );
-  } else if (allLoaded(queries) && food.data) {
-    content = (
+  if (allLoaded(queries) && food.data) {
+    return (
       <AmountForm
         title={food.data.name}
         subtitle={t('nutrition.amount.per100g', { calories: format(food.data.per100g.calories) })}
+        action={
+          // Only a food of one's own can be changed.
+          ref.kind === 'custom' ? (
+            <PillButton
+              label={t('nutrition.food.editButton')}
+              onPress={() =>
+                router.push({
+                  pathname: '/nutrition/edit-food/[id]',
+                  params: { id: String(ref.id), meal, day },
+                })
+              }
+            />
+          ) : undefined
+        }
         per100g={food.data.per100g}
         portions={food.data.portions}
         eatenCalories={totalOf(entries.data ?? []).calories}
@@ -65,51 +66,18 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
         }
       />
     );
-  } else {
-    content = (
-      <View style={[styles.flex, { padding: spacing.xl }]}>
-        <LoadState queries={queries} />
-      </View>
-    );
   }
-
   return (
-    <SafeAreaView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
-    >
-      <BackBar
-        action={
-          ref.kind === 'custom' && food.data ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('nutrition.food.edit', { name: food.data.name })}
-              onPress={() =>
-                router.push({
-                  pathname: '/nutrition/edit-food/[id]',
-                  params: { id: String(ref.id), meal, day },
-                })
-              }
-              style={styles.action}
-            >
-              <Icon name="edit" color="text" />
-            </Pressable>
-          ) : null
-        }
-      />
-      {content}
-    </SafeAreaView>
+    <Screen onBack={() => router.back()}>
+      {food.data === null ? (
+        <MessageView
+          icon="meal"
+          title={t('nutrition.amount.notFound.title')}
+          message={t('nutrition.amount.notFound.message')}
+        />
+      ) : (
+        <LoadState queries={queries} />
+      )}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  action: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
