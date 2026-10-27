@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -31,11 +31,26 @@ select results_eq(
 
 select throws_ok(
   $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-     values ('PROTEIN YOGHURT, VANILLA', 1, 1, 1, 1) $$,
+     values ('PROTEIN YOGHURT, VANILLA', 17, 1, 1, 1) $$,
   '23505',
   null,
   'A user''s foods have different names'
 );
+select throws_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('Too few calories', 22, 3, 0, 22) $$,
+  '23514',
+  null,
+  'A food has at least the calories its macros make, give or take rounding'
+);
+select lives_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('Beer', 43, 0.5, 3.6, 0) $$,
+  'A food may have more calories than its macros make, such as from alcohol'
+);
+reset role;
+delete from public.custom_foods where name = 'Beer';
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select throws_ok(
   $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
      values ('Too much', 900, 60, 40, 10) $$,
@@ -45,7 +60,7 @@ select throws_ok(
 );
 select throws_ok(
   $$ insert into public.custom_foods (user_id, name, kcal, protein_g, carbs_g, fat_g)
-     values ('00000000-0000-0000-0000-00000000000b', 'Not mine', 1, 1, 1, 1) $$,
+     values ('00000000-0000-0000-0000-00000000000b', 'Not mine', 17, 1, 1, 1) $$,
   '42501',
   null,
   'A food cannot be made for another user'
@@ -112,7 +127,7 @@ select throws_ok(
   'Foods of one''s own are archived, not deleted'
 );
 
-update public.custom_foods set kcal = 1, archived_at = '2000-01-01';
+update public.custom_foods set kcal = 69, archived_at = '2000-01-01';
 
 select is(
   (select archived_at from public.custom_foods),
@@ -159,11 +174,11 @@ select results_eq(
 
 -- 199 more make 200 that are not deleted; deleted ones count up to 1,000.
 insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-  select 'Food ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+  select 'Food ' || n, 17, 1, 1, 1 from generate_series(1, 200) n;
 
 select throws_ok(
   $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-     values ('One too many', 1, 1, 1, 1) $$,
+     values ('One too many', 17, 1, 1, 1) $$,
   'BB024',
   null,
   'A user has up to 200 foods of their own'
@@ -171,21 +186,21 @@ select throws_ok(
 
 update public.custom_foods set archived_at = now() where archived_at is null;
 insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-  select 'More ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+  select 'More ' || n, 17, 1, 1, 1 from generate_series(1, 200) n;
 update public.custom_foods set archived_at = now() where archived_at is null;
 insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-  select 'Again ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+  select 'Again ' || n, 17, 1, 1, 1 from generate_series(1, 200) n;
 update public.custom_foods set archived_at = now() where archived_at is null;
 insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-  select 'Still ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+  select 'Still ' || n, 17, 1, 1, 1 from generate_series(1, 200) n;
 update public.custom_foods set archived_at = now() where archived_at is null;
 insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-  select 'Last ' || n, 1, 1, 1, 1 from generate_series(1, 199) n;
+  select 'Last ' || n, 17, 1, 1, 1 from generate_series(1, 199) n;
 
 select throws_ok(
   $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-     values ('One too many', 1, 1, 1, 1) $$,
-  'BB024',
+     values ('One too many', 17, 1, 1, 1) $$,
+  'BB026',
   null,
   'Deleted foods count too, up to 1,000'
 );
@@ -194,7 +209,7 @@ select set_config('role', 'anon', true);
 
 select throws_ok(
   $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
-     values ('Guest', 1, 1, 1, 1) $$,
+     values ('Guest', 17, 1, 1, 1) $$,
   '42501',
   null,
   'Requests without a session cannot add foods'
@@ -204,6 +219,13 @@ select throws_ok(
   '42501',
   null,
   'Requests without a session cannot read foods of one''s own'
+);
+
+-- Deleting a user, with foods of their own and their entries, removed and not (#220).
+reset role;
+select lives_ok(
+  $$ delete from auth.users where id = '00000000-0000-0000-0000-00000000000a' $$,
+  'A user with foods, entries and removed entries can be deleted'
 );
 
 select * from finish();

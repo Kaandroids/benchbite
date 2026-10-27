@@ -5,6 +5,9 @@
 -- New error codes:
 --   BB024  the user already has as many foods of their own as they may have
 --   BB025  the food was deleted, which cannot be changed or undone
+--   BB026  the user has added and deleted as many foods as they may
+--
+-- It also fixes #220: deleting a user no longer keeps their entries for undo.
 
 create table public.custom_foods (
   id bigint generated always as identity primary key,
@@ -16,6 +19,13 @@ create table public.custom_foods (
   carbs_g numeric(5, 2) not null check (carbs_g between 0 and 100),
   fat_g numeric(5, 2) not null check (fat_g between 0 and 100),
   check (protein_g + carbs_g + fat_g <= 100),
+  -- Not fewer calories than protein, carbs and fat alone make, at 4, 4 and 9 kcal per gram,
+  -- allowing 15 % or 10 kcal for rounding on labels (ADR 0036). More is fine: fibre, alcohol and
+  -- sugar alcohols add energy too.
+  check (
+    4 * protein_g + 4 * carbs_g + 9 * fat_g - kcal
+      <= greatest(10, 0.15 * (4 * protein_g + 4 * carbs_g + 9 * fat_g))
+  ),
   -- One portion, such as 1 can = 330 g, or none.
   portion_unit public.portion_unit,
   portion_grams numeric(6, 1) check (portion_grams > 0 and portion_grams <= 5000),
@@ -30,6 +40,9 @@ create table public.custom_foods (
 create unique index custom_foods_unique_name
   on public.custom_foods (user_id, public.food_name_key(name))
   where archived_at is null;
+
+-- For the limit, which counts deleted foods too, and for deleting a user.
+create index custom_foods_user_id_idx on public.custom_foods (user_id);
 
 alter table public.custom_foods enable row level security;
 
@@ -61,14 +74,21 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  active integer;
+  total integer;
 begin
   perform public.lock_user_limits(new.user_id);
-  if (
-    select count(*) filter (where c.archived_at is null) >= 200 or count(*) >= 1000
-    from public.custom_foods c
-    where c.user_id = new.user_id
-  ) then
+  select count(*) filter (where c.archived_at is null), count(*)
+  into active, total
+  from public.custom_foods c
+  where c.user_id = new.user_id;
+  if active >= 200 then
     raise exception 'A user can have up to 200 foods of their own' using errcode = 'BB024';
+  end if;
+  if total >= 1000 then
+    raise exception 'A user can add up to 1,000 foods, deleted ones included'
+      using errcode = 'BB026';
   end if;
   return new;
 end;
@@ -160,7 +180,8 @@ begin
 end;
 $$;
 
--- Unchanged apart from keeping the food of one's own.
+-- Keeps the food of one's own too, and nothing when the entry goes with its user (#220): the
+-- row would name a user who is being deleted.
 create or replace function public.keep_removed_meal_entry()
 returns trigger
 language plpgsql
@@ -168,6 +189,9 @@ security definer
 set search_path = ''
 as $$
 begin
+  if not exists (select 1 from auth.users u where u.id = old.user_id) then
+    return null;
+  end if;
   delete from public.removed_meal_entries r
   where r.user_id = old.user_id and r.removed_at < now() - interval '1 hour';
   insert into public.removed_meal_entries (
