@@ -308,11 +308,12 @@
       "portionGrams": "Grams in {{portion}}",
       "portionAdds": "{{portion}} adds {{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
       "checkClose": "Matches the calories you entered.",
-      "checkFar": "Protein, carbs and fat make {{calories}} kcal, but you entered {{entered}} kcal. Check the values against the label.",
+      "checkFar": "These add up to {{calories}} kcal, not the {{entered}} kcal you entered. Check the label, then save.",
       "problems": {
         "tooMuchEnergy": "A food has at most 900 kcal per 100 g. Check the calories.",
         "tooMuchMacros": "Per 100 g, protein, carbs and fat add up to more than 100 g. Check the values.",
-        "portion": "A portion weighs more than 0 g and at most 5,000 g."
+        "portion": "A portion weighs more than 0 g and at most 5,000 g.",
+        "macrosDontAddUp": "Protein, carbs and fat do not add up to the calories."
       },
       "save": "Save",
       "saveError": "The food could not be saved. Check your connection and try again.",

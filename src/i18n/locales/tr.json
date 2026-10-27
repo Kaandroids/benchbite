@@ -308,11 +308,12 @@
       "portionGrams": "{{portion}} kaç gram",
       "portionAdds": "{{portion}} {{calories}} kcal ekler · P {{protein}} · K {{carbs}} · Y {{fat}}",
       "checkClose": "Girdiğin kaloriyle uyuşuyor.",
-      "checkFar": "Protein, karbonhidrat ve yağ {{calories}} kcal ediyor, ama {{entered}} kcal girdin. Değerleri etiketle karşılaştır.",
+      "checkFar": "Bunlar {{calories}} kcal ediyor, girdiğin {{entered}} kcal değil. Etiketi kontrol et, sonra kaydet.",
       "problems": {
         "tooMuchEnergy": "Bir besinde 100 g'da en fazla 900 kcal olabilir. Kaloriyi kontrol et.",
         "tooMuchMacros": "100 g'da protein, karbonhidrat ve yağ toplamı 100 g'ı geçiyor. Değerleri kontrol et.",
-        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir."
+        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir.",
+        "macrosDontAddUp": "Protein, karbonhidrat ve yağ kaloriyle uyuşmuyor."
       },
       "save": "Kaydet",
       "saveError": "Besin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",

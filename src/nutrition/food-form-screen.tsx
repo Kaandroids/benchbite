@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   check: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   gramsRow: {
     flexDirection: 'row',

@@ -308,11 +308,12 @@
       "portionGrams": "Gramm in {{portion}}",
       "portionAdds": "{{portion}} ergibt {{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
       "checkClose": "Passt zu den eingegebenen Kalorien.",
-      "checkFar": "Protein, Kohlenhydrate und Fett ergeben {{calories}} kcal, du hast aber {{entered}} kcal eingegeben. Vergleiche die Werte mit dem Etikett.",
+      "checkFar": "Das ergibt {{calories}} kcal, nicht die eingegebenen {{entered}} kcal. Prüfe das Etikett, dann speichern.",
       "problems": {
         "tooMuchEnergy": "Ein Lebensmittel hat höchstens 900 kcal pro 100 g. Prüfe die Kalorien.",
         "tooMuchMacros": "Pro 100 g ergeben Protein, Kohlenhydrate und Fett mehr als 100 g. Prüfe die Werte.",
-        "portion": "Eine Portion wiegt mehr als 0 g und höchstens 5.000 g."
+        "portion": "Eine Portion wiegt mehr als 0 g und höchstens 5.000 g.",
+        "macrosDontAddUp": "Protein, Kohlenhydrate und Fett passen nicht zu den Kalorien."
       },
       "save": "Speichern",
       "saveError": "Das Lebensmittel konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",

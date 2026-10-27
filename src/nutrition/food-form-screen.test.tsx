@@ -45,9 +45,15 @@ describe('FoodFormScreen, a new food', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('protein yog');
     expect(save()).toBeDisabled();
 
-    await fillIn({ Calories: '70', Protein: '10', Carbs: '6,5' });
+    // Empty macros count as 0, so the calories alone do not add up yet.
+    await fillIn({ Calories: '70' });
     expect(save()).toBeDisabled();
-    await fillIn({ Fat: '0.3' });
+    expect(
+      screen.getByText(
+        'These add up to 0 kcal, not the 70 kcal you entered. Check the label, then save.',
+      ),
+    ).toBeTruthy();
+    await fillIn({ Protein: '10', Carbs: '6,5' });
     expect(save()).toBeEnabled();
     expect(screen.getByText('Matches the calories you entered.')).toBeTruthy();
   });
@@ -123,9 +129,10 @@ describe('FoodFormScreen, a new food', () => {
     await fillIn({ Protein: '1', Carbs: '1' });
     expect(
       screen.getByText(
-        'Protein, carbs and fat make 17 kcal, but you entered 400 kcal. Check the values against the label.',
+        'These add up to 17 kcal, not the 400 kcal you entered. Check the label, then save.',
       ),
     ).toBeTruthy();
+    expect(save()).toBeDisabled();
   });
 
   it('says when a food with the name exists', async () => {
