@@ -335,17 +335,22 @@ ${columns.map((column) => `  ${column} = excluded.${column}`).join(',\n')},
 `;
 }
 
-function namesSql(chosen: [string, ChosenFood][]): string {
+/**
+ * Names are replaced as a whole, like portions: the unique index on names is checked row by row,
+ * so two foods that swap a name would conflict halfway through an upsert.
+ */
+function namesSql(chosen: [string, ChosenFood][], codes: string): string {
   const rows = chosen.flatMap(([code, food]) =>
     LANGUAGES.map(
       (language) => `  (${[code, language, food[language].trim()].map(sqlString).join(', ')})`,
     ),
   );
   return `
+delete from public.food_names where food_id in (${codes});
+
 insert into public.food_names (food_id, language, name)
 values
-${rows.join(',\n')}
-on conflict (food_id, language) do update set name = excluded.name;
+${rows.join(',\n')};
 `;
 }
 
@@ -382,7 +387,7 @@ writeFileSync(
   header +
     archivedSql(codes) +
     foodsSql(entries, bls) +
-    namesSql(entries) +
+    namesSql(entries, codes) +
     portionsSql(entries, codes),
 );
 console.log(`Wrote ${entries.length} foods to ${file}`);
