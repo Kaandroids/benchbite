@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -103,23 +104,20 @@ export function LeftOpenSaver() {
           {t('session.leftOpen.message', { time })}
         </Text>
         <View style={[styles.actions, { gap: spacing.lg }]}>
-          <Pressable
-            accessibilityRole="button"
-            hitSlop={8}
+          <TextLink
+            label={t('session.leftOpen.view')}
+            size="regular"
             onPress={() => {
               setSaved(null);
               router.push({ pathname: '/workout/log/[id]', params: { id: String(saved.logId) } });
             }}
-          >
-            <Text variant="label" color="primaryText">
-              {t('session.leftOpen.view')}
-            </Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setSaved(null)}>
-            <Text variant="label" color="textMuted">
-              {t('session.leftOpen.dismiss')}
-            </Text>
-          </Pressable>
+          />
+          <TextLink
+            label={t('session.leftOpen.dismiss')}
+            tone="muted"
+            size="regular"
+            onPress={() => setSaved(null)}
+          />
         </View>
       </View>
     </View>
@@ -148,6 +146,5 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    marginTop: 4,
   },
 });

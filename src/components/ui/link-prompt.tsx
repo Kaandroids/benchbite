@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Text } from './text';
+import { TextLink } from './text-link';
 
 /** A question and a link that answers it, such as "Already have an account? Log in". */
 export function LinkPrompt({
@@ -15,11 +16,7 @@ export function LinkPrompt({
   return (
     <View style={styles.row}>
       <Text color="textMuted">{question} </Text>
-      <Pressable accessibilityRole="button" hitSlop={8} onPress={onPress}>
-        <Text variant="label" color="primaryText">
-          {action}
-        </Text>
-      </Pressable>
+      <TextLink label={action} size="regular" onPress={onPress} />
     </View>
   );
 }

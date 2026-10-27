@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
 import { useRecentLogs } from './history';
@@ -33,15 +34,7 @@ export function RecentLogs() {
         </Text>
         <View style={styles.flex} />
         {all.length > 0 ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/workout/history')}
-            style={styles.seeAll}
-          >
-            <Text variant="captionStrong" color="primaryText">
-              {t('history.seeAll')}
-            </Text>
-          </Pressable>
+          <TextLink label={t('history.seeAll')} onPress={() => router.push('/workout/history')} />
         ) : null}
       </View>
       {/* While loading or after an error, never the empty card: the history is not gone. */}
@@ -70,9 +63,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  seeAll: {
-    minHeight: 32,
-    justifyContent: 'center',
   },
 });
