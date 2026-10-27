@@ -6,7 +6,6 @@ import { View } from 'react-native';
 import { AccountSection } from '@/account/account-section';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
-import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { AppearanceSection } from './appearance-section';
@@ -17,14 +16,7 @@ import { ProfileSection } from './profile-section';
 export function SettingsScreen() {
   const { t } = useTranslation();
   return (
-    <Screen
-      onBack={() => router.back()}
-      title={
-        <Text variant="label" accessibilityRole="header">
-          {t('settings.title')}
-        </Text>
-      }
-    >
+    <Screen onBack={() => router.back()} title={t('settings.title')}>
       <Section title={t('settings.profile')}>
         <ProfileSection />
       </Section>

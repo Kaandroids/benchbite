@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
-import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
 import { daysBetween, fromIsoDate, useWeekdayDateFormat } from '@/i18n/dates';
@@ -69,15 +68,11 @@ export function MealScreen({ meal, day }: MealScreenProps) {
   return (
     <Screen
       onBack={() => router.back()}
-      title={
-        <ScreenTitle
-          title={t(`nutrition.meals.${meal}`)}
-          subtitle={t('nutrition.meal.dayLine', {
-            name: dayName(date, daysBetween(date, new Date())),
-            date: weekdayDate(date),
-          })}
-        />
-      }
+      title={t(`nutrition.meals.${meal}`)}
+      subtitle={t('nutrition.meal.dayLine', {
+        name: dayName(date, daysBetween(date, new Date())),
+        date: weekdayDate(date),
+      })}
       footer={
         <View style={{ gap: spacing.md }}>
           {removed ? (
