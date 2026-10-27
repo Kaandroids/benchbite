@@ -35,7 +35,7 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
     <>
       <View style={{ gap: spacing.sm }}>
         <Text variant="title" color="primaryText">
-          {format(eaten.calories)}{' '}
+          {format(Math.round(eaten.calories))}{' '}
           <Text variant="bodyStrong" color="textMuted">
             {t('nutrition.calorieTarget', { target: format(targets.calories) })}
           </Text>
@@ -49,7 +49,7 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
               {t(`nutrition.macros.${key}`)}
             </Text>
             <Text variant="headline">
-              {format(eaten[nutrient])}{' '}
+              {format(Math.round(eaten[nutrient]))}{' '}
               <Text variant="caption" color="textMuted">
                 {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
               </Text>
