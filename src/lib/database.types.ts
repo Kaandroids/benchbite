@@ -930,6 +930,10 @@ export type Database = {
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
+      copy_meal_entries: {
+        Args: { entry_ids: number[]; to_day: string; to_meal: Database['public']['Enums']['meal'] };
+        Returns: number;
+      };
       create_exercise: { Args: { exercise: Json }; Returns: string };
       custom_exercise_fields: {
         Args: { exercise: Json };
@@ -1046,6 +1050,20 @@ export type Database = {
       };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
+      loggable_foods: {
+        Args: { language: string };
+        Returns: {
+          carbs_g: number;
+          custom_food_id: number;
+          fat_g: number;
+          food_id: string;
+          kcal: number;
+          name: string;
+          portion_grams: number;
+          portion_unit: Database['public']['Enums']['portion_unit'];
+          protein_g: number;
+        }[];
+      };
       metrics_valid: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
         Returns: boolean;
@@ -1078,10 +1096,6 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
-      repeat_meal: {
-        Args: { for_meal: Database['public']['Enums']['meal']; from_day: string; to_day: string };
-        Returns: number;
-      };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {

@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -86,12 +86,17 @@ select is_empty(
   'A favourite that left the library is not listed'
 );
 
--- Repeating a meal
+-- Copying a past meal's entries
+
+create temporary table yesterday on commit drop as
+  select id, food_id from public.meal_entries
+  where day = current_date - 1 and meal = 'breakfast' order by id;
+grant select on yesterday to authenticated;
 
 select is(
-  public.repeat_meal(current_date - 1, current_date, 'breakfast'),
+  public.copy_meal_entries(array(select id from yesterday), current_date, 'breakfast'),
   2,
-  'Repeating a meal adds the foods that can still be logged'
+  'Copying a meal adds the foods that can still be logged'
 );
 select results_eq(
   $$ select food_id, custom_food_id is not null, grams from public.meal_entries
@@ -100,15 +105,23 @@ select results_eq(
   'with the same amounts'
 );
 select is(
-  public.repeat_meal(current_date - 5, current_date, 'breakfast'),
-  0,
-  'A day without the meal adds nothing'
+  public.copy_meal_entries(
+    array(select id from yesterday where food_id = 'C133000'), current_date, 'dinner'
+  ),
+  1,
+  'Only the entries picked are copied, to the meal given'
 );
 select throws_ok(
-  $$ select public.repeat_meal(current_date - 1, current_date - 9, 'breakfast') $$,
+  $$ select public.copy_meal_entries(array(select id from yesterday), current_date - 9, 'lunch') $$,
   'BB020',
   null,
-  'A meal is repeated only onto a day that can be logged'
+  'Entries are copied only onto a day that can be logged'
+);
+select throws_ok(
+  $$ select public.copy_meal_entries(array(select generate_series(1, 101)::bigint), current_date, 'lunch') $$,
+  '22023',
+  null,
+  'Up to 100 entries are copied at a time'
 );
 
 -- Other users
@@ -125,9 +138,9 @@ select is_empty(
   'nor get the frequent foods of others'
 );
 select is(
-  public.repeat_meal(current_date - 1, current_date, 'breakfast'),
+  public.copy_meal_entries(array(select id from yesterday), current_date, 'breakfast'),
   0,
-  'nor repeat their meals'
+  'nor copy their entries'
 );
 select throws_ok(
   $$ insert into public.favourite_foods (custom_food_id) select id from mine $$,
@@ -171,6 +184,17 @@ select throws_ok(
   'A user has up to 500 favourites'
 );
 
+reset role;
+update public.custom_foods set archived_at = now()
+  where id = (select min(id) from public.custom_foods
+    where user_id = '00000000-0000-0000-0000-00000000000b');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select lives_ok(
+  $$ insert into public.favourite_foods (custom_food_id)
+     select max(id) from public.custom_foods $$,
+  'A favourite of a deleted food does not count toward the limit'
+);
+
 select set_config('role', 'anon', true);
 select throws_ok(
   $$ select * from public.favourite_foods $$,
@@ -179,10 +203,10 @@ select throws_ok(
   'Requests without a session cannot read favourites'
 );
 select throws_ok(
-  $$ select public.repeat_meal(current_date - 1, current_date, 'breakfast') $$,
+  $$ select public.copy_meal_entries(array[1::bigint], current_date, 'breakfast') $$,
   '42501',
   null,
-  'nor repeat a meal'
+  'nor copy entries'
 );
 
 select * from finish();

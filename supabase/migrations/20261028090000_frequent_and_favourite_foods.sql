@@ -1,5 +1,43 @@
 -- Foods logged often and foods starred as favourites, to add again without searching, and a past
--- meal to add again in one step (#205, ADR 0037).
+-- meal's entries to add again in one step (#205, ADR 0037).
+
+-- The foods the caller can log, as search_foods() returns them: library foods still in the
+-- library, named in the language with English as the fallback and with their default portion,
+-- and the caller's own foods that are not deleted. The lists below join it, so that they agree on
+-- names and on which foods can still be logged.
+create function public.loggable_foods(language text)
+returns table (
+  food_id text,
+  custom_food_id bigint,
+  name text,
+  kcal numeric,
+  protein_g numeric,
+  carbs_g numeric,
+  fat_g numeric,
+  portion_unit public.portion_unit,
+  portion_grams numeric
+)
+language sql
+stable
+set search_path = ''
+as $$
+  select f.id, null::bigint, coalesce(own.name, en.name), f.kcal, f.protein_g, f.carbs_g,
+    f.fat_g, p.unit, p.grams
+  from public.foods f
+  join public.food_names en on en.food_id = f.id and en.language = 'en'
+  left join public.food_names own
+    on own.food_id = f.id and own.language = loggable_foods.language
+  join public.food_portions p on p.food_id = f.id and p.is_default
+  where f.archived_at is null
+  union all
+  select null, c.id, c.name, c.kcal, c.protein_g, c.carbs_g, c.fat_g, c.portion_unit,
+    c.portion_grams
+  from public.custom_foods c
+  where c.user_id = (select auth.uid()) and c.archived_at is null;
+$$;
+
+revoke execute on function public.loggable_foods(text) from public, anon;
+grant execute on function public.loggable_foods(text) to authenticated;
 
 -- A food the user starred: a library food or one of their own, once each.
 create table public.favourite_foods (
@@ -43,7 +81,8 @@ revoke all on public.favourite_foods from anon;
 revoke insert, update, truncate on public.favourite_foods from authenticated;
 grant insert (food_id, custom_food_id) on public.favourite_foods to authenticated;
 
--- Up to 500 favourites per user.
+-- Up to 500 favourites per user. Favourites of foods that can no longer be logged are listed
+-- nowhere and cannot be unstarred, so they do not count.
 create function public.check_favourite_food_limit()
 returns trigger
 language plpgsql
@@ -53,7 +92,13 @@ set search_path = ''
 as $$
 begin
   perform public.lock_user_limits(new.user_id);
-  if (select count(*) from public.favourite_foods f where f.user_id = new.user_id) >= 500 then
+  if (
+    select count(*)
+    from public.favourite_foods fav
+    left join public.foods f on f.id = fav.food_id
+    left join public.custom_foods c on c.id = fav.custom_food_id
+    where fav.user_id = new.user_id and coalesce(f.archived_at, c.archived_at) is null
+  ) >= 500 then
     raise exception 'A user can have up to 500 favourite foods' using errcode = 'BB027';
   end if;
   return new;
@@ -66,8 +111,7 @@ create trigger favourite_foods_check_limit
   before insert on public.favourite_foods
   for each row execute function public.check_favourite_food_limit();
 
--- The caller's favourites that can still be logged, newest first, as search_foods() returns
--- foods: the name in the language, falling back to English, and the default portion.
+-- The caller's favourites that can still be logged, newest first, shaped as loggable_foods().
 create function public.list_favourite_foods(language text)
 returns table (
   food_id text,
@@ -84,35 +128,12 @@ language sql
 stable
 set search_path = ''
 as $$
-  select food_id, custom_food_id, name, kcal, protein_g, carbs_g, fat_g, portion_unit,
-    portion_grams
-  from (
-    select
-      f.id as food_id,
-      null::bigint as custom_food_id,
-      coalesce(own.name, en.name) as name,
-      f.kcal,
-      f.protein_g,
-      f.carbs_g,
-      f.fat_g,
-      p.unit as portion_unit,
-      p.grams as portion_grams,
-      fav.created_at,
-      fav.id
-    from public.favourite_foods fav
-    join public.foods f on f.id = fav.food_id and f.archived_at is null
-    join public.food_names en on en.food_id = f.id and en.language = 'en'
-    left join public.food_names own
-      on own.food_id = f.id and own.language = list_favourite_foods.language
-    join public.food_portions p on p.food_id = f.id and p.is_default
-    union all
-    select
-      null, c.id, c.name, c.kcal, c.protein_g, c.carbs_g, c.fat_g, c.portion_unit,
-      c.portion_grams, fav.created_at, fav.id
-    from public.favourite_foods fav
-    join public.custom_foods c on c.id = fav.custom_food_id and c.archived_at is null
-  ) favourites
-  order by created_at desc, id desc;
+  select l.food_id, l.custom_food_id, l.name, l.kcal, l.protein_g, l.carbs_g, l.fat_g,
+    l.portion_unit, l.portion_grams
+  from public.favourite_foods fav
+  join public.loggable_foods(list_favourite_foods.language) l
+    on l.food_id = fav.food_id or l.custom_food_id = fav.custom_food_id
+  order by fav.created_at desc, fav.id desc;
 $$;
 
 revoke execute on function public.list_favourite_foods(text) from public, anon;
@@ -152,35 +173,23 @@ as $$
   latest as (
     select * from recent where newest = 1
   )
-  select food_id, custom_food_id, name, kcal, protein_g, carbs_g, fat_g, times::integer, grams,
-    portion_unit, portion_count
-  from (
-    select
-      l.food_id, null::bigint as custom_food_id, coalesce(own.name, en.name) as name,
-      f.kcal, f.protein_g, f.carbs_g, f.fat_g, l.times, l.grams, l.portion_unit, l.portion_count
-    from latest l
-    join public.foods f on f.id = l.food_id and f.archived_at is null
-    join public.food_names en on en.food_id = f.id and en.language = 'en'
-    left join public.food_names own
-      on own.food_id = f.id and own.language = frequent_foods.language
-    union all
-    select
-      null, c.id, c.name, c.kcal, c.protein_g, c.carbs_g, c.fat_g, l.times, l.grams,
-      l.portion_unit, l.portion_count
-    from latest l
-    join public.custom_foods c on c.id = l.custom_food_id and c.archived_at is null
-  ) foods
-  order by times desc, name
+  select f.food_id, f.custom_food_id, f.name, f.kcal, f.protein_g, f.carbs_g, f.fat_g,
+    l.times::integer, l.grams, l.portion_unit, l.portion_count
+  from latest l
+  join public.loggable_foods(frequent_foods.language) f
+    on f.food_id = l.food_id or f.custom_food_id = l.custom_food_id
+  order by l.times desc, f.name
   limit 10;
 $$;
 
 revoke execute on function public.frequent_foods(public.meal, text) from public, anon;
 grant execute on function public.frequent_foods(public.meal, text) to authenticated;
 
--- Adds the caller's entries of a meal on one day to the same meal on another, in one step, with
--- the same amounts and the foods' current values. Foods that can no longer be logged are left
--- out. Returns how many were added. The day check (BB020) applies to the new day.
-create function public.repeat_meal(from_day date, to_day date, for_meal public.meal)
+-- Adds copies of the caller's entries to a meal of a day, in one step, with the same amounts and
+-- the foods' current values, such as the foods picked from a past meal. Entries of others and
+-- foods that can no longer be logged are left out. Returns how many were added. The day check
+-- (BB020) applies to the new day.
+create function public.copy_meal_entries(entry_ids bigint[], to_day date, to_meal public.meal)
 returns integer
 language plpgsql
 set search_path = ''
@@ -188,16 +197,19 @@ as $$
 declare
   added integer;
 begin
+  -- More than a meal holds, as the entries of one day are limited too.
+  if cardinality(entry_ids) > 100 then
+    raise exception 'Up to 100 entries at a time' using errcode = '22023';
+  end if;
   insert into public.meal_entries (day, meal, food_id, custom_food_id, grams, portion_unit,
     portion_count)
-  select repeat_meal.to_day, e.meal, e.food_id, e.custom_food_id, e.grams, e.portion_unit,
-    e.portion_count
+  select copy_meal_entries.to_day, copy_meal_entries.to_meal, e.food_id, e.custom_food_id,
+    e.grams, e.portion_unit, e.portion_count
   from public.meal_entries e
   left join public.foods f on f.id = e.food_id
   left join public.custom_foods c on c.id = e.custom_food_id
   where e.user_id = (select auth.uid())
-    and e.day = repeat_meal.from_day
-    and e.meal = repeat_meal.for_meal
+    and e.id = any (copy_meal_entries.entry_ids)
     and coalesce(f.archived_at, c.archived_at) is null
   order by e.created_at, e.id;
   get diagnostics added = row_count;
@@ -205,5 +217,7 @@ begin
 end;
 $$;
 
-revoke execute on function public.repeat_meal(date, date, public.meal) from public, anon;
-grant execute on function public.repeat_meal(date, date, public.meal) to authenticated;
+revoke execute on function public.copy_meal_entries(bigint[], date, public.meal)
+  from public, anon;
+grant execute on function public.copy_meal_entries(bigint[], date, public.meal)
+  to authenticated;
