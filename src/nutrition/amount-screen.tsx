@@ -119,13 +119,17 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
   const [gramsText, setGramsText] = useState<string | null>(null);
 
   const portion = portionIndex === null ? null : food.portions[portionIndex]!;
+  // As many portions as an entry's grams allow, such as 6.5 bottles of 750 g.
+  const maxCount = portion
+    ? Math.min(MAX_PORTIONS, Math.floor(MAX_GRAMS / portion.grams / PORTION_STEP) * PORTION_STEP)
+    : 0;
   // Entries keep grams to one decimal.
   const amount = portion ? Math.round(portion.grams * count * 10) / 10 : grams;
   const adds = amountOf(food.per100g, amount);
 
   const step = (direction: 1 | -1) => {
     if (portion) {
-      setCount((current) => clamp(current + direction * PORTION_STEP, PORTION_STEP, MAX_PORTIONS));
+      setCount((current) => clamp(current + direction * PORTION_STEP, PORTION_STEP, maxCount));
     } else {
       setGramsText(null);
       setGrams((current) =>
@@ -138,7 +142,7 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
     }
   };
   const atMin = portion ? count <= PORTION_STEP : grams <= 1;
-  const atMax = portion ? count >= MAX_PORTIONS : grams >= MAX_GRAMS;
+  const atMax = portion ? count >= maxCount : grams >= MAX_GRAMS;
 
   const save = () =>
     addEntry.mutate(
@@ -191,7 +195,7 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
               selected={portionIndex === null}
               onPress={() => {
                 setPortionIndex(null);
-                setGrams(amount);
+                setGrams(clamp(amount, 1, MAX_GRAMS));
                 setGramsText(null);
               }}
             />

@@ -102,6 +102,18 @@ describe('AmountScreen', () => {
     expect(screen.getByText(/0.5 cups/)).toBeTruthy();
   });
 
+  it('stops at the most grams an entry holds', async () => {
+    jest
+      .mocked(useFood)
+      .mockReturnValue(loaded({ ...YOGHURT, portions: [{ unit: 'bottle', grams: 750 }] }));
+    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    for (let step = 0; step < 15; step++) {
+      await fireEvent.press(screen.getByLabelText('More'));
+    }
+    expect(screen.getByText(/6.5 bottles · 4,875 g/)).toBeTruthy();
+    expect(screen.getByLabelText('More')).toBeDisabled();
+  });
+
   it('says when the food is no longer in the library', async () => {
     jest.mocked(useFood).mockReturnValue(loaded(null));
     await render(<AmountScreen foodId="X" meal="lunch" day="2026-10-27" />);
