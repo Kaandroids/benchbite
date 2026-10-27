@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
-import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { setKindOf } from '@/sets/fields';
@@ -28,9 +27,8 @@ export function ExerciseHistoryScreen({
   const library = useExerciseLibrary();
 
   const exercise = findExercise(library.data, id);
-  const title = (
-    <ScreenTitle title={exercise?.name ?? ''} subtitle={t('exerciseHistory.subtitle')} />
-  );
+  const title = exercise?.name ?? '';
+  const subtitle = t('exerciseHistory.subtitle');
 
   if (!allLoaded([history, library])) {
     return (
@@ -46,7 +44,7 @@ export function ExerciseHistoryScreen({
   };
   if (sessions.length === 0) {
     return (
-      <Screen onBack={() => router.back()} title={title}>
+      <Screen onBack={() => router.back()} title={title} subtitle={subtitle}>
         <MessageView
           icon="trophy"
           title={t('exerciseHistory.empty.title')}
@@ -65,7 +63,7 @@ export function ExerciseHistoryScreen({
       : { reps: { min: 1, max: 1 } },
   );
   return (
-    <Screen onBack={() => router.back()} title={title}>
+    <Screen onBack={() => router.back()} title={title} subtitle={subtitle}>
       {records.length > 0 ? <RecordsCard records={records} kind={kind} /> : null}
       <ProgressCard progress={progress} kind={kind} />
       <Text variant="label" color="textMuted" style={{ paddingHorizontal: 4 }}>

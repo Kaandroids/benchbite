@@ -11,7 +11,6 @@ import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
-import { ScreenTitle } from '@/components/ui/screen-title';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Constants } from '@/lib/database.types';
@@ -158,11 +157,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
     <KeyboardAvoiding>
       <Screen
         onBack={() => router.back()}
-        title={
-          <ScreenTitle
-            title={props.kind === 'new' ? t('nutrition.food.title') : t('nutrition.food.editTitle')}
-          />
-        }
+        title={props.kind === 'new' ? t('nutrition.food.title') : t('nutrition.food.editTitle')}
         footer={
           <View style={{ gap: spacing.md }}>
             {serverError ? <FormError>{serverError}</FormError> : null}

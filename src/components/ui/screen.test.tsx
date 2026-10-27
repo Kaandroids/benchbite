@@ -46,4 +46,27 @@ describe('Screen', () => {
     expect(progressBars()).toHaveLength(1);
     expect(progressBars()[0]).toHaveAccessibilityValue({ now: 50 });
   });
+
+  it('shows a text title as the header, with a line under it', async () => {
+    await render(
+      <Screen onBack={() => {}} title="Breakfast" subtitle="Today · Tue, Oct 27">
+        <Text>Body</Text>
+      </Screen>,
+    );
+    expect(screen.getByRole('header', { name: 'Breakfast' })).toBeTruthy();
+    expect(screen.getByText('Today · Tue, Oct 27')).toBeTruthy();
+  });
+
+  it('keeps an empty text title in the middle, balanced against the back button', async () => {
+    await render(
+      <Screen onBack={() => {}} title="" subtitle="History">
+        <Text>Body</Text>
+      </Screen>,
+    );
+    // The back button, and the spacer of its width at the other end of the bar.
+    const sides = screen.container.queryAll(
+      (node) => node.type === 'View' && node.props.style?.width === 44,
+    );
+    expect(sides.length).toBeGreaterThanOrEqual(2);
+  });
 });

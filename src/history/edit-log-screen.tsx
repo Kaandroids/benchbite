@@ -6,7 +6,6 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
-import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { useClockFormat } from '@/i18n/dates';
@@ -93,7 +92,7 @@ function LogEditor({
     <Screen
       onBack={() => router.back()}
       closes
-      title={<ScreenTitle title={t('history.edit.title', { name: workoutName(log) })} />}
+      title={t('history.edit.title', { name: workoutName(log) })}
       action={
         <PillButton
           variant="primary"

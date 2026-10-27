@@ -34,15 +34,7 @@ export function HistoryScreen() {
   );
 
   return (
-    <Screen
-      onBack={() => router.back()}
-      scrolls={false}
-      title={
-        <Text variant="label" accessibilityRole="header">
-          {t('workout.history.title')}
-        </Text>
-      }
-    >
+    <Screen onBack={() => router.back()} scrolls={false} title={t('workout.history.title')}>
       {!allLoaded([logs]) ? (
         <View style={{ padding: spacing.xl }}>
           <LoadState queries={[logs]} />

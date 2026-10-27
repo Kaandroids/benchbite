@@ -15,14 +15,7 @@ export function ArchiveScreen() {
   const inactive = workouts.data?.filter((workout) => !workout.active) ?? [];
 
   return (
-    <Screen
-      onBack={() => router.back()}
-      title={
-        <Text variant="label" accessibilityRole="header">
-          {t('workout.archive.title')}
-        </Text>
-      }
-    >
+    <Screen onBack={() => router.back()} title={t('workout.archive.title')}>
       <Text color="textMuted">{t('workout.archive.body')}</Text>
       <LoadState queries={[workouts]} />
       {allLoaded([workouts]) ? (
