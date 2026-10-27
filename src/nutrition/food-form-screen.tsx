@@ -102,7 +102,11 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
       ? t('nutrition.food.nameTaken')
       : isDbError(failed.error, 'customFoodLimit')
         ? t('nutrition.food.limit')
-        : t('nutrition.food.saveError')
+        : isDbError(failed.error, 'customFoodTotalLimit')
+          ? t('nutrition.food.totalLimit')
+          : isDbError(failed.error, 'customFoodDeleted')
+            ? t('nutrition.food.deleted')
+            : t('nutrition.food.saveError')
     : deleteFood.isError
       ? t('nutrition.food.deleteError')
       : null;

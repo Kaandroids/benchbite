@@ -265,7 +265,7 @@
     "addError": {
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
       "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
-      "archived": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
+      "archived": "Dieses Lebensmittel ist nicht mehr verfügbar."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -343,11 +343,13 @@
         "can": "Dose",
         "bottle": "Flasche"
       },
-      "tooFewCalories": "Protein, Kohlenhydrate und Fett allein ergeben {{calories}} kcal, mehr als die eingegebenen {{entered}} kcal. Prüfe das Etikett."
+      "tooFewCalories": "Protein, Kohlenhydrate und Fett allein ergeben {{calories}} kcal, mehr als die eingegebenen {{entered}} kcal. Prüfe das Etikett.",
+      "totalLimit": "Du hast 1.000 Lebensmittel hinzugefügt, gelöschte mitgezählt. Mehr geht nicht.",
+      "deleted": "Dieses Lebensmittel wurde gelöscht."
     },
     "foodNotFound": {
       "title": "Lebensmittel nicht gefunden",
-      "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
+      "message": "Dieses Lebensmittel ist nicht mehr verfügbar."
     }
   },
   "workout": {

@@ -189,7 +189,7 @@ describe('FoodSearchScreen', () => {
       .mocked(useAddEntry)
       .mockReturnValue({ mutateAsync, isError: true, error: { code: 'BB022' } } as never);
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
-    expect(screen.getByText('This food is no longer in the library.')).toBeTruthy();
+    expect(screen.getByText('This food is no longer available.')).toBeTruthy();
   });
 
   it('says when a day can no longer be changed', async () => {

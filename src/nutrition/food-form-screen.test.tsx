@@ -147,6 +147,18 @@ describe('FoodFormScreen, a new food', () => {
     expect(save()).toBeDisabled();
   });
 
+  it('says when the total of foods, deleted ones included, is reached', async () => {
+    jest
+      .mocked(useCreateFood)
+      .mockReturnValue(mutation(create, { isError: true, error: { code: 'BB026' } }));
+    await render(<FoodFormScreen kind="new" meal="snack" day="2026-10-27" />);
+    expect(
+      screen.getByText(
+        'You have added 1,000 foods, deleted ones included, which is the most anyone can.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('says when a food with the name exists', async () => {
     jest
       .mocked(useCreateFood)

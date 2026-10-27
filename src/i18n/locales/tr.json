@@ -265,7 +265,7 @@
     "addError": {
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
       "failed": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
-      "archived": "Bu besin artık kütüphanede yok."
+      "archived": "Bu besin artık mevcut değil."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -343,11 +343,13 @@
         "can": "Kutu",
         "bottle": "Şişe"
       },
-      "tooFewCalories": "Protein, karbonhidrat ve yağ tek başına {{calories}} kcal ediyor, girdiğin {{entered}} kcal'den fazla. Etiketi kontrol et."
+      "tooFewCalories": "Protein, karbonhidrat ve yağ tek başına {{calories}} kcal ediyor, girdiğin {{entered}} kcal'den fazla. Etiketi kontrol et.",
+      "totalLimit": "Silinenler dahil 1.000 besin ekledin; bu, eklenebilecek en fazla sayı.",
+      "deleted": "Bu besin silinmiş."
     },
     "foodNotFound": {
       "title": "Besin bulunamadı",
-      "message": "Bu besin artık kütüphanede yok."
+      "message": "Bu besin artık mevcut değil."
     }
   },
   "workout": {

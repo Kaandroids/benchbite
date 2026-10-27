@@ -265,7 +265,7 @@
     "addError": {
       "closedDay": "Meals can only be added to today and the week before.",
       "failed": "The food could not be added. Check your connection and try again.",
-      "archived": "This food is no longer in the library."
+      "archived": "This food is no longer available."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -343,11 +343,13 @@
         "can": "Can",
         "bottle": "Bottle"
       },
-      "tooFewCalories": "Protein, carbs and fat alone make {{calories}} kcal, more than the {{entered}} kcal you entered. Check the label."
+      "tooFewCalories": "Protein, carbs and fat alone make {{calories}} kcal, more than the {{entered}} kcal you entered. Check the label.",
+      "totalLimit": "You have added 1,000 foods, deleted ones included, which is the most anyone can.",
+      "deleted": "This food was deleted."
     },
     "foodNotFound": {
       "title": "Food not found",
-      "message": "This food is no longer in the library."
+      "message": "This food is no longer available."
     }
   },
   "workout": {
