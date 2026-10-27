@@ -207,7 +207,68 @@
     "mealTotalsLabel": "{{calories}} kcal, {{protein}} g Protein, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
     "suggested": "Vorschlag {{calories}} kcal",
     "nothingLogged": "Noch nichts eingetragen",
-    "loading": "Tag wird geladen"
+    "loading": "Tag wird geladen",
+    "units": {
+      "piece_one": "{{amount}} Stück",
+      "piece_other": "{{amount}} Stück",
+      "slice_one": "{{amount}} Scheibe",
+      "slice_other": "{{amount}} Scheiben",
+      "cup_one": "{{amount}} Tasse",
+      "cup_other": "{{amount}} Tassen",
+      "glass_one": "{{amount}} Glas",
+      "glass_other": "{{amount}} Gläser",
+      "bowl_one": "{{amount}} Schüssel",
+      "bowl_other": "{{amount}} Schüsseln",
+      "plate_one": "{{amount}} Teller",
+      "plate_other": "{{amount}} Teller",
+      "tablespoon_one": "{{amount}} EL",
+      "tablespoon_other": "{{amount}} EL",
+      "teaspoon_one": "{{amount}} TL",
+      "teaspoon_other": "{{amount}} TL",
+      "handful_one": "{{amount}} Handvoll",
+      "handful_other": "{{amount}} Handvoll",
+      "serving_one": "{{amount}} Portion",
+      "serving_other": "{{amount}} Portionen",
+      "can_one": "{{amount}} Dose",
+      "can_other": "{{amount}} Dosen",
+      "bottle_one": "{{amount}} Flasche",
+      "bottle_other": "{{amount}} Flaschen"
+    },
+    "addTo": {
+      "breakfast": "Zum Frühstück hinzufügen",
+      "lunch": "Zum Mittagessen hinzufügen",
+      "dinner": "Zum Abendessen hinzufügen",
+      "snack": "Snack hinzufügen"
+    },
+    "search": {
+      "placeholder": "Lebensmittel suchen",
+      "hint": "Gib mindestens zwei Buchstaben ein, um die Lebensmittel zu durchsuchen.",
+      "noResults": "Kein Lebensmittel passt zu „{{query}}“.",
+      "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
+      "quickAdd": "{{portion}} {{name}} hinzufügen",
+      "added": "{{name}} hinzugefügt",
+      "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
+    },
+    "amount": {
+      "per100g": "{{calories}} kcal pro 100 g",
+      "portion": "Portion",
+      "grams": "Gramm",
+      "portionChip": "{{portion}} · {{grams}} g",
+      "less": "Weniger",
+      "more": "Mehr",
+      "inGrams": "{{grams}} g",
+      "adds": "Das ergibt",
+      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal.",
+      "notFound": {
+        "title": "Lebensmittel nicht gefunden",
+        "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
+      }
+    },
+    "addError": {
+      "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
+      "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
+      "archived": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
+    }
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
