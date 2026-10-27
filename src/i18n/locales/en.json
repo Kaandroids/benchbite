@@ -408,7 +408,13 @@
       "favouriteRemoved": "Removed from favourites",
       "favouriteError": "The favourite could not be saved. Check your connection and try again.",
       "favouriteLimit": "You can have up to 500 favourites. Remove one to add another.",
-      "isFavourite": "Favourite"
+      "isFavourite": "Favourite",
+      "choose": "Choose",
+      "chooseLabel": "Choose foods of {{day}}",
+      "pickNote": "{{day}} · tick what you had again",
+      "addPicked_one": "Add {{count}} food · {{calories}} kcal",
+      "addPicked_other": "Add {{count}} foods · {{calories}} kcal",
+      "pickNothing": "Tick a food to add"
     }
   },
   "workout": {

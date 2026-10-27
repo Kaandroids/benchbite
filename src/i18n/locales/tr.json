@@ -408,7 +408,13 @@
       "favouriteRemoved": "Favorilerden çıkarıldı",
       "favouriteError": "Favori kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
       "favouriteLimit": "En fazla 500 favorin olabilir. Yenisini eklemek için birini çıkar.",
-      "isFavourite": "Favori"
+      "isFavourite": "Favori",
+      "choose": "Seç",
+      "chooseLabel": "{{day}} gününden besin seç",
+      "pickNote": "{{day}} · yine yediklerini işaretle",
+      "addPicked_one": "{{count}} besin ekle · {{calories}} kcal",
+      "addPicked_other": "{{count}} besin ekle · {{calories}} kcal",
+      "pickNothing": "Eklemek için bir besin işaretle"
     }
   },
   "workout": {

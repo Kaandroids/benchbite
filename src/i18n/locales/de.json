@@ -408,7 +408,13 @@
       "favouriteRemoved": "Aus Favoriten entfernt",
       "favouriteError": "Der Favorit konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
       "favouriteLimit": "Du kannst bis zu 500 Favoriten haben. Entferne einen, um einen neuen hinzuzufügen.",
-      "isFavourite": "Favorit"
+      "isFavourite": "Favorit",
+      "choose": "Auswählen",
+      "chooseLabel": "Lebensmittel von {{day}} auswählen",
+      "pickNote": "{{day}} · hake an, was du wieder hattest",
+      "addPicked_one": "{{count}} Lebensmittel hinzufügen · {{calories}} kcal",
+      "addPicked_other": "{{count}} Lebensmittel hinzufügen · {{calories}} kcal",
+      "pickNothing": "Hake ein Lebensmittel an"
     }
   },
   "workout": {
