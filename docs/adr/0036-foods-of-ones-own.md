@@ -12,9 +12,9 @@ brands and home dishes. People need to log those from the values printed on thei
 
 - **A table of its own, `custom_foods`:** the owner, a name, kcal and macros per 100 g, and one
   optional portion such as 1 can = 330 g. Row level security limits every row to its owner.
-- **Entered as the label prints them:** the form takes values per 100 g or per portion and stores
-  them per 100 g. It checks that the macros roughly add up to the calories, but does not block
-  saving, as labels round.
+- **Entered per 100 g, as labels print them:** the form takes the values per 100 g, and a portion
+  as a unit and the grams it weighs. It checks that the macros roughly add up to the calories,
+  naming both numbers, but does not block saving, as labels round.
 - **Entries name either kind of food:** `meal_entries` has `food_id` or `custom_food_id`, exactly
   one of them. The same trigger copies the values (ADR 0034). A food of another user counts as
   unknown, so its id reveals nothing.
@@ -31,6 +31,9 @@ brands and home dishes. People need to log those from the values printed on thei
 
 ## Alternatives considered
 
+- **Entering values per portion too, scaled to 100 g:** some labels print both, but a switch
+  between the two was hard to follow in the form, and labels in the EU always give the values
+  per 100 g.
 - **Sharing foods between users, as some apps do:** search would fill with duplicates and wrong
   values that need moderation.
 - **Adding them to `foods` with an owner column:** the library's rows are imported from the BLS
