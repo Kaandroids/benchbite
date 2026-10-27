@@ -57,6 +57,7 @@ describe('useStep', () => {
       sections: ['About you', 'Training', 'Your plan'],
       current: 0,
       value: 2 / 11,
+      overall: 2 / 20,
     });
 
     const { result: last } = await renderStep('summary');

@@ -70,7 +70,7 @@ const SAMPLE_SECTIONS = ['About you', 'Training', 'Your plan'];
 function sectionsAt(progress: number) {
   const scaled = progress * SAMPLE_SECTIONS.length;
   const current = Math.min(SAMPLE_SECTIONS.length - 1, Math.floor(scaled));
-  return { sections: SAMPLE_SECTIONS, current, value: scaled - current };
+  return { sections: SAMPLE_SECTIONS, current, value: scaled - current, overall: progress };
 }
 const CENTIMETRES = range(HEIGHT_RANGE_CM.min, HEIGHT_RANGE_CM.max);
 const FEET = range(3, 8);

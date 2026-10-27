@@ -114,13 +114,20 @@ describe('steps', () => {
   });
 
   it('measures progress within each section, counting the step itself', () => {
-    expect(progressOf('welcome')).toEqual({ current: 0, value: 0 });
-    expect(progressOf('nickname')).toEqual({ current: 0, value: 1 / 11 });
-    expect(progressOf('activity')).toEqual({ current: 0, value: 1 });
-    expect(progressOf('training-intro')).toEqual({ current: 1, value: 1 / 5 });
-    expect(progressOf('session-length')).toEqual({ current: 1, value: 1 });
-    expect(progressOf('building')).toEqual({ current: 2, value: 1 / 4 });
-    expect(progressOf('summary')).toEqual({ current: 2, value: 1 });
+    expect(progressOf('welcome')).toMatchObject({ current: 0, value: 0 });
+    expect(progressOf('nickname')).toMatchObject({ current: 0, value: 1 / 11 });
+    expect(progressOf('activity')).toMatchObject({ current: 0, value: 1 });
+    expect(progressOf('training-intro')).toMatchObject({ current: 1, value: 1 / 5 });
+    expect(progressOf('session-length')).toMatchObject({ current: 1, value: 1 });
+    expect(progressOf('building')).toMatchObject({ current: 2, value: 1 / 4 });
+    expect(progressOf('summary')).toMatchObject({ current: 2, value: 1 });
+  });
+
+  it('measures the whole flow against every step for screen readers', () => {
+    expect(progressOf('welcome').overall).toBe(0);
+    expect(progressOf('activity').overall).toBeCloseTo(11 / 20);
+    expect(progressOf('training-intro').overall).toBeCloseTo(12 / 20);
+    expect(progressOf('summary').overall).toBe(1);
   });
 
   it('moves forward with every step', () => {

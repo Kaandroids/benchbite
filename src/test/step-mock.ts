@@ -19,7 +19,12 @@ export function createStep(answers: OnboardingAnswers = {}): StepMock {
   const answer = jest.fn<void, [OnboardingAnswers]>();
   return {
     answers,
-    progress: { sections: ['About you', 'Training', 'Your plan'], current: 0, value: 0.5 },
+    progress: {
+      sections: ['About you', 'Training', 'Your plan'],
+      current: 0,
+      value: 0.5,
+      overall: 0.25,
+    },
     answer,
     next: jest.fn(),
     back: jest.fn(),
