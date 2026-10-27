@@ -364,6 +364,11 @@
     "overLimit_other": "Remove {{count}} exercises to save. Workouts can have up to {{max}}."
   },
   "onboarding": {
+    "sections": {
+      "you": "About you",
+      "training": "Training",
+      "plan": "Your plan"
+    },
     "steps": {
       "nickname": {
         "title": "What should we call you?"

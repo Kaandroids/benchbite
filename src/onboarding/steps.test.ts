@@ -113,12 +113,31 @@ describe('steps', () => {
     expect(answers).toEqual({ goal: 'stay_healthy', targetWeightKg: 70 });
   });
 
-  it('measures progress from 0 on the first step to 1 on the last', () => {
-    expect(progressOf('welcome')).toBe(0);
-    expect(progressOf('summary')).toBe(1);
-    expect(progressOf('goal')).toBeCloseTo(2 / 20);
-    expect(progressOf('target-weight')).toBeCloseTo(9 / 20);
-    expect(progressOf('activity')).toBeGreaterThan(progressOf('weight'));
+  it('measures progress within each section, counting the step itself', () => {
+    expect(progressOf('welcome')).toMatchObject({ current: 0, value: 0 });
+    expect(progressOf('nickname')).toMatchObject({ current: 0, value: 1 / 11 });
+    expect(progressOf('activity')).toMatchObject({ current: 0, value: 1 });
+    expect(progressOf('training-intro')).toMatchObject({ current: 1, value: 1 / 5 });
+    expect(progressOf('session-length')).toMatchObject({ current: 1, value: 1 });
+    expect(progressOf('building')).toMatchObject({ current: 2, value: 1 / 4 });
+    expect(progressOf('summary')).toMatchObject({ current: 2, value: 1 });
+  });
+
+  it('measures the whole flow against every step for screen readers', () => {
+    expect(progressOf('welcome').overall).toBe(0);
+    expect(progressOf('activity').overall).toBeCloseTo(11 / 20);
+    expect(progressOf('training-intro').overall).toBeCloseTo(12 / 20);
+    expect(progressOf('summary').overall).toBe(1);
+  });
+
+  it('moves forward with every step', () => {
+    const overall = STEPS.map((step) => {
+      const { current, value } = progressOf(step);
+      return current + value;
+    });
+    for (let index = 1; index < overall.length; index++) {
+      expect(overall[index]).toBeGreaterThan(overall[index - 1]!);
+    }
   });
 
   it('lists the steps of the flow between two steps', () => {

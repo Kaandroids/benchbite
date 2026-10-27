@@ -53,10 +53,15 @@ describe('useStep', () => {
   it('returns the answers so far and the progress', async () => {
     const { result } = await renderStep('goal', { goal: 'lose_fat' });
     expect(result.current.answers).toEqual({ goal: 'lose_fat' });
-    expect(result.current.progress).toBeCloseTo(2 / 20);
+    expect(result.current.progress).toEqual({
+      sections: ['About you', 'Training', 'Your plan'],
+      current: 0,
+      value: 2 / 11,
+      overall: 2 / 20,
+    });
 
     const { result: last } = await renderStep('summary');
-    expect(last.current.progress).toBe(1);
+    expect(last.current.progress).toMatchObject({ current: 2, value: 1 });
   });
 
   it('saves answers without moving on', async () => {

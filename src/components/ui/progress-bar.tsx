@@ -11,27 +11,42 @@ type ProgressBarProps = {
   /** The colour of the filled part. */
   color?: keyof ColorTokens;
   accessibilityLabel?: string;
+  /** `thin` for a bar that is one of several, such as a section of a flow. */
+  size?: 'regular' | 'thin';
+  /** False when an element around it describes the progress, so it is not read twice. */
+  accessible?: boolean;
 };
 
-export function ProgressBar({ value, color = 'primary', accessibilityLabel }: ProgressBarProps) {
+export function ProgressBar({
+  value,
+  color = 'primary',
+  accessibilityLabel,
+  size = 'regular',
+  accessible = true,
+}: ProgressBarProps) {
   const { colors, radii } = useTheme();
   const clamped = clamp(value, 0, 1);
   const progress = useSharedValue(clamped);
 
   useEffect(() => {
-    progress.value = withTiming(clamped, { duration: 350 });
+    progress.set(withTiming(clamped, { duration: 350 }));
   }, [clamped, progress]);
 
-  const fillStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
+  const fillStyle = useAnimatedStyle(() => ({ width: `${progress.get() * 100}%` }));
 
   return (
     <View
       // Without it, iOS does not read the bar.
-      accessible
-      accessibilityRole="progressbar"
+      accessible={accessible}
+      accessibilityRole={accessible ? 'progressbar' : undefined}
       accessibilityLabel={accessibilityLabel}
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped * 100) }}
-      style={[styles.track, { backgroundColor: colors.track, borderRadius: radii.full }]}
+      accessibilityValue={
+        accessible ? { min: 0, max: 100, now: Math.round(clamped * 100) } : undefined
+      }
+      style={[
+        styles.track,
+        { height: HEIGHTS[size], backgroundColor: colors.track, borderRadius: radii.full },
+      ]}
     >
       <Animated.View
         style={[
@@ -44,9 +59,10 @@ export function ProgressBar({ value, color = 'primary', accessibilityLabel }: Pr
   );
 }
 
+const HEIGHTS = { regular: 12, thin: 6 };
+
 const styles = StyleSheet.create({
   track: {
-    height: 12,
     overflow: 'hidden',
   },
   fill: {

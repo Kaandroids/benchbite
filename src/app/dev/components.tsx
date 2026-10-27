@@ -95,6 +95,15 @@ const ICONS: IconName[] = [
   'timer',
 ];
 
+const SAMPLE_SECTIONS = ['About you', 'Training', 'Your plan'];
+
+/** The sample sections with the overall progress, between 0 and 1, spread over them. */
+function sectionsAt(progress: number) {
+  const scaled = progress * SAMPLE_SECTIONS.length;
+  const current = Math.min(SAMPLE_SECTIONS.length - 1, Math.floor(scaled));
+  return { sections: SAMPLE_SECTIONS, current, value: scaled - current, overall: progress };
+}
+
 /** Every design system component in its states, for development only. */
 export default function ComponentGallery() {
   const { colors, spacing } = useTheme();
@@ -137,7 +146,7 @@ export default function ComponentGallery() {
 
   return (
     <Screen
-      progress={progress}
+      progress={sectionsAt(progress)}
       onBack={leave}
       footer={
         <Button

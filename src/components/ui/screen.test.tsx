@@ -39,7 +39,7 @@ describe('Screen', () => {
     expect(progressBars()).toHaveLength(0);
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
     await screen.rerender(
-      <Screen progress={0.5}>
+      <Screen progress={{ sections: ['One', 'Two'], current: 1, value: 0, overall: 0.5 }}>
         <Text>Content</Text>
       </Screen>,
     );
