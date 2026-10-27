@@ -1,15 +1,14 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { allLoaded, LoadState } from '@/components/load-state';
-import { MessageView } from '@/components/ui/message-view';
+import { allLoaded } from '@/components/load-state';
 import { PillButton } from '@/components/ui/pill-button';
-import { Screen } from '@/components/ui/screen';
 import { useNumberFormat } from '@/i18n/units';
 
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
 import { useAddEntry } from './entries';
+import { FoodLoadState } from './food-load-state';
 import { useFood, type FoodRef } from './foods';
 import { totalOf, useDayEntries, type Meal } from './meals';
 import { useNutritionTargets } from './targets';
@@ -70,17 +69,5 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
       />
     );
   }
-  return (
-    <Screen onBack={() => router.back()}>
-      {food.data === null ? (
-        <MessageView
-          icon="meal"
-          title={t('nutrition.foodNotFound.title')}
-          message={t('nutrition.foodNotFound.message')}
-        />
-      ) : (
-        <LoadState queries={queries} />
-      )}
-    </Screen>
-  );
+  return <FoodLoadState gone={food.data === null} queries={queries} />;
 }

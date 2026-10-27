@@ -3,14 +3,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { allLoaded, LoadState } from '@/components/load-state';
+import { allLoaded } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
-import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { Sheet } from '@/components/ui/sheet';
@@ -22,6 +21,7 @@ import { typography, useTheme } from '@/theme';
 
 import { useCreateFood, useDeleteFood, useUpdateFood } from './custom-foods';
 import { EMPTY_FORM, formOf, MAX_NAME_LENGTH, readForm, type FoodForm } from './food-form';
+import { FoodLoadState } from './food-load-state';
 import { amountOf, refKey, useFood, type PortionUnit } from './foods';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
@@ -50,24 +50,11 @@ export function FoodFormScreen(props: FoodFormScreenProps) {
 
 /** Loads a food of one's own to change it. */
 function EditFood(props: FoodFormScreenProps & { kind: 'edit' }) {
-  const { t } = useTranslation();
   const food = useFood({ kind: 'custom', id: props.id });
   if (allLoaded([food]) && food.data) {
     return <FoodFormBody {...props} initial={formOf(food.data)} />;
   }
-  return (
-    <Screen onBack={() => router.back()}>
-      {food.data === null ? (
-        <MessageView
-          icon="meal"
-          title={t('nutrition.foodNotFound.title')}
-          message={t('nutrition.foodNotFound.message')}
-        />
-      ) : (
-        <LoadState queries={[food]} />
-      )}
-    </Screen>
-  );
+  return <FoodLoadState gone={food.data === null} queries={[food]} />;
 }
 
 const UNITS = Constants.public.Enums.portion_unit;
