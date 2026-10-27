@@ -13,7 +13,7 @@ import { useTheme } from '@/theme';
 
 import { AmountForm } from './amount-form';
 import { useRemoveEntry, useUpdateEntry } from './entries';
-import { useFood } from './foods';
+import { useFood, type Portion } from './foods';
 import { totalOf, useDayEntries, type LoggedEntry } from './meals';
 import { handOverRemovedEntry } from './removed-entry';
 import { useNutritionTargets } from './targets';
@@ -106,6 +106,18 @@ export function EntryScreen({ id, day }: EntryScreenProps) {
   );
 }
 
+/**
+ * The food's portions, with the entry's own at the size it was logged in, so that an unchanged
+ * entry keeps its grams after the library changes a portion, or drops it.
+ */
+function portionsOf(entry: LoggedEntry, portions: Portion[]): Portion[] {
+  if (!entry.portion) {
+    return portions;
+  }
+  const logged = { unit: entry.portion.unit, grams: entry.grams / entry.portion.count };
+  return [logged, ...portions.filter((portion) => portion.unit !== logged.unit)];
+}
+
 type EntryFormProps = {
   entry: LoggedEntry;
   /** What the day has without this entry. */
@@ -118,7 +130,7 @@ type EntryFormProps = {
 function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved }: EntryFormProps) {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
-  // The food's portions; a food taken out of the library leaves grams only.
+  // The food's other portions; a food taken out of the library has none.
   const food = useFood(entry.foodId);
   const updateEntry = useUpdateEntry();
 
@@ -134,7 +146,7 @@ function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved 
       })}`}
       // The values it was logged with, as the database counts the entry by them (ADR 0034).
       per100g={entry.per100g}
-      portions={food.data?.portions ?? []}
+      portions={portionsOf(entry, food.data?.portions ?? [])}
       initial={entry}
       eatenCalories={eatenCalories}
       targetCalories={targetCalories}

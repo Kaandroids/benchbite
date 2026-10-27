@@ -115,10 +115,35 @@ describe('EntryScreen', () => {
     expect(takeRemovedEntry('breakfast', '2026-10-27')).toBeNull();
   });
 
-  it('keeps grams only for a food taken out of the library', async () => {
+  it('keeps the portion size it was logged in, after the library changed it', async () => {
+    jest.mocked(useFood).mockReturnValue(
+      loaded({
+        id: 'F503100',
+        name: 'Banana',
+        per100g: { calories: 97, proteinG: 1.2, carbsG: 20, fatG: 0.2 },
+        portions: [
+          { unit: 'piece', grams: 140 },
+          { unit: 'handful', grams: 40 },
+        ],
+      }),
+    );
+    update.mockResolvedValue(undefined);
+    await render(<EntryScreen id={5} day="2026-10-27" />);
+    expect(screen.getAllByText('1 piece · 120 g').length).toBeGreaterThan(0);
+    expect(screen.getByText('1 handful · 40 g')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Save'));
+    expect(update).toHaveBeenCalledWith({
+      id: 5,
+      day: '2026-10-27',
+      amount: { grams: 180, portion: { unit: 'piece', count: 1.5 } },
+    });
+  });
+
+  it('keeps its portion for a food taken out of the library', async () => {
     jest.mocked(useFood).mockReturnValue(loaded(null));
     await render(<EntryScreen id={5} day="2026-10-27" />);
-    expect(screen.getByLabelText('Grams').props.value).toBe('180');
+    expect(screen.getByText('1.5')).toBeTruthy();
+    expect(screen.getByText('Grams')).toBeTruthy();
   });
 
   it('says when the entry is gone', async () => {
