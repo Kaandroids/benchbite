@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 
-import type { Database } from '../src/lib/database.types.ts';
+import { Constants, type Database } from '../src/lib/database.types.ts';
 import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
 
 const BLS_URL = 'https://blsdb.de/assets/uploads/BLS_4_0_2025_DE.zip';
@@ -56,20 +56,7 @@ const GROUPS: Record<string, FoodGroup> = {
   Y: 'dishes',
 };
 
-const PORTION_UNITS = new Set<PortionUnit>([
-  'piece',
-  'slice',
-  'cup',
-  'glass',
-  'bowl',
-  'plate',
-  'tablespoon',
-  'teaspoon',
-  'handful',
-  'serving',
-  'can',
-  'bottle',
-]);
+const PORTION_UNITS = new Set<string>(Constants.public.Enums.portion_unit);
 
 /**
  * BLS nutrient codes, the first word of each column header, with the column they fill and the
