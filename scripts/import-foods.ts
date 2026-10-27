@@ -71,16 +71,19 @@ const PORTION_UNITS = new Set<PortionUnit>([
   'bottle',
 ]);
 
-/** BLS nutrient codes, the first word of each column header, and the column they fill. */
+/**
+ * BLS nutrient codes, the first word of each column header, with the column they fill and the
+ * decimals that column keeps.
+ */
 const NUTRIENTS = {
-  ENERCC: { column: 'kcal', required: true },
-  PROT625: { column: 'protein_g', required: true },
-  CHO: { column: 'carbs_g', required: true },
-  FAT: { column: 'fat_g', required: true },
-  FIBT: { column: 'fiber_g', required: false },
-  SUGAR: { column: 'sugar_g', required: false },
-  FASAT: { column: 'saturated_fat_g', required: false },
-  NACL: { column: 'salt_g', required: false },
+  ENERCC: { column: 'kcal', decimals: 1, required: true },
+  PROT625: { column: 'protein_g', decimals: 2, required: true },
+  CHO: { column: 'carbs_g', decimals: 2, required: true },
+  FAT: { column: 'fat_g', decimals: 2, required: true },
+  FIBT: { column: 'fiber_g', decimals: 2, required: false },
+  SUGAR: { column: 'sugar_g', decimals: 2, required: false },
+  FASAT: { column: 'saturated_fat_g', decimals: 2, required: false },
+  NACL: { column: 'salt_g', decimals: 2, required: false },
 } as const;
 
 type NutrientCode = keyof typeof NUTRIENTS;
@@ -279,36 +282,23 @@ function sqlNumber(value: number | null, decimals: number): string {
 }
 
 function foodsSql(chosen: [string, ChosenFood][], bls: Map<string, BlsFood>): string {
+  const nutrients = Object.entries(NUTRIENTS) as [NutrientCode, (typeof NUTRIENTS)[NutrientCode]][];
+  const columns = ['source', 'food_group', ...nutrients.map(([, { column }]) => column)];
   const rows = chosen.map(([code]) => {
     const values = bls.get(code)!;
     return `  (${[
       sqlString(code),
       "'bls'",
       sqlString(GROUPS[code[0]!]!),
-      sqlNumber(values.ENERCC, 1),
-      ...(['PROT625', 'CHO', 'FAT', 'FIBT', 'SUGAR', 'FASAT', 'NACL'] as const).map((nutrient) =>
-        sqlNumber(values[nutrient], 2),
-      ),
+      ...nutrients.map(([nutrient, { decimals }]) => sqlNumber(values[nutrient], decimals)),
     ].join(', ')})`;
   });
   return `
-insert into public.foods (
-  id, source, food_group, kcal, protein_g, carbs_g, fat_g, fiber_g, sugar_g, saturated_fat_g,
-  salt_g
-)
+insert into public.foods (id, ${columns.join(', ')})
 values
 ${rows.join(',\n')}
 on conflict (id) do update set
-  source = excluded.source,
-  food_group = excluded.food_group,
-  kcal = excluded.kcal,
-  protein_g = excluded.protein_g,
-  carbs_g = excluded.carbs_g,
-  fat_g = excluded.fat_g,
-  fiber_g = excluded.fiber_g,
-  sugar_g = excluded.sugar_g,
-  saturated_fat_g = excluded.saturated_fat_g,
-  salt_g = excluded.salt_g;
+${columns.map((column) => `  ${column} = excluded.${column}`).join(',\n')};
 `;
 }
 
