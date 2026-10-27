@@ -246,17 +246,27 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
       }
     }
     for (const language of LANGUAGES) {
-      if (!food[language]?.trim()) {
-        problems.push(`${code} has no ${language} name`);
+      const name = food[language]?.trim() ?? '';
+      if (name.length < 1 || name.length > 120) {
+        problems.push(`${code} needs a ${language} name of 1 to 120 characters`);
       }
     }
     if (food.portions.length === 0 || food.portions.filter((p) => p.default).length !== 1) {
       problems.push(`${code} needs portions with exactly one default`);
     }
+    // The same limits as the food_portions table: grams up to 5000 with one decimal.
     for (const portion of food.portions) {
-      if (!PORTION_UNITS.has(portion.unit) || !(portion.grams > 0)) {
+      const { unit, grams } = portion;
+      if (
+        !PORTION_UNITS.has(unit) ||
+        !(grams > 0 && grams <= 5000) ||
+        Number(grams.toFixed(1)) !== grams
+      ) {
         problems.push(`${code} has an invalid portion ${JSON.stringify(portion)}`);
       }
+    }
+    if (new Set(food.portions.map((p) => p.unit)).size !== food.portions.length) {
+      problems.push(`${code} has a unit more than once`);
     }
   }
   if (problems.length > 0) {
