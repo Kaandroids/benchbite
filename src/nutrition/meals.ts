@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { QueryData } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 
 import type { IconName } from '@/components/ui/icon';
@@ -110,30 +111,14 @@ export function totalsOf(row: {
 /** The query key of a day's entries, for anything that changes them. */
 export const dayEntriesKey = (day: string) => ['meal-entries', day];
 
-/** The columns of an entry that `loggedEntryOf` reads. */
+/** The columns of an entry that `loggedEntryOf` reads, with whether its food can still be logged. */
 const ENTRY_COLUMNS =
-  'id, day, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name)), custom_foods(name)';
+  'id, day, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(archived_at, food_names(language, name)), custom_foods(name, archived_at)';
 
-type EntryRow = {
-  id: number;
-  day: string;
-  meal: Meal;
-  food_id: string | null;
-  custom_food_id: number | null;
-  grams: number;
-  portion_unit: Database['public']['Enums']['portion_unit'] | null;
-  portion_count: number | null;
-  kcal_per_100g: number;
-  protein_per_100g: number;
-  carbs_per_100g: number;
-  fat_per_100g: number;
-  kcal: number | null;
-  protein_g: number | null;
-  carbs_g: number | null;
-  fat_g: number | null;
-  foods: { food_names: { language: string; name: string }[] } | null;
-  custom_foods: { name: string } | null;
-};
+const entriesQuery = () => supabase.from('meal_entries').select(ENTRY_COLUMNS);
+
+/** An entry as `ENTRY_COLUMNS` load it, typed from the generated database types. */
+type EntryRow = QueryData<ReturnType<typeof entriesQuery>>[number];
 
 /** An entry as `ENTRY_COLUMNS` load it, named in the language. */
 function loggedEntryOf(row: EntryRow, language: string): LoggedEntry {
@@ -166,9 +151,7 @@ export function useDayEntries(day: string) {
   return useQuery({
     queryKey: [...dayEntriesKey(day), i18n.language],
     queryFn: async (): Promise<LoggedEntry[]> => {
-      const { data, error } = await supabase
-        .from('meal_entries')
-        .select(ENTRY_COLUMNS)
+      const { data, error } = await entriesQuery()
         .eq('day', day)
         // A restored entry keeps its time, so it returns to its place.
         .order('created_at')
@@ -184,15 +167,17 @@ export function useDayEntries(day: string) {
 /** The entries of a meal on the latest day before `day` that has it, up to a week back. */
 export type PastMeal = { day: string; entries: LoggedEntry[] };
 
-/** The meal to add again on a day, as it was last eaten in the week before, or null. */
+/**
+ * The meal to add again on a day, as it was last eaten in the week before, or null. Entries of
+ * foods that can no longer be logged are left out, as copying would leave them out.
+ */
 export function usePastMeal(day: string, meal: Meal) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: [...dayEntriesKey(day), 'past', meal, i18n.language],
+    // Not under the day's key: it changes with the entries of the days before, which reload it.
+    queryKey: ['past-meal', meal, day, i18n.language],
     queryFn: async (): Promise<PastMeal | null> => {
-      const { data, error } = await supabase
-        .from('meal_entries')
-        .select(ENTRY_COLUMNS)
+      const { data, error } = await entriesQuery()
         .eq('meal', meal)
         .lt('day', day)
         .gte('day', toIsoDate(addDays(fromIsoDate(day), -LOGGABLE_DAYS)))
@@ -202,13 +187,16 @@ export function usePastMeal(day: string, meal: Meal) {
       if (error) {
         throw error;
       }
-      const latest = data[0]?.day;
+      const loggable = data.filter(
+        (row) => (row.foods?.archived_at ?? row.custom_foods?.archived_at ?? null) === null,
+      );
+      const latest = loggable[0]?.day;
       if (latest === undefined) {
         return null;
       }
       return {
         day: latest,
-        entries: data
+        entries: loggable
           .filter((row) => row.day === latest)
           .map((row) => loggedEntryOf(row, i18n.language)),
       };

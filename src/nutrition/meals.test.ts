@@ -188,7 +188,7 @@ describe('usePastMeal', () => {
     carbs_g: 0,
     fat_g: 0,
     custom_foods: null,
-    foods: { food_names: [{ language: 'en', name }] },
+    foods: { archived_at: null, food_names: [{ language: 'en', name }] },
   });
 
   function mockRows(rows: unknown[]) {
@@ -216,6 +216,30 @@ describe('usePastMeal', () => {
     expect(query.gte).toHaveBeenCalledWith('day', '2026-10-20');
     expect(result.current.data?.day).toBe('2026-10-26');
     expect(result.current.data?.entries.map((entry) => entry.name)).toEqual(['Bulgur', 'Ayran']);
+  });
+
+  it('leaves out foods that can no longer be logged, and days left with none', async () => {
+    mockRows([
+      {
+        ...entryRow(1, '2026-10-26', 'Old bread'),
+        foods: { archived_at: '2026-10-27', food_names: [] },
+      },
+      {
+        ...entryRow(2, '2026-10-25', 'Bulgur'),
+        foods: { archived_at: null, food_names: [{ language: 'en', name: 'Bulgur' }] },
+      },
+      {
+        ...entryRow(3, '2026-10-25', 'My pudding'),
+        food_id: null,
+        custom_food_id: 9,
+        foods: null,
+        custom_foods: { name: 'My pudding', archived_at: '2026-10-26' },
+      },
+    ]);
+    const { result } = await renderHook(() => usePastMeal('2026-10-27', 'lunch'));
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data?.day).toBe('2026-10-25');
+    expect(result.current.data?.entries.map((entry) => entry.name)).toEqual(['Bulgur']);
   });
 
   it('gives nothing when the meal was not eaten that week', async () => {

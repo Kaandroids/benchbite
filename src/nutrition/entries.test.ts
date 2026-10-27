@@ -4,7 +4,7 @@ import { act, createTestQueryClient, renderHook } from '@/test/render';
 import {
   useAddEntry,
   useRemoveEntry,
-  useRepeatMeal,
+  useCopyEntries,
   useRestoreEntry,
   useUpdateEntry,
 } from './entries';
@@ -163,26 +163,35 @@ describe('useRestoreEntry', () => {
   });
 });
 
-describe('useRepeatMeal', () => {
-  it("adds a past meal to the day in one step and loads the day's entries again", async () => {
-    jest.mocked(supabase.rpc).mockResolvedValue({ data: 3, error: null } as never);
+describe('useCopyEntries', () => {
+  it('adds copies of the entries picked in one step and loads the lists again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 2, error: null } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
-    const { result } = await renderHook(() => useRepeatMeal(), { queryClient });
+    const { result } = await renderHook(() => useCopyEntries(), { queryClient });
     let added;
     await act(async () => {
-      added = await result.current.mutateAsync({
-        from: '2026-10-26',
-        to: '2026-10-27',
-        meal: 'lunch',
-      });
+      added = await result.current.mutateAsync({ ids: [4, 5], day: '2026-10-27', meal: 'lunch' });
     });
-    expect(added).toBe(3);
-    expect(supabase.rpc).toHaveBeenCalledWith('repeat_meal', {
-      from_day: '2026-10-26',
+    expect(added).toBe(2);
+    expect(supabase.rpc).toHaveBeenCalledWith('copy_meal_entries', {
+      entry_ids: [4, 5],
       to_day: '2026-10-27',
-      for_meal: 'lunch',
+      to_meal: 'lunch',
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
+  });
+});
+
+describe('changing entries', () => {
+  it('loads the frequent foods and past meals again, which count every day', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    jest.mocked(supabase.from).mockReturnValue({ delete: () => ({ eq }) } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useRemoveEntry(), { queryClient });
+    await act(() => result.current.mutateAsync(MILK));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['frequent-foods'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
   });
 });
