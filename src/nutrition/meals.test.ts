@@ -65,7 +65,7 @@ describe('suggestedCalories', () => {
 
 describe('useDayEntries', () => {
   const order = jest.fn();
-  const eq = jest.fn(() => ({ order }));
+  const eq = jest.fn(() => ({ order: () => ({ order }) }));
   const select = jest.fn(() => ({ eq }));
 
   beforeEach(() => {

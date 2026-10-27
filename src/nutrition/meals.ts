@@ -121,6 +121,8 @@ export function useDayEntries(day: string) {
           'id, meal, food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name))',
         )
         .eq('day', day)
+        // A restored entry keeps its time, so it returns to its place.
+        .order('created_at')
         .order('id');
       if (error) {
         throw error;
