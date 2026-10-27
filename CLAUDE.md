@@ -55,13 +55,15 @@ and opens pull requests as the `benchbite-bot` GitHub App; the maintainer review
 - Keep commit messages short: the subject line, and at most two or three lines of body when the
   reason is not obvious. Details belong in the pull request description.
 - Pull requests are squash-merged, so the PR title becomes the commit on `main`.
-- Address every review comment with a new commit. Do not force-push a branch under review.
-- When the maintainer asks for a change to an open pull request, Claude first posts the request as
-  a review comment from the maintainer's GitHub account, in English, saying what to change and
-  why. Then Claude makes the change in a new commit and replies as `benchbite-bot` with that
-  commit. This way the maintainer's ideas and decisions are documented in the pull request,
-  next to the code they shaped, instead of being lost in a chat. A request that comes before a
-  pull request exists goes on its issue instead.
+- Address every review comment with a new commit, and reply with it. Do not force-push a branch
+  under review.
+- The maintainer's ideas and decisions are documented on GitHub, not left in a chat:
+  - Claude opens every pull request with a review request to the maintainer, and requests it
+    again once review comments are addressed. The maintainer approves a pull request before
+    merging it.
+  - When the maintainer asks Claude for a change to an open pull request, `benchbite-bot` first
+    posts the request as a comment marked as relayed from the maintainer, in English, with what
+    to change and why. A request that comes before a pull request exists goes on its issue.
 - Every pull request Claude opens gets an automated review: after `gh pr create`, a hook in
   `.claude/settings.json` asks Claude to run the `review-pr` skill, which reviews principles,
   security, and logic and performance in parallel and posts one comment on the PR.
