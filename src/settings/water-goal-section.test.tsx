@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@/test/render';
-import { useSetWaterGoal, useWaterGoal } from '@/nutrition/water';
+import { useSetWaterGoal, useWaterGoal } from '@/profile/water-goal';
 
 import { WaterGoalSection } from './water-goal-section';
 
-jest.mock('@/nutrition/water', () => ({
-  ...jest.requireActual('@/nutrition/water'),
+jest.mock('@/profile/water-goal', () => ({
+  ...jest.requireActual('@/profile/water-goal'),
   useWaterGoal: jest.fn(),
   useSetWaterGoal: jest.fn(),
 }));
