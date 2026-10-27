@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
+import { addDays, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { nameOf, refOfRow, type Amount, type FoodRef } from './foods';
@@ -109,6 +110,56 @@ export function totalsOf(row: {
 /** The query key of a day's entries, for anything that changes them. */
 export const dayEntriesKey = (day: string) => ['meal-entries', day];
 
+/** The columns of an entry that `loggedEntryOf` reads. */
+const ENTRY_COLUMNS =
+  'id, day, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name)), custom_foods(name)';
+
+type EntryRow = {
+  id: number;
+  day: string;
+  meal: Meal;
+  food_id: string | null;
+  custom_food_id: number | null;
+  grams: number;
+  portion_unit: Database['public']['Enums']['portion_unit'] | null;
+  portion_count: number | null;
+  kcal_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+  kcal: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  foods: { food_names: { language: string; name: string }[] } | null;
+  custom_foods: { name: string } | null;
+};
+
+/** An entry as `ENTRY_COLUMNS` load it, named in the language. */
+function loggedEntryOf(row: EntryRow, language: string): LoggedEntry {
+  return {
+    id: row.id,
+    day: row.day,
+    meal: row.meal,
+    food: refOfRow(row),
+    name: row.custom_foods
+      ? row.custom_foods.name
+      : nameOf(row.foods?.food_names ?? [], language, row.food_id ?? ''),
+    grams: row.grams,
+    portion:
+      row.portion_unit !== null && row.portion_count !== null
+        ? { unit: row.portion_unit, count: row.portion_count }
+        : null,
+    per100g: {
+      calories: row.kcal_per_100g,
+      proteinG: row.protein_per_100g,
+      carbsG: row.carbs_per_100g,
+      fatG: row.fat_per_100g,
+    },
+    ...totalsOf(row),
+  };
+}
+
 /** The signed-in user's entries of a day, YYYY-MM-DD, in the order they were logged. */
 export function useDayEntries(day: string) {
   const { i18n } = useTranslation();
@@ -117,9 +168,7 @@ export function useDayEntries(day: string) {
     queryFn: async (): Promise<LoggedEntry[]> => {
       const { data, error } = await supabase
         .from('meal_entries')
-        .select(
-          'id, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name)), custom_foods(name)',
-        )
+        .select(ENTRY_COLUMNS)
         .eq('day', day)
         // A restored entry keeps its time, so it returns to its place.
         .order('created_at')
@@ -127,29 +176,42 @@ export function useDayEntries(day: string) {
       if (error) {
         throw error;
       }
-      return data.map((row) => {
-        return {
-          id: row.id,
-          day,
-          meal: row.meal,
-          food: refOfRow(row),
-          name: row.custom_foods
-            ? row.custom_foods.name
-            : nameOf(row.foods?.food_names ?? [], i18n.language, row.food_id ?? ''),
-          grams: row.grams,
-          portion:
-            row.portion_unit !== null && row.portion_count !== null
-              ? { unit: row.portion_unit, count: row.portion_count }
-              : null,
-          per100g: {
-            calories: row.kcal_per_100g,
-            proteinG: row.protein_per_100g,
-            carbsG: row.carbs_per_100g,
-            fatG: row.fat_per_100g,
-          },
-          ...totalsOf(row),
-        };
-      });
+      return data.map((row) => loggedEntryOf(row, i18n.language));
+    },
+  });
+}
+
+/** The entries of a meal on the latest day before `day` that has it, up to a week back. */
+export type PastMeal = { day: string; entries: LoggedEntry[] };
+
+/** The meal to add again on a day, as it was last eaten in the week before, or null. */
+export function usePastMeal(day: string, meal: Meal) {
+  const { i18n } = useTranslation();
+  return useQuery({
+    queryKey: [...dayEntriesKey(day), 'past', meal, i18n.language],
+    queryFn: async (): Promise<PastMeal | null> => {
+      const { data, error } = await supabase
+        .from('meal_entries')
+        .select(ENTRY_COLUMNS)
+        .eq('meal', meal)
+        .lt('day', day)
+        .gte('day', toIsoDate(addDays(fromIsoDate(day), -LOGGABLE_DAYS)))
+        .order('day', { ascending: false })
+        .order('created_at')
+        .order('id');
+      if (error) {
+        throw error;
+      }
+      const latest = data[0]?.day;
+      if (latest === undefined) {
+        return null;
+      }
+      return {
+        day: latest,
+        entries: data
+          .filter((row) => row.day === latest)
+          .map((row) => loggedEntryOf(row, i18n.language)),
+      };
     },
   });
 }

@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import { useAddEntry, useRemoveEntry, useRestoreEntry, useUpdateEntry } from './entries';
+import {
+  useAddEntry,
+  useRemoveEntry,
+  useRepeatMeal,
+  useRestoreEntry,
+  useUpdateEntry,
+} from './entries';
 import type { LoggedEntry } from './meals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
@@ -154,5 +160,29 @@ describe('useRestoreEntry', () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ error: { code: 'BB023' } } as never);
     const { result } = await renderHook(() => useRestoreEntry());
     await expect(act(() => result.current.mutateAsync(MILK))).rejects.toEqual({ code: 'BB023' });
+  });
+});
+
+describe('useRepeatMeal', () => {
+  it("adds a past meal to the day in one step and loads the day's entries again", async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 3, error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useRepeatMeal(), { queryClient });
+    let added;
+    await act(async () => {
+      added = await result.current.mutateAsync({
+        from: '2026-10-26',
+        to: '2026-10-27',
+        meal: 'lunch',
+      });
+    });
+    expect(added).toBe(3);
+    expect(supabase.rpc).toHaveBeenCalledWith('repeat_meal', {
+      from_day: '2026-10-26',
+      to_day: '2026-10-27',
+      for_meal: 'lunch',
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
   });
 });

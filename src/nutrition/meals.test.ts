@@ -2,7 +2,14 @@ import { supabase } from '@/lib/supabase';
 import i18n from '@/i18n';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { mealsOf, suggestedCalories, totalOf, useDayEntries, type MealEntry } from './meals';
+import {
+  mealsOf,
+  suggestedCalories,
+  totalOf,
+  useDayEntries,
+  usePastMeal,
+  type MealEntry,
+} from './meals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
 
@@ -74,6 +81,7 @@ describe('useDayEntries', () => {
 
   const row = {
     id: 3,
+    day: '2026-10-27',
     meal: 'breakfast',
     food_id: 'C133000',
     custom_food_id: null,
@@ -158,5 +166,62 @@ describe('useDayEntries', () => {
     order.mockResolvedValue({ data: null, error: { message: 'offline' } });
     const { result } = await renderHook(() => useDayEntries('2026-10-27'));
     await waitFor(() => expect(result.current.error).toEqual({ message: 'offline' }));
+  });
+});
+
+describe('usePastMeal', () => {
+  const entryRow = (id: number, day: string, name: string) => ({
+    id,
+    day,
+    meal: 'lunch',
+    food_id: `F${id}`,
+    custom_food_id: null,
+    grams: 100,
+    portion_unit: null,
+    portion_count: null,
+    kcal_per_100g: 100,
+    protein_per_100g: 0,
+    carbs_per_100g: 0,
+    fat_per_100g: 0,
+    kcal: 100,
+    protein_g: 0,
+    carbs_g: 0,
+    fat_g: 0,
+    custom_foods: null,
+    foods: { food_names: [{ language: 'en', name }] },
+  });
+
+  function mockRows(rows: unknown[]) {
+    const query: Record<string, jest.Mock> = {};
+    for (const method of ['eq', 'lt', 'gte', 'order']) {
+      query[method] = jest.fn(() => query);
+    }
+    query.then = jest.fn((resolve: (value: unknown) => void) =>
+      resolve({ data: rows, error: null }),
+    );
+    jest.mocked(supabase.from).mockReturnValue({ select: () => query } as never);
+    return query;
+  }
+
+  it('gives the meal of the latest day before, up to a week back', async () => {
+    const query = mockRows([
+      entryRow(1, '2026-10-26', 'Bulgur'),
+      entryRow(2, '2026-10-26', 'Ayran'),
+      entryRow(3, '2026-10-24', 'Soup'),
+    ]);
+    const { result } = await renderHook(() => usePastMeal('2026-10-27', 'lunch'));
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(query.eq).toHaveBeenCalledWith('meal', 'lunch');
+    expect(query.lt).toHaveBeenCalledWith('day', '2026-10-27');
+    expect(query.gte).toHaveBeenCalledWith('day', '2026-10-20');
+    expect(result.current.data?.day).toBe('2026-10-26');
+    expect(result.current.data?.entries.map((entry) => entry.name)).toEqual(['Bulgur', 'Ayran']);
+  });
+
+  it('gives nothing when the meal was not eaten that week', async () => {
+    mockRows([]);
+    const { result } = await renderHook(() => usePastMeal('2026-10-27', 'lunch'));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeNull();
   });
 });

@@ -104,3 +104,25 @@ export function useRestoreEntry() {
       queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
   });
 }
+
+/**
+ * Adds a meal's entries of a past day to the same meal on another, in one step, with the same
+ * amounts (ADR 0037). Gives how many were added; foods that can no longer be logged are left out.
+ */
+export function useRepeatMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ from, to, meal }: { from: string; to: string; meal: Meal }) => {
+      const { data, error } = await supabase.rpc('repeat_meal', {
+        from_day: from,
+        to_day: to,
+        for_meal: meal,
+      });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: (_data, { to }) => queryClient.invalidateQueries({ queryKey: dayEntriesKey(to) }),
+  });
+}
