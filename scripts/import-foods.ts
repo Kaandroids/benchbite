@@ -253,7 +253,10 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
         problems.push(`${code} needs a ${language} name of 1 to 120 characters`);
       }
     }
-    if (food.portions.length === 0 || food.portions.filter((p) => p.default).length !== 1) {
+    if (
+      food.portions.length === 0 ||
+      food.portions.filter((p) => p.default === true).length !== 1
+    ) {
       problems.push(`${code} needs portions with exactly one default`);
     }
     // The same limits as the food_portions table: grams up to 5000 with one decimal.
