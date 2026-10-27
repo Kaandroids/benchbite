@@ -21,23 +21,13 @@ describe('readForm', () => {
     });
   });
 
-  it('scales values per portion to 100 g', () => {
-    const result = readForm({
-      ...YOGHURT,
-      kcal: '140',
-      protein: '20',
-      carbs: '13',
-      fat: '0.6',
-      basis: 'perPortion',
-      unit: 'serving',
-      portionGrams: '200',
-    });
-    expect(result).toEqual({
+  it('keeps a portion with its grams', () => {
+    expect(readForm({ ...YOGHURT, unit: 'cup', portionGrams: '200' })).toEqual({
       kind: 'valid',
       values: {
         name: 'Protein yoghurt, vanilla',
         per100g: { calories: 70, proteinG: 10, carbsG: 6.5, fatG: 0.3 },
-        portion: { unit: 'serving', grams: 200 },
+        portion: { unit: 'cup', grams: 200 },
       },
     });
   });
@@ -57,18 +47,9 @@ describe('readForm', () => {
       kind: 'problem',
       problem: 'tooMuchMacros',
     });
-    // 1 + 1 + 5 g in 7 g is 100 g per 100 g exactly, but 100.01 g once rounded as stored.
+    // 100.005 g in all, which the table keeps as 100.01 g.
     expect(
-      readForm({
-        ...YOGHURT,
-        protein: '1',
-        carbs: '1',
-        fat: '5',
-        kcal: '60',
-        basis: 'perPortion',
-        unit: 'piece',
-        portionGrams: '7',
-      }),
+      readForm({ ...YOGHURT, protein: '33.335', carbs: '33.335', fat: '33.335', kcal: '500' }),
     ).toEqual({ kind: 'problem', problem: 'tooMuchMacros' });
     expect(readForm({ ...YOGHURT, unit: 'can', portionGrams: '9000' })).toEqual({
       kind: 'problem',
@@ -79,8 +60,12 @@ describe('readForm', () => {
 
 describe('macroCheck', () => {
   it('adds up the macros and says whether they are close to the calories', () => {
-    expect(macroCheck(YOGHURT)).toEqual({ calories: 68.7, close: true });
-    expect(macroCheck({ ...YOGHURT, kcal: '200' })).toEqual({ calories: 68.7, close: false });
+    expect(macroCheck(YOGHURT)).toEqual({ calories: 68.7, entered: 70, close: true });
+    expect(macroCheck({ ...YOGHURT, kcal: '200' })).toEqual({
+      calories: 68.7,
+      entered: 200,
+      close: false,
+    });
   });
 
   it('has nothing to check until calories and a macro are typed', () => {
@@ -104,7 +89,6 @@ describe('formOf', () => {
       protein: '10',
       carbs: '6.5',
       fat: '0.3',
-      basis: 'per100g',
       unit: 'serving',
       portionGrams: '200',
     });

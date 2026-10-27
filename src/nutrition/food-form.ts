@@ -10,14 +10,13 @@ const MAX_KCAL_PER_100G = 900;
 const MAX_MACROS_PER_100G = 100;
 const MAX_PORTION_GRAMS = 5000;
 
-/** What the form holds as typed: values per 100 g, or per portion as a label may print them. */
+/** What the form holds as typed: values per 100 g, as labels print them, and one portion. */
 export type FoodForm = {
   name: string;
   kcal: string;
   protein: string;
   carbs: string;
   fat: string;
-  basis: 'per100g' | 'perPortion';
   unit: PortionUnit | null;
   portionGrams: string;
 };
@@ -28,7 +27,6 @@ export const EMPTY_FORM: FoodForm = {
   protein: '',
   carbs: '',
   fat: '',
-  basis: 'per100g',
   unit: null,
   portionGrams: '',
 };
@@ -42,7 +40,6 @@ export function formOf(food: Food): FoodForm {
     protein: String(food.per100g.proteinG),
     carbs: String(food.per100g.carbsG),
     fat: String(food.per100g.fatG),
-    basis: 'per100g',
     unit: portion?.unit ?? null,
     portionGrams: portion ? String(portion.grams) : '',
   };
@@ -68,10 +65,7 @@ function portionGramsOf(form: FoodForm): number | null {
   return rounded > 0 && rounded <= MAX_PORTION_GRAMS ? rounded : null;
 }
 
-/**
- * The food the form describes, per 100 g, or what is missing or wrong. Values per portion are
- * scaled to 100 g by the portion's grams.
- */
+/** The food the form describes, or what is missing or wrong. */
 export function readForm(form: FoodForm): FormResult {
   const numbers = [form.kcal, form.protein, form.carbs, form.fat].map(parseDecimal);
   if (!form.name.trim() || numbers.some((value) => value === null || value < 0)) {
@@ -83,10 +77,9 @@ export function readForm(form: FoodForm): FormResult {
       ? { kind: 'problem', problem: 'portion' }
       : { kind: 'incomplete' };
   }
-  const scale = form.basis === 'perPortion' && portionGrams ? 100 / portionGrams : 1;
   // Rounded as the table keeps them before they are checked, as the table checks them.
   const [kcal, protein, carbs, fat] = numbers.map((value, index) =>
-    round(value! * scale, index === 0 ? 1 : 2),
+    round(value!, index === 0 ? 1 : 2),
   ) as [number, number, number, number];
   if (kcal > MAX_KCAL_PER_100G) {
     return { kind: 'problem', problem: 'tooMuchEnergy' };
@@ -109,7 +102,9 @@ export function readForm(form: FoodForm): FormResult {
  * and whether that is close to the calories typed. Labels round, and fibre and alcohol count
  * differently, so within 15 % or 10 kcal counts as close. Null until there is something to check.
  */
-export function macroCheck(form: FoodForm): { calories: number; close: boolean } | null {
+export function macroCheck(
+  form: FoodForm,
+): { calories: number; entered: number; close: boolean } | null {
   const kcal = parseDecimal(form.kcal);
   const [protein, carbs, fat] = [form.protein, form.carbs, form.fat].map(
     (text) => parseDecimal(text) ?? 0,
@@ -118,5 +113,9 @@ export function macroCheck(form: FoodForm): { calories: number; close: boolean }
     return null;
   }
   const calories = 4 * protein + 4 * carbs + 9 * fat;
-  return { calories, close: Math.abs(calories - kcal) <= Math.max(10, kcal * 0.15) };
+  return {
+    calories,
+    entered: kcal,
+    close: Math.abs(calories - kcal) <= Math.max(10, kcal * 0.15),
+  };
 }
