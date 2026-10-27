@@ -132,7 +132,10 @@ const FIRST_STEP: Record<Section, Step> = {
 export function progressOf(step: Step): { section: number; value: number } {
   const index = STEPS.indexOf(step);
   const starts = SECTIONS.map((section) => STEPS.indexOf(FIRST_STEP[section]));
-  const section = Math.max(0, starts.findLastIndex((start) => start <= index));
+  const section = Math.max(
+    0,
+    starts.findLastIndex((start) => start <= index),
+  );
   const start = starts[section]!;
   const end = starts[section + 1] ?? STEPS.length;
   return { section, value: Math.max(0, index - start + 1) / (end - start) };

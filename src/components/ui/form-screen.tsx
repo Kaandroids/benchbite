@@ -5,6 +5,7 @@ import { useTheme } from '@/theme';
 
 import { KeyboardAvoiding } from './keyboard-avoiding';
 import { Screen } from './screen';
+import type { SectionProgressProps } from './section-progress';
 import { Text } from './text';
 
 type FormScreenProps = {
@@ -17,8 +18,8 @@ type FormScreenProps = {
   onBack?: () => void;
   /** Shows the back button as a cross, for leaving without saving. */
   closes?: boolean;
-  /** Shows a progress bar at the top, between 0 and 1. */
-  progress?: number;
+  /** Shows the progress through the sections of a flow at the top. */
+  progress?: SectionProgressProps;
 };
 
 /** A screen of text fields under a title, such as creating an account or giving a name. */

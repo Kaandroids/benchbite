@@ -1,10 +1,19 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BackHandler } from 'react-native';
 
 import { useOnboarding } from '@/providers/onboarding-provider';
 
-import { canGoBackFrom, isPassing, nextStep, previousStep, progressOf, type Step } from './steps';
+import {
+  canGoBackFrom,
+  isPassing,
+  nextStep,
+  previousStep,
+  progressOf,
+  SECTIONS,
+  type Step,
+} from './steps';
 import type { OnboardingAnswers } from './types';
 
 /**
@@ -13,6 +22,7 @@ import type { OnboardingAnswers } from './types';
  * resumes on the screen that was last shown.
  */
 export function useStep(step: Step) {
+  const { t } = useTranslation();
   const { draft, setStep, answer, complete } = useOnboarding();
   // Set while the next step opens, so a quick second tap does not open it twice.
   const leaving = useRef(false);
@@ -25,6 +35,7 @@ export function useStep(step: Step) {
   );
 
   const previous = previousStep(step, draft.answers);
+  const progress = progressOf(step);
 
   /** Goes back, also after resuming, when the previous step is not in the history. */
   const back = useCallback(() => {
@@ -83,7 +94,11 @@ export function useStep(step: Step) {
 
   return {
     answers: draft.answers,
-    progress: progressOf(step),
+    progress: {
+      sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
+      current: progress.section,
+      value: progress.value,
+    },
     /** Saves answers without moving on, for example to withdraw one. */
     answer,
     next,

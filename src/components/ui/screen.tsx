@@ -6,12 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 import { Icon } from './icon';
-import { ProgressBar } from './progress-bar';
+import { SectionProgress, type SectionProgressProps } from './section-progress';
 
 type ScreenProps = {
   children: ReactNode;
-  /** Shows a progress bar at the top, between 0 and 1. */
-  progress?: number;
+  /** Shows the progress through the sections of a flow at the top. */
+  progress?: SectionProgressProps;
   /** Shows a back button at the top. */
   onBack?: () => void;
   /** Shows the back button as a cross, for leaving without saving. */
@@ -61,7 +61,7 @@ export function Screen({
           ) : null}
           {progress !== undefined ? (
             <View style={styles.progress}>
-              <ProgressBar value={progress} />
+              <SectionProgress {...progress} />
             </View>
           ) : (
             <View style={[styles.progress, styles.title]}>{title}</View>
