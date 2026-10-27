@@ -1,0 +1,2404 @@
+{
+  "B101000": {
+    "en": "Wholemeal bread",
+    "de": "Vollkornbrot",
+    "tr": "Tam buğday ekmeği",
+    "portions": [{ "unit": "slice", "grams": 45, "default": true }]
+  },
+  "B271000": {
+    "en": "Mixed rye bread",
+    "de": "Roggenmischbrot",
+    "tr": "Karışık çavdar ekmeği",
+    "portions": [{ "unit": "slice", "grams": 45, "default": true }]
+  },
+  "B291000": {
+    "en": "Multigrain bread",
+    "de": "Mehrkornbrot",
+    "tr": "Çok tahıllı ekmek",
+    "portions": [{ "unit": "slice", "grams": 45, "default": true }]
+  },
+  "B311000": {
+    "en": "White bread",
+    "de": "Weißbrot",
+    "tr": "Beyaz ekmek",
+    "portions": [{ "unit": "slice", "grams": 30, "default": true }]
+  },
+  "B314000": {
+    "en": "Toast bread",
+    "de": "Toastbrot",
+    "tr": "Tost ekmeği",
+    "portions": [{ "unit": "slice", "grams": 25, "default": true }]
+  },
+  "B401000": {
+    "en": "Wholemeal roll",
+    "de": "Vollkornbrötchen",
+    "tr": "Tam buğday sandviç ekmeği",
+    "portions": [{ "unit": "piece", "grams": 70, "default": true }]
+  },
+  "B511000": {
+    "en": "Bread roll",
+    "de": "Brötchen",
+    "tr": "Sandviç ekmeği",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "B6A2000": {
+    "en": "Rye crispbread",
+    "de": "Roggenknäckebrot",
+    "tr": "Çavdar gevrek ekmeği",
+    "portions": [{ "unit": "slice", "grams": 10, "default": true }]
+  },
+  "B723000": {
+    "en": "Pretzel",
+    "de": "Laugenbrezel",
+    "tr": "Bretzel",
+    "portions": [{ "unit": "piece", "grams": 80, "default": true }]
+  },
+  "B780500": {
+    "en": "Pumpernickel",
+    "de": "Pumpernickel",
+    "tr": "Pumpernikel",
+    "portions": [{ "unit": "slice", "grams": 40, "default": true }]
+  },
+  "B781200": {
+    "en": "Baguette",
+    "de": "Baguette",
+    "tr": "Baget ekmek",
+    "portions": [
+      { "unit": "slice", "grams": 30, "default": true },
+      { "unit": "piece", "grams": 250 }
+    ]
+  },
+  "B782100": {
+    "en": "Flatbread",
+    "de": "Fladenbrot",
+    "tr": "Pide ekmeği",
+    "portions": [
+      { "unit": "slice", "grams": 60, "default": true },
+      { "unit": "piece", "grams": 400 }
+    ]
+  },
+  "B783012": {
+    "en": "Wheat tortilla",
+    "de": "Weizentortilla",
+    "tr": "Lavaş",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "C118000": {
+    "en": "Quinoa, raw",
+    "de": "Quinoa, roh",
+    "tr": "Kinoa, çiğ",
+    "portions": [{ "unit": "serving", "grams": 75, "default": true }]
+  },
+  "C118032": {
+    "en": "Quinoa, boiled",
+    "de": "Quinoa, gekocht",
+    "tr": "Kinoa, haşlanmış",
+    "portions": [{ "unit": "plate", "grams": 200, "default": true }]
+  },
+  "C119100": {
+    "en": "Bulgur, raw",
+    "de": "Bulgur, roh",
+    "tr": "Bulgur, çiğ",
+    "portions": [{ "unit": "serving", "grams": 75, "default": true }]
+  },
+  "C119132": {
+    "en": "Bulgur, boiled",
+    "de": "Bulgur, gekocht",
+    "tr": "Bulgur, haşlanmış",
+    "portions": [{ "unit": "plate", "grams": 200, "default": true }]
+  },
+  "C119200": {
+    "en": "Couscous, raw",
+    "de": "Couscous, roh",
+    "tr": "Kuskus, çiğ",
+    "portions": [{ "unit": "serving", "grams": 75, "default": true }]
+  },
+  "C119232": {
+    "en": "Couscous, cooked",
+    "de": "Couscous, gekocht",
+    "tr": "Kuskus, pişmiş",
+    "portions": [{ "unit": "plate", "grams": 200, "default": true }]
+  },
+  "C133000": {
+    "en": "Oat flakes",
+    "de": "Haferflocken",
+    "tr": "Yulaf ezmesi",
+    "portions": [
+      { "unit": "tablespoon", "grams": 10 },
+      { "unit": "bowl", "grams": 50, "default": true }
+    ]
+  },
+  "C214100": {
+    "en": "Wheat flour",
+    "de": "Weizenmehl Type 405",
+    "tr": "Buğday unu",
+    "portions": [
+      { "unit": "tablespoon", "grams": 10 },
+      { "unit": "cup", "grams": 120, "default": true }
+    ]
+  },
+  "C351000": {
+    "en": "Brown rice, raw",
+    "de": "Naturreis, roh",
+    "tr": "Esmer pirinç, çiğ",
+    "portions": [{ "unit": "serving", "grams": 75, "default": true }]
+  },
+  "C351032": {
+    "en": "Brown rice, boiled",
+    "de": "Naturreis, gekocht",
+    "tr": "Esmer pirinç, haşlanmış",
+    "portions": [{ "unit": "plate", "grams": 200, "default": true }]
+  },
+  "C352000": {
+    "en": "White rice, raw",
+    "de": "Reis, roh",
+    "tr": "Pirinç, çiğ",
+    "portions": [{ "unit": "serving", "grams": 75, "default": true }]
+  },
+  "C352032": {
+    "en": "White rice, boiled",
+    "de": "Reis, gekocht",
+    "tr": "Pirinç, haşlanmış",
+    "portions": [
+      { "unit": "plate", "grams": 200, "default": true },
+      { "unit": "tablespoon", "grams": 20 }
+    ]
+  },
+  "C512300": {
+    "en": "Muesli with dried fruit",
+    "de": "Müsli mit Trockenfrüchten",
+    "tr": "Kuru meyveli müsli",
+    "portions": [{ "unit": "bowl", "grams": 50, "default": true }]
+  },
+  "C514200": {
+    "en": "Granola",
+    "de": "Knuspermüsli",
+    "tr": "Granola",
+    "portions": [{ "unit": "bowl", "grams": 50, "default": true }]
+  },
+  "C515000": {
+    "en": "Cornflakes",
+    "de": "Cornflakes",
+    "tr": "Mısır gevreği",
+    "portions": [{ "unit": "bowl", "grams": 30, "default": true }]
+  },
+  "C518000": {
+    "en": "Popcorn, salted",
+    "de": "Popcorn, gesalzen",
+    "tr": "Patlamış mısır, tuzlu",
+    "portions": [{ "unit": "bowl", "grams": 30, "default": true }]
+  },
+  "C532700": {
+    "en": "Rice cakes",
+    "de": "Reiswaffeln",
+    "tr": "Pirinç patlağı",
+    "portions": [{ "unit": "piece", "grams": 8, "default": true }]
+  },
+  "C546000": {
+    "en": "Tortilla chips",
+    "de": "Tortilla-Chips",
+    "tr": "Tortilla cipsi",
+    "portions": [
+      { "unit": "handful", "grams": 25, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "C660000": {
+    "en": "Oat drink",
+    "de": "Haferdrink",
+    "tr": "Yulaf sütü",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "cup", "grams": 250 }
+    ]
+  },
+  "D050000": {
+    "en": "Crackers",
+    "de": "Cracker",
+    "tr": "Kraker",
+    "portions": [
+      { "unit": "piece", "grams": 5, "default": true },
+      { "unit": "handful", "grams": 25 }
+    ]
+  },
+  "D064000": {
+    "en": "Salted pretzel sticks",
+    "de": "Salzstangen",
+    "tr": "Çubuk kraker",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "D131200": {
+    "en": "Apple cake",
+    "de": "Apfelkuchen",
+    "tr": "Elmalı kek",
+    "portions": [{ "unit": "slice", "grams": 100, "default": true }]
+  },
+  "D300600": {
+    "en": "Black Forest gateau",
+    "de": "Schwarzwälder Kirschtorte",
+    "tr": "Kara Orman pastası",
+    "portions": [{ "unit": "slice", "grams": 120, "default": true }]
+  },
+  "D400400": {
+    "en": "Chocolate muffin",
+    "de": "Schokoladenmuffin",
+    "tr": "Çikolatalı muffin",
+    "portions": [{ "unit": "piece", "grams": 80, "default": true }]
+  },
+  "D431100": {
+    "en": "Marble cake",
+    "de": "Marmorkuchen",
+    "tr": "Mozaik kek",
+    "portions": [{ "unit": "slice", "grams": 70, "default": true }]
+  },
+  "D433300": {
+    "en": "Chocolate cake",
+    "de": "Schokoladenkuchen",
+    "tr": "Çikolatalı kek",
+    "portions": [{ "unit": "slice", "grams": 80, "default": true }]
+  },
+  "D480200": {
+    "en": "Cheesecake",
+    "de": "Käsekuchen",
+    "tr": "Cheesecake",
+    "portions": [{ "unit": "slice", "grams": 120, "default": true }]
+  },
+  "D4A2000": {
+    "en": "Brownie",
+    "de": "Brownie",
+    "tr": "Brownie",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "D540100": {
+    "en": "Apple strudel",
+    "de": "Apfelstrudel",
+    "tr": "Elmalı strudel",
+    "portions": [{ "unit": "slice", "grams": 120, "default": true }]
+  },
+  "D630700": {
+    "en": "Wafers with nougat filling",
+    "de": "Waffeln mit Nougatfüllung",
+    "tr": "Fındık kremalı gofret",
+    "portions": [{ "unit": "piece", "grams": 10, "default": true }]
+  },
+  "D702000": {
+    "en": "Baklava",
+    "de": "Baklava",
+    "tr": "Baklava",
+    "portions": [{ "unit": "piece", "grams": 40, "default": true }]
+  },
+  "D734600": {
+    "en": "Butter biscuits",
+    "de": "Butterkekse",
+    "tr": "Petibör bisküvi",
+    "portions": [
+      { "unit": "piece", "grams": 5, "default": true },
+      { "unit": "serving", "grams": 30 }
+    ]
+  },
+  "D741000": {
+    "en": "Doughnut with chocolate icing",
+    "de": "Donut mit Schokoladenglasur",
+    "tr": "Çikolatalı donut",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "D771600": {
+    "en": "Croissant",
+    "de": "Croissant",
+    "tr": "Kruvasan",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "D7A2000": {
+    "en": "Chocolate chip cookies",
+    "de": "Schokoladenkekse",
+    "tr": "Damla çikolatalı kurabiye",
+    "portions": [{ "unit": "piece", "grams": 12, "default": true }]
+  },
+  "D7A5300": {
+    "en": "Cinnamon roll",
+    "de": "Zimtschnecke",
+    "tr": "Tarçınlı çörek",
+    "portions": [{ "unit": "piece", "grams": 90, "default": true }]
+  },
+  "D7A6200": {
+    "en": "Jam doughnut",
+    "de": "Berliner mit Marmeladenfüllung",
+    "tr": "Reçelli Berliner",
+    "portions": [{ "unit": "piece", "grams": 70, "default": true }]
+  },
+  "E111100": {
+    "en": "Egg, raw",
+    "de": "Ei, roh",
+    "tr": "Yumurta, çiğ",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "E111132": {
+    "en": "Egg, boiled",
+    "de": "Ei, gekocht",
+    "tr": "Haşlanmış yumurta",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "E113100": {
+    "en": "Egg white, raw",
+    "de": "Eiklar, roh",
+    "tr": "Yumurta akı, çiğ",
+    "portions": [{ "unit": "piece", "grams": 35, "default": true }]
+  },
+  "E401000": {
+    "en": "Pasta, raw",
+    "de": "Nudeln, roh",
+    "tr": "Makarna, çiğ",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "E401032": {
+    "en": "Pasta, boiled",
+    "de": "Nudeln, gekocht",
+    "tr": "Makarna, haşlanmış",
+    "portions": [{ "unit": "plate", "grams": 250, "default": true }]
+  },
+  "E500032": {
+    "en": "Wholemeal pasta, boiled",
+    "de": "Vollkornnudeln, gekocht",
+    "tr": "Tam buğday makarna, haşlanmış",
+    "portions": [{ "unit": "plate", "grams": 250, "default": true }]
+  },
+  "E510000": {
+    "en": "Wholemeal pasta, raw",
+    "de": "Vollkornnudeln, roh",
+    "tr": "Tam buğday makarna, çiğ",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "F010600": {
+    "en": "Multi-fruit juice",
+    "de": "Multivitaminsaft",
+    "tr": "Karışık meyve suyu",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "F110100": {
+    "en": "Apple",
+    "de": "Apfel",
+    "tr": "Elma",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "F110600": {
+    "en": "Apple juice",
+    "de": "Apfelsaft",
+    "tr": "Elma suyu",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "F130100": {
+    "en": "Pear",
+    "de": "Birne",
+    "tr": "Armut",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "F201100": {
+    "en": "Apricot",
+    "de": "Aprikose",
+    "tr": "Kayısı",
+    "portions": [{ "unit": "piece", "grams": 40, "default": true }]
+  },
+  "F201400": {
+    "en": "Dried apricots",
+    "de": "Getrocknete Aprikosen",
+    "tr": "Kuru kayısı",
+    "portions": [
+      { "unit": "piece", "grams": 8, "default": true },
+      { "unit": "handful", "grams": 40 }
+    ]
+  },
+  "F203100": {
+    "en": "Peach",
+    "de": "Pfirsich",
+    "tr": "Şeftali",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "F211100": {
+    "en": "Cherries",
+    "de": "Süßkirschen",
+    "tr": "Kiraz",
+    "portions": [
+      { "unit": "handful", "grams": 80, "default": true },
+      { "unit": "bowl", "grams": 150 }
+    ]
+  },
+  "F212100": {
+    "en": "Sour cherries",
+    "de": "Sauerkirschen",
+    "tr": "Vişne",
+    "portions": [
+      { "unit": "handful", "grams": 80, "default": true },
+      { "unit": "bowl", "grams": 150 }
+    ]
+  },
+  "F212700": {
+    "en": "Sour cherry nectar",
+    "de": "Sauerkirschnektar",
+    "tr": "Vişne nektarı",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "F220100": {
+    "en": "Plum",
+    "de": "Pflaume",
+    "tr": "Erik",
+    "portions": [{ "unit": "piece", "grams": 35, "default": true }]
+  },
+  "F301100": {
+    "en": "Strawberries",
+    "de": "Erdbeeren",
+    "tr": "Çilek",
+    "portions": [
+      { "unit": "piece", "grams": 15 },
+      { "unit": "bowl", "grams": 150, "default": true }
+    ]
+  },
+  "F302100": {
+    "en": "Raspberries",
+    "de": "Himbeeren",
+    "tr": "Ahududu",
+    "portions": [
+      { "unit": "handful", "grams": 60 },
+      { "unit": "bowl", "grams": 125, "default": true }
+    ]
+  },
+  "F304100": {
+    "en": "Blueberries",
+    "de": "Heidelbeeren",
+    "tr": "Yaban mersini",
+    "portions": [
+      { "unit": "handful", "grams": 60 },
+      { "unit": "bowl", "grams": 125, "default": true }
+    ]
+  },
+  "F310100": {
+    "en": "Grapes",
+    "de": "Weintrauben",
+    "tr": "Üzüm",
+    "portions": [
+      { "unit": "handful", "grams": 80 },
+      { "unit": "bowl", "grams": 150, "default": true }
+    ]
+  },
+  "F501100": {
+    "en": "Pineapple",
+    "de": "Ananas",
+    "tr": "Ananas",
+    "portions": [{ "unit": "slice", "grams": 80, "default": true }]
+  },
+  "F502100": {
+    "en": "Avocado",
+    "de": "Avocado",
+    "tr": "Avokado",
+    "portions": [{ "unit": "piece", "grams": 140, "default": true }]
+  },
+  "F503100": {
+    "en": "Banana",
+    "de": "Banane",
+    "tr": "Muz",
+    "portions": [{ "unit": "piece", "grams": 120, "default": true }]
+  },
+  "F504400": {
+    "en": "Dates, dried",
+    "de": "Datteln, getrocknet",
+    "tr": "Hurma",
+    "portions": [{ "unit": "piece", "grams": 8, "default": true }]
+  },
+  "F505100": {
+    "en": "Fig",
+    "de": "Feige",
+    "tr": "İncir",
+    "portions": [{ "unit": "piece", "grams": 50, "default": true }]
+  },
+  "F505400": {
+    "en": "Dried figs",
+    "de": "Getrocknete Feigen",
+    "tr": "Kuru incir",
+    "portions": [{ "unit": "piece", "grams": 20, "default": true }]
+  },
+  "F506100": {
+    "en": "Pomegranate",
+    "de": "Granatapfel",
+    "tr": "Nar",
+    "portions": [
+      { "unit": "piece", "grams": 250, "default": true },
+      { "unit": "tablespoon", "grams": 15 }
+    ]
+  },
+  "F514100": {
+    "en": "Kiwi",
+    "de": "Kiwi",
+    "tr": "Kivi",
+    "portions": [{ "unit": "piece", "grams": 75, "default": true }]
+  },
+  "F516100": {
+    "en": "Mango",
+    "de": "Mango",
+    "tr": "Mango",
+    "portions": [
+      { "unit": "piece", "grams": 300 },
+      { "unit": "serving", "grams": 150, "default": true }
+    ]
+  },
+  "F533100": {
+    "en": "Honeydew melon",
+    "de": "Honigmelone",
+    "tr": "Kavun",
+    "portions": [{ "unit": "slice", "grams": 200, "default": true }]
+  },
+  "F535100": {
+    "en": "Watermelon",
+    "de": "Wassermelone",
+    "tr": "Karpuz",
+    "portions": [{ "unit": "slice", "grams": 300, "default": true }]
+  },
+  "F601100": {
+    "en": "Lemon",
+    "de": "Zitrone",
+    "tr": "Limon",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "F601600": {
+    "en": "Lemon juice",
+    "de": "Zitronensaft",
+    "tr": "Limon suyu",
+    "portions": [{ "unit": "tablespoon", "grams": 15, "default": true }]
+  },
+  "F603100": {
+    "en": "Orange",
+    "de": "Orange",
+    "tr": "Portakal",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "F603600": {
+    "en": "Orange juice",
+    "de": "Orangensaft",
+    "tr": "Portakal suyu",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "F606100": {
+    "en": "Mandarin",
+    "de": "Mandarine",
+    "tr": "Mandalina",
+    "portions": [{ "unit": "piece", "grams": 60, "default": true }]
+  },
+  "F840100": {
+    "en": "Raisins",
+    "de": "Rosinen",
+    "tr": "Kuru üzüm",
+    "portions": [
+      { "unit": "tablespoon", "grams": 10 },
+      { "unit": "handful", "grams": 30, "default": true }
+    ]
+  },
+  "F921900": {
+    "en": "Apple sauce",
+    "de": "Apfelmus",
+    "tr": "Elma püresi",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "serving", "grams": 100, "default": true }
+    ]
+  },
+  "G090132": {
+    "en": "Mixed vegetables, boiled",
+    "de": "Gemischtes Gemüse, gekocht",
+    "tr": "Karışık sebze, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G103100": {
+    "en": "Iceberg lettuce",
+    "de": "Eisbergsalat",
+    "tr": "Göbek marul",
+    "portions": [{ "unit": "bowl", "grams": 80, "default": true }]
+  },
+  "G107100": {
+    "en": "Romaine lettuce",
+    "de": "Romanasalat",
+    "tr": "Marul",
+    "portions": [{ "unit": "bowl", "grams": 80, "default": true }]
+  },
+  "G130100": {
+    "en": "Rocket",
+    "de": "Rucola",
+    "tr": "Roka",
+    "portions": [{ "unit": "handful", "grams": 20, "default": true }]
+  },
+  "G211100": {
+    "en": "Spinach, raw",
+    "de": "Spinat, roh",
+    "tr": "Ispanak, çiğ",
+    "portions": [
+      { "unit": "handful", "grams": 30, "default": true },
+      { "unit": "bowl", "grams": 100 }
+    ]
+  },
+  "G250100": {
+    "en": "Parsley",
+    "de": "Petersilie",
+    "tr": "Maydanoz",
+    "portions": [
+      { "unit": "tablespoon", "grams": 5, "default": true },
+      { "unit": "handful", "grams": 20 }
+    ]
+  },
+  "G311100": {
+    "en": "Cauliflower, raw",
+    "de": "Blumenkohl, roh",
+    "tr": "Karnabahar, çiğ",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G312100": {
+    "en": "Broccoli, raw",
+    "de": "Brokkoli, roh",
+    "tr": "Brokoli, çiğ",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G312132": {
+    "en": "Broccoli, boiled",
+    "de": "Brokkoli, gekocht",
+    "tr": "Brokoli, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G345902": {
+    "en": "Sauerkraut",
+    "de": "Sauerkraut",
+    "tr": "Lahana turşusu (Sauerkraut)",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G450100": {
+    "en": "Asparagus",
+    "de": "Spargel",
+    "tr": "Kuşkonmaz",
+    "portions": [
+      { "unit": "piece", "grams": 20 },
+      { "unit": "serving", "grams": 200, "default": true }
+    ]
+  },
+  "G470100": {
+    "en": "Leek",
+    "de": "Lauch",
+    "tr": "Pırasa",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "G480100": {
+    "en": "Onion",
+    "de": "Zwiebel",
+    "tr": "Soğan",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "G490100": {
+    "en": "Garlic",
+    "de": "Knoblauch",
+    "tr": "Sarımsak",
+    "portions": [{ "unit": "piece", "grams": 4, "default": true }]
+  },
+  "G510100": {
+    "en": "Aubergine",
+    "de": "Aubergine",
+    "tr": "Patlıcan",
+    "portions": [{ "unit": "piece", "grams": 250, "default": true }]
+  },
+  "G520100": {
+    "en": "Cucumber",
+    "de": "Gurke",
+    "tr": "Salatalık",
+    "portions": [
+      { "unit": "piece", "grams": 300 },
+      { "unit": "slice", "grams": 10 },
+      { "unit": "serving", "grams": 100, "default": true }
+    ]
+  },
+  "G520802": {
+    "en": "Pickled gherkins",
+    "de": "Essiggurken",
+    "tr": "Salatalık turşusu",
+    "portions": [{ "unit": "piece", "grams": 30, "default": true }]
+  },
+  "G541100": {
+    "en": "Green pepper",
+    "de": "Paprika, grün",
+    "tr": "Yeşil biber",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "G543100": {
+    "en": "Red pepper",
+    "de": "Paprika, rot",
+    "tr": "Kırmızı biber",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "G553100": {
+    "en": "Green chilli",
+    "de": "Grüne Chilischote",
+    "tr": "Sivri biber",
+    "portions": [{ "unit": "piece", "grams": 15, "default": true }]
+  },
+  "G561100": {
+    "en": "Tomato",
+    "de": "Tomate",
+    "tr": "Domates",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "G568900": {
+    "en": "Tomatoes, canned",
+    "de": "Tomaten aus der Dose",
+    "tr": "Konserve domates",
+    "portions": [
+      { "unit": "serving", "grams": 200, "default": true },
+      { "unit": "can", "grams": 400 }
+    ]
+  },
+  "G570902": {
+    "en": "Sweetcorn, canned",
+    "de": "Mais aus der Dose",
+    "tr": "Konserve mısır",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "serving", "grams": 100, "default": true }
+    ]
+  },
+  "G582100": {
+    "en": "Courgette",
+    "de": "Zucchini",
+    "tr": "Kabak",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "G620100": {
+    "en": "Carrot",
+    "de": "Karotte",
+    "tr": "Havuç",
+    "portions": [{ "unit": "piece", "grams": 80, "default": true }]
+  },
+  "G691100": {
+    "en": "Radishes",
+    "de": "Radieschen",
+    "tr": "Kırmızı turp",
+    "portions": [
+      { "unit": "piece", "grams": 10, "default": true },
+      { "unit": "handful", "grams": 50 }
+    ]
+  },
+  "G710100": {
+    "en": "Green beans",
+    "de": "Grüne Bohnen",
+    "tr": "Taze fasulye",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G710132": {
+    "en": "Green beans, boiled",
+    "de": "Grüne Bohnen, gekocht",
+    "tr": "Taze fasulye, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G760132": {
+    "en": "Peas, boiled",
+    "de": "Erbsen, gekocht",
+    "tr": "Bezelye, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "G770400": {
+    "en": "Chickpeas, dry",
+    "de": "Kichererbsen, getrocknet",
+    "tr": "Nohut, kuru",
+    "portions": [{ "unit": "serving", "grams": 60, "default": true }]
+  },
+  "G770432": {
+    "en": "Chickpeas, boiled",
+    "de": "Kichererbsen, gekocht",
+    "tr": "Nohut, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "H110700": {
+    "en": "Peanuts, roasted and salted",
+    "de": "Erdnüsse, geröstet und gesalzen",
+    "tr": "Tuzlu kavrulmuş yer fıstığı",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H120100": {
+    "en": "Walnuts",
+    "de": "Walnüsse",
+    "tr": "Ceviz",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H130100": {
+    "en": "Hazelnuts",
+    "de": "Haselnüsse",
+    "tr": "Fındık",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H170100": {
+    "en": "Cashews",
+    "de": "Cashewkerne",
+    "tr": "Kaju",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H210100": {
+    "en": "Almonds",
+    "de": "Mandeln",
+    "tr": "Badem",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H250700": {
+    "en": "Pistachios, roasted and salted",
+    "de": "Pistazien, geröstet und gesalzen",
+    "tr": "Tuzlu kavrulmuş antep fıstığı",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H310100": {
+    "en": "Pumpkin seeds",
+    "de": "Kürbiskerne",
+    "tr": "Kabak çekirdeği",
+    "portions": [
+      { "unit": "tablespoon", "grams": 10 },
+      { "unit": "handful", "grams": 25, "default": true }
+    ]
+  },
+  "H410100": {
+    "en": "Linseed",
+    "de": "Leinsamen",
+    "tr": "Keten tohumu",
+    "portions": [{ "unit": "tablespoon", "grams": 10, "default": true }]
+  },
+  "H420100": {
+    "en": "Sesame seeds",
+    "de": "Sesam",
+    "tr": "Susam",
+    "portions": [{ "unit": "tablespoon", "grams": 10, "default": true }]
+  },
+  "H430100": {
+    "en": "Sunflower seeds",
+    "de": "Sonnenblumenkerne",
+    "tr": "Ayçiçeği çekirdeği",
+    "portions": [
+      { "unit": "tablespoon", "grams": 10 },
+      { "unit": "handful", "grams": 25, "default": true }
+    ]
+  },
+  "H480100": {
+    "en": "Chia seeds",
+    "de": "Chiasamen",
+    "tr": "Chia tohumu",
+    "portions": [{ "unit": "tablespoon", "grams": 10, "default": true }]
+  },
+  "H510802": {
+    "en": "Green olives",
+    "de": "Grüne Oliven",
+    "tr": "Yeşil zeytin",
+    "portions": [
+      { "unit": "piece", "grams": 4, "default": true },
+      { "unit": "handful", "grams": 30 }
+    ]
+  },
+  "H520800": {
+    "en": "Black olives",
+    "de": "Schwarze Oliven",
+    "tr": "Siyah zeytin",
+    "portions": [
+      { "unit": "piece", "grams": 4, "default": true },
+      { "unit": "handful", "grams": 30 }
+    ]
+  },
+  "H720902": {
+    "en": "Chickpeas, canned",
+    "de": "Kichererbsen aus der Dose",
+    "tr": "Nohut, konserve",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "can", "grams": 240 }
+    ]
+  },
+  "H725100": {
+    "en": "Lentils, dry",
+    "de": "Linsen, getrocknet",
+    "tr": "Yeşil mercimek, kuru",
+    "portions": [{ "unit": "serving", "grams": 60, "default": true }]
+  },
+  "H730000": {
+    "en": "Red lentils, dry",
+    "de": "Rote Linsen, getrocknet",
+    "tr": "Kırmızı mercimek, kuru",
+    "portions": [{ "unit": "serving", "grams": 60, "default": true }]
+  },
+  "H730032": {
+    "en": "Red lentils, boiled",
+    "de": "Rote Linsen, gekocht",
+    "tr": "Kırmızı mercimek, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "H730132": {
+    "en": "Lentils, boiled",
+    "de": "Linsen, gekocht",
+    "tr": "Yeşil mercimek, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "H740132": {
+    "en": "White beans, boiled",
+    "de": "Weiße Bohnen, gekocht",
+    "tr": "Kuru fasulye, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "H742902": {
+    "en": "Kidney beans, canned",
+    "de": "Kidneybohnen aus der Dose",
+    "tr": "Barbunya, konserve",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "can", "grams": 250 }
+    ]
+  },
+  "H800000": {
+    "en": "Almond drink",
+    "de": "Mandeldrink",
+    "tr": "Badem sütü",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "H810000": {
+    "en": "Trail mix",
+    "de": "Studentenfutter",
+    "tr": "Karışık kuruyemiş",
+    "portions": [{ "unit": "handful", "grams": 25, "default": true }]
+  },
+  "H841100": {
+    "en": "Soy drink",
+    "de": "Sojadrink",
+    "tr": "Soya sütü",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "H861000": {
+    "en": "Tofu",
+    "de": "Tofu",
+    "tr": "Tofu",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "H880200": {
+    "en": "Peanut butter",
+    "de": "Erdnussbutter",
+    "tr": "Fıstık ezmesi",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 15, "default": true }
+    ]
+  },
+  "H900900": {
+    "en": "Baked beans",
+    "de": "Weiße Bohnen in Tomatensauce",
+    "tr": "Domates soslu fasulye",
+    "portions": [
+      { "unit": "serving", "grams": 200, "default": true },
+      { "unit": "can", "grams": 400 }
+    ]
+  },
+  "H960000": {
+    "en": "Hummus",
+    "de": "Hummus",
+    "tr": "Humus",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20, "default": true },
+      { "unit": "serving", "grams": 60 }
+    ]
+  },
+  "K110100": {
+    "en": "Potatoes, raw",
+    "de": "Kartoffeln, roh",
+    "tr": "Patates, çiğ",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "K110132": {
+    "en": "Potatoes, boiled",
+    "de": "Kartoffeln, gekocht",
+    "tr": "Patates, haşlanmış",
+    "portions": [
+      { "unit": "piece", "grams": 100 },
+      { "unit": "serving", "grams": 200, "default": true }
+    ]
+  },
+  "K120164": {
+    "en": "Jacket potato, baked",
+    "de": "Ofenkartoffel",
+    "tr": "Fırında patates",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "K130592": {
+    "en": "French fries",
+    "de": "Pommes frites",
+    "tr": "Patates kızartması",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "plate", "grams": 250 }
+    ]
+  },
+  "K270000": {
+    "en": "Gnocchi",
+    "de": "Gnocchi",
+    "tr": "Gnocchi",
+    "portions": [{ "unit": "plate", "grams": 250, "default": true }]
+  },
+  "K280100": {
+    "en": "Crisps",
+    "de": "Kartoffelchips",
+    "tr": "Patates cipsi",
+    "portions": [
+      { "unit": "handful", "grams": 25, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "K420132": {
+    "en": "Sweet potato, boiled",
+    "de": "Süßkartoffel, gekocht",
+    "tr": "Tatlı patates, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "K701100": {
+    "en": "Mushrooms",
+    "de": "Champignons",
+    "tr": "Mantar",
+    "portions": [
+      { "unit": "piece", "grams": 20 },
+      { "unit": "serving", "grams": 100, "default": true }
+    ]
+  },
+  "M012200": {
+    "en": "Feta",
+    "de": "Feta",
+    "tr": "Feta peyniri",
+    "portions": [
+      { "unit": "slice", "grams": 30, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "M032100": {
+    "en": "Mozzarella",
+    "de": "Mozzarella",
+    "tr": "Mozzarella",
+    "portions": [
+      { "unit": "piece", "grams": 125 },
+      { "unit": "serving", "grams": 50, "default": true }
+    ]
+  },
+  "M052000": {
+    "en": "White cheese",
+    "de": "Hirtenkäse",
+    "tr": "Beyaz peynir",
+    "portions": [
+      { "unit": "slice", "grams": 30, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "M111100": {
+    "en": "Skimmed milk",
+    "de": "Magermilch",
+    "tr": "Yağsız süt",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "cup", "grams": 250 }
+    ]
+  },
+  "M111200": {
+    "en": "Milk, 1.5% fat",
+    "de": "Fettarme Milch, 1,5 % Fett",
+    "tr": "Süt, %1,5 yağlı",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "cup", "grams": 250 },
+      { "unit": "tablespoon", "grams": 15 }
+    ]
+  },
+  "M111300": {
+    "en": "Milk, 3.5% fat",
+    "de": "Vollmilch, 3,5 % Fett",
+    "tr": "Süt, %3,5 yağlı",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "cup", "grams": 250 },
+      { "unit": "tablespoon", "grams": 15 }
+    ]
+  },
+  "M130300": {
+    "en": "Kefir, 3.5% fat",
+    "de": "Kefir, 3,5 % Fett",
+    "tr": "Kefir, %3,5 yağlı",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "M141200": {
+    "en": "Yoghurt, 1.5% fat",
+    "de": "Joghurt, 1,5 % Fett",
+    "tr": "Yoğurt, %1,5 yağlı",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "cup", "grams": 150, "default": true }
+    ]
+  },
+  "M141300": {
+    "en": "Yoghurt, 3.5% fat",
+    "de": "Joghurt, 3,5 % Fett",
+    "tr": "Yoğurt, %3,5 yağlı",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "cup", "grams": 150, "default": true }
+    ]
+  },
+  "M141500": {
+    "en": "Greek-style yoghurt, 10% fat",
+    "de": "Joghurt nach griechischer Art, 10 % Fett",
+    "tr": "Süzme yoğurt, %10 yağlı",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "cup", "grams": 150, "default": true }
+    ]
+  },
+  "M150000": {
+    "en": "Buttermilk",
+    "de": "Buttermilch",
+    "tr": "Yayık altı",
+    "portions": [{ "unit": "glass", "grams": 200, "default": true }]
+  },
+  "M171500": {
+    "en": "Coffee cream, 10% fat",
+    "de": "Kaffeesahne, 10 % Fett",
+    "tr": "Kahve kreması, %10 yağlı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "M172500": {
+    "en": "Sour cream",
+    "de": "Saure Sahne",
+    "tr": "Ekşi krema",
+    "portions": [{ "unit": "tablespoon", "grams": 20, "default": true }]
+  },
+  "M173800": {
+    "en": "Whipping cream, 30% fat",
+    "de": "Schlagsahne, 30 % Fett",
+    "tr": "Krema, %30 yağlı",
+    "portions": [
+      { "unit": "tablespoon", "grams": 15, "default": true },
+      { "unit": "cup", "grams": 200 }
+    ]
+  },
+  "M206300": {
+    "en": "Chocolate milk",
+    "de": "Kakaomilch",
+    "tr": "Kakaolu süt",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "M241300": {
+    "en": "Fruit yoghurt",
+    "de": "Fruchtjoghurt",
+    "tr": "Meyveli yoğurt",
+    "portions": [{ "unit": "cup", "grams": 150, "default": true }]
+  },
+  "M2S8300": {
+    "en": "Ayran",
+    "de": "Ayran",
+    "tr": "Ayran",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "bottle", "grams": 300 }
+    ]
+  },
+  "M303700": {
+    "en": "Cheddar",
+    "de": "Cheddar",
+    "tr": "Cheddar peyniri",
+    "portions": [{ "unit": "slice", "grams": 25, "default": true }]
+  },
+  "M304600": {
+    "en": "Emmental",
+    "de": "Emmentaler",
+    "tr": "Emmental peyniri",
+    "portions": [{ "unit": "slice", "grams": 25, "default": true }]
+  },
+  "M306400": {
+    "en": "Parmesan",
+    "de": "Parmesan",
+    "tr": "Parmesan peyniri",
+    "portions": [
+      { "unit": "tablespoon", "grams": 5 },
+      { "unit": "serving", "grams": 20, "default": true }
+    ]
+  },
+  "M402600": {
+    "en": "Gouda",
+    "de": "Gouda",
+    "tr": "Gouda peyniri",
+    "portions": [{ "unit": "slice", "grams": 25, "default": true }]
+  },
+  "M524500": {
+    "en": "Halloumi",
+    "de": "Halloumi",
+    "tr": "Hellim peyniri",
+    "portions": [
+      { "unit": "slice", "grams": 30, "default": true },
+      { "unit": "serving", "grams": 100 }
+    ]
+  },
+  "M602600": {
+    "en": "Camembert",
+    "de": "Camembert",
+    "tr": "Camembert peyniri",
+    "portions": [{ "unit": "slice", "grams": 30, "default": true }]
+  },
+  "M710100": {
+    "en": "Skyr",
+    "de": "Skyr",
+    "tr": "Skyr",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20 },
+      { "unit": "cup", "grams": 150, "default": true }
+    ]
+  },
+  "M710800": {
+    "en": "Cream cheese",
+    "de": "Doppelrahmfrischkäse",
+    "tr": "Krem peynir",
+    "portions": [
+      { "unit": "tablespoon", "grams": 20, "default": true },
+      { "unit": "serving", "grams": 30 }
+    ]
+  },
+  "M711300": {
+    "en": "Cottage cheese",
+    "de": "Körniger Frischkäse",
+    "tr": "Cottage peyniri",
+    "portions": [
+      { "unit": "tablespoon", "grams": 30 },
+      { "unit": "cup", "grams": 200, "default": true }
+    ]
+  },
+  "M713100": {
+    "en": "Low-fat quark",
+    "de": "Magerquark",
+    "tr": "Kuark, yağsız",
+    "portions": [
+      { "unit": "tablespoon", "grams": 30 },
+      { "unit": "cup", "grams": 250, "default": true }
+    ]
+  },
+  "M771600": {
+    "en": "Processed cheese slices",
+    "de": "Schmelzkäsescheiben",
+    "tr": "Dilim eritme peynir",
+    "portions": [{ "unit": "slice", "grams": 20, "default": true }]
+  },
+  "N019000": {
+    "en": "Iced tea",
+    "de": "Eistee",
+    "tr": "Soğuk çay",
+    "portions": [
+      { "unit": "glass", "grams": 200 },
+      { "unit": "can", "grams": 330, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N110000": {
+    "en": "Water",
+    "de": "Wasser",
+    "tr": "Su",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N127000": {
+    "en": "Sparkling mineral water",
+    "de": "Mineralwasser mit Kohlensäure",
+    "tr": "Maden suyu",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N256000": {
+    "en": "Apple juice spritzer",
+    "de": "Apfelschorle",
+    "tr": "Maden sulu elma suyu",
+    "portions": [
+      { "unit": "glass", "grams": 200, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N310400": {
+    "en": "Lemonade",
+    "de": "Zitronenlimonade",
+    "tr": "Gazoz",
+    "portions": [
+      { "unit": "glass", "grams": 200 },
+      { "unit": "can", "grams": 330, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N330000": {
+    "en": "Cola",
+    "de": "Cola",
+    "tr": "Kola",
+    "portions": [
+      { "unit": "glass", "grams": 200 },
+      { "unit": "can", "grams": 330, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N331000": {
+    "en": "Cola light",
+    "de": "Cola light",
+    "tr": "Light kola",
+    "portions": [
+      { "unit": "glass", "grams": 200 },
+      { "unit": "can", "grams": 330, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "N410100": {
+    "en": "Coffee, black",
+    "de": "Kaffee, schwarz",
+    "tr": "Sade filtre kahve",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "N410200": {
+    "en": "Coffee with milk",
+    "de": "Kaffee mit Milch",
+    "tr": "Sütlü kahve",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "N410300": {
+    "en": "Coffee with milk and sugar",
+    "de": "Kaffee mit Milch und Zucker",
+    "tr": "Sütlü şekerli kahve",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "N411100": {
+    "en": "Espresso",
+    "de": "Espresso",
+    "tr": "Espresso",
+    "portions": [{ "unit": "cup", "grams": 30, "default": true }]
+  },
+  "N414000": {
+    "en": "Cappuccino",
+    "de": "Cappuccino",
+    "tr": "Kapuçino",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "N418000": {
+    "en": "Latte macchiato",
+    "de": "Latte macchiato",
+    "tr": "Latte macchiato",
+    "portions": [{ "unit": "glass", "grams": 300, "default": true }]
+  },
+  "N419000": {
+    "en": "Turkish coffee",
+    "de": "Türkischer Mokka",
+    "tr": "Türk kahvesi",
+    "portions": [{ "unit": "cup", "grams": 60, "default": true }]
+  },
+  "N610100": {
+    "en": "Green tea",
+    "de": "Grüner Tee",
+    "tr": "Yeşil çay",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "N630000": {
+    "en": "Black tea",
+    "de": "Schwarzer Tee",
+    "tr": "Siyah çay",
+    "portions": [
+      { "unit": "cup", "grams": 100, "default": true },
+      { "unit": "glass", "grams": 200 }
+    ]
+  },
+  "N630600": {
+    "en": "Black tea with sugar",
+    "de": "Schwarzer Tee mit Zucker",
+    "tr": "Şekerli çay",
+    "portions": [
+      { "unit": "cup", "grams": 100, "default": true },
+      { "unit": "glass", "grams": 200 }
+    ]
+  },
+  "N720100": {
+    "en": "Herbal tea",
+    "de": "Kräutertee",
+    "tr": "Bitki çayı",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "P151100": {
+    "en": "Wheat beer",
+    "de": "Weißbier",
+    "tr": "Buğday birası",
+    "portions": [
+      { "unit": "glass", "grams": 500, "default": true },
+      { "unit": "bottle", "grams": 500 }
+    ]
+  },
+  "P163000": {
+    "en": "Beer, pilsner",
+    "de": "Pils",
+    "tr": "Bira, pilsner",
+    "portions": [
+      { "unit": "glass", "grams": 300 },
+      { "unit": "bottle", "grams": 500, "default": true },
+      { "unit": "can", "grams": 330 }
+    ]
+  },
+  "P163100": {
+    "en": "Alcohol-free beer",
+    "de": "Alkoholfreies Bier",
+    "tr": "Alkolsüz bira",
+    "portions": [
+      { "unit": "bottle", "grams": 500, "default": true },
+      { "unit": "can", "grams": 330 }
+    ]
+  },
+  "P192000": {
+    "en": "Shandy",
+    "de": "Radler",
+    "tr": "Limonatalı bira (radler)",
+    "portions": [{ "unit": "bottle", "grams": 500, "default": true }]
+  },
+  "P210000": {
+    "en": "White wine, dry",
+    "de": "Weißwein, trocken",
+    "tr": "Beyaz şarap, sek",
+    "portions": [
+      { "unit": "glass", "grams": 150, "default": true },
+      { "unit": "bottle", "grams": 750 }
+    ]
+  },
+  "P2A3000": {
+    "en": "Red wine, dry",
+    "de": "Rotwein, trocken",
+    "tr": "Kırmızı şarap, sek",
+    "portions": [
+      { "unit": "glass", "grams": 150, "default": true },
+      { "unit": "bottle", "grams": 750 }
+    ]
+  },
+  "P2A6000": {
+    "en": "Sparkling wine",
+    "de": "Sekt, trocken",
+    "tr": "Köpüklü şarap",
+    "portions": [{ "unit": "glass", "grams": 100, "default": true }]
+  },
+  "P712000": {
+    "en": "Vodka",
+    "de": "Wodka",
+    "tr": "Votka",
+    "portions": [{ "unit": "glass", "grams": 40, "default": true }]
+  },
+  "P733000": {
+    "en": "Whisky",
+    "de": "Whisky",
+    "tr": "Viski",
+    "portions": [{ "unit": "glass", "grams": 40, "default": true }]
+  },
+  "P7A1000": {
+    "en": "Raki",
+    "de": "Anisschnaps",
+    "tr": "Rakı",
+    "portions": [{ "unit": "glass", "grams": 40, "default": true }]
+  },
+  "Q120000": {
+    "en": "Olive oil",
+    "de": "Olivenöl",
+    "tr": "Zeytinyağı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q180000": {
+    "en": "Rapeseed oil",
+    "de": "Rapsöl",
+    "tr": "Kanola yağı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q320000": {
+    "en": "Sunflower oil",
+    "de": "Sonnenblumenöl",
+    "tr": "Ayçiçek yağı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q400000": {
+    "en": "Margarine",
+    "de": "Margarine",
+    "tr": "Margarin",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q550000": {
+    "en": "Coconut oil",
+    "de": "Kokosöl",
+    "tr": "Hindistan cevizi yağı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q630000": {
+    "en": "Butter",
+    "de": "Butter",
+    "tr": "Tereyağı",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q683000": {
+    "en": "Clarified butter",
+    "de": "Butterschmalz",
+    "tr": "Sade yağ",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 10, "default": true }
+    ]
+  },
+  "Q901000": {
+    "en": "Tahini",
+    "de": "Tahini",
+    "tr": "Tahin",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 15, "default": true }
+    ]
+  },
+  "Q991000": {
+    "en": "Mayonnaise",
+    "de": "Mayonnaise",
+    "tr": "Mayonez",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 15, "default": true }
+    ]
+  },
+  "R114000": {
+    "en": "Salt",
+    "de": "Jodsalz",
+    "tr": "Tuz",
+    "portions": [{ "unit": "teaspoon", "grams": 5, "default": true }]
+  },
+  "R125000": {
+    "en": "Balsamic vinegar",
+    "de": "Balsamico-Essig",
+    "tr": "Balzamik sirke",
+    "portions": [{ "unit": "tablespoon", "grams": 15, "default": true }]
+  },
+  "R132000": {
+    "en": "Mustard",
+    "de": "Senf, mittelscharf",
+    "tr": "Hardal",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5, "default": true },
+      { "unit": "tablespoon", "grams": 15 }
+    ]
+  },
+  "R141100": {
+    "en": "Ketchup",
+    "de": "Tomatenketchup",
+    "tr": "Ketçap",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5 },
+      { "unit": "tablespoon", "grams": 15, "default": true }
+    ]
+  },
+  "R143000": {
+    "en": "Soy sauce",
+    "de": "Sojasoße",
+    "tr": "Soya sosu",
+    "portions": [{ "unit": "tablespoon", "grams": 15, "default": true }]
+  },
+  "R148200": {
+    "en": "Barbecue sauce",
+    "de": "Barbecuesoße",
+    "tr": "Barbekü sosu",
+    "portions": [{ "unit": "tablespoon", "grams": 15, "default": true }]
+  },
+  "R160000": {
+    "en": "Tomato paste",
+    "de": "Tomatenmark",
+    "tr": "Domates salçası",
+    "portions": [{ "unit": "tablespoon", "grams": 20, "default": true }]
+  },
+  "R481232": {
+    "en": "Chocolate pudding",
+    "de": "Schokoladenpudding",
+    "tr": "Çikolatalı puding",
+    "portions": [{ "unit": "cup", "grams": 150, "default": true }]
+  },
+  "S111000": {
+    "en": "Sugar",
+    "de": "Zucker",
+    "tr": "Toz şeker",
+    "portions": [
+      { "unit": "teaspoon", "grams": 5, "default": true },
+      { "unit": "tablespoon", "grams": 12 }
+    ]
+  },
+  "S120000": {
+    "en": "Honey",
+    "de": "Honig",
+    "tr": "Bal",
+    "portions": [
+      { "unit": "teaspoon", "grams": 7 },
+      { "unit": "tablespoon", "grams": 20, "default": true }
+    ]
+  },
+  "S132000": {
+    "en": "Jam",
+    "de": "Konfitüre",
+    "tr": "Reçel",
+    "portions": [
+      { "unit": "teaspoon", "grams": 7 },
+      { "unit": "tablespoon", "grams": 20, "default": true }
+    ]
+  },
+  "S145000": {
+    "en": "Hazelnut chocolate spread",
+    "de": "Nuss-Nougat-Creme",
+    "tr": "Fındık kreması",
+    "portions": [
+      { "unit": "teaspoon", "grams": 7 },
+      { "unit": "tablespoon", "grams": 20, "default": true }
+    ]
+  },
+  "S157000": {
+    "en": "Grape molasses",
+    "de": "Traubensirup",
+    "tr": "Üzüm pekmezi",
+    "portions": [{ "unit": "tablespoon", "grams": 20, "default": true }]
+  },
+  "S241000": {
+    "en": "Vanilla ice cream",
+    "de": "Vanilleeis",
+    "tr": "Vanilyalı dondurma",
+    "portions": [
+      { "unit": "piece", "grams": 60 },
+      { "unit": "cup", "grams": 100, "default": true }
+    ]
+  },
+  "S242000": {
+    "en": "Chocolate ice cream",
+    "de": "Schokoladeneis",
+    "tr": "Çikolatalı dondurma",
+    "portions": [
+      { "unit": "piece", "grams": 60 },
+      { "unit": "cup", "grams": 100, "default": true }
+    ]
+  },
+  "S361000": {
+    "en": "Gummy sweets",
+    "de": "Fruchtgummi",
+    "tr": "Meyveli jelibon",
+    "portions": [
+      { "unit": "handful", "grams": 25, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "S530000": {
+    "en": "Milk chocolate",
+    "de": "Vollmilchschokolade",
+    "tr": "Sütlü çikolata",
+    "portions": [
+      { "unit": "piece", "grams": 5 },
+      { "unit": "serving", "grams": 25, "default": true }
+    ]
+  },
+  "S570000": {
+    "en": "Dark chocolate",
+    "de": "Zartbitterschokolade",
+    "tr": "Bitter çikolata",
+    "portions": [
+      { "unit": "piece", "grams": 5 },
+      { "unit": "serving", "grams": 25, "default": true }
+    ]
+  },
+  "S580000": {
+    "en": "White chocolate",
+    "de": "Weiße Schokolade",
+    "tr": "Beyaz çikolata",
+    "portions": [
+      { "unit": "piece", "grams": 5 },
+      { "unit": "serving", "grams": 25, "default": true }
+    ]
+  },
+  "S581100": {
+    "en": "Chocolate bar with caramel and peanuts",
+    "de": "Schokoriegel mit Karamell und Erdnüssen",
+    "tr": "Karamelli fıstıklı çikolata bar",
+    "portions": [{ "unit": "piece", "grams": 50, "default": true }]
+  },
+  "S740000": {
+    "en": "Hot chocolate powder",
+    "de": "Trinkschokoladenpulver",
+    "tr": "Sıcak çikolata tozu",
+    "portions": [
+      { "unit": "teaspoon", "grams": 7 },
+      { "unit": "tablespoon", "grams": 15, "default": true }
+    ]
+  },
+  "S830000": {
+    "en": "Muesli bar",
+    "de": "Müsliriegel",
+    "tr": "Müsli bar",
+    "portions": [{ "unit": "piece", "grams": 25, "default": true }]
+  },
+  "T104182": {
+    "en": "Anchovies, fried",
+    "de": "Sardellen, gebraten",
+    "tr": "Hamsi tava",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "T105702": {
+    "en": "Sardines in oil",
+    "de": "Sardinen in Öl",
+    "tr": "Sardalya, yağlı konserve",
+    "portions": [{ "unit": "can", "grams": 90, "default": true }]
+  },
+  "T107172": {
+    "en": "Mackerel, grilled",
+    "de": "Makrele, gegrillt",
+    "tr": "Uskumru, ızgara",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "T107600": {
+    "en": "Smoked mackerel",
+    "de": "Räuchermakrele",
+    "tr": "Füme uskumru",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "T121702": {
+    "en": "Tuna in oil, canned",
+    "de": "Thunfisch in Öl",
+    "tr": "Ton balığı, yağlı",
+    "portions": [{ "unit": "can", "grams": 150, "default": true }]
+  },
+  "T121902": {
+    "en": "Tuna in water, canned",
+    "de": "Thunfisch im eigenen Saft",
+    "tr": "Ton balığı, su içinde",
+    "portions": [{ "unit": "can", "grams": 150, "default": true }]
+  },
+  "T204100": {
+    "en": "Cod, raw",
+    "de": "Kabeljau, roh",
+    "tr": "Morina, çiğ",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "T204182": {
+    "en": "Cod, fried",
+    "de": "Kabeljau, gebraten",
+    "tr": "Morina, tavada",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "T410082": {
+    "en": "Salmon, fried",
+    "de": "Lachs, gebraten",
+    "tr": "Somon, tavada",
+    "portions": [{ "unit": "piece", "grams": 125, "default": true }]
+  },
+  "T410100": {
+    "en": "Salmon, raw",
+    "de": "Lachs, roh",
+    "tr": "Somon, çiğ",
+    "portions": [{ "unit": "piece", "grams": 125, "default": true }]
+  },
+  "T410600": {
+    "en": "Smoked salmon",
+    "de": "Räucherlachs",
+    "tr": "Füme somon",
+    "portions": [
+      { "unit": "slice", "grams": 20, "default": true },
+      { "unit": "serving", "grams": 50 }
+    ]
+  },
+  "T420182": {
+    "en": "Trout, fried",
+    "de": "Forelle, gebraten",
+    "tr": "Alabalık, tavada",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "T753132": {
+    "en": "Shrimp, boiled",
+    "de": "Garnelen, gekocht",
+    "tr": "Karides, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "T792132": {
+    "en": "Mussels, boiled",
+    "de": "Miesmuscheln, gekocht",
+    "tr": "Midye, haşlanmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "T930182": {
+    "en": "Fish fingers, fried",
+    "de": "Fischstäbchen, gebraten",
+    "tr": "Balık kroket, tavada",
+    "portions": [{ "unit": "piece", "grams": 30, "default": true }]
+  },
+  "U010100": {
+    "en": "Beef mince, raw",
+    "de": "Rinderhackfleisch, roh",
+    "tr": "Dana kıyma, çiğ",
+    "portions": [{ "unit": "serving", "grams": 125, "default": true }]
+  },
+  "U010182": {
+    "en": "Beef mince, fried",
+    "de": "Rinderhackfleisch, gebraten",
+    "tr": "Dana kıyma, kavrulmuş",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "U050100": {
+    "en": "Mixed mince, raw",
+    "de": "Gemischtes Hackfleisch, roh",
+    "tr": "Karışık kıyma, çiğ",
+    "portions": [{ "unit": "serving", "grams": 125, "default": true }]
+  },
+  "U070100": {
+    "en": "Lean beef mince, raw",
+    "de": "Rinderhackfleisch mager, roh",
+    "tr": "Az yağlı dana kıyma, çiğ",
+    "portions": [{ "unit": "serving", "grams": 125, "default": true }]
+  },
+  "U070182": {
+    "en": "Lean beef mince, fried",
+    "de": "Rinderhackfleisch mager, gebraten",
+    "tr": "Az yağlı dana kıyma, kavrulmuş",
+    "portions": [{ "unit": "serving", "grams": 100, "default": true }]
+  },
+  "U131100": {
+    "en": "Beef steak, raw",
+    "de": "Rindersteak, roh",
+    "tr": "Dana biftek, çiğ",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "U131182": {
+    "en": "Beef steak, fried",
+    "de": "Rindersteak, gebraten",
+    "tr": "Dana biftek, tavada",
+    "portions": [{ "unit": "piece", "grams": 180, "default": true }]
+  },
+  "U522182": {
+    "en": "Pork chop, fried",
+    "de": "Schweinekotelett, gebraten",
+    "tr": "Domuz pirzola, tavada",
+    "portions": [{ "unit": "piece", "grams": 180, "default": true }]
+  },
+  "U541100": {
+    "en": "Pork escalope, raw",
+    "de": "Schweineschnitzel, roh",
+    "tr": "Domuz şnitzel, çiğ",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "U611100": {
+    "en": "Pork tenderloin, raw",
+    "de": "Schweinefilet, roh",
+    "tr": "Domuz bonfile, çiğ",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "U727172": {
+    "en": "Lamb chop, grilled",
+    "de": "Lammkotelett, gegrillt",
+    "tr": "Kuzu pirzola, ızgara",
+    "portions": [
+      { "unit": "piece", "grams": 60, "default": true },
+      { "unit": "serving", "grams": 180 }
+    ]
+  },
+  "U881100": {
+    "en": "Lamb leg, raw",
+    "de": "Lammkeule, roh",
+    "tr": "Kuzu but, çiğ",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "V414162": {
+    "en": "Roast chicken",
+    "de": "Brathähnchen",
+    "tr": "Fırında tavuk",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "V416100": {
+    "en": "Chicken breast, raw",
+    "de": "Hähnchenbrustfilet, roh",
+    "tr": "Tavuk göğsü, çiğ",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "piece", "grams": 180 }
+    ]
+  },
+  "V416172": {
+    "en": "Chicken breast, grilled",
+    "de": "Hähnchenbrustfilet, gegrillt",
+    "tr": "Tavuk göğsü, ızgara",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "piece", "grams": 150 }
+    ]
+  },
+  "V416182": {
+    "en": "Chicken breast, fried",
+    "de": "Hähnchenbrustfilet, gebraten",
+    "tr": "Tavuk göğsü, kızarmış",
+    "portions": [
+      { "unit": "serving", "grams": 150, "default": true },
+      { "unit": "piece", "grams": 150 }
+    ]
+  },
+  "V417162": {
+    "en": "Chicken wings, roasted",
+    "de": "Hähnchenflügel, gebraten",
+    "tr": "Tavuk kanat, fırında",
+    "portions": [
+      { "unit": "piece", "grams": 35, "default": true },
+      { "unit": "serving", "grams": 200 }
+    ]
+  },
+  "V486100": {
+    "en": "Turkey breast, raw",
+    "de": "Putenbrust, roh",
+    "tr": "Hindi göğsü, çiğ",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "V486182": {
+    "en": "Turkey breast, fried",
+    "de": "Putenbrust, gebraten",
+    "tr": "Hindi göğsü, kızarmış",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "V4A5100": {
+    "en": "Chicken thigh, raw",
+    "de": "Hähnchenschenkel, roh",
+    "tr": "Tavuk but, çiğ",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "V4A5182": {
+    "en": "Chicken thigh, fried",
+    "de": "Hähnchenschenkel, gebraten",
+    "tr": "Tavuk but, kızarmış",
+    "portions": [{ "unit": "piece", "grams": 130, "default": true }]
+  },
+  "V4B5162": {
+    "en": "Chicken drumstick, roasted",
+    "de": "Hähnchenunterschenkel, gebraten",
+    "tr": "Tavuk baget, fırında",
+    "portions": [{ "unit": "piece", "grams": 90, "default": true }]
+  },
+  "W140000": {
+    "en": "Salami",
+    "de": "Salami",
+    "tr": "Salam",
+    "portions": [{ "unit": "slice", "grams": 10, "default": true }]
+  },
+  "W147000": {
+    "en": "Poultry salami",
+    "de": "Geflügelsalami",
+    "tr": "Tavuk salam",
+    "portions": [{ "unit": "slice", "grams": 10, "default": true }]
+  },
+  "W211100": {
+    "en": "Bockwurst",
+    "de": "Bockwurst",
+    "tr": "Bockwurst sosis",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "W211200": {
+    "en": "Vienna sausage",
+    "de": "Wiener Würstchen",
+    "tr": "Viyana sosisi",
+    "portions": [{ "unit": "piece", "grams": 50, "default": true }]
+  },
+  "W212000": {
+    "en": "Poultry sausage",
+    "de": "Geflügelwürstchen",
+    "tr": "Tavuk sosis",
+    "portions": [{ "unit": "piece", "grams": 50, "default": true }]
+  },
+  "W222672": {
+    "en": "Bratwurst, grilled",
+    "de": "Rostbratwurst, gegrillt",
+    "tr": "Bratwurst, ızgara",
+    "portions": [{ "unit": "piece", "grams": 100, "default": true }]
+  },
+  "W231200": {
+    "en": "Mortadella",
+    "de": "Mortadella",
+    "tr": "Mortadella",
+    "portions": [{ "unit": "slice", "grams": 20, "default": true }]
+  },
+  "W288100": {
+    "en": "Poultry mortadella",
+    "de": "Geflügelmortadella",
+    "tr": "Tavuk jambon",
+    "portions": [{ "unit": "slice", "grams": 20, "default": true }]
+  },
+  "W310000": {
+    "en": "Liver sausage",
+    "de": "Leberwurst",
+    "tr": "Ciğer ezmesi (Leberwurst)",
+    "portions": [{ "unit": "tablespoon", "grams": 20, "default": true }]
+  },
+  "W415082": {
+    "en": "Bacon, fried",
+    "de": "Frühstücksspeck, gebraten",
+    "tr": "Domuz pastırması, kızarmış",
+    "portions": [{ "unit": "slice", "grams": 8, "default": true }]
+  },
+  "W424000": {
+    "en": "Cooked ham",
+    "de": "Kochschinken",
+    "tr": "Jambon (haşlanmış)",
+    "portions": [{ "unit": "slice", "grams": 20, "default": true }]
+  },
+  "W442000": {
+    "en": "Black Forest ham",
+    "de": "Schwarzwälder Schinken",
+    "tr": "Füme çiğ jambon",
+    "portions": [{ "unit": "slice", "grams": 15, "default": true }]
+  },
+  "W561000": {
+    "en": "Turkey breast cold cuts",
+    "de": "Putenbrustaufschnitt",
+    "tr": "Hindi füme",
+    "portions": [{ "unit": "slice", "grams": 15, "default": true }]
+  },
+  "X1A2020": {
+    "en": "Potato salad with mayonnaise",
+    "de": "Kartoffelsalat mit Mayonnaise",
+    "tr": "Mayonezli patates salatası",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "X201160": {
+    "en": "Mixed salad, no dressing",
+    "de": "Gemischter Salat ohne Dressing",
+    "tr": "Karışık salata, sossuz",
+    "portions": [{ "unit": "bowl", "grams": 150, "default": true }]
+  },
+  "X201400": {
+    "en": "Mixed salad with vinaigrette",
+    "de": "Gemischter Salat mit Essig-Öl-Dressing",
+    "tr": "Zeytinyağlı karışık salata",
+    "portions": [{ "unit": "bowl", "grams": 150, "default": true }]
+  },
+  "X203850": {
+    "en": "Greek salad",
+    "de": "Griechischer Salat",
+    "tr": "Yunan salatası",
+    "portions": [{ "unit": "bowl", "grams": 250, "default": true }]
+  },
+  "X252640": {
+    "en": "Cucumber salad with yoghurt",
+    "de": "Gurkensalat mit Joghurt",
+    "tr": "Yoğurtlu salatalık (cacık)",
+    "portions": [{ "unit": "bowl", "grams": 200, "default": true }]
+  },
+  "X331353": {
+    "en": "Tomato sauce",
+    "de": "Tomatensoße",
+    "tr": "Domates sosu",
+    "portions": [{ "unit": "serving", "grams": 125, "default": true }]
+  },
+  "X372012": {
+    "en": "Pesto",
+    "de": "Pesto verde",
+    "tr": "Pesto sos",
+    "portions": [{ "unit": "tablespoon", "grams": 15, "default": true }]
+  },
+  "X416713": {
+    "en": "Vegetable soup",
+    "de": "Gemüsesuppe",
+    "tr": "Sebze çorbası",
+    "portions": [{ "unit": "bowl", "grams": 300, "default": true }]
+  },
+  "X446643": {
+    "en": "Tomato soup",
+    "de": "Tomatensuppe",
+    "tr": "Domates çorbası",
+    "portions": [{ "unit": "bowl", "grams": 300, "default": true }]
+  },
+  "X469753": {
+    "en": "Chili con carne",
+    "de": "Chili con Carne",
+    "tr": "Chili con carne",
+    "portions": [{ "unit": "bowl", "grams": 300, "default": true }]
+  },
+  "X4A1020": {
+    "en": "Chicken soup",
+    "de": "Hühnersuppe",
+    "tr": "Tavuk çorbası",
+    "portions": [{ "unit": "bowl", "grams": 300, "default": true }]
+  },
+  "X4A8070": {
+    "en": "Red lentil soup",
+    "de": "Rote-Linsen-Suppe",
+    "tr": "Mercimek çorbası",
+    "portions": [{ "unit": "bowl", "grams": 300, "default": true }]
+  },
+  "X554333": {
+    "en": "Stuffed peppers with mince and rice",
+    "de": "Gefüllte Paprika mit Hackfleisch und Reis",
+    "tr": "Etli biber dolması",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "X631042": {
+    "en": "Mashed potatoes",
+    "de": "Kartoffelpüree",
+    "tr": "Patates püresi",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "X651043": {
+    "en": "Fried potatoes with onions",
+    "de": "Bratkartoffeln",
+    "tr": "Soğanlı patates kızartması",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "X730033": {
+    "en": "Lasagne",
+    "de": "Lasagne",
+    "tr": "Lazanya",
+    "portions": [{ "unit": "plate", "grams": 350, "default": true }]
+  },
+  "X740433": {
+    "en": "Spaghetti bolognese",
+    "de": "Spaghetti Bolognese",
+    "tr": "Bolonez soslu spagetti",
+    "portions": [{ "unit": "plate", "grams": 350, "default": true }]
+  },
+  "X740733": {
+    "en": "Spaghetti carbonara",
+    "de": "Spaghetti Carbonara",
+    "tr": "Karbonara soslu spagetti",
+    "portions": [{ "unit": "plate", "grams": 350, "default": true }]
+  },
+  "X740933": {
+    "en": "Pasta with tomato sauce",
+    "de": "Nudeln mit Tomatensoße",
+    "tr": "Domates soslu makarna",
+    "portions": [{ "unit": "plate", "grams": 350, "default": true }]
+  },
+  "X810613": {
+    "en": "Rice pudding",
+    "de": "Milchreis",
+    "tr": "Sütlaç",
+    "portions": [{ "unit": "cup", "grams": 200, "default": true }]
+  },
+  "X890662": {
+    "en": "Rice pilaf",
+    "de": "Reispilaw",
+    "tr": "Pirinç pilavı",
+    "portions": [
+      { "unit": "plate", "grams": 200, "default": true },
+      { "unit": "tablespoon", "grams": 20 }
+    ]
+  },
+  "X912033": {
+    "en": "Pizza margherita",
+    "de": "Pizza Margherita",
+    "tr": "Margarita pizza",
+    "portions": [
+      { "unit": "slice", "grams": 100 },
+      { "unit": "piece", "grams": 350, "default": true }
+    ]
+  },
+  "X912412": {
+    "en": "Pizza prosciutto",
+    "de": "Pizza Prosciutto",
+    "tr": "Jambonlu pizza",
+    "portions": [
+      { "unit": "slice", "grams": 100 },
+      { "unit": "piece", "grams": 350, "default": true }
+    ]
+  },
+  "X914133": {
+    "en": "Pizza salami",
+    "de": "Pizza Salami",
+    "tr": "Salamili pizza",
+    "portions": [
+      { "unit": "slice", "grams": 100 },
+      { "unit": "piece", "grams": 350, "default": true }
+    ]
+  },
+  "X929212": {
+    "en": "Pancakes",
+    "de": "Pfannkuchen",
+    "tr": "Pankek",
+    "portions": [{ "unit": "piece", "grams": 80, "default": true }]
+  },
+  "X987612": {
+    "en": "Bulgur pilaf",
+    "de": "Bulgurpilaw",
+    "tr": "Bulgur pilavı",
+    "portions": [
+      { "unit": "plate", "grams": 200, "default": true },
+      { "unit": "tablespoon", "grams": 20 }
+    ]
+  },
+  "X9A2100": {
+    "en": "Porridge with milk",
+    "de": "Haferbrei mit Milch",
+    "tr": "Sütlü yulaf lapası",
+    "portions": [{ "unit": "bowl", "grams": 250, "default": true }]
+  },
+  "X9A3000": {
+    "en": "Spinach and feta pastry",
+    "de": "Blätterteigtasche mit Spinat und Schafskäse",
+    "tr": "Ispanaklı peynirli börek",
+    "portions": [{ "unit": "piece", "grams": 120, "default": true }]
+  },
+  "Y021512": {
+    "en": "Hot dog",
+    "de": "Hot Dog",
+    "tr": "Sosisli sandviç",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "Y036122": {
+    "en": "Meat patty",
+    "de": "Frikadelle",
+    "tr": "Köfte (karışık kıyma)",
+    "portions": [{ "unit": "piece", "grams": 80, "default": true }]
+  },
+  "Y036610": {
+    "en": "Beef meatballs, fried",
+    "de": "Rinderfrikadellen, gebraten",
+    "tr": "Dana köfte, kızarmış",
+    "portions": [
+      { "unit": "piece", "grams": 50, "default": true },
+      { "unit": "serving", "grams": 150 }
+    ]
+  },
+  "Y038213": {
+    "en": "Bolognese sauce",
+    "de": "Bolognesesoße",
+    "tr": "Bolonez sos",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "Y1A1000": {
+    "en": "Beef goulash",
+    "de": "Rindergulasch",
+    "tr": "Dana gulaş",
+    "portions": [{ "unit": "plate", "grams": 250, "default": true }]
+  },
+  "Y231322": {
+    "en": "Wiener schnitzel",
+    "de": "Wiener Schnitzel",
+    "tr": "Viyana şnitzeli",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "Y332132": {
+    "en": "Pork schnitzel, breaded",
+    "de": "Schweineschnitzel, paniert",
+    "tr": "Domuz şnitzel, pane",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "Y384112": {
+    "en": "Gyros",
+    "de": "Gyros",
+    "tr": "Gyros",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "Y583312": {
+    "en": "Turkey schnitzel, breaded",
+    "de": "Putenschnitzel, paniert",
+    "tr": "Hindi şnitzel, pane",
+    "portions": [{ "unit": "piece", "grams": 150, "default": true }]
+  },
+  "Y599112": {
+    "en": "Chicken wrap",
+    "de": "Hähnchen-Wrap",
+    "tr": "Tavuk dürüm",
+    "portions": [{ "unit": "piece", "grams": 250, "default": true }]
+  },
+  "Y627112": {
+    "en": "Salmon sushi",
+    "de": "Lachs-Sushi",
+    "tr": "Somonlu suşi",
+    "portions": [{ "unit": "piece", "grams": 30, "default": true }]
+  },
+  "Y689132": {
+    "en": "King prawns, grilled",
+    "de": "Riesengarnelen, gegrillt",
+    "tr": "Jumbo karides, ızgara",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "Y710142": {
+    "en": "Fried egg",
+    "de": "Spiegelei",
+    "tr": "Sahanda yumurta",
+    "portions": [{ "unit": "piece", "grams": 55, "default": true }]
+  },
+  "Y720143": {
+    "en": "Scrambled eggs",
+    "de": "Rührei",
+    "tr": "Çırpılmış yumurta",
+    "portions": [{ "unit": "serving", "grams": 120, "default": true }]
+  },
+  "Y722243": {
+    "en": "Scrambled eggs with tomatoes",
+    "de": "Rührei mit Tomaten",
+    "tr": "Domatesli yumurta (menemen)",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "Y730163": {
+    "en": "Omelette",
+    "de": "Omelett",
+    "tr": "Omlet",
+    "portions": [{ "unit": "serving", "grams": 150, "default": true }]
+  },
+  "Y911060": {
+    "en": "Hamburger",
+    "de": "Hamburger",
+    "tr": "Hamburger",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "Y911160": {
+    "en": "Cheeseburger",
+    "de": "Cheeseburger",
+    "tr": "Çizburger",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "Y921062": {
+    "en": "Döner kebab",
+    "de": "Döner Kebab",
+    "tr": "Döner ekmek arası",
+    "portions": [{ "unit": "piece", "grams": 350, "default": true }]
+  },
+  "Y921162": {
+    "en": "Chicken döner kebab",
+    "de": "Hähnchen-Döner",
+    "tr": "Tavuk döner ekmek arası",
+    "portions": [{ "unit": "piece", "grams": 350, "default": true }]
+  },
+  "Y943032": {
+    "en": "Currywurst",
+    "de": "Currywurst",
+    "tr": "Körili sosis (Currywurst)",
+    "portions": [{ "unit": "serving", "grams": 200, "default": true }]
+  },
+  "Y9A1000": {
+    "en": "Chicken burger",
+    "de": "Chicken-Burger",
+    "tr": "Tavuk burger",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  },
+  "Y9A1050": {
+    "en": "Falafel",
+    "de": "Falafel",
+    "tr": "Falafel",
+    "portions": [
+      { "unit": "piece", "grams": 25, "default": true },
+      { "unit": "serving", "grams": 125 }
+    ]
+  },
+  "Y9A1090": {
+    "en": "Lahmacun",
+    "de": "Lahmacun",
+    "tr": "Lahmacun",
+    "portions": [{ "unit": "piece", "grams": 200, "default": true }]
+  }
+}

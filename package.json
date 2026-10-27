@@ -61,6 +61,7 @@
     "format:check": "prettier --check .",
     "check:locales": "node scripts/check-locales.ts",
     "import:exercises": "node scripts/import-exercises.ts",
+    "import:foods": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-foods.ts",
     "icons": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-icons.ts",
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && cp src/lib/database.types.ts supabase/functions/_shared/database.types.ts && prettier --write src/lib/database.types.ts supabase/functions/_shared/database.types.ts",
     "functions:check": "cd supabase/functions && deno check . && deno lint && deno test",

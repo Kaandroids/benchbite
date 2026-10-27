@@ -118,7 +118,8 @@ src/                   components, hooks and other app code, by feature
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
-scripts/               the exercise import, the locale check and the plan check
+scripts/               the exercise and food imports (shared helpers in lib/), the locale check
+                       and the plan check
 docs/adr/              Architecture Decision Records
 docs/screenshots/      the screenshots in this README
 ```
@@ -193,6 +194,14 @@ changing only the translated names in `supabase/data/exercise-names.json`, run
 `pnpm import:exercises --names-only`, which writes a migration with just the names. See
 [ADR 0008](docs/adr/0008-exercise-library.md).
 
+#### Food library
+
+The food library comes from the [BLS 4.0](https://blsdb.de) of the Max Rubner-Institut. The
+foods it includes, with their English, German and Turkish names and their portions, are listed
+by BLS code in `supabase/data/foods.json`. After changing that file, run `pnpm import:foods`,
+which downloads the pinned BLS release, checks it and writes a new migration. See
+[ADR 0033](docs/adr/0033-food-library-from-bls.md).
+
 #### Edge Functions
 
 Edge Functions live in `supabase/functions/` and run on Deno. `pnpm supabase start` serves them
@@ -239,6 +248,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm check:locales`    | Check that all translations have the same keys        |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
+| `pnpm import:foods`     | Import the food library from the BLS 4.0              |
 | `pnpm icons`            | Draw the app icons and the splash image from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
@@ -306,6 +316,11 @@ with Xcode and an Apple Developer account added in Xcode's settings.
 The exercise data and images come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
 by Clint Plummer ([@yuhonas](https://github.com/yuhonas)) and contributors, released into the
 public domain under the [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE.md).
+
+The food data comes from the [Bundeslebensmittelschlüssel (BLS) 4.0](https://blsdb.de) by the
+Max Rubner-Institut, Karlsruhe, released under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The names in Turkish, some shortened
+names and the portion sizes are our own.
 
 ## License
 

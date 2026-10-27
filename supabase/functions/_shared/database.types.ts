@@ -102,6 +102,109 @@ export type Database = {
         };
         Relationships: [];
       };
+      food_names: {
+        Row: {
+          food_id: string;
+          language: string;
+          name: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          food_id: string;
+          language: string;
+          name: string;
+        };
+        Update: {
+          food_id?: string;
+          language?: string;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'food_names_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      food_portions: {
+        Row: {
+          food_id: string;
+          grams: number;
+          is_default: boolean;
+          unit: Database['public']['Enums']['portion_unit'];
+        };
+        ComputedFields: never;
+        Insert: {
+          food_id: string;
+          grams: number;
+          is_default?: boolean;
+          unit: Database['public']['Enums']['portion_unit'];
+        };
+        Update: {
+          food_id?: string;
+          grams?: number;
+          is_default?: boolean;
+          unit?: Database['public']['Enums']['portion_unit'];
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'food_portions_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      foods: {
+        Row: {
+          archived_at: string | null;
+          carbs_g: number;
+          fat_g: number;
+          fiber_g: number | null;
+          food_group: Database['public']['Enums']['food_group'];
+          id: string;
+          kcal: number;
+          protein_g: number;
+          salt_g: number | null;
+          saturated_fat_g: number | null;
+          source: Database['public']['Enums']['food_source'];
+          sugar_g: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          archived_at?: string | null;
+          carbs_g: number;
+          fat_g: number;
+          fiber_g?: number | null;
+          food_group: Database['public']['Enums']['food_group'];
+          id: string;
+          kcal: number;
+          protein_g: number;
+          salt_g?: number | null;
+          saturated_fat_g?: number | null;
+          source: Database['public']['Enums']['food_source'];
+          sugar_g?: number | null;
+        };
+        Update: {
+          archived_at?: string | null;
+          carbs_g?: number;
+          fat_g?: number;
+          fiber_g?: number | null;
+          food_group?: Database['public']['Enums']['food_group'];
+          id?: string;
+          kcal?: number;
+          protein_g?: number;
+          salt_g?: number | null;
+          saturated_fat_g?: number | null;
+          source?: Database['public']['Enums']['food_source'];
+          sugar_g?: number | null;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           created_at: string;
@@ -765,6 +868,27 @@ export type Database = {
       exercise_mechanic: 'compound' | 'isolation';
       exercise_metric: 'weight' | 'reps' | 'duration' | 'distance';
       experience: 'beginner' | 'intermediate' | 'advanced';
+      food_group:
+        | 'bread'
+        | 'cereals'
+        | 'pastries'
+        | 'eggs_and_pasta'
+        | 'fruit'
+        | 'vegetables'
+        | 'legumes_nuts_seeds'
+        | 'potatoes_mushrooms'
+        | 'dairy'
+        | 'drinks'
+        | 'alcoholic_drinks'
+        | 'fats'
+        | 'condiments'
+        | 'sweets'
+        | 'fish'
+        | 'meat'
+        | 'poultry_game_offal'
+        | 'sausages'
+        | 'dishes';
+      food_source: 'bls';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
       height_unit: 'cm' | 'ft';
       muscle:
@@ -800,6 +924,19 @@ export type Database = {
         | 'calves'
         | 'core'
         | 'conditioning';
+      portion_unit:
+        | 'piece'
+        | 'slice'
+        | 'cup'
+        | 'glass'
+        | 'bowl'
+        | 'plate'
+        | 'tablespoon'
+        | 'teaspoon'
+        | 'handful'
+        | 'serving'
+        | 'can'
+        | 'bottle';
       sex: 'female' | 'male' | 'unspecified';
       training_setup: 'gym' | 'dumbbells' | 'bodyweight';
       weight_unit: 'kg' | 'lb';
@@ -952,6 +1089,28 @@ export const Constants = {
       exercise_mechanic: ['compound', 'isolation'],
       exercise_metric: ['weight', 'reps', 'duration', 'distance'],
       experience: ['beginner', 'intermediate', 'advanced'],
+      food_group: [
+        'bread',
+        'cereals',
+        'pastries',
+        'eggs_and_pasta',
+        'fruit',
+        'vegetables',
+        'legumes_nuts_seeds',
+        'potatoes_mushrooms',
+        'dairy',
+        'drinks',
+        'alcoholic_drinks',
+        'fats',
+        'condiments',
+        'sweets',
+        'fish',
+        'meat',
+        'poultry_game_offal',
+        'sausages',
+        'dishes',
+      ],
+      food_source: ['bls'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
       height_unit: ['cm', 'ft'],
       muscle: [
@@ -988,6 +1147,20 @@ export const Constants = {
         'calves',
         'core',
         'conditioning',
+      ],
+      portion_unit: [
+        'piece',
+        'slice',
+        'cup',
+        'glass',
+        'bowl',
+        'plate',
+        'tablespoon',
+        'teaspoon',
+        'handful',
+        'serving',
+        'can',
+        'bottle',
       ],
       sex: ['female', 'male', 'unspecified'],
       training_setup: ['gym', 'dumbbells', 'bodyweight'],
