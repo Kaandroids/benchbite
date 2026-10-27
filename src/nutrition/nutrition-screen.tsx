@@ -19,7 +19,9 @@ export function NutritionScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const today = new Date();
-  const [day, setDay] = useState(() => addDays(today, 0));
+  // The distance from today rather than the date, so that today stays today after midnight.
+  const [daysBack, setDaysBack] = useState(0);
+  const day = addDays(today, -daysBack);
   const targets = useNutritionTargets();
   const entries = useDayEntries(toIsoDate(day));
   const queries = [targets, entries];
@@ -71,7 +73,7 @@ export function NutritionScreen() {
           <Text variant="title" accessibilityRole="header" style={styles.title}>
             {t('tabs.nutrition')}
           </Text>
-          <DaySwitcher day={day} today={today} onChange={setDay} />
+          <DaySwitcher today={today} daysBack={daysBack} onChange={setDaysBack} />
         </View>
         {content}
       </ScrollView>

@@ -91,6 +91,15 @@ describe('NutritionScreen', () => {
     expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-21');
   });
 
+  it('moves on to the new day after midnight', async () => {
+    jest.setSystemTime(new Date(2026, 9, 27, 23, 30));
+    await render(<NutritionScreen />);
+    jest.setSystemTime(new Date(2026, 9, 28, 8, 0));
+    await screen.rerender(<NutritionScreen />);
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-28');
+    expect(screen.getByText('Today')).toBeTruthy();
+  });
+
   it('shows the meals without a summary before the targets exist', async () => {
     jest.mocked(useNutritionTargets).mockReturnValue(query(null, {}));
     await render(<NutritionScreen />);

@@ -3,25 +3,25 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { addDays, toIsoDate } from '@/i18n/dates';
+import { addDays } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { LOGGABLE_DAYS } from './meals';
 
 type DaySwitcherProps = {
-  /** The day shown, at midnight. */
-  day: Date;
   today: Date;
-  onChange: (day: Date) => void;
+  /** How many days before today the day shown is, 0 for today. */
+  daysBack: number;
+  onChange: (daysBack: number) => void;
 };
 
 /** "‹ Today ›" beside the title: steps a day back, up to the days that can be logged, or forward. */
-export function DaySwitcher({ day, today, onChange }: DaySwitcherProps) {
+export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
   const { t, i18n } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const shown = toIsoDate(day);
-  const canGoBack = shown > toIsoDate(addDays(today, -LOGGABLE_DAYS));
-  const canGoForward = shown < toIsoDate(today);
+  const day = addDays(today, -daysBack);
+  const canGoBack = daysBack < LOGGABLE_DAYS;
+  const canGoForward = daysBack > 0;
 
   const date = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'short',
@@ -29,9 +29,9 @@ export function DaySwitcher({ day, today, onChange }: DaySwitcherProps) {
     month: 'short',
   }).format(day);
   const name =
-    shown === toIsoDate(today)
+    daysBack === 0
       ? t('nutrition.day.today')
-      : shown === toIsoDate(addDays(today, -1))
+      : daysBack === 1
         ? t('nutrition.day.yesterday')
         : new Intl.DateTimeFormat(i18n.language, { weekday: 'long' }).format(day);
 
@@ -42,7 +42,7 @@ export function DaySwitcher({ day, today, onChange }: DaySwitcherProps) {
       accessibilityState={{ disabled: !enabled }}
       disabled={!enabled}
       hitSlop={4}
-      onPress={() => onChange(addDays(day, by))}
+      onPress={() => onChange(daysBack - by)}
       style={({ pressed }) => [
         styles.step,
         {
