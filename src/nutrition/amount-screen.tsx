@@ -10,15 +10,14 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
-import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
-import { isDbError } from '@/lib/errors';
 import { clamp } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
+import { AddEntryError } from './add-entry-error';
 import { amountOf, useAddEntry, useFood, type Food } from './foods';
 import { MACROS } from './macro-targets';
 import { MEALS, totalOf, useDayEntries, type Meal } from './meals';
@@ -321,13 +320,7 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
           />
         </View>
 
-        {addEntry.isError ? (
-          <Note tone="danger">
-            {isDbError(addEntry.error, 'closedDay')
-              ? t('nutrition.amount.closedDay')
-              : t('nutrition.amount.saveError')}
-          </Note>
-        ) : null}
+        {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
         <Button label={t(`nutrition.addTo.${meal}`)} loading={addEntry.isPending} onPress={save} />

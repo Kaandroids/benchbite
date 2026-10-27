@@ -263,9 +263,12 @@
       "notFound": {
         "title": "Lebensmittel nicht gefunden",
         "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
-      },
-      "saveError": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
-      "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden."
+      }
+    },
+    "addError": {
+      "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
+      "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
+      "archived": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
     }
   },
   "workout": {

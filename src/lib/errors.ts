@@ -10,6 +10,7 @@ const DB_ERRORS = {
   logNotFound: 'BB013',
   moveDoesNotFit: 'BB019',
   closedDay: 'BB020',
+  foodArchived: 'BB022',
 } as const;
 
 type DbError = keyof typeof DB_ERRORS;

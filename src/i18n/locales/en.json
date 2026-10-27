@@ -263,9 +263,12 @@
       "notFound": {
         "title": "Food not found",
         "message": "This food is no longer in the library."
-      },
-      "saveError": "The food could not be added. Check your connection and try again.",
-      "closedDay": "Meals can only be added to today and the week before."
+      }
+    },
+    "addError": {
+      "closedDay": "Meals can only be added to today and the week before.",
+      "failed": "The food could not be added. Check your connection and try again.",
+      "archived": "This food is no longer in the library."
     }
   },
   "workout": {

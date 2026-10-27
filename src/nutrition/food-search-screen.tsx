@@ -18,9 +18,9 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
-import { isDbError } from '@/lib/errors';
 import { useTheme } from '@/theme';
 
+import { AddEntryError } from './add-entry-error';
 import { amountOf, MIN_QUERY_LENGTH, useAddEntry, useFoodSearch, type FoodResult } from './foods';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
@@ -180,13 +180,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
           autoFocus
           maxLength={50}
         />
-        {addEntry.isError ? (
-          <Note tone="danger">
-            {isDbError(addEntry.error, 'closedDay')
-              ? t('nutrition.amount.closedDay')
-              : t('nutrition.amount.saveError')}
-          </Note>
-        ) : null}
+        {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </View>
 
       {body}

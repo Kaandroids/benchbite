@@ -263,9 +263,12 @@
       "notFound": {
         "title": "Besin bulunamadı",
         "message": "Bu besin artık kütüphanede yok."
-      },
-      "saveError": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
-      "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir."
+      }
+    },
+    "addError": {
+      "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
+      "failed": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
+      "archived": "Bu besin artık kütüphanede yok."
     }
   },
   "workout": {

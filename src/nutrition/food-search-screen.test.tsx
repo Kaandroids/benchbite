@@ -88,6 +88,14 @@ describe('FoodSearchScreen', () => {
     ).toBeTruthy();
   });
 
+  it('says when a food was taken out of the library', async () => {
+    jest
+      .mocked(useAddEntry)
+      .mockReturnValue({ mutate, isError: true, error: { code: 'BB022' } } as never);
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    expect(screen.getByText('This food is no longer in the library.')).toBeTruthy();
+  });
+
   it('says when a day can no longer be changed', async () => {
     jest
       .mocked(useAddEntry)
