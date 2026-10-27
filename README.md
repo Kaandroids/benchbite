@@ -7,6 +7,38 @@ A mobile app for tracking workouts and nutrition in one place.
 > **Status:** In development. Onboarding, workout tracking and email accounts work end to end;
 > nutrition tracking comes next. There is no release yet. See the [roadmap](#roadmap).
 
+## Screenshots
+
+**Onboarding:** a few questions in three sections, then a plan built from the answers.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/welcome.png" width="220" alt="Welcome slides with the daily calorie and macro targets"></td>
+    <td><img src="docs/screenshots/goal.png" width="220" alt="Choosing the main goal, with what it means for the plan"></td>
+    <td><img src="docs/screenshots/goal-insight.png" width="220" alt="What to expect from the chosen goal, week by week"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/session-length.png" width="220" alt="Choosing the workout length, with the exercises, sets and rest it allows"></td>
+    <td><img src="docs/screenshots/building.png" width="220" alt="The plan being built behind a filling plate"></td>
+    <td><img src="docs/screenshots/summary.png" width="220" alt="The finished plan: daily calories, workouts per week and the first workout"></td>
+  </tr>
+</table>
+
+**The app:** the week at a glance, workouts to start, sets to log, and records over time.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/today.png" width="220" alt="Today: the week, a missed workout, today's workout and the daily targets"></td>
+    <td><img src="docs/screenshots/workout.png" width="220" alt="The workouts of the week and the latest finished one"></td>
+    <td><img src="docs/screenshots/record.png" width="220" alt="Logging sets with last time's numbers, a new record and the rest timer"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/history.png" width="220" alt="An exercise's records, progress chart and sessions"></td>
+    <td><img src="docs/screenshots/exercise-info.png" width="220" alt="An exercise's pictures, muscles, equipment and instructions"></td>
+    <td></td>
+  </tr>
+</table>
+
 ## Features
 
 - **Start without an account.** People use the app as a guest; the session lives on the device
