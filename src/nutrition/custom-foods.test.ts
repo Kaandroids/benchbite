@@ -39,6 +39,7 @@ describe('useCreateFood', () => {
     expect(supabase.from).toHaveBeenCalledWith('custom_foods');
     expect(insert).toHaveBeenCalledWith(COLUMNS);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['food-search'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries'] });
   });
 });
 

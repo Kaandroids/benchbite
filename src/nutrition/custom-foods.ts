@@ -24,13 +24,14 @@ function columnsOf({ name, per100g, portion }: CustomFoodValues) {
   };
 }
 
-/** Search and the food's own screen show it changed. */
+/** Search, the food's own screen and the days, which name it, show it changed. */
 function useReloadFoods() {
   const queryClient = useQueryClient();
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['food-search'] }),
       queryClient.invalidateQueries({ queryKey: ['food'] }),
+      queryClient.invalidateQueries({ queryKey: ['meal-entries'] }),
     ]);
 }
 
@@ -67,7 +68,10 @@ export function useUpdateFood() {
   });
 }
 
-/** Deletes a food of one's own: it is archived, so that past entries keep it (ADR 0036). */
+/**
+ * Deletes a food of one's own: it is archived, so that past entries keep it, and the database
+ * sets the time (ADR 0036).
+ */
 export function useDeleteFood() {
   const reload = useReloadFoods();
   return useMutation({
@@ -80,6 +84,9 @@ export function useDeleteFood() {
         throw error;
       }
     },
-    onSuccess: reload,
+    // Not waited for, so that the screen leaves before the food it shows reloads as deleted.
+    onSuccess: () => {
+      void reload();
+    },
   });
 }
