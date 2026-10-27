@@ -363,6 +363,52 @@
       "over": "Hedefe ulaşıldı · +{{ml}} ml",
       "add": "Bir bardak ekle, {{ml}} ml",
       "remove": "Bir bardak çıkar"
+    },
+    "quick": {
+      "tabs": "Besin listeleri",
+      "frequent": "Sık",
+      "favourites": "Favoriler",
+      "mine": "Benim",
+      "often": {
+        "breakfast": "Kahvaltıda sık",
+        "lunch": "Öğle yemeğinde sık",
+        "dinner": "Akşam yemeğinde sık",
+        "snack": "Atıştırmalık olarak sık"
+      },
+      "last": {
+        "breakfast": "Son kahvaltın",
+        "lunch": "Son öğle yemeğin",
+        "dinner": "Son akşam yemeğin",
+        "snack": "Son atıştırmalığın"
+      },
+      "lastSize_one": "{{count}} besin · {{calories}} kcal",
+      "lastSize_other": "{{count}} besin · {{calories}} kcal",
+      "lastFoods": "{{day}} · {{names}}",
+      "addAll": "Hepsini ekle",
+      "addAllLabel": "{{day}} gününün {{count}} besinini ekle",
+      "addedAll_one": "{{count}} besin eklendi",
+      "addedAll_other": "{{count}} besin eklendi",
+      "times": "{{count}}×",
+      "emptyFrequent": {
+        "breakfast": "Kahvaltıya henüz bir şey eklenmedi",
+        "lunch": "Öğle yemeğine henüz bir şey eklenmedi",
+        "dinner": "Akşam yemeğine henüz bir şey eklenmedi",
+        "snack": "Henüz atıştırmalık eklenmedi"
+      },
+      "emptyFrequentText": "Yukarıdan bir besin ara. En sık eklediklerin burada, tek dokunuş uzağında olacak.",
+      "noFavourites": "Henüz favori yok",
+      "noFavouritesText": "Bir besini burada tutmak için yıldızına dokun.",
+      "favouritesNote": "En yeniler önce. Eklemek ya da çıkarmak için bir besinin yıldızına dokun.",
+      "noMine": "Henüz kendi besinin yok",
+      "noMineText": "Aşağıdaki düğmeyle etiketinden bir tane oluştur.",
+      "error": "Liste yüklenemedi. Bağlantını kontrol edip tekrar dene.",
+      "favourite": "Favorilere ekle",
+      "unfavourite": "Favorilerden çıkar",
+      "favouriteAdded": "Favorilere eklendi",
+      "favouriteRemoved": "Favorilerden çıkarıldı",
+      "favouriteError": "Favori kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "favouriteLimit": "En fazla 500 favorin olabilir. Yenisini eklemek için birini çıkar.",
+      "isFavourite": "Favori"
     }
   },
   "workout": {

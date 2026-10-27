@@ -363,6 +363,52 @@
       "over": "Goal reached · +{{ml}} ml",
       "add": "Add a glass, {{ml}} ml",
       "remove": "Remove a glass"
+    },
+    "quick": {
+      "tabs": "Lists of foods",
+      "frequent": "Frequent",
+      "favourites": "Favourites",
+      "mine": "Mine",
+      "often": {
+        "breakfast": "Often at breakfast",
+        "lunch": "Often at lunch",
+        "dinner": "Often at dinner",
+        "snack": "Often as a snack"
+      },
+      "last": {
+        "breakfast": "Your last breakfast",
+        "lunch": "Your last lunch",
+        "dinner": "Your last dinner",
+        "snack": "Your last snack"
+      },
+      "lastSize_one": "{{count}} food · {{calories}} kcal",
+      "lastSize_other": "{{count}} foods · {{calories}} kcal",
+      "lastFoods": "{{day}} · {{names}}",
+      "addAll": "Add all",
+      "addAllLabel": "Add all {{count}} foods of {{day}}",
+      "addedAll_one": "{{count}} food added",
+      "addedAll_other": "{{count}} foods added",
+      "times": "{{count}}×",
+      "emptyFrequent": {
+        "breakfast": "Nothing logged at breakfast yet",
+        "lunch": "Nothing logged at lunch yet",
+        "dinner": "Nothing logged at dinner yet",
+        "snack": "No snacks logged yet"
+      },
+      "emptyFrequentText": "Search for a food above. What you add most often will be here, one tap away.",
+      "noFavourites": "No favourites yet",
+      "noFavouritesText": "Tap the star on a food to keep it here.",
+      "favouritesNote": "Newest first. Tap the star on a food to add or remove it.",
+      "noMine": "No foods of your own yet",
+      "noMineText": "Create one from its label with the button below.",
+      "error": "The list could not be loaded. Check your connection and try again.",
+      "favourite": "Add to favourites",
+      "unfavourite": "Remove from favourites",
+      "favouriteAdded": "Added to favourites",
+      "favouriteRemoved": "Removed from favourites",
+      "favouriteError": "The favourite could not be saved. Check your connection and try again.",
+      "favouriteLimit": "You can have up to 500 favourites. Remove one to add another.",
+      "isFavourite": "Favourite"
     }
   },
   "workout": {
