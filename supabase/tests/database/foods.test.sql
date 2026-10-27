@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 select cmp_ok(
   (select count(*) from public.foods)::integer, '>=', 300,
@@ -54,6 +54,13 @@ select isnt_empty(
   $$ select * from public.foods f join public.food_names n on n.food_id = f.id
      join public.food_portions p on p.food_id = f.id $$,
   'Guests can read foods, their names and portions'
+);
+select throws_ok(
+  $$ insert into public.foods (id, source, food_group, kcal, protein_g, carbs_g, fat_g)
+     values ('Z000000', 'bls', 'dishes', 1, 1, 1, 1) $$,
+  '42501',
+  null,
+  'Guests cannot add foods'
 );
 
 select set_config('role', 'authenticated', true),
