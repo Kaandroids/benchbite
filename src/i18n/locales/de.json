@@ -304,7 +304,7 @@
       "facts": "Nährwerte",
       "calories": "Kalorien",
       "portion": "Wie viel wiegt eine Portion?",
-      "portionHint": "Steht auf der Packung, etwa 1 Dose = 330 g.",
+      "portionHint": "Optional. Steht auf der Packung, etwa 1 Dose = 330 g.",
       "portionGrams": "Gramm in {{portion}}",
       "portionAdds": "{{portion}} ergibt {{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
       "checkClose": "Passt zu den eingegebenen Kalorien.",
@@ -344,8 +344,7 @@
         "serving": "Portion",
         "can": "Dose",
         "bottle": "Flasche"
-      },
-      "optional": "optional"
+      }
     },
     "foodNotFound": {
       "title": "Lebensmittel nicht gefunden",

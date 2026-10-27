@@ -304,7 +304,7 @@
       "facts": "Besin değerleri",
       "calories": "Kalori",
       "portion": "Bir porsiyon kaç gram?",
-      "portionHint": "Paketin üzerinde yazar, örneğin 1 kutu = 330 g.",
+      "portionHint": "İsteğe bağlı. Paketin üzerinde yazar, örneğin 1 kutu = 330 g.",
       "portionGrams": "{{portion}} kaç gram",
       "portionAdds": "{{portion}} {{calories}} kcal ekler · P {{protein}} · K {{carbs}} · Y {{fat}}",
       "checkClose": "Girdiğin kaloriyle uyuşuyor.",
@@ -344,8 +344,7 @@
         "serving": "Porsiyon",
         "can": "Kutu",
         "bottle": "Şişe"
-      },
-      "optional": "isteğe bağlı"
+      }
     },
     "foodNotFound": {
       "title": "Besin bulunamadı",

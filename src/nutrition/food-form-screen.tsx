@@ -11,7 +11,6 @@ import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { MessageView } from '@/components/ui/message-view';
 import { Note } from '@/components/ui/note';
-import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { Sheet } from '@/components/ui/sheet';
@@ -64,7 +63,7 @@ function EditFood(props: FoodFormScreenProps & { kind: 'edit' }) {
     return <FoodFormBody {...props} initial={formOf(food.data)} />;
   }
   return (
-    <Screen onBack={() => router.back()} closes>
+    <Screen onBack={() => router.back()}>
       {food.data === null ? (
         <MessageView
           icon="meal"
@@ -154,7 +153,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
       placeholderTextColor={colors.placeholder}
       style={[
         key === 'kcal' ? typography.title : typography.headline,
-        styles.number,
+        key === 'kcal' ? styles.calories : styles.macroNumber,
         { color: key === 'kcal' ? colors.primaryText : colors.text },
       ]}
     />
@@ -164,184 +163,184 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
     <KeyboardAvoiding>
       <Screen
         onBack={() => router.back()}
-        closes
         title={
           <ScreenTitle
             title={props.kind === 'new' ? t('nutrition.food.title') : t('nutrition.food.editTitle')}
           />
         }
-        action={
-          <PillButton
+        footer={
+          <Button
             label={t('nutrition.food.save')}
-            disabled={result.kind !== 'valid' || saving}
+            loading={saving}
+            disabled={result.kind !== 'valid'}
             onPress={save}
           />
         }
       >
-        <View style={{ gap: spacing.sm }}>
-          <FieldLabel text={t('nutrition.food.name')} />
-          <TextInput
-            accessibilityLabel={t('nutrition.food.name')}
-            value={form.name}
-            onChangeText={(name) => set({ name })}
-            placeholder={t('nutrition.food.namePlaceholder')}
-            placeholderTextColor={colors.placeholder}
-            maxLength={MAX_NAME_LENGTH}
-            style={fieldStyle}
-          />
-          <Text variant="caption" color="textMuted">
-            {t('nutrition.food.onlyYou')}
-          </Text>
-        </View>
+        {/* The sections stand further apart than the lines within one. */}
+        <View style={{ gap: spacing.xl }}>
+          <View style={{ gap: spacing.sm }}>
+            <FieldLabel text={t('nutrition.food.name')} />
+            <TextInput
+              accessibilityLabel={t('nutrition.food.name')}
+              value={form.name}
+              onChangeText={(name) => set({ name })}
+              placeholder={t('nutrition.food.namePlaceholder')}
+              placeholderTextColor={colors.placeholder}
+              maxLength={MAX_NAME_LENGTH}
+              style={fieldStyle}
+            />
+            <Text variant="caption" color="textMuted">
+              {t('nutrition.food.onlyYou')}
+            </Text>
+          </View>
 
-        <View style={{ gap: spacing.sm }}>
-          <View style={styles.factsHeader}>
-            <FieldLabel text={t('nutrition.food.facts')} />
-            <Text variant="captionStrong" color="textMuted" style={styles.perLabel}>
-              {t('nutrition.food.perLabel')}
-            </Text>
-          </View>
-          <Card style={[styles.caloriesRow, { gap: spacing.md }]}>
-            <Text variant="label" style={styles.flex}>
-              {t('nutrition.food.calories')}
-            </Text>
-            {numberField('kcal', t('nutrition.food.calories'))}
-            <Text variant="bodyStrong" color="textMuted">
-              kcal
-            </Text>
-          </Card>
-          <View style={[styles.macros, { gap: spacing.sm }]}>
-            {MACROS.map(({ key, color }) => (
-              <Card key={key} style={[styles.macro, { gap: spacing.xs, padding: spacing.md }]}>
-                <View style={[styles.macroName, { gap: spacing.xs }]}>
-                  <MacroDot color={color} />
-                  <Text variant="captionStrong" color="textMuted">
-                    {t(`nutrition.macros.${key}`)}
-                  </Text>
-                </View>
-                <View style={[styles.macroValue, { gap: 2 }]}>
-                  {numberField(key, t(`nutrition.macros.${key}`))}
-                  <Text variant="bodyStrong" color="textMuted">
-                    g
-                  </Text>
-                </View>
-              </Card>
-            ))}
-          </View>
-          {check?.close ? (
-            <View style={[styles.check, { gap: spacing.xs }]}>
-              <Icon name="check" size={16} color="success" />
-              <Text variant="caption" color="textMuted" style={styles.flex}>
-                {t('nutrition.food.checkClose')}
+          <View style={{ gap: spacing.sm }}>
+            <View style={styles.factsHeader}>
+              <FieldLabel text={t('nutrition.food.facts')} />
+              <Text variant="caption" color="textMuted" style={styles.perLabel}>
+                {t('nutrition.food.perLabel')}
               </Text>
             </View>
-          ) : check ? (
-            <Note tone="warning">
-              {t('nutrition.food.checkFar', {
-                calories: format(Math.round(check.calories)),
-                entered: format(check.entered),
-              })}
+            <Card style={[styles.caloriesRow, { gap: spacing.md }]}>
+              <Text variant="label" style={styles.flex}>
+                {t('nutrition.food.calories')}
+              </Text>
+              {numberField('kcal', t('nutrition.food.calories'))}
+              <Text variant="bodyStrong" color="textMuted">
+                kcal
+              </Text>
+            </Card>
+            <View style={[styles.macros, { gap: spacing.sm }]}>
+              {MACROS.map(({ key, color }) => (
+                <Card key={key} style={[styles.macro, { gap: spacing.xs, padding: spacing.md }]}>
+                  <View style={[styles.macroName, { gap: spacing.xs }]}>
+                    <MacroDot color={color} />
+                    <Text variant="captionStrong" color="textMuted">
+                      {t(`nutrition.macros.${key}`)}
+                    </Text>
+                  </View>
+                  <View style={[styles.macroValue, { gap: 2 }]}>
+                    {numberField(key, t(`nutrition.macros.${key}`))}
+                    <Text variant="bodyStrong" color="textMuted">
+                      g
+                    </Text>
+                  </View>
+                </Card>
+              ))}
+            </View>
+            {check?.close ? (
+              <View style={[styles.check, { gap: spacing.xs }]}>
+                <Icon name="check" size={16} color="success" />
+                <Text variant="caption" color="textMuted" style={styles.flex}>
+                  {t('nutrition.food.checkClose')}
+                </Text>
+              </View>
+            ) : check ? (
+              <Note tone="warning">
+                {t('nutrition.food.checkFar', {
+                  calories: format(Math.round(check.calories)),
+                  entered: format(check.entered),
+                })}
+              </Note>
+            ) : null}
+          </View>
+
+          <Card>
+            <View style={{ gap: spacing.xs }}>
+              <Text variant="label">{t('nutrition.food.portion')}</Text>
+              <Text variant="caption" color="textMuted">
+                {t('nutrition.food.portionHint')}
+              </Text>
+            </View>
+            <View style={[styles.gramsRow, { gap: spacing.sm }]}>
+              <Text variant="bodyStrong">1 ×</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('nutrition.food.unitButton', {
+                  unit: form.unit
+                    ? t(`nutrition.food.units.${form.unit}`)
+                    : t('nutrition.food.chooseUnit'),
+                })}
+                onPress={() => setPickingUnit(true)}
+                style={[
+                  styles.unitButton,
+                  {
+                    gap: spacing.sm,
+                    borderRadius: radii.md,
+                    borderColor: colors.border,
+                    backgroundColor: colors.surface,
+                    paddingHorizontal: spacing.md,
+                  },
+                ]}
+              >
+                <Text color={form.unit ? 'text' : 'placeholder'} style={styles.flex}>
+                  {form.unit
+                    ? t(`nutrition.food.units.${form.unit}`)
+                    : t('nutrition.food.chooseUnit')}
+                </Text>
+                <Icon name="down" size={16} color="textMuted" />
+              </Pressable>
+              <Text variant="bodyStrong">=</Text>
+              <TextInput
+                accessibilityLabel={t('nutrition.food.portionGrams', {
+                  portion: portion ?? t('nutrition.food.chooseUnit'),
+                })}
+                value={form.portionGrams}
+                onChangeText={(portionGrams) => set({ portionGrams })}
+                editable={form.unit !== null}
+                keyboardType="decimal-pad"
+                selectTextOnFocus
+                maxLength={6}
+                placeholder="0"
+                placeholderTextColor={colors.placeholder}
+                style={[
+                  fieldStyle,
+                  styles.gramsInput,
+                  { borderRadius: radii.md, borderColor: colors.border },
+                  form.unit === null ? styles.disabled : null,
+                ]}
+              />
+              <Text variant="bodyStrong" color="textMuted">
+                g
+              </Text>
+            </View>
+            {portionAdds && portion ? (
+              <Text variant="caption" color="textMuted">
+                {t('nutrition.food.portionAdds', {
+                  portion,
+                  calories: format(Math.round(portionAdds.calories)),
+                  protein: format(toTenth(portionAdds.proteinG)),
+                  carbs: format(toTenth(portionAdds.carbsG)),
+                  fat: format(toTenth(portionAdds.fatG)),
+                })}
+              </Text>
+            ) : null}
+          </Card>
+
+          {result.kind === 'problem' ? (
+            <Note tone="warning">{t(`nutrition.food.problems.${result.problem}`)}</Note>
+          ) : null}
+          {failed.isError ? (
+            <Note tone="danger">
+              {isDbError(failed.error, 'uniqueViolation')
+                ? t('nutrition.food.nameTaken')
+                : isDbError(failed.error, 'customFoodLimit')
+                  ? t('nutrition.food.limit')
+                  : t('nutrition.food.saveError')}
             </Note>
           ) : null}
-        </View>
+          {deleteFood.isError ? <Note tone="danger">{t('nutrition.food.deleteError')}</Note> : null}
 
-        <Card>
-          <Text variant="label">
-            {t('nutrition.food.portion')}{' '}
-            <Text variant="caption" color="textMuted">
-              · {t('nutrition.food.optional')}
-            </Text>
-          </Text>
-          <Text variant="caption" color="textMuted">
-            {t('nutrition.food.portionHint')}
-          </Text>
-          <View style={[styles.gramsRow, { gap: spacing.sm }]}>
-            <Text variant="bodyStrong">1</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('nutrition.food.unitButton', {
-                unit: form.unit
-                  ? t(`nutrition.food.units.${form.unit}`)
-                  : t('nutrition.food.chooseUnit'),
-              })}
-              onPress={() => setPickingUnit(true)}
-              style={[
-                styles.unitButton,
-                {
-                  gap: spacing.sm,
-                  borderRadius: radii.md,
-                  borderColor: colors.border,
-                  backgroundColor: colors.surface,
-                  paddingHorizontal: spacing.md,
-                },
-              ]}
-            >
-              <Text color={form.unit ? 'text' : 'placeholder'} style={styles.flex}>
-                {form.unit
-                  ? t(`nutrition.food.units.${form.unit}`)
-                  : t('nutrition.food.chooseUnit')}
-              </Text>
-              <Icon name="down" size={16} color="textMuted" />
-            </Pressable>
-            <Text variant="bodyStrong">=</Text>
-            <TextInput
-              accessibilityLabel={t('nutrition.food.portionGrams', {
-                portion: portion ?? t('nutrition.food.chooseUnit'),
-              })}
-              value={form.portionGrams}
-              onChangeText={(portionGrams) => set({ portionGrams })}
-              editable={form.unit !== null}
-              keyboardType="decimal-pad"
-              selectTextOnFocus
-              maxLength={6}
-              placeholder="0"
-              placeholderTextColor={colors.placeholder}
-              style={[
-                fieldStyle,
-                styles.gramsInput,
-                { borderRadius: radii.md, borderColor: colors.border },
-                form.unit === null ? styles.disabled : null,
-              ]}
+          {props.kind === 'edit' ? (
+            <Button
+              label={t('nutrition.food.delete')}
+              variant="ghost"
+              loading={deleteFood.isPending}
+              onPress={remove}
             />
-            <Text variant="bodyStrong" color="textMuted">
-              g
-            </Text>
-          </View>
-          {portionAdds && portion ? (
-            <Text variant="caption" color="textMuted">
-              {t('nutrition.food.portionAdds', {
-                portion,
-                calories: format(Math.round(portionAdds.calories)),
-                protein: format(toTenth(portionAdds.proteinG)),
-                carbs: format(toTenth(portionAdds.carbsG)),
-                fat: format(toTenth(portionAdds.fatG)),
-              })}
-            </Text>
           ) : null}
-        </Card>
-
-        {result.kind === 'problem' ? (
-          <Note tone="warning">{t(`nutrition.food.problems.${result.problem}`)}</Note>
-        ) : null}
-        {failed.isError ? (
-          <Note tone="danger">
-            {isDbError(failed.error, 'uniqueViolation')
-              ? t('nutrition.food.nameTaken')
-              : isDbError(failed.error, 'customFoodLimit')
-                ? t('nutrition.food.limit')
-                : t('nutrition.food.saveError')}
-          </Note>
-        ) : null}
-        {deleteFood.isError ? <Note tone="danger">{t('nutrition.food.deleteError')}</Note> : null}
-
-        {props.kind === 'edit' ? (
-          <Button
-            label={t('nutrition.food.delete')}
-            variant="ghost"
-            loading={deleteFood.isPending}
-            onPress={remove}
-          />
-        ) : null}
+        </View>
       </Screen>
       {pickingUnit ? (
         <Sheet onClose={() => setPickingUnit(false)}>
@@ -453,9 +452,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  number: {
+  calories: {
     minWidth: 56,
     textAlign: 'right',
+    paddingVertical: 0,
+  },
+  // Under its name, as wide as the number, so that the unit follows it.
+  macroNumber: {
+    minWidth: 24,
+    flexShrink: 1,
     paddingVertical: 0,
   },
   macros: {
