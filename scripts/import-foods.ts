@@ -25,10 +25,10 @@ const FOODS_FILE = join(ROOT, 'supabase', 'data', 'foods.json');
 type FoodGroup = Database['public']['Enums']['food_group'];
 type PortionUnit = Database['public']['Enums']['portion_unit'];
 
-type ChosenFood = {
-  en: string;
-  de: string;
-  tr: string;
+/** The languages every food is named in. A new one needs its names in foods.json. */
+const LANGUAGES = ['en', 'de', 'tr'] as const;
+
+type ChosenFood = Record<(typeof LANGUAGES)[number], string> & {
   portions: { unit: PortionUnit; grams: number; default?: boolean }[];
 };
 
@@ -245,7 +245,7 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
         problems.push(`${code} has no ${nutrient}`);
       }
     }
-    for (const language of ['en', 'de', 'tr'] as const) {
+    for (const language of LANGUAGES) {
       if (!food[language]?.trim()) {
         problems.push(`${code} has no ${language} name`);
       }
@@ -291,7 +291,7 @@ ${columns.map((column) => `  ${column} = excluded.${column}`).join(',\n')};
 
 function namesSql(chosen: [string, ChosenFood][]): string {
   const rows = chosen.flatMap(([code, food]) =>
-    (['en', 'de', 'tr'] as const).map(
+    LANGUAGES.map(
       (language) => `  (${[code, language, food[language].trim()].map(sqlString).join(', ')})`,
     ),
   );
