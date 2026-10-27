@@ -8,7 +8,6 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,10 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
+import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { isDbError } from '@/lib/errors';
-import { typography, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { amountOf, MIN_QUERY_LENGTH, useAddEntry, useFoodSearch, type FoodResult } from './foods';
 import type { Meal } from './meals';
@@ -37,7 +37,7 @@ type FoodSearchScreenProps = {
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const portionLabel = usePortionLabel();
   const [query, setQuery] = useState('');
@@ -173,32 +173,13 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
-        <View
-          style={[
-            styles.search,
-            {
-              gap: spacing.sm,
-              borderRadius: radii.md,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: spacing.md,
-            },
-          ]}
-        >
-          <Icon name="search" size={20} color="textMuted" />
-          <TextInput
-            accessibilityLabel={t('nutrition.search.placeholder')}
-            placeholder={t('nutrition.search.placeholder')}
-            placeholderTextColor={colors.textMuted}
-            value={query}
-            onChangeText={setQuery}
-            autoFocus
-            autoCorrect={false}
-            returnKeyType="search"
-            maxLength={50}
-            style={[styles.input, typography.body, { color: colors.text }]}
-          />
-        </View>
+        <SearchField
+          label={t('nutrition.search.placeholder')}
+          value={query}
+          onChangeText={setQuery}
+          autoFocus
+          maxLength={50}
+        />
         {addEntry.isError ? (
           <Note tone="danger">
             {isDbError(addEntry.error, 'closedDay')
@@ -230,16 +211,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    minHeight: 52,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
   },
   row: {
     flexDirection: 'row',
