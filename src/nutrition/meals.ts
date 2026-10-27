@@ -75,10 +75,28 @@ export function suggestedCalories(target: number, meals: MealSummary[]): Map<Mea
   return suggested;
 }
 
+/** A row's kcal and macros as totals; generated columns may be typed as nullable. */
+export function totalsOf(row: {
+  kcal: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+}): Totals {
+  return {
+    calories: row.kcal ?? 0,
+    proteinG: row.protein_g ?? 0,
+    carbsG: row.carbs_g ?? 0,
+    fatG: row.fat_g ?? 0,
+  };
+}
+
+/** The query key of a day's entries, for anything that changes them. */
+export const dayEntriesKey = (day: string) => ['meal-entries', day];
+
 /** The signed-in user's entries of a day, YYYY-MM-DD, in the order they were logged. */
 export function useDayEntries(day: string) {
   return useQuery({
-    queryKey: ['meal-entries', day],
+    queryKey: dayEntriesKey(day),
     queryFn: async (): Promise<MealEntry[]> => {
       const { data, error } = await supabase
         .from('meal_entries')
@@ -88,14 +106,7 @@ export function useDayEntries(day: string) {
       if (error) {
         throw error;
       }
-      // Generated columns are typed as nullable, though the database always fills them.
-      return data.map((row) => ({
-        meal: row.meal,
-        calories: row.kcal ?? 0,
-        proteinG: row.protein_g ?? 0,
-        carbsG: row.carbs_g ?? 0,
-        fatG: row.fat_g ?? 0,
-      }));
+      return data.map((row) => ({ meal: row.meal, ...totalsOf(row) }));
     },
   });
 }

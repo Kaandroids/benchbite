@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -13,13 +14,15 @@ type MealListProps = {
   meals: MealSummary[];
   /** The calories suggested for the empty meals, from `suggestedCalories`. */
   suggested: Map<Meal, number>;
+  /** Opens the search to add a food to the meal. */
+  onAdd: (meal: Meal) => void;
 };
 
 /**
  * One row per meal with only its totals, so a day with many entries still fits. An empty meal
  * shows the calories suggested for it.
  */
-export function MealList({ meals, suggested }: MealListProps) {
+export function MealList({ meals, suggested, onAdd }: MealListProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -37,7 +40,6 @@ export function MealList({ meals, suggested }: MealListProps) {
         return (
           <View
             key={meal}
-            accessible
             style={[
               styles.row,
               { gap: spacing.md, paddingVertical: spacing.md },
@@ -55,7 +57,7 @@ export function MealList({ meals, suggested }: MealListProps) {
             >
               <Icon name={icon} size={20} color={items > 0 ? 'primary' : 'textMuted'} />
             </View>
-            <View style={styles.text}>
+            <View style={styles.text} accessible>
               <Text variant="label">
                 {t(`nutrition.meals.${meal}`)}
                 {items > 0 ? (
@@ -81,6 +83,14 @@ export function MealList({ meals, suggested }: MealListProps) {
                 </Text>
               )}
             </View>
+            <RoundIconButton
+              icon="plus"
+              color={items > 0 ? 'primary' : 'onPrimary'}
+              background={items > 0 ? 'iconBackground' : 'primaryButton'}
+              size={40}
+              label={t(`nutrition.addTo.${meal}`)}
+              onPress={() => onAdd(meal)}
+            />
           </View>
         );
       })}

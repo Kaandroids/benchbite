@@ -7,3 +7,9 @@ export function range(from: number, to: number): number[] {
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
+
+/** A typed number, with a point or a comma as the decimal separator; null when it is none. */
+export function parseDecimal(text: string): number | null {
+  const value = Number(text.trim().replace(',', '.'));
+  return text.trim() && Number.isFinite(value) ? value : null;
+}

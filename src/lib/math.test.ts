@@ -1,4 +1,4 @@
-import { clamp, range } from './math';
+import { clamp, parseDecimal, range } from './math';
 
 describe('range', () => {
   it('includes both ends', () => {
@@ -8,6 +8,20 @@ describe('range', () => {
 
   it('is empty when it ends before it starts', () => {
     expect(range(5, 4)).toEqual([]);
+  });
+});
+
+describe('parseDecimal', () => {
+  it('reads a point or a comma as the decimal separator', () => {
+    expect(parseDecimal('80.5')).toBe(80.5);
+    expect(parseDecimal(' 80,5 ')).toBe(80.5);
+  });
+
+  it('is null for text that is no number', () => {
+    expect(parseDecimal('')).toBeNull();
+    expect(parseDecimal('  ')).toBeNull();
+    expect(parseDecimal('1,2,3')).toBeNull();
+    expect(parseDecimal('abc')).toBeNull();
   });
 });
 
