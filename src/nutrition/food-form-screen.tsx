@@ -21,14 +21,7 @@ import { toTenth, useNumberFormat } from '@/i18n/units';
 import { typography, useTheme } from '@/theme';
 
 import { useCreateFood, useDeleteFood, useUpdateFood } from './custom-foods';
-import {
-  EMPTY_FORM,
-  formOf,
-  macroCheck,
-  MAX_NAME_LENGTH,
-  readForm,
-  type FoodForm,
-} from './food-form';
+import { EMPTY_FORM, formOf, MAX_NAME_LENGTH, readForm, type FoodForm } from './food-form';
 import { amountOf, refKey, useFood, type PortionUnit } from './foods';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
@@ -93,7 +86,6 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const set = (change: Partial<FoodForm>) => setForm((current) => ({ ...current, ...change }));
 
   const result = readForm(form);
-  const check = macroCheck(form);
   // What one portion adds, once the food is complete.
   const portionAdds =
     result.kind === 'valid' && result.values.portion
@@ -102,8 +94,8 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const portion = form.unit ? portionLabel(form.unit, 1) : null;
   const saving = createFood.isPending || updateFood.isPending;
   const failed = props.kind === 'new' ? createFood : updateFood;
-  // Each value problem shows under its field, and too few calories by the check.
-  const problem = result.kind === 'problem' ? result.problem : null;
+  // Each value problem shows under its field.
+  const problem = result.kind === 'problem' ? result : null;
   // Why saving or deleting failed, above the button that saves.
   const serverError = failed.isError
     ? isDbError(failed.error, 'uniqueViolation')
@@ -226,7 +218,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 kcal
               </Text>
             </Card>
-            {problem === 'tooMuchEnergy' ? (
+            {problem?.problem === 'tooMuchEnergy' ? (
               <FormError>{t('nutrition.food.problems.tooMuchEnergy')}</FormError>
             ) : null}
             <View style={[styles.macros, { gap: spacing.sm }]}>
@@ -247,14 +239,14 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 </Card>
               ))}
             </View>
-            {problem === 'tooMuchMacros' ? (
+            {problem?.problem === 'tooMuchMacros' ? (
               <FormError>{t('nutrition.food.problems.tooMuchMacros')}</FormError>
             ) : null}
-            {check?.tooFewCalories ? (
+            {problem?.problem === 'tooFewCalories' ? (
               <FormError>
                 {t('nutrition.food.tooFewCalories', {
-                  calories: format(Math.round(check.calories)),
-                  entered: format(check.entered),
+                  calories: format(Math.round(problem.calories)),
+                  entered: format(problem.entered),
                 })}
               </FormError>
             ) : null}
@@ -319,7 +311,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 g
               </Text>
             </View>
-            {problem === 'portion' ? (
+            {problem?.problem === 'portion' ? (
               <FormError>{t('nutrition.food.problems.portion')}</FormError>
             ) : null}
             {portionAdds && portion ? (

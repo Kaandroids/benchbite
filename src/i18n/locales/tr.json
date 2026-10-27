@@ -310,8 +310,7 @@
       "problems": {
         "tooMuchEnergy": "Bir besinde 100 g'da en fazla 900 kcal olabilir. Kaloriyi kontrol et.",
         "tooMuchMacros": "100 g'da protein, karbonhidrat ve yağ toplamı 100 g'ı geçiyor. Değerleri kontrol et.",
-        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir.",
-        "tooFewCalories": "Kalori, protein, karbonhidrat ve yağın ettiğinden az."
+        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir."
       },
       "save": "Kaydet",
       "saveError": "Besin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",

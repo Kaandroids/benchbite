@@ -310,8 +310,7 @@
       "problems": {
         "tooMuchEnergy": "A food has at most 900 kcal per 100 g. Check the calories.",
         "tooMuchMacros": "Per 100 g, protein, carbs and fat add up to more than 100 g. Check the values.",
-        "portion": "A portion weighs more than 0 g and at most 5,000 g.",
-        "tooFewCalories": "The calories are fewer than protein, carbs and fat make."
+        "portion": "A portion weighs more than 0 g and at most 5,000 g."
       },
       "save": "Save",
       "saveError": "The food could not be saved. Check your connection and try again.",

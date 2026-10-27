@@ -310,8 +310,7 @@
       "problems": {
         "tooMuchEnergy": "Ein Lebensmittel hat höchstens 900 kcal pro 100 g. Prüfe die Kalorien.",
         "tooMuchMacros": "Pro 100 g ergeben Protein, Kohlenhydrate und Fett mehr als 100 g. Prüfe die Werte.",
-        "portion": "Eine Portion wiegt mehr als 0 g und höchstens 5.000 g.",
-        "tooFewCalories": "Die Kalorien sind weniger, als Protein, Kohlenhydrate und Fett ergeben."
+        "portion": "Eine Portion wiegt mehr als 0 g und höchstens 5.000 g."
       },
       "save": "Speichern",
       "saveError": "Das Lebensmittel konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",

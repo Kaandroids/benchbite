@@ -46,14 +46,21 @@ export function formOf(food: Food): FoodForm {
 }
 
 /**
- * Why a filled-in form cannot be saved: values the database would refuse, or fewer calories than
- * the macros alone make, which means something was typed wrong.
+ * Why a filled-in form cannot be saved: values the database would refuse, among them fewer
+ * calories than the macros alone make, which means something was typed wrong.
  */
-export type FormProblem = 'tooMuchEnergy' | 'tooMuchMacros' | 'portion' | 'tooFewCalories';
+export type FormProblem =
+  | { problem: 'tooMuchEnergy' | 'tooMuchMacros' | 'portion' }
+  | {
+      problem: 'tooFewCalories';
+      /** What protein, carbs and fat alone make, and the calories typed. */
+      calories: number;
+      entered: number;
+    };
 
 export type FormResult =
   | { kind: 'incomplete' }
-  | { kind: 'problem'; problem: FormProblem }
+  | ({ kind: 'problem' } & FormProblem)
   | { kind: 'valid'; values: CustomFoodValues };
 
 const round = (value: number, decimals: number) => Number(value.toFixed(decimals));
@@ -68,21 +75,18 @@ function portionGramsOf(form: FoodForm): number | null {
   return rounded > 0 && rounded <= MAX_PORTION_GRAMS ? rounded : null;
 }
 
-/** The food the form describes, or what is missing or wrong. */
+/**
+ * The food the form describes, or what is missing or wrong. The values are checked before the
+ * name, so that a mistake shows while the name is still empty.
+ */
 export function readForm(form: FoodForm): FormResult {
   // Macros left empty count as 0, as a label may list only some; the calories are needed.
   const numbers = [
     parseDecimal(form.kcal),
     ...[form.protein, form.carbs, form.fat].map((text) => (text.trim() ? parseDecimal(text) : 0)),
   ];
-  if (!form.name.trim() || numbers.some((value) => value === null || value < 0)) {
+  if (numbers.some((value) => value === null || value < 0)) {
     return { kind: 'incomplete' };
-  }
-  const portionGrams = portionGramsOf(form);
-  if (form.unit && portionGrams === null) {
-    return form.portionGrams.trim()
-      ? { kind: 'problem', problem: 'portion' }
-      : { kind: 'incomplete' };
   }
   // Rounded as the table keeps them before they are checked, as the table checks them.
   const [kcal, protein, carbs, fat] = numbers.map((value, index) =>
@@ -96,8 +100,20 @@ export function readForm(form: FoodForm): FormResult {
   if (Math.round((protein + carbs + fat) * 100) > MAX_MACROS_PER_100G * 100) {
     return { kind: 'problem', problem: 'tooMuchMacros' };
   }
-  if (macroCheck(form)?.tooFewCalories) {
-    return { kind: 'problem', problem: 'tooFewCalories' };
+  // As the custom_foods table checks it: not fewer calories than the macros make, allowing 15 %
+  // or 10 kcal for rounding on labels. More is fine, as fibre and alcohol add energy too.
+  const calories = 4 * protein + 4 * carbs + 9 * fat;
+  if (calories - kcal > Math.max(10, calories * 0.15)) {
+    return { kind: 'problem', problem: 'tooFewCalories', calories, entered: kcal };
+  }
+  const portionGrams = portionGramsOf(form);
+  if (form.unit && portionGrams === null) {
+    return form.portionGrams.trim()
+      ? { kind: 'problem', problem: 'portion' }
+      : { kind: 'incomplete' };
+  }
+  if (!form.name.trim()) {
+    return { kind: 'incomplete' };
   }
   return {
     kind: 'valid',
@@ -106,30 +122,5 @@ export function readForm(form: FoodForm): FormResult {
       per100g: { calories: kcal, proteinG: protein, carbsG: carbs, fatG: fat },
       portion: form.unit && portionGrams ? { unit: form.unit, grams: portionGrams } : null,
     },
-  };
-}
-
-/**
- * The calories protein, carbs and fat alone make, 4 kcal per gram of protein and carbs and 9 per
- * gram of fat, and whether the calories typed are fewer than that. A food can have more, as
- * fibre, alcohol and sugar alcohols add energy too, but not fewer. Labels round, so it takes more
- * than 15 % or 10 kcal fewer, whichever is larger. Empty macros count as 0. Null until the
- * calories are typed.
- */
-export function macroCheck(
-  form: FoodForm,
-): { calories: number; entered: number; tooFewCalories: boolean } | null {
-  const kcal = parseDecimal(form.kcal);
-  if (kcal === null || kcal < 0) {
-    return null;
-  }
-  const [protein, carbs, fat] = [form.protein, form.carbs, form.fat].map(
-    (text) => parseDecimal(text) ?? 0,
-  ) as [number, number, number];
-  const calories = 4 * protein + 4 * carbs + 9 * fat;
-  return {
-    calories,
-    entered: kcal,
-    tooFewCalories: calories - kcal > Math.max(10, calories * 0.15),
   };
 }
