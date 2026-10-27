@@ -21,6 +21,9 @@ about 350 foods with three names each (ADR 0033). Later, people's own foods (#20
 - **Ranking:** a name whose first word is the query comes first (so "Ei" finds "Ei, roh" before
   "Eistee"), then names that start with it, then names that contain it, then names with a word
   close to it. Ties go to the shorter name.
+- **Case:** both the query and the names are lower-cased, with Turkish İ and ı folded to i first,
+  as the database's collation would otherwise not match "inc" with "İncir" or "ısp" with
+  "Ispanak".
 - **Typos:** `pg_trgm`'s `strict_word_similarity` of at least 0.4, for queries of 4 or more
   characters. Shorter ones have too few trigrams to compare reliably.
 - **No index for now:** at about a thousand names a search scans them in about a millisecond. A

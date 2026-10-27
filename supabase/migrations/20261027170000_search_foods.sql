@@ -4,8 +4,9 @@
 
 create extension if not exists pg_trgm with schema extensions;
 
--- Up to 30 foods that match the query, best first: names that start with it, then names that
--- contain it, then names with a similar word. A query shorter than two characters finds nothing.
+-- Up to 30 foods that match the query, best first: names whose first word is the query, then
+-- names that start with it, then names that contain it, then names with a similar word. A query
+-- shorter than two characters finds nothing.
 create function public.search_foods(query text, language text)
 returns table (
   food_id text,
