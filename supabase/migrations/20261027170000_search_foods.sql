@@ -25,32 +25,33 @@ as $$
   with search as (
     select lower(trim(search_foods.query)) as term
   ),
-  matches as (
-    select distinct on (n.food_id)
+  scored as (
+    select
       n.food_id,
       case
         -- The query is the name's first word, such as "Ei" in "Ei, roh".
-        when lower(n.name) = s.term
-          or starts_with(lower(n.name), s.term || ' ')
-          or starts_with(lower(n.name), s.term || ',') then 4
-        when starts_with(lower(n.name), s.term) then 3
-        when position(s.term in lower(n.name)) > 0 then 2
-        else extensions.strict_word_similarity(s.term, lower(n.name))
+        when x.name = s.term
+          or starts_with(x.name, s.term || ' ')
+          or starts_with(x.name, s.term || ',') then 4
+        when starts_with(x.name, s.term) then 3
+        when position(s.term in x.name) > 0 then 2
+        -- A word of the name close to the query, for typos: below 1. Shorter queries have too
+        -- few trigrams to compare.
+        when length(s.term) >= 4 then extensions.strict_word_similarity(s.term, x.name)
+        else 0
       end as score
     from public.food_names n
     cross join search s
+    cross join lateral (select lower(n.name) as name) x
     where length(s.term) between 2 and 50
       and n.language in (search_foods.language, 'en')
-      and (
-        position(s.term in lower(n.name)) > 0
-        -- A word of the name close enough to count as a typo of the query. Shorter queries
-        -- have too few trigrams to compare.
-        or (
-          length(s.term) >= 4
-          and extensions.strict_word_similarity(s.term, lower(n.name)) >= 0.4
-        )
-      )
-    order by n.food_id, score desc
+  ),
+  -- Each food once, by its best name. A typo counts from a similarity of 0.4.
+  matches as (
+    select distinct on (food_id) food_id, score
+    from scored
+    where score >= 0.4
+    order by food_id, score desc
   )
   select
     f.id,
