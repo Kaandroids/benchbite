@@ -25,6 +25,7 @@ import { useTheme } from '@/theme';
 import { AddEntryError } from './add-entry-error';
 import {
   amountOf,
+  DEFAULT_GRAMS,
   MIN_QUERY_LENGTH,
   useFoodSearch,
   useSettledQuery,
@@ -42,11 +43,11 @@ type FoodSearchScreenProps = {
   day: string;
 };
 
-/** What + on a result adds: one default portion, or 100 g of a food without one. */
+/** What + on a result adds: one default portion, or `DEFAULT_GRAMS` of a food without one. */
 function quickAmountOf(food: FoodResult): Amount {
   return food.portion
     ? { grams: food.portion.grams, portion: { unit: food.portion.unit, count: 1 } }
-    : { grams: 100, portion: null };
+    : { grams: DEFAULT_GRAMS, portion: null };
 }
 
 /**

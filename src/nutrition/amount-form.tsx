@@ -15,7 +15,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
-import { amountOf, type Amount, type Portion } from './foods';
+import { amountOf, DEFAULT_GRAMS, type Amount, type Portion } from './foods';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import type { Totals } from './meals';
@@ -98,7 +98,7 @@ export function AmountForm({
   const portionLabel = usePortionLabel();
   const [portionIndex, setPortionIndex] = useState(() => portionIndexOf(portions, initial));
   const [count, setCount] = useState(portionIndex !== null ? (initial?.portion?.count ?? 1) : 1);
-  const [grams, setGrams] = useState(initial?.grams ?? portions[0]?.grams ?? 100);
+  const [grams, setGrams] = useState(initial?.grams ?? portions[0]?.grams ?? DEFAULT_GRAMS);
   const [gramsText, setGramsText] = useState<string | null>(null);
 
   const portion = portionIndex === null ? null : portions[portionIndex]!;

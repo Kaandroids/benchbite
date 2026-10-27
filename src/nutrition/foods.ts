@@ -60,6 +60,9 @@ export type FoodResult = { ref: FoodRef; name: string; per100g: Totals; portion:
 /** A food with its values per 100 g and every portion, the default first. */
 export type Food = { ref: FoodRef; name: string; per100g: Totals; portions: Portion[] };
 
+/** The amount of a food without a portion, when nothing else is chosen. */
+export const DEFAULT_GRAMS = 100;
+
 /** How long typing pauses before a search is sent. */
 export const SEARCH_DELAY_MS = 250;
 
