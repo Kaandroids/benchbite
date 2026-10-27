@@ -299,7 +299,38 @@
       },
       "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene."
     },
-    "kcal": "{{calories}} kcal"
+    "kcal": "{{calories}} kcal",
+    "food": {
+      "title": "Yeni besin",
+      "editTitle": "Besini düzenle",
+      "intro": "Değerleri etiketten aktar. Sadece sen görürsün.",
+      "name": "Ad",
+      "namePlaceholder": "Örneğin vanilyalı protein yoğurt",
+      "facts": "Besin değerleri",
+      "per100g": "100 g'da",
+      "perUnit": "{{portion}} başına",
+      "calories": "Kalori",
+      "portion": "Bir porsiyon",
+      "optional": "isteğe bağlı",
+      "portionHint": "Bir birim seç ve ağırlığını yaz, örneğin 1 kutu = 330 g.",
+      "portionGrams": "{{portion}} kaç gram",
+      "portionAdds": "{{portion}}: {{calories}} kcal · P {{protein}} · K {{carbs}} · Y {{fat}}",
+      "checkClose": "Makrolar {{calories}} kcal ediyor, etikete yakın.",
+      "checkFar": "Makrolar {{calories}} kcal ediyor. Etiketteki değerleri kontrol et.",
+      "problems": {
+        "tooMuchEnergy": "Bir besinde 100 g'da en fazla 900 kcal olabilir. Kaloriyi kontrol et.",
+        "tooMuchMacros": "100 g'da protein, karbonhidrat ve yağ toplamı 100 g'ı geçiyor. Değerleri kontrol et.",
+        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir."
+      },
+      "save": "Kaydet",
+      "saveError": "Besin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "nameTaken": "Bu adda bir besinin zaten var.",
+      "limit": "En fazla 200 kendi besinin olabilir.",
+      "delete": "Besini sil",
+      "deleteError": "Besin silinemedi. Bağlantını kontrol edip tekrar dene.",
+      "create": "Yeni besin",
+      "edit": "{{name}} düzenle"
+    }
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
