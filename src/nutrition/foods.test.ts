@@ -86,6 +86,7 @@ describe('useFood', () => {
     protein_g: 13.22,
     carbs_g: 53.3,
     fat_g: 6.65,
+    archived_at: null,
     food_names: [
       { language: 'en', name: 'Oat flakes' },
       { language: 'de', name: 'Haferflocken' },
@@ -120,6 +121,13 @@ describe('useFood', () => {
     await act(() => i18n.changeLanguage('tr'));
     const { result } = await renderHook(() => useFood('C133000'));
     await waitFor(() => expect(result.current.data?.name).toBe('Oat flakes'));
+  });
+
+  it('is null for a food taken out of the library', async () => {
+    maybeSingle.mockResolvedValue({ data: { ...row, archived_at: '2026-10-27' }, error: null });
+    const { result } = await renderHook(() => useFood('C133000'));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeNull();
   });
 
   it('is null for an unknown food', async () => {

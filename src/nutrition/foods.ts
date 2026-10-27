@@ -72,7 +72,10 @@ export function useFoodSearch(query: string) {
   });
 }
 
-/** A food with its name in the app language, falling back to English, and its portions. */
+/**
+ * A food with its name in the app language, falling back to English, and its portions. Null when
+ * it is not in the library, or no longer.
+ */
 export function useFood(id: string) {
   const { i18n } = useTranslation();
   return useQuery({
@@ -81,14 +84,15 @@ export function useFood(id: string) {
       const { data, error } = await supabase
         .from('foods')
         .select(
-          'id, kcal, protein_g, carbs_g, fat_g, food_names(language, name), food_portions(unit, grams, is_default)',
+          'id, kcal, protein_g, carbs_g, fat_g, archived_at, food_names(language, name), food_portions(unit, grams, is_default)',
         )
         .eq('id', id)
         .maybeSingle();
       if (error) {
         throw error;
       }
-      if (!data) {
+      // A food taken out of the library cannot be logged any more (ADR 0034).
+      if (!data || data.archived_at !== null) {
         return null;
       }
       const nameIn = (language: string) =>
