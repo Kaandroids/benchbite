@@ -10,7 +10,7 @@ const MILK: LoggedEntry = {
   id: 7,
   day: '2026-10-27',
   meal: 'breakfast',
-  foodId: 'M111300',
+  food: { kind: 'library', id: 'M111300' },
   name: 'Whole milk',
   grams: 200,
   portion: { unit: 'glass', count: 1 },
@@ -35,7 +35,7 @@ describe('useAddEntry', () => {
       result.current.mutateAsync({
         day: '2026-10-27',
         meal: 'breakfast',
-        foodId: 'C133000',
+        food: { kind: 'library', id: 'C133000' },
         grams: 100,
         portion: { unit: 'serving', count: 2 },
       }),
@@ -45,11 +45,29 @@ describe('useAddEntry', () => {
       day: '2026-10-27',
       meal: 'breakfast',
       food_id: 'C133000',
+      custom_food_id: null,
       grams: 100,
       portion_unit: 'serving',
       portion_count: 2,
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
+  });
+
+  it("logs a food of the user's own by its id", async () => {
+    insert.mockResolvedValue({ error: null });
+    const { result } = await renderHook(() => useAddEntry());
+    await act(() =>
+      result.current.mutateAsync({
+        day: '2026-10-27',
+        meal: 'snack',
+        food: { kind: 'custom', id: 12 },
+        grams: 200,
+        portion: null,
+      }),
+    );
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ food_id: null, custom_food_id: 12 }),
+    );
   });
 
   it('logs grams without a portion', async () => {
@@ -59,7 +77,7 @@ describe('useAddEntry', () => {
       result.current.mutateAsync({
         day: '2026-10-27',
         meal: 'snack',
-        foodId: 'C133000',
+        food: { kind: 'library', id: 'C133000' },
         grams: 35,
         portion: null,
       }),
@@ -77,7 +95,7 @@ describe('useAddEntry', () => {
         result.current.mutateAsync({
           day: '2026-10-01',
           meal: 'snack',
-          foodId: 'X',
+          food: { kind: 'library', id: 'X' },
           grams: 1,
           portion: null,
         }),

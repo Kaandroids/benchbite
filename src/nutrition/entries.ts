@@ -2,15 +2,22 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 
-import type { Amount } from './foods';
+import type { Amount, FoodRef } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 
 export type NewEntry = Amount & {
   /** YYYY-MM-DD. */
   day: string;
   meal: Meal;
-  foodId: string;
+  food: FoodRef;
 };
+
+/** A food as the meal_entries columns name it: a library food or one of one's own. */
+function foodColumns(food: FoodRef) {
+  return food.kind === 'custom'
+    ? { food_id: null, custom_food_id: food.id }
+    : { food_id: food.id, custom_food_id: null };
+}
 
 /** An amount as the meal_entries columns hold it. */
 function amountColumns({ grams, portion }: Amount) {
@@ -28,7 +35,7 @@ export function useAddEntry() {
       const { error } = await supabase.from('meal_entries').insert({
         day: entry.day,
         meal: entry.meal,
-        food_id: entry.foodId,
+        ...foodColumns(entry.food),
         ...amountColumns(entry),
       });
       if (error) {

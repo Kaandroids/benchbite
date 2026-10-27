@@ -76,6 +76,7 @@ describe('useDayEntries', () => {
     id: 3,
     meal: 'breakfast',
     food_id: 'C133000',
+    custom_food_id: null,
     grams: 50,
     portion_unit: 'serving',
     portion_count: 1,
@@ -87,6 +88,7 @@ describe('useDayEntries', () => {
     protein_g: 6.6,
     carbs_g: 26.7,
     fat_g: 3.3,
+    custom_foods: null,
     foods: {
       food_names: [
         { language: 'en', name: 'Oat flakes' },
@@ -107,7 +109,7 @@ describe('useDayEntries', () => {
           id: 3,
           day: '2026-10-27',
           meal: 'breakfast',
-          foodId: 'C133000',
+          food: { kind: 'library', id: 'C133000' },
           name: 'Haferflocken',
           grams: 50,
           portion: { unit: 'serving', count: 1 },
@@ -121,6 +123,24 @@ describe('useDayEntries', () => {
     );
     expect(supabase.from).toHaveBeenCalledWith('meal_entries');
     expect(eq).toHaveBeenCalledWith('day', '2026-10-27');
+  });
+
+  it("names an entry of the user's own food by that food", async () => {
+    order.mockResolvedValue({
+      data: [
+        {
+          ...row,
+          food_id: null,
+          custom_food_id: 12,
+          foods: null,
+          custom_foods: { name: 'Protein yoghurt' },
+        },
+      ],
+      error: null,
+    });
+    const { result } = await renderHook(() => useDayEntries('2026-10-27'));
+    await waitFor(() => expect(result.current.data?.[0]?.name).toBe('Protein yoghurt'));
+    expect(result.current.data?.[0]?.food).toEqual({ kind: 'custom', id: 12 });
   });
 
   it('falls back to the English name and leaves out a portion for grams', async () => {

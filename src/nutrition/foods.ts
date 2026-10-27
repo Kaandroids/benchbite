@@ -27,11 +27,33 @@ export function nameOf(
   return nameIn(language) ?? nameIn('en') ?? id;
 }
 
-/** A food found by search, with its values per 100 g and its default portion. */
-export type FoodResult = { id: string; name: string; per100g: Totals; portion: Portion };
+/** A food of the library, by its BLS code, or one of the user's own, by its id (ADR 0036). */
+export type FoodRef = { kind: 'library'; id: string } | { kind: 'custom'; id: number };
 
-/** A food of the library, with its values per 100 g and every portion, the default first. */
-export type Food = { id: string; name: string; per100g: Totals; portions: Portion[] };
+/** A food as a route parameter: a library code, or "custom-" and the id of one's own. */
+export function refKey(ref: FoodRef): string {
+  return ref.kind === 'custom' ? `custom-${ref.id}` : ref.id;
+}
+
+/** The food a route parameter names, the reverse of `refKey`. */
+export function refOf(key: string): FoodRef {
+  return key.startsWith('custom-')
+    ? { kind: 'custom', id: Number(key.slice('custom-'.length)) }
+    : { kind: 'library', id: key };
+}
+
+/** The food a row names by its food_id or custom_food_id. */
+export function refOfRow(row: { food_id: string | null; custom_food_id: number | null }): FoodRef {
+  return row.custom_food_id !== null
+    ? { kind: 'custom', id: row.custom_food_id }
+    : { kind: 'library', id: row.food_id ?? '' };
+}
+
+/** A food found by search, with its values per 100 g and its default portion, if any. */
+export type FoodResult = { ref: FoodRef; name: string; per100g: Totals; portion: Portion | null };
+
+/** A food with its values per 100 g and every portion, the default first. */
+export type Food = { ref: FoodRef; name: string; per100g: Totals; portions: Portion[] };
 
 /** How long typing pauses before a search is sent. */
 export const SEARCH_DELAY_MS = 250;
@@ -60,8 +82,9 @@ export function useSettledQuery(value: string): string {
 }
 
 /**
- * Searches the food library by name in the app language and in English (ADR 0035). The last
- * results stay while the next ones load. Nothing is searched below `MIN_QUERY_LENGTH`.
+ * Searches the food library by name in the app language and in English, and the user's own foods
+ * (ADR 0035, 0036). The last results stay while the next ones load. Nothing is searched below
+ * `MIN_QUERY_LENGTH`.
  */
 export function useFoodSearch(term: string) {
   const { i18n } = useTranslation();
@@ -78,10 +101,13 @@ export function useFoodSearch(term: string) {
         throw error;
       }
       return data.map((row) => ({
-        id: row.food_id,
+        ref: refOfRow(row),
         name: row.name,
         per100g: totalsOf(row),
-        portion: { unit: row.portion_unit, grams: row.portion_grams },
+        portion:
+          row.portion_unit !== null && row.portion_grams !== null
+            ? { unit: row.portion_unit, grams: row.portion_grams }
+            : null,
       }));
     },
   });
@@ -89,35 +115,61 @@ export function useFoodSearch(term: string) {
 
 /**
  * A food with its name in the app language, falling back to English, and its portions. Null when
- * it is not in the library, or no longer.
+ * it is not in the library, or no longer, or a food of one's own was deleted.
  */
-export function useFood(id: string) {
+export function useFood(ref: FoodRef) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food', i18n.language, id],
-    queryFn: async (): Promise<Food | null> => {
-      const { data, error } = await supabase
-        .from('foods')
-        .select(
-          'id, kcal, protein_g, carbs_g, fat_g, archived_at, food_names(language, name), food_portions(unit, grams, is_default)',
-        )
-        .eq('id', id)
-        .maybeSingle();
-      if (error) {
-        throw error;
-      }
-      // A food taken out of the library cannot be logged any more (ADR 0034).
-      if (!data || data.archived_at !== null) {
-        return null;
-      }
-      return {
-        id: data.id,
-        name: nameOf(data.food_names, i18n.language, data.id),
-        per100g: totalsOf(data),
-        portions: [...data.food_portions]
-          .sort((a, b) => Number(b.is_default) - Number(a.is_default))
-          .map(({ unit, grams }) => ({ unit, grams })),
-      };
-    },
+    queryKey: ['food', i18n.language, refKey(ref)],
+    queryFn: async (): Promise<Food | null> =>
+      ref.kind === 'custom' ? customFood(ref.id) : libraryFood(ref.id, i18n.language),
   });
+}
+
+async function libraryFood(id: string, language: string): Promise<Food | null> {
+  const { data, error } = await supabase
+    .from('foods')
+    .select(
+      'id, kcal, protein_g, carbs_g, fat_g, archived_at, food_names(language, name), food_portions(unit, grams, is_default)',
+    )
+    .eq('id', id)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  // A food taken out of the library cannot be logged any more (ADR 0034).
+  if (!data || data.archived_at !== null) {
+    return null;
+  }
+  return {
+    ref: { kind: 'library', id: data.id },
+    name: nameOf(data.food_names, language, data.id),
+    per100g: totalsOf(data),
+    portions: [...data.food_portions]
+      .sort((a, b) => Number(b.is_default) - Number(a.is_default))
+      .map(({ unit, grams }) => ({ unit, grams })),
+  };
+}
+
+async function customFood(id: number): Promise<Food | null> {
+  const { data, error } = await supabase
+    .from('custom_foods')
+    .select('id, name, kcal, protein_g, carbs_g, fat_g, portion_unit, portion_grams, archived_at')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  if (!data || data.archived_at !== null) {
+    return null;
+  }
+  return {
+    ref: { kind: 'custom', id: data.id },
+    name: data.name,
+    per100g: totalsOf(data),
+    portions:
+      data.portion_unit !== null && data.portion_grams !== null
+        ? [{ unit: data.portion_unit, grams: data.portion_grams }]
+        : [],
+  };
 }

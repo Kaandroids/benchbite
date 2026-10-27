@@ -2,7 +2,15 @@ import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { act, renderHook, waitFor } from '@/test/render';
 
-import { amountOf, SEARCH_DELAY_MS, useFood, useFoodSearch, useSettledQuery } from './foods';
+import {
+  amountOf,
+  refKey,
+  refOf,
+  SEARCH_DELAY_MS,
+  useFood,
+  useFoodSearch,
+  useSettledQuery,
+} from './foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
@@ -16,6 +24,15 @@ describe('amountOf', () => {
       carbsG: 26.65,
       fatG: 3.325,
     });
+  });
+});
+
+describe('refKey', () => {
+  it('names a food as a route parameter and back', () => {
+    expect(refKey({ kind: 'library', id: 'C133000' })).toBe('C133000');
+    expect(refKey({ kind: 'custom', id: 12 })).toBe('custom-12');
+    expect(refOf('custom-12')).toEqual({ kind: 'custom', id: 12 });
+    expect(refOf('C133000')).toEqual({ kind: 'library', id: 'C133000' });
   });
 });
 
@@ -43,6 +60,7 @@ describe('useFoodSearch', () => {
       data: [
         {
           food_id: 'C133000',
+          custom_food_id: null,
           name: 'Oat flakes',
           kcal: 348,
           protein_g: 13.22,
@@ -58,7 +76,7 @@ describe('useFoodSearch', () => {
     await waitFor(() =>
       expect(result.current.data).toEqual([
         {
-          id: 'C133000',
+          ref: { kind: 'library', id: 'C133000' },
           name: 'Oat flakes',
           per100g: OATS,
           portion: { unit: 'serving', grams: 50 },
@@ -66,6 +84,34 @@ describe('useFoodSearch', () => {
       ]),
     );
     expect(supabase.rpc).toHaveBeenCalledWith('search_foods', { query: 'oat', language: 'en' });
+  });
+
+  it("finds the user's own foods, which may have no portion", async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({
+      data: [
+        {
+          food_id: null,
+          custom_food_id: 12,
+          name: 'Protein yoghurt',
+          kcal: 70,
+          protein_g: 10,
+          carbs_g: 6.5,
+          fat_g: 0.3,
+          portion_unit: null,
+          portion_grams: null,
+        },
+      ],
+      error: null,
+    } as never);
+    const { result } = await renderHook(() => useFoodSearch('protein'));
+    await waitFor(() =>
+      expect(result.current.data?.[0]).toEqual({
+        ref: { kind: 'custom', id: 12 },
+        name: 'Protein yoghurt',
+        per100g: { calories: 70, proteinG: 10, carbsG: 6.5, fatG: 0.3 },
+        portion: null,
+      }),
+    );
   });
 
   it('does not search below 2 characters', async () => {
@@ -103,10 +149,10 @@ describe('useFood', () => {
   it('loads the food with its name in the app language and the default portion first', async () => {
     maybeSingle.mockResolvedValue({ data: row, error: null });
     await act(() => i18n.changeLanguage('de'));
-    const { result } = await renderHook(() => useFood('C133000'));
+    const { result } = await renderHook(() => useFood({ kind: 'library', id: 'C133000' }));
     await waitFor(() =>
       expect(result.current.data).toEqual({
-        id: 'C133000',
+        ref: { kind: 'library', id: 'C133000' },
         name: 'Haferflocken',
         per100g: OATS,
         portions: [
@@ -122,20 +168,47 @@ describe('useFood', () => {
   it('falls back to the English name', async () => {
     maybeSingle.mockResolvedValue({ data: row, error: null });
     await act(() => i18n.changeLanguage('tr'));
-    const { result } = await renderHook(() => useFood('C133000'));
+    const { result } = await renderHook(() => useFood({ kind: 'library', id: 'C133000' }));
     await waitFor(() => expect(result.current.data?.name).toBe('Oat flakes'));
   });
 
   it('is null for a food taken out of the library', async () => {
     maybeSingle.mockResolvedValue({ data: { ...row, archived_at: '2026-10-27' }, error: null });
-    const { result } = await renderHook(() => useFood('C133000'));
+    const { result } = await renderHook(() => useFood({ kind: 'library', id: 'C133000' }));
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeNull();
   });
 
+  it("loads a food of the user's own with its portion", async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        id: 12,
+        name: 'Protein yoghurt',
+        kcal: 70,
+        protein_g: 10,
+        carbs_g: 6.5,
+        fat_g: 0.3,
+        portion_unit: 'serving',
+        portion_grams: 200,
+        archived_at: null,
+      },
+      error: null,
+    });
+    const { result } = await renderHook(() => useFood({ kind: 'custom', id: 12 }));
+    await waitFor(() =>
+      expect(result.current.data).toEqual({
+        ref: { kind: 'custom', id: 12 },
+        name: 'Protein yoghurt',
+        per100g: { calories: 70, proteinG: 10, carbsG: 6.5, fatG: 0.3 },
+        portions: [{ unit: 'serving', grams: 200 }],
+      }),
+    );
+    expect(supabase.from).toHaveBeenCalledWith('custom_foods');
+  });
+
   it('is null for an unknown food', async () => {
     maybeSingle.mockResolvedValue({ data: null, error: null });
-    const { result } = await renderHook(() => useFood('X'));
+    const { result } = await renderHook(() => useFood({ kind: 'library', id: 'X' }));
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeNull();
   });
