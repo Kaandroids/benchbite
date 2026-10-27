@@ -162,6 +162,20 @@ describe('AmountScreen', () => {
     });
   });
 
+  it('starts over when the food changes its portions while it shows', async () => {
+    const view = await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    await fireEvent.press(screen.getByLabelText('More'));
+    expect(screen.getByText(/1.5 cups/)).toBeTruthy();
+
+    jest.mocked(useFood).mockReturnValue(loaded({ ...YOGHURT, portions: [] }));
+    await view.rerender(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    expect(screen.getByLabelText('Grams').props.value).toBe('100');
+  });
+
   it('says when the food is no longer in the library', async () => {
     jest.mocked(useFood).mockReturnValue(loaded(null));
     await render(

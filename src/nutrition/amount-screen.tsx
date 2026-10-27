@@ -35,6 +35,9 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   if (allLoaded(queries) && food.data) {
     return (
       <AmountForm
+        // A fresh form when the food's portions change while it shows, such as after editing it,
+        // so that it does not keep a portion that is gone or a count beyond the new maximum.
+        key={food.data.portions.map(({ unit, grams }) => `${unit}:${grams}`).join()}
         title={food.data.name}
         subtitle={t('nutrition.amount.per100g', { calories: format(food.data.per100g.calories) })}
         action={
@@ -72,8 +75,8 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
       {food.data === null ? (
         <MessageView
           icon="meal"
-          title={t('nutrition.amount.notFound.title')}
-          message={t('nutrition.amount.notFound.message')}
+          title={t('nutrition.foodNotFound.title')}
+          message={t('nutrition.foodNotFound.message')}
         />
       ) : (
         <LoadState queries={queries} />
