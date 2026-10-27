@@ -55,7 +55,8 @@ export function mealsOf(entries: MealEntry[]): MealSummary[] {
 
 /**
  * The calories suggested for each empty meal: what is left of the day, split between the empty
- * meals by their usual shares. Nothing is suggested once the day's calories are used up.
+ * meals by their usual shares, to 10 kcal. Nothing is suggested once the day's calories are used
+ * up, nor for a meal whose share rounds to nothing.
  */
 export function suggestedCalories(target: number, meals: MealSummary[]): Map<Meal, number> {
   const left = target - totalOf(meals.map((meal) => meal.totals)).calories;
@@ -66,7 +67,10 @@ export function suggestedCalories(target: number, meals: MealSummary[]): Map<Mea
     return suggested;
   }
   for (const { meal, share } of empty) {
-    suggested.set(meal, Math.round((left * share) / shares / 10) * 10);
+    const calories = Math.round((left * share) / shares / 10) * 10;
+    if (calories > 0) {
+      suggested.set(meal, calories);
+    }
   }
   return suggested;
 }

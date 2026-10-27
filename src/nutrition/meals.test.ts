@@ -52,6 +52,11 @@ describe('suggestedCalories', () => {
     expect(suggestedCalories(2000, mealsOf([])).get('breakfast')).toBe(500);
   });
 
+  it('suggests nothing for a meal whose share rounds to 0', () => {
+    const meals = mealsOf([entry('breakfast', 900), entry('lunch', 900), entry('dinner', 746)]);
+    expect(suggestedCalories(2550, meals).size).toBe(0);
+  });
+
   it('suggests nothing once the calories are used up', () => {
     expect(suggestedCalories(500, mealsOf([entry('breakfast', 600)])).size).toBe(0);
   });
