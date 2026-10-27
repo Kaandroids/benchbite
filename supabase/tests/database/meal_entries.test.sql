@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -75,6 +75,13 @@ select throws_ok(
   'BB022',
   null,
   'An archived food cannot be logged'
+);
+select throws_ok(
+  $$ insert into public.meal_entries (day, meal, food_id, grams)
+     values ('2026-10-27', 'lunch', 'X999999', 50) $$,
+  '23503',
+  null,
+  'An unknown food is rejected'
 );
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams, portion_unit)

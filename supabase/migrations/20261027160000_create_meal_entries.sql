@@ -75,9 +75,12 @@ begin
   into new.kcal_per_100g, new.protein_per_100g, new.carbs_per_100g, new.fat_per_100g
   from public.foods f
   where f.id = new.food_id and f.archived_at is null;
-  -- Unknown foods are left to the foreign key.
-  if not found and exists (select 1 from public.foods f where f.id = new.food_id) then
-    raise exception 'The food is no longer in the library' using errcode = 'BB022';
+  if not found then
+    if exists (select 1 from public.foods f where f.id = new.food_id) then
+      raise exception 'The food is no longer in the library' using errcode = 'BB022';
+    end if;
+    -- The foreign key would only be checked after the copied values are found missing.
+    raise exception 'Food % not found', new.food_id using errcode = '23503';
   end if;
   if (
     select count(*) from public.meal_entries e where e.user_id = new.user_id and e.day = new.day
