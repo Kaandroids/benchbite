@@ -260,7 +260,10 @@
       "adds": "This adds",
       "dayWould": "The day would be {{eaten}} of {{target}} kcal.",
       "meal": "Meal",
-      "notFound": "This food is no longer in the library.",
+      "notFound": {
+        "title": "Food not found",
+        "message": "This food is no longer in the library."
+      },
       "saveError": "The food could not be added. Check your connection and try again.",
       "closedDay": "Meals can only be added to today and the week before."
     }

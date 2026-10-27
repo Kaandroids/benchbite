@@ -260,7 +260,10 @@
       "adds": "Eklenecek",
       "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır.",
       "meal": "Öğün",
-      "notFound": "Bu besin artık kütüphanede yok.",
+      "notFound": {
+        "title": "Besin bulunamadı",
+        "message": "Bu besin artık kütüphanede yok."
+      },
       "saveError": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir."
     }
