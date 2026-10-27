@@ -295,7 +295,8 @@
         "title": "Entry not found",
         "message": "This entry was removed."
       }
-    }
+    },
+    "kcal": "{{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

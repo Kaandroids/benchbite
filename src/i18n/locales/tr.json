@@ -295,7 +295,8 @@
         "title": "Kayıt bulunamadı",
         "message": "Bu kayıt kaldırılmış."
       }
-    }
+    },
+    "kcal": "{{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
