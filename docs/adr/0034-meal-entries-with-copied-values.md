@@ -24,9 +24,14 @@ People log late at night and travel, so "today" is the day on their phone, not t
   level security. Column privileges let it send only the day, meal, food and amount, so the copied
   values cannot be faked, and an entry cannot switch to another food.
 - **Fixed meals:** breakfast, lunch, dinner and snack, as an enum.
-- **The local day:** the app sends the day it shows. The database allows up to one day ahead of
-  its own date, for time zones east of it, and refuses later days.
-- **Limits:** up to 100 entries per day, so that a broken client cannot fill the table.
+- **The local day:** the app sends the day it shows. Meals are logged for today and the week
+  before it, so a forgotten meal can be added but a day cannot be filled in long after. The app
+  goes back 7 days; the database allows one more day on each side of its own date, as the user's
+  day may differ from the server's by one either way. Entries older than the week can still be
+  corrected and deleted.
+- **Limits:** up to 100 entries per day, counted under the user's limit lock. With the week
+  window, a user can add about a thousand entries at once and then 100 a day, so a broken client
+  or a cheap anonymous session cannot fill the table.
 
 ## Alternatives considered
 
@@ -49,5 +54,6 @@ People log late at night and travel, so "today" is the day on their phone, not t
 - A change to the library only affects entries added afterwards.
 - Custom foods and recipes will add their own reference columns to `meal_entries`, with a check
   that an entry names exactly one source.
-- The 100-entry limit is checked on insert only; moving entries between days can exceed it, which
-  is harmless.
+- The 100-entry limit is checked on insert only; moving entries between days within the week can
+  exceed it, which is harmless.
+- People who log on paper and type it in later cannot go back further than a week.
