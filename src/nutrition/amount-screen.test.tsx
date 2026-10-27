@@ -59,19 +59,20 @@ describe('AmountScreen', () => {
     expect(screen.getByText('The day would be 1,059 of 2,550 kcal.')).toBeTruthy();
   });
 
-  it('steps the portions in halves and adds them to the chosen meal', async () => {
+  it('steps the portions in halves and adds them to the meal the search was opened for', async () => {
     await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
     await fireEvent.press(screen.getByLabelText('More'));
     await fireEvent.press(screen.getByLabelText('More'));
     expect(screen.getByText(/2 cups/)).toBeTruthy();
     expect(screen.getByText('198 kcal')).toBeTruthy();
 
-    await fireEvent.press(screen.getByText('Dinner'));
-    await fireEvent.press(screen.getByText('Add to dinner'));
+    // The meal is fixed where the search was opened.
+    expect(screen.queryByText('Dinner')).toBeNull();
+    await fireEvent.press(screen.getByText('Add to lunch'));
     expect(mutate).toHaveBeenCalledWith(
       {
         day: '2026-10-27',
-        meal: 'dinner',
+        meal: 'lunch',
         foodId: 'M141300',
         grams: 300,
         portion: { unit: 'cup', count: 2 },

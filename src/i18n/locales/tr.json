@@ -259,7 +259,6 @@
       "inGrams": "{{grams}} g",
       "adds": "Eklenecek",
       "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır.",
-      "meal": "Öğün",
       "notFound": {
         "title": "Besin bulunamadı",
         "message": "Bu besin artık kütüphanede yok."

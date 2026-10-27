@@ -259,7 +259,6 @@
       "inGrams": "{{grams}} g",
       "adds": "Das ergibt",
       "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal.",
-      "meal": "Mahlzeit",
       "notFound": {
         "title": "Lebensmittel nicht gefunden",
         "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."

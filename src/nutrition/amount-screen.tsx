@@ -11,7 +11,6 @@ import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
-import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
@@ -20,7 +19,7 @@ import { typography, useTheme } from '@/theme';
 import { AddEntryError } from './add-entry-error';
 import { amountOf, useAddEntry, useFood, type Food } from './foods';
 import { MACROS } from './macro-targets';
-import { MEALS, totalOf, useDayEntries, type Meal } from './meals';
+import { totalOf, useDayEntries, type Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 import { useNutritionTargets } from './targets';
 
@@ -42,13 +41,13 @@ function typedGrams(text: string): number | null {
 
 type AmountScreenProps = {
   foodId: string;
-  /** The meal the food goes to, which can still be changed here. */
+  /** The meal the food goes to: the one the search was opened for. */
   meal: Meal;
   /** YYYY-MM-DD. */
   day: string;
 };
 
-/** Picks how much of a food was eaten and which meal it goes to, showing what that adds. */
+/** Picks how much of a food was eaten for a meal, showing what that adds to the day. */
 export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -70,7 +69,7 @@ export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
     content = (
       <AmountForm
         food={food.data}
-        initialMeal={meal}
+        meal={meal}
         day={day}
         eatenCalories={totalOf(entries.data ?? []).calories}
         targetCalories={targets.data?.calories ?? null}
@@ -106,20 +105,19 @@ export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
 
 type AmountFormProps = {
   food: Food;
-  initialMeal: Meal;
+  meal: Meal;
   day: string;
   /** What the day has without this food. */
   eatenCalories: number;
   targetCalories: number | null;
 };
 
-function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: AmountFormProps) {
+function AmountForm({ food, meal, day, eatenCalories, targetCalories }: AmountFormProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
   const portionLabel = usePortionLabel();
   const addEntry = useAddEntry();
-  const [meal, setMeal] = useState(initialMeal);
   // The index of the chosen portion, or null for grams.
   const [portionIndex, setPortionIndex] = useState<number | null>(
     food.portions.length > 0 ? 0 : null,
@@ -325,21 +323,6 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
             </Text>
           ) : null}
         </Card>
-
-        <View style={{ gap: spacing.sm }}>
-          <Text variant="captionStrong" color="textMuted">
-            {t('nutrition.amount.meal')}
-          </Text>
-          <SegmentedControl
-            options={MEALS.map(({ meal: value }) => ({
-              value,
-              label: t(`nutrition.meals.${value}`),
-            }))}
-            value={meal}
-            onChange={setMeal}
-            accessibilityLabel={t('nutrition.amount.meal')}
-          />
-        </View>
 
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </ScrollView>
