@@ -21,7 +21,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { isDbError } from '@/lib/errors';
 import { typography, useTheme } from '@/theme';
 
-import { amountOf, useAddEntry, useFoodSearch, type FoodResult } from './foods';
+import { amountOf, MIN_QUERY_LENGTH, useAddEntry, useFoodSearch, type FoodResult } from './foods';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 
@@ -45,7 +45,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const addEntry = useAddEntry();
   // The foods added from here, which show a check instead of their +.
   const [added, setAdded] = useState<string[]>([]);
-  const searching = query.trim().length >= 2;
+  const searching = query.trim().length >= MIN_QUERY_LENGTH;
 
   const quickAdd = (food: FoodResult) =>
     addEntry.mutate(

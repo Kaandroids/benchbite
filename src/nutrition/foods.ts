@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import type { Meal, Totals } from './meals';
+import { dayEntriesKey, totalsOf, type Meal, type Totals } from './meals';
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
@@ -19,6 +19,9 @@ export type Food = { id: string; name: string; per100g: Totals; portions: Portio
 
 /** How long typing pauses before a search is sent. */
 export const SEARCH_DELAY_MS = 250;
+
+/** The shortest query searched; search_foods finds nothing below it. */
+export const MIN_QUERY_LENGTH = 2;
 
 /** What an amount of a food adds, from its values per 100 g. */
 export function amountOf(per100g: Totals, grams: number): Totals {
@@ -42,14 +45,14 @@ function useSettled(value: string): string {
 
 /**
  * Searches the food library by name in the app language and in English (ADR 0035), once typing
- * pauses. The last results stay while the next ones load. Nothing is searched below 2 characters.
+ * pauses. The last results stay while the next ones load. Nothing is searched below `MIN_QUERY_LENGTH`.
  */
 export function useFoodSearch(query: string) {
   const { i18n } = useTranslation();
   const term = useSettled(query.trim());
   return useQuery({
     queryKey: ['food-search', i18n.language, term],
-    enabled: term.length >= 2,
+    enabled: term.length >= MIN_QUERY_LENGTH,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<FoodResult[]> => {
       const { data, error } = await supabase.rpc('search_foods', {
@@ -62,12 +65,7 @@ export function useFoodSearch(query: string) {
       return data.map((row) => ({
         id: row.food_id,
         name: row.name,
-        per100g: {
-          calories: row.kcal,
-          proteinG: row.protein_g,
-          carbsG: row.carbs_g,
-          fatG: row.fat_g,
-        },
+        per100g: totalsOf(row),
         portion: { unit: row.portion_unit, grams: row.portion_grams },
       }));
     },
@@ -98,12 +96,7 @@ export function useFood(id: string) {
       return {
         id: data.id,
         name: nameIn(i18n.language) ?? nameIn('en') ?? data.id,
-        per100g: {
-          calories: data.kcal,
-          proteinG: data.protein_g,
-          carbsG: data.carbs_g,
-          fatG: data.fat_g,
-        },
+        per100g: totalsOf(data),
         portions: [...data.food_portions]
           .sort((a, b) => Number(b.is_default) - Number(a.is_default))
           .map(({ unit, grams }) => ({ unit, grams })),
@@ -143,6 +136,6 @@ export function useAddEntry() {
       }
     },
     onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: ['meal-entries', entry.day] }),
+      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
   });
 }
