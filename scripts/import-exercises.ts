@@ -16,6 +16,7 @@ import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 
 import type { Database } from '../src/lib/database.types.ts';
+import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
 
 const UPSTREAM_COMMIT = 'f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5';
 const UPSTREAM = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/${UPSTREAM_COMMIT}`;
@@ -29,7 +30,6 @@ const ROOT = join(import.meta.dirname, '..');
 const IMAGES_DIR = join(ROOT, 'supabase', 'storage', 'exercise-images');
 const NAMES_FILE = join(ROOT, 'supabase', 'data', 'exercise-names.json');
 const METRICS_FILE = join(ROOT, 'supabase', 'data', 'exercise-metrics.json');
-const MIGRATIONS_DIR = join(ROOT, 'supabase', 'migrations');
 
 type UpstreamExercise = {
   id: string;
@@ -118,10 +118,6 @@ async function convertImages(images: string[]): Promise<void> {
   await Promise.all(Array.from({ length: PARALLEL_DOWNLOADS }, worker));
 }
 
-function sqlString(value: string | null): string {
-  return value === null ? 'null' : `'${value.replaceAll("'", "''")}'`;
-}
-
 function sqlArray(values: string[], type: string): string {
   return `array[${values.map(sqlString).join(', ')}]::${type}[]`;
 }
@@ -189,11 +185,6 @@ values
 ${translations.join(',\n')}
 on conflict (exercise_id, language) do update set name = excluded.name;
 `;
-}
-
-/** A migration timestamp in the Supabase CLI's format, such as 20261020215835. */
-function timestamp(): string {
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 }
 
 const exercises = (await fetchExercises()).sort((a, b) => a.id.localeCompare(b.id));

@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
 
 import type { Database } from '../src/lib/database.types.ts';
+import { MIGRATIONS_DIR, sqlString, timestamp } from './lib/migration.ts';
 
 const BLS_URL = 'https://blsdb.de/assets/uploads/BLS_4_0_2025_DE.zip';
 const BLS_SHA256 = '12b7a6ba62807ec9b301eb276f897dc85f99b2292311618dec3749a12d984c91';
@@ -20,7 +21,6 @@ const BLS_DATA_FILE = 'BLS_4_0_Daten_2025_DE.xlsx';
 
 const ROOT = join(import.meta.dirname, '..');
 const FOODS_FILE = join(ROOT, 'supabase', 'data', 'foods.json');
-const MIGRATIONS_DIR = join(ROOT, 'supabase', 'migrations');
 
 type FoodGroup = Database['public']['Enums']['food_group'];
 type PortionUnit = Database['public']['Enums']['portion_unit'];
@@ -274,10 +274,6 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
   }
 }
 
-function sqlString(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`;
-}
-
 function sqlNumber(value: number | null, decimals: number): string {
   return value === null ? 'null' : String(Number(value.toFixed(decimals)));
 }
@@ -346,11 +342,6 @@ insert into public.food_portions (food_id, unit, grams, is_default)
 values
 ${rows.join(',\n')};
 `;
-}
-
-/** A migration timestamp in the Supabase CLI's format, such as 20261027120000. */
-function timestamp(): string {
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 }
 
 const chosen = JSON.parse(readFileSync(FOODS_FILE, 'utf8')) as Record<string, ChosenFood>;
