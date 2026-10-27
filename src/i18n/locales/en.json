@@ -75,7 +75,7 @@
     "phoneLanguage": "Phone’s language",
     "phoneLanguageNow": "{{language}} now",
     "waterGoal": "Daily water goal",
-    "waterGoalNote": "The glasses to fill on the Nutrition tab, 250 ml each.",
+    "waterGoalNote": "The glasses to fill on the Nutrition tab, {{ml}} ml each.",
     "liters": "{{amount}} L"
   },
   "loadError": {
@@ -359,7 +359,8 @@
       "total": "{{drunk}} of {{goal}} L",
       "toGo_one": "{{count}} glass to go",
       "toGo_other": "{{count}} glasses to go",
-      "reached": "goal reached",
+      "reached": "Goal reached",
+      "over": "Goal reached · +{{ml}} ml",
       "add": "Add a glass, {{ml}} ml",
       "remove": "Remove a glass"
     }

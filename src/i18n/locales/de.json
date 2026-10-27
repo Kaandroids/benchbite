@@ -75,7 +75,7 @@
     "phoneLanguage": "Sprache des Handys",
     "phoneLanguageNow": "Gerade {{language}}",
     "waterGoal": "Tägliches Wasserziel",
-    "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je 250 ml.",
+    "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je {{ml}} ml.",
     "liters": "{{amount}} L"
   },
   "loadError": {
@@ -360,6 +360,7 @@
       "toGo_one": "noch {{count}} Glas",
       "toGo_other": "noch {{count}} Gläser",
       "reached": "Ziel erreicht",
+      "over": "Ziel erreicht · +{{ml}} ml",
       "add": "Ein Glas hinzufügen, {{ml}} ml",
       "remove": "Ein Glas entfernen"
     }

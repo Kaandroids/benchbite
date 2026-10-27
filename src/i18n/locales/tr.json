@@ -75,7 +75,7 @@
     "phoneLanguage": "Telefonun dili",
     "phoneLanguageNow": "Şu an {{language}}",
     "waterGoal": "Günlük su hedefi",
-    "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri 250 ml.",
+    "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri {{ml}} ml.",
     "liters": "{{amount}} L"
   },
   "loadError": {
@@ -359,7 +359,8 @@
       "total": "{{goal}} L'nin {{drunk}} L'si",
       "toGo_one": "{{count}} bardak kaldı",
       "toGo_other": "{{count}} bardak kaldı",
-      "reached": "hedefe ulaşıldı",
+      "reached": "Hedefe ulaşıldı",
+      "over": "Hedefe ulaşıldı · +{{ml}} ml",
       "add": "Bir bardak ekle, {{ml}} ml",
       "remove": "Bir bardak çıkar"
     }
