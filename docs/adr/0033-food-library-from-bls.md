@@ -56,5 +56,5 @@ but no portion sizes.
   own; `food_source` is an enum so that one can be added.
 - Portion sizes are typical European amounts we chose, not BLS data.
 - Adding foods means editing `foods.json` and generating a new migration. A food taken out of
-  the file is deleted, so tables that reference foods have to survive that, for example by
-  keeping their own copy of the values.
+  the file is archived with `archived_at`, as custom exercises are, so meals that refer to it
+  keep working and search no longer offers it; listing it again restores it.

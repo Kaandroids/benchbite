@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(12);
 
 select cmp_ok(
   (select count(*) from public.foods)::integer, '>=', 300,
@@ -16,6 +16,11 @@ select is_empty(
      left join public.food_names n on n.food_id = f.id and n.language = l.language
      where n.food_id is null $$,
   'Every food has an English, German and Turkish name'
+);
+
+select is_empty(
+  $$ select id from public.foods where archived_at is not null $$,
+  'The listed foods are not archived'
 );
 
 select is_empty(

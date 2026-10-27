@@ -161,6 +161,7 @@ export type Database = {
       };
       foods: {
         Row: {
+          archived_at: string | null;
           carbs_g: number;
           fat_g: number;
           fiber_g: number | null;
@@ -175,6 +176,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          archived_at?: string | null;
           carbs_g: number;
           fat_g: number;
           fiber_g?: number | null;
@@ -188,6 +190,7 @@ export type Database = {
           sugar_g?: number | null;
         };
         Update: {
+          archived_at?: string | null;
           carbs_g?: number;
           fat_g?: number;
           fiber_g?: number | null;
