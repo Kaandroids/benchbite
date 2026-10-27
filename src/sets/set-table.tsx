@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { parseDecimal } from '@/lib/math';
 import { minutesAndSeconds } from '@/lib/time';
 import { typography, useTheme } from '@/theme';
 
@@ -33,8 +34,8 @@ export function readSetValue(field: SetField, text: string): number | null {
   if (field === 'seconds') {
     return parseTime(text);
   }
-  const value = Number(text.replace(',', '.'));
-  if (!text.trim() || !Number.isFinite(value) || value <= 0) {
+  const value = parseDecimal(text);
+  if (value === null || value <= 0) {
     return null;
   }
   // Beyond what a set can hold, the value is the most it can be, so that the workout still saves.
