@@ -49,11 +49,7 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
         },
       ]}
     >
-      <Icon
-        name={icon === 'back' ? 'back' : 'forward'}
-        size={18}
-        color={enabled ? 'primary' : 'placeholder'}
-      />
+      <Icon name={icon} size={18} color={enabled ? 'primary' : 'placeholder'} />
     </Pressable>
   );
 
