@@ -95,6 +95,17 @@ describe('AmountScreen', () => {
     );
   });
 
+  it('turns Add off while the grams typed are no amount', async () => {
+    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await fireEvent.press(screen.getByText('Grams'));
+    await fireEvent.changeText(screen.getByLabelText('Grams'), '');
+    expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
+    await fireEvent.changeText(screen.getByLabelText('Grams'), '6000');
+    expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
+    await fireEvent.changeText(screen.getByLabelText('Grams'), '250,5');
+    expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeEnabled();
+  });
+
   it('keeps the amount within its limits', async () => {
     await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
     await fireEvent.press(screen.getByLabelText('Less'));

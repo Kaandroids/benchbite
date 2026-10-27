@@ -14,7 +14,7 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
-import { clamp } from '@/lib/math';
+import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
@@ -29,6 +29,16 @@ const PORTION_STEP = 0.5;
 const MAX_PORTIONS = 20;
 const GRAMS_STEP = 10;
 const MAX_GRAMS = 5000;
+
+/** Typed grams as an entry keeps them, to one decimal; null unless above 0 and up to the most. */
+function typedGrams(text: string): number | null {
+  const value = parseDecimal(text);
+  if (value === null) {
+    return null;
+  }
+  const grams = Math.round(value * 10) / 10;
+  return grams > 0 && grams <= MAX_GRAMS ? grams : null;
+}
 
 type AmountScreenProps = {
   foodId: string;
@@ -141,6 +151,8 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
       );
     }
   };
+  // Typed grams that are no amount, such as an empty field or more than an entry holds.
+  const invalidGrams = !portion && gramsText !== null && typedGrams(gramsText) === null;
   const atMin = portion ? count <= PORTION_STEP : grams <= 1;
   const atMax = portion ? count >= maxCount : grams >= MAX_GRAMS;
 
@@ -230,12 +242,17 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
                   value={gramsText ?? String(grams)}
                   onChangeText={(text) => {
                     setGramsText(text);
-                    const value = Number(text.replace(',', '.'));
-                    if (Number.isFinite(value) && value > 0) {
-                      setGrams(clamp(Math.round(value * 10) / 10, 0.1, MAX_GRAMS));
+                    const value = typedGrams(text);
+                    if (value !== null) {
+                      setGrams(value);
                     }
                   }}
-                  onEndEditing={() => setGramsText(null)}
+                  // Text that is no amount stays, so that Add stays off until it is fixed.
+                  onEndEditing={() => {
+                    if (gramsText !== null && typedGrams(gramsText) !== null) {
+                      setGramsText(null);
+                    }
+                  }}
                   keyboardType="decimal-pad"
                   selectTextOnFocus
                   maxLength={6}
@@ -327,7 +344,12 @@ function AmountForm({ food, initialMeal, day, eatenCalories, targetCalories }: A
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </ScrollView>
       <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
-        <Button label={t(`nutrition.addTo.${meal}`)} loading={addEntry.isPending} onPress={save} />
+        <Button
+          label={t(`nutrition.addTo.${meal}`)}
+          loading={addEntry.isPending}
+          disabled={invalidGrams}
+          onPress={save}
+        />
       </View>
     </>
   );
