@@ -303,20 +303,16 @@
     "food": {
       "title": "New food",
       "editTitle": "Edit food",
-      "intro": "Copy the values from the label. Only you see it.",
       "name": "Name",
       "namePlaceholder": "Such as vanilla protein yoghurt",
       "facts": "Nutrition facts",
-      "per100g": "per 100 g",
-      "perUnit": "per {{portion}}",
       "calories": "Calories",
-      "portion": "A portion",
-      "optional": "optional",
-      "portionHint": "Pick a unit and how much it weighs, such as 1 can = 330 g.",
+      "portion": "How much does one portion weigh?",
+      "portionHint": "Read it on the pack, such as 1 can = 330 g.",
       "portionGrams": "Grams in {{portion}}",
-      "portionAdds": "{{portion}}: {{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
-      "checkClose": "The macros add up to {{calories}} kcal, close to the label.",
-      "checkFar": "The macros add up to {{calories}} kcal. Check the values on the label.",
+      "portionAdds": "{{portion}} adds {{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
+      "checkClose": "Matches the calories you entered.",
+      "checkFar": "Protein, carbs and fat make {{calories}} kcal, but you entered {{entered}} kcal. Check the values against the label.",
       "problems": {
         "tooMuchEnergy": "A food has at most 900 kcal per 100 g. Check the calories.",
         "tooMuchMacros": "Per 100 g, protein, carbs and fat add up to more than 100 g. Check the values.",
@@ -329,7 +325,31 @@
       "delete": "Delete food",
       "deleteError": "The food could not be deleted. Check your connection and try again.",
       "create": "New food",
-      "editButton": "Edit"
+      "editButton": "Edit",
+      "onlyYou": "Only you see the foods you add.",
+      "perLabel": "per 100 g, as on the label",
+      "chooseUnit": "Choose",
+      "unitSheet": {
+        "title": "What is one portion?",
+        "message": "You enter how much it weighs next.",
+        "none": "No portion, grams only"
+      },
+      "unitButton": "Unit of a portion: {{unit}}",
+      "units": {
+        "piece": "Piece",
+        "slice": "Slice",
+        "cup": "Cup",
+        "glass": "Glass",
+        "bowl": "Bowl",
+        "plate": "Plate",
+        "tablespoon": "Tablespoon",
+        "teaspoon": "Teaspoon",
+        "handful": "Handful",
+        "serving": "Serving",
+        "can": "Can",
+        "bottle": "Bottle"
+      },
+      "optional": "optional"
     }
   },
   "workout": {

@@ -303,20 +303,16 @@
     "food": {
       "title": "Neues Lebensmittel",
       "editTitle": "Lebensmittel bearbeiten",
-      "intro": "Übernimm die Werte vom Etikett. Nur du siehst es.",
       "name": "Name",
       "namePlaceholder": "Zum Beispiel Proteinjoghurt Vanille",
       "facts": "Nährwerte",
-      "per100g": "pro 100 g",
-      "perUnit": "pro {{portion}}",
       "calories": "Kalorien",
-      "portion": "Eine Portion",
-      "optional": "optional",
-      "portionHint": "Wähle eine Einheit und ihr Gewicht, etwa 1 Dose = 330 g.",
+      "portion": "Wie viel wiegt eine Portion?",
+      "portionHint": "Steht auf der Packung, etwa 1 Dose = 330 g.",
       "portionGrams": "Gramm in {{portion}}",
-      "portionAdds": "{{portion}}: {{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
-      "checkClose": "Die Makros ergeben {{calories}} kcal, nah am Etikett.",
-      "checkFar": "Die Makros ergeben {{calories}} kcal. Prüfe die Werte auf dem Etikett.",
+      "portionAdds": "{{portion}} ergibt {{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
+      "checkClose": "Passt zu den eingegebenen Kalorien.",
+      "checkFar": "Protein, Kohlenhydrate und Fett ergeben {{calories}} kcal, du hast aber {{entered}} kcal eingegeben. Vergleiche die Werte mit dem Etikett.",
       "problems": {
         "tooMuchEnergy": "Ein Lebensmittel hat höchstens 900 kcal pro 100 g. Prüfe die Kalorien.",
         "tooMuchMacros": "Pro 100 g ergeben Protein, Kohlenhydrate und Fett mehr als 100 g. Prüfe die Werte.",
@@ -329,7 +325,31 @@
       "delete": "Lebensmittel löschen",
       "deleteError": "Das Lebensmittel konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
       "create": "Neues Lebensmittel",
-      "editButton": "Bearbeiten"
+      "editButton": "Bearbeiten",
+      "onlyYou": "Nur du siehst die Lebensmittel, die du hinzufügst.",
+      "perLabel": "pro 100 g, wie auf dem Etikett",
+      "chooseUnit": "Wählen",
+      "unitSheet": {
+        "title": "Was ist eine Portion?",
+        "message": "Das Gewicht gibst du danach ein.",
+        "none": "Keine Portion, nur Gramm"
+      },
+      "unitButton": "Einheit einer Portion: {{unit}}",
+      "units": {
+        "piece": "Stück",
+        "slice": "Scheibe",
+        "cup": "Tasse",
+        "glass": "Glas",
+        "bowl": "Schüssel",
+        "plate": "Teller",
+        "tablespoon": "Esslöffel",
+        "teaspoon": "Teelöffel",
+        "handful": "Handvoll",
+        "serving": "Portion",
+        "can": "Dose",
+        "bottle": "Flasche"
+      },
+      "optional": "optional"
     }
   },
   "workout": {

@@ -49,7 +49,7 @@ describe('FoodFormScreen, a new food', () => {
     expect(save()).toBeDisabled();
     await fillIn({ Fat: '0.3' });
     expect(save()).toBeEnabled();
-    expect(screen.getByText('The macros add up to 69 kcal, close to the label.')).toBeTruthy();
+    expect(screen.getByText('Matches the calories you entered.')).toBeTruthy();
   });
 
   it('saves the food and opens it to log an amount', async () => {
@@ -76,26 +76,39 @@ describe('FoodFormScreen, a new food', () => {
     );
   });
 
-  it('takes the values per portion, as a label may print them', async () => {
+  it('takes a portion: a unit picked from a list, and the grams typed in', async () => {
     create.mockResolvedValue(12);
     await render(<FoodFormScreen kind="new" meal="snack" day="2026-10-27" />);
-    await fireEvent.press(screen.getByText('1 serving'));
-    await fillIn({ 'Grams in 1 serving': '200' });
-    await fireEvent.press(screen.getByText('per 1 serving'));
     await fillIn({
       Name: 'Protein yoghurt',
-      Calories: '140',
-      Protein: '20',
-      Carbs: '13',
-      Fat: '0.6',
+      Calories: '70',
+      Protein: '10',
+      Carbs: '6.5',
+      Fat: '0.3',
     });
-    expect(screen.getByText('1 serving: 140 kcal · P 20 · C 13 · F 0.6')).toBeTruthy();
+    expect(screen.getByLabelText('Grams in Choose')).not.toBeEnabled();
+
+    await fireEvent.press(screen.getByLabelText('Unit of a portion: Choose'));
+    expect(screen.getByText('What is one portion?')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Cup'));
+    await fillIn({ 'Grams in 1 cup': '200' });
+    expect(screen.getByText('1 cup adds 140 kcal · P 20 · C 13 · F 0.6')).toBeTruthy();
+
     await fireEvent.press(save());
     expect(create).toHaveBeenCalledWith({
       name: 'Protein yoghurt',
       per100g: { calories: 70, proteinG: 10, carbsG: 6.5, fatG: 0.3 },
-      portion: { unit: 'serving', grams: 200 },
+      portion: { unit: 'cup', grams: 200 },
     });
+  });
+
+  it('leaves the portion out again', async () => {
+    await render(<FoodFormScreen kind="new" meal="snack" day="2026-10-27" />);
+    await fireEvent.press(screen.getByLabelText('Unit of a portion: Choose'));
+    await fireEvent.press(screen.getByText('Cup'));
+    await fireEvent.press(screen.getByLabelText('Unit of a portion: Cup'));
+    await fireEvent.press(screen.getByText('No portion, grams only'));
+    expect(screen.getByLabelText('Unit of a portion: Choose')).toBeTruthy();
   });
 
   it('says when the values cannot be right, or the macros do not add up', async () => {
@@ -109,7 +122,9 @@ describe('FoodFormScreen, a new food', () => {
     expect(save()).toBeDisabled();
     await fillIn({ Protein: '1', Carbs: '1' });
     expect(
-      screen.getByText('The macros add up to 17 kcal. Check the values on the label.'),
+      screen.getByText(
+        'Protein, carbs and fat make 17 kcal, but you entered 400 kcal. Check the values against the label.',
+      ),
     ).toBeTruthy();
   });
 

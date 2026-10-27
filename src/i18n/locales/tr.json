@@ -303,20 +303,16 @@
     "food": {
       "title": "Yeni besin",
       "editTitle": "Besini düzenle",
-      "intro": "Değerleri etiketten aktar. Sadece sen görürsün.",
       "name": "Ad",
       "namePlaceholder": "Örneğin vanilyalı protein yoğurt",
       "facts": "Besin değerleri",
-      "per100g": "100 g'da",
-      "perUnit": "{{portion}} başına",
       "calories": "Kalori",
-      "portion": "Bir porsiyon",
-      "optional": "isteğe bağlı",
-      "portionHint": "Bir birim seç ve ağırlığını yaz, örneğin 1 kutu = 330 g.",
+      "portion": "Bir porsiyon kaç gram?",
+      "portionHint": "Paketin üzerinde yazar, örneğin 1 kutu = 330 g.",
       "portionGrams": "{{portion}} kaç gram",
-      "portionAdds": "{{portion}}: {{calories}} kcal · P {{protein}} · K {{carbs}} · Y {{fat}}",
-      "checkClose": "Makrolar {{calories}} kcal ediyor, etikete yakın.",
-      "checkFar": "Makrolar {{calories}} kcal ediyor. Etiketteki değerleri kontrol et.",
+      "portionAdds": "{{portion}} {{calories}} kcal ekler · P {{protein}} · K {{carbs}} · Y {{fat}}",
+      "checkClose": "Girdiğin kaloriyle uyuşuyor.",
+      "checkFar": "Protein, karbonhidrat ve yağ {{calories}} kcal ediyor, ama {{entered}} kcal girdin. Değerleri etiketle karşılaştır.",
       "problems": {
         "tooMuchEnergy": "Bir besinde 100 g'da en fazla 900 kcal olabilir. Kaloriyi kontrol et.",
         "tooMuchMacros": "100 g'da protein, karbonhidrat ve yağ toplamı 100 g'ı geçiyor. Değerleri kontrol et.",
@@ -329,7 +325,31 @@
       "delete": "Besini sil",
       "deleteError": "Besin silinemedi. Bağlantını kontrol edip tekrar dene.",
       "create": "Yeni besin",
-      "editButton": "Düzenle"
+      "editButton": "Düzenle",
+      "onlyYou": "Eklediğin besinleri sadece sen görürsün.",
+      "perLabel": "100 g'da, etikette yazdığı gibi",
+      "chooseUnit": "Seç",
+      "unitSheet": {
+        "title": "Bir porsiyon nedir?",
+        "message": "Ağırlığını sonra gireceksin.",
+        "none": "Porsiyon yok, sadece gram"
+      },
+      "unitButton": "Porsiyon birimi: {{unit}}",
+      "units": {
+        "piece": "Adet",
+        "slice": "Dilim",
+        "cup": "Su bardağı",
+        "glass": "Bardak",
+        "bowl": "Kase",
+        "plate": "Tabak",
+        "tablespoon": "Yemek kaşığı",
+        "teaspoon": "Çay kaşığı",
+        "handful": "Avuç",
+        "serving": "Porsiyon",
+        "can": "Kutu",
+        "bottle": "Şişe"
+      },
+      "optional": "isteğe bağlı"
     }
   },
   "workout": {

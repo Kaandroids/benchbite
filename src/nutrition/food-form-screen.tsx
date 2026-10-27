@@ -1,12 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Chip } from '@/components/ui/chip';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
@@ -15,7 +14,7 @@ import { Note } from '@/components/ui/note';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
 import { ScreenTitle } from '@/components/ui/screen-title';
-import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Constants } from '@/lib/database.types';
 import { isDbError } from '@/lib/errors';
@@ -31,7 +30,7 @@ import {
   readForm,
   type FoodForm,
 } from './food-form';
-import { amountOf, refKey, useFood } from './foods';
+import { amountOf, refKey, useFood, type PortionUnit } from './foods';
 import { MacroDot } from './macro-dot';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
@@ -99,6 +98,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const updateFood = useUpdateFood();
   const deleteFood = useDeleteFood();
   const [form, setForm] = useState(props.initial);
+  const [pickingUnit, setPickingUnit] = useState(false);
   const set = (change: Partial<FoodForm>) => setForm((current) => ({ ...current, ...change }));
 
   const result = readForm(form);
@@ -180,14 +180,12 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
         }
         action={
           <PillButton
-            variant="primary"
             label={t('nutrition.food.save')}
             disabled={result.kind !== 'valid' || saving}
             onPress={save}
           />
         }
       >
-        <Text color="textMuted">{t('nutrition.food.intro')}</Text>
         <View style={{ gap: spacing.sm }}>
           <FieldLabel text={t('nutrition.food.name')} />
           <TextInput
@@ -199,28 +197,17 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
             maxLength={MAX_NAME_LENGTH}
             style={fieldStyle}
           />
+          <Text variant="caption" color="textMuted">
+            {t('nutrition.food.onlyYou')}
+          </Text>
         </View>
 
         <View style={{ gap: spacing.sm }}>
           <View style={styles.factsHeader}>
             <FieldLabel text={t('nutrition.food.facts')} />
-            {portion ? (
-              <View style={styles.basis}>
-                <SegmentedControl
-                  options={[
-                    { value: 'per100g', label: t('nutrition.food.per100g') },
-                    { value: 'perPortion', label: t('nutrition.food.perUnit', { portion }) },
-                  ]}
-                  value={form.basis}
-                  onChange={(basis) => set({ basis })}
-                  accessibilityLabel={t('nutrition.food.facts')}
-                />
-              </View>
-            ) : (
-              <Text variant="captionStrong" color="textMuted">
-                {t('nutrition.food.per100g')}
-              </Text>
-            )}
+            <Text variant="captionStrong" color="textMuted" style={styles.perLabel}>
+              {t('nutrition.food.perLabel')}
+            </Text>
           </View>
           <Card style={[styles.caloriesRow, { gap: spacing.md }]}>
             <Text variant="label" style={styles.flex}>
@@ -249,19 +236,20 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
               </Card>
             ))}
           </View>
-          {check ? (
+          {check?.close ? (
             <View style={[styles.check, { gap: spacing.xs }]}>
-              <Icon
-                name={check.close ? 'check' : 'warning'}
-                size={16}
-                color={check.close ? 'success' : 'warning'}
-              />
+              <Icon name="check" size={16} color="success" />
               <Text variant="caption" color="textMuted" style={styles.flex}>
-                {t(check.close ? 'nutrition.food.checkClose' : 'nutrition.food.checkFar', {
-                  calories: format(Math.round(check.calories)),
-                })}
+                {t('nutrition.food.checkClose')}
               </Text>
             </View>
+          ) : check ? (
+            <Note tone="warning">
+              {t('nutrition.food.checkFar', {
+                calories: format(Math.round(check.calories)),
+                entered: format(check.entered),
+              })}
+            </Note>
           ) : null}
         </View>
 
@@ -275,50 +263,58 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
           <Text variant="caption" color="textMuted">
             {t('nutrition.food.portionHint')}
           </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.sm }}
-          >
-            {UNITS.map((unit) => (
-              <Chip
-                key={unit}
-                label={portionLabel(unit, 1)}
-                selected={form.unit === unit}
-                onPress={() =>
-                  // Choosing the unit again leaves the food without a portion.
-                  form.unit === unit
-                    ? set({ unit: null, portionGrams: '', basis: 'per100g' })
-                    : set({ unit })
-                }
-              />
-            ))}
-          </ScrollView>
-          {portion ? (
-            <View style={[styles.gramsRow, { gap: spacing.sm }]}>
-              <Text variant="bodyStrong" style={styles.flex}>
-                {t('nutrition.food.portionGrams', { portion })}
+          <View style={[styles.gramsRow, { gap: spacing.sm }]}>
+            <Text variant="bodyStrong">1</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('nutrition.food.unitButton', {
+                unit: form.unit
+                  ? t(`nutrition.food.units.${form.unit}`)
+                  : t('nutrition.food.chooseUnit'),
+              })}
+              onPress={() => setPickingUnit(true)}
+              style={[
+                styles.unitButton,
+                {
+                  gap: spacing.sm,
+                  borderRadius: radii.md,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  paddingHorizontal: spacing.md,
+                },
+              ]}
+            >
+              <Text color={form.unit ? 'text' : 'placeholder'} style={styles.flex}>
+                {form.unit
+                  ? t(`nutrition.food.units.${form.unit}`)
+                  : t('nutrition.food.chooseUnit')}
               </Text>
-              <TextInput
-                accessibilityLabel={t('nutrition.food.portionGrams', { portion })}
-                value={form.portionGrams}
-                onChangeText={(portionGrams) => set({ portionGrams })}
-                keyboardType="decimal-pad"
-                selectTextOnFocus
-                maxLength={6}
-                placeholder="0"
-                placeholderTextColor={colors.placeholder}
-                style={[
-                  fieldStyle,
-                  styles.gramsInput,
-                  { borderRadius: radii.md, borderColor: colors.border },
-                ]}
-              />
-              <Text variant="bodyStrong" color="textMuted">
-                g
-              </Text>
-            </View>
-          ) : null}
+              <Icon name="down" size={16} color="textMuted" />
+            </Pressable>
+            <Text variant="bodyStrong">=</Text>
+            <TextInput
+              accessibilityLabel={t('nutrition.food.portionGrams', {
+                portion: portion ?? t('nutrition.food.chooseUnit'),
+              })}
+              value={form.portionGrams}
+              onChangeText={(portionGrams) => set({ portionGrams })}
+              editable={form.unit !== null}
+              keyboardType="decimal-pad"
+              selectTextOnFocus
+              maxLength={6}
+              placeholder="0"
+              placeholderTextColor={colors.placeholder}
+              style={[
+                fieldStyle,
+                styles.gramsInput,
+                { borderRadius: radii.md, borderColor: colors.border },
+                form.unit === null ? styles.disabled : null,
+              ]}
+            />
+            <Text variant="bodyStrong" color="textMuted">
+              g
+            </Text>
+          </View>
           {portionAdds && portion ? (
             <Text variant="caption" color="textMuted">
               {t('nutrition.food.portionAdds', {
@@ -355,7 +351,76 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
           />
         ) : null}
       </Screen>
+      {pickingUnit ? (
+        <Sheet onClose={() => setPickingUnit(false)}>
+          <UnitPicker
+            value={form.unit}
+            onPick={(unit) => {
+              setPickingUnit(false);
+              set(unit ? { unit } : { unit: null, portionGrams: '' });
+            }}
+          />
+        </Sheet>
+      ) : null}
     </KeyboardAvoiding>
+  );
+}
+
+/** The units a portion can be counted in, and none, in a sheet. */
+function UnitPicker({
+  value,
+  onPick,
+}: {
+  value: PortionUnit | null;
+  onPick: (unit: PortionUnit | null) => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  return (
+    <View style={{ gap: spacing.md }}>
+      <View>
+        <Text variant="headline" accessibilityRole="header">
+          {t('nutrition.food.unitSheet.title')}
+        </Text>
+        <Text color="textMuted">{t('nutrition.food.unitSheet.message')}</Text>
+      </View>
+      <View style={[styles.units, { gap: spacing.sm }]}>
+        {UNITS.map((unit) => {
+          const selected = unit === value;
+          return (
+            <Pressable
+              key={unit}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => onPick(unit)}
+              style={({ pressed }) => [
+                styles.unit,
+                {
+                  borderRadius: radii.md,
+                  paddingHorizontal: spacing.md,
+                  borderWidth: selected ? 2 : 1,
+                  borderColor: selected ? colors.primaryButton : colors.border,
+                  backgroundColor: selected ? colors.selected : colors.surface,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text
+                variant={selected ? 'label' : 'bodyStrong'}
+                color={selected ? 'primaryText' : 'text'}
+              >
+                {t(`nutrition.food.units.${unit}`)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Button
+        label={t('nutrition.food.unitSheet.none')}
+        variant="ghost"
+        onPress={() => onPick(null)}
+      />
+    </View>
   );
 }
 
@@ -369,9 +434,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  basis: {
+  perLabel: {
     flexShrink: 1,
-    minWidth: 180,
+    textAlign: 'right',
+  },
+  unitButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 52,
+    borderWidth: 1,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  units: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  unit: {
+    width: '48%',
+    minHeight: 48,
+    justifyContent: 'center',
   },
   caloriesRow: {
     flexDirection: 'row',
