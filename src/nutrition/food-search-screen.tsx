@@ -36,7 +36,7 @@ import { FoodRow } from './food-row';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 import { useFavouriteKeys } from './quick-foods';
-import { QuickFoods } from './quick-foods-view';
+import { QuickFoods, type QuickFoodRow } from './quick-foods-view';
 
 type FoodSearchScreenProps = {
   meal: Meal;
@@ -90,7 +90,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       .finally(() => setSaving((current) => current.filter((id) => id !== key)));
   };
 
-  const row = (food: FoodResult, index: number, amount = quickAmountOf(food), times?: number) => {
+  const row = ({ food, index, amount = quickAmountOf(food), times }: QuickFoodRow) => {
     const key = refKey(food.ref);
     const portion = amount.portion
       ? portionLabel(amount.portion.unit, amount.portion.count)
@@ -159,7 +159,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       <FlatList
         data={search.data}
         keyExtractor={(item) => refKey(item.ref)}
-        renderItem={({ item, index }) => row(item, index)}
+        renderItem={({ item, index }) => row({ food: item, index })}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
       />

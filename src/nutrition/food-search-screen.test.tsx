@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
-import { useAddEntry, useRepeatMeal } from './entries';
+import { useAddEntry, useCopyEntries } from './entries';
 import { useFoodSearch, type FoodResult } from './foods';
 import { usePastMeal, type LoggedEntry } from './meals';
 import {
@@ -19,7 +19,7 @@ jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }
 jest.mock('./entries', () => ({
   ...jest.requireActual('./entries'),
   useAddEntry: jest.fn(),
-  useRepeatMeal: jest.fn(),
+  useCopyEntries: jest.fn(),
 }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), usePastMeal: jest.fn() }));
 jest.mock('./quick-foods', () => ({
@@ -50,7 +50,7 @@ const OATS: FoodResult = {
 };
 
 const mutateAsync = jest.fn();
-const repeat = jest.fn();
+const copy = jest.fn();
 
 const loaded = <T,>(data: T) => ({ data, isError: false }) as never;
 
@@ -74,7 +74,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockSearch({});
   jest.mocked(useAddEntry).mockReturnValue({ mutateAsync, isError: false, error: null } as never);
-  jest.mocked(useRepeatMeal).mockReturnValue({ mutate: repeat, isError: false } as never);
+  jest.mocked(useCopyEntries).mockReturnValue({ mutate: copy, isError: false } as never);
   jest.mocked(usePastMeal).mockReturnValue(loaded(null));
   jest.mocked(useFrequentFoods).mockReturnValue(loaded([]));
   jest.mocked(useFavouriteFoods).mockReturnValue(loaded([]));
@@ -257,20 +257,52 @@ describe('FoodSearchScreen', () => {
       expect(screen.getByText('Nothing logged at dinner yet')).toBeTruthy();
     });
 
+    const entry = (id: number, name: string, calories: number) =>
+      ({
+        id,
+        name,
+        calories,
+        grams: 100,
+        portion: null,
+        proteinG: 0,
+        carbsG: 0,
+        fatG: 0,
+      }) as LoggedEntry;
+    const pastLunch = () =>
+      jest.mocked(usePastMeal).mockReturnValue(
+        loaded({
+          day: '2026-10-26',
+          entries: [entry(4, 'Bulgur', 208), entry(5, 'Ayran', 74), entry(6, 'Salad', 96)],
+        }),
+      );
+
     it('adds the meal as it was last eaten in one tap', async () => {
-      const entry = (name: string, calories: number) =>
-        ({ name, calories, proteinG: 0, carbsG: 0, fatG: 0 }) as LoggedEntry;
-      jest
-        .mocked(usePastMeal)
-        .mockReturnValue(
-          loaded({ day: '2026-10-26', entries: [entry('Bulgur', 208), entry('Ayran', 74)] }),
-        );
+      pastLunch();
       await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
       expect(screen.getByText('Your last lunch')).toBeTruthy();
-      expect(screen.getByText('2 foods · 282 kcal')).toBeTruthy();
-      expect(screen.getByText('Yesterday · Bulgur, Ayran')).toBeTruthy();
-      await fireEvent.press(screen.getByLabelText('Add all 2 foods of Yesterday'));
-      expect(repeat).toHaveBeenCalledWith({ from: '2026-10-26', to: '2026-10-27', meal: 'lunch' });
+      expect(screen.getByText('3 foods · 378 kcal')).toBeTruthy();
+      expect(screen.getByText('Yesterday · Bulgur, Ayran, Salad')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Add all 3 foods of Yesterday'));
+      expect(copy).toHaveBeenCalledWith({ ids: [4, 5, 6], day: '2026-10-27', meal: 'lunch' });
+    });
+
+    it('adds only the foods ticked in the sheet', async () => {
+      pastLunch();
+      await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+      await fireEvent.press(screen.getByLabelText('Choose foods of Yesterday'));
+      await fireEvent.press(screen.getByRole('checkbox', { name: 'Ayran, 100 g, 74 kcal' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Add 2 foods · 304 kcal' }));
+      expect(copy).toHaveBeenCalledWith({ ids: [4, 6], day: '2026-10-27', meal: 'lunch' });
+    });
+
+    it('shows a check only when something was added', async () => {
+      pastLunch();
+      jest
+        .mocked(useCopyEntries)
+        .mockReturnValue({ mutate: copy, isError: false, isSuccess: true, data: 0 } as never);
+      await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+      expect(screen.getByText('This food is no longer available.')).toBeTruthy();
+      expect(screen.queryByLabelText('0 foods added')).toBeNull();
     });
 
     it('shows the favourites and the own foods on their tabs', async () => {
