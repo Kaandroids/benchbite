@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SearchField } from '@/components/ui/search-field';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -23,9 +25,12 @@ import { useTheme } from '@/theme';
 import { AddEntryError } from './add-entry-error';
 import {
   amountOf,
+  DEFAULT_GRAMS,
   MIN_QUERY_LENGTH,
   useFoodSearch,
   useSettledQuery,
+  refKey,
+  type Amount,
   type FoodResult,
 } from './foods';
 import { useAddEntry } from './entries';
@@ -37,6 +42,13 @@ type FoodSearchScreenProps = {
   /** The day the food is added to, YYYY-MM-DD. */
   day: string;
 };
+
+/** What + on a result adds: one default portion, or `DEFAULT_GRAMS` of a food without one. */
+function quickAmountOf(food: FoodResult): Amount {
+  return food.portion
+    ? { grams: food.portion.grams, portion: { unit: food.portion.unit, count: 1 } }
+    : { grams: DEFAULT_GRAMS, portion: null };
+}
 
 /**
  * Finds a food to add to a meal. A result opens the amount screen, or its + adds the food's
@@ -59,17 +71,12 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
 
   // Handled per call: callbacks passed to mutate() run only for the latest one.
   const quickAdd = (food: FoodResult) => {
-    setSaving((current) => [...current, food.id]);
+    const key = refKey(food.ref);
+    setSaving((current) => [...current, key]);
     addEntry
-      .mutateAsync({
-        day,
-        meal,
-        foodId: food.id,
-        grams: food.portion.grams,
-        portion: { unit: food.portion.unit, count: 1 },
-      })
+      .mutateAsync({ day, meal, food: food.ref, ...quickAmountOf(food) })
       .then(() => {
-        setAdded((current) => [...current, food.id]);
+        setAdded((current) => [...current, key]);
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         AccessibilityInfo.announceForAccessibility(
           t('nutrition.search.added', { name: food.name }),
@@ -77,12 +84,16 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       })
       // The mutation's error is shown above the results.
       .catch(() => {})
-      .finally(() => setSaving((current) => current.filter((id) => id !== food.id)));
+      .finally(() => setSaving((current) => current.filter((id) => id !== key)));
   };
 
   const row = ({ item }: { item: FoodResult }) => {
-    const portion = portionLabel(item.portion.unit, 1);
-    const done = added.includes(item.id);
+    const key = refKey(item.ref);
+    const quick = quickAmountOf(item);
+    const portion = item.portion
+      ? portionLabel(item.portion.unit, 1)
+      : t('nutrition.amount.inGrams', { grams: format(quick.grams) });
+    const done = added.includes(key);
     return (
       <View
         style={[
@@ -93,18 +104,21 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         <Pressable
           accessibilityRole="button"
           onPress={() =>
-            router.push({ pathname: '/nutrition/food/[id]', params: { id: item.id, meal, day } })
+            router.push({ pathname: '/nutrition/food/[id]', params: { id: key, meal, day } })
           }
           style={({ pressed }) => [styles.text, { opacity: pressed ? 0.6 : 1 }]}
         >
-          <Text variant="label" numberOfLines={2}>
-            {item.name}
-          </Text>
+          <View style={[styles.name, { gap: spacing.sm }]}>
+            <Text variant="label" numberOfLines={2} style={styles.flexText}>
+              {item.name}
+            </Text>
+            {item.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
+          </View>
           <Text variant="caption" color="textMuted">
-            {t('nutrition.search.result', {
+            {t(item.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
               portion,
-              grams: format(item.portion.grams),
-              calories: format(Math.round(amountOf(item.per100g, item.portion.grams).calories)),
+              grams: format(quick.grams),
+              calories: format(Math.round(amountOf(item.per100g, quick.grams).calories)),
             })}
           </Text>
         </Pressable>
@@ -120,7 +134,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
             size={36}
             label={t('nutrition.search.quickAdd', { portion, name: item.name })}
             onPress={() => quickAdd(item)}
-            disabled={saving.includes(item.id)}
+            disabled={saving.includes(key)}
           />
         )}
       </View>
@@ -161,7 +175,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
     body = (
       <FlatList
         data={search.data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => refKey(item.ref)}
         renderItem={row}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
@@ -200,13 +214,25 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </View>
 
-      {body}
+      <View style={styles.flex}>{body}</View>
+      <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
+        <Button
+          label={t('nutrition.food.create')}
+          variant="secondary"
+          onPress={() =>
+            router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
+  },
+  flex: {
     flex: 1,
   },
   header: {
@@ -230,6 +256,13 @@ const styles = StyleSheet.create({
   },
   text: {
     flex: 1,
+  },
+  name: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flexText: {
+    flexShrink: 1,
   },
   done: {
     width: 36,

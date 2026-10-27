@@ -31,7 +31,7 @@ const BANANA: LoggedEntry = {
   id: 5,
   day: '2026-10-27',
   meal: 'breakfast',
-  foodId: 'F503100',
+  food: { kind: 'library', id: 'F503100' },
   name: 'Banana',
   grams: 180,
   portion: { unit: 'piece', count: 1.5 },
@@ -54,7 +54,7 @@ beforeEach(() => {
     .mockReturnValue(loaded([BANANA, { ...BANANA, id: 6, calories: 500, name: 'Oat flakes' }]));
   jest.mocked(useFood).mockReturnValue(
     loaded({
-      id: 'F503100',
+      ref: { kind: 'library', id: 'F503100' },
       name: 'Banana',
       per100g: { calories: 97, proteinG: 1.2, carbsG: 20, fatG: 0.2 },
       portions: [{ unit: 'piece', grams: 120 }],
@@ -118,7 +118,7 @@ describe('EntryScreen', () => {
   it('keeps the portion size it was logged in, after the library changed it', async () => {
     jest.mocked(useFood).mockReturnValue(
       loaded({
-        id: 'F503100',
+        ref: { kind: 'library', id: 'F503100' },
         name: 'Banana',
         per100g: { calories: 97, proteinG: 1.2, carbsG: 20, fatG: 0.2 },
         portions: [

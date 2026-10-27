@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "{{portion}} {{name}} hinzufügen",
       "added": "{{name}} hinzugefügt",
-      "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
+      "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Eigenes"
     },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",
@@ -258,16 +260,12 @@
       "more": "Mehr",
       "inGrams": "{{grams}} g",
       "adds": "Das ergibt",
-      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal.",
-      "notFound": {
-        "title": "Lebensmittel nicht gefunden",
-        "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
-      }
+      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal."
     },
     "addError": {
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
       "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
-      "archived": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
+      "archived": "Dieses Lebensmittel ist nicht mehr verfügbar."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -297,7 +295,62 @@
       },
       "removeError": "Der Eintrag konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es erneut."
     },
-    "kcal": "{{calories}} kcal"
+    "kcal": "{{calories}} kcal",
+    "food": {
+      "title": "Neues Lebensmittel",
+      "editTitle": "Lebensmittel bearbeiten",
+      "name": "Name",
+      "namePlaceholder": "Zum Beispiel Proteinjoghurt Vanille",
+      "facts": "Nährwerte",
+      "calories": "Kalorien",
+      "portion": "Wie viel wiegt eine Portion?",
+      "portionHint": "Optional. Steht auf der Packung, etwa 1 Dose = 330 g.",
+      "portionGrams": "Gramm in {{portion}}",
+      "portionAdds": "{{portion}} ergibt {{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
+      "problems": {
+        "tooMuchEnergy": "Ein Lebensmittel hat höchstens 900 kcal pro 100 g. Prüfe die Kalorien.",
+        "tooMuchMacros": "Pro 100 g ergeben Protein, Kohlenhydrate und Fett mehr als 100 g. Prüfe die Werte.",
+        "portion": "Eine Portion wiegt mehr als 0 g und höchstens 5.000 g."
+      },
+      "save": "Speichern",
+      "saveError": "Das Lebensmittel konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "nameTaken": "Du hast schon ein Lebensmittel mit diesem Namen.",
+      "limit": "Du kannst bis zu 200 eigene Lebensmittel haben.",
+      "delete": "Lebensmittel löschen",
+      "deleteError": "Das Lebensmittel konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.",
+      "create": "Neues Lebensmittel",
+      "editButton": "Bearbeiten",
+      "onlyYou": "Nur du siehst die Lebensmittel, die du hinzufügst.",
+      "perLabel": "pro 100 g, wie auf dem Etikett",
+      "chooseUnit": "Wählen",
+      "unitSheet": {
+        "title": "Was ist eine Portion?",
+        "message": "Das Gewicht gibst du danach ein.",
+        "none": "Keine Portion, nur Gramm"
+      },
+      "unitButton": "Einheit einer Portion: {{unit}}",
+      "units": {
+        "piece": "Stück",
+        "slice": "Scheibe",
+        "cup": "Tasse",
+        "glass": "Glas",
+        "bowl": "Schüssel",
+        "plate": "Teller",
+        "tablespoon": "Esslöffel",
+        "teaspoon": "Teelöffel",
+        "handful": "Handvoll",
+        "serving": "Portion",
+        "can": "Dose",
+        "bottle": "Flasche"
+      },
+      "tooFewCalories": "Protein, Kohlenhydrate und Fett allein ergeben {{calories}} kcal, mehr als die eingegebenen {{entered}} kcal. Prüfe das Etikett.",
+      "totalLimit": "Du hast 1.000 Lebensmittel hinzugefügt, gelöschte mitgezählt. Mehr geht nicht.",
+      "deleted": "Dieses Lebensmittel wurde gelöscht."
+    },
+    "foodNotFound": {
+      "title": "Lebensmittel nicht gefunden",
+      "message": "Dieses Lebensmittel ist nicht mehr verfügbar."
+    }
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",

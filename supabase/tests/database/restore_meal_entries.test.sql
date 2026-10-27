@@ -73,7 +73,8 @@ select is(
 -- An entry removed more than an hour ago.
 delete from public.meal_entries;
 reset role;
-update public.removed_meal_entries set removed_at = now() - interval '2 hours';
+update public.removed_meal_entries set removed_at = now() - interval '2 hours'
+  where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select throws_ok(
@@ -86,7 +87,8 @@ select throws_ok(
 -- An entry of a day that left the week that can be logged.
 reset role;
 update public.foods set archived_at = null where id = 'C133000';
-update public.removed_meal_entries set removed_at = now(), day = current_date - 9;
+update public.removed_meal_entries set removed_at = now(), day = current_date - 9
+  where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select throws_ok(
@@ -99,13 +101,15 @@ select throws_ok(
 -- Removing again drops entries removed over an hour ago.
 insert into public.meal_entries (day, meal, food_id, grams) values (current_date, 'lunch', 'C133000', 10);
 reset role;
-update public.removed_meal_entries set removed_at = now() - interval '2 hours';
+update public.removed_meal_entries set removed_at = now() - interval '2 hours'
+  where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 delete from public.meal_entries;
 reset role;
 
 select is(
-  (select count(*)::integer from public.removed_meal_entries),
+  (select count(*)::integer from public.removed_meal_entries
+   where user_id = '00000000-0000-0000-0000-00000000000a'),
   1,
   'Only the entry removed last is kept'
 );

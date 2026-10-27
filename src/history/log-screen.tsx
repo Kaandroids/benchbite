@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -112,16 +113,7 @@ export function LogScreen({ id }: { id: number }) {
           }
         />
       }
-      title={
-        <>
-          <Text variant="label" accessibilityRole="header" numberOfLines={1}>
-            {workoutName(log)}
-          </Text>
-          <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {day}
-          </Text>
-        </>
-      }
+      title={<ScreenTitle title={workoutName(log)} subtitle={day} />}
     >
       {/* Four even columns, like the figures on a workout's screen, over when it started and ended. */}
       <StatColumns

@@ -23,6 +23,49 @@ export type Database = {
   };
   public: {
     Tables: {
+      custom_foods: {
+        Row: {
+          archived_at: string | null;
+          carbs_g: number;
+          created_at: string;
+          fat_g: number;
+          id: number;
+          kcal: number;
+          name: string;
+          portion_grams: number | null;
+          portion_unit: Database['public']['Enums']['portion_unit'] | null;
+          protein_g: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          archived_at?: string | null;
+          carbs_g: number;
+          created_at?: string;
+          fat_g: number;
+          id?: never;
+          kcal: number;
+          name: string;
+          portion_grams?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_g: number;
+          user_id?: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          carbs_g?: number;
+          created_at?: string;
+          fat_g?: number;
+          id?: never;
+          kcal?: number;
+          name?: string;
+          portion_grams?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_g?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       exercise_translations: {
         Row: {
           exercise_id: string;
@@ -322,10 +365,11 @@ export type Database = {
           carbs_g: number | null;
           carbs_per_100g: number;
           created_at: string;
+          custom_food_id: number | null;
           day: string;
           fat_g: number | null;
           fat_per_100g: number;
-          food_id: string;
+          food_id: string | null;
           grams: number;
           id: number;
           kcal: number | null;
@@ -342,10 +386,11 @@ export type Database = {
           carbs_g?: never;
           carbs_per_100g?: number;
           created_at?: string;
+          custom_food_id?: number | null;
           day: string;
           fat_g?: never;
           fat_per_100g?: number;
-          food_id: string;
+          food_id?: string | null;
           grams: number;
           id?: never;
           kcal?: never;
@@ -361,10 +406,11 @@ export type Database = {
           carbs_g?: never;
           carbs_per_100g?: number;
           created_at?: string;
+          custom_food_id?: number | null;
           day?: string;
           fat_g?: never;
           fat_per_100g?: number;
-          food_id?: string;
+          food_id?: string | null;
           grams?: number;
           id?: never;
           kcal?: never;
@@ -377,6 +423,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'meal_entries_custom_food_id_fkey';
+            columns: ['custom_food_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_foods';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'meal_entries_food_id_fkey';
             columns: ['food_id'];
@@ -481,9 +534,10 @@ export type Database = {
         Row: {
           carbs_per_100g: number;
           created_at: string;
+          custom_food_id: number | null;
           day: string;
           fat_per_100g: number;
-          food_id: string;
+          food_id: string | null;
           grams: number;
           id: number;
           kcal_per_100g: number;
@@ -498,9 +552,10 @@ export type Database = {
         Insert: {
           carbs_per_100g: number;
           created_at: string;
+          custom_food_id?: number | null;
           day: string;
           fat_per_100g: number;
-          food_id: string;
+          food_id?: string | null;
           grams: number;
           id: number;
           kcal_per_100g: number;
@@ -514,9 +569,10 @@ export type Database = {
         Update: {
           carbs_per_100g?: number;
           created_at?: string;
+          custom_food_id?: number | null;
           day?: string;
           fat_per_100g?: number;
-          food_id?: string;
+          food_id?: string | null;
           grams?: number;
           id?: number;
           kcal_per_100g?: number;
@@ -528,6 +584,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'removed_meal_entries_custom_food_id_fkey';
+            columns: ['custom_food_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_foods';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'removed_meal_entries_food_id_fkey';
             columns: ['food_id'];
@@ -940,6 +1003,7 @@ export type Database = {
         Args: { language: string; query: string };
         Returns: {
           carbs_g: number;
+          custom_food_id: number;
           fat_g: number;
           food_id: string;
           kcal: number;

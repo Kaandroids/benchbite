@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { setKindOf } from '@/sets/fields';
@@ -28,14 +29,7 @@ export function ExerciseHistoryScreen({
 
   const exercise = findExercise(library.data, id);
   const title = (
-    <>
-      <Text variant="label" accessibilityRole="header" numberOfLines={1}>
-        {exercise?.name ?? ''}
-      </Text>
-      <Text variant="caption" color="textMuted" numberOfLines={1}>
-        {t('exerciseHistory.subtitle')}
-      </Text>
-    </>
+    <ScreenTitle title={exercise?.name ?? ''} subtitle={t('exerciseHistory.subtitle')} />
   );
 
   if (!allLoaded([history, library])) {

@@ -1,15 +1,12 @@
 import { router, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { BackBar } from '@/components/ui/back-bar';
-import { Icon } from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
 import { MessageView } from '@/components/ui/message-view';
 import { Note } from '@/components/ui/note';
+import { Screen } from '@/components/ui/screen';
 import { useNumberFormat } from '@/i18n/units';
-import { useTheme } from '@/theme';
 
 import { AmountForm } from './amount-form';
 import { useRemoveEntry, useUpdateEntry } from './entries';
@@ -27,7 +24,6 @@ type EntryScreenProps = {
 /** Changes how much of a food an entry holds, or removes it. It stays in its meal. */
 export function EntryScreen({ id, day }: EntryScreenProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
   const entries = useDayEntries(day);
   const targets = useNutritionTargets();
   const removeEntry = useRemoveEntry();
@@ -49,28 +45,15 @@ export function EntryScreen({ id, day }: EntryScreenProps) {
       .catch(() => {});
   };
 
-  let content;
-  if (!allLoaded([entries, targets])) {
-    content = (
-      <View style={[styles.flex, { padding: spacing.xl }]}>
-        <LoadState queries={[entries, targets]} />
-      </View>
-    );
-  } else if (!entry) {
-    content = (
-      <MessageView
-        icon="meal"
-        title={t('nutrition.entry.notFound.title')}
-        message={t('nutrition.entry.notFound.message')}
-      />
-    );
-  } else {
-    content = (
+  if (allLoaded([entries, targets]) && entry) {
+    return (
       <EntryForm
         entry={entry}
         eatenCalories={totalOf(entries.data ?? []).calories - entry.calories}
         targetCalories={targets.data?.calories ?? null}
+        removing={removeEntry.isPending}
         removeError={removeEntry.isError}
+        onRemove={() => remove(entry)}
         onSaved={() => {
           if (navigation.isFocused()) {
             router.back();
@@ -79,30 +62,18 @@ export function EntryScreen({ id, day }: EntryScreenProps) {
       />
     );
   }
-
   return (
-    <SafeAreaView
-      style={[styles.flex, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
-    >
-      <BackBar
-        action={
-          entry ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('nutrition.entry.remove')}
-              accessibilityState={{ disabled: removeEntry.isPending }}
-              disabled={removeEntry.isPending}
-              onPress={() => remove(entry)}
-              style={styles.remove}
-            >
-              <Icon name="trash" color="danger" />
-            </Pressable>
-          ) : null
-        }
-      />
-      {content}
-    </SafeAreaView>
+    <Screen onBack={() => router.back()}>
+      {allLoaded([entries, targets]) ? (
+        <MessageView
+          icon="meal"
+          title={t('nutrition.entry.notFound.title')}
+          message={t('nutrition.entry.notFound.message')}
+        />
+      ) : (
+        <LoadState queries={[entries, targets]} />
+      )}
+    </Screen>
   );
 }
 
@@ -123,19 +94,33 @@ type EntryFormProps = {
   /** What the day has without this entry. */
   eatenCalories: number;
   targetCalories: number | null;
+  removing: boolean;
   removeError: boolean;
+  onRemove: () => void;
   onSaved: () => void;
 };
 
-function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved }: EntryFormProps) {
+function EntryForm({
+  entry,
+  eatenCalories,
+  targetCalories,
+  removing,
+  removeError,
+  onRemove,
+  onSaved,
+}: EntryFormProps) {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   // The food's other portions; a food taken out of the library has none.
-  const food = useFood(entry.foodId);
+  const food = useFood(entry.food);
   const updateEntry = useUpdateEntry();
 
   if (!allLoaded([food])) {
-    return <LoadState queries={[food]} />;
+    return (
+      <Screen onBack={() => router.back()}>
+        <LoadState queries={[food]} />
+      </Screen>
+    );
   }
 
   return (
@@ -166,18 +151,13 @@ function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved 
           .then(onSaved)
           .catch(() => {})
       }
-    />
+    >
+      <Button
+        label={t('nutrition.entry.remove')}
+        variant="ghost"
+        loading={removing}
+        onPress={onRemove}
+      />
+    </AmountForm>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  remove: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

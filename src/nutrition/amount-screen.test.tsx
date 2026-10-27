@@ -9,14 +9,16 @@ import { useDayEntries } from './meals';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), dismissTo: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn() },
+}));
 jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
 jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
 
 const YOGHURT: Food = {
-  id: 'M141300',
+  ref: { kind: 'library', id: 'M141300' },
   name: 'Yoghurt, 3.5% fat',
   per100g: { calories: 66, proteinG: 3.3, carbsG: 4.4, fatG: 3.6 },
   portions: [
@@ -48,7 +50,9 @@ beforeEach(() => {
 
 describe('AmountScreen', () => {
   it('starts with one default portion and shows what it adds to the day', async () => {
-    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
     expect(screen.getByText('Yoghurt, 3.5% fat')).toBeTruthy();
     expect(screen.getByText('66 kcal per 100 g')).toBeTruthy();
     // The chip, and the amount under the count.
@@ -58,7 +62,9 @@ describe('AmountScreen', () => {
   });
 
   it('steps the portions in halves and adds them to the meal the search was opened for', async () => {
-    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
     await fireEvent.press(screen.getByLabelText('More'));
     await fireEvent.press(screen.getByLabelText('More'));
     expect(screen.getByText(/2 cups/)).toBeTruthy();
@@ -71,7 +77,7 @@ describe('AmountScreen', () => {
       {
         day: '2026-10-27',
         meal: 'lunch',
-        foodId: 'M141300',
+        food: { kind: 'library', id: 'M141300' },
         grams: 300,
         portion: { unit: 'cup', count: 2 },
       },
@@ -82,20 +88,30 @@ describe('AmountScreen', () => {
   });
 
   it('takes grams typed in', async () => {
-    await render(<AmountScreen foodId="M141300" meal="snack" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="snack" day="2026-10-27" />,
+    );
     await fireEvent.press(screen.getByText('Grams'));
     await fireEvent.changeText(screen.getByLabelText('Grams'), '80');
     expect(screen.getByText('53 kcal')).toBeTruthy();
 
     await fireEvent.press(screen.getByText('Add a snack'));
     expect(mutate).toHaveBeenCalledWith(
-      { day: '2026-10-27', meal: 'snack', foodId: 'M141300', grams: 80, portion: null },
+      {
+        day: '2026-10-27',
+        meal: 'snack',
+        food: { kind: 'library', id: 'M141300' },
+        grams: 80,
+        portion: null,
+      },
       expect.anything(),
     );
   });
 
   it('turns Add off while the grams typed are no amount', async () => {
-    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
     await fireEvent.press(screen.getByText('Grams'));
     await fireEvent.changeText(screen.getByLabelText('Grams'), '');
     expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
@@ -106,7 +122,9 @@ describe('AmountScreen', () => {
   });
 
   it('keeps the amount within its limits', async () => {
-    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
     await fireEvent.press(screen.getByLabelText('Less'));
     expect(screen.getByLabelText('Less')).toBeDisabled();
     expect(screen.getByText(/0.5 cups/)).toBeTruthy();
@@ -116,7 +134,9 @@ describe('AmountScreen', () => {
     jest
       .mocked(useFood)
       .mockReturnValue(loaded({ ...YOGHURT, portions: [{ unit: 'bottle', grams: 750 }] }));
-    await render(<AmountScreen foodId="M141300" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
     for (let step = 0; step < 15; step++) {
       await fireEvent.press(screen.getByLabelText('More'));
     }
@@ -124,9 +144,43 @@ describe('AmountScreen', () => {
     expect(screen.getByLabelText('More')).toBeDisabled();
   });
 
+  it("opens a food of one's own to change it, and only that", async () => {
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+
+    jest
+      .mocked(useFood)
+      .mockReturnValue(loaded({ ...YOGHURT, ref: { kind: 'custom', id: 12 }, name: 'My yoghurt' }));
+    await render(<AmountScreen food={{ kind: 'custom', id: 12 }} meal="lunch" day="2026-10-27" />);
+    expect(screen.getByText('My yoghurt')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/edit-food/[id]',
+      params: { id: '12', meal: 'lunch', day: '2026-10-27' },
+    });
+  });
+
+  it('starts over when the food changes its portions while it shows', async () => {
+    const view = await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    await fireEvent.press(screen.getByLabelText('More'));
+    expect(screen.getByText(/1.5 cups/)).toBeTruthy();
+
+    jest.mocked(useFood).mockReturnValue(loaded({ ...YOGHURT, portions: [] }));
+    await view.rerender(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    expect(screen.getByLabelText('Grams').props.value).toBe('100');
+  });
+
   it('says when the food is no longer in the library', async () => {
     jest.mocked(useFood).mockReturnValue(loaded(null));
-    await render(<AmountScreen foodId="X" meal="lunch" day="2026-10-27" />);
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'X' }} meal="lunch" day="2026-10-27" />,
+    );
     expect(screen.getByText('Food not found')).toBeTruthy();
   });
 });

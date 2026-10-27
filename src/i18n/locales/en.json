@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "Add {{portion}} of {{name}}",
       "added": "{{name}} added",
-      "error": "The search failed. Check your connection and try again."
+      "error": "The search failed. Check your connection and try again.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Mine"
     },
     "amount": {
       "per100g": "{{calories}} kcal per 100 g",
@@ -258,16 +260,12 @@
       "more": "More",
       "inGrams": "{{grams}} g",
       "adds": "This adds",
-      "dayWould": "The day would be {{eaten}} of {{target}} kcal.",
-      "notFound": {
-        "title": "Food not found",
-        "message": "This food is no longer in the library."
-      }
+      "dayWould": "The day would be {{eaten}} of {{target}} kcal."
     },
     "addError": {
       "closedDay": "Meals can only be added to today and the week before.",
       "failed": "The food could not be added. Check your connection and try again.",
-      "archived": "This food is no longer in the library."
+      "archived": "This food is no longer available."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -297,7 +295,62 @@
       },
       "removeError": "The entry could not be removed. Check your connection and try again."
     },
-    "kcal": "{{calories}} kcal"
+    "kcal": "{{calories}} kcal",
+    "food": {
+      "title": "New food",
+      "editTitle": "Edit food",
+      "name": "Name",
+      "namePlaceholder": "Such as vanilla protein yoghurt",
+      "facts": "Nutrition facts",
+      "calories": "Calories",
+      "portion": "How much does one portion weigh?",
+      "portionHint": "Optional. Read it on the pack, such as 1 can = 330 g.",
+      "portionGrams": "Grams in {{portion}}",
+      "portionAdds": "{{portion}} adds {{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
+      "problems": {
+        "tooMuchEnergy": "A food has at most 900 kcal per 100 g. Check the calories.",
+        "tooMuchMacros": "Per 100 g, protein, carbs and fat add up to more than 100 g. Check the values.",
+        "portion": "A portion weighs more than 0 g and at most 5,000 g."
+      },
+      "save": "Save",
+      "saveError": "The food could not be saved. Check your connection and try again.",
+      "nameTaken": "You already have a food with this name.",
+      "limit": "You can have up to 200 foods of your own.",
+      "delete": "Delete food",
+      "deleteError": "The food could not be deleted. Check your connection and try again.",
+      "create": "New food",
+      "editButton": "Edit",
+      "onlyYou": "Only you see the foods you add.",
+      "perLabel": "per 100 g, as on the label",
+      "chooseUnit": "Choose",
+      "unitSheet": {
+        "title": "What is one portion?",
+        "message": "You enter how much it weighs next.",
+        "none": "No portion, grams only"
+      },
+      "unitButton": "Unit of a portion: {{unit}}",
+      "units": {
+        "piece": "Piece",
+        "slice": "Slice",
+        "cup": "Cup",
+        "glass": "Glass",
+        "bowl": "Bowl",
+        "plate": "Plate",
+        "tablespoon": "Tablespoon",
+        "teaspoon": "Teaspoon",
+        "handful": "Handful",
+        "serving": "Serving",
+        "can": "Can",
+        "bottle": "Bottle"
+      },
+      "tooFewCalories": "Protein, carbs and fat alone make {{calories}} kcal, more than the {{entered}} kcal you entered. Check the label.",
+      "totalLimit": "You have added 1,000 foods, deleted ones included, which is the most anyone can.",
+      "deleted": "This food was deleted."
+    },
+    "foodNotFound": {
+      "title": "Food not found",
+      "message": "This food is no longer available."
+    }
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

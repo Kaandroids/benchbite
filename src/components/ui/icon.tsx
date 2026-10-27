@@ -18,6 +18,7 @@ export const ICONS = {
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
+  down: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },
   drag: { ios: 'line.3.horizontal', android: 'drag_indicator', web: 'drag_indicator' },
   dumbbell: { ios: 'dumbbell', android: 'fitness_center', web: 'fitness_center' },
   edit: { ios: 'pencil', android: 'edit', web: 'edit' },

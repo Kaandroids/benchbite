@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "{{name}}, {{portion}} ekle",
       "added": "{{name}} eklendi",
-      "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene."
+      "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Benim"
     },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",
@@ -258,16 +260,12 @@
       "more": "Artır",
       "inGrams": "{{grams}} g",
       "adds": "Eklenecek",
-      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır.",
-      "notFound": {
-        "title": "Besin bulunamadı",
-        "message": "Bu besin artık kütüphanede yok."
-      }
+      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır."
     },
     "addError": {
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
       "failed": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
-      "archived": "Bu besin artık kütüphanede yok."
+      "archived": "Bu besin artık mevcut değil."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
@@ -297,7 +295,62 @@
       },
       "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene."
     },
-    "kcal": "{{calories}} kcal"
+    "kcal": "{{calories}} kcal",
+    "food": {
+      "title": "Yeni besin",
+      "editTitle": "Besini düzenle",
+      "name": "Ad",
+      "namePlaceholder": "Örneğin vanilyalı protein yoğurt",
+      "facts": "Besin değerleri",
+      "calories": "Kalori",
+      "portion": "Bir porsiyon kaç gram?",
+      "portionHint": "İsteğe bağlı. Paketin üzerinde yazar, örneğin 1 kutu = 330 g.",
+      "portionGrams": "{{portion}} kaç gram",
+      "portionAdds": "{{portion}} {{calories}} kcal ekler · P {{protein}} · K {{carbs}} · Y {{fat}}",
+      "problems": {
+        "tooMuchEnergy": "Bir besinde 100 g'da en fazla 900 kcal olabilir. Kaloriyi kontrol et.",
+        "tooMuchMacros": "100 g'da protein, karbonhidrat ve yağ toplamı 100 g'ı geçiyor. Değerleri kontrol et.",
+        "portion": "Bir porsiyon 0 g'dan fazla, en fazla 5.000 g olabilir."
+      },
+      "save": "Kaydet",
+      "saveError": "Besin kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "nameTaken": "Bu adda bir besinin zaten var.",
+      "limit": "En fazla 200 kendi besinin olabilir.",
+      "delete": "Besini sil",
+      "deleteError": "Besin silinemedi. Bağlantını kontrol edip tekrar dene.",
+      "create": "Yeni besin",
+      "editButton": "Düzenle",
+      "onlyYou": "Eklediğin besinleri sadece sen görürsün.",
+      "perLabel": "100 g'da, etikette yazdığı gibi",
+      "chooseUnit": "Seç",
+      "unitSheet": {
+        "title": "Bir porsiyon nedir?",
+        "message": "Ağırlığını sonra gireceksin.",
+        "none": "Porsiyon yok, sadece gram"
+      },
+      "unitButton": "Porsiyon birimi: {{unit}}",
+      "units": {
+        "piece": "Adet",
+        "slice": "Dilim",
+        "cup": "Su bardağı",
+        "glass": "Bardak",
+        "bowl": "Kase",
+        "plate": "Tabak",
+        "tablespoon": "Yemek kaşığı",
+        "teaspoon": "Çay kaşığı",
+        "handful": "Avuç",
+        "serving": "Porsiyon",
+        "can": "Kutu",
+        "bottle": "Şişe"
+      },
+      "tooFewCalories": "Protein, karbonhidrat ve yağ tek başına {{calories}} kcal ediyor, girdiğin {{entered}} kcal'den fazla. Etiketi kontrol et.",
+      "totalLimit": "Silinenler dahil 1.000 besin ekledin; bu, eklenebilecek en fazla sayı.",
+      "deleted": "Bu besin silinmiş."
+    },
+    "foodNotFound": {
+      "title": "Besin bulunamadı",
+      "message": "Bu besin artık mevcut değil."
+    }
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",

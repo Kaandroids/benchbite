@@ -5,7 +5,7 @@ import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import { nameOf, type Amount } from './foods';
+import { nameOf, refOfRow, type Amount, type FoodRef } from './foods';
 
 import type { NutritionTargets } from './targets';
 
@@ -36,7 +36,7 @@ export type LoggedEntry = MealEntry &
     id: number;
     /** YYYY-MM-DD. */
     day: string;
-    foodId: string;
+    food: FoodRef;
     /** In the app language, falling back to English. */
     name: string;
     /** The food's values per 100 g when it was logged (ADR 0034). */
@@ -118,7 +118,7 @@ export function useDayEntries(day: string) {
       const { data, error } = await supabase
         .from('meal_entries')
         .select(
-          'id, meal, food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name))',
+          'id, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name)), custom_foods(name)',
         )
         .eq('day', day)
         // A restored entry keeps its time, so it returns to its place.
@@ -132,8 +132,10 @@ export function useDayEntries(day: string) {
           id: row.id,
           day,
           meal: row.meal,
-          foodId: row.food_id,
-          name: nameOf(row.foods.food_names, i18n.language, row.food_id),
+          food: refOfRow(row),
+          name: row.custom_foods
+            ? row.custom_foods.name
+            : nameOf(row.foods?.food_names ?? [], i18n.language, row.food_id ?? ''),
           grams: row.grams,
           portion:
             row.portion_unit !== null && row.portion_count !== null

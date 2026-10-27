@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -156,16 +157,12 @@ export function WorkoutScreen({ id }: { id: number }) {
     <Screen
       onBack={() => router.back()}
       title={
-        <>
-          <Text variant="label" accessibilityRole="header" numberOfLines={1}>
-            {name}
-          </Text>
-          <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {mainMuscles(workout)
-              .map((muscle) => t(`workout.muscles.${muscle}`))
-              .join(' · ')}
-          </Text>
-        </>
+        <ScreenTitle
+          title={name}
+          subtitle={mainMuscles(workout)
+            .map((muscle) => t(`workout.muscles.${muscle}`))
+            .join(' · ')}
+        />
       }
       footer={
         workout.active ? (
