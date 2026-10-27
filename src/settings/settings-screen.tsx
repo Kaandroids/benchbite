@@ -12,6 +12,7 @@ import { useTheme } from '@/theme';
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
 import { ProfileSection } from './profile-section';
+import { WaterGoalSection } from './water-goal-section';
 
 /** The app's settings, one section per topic. */
 export function SettingsScreen() {
@@ -30,6 +31,9 @@ export function SettingsScreen() {
       </Section>
       <Section title={t('settings.account')}>
         <AccountSection />
+      </Section>
+      <Section title={t('settings.waterGoal')}>
+        <WaterGoalSection />
       </Section>
       <Section title={t('settings.appearance')}>
         <AppearanceSection />
