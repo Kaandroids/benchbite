@@ -13,9 +13,11 @@ brands and home dishes. People need to log those from the values printed on thei
 - **A table of its own, `custom_foods`:** the owner, a name, kcal and macros per 100 g, and one
   optional portion such as 1 can = 330 g. Row level security limits every row to its owner.
 - **Entered per 100 g, as labels print them:** the form takes the values per 100 g, and a portion
-  as a unit and the grams it weighs. Macros left empty count as 0. The macros must add up to the
-  calories within 15 % or 10 kcal, as labels round; otherwise the values were typed wrong, and
-  the form says so, naming both numbers, and does not save.
+  as a unit and the grams it weighs. Macros left empty count as 0. A food cannot have fewer
+  calories than protein, carbs and fat alone make (4, 4 and 9 kcal per gram), allowing 15 % or
+  10 kcal for rounding on labels. Fewer means something was typed wrong: the form says so in red,
+  naming both numbers, and does not save. More is fine, as fibre, alcohol and sugar alcohols add
+  energy too.
 - **Entries name either kind of food:** `meal_entries` has `food_id` or `custom_food_id`, exactly
   one of them. The same trigger copies the values (ADR 0034). A food of another user counts as
   unknown, so its id reveals nothing.
@@ -42,14 +44,14 @@ brands and home dishes. People need to log those from the values printed on thei
   names table.
 - **Deleting rows:** entries reference the food, and their names come from it.
 
-- **Only warning when the macros do not add up:** it would let wrong values into every day the
-  food is logged on.
+- **Requiring the macros to match the calories both ways:** foods with alcohol or sugar alcohols
+  have more energy than their macros explain, so an upper limit would refuse correct labels.
+- **Only warning about too few calories:** it would let impossible values into every day the food
+  is logged on.
 
 ## Consequences
 
 - Every place that reads entries or foods handles both kinds, through `FoodRef` in the app.
 - A food changed after logging leaves past entries as they were, as for the library.
-- Foods whose energy comes from more than protein, carbs and fat, such as alcohol or sugar
-  alcohols, may not pass the check; they need their macros as the label counts them.
 - Recipes (#204) can follow the same pattern: a table of their own, and a third reference column
   on entries.

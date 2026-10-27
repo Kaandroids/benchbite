@@ -45,17 +45,11 @@ describe('FoodFormScreen, a new food', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('protein yog');
     expect(save()).toBeDisabled();
 
-    // Empty macros count as 0, so the calories alone do not add up yet.
+    // Empty macros count as 0, so the calories alone are enough.
     await fillIn({ Calories: '70' });
-    expect(save()).toBeDisabled();
-    expect(
-      screen.getByText(
-        'These add up to 0 kcal, not the 70 kcal you entered. Check the label, then save.',
-      ),
-    ).toBeTruthy();
+    expect(save()).toBeEnabled();
     await fillIn({ Protein: '10', Carbs: '6,5' });
     expect(save()).toBeEnabled();
-    expect(screen.getByText('Matches the calories you entered.')).toBeTruthy();
   });
 
   it('saves the food and opens it to log an amount', async () => {
@@ -126,14 +120,21 @@ describe('FoodFormScreen, a new food', () => {
       ),
     ).toBeTruthy();
     expect(save()).toBeDisabled();
+    // More calories than the macros make is fine, as alcohol or fibre may add them.
     await fillIn({ Protein: '1', Carbs: '1' });
+    expect(save()).toBeEnabled();
+    expect(screen.queryByText(/alone make/)).toBeNull();
+
+    await fillIn({ Calories: '22', Protein: '3', Carbs: '0', Fat: '22' });
     expect(
       screen.getByText(
-        'These add up to 17 kcal, not the 400 kcal you entered. Check the label, then save.',
+        'Protein, carbs and fat alone make 210 kcal, more than the 22 kcal you entered. Check the label.',
       ),
     ).toBeTruthy();
     // Said once, by the check, not again under the form.
-    expect(screen.queryByText('Protein, carbs and fat do not add up to the calories.')).toBeNull();
+    expect(
+      screen.queryByText('The calories are fewer than protein, carbs and fat make.'),
+    ).toBeNull();
     expect(save()).toBeDisabled();
   });
 

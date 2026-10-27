@@ -229,7 +229,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 </Card>
               ))}
             </View>
-            {check ? (
+            {check?.tooFewCalories ? (
               <View
                 accessibilityLiveRegion="polite"
                 style={[
@@ -238,24 +238,16 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                     gap: spacing.sm,
                     padding: spacing.md,
                     borderRadius: radii.md,
-                    backgroundColor: check.close
-                      ? colors.successHintBackground
-                      : colors.warningHintBackground,
+                    backgroundColor: colors.dangerBackground,
                   },
                 ]}
               >
-                <Icon
-                  name={check.close ? 'check' : 'warning'}
-                  size={16}
-                  color={check.close ? 'success' : 'warning'}
-                />
+                <Icon name="error" size={16} color="danger" />
                 <Text variant="caption" style={styles.flex}>
-                  {check.close
-                    ? t('nutrition.food.checkClose')
-                    : t('nutrition.food.checkFar', {
-                        calories: format(Math.round(check.calories)),
-                        entered: format(check.entered),
-                      })}
+                  {t('nutrition.food.tooFewCalories', {
+                    calories: format(Math.round(check.calories)),
+                    entered: format(check.entered),
+                  })}
                 </Text>
               </View>
             ) : null}
@@ -333,8 +325,8 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
             ) : null}
           </Card>
 
-          {/* Macros that do not add up are told by the check above. */}
-          {result.kind === 'problem' && result.problem !== 'macrosDontAddUp' ? (
+          {/* Too few calories are told by the check above. */}
+          {result.kind === 'problem' && result.problem !== 'tooFewCalories' ? (
             <Note tone="warning">{t(`nutrition.food.problems.${result.problem}`)}</Note>
           ) : null}
           {failed.isError ? (

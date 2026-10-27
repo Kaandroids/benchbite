@@ -307,13 +307,11 @@
       "portionHint": "Optional. Read it on the pack, such as 1 can = 330 g.",
       "portionGrams": "Grams in {{portion}}",
       "portionAdds": "{{portion}} adds {{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
-      "checkClose": "Matches the calories you entered.",
-      "checkFar": "These add up to {{calories}} kcal, not the {{entered}} kcal you entered. Check the label, then save.",
       "problems": {
         "tooMuchEnergy": "A food has at most 900 kcal per 100 g. Check the calories.",
         "tooMuchMacros": "Per 100 g, protein, carbs and fat add up to more than 100 g. Check the values.",
         "portion": "A portion weighs more than 0 g and at most 5,000 g.",
-        "macrosDontAddUp": "Protein, carbs and fat do not add up to the calories."
+        "tooFewCalories": "The calories are fewer than protein, carbs and fat make."
       },
       "save": "Save",
       "saveError": "The food could not be saved. Check your connection and try again.",
@@ -345,7 +343,8 @@
         "serving": "Serving",
         "can": "Can",
         "bottle": "Bottle"
-      }
+      },
+      "tooFewCalories": "Protein, carbs and fat alone make {{calories}} kcal, more than the {{entered}} kcal you entered. Check the label."
     },
     "foodNotFound": {
       "title": "Food not found",
