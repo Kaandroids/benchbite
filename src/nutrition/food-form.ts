@@ -45,8 +45,11 @@ export function formOf(food: Food): FoodForm {
   };
 }
 
-/** Why a filled-in form cannot be saved, as the database would refuse it. */
-export type FormProblem = 'tooMuchEnergy' | 'tooMuchMacros' | 'portion';
+/**
+ * Why a filled-in form cannot be saved: values the database would refuse, or macros that do not
+ * add up to the calories, which means something was typed wrong.
+ */
+export type FormProblem = 'tooMuchEnergy' | 'tooMuchMacros' | 'portion' | 'macrosDontAddUp';
 
 export type FormResult =
   | { kind: 'incomplete' }
@@ -67,7 +70,11 @@ function portionGramsOf(form: FoodForm): number | null {
 
 /** The food the form describes, or what is missing or wrong. */
 export function readForm(form: FoodForm): FormResult {
-  const numbers = [form.kcal, form.protein, form.carbs, form.fat].map(parseDecimal);
+  // Macros left empty count as 0, as a label may list only some; the calories are needed.
+  const numbers = [
+    parseDecimal(form.kcal),
+    ...[form.protein, form.carbs, form.fat].map((text) => (text.trim() ? parseDecimal(text) : 0)),
+  ];
   if (!form.name.trim() || numbers.some((value) => value === null || value < 0)) {
     return { kind: 'incomplete' };
   }
@@ -89,6 +96,9 @@ export function readForm(form: FoodForm): FormResult {
   if (Math.round((protein + carbs + fat) * 100) > MAX_MACROS_PER_100G * 100) {
     return { kind: 'problem', problem: 'tooMuchMacros' };
   }
+  if (macroCheck(form)?.close === false) {
+    return { kind: 'problem', problem: 'macrosDontAddUp' };
+  }
   return {
     kind: 'valid',
     values: {
@@ -102,18 +112,19 @@ export function readForm(form: FoodForm): FormResult {
 /**
  * The calories the macros add up to, 4 kcal per gram of protein and carbs and 9 per gram of fat,
  * and whether that is close to the calories typed. Labels round, and fibre and alcohol count
- * differently, so within 15 % or 10 kcal counts as close. Null until there is something to check.
+ * differently, so within 15 % or 10 kcal counts as close. Empty macros count as 0. Null until the
+ * calories are typed.
  */
 export function macroCheck(
   form: FoodForm,
 ): { calories: number; entered: number; close: boolean } | null {
   const kcal = parseDecimal(form.kcal);
+  if (kcal === null || kcal < 0) {
+    return null;
+  }
   const [protein, carbs, fat] = [form.protein, form.carbs, form.fat].map(
     (text) => parseDecimal(text) ?? 0,
   ) as [number, number, number];
-  if (kcal === null || kcal <= 0 || protein + carbs + fat === 0) {
-    return null;
-  }
   const calories = 4 * protein + 4 * carbs + 9 * fat;
   return {
     calories,

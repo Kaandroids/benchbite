@@ -38,9 +38,21 @@ describe('readForm', () => {
     ).toBe('valid');
   });
 
-  it('waits for a name and every value', () => {
+  it('counts empty macros as 0', () => {
+    expect(readForm({ ...YOGHURT, kcal: '4', protein: '1', carbs: '', fat: '' })).toEqual({
+      kind: 'valid',
+      values: {
+        name: 'Protein yoghurt, vanilla',
+        per100g: { calories: 4, proteinG: 1, carbsG: 0, fatG: 0 },
+        portion: null,
+      },
+    });
+  });
+
+  it('waits for a name and the calories', () => {
     expect(readForm({ ...YOGHURT, name: '  ' })).toEqual({ kind: 'incomplete' });
-    expect(readForm({ ...YOGHURT, fat: '' })).toEqual({ kind: 'incomplete' });
+    expect(readForm({ ...YOGHURT, kcal: '' })).toEqual({ kind: 'incomplete' });
+    expect(readForm({ ...YOGHURT, fat: 'x' })).toEqual({ kind: 'incomplete' });
     expect(readForm({ ...YOGHURT, unit: 'serving' })).toEqual({ kind: 'incomplete' });
   });
 
@@ -62,6 +74,13 @@ describe('readForm', () => {
       problem: 'portion',
     });
   });
+
+  it('refuses macros that do not add up to the calories', () => {
+    expect(readForm({ ...YOGHURT, kcal: '22' })).toEqual({
+      kind: 'problem',
+      problem: 'macrosDontAddUp',
+    });
+  });
 });
 
 describe('macroCheck', () => {
@@ -74,9 +93,13 @@ describe('macroCheck', () => {
     });
   });
 
-  it('has nothing to check until calories and a macro are typed', () => {
+  it('has nothing to check until the calories are typed, and counts empty macros as 0', () => {
     expect(macroCheck({ ...YOGHURT, kcal: '' })).toBeNull();
-    expect(macroCheck({ ...YOGHURT, protein: '', carbs: '', fat: '' })).toBeNull();
+    expect(macroCheck({ ...YOGHURT, protein: '', carbs: '', fat: '' })).toEqual({
+      calories: 0,
+      entered: 70,
+      close: false,
+    });
   });
 });
 
