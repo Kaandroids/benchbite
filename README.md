@@ -65,13 +65,8 @@ A mobile app for tracking workouts and nutrition in one place.
 Planned work is tracked in [issues](https://github.com/Kaandroids/benchbite/issues) and
 [milestones](https://github.com/Kaandroids/benchbite/milestones).
 
-**Done**
-
-- [x] Guest-first start and an onboarding that builds the plan and the daily targets
-- [x] Workouts: a library of about 870 exercises, editing, logging sets, a rest timer, history and
-      records
-- [x] Accounts with email and password
-- [x] The brand: app icon, animated splash screen and welcome slides
+What already works is under [Features](#features); finished work is in the
+[closed issues](https://github.com/Kaandroids/benchbite/issues?q=is%3Aissue+is%3Aclosed).
 
 **Next**
 
