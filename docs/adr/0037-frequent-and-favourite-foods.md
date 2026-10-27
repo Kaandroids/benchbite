@@ -18,11 +18,13 @@ meal to add again in one tap.
   own, exactly one, once each. Users read, star and unstar only their own, and can star only their
   own foods. Up to 500 per user (`BB027`). `list_favourite_foods(language)` returns them newest
   first, shaped like search results.
-- **A past meal is repeated in one step:** `repeat_meal(from_day, to_day, meal)` copies the entries
-  with their amounts in one statement, so a failure adds none. The foods' current values are
-  copied (ADR 0034), and foods that can no longer be logged are left out.
-- **Only foods that can still be logged are offered:** archived library foods and deleted foods of
-  one's own drop out of all three.
+- **A past meal is added again in one step:** the add screen offers the meal as it was last eaten
+  in the week before, to add all of it or the foods picked from it. `copy_meal_entries(ids, day,
+meal)` copies those entries with their amounts in one statement, so a failure adds none. The
+  foods' current values are copied (ADR 0034), and foods that can no longer be logged are left out.
+- **Only foods that can still be logged are offered:** `loggable_foods(language)` names them, and
+  the lists join it, so that they agree on names and on which foods count. Favourites of foods
+  that can no longer be logged do not count toward the limit either.
 - **Search stays as it is:** typing searches every food. The tabs Frequent, Favourites and Mine show
   only while the search is empty.
 
