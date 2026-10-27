@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
+import { TextLink } from '@/components/ui/text-link';
 import { FormScreen } from '@/components/ui/form-screen';
 
 import { errorField, useCreateAccount } from './account';
@@ -60,11 +60,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
         error={field === 'email' ? message : null}
         errorAction={
           reason === 'emailTaken' ? (
-            <Pressable accessibilityRole="button" hitSlop={8} onPress={onLogIn}>
-              <Text variant="captionStrong" color="primaryText">
-                {t('account.logInInstead')}
-              </Text>
-            </Pressable>
+            <TextLink label={t('account.logInInstead')} align="start" onPress={onLogIn} />
           ) : null
         }
       />
