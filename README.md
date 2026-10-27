@@ -118,7 +118,8 @@ src/                   components, hooks and other app code, by feature
 supabase/migrations/   the database schema, changed only through migrations
 supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
-scripts/               the exercise import, the locale check and the plan check
+scripts/               the exercise and food imports (shared helpers in lib/), the locale check
+                       and the plan check
 docs/adr/              Architecture Decision Records
 docs/screenshots/      the screenshots in this README
 ```
