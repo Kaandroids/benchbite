@@ -76,6 +76,12 @@ export function useNumberFormat() {
   return { format, decimalSeparator };
 }
 
+/** Millilitres as litres, with up to two decimals: 1250 as "1.25". */
+export function useLitersFormat() {
+  const { format } = useNumberFormat();
+  return (ml: number) => format(ml / 1000, { maximumFractionDigits: 2 });
+}
+
 /** Formats a weight in kilograms as a number in the unit, with at most one decimal. */
 export function useWeightFormat() {
   const { format } = useNumberFormat();

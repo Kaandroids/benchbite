@@ -7,6 +7,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { TabScreen } from '@/components/tab-screen';
 import { Text } from '@/components/ui/text';
 import { addDays, toIsoDate } from '@/i18n/dates';
+import { useWaterGoal } from '@/profile/water-goal';
 import { useTheme } from '@/theme';
 
 import { DaySummary } from './day-summary';
@@ -14,8 +15,10 @@ import { DaySwitcher } from './day-switcher';
 import { MealList } from './meal-list';
 import { mealsOf, suggestedCalories, totalOf, useDayEntries } from './meals';
 import { useNutritionTargets } from './targets';
+import { useWater } from './water';
+import { WaterCard } from './water-card';
 
-/** The nutrition tab: a day's calories and macros against the targets, and its meals. */
+/** The nutrition tab: a day's calories and macros against the targets, its meals and water. */
 export function NutritionScreen() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -25,7 +28,9 @@ export function NutritionScreen() {
   const day = addDays(today, -daysBack);
   const targets = useNutritionTargets();
   const entries = useDayEntries(toIsoDate(day));
-  const queries = [targets, entries];
+  const water = useWater(toIsoDate(day));
+  const waterGoal = useWaterGoal();
+  const queries = [targets, entries, water, waterGoal];
 
   let content = <LoadState queries={queries} />;
   if (allLoaded(queries)) {
@@ -45,6 +50,7 @@ export function NutritionScreen() {
             router.push({ pathname: '/nutrition/add', params: { meal, day: toIsoDate(day) } })
           }
         />
+        <WaterCard day={toIsoDate(day)} drunk={water.data ?? 0} goal={waterGoal.data ?? 0} />
       </>
     );
   }
