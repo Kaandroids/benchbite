@@ -22,8 +22,10 @@ language sql
 stable
 set search_path = ''
 as $$
+  -- Turkish İ and ı fold to i on both sides: lower() follows the database's collation, which
+  -- would turn İ into i with a combining dot and keep ı, so "inc" would not find "İncir".
   with search as (
-    select lower(trim(search_foods.query)) as term
+    select lower(translate(trim(search_foods.query), 'İı', 'ii')) as term
   ),
   scored as (
     select
@@ -42,7 +44,7 @@ as $$
       end as score
     from public.food_names n
     cross join search s
-    cross join lateral (select lower(n.name) as name) x
+    cross join lateral (select lower(translate(n.name, 'İı', 'ii')) as name) x
     where length(s.term) between 2 and 50
       and n.language in (search_foods.language, 'en')
   ),

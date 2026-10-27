@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(13);
 
 select set_config('role', 'authenticated', true),
   set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000a","role":"authenticated"}', true);
@@ -17,6 +17,21 @@ select results_eq(
 select ok(
   (select bool_and(name ilike '%yumurta%') from public.search_foods('yumurta', 'tr')),
   'Foods are found by their Turkish names'
+);
+
+select is(
+  (select name from public.search_foods('inc', 'tr') limit 1),
+  'İncir',
+  'A Turkish dotted İ is found with an i'
+);
+select is(
+  (select name from public.search_foods('ıspa', 'tr') limit 1),
+  'Ispanak, çiğ',
+  'A Turkish dotless ı is found with an I'
+);
+select isnt_empty(
+  $$ select * from public.search_foods('KARIŞIK', 'tr') $$,
+  'A query in capitals finds the food'
 );
 
 select is(
