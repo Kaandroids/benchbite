@@ -46,4 +46,14 @@ describe('Screen', () => {
     expect(progressBars()).toHaveLength(1);
     expect(progressBars()[0]).toHaveAccessibilityValue({ now: 50 });
   });
+
+  it('shows a text title as the header, with a line under it', async () => {
+    await render(
+      <Screen onBack={() => {}} title="Breakfast" subtitle="Today · Tue, Oct 27">
+        <Text>Body</Text>
+      </Screen>,
+    );
+    expect(screen.getByRole('header', { name: 'Breakfast' })).toBeTruthy();
+    expect(screen.getByText('Today · Tue, Oct 27')).toBeTruthy();
+  });
 });
