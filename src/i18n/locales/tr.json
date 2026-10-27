@@ -87,7 +87,6 @@
   },
   "comingSoon": {
     "title": "Yakında",
-    "nutrition": "Öğünlerini yakında buradan kaydedebileceksin.",
     "progress": "Kilon ve ilerlemen yakında burada olacak."
   },
   "today": {
@@ -186,7 +185,29 @@
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "macroGrams": "{{grams}} g {{macro}}"
+    "macroGrams": "{{grams}} g {{macro}}",
+    "day": {
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "previous": "Önceki gün",
+      "next": "Sonraki gün"
+    },
+    "left": "kcal kaldı",
+    "over": "kcal fazla",
+    "ringLabel": "{{target}} kcal'nin {{eaten}} kcal'si yendi",
+    "meals": {
+      "breakfast": "Kahvaltı",
+      "lunch": "Öğle yemeği",
+      "dinner": "Akşam yemeği",
+      "snack": "Atıştırmalıklar"
+    },
+    "items_one": "{{count}} öğe",
+    "items_other": "{{count}} öğe",
+    "mealTotals": "{{calories}} kcal · P {{protein}} · K {{carbs}} · Y {{fat}}",
+    "mealTotalsLabel": "{{calories}} kcal, {{protein}} g protein, {{carbs}} g karbonhidrat, {{fat}} g yağ",
+    "suggested": "Önerilen {{calories}} kcal",
+    "nothingLogged": "Henüz bir şey eklenmedi",
+    "loading": "Gün yükleniyor"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
