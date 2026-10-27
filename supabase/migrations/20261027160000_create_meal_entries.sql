@@ -3,7 +3,7 @@
 -- later change to the library never rewrites a past day.
 --
 -- Errors the app needs to tell apart have their own SQLSTATE codes:
---   BB020  the day is in the future
+--   BB020  the day is in the future or more than a week back
 --   BB021  the day already has as many entries as it may have
 --   BB022  the food is no longer in the library
 
@@ -106,15 +106,16 @@ begin
 end;
 $$;
 
--- A day may be one ahead of the server's, for time zones east of it.
+-- Meals are logged for today and the week before it. The server's day may differ from the user's
+-- by one either way, so it allows a day more on each side.
 create function public.check_meal_day()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  if new.day > current_date + 1 then
-    raise exception 'Meals cannot be logged for a future day' using errcode = 'BB020';
+  if new.day not between current_date - 8 and current_date + 1 then
+    raise exception 'Meals can be logged for today and the week before' using errcode = 'BB020';
   end if;
   return new;
 end;

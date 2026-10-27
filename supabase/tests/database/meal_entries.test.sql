@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -21,7 +21,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 -- What the app sends: oat flakes, 50 g as one serving.
 insert into public.meal_entries (day, meal, food_id, grams, portion_unit, portion_count)
-  values ('2026-10-27', 'breakfast', 'C133000', 50, 'serving', 1);
+  values (current_date, 'breakfast', 'C133000', 50, 'serving', 1);
 
 select results_eq(
   $$ select user_id, kcal_per_100g, kcal, protein_g, carbs_g, fat_g from public.meal_entries $$,
@@ -40,7 +40,7 @@ select results_eq(
 
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams, kcal_per_100g)
-     values ('2026-10-27', 'lunch', 'C133000', 50, 1) $$,
+     values (current_date, 'lunch', 'C133000', 50, 1) $$,
   '42501',
   null,
   'The copied values cannot be sent'
@@ -66,37 +66,51 @@ select throws_ok(
 );
 select lives_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams)
-     values (current_date + 1, 'lunch', 'C133000', 50) $$,
-  'The next day is allowed for time zones ahead of the server'
+     values (current_date + 1, 'lunch', 'C133000', 50),
+       (current_date - 8, 'lunch', 'C133000', 50) $$,
+  'A day either side of the week is allowed for time zones'
 );
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams)
-     values ('2026-10-27', 'lunch', 'B101000', 50) $$,
+     values (current_date - 9, 'lunch', 'C133000', 50) $$,
+  'BB020',
+  null,
+  'A day more than a week back is rejected'
+);
+select throws_ok(
+  $$ update public.meal_entries set day = current_date - 30 $$,
+  'BB020',
+  null,
+  'An entry cannot move more than a week back'
+);
+select throws_ok(
+  $$ insert into public.meal_entries (day, meal, food_id, grams)
+     values (current_date, 'lunch', 'B101000', 50) $$,
   'BB022',
   null,
   'An archived food cannot be logged'
 );
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams)
-     values ('2026-10-27', 'lunch', 'X999999', 50) $$,
+     values (current_date, 'lunch', 'X999999', 50) $$,
   '23503',
   null,
   'An unknown food is rejected'
 );
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams, portion_unit)
-     values ('2026-10-27', 'lunch', 'C133000', 50, 'serving') $$,
+     values (current_date, 'lunch', 'C133000', 50, 'serving') $$,
   '23514',
   null,
   'A portion needs its count'
 );
 
 insert into public.meal_entries (day, meal, food_id, grams)
-  select '2026-10-26', 'snack', 'C133000', 10 from generate_series(1, 100);
+  select current_date - 1, 'snack', 'C133000', 10 from generate_series(1, 100);
 
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, food_id, grams)
-     values ('2026-10-26', 'snack', 'C133000', 10) $$,
+     values (current_date - 1, 'snack', 'C133000', 10) $$,
   'BB021',
   null,
   'A day has up to 100 entries'
@@ -116,12 +130,12 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select count(*)::integer, min(grams) from public.meal_entries $$,
-  $$ values (102, 10.0::numeric) $$,
+  $$ values (103, 10.0::numeric) $$,
   'Users cannot change or delete the entries of others'
 );
 
 select lives_ok(
-  $$ delete from public.meal_entries where day = '2026-10-26' $$,
+  $$ delete from public.meal_entries where day = current_date - 1 $$,
   'Users delete their own entries'
 );
 
