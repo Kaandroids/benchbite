@@ -28,6 +28,48 @@ A mobile app for tracking workouts and nutrition in one place.
   its progress chart and records such as the heaviest set and the estimated one-rep max.
 - **Settings:** English, German and Turkish, and a light, dark or system appearance.
 
+## Roadmap
+
+Planned work is tracked in [issues](https://github.com/Kaandroids/benchbite/issues) and
+[milestones](https://github.com/Kaandroids/benchbite/milestones).
+
+**Done**
+
+- [x] Guest-first start and an onboarding that builds the plan and the daily targets
+- [x] Workouts: a library of about 870 exercises, editing, logging sets, a rest timer, history and
+      records
+- [x] Accounts with email and password
+- [x] The brand: app icon, animated splash screen and welcome slides
+
+**Next**
+
+- [ ] Nutrition tracking: logging meals against the daily targets, with a food database
+- [ ] The Progress tab: weight over time ([#65](https://github.com/Kaandroids/benchbite/issues/65)),
+      daily streaks and freezes ([#70](https://github.com/Kaandroids/benchbite/issues/70)), and
+      earlier weeks ([#71](https://github.com/Kaandroids/benchbite/issues/71))
+- [ ] More ways to sign in: Apple ([#132](https://github.com/Kaandroids/benchbite/issues/132)),
+      Google ([#133](https://github.com/Kaandroids/benchbite/issues/133)), confirming email
+      addresses and resetting passwords ([#173](https://github.com/Kaandroids/benchbite/issues/173)),
+      and deleting an account ([#134](https://github.com/Kaandroids/benchbite/issues/134))
+
+**Before the first release**
+
+- [ ] Privacy policy ([#44](https://github.com/Kaandroids/benchbite/issues/44)) and terms of use
+      ([#48](https://github.com/Kaandroids/benchbite/issues/48))
+- [ ] Build profiles, a staging project and versioned releases
+      ([#165](https://github.com/Kaandroids/benchbite/issues/165),
+      [#166](https://github.com/Kaandroids/benchbite/issues/166),
+      [#167](https://github.com/Kaandroids/benchbite/issues/167))
+- [ ] Hardening storage, auth settings and the supply chain
+      ([#56](https://github.com/Kaandroids/benchbite/issues/56))
+
+**Later**
+
+- [ ] Personal plans from an AI coach ([#38](https://github.com/Kaandroids/benchbite/issues/38))
+- [ ] Supersets ([#141](https://github.com/Kaandroids/benchbite/issues/141)) and heart rate from
+      Apple Health and Health Connect ([#85](https://github.com/Kaandroids/benchbite/issues/85))
+- [ ] Logging workouts and meals offline ([#6](https://github.com/Kaandroids/benchbite/issues/6))
+
 ## Tech stack
 
 | Layer             | Technology                                                                |
