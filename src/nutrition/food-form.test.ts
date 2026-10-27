@@ -32,6 +32,12 @@ describe('readForm', () => {
     });
   });
 
+  it('takes macros that add up to exactly 100 g, as the database does', () => {
+    expect(
+      readForm({ ...YOGHURT, protein: '0.2', carbs: '83.9', fat: '15.9', kcal: '480' }).kind,
+    ).toBe('valid');
+  });
+
   it('waits for a name and every value', () => {
     expect(readForm({ ...YOGHURT, name: '  ' })).toEqual({ kind: 'incomplete' });
     expect(readForm({ ...YOGHURT, fat: '' })).toEqual({ kind: 'incomplete' });

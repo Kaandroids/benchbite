@@ -84,7 +84,9 @@ export function readForm(form: FoodForm): FormResult {
   if (kcal > MAX_KCAL_PER_100G) {
     return { kind: 'problem', problem: 'tooMuchEnergy' };
   }
-  if (protein + carbs + fat > MAX_MACROS_PER_100G) {
+  // In hundredths, as the table adds them exactly and floats would not: 0.2 + 83.9 + 15.9 is
+  // 100.00000000000001.
+  if (Math.round((protein + carbs + fat) * 100) > MAX_MACROS_PER_100G * 100) {
     return { kind: 'problem', problem: 'tooMuchMacros' };
   }
   return {
