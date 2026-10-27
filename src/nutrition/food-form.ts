@@ -46,10 +46,10 @@ export function formOf(food: Food): FoodForm {
 }
 
 /**
- * Why a filled-in form cannot be saved: values the database would refuse, or macros that do not
- * add up to the calories, which means something was typed wrong.
+ * Why a filled-in form cannot be saved: values the database would refuse, or fewer calories than
+ * the macros alone make, which means something was typed wrong.
  */
-export type FormProblem = 'tooMuchEnergy' | 'tooMuchMacros' | 'portion' | 'macrosDontAddUp';
+export type FormProblem = 'tooMuchEnergy' | 'tooMuchMacros' | 'portion' | 'tooFewCalories';
 
 export type FormResult =
   | { kind: 'incomplete' }
@@ -96,8 +96,8 @@ export function readForm(form: FoodForm): FormResult {
   if (Math.round((protein + carbs + fat) * 100) > MAX_MACROS_PER_100G * 100) {
     return { kind: 'problem', problem: 'tooMuchMacros' };
   }
-  if (macroCheck(form)?.close === false) {
-    return { kind: 'problem', problem: 'macrosDontAddUp' };
+  if (macroCheck(form)?.tooFewCalories) {
+    return { kind: 'problem', problem: 'tooFewCalories' };
   }
   return {
     kind: 'valid',
@@ -110,14 +110,15 @@ export function readForm(form: FoodForm): FormResult {
 }
 
 /**
- * The calories the macros add up to, 4 kcal per gram of protein and carbs and 9 per gram of fat,
- * and whether that is close to the calories typed. Labels round, and fibre and alcohol count
- * differently, so within 15 % or 10 kcal counts as close. Empty macros count as 0. Null until the
+ * The calories protein, carbs and fat alone make, 4 kcal per gram of protein and carbs and 9 per
+ * gram of fat, and whether the calories typed are fewer than that. A food can have more, as
+ * fibre, alcohol and sugar alcohols add energy too, but not fewer. Labels round, so it takes more
+ * than 15 % or 10 kcal fewer, whichever is larger. Empty macros count as 0. Null until the
  * calories are typed.
  */
 export function macroCheck(
   form: FoodForm,
-): { calories: number; entered: number; close: boolean } | null {
+): { calories: number; entered: number; tooFewCalories: boolean } | null {
   const kcal = parseDecimal(form.kcal);
   if (kcal === null || kcal < 0) {
     return null;
@@ -129,6 +130,6 @@ export function macroCheck(
   return {
     calories,
     entered: kcal,
-    close: Math.abs(calories - kcal) <= Math.max(10, kcal * 0.15),
+    tooFewCalories: calories - kcal > Math.max(10, calories * 0.15),
   };
 }

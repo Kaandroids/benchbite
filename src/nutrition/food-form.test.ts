@@ -75,22 +75,29 @@ describe('readForm', () => {
     });
   });
 
-  it('refuses macros that do not add up to the calories', () => {
-    expect(readForm({ ...YOGHURT, kcal: '22' })).toEqual({
+  it('refuses fewer calories than the macros alone make, and allows more', () => {
+    expect(readForm({ ...YOGHURT, kcal: '22', protein: '3', carbs: '0', fat: '22' })).toEqual({
       kind: 'problem',
-      problem: 'macrosDontAddUp',
+      problem: 'tooFewCalories',
     });
+    // Beer: most of its energy is alcohol, which the macros do not count.
+    expect(readForm({ ...YOGHURT, kcal: '43', protein: '0.5', carbs: '3.6', fat: '0' }).kind).toBe(
+      'valid',
+    );
   });
 });
 
 describe('macroCheck', () => {
-  it('adds up the macros and says whether they are close to the calories', () => {
-    expect(macroCheck(YOGHURT)).toEqual({ calories: 68.7, entered: 70, close: true });
-    expect(macroCheck({ ...YOGHURT, kcal: '200' })).toEqual({
-      calories: 68.7,
-      entered: 200,
-      close: false,
-    });
+  it('finds fewer calories than the macros make, beyond rounding on labels', () => {
+    expect(macroCheck(YOGHURT)).toEqual({ calories: 68.7, entered: 70, tooFewCalories: false });
+    // 67 from the macros, with about 10 kcal of tolerance: 57 is within it, 56 is not.
+    const label = { ...YOGHURT, protein: '5', carbs: '5', fat: '3' };
+    expect(macroCheck({ ...label, kcal: '57' })?.tooFewCalories).toBe(false);
+    expect(macroCheck({ ...label, kcal: '56' })?.tooFewCalories).toBe(true);
+    // 300 from the macros: 15 % is 45, so 260 is fine and 250 is not.
+    const rich = { ...YOGHURT, protein: '0', carbs: '75', fat: '0' };
+    expect(macroCheck({ ...rich, kcal: '260' })?.tooFewCalories).toBe(false);
+    expect(macroCheck({ ...rich, kcal: '250' })?.tooFewCalories).toBe(true);
   });
 
   it('has nothing to check until the calories are typed, and counts empty macros as 0', () => {
@@ -98,7 +105,7 @@ describe('macroCheck', () => {
     expect(macroCheck({ ...YOGHURT, protein: '', carbs: '', fat: '' })).toEqual({
       calories: 0,
       entered: 70,
-      close: false,
+      tooFewCalories: false,
     });
   });
 });
