@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { addDays, isoWeekday, useWeekdayDateFormat, useWeekdayFormat } from '@/i18n/dates';
+import { addDays, useWeekdayDateFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
+import { useDayName } from './day-name';
 import { LOGGABLE_DAYS } from './meals';
 
 type DaySwitcherProps = {
@@ -18,19 +19,14 @@ type DaySwitcherProps = {
 /** "‹ Today ›" beside the title: steps a day back, up to the days that can be logged, or forward. */
 export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
   const { t } = useTranslation();
-  const weekday = useWeekdayFormat();
+  const dayName = useDayName();
   const weekdayDate = useWeekdayDateFormat();
   const { colors, radii, spacing } = useTheme();
   const day = addDays(today, -daysBack);
   const canGoBack = daysBack < LOGGABLE_DAYS;
   const canGoForward = daysBack > 0;
 
-  const name =
-    daysBack === 0
-      ? t('nutrition.day.today')
-      : daysBack === 1
-        ? t('nutrition.day.yesterday')
-        : weekday(isoWeekday(day));
+  const name = dayName(day, daysBack);
 
   const step = (icon: 'back' | 'forward', enabled: boolean, by: number) => (
     <Pressable

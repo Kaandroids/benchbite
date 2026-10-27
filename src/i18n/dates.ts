@@ -26,6 +26,12 @@ export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
+/** How many days `day` is before `today`, by the calendar; negative for a later day. */
+export function daysBetween(day: Date, today: Date): number {
+  const utc = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((utc(today) - utc(day)) / 86_400_000);
+}
+
 /** The Monday a week starts on, at midnight. */
 export function weekStart(date: Date): Date {
   return addDays(date, 1 - isoWeekday(date));

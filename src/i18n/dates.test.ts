@@ -3,6 +3,7 @@ import { act, renderHook } from '@/test/render';
 
 import {
   addDays,
+  daysBetween,
   fromIsoDate,
   isoWeekday,
   toIsoDate,
@@ -14,6 +15,16 @@ import {
   useWeekdayFormat,
   weekStart,
 } from './dates';
+
+describe('daysBetween', () => {
+  it('counts calendar days back, across a clock change', () => {
+    expect(daysBetween(new Date(2026, 9, 27, 23, 0), new Date(2026, 9, 27, 1, 0))).toBe(0);
+    expect(daysBetween(new Date(2026, 9, 20), new Date(2026, 9, 27))).toBe(7);
+    // Clocks go back on 25 October 2026 in Europe.
+    expect(daysBetween(new Date(2026, 9, 24), new Date(2026, 9, 26))).toBe(2);
+    expect(daysBetween(new Date(2026, 9, 28), new Date(2026, 9, 27))).toBe(-1);
+  });
+});
 
 describe('toIsoDate', () => {
   it("writes the device's day, padded", () => {
