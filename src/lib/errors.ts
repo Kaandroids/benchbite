@@ -1,4 +1,4 @@
-// The codes the database raises for requests it refuses (BB001 to BB019 in the migrations), named
+// The codes the database raises for requests it refuses (BB001 to BB022 in the migrations), named
 // by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',

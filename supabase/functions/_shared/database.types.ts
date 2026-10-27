@@ -317,6 +317,75 @@ export type Database = {
           },
         ];
       };
+      meal_entries: {
+        Row: {
+          carbs_g: number | null;
+          carbs_per_100g: number;
+          created_at: string;
+          day: string;
+          fat_g: number | null;
+          fat_per_100g: number;
+          food_id: string;
+          grams: number;
+          id: number;
+          kcal: number | null;
+          kcal_per_100g: number;
+          meal: Database['public']['Enums']['meal'];
+          portion_count: number | null;
+          portion_unit: Database['public']['Enums']['portion_unit'] | null;
+          protein_g: number | null;
+          protein_per_100g: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          carbs_g?: never;
+          carbs_per_100g: number;
+          created_at?: string;
+          day: string;
+          fat_g?: never;
+          fat_per_100g: number;
+          food_id: string;
+          grams: number;
+          id?: never;
+          kcal?: never;
+          kcal_per_100g: number;
+          meal: Database['public']['Enums']['meal'];
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_g?: never;
+          protein_per_100g: number;
+          user_id?: string;
+        };
+        Update: {
+          carbs_g?: never;
+          carbs_per_100g?: number;
+          created_at?: string;
+          day?: string;
+          fat_g?: never;
+          fat_per_100g?: number;
+          food_id?: string;
+          grams?: number;
+          id?: never;
+          kcal?: never;
+          kcal_per_100g?: number;
+          meal?: Database['public']['Enums']['meal'];
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          protein_g?: never;
+          protein_per_100g?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'meal_entries_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       plan_slot_exercises: {
         Row: {
           exercise_id: string;
@@ -891,6 +960,7 @@ export type Database = {
       food_source: 'bls';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
       height_unit: 'cm' | 'ft';
+      meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       muscle:
         | 'abdominals'
         | 'abductors'
@@ -1113,6 +1183,7 @@ export const Constants = {
       food_source: ['bls'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
       height_unit: ['cm', 'ft'],
+      meal: ['breakfast', 'lunch', 'dinner', 'snack'],
       muscle: [
         'abdominals',
         'abductors',
