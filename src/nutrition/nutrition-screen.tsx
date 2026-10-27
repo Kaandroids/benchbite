@@ -14,6 +14,7 @@ import { DaySwitcher } from './day-switcher';
 import { MealList } from './meal-list';
 import { mealsOf, suggestedCalories, totalOf, useDayEntries } from './meals';
 import { useNutritionTargets } from './targets';
+import { WaterCard } from './water-card';
 
 /** The nutrition tab: a day's calories and macros against the targets, and its meals. */
 export function NutritionScreen() {
@@ -45,6 +46,7 @@ export function NutritionScreen() {
             router.push({ pathname: '/nutrition/add', params: { meal, day: toIsoDate(day) } })
           }
         />
+        <WaterCard day={toIsoDate(day)} />
       </>
     );
   }
