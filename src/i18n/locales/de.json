@@ -260,11 +260,7 @@
       "more": "Mehr",
       "inGrams": "{{grams}} g",
       "adds": "Das ergibt",
-      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal.",
-      "notFound": {
-        "title": "Lebensmittel nicht gefunden",
-        "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
-      }
+      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal."
     },
     "addError": {
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
@@ -350,6 +346,10 @@
         "bottle": "Flasche"
       },
       "optional": "optional"
+    },
+    "foodNotFound": {
+      "title": "Lebensmittel nicht gefunden",
+      "message": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
     }
   },
   "workout": {

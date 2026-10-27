@@ -114,16 +114,11 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
             {item.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
           </View>
           <Text variant="caption" color="textMuted">
-            {item.portion
-              ? t('nutrition.search.result', {
-                  portion,
-                  grams: format(quick.grams),
-                  calories: format(Math.round(amountOf(item.per100g, quick.grams).calories)),
-                })
-              : t('nutrition.search.resultGrams', {
-                  grams: format(quick.grams),
-                  calories: format(Math.round(amountOf(item.per100g, quick.grams).calories)),
-                })}
+            {t(item.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
+              portion,
+              grams: format(quick.grams),
+              calories: format(Math.round(amountOf(item.per100g, quick.grams).calories)),
+            })}
           </Text>
         </Pressable>
         {done ? (

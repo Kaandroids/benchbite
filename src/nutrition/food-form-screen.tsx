@@ -18,8 +18,8 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Constants } from '@/lib/database.types';
 import { isDbError } from '@/lib/errors';
-import { useNumberFormat } from '@/i18n/units';
-import { typography, useTheme, type ColorTokens } from '@/theme';
+import { toTenth, useNumberFormat } from '@/i18n/units';
+import { typography, useTheme } from '@/theme';
 
 import { useCreateFood, useDeleteFood, useUpdateFood } from './custom-foods';
 import {
@@ -32,6 +32,7 @@ import {
 } from './food-form';
 import { amountOf, refKey, useFood, type PortionUnit } from './foods';
 import { MacroDot } from './macro-dot';
+import { MACROS } from './macro-targets';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 
@@ -45,7 +46,7 @@ type FoodFormScreenProps = {
 
 /**
  * Adds a food of one's own from its label, then opens it to log an amount; or changes or deletes
- * one. Values can be typed per 100 g or per portion, as the label prints them.
+ * one. Values are typed per 100 g, as labels print them.
  */
 export function FoodFormScreen(props: FoodFormScreenProps) {
   return props.kind === 'new' ? (
@@ -67,8 +68,8 @@ function EditFood(props: FoodFormScreenProps & { kind: 'edit' }) {
       {food.data === null ? (
         <MessageView
           icon="meal"
-          title={t('nutrition.amount.notFound.title')}
-          message={t('nutrition.amount.notFound.message')}
+          title={t('nutrition.foodNotFound.title')}
+          message={t('nutrition.foodNotFound.message')}
         />
       ) : (
         <LoadState queries={[food]} />
@@ -78,15 +79,6 @@ function EditFood(props: FoodFormScreenProps & { kind: 'edit' }) {
 }
 
 const UNITS = Constants.public.Enums.portion_unit;
-
-const MACRO_FIELDS: {
-  key: 'protein' | 'carbs' | 'fat';
-  color: keyof ColorTokens;
-}[] = [
-  { key: 'protein', color: 'protein' },
-  { key: 'carbs', color: 'carbs' },
-  { key: 'fat', color: 'fat' },
-];
 
 function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const { t } = useTranslation();
@@ -219,7 +211,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
             </Text>
           </Card>
           <View style={[styles.macros, { gap: spacing.sm }]}>
-            {MACRO_FIELDS.map(({ key, color }) => (
+            {MACROS.map(({ key, color }) => (
               <Card key={key} style={[styles.macro, { gap: spacing.xs, padding: spacing.md }]}>
                 <View style={[styles.macroName, { gap: spacing.xs }]}>
                   <MacroDot color={color} />
@@ -320,9 +312,9 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
               {t('nutrition.food.portionAdds', {
                 portion,
                 calories: format(Math.round(portionAdds.calories)),
-                protein: format(Math.round(portionAdds.proteinG * 10) / 10),
-                carbs: format(Math.round(portionAdds.carbsG * 10) / 10),
-                fat: format(Math.round(portionAdds.fatG * 10) / 10),
+                protein: format(toTenth(portionAdds.proteinG)),
+                carbs: format(toTenth(portionAdds.carbsG)),
+                fat: format(toTenth(portionAdds.fatG)),
               })}
             </Text>
           ) : null}

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Portion } from './foods';
 import type { Totals } from './meals';
 
-/** A food of one's own as the form saves it: its values per 100 g and one portion, if any. */
+/** A food of one's own as the form saves it: its name trimmed, its values per 100 g and one portion, if any. */
 export type CustomFoodValues = {
   name: string;
   per100g: Totals;
@@ -14,7 +14,7 @@ export type CustomFoodValues = {
 
 function columnsOf({ name, per100g, portion }: CustomFoodValues) {
   return {
-    name: name.trim(),
+    name,
     kcal: per100g.calories,
     protein_g: per100g.proteinG,
     carbs_g: per100g.carbsG,

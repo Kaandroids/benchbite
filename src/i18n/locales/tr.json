@@ -260,11 +260,7 @@
       "more": "Artır",
       "inGrams": "{{grams}} g",
       "adds": "Eklenecek",
-      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır.",
-      "notFound": {
-        "title": "Besin bulunamadı",
-        "message": "Bu besin artık kütüphanede yok."
-      }
+      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır."
     },
     "addError": {
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
@@ -350,6 +346,10 @@
         "bottle": "Şişe"
       },
       "optional": "isteğe bağlı"
+    },
+    "foodNotFound": {
+      "title": "Besin bulunamadı",
+      "message": "Bu besin artık kütüphanede yok."
     }
   },
   "workout": {

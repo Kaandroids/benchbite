@@ -260,11 +260,7 @@
       "more": "More",
       "inGrams": "{{grams}} g",
       "adds": "This adds",
-      "dayWould": "The day would be {{eaten}} of {{target}} kcal.",
-      "notFound": {
-        "title": "Food not found",
-        "message": "This food is no longer in the library."
-      }
+      "dayWould": "The day would be {{eaten}} of {{target}} kcal."
     },
     "addError": {
       "closedDay": "Meals can only be added to today and the week before.",
@@ -350,6 +346,10 @@
         "bottle": "Bottle"
       },
       "optional": "optional"
+    },
+    "foodNotFound": {
+      "title": "Food not found",
+      "message": "This food is no longer in the library."
     }
   },
   "workout": {
