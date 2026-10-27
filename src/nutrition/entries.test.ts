@@ -68,6 +68,7 @@ describe('useAddEntry', () => {
         meal: 'snack',
         foodId: 'C133000',
         grams: 35,
+        portion: null,
       }),
     );
     expect(insert).toHaveBeenCalledWith(
@@ -80,7 +81,13 @@ describe('useAddEntry', () => {
     const { result } = await renderHook(() => useAddEntry());
     await expect(
       act(() =>
-        result.current.mutateAsync({ day: '2026-10-01', meal: 'snack', foodId: 'X', grams: 1 }),
+        result.current.mutateAsync({
+          day: '2026-10-01',
+          meal: 'snack',
+          foodId: 'X',
+          grams: 1,
+          portion: null,
+        }),
       ),
     ).rejects.toEqual({ code: 'BB020' });
   });
@@ -95,7 +102,11 @@ describe('useUpdateEntry', () => {
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useUpdateEntry(), { queryClient });
     await act(() =>
-      result.current.mutateAsync({ id: 7, day: '2026-10-27', amount: { grams: 75 } }),
+      result.current.mutateAsync({
+        id: 7,
+        day: '2026-10-27',
+        amount: { grams: 75, portion: null },
+      }),
     );
     expect(update).toHaveBeenCalledWith({ grams: 75, portion_unit: null, portion_count: null });
     expect(eq).toHaveBeenCalledWith('id', 7);

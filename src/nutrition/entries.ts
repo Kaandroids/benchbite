@@ -2,15 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 
-import type { PortionUnit } from './foods';
+import type { Amount } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
-
-/** An amount of a food: grams, and the portion it was picked in, such as 2 slices, if any. */
-export type Amount = {
-  grams: number;
-  /** Left out when grams were entered. */
-  portion?: { unit: PortionUnit; count: number } | null;
-};
 
 export type NewEntry = Amount & {
   /** YYYY-MM-DD. */

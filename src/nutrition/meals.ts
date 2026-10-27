@@ -5,7 +5,7 @@ import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import type { PortionUnit } from './foods';
+import { nameOf, type Amount } from './foods';
 
 import type { NutritionTargets } from './targets';
 
@@ -31,19 +31,17 @@ export const MEALS: { meal: Meal; icon: IconName; share: number }[] = [
 export type MealEntry = { meal: Meal } & Totals;
 
 /** A logged entry: what it adds, and the food, amount and values it was logged with. */
-export type LoggedEntry = MealEntry & {
-  id: number;
-  /** YYYY-MM-DD. */
-  day: string;
-  foodId: string;
-  /** In the app language, falling back to English. */
-  name: string;
-  grams: number;
-  /** The portion it was picked in, such as 2 slices, or null when grams were entered. */
-  portion: { unit: PortionUnit; count: number } | null;
-  /** The food's values per 100 g when it was logged (ADR 0034). */
-  per100g: Totals;
-};
+export type LoggedEntry = MealEntry &
+  Amount & {
+    id: number;
+    /** YYYY-MM-DD. */
+    day: string;
+    foodId: string;
+    /** In the app language, falling back to English. */
+    name: string;
+    /** The food's values per 100 g when it was logged (ADR 0034). */
+    per100g: Totals;
+  };
 
 export const NOTHING: Totals = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
@@ -128,14 +126,12 @@ export function useDayEntries(day: string) {
         throw error;
       }
       return data.map((row) => {
-        const names = row.foods.food_names;
-        const nameIn = (language: string) => names.find((n) => n.language === language)?.name;
         return {
           id: row.id,
           day,
           meal: row.meal,
           foodId: row.food_id,
-          name: nameIn(i18n.language) ?? nameIn('en') ?? row.food_id,
+          name: nameOf(row.foods.food_names, i18n.language, row.food_id),
           grams: row.grams,
           portion:
             row.portion_unit !== null && row.portion_count !== null

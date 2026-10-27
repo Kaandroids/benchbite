@@ -123,7 +123,7 @@ function EntryForm({ entry, eatenCalories, targetCalories, removeError }: EntryF
       // The values it was logged with, as the database counts the entry by them (ADR 0034).
       per100g={entry.per100g}
       portions={food.data?.portions ?? []}
-      initial={{ grams: entry.grams, portion: entry.portion }}
+      initial={entry}
       eatenCalories={eatenCalories}
       targetCalories={targetCalories}
       note={t('nutrition.entry.was', { calories: format(Math.round(entry.calories)) })}

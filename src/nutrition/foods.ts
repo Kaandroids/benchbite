@@ -11,6 +11,22 @@ export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
 export type Portion = { unit: PortionUnit; grams: number };
 
+/** A number of portions, such as 2 slices. */
+export type PickedPortion = { unit: PortionUnit; count: number };
+
+/** An amount of a food: grams, and the portions they were picked in, or null for grams. */
+export type Amount = { grams: number; portion: PickedPortion | null };
+
+/** A food's name in a language, falling back to English, then to its id (ADR 0035). */
+export function nameOf(
+  names: { language: string; name: string }[],
+  language: string,
+  id: string,
+): string {
+  const nameIn = (code: string) => names.find((name) => name.language === code)?.name;
+  return nameIn(language) ?? nameIn('en') ?? id;
+}
+
 /** A food found by search, with its values per 100 g and its default portion. */
 export type FoodResult = { id: string; name: string; per100g: Totals; portion: Portion };
 
@@ -94,11 +110,9 @@ export function useFood(id: string) {
       if (!data || data.archived_at !== null) {
         return null;
       }
-      const nameIn = (language: string) =>
-        data.food_names.find((name) => name.language === language)?.name;
       return {
         id: data.id,
-        name: nameIn(i18n.language) ?? nameIn('en') ?? data.id,
+        name: nameOf(data.food_names, i18n.language, data.id),
         per100g: totalsOf(data),
         portions: [...data.food_portions]
           .sort((a, b) => Number(b.is_default) - Number(a.is_default))

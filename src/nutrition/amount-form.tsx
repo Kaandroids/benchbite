@@ -11,8 +11,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
-import type { Amount } from './entries';
-import { amountOf, type Portion } from './foods';
+import { amountOf, type Amount, type Portion } from './foods';
 import { MACROS } from './macro-targets';
 import type { Totals } from './meals';
 import { usePortionLabel } from './portion-label';
