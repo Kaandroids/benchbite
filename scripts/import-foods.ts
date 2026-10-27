@@ -355,7 +355,7 @@ with listed (food_id, language, name) as (
 ${rows.map((row) => `  ${row}`).join(',\n')}
 )
 update public.food_names n
-set name = left(n.name, 110) || ' (' || n.food_id || ')'
+set name = left(n.name, ${MAX_NAME_LENGTH} - length(' ()') - length(n.food_id)) || ' (' || n.food_id || ')'
 from listed l, public.foods f
 where f.id = n.food_id
   and f.archived_at is not null
