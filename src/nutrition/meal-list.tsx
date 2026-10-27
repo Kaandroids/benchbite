@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
@@ -14,6 +14,8 @@ type MealListProps = {
   meals: MealSummary[];
   /** The calories suggested for the empty meals, from `suggestedCalories`. */
   suggested: Map<Meal, number>;
+  /** Opens the meal with its entries. */
+  onOpen: (meal: Meal) => void;
   /** Opens the search to add a food to the meal. */
   onAdd: (meal: Meal) => void;
 };
@@ -22,7 +24,7 @@ type MealListProps = {
  * One row per meal with only its totals, so a day with many entries still fits. An empty meal
  * shows the calories suggested for it.
  */
-export function MealList({ meals, suggested, onAdd }: MealListProps) {
+export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -46,43 +48,52 @@ export function MealList({ meals, suggested, onAdd }: MealListProps) {
               listDivider(index === 0, colors.border),
             ]}
           >
-            <View
-              style={[
-                styles.tile,
-                {
-                  borderRadius: radii.md,
-                  backgroundColor: items > 0 ? colors.iconBackground : colors.background,
-                },
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onOpen(meal)}
+              style={({ pressed }) => [
+                styles.open,
+                { gap: spacing.md, opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <Icon name={icon} size={20} color={items > 0 ? 'primary' : 'textMuted'} />
-            </View>
-            <View style={styles.text} accessible>
-              <Text variant="label">
-                {t(`nutrition.meals.${meal}`)}
+              <View
+                style={[
+                  styles.tile,
+                  {
+                    borderRadius: radii.md,
+                    backgroundColor: items > 0 ? colors.iconBackground : colors.background,
+                  },
+                ]}
+              >
+                <Icon name={icon} size={20} color={items > 0 ? 'primary' : 'textMuted'} />
+              </View>
+              <View style={styles.text}>
+                <Text variant="label">
+                  {t(`nutrition.meals.${meal}`)}
+                  {items > 0 ? (
+                    <Text variant="caption" color="textMuted">
+                      {' · '}
+                      {t('nutrition.items', { count: items })}
+                    </Text>
+                  ) : null}
+                </Text>
                 {items > 0 ? (
-                  <Text variant="caption" color="textMuted">
-                    {' · '}
-                    {t('nutrition.items', { count: items })}
+                  <Text
+                    variant="caption"
+                    color="textMuted"
+                    accessibilityLabel={t('nutrition.mealTotalsLabel', values)}
+                  >
+                    {t('nutrition.mealTotals', values)}
                   </Text>
-                ) : null}
-              </Text>
-              {items > 0 ? (
-                <Text
-                  variant="caption"
-                  color="textMuted"
-                  accessibilityLabel={t('nutrition.mealTotalsLabel', values)}
-                >
-                  {t('nutrition.mealTotals', values)}
-                </Text>
-              ) : (
-                <Text variant="caption" color="textMuted">
-                  {calories === undefined
-                    ? t('nutrition.nothingLogged')
-                    : t('nutrition.suggested', { calories: format(calories) })}
-                </Text>
-              )}
-            </View>
+                ) : (
+                  <Text variant="caption" color="textMuted">
+                    {calories === undefined
+                      ? t('nutrition.nothingLogged')
+                      : t('nutrition.suggested', { calories: format(calories) })}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
             <RoundIconButton
               icon="plus"
               color={items > 0 ? 'primary' : 'onPrimary'}
@@ -108,6 +119,11 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  open: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   text: {
     flex: 1,

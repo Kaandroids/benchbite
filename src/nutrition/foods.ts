@@ -1,15 +1,31 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import { dayEntriesKey, totalsOf, type Meal, type Totals } from './meals';
+import { totalsOf, type Totals } from './meals';
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
 export type Portion = { unit: PortionUnit; grams: number };
+
+/** A number of portions, such as 2 slices. */
+export type PickedPortion = { unit: PortionUnit; count: number };
+
+/** An amount of a food: grams, and the portions they were picked in, or null for grams. */
+export type Amount = { grams: number; portion: PickedPortion | null };
+
+/** A food's name in a language, falling back to English, then to its id (ADR 0035). */
+export function nameOf(
+  names: { language: string; name: string }[],
+  language: string,
+  id: string,
+): string {
+  const nameIn = (code: string) => names.find((name) => name.language === code)?.name;
+  return nameIn(language) ?? nameIn('en') ?? id;
+}
 
 /** A food found by search, with its values per 100 g and its default portion. */
 export type FoodResult = { id: string; name: string; per100g: Totals; portion: Portion };
@@ -94,51 +110,14 @@ export function useFood(id: string) {
       if (!data || data.archived_at !== null) {
         return null;
       }
-      const nameIn = (language: string) =>
-        data.food_names.find((name) => name.language === language)?.name;
       return {
         id: data.id,
-        name: nameIn(i18n.language) ?? nameIn('en') ?? data.id,
+        name: nameOf(data.food_names, i18n.language, data.id),
         per100g: totalsOf(data),
         portions: [...data.food_portions]
           .sort((a, b) => Number(b.is_default) - Number(a.is_default))
           .map(({ unit, grams }) => ({ unit, grams })),
       };
     },
-  });
-}
-
-export type NewEntry = {
-  /** YYYY-MM-DD. */
-  day: string;
-  meal: Meal;
-  foodId: string;
-  grams: number;
-  /** The portion it was picked in, such as 2 slices; left out when grams were entered. */
-  portion?: { unit: PortionUnit; count: number };
-};
-
-/**
- * Logs a food to a meal. The database copies the food's values and checks the day (ADR 0034);
- * the day's entries are loaded again.
- */
-export function useAddEntry() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (entry: NewEntry) => {
-      const { error } = await supabase.from('meal_entries').insert({
-        day: entry.day,
-        meal: entry.meal,
-        food_id: entry.foodId,
-        grams: entry.grams,
-        portion_unit: entry.portion?.unit ?? null,
-        portion_count: entry.portion?.count ?? null,
-      });
-      if (error) {
-        throw error;
-      }
-    },
-    onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
   });
 }

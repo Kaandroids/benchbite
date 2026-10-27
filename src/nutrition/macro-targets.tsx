@@ -5,6 +5,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
+import { MacroDot } from './macro-dot';
 import type { NutritionTargets } from './targets';
 
 /** The macros in their usual order, with the target each one reads and its colour. */
@@ -37,7 +38,9 @@ export function MacroTargets({ targets }: { targets: NutritionTargets }) {
               { borderRadius: radii.md, backgroundColor: colors.track, padding: spacing.md },
             ]}
           >
-            <View style={[styles.dot, { backgroundColor: colors[color] }]} />
+            <View style={styles.dotSpace}>
+              <MacroDot color={color} size={10} />
+            </View>
             <Text variant="bodyStrong">{t('nutrition.grams', { count: targets[grams] })}</Text>
             <Text variant="caption" color="textMuted">
               {t(`nutrition.macros.${key}`)}
@@ -57,10 +60,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  dotSpace: {
     marginBottom: 4,
   },
 });

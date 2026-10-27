@@ -268,7 +268,36 @@
       "closedDay": "Meals can only be added to today and the week before.",
       "failed": "The food could not be added. Check your connection and try again.",
       "archived": "This food is no longer in the library."
-    }
+    },
+    "meal": {
+      "dayLine": "{{name}} · {{date}}",
+      "swipeHint": "Swipe an entry left to remove it.",
+      "remove": "Remove",
+      "removeEntry": "Remove {{name}}",
+      "removed": "{{name}} removed",
+      "undo": "Undo",
+      "empty": "Nothing logged yet.",
+      "removeError": "The entry could not be removed. Check your connection and try again.",
+      "undoError": "The entry could not be brought back. It can be restored for an hour after it was removed."
+    },
+    "entry": {
+      "inMeal": {
+        "breakfast": "In breakfast",
+        "lunch": "In lunch",
+        "dinner": "In dinner",
+        "snack": "In snacks"
+      },
+      "was": "Was {{calories}} kcal. It stays in this meal.",
+      "save": "Save",
+      "remove": "Remove this entry",
+      "saveError": "The change could not be saved. Check your connection and try again.",
+      "notFound": {
+        "title": "Entry not found",
+        "message": "This entry was removed."
+      },
+      "removeError": "The entry could not be removed. Check your connection and try again."
+    },
+    "kcal": "{{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

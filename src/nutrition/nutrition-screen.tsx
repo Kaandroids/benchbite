@@ -38,6 +38,9 @@ export function NutritionScreen() {
         <MealList
           meals={meals}
           suggested={targets.data ? suggestedCalories(targets.data.calories, meals) : new Map()}
+          onOpen={(meal) =>
+            router.push({ pathname: '/nutrition/meal', params: { meal, day: toIsoDate(day) } })
+          }
           onAdd={(meal) =>
             router.push({ pathname: '/nutrition/add', params: { meal, day: toIsoDate(day) } })
           }

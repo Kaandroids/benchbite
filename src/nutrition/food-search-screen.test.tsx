@@ -3,14 +3,15 @@ import { router } from 'expo-router';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
-import { useAddEntry, useFoodSearch, type FoodResult } from './foods';
+import { useAddEntry } from './entries';
+import { useFoodSearch, type FoodResult } from './foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./foods', () => ({
   ...jest.requireActual('./foods'),
   useFoodSearch: jest.fn(),
-  useAddEntry: jest.fn(),
   // Typing settles at once here; the delay has its own test.
   useSettledQuery: (query: string) => query,
 }));

@@ -55,6 +55,7 @@ export const ICONS = {
   sunrise: { ios: 'sunrise', android: 'wb_twilight', web: 'wb_twilight' },
   target: { ios: 'target', android: 'target', web: 'target' },
   timer: { ios: 'timer', android: 'timer', web: 'timer' },
+  trash: { ios: 'trash', android: 'delete', web: 'delete' },
   trend: { ios: 'chart.line.uptrend.xyaxis', android: 'show_chart', web: 'show_chart' },
   trophy: { ios: 'trophy', android: 'trophy', web: 'trophy' },
   undo: { ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' },

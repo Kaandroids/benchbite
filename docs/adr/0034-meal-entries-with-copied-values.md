@@ -33,6 +33,10 @@ People log late at night and travel, so "today" is the day on their phone, not t
   window, a user can add about a thousand entries at once and then 100 a day, so a broken client
   or a cheap anonymous session cannot fill the table.
 
+- **Undo:** a removed entry is kept for an hour in `removed_meal_entries`, which the app cannot
+  read, and `restore_meal_entry()` puts it back with its id, time and copied values (#202). The
+  day's checks apply to it as to a new entry.
+
 ## Alternatives considered
 
 - **Totals only, without copies:** each day would be computed from the library as it is now, so
@@ -47,6 +51,11 @@ People log late at night and travel, so "today" is the day on their phone, not t
   meals cover how most people eat; a snack holds the rest.
 - **A timestamp instead of a day:** the day would depend on the time zone at read time, and a meal
   logged after midnight for the evening before could not be put on its day.
+
+- **Undo by logging the entry again:** simpler, but it would copy the food's current values, fail
+  for a food taken out of the library, and move the entry to the end of its meal.
+- **Soft delete with a `removed_at` column:** every read of entries would have to leave removed
+  ones out, and they would stay in the table.
 
 ## Consequences
 

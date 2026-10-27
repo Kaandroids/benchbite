@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import { renderHook, waitFor } from '@/test/render';
+import i18n from '@/i18n';
+import { act, renderHook, waitFor } from '@/test/render';
 
 import { mealsOf, suggestedCalories, totalOf, useDayEntries, type MealEntry } from './meals';
 
@@ -64,26 +65,73 @@ describe('suggestedCalories', () => {
 
 describe('useDayEntries', () => {
   const order = jest.fn();
-  const eq = jest.fn(() => ({ order }));
+  const eq = jest.fn(() => ({ order: () => ({ order }) }));
   const select = jest.fn(() => ({ eq }));
 
   beforeEach(() => {
     jest.mocked(supabase.from).mockReturnValue({ select } as never);
   });
 
-  it("loads the day's entries with what each adds", async () => {
-    order.mockResolvedValue({
-      data: [{ meal: 'breakfast', kcal: 174, protein_g: 6.6, carbs_g: 26.7, fat_g: 3.3 }],
-      error: null,
-    });
+  const row = {
+    id: 3,
+    meal: 'breakfast',
+    food_id: 'C133000',
+    grams: 50,
+    portion_unit: 'serving',
+    portion_count: 1,
+    kcal_per_100g: 348,
+    protein_per_100g: 13.22,
+    carbs_per_100g: 53.3,
+    fat_per_100g: 6.65,
+    kcal: 174,
+    protein_g: 6.6,
+    carbs_g: 26.7,
+    fat_g: 3.3,
+    foods: {
+      food_names: [
+        { language: 'en', name: 'Oat flakes' },
+        { language: 'de', name: 'Haferflocken' },
+      ],
+    },
+  };
+
+  afterEach(() => act(() => i18n.changeLanguage('en')));
+
+  it("loads the day's entries with their food, amount, values and what each adds", async () => {
+    order.mockResolvedValue({ data: [row], error: null });
+    await act(() => i18n.changeLanguage('de'));
     const { result } = await renderHook(() => useDayEntries('2026-10-27'));
     await waitFor(() =>
       expect(result.current.data).toEqual([
-        { meal: 'breakfast', calories: 174, proteinG: 6.6, carbsG: 26.7, fatG: 3.3 },
+        {
+          id: 3,
+          day: '2026-10-27',
+          meal: 'breakfast',
+          foodId: 'C133000',
+          name: 'Haferflocken',
+          grams: 50,
+          portion: { unit: 'serving', count: 1 },
+          per100g: { calories: 348, proteinG: 13.22, carbsG: 53.3, fatG: 6.65 },
+          calories: 174,
+          proteinG: 6.6,
+          carbsG: 26.7,
+          fatG: 3.3,
+        },
       ]),
     );
     expect(supabase.from).toHaveBeenCalledWith('meal_entries');
     expect(eq).toHaveBeenCalledWith('day', '2026-10-27');
+  });
+
+  it('falls back to the English name and leaves out a portion for grams', async () => {
+    order.mockResolvedValue({
+      data: [{ ...row, portion_unit: null, portion_count: null }],
+      error: null,
+    });
+    await act(() => i18n.changeLanguage('tr'));
+    const { result } = await renderHook(() => useDayEntries('2026-10-27'));
+    await waitFor(() => expect(result.current.data?.[0]?.name).toBe('Oat flakes'));
+    expect(result.current.data?.[0]?.portion).toBeNull();
   });
 
   it('fails with the error of the request', async () => {

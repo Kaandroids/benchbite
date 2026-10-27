@@ -268,7 +268,36 @@
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
       "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
       "archived": "Dieses Lebensmittel ist nicht mehr in der Bibliothek."
-    }
+    },
+    "meal": {
+      "dayLine": "{{name}} · {{date}}",
+      "swipeHint": "Wische einen Eintrag nach links, um ihn zu entfernen.",
+      "remove": "Entfernen",
+      "removeEntry": "{{name}} entfernen",
+      "removed": "{{name}} entfernt",
+      "undo": "Rückgängig",
+      "empty": "Noch nichts eingetragen.",
+      "removeError": "Der Eintrag konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es erneut.",
+      "undoError": "Der Eintrag konnte nicht zurückgeholt werden. Das geht bis eine Stunde nach dem Entfernen."
+    },
+    "entry": {
+      "inMeal": {
+        "breakfast": "Im Frühstück",
+        "lunch": "Im Mittagessen",
+        "dinner": "Im Abendessen",
+        "snack": "In den Snacks"
+      },
+      "was": "Vorher {{calories}} kcal. Der Eintrag bleibt in dieser Mahlzeit.",
+      "save": "Speichern",
+      "remove": "Diesen Eintrag entfernen",
+      "saveError": "Die Änderung konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "notFound": {
+        "title": "Eintrag nicht gefunden",
+        "message": "Dieser Eintrag wurde entfernt."
+      },
+      "removeError": "Der Eintrag konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es erneut."
+    },
+    "kcal": "{{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",

@@ -3,17 +3,15 @@ import { router } from 'expo-router';
 import { fireEvent, render, screen } from '@/test/render';
 
 import { AmountScreen } from './amount-screen';
-import { useAddEntry, useFood, type Food } from './foods';
+import { useAddEntry } from './entries';
+import { useFood, type Food } from './foods';
 import { useDayEntries } from './meals';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), dismissTo: jest.fn() } }));
-jest.mock('./foods', () => ({
-  ...jest.requireActual('./foods'),
-  useFood: jest.fn(),
-  useAddEntry: jest.fn(),
-}));
+jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
+jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
 
@@ -91,7 +89,7 @@ describe('AmountScreen', () => {
 
     await fireEvent.press(screen.getByText('Add a snack'));
     expect(mutate).toHaveBeenCalledWith(
-      { day: '2026-10-27', meal: 'snack', foodId: 'M141300', grams: 80, portion: undefined },
+      { day: '2026-10-27', meal: 'snack', foodId: 'M141300', grams: 80, portion: null },
       expect.anything(),
     );
   });

@@ -24,11 +24,11 @@ import { AddEntryError } from './add-entry-error';
 import {
   amountOf,
   MIN_QUERY_LENGTH,
-  useAddEntry,
   useFoodSearch,
   useSettledQuery,
   type FoodResult,
 } from './foods';
+import { useAddEntry } from './entries';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 

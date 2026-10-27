@@ -113,6 +113,15 @@ describe('NutritionScreen', () => {
     });
   });
 
+  it('opens a meal with its entries', async () => {
+    await render(<NutritionScreen />);
+    await fireEvent.press(screen.getByText('Lunch'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/meal',
+      params: { meal: 'lunch', day: '2026-10-27' },
+    });
+  });
+
   it('shows the meals without a summary before the targets exist', async () => {
     jest.mocked(useNutritionTargets).mockReturnValue(query(null, {}));
     await render(<NutritionScreen />);

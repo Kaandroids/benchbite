@@ -268,7 +268,36 @@
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
       "failed": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
       "archived": "Bu besin artık kütüphanede yok."
-    }
+    },
+    "meal": {
+      "dayLine": "{{name}} · {{date}}",
+      "swipeHint": "Bir kaydı kaldırmak için sola kaydır.",
+      "remove": "Kaldır",
+      "removeEntry": "{{name}} kaldır",
+      "removed": "{{name}} kaldırıldı",
+      "undo": "Geri al",
+      "empty": "Henüz bir şey eklenmedi.",
+      "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene.",
+      "undoError": "Kayıt geri getirilemedi. Bir kayıt, kaldırıldıktan sonra bir saat içinde geri getirilebilir."
+    },
+    "entry": {
+      "inMeal": {
+        "breakfast": "Kahvaltıda",
+        "lunch": "Öğle yemeğinde",
+        "dinner": "Akşam yemeğinde",
+        "snack": "Atıştırmalıklarda"
+      },
+      "was": "Önceden {{calories}} kcal. Kayıt bu öğünde kalır.",
+      "save": "Kaydet",
+      "remove": "Bu kaydı kaldır",
+      "saveError": "Değişiklik kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "notFound": {
+        "title": "Kayıt bulunamadı",
+        "message": "Bu kayıt kaldırılmış."
+      },
+      "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene."
+    },
+    "kcal": "{{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
