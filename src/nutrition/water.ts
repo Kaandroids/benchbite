@@ -1,19 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
 
 /** A glass, which + and − add and take away. */
 export const GLASS_ML = 250;
 
-/** The goal before the user sets one, as the profiles table has it. */
-export const DEFAULT_WATER_GOAL_ML = 2000;
-
-/** The goals the settings offer, in millilitres. */
-export const WATER_GOALS_ML = [1500, 2000, 2500, 3000] as const;
+/** The most a day holds, as water_days does. */
+const MAX_WATER_ML = 10000;
 
 const waterKey = (day: string) => ['water', day];
-const GOAL_KEY = ['profile', 'water-goal'];
 
 /** The water drunk on a day, YYYY-MM-DD, in millilitres; 0 before the first glass. */
 export function useWater(day: string) {
@@ -35,61 +30,29 @@ export function useWater(day: string) {
 
 /**
  * Adds a glass to a day, or takes one away with a negative amount. The total shows the change at
- * once and then what the database counted, which keeps it between nothing and 10 L.
+ * once. Taps can run side by side and their answers come back in any order, so the day is loaded
+ * again once the last one is done, rather than trusting any one answer.
  */
 export function useAddWater(day: string) {
   const queryClient = useQueryClient();
+  const mutationKey = ['add-water', day];
   return useMutation({
-    mutationFn: async (ml: number): Promise<number> => {
-      const { data, error } = await supabase.rpc('add_water', { on_day: day, amount_ml: ml });
+    mutationKey,
+    mutationFn: async (ml: number) => {
+      const { error } = await supabase.rpc('add_water', { on_day: day, amount_ml: ml });
       if (error) {
         throw error;
       }
-      return data;
     },
     onMutate: async (ml) => {
       await queryClient.cancelQueries({ queryKey: waterKey(day) });
-      const before = queryClient.getQueryData<number>(waterKey(day));
-      queryClient.setQueryData<number>(waterKey(day), (total = 0) => Math.max(0, total + ml));
-      return { before };
+      queryClient.setQueryData<number>(waterKey(day), (total = 0) =>
+        Math.min(MAX_WATER_ML, Math.max(0, total + ml)),
+      );
     },
-    onError: (_error, _ml, context) => queryClient.setQueryData(waterKey(day), context?.before),
-    onSuccess: (total) => queryClient.setQueryData(waterKey(day), total),
-  });
-}
-
-/** The signed-in user's daily water goal in millilitres. */
-export function useWaterGoal() {
-  return useQuery({
-    queryKey: GOAL_KEY,
-    queryFn: async (): Promise<number> => {
-      const { data, error } = await supabase.from('profiles').select('water_goal_ml').maybeSingle();
-      if (error) {
-        throw error;
-      }
-      return data?.water_goal_ml ?? DEFAULT_WATER_GOAL_ML;
-    },
-  });
-}
-
-/** Changes the signed-in user's daily water goal. */
-export function useSetWaterGoal() {
-  const queryClient = useQueryClient();
-  const session = useSession();
-  return useMutation({
-    mutationFn: async (ml: number) => {
-      if (session.status !== 'ready') {
-        throw new Error('Not signed in');
-      }
-      const { error } = await supabase
-        .from('profiles')
-        .update({ water_goal_ml: ml })
-        .eq('user_id', session.session.user.id);
-      if (error) {
-        throw error;
-      }
-      return ml;
-    },
-    onSuccess: (ml) => queryClient.setQueryData(GOAL_KEY, ml),
+    onSettled: () =>
+      queryClient.isMutating({ mutationKey }) === 1
+        ? queryClient.invalidateQueries({ queryKey: waterKey(day) })
+        : undefined,
   });
 }
