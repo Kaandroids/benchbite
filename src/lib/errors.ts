@@ -1,5 +1,5 @@
-// The codes the database raises for requests it refuses (BB001 to BB024 in the migrations, and some of Postgres's own), named
-// by what they mean, for the ones the app tells apart.
+// The codes the database raises for requests it refuses (BB001 to BB025 in the migrations, and
+// some of Postgres's own), named by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',
   tooYoung: 'BB002',
@@ -12,8 +12,8 @@ const DB_ERRORS = {
   closedDay: 'BB020',
   foodArchived: 'BB022',
   customFoodLimit: 'BB024',
-  // A unique constraint, such as the name of a food of one's own.
-  nameTaken: '23505',
+  // Postgres's own, for a row that would repeat a unique value, such as a food's name.
+  uniqueViolation: '23505',
 } as const;
 
 type DbError = keyof typeof DB_ERRORS;

@@ -345,7 +345,7 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
         ) : null}
         {failed.isError ? (
           <Note tone="danger">
-            {isDbError(failed.error, 'nameTaken')
+            {isDbError(failed.error, 'uniqueViolation')
               ? t('nutrition.food.nameTaken')
               : isDbError(failed.error, 'customFoodLimit')
                 ? t('nutrition.food.limit')

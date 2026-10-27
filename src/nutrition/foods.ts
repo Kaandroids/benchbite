@@ -11,6 +11,11 @@ export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
 export type Portion = { unit: PortionUnit; grams: number };
 
+/** A portion from a row's nullable unit and grams, or null when it has none. */
+export function portionOf(unit: PortionUnit | null, grams: number | null): Portion | null {
+  return unit !== null && grams !== null ? { unit, grams } : null;
+}
+
 /** A number of portions, such as 2 slices. */
 export type PickedPortion = { unit: PortionUnit; count: number };
 
@@ -104,10 +109,7 @@ export function useFoodSearch(term: string) {
         ref: refOfRow(row),
         name: row.name,
         per100g: totalsOf(row),
-        portion:
-          row.portion_unit !== null && row.portion_grams !== null
-            ? { unit: row.portion_unit, grams: row.portion_grams }
-            : null,
+        portion: portionOf(row.portion_unit, row.portion_grams),
       }));
     },
   });
@@ -163,13 +165,11 @@ async function customFood(id: number): Promise<Food | null> {
   if (!data || data.archived_at !== null) {
     return null;
   }
+  const portion = portionOf(data.portion_unit, data.portion_grams);
   return {
     ref: { kind: 'custom', id: data.id },
     name: data.name,
     per100g: totalsOf(data),
-    portions:
-      data.portion_unit !== null && data.portion_grams !== null
-        ? [{ unit: data.portion_unit, grams: data.portion_grams }]
-        : [],
+    portions: portion ? [portion] : [],
   };
 }
