@@ -55,4 +55,6 @@ but no portion sizes.
 - Foods BLS does not have, such as simit or sucuk, are missing until they get a source of their
   own; `food_source` is an enum so that one can be added.
 - Portion sizes are typical European amounts we chose, not BLS data.
-- Adding foods means editing `foods.json` and generating a new migration.
+- Adding foods means editing `foods.json` and generating a new migration. A food taken out of
+  the file is deleted, so tables that reference foods have to survive that, for example by
+  keeping their own copy of the values.
