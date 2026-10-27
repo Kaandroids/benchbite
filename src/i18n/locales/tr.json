@@ -278,7 +278,7 @@
       "undo": "Geri al",
       "empty": "Henüz bir şey eklenmedi.",
       "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene.",
-      "undoError": "Kayıt geri eklenemedi."
+      "undoError": "Kayıt geri getirilemedi. Bir kayıt, kaldırıldıktan sonra bir saat içinde geri getirilebilir."
     },
     "entry": {
       "inMeal": {
@@ -294,7 +294,8 @@
       "notFound": {
         "title": "Kayıt bulunamadı",
         "message": "Bu kayıt kaldırılmış."
-      }
+      },
+      "removeError": "Kayıt kaldırılamadı. Bağlantını kontrol edip tekrar dene."
     },
     "kcal": "{{calories}} kcal"
   },

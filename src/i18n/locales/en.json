@@ -278,7 +278,7 @@
       "undo": "Undo",
       "empty": "Nothing logged yet.",
       "removeError": "The entry could not be removed. Check your connection and try again.",
-      "undoError": "The entry could not be added back."
+      "undoError": "The entry could not be brought back. It can be restored for an hour after it was removed."
     },
     "entry": {
       "inMeal": {
@@ -294,7 +294,8 @@
       "notFound": {
         "title": "Entry not found",
         "message": "This entry was removed."
-      }
+      },
+      "removeError": "The entry could not be removed. Check your connection and try again."
     },
     "kcal": "{{calories}} kcal"
   },

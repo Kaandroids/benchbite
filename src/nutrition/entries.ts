@@ -56,11 +56,14 @@ export function useUpdateEntry() {
         throw error;
       }
     },
-    onSuccess: (_data, { day }) => queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
+    // Not waited for, so that the screen that changed it can go back before its day reloads.
+    onSuccess: (_data, { day }) => {
+      void queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) });
+    },
   });
 }
 
-/** Removes an entry from its day. */
+/** Removes an entry from its day. It can be restored for an hour. */
 export function useRemoveEntry() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -70,36 +73,27 @@ export function useRemoveEntry() {
         throw error;
       }
     },
-    onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
+    // Not waited for, so that the screen that removed it can go back before its day reloads.
+    onSuccess: (_data, entry) => {
+      void queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) });
+    },
   });
 }
 
 /**
- * The entry to log again when its removal is undone. It is logged anew, so it copies the food's
- * values again, which are the same unless the library changed in between.
+ * Puts a removed entry back as it was, with its time and copied values, within an hour of its
+ * removal. The database keeps it for that long.
  */
-export function restoreOf(entry: LoggedEntry): NewEntry {
-  return {
-    day: entry.day,
-    meal: entry.meal,
-    foodId: entry.foodId,
-    grams: entry.grams,
-    portion: entry.portion,
-  };
-}
-
-// The entry removed last on the entry screen, which the meal screen offers to undo when it shows
-// again. The entry screen is a screen of its own, so it hands the entry back this way.
-let removed: LoggedEntry | null = null;
-
-export function setRemovedEntry(entry: LoggedEntry) {
-  removed = entry;
-}
-
-/** The entry removed since the meal screen last asked, once. */
-export function takeRemovedEntry(): LoggedEntry | null {
-  const entry = removed;
-  removed = null;
-  return entry;
+export function useRestoreEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (entry: LoggedEntry) => {
+      const { error } = await supabase.rpc('restore_meal_entry', { entry_id: entry.id });
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: (_data, entry) =>
+      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
+  });
 }

@@ -1,17 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import {
-  restoreOf,
-  setRemovedEntry,
-  takeRemovedEntry,
-  useAddEntry,
-  useRemoveEntry,
-  useUpdateEntry,
-} from './entries';
+import { useAddEntry, useRemoveEntry, useRestoreEntry, useUpdateEntry } from './entries';
 import type { LoggedEntry } from './meals';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 const MILK: LoggedEntry = {
   id: 7,
@@ -128,22 +121,20 @@ describe('useRemoveEntry', () => {
   });
 });
 
-describe('restoreOf', () => {
-  it('logs the same food and amount to the same meal and day', () => {
-    expect(restoreOf(MILK)).toEqual({
-      day: '2026-10-27',
-      meal: 'breakfast',
-      foodId: 'M111300',
-      grams: 200,
-      portion: { unit: 'glass', count: 1 },
-    });
+describe('useRestoreEntry', () => {
+  it("puts the entry back and loads the day's entries again", async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useRestoreEntry(), { queryClient });
+    await act(() => result.current.mutateAsync(MILK));
+    expect(supabase.rpc).toHaveBeenCalledWith('restore_meal_entry', { entry_id: 7 });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
   });
-});
 
-describe('takeRemovedEntry', () => {
-  it('hands the removed entry over once', () => {
-    setRemovedEntry(MILK);
-    expect(takeRemovedEntry()).toBe(MILK);
-    expect(takeRemovedEntry()).toBeNull();
+  it('fails when the entry can no longer be restored', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ error: { code: 'BB023' } } as never);
+    const { result } = await renderHook(() => useRestoreEntry());
+    await expect(act(() => result.current.mutateAsync(MILK))).rejects.toEqual({ code: 'BB023' });
   });
 });

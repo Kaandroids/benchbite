@@ -16,10 +16,11 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { useDayName } from './day-name';
-import { restoreOf, takeRemovedEntry, useAddEntry, useRemoveEntry } from './entries';
+import { useRemoveEntry, useRestoreEntry } from './entries';
 import { EntryRow } from './entry-row';
 import { MACROS } from './macro-targets';
 import { totalOf, useDayEntries, type LoggedEntry, type Meal } from './meals';
+import { takeRemovedEntry } from './removed-entry';
 
 type MealScreenProps = {
   meal: Meal;
@@ -36,18 +37,18 @@ export function MealScreen({ meal, day }: MealScreenProps) {
   const weekdayDate = useWeekdayDateFormat();
   const entries = useDayEntries(day);
   const removeEntry = useRemoveEntry();
-  const addEntry = useAddEntry();
+  const restoreEntry = useRestoreEntry();
   // The entry removed last, which the toast offers to put back.
   const [removed, setRemoved] = useState<LoggedEntry | null>(null);
 
   // An entry removed on its own screen comes back here to be offered for undo.
   useFocusEffect(
     useCallback(() => {
-      const entry = takeRemovedEntry();
+      const entry = takeRemovedEntry(meal, day);
       if (entry) {
         setRemoved(entry);
       }
-    }, []),
+    }, [meal, day]),
   );
   const hideToast = useCallback(() => setRemoved(null), []);
 
@@ -62,9 +63,7 @@ export function MealScreen({ meal, day }: MealScreenProps) {
       .then(() => setRemoved(entry))
       .catch(() => {});
   };
-  const undo = (entry: LoggedEntry) => {
-    addEntry.mutate(restoreOf(entry));
-  };
+  const undo = (entry: LoggedEntry) => restoreEntry.mutate(entry);
 
   let content;
   if (!allLoaded([entries])) {
@@ -141,7 +140,7 @@ export function MealScreen({ meal, day }: MealScreenProps) {
         )}
 
         {removeEntry.isError ? <Note tone="danger">{t('nutrition.meal.removeError')}</Note> : null}
-        {addEntry.isError ? <Note tone="danger">{t('nutrition.meal.undoError')}</Note> : null}
+        {restoreEntry.isError ? <Note tone="danger">{t('nutrition.meal.undoError')}</Note> : null}
       </ScrollView>
     );
   }
@@ -156,6 +155,8 @@ export function MealScreen({ meal, day }: MealScreenProps) {
       <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md, gap: spacing.md }}>
         {removed ? (
           <Toast
+            // A new toast for each removal, so that its time and announcement start again.
+            key={removed.id}
             message={t('nutrition.meal.removed', { name: removed.name })}
             action={{ label: t('nutrition.meal.undo'), onPress: () => undo(removed) }}
             onHide={hideToast}

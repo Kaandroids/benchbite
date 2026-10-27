@@ -278,7 +278,7 @@
       "undo": "Rückgängig",
       "empty": "Noch nichts eingetragen.",
       "removeError": "Der Eintrag konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es erneut.",
-      "undoError": "Der Eintrag konnte nicht wiederhergestellt werden."
+      "undoError": "Der Eintrag konnte nicht zurückgeholt werden. Das geht bis eine Stunde nach dem Entfernen."
     },
     "entry": {
       "inMeal": {
@@ -294,7 +294,8 @@
       "notFound": {
         "title": "Eintrag nicht gefunden",
         "message": "Dieser Eintrag wurde entfernt."
-      }
+      },
+      "removeError": "Der Eintrag konnte nicht entfernt werden. Prüfe deine Verbindung und versuche es erneut."
     },
     "kcal": "{{calories}} kcal"
   },

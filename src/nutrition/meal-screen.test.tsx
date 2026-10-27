@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 
 import { act, fireEvent, render, screen } from '@/test/render';
 
-import { setRemovedEntry, useAddEntry, useRemoveEntry } from './entries';
+import { useRemoveEntry, useRestoreEntry } from './entries';
 import { MealScreen } from './meal-screen';
 import { useDayEntries, type LoggedEntry } from './meals';
+import { handOverRemovedEntry } from './removed-entry';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => {
@@ -18,8 +19,8 @@ jest.mock('expo-router', () => {
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./entries', () => ({
   ...jest.requireActual('./entries'),
-  useAddEntry: jest.fn(),
   useRemoveEntry: jest.fn(),
+  useRestoreEntry: jest.fn(),
 }));
 
 const entry = (id: number, name: string, meal: LoggedEntry['meal'], calories: number) =>
@@ -58,7 +59,7 @@ beforeEach(() => {
   jest
     .mocked(useRemoveEntry)
     .mockReturnValue({ mutateAsync, isError: false, isPending: false } as never);
-  jest.mocked(useAddEntry).mockReturnValue({ mutate, isError: false } as never);
+  jest.mocked(useRestoreEntry).mockReturnValue({ mutate, isError: false } as never);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -96,17 +97,13 @@ describe('MealScreen', () => {
     expect(mutateAsync).toHaveBeenCalledWith(MILK);
 
     await fireEvent.press(await screen.findByRole('button', { name: 'Undo' }));
-    expect(mutate).toHaveBeenCalledWith({
-      day: '2026-10-27',
-      meal: 'breakfast',
-      foodId: 'F2',
-      grams: 200,
-      portion: { unit: 'glass', count: 1 },
-    });
+    expect(mutate).toHaveBeenCalledWith(MILK);
   });
 
-  it('offers to undo an entry removed on its own screen', async () => {
-    setRemovedEntry(OATS);
+  it('offers to undo an entry removed on its own screen, on its meal only', async () => {
+    handOverRemovedEntry(OATS);
+    await render(<MealScreen meal="lunch" day="2026-10-27" />);
+    expect(screen.queryByText('Oat flakes removed')).toBeNull();
     await render(<MealScreen meal="breakfast" day="2026-10-27" />);
     expect(screen.getByText('Oat flakes removed')).toBeTruthy();
   });
