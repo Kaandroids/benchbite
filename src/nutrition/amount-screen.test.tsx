@@ -6,6 +6,7 @@ import { AmountScreen } from './amount-screen';
 import { useAddEntry } from './entries';
 import { useFood, type Food } from './foods';
 import { useDayEntries } from './meals';
+import { useFavouriteKeys, useSetFavourite } from './quick-foods';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -16,6 +17,7 @@ jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn
 jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
+jest.mock('./quick-foods', () => ({ useFavouriteKeys: jest.fn(), useSetFavourite: jest.fn() }));
 
 const YOGHURT: Food = {
   ref: { kind: 'library', id: 'M141300' },
@@ -31,6 +33,7 @@ const loaded = <T,>(data: T) =>
   ({ data, isPending: false, isError: false, isFetching: false, refetch: jest.fn() }) as never;
 
 const mutate = jest.fn();
+const setFavourite = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -46,6 +49,8 @@ beforeEach(() => {
   jest
     .mocked(useAddEntry)
     .mockReturnValue({ mutate, isPending: false, isError: false, error: null } as never);
+  jest.mocked(useFavouriteKeys).mockReturnValue(new Set());
+  jest.mocked(useSetFavourite).mockReturnValue({ mutate: setFavourite, isPending: false } as never);
 });
 
 describe('AmountScreen', () => {
@@ -182,5 +187,18 @@ describe('AmountScreen', () => {
       <AmountScreen food={{ kind: 'library', id: 'X' }} meal="lunch" day="2026-10-27" />,
     );
     expect(screen.getByText('Food not found')).toBeTruthy();
+  });
+
+  it('stars the food, and takes the star away', async () => {
+    await render(<AmountScreen food={YOGHURT.ref} meal="lunch" day="2026-10-27" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add to favourites' }));
+    expect(setFavourite).toHaveBeenCalledWith(
+      { food: YOGHURT.ref, favourite: true },
+      expect.anything(),
+    );
+
+    jest.mocked(useFavouriteKeys).mockReturnValue(new Set(['M141300']));
+    await render(<AmountScreen food={YOGHURT.ref} meal="lunch" day="2026-10-27" />);
+    expect(screen.getByRole('button', { name: 'Remove from favourites' })).toBeSelected();
   });
 });

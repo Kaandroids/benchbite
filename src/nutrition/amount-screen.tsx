@@ -1,13 +1,16 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 import { allLoaded } from '@/components/load-state';
 import { PillButton } from '@/components/ui/pill-button';
 import { useNumberFormat } from '@/i18n/units';
+import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
 import { useAddEntry } from './entries';
+import { FavouriteButton } from './favourite-star';
 import { FoodLoadState } from './food-load-state';
 import { useFood, type FoodRef } from './foods';
 import { totalOf, useDayEntries, type Meal } from './meals';
@@ -21,10 +24,14 @@ type AmountScreenProps = {
   day: string;
 };
 
-/** Picks how much of a food was eaten for a meal, showing what that adds to the day. */
+/**
+ * Picks how much of a food was eaten for a meal, showing what that adds to the day. The star in
+ * the top bar keeps the food in the favourites.
+ */
 export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
+  const { spacing } = useTheme();
   const food = useFood(ref);
   const addEntry = useAddEntry();
   const entries = useDayEntries(day);
@@ -40,18 +47,21 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
         title={food.data.name}
         subtitle={t('nutrition.amount.per100g', { calories: format(food.data.per100g.calories) })}
         action={
-          // Only a food of one's own can be changed.
-          ref.kind === 'custom' ? (
-            <PillButton
-              label={t('nutrition.food.editButton')}
-              onPress={() =>
-                router.push({
-                  pathname: '/nutrition/edit-food/[id]',
-                  params: { id: String(ref.id), meal, day },
-                })
-              }
-            />
-          ) : undefined
+          <View style={[styles.actions, { gap: spacing.xs }]}>
+            <FavouriteButton food={ref} name={food.data.name} />
+            {/* Only a food of one's own can be changed. */}
+            {ref.kind === 'custom' ? (
+              <PillButton
+                label={t('nutrition.food.editButton')}
+                onPress={() =>
+                  router.push({
+                    pathname: '/nutrition/edit-food/[id]',
+                    params: { id: String(ref.id), meal, day },
+                  })
+                }
+              />
+            ) : null}
+          </View>
         }
         per100g={food.data.per100g}
         portions={food.data.portions}
@@ -71,3 +81,10 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   }
   return <FoodLoadState gone={food.data === null} queries={queries} />;
 }
+
+const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+});
