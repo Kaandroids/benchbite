@@ -1,8 +1,5 @@
-import { useTranslation } from 'react-i18next';
-
-import { ComingSoon } from '@/components/coming-soon';
+import { NutritionScreen } from '@/nutrition/nutrition-screen';
 
 export default function NutritionTab() {
-  const { t } = useTranslation();
-  return <ComingSoon icon="meal" message={t('comingSoon.nutrition')} />;
+  return <NutritionScreen />;
 }
