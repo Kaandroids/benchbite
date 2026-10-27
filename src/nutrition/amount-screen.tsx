@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { BackBar } from '@/components/ui/back-bar';
+import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -77,7 +78,25 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
       style={[styles.flex, { backgroundColor: colors.background }]}
       edges={['top', 'bottom']}
     >
-      <BackBar />
+      <BackBar
+        action={
+          ref.kind === 'custom' && food.data ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('nutrition.food.edit', { name: food.data.name })}
+              onPress={() =>
+                router.push({
+                  pathname: '/nutrition/edit-food/[id]',
+                  params: { id: String(ref.id), meal, day },
+                })
+              }
+              style={styles.action}
+            >
+              <Icon name="edit" color="text" />
+            </Pressable>
+          ) : null
+        }
+      />
       {content}
     </SafeAreaView>
   );
@@ -86,5 +105,11 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+  },
+  action: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -9,7 +9,9 @@ import { useDayEntries } from './meals';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), dismissTo: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn() },
+}));
 jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
 jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
@@ -140,6 +142,23 @@ describe('AmountScreen', () => {
     }
     expect(screen.getByText(/6.5 bottles · 4,875 g/)).toBeTruthy();
     expect(screen.getByLabelText('More')).toBeDisabled();
+  });
+
+  it("opens a food of one's own to change it, and only that", async () => {
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="lunch" day="2026-10-27" />,
+    );
+    expect(screen.queryByLabelText(/^Edit/)).toBeNull();
+
+    jest
+      .mocked(useFood)
+      .mockReturnValue(loaded({ ...YOGHURT, ref: { kind: 'custom', id: 12 }, name: 'My yoghurt' }));
+    await render(<AmountScreen food={{ kind: 'custom', id: 12 }} meal="lunch" day="2026-10-27" />);
+    await fireEvent.press(screen.getByLabelText('Edit My yoghurt'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/edit-food/[id]',
+      params: { id: '12', meal: 'lunch', day: '2026-10-27' },
+    });
   });
 
   it('says when the food is no longer in the library', async () => {

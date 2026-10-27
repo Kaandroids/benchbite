@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
@@ -217,13 +218,25 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </View>
 
-      {body}
+      <View style={styles.flex}>{body}</View>
+      <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
+        <Button
+          label={t('nutrition.food.create')}
+          variant="secondary"
+          onPress={() =>
+            router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
+  },
+  flex: {
     flex: 1,
   },
   header: {

@@ -139,6 +139,17 @@ describe('FoodSearchScreen', () => {
     });
   });
 
+  it('opens a new food with what was typed', async () => {
+    mockSearch({ data: [] });
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'protein yog');
+    await fireEvent.press(screen.getByText('New food'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/new-food',
+      params: { meal: 'lunch', day: '2026-10-27', name: 'protein yog' },
+    });
+  });
+
   it('says when nothing matches', async () => {
     mockSearch({ data: [] });
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
