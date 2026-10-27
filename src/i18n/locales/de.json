@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "{{portion}} {{name}} hinzufügen",
       "added": "{{name}} hinzugefügt",
-      "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
+      "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Eigenes"
     },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",

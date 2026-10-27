@@ -28,7 +28,7 @@ const entry = (id: number, name: string, meal: LoggedEntry['meal'], calories: nu
     id,
     day: '2026-10-27',
     meal,
-    foodId: `F${id}`,
+    food: { kind: 'library', id: `F${id}` },
     name,
     grams: 200,
     portion: { unit: 'glass', count: 1 },

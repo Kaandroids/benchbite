@@ -17,14 +17,14 @@ jest.mock('./foods', () => ({
 }));
 
 const EGG: FoodResult = {
-  id: 'E111100',
+  ref: { kind: 'library', id: 'E111100' },
   name: 'Egg, raw',
   per100g: { calories: 137, proteinG: 12.5, carbsG: 0.5, fatG: 9.3 },
   portion: { unit: 'piece', grams: 60 },
 };
 
 const OATS: FoodResult = {
-  id: 'C133000',
+  ref: { kind: 'library', id: 'C133000' },
   name: 'Oat flakes',
   per100g: { calories: 348, proteinG: 13.22, carbsG: 53.3, fatG: 6.65 },
   portion: { unit: 'serving', grams: 50 },
@@ -84,7 +84,7 @@ describe('FoodSearchScreen', () => {
     expect(mutateAsync).toHaveBeenCalledWith({
       day: '2026-10-27',
       meal: 'breakfast',
-      foodId: 'C133000',
+      food: { kind: 'library', id: 'C133000' },
       grams: 50,
       portion: { unit: 'serving', count: 1 },
     });
@@ -106,6 +106,37 @@ describe('FoodSearchScreen', () => {
     await act(async () => saves.forEach((save) => save()));
     expect(screen.queryByLabelText('Add 1 serving of Oat flakes')).toBeNull();
     expect(screen.queryByLabelText('Add 1 piece of Egg, raw')).toBeNull();
+  });
+
+  it("marks the user's own foods and adds 100 g of one without a portion", async () => {
+    mutateAsync.mockResolvedValue(undefined);
+    mockSearch({
+      data: [
+        {
+          ref: { kind: 'custom', id: 12 },
+          name: 'Protein yoghurt',
+          per100g: { calories: 70, proteinG: 10, carbsG: 6.5, fatG: 0.3 },
+          portion: null,
+        },
+      ],
+    });
+    await render(<FoodSearchScreen meal="snack" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'protein');
+    expect(screen.getByText('Mine')).toBeTruthy();
+    expect(screen.getByText('100 g · 70 kcal')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Add 100 g of Protein yoghurt'));
+    expect(mutateAsync).toHaveBeenCalledWith({
+      day: '2026-10-27',
+      meal: 'snack',
+      food: { kind: 'custom', id: 12 },
+      grams: 100,
+      portion: null,
+    });
+    await fireEvent.press(screen.getByText('Protein yoghurt'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/food/[id]',
+      params: { id: 'custom-12', meal: 'snack', day: '2026-10-27' },
+    });
   });
 
   it('says when nothing matches', async () => {

@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "Add {{portion}} of {{name}}",
       "added": "{{name}} added",
-      "error": "The search failed. Check your connection and try again."
+      "error": "The search failed. Check your connection and try again.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Mine"
     },
     "amount": {
       "per100g": "{{calories}} kcal per 100 g",

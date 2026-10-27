@@ -131,7 +131,7 @@ function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved 
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   // The food's other portions; a food taken out of the library has none.
-  const food = useFood(entry.foodId);
+  const food = useFood(entry.food);
   const updateEntry = useUpdateEntry();
 
   if (!allLoaded([food])) {

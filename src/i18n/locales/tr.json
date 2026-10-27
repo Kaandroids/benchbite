@@ -247,7 +247,9 @@
       "result": "{{portion}} · {{grams}} g · {{calories}} kcal",
       "quickAdd": "{{name}}, {{portion}} ekle",
       "added": "{{name}} eklendi",
-      "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene."
+      "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene.",
+      "resultGrams": "{{grams}} g · {{calories}} kcal",
+      "mine": "Benim"
     },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",

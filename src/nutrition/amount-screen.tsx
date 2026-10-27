@@ -12,12 +12,12 @@ import { useTheme } from '@/theme';
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
 import { useAddEntry } from './entries';
-import { useFood } from './foods';
+import { useFood, type FoodRef } from './foods';
 import { totalOf, useDayEntries, type Meal } from './meals';
 import { useNutritionTargets } from './targets';
 
 type AmountScreenProps = {
-  foodId: string;
+  food: FoodRef;
   /** The meal the food goes to: the one the search was opened for. */
   meal: Meal;
   /** YYYY-MM-DD. */
@@ -25,11 +25,11 @@ type AmountScreenProps = {
 };
 
 /** Picks how much of a food was eaten for a meal, showing what that adds to the day. */
-export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
+export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const food = useFood(foodId);
+  const food = useFood(ref);
   const addEntry = useAddEntry();
   const entries = useDayEntries(day);
   const targets = useNutritionTargets();
@@ -58,7 +58,7 @@ export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
         error={addEntry.isError ? <AddEntryError error={addEntry.error} /> : undefined}
         onSubmit={(amount) =>
           addEntry.mutate(
-            { day, meal, foodId, ...amount },
+            { day, meal, food: ref, ...amount },
             { onSuccess: () => router.dismissTo('/nutrition') },
           )
         }
