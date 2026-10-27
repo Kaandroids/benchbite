@@ -10,6 +10,7 @@ import {
   useShortDateFormat,
   useClockFormat,
   useTimeFormat,
+  useWeekdayDateFormat,
   useWeekdayFormat,
   weekStart,
 } from './dates';
@@ -154,6 +155,13 @@ describe('useShortDateFormat', () => {
     const { result } = await renderHook(() => useShortDateFormat(new Date(2026, 9, 23)));
     expect(result.current(new Date(2026, 9, 5))).toBe('Oct 5');
     expect(result.current(new Date(2025, 9, 5))).toBe('Oct 5, 2025');
+  });
+});
+
+describe('useWeekdayDateFormat', () => {
+  it('writes a day briefly with its weekday', async () => {
+    const { result } = await renderHook(() => useWeekdayDateFormat());
+    expect(result.current(new Date(2026, 9, 27))).toBe('Tue, Oct 27');
   });
 });
 
