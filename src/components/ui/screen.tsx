@@ -26,7 +26,7 @@ type ScreenProps = {
    * header on one line, or a component for a title that needs more.
    */
   title?: ReactNode;
-  /** A short line under a text title, such as the day of a meal. */
+  /** A short line under a text title, such as the day of a meal; not shown with a component. */
   subtitle?: string;
   /** False for content that scrolls itself, such as a long virtualized list. */
   scrolls?: boolean;
@@ -80,7 +80,7 @@ export function Screen({
             </View>
           )}
           {/* Keeps a title in the middle when there is a back button but no action. */}
-          {action ?? (title && onBack ? <View style={styles.back} /> : null)}
+          {action ?? (title !== undefined && onBack ? <View style={styles.back} /> : null)}
         </View>
       ) : null}
       {scrolls ? (
