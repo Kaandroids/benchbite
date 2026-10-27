@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+
 import { fireEvent, render, screen } from '@/test/render';
 
 import { useDayEntries, type MealEntry } from './meals';
@@ -5,6 +7,7 @@ import { NutritionScreen } from './nutrition-screen';
 import { useNutritionTargets, type NutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 
@@ -98,6 +101,16 @@ describe('NutritionScreen', () => {
     await screen.rerender(<NutritionScreen />);
     expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-28');
     expect(screen.getByText('Today')).toBeTruthy();
+  });
+
+  it('opens the search for a meal of the day shown', async () => {
+    await render(<NutritionScreen />);
+    await fireEvent.press(screen.getByLabelText('Previous day'));
+    await fireEvent.press(screen.getByLabelText('Add to dinner'));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/add',
+      params: { meal: 'dinner', day: '2026-10-26' },
+    });
   });
 
   it('shows the meals without a summary before the targets exist', async () => {
