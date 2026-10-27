@@ -1,15 +1,8 @@
 import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
-import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
+import { act, renderHook, waitFor } from '@/test/render';
 
-import {
-  amountOf,
-  SEARCH_DELAY_MS,
-  useAddEntry,
-  useFood,
-  useFoodSearch,
-  useSettledQuery,
-} from './foods';
+import { amountOf, SEARCH_DELAY_MS, useFood, useFoodSearch, useSettledQuery } from './foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
@@ -145,63 +138,5 @@ describe('useFood', () => {
     const { result } = await renderHook(() => useFood('X'));
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeNull();
-  });
-});
-
-describe('useAddEntry', () => {
-  const insert = jest.fn();
-
-  beforeEach(() => jest.mocked(supabase.from).mockReturnValue({ insert } as never));
-
-  it("logs the food and loads the day's entries again", async () => {
-    insert.mockResolvedValue({ error: null });
-    const queryClient = createTestQueryClient();
-    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
-    const { result } = await renderHook(() => useAddEntry(), { queryClient });
-    await act(() =>
-      result.current.mutateAsync({
-        day: '2026-10-27',
-        meal: 'breakfast',
-        foodId: 'C133000',
-        grams: 100,
-        portion: { unit: 'serving', count: 2 },
-      }),
-    );
-    expect(supabase.from).toHaveBeenCalledWith('meal_entries');
-    expect(insert).toHaveBeenCalledWith({
-      day: '2026-10-27',
-      meal: 'breakfast',
-      food_id: 'C133000',
-      grams: 100,
-      portion_unit: 'serving',
-      portion_count: 2,
-    });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
-  });
-
-  it('logs grams without a portion', async () => {
-    insert.mockResolvedValue({ error: null });
-    const { result } = await renderHook(() => useAddEntry());
-    await act(() =>
-      result.current.mutateAsync({
-        day: '2026-10-27',
-        meal: 'snack',
-        foodId: 'C133000',
-        grams: 35,
-      }),
-    );
-    expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ grams: 35, portion_unit: null, portion_count: null }),
-    );
-  });
-
-  it('fails with the error of the request', async () => {
-    insert.mockResolvedValue({ error: { code: 'BB020' } });
-    const { result } = await renderHook(() => useAddEntry());
-    await expect(
-      act(() =>
-        result.current.mutateAsync({ day: '2026-10-01', meal: 'snack', foodId: 'X', grams: 1 }),
-      ),
-    ).rejects.toEqual({ code: 'BB020' });
   });
 });

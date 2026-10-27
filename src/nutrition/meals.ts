@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+
+import type { PortionUnit } from './foods';
 
 import type { NutritionTargets } from './targets';
 
@@ -26,6 +29,21 @@ export const MEALS: { meal: Meal; icon: IconName; share: number }[] = [
 ];
 
 export type MealEntry = { meal: Meal } & Totals;
+
+/** A logged entry: what it adds, and the food, amount and values it was logged with. */
+export type LoggedEntry = MealEntry & {
+  id: number;
+  /** YYYY-MM-DD. */
+  day: string;
+  foodId: string;
+  /** In the app language, falling back to English. */
+  name: string;
+  grams: number;
+  /** The portion it was picked in, such as 2 slices, or null when grams were entered. */
+  portion: { unit: PortionUnit; count: number } | null;
+  /** The food's values per 100 g when it was logged (ADR 0034). */
+  per100g: Totals;
+};
 
 export const NOTHING: Totals = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
@@ -95,18 +113,43 @@ export const dayEntriesKey = (day: string) => ['meal-entries', day];
 
 /** The signed-in user's entries of a day, YYYY-MM-DD, in the order they were logged. */
 export function useDayEntries(day: string) {
+  const { i18n } = useTranslation();
   return useQuery({
-    queryKey: dayEntriesKey(day),
-    queryFn: async (): Promise<MealEntry[]> => {
+    queryKey: [...dayEntriesKey(day), i18n.language],
+    queryFn: async (): Promise<LoggedEntry[]> => {
       const { data, error } = await supabase
         .from('meal_entries')
-        .select('meal, kcal, protein_g, carbs_g, fat_g')
+        .select(
+          'id, meal, food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name))',
+        )
         .eq('day', day)
         .order('id');
       if (error) {
         throw error;
       }
-      return data.map((row) => ({ meal: row.meal, ...totalsOf(row) }));
+      return data.map((row) => {
+        const names = row.foods.food_names;
+        const nameIn = (language: string) => names.find((n) => n.language === language)?.name;
+        return {
+          id: row.id,
+          day,
+          meal: row.meal,
+          foodId: row.food_id,
+          name: nameIn(i18n.language) ?? nameIn('en') ?? row.food_id,
+          grams: row.grams,
+          portion:
+            row.portion_unit !== null && row.portion_count !== null
+              ? { unit: row.portion_unit, count: row.portion_count }
+              : null,
+          per100g: {
+            calories: row.kcal_per_100g,
+            proteinG: row.protein_per_100g,
+            carbsG: row.carbs_per_100g,
+            fatG: row.fat_per_100g,
+          },
+          ...totalsOf(row),
+        };
+      });
     },
   });
 }

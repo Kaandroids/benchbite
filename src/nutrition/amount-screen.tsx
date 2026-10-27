@@ -17,7 +17,8 @@ import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
-import { amountOf, useAddEntry, useFood, type Food } from './foods';
+import { useAddEntry } from './entries';
+import { amountOf, useFood, type Food } from './foods';
 import { MACROS } from './macro-targets';
 import { totalOf, useDayEntries, type Meal } from './meals';
 import { usePortionLabel } from './portion-label';

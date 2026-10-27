@@ -1,11 +1,11 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import { dayEntriesKey, totalsOf, type Meal, type Totals } from './meals';
+import { totalsOf, type Totals } from './meals';
 
 export type PortionUnit = Database['public']['Enums']['portion_unit'];
 
@@ -105,40 +105,5 @@ export function useFood(id: string) {
           .map(({ unit, grams }) => ({ unit, grams })),
       };
     },
-  });
-}
-
-export type NewEntry = {
-  /** YYYY-MM-DD. */
-  day: string;
-  meal: Meal;
-  foodId: string;
-  grams: number;
-  /** The portion it was picked in, such as 2 slices; left out when grams were entered. */
-  portion?: { unit: PortionUnit; count: number };
-};
-
-/**
- * Logs a food to a meal. The database copies the food's values and checks the day (ADR 0034);
- * the day's entries are loaded again.
- */
-export function useAddEntry() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (entry: NewEntry) => {
-      const { error } = await supabase.from('meal_entries').insert({
-        day: entry.day,
-        meal: entry.meal,
-        food_id: entry.foodId,
-        grams: entry.grams,
-        portion_unit: entry.portion?.unit ?? null,
-        portion_count: entry.portion?.count ?? null,
-      });
-      if (error) {
-        throw error;
-      }
-    },
-    onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
   });
 }
