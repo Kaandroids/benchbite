@@ -4,17 +4,18 @@
 
 A mobile app for tracking workouts and nutrition in one place.
 
-> **Status:** In development. Onboarding and workout tracking work end to end; nutrition
-> tracking and the Progress tab come next. There is no release yet.
+> **Status:** In development. Onboarding, workout tracking and email accounts work end to end;
+> nutrition tracking comes next. There is no release yet. See the [roadmap](#roadmap).
 
 ## Features
 
 - **Start without an account.** People use the app as a guest; the session lives on the device
-  ([ADR 0005](docs/adr/0005-guest-first-accounts.md)). Creating an account and logging in are
-  planned in the [Accounts milestone](https://github.com/Kaandroids/benchbite/milestone/6).
-- **Onboarding** asks for the goal, body data and training preferences, then calculates daily
-  calorie and macro targets and builds a weekly workout plan that fits the chosen session length
-  ([ADR 0009](docs/adr/0009-nutrition-targets.md),
+  ([ADR 0005](docs/adr/0005-guest-first-accounts.md)). A guest can create an account with an
+  email address and a password at any time, keeping everything logged so far, and log in on
+  another device ([ADR 0031](docs/adr/0031-email-and-password-accounts.md)).
+- **Onboarding** asks for the goal, body data and training preferences in three sections, then
+  calculates daily calorie and macro targets and builds a weekly workout plan that fits the
+  chosen workout length ([ADR 0009](docs/adr/0009-nutrition-targets.md),
   [ADR 0010](docs/adr/0010-plan-builder-edge-function.md)).
 - **Today** shows the week's workouts, today's workout or the next one, the daily targets and the
   weight.
@@ -25,7 +26,7 @@ A mobile app for tracking workouts and nutrition in one place.
   on its own after 12 hours.
 - **History and records:** every finished workout by week, editable afterwards, and per exercise
   its progress chart and records such as the heaviest set and the estimated one-rep max.
-- **English, German and Turkish**, light and dark mode.
+- **Settings:** English, German and Turkish, and a light, dark or system appearance.
 
 ## Tech stack
 
