@@ -229,20 +229,35 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 </Card>
               ))}
             </View>
-            {check?.close ? (
-              <View style={[styles.check, { gap: spacing.xs }]}>
-                <Icon name="check" size={16} color="success" />
-                <Text variant="caption" color="textMuted" style={styles.flex}>
-                  {t('nutrition.food.checkClose')}
+            {check ? (
+              <View
+                accessibilityLiveRegion="polite"
+                style={[
+                  styles.check,
+                  {
+                    gap: spacing.sm,
+                    padding: spacing.md,
+                    borderRadius: radii.md,
+                    backgroundColor: check.close
+                      ? colors.successHintBackground
+                      : colors.warningHintBackground,
+                  },
+                ]}
+              >
+                <Icon
+                  name={check.close ? 'check' : 'warning'}
+                  size={16}
+                  color={check.close ? 'success' : 'warning'}
+                />
+                <Text variant="caption" style={styles.flex}>
+                  {check.close
+                    ? t('nutrition.food.checkClose')
+                    : t('nutrition.food.checkFar', {
+                        calories: format(Math.round(check.calories)),
+                        entered: format(check.entered),
+                      })}
                 </Text>
               </View>
-            ) : check ? (
-              <Note tone="warning">
-                {t('nutrition.food.checkFar', {
-                  calories: format(Math.round(check.calories)),
-                  entered: format(check.entered),
-                })}
-              </Note>
             ) : null}
           </View>
 
@@ -318,7 +333,8 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
             ) : null}
           </Card>
 
-          {result.kind === 'problem' ? (
+          {/* Macros that do not add up are told by the check above. */}
+          {result.kind === 'problem' && result.problem !== 'macrosDontAddUp' ? (
             <Note tone="warning">{t(`nutrition.food.problems.${result.problem}`)}</Note>
           ) : null}
           {failed.isError ? (

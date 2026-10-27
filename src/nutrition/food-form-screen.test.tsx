@@ -132,6 +132,8 @@ describe('FoodFormScreen, a new food', () => {
         'These add up to 17 kcal, not the 400 kcal you entered. Check the label, then save.',
       ),
     ).toBeTruthy();
+    // Said once, by the check, not again under the form.
+    expect(screen.queryByText('Protein, carbs and fat do not add up to the calories.')).toBeNull();
     expect(save()).toBeDisabled();
   });
 
