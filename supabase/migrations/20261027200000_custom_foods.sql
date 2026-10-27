@@ -2,8 +2,9 @@
 -- their owner sees them. They are logged like library foods: an entry names one or the other and
 -- copies its values (ADR 0034), and search finds both.
 --
--- A new error code:
+-- New error codes:
 --   BB024  the user already has as many foods of their own as they may have
+--   BB025  the food was deleted, which cannot be changed or undone
 
 create table public.custom_foods (
   id bigint generated always as identity primary key,
@@ -51,7 +52,8 @@ grant insert (name, kcal, protein_g, carbs_g, fat_g, portion_unit, portion_grams
 grant update (name, kcal, protein_g, carbs_g, fat_g, portion_unit, portion_grams, archived_at)
   on public.custom_foods to authenticated;
 
--- Up to 200 foods of one's own, archived ones left out.
+-- Up to 200 foods of one's own, and up to 1,000 counting deleted ones, so that deleting and
+-- adding again cannot grow the table without end.
 create function public.check_custom_food_limit()
 returns trigger
 language plpgsql
@@ -62,9 +64,10 @@ as $$
 begin
   perform public.lock_user_limits(new.user_id);
   if (
-    select count(*) from public.custom_foods c
-    where c.user_id = new.user_id and c.archived_at is null
-  ) >= 200 then
+    select count(*) filter (where c.archived_at is null) >= 200 or count(*) >= 1000
+    from public.custom_foods c
+    where c.user_id = new.user_id
+  ) then
     raise exception 'A user can have up to 200 foods of their own' using errcode = 'BB024';
   end if;
   return new;
@@ -76,6 +79,30 @@ revoke execute on function public.check_custom_food_limit() from public, anon, a
 create trigger custom_foods_check_limit
   before insert on public.custom_foods
   for each row execute function public.check_custom_food_limit();
+
+-- Deleting is for good: a deleted food is not changed or brought back, and the server sets the
+-- time, whatever the app sends.
+create function public.keep_custom_food_deleted()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if old.archived_at is not null then
+    raise exception 'The food was deleted' using errcode = 'BB025';
+  end if;
+  if new.archived_at is not null then
+    new.archived_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.keep_custom_food_deleted() from public, anon, authenticated;
+
+create trigger custom_foods_keep_deleted
+  before update on public.custom_foods
+  for each row execute function public.keep_custom_food_deleted();
 
 -- An entry names a library food or one of the user's own.
 alter table public.meal_entries

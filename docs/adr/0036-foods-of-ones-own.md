@@ -21,9 +21,11 @@ brands and home dishes. People need to log those from the values printed on thei
 - **Search finds both:** `search_foods` returns a library food's `food_id` or one's own
   `custom_food_id`. Both kinds are ranked alike (ADR 0035), and on a tie one's own food comes first.
 - **Deleting archives:** clients may not delete a row. Setting `archived_at` takes the food out of
-  search and logging, while past entries keep it and its name.
-- **Limits:** up to 200 foods per user, counted under the user's limit lock. Names are unique per
-  user, compared as search compares them.
+  search and logging, while past entries keep it and its name. It is for good: a trigger refuses
+  to change or bring back a deleted food, and sets the server's time.
+- **Limits:** up to 200 foods per user, and up to 1,000 counting deleted ones, so that deleting and
+  adding again cannot grow the table without end. Both are counted under the user's limit lock.
+  Names are unique per user, compared as search compares them.
 - **In the app:** a food is named by a `FoodRef`, `{ kind: 'library', id }` or
   `{ kind: 'custom', id }`. In routes it is written as the BLS code or as `custom-<id>`.
 

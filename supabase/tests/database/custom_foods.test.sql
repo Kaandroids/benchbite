@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(22);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -93,6 +93,16 @@ select throws_ok(
   'Users cannot log the foods of others'
 );
 
+update public.custom_foods set name = 'Taken', archived_at = now();
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
+select results_eq(
+  $$ select name, archived_at from public.custom_foods $$,
+  $$ values ('Protein yoghurt, vanilla', null::timestamptz) $$,
+  'Users cannot change or delete the foods of others'
+);
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select throws_ok(
@@ -102,7 +112,25 @@ select throws_ok(
   'Foods of one''s own are archived, not deleted'
 );
 
-update public.custom_foods set kcal = 1, archived_at = now();
+update public.custom_foods set kcal = 1, archived_at = '2000-01-01';
+
+select is(
+  (select archived_at from public.custom_foods),
+  now(),
+  'Deleting takes the server''s time'
+);
+select throws_ok(
+  $$ update public.custom_foods set archived_at = null $$,
+  'BB025',
+  null,
+  'A deleted food cannot be brought back'
+);
+select throws_ok(
+  $$ update public.custom_foods set name = 'Renamed' $$,
+  'BB025',
+  null,
+  'A deleted food cannot be changed'
+);
 
 select throws_ok(
   $$ insert into public.meal_entries (day, meal, custom_food_id, grams)
@@ -129,8 +157,48 @@ select results_eq(
   'An entry of a food of one''s own is restored with it'
 );
 
+-- 199 more make 200 that are not deleted; deleted ones count up to 1,000.
+insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+  select 'Food ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+
+select throws_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('One too many', 1, 1, 1, 1) $$,
+  'BB024',
+  null,
+  'A user has up to 200 foods of their own'
+);
+
+update public.custom_foods set archived_at = now() where archived_at is null;
+insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+  select 'More ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+update public.custom_foods set archived_at = now() where archived_at is null;
+insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+  select 'Again ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+update public.custom_foods set archived_at = now() where archived_at is null;
+insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+  select 'Still ' || n, 1, 1, 1, 1 from generate_series(1, 200) n;
+update public.custom_foods set archived_at = now() where archived_at is null;
+insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+  select 'Last ' || n, 1, 1, 1, 1 from generate_series(1, 199) n;
+
+select throws_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('One too many', 1, 1, 1, 1) $$,
+  'BB024',
+  null,
+  'Deleted foods count too, up to 1,000'
+);
+
 select set_config('role', 'anon', true);
 
+select throws_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('Guest', 1, 1, 1, 1) $$,
+  '42501',
+  null,
+  'Requests without a session cannot add foods'
+);
 select throws_ok(
   $$ select * from public.custom_foods $$,
   '42501',
