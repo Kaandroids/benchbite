@@ -33,8 +33,8 @@ export function amountOf(per100g: Totals, grams: number): Totals {
   };
 }
 
-/** The value of a query once typing has paused for `SEARCH_DELAY_MS`. */
-function useSettled(value: string): string {
+/** A typed query once typing has paused for `SEARCH_DELAY_MS`, so a search is not sent per key. */
+export function useSettledQuery(value: string): string {
   const [settled, setSettled] = useState(value);
   useEffect(() => {
     const timer = setTimeout(() => setSettled(value), SEARCH_DELAY_MS);
@@ -44,12 +44,11 @@ function useSettled(value: string): string {
 }
 
 /**
- * Searches the food library by name in the app language and in English (ADR 0035), once typing
- * pauses. The last results stay while the next ones load. Nothing is searched below `MIN_QUERY_LENGTH`.
+ * Searches the food library by name in the app language and in English (ADR 0035). The last
+ * results stay while the next ones load. Nothing is searched below `MIN_QUERY_LENGTH`.
  */
-export function useFoodSearch(query: string) {
+export function useFoodSearch(term: string) {
   const { i18n } = useTranslation();
-  const term = useSettled(query.trim());
   return useQuery({
     queryKey: ['food-search', i18n.language, term],
     enabled: term.length >= MIN_QUERY_LENGTH,

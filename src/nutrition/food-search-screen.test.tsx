@@ -11,6 +11,8 @@ jest.mock('./foods', () => ({
   ...jest.requireActual('./foods'),
   useFoodSearch: jest.fn(),
   useAddEntry: jest.fn(),
+  // Typing settles at once here; the delay has its own test.
+  useSettledQuery: (query: string) => query,
 }));
 
 const EGG: FoodResult = {
@@ -29,10 +31,20 @@ const OATS: FoodResult = {
 
 const mutateAsync = jest.fn();
 
-function mockSearch(state: Partial<{ data: FoodResult[]; isError: boolean; isFetching: boolean }>) {
-  jest
-    .mocked(useFoodSearch)
-    .mockReturnValue({ isError: false, isFetching: false, ...state } as never);
+function mockSearch(
+  state: Partial<{
+    data: FoodResult[];
+    isError: boolean;
+    isFetching: boolean;
+    isPlaceholderData: boolean;
+  }>,
+) {
+  jest.mocked(useFoodSearch).mockReturnValue({
+    isError: false,
+    isFetching: false,
+    isPlaceholderData: false,
+    ...state,
+  } as never);
 }
 
 beforeEach(() => {
@@ -100,6 +112,24 @@ describe('FoodSearchScreen', () => {
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
     await fireEvent.changeText(screen.getByLabelText('Search foods'), 'xyz');
     expect(screen.getByText('No food matches “xyz”.')).toBeTruthy();
+  });
+
+  it('waits for the search of what is typed before saying nothing matches', async () => {
+    mockSearch({ data: [], isPlaceholderData: true, isFetching: true });
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'xyzw');
+    expect(screen.queryByText(/No food matches/)).toBeNull();
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+  });
+
+  it('says when a newer search fails, over the last results', async () => {
+    mockSearch({ data: [OATS], isError: true, isPlaceholderData: true });
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'oats');
+    expect(
+      screen.getByText('The search failed. Check your connection and try again.'),
+    ).toBeTruthy();
+    expect(screen.queryByText('Oat flakes')).toBeNull();
   });
 
   it('says when the search fails', async () => {

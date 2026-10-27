@@ -21,7 +21,14 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
-import { amountOf, MIN_QUERY_LENGTH, useAddEntry, useFoodSearch, type FoodResult } from './foods';
+import {
+  amountOf,
+  MIN_QUERY_LENGTH,
+  useAddEntry,
+  useFoodSearch,
+  useSettledQuery,
+  type FoodResult,
+} from './foods';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 
@@ -41,13 +48,14 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { format } = useNumberFormat();
   const portionLabel = usePortionLabel();
   const [query, setQuery] = useState('');
-  const search = useFoodSearch(query);
+  const typed = query.trim();
+  const term = useSettledQuery(typed);
+  const search = useFoodSearch(term);
   const addEntry = useAddEntry();
   // The foods added from here, which show a check instead of their +, and the ones being saved,
   // whose + waits so that a double tap does not add them twice.
   const [added, setAdded] = useState<string[]>([]);
   const [saving, setSaving] = useState<string[]>([]);
-  const searching = query.trim().length >= MIN_QUERY_LENGTH;
 
   // Handled per call: callbacks passed to mutate() run only for the latest one.
   const quickAdd = (food: FoodResult) => {
@@ -119,20 +127,23 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
     );
   };
 
+  // The results belong to what is typed only once its search has finished; until then the last
+  // ones stay, and an empty list is no answer yet.
+  const current = term === typed && !search.isPlaceholderData && !search.isFetching;
   let body;
-  if (!searching) {
+  if (typed.length < MIN_QUERY_LENGTH) {
     body = (
       <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
         {t('nutrition.search.hint')}
       </Text>
     );
-  } else if (search.isError && search.data === undefined) {
+  } else if (search.isError) {
     body = (
       <View style={{ padding: spacing.xl }}>
         <Note tone="danger">{t('nutrition.search.error')}</Note>
       </View>
     );
-  } else if (search.data === undefined) {
+  } else if (search.data === undefined || (search.data.length === 0 && !current)) {
     body = (
       <ActivityIndicator
         color={colors.primary}
@@ -140,10 +151,10 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         style={{ padding: spacing.xl }}
       />
     );
-  } else if (search.data.length === 0 && !search.isFetching) {
+  } else if (search.data.length === 0) {
     body = (
       <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
-        {t('nutrition.search.noResults', { query: query.trim() })}
+        {t('nutrition.search.noResults', { query: term })}
       </Text>
     );
   } else {

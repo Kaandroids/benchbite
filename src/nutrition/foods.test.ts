@@ -2,7 +2,14 @@ import i18n from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
-import { amountOf, SEARCH_DELAY_MS, useAddEntry, useFood, useFoodSearch } from './foods';
+import {
+  amountOf,
+  SEARCH_DELAY_MS,
+  useAddEntry,
+  useFood,
+  useFoodSearch,
+  useSettledQuery,
+} from './foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
@@ -19,14 +26,26 @@ describe('amountOf', () => {
   });
 });
 
-describe('useFoodSearch', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers({ doNotFake: ['nextTick'] });
-  });
+describe('useSettledQuery', () => {
+  beforeEach(() => jest.useFakeTimers({ doNotFake: ['nextTick'] }));
   afterEach(() => jest.useRealTimers());
 
-  it('searches once typing pauses, in the app language', async () => {
+  it('follows what is typed once typing pauses', async () => {
+    const { result, rerender } = await renderHook(({ query }) => useSettledQuery(query), {
+      initialProps: { query: '' },
+    });
+    await rerender({ query: 'oa' });
+    await rerender({ query: 'oat' });
+    expect(result.current).toBe('');
+    await act(() => jest.advanceTimersByTime(SEARCH_DELAY_MS));
+    expect(result.current).toBe('oat');
+  });
+});
+
+describe('useFoodSearch', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('searches in the app language', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({
       data: [
         {
@@ -42,14 +61,7 @@ describe('useFoodSearch', () => {
       ],
       error: null,
     } as never);
-    const { result, rerender } = await renderHook(({ query }) => useFoodSearch(query), {
-      initialProps: { query: '' },
-    });
-    await rerender({ query: 'oa' });
-    await rerender({ query: 'oat' });
-    expect(supabase.rpc).not.toHaveBeenCalled();
-
-    await act(() => jest.advanceTimersByTime(SEARCH_DELAY_MS));
+    const { result } = await renderHook(() => useFoodSearch('oat'));
     await waitFor(() =>
       expect(result.current.data).toEqual([
         {
@@ -60,13 +72,11 @@ describe('useFoodSearch', () => {
         },
       ]),
     );
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
     expect(supabase.rpc).toHaveBeenCalledWith('search_foods', { query: 'oat', language: 'en' });
   });
 
   it('does not search below 2 characters', async () => {
-    const { result } = await renderHook(() => useFoodSearch(' o '));
-    await act(() => jest.advanceTimersByTime(SEARCH_DELAY_MS));
+    const { result } = await renderHook(() => useFoodSearch('o'));
     expect(supabase.rpc).not.toHaveBeenCalled();
     expect(result.current.data).toBeUndefined();
   });
