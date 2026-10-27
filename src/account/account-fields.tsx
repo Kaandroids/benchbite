@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
+import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
@@ -42,7 +43,7 @@ export function EmailField({ value, onChange, error, errorAction, editable = tru
         placeholderTextColor={colors.placeholder}
         style={[field, error ? { borderColor: colors.danger } : null]}
       />
-      {error ? <FieldError message={error} action={errorAction} /> : null}
+      {error ? <FormError action={errorAction}>{error}</FormError> : null}
     </View>
   );
 }
@@ -87,27 +88,12 @@ export function PasswordField({
         </Pressable>
       </View>
       {error ? (
-        <FieldError message={error} />
+        <FormError>{error}</FormError>
       ) : hint ? (
         <Text variant="caption" color="textMuted">
           {hint}
         </Text>
       ) : null}
-    </View>
-  );
-}
-
-function FieldError({ message, action }: { message: string; action?: ReactNode }) {
-  return (
-    <View style={styles.errorBlock}>
-      <View accessible accessibilityRole="alert" style={styles.error}>
-        <Icon name="error" size={16} color="danger" />
-        <Text variant="captionStrong" color="danger" style={styles.flex}>
-          {message}
-        </Text>
-      </View>
-      {/* Outside the alert, which a screen reader reads as one, so that it can be reached. */}
-      {action}
     </View>
   );
 }
@@ -127,14 +113,6 @@ const styles = StyleSheet.create({
     width: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  errorBlock: {
-    gap: 4,
-  },
-  error: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'flex-start',
   },
   flex: {
     flex: 1,
