@@ -50,3 +50,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0032](0032-animated-splash-over-a-static-native-splash.md)  | Animate the splash in the app, over a static native splash                         | Accepted               |
 | [0033](0033-food-library-from-bls.md)                        | Build the food library from the BLS 4.0                                            | Accepted               |
 | [0034](0034-meal-entries-with-copied-values.md)              | Log meals as entries with copied values, per local day and fixed meal              | Accepted               |
+| [0035](0035-search-foods-in-postgres.md)                     | Search foods in Postgres, by name in the user's language and in English            | Accepted               |

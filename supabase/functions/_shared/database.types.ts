@@ -874,6 +874,19 @@ export type Database = {
         Returns: boolean;
       };
       save_workout: { Args: { workout: Json }; Returns: number };
+      search_foods: {
+        Args: { language: string; query: string };
+        Returns: {
+          carbs_g: number;
+          fat_g: number;
+          food_id: string;
+          kcal: number;
+          name: string;
+          portion_grams: number;
+          portion_unit: Database['public']['Enums']['portion_unit'];
+          protein_g: number;
+        }[];
+      };
       set_suits: {
         Args: {
           meters: number;
