@@ -78,7 +78,8 @@ create table public.food_portions (
   unit public.portion_unit not null,
   -- The edible amount of one unit, such as 60 for an egg.
   grams numeric(6, 1) not null check (grams > 0 and grams <= 5000),
-  -- The portion the app suggests first. Exactly one per food, checked by the import.
+  -- The portion the app suggests first. At most one per food, by the index below; the import
+  -- checks that there is one.
   is_default boolean not null default false,
   primary key (food_id, unit)
 );
@@ -107,6 +108,5 @@ create policy "Food portions are readable by everyone"
   to anon, authenticated
   using (true);
 
-revoke insert, update, delete, truncate on public.foods from anon, authenticated;
-revoke insert, update, delete, truncate on public.food_names from anon, authenticated;
-revoke insert, update, delete, truncate on public.food_portions from anon, authenticated;
+revoke insert, update, delete, truncate on public.foods, public.food_names, public.food_portions
+  from anon, authenticated;
