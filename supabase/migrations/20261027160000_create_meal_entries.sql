@@ -64,7 +64,7 @@ grant insert (day, meal, food_id, grams, portion_unit, portion_count)
   on public.meal_entries to authenticated;
 grant update (day, meal, grams, portion_unit, portion_count) on public.meal_entries to authenticated;
 
--- Copies the food's nutrients into a new entry and keeps a day within its limit.
+-- Copies the food's nutrients into a new entry.
 create function public.copy_food_values()
 returns trigger
 language plpgsql
@@ -82,6 +82,21 @@ begin
     -- The foreign key would only be checked after the copied values are found missing.
     raise exception 'Food % not found', new.food_id using errcode = '23503';
   end if;
+  return new;
+end;
+$$;
+
+-- Keeps a day within its number of entries. Takes the user's limit lock first, so that inserts
+-- sent at the same time cannot all pass the count.
+create function public.check_meal_day_limit()
+returns trigger
+language plpgsql
+-- Calls lock_user_limits(), which callers may not execute.
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.lock_user_limits(new.user_id);
   if (
     select count(*) from public.meal_entries e where e.user_id = new.user_id and e.day = new.day
   ) >= 100 then
@@ -105,12 +120,19 @@ begin
 end;
 $$;
 
-revoke execute on function public.copy_food_values(), public.check_meal_day()
-  from public, anon, authenticated;
+revoke execute on function
+  public.copy_food_values(),
+  public.check_meal_day_limit(),
+  public.check_meal_day()
+from public, anon, authenticated;
 
 create trigger meal_entries_copy_food_values
   before insert on public.meal_entries
   for each row execute function public.copy_food_values();
+
+create trigger meal_entries_check_meal_day_limit
+  before insert on public.meal_entries
+  for each row execute function public.check_meal_day_limit();
 
 create trigger meal_entries_check_meal_day
   before insert or update of day on public.meal_entries
