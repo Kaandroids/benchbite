@@ -489,6 +489,7 @@ export type Database = {
           training_setup: Database['public']['Enums']['training_setup'];
           updated_at: string;
           user_id: string;
+          water_goal_ml: number;
           weight_unit: Database['public']['Enums']['weight_unit'];
         };
         ComputedFields: never;
@@ -508,6 +509,7 @@ export type Database = {
           training_setup: Database['public']['Enums']['training_setup'];
           updated_at?: string;
           user_id: string;
+          water_goal_ml?: number;
           weight_unit: Database['public']['Enums']['weight_unit'];
         };
         Update: {
@@ -526,6 +528,7 @@ export type Database = {
           training_setup?: Database['public']['Enums']['training_setup'];
           updated_at?: string;
           user_id?: string;
+          water_goal_ml?: number;
           weight_unit?: Database['public']['Enums']['weight_unit'];
         };
         Relationships: [];
@@ -599,6 +602,25 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      water_days: {
+        Row: {
+          day: string;
+          ml: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          ml: number;
+          user_id?: string;
+        };
+        Update: {
+          day?: string;
+          ml?: number;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       weight_entries: {
         Row: {
@@ -841,6 +863,7 @@ export type Database = {
       };
     };
     Functions: {
+      add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       calculate_nutrition_targets: {
