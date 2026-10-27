@@ -138,6 +138,15 @@ describe('FoodFormScreen, a new food', () => {
     expect(save()).toBeDisabled();
   });
 
+  it('says what is wrong under the field it is about', async () => {
+    await render(<FoodFormScreen kind="new" meal="snack" day="2026-10-27" />);
+    await fillIn({ Name: 'Odd', Calories: '1122', Protein: '1' });
+    expect(
+      screen.getByText('A food has at most 900 kcal per 100 g. Check the calories.'),
+    ).toBeTruthy();
+    expect(save()).toBeDisabled();
+  });
+
   it('says when a food with the name exists', async () => {
     jest
       .mocked(useCreateFood)

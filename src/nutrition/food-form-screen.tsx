@@ -7,10 +7,10 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
+import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { MessageView } from '@/components/ui/message-view';
-import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { Sheet } from '@/components/ui/sheet';
@@ -102,6 +102,18 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const portion = form.unit ? portionLabel(form.unit, 1) : null;
   const saving = createFood.isPending || updateFood.isPending;
   const failed = props.kind === 'new' ? createFood : updateFood;
+  // Each value problem shows under its field, and too few calories by the check.
+  const problem = result.kind === 'problem' ? result.problem : null;
+  // Why saving or deleting failed, above the button that saves.
+  const serverError = failed.isError
+    ? isDbError(failed.error, 'uniqueViolation')
+      ? t('nutrition.food.nameTaken')
+      : isDbError(failed.error, 'customFoodLimit')
+        ? t('nutrition.food.limit')
+        : t('nutrition.food.saveError')
+    : deleteFood.isError
+      ? t('nutrition.food.deleteError')
+      : null;
 
   const save = () => {
     if (result.kind !== 'valid') {
@@ -169,12 +181,15 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
           />
         }
         footer={
-          <Button
-            label={t('nutrition.food.save')}
-            loading={saving}
-            disabled={result.kind !== 'valid'}
-            onPress={save}
-          />
+          <View style={{ gap: spacing.md }}>
+            {serverError ? <FormError>{serverError}</FormError> : null}
+            <Button
+              label={t('nutrition.food.save')}
+              loading={saving}
+              disabled={result.kind !== 'valid'}
+              onPress={save}
+            />
+          </View>
         }
       >
         {/* The sections stand further apart than the lines within one. */}
@@ -211,6 +226,9 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 kcal
               </Text>
             </Card>
+            {problem === 'tooMuchEnergy' ? (
+              <FormError>{t('nutrition.food.problems.tooMuchEnergy')}</FormError>
+            ) : null}
             <View style={[styles.macros, { gap: spacing.sm }]}>
               {MACROS.map(({ key, color }) => (
                 <Card key={key} style={[styles.macro, { gap: spacing.xs, padding: spacing.md }]}>
@@ -229,27 +247,16 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 </Card>
               ))}
             </View>
+            {problem === 'tooMuchMacros' ? (
+              <FormError>{t('nutrition.food.problems.tooMuchMacros')}</FormError>
+            ) : null}
             {check?.tooFewCalories ? (
-              <View
-                accessibilityLiveRegion="polite"
-                style={[
-                  styles.check,
-                  {
-                    gap: spacing.sm,
-                    padding: spacing.md,
-                    borderRadius: radii.md,
-                    backgroundColor: colors.dangerBackground,
-                  },
-                ]}
-              >
-                <Icon name="error" size={16} color="danger" />
-                <Text variant="caption" style={styles.flex}>
-                  {t('nutrition.food.tooFewCalories', {
-                    calories: format(Math.round(check.calories)),
-                    entered: format(check.entered),
-                  })}
-                </Text>
-              </View>
+              <FormError>
+                {t('nutrition.food.tooFewCalories', {
+                  calories: format(Math.round(check.calories)),
+                  entered: format(check.entered),
+                })}
+              </FormError>
             ) : null}
           </View>
 
@@ -312,6 +319,9 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
                 g
               </Text>
             </View>
+            {problem === 'portion' ? (
+              <FormError>{t('nutrition.food.problems.portion')}</FormError>
+            ) : null}
             {portionAdds && portion ? (
               <Text variant="caption" color="textMuted">
                 {t('nutrition.food.portionAdds', {
@@ -324,21 +334,6 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
               </Text>
             ) : null}
           </Card>
-
-          {/* Too few calories are told by the check above. */}
-          {result.kind === 'problem' && result.problem !== 'tooFewCalories' ? (
-            <Note tone="warning">{t(`nutrition.food.problems.${result.problem}`)}</Note>
-          ) : null}
-          {failed.isError ? (
-            <Note tone="danger">
-              {isDbError(failed.error, 'uniqueViolation')
-                ? t('nutrition.food.nameTaken')
-                : isDbError(failed.error, 'customFoodLimit')
-                  ? t('nutrition.food.limit')
-                  : t('nutrition.food.saveError')}
-            </Note>
-          ) : null}
-          {deleteFood.isError ? <Note tone="danger">{t('nutrition.food.deleteError')}</Note> : null}
 
           {props.kind === 'edit' ? (
             <Button
@@ -484,10 +479,6 @@ const styles = StyleSheet.create({
   macroValue: {
     flexDirection: 'row',
     alignItems: 'baseline',
-  },
-  check: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
   },
   gramsRow: {
     flexDirection: 'row',
