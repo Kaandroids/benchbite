@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
 import { useAddEntry, useFoodSearch, type FoodResult } from './foods';
@@ -13,6 +13,13 @@ jest.mock('./foods', () => ({
   useAddEntry: jest.fn(),
 }));
 
+const EGG: FoodResult = {
+  id: 'E111100',
+  name: 'Egg, raw',
+  per100g: { calories: 137, proteinG: 12.5, carbsG: 0.5, fatG: 9.3 },
+  portion: { unit: 'piece', grams: 60 },
+};
+
 const OATS: FoodResult = {
   id: 'C133000',
   name: 'Oat flakes',
@@ -20,7 +27,7 @@ const OATS: FoodResult = {
   portion: { unit: 'serving', grams: 50 },
 };
 
-const mutate = jest.fn();
+const mutateAsync = jest.fn();
 
 function mockSearch(state: Partial<{ data: FoodResult[]; isError: boolean; isFetching: boolean }>) {
   jest
@@ -31,7 +38,7 @@ function mockSearch(state: Partial<{ data: FoodResult[]; isError: boolean; isFet
 beforeEach(() => {
   jest.clearAllMocks();
   mockSearch({});
-  jest.mocked(useAddEntry).mockReturnValue({ mutate, isError: false, error: null } as never);
+  jest.mocked(useAddEntry).mockReturnValue({ mutateAsync, isError: false, error: null } as never);
 });
 
 describe('FoodSearchScreen', () => {
@@ -55,21 +62,37 @@ describe('FoodSearchScreen', () => {
   });
 
   it('adds the default portion at once with +', async () => {
+    mutateAsync.mockResolvedValue(undefined);
     mockSearch({ data: [OATS] });
     await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
     await fireEvent.changeText(screen.getByLabelText('Search foods'), 'oat');
     await fireEvent.press(screen.getByLabelText('Add 1 serving of Oat flakes'));
 
-    expect(mutate).toHaveBeenCalledWith(
-      {
-        day: '2026-10-27',
-        meal: 'breakfast',
-        foodId: 'C133000',
-        grams: 50,
-        portion: { unit: 'serving', count: 1 },
-      },
-      expect.anything(),
-    );
+    expect(mutateAsync).toHaveBeenCalledWith({
+      day: '2026-10-27',
+      meal: 'breakfast',
+      foodId: 'C133000',
+      grams: 50,
+      portion: { unit: 'serving', count: 1 },
+    });
+    expect(screen.queryByLabelText('Add 1 serving of Oat flakes')).toBeNull();
+  });
+
+  it('marks every food added quickly in a row, and saves each once', async () => {
+    const saves: (() => void)[] = [];
+    mutateAsync.mockImplementation(() => new Promise<void>((resolve) => saves.push(resolve)));
+    mockSearch({ data: [OATS, EGG] });
+    await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'ea');
+
+    await fireEvent.press(screen.getByLabelText('Add 1 serving of Oat flakes'));
+    await fireEvent.press(screen.getByLabelText('Add 1 serving of Oat flakes'));
+    await fireEvent.press(screen.getByLabelText('Add 1 piece of Egg, raw'));
+    expect(mutateAsync).toHaveBeenCalledTimes(2);
+
+    await act(async () => saves.forEach((save) => save()));
+    expect(screen.queryByLabelText('Add 1 serving of Oat flakes')).toBeNull();
+    expect(screen.queryByLabelText('Add 1 piece of Egg, raw')).toBeNull();
   });
 
   it('says when nothing matches', async () => {
@@ -91,7 +114,7 @@ describe('FoodSearchScreen', () => {
   it('says when a food was taken out of the library', async () => {
     jest
       .mocked(useAddEntry)
-      .mockReturnValue({ mutate, isError: true, error: { code: 'BB022' } } as never);
+      .mockReturnValue({ mutateAsync, isError: true, error: { code: 'BB022' } } as never);
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
     expect(screen.getByText('This food is no longer in the library.')).toBeTruthy();
   });
@@ -99,7 +122,7 @@ describe('FoodSearchScreen', () => {
   it('says when a day can no longer be changed', async () => {
     jest
       .mocked(useAddEntry)
-      .mockReturnValue({ mutate, isError: true, error: { code: 'BB020' } } as never);
+      .mockReturnValue({ mutateAsync, isError: true, error: { code: 'BB020' } } as never);
     await render(<FoodSearchScreen meal="lunch" day="2026-10-01" />);
     expect(screen.getByText('Meals can only be added to today and the week before.')).toBeTruthy();
   });

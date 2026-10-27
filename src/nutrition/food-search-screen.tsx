@@ -43,29 +43,34 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const [query, setQuery] = useState('');
   const search = useFoodSearch(query);
   const addEntry = useAddEntry();
-  // The foods added from here, which show a check instead of their +.
+  // The foods added from here, which show a check instead of their +, and the ones being saved,
+  // whose + waits so that a double tap does not add them twice.
   const [added, setAdded] = useState<string[]>([]);
+  const [saving, setSaving] = useState<string[]>([]);
   const searching = query.trim().length >= MIN_QUERY_LENGTH;
 
-  const quickAdd = (food: FoodResult) =>
-    addEntry.mutate(
-      {
+  // Handled per call: callbacks passed to mutate() run only for the latest one.
+  const quickAdd = (food: FoodResult) => {
+    setSaving((current) => [...current, food.id]);
+    addEntry
+      .mutateAsync({
         day,
         meal,
         foodId: food.id,
         grams: food.portion.grams,
         portion: { unit: food.portion.unit, count: 1 },
-      },
-      {
-        onSuccess: () => {
-          setAdded((current) => [...current, food.id]);
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          AccessibilityInfo.announceForAccessibility(
-            t('nutrition.search.added', { name: food.name }),
-          );
-        },
-      },
-    );
+      })
+      .then(() => {
+        setAdded((current) => [...current, food.id]);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        AccessibilityInfo.announceForAccessibility(
+          t('nutrition.search.added', { name: food.name }),
+        );
+      })
+      // The mutation's error is shown above the results.
+      .catch(() => {})
+      .finally(() => setSaving((current) => current.filter((id) => id !== food.id)));
+  };
 
   const row = ({ item }: { item: FoodResult }) => {
     const portion = portionLabel(item.portion.unit, 1);
@@ -107,6 +112,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
             size={36}
             label={t('nutrition.search.quickAdd', { portion, name: item.name })}
             onPress={() => quickAdd(item)}
+            disabled={saving.includes(item.id)}
           />
         )}
       </View>
