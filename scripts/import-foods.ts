@@ -235,7 +235,11 @@ function readBls(archive: Buffer): Map<string, BlsFood> {
   return foods;
 }
 
-/** A name as public.food_name_key() compares it: in lower case, with Turkish İ and ı as i. */
+/**
+ * A name as public.food_name_key() compares it: in lower case, with Turkish İ and ı as i. A close
+ * copy, as JavaScript and Postgres may lower some other letters differently; the unique index on
+ * food_names is the final check.
+ */
 function nameKey(name: string): string {
   return name.replace(/[İı]/g, 'i').toLowerCase();
 }
