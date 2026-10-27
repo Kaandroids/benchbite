@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScreen } from '@/components/tab-screen';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
@@ -51,16 +51,7 @@ export function TodayScreen() {
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
-  const [refreshing, setRefreshing] = useState(false);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
-  const refresh = async () => {
-    setRefreshing(true);
-    try {
-      await Promise.all(queries.map((query) => query.refetch()));
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   const sheetDay =
     sheet?.kind === 'day'
@@ -134,59 +125,41 @@ export function TodayScreen() {
   }
 
   return (
-    // Inside a tab, the bottom inset includes the tab bar, which covers the content on iOS.
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
+    <TabScreen
+      queries={queries}
+      overlay={
+        // One sheet whose content changes, as a modal cannot open while another one closes.
+        sheet ? (
+          <Sheet onClose={() => setSheet(null)}>
+            {sheet.kind === 'pick' ? (
+              <PickDay
+                schedule={schedule}
+                session={sheet.session}
+                fromOn={sheet.fromOn}
+                today={today}
+                onDone={() => setSheet(null)}
+              />
+            ) : sheetDay ? (
+              <DayMenu
+                schedule={schedule}
+                day={sheetDay}
+                today={today}
+                onMove={(session, fromOn) => setSheet({ kind: 'pick', session, fromOn })}
+              />
+            ) : null}
+          </Sheet>
+        ) : null
+      }
     >
-      <ScrollView
-        contentContainerStyle={[styles.content, { padding: spacing.xl, gap: spacing.lg }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void refresh()}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      >
-        <Text variant="title" accessibilityRole="header">
-          {greeting(today, name)}
-        </Text>
-        {content}
-      </ScrollView>
-      {/* One sheet whose content changes, as a modal cannot open while another one closes. */}
-      {sheet ? (
-        <Sheet onClose={() => setSheet(null)}>
-          {sheet.kind === 'pick' ? (
-            <PickDay
-              schedule={schedule}
-              session={sheet.session}
-              fromOn={sheet.fromOn}
-              today={today}
-              onDone={() => setSheet(null)}
-            />
-          ) : sheetDay ? (
-            <DayMenu
-              schedule={schedule}
-              day={sheetDay}
-              today={today}
-              onMove={(session, fromOn) => setSheet({ kind: 'pick', session, fromOn })}
-            />
-          ) : null}
-        </Sheet>
-      ) : null}
-    </SafeAreaView>
+      <Text variant="title" accessibilityRole="header">
+        {greeting(today, name)}
+      </Text>
+      {content}
+    </TabScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
