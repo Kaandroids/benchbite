@@ -29,7 +29,9 @@ but no portion sizes.
   - `foods` keeps the BLS code as its id, the BLS main group, and kcal, protein, carbs, fat,
     fibre, sugar, saturated fat and salt per 100 g;
   - `food_names` has one row per food and language, with any two-letter code, so a language is
-    added with rows, not a schema change, and the app falls back to English;
+    added with rows, not a schema change, and the app falls back to English. A name is used
+    once per language, compared as search compares names (ADR 0035), so that no two results
+    look the same;
   - `food_portions` holds portions such as one egg = 60 g in a fixed set of units named in the
     app's translations, with exactly one default per food.
 - **Access:** row level security lets everyone read the three tables; there are no write
