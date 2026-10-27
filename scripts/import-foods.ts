@@ -235,8 +235,19 @@ function readBls(archive: Buffer): Map<string, BlsFood> {
   return foods;
 }
 
+/**
+ * A name as public.food_name_key() compares it: in lower case, with Turkish İ and ı as i. A close
+ * copy, as JavaScript and Postgres may lower some other letters differently; the unique index on
+ * food_names is the final check.
+ */
+function nameKey(name: string): string {
+  return name.replace(/[İı]/g, 'i').toLowerCase();
+}
+
 function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): void {
   const problems: string[] = [];
+  // The first food with each name, per language, to find a name used twice.
+  const named = new Map<string, string>();
   for (const [code, food] of Object.entries(chosen)) {
     const values = bls.get(code);
     if (!values) {
@@ -255,6 +266,13 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
       const name = food[language]?.trim() ?? '';
       if (name.length < 1 || name.length > MAX_NAME_LENGTH) {
         problems.push(`${code} needs a ${language} name of 1 to ${MAX_NAME_LENGTH} characters`);
+      }
+      const key = `${language}:${nameKey(name)}`;
+      const other = named.get(key);
+      if (other) {
+        problems.push(`${code} has the ${language} name "${name}" of ${other}`);
+      } else {
+        named.set(key, code);
       }
     }
     if (
@@ -321,17 +339,38 @@ ${columns.map((column) => `  ${column} = excluded.${column}`).join(',\n')},
 `;
 }
 
-function namesSql(chosen: [string, ChosenFood][]): string {
+/**
+ * Names are replaced as a whole, like portions: the unique index on names is checked row by row,
+ * so two foods that swap a name would conflict halfway through an upsert.
+ *
+ * An archived food keeps its names for the meals that refer to it, but search no longer shows it,
+ * so a listed food may take one of them: the archived food's name then gets its code, such as
+ * "Haferflocken (C133000)", to stay unique.
+ */
+function namesSql(chosen: [string, ChosenFood][], codes: string): string {
   const rows = chosen.flatMap(([code, food]) =>
     LANGUAGES.map(
       (language) => `  (${[code, language, food[language].trim()].map(sqlString).join(', ')})`,
     ),
   );
   return `
+with listed (food_id, language, name) as (
+  values
+${rows.map((row) => `  ${row}`).join(',\n')}
+)
+update public.food_names n
+set name = left(n.name, ${MAX_NAME_LENGTH} - length(' ()') - length(n.food_id)) || ' (' || n.food_id || ')'
+from listed l, public.foods f
+where f.id = n.food_id
+  and f.archived_at is not null
+  and l.language = n.language
+  and public.food_name_key(l.name) = public.food_name_key(n.name);
+
+delete from public.food_names where food_id in (${codes});
+
 insert into public.food_names (food_id, language, name)
 values
-${rows.join(',\n')}
-on conflict (food_id, language) do update set name = excluded.name;
+${rows.join(',\n')};
 `;
 }
 
@@ -368,7 +407,7 @@ writeFileSync(
   header +
     archivedSql(codes) +
     foodsSql(entries, bls) +
-    namesSql(entries) +
+    namesSql(entries, codes) +
     portionsSql(entries, codes),
 );
 console.log(`Wrote ${entries.length} foods to ${file}`);

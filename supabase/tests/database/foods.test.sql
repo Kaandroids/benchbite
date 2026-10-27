@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 select cmp_ok(
   (select count(*) from public.foods)::integer, '>=', 300,
@@ -44,6 +44,17 @@ select results_eq(
   $$ values (348.0::numeric, 13.22::numeric, 53.30::numeric, 6.65::numeric,
        'cereals'::public.food_group) $$,
   'Nutrients per 100 g come from the BLS'
+);
+
+select throws_ok(
+  $$ update public.food_names set name = 'YUMURTA, ÇIĞ' where food_id = 'C133000' and language = 'tr' $$,
+  '23505',
+  null,
+  'A name is used once per language, whatever its case'
+);
+select lives_ok(
+  $$ update public.food_names set name = 'Haferflocken' where food_id = 'C133000' and language = 'en' $$,
+  'The same name may be used in another language'
 );
 
 select throws_ok(

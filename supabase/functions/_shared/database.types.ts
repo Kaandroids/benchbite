@@ -801,6 +801,7 @@ export type Database = {
         }[];
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
+      food_name_key: { Args: { name: string }; Returns: string };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
