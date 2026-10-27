@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -37,6 +38,9 @@ export function NutritionScreen() {
         <MealList
           meals={meals}
           suggested={targets.data ? suggestedCalories(targets.data.calories, meals) : new Map()}
+          onAdd={(meal) =>
+            router.push({ pathname: '/nutrition/add', params: { meal, day: toIsoDate(day) } })
+          }
         />
       </>
     );

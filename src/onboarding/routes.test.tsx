@@ -5,7 +5,8 @@ import { Text } from 'react-native';
 
 import AppLayout from '@/app/(app)/_layout';
 import AppIndex from '@/app/(app)/index';
-import NutritionTab from '@/app/(app)/nutrition';
+import NutritionLayout from '@/app/(app)/nutrition/_layout';
+import NutritionTab from '@/app/(app)/nutrition/index';
 import ProgressTab from '@/app/(app)/progress';
 import WorkoutDetail from '@/app/(app)/workout/[id]';
 import WorkoutLayout from '@/app/(app)/workout/_layout';
@@ -174,7 +175,8 @@ const APP_ROUTES = {
   '(app)/workout/exercise/[id]': ExerciseDetails,
   '(app)/workout/pick': PickExercises,
   '(app)/workout/edit': EditWorkout,
-  '(app)/nutrition': NutritionTab,
+  '(app)/nutrition/_layout': NutritionLayout,
+  '(app)/nutrition/index': NutritionTab,
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
   'session/index': () => <Text>Workout in progress</Text>,

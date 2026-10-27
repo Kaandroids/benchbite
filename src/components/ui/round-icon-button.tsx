@@ -14,6 +14,7 @@ type RoundIconButtonProps = {
   size?: number;
   /** Outlines the button, for one that stands on the screen's background. */
   bordered?: boolean;
+  disabled?: boolean;
 };
 
 /** A round button with an icon, such as the "i" beside an exercise. */
@@ -25,12 +26,15 @@ export function RoundIconButton({
   onPress,
   size = 32,
   bordered = false,
+  disabled = false,
 }: RoundIconButtonProps) {
   const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       hitSlop={6}
       style={({ pressed }) => [
@@ -40,7 +44,7 @@ export function RoundIconButton({
           height: size,
           borderRadius: size / 2,
           backgroundColor: colors[background],
-          opacity: pressed ? 0.6 : 1,
+          opacity: disabled ? 0.4 : pressed ? 0.6 : 1,
         },
         bordered ? { borderWidth: 1.5, borderColor: colors.border } : null,
       ]}

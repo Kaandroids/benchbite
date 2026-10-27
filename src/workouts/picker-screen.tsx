@@ -1,13 +1,14 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
 import { takeCreatedExercise } from '@/exercises/custom';
@@ -22,7 +23,7 @@ import {
   type ExerciseFilter,
   type LibraryExercise,
 } from '@/exercises/library';
-import { typography, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
@@ -140,29 +141,7 @@ export function PickerScreen() {
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
-        <View
-          style={[
-            styles.search,
-            {
-              gap: spacing.sm,
-              borderRadius: radii.md,
-              borderColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: spacing.md,
-            },
-          ]}
-        >
-          <Icon name="search" size={20} color="textMuted" />
-          <TextInput
-            accessibilityLabel={t('picker.search')}
-            placeholder={t('picker.search')}
-            placeholderTextColor={colors.textMuted}
-            value={query}
-            onChangeText={setQuery}
-            autoCorrect={false}
-            style={[styles.input, typography.body, { color: colors.text }]}
-          />
-        </View>
+        <SearchField label={t('picker.search')} value={query} onChangeText={setQuery} />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -316,16 +295,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    borderWidth: 1.5,
-  },
-  input: {
-    flex: 1,
-    height: '100%',
   },
   row: {
     height: ROW_HEIGHT,
