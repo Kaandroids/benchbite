@@ -340,21 +340,21 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           carbs_g?: never;
-          carbs_per_100g: number;
+          carbs_per_100g?: number;
           created_at?: string;
           day: string;
           fat_g?: never;
-          fat_per_100g: number;
+          fat_per_100g?: number;
           food_id: string;
           grams: number;
           id?: never;
           kcal?: never;
-          kcal_per_100g: number;
+          kcal_per_100g?: number;
           meal: Database['public']['Enums']['meal'];
           portion_count?: number | null;
           portion_unit?: Database['public']['Enums']['portion_unit'] | null;
           protein_g?: never;
-          protein_per_100g: number;
+          protein_per_100g?: number;
           user_id?: string;
         };
         Update: {

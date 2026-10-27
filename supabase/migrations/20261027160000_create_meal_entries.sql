@@ -22,11 +22,12 @@ create table public.meal_entries (
   portion_unit public.portion_unit,
   portion_count numeric(4, 1) check (portion_count > 0 and portion_count <= 100),
   check ((portion_unit is null) = (portion_count is null)),
-  -- Per 100 g, copied from the food by copy_food_values().
-  kcal_per_100g numeric(6, 1) not null,
-  protein_per_100g numeric(5, 2) not null,
-  carbs_per_100g numeric(5, 2) not null,
-  fat_per_100g numeric(5, 2) not null,
+  -- Per 100 g, copied from the food by copy_food_values(), which always overwrites the defaults.
+  -- They only keep these columns optional for the app, which cannot send them.
+  kcal_per_100g numeric(6, 1) not null default 0,
+  protein_per_100g numeric(5, 2) not null default 0,
+  carbs_per_100g numeric(5, 2) not null default 0,
+  fat_per_100g numeric(5, 2) not null default 0,
   -- What the entry adds to the day.
   kcal numeric(7, 1) generated always as (round(grams * kcal_per_100g / 100, 1)) stored,
   protein_g numeric(6, 1) generated always as (round(grams * protein_per_100g / 100, 1)) stored,
