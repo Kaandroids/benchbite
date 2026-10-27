@@ -145,6 +145,46 @@ export type Database = {
         };
         Relationships: [];
       };
+      favourite_foods: {
+        Row: {
+          created_at: string;
+          custom_food_id: number | null;
+          food_id: string | null;
+          id: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          custom_food_id?: number | null;
+          food_id?: string | null;
+          id?: never;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          custom_food_id?: number | null;
+          food_id?: string | null;
+          id?: never;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'favourite_foods_custom_food_id_fkey';
+            columns: ['custom_food_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'favourite_foods_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       food_names: {
         Row: {
           food_id: string;
@@ -948,6 +988,22 @@ export type Database = {
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       food_name_key: { Args: { name: string }; Returns: string };
+      frequent_foods: {
+        Args: { for_meal: Database['public']['Enums']['meal']; language: string };
+        Returns: {
+          carbs_g: number;
+          custom_food_id: number;
+          fat_g: number;
+          food_id: string;
+          grams: number;
+          kcal: number;
+          name: string;
+          portion_count: number;
+          portion_unit: Database['public']['Enums']['portion_unit'];
+          protein_g: number;
+          times: number;
+        }[];
+      };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
@@ -973,6 +1029,20 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      list_favourite_foods: {
+        Args: { language: string };
+        Returns: {
+          carbs_g: number;
+          custom_food_id: number;
+          fat_g: number;
+          food_id: string;
+          kcal: number;
+          name: string;
+          portion_grams: number;
+          portion_unit: Database['public']['Enums']['portion_unit'];
+          protein_g: number;
+        }[];
       };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
@@ -1008,6 +1078,10 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      repeat_meal: {
+        Args: { for_meal: Database['public']['Enums']['meal']; from_day: string; to_day: string };
+        Returns: number;
+      };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
