@@ -73,7 +73,10 @@
     "language": "Dil",
     "languageHint": "Seçilebilecek dilleri açar",
     "phoneLanguage": "Telefonun dili",
-    "phoneLanguageNow": "Şu an {{language}}"
+    "phoneLanguageNow": "Şu an {{language}}",
+    "waterGoal": "Günlük su hedefi",
+    "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri 250 ml.",
+    "liters": "{{amount}} L"
   },
   "loadError": {
     "title": "Yüklenemedi",
@@ -350,6 +353,15 @@
     "foodNotFound": {
       "title": "Besin bulunamadı",
       "message": "Bu besin artık mevcut değil."
+    },
+    "water": {
+      "title": "Su",
+      "total": "{{goal}} L'nin {{drunk}} L'si",
+      "toGo_one": "{{count}} bardak kaldı",
+      "toGo_other": "{{count}} bardak kaldı",
+      "reached": "hedefe ulaşıldı",
+      "add": "Bir bardak ekle, {{ml}} ml",
+      "remove": "Bir bardak çıkar"
     }
   },
   "workout": {

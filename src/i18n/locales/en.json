@@ -73,7 +73,10 @@
     "language": "Language",
     "languageHint": "Opens the languages to choose from",
     "phoneLanguage": "Phone’s language",
-    "phoneLanguageNow": "{{language}} now"
+    "phoneLanguageNow": "{{language}} now",
+    "waterGoal": "Daily water goal",
+    "waterGoalNote": "The glasses to fill on the Nutrition tab, 250 ml each.",
+    "liters": "{{amount}} L"
   },
   "loadError": {
     "title": "This couldn't load",
@@ -350,6 +353,15 @@
     "foodNotFound": {
       "title": "Food not found",
       "message": "This food is no longer available."
+    },
+    "water": {
+      "title": "Water",
+      "total": "{{drunk}} of {{goal}} L",
+      "toGo_one": "{{count}} glass to go",
+      "toGo_other": "{{count}} glasses to go",
+      "reached": "goal reached",
+      "add": "Add a glass, {{ml}} ml",
+      "remove": "Remove a glass"
     }
   },
   "workout": {

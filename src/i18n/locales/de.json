@@ -73,7 +73,10 @@
     "language": "Sprache",
     "languageHint": "Öffnet die Sprachen zur Auswahl",
     "phoneLanguage": "Sprache des Handys",
-    "phoneLanguageNow": "Gerade {{language}}"
+    "phoneLanguageNow": "Gerade {{language}}",
+    "waterGoal": "Tägliches Wasserziel",
+    "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je 250 ml.",
+    "liters": "{{amount}} L"
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
@@ -350,6 +353,15 @@
     "foodNotFound": {
       "title": "Lebensmittel nicht gefunden",
       "message": "Dieses Lebensmittel ist nicht mehr verfügbar."
+    },
+    "water": {
+      "title": "Wasser",
+      "total": "{{drunk}} von {{goal}} L",
+      "toGo_one": "noch {{count}} Glas",
+      "toGo_other": "noch {{count}} Gläser",
+      "reached": "Ziel erreicht",
+      "add": "Ein Glas hinzufügen, {{ml}} ml",
+      "remove": "Ein Glas entfernen"
     }
   },
   "workout": {
