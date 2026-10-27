@@ -89,7 +89,7 @@ describe('AmountScreen', () => {
 
     await fireEvent.press(screen.getByText('Add a snack'));
     expect(mutate).toHaveBeenCalledWith(
-      { day: '2026-10-27', meal: 'snack', foodId: 'M141300', grams: 80, portion: undefined },
+      { day: '2026-10-27', meal: 'snack', foodId: 'M141300', grams: 80, portion: null },
       expect.anything(),
     );
   });
