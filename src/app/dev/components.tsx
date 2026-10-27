@@ -63,15 +63,6 @@ const WHOLE_WEIGHTS = {
   ),
 };
 const TENTHS = range(0, 9);
-
-const SAMPLE_SECTIONS = ['About you', 'Training', 'Your plan'];
-
-/** The sample sections with the overall progress, between 0 and 1, spread over them. */
-function sectionsAt(progress: number) {
-  const scaled = progress * SAMPLE_SECTIONS.length;
-  const current = Math.min(SAMPLE_SECTIONS.length - 1, Math.floor(scaled));
-  return { sections: SAMPLE_SECTIONS, current, value: scaled - current, overall: progress };
-}
 const CENTIMETRES = range(HEIGHT_RANGE_CM.min, HEIGHT_RANGE_CM.max);
 const FEET = range(3, 8);
 const INCHES = range(0, 11);
@@ -103,6 +94,15 @@ const ICONS: IconName[] = [
   'target',
   'timer',
 ];
+
+const SAMPLE_SECTIONS = ['About you', 'Training', 'Your plan'];
+
+/** The sample sections with the overall progress, between 0 and 1, spread over them. */
+function sectionsAt(progress: number) {
+  const scaled = progress * SAMPLE_SECTIONS.length;
+  const current = Math.min(SAMPLE_SECTIONS.length - 1, Math.floor(scaled));
+  return { sections: SAMPLE_SECTIONS, current, value: scaled - current, overall: progress };
+}
 
 /** Every design system component in its states, for development only. */
 export default function ComponentGallery() {
