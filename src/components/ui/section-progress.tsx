@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
 
+import { ProgressBar } from './progress-bar';
 import { Text } from './text';
 
 export type SectionProgressProps = {
@@ -36,7 +35,11 @@ export function SectionProgress({ sections, current, value }: SectionProgressPro
     >
       {sections.map((label, index) => (
         <View key={label} style={[styles.section, { gap: spacing.xs }]}>
-          <Segment value={index < current ? 1 : index === current ? clamped : 0} />
+          <ProgressBar
+            value={index < current ? 1 : index === current ? clamped : 0}
+            size="thin"
+            accessible={false}
+          />
           <Text
             variant="captionStrong"
             color={index === current ? 'primaryText' : 'textMuted'}
@@ -50,41 +53,11 @@ export function SectionProgress({ sections, current, value }: SectionProgressPro
   );
 }
 
-function Segment({ value }: { value: number }) {
-  const { colors, radii } = useTheme();
-  const progress = useSharedValue(value);
-
-  useEffect(() => {
-    progress.set(withTiming(value, { duration: 350 }));
-  }, [value, progress]);
-
-  const fillStyle = useAnimatedStyle(() => ({ width: `${progress.get() * 100}%` }));
-
-  return (
-    <View style={[styles.track, { backgroundColor: colors.track, borderRadius: radii.full }]}>
-      <Animated.View
-        style={[
-          styles.fill,
-          { backgroundColor: colors.primary, borderRadius: radii.full },
-          fillStyle,
-        ]}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
   section: {
     flex: 1,
-  },
-  track: {
-    height: 6,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
   },
 });

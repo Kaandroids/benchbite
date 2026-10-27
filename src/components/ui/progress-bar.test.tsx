@@ -17,4 +17,9 @@ describe('ProgressBar', () => {
     await screen.rerender(<ProgressBar value={-0.2} accessibilityLabel="Onboarding" />);
     expect(progressBar()).toHaveAccessibilityValue({ now: 0 });
   });
+
+  it('leaves the reading to an element around it when not accessible', async () => {
+    await render(<ProgressBar value={0.5} accessible={false} />);
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
 });
