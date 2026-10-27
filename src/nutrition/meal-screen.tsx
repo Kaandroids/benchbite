@@ -18,6 +18,7 @@ import { useTheme } from '@/theme';
 import { useDayName } from './day-name';
 import { useRemoveEntry, useRestoreEntry } from './entries';
 import { EntryRow } from './entry-row';
+import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import { totalOf, useDayEntries, type LoggedEntry, type Meal } from './meals';
 import { takeRemovedEntry } from './removed-entry';
@@ -102,7 +103,7 @@ export function MealScreen({ meal, day }: MealScreenProps) {
                 accessibilityLabel={`${t(`nutrition.macros.${key}`)} ${t('nutrition.grams', { count: Math.round(totals[grams]) })}`}
                 style={[styles.macro, { gap: spacing.xs }]}
               >
-                <View style={[styles.dot, { backgroundColor: colors[color] }]} />
+                <MacroDot color={color} />
                 <Text variant="captionStrong">
                   {t('nutrition.grams', { count: Math.round(totals[grams]) })}
                 </Text>
@@ -186,11 +187,6 @@ const styles = StyleSheet.create({
   macro: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
   // The rows pad themselves, so that a swiped row reaches the card's edges.
   list: {

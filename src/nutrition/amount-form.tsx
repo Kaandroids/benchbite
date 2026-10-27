@@ -12,6 +12,7 @@ import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
 
 import { amountOf, type Amount, type Portion } from './foods';
+import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import type { Totals } from './meals';
 import { usePortionLabel } from './portion-label';
@@ -258,7 +259,7 @@ export function AmountForm({
                 ]}
               >
                 <View style={[styles.macroName, { gap: spacing.xs }]}>
-                  <View style={[styles.dot, { backgroundColor: colors[color] }]} />
+                  <MacroDot color={color} />
                   <Text variant="caption" color="textMuted">
                     {t(`nutrition.macros.${key}`)}
                   </Text>
@@ -331,10 +332,5 @@ const styles = StyleSheet.create({
   macroName: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
 });
