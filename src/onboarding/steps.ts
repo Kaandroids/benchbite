@@ -113,12 +113,29 @@ export function previousStep(step: Step, answers: OnboardingAnswers): Step | nul
   return null;
 }
 
+/** The parts of the onboarding the progress bar shows, each named after its first step. */
+export const SECTIONS = ['you', 'training', 'plan'] as const;
+
+export type Section = (typeof SECTIONS)[number];
+
+const FIRST_STEP: Record<Section, Step> = {
+  you: 'nickname',
+  training: 'training-intro',
+  plan: 'building',
+};
+
 /**
- * How far the user is, between 0 and 1. It is measured against every step, including those that
- * may be skipped, so the total never grows and skipping a step moves the bar further.
+ * The section the step is in and how far into it, between 0 and 1, counting the step itself as
+ * reached. The welcome comes before the first section. It is measured against every step,
+ * including those that may be skipped, so a section never grows and skipping moves it further.
  */
-export function progressOf(step: Step): number {
-  return STEPS.indexOf(step) / (STEPS.length - 1);
+export function progressOf(step: Step): { section: number; value: number } {
+  const index = STEPS.indexOf(step);
+  const starts = SECTIONS.map((section) => STEPS.indexOf(FIRST_STEP[section]));
+  const section = Math.max(0, starts.findLastIndex((start) => start <= index));
+  const start = starts[section]!;
+  const end = starts[section + 1] ?? STEPS.length;
+  return { section, value: Math.max(0, index - start + 1) / (end - start) };
 }
 
 export function isStep(value: string): value is Step {

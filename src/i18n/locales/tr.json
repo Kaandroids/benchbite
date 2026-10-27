@@ -364,6 +364,11 @@
     "overLimit_other": "Kaydetmek için {{count}} egzersizi çıkar. Bir antrenmanda en fazla {{max}} egzersiz olabilir."
   },
   "onboarding": {
+    "sections": {
+      "you": "Bilgilerin",
+      "training": "Antrenman",
+      "plan": "Planın"
+    },
     "steps": {
       "nickname": {
         "title": "Sana nasıl hitap edelim?"

@@ -364,6 +364,11 @@
     "overLimit_other": "Entferne {{count}} Übungen, um zu speichern. Ein Training kann bis zu {{max}} haben."
   },
   "onboarding": {
+    "sections": {
+      "you": "Über dich",
+      "training": "Training",
+      "plan": "Dein Plan"
+    },
     "steps": {
       "nickname": {
         "title": "Wie sollen wir dich nennen?"
