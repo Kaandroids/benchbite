@@ -114,19 +114,19 @@ describe('steps', () => {
   });
 
   it('measures progress within each section, counting the step itself', () => {
-    expect(progressOf('welcome')).toEqual({ section: 0, value: 0 });
-    expect(progressOf('nickname')).toEqual({ section: 0, value: 1 / 11 });
-    expect(progressOf('activity')).toEqual({ section: 0, value: 1 });
-    expect(progressOf('training-intro')).toEqual({ section: 1, value: 1 / 5 });
-    expect(progressOf('session-length')).toEqual({ section: 1, value: 1 });
-    expect(progressOf('building')).toEqual({ section: 2, value: 1 / 4 });
-    expect(progressOf('summary')).toEqual({ section: 2, value: 1 });
+    expect(progressOf('welcome')).toEqual({ current: 0, value: 0 });
+    expect(progressOf('nickname')).toEqual({ current: 0, value: 1 / 11 });
+    expect(progressOf('activity')).toEqual({ current: 0, value: 1 });
+    expect(progressOf('training-intro')).toEqual({ current: 1, value: 1 / 5 });
+    expect(progressOf('session-length')).toEqual({ current: 1, value: 1 });
+    expect(progressOf('building')).toEqual({ current: 2, value: 1 / 4 });
+    expect(progressOf('summary')).toEqual({ current: 2, value: 1 });
   });
 
   it('moves forward with every step', () => {
     const overall = STEPS.map((step) => {
-      const { section, value } = progressOf(step);
-      return section + value;
+      const { current, value } = progressOf(step);
+      return current + value;
     });
     for (let index = 1; index < overall.length; index++) {
       expect(overall[index]).toBeGreaterThan(overall[index - 1]!);

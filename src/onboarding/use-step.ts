@@ -35,7 +35,6 @@ export function useStep(step: Step) {
   );
 
   const previous = previousStep(step, draft.answers);
-  const progress = progressOf(step);
 
   /** Goes back, also after resuming, when the previous step is not in the history. */
   const back = useCallback(() => {
@@ -96,8 +95,7 @@ export function useStep(step: Step) {
     answers: draft.answers,
     progress: {
       sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
-      current: progress.section,
-      value: progress.value,
+      ...progressOf(step),
     },
     /** Saves answers without moving on, for example to withdraw one. */
     answer,
