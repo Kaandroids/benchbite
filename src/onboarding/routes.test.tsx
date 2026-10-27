@@ -46,6 +46,10 @@ jest.mock('@/today/today-screen', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { TodayScreen: () => <MockText>Today screen</MockText> };
 });
+jest.mock('@/nutrition/nutrition-screen', () => {
+  const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { NutritionScreen: () => <MockText>Nutrition screen</MockText> };
+});
 
 // The workout screens load the user's workouts; these tests only check which one opens.
 jest.mock('@/workouts/workouts-screen', () => {

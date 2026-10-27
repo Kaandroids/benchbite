@@ -87,7 +87,6 @@
   },
   "comingSoon": {
     "title": "Coming soon",
-    "nutrition": "Logging your meals will be here.",
     "progress": "Your weight and progress will be here."
   },
   "today": {
@@ -186,7 +185,29 @@
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "macroGrams": "{{grams}} g {{macro}}"
+    "macroGrams": "{{grams}} g {{macro}}",
+    "day": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "previous": "Previous day",
+      "next": "Next day"
+    },
+    "left": "kcal left",
+    "over": "kcal over",
+    "ringLabel": "{{eaten}} of {{target}} kcal eaten",
+    "meals": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snacks"
+    },
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "mealTotals": "{{calories}} kcal · P {{protein}} · C {{carbs}} · F {{fat}}",
+    "mealTotalsLabel": "{{calories}} kcal, {{protein}} g protein, {{carbs}} g carbs, {{fat}} g fat",
+    "suggested": "Suggested {{calories}} kcal",
+    "nothingLogged": "Nothing logged",
+    "loading": "Loading the day"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

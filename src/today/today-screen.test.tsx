@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import { useFinishedThisWeek } from '@/history/history';
+import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { act, fireEvent, render, screen } from '@/test/render';
@@ -21,6 +22,10 @@ jest.mock('@/workouts/moves', () => ({
   useUndoMove: jest.fn(),
 }));
 jest.mock('@/nutrition/targets', () => ({ useNutritionTargets: jest.fn() }));
+jest.mock('@/nutrition/meals', () => ({
+  ...jest.requireActual('@/nutrition/meals'),
+  useDayEntries: jest.fn(),
+}));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: jest.fn() }));
 jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
@@ -120,6 +125,7 @@ function mockData({
   moving = { isError: false, isPending: false, error: null as unknown },
   undoing = { isError: false, isPending: false },
   name = null,
+  eaten = loaded<MealEntry[]>([]),
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
@@ -131,6 +137,7 @@ function mockData({
   moving?: { isError: boolean; isPending: boolean; error: unknown };
   undoing?: { isError: boolean; isPending: boolean };
   name?: string | null;
+  eaten?: Query<MealEntry[]>;
 } = {}) {
   jest.mocked(useDisplayName).mockReturnValue({ data: name } as never);
   jest.mocked(useMoveWorkout).mockReturnValue({ mutate: move, ...moving } as never);
@@ -139,10 +146,11 @@ function mockData({
   jest.mocked(useWeekMoves).mockReturnValue(moves as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
+  jest.mocked(useDayEntries).mockReturnValue(eaten as never);
   jest.mocked(useLatestWeight).mockReturnValue(weight as never);
   jest.mocked(useWeightUnit).mockReturnValue(unit as never);
   jest.mocked(useLogWeight).mockReturnValue({ mutate, reset, ...log } as never);
-  return { plan, targets, weight, unit };
+  return { plan, targets, weight, unit, eaten };
 }
 
 describe('TodayScreen', () => {
@@ -285,13 +293,20 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Next: Monday · Push')).toBeTruthy();
   });
 
-  it('shows what was eaten against the daily targets, nothing until meals can be logged', async () => {
-    mockData();
+  it("shows today's meals against the daily targets", async () => {
+    const meal = { calories: 640, proteinG: 42, carbsG: 70, fatG: 18 };
+    mockData({
+      eaten: loaded<MealEntry[]>([
+        { meal: 'breakfast', ...meal },
+        { meal: 'lunch', ...meal },
+      ]),
+    });
     await render(<TodayScreen />);
-    expect(screen.getByText('0 / 2,200 kcal')).toBeTruthy();
-    expect(screen.getByText('0 / 150 g')).toBeTruthy();
-    expect(screen.getByText('0 / 250 g')).toBeTruthy();
-    expect(screen.getByText('0 / 70 g')).toBeTruthy();
+    expect(jest.mocked(useDayEntries)).toHaveBeenCalledWith('2026-10-21');
+    expect(screen.getByText('1,280 / 2,200 kcal')).toBeTruthy();
+    expect(screen.getByText('84 / 150 g')).toBeTruthy();
+    expect(screen.getByText('140 / 250 g')).toBeTruthy();
+    expect(screen.getByText('36 / 70 g')).toBeTruthy();
   });
 
   it('leaves out what the user has no data for', async () => {
@@ -304,12 +319,12 @@ describe('TodayScreen', () => {
   });
 
   it('loads everything again when pulled down', async () => {
-    const { plan, targets, weight, unit } = mockData();
+    const { plan, targets, weight, unit, eaten } = mockData();
     await render(<TodayScreen />);
     // The mock of RefreshControl drops its props, so the handler is taken from the scroll view.
     const [scrollView] = screen.container.queryAll((node) => node.type === 'RCTScrollView');
     await act(() => scrollView!.props.refreshControl.props.onRefresh());
-    for (const query of [plan, targets, weight, unit]) {
+    for (const query of [plan, targets, weight, unit, eaten]) {
       expect(query.refetch).toHaveBeenCalled();
     }
   });

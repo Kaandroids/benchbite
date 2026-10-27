@@ -27,6 +27,19 @@ describe('DailyProgress', () => {
     ]);
   });
 
+  it('rounds what was eaten to whole numbers', async () => {
+    await render(
+      <DailyProgress
+        targets={TARGETS}
+        eaten={{ calories: 1280.4, proteinG: 9.9, carbsG: 26.7, fatG: 3.3 }}
+      />,
+    );
+    expect(screen.getByText('1,280 / 2,850 kcal')).toBeTruthy();
+    expect(screen.getByText('10 / 180 g')).toBeTruthy();
+    expect(screen.getByText('27 / 355 g')).toBeTruthy();
+    expect(screen.getByText('3 / 79 g')).toBeTruthy();
+  });
+
   it('fills the bars no further than the target', async () => {
     await render(<DailyProgress targets={TARGETS} eaten={{ ...TARGETS, calories: 3500 }} />);
     expect(progress()[0]).toEqual(['Calories', 100]);

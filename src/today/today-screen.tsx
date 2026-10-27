@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TabScreen } from '@/components/tab-screen';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
@@ -11,7 +11,8 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
-import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
+import { totalOf, useDayEntries } from '@/nutrition/meals';
+import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
@@ -27,9 +28,6 @@ import { PickDay } from './pick-day';
 import { WeekCard } from './week-card';
 import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
-
-/** Meals are logged in the nutrition milestone; until then nothing is eaten. */
-const NOTHING_EATEN: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
 /** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
 type SheetContent =
@@ -47,22 +45,14 @@ export function TodayScreen() {
   const greeting = useGreeting();
   const today = new Date();
   const { schedule, plan, moves, finished } = useWeekSchedule(today);
-  const queries = [plan, targets, latestWeight, weightUnit, finished, moves];
+  const todayOn = toIsoDate(today);
+  const eaten = useDayEntries(todayOn);
+  const queries = [plan, targets, latestWeight, weightUnit, finished, moves, eaten];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
-  const [refreshing, setRefreshing] = useState(false);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
-  const refresh = async () => {
-    setRefreshing(true);
-    try {
-      await Promise.all(queries.map((query) => query.refetch()));
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
-  const todayOn = toIsoDate(today);
   const sheetDay =
     sheet?.kind === 'day'
       ? schedule.days.find((day) => day.date === sheet.date && hasWorkouts(day))
@@ -122,7 +112,7 @@ export function TodayScreen() {
         {targets.data ? (
           <Card entering={FadeInDown.delay(200).duration(400)}>
             <Text variant="headline">{t('today.targets')}</Text>
-            <DailyProgress targets={targets.data} eaten={NOTHING_EATEN} />
+            <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
           </Card>
         ) : null}
         <WeightCard
@@ -135,59 +125,41 @@ export function TodayScreen() {
   }
 
   return (
-    // Inside a tab, the bottom inset includes the tab bar, which covers the content on iOS.
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
+    <TabScreen
+      queries={queries}
+      overlay={
+        // One sheet whose content changes, as a modal cannot open while another one closes.
+        sheet ? (
+          <Sheet onClose={() => setSheet(null)}>
+            {sheet.kind === 'pick' ? (
+              <PickDay
+                schedule={schedule}
+                session={sheet.session}
+                fromOn={sheet.fromOn}
+                today={today}
+                onDone={() => setSheet(null)}
+              />
+            ) : sheetDay ? (
+              <DayMenu
+                schedule={schedule}
+                day={sheetDay}
+                today={today}
+                onMove={(session, fromOn) => setSheet({ kind: 'pick', session, fromOn })}
+              />
+            ) : null}
+          </Sheet>
+        ) : null
+      }
     >
-      <ScrollView
-        contentContainerStyle={[styles.content, { padding: spacing.xl, gap: spacing.lg }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void refresh()}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      >
-        <Text variant="title" accessibilityRole="header">
-          {greeting(today, name)}
-        </Text>
-        {content}
-      </ScrollView>
-      {/* One sheet whose content changes, as a modal cannot open while another one closes. */}
-      {sheet ? (
-        <Sheet onClose={() => setSheet(null)}>
-          {sheet.kind === 'pick' ? (
-            <PickDay
-              schedule={schedule}
-              session={sheet.session}
-              fromOn={sheet.fromOn}
-              today={today}
-              onDone={() => setSheet(null)}
-            />
-          ) : sheetDay ? (
-            <DayMenu
-              schedule={schedule}
-              day={sheetDay}
-              today={today}
-              onMove={(session, fromOn) => setSheet({ kind: 'pick', session, fromOn })}
-            />
-          ) : null}
-        </Sheet>
-      ) : null}
-    </SafeAreaView>
+      <Text variant="title" accessibilityRole="header">
+        {greeting(today, name)}
+      </Text>
+      {content}
+    </TabScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',

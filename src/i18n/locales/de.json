@@ -87,7 +87,6 @@
   },
   "comingSoon": {
     "title": "Bald verfügbar",
-    "nutrition": "Hier kannst du bald deine Mahlzeiten eintragen.",
     "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
   },
   "today": {
@@ -186,7 +185,29 @@
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "macroGrams": "{{grams}} g {{macro}}"
+    "macroGrams": "{{grams}} g {{macro}}",
+    "day": {
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "previous": "Vorheriger Tag",
+      "next": "Nächster Tag"
+    },
+    "left": "kcal übrig",
+    "over": "kcal zu viel",
+    "ringLabel": "{{eaten}} von {{target}} kcal gegessen",
+    "meals": {
+      "breakfast": "Frühstück",
+      "lunch": "Mittagessen",
+      "dinner": "Abendessen",
+      "snack": "Snacks"
+    },
+    "items_one": "{{count}} Eintrag",
+    "items_other": "{{count}} Einträge",
+    "mealTotals": "{{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
+    "mealTotalsLabel": "{{calories}} kcal, {{protein}} g Protein, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
+    "suggested": "Vorschlag {{calories}} kcal",
+    "nothingLogged": "Noch nichts eingetragen",
+    "loading": "Tag wird geladen"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
