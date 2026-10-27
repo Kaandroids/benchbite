@@ -235,8 +235,15 @@ function readBls(archive: Buffer): Map<string, BlsFood> {
   return foods;
 }
 
+/** A name as the food_names index compares it: in lower case, with Turkish İ and ı as i. */
+function nameKey(name: string): string {
+  return name.trim().replace(/[İı]/g, 'i').toLowerCase();
+}
+
 function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): void {
   const problems: string[] = [];
+  // The first food with each name, per language, to find a name used twice.
+  const named = new Map<string, string>();
   for (const [code, food] of Object.entries(chosen)) {
     const values = bls.get(code);
     if (!values) {
@@ -255,6 +262,13 @@ function check(chosen: Record<string, ChosenFood>, bls: Map<string, BlsFood>): v
       const name = food[language]?.trim() ?? '';
       if (name.length < 1 || name.length > MAX_NAME_LENGTH) {
         problems.push(`${code} needs a ${language} name of 1 to ${MAX_NAME_LENGTH} characters`);
+      }
+      const key = `${language}:${nameKey(name)}`;
+      const other = named.get(key);
+      if (other) {
+        problems.push(`${code} has the ${language} name "${name}" of ${other}`);
+      } else {
+        named.set(key, code);
       }
     }
     if (
