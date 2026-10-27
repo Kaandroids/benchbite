@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { Icon } from '@/components/ui/icon';
+import { BackBar } from '@/components/ui/back-bar';
 import { MessageView } from '@/components/ui/message-view';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -77,16 +77,7 @@ export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
       style={[styles.flex, { backgroundColor: colors.background }]}
       edges={['top', 'bottom']}
     >
-      <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          onPress={() => router.back()}
-          style={styles.back}
-        >
-          <Icon name="back" color="text" />
-        </Pressable>
-      </View>
+      <BackBar />
       {content}
     </SafeAreaView>
   );
@@ -95,16 +86,5 @@ export function AmountScreen({ foodId, meal, day }: AmountScreenProps) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 52,
-  },
-  back: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
