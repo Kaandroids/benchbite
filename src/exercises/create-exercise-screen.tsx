@@ -8,7 +8,6 @@ import { Chip } from '@/components/ui/chip';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { Text } from '@/components/ui/text';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
 import { typography, useTheme } from '@/theme';
@@ -118,11 +117,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
     <Screen
       onBack={() => router.back()}
       closes
-      title={
-        <Text variant="label" accessibilityRole="header">
-          {editing ? t('customExercise.editTitle') : t('customExercise.title')}
-        </Text>
-      }
+      title={editing ? t('customExercise.editTitle') : t('customExercise.title')}
       footer={
         <Button
           label={editing ? t('customExercise.save') : t('customExercise.create')}

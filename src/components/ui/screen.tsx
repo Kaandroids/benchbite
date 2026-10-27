@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 import { Icon } from './icon';
+import { ScreenTitle } from './screen-title';
 import { SectionProgress, type SectionProgressProps } from './section-progress';
 
 type ScreenProps = {
@@ -20,8 +21,13 @@ type ScreenProps = {
   footer?: ReactNode;
   /** A button at the end of the top bar, such as Edit. */
   action?: ReactNode;
-  /** A title in the middle of the top bar, instead of a progress bar. */
+  /**
+   * A title in the middle of the top bar, instead of a progress bar: text, shown as the screen's
+   * header on one line, or a component for a title that needs more.
+   */
   title?: ReactNode;
+  /** A short line under a text title, such as the day of a meal; not shown with a component. */
+  subtitle?: string;
   /** False for content that scrolls itself, such as a long virtualized list. */
   scrolls?: boolean;
 };
@@ -35,6 +41,7 @@ export function Screen({
   footer,
   action,
   title,
+  subtitle,
   scrolls = true,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
@@ -64,10 +71,16 @@ export function Screen({
               <SectionProgress {...progress} />
             </View>
           ) : (
-            <View style={[styles.progress, styles.title]}>{title}</View>
+            <View style={[styles.progress, styles.title]}>
+              {typeof title === 'string' ? (
+                <ScreenTitle title={title} subtitle={subtitle} />
+              ) : (
+                title
+              )}
+            </View>
           )}
           {/* Keeps a title in the middle when there is a back button but no action. */}
-          {action ?? (title && onBack ? <View style={styles.back} /> : null)}
+          {action ?? (title !== undefined && onBack ? <View style={styles.back} /> : null)}
         </View>
       ) : null}
       {scrolls ? (

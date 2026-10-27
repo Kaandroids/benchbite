@@ -9,7 +9,6 @@ import { Chip } from '@/components/ui/chip';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
-import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
@@ -136,7 +135,8 @@ export function AmountForm({
     <KeyboardAvoiding>
       <Screen
         onBack={() => router.back()}
-        title={<ScreenTitle title={title} subtitle={subtitle} />}
+        title={title}
+        subtitle={subtitle}
         action={action}
         footer={
           <Button
