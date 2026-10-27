@@ -3,6 +3,13 @@ import { parseDecimal } from '@/lib/math';
 import type { CustomFoodValues } from './custom-foods';
 import type { Food, PortionUnit } from './foods';
 
+// The limits of the custom_foods table (migration 20261027200000), checked here first so that
+// Save stays off for a food the database would refuse.
+export const MAX_NAME_LENGTH = 120;
+const MAX_KCAL_PER_100G = 900;
+const MAX_MACROS_PER_100G = 100;
+const MAX_PORTION_GRAMS = 5000;
+
 /** What the form holds as typed: values per 100 g, or per portion as a label may print them. */
 export type FoodForm = {
   name: string;
@@ -54,7 +61,11 @@ const round = (value: number, decimals: number) => Number(value.toFixed(decimals
 /** The portion's grams, if a unit is chosen and they are a valid amount. */
 function portionGramsOf(form: FoodForm): number | null {
   const grams = parseDecimal(form.portionGrams);
-  return form.unit && grams !== null && grams > 0 && grams <= 5000 ? round(grams, 1) : null;
+  if (!form.unit || grams === null) {
+    return null;
+  }
+  const rounded = round(grams, 1);
+  return rounded > 0 && rounded <= MAX_PORTION_GRAMS ? rounded : null;
 }
 
 /**
@@ -73,28 +84,21 @@ export function readForm(form: FoodForm): FormResult {
       : { kind: 'incomplete' };
   }
   const scale = form.basis === 'perPortion' && portionGrams ? 100 / portionGrams : 1;
-  const [kcal, protein, carbs, fat] = numbers.map((value) => value! * scale) as [
-    number,
-    number,
-    number,
-    number,
-  ];
-  if (kcal > 900) {
+  // Rounded as the table keeps them before they are checked, as the table checks them.
+  const [kcal, protein, carbs, fat] = numbers.map((value, index) =>
+    round(value! * scale, index === 0 ? 1 : 2),
+  ) as [number, number, number, number];
+  if (kcal > MAX_KCAL_PER_100G) {
     return { kind: 'problem', problem: 'tooMuchEnergy' };
   }
-  if (protein + carbs + fat > 100) {
+  if (protein + carbs + fat > MAX_MACROS_PER_100G) {
     return { kind: 'problem', problem: 'tooMuchMacros' };
   }
   return {
     kind: 'valid',
     values: {
       name: form.name.trim(),
-      per100g: {
-        calories: round(kcal, 1),
-        proteinG: round(protein, 2),
-        carbsG: round(carbs, 2),
-        fatG: round(fat, 2),
-      },
+      per100g: { calories: kcal, proteinG: protein, carbsG: carbs, fatG: fat },
       portion: form.unit && portionGrams ? { unit: form.unit, grams: portionGrams } : null,
     },
   };

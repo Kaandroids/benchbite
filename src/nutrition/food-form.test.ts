@@ -57,6 +57,19 @@ describe('readForm', () => {
       kind: 'problem',
       problem: 'tooMuchMacros',
     });
+    // 1 + 1 + 5 g in 7 g is 100 g per 100 g exactly, but 100.01 g once rounded as stored.
+    expect(
+      readForm({
+        ...YOGHURT,
+        protein: '1',
+        carbs: '1',
+        fat: '5',
+        kcal: '60',
+        basis: 'perPortion',
+        unit: 'piece',
+        portionGrams: '7',
+      }),
+    ).toEqual({ kind: 'problem', problem: 'tooMuchMacros' });
     expect(readForm({ ...YOGHURT, unit: 'can', portionGrams: '9000' })).toEqual({
       kind: 'problem',
       problem: 'portion',
