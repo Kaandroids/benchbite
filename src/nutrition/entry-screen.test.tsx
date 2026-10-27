@@ -1,15 +1,20 @@
 import { router } from 'expo-router';
 
-import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { takeRemovedEntry, useRemoveEntry, useUpdateEntry } from './entries';
+import { useRemoveEntry, useUpdateEntry } from './entries';
 import { EntryScreen } from './entry-screen';
 import { useFood } from './foods';
 import { useDayEntries, type LoggedEntry } from './meals';
+import { takeRemovedEntry } from './removed-entry';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+const mockIsFocused = jest.fn(() => true);
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn() },
+  useNavigation: () => ({ isFocused: mockIsFocused }),
+}));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
@@ -43,6 +48,7 @@ const remove = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockIsFocused.mockReturnValue(true);
   jest
     .mocked(useDayEntries)
     .mockReturnValue(loaded([BANANA, { ...BANANA, id: 6, calories: 500, name: 'Oat flakes' }]));
@@ -95,7 +101,18 @@ describe('EntryScreen', () => {
     await fireEvent.press(screen.getByLabelText('Remove this entry'));
     expect(remove).toHaveBeenCalledWith(BANANA);
     await waitFor(() => expect(router.back).toHaveBeenCalled());
-    expect(takeRemovedEntry()).toBe(BANANA);
+    expect(takeRemovedEntry('breakfast', '2026-10-27')).toBe(BANANA);
+  });
+
+  it('does nothing more once the user went back while the removal ran', async () => {
+    let finish = () => {};
+    remove.mockReturnValue(new Promise<void>((resolve) => (finish = resolve)));
+    await render(<EntryScreen id={5} day="2026-10-27" />);
+    await fireEvent.press(screen.getByLabelText('Remove this entry'));
+    mockIsFocused.mockReturnValue(false);
+    await act(async () => finish());
+    expect(router.back).not.toHaveBeenCalled();
+    expect(takeRemovedEntry('breakfast', '2026-10-27')).toBeNull();
   });
 
   it('keeps grams only for a food taken out of the library', async () => {

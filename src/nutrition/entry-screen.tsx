@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,9 +12,10 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { AmountForm } from './amount-form';
-import { setRemovedEntry, useRemoveEntry, useUpdateEntry } from './entries';
+import { useRemoveEntry, useUpdateEntry } from './entries';
 import { useFood } from './foods';
 import { totalOf, useDayEntries, type LoggedEntry } from './meals';
+import { handOverRemovedEntry } from './removed-entry';
 import { useNutritionTargets } from './targets';
 
 type EntryScreenProps = {
@@ -30,15 +31,20 @@ export function EntryScreen({ id, day }: EntryScreenProps) {
   const entries = useDayEntries(day);
   const targets = useNutritionTargets();
   const removeEntry = useRemoveEntry();
+  const navigation = useNavigation();
   const entry = entries.data?.find((item) => item.id === id);
 
+  // Once the request is done, and only if the screen is still showing: going back by hand while
+  // it ran must not take the user a screen further.
   const remove = (removing: LoggedEntry) => {
     removeEntry
       .mutateAsync(removing)
       .then(() => {
-        // The meal screen offers to undo it.
-        setRemovedEntry(removing);
-        router.back();
+        if (navigation.isFocused()) {
+          // The meal screen offers to undo it.
+          handOverRemovedEntry(removing);
+          router.back();
+        }
       })
       .catch(() => {});
   };
@@ -65,6 +71,11 @@ export function EntryScreen({ id, day }: EntryScreenProps) {
         eatenCalories={totalOf(entries.data ?? []).calories - entry.calories}
         targetCalories={targets.data?.calories ?? null}
         removeError={removeEntry.isError}
+        onSaved={() => {
+          if (navigation.isFocused()) {
+            router.back();
+          }
+        }}
       />
     );
   }
@@ -101,9 +112,10 @@ type EntryFormProps = {
   eatenCalories: number;
   targetCalories: number | null;
   removeError: boolean;
+  onSaved: () => void;
 };
 
-function EntryForm({ entry, eatenCalories, targetCalories, removeError }: EntryFormProps) {
+function EntryForm({ entry, eatenCalories, targetCalories, removeError, onSaved }: EntryFormProps) {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   // The food's portions; a food taken out of the library leaves grams only.
@@ -133,13 +145,13 @@ function EntryForm({ entry, eatenCalories, targetCalories, removeError }: EntryF
         updateEntry.isError ? (
           <Note tone="danger">{t('nutrition.entry.saveError')}</Note>
         ) : removeError ? (
-          <Note tone="danger">{t('nutrition.meal.removeError')}</Note>
+          <Note tone="danger">{t('nutrition.entry.removeError')}</Note>
         ) : undefined
       }
       onSubmit={(amount) =>
         updateEntry
           .mutateAsync({ id: entry.id, day: entry.day, amount })
-          .then(() => router.back())
+          .then(onSaved)
           .catch(() => {})
       }
     />
