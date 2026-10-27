@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { MEALS, type Meal, type MealSummary } from './meals';
+import type { Meal, MealSummary } from './meals';
 
 type MealListProps = {
   meals: MealSummary[];
@@ -26,8 +26,7 @@ export function MealList({ meals, suggested }: MealListProps) {
 
   return (
     <Card list>
-      {meals.map(({ meal, items, totals }, index) => {
-        const icon = MEALS.find((m) => m.meal === meal)!.icon;
+      {meals.map(({ meal, icon, items, totals }, index) => {
         const values = {
           calories: format(Math.round(totals.calories)),
           protein: format(Math.round(totals.proteinG)),

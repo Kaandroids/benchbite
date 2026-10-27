@@ -43,13 +43,13 @@ export function totalOf(entries: Totals[]): Totals {
   return entries.reduce(add, NOTHING);
 }
 
-export type MealSummary = { meal: Meal; items: number; totals: Totals };
+export type MealSummary = (typeof MEALS)[number] & { items: number; totals: Totals };
 
 /** Every meal with its number of entries and what they add up to, empty ones too. */
 export function mealsOf(entries: MealEntry[]): MealSummary[] {
-  return MEALS.map(({ meal }) => {
-    const items = entries.filter((entry) => entry.meal === meal);
-    return { meal, items: items.length, totals: totalOf(items) };
+  return MEALS.map((row) => {
+    const items = entries.filter((entry) => entry.meal === row.meal);
+    return { ...row, items: items.length, totals: totalOf(items) };
   });
 }
 
@@ -59,7 +59,7 @@ export function mealsOf(entries: MealEntry[]): MealSummary[] {
  */
 export function suggestedCalories(target: number, meals: MealSummary[]): Map<Meal, number> {
   const left = target - totalOf(meals.map((meal) => meal.totals)).calories;
-  const empty = MEALS.filter(({ meal }) => meals.some((m) => m.meal === meal && m.items === 0));
+  const empty = meals.filter((meal) => meal.items === 0);
   const shares = empty.reduce((sum, { share }) => sum + share, 0);
   const suggested = new Map<Meal, number>();
   if (left <= 0 || shares === 0) {
