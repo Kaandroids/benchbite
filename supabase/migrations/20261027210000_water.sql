@@ -27,10 +27,26 @@ create policy "Users read their own water"
 revoke all on public.water_days from anon;
 revoke insert, update, delete, truncate on public.water_days from authenticated;
 
--- Water is logged for today and the week before it, as meals are.
+-- Water is logged for today and the week before it, as meals are, so the day check is shared and
+-- named for both. The meal triggers follow the function, not its name.
+alter function public.check_meal_day() rename to check_log_day;
+
+create or replace function public.check_log_day()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.day not between current_date - 8 and current_date + 1 then
+    raise exception 'Only today and the week before can be logged' using errcode = 'BB020';
+  end if;
+  return new;
+end;
+$$;
+
 create trigger water_days_check_day
   before insert or update of day on public.water_days
-  for each row execute function public.check_meal_day();
+  for each row execute function public.check_log_day();
 
 -- Adds millilitres to a day of the caller, or takes them away with a negative amount, and gives
 -- the new total. It never goes below nothing or above 10 L.
