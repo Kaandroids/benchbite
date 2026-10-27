@@ -120,6 +120,7 @@ supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
 scripts/               the exercise import, the locale check and the plan check
 docs/adr/              Architecture Decision Records
+docs/screenshots/      the screenshots in this README
 ```
 
 ## Getting started
