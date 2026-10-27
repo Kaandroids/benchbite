@@ -1,15 +1,19 @@
 import { router } from 'expo-router';
 
+import { useWaterGoal } from '@/profile/water-goal';
 import { fireEvent, render, screen } from '@/test/render';
 
 import { useDayEntries, type MealEntry } from './meals';
 import { NutritionScreen } from './nutrition-screen';
 import { useNutritionTargets, type NutritionTargets } from './targets';
+import { useWater } from './water';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
+jest.mock('./water', () => ({ ...jest.requireActual('./water'), useWater: jest.fn() }));
+jest.mock('@/profile/water-goal', () => ({ useWaterGoal: jest.fn() }));
 
 const TARGETS: NutritionTargets = { calories: 2550, proteinG: 144, carbsG: 300, fatG: 85 };
 
@@ -40,6 +44,8 @@ beforeEach(() => {
   jest.useFakeTimers({ now: new Date(2026, 9, 27, 12, 0), doNotFake: ['nextTick'] });
   jest.mocked(useNutritionTargets).mockReturnValue(query(TARGETS, {}));
   mockDay([]);
+  jest.mocked(useWater).mockReturnValue(query(750, {}));
+  jest.mocked(useWaterGoal).mockReturnValue(query(2000, {}));
 });
 afterEach(() => jest.useRealTimers());
 
@@ -134,5 +140,15 @@ describe('NutritionScreen', () => {
     mockDay(undefined, { isError: true });
     await render(<NutritionScreen />);
     expect(screen.getByText('Try again')).toBeTruthy();
+  });
+
+  it("shows the day's water, and waits for it with the rest", async () => {
+    await render(<NutritionScreen />);
+    expect(jest.mocked(useWater)).toHaveBeenLastCalledWith('2026-10-27');
+    expect(screen.getByText('0.75 of 2 L')).toBeTruthy();
+
+    jest.mocked(useWater).mockReturnValue(query(undefined, { isPending: true }));
+    await render(<NutritionScreen />);
+    expect(screen.queryByText('Breakfast')).toBeNull();
   });
 });
