@@ -54,6 +54,16 @@ export function refOfRow(row: { food_id: string | null; custom_food_id: number |
     : { kind: 'library', id: row.food_id ?? '' };
 }
 
+/** A food as the columns of entries and favourites name it: a library food or one of one's own. */
+export function foodColumns(food: FoodRef): {
+  food_id: string | null;
+  custom_food_id: number | null;
+} {
+  return food.kind === 'custom'
+    ? { food_id: null, custom_food_id: food.id }
+    : { food_id: food.id, custom_food_id: null };
+}
+
 /** A food found by search, with its values per 100 g and its default portion, if any. */
 export type FoodResult = { ref: FoodRef; name: string; per100g: Totals; portion: Portion | null };
 

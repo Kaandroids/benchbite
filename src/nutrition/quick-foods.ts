@@ -3,7 +3,15 @@ import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
 
-import { portionOf, refKey, refOfRow, type Amount, type FoodRef, type FoodResult } from './foods';
+import {
+  foodColumns,
+  portionOf,
+  refKey,
+  refOfRow,
+  type Amount,
+  type FoodRef,
+  type FoodResult,
+} from './foods';
 import { totalsOf, type Meal } from './meals';
 
 /** A food logged often at a meal: how often, and the amount it was logged with last. */
@@ -71,13 +79,6 @@ export function useFavouriteKeys(): Set<string> {
   return new Set((favourites.data ?? []).map((food) => refKey(food.ref)));
 }
 
-/** A food as the favourite_foods columns name it. */
-function foodColumn(food: FoodRef): { food_id: string | null; custom_food_id: number | null } {
-  return food.kind === 'custom'
-    ? { food_id: null, custom_food_id: food.id }
-    : { food_id: food.id, custom_food_id: null };
-}
-
 /**
  * Stars a food or takes its star away. Starring one already starred, say from another device,
  * counts as done.
@@ -87,12 +88,13 @@ export function useSetFavourite() {
   return useMutation({
     mutationFn: async ({ food, favourite }: { food: FoodRef; favourite: boolean }) => {
       if (favourite) {
-        const { error } = await supabase.from('favourite_foods').insert(foodColumn(food));
+        const { error } = await supabase.from('favourite_foods').insert(foodColumns(food));
         if (error && error.code !== '23505') {
           throw error;
         }
         return;
       }
+      // By the one column that names the food: an equal filter on the other, null, matches nothing.
       const query = supabase.from('favourite_foods').delete();
       const { error } =
         food.kind === 'custom'
