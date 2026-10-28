@@ -200,7 +200,7 @@ export function AmountForm({
                 </Text>
               </>
             ) : (
-              <View style={[styles.gramsRow, { gap: spacing.xs }]}>
+              <>
                 <TextInput
                   accessibilityLabel={t('nutrition.amount.grams')}
                   value={gramsText ?? String(grams)}
@@ -222,14 +222,20 @@ export function AmountForm({
                   maxLength={6}
                   style={[
                     styles.gramsInput,
-                    typography.display,
+                    // Without its line height: iOS draws the text of an input with one above the
+                    // middle of its box, so the number sat high and moved while it was edited.
+                    {
+                      fontFamily: typography.display.fontFamily,
+                      fontSize: typography.display.fontSize,
+                    },
                     { color: colors.text, borderBottomColor: colors.border },
                   ]}
                 />
-                <Text variant="headline" color="textMuted">
-                  g
+                {/* Below the number, as the portion's words are, rather than beside it. */}
+                <Text variant="caption" color="textMuted" align="center">
+                  {t('nutrition.amount.gramsUnit')}
                 </Text>
-              </View>
+              </>
             )}
           </View>
           <RoundIconButton
@@ -315,12 +321,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  gramsRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
   gramsInput: {
     minWidth: 80,
+    // The height of the portion count, so that switching between them does not move the card.
+    height: 44,
     textAlign: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: 0,
