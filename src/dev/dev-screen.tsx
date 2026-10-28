@@ -6,6 +6,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
 import { DevAccountLink } from './dev-account-link';
@@ -23,6 +24,7 @@ const TOOLS: { icon: IconName; title: string; detail: string; href: Href }[] = [
 /** Everything for development in one place, opened from beside the settings; only in development. */
 export function DevScreen() {
   const { colors, spacing } = useTheme();
+  const isAccount = useIsAccount();
   if (!__DEV__) {
     return <Redirect href="/" />;
   }
@@ -53,7 +55,10 @@ export function DevScreen() {
           </Pressable>
         ))}
       </Card>
-      <DevAccountLink />
+      <DevAccountLink
+        // Logging in warns about this; here it is said beside the link.
+        note={isAccount ? undefined : 'This guest is signed out, and its data stays behind.'}
+      />
       <Text variant="caption" color="textMuted">
         Supabase: {process.env.EXPO_PUBLIC_SUPABASE_URL}
       </Text>
