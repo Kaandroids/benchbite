@@ -1024,6 +1024,7 @@ export type Database = {
           kcal: number | null;
           protein_g: number | null;
           recipe_id: number | null;
+          serving_grams: number | null;
         };
         ComputedFields: never;
         Relationships: [];
