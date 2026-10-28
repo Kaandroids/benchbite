@@ -151,6 +151,7 @@ export type Database = {
           custom_food_id: number | null;
           food_id: string | null;
           id: number;
+          recipe_id: number | null;
           user_id: string;
         };
         ComputedFields: never;
@@ -159,6 +160,7 @@ export type Database = {
           custom_food_id?: number | null;
           food_id?: string | null;
           id?: never;
+          recipe_id?: number | null;
           user_id?: string;
         };
         Update: {
@@ -166,6 +168,7 @@ export type Database = {
           custom_food_id?: number | null;
           food_id?: string | null;
           id?: never;
+          recipe_id?: number | null;
           user_id?: string;
         };
         Relationships: [
@@ -181,6 +184,20 @@ export type Database = {
             columns: ['food_id'];
             isOneToOne: false;
             referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'favourite_foods_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipe_values';
+            referencedColumns: ['recipe_id'];
+          },
+          {
+            foreignKeyName: 'favourite_foods_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipes';
             referencedColumns: ['id'];
           },
         ];
@@ -419,6 +436,7 @@ export type Database = {
           portion_unit: Database['public']['Enums']['portion_unit'] | null;
           protein_g: number | null;
           protein_per_100g: number;
+          recipe_id: number | null;
           user_id: string;
         };
         ComputedFields: never;
@@ -440,6 +458,7 @@ export type Database = {
           portion_unit?: Database['public']['Enums']['portion_unit'] | null;
           protein_g?: never;
           protein_per_100g?: number;
+          recipe_id?: number | null;
           user_id?: string;
         };
         Update: {
@@ -460,6 +479,7 @@ export type Database = {
           portion_unit?: Database['public']['Enums']['portion_unit'] | null;
           protein_g?: never;
           protein_per_100g?: number;
+          recipe_id?: number | null;
           user_id?: string;
         };
         Relationships: [
@@ -475,6 +495,20 @@ export type Database = {
             columns: ['food_id'];
             isOneToOne: false;
             referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'meal_entries_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipe_values';
+            referencedColumns: ['recipe_id'];
+          },
+          {
+            foreignKeyName: 'meal_entries_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipes';
             referencedColumns: ['id'];
           },
         ];
@@ -573,6 +607,97 @@ export type Database = {
         };
         Relationships: [];
       };
+      recipe_ingredients: {
+        Row: {
+          custom_food_id: number | null;
+          food_id: string | null;
+          grams: number;
+          portion_count: number | null;
+          portion_unit: Database['public']['Enums']['portion_unit'] | null;
+          position: number;
+          recipe_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          custom_food_id?: number | null;
+          food_id?: string | null;
+          grams: number;
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          position: number;
+          recipe_id: number;
+        };
+        Update: {
+          custom_food_id?: number | null;
+          food_id?: string | null;
+          grams?: number;
+          portion_count?: number | null;
+          portion_unit?: Database['public']['Enums']['portion_unit'] | null;
+          position?: number;
+          recipe_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_ingredients_custom_food_id_fkey';
+            columns: ['custom_food_id'];
+            isOneToOne: false;
+            referencedRelation: 'custom_foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'recipe_ingredients_food_id_fkey';
+            columns: ['food_id'];
+            isOneToOne: false;
+            referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'recipe_ingredients_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipe_values';
+            referencedColumns: ['recipe_id'];
+          },
+          {
+            foreignKeyName: 'recipe_ingredients_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipes';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      recipes: {
+        Row: {
+          archived_at: string | null;
+          created_at: string;
+          id: number;
+          name: string;
+          serving_unit: Database['public']['Enums']['portion_unit'];
+          servings: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          archived_at?: string | null;
+          created_at?: string;
+          id?: never;
+          name: string;
+          serving_unit: Database['public']['Enums']['portion_unit'];
+          servings: number;
+          user_id?: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          created_at?: string;
+          id?: never;
+          name?: string;
+          serving_unit?: Database['public']['Enums']['portion_unit'];
+          servings?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       removed_meal_entries: {
         Row: {
           carbs_per_100g: number;
@@ -588,6 +713,7 @@ export type Database = {
           portion_count: number | null;
           portion_unit: Database['public']['Enums']['portion_unit'] | null;
           protein_per_100g: number;
+          recipe_id: number | null;
           removed_at: string;
           user_id: string;
         };
@@ -606,6 +732,7 @@ export type Database = {
           portion_count?: number | null;
           portion_unit?: Database['public']['Enums']['portion_unit'] | null;
           protein_per_100g: number;
+          recipe_id?: number | null;
           removed_at?: string;
           user_id: string;
         };
@@ -623,6 +750,7 @@ export type Database = {
           portion_count?: number | null;
           portion_unit?: Database['public']['Enums']['portion_unit'] | null;
           protein_per_100g?: number;
+          recipe_id?: number | null;
           removed_at?: string;
           user_id?: string;
         };
@@ -639,6 +767,20 @@ export type Database = {
             columns: ['food_id'];
             isOneToOne: false;
             referencedRelation: 'foods';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'removed_meal_entries_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipe_values';
+            referencedColumns: ['recipe_id'];
+          },
+          {
+            foreignKeyName: 'removed_meal_entries_recipe_id_fkey';
+            columns: ['recipe_id'];
+            isOneToOne: false;
+            referencedRelation: 'recipes';
             referencedColumns: ['id'];
           },
         ];
@@ -874,6 +1016,18 @@ export type Database = {
       };
     };
     Views: {
+      recipe_values: {
+        Row: {
+          carbs_g: number | null;
+          fat_g: number | null;
+          grams: number | null;
+          kcal: number | null;
+          protein_g: number | null;
+          recipe_id: number | null;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
       workout_log_summaries: {
         Row: {
           estimated_kcal: number | null;
@@ -1005,6 +1159,7 @@ export type Database = {
           portion_count: number;
           portion_unit: Database['public']['Enums']['portion_unit'];
           protein_g: number;
+          recipe_id: number;
           times: number;
         }[];
       };
@@ -1046,6 +1201,7 @@ export type Database = {
           portion_grams: number;
           portion_unit: Database['public']['Enums']['portion_unit'];
           protein_g: number;
+          recipe_id: number;
         }[];
       };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
@@ -1062,6 +1218,7 @@ export type Database = {
           portion_grams: number;
           portion_unit: Database['public']['Enums']['portion_unit'];
           protein_g: number;
+          recipe_id: number;
         }[];
       };
       metrics_valid: {
@@ -1109,6 +1266,16 @@ export type Database = {
         };
         Returns: boolean;
       };
+      save_recipe: {
+        Args: {
+          ingredients: Json;
+          name: string;
+          recipe_id: number;
+          serving_unit: Database['public']['Enums']['portion_unit'];
+          servings: number;
+        };
+        Returns: number;
+      };
       save_workout: { Args: { workout: Json }; Returns: number };
       search_foods: {
         Args: { language: string; query: string };
@@ -1122,6 +1289,7 @@ export type Database = {
           portion_grams: number;
           portion_unit: Database['public']['Enums']['portion_unit'];
           protein_g: number;
+          recipe_id: number;
         }[];
       };
       set_suits: {
