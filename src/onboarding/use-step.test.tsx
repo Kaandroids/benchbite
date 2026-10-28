@@ -164,7 +164,7 @@ describe('useStep', () => {
 
   it('closes the questions for the welcome screen, keeping the answers', async () => {
     const { result } = await renderStep('height', { goal: 'lose_fat' });
-    result.current.close?.();
+    result.current.bar.onClose?.();
     expect(router.dismissAll).toHaveBeenCalled();
     expect(router.replace).toHaveBeenCalledWith({
       pathname: '/onboarding/[step]',
@@ -176,16 +176,15 @@ describe('useStep', () => {
   it('has no close on the welcome screen, while the plan is built or once it is shown', async () => {
     for (const step of ['welcome', 'building', 'plan', 'summary'] as const) {
       const { result } = await renderStep(step);
-      expect(result.current.close).toBeUndefined();
+      expect(result.current.bar.onClose).toBeUndefined();
     }
   });
 
-  it('gives the top bar its progress, back and cross together', async () => {
+  it('gives the top bar the progress and the way back', async () => {
     const { result } = await renderStep('height', { goal: 'lose_fat' });
-    expect(result.current.bar).toEqual({
+    expect(result.current.bar).toMatchObject({
       progress: result.current.progress,
       onBack: result.current.back,
-      onClose: result.current.close,
     });
   });
 

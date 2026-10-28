@@ -9,7 +9,8 @@ import { TargetWeightNote } from '@/goals/target-weight-note';
 import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { WeightWheels } from '@/weight/weight-wheels';
 
-import { returnTo, useStep } from '../use-step';
+import { returnTo } from '../navigation';
+import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
 /**

@@ -4,11 +4,9 @@ import { fireEvent, render, screen } from '@/test/render';
 import { TargetWeightStep } from './target-weight';
 
 let mockStep = createStep();
+jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
 const mockReturnTo = jest.fn();
-jest.mock('@/onboarding/use-step', () => ({
-  useStep: () => mockStep,
-  returnTo: (step: string) => mockReturnTo(step),
-}));
+jest.mock('@/onboarding/navigation', () => ({ returnTo: (step: string) => mockReturnTo(step) }));
 
 const LABEL = "What's your target weight?";
 

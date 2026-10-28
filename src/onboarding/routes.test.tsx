@@ -30,7 +30,7 @@ import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
 import { stepHref, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
-import { returnTo } from './use-step';
+import { returnTo } from './navigation';
 
 // The step screens are replaced by their names: these tests are about which one opens.
 jest.mock('@/onboarding/screens', () => {

@@ -5,6 +5,7 @@ import { BackHandler } from 'react-native';
 
 import { useOnboarding } from '@/providers/onboarding-provider';
 
+import { returnTo } from './navigation';
 import {
   canCloseFrom,
   canGoBackFrom,
@@ -17,18 +18,6 @@ import {
   type Step,
 } from './steps';
 import type { OnboardingAnswers } from './types';
-
-/**
- * Goes back to an earlier step, leaving none of the steps after it to go back to. Every step is
- * the same route, so going back to one by its address would only change the screen on top: the
- * steps are closed down to the first, which becomes the step.
- */
-export function returnTo(step: Step) {
-  if (router.canDismiss()) {
-    router.dismissAll();
-  }
-  router.replace(stepHref(step));
-}
 
 /**
  * What a step's screen needs: its answers so far, the progress, and moving on or back. The step
@@ -109,7 +98,9 @@ export function useStep(step: Step) {
     sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
     ...progressOf(step),
   };
-  const close = canCloseFrom(step) ? () => returnTo('welcome') : undefined;
+  const onBack = previous ? back : undefined;
+  /** Leaves the steps for the welcome screen, keeping the answers, so starting again finds them. */
+  const onClose = canCloseFrom(step) ? () => returnTo('welcome') : undefined;
 
   return {
     answers: draft.answers,
@@ -117,14 +108,12 @@ export function useStep(step: Step) {
     /** Saves answers without moving on, for example to withdraw one. */
     answer,
     next,
-    back: previous ? back : undefined,
+    back: onBack,
     /**
-     * Leaves the steps for the welcome screen, keeping the answers so far, so starting again finds
-     * them. Only on the questions.
+     * The top bar of the step's screen, to spread into it: the progress, back, and on the
+     * questions a cross to the welcome screen.
      */
-    close,
-    /** The top bar of the step's screen, to spread into it: the progress, back and the cross. */
-    bar: { progress, onBack: previous ? back : undefined, onClose: close },
+    bar: { progress, onBack, onClose },
     /**
      * For a step's choice: saves the answer when it differs from the one saved, so tapping the
      * chosen card again does nothing. Continue then moves on.

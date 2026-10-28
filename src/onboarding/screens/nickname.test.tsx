@@ -24,7 +24,7 @@ describe('NicknameStep', () => {
     mockStep = createStep();
     await render(<NicknameStep />);
     await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
-    expect(mockStep.close).toHaveBeenCalled();
+    expect(mockStep.bar.onClose).toHaveBeenCalled();
   });
 
   it('can be skipped, which drops a name given before', async () => {
