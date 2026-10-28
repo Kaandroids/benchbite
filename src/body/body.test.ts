@@ -10,6 +10,7 @@ import {
   bmi,
   defaultTargetKg,
   isTargetInGoalDirection,
+  isPaceInRange,
   isTooLightToLose,
   minHealthyWeightKg,
   paceLevel,
@@ -177,6 +178,16 @@ describe('target weights', () => {
     expect(defaultTargetKg('lose_fat', 80, 180)).toBe(75);
     expect(defaultTargetKg('build_muscle', 80, 180)).toBe(83);
     expect(defaultTargetKg('lose_fat', 62, 180)).toBe(60);
+  });
+});
+
+describe('isPaceInRange', () => {
+  it('takes a pace the slider offers in the unit, from either unit', () => {
+    expect(isPaceInRange('kg', 'lose_fat', 0.68)).toBe(true);
+    // 2 lb a week, saved as 0.91 kg.
+    expect(isPaceInRange('kg', 'lose_fat', 0.91)).toBe(true);
+    expect(isPaceInRange('kg', 'lose_fat', 1.2)).toBe(false);
+    expect(isPaceInRange('lb', 'build_muscle', 0.1)).toBe(false);
   });
 });
 

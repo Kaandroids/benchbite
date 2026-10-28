@@ -131,6 +131,35 @@ describe('the target step', () => {
     expect(screen.getByText(/^166\.3/)).toBeTruthy();
   });
 
+  // A pace saved in the other unit lies between the slider's steps.
+  it.each([
+    ['kg', 0.68, '0.68'],
+    ['lb', 0.55, '0.55'],
+  ] as const)(
+    'keeps a saved pace the slider rounds, in %s, until it moves',
+    async (unit, kg, sent) => {
+      jest.mocked(useWeightUnit).mockReturnValue(loaded(unit));
+      open({ step: 'target', goal: 'lose_fat', target: '75', pace: String(kg), activity: 'light' });
+      await render(<RecalculateScreen />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+      expect(router.push).toHaveBeenLastCalledWith(
+        expect.objectContaining({ params: expect.objectContaining({ pace: sent }) }),
+      );
+    },
+  );
+
+  it('sends the pace from the slider once it moves', async () => {
+    open({ step: 'target', goal: 'lose_fat', target: '75', pace: '0.68', activity: 'light' });
+    await render(<RecalculateScreen />);
+    await fireEvent(screen.getByRole('adjustable', { name: 'Pace' }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'increment' },
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(router.push).toHaveBeenLastCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ pace: '0.75' }) }),
+    );
+  });
+
   it('keeps Continue off for a target on the wrong side, without a pace', async () => {
     open({ step: 'target', goal: 'lose_fat', target: '79.5' });
     await render(<RecalculateScreen />);

@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import {
   changesWeight,
   defaultTargetKg,
+  isPaceInRange,
   isTooLightToLose,
   PACE_RANGES,
   startingPace,
@@ -42,6 +43,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
     answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, basis.heightCm),
   );
   const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
+  const [paceMoved, setPaceMoved] = useState(false);
 
   // Someone already at the lower end of a healthy weight should not lose more.
   if (goal === 'lose_fat' && isTooLightToLose(weightKg, basis.heightCm)) {
@@ -65,7 +67,11 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
   }
 
   const problem = targetWeightProblem(goal, weightKg, targetKg, basis.heightCm);
-  const paceKg = paceToKg(unit, pace);
+  // The saved pace stays until the slider moves: on the slider's steps it may round, as one saved
+  // in the other unit does, and would then count as a change nobody made.
+  const saved = answers.weeklyPaceKg;
+  const paceKg =
+    !paceMoved && saved !== null && isPaceInRange(unit, goal, saved) ? saved : paceToKg(unit, pace);
   const change = (steps: number) => {
     const shown = weightIn(unit, targetKg) + steps * TARGET_STEP[unit];
     setTargetKg(clamp(weightToKg(unit, shown), WEIGHT_RANGE_KG.min, WEIGHT_RANGE_KG.max));
@@ -140,7 +146,10 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
           <Slider
             accessibilityLabel={t('nutrition.recalculate.target.pace')}
             value={pace}
-            onChange={setPace}
+            onChange={(value) => {
+              setPace(value);
+              setPaceMoved(true);
+            }}
             min={paceRange.min}
             max={paceRange.max}
             step={paceRange.step}

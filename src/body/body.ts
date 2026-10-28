@@ -126,6 +126,14 @@ export function startingPace(
   return savedKg == null ? range.default : snapPace(paceIn(unit, savedKg), range);
 }
 
+/** Whether a pace in kilograms lies within what the slider offers in the unit. */
+export function isPaceInRange(unit: WeightUnit, goal: WeightGoal, paceKg: number): boolean {
+  const range = PACE_RANGES[unit][goal];
+  const pace = paceIn(unit, paceKg);
+  // A hundredth either way, as a pace comes back from the other unit rounded.
+  return pace >= range.min - 0.01 && pace <= range.max + 0.01;
+}
+
 export type PaceLevel = 'ideal' | 'ambitious' | 'aggressive';
 
 /**
