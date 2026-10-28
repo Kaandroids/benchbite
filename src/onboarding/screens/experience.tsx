@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Constants } from '@/lib/database.types';
 import { prescribe } from '@shared/plan/prescription';
 import { splitFor } from '@shared/plan/split';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { required } from '../plan-request';
-import { StepHeading } from '../step-heading';
 import { RECOMMENDED_DAYS } from '../training';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';

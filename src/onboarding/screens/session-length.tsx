@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { type ColorTokens, useTheme } from '@/theme';
 import type { SessionMinutes } from '@shared/plan/limits';
@@ -15,7 +16,6 @@ import type { SessionTime } from '@shared/plan/types';
 
 import { partMinutes, useLengthPreview, type LengthPreview } from '../length-preview';
 import { SESSION_MINUTES } from '../training';
-import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 /** The length chosen until the user picks one: the middle of the range. */

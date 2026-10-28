@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Constants } from '@/lib/database.types';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
-import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 

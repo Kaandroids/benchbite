@@ -19,6 +19,7 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
+import { StepHeading } from '@/components/ui/step-heading';
 import { SuccessBadge } from '@/components/ui/success-badge';
 import { Text } from '@/components/ui/text';
 import { ActivityChoices } from '@/goals/activity-choices';
@@ -36,7 +37,6 @@ import {
   type WeightUnit,
 } from '@/i18n/units';
 import { clamp } from '@/lib/math';
-import { StepHeading } from '@/onboarding/step-heading';
 import { useTheme } from '@/theme';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';

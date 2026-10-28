@@ -4,13 +4,13 @@ import { View } from 'react-native';
 import { activityShare } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { ActivityChoices } from '@/goals/activity-choices';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { ChoiceInsight } from '../choice-insight';
-import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
