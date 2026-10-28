@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { StyleSheet } from 'react-native';
 
 import { useWaterGoal } from '@/profile/water-goal';
 import { fireEvent, render, screen } from '@/test/render';
@@ -49,6 +50,10 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
+/** The background of a button, to tell the filled + from the soft ones. */
+const background = (label: string) =>
+  StyleSheet.flatten(screen.getByLabelText(label).props.style).backgroundColor;
+
 const progress = () =>
   screen.container
     .queryAll((node) => node.props.accessibilityRole === 'progressbar')
@@ -65,6 +70,7 @@ describe('NutritionScreen', () => {
     expect(screen.getByText('1,070')).toBeTruthy();
     expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.getByText('96 / 144 g')).toBeTruthy();
+    expect(screen.getByText('1,480 / 2,550 kcal')).toBeTruthy();
     expect(progress()[0]).toEqual(['1,480 of 2,550 kcal eaten', 58]);
 
     expect(screen.getByText(/2 items/)).toBeTruthy();
@@ -178,5 +184,25 @@ describe('NutritionScreen', () => {
     }
     expect(screen.getByText('Sunday')).toBeTruthy();
     expect(screen.getByText('October 25')).toBeTruthy();
+  });
+
+  it('fills the + of the meal due now only, on today only', async () => {
+    // Noon, with nothing logged: lunch is due.
+    await render(<NutritionScreen />);
+    const soft = background('Add to breakfast');
+    expect(background('Add to lunch')).not.toBe(soft);
+    expect(background('Add to dinner')).toBe(soft);
+
+    await fireEvent.press(screen.getByLabelText('Previous day'));
+    expect(background('Add to lunch')).toBe(soft);
+  });
+
+  it('points to no meal once the one due is logged', async () => {
+    mockDay([entry('lunch', 600)]);
+    await render(<NutritionScreen />);
+    const soft = background('Add to breakfast');
+    for (const meal of ['lunch', 'dinner']) {
+      expect(background(`Add to ${meal}`)).toBe(soft);
+    }
   });
 });
