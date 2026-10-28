@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -157,6 +157,31 @@ select results_eq(
   'Archiving it turns a move from a kept day into a skip too, and drops those of later days'
 );
 
+-- G did Friday's Push early, on a Tuesday now kept: the move goes back into a kept day, which
+-- shows the workout only through it.
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a7', 'g@example.com');
+insert into public.planned_days_kept (user_id, through)
+values ('00000000-0000-0000-0000-0000000000a7', date_trunc('week', current_date + 7)::date + 1);
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, type, estimated_minutes, weekdays)
+overriding system value values
+  (907, '00000000-0000-0000-0000-0000000000a7', 'Push', 'push', 45, '{5}');
+insert into public.workout_moves (user_id, workout_id, from_on, to_on)
+select '00000000-0000-0000-0000-0000000000a7', 907, monday + 4, monday + 1
+from (select date_trunc('week', current_date + 7)::date as monday) w;
+set local session_replication_role = origin;
+
+update public.workouts set weekdays = '{3}' where id = 907;
+update public.workouts set active = false where id = 907;
+delete from public.workouts where id = 907;
+select results_eq(
+  $$ select workout_id, extract(isodow from from_on)::integer, extract(isodow from to_on)::integer
+     from public.workout_moves where user_id = '00000000-0000-0000-0000-0000000000a7' $$,
+  $$ values (null::bigint, 5, 2) $$,
+  'A move into a kept day stays when the workout loses its day, is archived or is deleted'
+);
+
 -- ----------------------------------------------------------------------------------------------
 -- Reading a day's plan
 
@@ -167,9 +192,8 @@ insert into public.profiles (user_id, sex, birth_year, height_cm, weight_unit, h
   onboarding_completed_at)
 values ('00000000-0000-0000-0000-00000000000e', 'male', extract(year from current_date) - 30,
   180, 'kg', 'cm', 'moderate', 'beginner', 'gym', '{1,3,5}', 60, now() - interval '5 days');
--- Finishing the onboarding started E's plan; it is set to five days ago, as it was then.
-update public.planned_days_kept set through = current_date - 4, started_on = current_date - 5
-where user_id = '00000000-0000-0000-0000-00000000000e';
+insert into public.planned_days_kept (user_id, through, started_on)
+values ('00000000-0000-0000-0000-00000000000e', current_date - 4, current_date - 5);
 insert into public.planned_days (user_id, day, name, type)
 select '00000000-0000-0000-0000-00000000000e', current_date - days, 'Old', 'push'
 from generate_series(4, 5) days;
