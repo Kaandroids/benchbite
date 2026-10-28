@@ -16,7 +16,6 @@ type TargetWeightNoteProps = {
   problem: TargetWeightProblem | null;
   /** Makes the lowest healthy weight the target. */
   onUseLowest: (kg: number) => void;
-  align?: 'center' | 'left';
 };
 
 /**
@@ -31,7 +30,6 @@ export function TargetWeightNote({
   unit,
   problem,
   onUseLowest,
-  align = 'center',
 }: TargetWeightNoteProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -41,7 +39,7 @@ export function TargetWeightNote({
 
   if (problem === 'wrongDirection' || problem === 'tooClose') {
     return (
-      <Text color="danger" align={align}>
+      <Text color="danger" align="center">
         {problem === 'tooClose'
           ? t('onboarding.targetWeight.tooClose')
           : t(`onboarding.targetWeight.wrongDirection.${goal}`)}
@@ -51,7 +49,7 @@ export function TargetWeightNote({
   if (problem === 'belowHealthy') {
     return (
       <View style={{ gap: spacing.sm }}>
-        <Text color="danger" align={align}>
+        <Text color="danger" align="center">
           {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
         </Text>
         <Button
@@ -65,7 +63,7 @@ export function TargetWeightNote({
   const differenceKg = targetKg - weightKg;
   const sign = differenceKg > 0 ? '+' : differenceKg < 0 ? '−' : '';
   return (
-    <Text variant="bodyStrong" color="primaryText" align={align}>
+    <Text variant="bodyStrong" color="primaryText" align="center">
       {t('onboarding.targetWeight.difference', {
         difference: `${sign}${show(Math.abs(differenceKg))}`,
         unit,
