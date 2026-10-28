@@ -7,7 +7,7 @@ import { PillButton } from '@/components/ui/pill-button';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useWorkoutName } from '@/workouts/format';
+import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import type { PlannedWorkout, ScheduleDay } from '@/workouts/week-schedule';
 
 type MissedCardProps = {
@@ -27,6 +27,7 @@ export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
+  const sessionSize = useSessionSize();
   const [first] = missed;
   if (!first) {
     return null;
@@ -37,10 +38,7 @@ export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
     const { session } = first.workout;
     caption = t('today.missed.missedOn', { day: weekdayName(first.day.weekday) });
     title = workoutName(session);
-    detail = t('workout.session', {
-      count: session.exercises.length,
-      minutes: session.estimatedMinutes,
-    });
+    detail = sessionSize(session);
   } else {
     caption = t('today.missed.count', { count: missed.length });
     // A workout missed on several days, or a day with several missed, is named once.

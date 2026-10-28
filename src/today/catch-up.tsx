@@ -6,7 +6,7 @@ import { Chip } from '@/components/ui/chip';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useWorkoutName } from '@/workouts/format';
+import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import { useMoveWorkout } from '@/workouts/moves';
 import {
   missedWorkouts,
@@ -68,6 +68,7 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
   const weekdayName = useWeekdayFormat();
   const shortWeekday = useWeekdayFormat('short');
   const workoutName = useWorkoutName();
+  const sessionSize = useSessionSize();
   const moveWorkout = useMoveWorkout();
   const { session } = workout;
   const fromOn = originOf(workout, day);
@@ -88,10 +89,7 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
           <Text variant="caption" color="textMuted">
             {t('today.catchUp.missedOn', {
               day: weekdayName(day.weekday),
-              session: t('workout.session', {
-                count: session.exercises.length,
-                minutes: session.estimatedMinutes,
-              }),
+              session: sessionSize(session),
             })}
           </Text>
         </View>

@@ -8,7 +8,7 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useWorkoutName } from '@/workouts/format';
+import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
@@ -38,6 +38,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
   const { colors, spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
+  const sessionSize = useSessionSize();
   const day = schedule.days[isoWeekday(today) - 1];
   const todays = day?.workouts.filter((workout) => workout.status !== 'skipped') ?? [];
   const ahead = todays.filter((workout) => workout.status === 'planned');
@@ -90,12 +91,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
           </View>
           <View style={[styles.wrap, { gap: spacing.sm }]}>
             {movedFrom ? <MovedFrom date={movedFrom} /> : null}
-            <Text color="textMuted">
-              {t('workout.session', {
-                count: session.exercises.length,
-                minutes: session.estimatedMinutes,
-              })}
-            </Text>
+            <Text color="textMuted">{sessionSize(session)}</Text>
           </View>
         </Card>
       </Pressable>
@@ -131,12 +127,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
               <Text variant="bodyStrong">{workoutName(session)}</Text>
               {movedFrom && status !== 'done' ? <MovedFrom date={movedFrom} /> : null}
               <Text variant="caption" color="textMuted">
-                {status === 'done'
-                  ? t('today.workout.finished')
-                  : t('workout.session', {
-                      count: session.exercises.length,
-                      minutes: session.estimatedMinutes,
-                    })}
+                {status === 'done' ? t('today.workout.finished') : sessionSize(session)}
               </Text>
             </View>
             {status === 'done' ? null : <Icon name="forward" color="textMuted" />}
