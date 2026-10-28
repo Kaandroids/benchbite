@@ -13,6 +13,15 @@ import type { NutritionTargets } from './targets';
 
 export type Meal = Database['public']['Enums']['meal'];
 
+/**
+ * The meal due at a time of day: breakfast until 11, lunch until 4 pm, dinner until 9 pm, then a
+ * snack. The Nutrition tab points to it on today's page.
+ */
+export function dueMeal(now: Date): Meal {
+  const hour = now.getHours();
+  return hour < 11 ? 'breakfast' : hour < 16 ? 'lunch' : hour < 21 ? 'dinner' : 'snack';
+}
+
 /** What a meal or a day adds up to, in the units of the targets. */
 export type Totals = NutritionTargets;
 
