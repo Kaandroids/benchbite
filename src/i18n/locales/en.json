@@ -488,7 +488,40 @@
       "limits": "Calories are 800 to 6,000 kcal; protein up to 500 g, carbs up to 1,000 g and fat up to 400 g, in whole numbers.",
       "save": "Save goals",
       "saveError": "The goals could not be saved. Check your connection and try again.",
-      "reached": "Target reached"
+      "reached": "Target reached",
+      "again": "Calculate again"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Goal",
+        "target": "Target",
+        "activity": "Activity",
+        "result": "Goals"
+      },
+      "goal": {
+        "title": "What is your goal now?",
+        "intro": "Your daily goals follow from it."
+      },
+      "target": {
+        "title": "Your target and pace",
+        "intro": "You weigh {{weight}} {{unit}} now, from your latest weight.",
+        "weight": "Target weight",
+        "lower": "Lower target",
+        "higher": "Higher target",
+        "pace": "Pace"
+      },
+      "activity": {
+        "title": "How active is your day?",
+        "intro": "Your job and getting around. Workouts are counted separately."
+      },
+      "result": {
+        "title": "Your new daily goals",
+        "intro": "Worked out as at the start, from your goal, weight and activity.",
+        "change": "{{to}} {{unit}}, was {{from}} {{unit}}",
+        "note": "They follow along as your weight changes. Your workout plan stays as it is.",
+        "use": "Use these goals",
+        "saveError": "The goals could not be saved. Check your connection and try again."
+      }
     }
   },
   "workout": {

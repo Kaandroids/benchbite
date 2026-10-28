@@ -488,7 +488,40 @@
       "limits": "Kalori 800 ile 6.000 kcal arasında; protein en fazla 500 g, karbonhidrat 1.000 g ve yağ 400 g, tam sayı olarak.",
       "save": "Hedefleri kaydet",
       "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
-      "reached": "Hedefe ulaşıldı"
+      "reached": "Hedefe ulaşıldı",
+      "again": "Yeniden hesapla"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Hedef",
+        "target": "Hedef kilo",
+        "activity": "Aktivite",
+        "result": "Hedefler"
+      },
+      "goal": {
+        "title": "Şimdiki hedefin ne?",
+        "intro": "Günlük hedeflerin buna göre belirlenir."
+      },
+      "target": {
+        "title": "Hedef kilon ve hızın",
+        "intro": "Son tartına göre şu an {{weight}} {{unit}} geliyorsun.",
+        "weight": "Hedef kilo",
+        "lower": "Hedefi düşür",
+        "higher": "Hedefi yükselt",
+        "pace": "Hız"
+      },
+      "activity": {
+        "title": "Günün ne kadar hareketli?",
+        "intro": "İşin ve gün içindeki yolların. Antrenmanlar ayrıca sayılır."
+      },
+      "result": {
+        "title": "Yeni günlük hedeflerin",
+        "intro": "Başlangıçtaki gibi hedefinden, kilondan ve aktivitenden hesaplandı.",
+        "change": "{{to}} {{unit}}, önce {{from}} {{unit}}",
+        "note": "Kilon değiştikçe bunlar da değişir. Antrenman planın olduğu gibi kalır.",
+        "use": "Bu hedefleri kullan",
+        "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+      }
     }
   },
   "workout": {

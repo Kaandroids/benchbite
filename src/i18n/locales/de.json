@@ -488,7 +488,40 @@
       "limits": "Kalorien liegen zwischen 800 und 6.000 kcal; Eiweiß bis 500 g, Kohlenhydrate bis 1.000 g und Fett bis 400 g, in ganzen Zahlen.",
       "save": "Ziele speichern",
       "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
-      "reached": "Ziel erreicht"
+      "reached": "Ziel erreicht",
+      "again": "Neu berechnen"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Ziel",
+        "target": "Zielgewicht",
+        "activity": "Aktivität",
+        "result": "Ziele"
+      },
+      "goal": {
+        "title": "Was ist jetzt dein Ziel?",
+        "intro": "Deine Tagesziele richten sich danach."
+      },
+      "target": {
+        "title": "Dein Zielgewicht und Tempo",
+        "intro": "Du wiegst jetzt {{weight}} {{unit}}, laut deinem letzten Gewicht.",
+        "weight": "Zielgewicht",
+        "lower": "Zielgewicht senken",
+        "higher": "Zielgewicht erhöhen",
+        "pace": "Tempo"
+      },
+      "activity": {
+        "title": "Wie aktiv ist dein Tag?",
+        "intro": "Dein Job und deine Wege. Workouts zählen extra."
+      },
+      "result": {
+        "title": "Deine neuen Tagesziele",
+        "intro": "Berechnet wie zu Beginn, aus deinem Ziel, Gewicht und deiner Aktivität.",
+        "change": "{{to}} {{unit}}, vorher {{from}} {{unit}}",
+        "note": "Sie passen sich an, wenn sich dein Gewicht ändert. Dein Trainingsplan bleibt, wie er ist.",
+        "use": "Diese Ziele nutzen",
+        "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+      }
     }
   },
   "workout": {
