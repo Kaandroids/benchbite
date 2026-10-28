@@ -8,6 +8,7 @@ import { LoadState } from '@/components/load-state';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { findExercise } from '@/exercises/library';
 import { typography, useTheme } from '@/theme';
@@ -36,15 +37,15 @@ export function EditorScreen({ id }: { id?: number }) {
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
+          accessibilityLabel={t('common.back')}
           onPress={() => router.back()}
           style={styles.close}
         >
-          <Icon name="close" color="textMuted" />
+          <Icon name="back" color="textMuted" />
         </Pressable>
-        <Text variant="label" accessibilityRole="header" style={styles.flex} align="center">
-          {id === undefined ? t('editor.newTitle') : t('editor.editTitle')}
-        </Text>
+        <View style={styles.flex}>
+          <ScreenTitle title={id === undefined ? t('editor.newTitle') : t('editor.editTitle')} />
+        </View>
         <PillButton
           variant="primary"
           label={t('editor.save')}

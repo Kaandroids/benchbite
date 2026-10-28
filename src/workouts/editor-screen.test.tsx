@@ -103,7 +103,9 @@ describe('EditorScreen', () => {
 
   it('starts a new workout empty, and saves only with a name and an exercise', async () => {
     await render(<EditorScreen />);
-    expect(screen.getByText('New workout')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'New workout' })).toHaveStyle({ fontSize: 20 });
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(router.back).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Arms');
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
