@@ -22,7 +22,7 @@ export function NicknameStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const greeting = useGreeting();
-  const { answers, progress, next, back } = useStep('nickname');
+  const { answers, progress, next, back, close } = useStep('nickname');
   const [text, setText] = useState(answers.displayName ?? '');
   const [now] = useState(() => new Date());
   const name = displayNameOf(text);
@@ -37,6 +37,7 @@ export function NicknameStep() {
       subtitle={t('onboarding.nickname.subtitle')}
       progress={progress}
       onBack={back}
+      onClose={close}
       footer={
         <View style={{ gap: spacing.md }}>
           <Button label={t('common.continue')} disabled={!name} onPress={save} />

@@ -54,7 +54,7 @@ type Result = { targets: NutritionTargets; plan: WorkoutPlan };
  */
 export function BuildingStep() {
   const { t } = useTranslation();
-  const { answers, progress, next, back } = useStep('building');
+  const { answers, progress, next, back, close } = useStep('building');
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -63,6 +63,7 @@ export function BuildingStep() {
     <Screen
       progress={progress}
       onBack={back}
+      onClose={close}
       footer={
         failed ? (
           <Button

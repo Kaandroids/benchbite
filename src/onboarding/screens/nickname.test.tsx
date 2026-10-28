@@ -20,6 +20,13 @@ describe('NicknameStep', () => {
     expect(mockStep.next).toHaveBeenCalledWith({ displayName: 'Kaan' });
   });
 
+  it('leaves for the welcome screen with the cross', async () => {
+    mockStep = createStep();
+    await render(<NicknameStep />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(mockStep.close).toHaveBeenCalled();
+  });
+
   it('can be skipped, which drops a name given before', async () => {
     mockStep = createStep({ displayName: 'Kaan' });
     await render(<NicknameStep />);

@@ -33,7 +33,7 @@ export function PlanStep() {
   const weightLabel = useWeightLabel();
   const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
-  const { answers, progress, next, back } = useStep('plan');
+  const { answers, progress, next, back, close } = useStep('plan');
   const { targets, plan } = answers;
   const library = useExerciseLibrary();
   const [saving, setSaving] = useState(false);
@@ -68,6 +68,7 @@ export function PlanStep() {
     <Screen
       progress={progress}
       onBack={back}
+      onClose={close}
       footer={
         <View style={{ gap: spacing.sm }}>
           {failure ? (

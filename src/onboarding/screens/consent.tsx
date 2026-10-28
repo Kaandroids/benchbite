@@ -35,7 +35,7 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
 export function ConsentStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const { answers, progress, answer, next, back } = useStep('consent');
+  const { answers, progress, answer, next, back, close } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [explaining, setExplaining] = useState(false);
   const saved = answers.consentedPolicyVersion;
@@ -83,6 +83,7 @@ export function ConsentStep() {
     <Screen
       progress={progress}
       onBack={back}
+      onClose={close}
       footer={
         <View style={{ gap: spacing.md }}>
           <Button

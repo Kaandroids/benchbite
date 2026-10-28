@@ -22,13 +22,14 @@ const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] =
  */
 export function GoalStep() {
   const { t } = useTranslation();
-  const { answers, progress, back, select, next } = useStep('goal');
+  const { answers, progress, back, close, select, next } = useStep('goal');
   const goal = answers.goal;
 
   return (
     <Screen
       progress={progress}
       onBack={back}
+      onClose={close}
       footer={<Button label={t('common.continue')} disabled={!goal} onPress={() => next()} />}
     >
       <Text variant="title" accessibilityRole="header">
