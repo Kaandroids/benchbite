@@ -15,6 +15,7 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (effect: () => void) =>
     jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
 }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/providers/session-provider', () => ({ useIsAccount: jest.fn(() => false) }));
 
 const slides = () => screen.getByRole('adjustable');

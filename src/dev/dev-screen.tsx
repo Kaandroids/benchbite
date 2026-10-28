@@ -8,6 +8,8 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
+import { DevAccountLink } from './dev-account-link';
+
 /** The tools, one row each. Text here is for developers only, so it is not translated. */
 const TOOLS: { icon: IconName; title: string; detail: string; href: Href }[] = [
   {
@@ -51,6 +53,7 @@ export function DevScreen() {
           </Pressable>
         ))}
       </Card>
+      <DevAccountLink />
       <Text variant="caption" color="textMuted">
         Supabase: {process.env.EXPO_PUBLIC_SUPABASE_URL}
       </Text>
