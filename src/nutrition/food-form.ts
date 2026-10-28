@@ -2,6 +2,7 @@ import { parseDecimal } from '@/lib/math';
 
 import type { CustomFoodValues } from './custom-foods';
 import type { Food, PortionUnit } from './foods';
+import { macroCalories } from './targets-form';
 
 // The limits of the custom_foods table (migration 20261027200000), checked here first so that
 // Save stays off for a food the database would refuse.
@@ -102,7 +103,7 @@ export function readForm(form: FoodForm): FormResult {
   }
   // As the custom_foods table checks it: not fewer calories than the macros make, allowing 15 %
   // or 10 kcal for rounding on labels. More is fine, as fibre and alcohol add energy too.
-  const calories = 4 * protein + 4 * carbs + 9 * fat;
+  const calories = macroCalories({ proteinG: protein, carbsG: carbs, fatG: fat });
   if (calories - kcal > Math.max(10, calories * 0.15)) {
     return { kind: 'problem', problem: 'tooFewCalories', calories, entered: kcal };
   }

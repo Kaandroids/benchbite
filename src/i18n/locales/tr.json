@@ -463,7 +463,33 @@
       "full": "Bir tarifte en fazla 50 malzeme olabilir."
     },
     "kcalEaten": "kcal yenildi",
-    "goal": "Hedef {{calories}} kcal"
+    "goal": "Hedef {{calories}} kcal",
+    "goals": {
+      "button": "Hedefler",
+      "title": "Günlük hedefler",
+      "modes": "Hangi hedefler",
+      "calculated": "Hesaplanan",
+      "own": "Kendi hedeflerim",
+      "calories": "Kalori",
+      "workedOutFrom": "Neye göre hesaplandı",
+      "note": "Kilona, boyuna, yaşına, aktivitene ve hedefine göre hesaplanır. Kilon değiştikçe güncellenir.",
+      "goal": "Hedef",
+      "weight": "Kilo",
+      "pace": "Hız",
+      "activity": "Aktivite",
+      "weightChange": "{{from}} → {{to}} {{unit}}",
+      "toGo": "{{difference}} {{unit}} kaldı",
+      "weightNow": "{{weight}} {{unit}}",
+      "keeping": "Olduğu gibi kalıyor",
+      "perWeek": "Haftada {{value}} {{unit}}",
+      "by": "{{date}} tarihine kadar",
+      "macrosMake": "Protein, karbonhidrat ve yağ {{calories}} kcal'nin {{macros}} kcal'sini oluşturuyor.",
+      "tooMuch": "Protein, karbonhidrat ve yağ {{macros}} kcal ediyor, hedefteki {{calories}} kcal'den fazla. Bir makroyu azalt ya da kaloriyi artır.",
+      "limits": "Kalori 800 ile 6.000 kcal arasında; protein en fazla 500 g, karbonhidrat 1.000 g ve yağ 400 g, tam sayı olarak.",
+      "save": "Hedefleri kaydet",
+      "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "reached": "Hedefe ulaşıldı"
+    }
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",

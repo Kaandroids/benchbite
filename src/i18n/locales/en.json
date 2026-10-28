@@ -463,7 +463,33 @@
       "full": "A recipe holds up to 50 ingredients."
     },
     "kcalEaten": "kcal eaten",
-    "goal": "Goal {{calories}} kcal"
+    "goal": "Goal {{calories}} kcal",
+    "goals": {
+      "button": "Goals",
+      "title": "Daily goals",
+      "modes": "Which goals",
+      "calculated": "Calculated",
+      "own": "My own",
+      "calories": "Calories",
+      "workedOutFrom": "Worked out from",
+      "note": "Worked out from your weight, height, age, activity and goal. They follow along as your weight changes.",
+      "goal": "Goal",
+      "weight": "Weight",
+      "pace": "Pace",
+      "activity": "Activity",
+      "weightChange": "{{from}} → {{to}} {{unit}}",
+      "toGo": "{{difference}} {{unit}} to go",
+      "weightNow": "{{weight}} {{unit}}",
+      "keeping": "Kept as it is",
+      "perWeek": "{{value}} {{unit}} a week",
+      "by": "By {{date}}",
+      "macrosMake": "Protein, carbs and fat make {{macros}} of the {{calories}} kcal.",
+      "tooMuch": "Protein, carbs and fat make {{macros}} kcal, more than the {{calories}} kcal of the goal. Lower a macro or raise the calories.",
+      "limits": "Calories are 800 to 6,000 kcal; protein up to 500 g, carbs up to 1,000 g and fat up to 400 g, in whole numbers.",
+      "save": "Save goals",
+      "saveError": "The goals could not be saved. Check your connection and try again.",
+      "reached": "Target reached"
+    }
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",

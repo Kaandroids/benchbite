@@ -463,7 +463,33 @@
       "full": "Ein Rezept hat höchstens 50 Zutaten."
     },
     "kcalEaten": "kcal gegessen",
-    "goal": "Ziel {{calories}} kcal"
+    "goal": "Ziel {{calories}} kcal",
+    "goals": {
+      "button": "Ziele",
+      "title": "Tagesziele",
+      "modes": "Welche Ziele",
+      "calculated": "Berechnet",
+      "own": "Eigene",
+      "calories": "Kalorien",
+      "workedOutFrom": "Berechnet aus",
+      "note": "Berechnet aus deinem Gewicht, deiner Größe, deinem Alter, deiner Aktivität und deinem Ziel. Sie passen sich an, wenn sich dein Gewicht ändert.",
+      "goal": "Ziel",
+      "weight": "Gewicht",
+      "pace": "Tempo",
+      "activity": "Aktivität",
+      "weightChange": "{{from}} → {{to}} {{unit}}",
+      "toGo": "noch {{difference}} {{unit}}",
+      "weightNow": "{{weight}} {{unit}}",
+      "keeping": "Bleibt wie es ist",
+      "perWeek": "{{value}} {{unit}} pro Woche",
+      "by": "Bis {{date}}",
+      "macrosMake": "Eiweiß, Kohlenhydrate und Fett ergeben {{macros}} von {{calories}} kcal.",
+      "tooMuch": "Eiweiß, Kohlenhydrate und Fett ergeben {{macros}} kcal, mehr als die {{calories}} kcal des Ziels. Senke ein Makro oder erhöhe die Kalorien.",
+      "limits": "Kalorien liegen zwischen 800 und 6.000 kcal; Eiweiß bis 500 g, Kohlenhydrate bis 1.000 g und Fett bis 400 g, in ganzen Zahlen.",
+      "save": "Ziele speichern",
+      "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "reached": "Ziel erreicht"
+    }
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
