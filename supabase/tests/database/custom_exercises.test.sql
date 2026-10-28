@@ -122,14 +122,14 @@ select throws_ok(
 select throws_ok(
   $$ select public.save_workout(jsonb_build_object('name', 'Glutes', 'weekdays', '[]'::jsonb,
        'exercises', jsonb_build_array(jsonb_build_object('exerciseId', (select id from made),
-         'sets', 3, 'target', '{"reps": {"min": 8, "max": 12}}'::jsonb, 'restSeconds', 60)))) $$,
+         'sets', 3, 'target', '{"reps": {"min": 8, "max": 12}}'::jsonb, 'restSeconds', 60))), current_date) $$,
   'BB015', null, 'Other users cannot put a custom exercise in their workouts'
 );
 select set_config('test.core', public.save_workout(jsonb_build_object(
   'name', 'Core', 'weekdays', '[]'::jsonb,
   'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank',
     'sets', 2, 'target', '{"seconds": 30}'::jsonb, 'restSeconds', 45))
-))::text, true);
+), current_date)::text, true);
 select throws_ok(
   $$ select public.log_workout(jsonb_build_object(
        'workoutId', current_setting('test.core')::bigint,
@@ -173,7 +173,7 @@ create temp table glutes as select public.save_workout(jsonb_build_object(
   'name', 'Glutes', 'weekdays', '[]'::jsonb,
   'exercises', jsonb_build_array(jsonb_build_object('exerciseId', (select id from made),
     'sets', 3, 'target', '{"reps": {"min": 8, "max": 12}}'::jsonb, 'restSeconds', 60))
-)) as id;
+), current_date) as id;
 grant select on glutes to authenticated;
 select throws_ok(
   $$ select public.edit_exercise((select id from made), pg_temp.hip_thrust('{"metrics": ["duration"]}')) $$,

@@ -43,6 +43,22 @@ export type ColorTokens = {
   protein: string;
   carbs: string;
   fat: string;
+  /**
+   * Each meal's own colour for its icon and its + button, on its background, so that the meals
+   * read apart and not every action is orange. At least 3:1 on their backgrounds in both themes.
+   * Lunch keeps the brand colour.
+   */
+  breakfast: string;
+  breakfastBackground: string;
+  lunch: string;
+  lunchBackground: string;
+  dinner: string;
+  dinnerBackground: string;
+  snack: string;
+  snackBackground: string;
+  /** Water's glasses, icon and + button, on `waterBackground`, apart from the meals. */
+  water: string;
+  waterBackground: string;
   /** Text and icons of frozen streak days, on `frozenBackground`. */
   frozen: string;
   frozenBackground: string;
@@ -93,6 +109,16 @@ export const lightColors: ColorTokens = {
   protein: '#0E9384', // 3.8:1 on surface
   carbs: '#B98000', // 3.4:1 on surface; the brighter #F5B800 had 1.8:1
   fat: '#6E5BD8',
+  breakfast: '#B45309', // 4.5:1 on breakfastBackground
+  breakfastBackground: '#FEF3C7',
+  lunch: '#E05300', // 3.4:1 on lunchBackground
+  lunchBackground: '#FFEDE2',
+  dinner: '#4F5FD0', // 4.6:1 on dinnerBackground
+  dinnerBackground: '#E8EBFB',
+  snack: '#C2346F', // 4.4:1 on snackBackground
+  snackBackground: '#FCE7F0',
+  water: '#1F8A86', // 3.7:1 on waterBackground
+  waterBackground: '#E1F4F2',
   frozen: '#1D4ED8', // 5.5:1 on frozenBackground
   frozenBackground: '#DBEAFE',
   planned: '#FFC9A8',
@@ -135,6 +161,16 @@ export const darkColors: ColorTokens = {
   protein: '#2DD4BF', // 9.2:1 on surface
   carbs: '#FFD23F',
   fat: '#9F8CFF',
+  breakfast: '#F5B54A', // 7.5:1 on breakfastBackground
+  breakfastBackground: '#3A2C14',
+  lunch: '#FF7F26', // 5.8:1 on lunchBackground
+  lunchBackground: '#3A2416',
+  dinner: '#9AA6F5', // 6.1:1 on dinnerBackground
+  dinnerBackground: '#232A4D',
+  snack: '#F28AB7', // 6.3:1 on snackBackground
+  snackBackground: '#3D1F2D',
+  water: '#4FD1C5', // 7.1:1 on waterBackground
+  waterBackground: '#173533',
   frozen: '#93C5FD', // 6.4:1 on frozenBackground
   frozenBackground: '#1E3A5F',
   planned: '#A8561C',

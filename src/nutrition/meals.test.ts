@@ -3,7 +3,6 @@ import i18n from '@/i18n';
 import { act, renderHook, waitFor } from '@/test/render';
 
 import {
-  dueMeal,
   mealsOf,
   scaled,
   suggestedCalories,
@@ -42,23 +41,6 @@ describe('scaled', () => {
       carbsG: 10,
       fatG: 2,
     });
-  });
-});
-
-describe('dueMeal', () => {
-  it('gives the meal of the time of day', () => {
-    const at = (hour: number) => dueMeal(new Date(2026, 9, 28, hour, 30));
-    expect([7, 10, 11, 15, 16, 20, 21, 23, 2].map(at)).toEqual([
-      'breakfast',
-      'breakfast',
-      'lunch',
-      'lunch',
-      'dinner',
-      'dinner',
-      'snack',
-      'snack',
-      'breakfast',
-    ]);
   });
 });
 

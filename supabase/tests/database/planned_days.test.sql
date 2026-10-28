@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(44);
+select plan(46);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -62,7 +62,7 @@ select is_empty(
   'Today follows the plan as it is'
 );
 
-update public.workouts set active = false where id = 901;
+select public.set_workout_active(901, false, current_date);
 select is(pg_temp.kept('00000000-0000-0000-0000-00000000000a'), 14,
   'Archiving the workout leaves past days planned with it');
 select results_eq(
@@ -71,7 +71,7 @@ select results_eq(
   'and keeps the skip of a past day, while a later one that no longer fits goes'
 );
 
-update public.workouts set active = true where id = 901;
+select public.set_workout_active(901, true, current_date);
 select public.keep_planned_days(current_date);
 select is(pg_temp.kept('00000000-0000-0000-0000-00000000000a'), 14,
   'A kept day is never written again');
@@ -82,7 +82,7 @@ select is(pg_temp.through('00000000-0000-0000-0000-00000000000a'), current_date 
   'nor does the last kept day move back, as when two calls overlap');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
-delete from public.workouts where id = 901;
+select public.delete_workout(901, current_date);
 select results_eq(
   $$ select count(*)::integer, count(*) filter (where workout_id = 901)::integer, min(name) from public.planned_days $$,
   $$ values (14, 14, 'Push') $$,
@@ -141,12 +141,25 @@ select throws_ok(
 );
 
 -- ----------------------------------------------------------------------------------------------
--- Changes the app did not announce
+-- Changes outside the functions
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select throws_ok(
+  $$ update public.workouts set active = false where id = 902 $$,
+  '42501',
+  null,
+  'Users change the plan only through the functions that keep the days first'
+);
+select throws_ok(
+  $$ delete from public.workouts where id = 902 $$,
+  '42501',
+  null,
+  'nor delete a workout directly'
+);
+reset role;
 update public.workouts set active = false where id = 902;
 select is(pg_temp.kept('00000000-0000-0000-0000-00000000000b'), 3,
-  'A change keeps the days before it even when the app did not keep them first');
+  'A change made any other way keeps the days before it all the same');
 select is(pg_temp.through('00000000-0000-0000-0000-00000000000b'), current_date - 2,
   'up to the day before the server''s yesterday, so that a device a day behind still changes its today');
 
@@ -155,12 +168,12 @@ select lives_ok(
   $$ select public.save_workout(jsonb_build_object('name', 'Pull',
        'weekdays', jsonb_build_array(1, 2, 3, 4, 5, 6, 7),
        'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank', 'sets', 2,
-         'target', jsonb_build_object('seconds', 30), 'restSeconds', 45)))) $$,
+         'target', jsonb_build_object('seconds', 30), 'restSeconds', 45))), current_date) $$,
   'A first workout'
 );
 select results_eq(
   $$ select (select through from public.planned_days_kept), (select count(*)::integer from public.planned_days) $$,
-  $$ values (current_date - 2, 0) $$,
+  $$ values (current_date - 1, 0) $$,
   'starts the plan without earlier days: their plan is not known'
 );
 

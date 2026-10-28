@@ -29,12 +29,12 @@ function Glass({ full }: { full: boolean }) {
           <Path
             key="full"
             d={GLASS_OUTLINE}
-            fill={colors.infoBackground}
-            stroke={colors.info}
+            fill={colors.waterBackground}
+            stroke={colors.water}
             strokeWidth={2}
             strokeLinejoin="round"
           />
-          <Path d={GLASS_WATER} fill={colors.info} />
+          <Path d={GLASS_WATER} fill={colors.water} />
         </>
       ) : (
         <Path
@@ -75,9 +75,9 @@ export function WaterCard({ day, drunk, goal }: { day: string; drunk: number; go
     <Card style={{ padding: spacing.md, gap: spacing.sm }}>
       <View style={[styles.row, { gap: spacing.md }]}>
         <View
-          style={[styles.tile, { borderRadius: radii.md, backgroundColor: colors.infoBackground }]}
+          style={[styles.tile, { borderRadius: radii.md, backgroundColor: colors.waterBackground }]}
         >
-          <Icon name="water" size={20} color="info" />
+          <Icon name="water" size={20} color="water" />
         </View>
         <View style={styles.text} accessible>
           <Text variant="label">{t('nutrition.water.title')}</Text>
@@ -103,8 +103,8 @@ export function WaterCard({ day, drunk, goal }: { day: string; drunk: number; go
         />
         <RoundIconButton
           icon="plus"
-          color="onPrimary"
-          background="info"
+          color="water"
+          background="waterBackground"
           size={40}
           label={t('nutrition.water.add', { ml: GLASS_ML })}
           onPress={() => change(GLASS_ML)}

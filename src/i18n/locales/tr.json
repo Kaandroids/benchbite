@@ -470,8 +470,6 @@
       "ingredient": "{{name}} {{amount}}",
       "full": "Bir tarifte en fazla 50 malzeme olabilir."
     },
-    "kcalEaten": "kcal yenildi",
-    "goal": "Hedef {{calories}} kcal",
     "goals": {
       "button": "Hedefler",
       "title": "Günlük hedefler",
@@ -497,7 +495,9 @@
       "save": "Hedefleri kaydet",
       "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
       "reached": "Hedefe ulaşıldı",
-      "again": "Yeniden hesapla"
+      "again": "Yeniden hesapla",
+      "eatenOfGoal": "{{goal}} kcal hedefin {{eaten}} kcal kadarı yendi. Günlük hedefler",
+      "ofGoal": "/ {{goal}} kcal"
     },
     "recalculate": {
       "sections": {

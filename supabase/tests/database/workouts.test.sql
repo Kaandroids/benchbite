@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -53,7 +53,8 @@ select is(
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select lives_ok(
-  $$ update public.workouts set active = false where type = 'push' $$,
+  $$ select public.set_workout_active(w.id, false, current_date)
+     from public.workouts w where w.type = 'push' $$,
   'Users can switch their own workout off'
 );
 select is(
@@ -67,11 +68,18 @@ select is(
 select throws_ok(
   $$ update public.workouts set estimated_minutes = 10 $$,
   '42501', null,
-  'Users cannot change the rest of a workout yet'
+  'Users change workouts only through the functions'
 );
 
--- Another user's workout is invisible, so the update finds no rows.
-update public.workouts set active = false where type = 'pull';
+-- Another user's workout is not theirs to switch.
+reset role;
+select set_config('test.pull_id', (select id::text from public.workouts where type = 'pull'), true);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ select public.set_workout_active(current_setting('test.pull_id')::bigint, false, current_date) $$,
+  'BB006', null,
+  'Users cannot switch another user''s workout off'
+);
 reset role;
 select is(
   (
