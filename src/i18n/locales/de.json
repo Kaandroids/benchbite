@@ -207,7 +207,6 @@
     },
     "items_one": "{{count}} Eintrag",
     "items_other": "{{count}} Einträge",
-    "mealTotals": "{{calories}} kcal · E {{protein}} · K {{carbs}} · F {{fat}}",
     "mealTotalsLabel": "{{calories}} kcal, {{protein}} g Protein, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
     "suggested": "Vorschlag {{calories}} kcal",
     "nothingLogged": "Noch nichts eingetragen",
@@ -462,7 +461,9 @@
       "inIt": "Darin · ergibt {{portion}}",
       "ingredient": "{{name}} {{amount}}",
       "full": "Ein Rezept hat höchstens 50 Zutaten."
-    }
+    },
+    "kcalEaten": "kcal gegessen",
+    "goal": "Ziel {{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",

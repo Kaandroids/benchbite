@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import type { QueryData } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +13,44 @@ import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './
 import type { NutritionTargets } from './targets';
 
 export type Meal = Database['public']['Enums']['meal'];
+
+/** The hours at which the meal due changes: breakfast until 11, lunch until 4 pm, dinner until 9. */
+const MEAL_HOURS: [number, Meal][] = [
+  [11, 'breakfast'],
+  [16, 'lunch'],
+  [21, 'dinner'],
+];
+
+/**
+ * The meal due at a time of day: breakfast until 11, lunch until 4 pm, dinner until 9 pm, then a
+ * snack. The Nutrition tab points to it on today's page.
+ */
+export function dueMeal(now: Date): Meal {
+  const hour = now.getHours();
+  return MEAL_HOURS.find(([until]) => hour < until)?.[1] ?? 'snack';
+}
+
+/** When the meal due next changes after `now`: the next of 11, 4 pm, 9 pm and midnight. */
+function nextMealChange(now: Date): Date {
+  const until = MEAL_HOURS.find(([hour]) => now.getHours() < hour)?.[0] ?? 24;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), until);
+}
+
+/**
+ * The meal due now, kept current as the hours pass while a screen stays open, rather than only
+ * when it renders.
+ */
+export function useDueMeal(): Meal {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setNow(new Date()),
+      nextMealChange(now).getTime() - now.getTime(),
+    );
+    return () => clearTimeout(timer);
+  }, [now]);
+  return dueMeal(now);
+}
 
 /** What a meal or a day adds up to, in the units of the targets. */
 export type Totals = NutritionTargets;

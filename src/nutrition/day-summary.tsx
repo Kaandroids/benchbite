@@ -10,6 +10,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
 
+import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import type { Totals } from './meals';
 import type { NutritionTargets } from './targets';
@@ -52,67 +53,82 @@ function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Total
   const share = targets.calories > 0 ? clamp(eaten.calories / targets.calories, 0, 1) : 0;
 
   return (
-    <View style={[styles.row, { gap: spacing.lg }]}>
-      <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={t('nutrition.ringLabel', {
-          eaten: format(Math.round(eaten.calories)),
-          target: format(targets.calories),
-        })}
-        accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
-        style={styles.ring}
-      >
-        <Svg width={RING} height={RING}>
-          <Circle
-            cx={RING / 2}
-            cy={RING / 2}
-            r={RADIUS}
-            fill="none"
-            stroke={colors.track}
-            strokeWidth={STROKE}
-          />
-          {share > 0 ? (
+    <View style={{ gap: spacing.md }}>
+      {/* What was eaten and the goal, to read only: the goals change elsewhere. */}
+      <View style={styles.eatenLine}>
+        <Text variant="captionStrong" color="textMuted">
+          <Text variant="label">{format(Math.round(eaten.calories))}</Text>{' '}
+          {t('nutrition.kcalEaten')}
+        </Text>
+        <Text variant="captionStrong" color="textMuted">
+          {t('nutrition.goal', { calories: format(targets.calories) })}
+        </Text>
+      </View>
+      <View style={[styles.row, { gap: spacing.lg }]}>
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel={t('nutrition.ringLabel', {
+            eaten: format(Math.round(eaten.calories)),
+            target: format(targets.calories),
+          })}
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
+          style={styles.ring}
+        >
+          <Svg width={RING} height={RING}>
             <Circle
               cx={RING / 2}
               cy={RING / 2}
               r={RADIUS}
               fill="none"
-              stroke={left < 0 ? colors.warning : colors.primary}
+              stroke={colors.track}
               strokeWidth={STROKE}
-              strokeLinecap="round"
-              strokeDasharray={`${share * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-              transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
             />
-          ) : null}
-        </Svg>
-        <View style={styles.center}>
-          <Text variant="headline">{format(Math.abs(left))}</Text>
-          <Text variant="caption" color="textMuted">
-            {left < 0 ? t('nutrition.over') : t('nutrition.left')}
-          </Text>
-        </View>
-      </View>
-      <View style={[styles.macros, { gap: spacing.sm }]}>
-        {MACROS.map(({ key, grams, color }) => (
-          <View key={key} style={{ gap: spacing.xs }}>
-            <View style={styles.macroLine}>
-              <Text variant="captionStrong" color="textMuted">
-                {t(`nutrition.macros.${key}`)}
-              </Text>
-              <Text variant="captionStrong">
-                {format(Math.round(eaten[grams]))}{' '}
-                {t('nutrition.gramTarget', { target: format(targets[grams]) })}
-              </Text>
-            </View>
-            <ProgressBar
-              value={targets[grams] > 0 ? eaten[grams] / targets[grams] : 0}
-              color={color}
-              size="thin"
-              accessibilityLabel={t(`nutrition.macros.${key}`)}
-            />
+            {share > 0 ? (
+              <Circle
+                cx={RING / 2}
+                cy={RING / 2}
+                r={RADIUS}
+                fill="none"
+                stroke={left < 0 ? colors.warning : colors.primary}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                strokeDasharray={`${share * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+                transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+              />
+            ) : null}
+          </Svg>
+          <View style={styles.center}>
+            <Text variant="headline">{format(Math.abs(left))}</Text>
+            <Text variant="caption" color="textMuted">
+              {left < 0 ? t('nutrition.over') : t('nutrition.left')}
+            </Text>
           </View>
-        ))}
+        </View>
+        <View style={[styles.macros, { gap: spacing.sm }]}>
+          {MACROS.map(({ key, grams, color }) => (
+            <View key={key} style={{ gap: spacing.xs }}>
+              <View style={styles.macroLine}>
+                <View style={[styles.macroName, { gap: spacing.xs }]}>
+                  <MacroDot color={color} />
+                  <Text variant="captionStrong" color="textMuted">
+                    {t(`nutrition.macros.${key}`)}
+                  </Text>
+                </View>
+                <Text variant="captionStrong">
+                  {format(Math.round(eaten[grams]))}{' '}
+                  {t('nutrition.gramTarget', { target: format(targets[grams]) })}
+                </Text>
+              </View>
+              <ProgressBar
+                value={targets[grams] > 0 ? eaten[grams] / targets[grams] : 0}
+                color={color}
+                size="thin"
+                accessibilityLabel={t(`nutrition.macros.${key}`)}
+              />
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -134,6 +150,15 @@ const styles = StyleSheet.create({
   },
   macros: {
     flex: 1,
+  },
+  eatenLine: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  macroName: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   macroLine: {
     flexDirection: 'row',

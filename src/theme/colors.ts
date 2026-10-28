@@ -91,7 +91,7 @@ export const lightColors: ColorTokens = {
   warningBackground: '#FEF3C7',
   dangerBackground: '#FEE2E2',
   protein: '#0E9384', // 3.8:1 on surface
-  carbs: '#F5B800',
+  carbs: '#B98000', // 3.4:1 on surface; the brighter #F5B800 had 1.8:1
   fat: '#6E5BD8',
   frozen: '#1D4ED8', // 5.5:1 on frozenBackground
   frozenBackground: '#DBEAFE',

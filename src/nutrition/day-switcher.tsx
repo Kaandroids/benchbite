@@ -23,7 +23,7 @@ type DaySwitcherProps = {
 export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
   const { t } = useTranslation();
   const dayLabel = useDayLabel();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const day = addDays(today, -daysBack);
   const canGoBack = daysBack < LOGGABLE_DAYS;
   const canGoForward = daysBack > 0;
@@ -38,16 +38,11 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
       disabled={!enabled}
       hitSlop={4}
       onPress={() => onChange(daysBack - by)}
-      style={({ pressed }) => [
-        styles.step,
-        {
-          borderRadius: radii.full,
-          backgroundColor: enabled ? colors.iconBackground : colors.background,
-          opacity: pressed ? 0.6 : 1,
-        },
-      ]}
+      // An arrow alone, without a filled circle, so that the day stands out more than the way
+      // to another.
+      style={({ pressed }) => [styles.step, { opacity: pressed ? 0.6 : 1 }]}
     >
-      <Icon name={icon} size={18} color={enabled ? 'primary' : 'placeholder'} />
+      <Icon name={icon} size={22} color={enabled ? 'primary' : 'placeholder'} />
     </Pressable>
   );
 

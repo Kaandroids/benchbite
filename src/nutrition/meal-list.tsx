@@ -8,6 +8,8 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
+import { MacroDot } from './macro-dot';
+import { MACROS } from './macro-targets';
 import type { Meal, MealSummary } from './meals';
 
 type MealListProps = {
@@ -18,13 +20,16 @@ type MealListProps = {
   onOpen: (meal: Meal) => void;
   /** Opens the search to add a food to the meal. */
   onAdd: (meal: Meal) => void;
+  /** The meal due now, whose + stands out while it is empty; none on other days. */
+  due?: Meal;
 };
 
 /**
  * One row per meal with only its totals, so a day with many entries still fits. An empty meal
- * shows the calories suggested for it.
+ * shows the calories suggested for it. Only the meal due now, while empty, has a filled +, so
+ * that the screen has one main action.
  */
-export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
+export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -39,6 +44,8 @@ export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
           fat: format(Math.round(totals.fatG)),
         };
         const calories = suggested.get(meal);
+        const logged = items > 0;
+        const next = meal === due && !logged;
         return (
           <View
             key={meal}
@@ -56,16 +63,20 @@ export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
                 { gap: spacing.md, opacity: pressed ? 0.6 : 1 },
               ]}
             >
+              {/* An empty meal's tile is lighter, not grey, so that it reads as not yet logged
+                  rather than off. */}
               <View
                 style={[
                   styles.tile,
                   {
                     borderRadius: radii.md,
-                    backgroundColor: items > 0 ? colors.iconBackground : colors.background,
+                    backgroundColor: logged ? colors.iconBackground : colors.selected,
                   },
                 ]}
               >
-                <Icon name={icon} size={20} color={items > 0 ? 'primary' : 'textMuted'} />
+                <View style={{ opacity: logged ? 1 : 0.6 }}>
+                  <Icon name={icon} size={20} color="primary" />
+                </View>
               </View>
               <View style={styles.text}>
                 <Text variant="label">
@@ -77,14 +88,25 @@ export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
                     </Text>
                   ) : null}
                 </Text>
-                {items > 0 ? (
-                  <Text
-                    variant="caption"
-                    color="textMuted"
+                {logged ? (
+                  // The macros by the dots of their colours, as in the summary above.
+                  <View
+                    accessible
                     accessibilityLabel={t('nutrition.mealTotalsLabel', values)}
+                    style={[styles.totals, { gap: spacing.sm }]}
                   >
-                    {t('nutrition.mealTotals', values)}
-                  </Text>
+                    <Text variant="caption" color="textMuted">
+                      {t('nutrition.kcal', values)}
+                    </Text>
+                    {MACROS.map(({ key, color }) => (
+                      <View key={key} style={[styles.totals, { gap: spacing.xs }]}>
+                        <MacroDot color={color} size={7} />
+                        <Text variant="caption" color="textMuted">
+                          {values[key]}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 ) : (
                   <Text variant="caption" color="textMuted">
                     {calories === undefined
@@ -96,8 +118,8 @@ export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
             </Pressable>
             <RoundIconButton
               icon="plus"
-              color={items > 0 ? 'primary' : 'onPrimary'}
-              background={items > 0 ? 'iconBackground' : 'primaryButton'}
+              color={next ? 'onPrimary' : 'primary'}
+              background={next ? 'primaryButton' : 'iconBackground'}
               size={40}
               label={t(`nutrition.addTo.${meal}`)}
               onPress={() => onAdd(meal)}
@@ -127,5 +149,9 @@ const styles = StyleSheet.create({
   },
   text: {
     flex: 1,
+  },
+  totals: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

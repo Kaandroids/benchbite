@@ -12,7 +12,7 @@ import { useTheme } from '@/theme';
 import { DaySummary } from './day-summary';
 import { DaySwitcher } from './day-switcher';
 import { MealList } from './meal-list';
-import { mealsOf, suggestedCalories, totalOf, useDayEntries } from './meals';
+import { mealsOf, suggestedCalories, totalOf, useDayEntries, useDueMeal } from './meals';
 import { useNutritionTargets } from './targets';
 import { useWater } from './water';
 import { WaterCard } from './water-card';
@@ -29,6 +29,7 @@ export function NutritionScreen() {
   const entries = useDayEntries(toIsoDate(day));
   const water = useWater(toIsoDate(day));
   const waterGoal = useWaterGoal();
+  const due = useDueMeal();
   const queries = [targets, entries, water, waterGoal];
 
   const loaded = allLoaded(queries);
@@ -39,6 +40,7 @@ export function NutritionScreen() {
       <>
         <MealList
           meals={meals}
+          due={daysBack === 0 ? due : undefined}
           suggested={targets.data ? suggestedCalories(targets.data.calories, meals) : new Map()}
           onOpen={(meal) =>
             router.push({ pathname: '/nutrition/meal', params: { meal, day: toIsoDate(day) } })
