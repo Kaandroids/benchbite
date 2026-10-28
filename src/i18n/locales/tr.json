@@ -534,8 +534,22 @@
         "changed": "{{label}}: {{to}}, önce {{from}}",
         "none": "Henüz hiçbir şeyi değiştirmedin. Hedefini, hedef kilonu, hızını ya da aktiviteni değiştirmek için geri dön.",
         "plan": "Antrenman planın olduğu gibi kalır.",
-        "calculate": "Hedeflerimi hesapla",
-        "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+        "calculate": "Hedeflerimi hesapla"
+      },
+      "building": {
+        "title": "Hedeflerin hesaplanıyor",
+        "wait": "Sadece birkaç saniye.",
+        "lines": {
+          "goal": "Hedef: {{goal}}",
+          "losing": "{{pace}} vermek, şu an {{weight}}",
+          "gaining": "{{pace}} almak, şu an {{weight}}",
+          "keeping": "Kilonu {{weight}} olarak korumak",
+          "activity": "Aktivite: {{level}}",
+          "calories": "Her gün için kalori ve makrolar"
+        },
+        "ready": "Yeni hedeflerin hazır",
+        "error": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+        "see": "Hedeflerimi gör"
       },
       "done": {
         "title": "Yeni günlük hedeflerin",

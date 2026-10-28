@@ -534,8 +534,22 @@
         "changed": "{{label}}: {{to}}, vorher {{from}}",
         "none": "Du hast noch nichts geändert. Geh zurück, um dein Ziel, Zielgewicht, Tempo oder deine Aktivität zu ändern.",
         "plan": "Dein Trainingsplan bleibt, wie er ist.",
-        "calculate": "Meine Ziele berechnen",
-        "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+        "calculate": "Meine Ziele berechnen"
+      },
+      "building": {
+        "title": "Deine Ziele werden berechnet",
+        "wait": "Nur ein paar Sekunden.",
+        "lines": {
+          "goal": "Ziel: {{goal}}",
+          "losing": "{{pace}} abnehmen, ab {{weight}}",
+          "gaining": "{{pace}} zunehmen, ab {{weight}}",
+          "keeping": "Dein Gewicht von {{weight}} halten",
+          "activity": "Aktivität: {{level}}",
+          "calories": "Kalorien und Makros für jeden Tag"
+        },
+        "ready": "Deine neuen Ziele sind fertig",
+        "error": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+        "see": "Meine Ziele ansehen"
       },
       "done": {
         "title": "Deine neuen Tagesziele",

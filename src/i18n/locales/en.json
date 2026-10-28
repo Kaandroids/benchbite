@@ -534,8 +534,22 @@
         "changed": "{{label}}: {{to}}, was {{from}}",
         "none": "You have not changed anything yet. Go back to change your goal, target, pace or activity.",
         "plan": "Your workout plan stays as it is.",
-        "calculate": "Calculate my goals",
-        "saveError": "The goals could not be saved. Check your connection and try again."
+        "calculate": "Calculate my goals"
+      },
+      "building": {
+        "title": "Working out your goals",
+        "wait": "Just a few seconds.",
+        "lines": {
+          "goal": "Goal: {{goal}}",
+          "losing": "Losing {{pace}}, from {{weight}}",
+          "gaining": "Gaining {{pace}}, from {{weight}}",
+          "keeping": "Keeping your weight at {{weight}}",
+          "activity": "Activity: {{level}}",
+          "calories": "Calories and macros for each day"
+        },
+        "ready": "Your new goals are ready",
+        "error": "The goals could not be saved. Check your connection and try again.",
+        "see": "See my goals"
       },
       "done": {
         "title": "Your new daily goals",
