@@ -13,7 +13,6 @@ import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { Constants } from '@/lib/database.types';
 import { isDbError } from '@/lib/errors';
 import { toTenth, useNumberFormat } from '@/i18n/units';
 import { typography, useTheme } from '@/theme';
@@ -21,11 +20,12 @@ import { typography, useTheme } from '@/theme';
 import { useCreateFood, useDeleteFood, useUpdateFood } from './custom-foods';
 import { EMPTY_FORM, formOf, MAX_NAME_LENGTH, readForm, type FoodForm } from './food-form';
 import { FoodLoadState } from './food-load-state';
-import { amountOf, refKey, useFood, type PortionUnit } from './foods';
+import { amountOf, refKey, useFood } from './foods';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
+import { UnitPicker } from './unit-picker';
 
 type FoodFormScreenProps = {
   /** The meal and day the search was opened for, where a new food goes on to be logged. */
@@ -55,8 +55,6 @@ function EditFood(props: FoodFormScreenProps & { kind: 'edit' }) {
   }
   return <FoodLoadState gone={food.data === null} queries={[food]} />;
 }
-
-const UNITS = Constants.public.Enums.portion_unit;
 
 function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const { t } = useTranslation();
@@ -326,6 +324,9 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
       {pickingUnit ? (
         <Sheet onClose={() => setPickingUnit(false)}>
           <UnitPicker
+            title={t('nutrition.food.unitSheet.title')}
+            message={t('nutrition.food.unitSheet.message')}
+            noneLabel={t('nutrition.food.unitSheet.none')}
             value={form.unit}
             onPick={(unit) => {
               setPickingUnit(false);
@@ -335,64 +336,6 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
         </Sheet>
       ) : null}
     </KeyboardAvoiding>
-  );
-}
-
-/** The units a portion can be counted in, and none, in a sheet. */
-function UnitPicker({
-  value,
-  onPick,
-}: {
-  value: PortionUnit | null;
-  onPick: (unit: PortionUnit | null) => void;
-}) {
-  const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  return (
-    <View style={{ gap: spacing.md }}>
-      <View>
-        <Text variant="headline" accessibilityRole="header">
-          {t('nutrition.food.unitSheet.title')}
-        </Text>
-        <Text color="textMuted">{t('nutrition.food.unitSheet.message')}</Text>
-      </View>
-      <View style={[styles.units, { gap: spacing.sm }]}>
-        {UNITS.map((unit) => {
-          const selected = unit === value;
-          return (
-            <Pressable
-              key={unit}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              onPress={() => onPick(unit)}
-              style={({ pressed }) => [
-                styles.unit,
-                {
-                  borderRadius: radii.md,
-                  paddingHorizontal: spacing.md,
-                  borderWidth: selected ? 2 : 1,
-                  borderColor: selected ? colors.primaryButton : colors.border,
-                  backgroundColor: selected ? colors.selected : colors.surface,
-                  opacity: pressed ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text
-                variant={selected ? 'label' : 'bodyStrong'}
-                color={selected ? 'primaryText' : 'text'}
-              >
-                {t(`nutrition.food.units.${unit}`)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Button
-        label={t('nutrition.food.unitSheet.none')}
-        variant="ghost"
-        onPress={() => onPick(null)}
-      />
-    </View>
   );
 }
 
@@ -419,15 +362,6 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
-  },
-  units: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  unit: {
-    width: '48%',
-    minHeight: 48,
-    justifyContent: 'center',
   },
   caloriesRow: {
     flexDirection: 'row',
