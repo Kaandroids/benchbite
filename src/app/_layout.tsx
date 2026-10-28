@@ -116,6 +116,8 @@ function RootNavigator() {
             <Stack.Screen name="session/exercise/[id]" />
             <Stack.Screen name="session/exercise/history" />
             <Stack.Screen name="settings" />
+            {/* Opened from beside the settings, in development only. */}
+            <Stack.Screen name="dev/tools" />
           </Stack.Protected>
           {/* Reachable from the onboarding's first step and from the settings. */}
           <Stack.Screen name="account/create" />
