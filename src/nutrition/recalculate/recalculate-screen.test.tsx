@@ -1,17 +1,29 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { BackHandler } from 'react-native';
 
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
 import { useNutritionTargets, useRecalculateTargets, useTargetBasis } from '../targets';
+import { openSave } from './building-step';
 import { RecalculateScreen } from './recalculate-screen';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
-  useLocalSearchParams: jest.fn(),
-  Stack: { Screen: () => null },
-}));
+const mockRedirect = jest.fn();
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual<typeof import('react')>('react');
+  return {
+    router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
+    useLocalSearchParams: jest.fn(),
+    // Runs once on mount, as the screen comes into focus.
+    useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+    Redirect: ({ href }: { href: unknown }) => {
+      mockRedirect(href);
+      return null;
+    },
+    Stack: { Screen: () => null },
+  };
+});
 jest.mock('../targets', () => ({
   ...jest.requireActual('../targets'),
   useTargetBasis: jest.fn(),
@@ -259,8 +271,12 @@ describe('the review step', () => {
   it('saves nothing itself, and opens the save with the answers and the goals in use', async () => {
     open(params);
     await render(<RecalculateScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Calculate my goals' }));
+    const calculate = screen.getByRole('button', { name: 'Calculate my goals' });
+    await fireEvent.press(calculate);
+    // A double tap opens one save.
+    await fireEvent.press(calculate);
     expect(recalculate).not.toHaveBeenCalled();
+    expect(router.push).toHaveBeenCalledTimes(1);
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/nutrition/recalculate/[step]',
       params: {
@@ -270,26 +286,36 @@ describe('the review step', () => {
         pace: '0.25',
         activity: 'active',
         was: '1940,135,229,54',
+        save: expect.any(String),
       },
     });
   });
 });
 
 describe('the save', () => {
-  const params = {
-    step: 'building',
+  const answers = {
     goal: 'build_muscle',
-    target: '84',
-    pace: '0.25',
+    targetWeightKg: 84,
+    weeklyPaceKg: 0.25,
     activity: 'active',
-    was: '1940,135,229,54',
+  } as const;
+
+  /** Opens the save as the review does, and returns its parameters. */
+  const openFromReview = (opened: Parameters<typeof openSave>[0] = answers) => {
+    openSave(opened, '1940,135,229,54');
+    const { params } = jest.mocked(router.push).mock.calls.at(-1)![0] as {
+      params: Record<string, string>;
+    };
+    jest.mocked(router.push).mockClear();
+    open(params);
+    return params;
   };
   const advance = (ms: number) => act(() => jest.advanceTimersByTimeAsync(ms));
   const seeMyGoals = () => screen.queryByRole('button', { name: 'See my goals' });
 
   it('saves the answers while a line about the goals shows at a time', async () => {
     recalculate.mockResolvedValue(undefined);
-    open(params);
+    openFromReview();
     await render(<RecalculateScreen />);
     expect(recalculate).toHaveBeenCalledWith({
       goal: 'build_muscle',
@@ -320,28 +346,65 @@ describe('the save', () => {
 
   it('says the weight stays for a goal that keeps it', async () => {
     recalculate.mockResolvedValue(undefined);
-    open({ step: 'building', goal: 'get_stronger', activity: 'light' });
+    openFromReview({
+      goal: 'get_stronger',
+      targetWeightKg: null,
+      weeklyPaceKg: null,
+      activity: 'light',
+    });
     await render(<RecalculateScreen />);
     await advance(1100);
     expect(screen.getByText('Keeping your weight at 80 kg')).toBeTruthy();
   });
 
+  it('opens the review instead for a link, or when nothing changed', async () => {
+    open({
+      step: 'building',
+      goal: 'build_muscle',
+      target: '84',
+      pace: '0.25',
+      activity: 'active',
+    });
+    await render(<RecalculateScreen />);
+    open({ ...openFromReview(), save: 'guessed' });
+    await render(<RecalculateScreen />);
+    openFromReview({ goal: 'lose_fat', targetWeightKg: 75, weeklyPaceKg: 0.5, activity: 'light' });
+    await render(<RecalculateScreen />);
+    expect(recalculate).not.toHaveBeenCalled();
+    expect(mockRedirect).toHaveBeenCalledTimes(3);
+    expect(mockRedirect).toHaveBeenLastCalledWith({
+      pathname: '/nutrition/recalculate/[step]',
+      params: { step: 'review', goal: 'lose_fat', activity: 'light', target: '75', pace: '0.5' },
+    });
+  });
+
   it('cannot be left while saving, and offers to try again or go back on failure', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    let hardwareBack = () => false as boolean | null | undefined;
+    const backHandler = jest
+      .spyOn(BackHandler, 'addEventListener')
+      .mockImplementation((_event, handler) => {
+        hardwareBack = () => handler({} as never);
+        return { remove: jest.fn() };
+      });
     recalculate.mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined);
-    open(params);
+    openFromReview();
     await render(<RecalculateScreen />);
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    // Android's back button does nothing while saving.
+    expect(hardwareBack()).toBe(true);
 
     await advance(4400);
     expect(screen.getByText(/The goals could not be saved/)).toBeTruthy();
     expect(seeMyGoals()).toBeNull();
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+    expect(hardwareBack()).toBe(false);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
     expect(recalculate).toHaveBeenCalledTimes(2);
     await advance(5000);
     expect(seeMyGoals()).toBeTruthy();
+    backHandler.mockRestore();
     warn.mockRestore();
   });
 });
