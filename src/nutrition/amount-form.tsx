@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Chip } from '@/components/ui/chip';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
-import { Text } from '@/components/ui/text';
+import { MAX_FONT_SCALE, Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { clamp, parseDecimal } from '@/lib/math';
 import { typography, useTheme } from '@/theme';
@@ -93,6 +93,7 @@ export function AmountForm({
 }: AmountFormProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const { fontScale } = useWindowDimensions();
   const { format } = useNumberFormat();
   const portionLabel = usePortionLabel();
   const [portionIndex, setPortionIndex] = useState(() => portionIndexOf(portions, initial));
@@ -220,15 +221,23 @@ export function AmountForm({
                   keyboardType="decimal-pad"
                   selectTextOnFocus
                   maxLength={6}
+                  // Grows with the system font as far as the portion count does.
+                  maxFontSizeMultiplier={DISPLAY_FONT_SCALE}
                   style={[
                     styles.gramsInput,
-                    // Without its line height: iOS draws the text of an input with one above the
-                    // middle of its box, so the number sat high and moved while it was edited.
                     {
+                      // The display type without its line height: iOS draws the text of an input
+                      // with one above the middle of its box, so the number sat high and moved
+                      // while it was edited.
                       fontFamily: typography.display.fontFamily,
                       fontSize: typography.display.fontSize,
+                      // The height of the portion count, so that switching between them does not
+                      // move the card.
+                      height:
+                        typography.display.lineHeight * Math.min(fontScale, DISPLAY_FONT_SCALE),
+                      color: colors.text,
+                      borderBottomColor: colors.border,
                     },
-                    { color: colors.text, borderBottomColor: colors.border },
                   ]}
                 />
                 {/* Below the number, as the portion's words are, rather than beside it. */}
@@ -308,6 +317,9 @@ export function AmountForm({
   );
 }
 
+/** How far the `display` text of the portion count grows with the system font. */
+const DISPLAY_FONT_SCALE = MAX_FONT_SCALE.display ?? 1;
+
 const styles = StyleSheet.create({
   chips: {
     flexDirection: 'row',
@@ -323,8 +335,6 @@ const styles = StyleSheet.create({
   },
   gramsInput: {
     minWidth: 80,
-    // The height of the portion count, so that switching between them does not move the card.
-    height: 44,
     textAlign: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: 0,

@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import * as ReactNative from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
@@ -111,6 +112,24 @@ describe('AmountScreen', () => {
       },
       expect.anything(),
     );
+  });
+
+  it('keeps typed grams as tall as the portion count, also with a large system font', async () => {
+    const dimensions = jest.spyOn(ReactNative, 'useWindowDimensions').mockReturnValue({
+      width: 390,
+      height: 844,
+      scale: 3,
+      fontScale: 2,
+    });
+    await render(
+      <AmountScreen food={{ kind: 'library', id: 'M141300' }} meal="snack" day="2026-10-27" />,
+    );
+    await fireEvent.press(screen.getByText('Grams'));
+    const input = screen.getByLabelText('Grams');
+    expect(input.props.maxFontSizeMultiplier).toBe(1.3);
+    expect(ReactNative.StyleSheet.flatten(input.props.style)).toMatchObject({ height: 44 * 1.3 });
+    expect(screen.getByText('grams')).toBeTruthy();
+    dimensions.mockRestore();
   });
 
   it('turns Add off while the grams typed are no amount', async () => {
