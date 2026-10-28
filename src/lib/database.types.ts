@@ -1408,6 +1408,16 @@ export type Database = {
           workout_id: number;
         }[];
       };
+      plans_by_weekdays: {
+        Args: {
+          day: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
+      };
       plans_workout_on: {
         Args: {
           day: string;
@@ -1467,7 +1477,7 @@ export type Database = {
         };
         Returns: number;
       };
-      save_workout: { Args: { today?: string; workout: Json }; Returns: number };
+      save_workout: { Args: { today: string; workout: Json }; Returns: number };
       search_foods: {
         Args: { language: string; query: string; recipes?: boolean };
         Returns: {
