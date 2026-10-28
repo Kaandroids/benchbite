@@ -230,24 +230,6 @@ function answersArgs(answers: TargetAnswers) {
   };
 }
 
-/** The targets the answers would give, before they are saved; null without answers yet. */
-export function usePreviewTargets(answers: TargetAnswers | null) {
-  return useQuery({
-    queryKey: ['nutrition-targets', 'preview', answers],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc(
-        'preview_nutrition_targets',
-        answersArgs(answers as TargetAnswers),
-      );
-      if (error) {
-        throw error;
-      }
-      return targetsFrom(data);
-    },
-    enabled: answers !== null,
-  });
-}
-
 /** Saves new answers and puts the calculated targets back in use, from today on. */
 export function useRecalculateTargets() {
   const reload = useReloadTargets();

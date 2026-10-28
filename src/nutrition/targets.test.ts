@@ -9,7 +9,6 @@ import {
   useDayTargets,
   useNutritionTargets,
   useOwnTargets,
-  usePreviewTargets,
   useRecalculateTargets,
   useSetOwnTargets,
   useTargetBasis,
@@ -145,38 +144,6 @@ describe('useTargetBasis', () => {
       activity: 'light',
       heightCm: 180,
     });
-  });
-});
-
-describe('usePreviewTargets', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('works the targets of new answers out, before they are saved', async () => {
-    rpc.mockResolvedValue({
-      data: { calories: 2050, protein_g: 144, carbs_g: 246, fat_g: 57 },
-      error: null,
-    } as never);
-    const { result } = await renderHook(() =>
-      usePreviewTargets({
-        goal: 'lose_fat',
-        targetWeightKg: 75,
-        weeklyPaceKg: 0.5,
-        activity: 'light',
-      }),
-    );
-    await waitFor(() => expect(result.current.data?.calories).toBe(2050));
-    expect(rpc).toHaveBeenCalledWith('preview_nutrition_targets', {
-      goal: 'lose_fat',
-      target_weight_kg: 75,
-      weekly_pace_kg: 0.5,
-      activity_level: 'light',
-    });
-  });
-
-  it('waits for the answers', async () => {
-    const { result } = await renderHook(() => usePreviewTargets(null));
-    expect(result.current.fetchStatus).toBe('idle');
-    expect(rpc).not.toHaveBeenCalled();
   });
 });
 
