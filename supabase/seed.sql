@@ -1,7 +1,7 @@
 -- Local development only: `supabase db reset` runs this after the migrations. It creates an
--- account that has finished the onboarding, so the app can skip it from the developer tools
--- (#246). The password is a placeholder for the local database, not a secret; hosted projects
--- are never seeded.
+-- account that has finished the onboarding, so the app can skip it with "Use the dev account" on
+-- the welcome screen or in the developer tools (#246). The password is a placeholder for the
+-- local database, not a secret; hosted projects are never seeded.
 
 -- The account, with a confirmed email so that it can sign in with its password at once.
 insert into auth.users (
@@ -18,21 +18,23 @@ values (
   '', '', '', ''
 );
 
+-- The rest finds the account by its email, so that its id is written once, above.
 insert into auth.identities (
   id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at
 )
-values (
-  gen_random_uuid(), 'de000000-0000-4000-8000-000000000001',
-  'de000000-0000-4000-8000-000000000001', 'email',
-  '{"sub": "de000000-0000-4000-8000-000000000001", "email": "dev@benchbite.local", "email_verified": true}',
-  now(), now(), now()
-);
+select gen_random_uuid(), u.id, u.id::text, 'email',
+  jsonb_build_object('sub', u.id, 'email', u.email, 'email_verified', true), now(), now(), now()
+from auth.users u
+where u.email = 'dev@benchbite.local';
 
 -- The onboarding, saved as the app saves it: a 30-year-old man of 180 cm and 85 kg losing fat
 -- towards 78 kg, lightly active, training on Monday, Wednesday and Friday.
 select set_config(
   'request.jwt.claims',
-  '{"sub": "de000000-0000-4000-8000-000000000001", "role": "authenticated"}',
+  json_build_object(
+    'sub', (select u.id from auth.users u where u.email = 'dev@benchbite.local'),
+    'role', 'authenticated'
+  )::text,
   -- For the session, as the seed may run its statements in transactions of their own.
   false
 );
@@ -65,8 +67,9 @@ select public.complete_onboarding(
 
 -- Two weeks of weights before today's, going down, so that the charts have something to show.
 insert into public.weight_entries (user_id, weight_kg, measured_on)
-select 'de000000-0000-4000-8000-000000000001', 85 + days * 0.1, current_date - days
-from generate_series(1, 14) days
+select u.id, 85 + days * 0.1, current_date - days
+from auth.users u, generate_series(1, 14) days
+where u.email = 'dev@benchbite.local'
 on conflict do nothing;
 
 select set_config('request.jwt.claims', '', false);
