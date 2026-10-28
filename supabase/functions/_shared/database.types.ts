@@ -643,15 +643,18 @@ export type Database = {
       };
       planned_days_kept: {
         Row: {
+          started_on: string | null;
           through: string;
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
+          started_on?: string | null;
           through: string;
           user_id: string;
         };
         Update: {
+          started_on?: string | null;
           through?: string;
           user_id?: string;
         };
@@ -1062,7 +1065,7 @@ export type Database = {
           id: number;
           to_on: string | null;
           user_id: string;
-          workout_id: number;
+          workout_id: number | null;
         };
         ComputedFields: never;
         Insert: {
@@ -1071,7 +1074,7 @@ export type Database = {
           id?: never;
           to_on?: string | null;
           user_id: string;
-          workout_id: number;
+          workout_id?: number | null;
         };
         Update: {
           created_at?: string;
@@ -1079,7 +1082,7 @@ export type Database = {
           id?: never;
           to_on?: string | null;
           user_id?: string;
-          workout_id?: number;
+          workout_id?: number | null;
         };
         Relationships: [
           {
@@ -1229,6 +1232,17 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      drop_stale_moves_of: {
+        Args: {
+          kept: string;
+          whole: boolean;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: undefined;
+      };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
@@ -1397,6 +1411,15 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      plan_by_weekdays: {
+        Args: { from_day: string; owner: string; to_day: string };
+        Returns: {
+          day: string;
+          name: string;
+          type: Database['public']['Enums']['workout_type'];
+          workout_id: number;
+        }[];
+      };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
