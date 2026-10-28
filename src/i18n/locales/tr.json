@@ -496,7 +496,7 @@
         "goal": "Hedef",
         "target": "Hedef kilo",
         "activity": "Aktivite",
-        "result": "Hedefler"
+        "review": "Kontrol"
       },
       "goal": {
         "title": "Şimdiki hedefin ne?",
@@ -514,13 +514,27 @@
         "title": "Günün ne kadar hareketli?",
         "intro": "İşin ve gün içindeki yolların. Antrenmanlar ayrıca sayılır."
       },
-      "result": {
-        "title": "Yeni günlük hedeflerin",
-        "intro": "Başlangıçtaki gibi hedefinden, kilondan ve aktivitenden hesaplandı.",
-        "change": "{{to}} {{unit}}, önce {{from}} {{unit}}",
-        "note": "Kilon değiştikçe bunlar da değişir. Antrenman planın olduğu gibi kalır.",
-        "use": "Bu hedefleri kullan",
+      "review": {
+        "title": "Değişikliklerini kontrol et",
+        "intro": "Sadece değiştirdiklerin. Boyun ve son tartın olduğu gibi kalır.",
+        "labels": {
+          "goal": "Hedef",
+          "target": "Hedef kilo",
+          "pace": "Hız",
+          "activity": "Aktivite"
+        },
+        "changed": "{{label}}: {{to}}, önce {{from}}",
+        "none": "Henüz hiçbir şeyi değiştirmedin. Hedefini, hedef kilonu, hızını ya da aktiviteni değiştirmek için geri dön.",
+        "plan": "Antrenman planın olduğu gibi kalır.",
+        "calculate": "Hedeflerimi hesapla",
         "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+      },
+      "done": {
+        "title": "Yeni günlük hedeflerin",
+        "intro": "Yeni cevaplarından hesaplandı ve bugünden itibaren geçerli.",
+        "change": "{{to}} {{unit}}, önce {{from}} {{unit}}",
+        "note": "Kilon değiştikçe bunlar da değişir. Geçmiş günler kendi hedeflerini korur.",
+        "done": "Tamam"
       }
     }
   },

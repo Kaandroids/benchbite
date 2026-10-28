@@ -496,7 +496,7 @@
         "goal": "Goal",
         "target": "Target",
         "activity": "Activity",
-        "result": "Goals"
+        "review": "Review"
       },
       "goal": {
         "title": "What is your goal now?",
@@ -514,13 +514,27 @@
         "title": "How active is your day?",
         "intro": "Your job and getting around. Workouts are counted separately."
       },
-      "result": {
-        "title": "Your new daily goals",
-        "intro": "Worked out as at the start, from your goal, weight and activity.",
-        "change": "{{to}} {{unit}}, was {{from}} {{unit}}",
-        "note": "They follow along as your weight changes. Your workout plan stays as it is.",
-        "use": "Use these goals",
+      "review": {
+        "title": "Check your changes",
+        "intro": "Only what you changed. Your height and latest weight stay as they are.",
+        "labels": {
+          "goal": "Goal",
+          "target": "Target weight",
+          "pace": "Pace",
+          "activity": "Activity"
+        },
+        "changed": "{{label}}: {{to}}, was {{from}}",
+        "none": "You have not changed anything yet. Go back to change your goal, target, pace or activity.",
+        "plan": "Your workout plan stays as it is.",
+        "calculate": "Calculate my goals",
         "saveError": "The goals could not be saved. Check your connection and try again."
+      },
+      "done": {
+        "title": "Your new daily goals",
+        "intro": "Worked out from your new answers and in use from today.",
+        "change": "{{to}} {{unit}}, was {{from}} {{unit}}",
+        "note": "They follow along as your weight changes. Past days keep the goals they had.",
+        "done": "Done"
       }
     }
   },

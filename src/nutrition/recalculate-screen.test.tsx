@@ -4,12 +4,7 @@ import { fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
 import { RecalculateScreen } from './recalculate-screen';
-import {
-  useNutritionTargets,
-  usePreviewTargets,
-  useRecalculateTargets,
-  useTargetBasis,
-} from './targets';
+import { useNutritionTargets, useRecalculateTargets, useTargetBasis } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({
@@ -20,7 +15,6 @@ jest.mock('./targets', () => ({
   ...jest.requireActual('./targets'),
   useTargetBasis: jest.fn(),
   useNutritionTargets: jest.fn(),
-  usePreviewTargets: jest.fn(),
   useRecalculateTargets: jest.fn(),
 }));
 jest.mock('@/weight/weights', () => ({ useLatestWeight: jest.fn(), useWeightUnit: jest.fn() }));
@@ -52,9 +46,6 @@ beforeEach(() => {
   jest
     .mocked(useNutritionTargets)
     .mockReturnValue(loaded({ calories: 1940, proteinG: 135, carbsG: 229, fatG: 54 }));
-  jest
-    .mocked(usePreviewTargets)
-    .mockReturnValue(loaded({ calories: 2050, proteinG: 135, carbsG: 246, fatG: 57 }));
   jest
     .mocked(useRecalculateTargets)
     .mockReturnValue({ mutate: recalculate, isPending: false, isError: false } as never);
@@ -180,44 +171,77 @@ describe('the activity step', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/nutrition/recalculate/[step]',
-      params: { step: 'result', goal: 'lose_fat', target: '75', pace: '0.5', activity: 'active' },
+      params: { step: 'review', goal: 'lose_fat', target: '75', pace: '0.5', activity: 'active' },
     });
   });
 });
 
-describe('the result step', () => {
+describe('leaving', () => {
+  it('closes the steps from any of them, back to the daily goals', async () => {
+    open({ step: 'activity', goal: 'lose_fat', target: '75', pace: '0.5' });
+    await render(<RecalculateScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(router.dismissTo).toHaveBeenCalledWith('/nutrition/goals');
+  });
+
+  it('names the last step Review, apart from the goal', async () => {
+    open({ step: 'review' });
+    await render(<RecalculateScreen />);
+    expect(screen.getByRole('progressbar', { name: 'Review' })).toBeTruthy();
+    expect(screen.getByText('Goal')).toBeTruthy();
+  });
+});
+
+describe('the review step', () => {
   const params = {
-    step: 'result',
-    goal: 'lose_fat',
-    target: '75',
-    pace: '0.5',
+    step: 'review',
+    goal: 'build_muscle',
+    target: '84',
+    pace: '0.25',
     activity: 'active',
   };
 
-  it('shows the new goals against the ones in use', async () => {
-    open(params);
+  it('lists only what changed, each against its saved value', async () => {
+    open({ step: 'review', goal: 'lose_fat', target: '75', pace: '0.5', activity: 'active' });
     await render(<RecalculateScreen />);
-    expect(usePreviewTargets).toHaveBeenCalledWith({
-      goal: 'lose_fat',
-      targetWeightKg: 75,
-      weeklyPaceKg: 0.5,
-      activity: 'active',
-    });
-    expect(screen.getByLabelText('Calories: 2,050 kcal, was 1,940 kcal')).toBeTruthy();
-    expect(screen.getByLabelText('Protein: 135 g')).toBeTruthy();
-    expect(screen.getByLabelText('Carbs: 246 g, was 229 g')).toBeTruthy();
+    expect(screen.getByLabelText('Activity: Very active, was Lightly active')).toBeTruthy();
+    expect(screen.queryByLabelText(/^Goal/)).toBeNull();
+    expect(screen.queryByLabelText(/^Target weight/)).toBeNull();
+    expect(screen.queryByLabelText(/^Pace/)).toBeNull();
   });
 
-  it('saves them and goes back to the goals', async () => {
+  it('lists every answer that changed with a new goal', async () => {
     open(params);
     await render(<RecalculateScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Use these goals' }));
+    expect(screen.getByLabelText('Goal: Build muscle, was Lose fat')).toBeTruthy();
+    expect(screen.getByLabelText('Target weight: 84 kg, was 75 kg')).toBeTruthy();
+    expect(screen.getByLabelText('Pace: 0.25 kg a week, was 0.5 kg a week')).toBeTruthy();
+    expect(screen.getByText('Your workout plan stays as it is.')).toBeTruthy();
+  });
+
+  it('keeps the button off when nothing changed', async () => {
+    open({ step: 'review' });
+    await render(<RecalculateScreen />);
+    expect(screen.getByText(/You have not changed anything yet/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Calculate my goals' })).toBeDisabled();
+  });
+
+  it('saves only when asked, then opens the new goals against the old', async () => {
+    open(params);
+    await render(<RecalculateScreen />);
+    expect(recalculate).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Calculate my goals' }));
     expect(recalculate).toHaveBeenCalledWith(
-      { goal: 'lose_fat', targetWeightKg: 75, weeklyPaceKg: 0.5, activity: 'active' },
+      { goal: 'build_muscle', targetWeightKg: 84, weeklyPaceKg: 0.25, activity: 'active' },
       expect.anything(),
     );
+    expect(router.push).not.toHaveBeenCalled();
     recalculate.mock.calls[0][1].onSuccess();
     expect(router.dismissTo).toHaveBeenCalledWith('/nutrition/goals');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/recalculate/[step]',
+      params: { step: 'done', was: '1940,135,229,54' },
+    });
   });
 
   it('says when they could not be saved', async () => {
@@ -228,17 +252,34 @@ describe('the result step', () => {
     await render(<RecalculateScreen />);
     expect(screen.getByText(/The goals could not be saved/)).toBeTruthy();
   });
+});
 
-  it('keeps the button off until the new goals are worked out', async () => {
-    jest.mocked(usePreviewTargets).mockReturnValue({
-      data: undefined,
-      isPending: true,
-      isError: false,
-      isFetching: true,
-      refetch: jest.fn(),
-    } as never);
-    open(params);
+describe('the page after saving', () => {
+  beforeEach(() =>
+    jest
+      .mocked(useNutritionTargets)
+      .mockReturnValue(loaded({ calories: 3400, proteinG: 180, carbsG: 430, fatG: 70 })),
+  );
+
+  it('shows the new goals against the ones before', async () => {
+    open({ step: 'done', was: '2500,150,300,70' });
     await render(<RecalculateScreen />);
-    expect(screen.getByRole('button', { name: 'Use these goals' })).toBeDisabled();
+    expect(screen.getByText('Your new daily goals')).toBeTruthy();
+    expect(screen.getByLabelText('Calories: 3,400 kcal, was 2,500 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('Protein: 180 g, was 150 g')).toBeTruthy();
+    expect(screen.getByLabelText('Fat: 70 g')).toBeTruthy();
+  });
+
+  it('shows the new goals alone without the ones before', async () => {
+    open({ step: 'done', was: 'nonsense' });
+    await render(<RecalculateScreen />);
+    expect(screen.getByLabelText('Calories: 3,400 kcal')).toBeTruthy();
+  });
+
+  it('goes back to the daily goals when done', async () => {
+    open({ step: 'done', was: '2500,150,300,70' });
+    await render(<RecalculateScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(router.dismissTo).toHaveBeenCalledWith('/nutrition/goals');
   });
 });

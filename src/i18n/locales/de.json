@@ -496,7 +496,7 @@
         "goal": "Ziel",
         "target": "Zielgewicht",
         "activity": "Aktivität",
-        "result": "Ziele"
+        "review": "Prüfen"
       },
       "goal": {
         "title": "Was ist jetzt dein Ziel?",
@@ -514,13 +514,27 @@
         "title": "Wie aktiv ist dein Tag?",
         "intro": "Dein Job und deine Wege. Workouts zählen extra."
       },
-      "result": {
-        "title": "Deine neuen Tagesziele",
-        "intro": "Berechnet wie zu Beginn, aus deinem Ziel, Gewicht und deiner Aktivität.",
-        "change": "{{to}} {{unit}}, vorher {{from}} {{unit}}",
-        "note": "Sie passen sich an, wenn sich dein Gewicht ändert. Dein Trainingsplan bleibt, wie er ist.",
-        "use": "Diese Ziele nutzen",
+      "review": {
+        "title": "Prüfe deine Änderungen",
+        "intro": "Nur, was du geändert hast. Deine Größe und dein letztes Gewicht bleiben, wie sie sind.",
+        "labels": {
+          "goal": "Ziel",
+          "target": "Zielgewicht",
+          "pace": "Tempo",
+          "activity": "Aktivität"
+        },
+        "changed": "{{label}}: {{to}}, vorher {{from}}",
+        "none": "Du hast noch nichts geändert. Geh zurück, um dein Ziel, Zielgewicht, Tempo oder deine Aktivität zu ändern.",
+        "plan": "Dein Trainingsplan bleibt, wie er ist.",
+        "calculate": "Meine Ziele berechnen",
         "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+      },
+      "done": {
+        "title": "Deine neuen Tagesziele",
+        "intro": "Aus deinen neuen Antworten berechnet und ab heute im Einsatz.",
+        "change": "{{to}} {{unit}}, vorher {{from}} {{unit}}",
+        "note": "Sie passen sich an, wenn sich dein Gewicht ändert. Vergangene Tage behalten ihre Ziele.",
+        "done": "Fertig"
       }
     }
   },
