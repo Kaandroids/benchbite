@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PACE_RANGES, paceLevel, projectedDate, snapPace, type PaceLevel } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
@@ -9,7 +10,6 @@ import { useDateFormat } from '@/i18n/dates';
 import { paceIn, paceToKg, useNumberFormat, useWeightFormat } from '@/i18n/units';
 import type { ColorTokens } from '@/theme';
 
-import { PACE_RANGES, paceLevel, projectedDate, snapPace, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 

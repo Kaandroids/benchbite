@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { projectedDate } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -15,7 +16,6 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useMonthDayFormat } from '@/i18n/dates';
 import { useNumberFormat, weightIn } from '@/i18n/units';
-import { projectedDate } from '@/onboarding/body';
 import { typography, useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 

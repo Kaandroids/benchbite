@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
+import { activityShare } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
@@ -10,7 +11,6 @@ import { useNumberFormat } from '@/i18n/units';
 import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
-import { activityShare } from '../body';
 import { ChoiceInsight } from '../choice-insight';
 import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';

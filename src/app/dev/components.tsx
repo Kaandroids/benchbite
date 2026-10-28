@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 
 import { AnimatedSplash } from '@/brand/animated-splash';
+import { HEIGHT_RANGE_CM } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -23,7 +24,6 @@ import {
   type WeightUnit,
 } from '@/i18n/units';
 import { range } from '@/lib/math';
-import { HEIGHT_RANGE_CM } from '@/onboarding/body';
 import { useOnboarding } from '@/providers/onboarding-provider';
 import { StreakBadge } from '@/streak/streak-badge';
 import { sampleStreak } from '@/streak/sample-streak';

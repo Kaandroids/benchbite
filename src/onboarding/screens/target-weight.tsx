@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { isTargetInGoalDirection, minHealthyWeightKg } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
@@ -11,7 +12,6 @@ import { useWeightFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 import { WeightWheels } from '@/weight/weight-wheels';
 
-import { isTargetInGoalDirection, minHealthyWeightKg } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 

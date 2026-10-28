@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
+import { projectedDate, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
@@ -14,7 +15,6 @@ import { useWeightLabel } from '@/i18n/units';
 import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
-import { projectedDate, weightGoal } from '../body';
 import { refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';

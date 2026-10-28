@@ -1,9 +1,11 @@
-// Rules for the body data steps. They only decide what the onboarding shows and allows; the
-// calorie targets themselves are calculated in the database (ADR 0009).
+// Rules for body data, goals and paces. They only decide what the onboarding and changing the
+// goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
 import { toTenth } from '@/i18n/units';
+import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
 
-import type { Goal, OnboardingAnswers } from './types';
+type Goal = Database['public']['Enums']['goal_kind'];
+type ActivityLevel = Database['public']['Enums']['activity_level'];
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
@@ -94,9 +96,11 @@ export function projectedDate(
  * The weight the user aims for and the weekly pace, for a goal that changes the weight, or null
  * for one that keeps it.
  */
-export function weightGoal(
-  answers: OnboardingAnswers,
-): { goal: 'lose_fat' | 'build_muscle'; targetKg: number; paceKg: number } | null {
+export function weightGoal(answers: {
+  goal?: Goal;
+  targetWeightKg?: number;
+  weeklyPaceKg?: number;
+}): { goal: 'lose_fat' | 'build_muscle'; targetKg: number; paceKg: number } | null {
   const { goal, targetWeightKg, weeklyPaceKg } = answers;
   if ((goal !== 'lose_fat' && goal !== 'build_muscle') || !targetWeightKg || !weeklyPaceKg) {
     return null;
@@ -109,7 +113,7 @@ export function weightGoal(
  * `activity_factors` in calculate_nutrition_targets(), which nutrition_targets.test.sql pins to
  * the same values; change both.
  */
-export const ACTIVITY_FACTORS: Record<NonNullable<OnboardingAnswers['activityLevel']>, number> = {
+export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   sedentary: 1.2,
   light: 1.375,
   moderate: 1.55,
@@ -117,6 +121,6 @@ export const ACTIVITY_FACTORS: Record<NonNullable<OnboardingAnswers['activityLev
 };
 
 /** How many more calories a level of daily movement burns than mostly sitting, as a share. */
-export function activityShare(level: NonNullable<OnboardingAnswers['activityLevel']>): number {
+export function activityShare(level: ActivityLevel): number {
   return ACTIVITY_FACTORS[level] / ACTIVITY_FACTORS.sedentary - 1;
 }

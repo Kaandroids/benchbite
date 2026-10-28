@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { HEIGHT_RANGE_CM } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -16,7 +17,6 @@ import {
 import { clamp, range } from '@/lib/math';
 import { useTheme } from '@/theme';
 
-import { HEIGHT_RANGE_CM } from '../body';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';

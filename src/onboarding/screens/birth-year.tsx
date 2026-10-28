@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { ageIn, MIN_AGE } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { WheelPicker } from '@/components/ui/wheel-picker';
 import { useTheme } from '@/theme';
 
-import { ageIn, MIN_AGE } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
