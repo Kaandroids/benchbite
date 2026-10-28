@@ -263,7 +263,8 @@
       "more": "Artır",
       "inGrams": "{{grams}} g",
       "adds": "Eklenecek",
-      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır."
+      "dayWould": "Gün {{target}} kcal'nin {{eaten}} kcal'sine ulaşır.",
+      "gramsUnit": "gram"
     },
     "addError": {
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
