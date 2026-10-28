@@ -21,7 +21,10 @@ type ScreenProps = {
   footer?: ReactNode;
   /** A button at the end of the top bar, such as Edit. */
   action?: ReactNode;
-  /** Shows a cross at the end of the top bar, for leaving a flow of steps from any of them. */
+  /**
+   * Shows a cross at the end of the top bar, for leaving a flow of steps from any of them. It takes
+   * the place of `action`, so a screen has one or the other.
+   */
   onClose?: () => void;
   /**
    * A title in the middle of the top bar, instead of a progress bar: text, shown as the screen's
