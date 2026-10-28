@@ -513,6 +513,37 @@ export type Database = {
           },
         ];
       };
+      own_nutrition_targets: {
+        Row: {
+          calories: number;
+          carbs_g: number;
+          fat_g: number;
+          in_use: boolean;
+          protein_g: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          calories: number;
+          carbs_g: number;
+          fat_g: number;
+          in_use?: boolean;
+          protein_g: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          calories?: number;
+          carbs_g?: number;
+          fat_g?: number;
+          in_use?: boolean;
+          protein_g?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       plan_slot_exercises: {
         Row: {
           exercise_id: string;
@@ -1082,6 +1113,16 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      calculated_nutrition_targets: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['nutrition_targets'];
+        SetofOptions: {
+          from: '*';
+          to: 'nutrition_targets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       can_be_logged: {
         Args: { custom_food_id: number; food_id: string; recipe_id: number };
         Returns: boolean;
@@ -1273,6 +1314,30 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      preview_nutrition_targets: {
+        Args: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          goal: Database['public']['Enums']['goal_kind'];
+          target_weight_kg: number;
+          weekly_pace_kg: number;
+        };
+        Returns: Database['public']['CompositeTypes']['nutrition_targets'];
+        SetofOptions: {
+          from: '*';
+          to: 'nutrition_targets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      recalculate_nutrition_targets: {
+        Args: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          goal: Database['public']['Enums']['goal_kind'];
+          target_weight_kg: number;
+          weekly_pace_kg: number;
+        };
+        Returns: undefined;
+      };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
