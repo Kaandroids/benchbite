@@ -69,7 +69,8 @@ export function weekSchedule(
   const movedAway: ScheduleDay['movedAway'][] = dates.map(() => []);
   const moving: { session: WeekSession; from: number; to: number }[] = [];
   dates.forEach((date, index) => {
-    for (const session of sessions.filter((item) => item.weekday === index + 1)) {
+    const onDay = (item: WeekSession) => (item.on ? item.on === date : item.weekday === index + 1);
+    for (const session of sessions.filter(onDay)) {
       const move = moveOf.get(`${session.workoutId}|${date}`);
       const to = move?.toOn ? dates.indexOf(move.toOn) : -1;
       if (move && move.toOn === null) {
@@ -99,7 +100,9 @@ export function weekSchedule(
   const days = dates.map((date, index): ScheduleDay => {
     const logs = finished.filter((log) => log.startedOn === date).map((log) => log.workoutId);
     const finishedOne = ({ session }: Entry) => {
-      const log = logs.indexOf(session.workoutId);
+      // A deleted workout's logs no longer say which workout they were.
+      const own = logs.indexOf(session.workoutId);
+      const log = own < 0 && session.gone ? logs.indexOf(null) : own;
       if (log >= 0) {
         logs.splice(log, 1);
       }
@@ -212,7 +215,8 @@ export type MissedWorkout = { workout: PlannedWorkout; day: ScheduleDay };
 export function missedWorkouts(schedule: WeekSchedule): MissedWorkout[] {
   return schedule.days.flatMap((day) =>
     day.workouts
-      .filter((workout) => workout.status === 'missed')
+      // A workout that left the plan can be neither moved nor skipped.
+      .filter((workout) => workout.status === 'missed' && !workout.session.gone)
       .map((workout) => ({ workout, day })),
   );
 }

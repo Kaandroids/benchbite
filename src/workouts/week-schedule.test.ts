@@ -390,3 +390,45 @@ describe('upcomingWorkouts', () => {
     expect(upcomingWorkouts(schedule, SESSIONS, thursday, 1)[0]?.sessions).toEqual([session(3, 4)]);
   });
 });
+
+describe('sessions planned on one day', () => {
+  // Wednesday, October 21.
+  const today = new Date(2026, 9, 21, 9, 0);
+  const kept = (on: string, workoutId: number, gone = false): WeekSession => ({
+    workoutId,
+    weekday: new Date(`${on}T00:00`).getDay() || 7,
+    on,
+    name: null,
+    type: 'push',
+    exercises: [],
+    estimatedMinutes: 45,
+    gone,
+  });
+
+  it('plans a session with a day on that day only, not every week on its weekday', () => {
+    const schedule = weekSchedule([kept('2026-10-19', 1)], [], [], today);
+    expect(schedule.days[0]?.workouts).toHaveLength(1);
+    expect(schedule.days.slice(1).every((day) => day.workouts.length === 0)).toBe(true);
+  });
+
+  it("counts a log without a workout for a workout that left the plan, as a deleted one's are", () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, true)],
+      [],
+      [{ workoutId: null, startedOn: '2026-10-19' }],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('done');
+    expect(schedule.days[0]?.extras).toBe(0);
+  });
+
+  it('does not offer a workout that left the plan to catch up', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, true), kept('2026-10-20', 1)],
+      [],
+      [],
+      today,
+    );
+    expect(missedWorkouts(schedule).map(({ day }) => day.date)).toEqual(['2026-10-20']);
+  });
+});
