@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { Card } from '@/components/ui/card';
+import { Card, CardDivider } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
@@ -31,19 +31,12 @@ type DaySummaryProps = {
  * eaten against their targets.
  */
 export function DaySummary({ header, totals }: DaySummaryProps) {
-  const { colors, spacing } = useTheme();
   return (
     <Card>
       {header}
       {totals ? (
         <>
-          {/* Across the whole card, to set the day apart from what it holds. */}
-          <View
-            style={[
-              styles.separator,
-              { backgroundColor: colors.border, marginHorizontal: -spacing.lg },
-            ]}
-          />
+          <CardDivider />
           <DayTotals {...totals} />
         </>
       ) : null}
@@ -126,9 +119,6 @@ function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Total
 }
 
 const styles = StyleSheet.create({
-  separator: {
-    height: StyleSheet.hairlineWidth,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

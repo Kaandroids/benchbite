@@ -1,8 +1,11 @@
 import type { ComponentProps } from 'react';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { useTheme } from '@/theme';
+import { useTheme, type Theme } from '@/theme';
+
+/** The space between a card's border and its content, unless its style changes it. */
+const cardPadding = (spacing: Theme['spacing']) => spacing.lg;
 
 type CardProps = Pick<ComponentProps<typeof Animated.View>, 'entering' | 'children'> & {
   /** A list of rows, which space themselves: no padding above and below, and no gap. */
@@ -23,7 +26,7 @@ export function Card({ entering, children, list = false, style }: CardProps) {
           borderColor: colors.border,
           backgroundColor: colors.surface,
           borderRadius: radii.lg,
-          padding: spacing.lg,
+          padding: cardPadding(spacing),
           gap: spacing.md,
         },
         list ? styles.list : null,
@@ -32,6 +35,22 @@ export function Card({ entering, children, list = false, style }: CardProps) {
     >
       {children}
     </Animated.View>
+  );
+}
+
+/**
+ * A thin line across the whole width of a card, through its padding, that sets apart two parts of
+ * it, such as a header from what it heads. For a card with its own padding.
+ */
+export function CardDivider() {
+  const { colors, spacing } = useTheme();
+  return (
+    <View
+      style={[
+        styles.divider,
+        { backgroundColor: colors.border, marginHorizontal: -cardPadding(spacing) },
+      ]}
+    />
   );
 }
 
@@ -47,5 +66,8 @@ const styles = StyleSheet.create({
   list: {
     paddingVertical: 0,
     gap: 0,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
   },
 });
