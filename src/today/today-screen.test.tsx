@@ -5,14 +5,12 @@ import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { act, fireEvent, render, screen } from '@/test/render';
-import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
 import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
 import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
 import { useWeek, type WeekSession } from '@/workouts/workouts';
 
 import { greetingOf } from './greeting';
 import { TodayScreen } from './today-screen';
-import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
@@ -27,11 +25,6 @@ jest.mock('@/nutrition/meals', () => ({
   useDayEntries: jest.fn(),
 }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: jest.fn() }));
-jest.mock('@/weight/weights', () => ({
-  useLatestWeight: jest.fn(),
-  useLogWeight: jest.fn(),
-  useWeightUnit: jest.fn(),
-}));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: () => ({
@@ -106,20 +99,12 @@ const THURSDAY = new Date(2026, 9, 22, 9, 0);
 const finishedOn = (...dates: string[]): FinishedWorkout[] =>
   dates.map((date) => ({ workoutId: new Date(`${date}T00:00`).getDay() || 7, startedOn: date }));
 
-const mutate = jest.fn();
-const reset = jest.fn();
 const move = jest.fn();
 const undo = jest.fn();
 
 function mockData({
   plan = loaded<Plan | null>(PLAN),
   targets = loaded<NutritionTargets | null>(TARGETS),
-  weight = loaded({ weightKg: 80, measuredOn: '2026-10-21' } as {
-    weightKg: number;
-    measuredOn: string;
-  } | null),
-  unit = loaded<'kg' | 'lb'>('kg'),
-  log = { isError: false, isPending: false },
   finished = loaded<FinishedWorkout[]>([]),
   moves = loaded<WorkoutMove[]>([]),
   moving = { isError: false, isPending: false, error: null as unknown },
@@ -129,9 +114,6 @@ function mockData({
 }: {
   plan?: Query<Plan | null>;
   targets?: Query<NutritionTargets | null>;
-  weight?: Query<{ weightKg: number; measuredOn: string } | null>;
-  unit?: Query<'kg' | 'lb'>;
-  log?: { isError: boolean; isPending: boolean };
   finished?: Query<FinishedWorkout[]>;
   moves?: Query<WorkoutMove[]>;
   moving?: { isError: boolean; isPending: boolean; error: unknown };
@@ -147,10 +129,7 @@ function mockData({
   jest.mocked(useWeek).mockReturnValue(plan as never);
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useDayEntries).mockReturnValue(eaten as never);
-  jest.mocked(useLatestWeight).mockReturnValue(weight as never);
-  jest.mocked(useWeightUnit).mockReturnValue(unit as never);
-  jest.mocked(useLogWeight).mockReturnValue({ mutate, reset, ...log } as never);
-  return { plan, targets, weight, unit, eaten };
+  return { plan, targets, eaten };
 }
 
 describe('TodayScreen', () => {
@@ -315,16 +294,31 @@ describe('TodayScreen', () => {
     expect(screen.queryByText("Today's workout")).toBeNull();
     expect(screen.queryByText('Rest day')).toBeNull();
     expect(screen.queryByText('Your daily targets')).toBeNull();
-    expect(screen.getByText('Weight')).toBeTruthy();
+    expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
+  });
+
+  it('shows the week, the daily targets, the missed workouts and today in that order', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    const headings = screen.getAllByText(
+      /^(Wednesday, October 21|Your daily targets|Missed on Monday|Today's workout)$/,
+    );
+    expect(headings.map((node) => node.props.children)).toEqual([
+      'Wednesday, October 21',
+      'Your daily targets',
+      'Missed on Monday',
+      "Today's workout",
+    ]);
+    expect(screen.queryByText('Weight')).toBeNull();
   });
 
   it('loads everything again when pulled down', async () => {
-    const { plan, targets, weight, unit, eaten } = mockData();
+    const { plan, targets, eaten } = mockData();
     await render(<TodayScreen />);
     // The mock of RefreshControl drops its props, so the handler is taken from the scroll view.
     const [scrollView] = screen.container.queryAll((node) => node.type === 'RCTScrollView');
     await act(() => scrollView!.props.refreshControl.props.onRefresh());
-    for (const query of [plan, targets, weight, unit, eaten]) {
+    for (const query of [plan, targets, eaten]) {
       expect(query.refetch).toHaveBeenCalled();
     }
   });
@@ -453,89 +447,5 @@ describe('moving workouts', () => {
     await fireEvent.press(screen.getByLabelText('Fri 23, Legs, skipped'));
     await fireEvent.press(screen.getByRole('button', { name: 'Undo skip' }));
     expect(undo).toHaveBeenCalledWith({ workoutId: 5, fromOn: '2026-10-23' });
-  });
-});
-
-describe('the weight card', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
-  });
-  afterEach(() => jest.useRealTimers());
-
-  const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
-
-  it('says when no weight is logged', async () => {
-    mockData({ weight: loaded(null) });
-    await render(<TodayScreen />);
-    expect(screen.getByText('No weight logged yet.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Increase weight' })).toBeNull();
-  });
-
-  it("shows today's weight", async () => {
-    mockData();
-    await render(<TodayScreen />);
-    expect(screen.getByText('80 kg')).toBeTruthy();
-    expect(screen.getByText('Logged today')).toBeTruthy();
-  });
-
-  it('shows the day of an earlier weight, in the unit of the user', async () => {
-    mockData({
-      weight: loaded({ weightKg: 80, measuredOn: '2026-10-19' }),
-      unit: loaded<'kg' | 'lb'>('lb'),
-    });
-    await render(<TodayScreen />);
-    expect(screen.getByText('176.4 lb')).toBeTruthy();
-    expect(screen.getByText('Logged on Oct 19, 2026')).toBeTruthy();
-  });
-
-  it('changes the weight a tenth of a kilogram per press and saves it once after the last', async () => {
-    mockData({ weight: loaded({ weightKg: 80, measuredOn: '2026-10-19' }) });
-    await render(<TodayScreen />);
-    await press('Increase weight');
-    await press('Increase weight');
-    await press('Increase weight');
-    await press('Decrease weight');
-    expect(screen.getByText('80.2 kg')).toBeTruthy();
-    expect(screen.getByText('Logged today')).toBeTruthy();
-    expect(mutate).not.toHaveBeenCalled();
-    await act(() => jest.advanceTimersByTime(SAVE_DELAY_MS));
-    expect(mutate).toHaveBeenCalledTimes(1);
-    expect(mutate).toHaveBeenCalledWith(80.2, expect.anything());
-  });
-
-  it('shows the saved weight once it is loaded again', async () => {
-    mockData();
-    mutate.mockImplementation((_kg: number, { onSettled }: { onSettled: () => void }) =>
-      onSettled(),
-    );
-    await render(<TodayScreen />);
-    await press('Decrease weight');
-    await act(() => jest.advanceTimersByTime(SAVE_DELAY_MS));
-    // The mocked query still returns the old weight.
-    expect(screen.getByText('80 kg')).toBeTruthy();
-  });
-
-  it('saves a waiting change when the screen closes', async () => {
-    mockData();
-    const { unmount } = await render(<TodayScreen />);
-    await press('Increase weight');
-    await act(() => unmount());
-    expect(mutate).toHaveBeenCalledWith(80.1, expect.anything());
-  });
-
-  it('stays within the weights the database accepts', async () => {
-    mockData({ weight: loaded({ weightKg: 30, measuredOn: '2026-10-21' }) });
-    await render(<TodayScreen />);
-    await press('Decrease weight');
-    expect(screen.getByText('30 kg')).toBeTruthy();
-  });
-
-  it('says when saving failed', async () => {
-    mockData({ log: { isError: true, isPending: false } });
-    await render(<TodayScreen />);
-    expect(
-      screen.getByText("We couldn't save your weight. Check your connection and try again."),
-    ).toBeTruthy();
   });
 });

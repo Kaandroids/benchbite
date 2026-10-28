@@ -2,9 +2,8 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 
-import { Card } from '@/components/ui/card';
+import { Card, type CardProps } from '@/components/ui/card';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat } from '@/i18n/dates';
@@ -23,6 +22,8 @@ const STEP_KG = 0.1;
 export const SAVE_DELAY_MS = 800;
 
 type WeightCardProps = {
+  /** How the card comes in, from the screen that places it. */
+  entering?: CardProps['entering'];
   latest: WeightEntry | null;
   unit: WeightUnit;
   today: Date;
@@ -32,7 +33,7 @@ type WeightCardProps = {
  * The latest weight, with buttons to change today's weight a tenth of a kilogram at a time. The
  * change is saved shortly after the last press.
  */
-export function WeightCard({ latest, unit, today }: WeightCardProps) {
+export function WeightCard({ latest, unit, today, entering }: WeightCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const formatWeight = useWeightFormat();
@@ -79,10 +80,10 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
   };
 
   return (
-    <Card entering={FadeInDown.delay(300).duration(400)}>
-      <Text variant="headline">{t('today.weight.title')}</Text>
+    <Card entering={entering}>
+      <Text variant="headline">{t('weight.title')}</Text>
       {shownKg === undefined ? (
-        <Text color="textMuted">{t('today.weight.none')}</Text>
+        <Text color="textMuted">{t('weight.none')}</Text>
       ) : (
         <View style={[styles.row, { gap: spacing.md }]}>
           <View style={styles.latest}>
@@ -91,8 +92,8 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
             </Text>
             <Text color="textMuted">
               {loggedToday
-                ? t('today.weight.loggedToday')
-                : t('today.weight.loggedOn', {
+                ? t('weight.loggedToday')
+                : t('weight.loggedOn', {
                     // A day without a time zone, so it is read as local midnight.
                     date: formatDate(new Date(`${latest?.measuredOn}T00:00`)),
                   })}
@@ -101,12 +102,12 @@ export function WeightCard({ latest, unit, today }: WeightCardProps) {
           <StepButtons
             onDecrease={() => change(-STEP_KG)}
             onIncrease={() => change(STEP_KG)}
-            decreaseLabel={t('today.weight.decrease')}
-            increaseLabel={t('today.weight.increase')}
+            decreaseLabel={t('weight.decrease')}
+            increaseLabel={t('weight.increase')}
           />
         </View>
       )}
-      {logWeight.isError ? <Text color="danger">{t('today.weight.saveError')}</Text> : null}
+      {logWeight.isError ? <Text color="danger">{t('weight.saveError')}</Text> : null}
     </Card>
   );
 }

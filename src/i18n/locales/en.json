@@ -89,9 +89,14 @@
     "nutrition": "Nutrition",
     "progress": "Progress"
   },
-  "comingSoon": {
-    "title": "Coming soon",
-    "progress": "Your weight and progress will be here."
+  "weight": {
+    "title": "Weight",
+    "none": "No weight logged yet.",
+    "loggedToday": "Logged today",
+    "loggedOn": "Logged on {{date}}",
+    "saveError": "We couldn't save your weight. Check your connection and try again.",
+    "decrease": "Decrease weight",
+    "increase": "Increase weight"
   },
   "today": {
     "loading": "Loading",
@@ -159,15 +164,6 @@
       "movedTo": "Moved to {{day}}",
       "note": "A move only changes this week. Next week your workouts are back on their days.",
       "error": "We couldn't undo the move. Check your connection and try again."
-    },
-    "weight": {
-      "title": "Weight",
-      "none": "No weight logged yet.",
-      "loggedToday": "Logged today",
-      "loggedOn": "Logged on {{date}}",
-      "saveError": "We couldn't save your weight. Check your connection and try again.",
-      "decrease": "Decrease weight",
-      "increase": "Increase weight"
     },
     "error": {
       "title": "Today couldn't load",

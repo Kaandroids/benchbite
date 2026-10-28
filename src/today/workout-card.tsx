@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 
-import { Card } from '@/components/ui/card';
+import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
@@ -16,6 +15,8 @@ import type { WeekSession } from '@/workouts/workouts';
 import { MovedFrom } from './moved-from';
 
 type WorkoutCardProps = {
+  /** How the card comes in, from the screen that places it. */
+  entering?: CardProps['entering'];
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
   /** The plan's sessions, for the next workout after this week. */
@@ -32,7 +33,7 @@ function openWorkout(session: WeekSession) {
  * list, each done or to open. On a rest day, or once today's are done, it says when the next ones
  * are.
  */
-export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
+export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCardProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
@@ -48,7 +49,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
     }
     const done = todays.length > 0;
     return (
-      <Card entering={FadeInDown.delay(100).duration(400)}>
+      <Card entering={entering}>
         <View style={[styles.row, { gap: spacing.md }]}>
           <IconTile name={done ? 'check' : 'moon'} />
           <View style={styles.text}>
@@ -76,7 +77,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
         onPress={() => openWorkout(session)}
         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
-        <Card entering={FadeInDown.delay(100).duration(400)}>
+        <Card entering={entering}>
           <View style={[styles.row, { gap: spacing.md }]}>
             <IconTile name="dumbbell" />
             <View style={styles.text}>
@@ -103,7 +104,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
 
   const done = todays.length - ahead.length;
   return (
-    <Card entering={FadeInDown.delay(100).duration(400)}>
+    <Card entering={entering}>
       <View style={styles.text}>
         <Text variant="caption" color="primaryText">
           {t('today.workout.titleMany')}

@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { TabHeader } from '@/components/tab-header';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { isoWeekday } from '@/i18n/dates';
@@ -50,10 +51,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
       <ScrollView
         contentContainerStyle={[styles.content, { padding: spacing.xl, gap: spacing.md }]}
       >
-        <View style={styles.header}>
-          <Text variant="title" accessibilityRole="header" style={styles.title}>
-            {t('workout.title')}
-          </Text>
+        <TabHeader title={t('workout.title')}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('workout.archive.title')}
@@ -85,7 +83,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
           >
             <Icon name="plus" color="onPrimary" />
           </Pressable>
-        </View>
+        </TabHeader>
 
         <LoadState queries={[workouts]} />
         {allLoaded([workouts]) ? (
@@ -123,14 +121,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    flex: 1,
   },
   headerButton: {
     width: 44,

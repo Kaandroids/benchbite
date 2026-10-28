@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { Card } from '@/components/ui/card';
+import { Card, type CardProps } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
@@ -25,6 +24,8 @@ const REST_SIZE = 8;
 const BADGE_SIZE = 18;
 
 type WeekCardProps = {
+  /** How the card comes in, from the screen that places it. */
+  entering?: CardProps['entering'];
   today: Date;
   streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
@@ -155,7 +156,14 @@ function arc(radius: number, share: number): string {
  * which fills as they are done, and a dot for each rest day. Moved, missed, skipped and extra
  * workouts each have their own mark (ADR 0028).
  */
-export function WeekCard({ today, streak, schedule, onDayPress, children }: WeekCardProps) {
+export function WeekCard({
+  today,
+  streak,
+  schedule,
+  onDayPress,
+  children,
+  entering,
+}: WeekCardProps) {
   const { t } = useTranslation();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
@@ -181,7 +189,7 @@ export function WeekCard({ today, streak, schedule, onDayPress, children }: Week
     ].join(', ');
 
   return (
-    <Card entering={FadeInDown.duration(400)}>
+    <Card entering={entering}>
       <View style={styles.header}>
         <View style={styles.flex}>
           <Text variant="headline" accessibilityRole="header">

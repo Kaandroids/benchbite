@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 
 import { TabScreen } from '@/components/tab-screen';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, cardEntering } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
@@ -17,7 +16,6 @@ import { useDisplayName } from '@/profile/display-name';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
-import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
@@ -26,20 +24,17 @@ import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PickDay } from './pick-day';
 import { WeekCard } from './week-card';
-import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
 /** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
 type SheetContent =
   { kind: 'day'; date: string } | { kind: 'pick'; session: WeekSession; fromOn: string };
 
-/** The home tab: a greeting, the week, today's workout, the daily targets and the weight. */
+/** The home tab: a greeting, the week, the daily targets, missed workouts and today's workout. */
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const targets = useNutritionTargets();
-  const latestWeight = useLatestWeight();
-  const weightUnit = useWeightUnit();
   const streak = useStreak();
   const name = useDisplayName().data;
   const greeting = useGreeting();
@@ -47,7 +42,7 @@ export function TodayScreen() {
   const { schedule, plan, moves, finished } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
-  const queries = [plan, targets, latestWeight, weightUnit, finished, moves, eaten];
+  const queries = [plan, targets, finished, moves, eaten];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));
@@ -89,16 +84,24 @@ export function TodayScreen() {
     content = (
       <>
         <WeekCard
+          entering={cardEntering(0)}
           today={today}
           streak={streak}
           schedule={schedule}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
         />
+        {targets.data ? (
+          <Card entering={cardEntering(1)}>
+            <Text variant="headline">{t('today.targets')}</Text>
+            <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
+          </Card>
+        ) : null}
         {missedWorkouts(schedule).map(({ workout, day }) => {
           const fromOn = originOf(workout, day);
           return (
             <MissedCard
               key={`${workout.session.workoutId}-${fromOn}`}
+              entering={cardEntering(2)}
               workout={workout}
               day={day}
               canMove={moveTargets(schedule, workout.session.workoutId, fromOn, todayOn).length > 0}
@@ -107,19 +110,13 @@ export function TodayScreen() {
           );
         })}
         {plan.data ? (
-          <WorkoutCard schedule={schedule} sessions={plan.data.sessions} today={today} />
+          <WorkoutCard
+            entering={cardEntering(2)}
+            schedule={schedule}
+            sessions={plan.data.sessions}
+            today={today}
+          />
         ) : null}
-        {targets.data ? (
-          <Card entering={FadeInDown.delay(200).duration(400)}>
-            <Text variant="headline">{t('today.targets')}</Text>
-            <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
-          </Card>
-        ) : null}
-        <WeightCard
-          latest={latestWeight.data ?? null}
-          unit={weightUnit.data ?? 'kg'}
-          today={today}
-        />
       </>
     );
   }

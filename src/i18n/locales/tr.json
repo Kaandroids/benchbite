@@ -89,9 +89,14 @@
     "nutrition": "Beslenme",
     "progress": "İlerleme"
   },
-  "comingSoon": {
-    "title": "Yakında",
-    "progress": "Kilon ve ilerlemen yakında burada olacak."
+  "weight": {
+    "title": "Kilo",
+    "none": "Henüz kilo girmedin.",
+    "loggedToday": "Bugün girildi",
+    "loggedOn": "{{date}} tarihinde girildi",
+    "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene.",
+    "decrease": "Kiloyu azalt",
+    "increase": "Kiloyu artır"
   },
   "today": {
     "loading": "Yükleniyor",
@@ -159,15 +164,6 @@
       "movedTo": "{{day}} gününe taşındı",
       "note": "Taşıma yalnızca bu haftayı değiştirir. Gelecek hafta antrenmanların yine kendi günlerinde.",
       "error": "Taşıma geri alınamadı. Bağlantını kontrol edip tekrar dene."
-    },
-    "weight": {
-      "title": "Kilo",
-      "none": "Henüz kilo girmedin.",
-      "loggedToday": "Bugün girildi",
-      "loggedOn": "{{date}} tarihinde girildi",
-      "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene.",
-      "decrease": "Kiloyu azalt",
-      "increase": "Kiloyu artır"
     },
     "error": {
       "title": "Bugün yüklenemedi",
