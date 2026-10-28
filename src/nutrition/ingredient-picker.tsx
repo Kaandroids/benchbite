@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, FlatList, Modal, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { allLoaded } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
@@ -55,20 +56,23 @@ export function IngredientPicker({
 }: IngredientPickerProps) {
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      {changing ? (
-        <IngredientAmount
-          food={changing.food}
-          initial={changing}
-          submitLabel="saveAmount"
-          onBack={onClose}
-          onPick={(ingredient) => {
-            onPick(ingredient);
-            onClose();
-          }}
-        />
-      ) : (
-        <IngredientSearch recipeName={recipeName} full={full} onPick={onPick} onClose={onClose} />
-      )}
+      {/* On iOS, a screen in a full-screen modal gets no safe area without a provider of its own. */}
+      <SafeAreaProvider>
+        {changing ? (
+          <IngredientAmount
+            food={changing.food}
+            initial={changing}
+            submitLabel="saveAmount"
+            onBack={onClose}
+            onPick={(ingredient) => {
+              onPick(ingredient);
+              onClose();
+            }}
+          />
+        ) : (
+          <IngredientSearch recipeName={recipeName} full={full} onPick={onPick} onClose={onClose} />
+        )}
+      </SafeAreaProvider>
     </Modal>
   );
 }
