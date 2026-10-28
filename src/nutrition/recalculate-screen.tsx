@@ -6,9 +6,9 @@ import { StyleSheet, View } from 'react-native';
 import {
   changesWeight,
   defaultTargetKg,
-  minHealthyWeightKg,
+  isTooLightToLose,
   PACE_RANGES,
-  snapPace,
+  startingPace,
   targetWeightProblem,
 } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
@@ -191,15 +191,10 @@ function TargetStep({ answers, basis, weightKg, unit, progress, next }: StepProp
   const [targetKg, setTargetKg] = useState(
     answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, basis.heightCm),
   );
-  // A pace saved before the limits changed may lie outside them.
-  const [pace, setPace] = useState(() =>
-    answers.weeklyPaceKg === null
-      ? paceRange.default
-      : snapPace(paceIn(unit, answers.weeklyPaceKg), paceRange),
-  );
+  const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
 
   // Someone already at the lower end of a healthy weight should not lose more.
-  if (goal === 'lose_fat' && weightKg <= minHealthyWeightKg(basis.heightCm)) {
+  if (goal === 'lose_fat' && isTooLightToLose(weightKg, basis.heightCm)) {
     return (
       <Screen
         progress={progress}

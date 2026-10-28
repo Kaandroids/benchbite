@@ -10,10 +10,12 @@ import {
   bmi,
   defaultTargetKg,
   isTargetInGoalDirection,
+  isTooLightToLose,
   minHealthyWeightKg,
   paceLevel,
   projectedDate,
   snapPace,
+  startingPace,
   targetWeightProblem,
 } from './body';
 
@@ -175,6 +177,23 @@ describe('target weights', () => {
     expect(defaultTargetKg('lose_fat', 80, 180)).toBe(75);
     expect(defaultTargetKg('build_muscle', 80, 180)).toBe(83);
     expect(defaultTargetKg('lose_fat', 62, 180)).toBe(60);
+  });
+});
+
+describe('starting points', () => {
+  it('does not let someone at the lower end of a healthy weight lose more', () => {
+    expect(isTooLightToLose(60, 180)).toBe(true);
+    expect(isTooLightToLose(60.1, 180)).toBe(false);
+  });
+
+  it("starts the pace at the saved one, on the slider's steps, or at the default", () => {
+    expect(startingPace('kg', 'lose_fat', 0.75)).toBe(0.75);
+    expect(startingPace('kg', 'lose_fat', null)).toBe(0.5);
+    expect(startingPace('kg', 'build_muscle', undefined)).toBe(0.25);
+    // 1 lb a week comes back from kilograms as 0.99 lb.
+    expect(startingPace('lb', 'lose_fat', 0.45)).toBe(1);
+    // Saved before the fastest pace came down.
+    expect(startingPace('kg', 'lose_fat', 1.2)).toBe(0.9);
   });
 });
 

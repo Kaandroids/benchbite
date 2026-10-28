@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { defaultTargetKg, minHealthyWeightKg, targetWeightProblem } from '@/body/body';
+import { defaultTargetKg, isTooLightToLose, targetWeightProblem } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
@@ -28,13 +28,12 @@ export function TargetWeightStep() {
   const weightKg = answers.weightKg ?? 72;
   const heightCm = answers.heightCm ?? 172;
   const unit = answers.weightUnit ?? 'kg';
-  const lowestKg = minHealthyWeightKg(heightCm);
   const [targetKg, setTargetKg] = useState(
     answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, heightCm),
   );
 
   // Someone already at the lower end of a healthy weight should not lose more.
-  if (goal === 'lose_fat' && weightKg <= lowestKg) {
+  if (goal === 'lose_fat' && isTooLightToLose(weightKg, heightCm)) {
     return (
       <Screen
         progress={progress}

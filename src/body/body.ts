@@ -1,6 +1,6 @@
 // Rules for body data, goals and paces. They only decide what the onboarding and changing the
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
-import { toTenth } from '@/i18n/units';
+import { paceIn, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
 
@@ -45,6 +45,11 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
   const weight = toTenth(weightKg);
   const target = toTenth(targetKg);
   return goal === 'lose_fat' ? target < weight : target > weight;
+}
+
+/** Whether the weight is already at the lower end of a healthy one, so that losing fat is not. */
+export function isTooLightToLose(weightKg: number, heightCm: number): boolean {
+  return weightKg <= minHealthyWeightKg(heightCm);
 }
 
 /** Why a target weight cannot be saved. */
@@ -107,6 +112,19 @@ export const PACE_RANGES: Record<'kg' | 'lb', Record<WeightGoal, PaceRange>> = {
     build_muscle: { min: 0.25, max: 1, step: 0.05, default: 0.5 },
   },
 };
+
+/**
+ * The pace the slider starts at, in the unit: the saved one on the slider's steps, as one saved
+ * before the limits changed may lie outside them, or the default.
+ */
+export function startingPace(
+  unit: WeightUnit,
+  goal: WeightGoal,
+  savedKg: number | null | undefined,
+): number {
+  const range = PACE_RANGES[unit][goal];
+  return savedKg == null ? range.default : snapPace(paceIn(unit, savedKg), range);
+}
 
 export type PaceLevel = 'ideal' | 'ambitious' | 'aggressive';
 

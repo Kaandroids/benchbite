@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PACE_RANGES, snapPace } from '@/body/body';
+import { PACE_RANGES, startingPace } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { PaceNote } from '@/goals/pace-note';
-import { paceIn, paceToKg, useNumberFormat } from '@/i18n/units';
+import { paceToKg, useNumberFormat } from '@/i18n/units';
 
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
@@ -22,12 +22,7 @@ export function PaceStep() {
   const weightKg = answers.weightKg ?? 72;
   const targetKg = answers.targetWeightKg ?? weightKg;
   const paceRange = PACE_RANGES[unit][goal];
-  // A pace saved before the limits changed may lie outside them.
-  const [pace, setPace] = useState(() =>
-    answers.weeklyPaceKg === undefined
-      ? paceRange.default
-      : snapPace(paceIn(unit, answers.weeklyPaceKg), paceRange),
-  );
+  const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
   const paceKg = paceToKg(unit, pace);
 
   return (
