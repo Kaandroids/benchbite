@@ -1,4 +1,4 @@
-// The codes the database raises for requests it refuses (BB001 to BB027 in the migrations, and
+// The codes the database raises for requests it refuses (BB001 to BB030 in the migrations, and
 // some of Postgres's own), named by what they mean, for the ones the app tells apart.
 const DB_ERRORS = {
   onboardingCompleted: 'BB001',
@@ -15,6 +15,9 @@ const DB_ERRORS = {
   customFoodDeleted: 'BB025',
   customFoodTotalLimit: 'BB026',
   favouriteLimit: 'BB027',
+  recipeLimit: 'BB028',
+  recipeTotalLimit: 'BB029',
+  recipeDeleted: 'BB030',
   // Postgres's own, for a row that would repeat a unique value, such as a food's name.
   uniqueViolation: '23505',
 } as const;

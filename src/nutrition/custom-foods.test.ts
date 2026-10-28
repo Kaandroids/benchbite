@@ -44,14 +44,19 @@ describe('useCreateFood', () => {
 });
 
 describe('useUpdateFood', () => {
-  it('changes the food', async () => {
+  it('changes the food, and reloads every screen that shows it', async () => {
     const eq = jest.fn().mockResolvedValue({ error: null });
     const update = jest.fn(() => ({ eq }));
     jest.mocked(supabase.from).mockReturnValue({ update } as never);
-    const { result } = await renderHook(() => useUpdateFood());
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useUpdateFood(), { queryClient });
     await act(() => result.current.mutateAsync({ id: 12, values: { ...YOGHURT, portion: null } }));
     expect(update).toHaveBeenCalledWith({ ...COLUMNS, portion_unit: null, portion_grams: null });
     expect(eq).toHaveBeenCalledWith('id', 12);
+    // A recipe with it in, and a past meal that names it, show it too.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['recipe'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
   });
 });
 

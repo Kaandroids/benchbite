@@ -4,8 +4,12 @@ import { act, renderHook, waitFor } from '@/test/render';
 
 import {
   amountOf,
+  columnOf,
+  foodColumns,
+  pickedPortionOf,
   refKey,
   refOf,
+  refOfRow,
   SEARCH_DELAY_MS,
   useFood,
   useFoodSearch,
@@ -33,6 +37,41 @@ describe('refKey', () => {
     expect(refKey({ kind: 'custom', id: 12 })).toBe('custom-12');
     expect(refOf('custom-12')).toEqual({ kind: 'custom', id: 12 });
     expect(refOf('C133000')).toEqual({ kind: 'library', id: 'C133000' });
+    expect(refKey({ kind: 'recipe', id: 3 })).toBe('recipe-3');
+    expect(refOf('recipe-3')).toEqual({ kind: 'recipe', id: 3 });
+  });
+});
+
+describe('pickedPortionOf', () => {
+  it('gives the portions picked, or none when grams were entered', () => {
+    expect(pickedPortionOf('bowl', 1.5)).toEqual({ unit: 'bowl', count: 1.5 });
+    expect(pickedPortionOf(null, null)).toBeNull();
+  });
+});
+
+describe('refOfRow and foodColumns', () => {
+  it("name a library food, a food of one's own or a recipe, by exactly one column", () => {
+    expect(refOfRow({ food_id: null, custom_food_id: null, recipe_id: 3 })).toEqual({
+      kind: 'recipe',
+      id: 3,
+    });
+    expect(refOfRow({ food_id: null, custom_food_id: 4, recipe_id: null })).toEqual({
+      kind: 'custom',
+      id: 4,
+    });
+    expect(columnOf({ kind: 'recipe', id: 3 })).toBe('recipe_id');
+    expect(columnOf({ kind: 'custom', id: 4 })).toBe('custom_food_id');
+    expect(columnOf({ kind: 'library', id: 'C133000' })).toBe('food_id');
+    expect(foodColumns({ kind: 'recipe', id: 3 })).toEqual({
+      food_id: null,
+      custom_food_id: null,
+      recipe_id: 3,
+    });
+    expect(foodColumns({ kind: 'library', id: 'C133000' })).toEqual({
+      food_id: 'C133000',
+      custom_food_id: null,
+      recipe_id: null,
+    });
   });
 });
 
@@ -61,6 +100,7 @@ describe('useFoodSearch', () => {
         {
           food_id: 'C133000',
           custom_food_id: null,
+          recipe_id: null,
           name: 'Oat flakes',
           kcal: 348,
           protein_g: 13.22,
@@ -92,6 +132,7 @@ describe('useFoodSearch', () => {
         {
           food_id: null,
           custom_food_id: 12,
+          recipe_id: null,
           name: 'Protein yoghurt',
           kcal: 70,
           protein_g: 10,
@@ -209,6 +250,50 @@ describe('useFood', () => {
   it('is null for an unknown food', async () => {
     maybeSingle.mockResolvedValue({ data: null, error: null });
     const { result } = await renderHook(() => useFood({ kind: 'library', id: 'X' }));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBeNull();
+  });
+});
+
+describe('useFood, for a recipe', () => {
+  function mockRecipe(recipe: unknown, values: unknown) {
+    jest.mocked(supabase.from).mockImplementation(
+      (table) =>
+        ({
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () =>
+                Promise.resolve({
+                  data: String(table) === 'recipes' ? recipe : values,
+                  error: null,
+                }),
+            }),
+          }),
+        }) as never,
+    );
+  }
+
+  it('gives its values per 100 g and one serving as its portion', async () => {
+    mockRecipe(
+      { id: 3, name: 'Lentil soup', servings: 4, serving_unit: 'bowl', archived_at: null },
+      { kcal: 67.8, protein_g: 4, carbs_g: 9.3, fat_g: 1.5, serving_grams: 400 },
+    );
+    const { result } = await renderHook(() => useFood({ kind: 'recipe', id: 3 }));
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data).toEqual({
+      ref: { kind: 'recipe', id: 3 },
+      name: 'Lentil soup',
+      per100g: { calories: 67.8, proteinG: 4, carbsG: 9.3, fatG: 1.5 },
+      portions: [{ unit: 'bowl', grams: 400 }],
+    });
+  });
+
+  it('gives nothing for a deleted recipe', async () => {
+    mockRecipe(
+      { id: 3, name: 'Lentil soup', servings: 4, serving_unit: 'bowl', archived_at: '2026-10-28' },
+      { kcal: 67.8, protein_g: 4, carbs_g: 9.3, fat_g: 1.5, serving_grams: 400 },
+    );
+    const { result } = await renderHook(() => useFood({ kind: 'recipe', id: 3 }));
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toBeNull();
   });

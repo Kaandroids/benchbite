@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 
 import {
+  columnOf,
   foodColumns,
+  pickedPortionOf,
   portionOf,
   refKey,
   refOfRow,
@@ -17,8 +19,28 @@ import { totalsOf, type Meal } from './meals';
 /** A food logged often at a meal: how often, and the amount it was logged with last. */
 export type FrequentFood = FoodResult & { times: number; amount: Amount };
 
-/** The query keys of the lists of the add screen, for anything that changes a food in them. */
-export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-foods']];
+/** The query keys of the lists of the add screen. */
+export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-foods'], ['recipes']];
+
+/**
+ * Everything that shows a food or a recipe by its name or values: search, the food and recipe
+ * screens, the days, the past meals and the add screen's lists. Changing or deleting one reloads
+ * them all.
+ */
+export function useReloadFoods() {
+  const queryClient = useQueryClient();
+  return () =>
+    Promise.all(
+      [
+        ['food-search'],
+        ['food'],
+        ['recipe'],
+        ['meal-entries'],
+        ['past-meal'],
+        ...QUICK_FOOD_KEYS,
+      ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+    );
+}
 
 /** The foods the user logged most at a meal in the last 90 days (ADR 0037). */
 export function useFrequentFoods(meal: Meal) {
@@ -41,10 +63,7 @@ export function useFrequentFoods(meal: Meal) {
         times: row.times,
         amount: {
           grams: row.grams,
-          portion:
-            row.portion_unit !== null && row.portion_count !== null
-              ? { unit: row.portion_unit, count: row.portion_count }
-              : null,
+          portion: pickedPortionOf(row.portion_unit, row.portion_count),
         },
       }));
     },
@@ -94,12 +113,9 @@ export function useSetFavourite() {
         }
         return;
       }
-      // By the one column that names the food: an equal filter on the other, null, matches nothing.
-      const query = supabase.from('favourite_foods').delete();
-      const { error } =
-        food.kind === 'custom'
-          ? await query.eq('custom_food_id', food.id)
-          : await query.eq('food_id', food.id);
+      // By the one column that names the food: an equal filter on the others, null, matches
+      // nothing.
+      const { error } = await supabase.from('favourite_foods').delete().eq(columnOf(food), food.id);
       if (error) {
         throw error;
       }

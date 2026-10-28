@@ -46,9 +46,9 @@ select results_eq(
   'with its ingredients in order'
 );
 select results_eq(
-  $$ select grams, kcal from public.recipe_values $$,
-  $$ values (400.0, 224.0) $$,
-  'Its values per 100 g are summed from the ingredients'
+  $$ select grams, kcal, serving_grams from public.recipe_values $$,
+  $$ values (400.0, 224.0, 200.0) $$,
+  'Its values per 100 g are summed from the ingredients, and a serving shares out the weight'
 );
 select results_eq(
   $$ select name, portion_unit::text, portion_grams from public.loggable_foods('en')
