@@ -47,9 +47,29 @@ create trigger own_nutrition_targets_updated_at
   before update on public.own_nutrition_targets
   for each row execute function extensions.moddatetime(updated_at);
 
--- The caller's targets as the app works them out from their profile, goal and latest weight,
--- whether or not they use their own. Null before the onboarding is saved.
-create function public.calculated_nutrition_targets()
+-- The caller's latest weight in kilograms, which the targets are worked out from.
+create function public.my_latest_weight_kg()
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select e.weight_kg
+  from public.weight_entries e
+  where e.user_id = (select auth.uid())
+  order by e.measured_on desc, e.id desc
+  limit 1;
+$$;
+
+-- The targets a goal, target weight, pace and activity would give the caller, with their profile
+-- and latest weight. The target and the pace are rounded as goals stores them, so that a preview
+-- matches what saving them gives. Null before the onboarding is saved.
+create function public.preview_nutrition_targets(
+  goal public.goal_kind,
+  target_weight_kg numeric,
+  weekly_pace_kg numeric,
+  activity_level public.activity_level
+)
 returns public.nutrition_targets
 language sql
 stable
@@ -59,23 +79,32 @@ as $$
     sex => p.sex,
     age => public.age_in_years(p.birth_year),
     height_cm => p.height_cm,
-    weight_kg => w.weight_kg,
-    activity_level => p.activity_level,
+    weight_kg => public.my_latest_weight_kg(),
+    activity_level => preview_nutrition_targets.activity_level,
     training_days_per_week => cardinality(p.training_days),
-    goal => g.kind,
-    target_weight_kg => g.target_weight_kg,
-    weekly_pace_kg => g.weekly_pace_kg,
+    goal => preview_nutrition_targets.goal,
+    target_weight_kg => round(preview_nutrition_targets.target_weight_kg, 1),
+    weekly_pace_kg => round(preview_nutrition_targets.weekly_pace_kg, 2),
     pregnant_or_breastfeeding => p.pregnant_or_breastfeeding
   )
   from public.profiles p
+  where p.user_id = (select auth.uid())
+    and public.my_latest_weight_kg() is not null;
+$$;
+
+-- The caller's targets as the app works them out, whether or not they use their own: a preview
+-- of their saved goal and activity. Null before the onboarding is saved.
+create function public.calculated_nutrition_targets()
+returns public.nutrition_targets
+language sql
+stable
+set search_path = ''
+as $$
+  select public.preview_nutrition_targets(
+    g.kind, g.target_weight_kg, g.weekly_pace_kg, p.activity_level
+  )
+  from public.profiles p
   join public.goals g on g.user_id = p.user_id
-  cross join lateral (
-    select e.weight_kg
-    from public.weight_entries e
-    where e.user_id = p.user_id
-    order by e.measured_on desc, e.id desc
-    limit 1
-  ) w
   where p.user_id = (select auth.uid());
 $$;
 
@@ -97,42 +126,6 @@ as $$
   );
 $$;
 
--- The targets a new goal, target weight, pace and activity would give the caller, with their
--- profile and latest weight, before they are saved. Null before the onboarding is saved.
-create function public.preview_nutrition_targets(
-  goal public.goal_kind,
-  target_weight_kg numeric,
-  weekly_pace_kg numeric,
-  activity_level public.activity_level
-)
-returns public.nutrition_targets
-language sql
-stable
-set search_path = ''
-as $$
-  select public.calculate_nutrition_targets(
-    sex => p.sex,
-    age => public.age_in_years(p.birth_year),
-    height_cm => p.height_cm,
-    weight_kg => w.weight_kg,
-    activity_level => preview_nutrition_targets.activity_level,
-    training_days_per_week => cardinality(p.training_days),
-    goal => preview_nutrition_targets.goal,
-    target_weight_kg => preview_nutrition_targets.target_weight_kg,
-    weekly_pace_kg => preview_nutrition_targets.weekly_pace_kg,
-    pregnant_or_breastfeeding => p.pregnant_or_breastfeeding
-  )
-  from public.profiles p
-  cross join lateral (
-    select e.weight_kg
-    from public.weight_entries e
-    where e.user_id = p.user_id
-    order by e.measured_on desc, e.id desc
-    limit 1
-  ) w
-  where p.user_id = (select auth.uid());
-$$;
-
 -- Saves a new goal, target weight, pace and activity in one step, and puts the calculated targets
 -- back in use. A target weight and a pace belong only to goals that change the weight, and the
 -- target has to lie in the goal's direction from the latest weight. Runs as the caller, so the
@@ -150,32 +143,26 @@ as $$
 declare
   caller_id uuid := (select auth.uid());
   changes_weight boolean := recalculate_nutrition_targets.goal in ('lose_fat', 'build_muscle');
-  current_kg numeric;
+  -- Rounded as goals stores them, so that the check below sees what is saved.
+  target_kg numeric := round(recalculate_nutrition_targets.target_weight_kg, 1);
+  pace_kg numeric := round(recalculate_nutrition_targets.weekly_pace_kg, 2);
+  current_kg numeric := public.my_latest_weight_kg();
 begin
-  if changes_weight
-    and (recalculate_nutrition_targets.target_weight_kg is null
-      or recalculate_nutrition_targets.weekly_pace_kg is null) then
+  if changes_weight and (target_kg is null or pace_kg is null) then
     raise exception 'A goal that changes the weight needs a target and a pace'
       using errcode = '22023';
   end if;
-  select e.weight_kg into current_kg
-  from public.weight_entries e
-  where e.user_id = caller_id
-  order by e.measured_on desc, e.id desc
-  limit 1;
-  if (recalculate_nutrition_targets.goal = 'lose_fat'
-      and recalculate_nutrition_targets.target_weight_kg >= current_kg)
-    or (recalculate_nutrition_targets.goal = 'build_muscle'
-      and recalculate_nutrition_targets.target_weight_kg <= current_kg) then
+  -- The same direction calculate_nutrition_targets() needs to apply a deficit or a surplus; it
+  -- ignores a target on the wrong side, so it is refused here rather than saved to no effect.
+  if (recalculate_nutrition_targets.goal = 'lose_fat' and target_kg >= current_kg)
+    or (recalculate_nutrition_targets.goal = 'build_muscle' and target_kg <= current_kg) then
     raise exception 'The target weight does not suit the goal' using errcode = 'BB031';
   end if;
 
   update public.goals g
   set kind = recalculate_nutrition_targets.goal,
-    target_weight_kg = case when changes_weight
-      then recalculate_nutrition_targets.target_weight_kg end,
-    weekly_pace_kg = case when changes_weight
-      then recalculate_nutrition_targets.weekly_pace_kg end
+    target_weight_kg = case when changes_weight then target_kg end,
+    weekly_pace_kg = case when changes_weight then pace_kg end
   where g.user_id = caller_id;
   if not found then
     raise exception 'No goal to change before the onboarding is saved' using errcode = 'P0002';
@@ -187,6 +174,8 @@ begin
 end;
 $$;
 
+revoke execute on function public.my_latest_weight_kg() from public, anon;
+grant execute on function public.my_latest_weight_kg() to authenticated;
 revoke execute on function public.calculated_nutrition_targets() from public, anon;
 grant execute on function public.calculated_nutrition_targets() to authenticated;
 revoke execute on function public.preview_nutrition_targets(

@@ -1302,6 +1302,7 @@ export type Database = {
         Args: { from_on: string; to_on: string; workout_id: number };
         Returns: undefined;
       };
+      my_latest_weight_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
         Returns: Database['public']['CompositeTypes']['nutrition_targets'];
