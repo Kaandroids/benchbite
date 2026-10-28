@@ -1175,6 +1175,7 @@ export type Database = {
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
+      assert_device_today: { Args: { today: string }; Returns: undefined };
       calculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1232,17 +1233,6 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
-      drop_stale_moves_of: {
-        Args: {
-          kept: string;
-          whole: boolean;
-          workout: Omit<
-            Database['public']['Tables']['workouts']['Row'],
-            Database['public']['Tables']['workouts']['ComputedFields']
-          >;
-        };
-        Returns: undefined;
-      };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
@@ -1310,6 +1300,7 @@ export type Database = {
       };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: undefined };
+      last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
         Args: { exercise_ids: string[] };
         Returns: {
@@ -1361,6 +1352,7 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      lock_planned_days: { Args: { owner: string }; Returns: undefined };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
@@ -1515,6 +1507,18 @@ export type Database = {
           weight_kg: number;
         }[];
       };
+      settle_moves: {
+        Args: {
+          deleted: boolean;
+          kept: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: undefined;
+      };
+      start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
