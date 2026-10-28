@@ -55,3 +55,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0037](0037-frequent-and-favourite-foods.md)                 | Count frequent foods from the entries, and keep favourites in a table              | Accepted               |
 | [0038](0038-recipes.md)                                      | Sum recipes from their ingredients and log them by the serving                     | Accepted               |
 | [0039](0039-own-nutrition-targets.md)                        | Let people set their own targets and work the calculated ones out again            | Accepted               |
+| [0040](0040-day-nutrition-targets.md)                        | Keep each day's targets with the day                                               | Accepted               |
