@@ -19,8 +19,8 @@ export function GoalChoices({
     <ChoiceCard
       key={option}
       icon={GOAL_ICONS[option]}
-      title={t(`onboarding.options.goal.${option}`)}
-      description={t(`onboarding.goal.descriptions.${option}`)}
+      title={t(`goals.goal.${option}`)}
+      description={t(`goals.goalDescriptions.${option}`)}
       selected={value === option}
       onPress={() => onChange(option)}
       size="compact"

@@ -41,9 +41,9 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
   const shown = (change: AnswerChange, side: 'from' | 'to'): string | null => {
     switch (change.key) {
       case 'goal':
-        return t(`onboarding.options.goal.${change[side]}`);
+        return t(`goals.goal.${change[side]}`);
       case 'activity':
-        return t(`onboarding.options.activityLevel.${change[side]}`);
+        return t(`goals.activityLevel.${change[side]}`);
       case 'target': {
         const kg = change[side];
         return kg === null ? null : weightLabel(kg, unit);

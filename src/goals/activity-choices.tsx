@@ -26,8 +26,8 @@ export function ActivityChoices({
     <ChoiceCard
       key={level}
       icon={ICONS[level]}
-      title={t(`onboarding.options.activityLevel.${level}`)}
-      description={t(`onboarding.activity.descriptions.${level}`)}
+      title={t(`goals.activityLevel.${level}`)}
+      description={t(`goals.activityDescriptions.${level}`)}
       level={{ value: index + 1, of: LEVELS.length }}
       selected={value === level}
       onPress={() => onChange(level)}

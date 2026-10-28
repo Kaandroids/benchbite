@@ -779,22 +779,10 @@
       }
     },
     "options": {
-      "goal": {
-        "lose_fat": "Lose fat",
-        "build_muscle": "Build muscle",
-        "get_stronger": "Get stronger",
-        "stay_healthy": "Stay healthy"
-      },
       "sex": {
         "female": "Female",
         "male": "Male",
         "unspecified": "Prefer not to say"
-      },
-      "activityLevel": {
-        "sedentary": "Mostly sitting",
-        "light": "Lightly active",
-        "moderate": "Moderately active",
-        "active": "Very active"
       },
       "experience": {
         "beginner": "Beginner",
@@ -845,12 +833,6 @@
       "preview": "On Today"
     },
     "goal": {
-      "descriptions": {
-        "lose_fat": "Burn fat and keep your muscle",
-        "build_muscle": "Gain muscle with a small surplus",
-        "get_stronger": "Lift heavier, step by step",
-        "stay_healthy": "Feel fit and keep a balance"
-      },
       "effects": {
         "title": "Your plan with this goal",
         "empty": "Pick a goal to see what it sets in your plan.",
@@ -971,42 +953,8 @@
       "age": "You're turning {{count}} this year",
       "tooYoung": "Benchbite is for people aged 18 and over."
     },
-    "targetWeight": {
-      "difference": "{{difference}} {{unit}} from now",
-      "wrongDirection": {
-        "lose_fat": "To lose fat, your target has to be below your current weight.",
-        "build_muscle": "To build muscle, your target has to be above your current weight."
-      },
-      "tooClose": "This is too close to your current weight. Choose a target a little further away.",
-      "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
-      "useLowest": "Make {{weight}} {{unit}} my target",
-      "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",
-      "changeGoal": "Choose another goal"
-    },
-    "pace": {
-      "perWeek": "{{value}} {{unit}} per week",
-      "slower": "Slower",
-      "faster": "Faster",
-      "levels": {
-        "ideal": "Ideal: steady and sustainable",
-        "ambitious": "Ambitious: doable, but demanding",
-        "aggressive": "Aggressive: hard to keep up and less healthy"
-      },
-      "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
-      "disclaimer": "These are estimates, not medical advice.",
-      "fastest": {
-        "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
-        "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
-      }
-    },
     "activity": {
       "intro": "Your job and getting around. Workouts are counted separately.",
-      "descriptions": {
-        "sedentary": "Desk job, little walking",
-        "light": "On your feet some of the day",
-        "moderate": "On your feet most of the day",
-        "active": "Physical work all day"
-      },
       "calories": "Your daily calories",
       "more": "{{percent}} more than mostly sitting",
       "base": "The starting point for your calories",
@@ -1154,6 +1102,60 @@
       "why": "Why we ask",
       "burn": "Men and women burn a different number of calories at rest.",
       "only": "Only your calorie targets use it. Your training does not change."
+    }
+  },
+  "goals": {
+    "goal": {
+      "lose_fat": "Lose fat",
+      "build_muscle": "Build muscle",
+      "get_stronger": "Get stronger",
+      "stay_healthy": "Stay healthy"
+    },
+    "goalDescriptions": {
+      "lose_fat": "Burn fat and keep your muscle",
+      "build_muscle": "Gain muscle with a small surplus",
+      "get_stronger": "Lift heavier, step by step",
+      "stay_healthy": "Feel fit and keep a balance"
+    },
+    "activityLevel": {
+      "sedentary": "Mostly sitting",
+      "light": "Lightly active",
+      "moderate": "Moderately active",
+      "active": "Very active"
+    },
+    "activityDescriptions": {
+      "sedentary": "Desk job, little walking",
+      "light": "On your feet some of the day",
+      "moderate": "On your feet most of the day",
+      "active": "Physical work all day"
+    },
+    "targetWeight": {
+      "difference": "{{difference}} {{unit}} from now",
+      "wrongDirection": {
+        "lose_fat": "To lose fat, your target has to be below your current weight.",
+        "build_muscle": "To build muscle, your target has to be above your current weight."
+      },
+      "tooClose": "This is too close to your current weight. Choose a target a little further away.",
+      "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
+      "useLowest": "Make {{weight}} {{unit}} my target",
+      "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",
+      "changeGoal": "Choose another goal"
+    },
+    "pace": {
+      "perWeek": "{{value}} {{unit}} per week",
+      "slower": "Slower",
+      "faster": "Faster",
+      "levels": {
+        "ideal": "Ideal: steady and sustainable",
+        "ambitious": "Ambitious: doable, but demanding",
+        "aggressive": "Aggressive: hard to keep up and less healthy"
+      },
+      "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
+      "disclaimer": "These are estimates, not medical advice.",
+      "fastest": {
+        "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
+        "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
+      }
     }
   },
   "session": {

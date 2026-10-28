@@ -41,8 +41,8 @@ export function TargetWeightNote({
     return (
       <Text color="danger" align="center">
         {problem === 'tooClose'
-          ? t('onboarding.targetWeight.tooClose')
-          : t(`onboarding.targetWeight.wrongDirection.${goal}`)}
+          ? t('goals.targetWeight.tooClose')
+          : t(`goals.targetWeight.wrongDirection.${goal}`)}
       </Text>
     );
   }
@@ -50,11 +50,11 @@ export function TargetWeightNote({
     return (
       <View style={{ gap: spacing.sm }}>
         <Text color="danger" align="center">
-          {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
+          {t('goals.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
         </Text>
         <Button
           variant="secondary"
-          label={t('onboarding.targetWeight.useLowest', { weight: show(lowestKg), unit })}
+          label={t('goals.targetWeight.useLowest', { weight: show(lowestKg), unit })}
           onPress={() => onUseLowest(lowestKg)}
         />
       </View>
@@ -64,7 +64,7 @@ export function TargetWeightNote({
   const sign = differenceKg > 0 ? '+' : differenceKg < 0 ? '−' : '';
   return (
     <Text variant="bodyStrong" color="primaryText" align="center">
-      {t('onboarding.targetWeight.difference', {
+      {t('goals.targetWeight.difference', {
         difference: `${sign}${show(Math.abs(differenceKg))}`,
         unit,
       })}

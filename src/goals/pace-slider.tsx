@@ -26,11 +26,9 @@ export function PaceSlider({ goal, unit, value, onChange, accessibilityLabel }: 
       min={range.min}
       max={range.max}
       step={range.step}
-      formatAccessibilityValue={(pace) =>
-        t('onboarding.pace.perWeek', { value: format(pace), unit })
-      }
-      minLabel={t('onboarding.pace.slower')}
-      maxLabel={t('onboarding.pace.faster')}
+      formatAccessibilityValue={(pace) => t('goals.pace.perWeek', { value: format(pace), unit })}
+      minLabel={t('goals.pace.slower')}
+      maxLabel={t('goals.pace.faster')}
     />
   );
 }

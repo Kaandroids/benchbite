@@ -44,15 +44,15 @@ export function PaceNote({
   return (
     <>
       <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align={align}>
-        {t(`onboarding.pace.levels.${level}`)}
+        {t(`goals.pace.levels.${level}`)}
       </Text>
       {fastest ? (
         <Text color="textMuted" align={align}>
-          {t(`onboarding.pace.fastest.${goal}`)}
+          {t(`goals.pace.fastest.${goal}`)}
         </Text>
       ) : null}
       <Text align={align}>
-        {t('onboarding.pace.projected', {
+        {t('goals.pace.projected', {
           weight: formatWeight(targetKg, unit),
           unit,
           date: formatDate(projectedDate(weightKg, targetKg, paceKg, new Date())),

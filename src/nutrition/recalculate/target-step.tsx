@@ -50,9 +50,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
         progress={progress}
         onBack={() => router.back()}
         onClose={leave}
-        footer={
-          <Button label={t('onboarding.targetWeight.changeGoal')} onPress={() => router.back()} />
-        }
+        footer={<Button label={t('goals.targetWeight.changeGoal')} onPress={() => router.back()} />}
       >
         <TooLightToLose />
       </Screen>
@@ -132,9 +130,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
         <Card>
           <View style={[styles.row, styles.between]}>
             <Text variant="label">{t('nutrition.recalculate.target.pace')}</Text>
-            <Text variant="label">
-              {t('onboarding.pace.perWeek', { value: format(pace), unit })}
-            </Text>
+            <Text variant="label">{t('goals.pace.perWeek', { value: format(pace), unit })}</Text>
           </View>
           <PaceSlider
             goal={goal}

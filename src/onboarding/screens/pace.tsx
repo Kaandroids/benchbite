@@ -44,13 +44,13 @@ export function PaceStep() {
               unit={unit}
             />
             <Text variant="caption" color="textMuted" align="center">
-              {t('onboarding.pace.disclaimer')}
+              {t('goals.pace.disclaimer')}
             </Text>
           </>
         }
       >
         <Text variant="display" align="center">
-          {t('onboarding.pace.perWeek', {
+          {t('goals.pace.perWeek', {
             value: format(pace, { minimumFractionDigits: 2 }),
             unit,
           })}

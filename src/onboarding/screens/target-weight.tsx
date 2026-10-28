@@ -37,7 +37,7 @@ export function TargetWeightStep() {
         onBack={back}
         footer={
           <Button
-            label={t('onboarding.targetWeight.changeGoal')}
+            label={t('goals.targetWeight.changeGoal')}
             onPress={() =>
               router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'goal' } })
             }

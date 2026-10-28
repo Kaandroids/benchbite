@@ -16,7 +16,7 @@ export function TooLightToLose() {
     <View style={[styles.centered, { gap: spacing.lg }]}>
       <IconTile name="heart" size={88} />
       <Text color="textMuted" align="center">
-        {t('onboarding.targetWeight.alreadyLow')}
+        {t('goals.targetWeight.alreadyLow')}
       </Text>
     </View>
   );

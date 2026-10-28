@@ -272,7 +272,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     {
       icon: 'target',
       label: t('nutrition.goals.goal'),
-      value: t(`onboarding.options.goal.${basis.goal}`),
+      value: t(`goals.goal.${basis.goal}`),
       detail: t(`onboarding.goal.effects.${basis.goal}.calories`),
     },
   ];
@@ -322,8 +322,8 @@ function BasisList({ basis }: { basis: TargetBasis }) {
   rows.push({
     icon: 'person',
     label: t('nutrition.goals.activity'),
-    value: t(`onboarding.options.activityLevel.${basis.activity}`),
-    detail: t(`onboarding.activity.descriptions.${basis.activity}`),
+    value: t(`goals.activityLevel.${basis.activity}`),
+    detail: t(`goals.activityDescriptions.${basis.activity}`),
   });
 
   return (
