@@ -25,7 +25,9 @@ describe('WaterCard', () => {
   it('shows the water against the goal, a glass for each 250 ml of it', async () => {
     await render(<WaterCard day="2026-10-27" drunk={1250} goal={2000} />);
     expect(screen.getByText('1.25 of 2 L')).toBeTruthy();
-    expect(screen.getByText('3 glasses to go')).toBeTruthy();
+    // The glasses show what is left, so no line says it again.
+    expect(screen.queryByText(/to go/)).toBeNull();
+    expect(screen.queryByText('Goal reached')).toBeNull();
     expect(glasses()).toEqual({ full: 5, empty: 3 });
   });
 
