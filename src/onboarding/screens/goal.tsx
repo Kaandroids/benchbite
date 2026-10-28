@@ -1,14 +1,12 @@
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { ChoiceCard } from '@/components/ui/choice-card';
 import { type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { Constants } from '@/lib/database.types';
+import { GoalChoices } from '@/goals/goal-choices';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
-import { GOAL_ICONS } from '../goal-icons';
 import { useStep } from '../use-step';
 
 /** What a goal sets in the plan, one row each. */
@@ -36,17 +34,7 @@ export function GoalStep() {
       <Text variant="title" accessibilityRole="header">
         {t('onboarding.steps.goal.title')}
       </Text>
-      {Constants.public.Enums.goal_kind.map((option) => (
-        <ChoiceCard
-          key={option}
-          icon={GOAL_ICONS[option]}
-          title={t(`onboarding.options.goal.${option}`)}
-          description={t(`onboarding.goal.descriptions.${option}`)}
-          selected={goal === option}
-          onPress={() => select({ goal: option })}
-          size="compact"
-        />
-      ))}
+      <GoalChoices value={goal} onChange={(option) => select({ goal: option })} />
       <ChoiceInsight
         title={t('onboarding.goal.effects.title')}
         choice={goal}

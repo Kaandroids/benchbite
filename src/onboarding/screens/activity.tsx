@@ -3,12 +3,10 @@ import { View } from 'react-native';
 
 import { activityShare } from '@/body/body';
 import { Button } from '@/components/ui/button';
-import { ChoiceCard } from '@/components/ui/choice-card';
-import type { IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { ActivityChoices } from '@/goals/activity-choices';
 import { useNumberFormat } from '@/i18n/units';
-import { Constants } from '@/lib/database.types';
 import { useTheme } from '@/theme';
 
 import { ChoiceInsight } from '../choice-insight';
@@ -17,14 +15,6 @@ import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
 type ActivityLevel = NonNullable<OnboardingAnswers['activityLevel']>;
-
-const ICONS: Record<ActivityLevel, IconName> = {
-  sedentary: 'chair',
-  light: 'person',
-  moderate: 'run',
-  active: 'hammer',
-};
-const LEVELS = Constants.public.Enums.activity_level;
 
 /**
  * Daily movement outside workouts, each level with an icon and a meter, and a card on what the
@@ -46,18 +36,7 @@ export function ActivityStep() {
         title={t('onboarding.steps.activity.title')}
         intro={t('onboarding.activity.intro')}
       />
-      {LEVELS.map((activityLevel, index) => (
-        <ChoiceCard
-          key={activityLevel}
-          icon={ICONS[activityLevel]}
-          title={t(`onboarding.options.activityLevel.${activityLevel}`)}
-          description={t(`onboarding.activity.descriptions.${activityLevel}`)}
-          level={{ value: index + 1, of: LEVELS.length }}
-          selected={level === activityLevel}
-          onPress={() => select({ activityLevel })}
-          size="compact"
-        />
-      ))}
+      <ActivityChoices value={level} onChange={(activityLevel) => select({ activityLevel })} />
       <ChoiceInsight title={t('onboarding.activity.calories')} choice={level}>
         {level ? <CaloriesLine level={level} /> : null}
       </ChoiceInsight>
