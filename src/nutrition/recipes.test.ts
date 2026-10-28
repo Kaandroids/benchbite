@@ -168,6 +168,7 @@ describe('useSaveRecipe', () => {
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['recipes'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['food-search'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
   });
 
   it('fails with what the database refused', async () => {

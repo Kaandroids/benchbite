@@ -1,11 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
 
 import {
   amountOf,
+  columnOf,
   nameOf,
+  pickedPortionOf,
   portionOf,
   refOfRow,
   type Amount,
@@ -13,8 +15,8 @@ import {
   type FoodResult,
   type PortionUnit,
 } from './foods';
-import { NOTHING, totalOf, totalsOf, type Totals } from './meals';
-import { QUICK_FOOD_KEYS } from './quick-foods';
+import { NOTHING, scaled, totalOf, totalsOf, type Totals } from './meals';
+import { useReloadFoods } from './quick-foods';
 
 /** How many servings a recipe makes at most, and how many ingredients it has, as the database allows. */
 export const MAX_SERVINGS = 50;
@@ -50,18 +52,8 @@ export function recipeTotals({
   const total = totalOf(
     ingredients.map((ingredient) => amountOf(ingredient.per100g, ingredient.grams)),
   );
-  const share = (value: number) => value / Math.max(servings, 1);
-  return {
-    grams,
-    total,
-    servingGrams: share(grams),
-    serving: {
-      calories: share(total.calories),
-      proteinG: share(total.proteinG),
-      carbsG: share(total.carbsG),
-      fatG: share(total.fatG),
-    },
-  };
+  const share = 1 / Math.max(servings, 1);
+  return { grams, total, servingGrams: grams * share, serving: scaled(total, share) };
 }
 
 /** A recipe of the signed-in user with its ingredients in order, or null when it was deleted. */
@@ -93,16 +85,17 @@ export function useRecipe(id: number) {
           .map((row) => {
             const food = row.custom_foods ?? row.foods;
             return {
-              food: refOfRow(row) as Ingredient['food'],
+              // An ingredient is never a recipe.
+              food:
+                row.custom_food_id !== null
+                  ? { kind: 'custom' as const, id: row.custom_food_id }
+                  : { kind: 'library' as const, id: row.food_id ?? '' },
               name:
                 row.custom_foods?.name ??
                 nameOf(row.foods?.food_names ?? [], i18n.language, row.food_id ?? ''),
               per100g: food ? totalsOf(food) : NOTHING,
               grams: row.grams,
-              portion:
-                row.portion_unit !== null && row.portion_count !== null
-                  ? { unit: row.portion_unit, count: row.portion_count }
-                  : null,
+              portion: pickedPortionOf(row.portion_unit, row.portion_count),
             };
           }),
       };
@@ -133,23 +126,12 @@ export function useRecipes() {
   });
 }
 
-/** Everything that shows a recipe: the lists, search, its own screens and the days. */
-function useReloadRecipes() {
-  const queryClient = useQueryClient();
-  return () =>
-    Promise.all(
-      [['recipe'], ['food'], ['food-search'], ['meal-entries'], ...QUICK_FOOD_KEYS].map(
-        (queryKey) => queryClient.invalidateQueries({ queryKey }),
-      ),
-    );
-}
-
 /**
  * Adds a recipe, or changes one with `id`, with all its ingredients in one step, and gives its id
  * (ADR 0038). Past entries keep the values they copied.
  */
 export function useSaveRecipe() {
-  const reload = useReloadRecipes();
+  const reload = useReloadFoods();
   return useMutation({
     mutationFn: async ({ id, values }: { id?: number; values: RecipeValues }): Promise<number> => {
       const { data, error } = await supabase.rpc('save_recipe', {
@@ -159,7 +141,7 @@ export function useSaveRecipe() {
         servings: values.servings,
         serving_unit: values.servingUnit,
         ingredients: values.ingredients.map(({ food, grams, portion }) => ({
-          [food.kind === 'custom' ? 'custom_food_id' : 'food_id']: food.id,
+          [columnOf(food)]: food.id,
           grams,
           portion_unit: portion?.unit ?? null,
           portion_count: portion?.count ?? null,
@@ -176,7 +158,7 @@ export function useSaveRecipe() {
 
 /** Deletes a recipe: it is archived, so that past entries keep it (ADR 0038). */
 export function useDeleteRecipe() {
-  const reload = useReloadRecipes();
+  const reload = useReloadFoods();
   return useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase
