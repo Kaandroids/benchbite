@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
@@ -41,6 +42,35 @@ export function useNutritionTargets() {
       return targetsFrom(data);
     },
   });
+}
+
+/** The query key of the targets a day kept, for anything that logs to it. */
+export const dayTargetsKey = (day: string) => ['nutrition-targets', 'day', day];
+
+/**
+ * The targets a day is measured against (ADR 0040): today the ones in use, a past day the ones it
+ * kept with its first entry. A past day without any, as nothing was logged on it, takes the ones
+ * in use.
+ */
+export function useDayTargets(day: string) {
+  const current = useNutritionTargets();
+  const past = day < toIsoDate(new Date());
+  const kept = useQuery({
+    queryKey: dayTargetsKey(day),
+    enabled: past,
+    queryFn: async (): Promise<NutritionTargets | null> => {
+      const { data, error } = await supabase
+        .from('day_nutrition_targets')
+        .select('calories, protein_g, carbs_g, fat_g')
+        .eq('day', day)
+        .maybeSingle();
+      if (error) {
+        throw error;
+      }
+      return data ? targetsFrom(data) : null;
+    },
+  });
+  return past && kept.data !== null ? kept : current;
 }
 
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 import { foodColumns, type Amount, type FoodRef } from './foods';
+import { dayTargetsKey } from './targets';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 
 export type NewEntry = Amount & {
@@ -26,6 +27,8 @@ function useReloadDay() {
   return (day: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
+      // The day's first entry keeps the targets in use for it (ADR 0040).
+      queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
       queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
       queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
     ]);

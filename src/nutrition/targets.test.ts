@@ -6,6 +6,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import {
   targetsFrom,
   useCalculatedTargets,
+  useDayTargets,
   useNutritionTargets,
   useOwnTargets,
   useSetOwnTargets,
@@ -141,5 +142,42 @@ describe('useTargetBasis', () => {
       weeklyPaceKg: 0.5,
       activity: 'light',
     });
+  });
+});
+
+describe('useDayTargets', () => {
+  const current = { calories: 3100, protein_g: 150, carbs_g: 425, fat_g: 80 };
+
+  beforeEach(() => {
+    jest.useFakeTimers({ now: new Date(2026, 9, 28, 12), doNotFake: ['nextTick'] });
+    rpc.mockResolvedValue({ data: current, error: null } as never);
+  });
+  afterEach(() => jest.useRealTimers());
+
+  function mockKept(kept: unknown) {
+    const maybeSingle = jest.fn().mockResolvedValue({ data: kept, error: null });
+    const eq = jest.fn(() => ({ maybeSingle }));
+    jest.mocked(supabase.from).mockReturnValue({ select: () => ({ eq }) } as never);
+    return eq;
+  }
+
+  it('measures today against the targets in use', async () => {
+    const eq = mockKept({ calories: 2800, protein_g: 150, carbs_g: 350, fat_g: 80 });
+    const { result } = await renderHook(() => useDayTargets('2026-10-28'));
+    await waitFor(() => expect(result.current.data?.calories).toBe(3100));
+    expect(eq).not.toHaveBeenCalled();
+  });
+
+  it('measures a past day against the targets it kept', async () => {
+    const eq = mockKept({ calories: 2800, protein_g: 150, carbs_g: 350, fat_g: 80 });
+    const { result } = await renderHook(() => useDayTargets('2026-10-27'));
+    await waitFor(() => expect(result.current.data?.calories).toBe(2800));
+    expect(eq).toHaveBeenCalledWith('day', '2026-10-27');
+  });
+
+  it('measures a past day without kept targets against the ones in use', async () => {
+    mockKept(null);
+    const { result } = await renderHook(() => useDayTargets('2026-10-20'));
+    await waitFor(() => expect(result.current.data?.calories).toBe(3100));
   });
 });
