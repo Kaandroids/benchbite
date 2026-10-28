@@ -1,4 +1,11 @@
-import { answersFrom, paramsOf, stepsFor } from './recalculate';
+import {
+  answerChanges,
+  answersFrom,
+  paramsOf,
+  stepsFor,
+  targetsFromWas,
+  wasParam,
+} from './recalculate';
 import type { TargetBasis } from './targets';
 
 // Saved: losing fat from 80 to 75 kg at 0.5 kg a week, lightly active, 180 cm tall.
@@ -12,10 +19,10 @@ const basis: TargetBasis = {
 
 describe('stepsFor', () => {
   it('asks for a target and a pace only for a goal that changes the weight', () => {
-    expect(stepsFor('lose_fat')).toEqual(['goal', 'target', 'activity', 'result']);
-    expect(stepsFor('build_muscle')).toEqual(['goal', 'target', 'activity', 'result']);
-    expect(stepsFor('get_stronger')).toEqual(['goal', 'activity', 'result']);
-    expect(stepsFor('stay_healthy')).toEqual(['goal', 'activity', 'result']);
+    expect(stepsFor('lose_fat')).toEqual(['goal', 'target', 'activity', 'review']);
+    expect(stepsFor('build_muscle')).toEqual(['goal', 'target', 'activity', 'review']);
+    expect(stepsFor('get_stronger')).toEqual(['goal', 'activity', 'review']);
+    expect(stepsFor('stay_healthy')).toEqual(['goal', 'activity', 'review']);
   });
 });
 
@@ -101,5 +108,87 @@ describe('paramsOf', () => {
         activity: 'light',
       }),
     ).toEqual({ goal: 'stay_healthy', activity: 'light' });
+  });
+});
+
+describe('answerChanges', () => {
+  const same = {
+    goal: 'lose_fat',
+    targetWeightKg: 75,
+    weeklyPaceKg: 0.5,
+    activity: 'light',
+  } as const;
+
+  it('lists nothing when the answers are the saved ones', () => {
+    expect(answerChanges(basis, same)).toEqual([]);
+  });
+
+  it('compares the target and pace as they are stored', () => {
+    // 165.3 lb back in kilograms, and a pace a fraction off from pounds.
+    expect(answerChanges(basis, { ...same, targetWeightKg: 74.98, weeklyPaceKg: 0.501 })).toEqual(
+      [],
+    );
+  });
+
+  it('lists each changed answer with its saved value', () => {
+    expect(
+      answerChanges(basis, {
+        goal: 'lose_fat',
+        targetWeightKg: 72,
+        weeklyPaceKg: 0.75,
+        activity: 'active',
+      }),
+    ).toEqual([
+      { key: 'target', from: 75, to: 72 },
+      { key: 'pace', from: 0.5, to: 0.75 },
+      { key: 'activity', from: 'light', to: 'active' },
+    ]);
+  });
+
+  it('lists only the goal when the new one keeps the weight', () => {
+    expect(
+      answerChanges(basis, {
+        goal: 'stay_healthy',
+        targetWeightKg: null,
+        weeklyPaceKg: null,
+        activity: 'light',
+      }),
+    ).toEqual([{ key: 'goal', from: 'lose_fat', to: 'stay_healthy' }]);
+  });
+
+  it('lists a target and pace that were not there before without a saved value', () => {
+    const keeping = {
+      ...basis,
+      goal: 'stay_healthy',
+      targetWeightKg: null,
+      weeklyPaceKg: null,
+    } as const;
+    expect(
+      answerChanges(keeping, {
+        goal: 'build_muscle',
+        targetWeightKg: 83,
+        weeklyPaceKg: 0.25,
+        activity: 'light',
+      }),
+    ).toEqual([
+      { key: 'goal', from: 'stay_healthy', to: 'build_muscle' },
+      { key: 'target', from: null, to: 83 },
+      { key: 'pace', from: null, to: 0.25 },
+    ]);
+  });
+});
+
+describe('the targets before saving', () => {
+  it('go to the page after saving and come back', () => {
+    const targets = { calories: 2500, proteinG: 150, carbsG: 300, fatG: 70 };
+    expect(wasParam(targets)).toBe('2500,150,300,70');
+    expect(targetsFromWas(wasParam(targets))).toEqual(targets);
+  });
+
+  it("are left out when the parameter is not the app's", () => {
+    expect(targetsFromWas(undefined)).toBeNull();
+    expect(targetsFromWas('2500,150')).toBeNull();
+    expect(targetsFromWas('2500,150,x,70')).toBeNull();
+    expect(targetsFromWas('2500,150,-1,70')).toBeNull();
   });
 });
