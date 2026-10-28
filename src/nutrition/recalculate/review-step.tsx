@@ -14,9 +14,10 @@ import { Text } from '@/components/ui/text';
 import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { useNutritionTargets, useRecalculateTargets, type TargetBasis } from '../targets';
+import { useNutritionTargets, useRecalculateTargets } from '../targets';
 import { answerChanges, wasParam, type AnswerChange } from './answers';
 import { leave, type StepProps } from './step';
+import { Was } from './was';
 
 /** The icon of each changed answer on the review, as on the daily goals. */
 const CHANGE_ICONS: Record<AnswerChange['key'], IconName> = {
@@ -36,16 +37,23 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
   const changes = answerChanges(basis, answers);
   const was = inUse.data;
 
-  const shown = (key: AnswerChange['key'], value: string | number) => {
-    switch (key) {
+  /** The change's old or new value as text, or null for a target or pace there was none of. */
+  const shown = (change: AnswerChange, side: 'from' | 'to'): string | null => {
+    switch (change.key) {
       case 'goal':
-        return t(`onboarding.options.goal.${value as TargetBasis['goal']}`);
+        return t(`onboarding.options.goal.${change[side]}`);
       case 'activity':
-        return t(`onboarding.options.activityLevel.${value as TargetBasis['activity']}`);
-      case 'target':
-        return weightLabel(Number(value), unit);
-      case 'pace':
-        return t('nutrition.goals.perWeek', { value: format(paceIn(unit, Number(value))), unit });
+        return t(`onboarding.options.activityLevel.${change[side]}`);
+      case 'target': {
+        const kg = change[side];
+        return kg === null ? null : weightLabel(kg, unit);
+      }
+      case 'pace': {
+        const kg = change[side];
+        return kg === null
+          ? null
+          : t('nutrition.goals.perWeek', { value: format(paceIn(unit, kg)), unit });
+      }
     }
   };
 
@@ -99,8 +107,8 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
           <Card list>
             {changes.map((change, index) => {
               const label = t(`nutrition.recalculate.review.labels.${change.key}`);
-              const to = shown(change.key, change.to);
-              const from = change.from === null ? null : shown(change.key, change.from);
+              const to = shown(change, 'to') ?? '';
+              const from = shown(change, 'from');
               return (
                 <View
                   key={change.key}
@@ -122,16 +130,7 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
                       {label}
                     </Text>
                     <Text variant="label">
-                      {from !== null ? (
-                        <>
-                          <Text variant="label" color="textMuted" style={styles.was}>
-                            {from}
-                          </Text>
-                          <Text variant="label" color="textMuted">
-                            {' → '}
-                          </Text>
-                        </>
-                      ) : null}
+                      {from !== null ? <Was value={from} variant="label" /> : null}
                       {to}
                     </Text>
                   </View>
@@ -154,8 +153,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  was: {
-    textDecorationLine: 'line-through',
   },
 });

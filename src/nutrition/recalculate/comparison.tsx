@@ -10,6 +10,7 @@ import { useTheme } from '@/theme';
 import { MacroDot } from '../macro-dot';
 import { MACROS } from '../macro-targets';
 import { type NutritionTargets } from '../targets';
+import { Was } from './was';
 
 /** The new targets, each beside the one in use now when it changes. */
 export function Comparison({ from, to }: { from: NutritionTargets; to: NutritionTargets }) {
@@ -26,16 +27,7 @@ export function Comparison({ from, to }: { from: NutritionTargets; to: Nutrition
           : t('nutrition.recalculate.done.change', { from: format(was), to: format(now), unit }),
       node: (
         <Text variant="label">
-          {was !== now ? (
-            <>
-              <Text variant="bodyStrong" color="textMuted" style={styles.was}>
-                {format(was)}
-              </Text>
-              <Text variant="bodyStrong" color="textMuted">
-                {' → '}
-              </Text>
-            </>
-          ) : null}
+          {was !== now ? <Was value={format(was)} variant="bodyStrong" /> : null}
           <Text variant={large ? 'headline' : 'label'} color={large ? 'primaryText' : 'text'}>
             {format(now)}{' '}
           </Text>
@@ -96,8 +88,5 @@ const styles = StyleSheet.create({
   },
   between: {
     justifyContent: 'space-between',
-  },
-  was: {
-    textDecorationLine: 'line-through',
   },
 });
