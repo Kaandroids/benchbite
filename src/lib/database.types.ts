@@ -605,6 +605,53 @@ export type Database = {
           },
         ];
       };
+      planned_days: {
+        Row: {
+          day: string;
+          id: number;
+          name: string | null;
+          type: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          id?: never;
+          name?: string | null;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id: number;
+        };
+        Update: {
+          day?: string;
+          id?: never;
+          name?: string | null;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id?: string;
+          workout_id?: number;
+        };
+        Relationships: [];
+      };
+      planned_days_kept: {
+        Row: {
+          started_on: string | null;
+          through: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          started_on?: string | null;
+          through: string;
+          user_id: string;
+        };
+        Update: {
+          started_on?: string | null;
+          through?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1029,15 +1076,7 @@ export type Database = {
           user_id?: string;
           workout_id?: number;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'workout_moves_workout_id_fkey';
-            columns: ['workout_id'];
-            isOneToOne: false;
-            referencedRelation: 'workouts';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       workouts: {
         Row: {
@@ -1120,6 +1159,7 @@ export type Database = {
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
+      assert_device_today: { Args: { today: string }; Returns: undefined };
       calculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1177,6 +1217,8 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
+      device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
@@ -1242,6 +1284,9 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      keep_planned_days: { Args: { today: string }; Returns: undefined };
+      keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
+      last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
         Args: { exercise_ids: string[] };
         Returns: {
@@ -1293,6 +1338,7 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      lock_planned_days: { Args: { owner: string }; Returns: undefined };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
@@ -1343,6 +1389,24 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      plan_by_weekdays: {
+        Args: { from_day: string; owner: string; to_day: string };
+        Returns: {
+          day: string;
+          name: string;
+          type: Database['public']['Enums']['workout_type'];
+          workout_id: number;
+        }[];
+      };
+      planned_workouts: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          day: string;
+          name: string;
+          type: Database['public']['Enums']['workout_type'];
+          workout_id: number;
+        }[];
+      };
       preview_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1391,7 +1455,7 @@ export type Database = {
         };
         Returns: number;
       };
-      save_workout: { Args: { workout: Json }; Returns: number };
+      save_workout: { Args: { today?: string; workout: Json }; Returns: number };
       search_foods: {
         Args: { language: string; query: string; recipes?: boolean };
         Returns: {
@@ -1417,6 +1481,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      set_workout_active: {
+        Args: { active: boolean; today: string; workout_id: number };
+        Returns: undefined;
+      };
       sets_of: {
         Args: { log: Json };
         Returns: {
@@ -1429,6 +1497,18 @@ export type Database = {
           weight_kg: number;
         }[];
       };
+      settle_moves: {
+        Args: {
+          deleted: boolean;
+          kept: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: undefined;
+      };
+      start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
