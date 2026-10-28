@@ -172,16 +172,24 @@ development values that only work against the local stack.
 
 Useful commands:
 
-| Command                  | Description                                     |
-| ------------------------ | ----------------------------------------------- |
-| `pnpm supabase status`   | Show the local URLs and keys                    |
-| `pnpm supabase db reset` | Recreate the local database from the migrations |
-| `pnpm supabase test db`  | Run the database tests in `supabase/tests/`     |
-| `pnpm supabase stop`     | Stop the stack and keep its data                |
+| Command                  | Description                                                 |
+| ------------------------ | ----------------------------------------------------------- |
+| `pnpm supabase status`   | Show the local URLs and keys                                |
+| `pnpm supabase db reset` | Recreate the local database from the migrations and seed it |
+| `pnpm supabase test db`  | Run the database tests in `supabase/tests/`                 |
+| `pnpm supabase stop`     | Stop the stack and keep its data                            |
 
 See [ADR 0003](docs/adr/0003-local-first-database-development.md) for how database changes are made.
 
 After changing the schema, regenerate the TypeScript types with `pnpm db:types`.
+
+#### Dev account
+
+`pnpm supabase db reset` also runs `supabase/seed.sql`, which creates an account that has finished
+the onboarding: `dev@benchbite.local` with the password `benchbite-dev`. These work only against
+the local database. In development, **Use the dev account** on the welcome screen and in the
+developer tools (the code button beside the settings) signs in to it, so the onboarding can be
+skipped after a reset.
 
 #### Exercise library
 

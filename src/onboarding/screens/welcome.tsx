@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { DevAccountLink } from '@/dev/dev-account-link';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
@@ -69,6 +70,7 @@ export function WelcomeStep() {
               onPress={() => router.push('/account/login')}
             />
           )}
+          <DevAccountLink />
         </View>
       }
     >

@@ -120,6 +120,7 @@ jest.mock('@/sessions/rest-alarm', () => ({
   REST_NOTIFICATION_ID: 'rest-end',
   RestAlarm: () => null,
 }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/providers/onboarding-provider', () => ({
   OnboardingProvider: ({ children }: PropsWithChildren) => children,
   useOnboarding: jest.fn(),
