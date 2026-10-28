@@ -359,6 +359,18 @@ describe('moving workouts', () => {
     expect(screen.getByText('Push')).toBeTruthy();
   });
 
+  it('names a day with several missed workouts once', async () => {
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(1, 'push'), { ...session(1, 'legs'), workoutId: 8 }],
+      }),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('2 missed workouts')).toBeTruthy();
+    expect(screen.getByText('Push, Legs')).toBeTruthy();
+    expect(screen.getByText('Monday')).toBeTruthy();
+  });
+
   it('has no missed card once the workout is done or skipped', async () => {
     mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: null }]) });
     await render(<TodayScreen />);

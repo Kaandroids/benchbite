@@ -43,9 +43,10 @@ export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
     });
   } else {
     caption = t('today.missed.count', { count: missed.length });
-    // A workout planned on several days is named once.
-    title = [...new Set(missed.map(({ workout }) => workoutName(workout.session)))].join(', ');
-    detail = missed.map(({ day }) => weekdayName(day.weekday)).join(', ');
+    // A workout missed on several days, or a day with several missed, is named once.
+    const once = (names: string[]) => [...new Set(names)].join(', ');
+    title = once(missed.map(({ workout }) => workoutName(workout.session)));
+    detail = once(missed.map(({ day }) => weekdayName(day.weekday)));
   }
 
   return (
