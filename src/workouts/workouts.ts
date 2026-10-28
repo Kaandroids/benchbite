@@ -1,7 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
+import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+
+import { MOVES_KEY } from './moves';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
@@ -32,10 +35,29 @@ export type Workout = {
   exercises: WorkoutExercise[];
 };
 
+/** A workout as a session on a weekday. */
+export function sessionOf(workout: Workout, weekday: number): WeekSession {
+  return {
+    weekday,
+    workoutId: workout.id,
+    name: workout.name,
+    type: workout.type,
+    exercises: workout.exercises,
+    estimatedMinutes: workout.estimatedMinutes,
+  };
+}
+
 /** A workout on one day of the week. */
 export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimatedMinutes'> & {
   weekday: number;
   workoutId: number;
+  /** The one day it is planned on, YYYY-MM-DD, as a kept day (ADR 0041); without it, every week. */
+  on?: string;
+  /**
+   * How the workout left the plan since, if it did: shown, but not started, moved or undone. A
+   * deleted one's logs no longer say which workout they were.
+   */
+  left?: 'archived' | 'deleted';
 };
 
 export const WORKOUTS_KEY = ['workouts'];
@@ -109,18 +131,20 @@ export async function fetchWorkouts(): Promise<Workout[]> {
 export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
   const sessions = workouts
     .filter((workout) => workout.active)
-    .flatMap((workout) =>
-      workout.weekdays.map((weekday) => ({
-        weekday,
-        workoutId: workout.id,
-        name: workout.name,
-        type: workout.type,
-        exercises: workout.exercises,
-        estimatedMinutes: workout.estimatedMinutes,
-      })),
-    )
+    .flatMap((workout) => workout.weekdays.map((weekday) => sessionOf(workout, weekday)))
     .sort((a, b) => a.weekday - b.weekday);
   return { sessions };
+}
+
+/**
+ * Loads the plan again after it changed: the workouts, with the planned days under them, and the
+ * moves, which the database settles when a workout changes (ADR 0041).
+ */
+function reloadPlan(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+  ]);
 }
 
 export function useWorkouts() {
@@ -149,7 +173,13 @@ export function useSetWorkoutActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      const { error } = await supabase.from('workouts').update({ active }).eq('id', id);
+      // With the device's today, as every change to the plan, so that the days before it keep
+      // the plan they had (ADR 0041).
+      const { error } = await supabase.rpc('set_workout_active', {
+        workout_id: id,
+        active,
+        today: deviceToday(),
+      });
       if (error) {
         throw error;
       }
@@ -165,7 +195,7 @@ export function useSetWorkoutActive() {
     onError: (_error, _variables, context) => {
       queryClient.setQueryData(WORKOUTS_KEY, context?.previous);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    onSettled: () => reloadPlan(queryClient),
   });
 }
 
@@ -216,13 +246,16 @@ export function useSaveWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (draft: WorkoutDraft) => {
-      const { data, error } = await supabase.rpc('save_workout', { workout: draft });
+      const { data, error } = await supabase.rpc('save_workout', {
+        workout: draft,
+        today: deviceToday(),
+      });
       if (error) {
         throw error;
       }
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    onSuccess: () => reloadPlan(queryClient),
   });
 }
 
@@ -231,7 +264,10 @@ export function useDeleteWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('workouts').delete().eq('id', id);
+      const { error } = await supabase.rpc('delete_workout', {
+        workout_id: id,
+        today: deviceToday(),
+      });
       if (error) {
         throw error;
       }
@@ -241,7 +277,7 @@ export function useDeleteWorkout() {
       queryClient.setQueryData<Workout[]>(WORKOUTS_KEY, (workouts) =>
         workouts?.filter((workout) => workout.id !== id),
       );
-      void queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY });
+      void reloadPlan(queryClient);
     },
   });
 }

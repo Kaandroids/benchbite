@@ -1,16 +1,26 @@
 import { AppState } from 'react-native';
 
 import { useFinishedThisWeek } from '@/history/history';
+import { plannedOf, workoutsOf } from '@/test/planned-week';
 import { act, render, waitFor } from '@/test/render';
 import { useWeekMoves } from '@/workouts/moves';
 import type { WorkoutMove } from '@/workouts/week-schedule';
-import { useWeek, type WeekSession } from '@/workouts/workouts';
+import { usePlannedWeek } from '@/workouts/planned-week';
+import { useWeek, useWorkouts, type WeekSession } from '@/workouts/workouts';
 
 import { ReminderSync } from './reminder-sync';
 import { scheduleReminders } from './reminders';
 import { loadReminderMinutes } from './settings';
 
-jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({
+  ...jest.requireActual('@/workouts/workouts'),
+  useWeek: jest.fn(),
+  useWorkouts: jest.fn(),
+}));
+jest.mock('@/workouts/planned-week', () => ({
+  ...jest.requireActual('@/workouts/planned-week'),
+  usePlannedWeek: jest.fn(),
+}));
 jest.mock('@/workouts/moves', () => ({ useWeekMoves: jest.fn() }));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
 jest.mock('./reminders', () => ({
@@ -18,6 +28,7 @@ jest.mock('./reminders', () => ({
   scheduleReminders: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('./settings', () => ({ loadReminderMinutes: jest.fn() }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 // Wednesday, October 21.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
@@ -45,6 +56,10 @@ function mockWeek(moves: WorkoutMove[] = [], loaded = true) {
   jest
     .mocked(useWeek)
     .mockReturnValue({ data: loaded ? { sessions: SESSIONS } : undefined } as never);
+  jest.mocked(useWorkouts).mockReturnValue({ data: workoutsOf(SESSIONS) } as never);
+  jest
+    .mocked(usePlannedWeek)
+    .mockReturnValue({ data: loaded ? plannedOf(SESSIONS, '2026-10-19') : undefined } as never);
   jest.mocked(useWeekMoves).mockReturnValue({ data: loaded ? moves : undefined } as never);
   jest.mocked(useFinishedThisWeek).mockReturnValue({ data: loaded ? [] : undefined } as never);
 }

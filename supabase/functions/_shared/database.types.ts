@@ -1286,6 +1286,7 @@ export type Database = {
       };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
+      kept_through: { Args: { latest: string; owner: string }; Returns: string };
       last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
         Args: { exercise_ids: string[] };
@@ -1406,6 +1407,17 @@ export type Database = {
           type: Database['public']['Enums']['workout_type'];
           workout_id: number;
         }[];
+      };
+      plans_workout_on: {
+        Args: {
+          day: string;
+          on_day: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
       };
       preview_nutrition_targets: {
         Args: {

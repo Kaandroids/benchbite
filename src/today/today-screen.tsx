@@ -42,10 +42,10 @@ export function TodayScreen() {
   const name = useDisplayName().data;
   const greeting = useGreeting();
   const today = new Date();
-  const { schedule, plan, moves, finished } = useWeekSchedule(today);
+  const { schedule, plan, queries: weekQueries } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
-  const queries = [plan, targets, finished, moves, eaten];
+  const queries = [...weekQueries, targets, eaten];
 
   const refetchFailed = () =>
     Promise.all(queries.filter((query) => query.isError).map((query) => query.refetch()));

@@ -1,3 +1,5 @@
+import { fromIsoDate, isoWeekday } from '@/i18n/dates';
+
 import type { WeekSession } from './workouts';
 import {
   canUndo,
@@ -388,5 +390,85 @@ describe('upcomingWorkouts', () => {
     );
     const thursday = new Date(2026, 9, 22, 9, 0);
     expect(upcomingWorkouts(schedule, SESSIONS, thursday, 1)[0]?.sessions).toEqual([session(3, 4)]);
+  });
+});
+
+describe('sessions planned on one day', () => {
+  // Wednesday, October 21.
+  const today = new Date(2026, 9, 21, 9, 0);
+  const kept = (on: string, workoutId: number, left?: 'archived' | 'deleted'): WeekSession => ({
+    workoutId,
+    weekday: isoWeekday(fromIsoDate(on)),
+    on,
+    name: null,
+    type: 'push',
+    exercises: [],
+    estimatedMinutes: 45,
+    left,
+  });
+
+  it('plans a session with a day on that day only, not every week on its weekday', () => {
+    const schedule = weekSchedule([kept('2026-10-19', 1)], [], [], today);
+    expect(schedule.days[0]?.workouts).toHaveLength(1);
+    expect(schedule.days.slice(1).every((day) => day.workouts.length === 0)).toBe(true);
+  });
+
+  it("counts a log without a workout for a workout that left the plan, as a deleted one's are", () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'deleted')],
+      [],
+      [{ workoutId: null, startedOn: '2026-10-19' }],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('done');
+    expect(schedule.days[0]?.extras).toBe(0);
+  });
+
+  it("leaves a deleted extra's log to no archived workout, whose logs keep it", () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [],
+      [{ workoutId: null, startedOn: '2026-10-19' }],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('missed');
+    expect(schedule.days[0]?.extras).toBe(1);
+  });
+
+  it('counts the move of a workout that left the plan to a later day as a skip of its day', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [{ workoutId: 9, fromOn: '2026-10-19', toOn: '2026-10-22' }],
+      [],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('skipped');
+    expect(schedule.days[3]?.workouts).toEqual([]);
+  });
+
+  it('neither moves nor undoes a workout that left the plan', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [{ workoutId: 9, fromOn: '2026-10-19', toOn: null }],
+      [],
+      today,
+    );
+    expect(moveTargets(schedule, 9, '2026-10-19', '2026-10-21')).toEqual([]);
+    expect(canUndo(schedule, 9, '2026-10-19')).toBe(false);
+  });
+
+  it('does not ask to count a workout that left the plan for its missed day', () => {
+    const schedule = weekSchedule([kept('2026-10-19', 9, 'archived')], [], [], today);
+    expect(startMove(schedule, 9, '2026-10-21')).toBeNull();
+  });
+
+  it('does not offer a workout that left the plan to catch up', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'deleted'), kept('2026-10-20', 1)],
+      [],
+      [],
+      today,
+    );
+    expect(missedWorkouts(schedule).map(({ day }) => day.date)).toEqual(['2026-10-20']);
   });
 });
