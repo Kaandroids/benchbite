@@ -70,7 +70,8 @@ describe('NutritionScreen', () => {
     expect(screen.getByText('1,070')).toBeTruthy();
     expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.getByText('96 / 144 g')).toBeTruthy();
-    expect(screen.getByText('1,480 / 2,550 kcal')).toBeTruthy();
+    expect(screen.getByText('Goal 2,550 kcal')).toBeTruthy();
+    expect(screen.getByText('1,480')).toBeTruthy();
     expect(progress()[0]).toEqual(['1,480 of 2,550 kcal eaten', 58]);
 
     expect(screen.getByText(/2 items/)).toBeTruthy();

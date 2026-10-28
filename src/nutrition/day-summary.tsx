@@ -16,8 +16,6 @@ import type { Totals } from './meals';
 import type { NutritionTargets } from './targets';
 
 const RING = 96;
-/** The height of a caption line, which the note on what was eaten takes above the macros. */
-const NOTE_HEIGHT = 18;
 const STROKE = 10;
 const RADIUS = (RING - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -55,13 +53,17 @@ function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Total
   const share = targets.calories > 0 ? clamp(eaten.calories / targets.calories, 0, 1) : 0;
 
   return (
-    // The note on what was eaten sits above the macros without moving them, so that the ring
-    // stays level with their bars.
-    <View style={{ paddingTop: NOTE_HEIGHT }}>
-      <Text variant="caption" color="textMuted" style={[styles.note, { height: NOTE_HEIGHT }]}>
-        {format(Math.round(eaten.calories))}{' '}
-        {t('nutrition.calorieTarget', { target: format(targets.calories) })}
-      </Text>
+    <View style={{ gap: spacing.md }}>
+      {/* What was eaten and the goal, to read only: the goals change elsewhere. */}
+      <View style={styles.eatenLine}>
+        <Text variant="captionStrong" color="textMuted">
+          <Text variant="label">{format(Math.round(eaten.calories))}</Text>{' '}
+          {t('nutrition.kcalEaten')}
+        </Text>
+        <Text variant="captionStrong" color="textMuted">
+          {t('nutrition.goal', { calories: format(targets.calories) })}
+        </Text>
+      </View>
       <View style={[styles.row, { gap: spacing.lg }]}>
         <View
           accessible
@@ -149,10 +151,10 @@ const styles = StyleSheet.create({
   macros: {
     flex: 1,
   },
-  note: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
+  eatenLine: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
   macroName: {
     flexDirection: 'row',

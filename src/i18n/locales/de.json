@@ -461,7 +461,9 @@
       "inIt": "Darin · ergibt {{portion}}",
       "ingredient": "{{name}} {{amount}}",
       "full": "Ein Rezept hat höchstens 50 Zutaten."
-    }
+    },
+    "kcalEaten": "kcal gegessen",
+    "goal": "Ziel {{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",

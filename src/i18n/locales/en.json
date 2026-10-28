@@ -461,7 +461,9 @@
       "inIt": "In it · makes {{portion}}",
       "ingredient": "{{name}} {{amount}}",
       "full": "A recipe holds up to 50 ingredients."
-    }
+    },
+    "kcalEaten": "kcal eaten",
+    "goal": "Goal {{calories}} kcal"
   },
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",
