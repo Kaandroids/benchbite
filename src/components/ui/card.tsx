@@ -40,7 +40,8 @@ export function Card({ entering, children, list = false, style }: CardProps) {
 
 /**
  * A thin line across the whole width of a card, through its padding, that sets apart two parts of
- * it, such as a header from what it heads. For a card with its own padding.
+ * it, such as a header from what it heads. Only for a card that keeps the default padding: one
+ * whose style changes it would leave the line short of its border or past it.
  */
 export function CardDivider() {
   const { colors, spacing } = useTheme();
