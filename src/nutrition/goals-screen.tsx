@@ -37,6 +37,7 @@ type Mode = 'calculated' | 'own';
 /**
  * The daily goals (ADR 0039): the calculated ones with what they are worked out from, or the
  * user's own, typed in. Choosing Calculated puts them back in use at once; one's own are saved.
+ * Calculate again asks for a new goal, target, pace and activity.
  */
 export function GoalsScreen() {
   const calculated = useCalculatedTargets();
@@ -105,7 +106,15 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
                 onPress={save}
               />
             </View>
-          ) : undefined
+          ) : (
+            <Button
+              label={t('nutrition.goals.again')}
+              disabled={useCalculated.isPending}
+              onPress={() =>
+                router.push({ pathname: '/nutrition/recalculate/[step]', params: { step: 'goal' } })
+              }
+            />
+          )
         }
       >
         <SegmentedControl

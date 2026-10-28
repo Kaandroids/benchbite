@@ -13,7 +13,7 @@ import {
 } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('./targets', () => ({
   ...jest.requireActual('./targets'),
   useCalculatedTargets: jest.fn(),
@@ -39,11 +39,15 @@ beforeEach(() => {
     .mocked(useCalculatedTargets)
     .mockReturnValue(loaded({ calories: 1940, proteinG: 135, carbsG: 229, fatG: 54 }));
   jest.mocked(useOwnTargets).mockReturnValue(loaded(null));
-  jest
-    .mocked(useTargetBasis)
-    .mockReturnValue(
-      loaded({ goal: 'lose_fat', targetWeightKg: 75, weeklyPaceKg: 0.5, activity: 'light' }),
-    );
+  jest.mocked(useTargetBasis).mockReturnValue(
+    loaded({
+      goal: 'lose_fat',
+      targetWeightKg: 75,
+      weeklyPaceKg: 0.5,
+      activity: 'light',
+      heightCm: 180,
+    }),
+  );
   jest.mocked(useLatestWeight).mockReturnValue(loaded({ weightKg: 80, measuredOn: '2026-10-28' }));
   jest.mocked(useWeightUnit).mockReturnValue(loaded('kg'));
   jest.mocked(useSetOwnTargets).mockReturnValue({ mutate: setOwn, isPending: false } as never);
@@ -61,6 +65,15 @@ describe('GoalsScreen', () => {
     expect(screen.getByLabelText('Pace: 0.5 kg a week, By January 6')).toBeTruthy();
     expect(screen.getByLabelText(/^Activity: Lightly active/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Save goals' })).toBeNull();
+  });
+
+  it('opens the steps to work the calculated goals out again', async () => {
+    await render(<GoalsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Calculate again' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/recalculate/[step]',
+      params: { step: 'goal' },
+    });
   });
 
   it('saves own goals, starting from the calculated ones', async () => {
