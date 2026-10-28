@@ -14,7 +14,11 @@ import { useWeek, useWorkouts, type WeekSession } from '@/workouts/workouts';
 import { greetingOf } from './greeting';
 import { TodayScreen } from './today-screen';
 
-jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn(), useWorkouts: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({
+  ...jest.requireActual('@/workouts/workouts'),
+  useWeek: jest.fn(),
+  useWorkouts: jest.fn(),
+}));
 jest.mock('@/workouts/planned-week', () => ({
   ...jest.requireActual('@/workouts/planned-week'),
   usePlannedWeek: jest.fn(),

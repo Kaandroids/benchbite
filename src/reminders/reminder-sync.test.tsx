@@ -12,7 +12,11 @@ import { ReminderSync } from './reminder-sync';
 import { scheduleReminders } from './reminders';
 import { loadReminderMinutes } from './settings';
 
-jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn(), useWorkouts: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({
+  ...jest.requireActual('@/workouts/workouts'),
+  useWeek: jest.fn(),
+  useWorkouts: jest.fn(),
+}));
 jest.mock('@/workouts/planned-week', () => ({
   ...jest.requireActual('@/workouts/planned-week'),
   usePlannedWeek: jest.fn(),
