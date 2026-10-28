@@ -8,7 +8,7 @@ import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useLitersFormat } from '@/i18n/units';
-import { typography, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { GLASS_ML, useAddWater } from './water';
 
@@ -63,6 +63,7 @@ export function WaterCard({ day, drunk, goal }: { day: string; drunk: number; go
 
   const glasses = Math.round(goal / GLASS_ML);
   const full = Math.min(glasses, Math.floor(drunk / GLASS_ML));
+  const toGo = glasses - full;
 
   const change = (ml: number) => {
     void Haptics.selectionAsync();
@@ -82,16 +83,9 @@ export function WaterCard({ day, drunk, goal }: { day: string; drunk: number; go
           <Text variant="caption" color="textMuted" numberOfLines={1}>
             {t('nutrition.water.total', { drunk: liters(drunk), goal: liters(goal) })}
           </Text>
-          {/* The glasses show what is left; this line says only when the goal is reached or
-              passed, and keeps its height while empty, so that the card does not grow. */}
-          <Text
-            variant="caption"
-            color="textMuted"
-            numberOfLines={1}
-            style={{ minHeight: typography.caption.lineHeight }}
-          >
-            {full < glasses
-              ? ''
+          <Text variant="caption" color="textMuted" numberOfLines={1}>
+            {toGo > 0
+              ? t('nutrition.water.toGo', { count: toGo })
               : drunk > goal
                 ? t('nutrition.water.over', { ml: drunk - goal })
                 : t('nutrition.water.reached')}

@@ -358,6 +358,8 @@
     "water": {
       "title": "Water",
       "total": "{{drunk}} of {{goal}} L",
+      "toGo_one": "{{count}} glass to go",
+      "toGo_other": "{{count}} glasses to go",
       "reached": "Goal reached",
       "over": "Goal reached · +{{ml}} ml",
       "add": "Add a glass, {{ml}} ml",

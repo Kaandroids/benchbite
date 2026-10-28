@@ -358,6 +358,8 @@
     "water": {
       "title": "Su",
       "total": "{{goal}} L'nin {{drunk}} L'si",
+      "toGo_one": "{{count}} bardak kaldı",
+      "toGo_other": "{{count}} bardak kaldı",
       "reached": "Hedefe ulaşıldı",
       "over": "Hedefe ulaşıldı · +{{ml}} ml",
       "add": "Bir bardak ekle, {{ml}} ml",
