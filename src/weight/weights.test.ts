@@ -7,7 +7,7 @@ import { sessionValue } from '@/test/context-mocks';
 
 import { useLatestWeight, useLogWeight, useWeightUnit } from './weights';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
 
 const maybeSingle = jest.fn();
@@ -19,6 +19,7 @@ const upsert = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(supabase.from).mockReturnValue({ select, upsert } as never);
+  jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
   jest.mocked(useSession).mockReturnValue(sessionValue('user-1'));
 });
 
@@ -77,6 +78,10 @@ describe('useLogWeight', () => {
       { user_id: 'user-1', weight_kg: 79.5, measured_on: '2026-10-22' },
       { onConflict: 'user_id,measured_on' },
     );
+    // Today follows the targets the new weight gives, on the device's date (ADR 0040).
+    expect(supabase.rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', {
+      from_day: '2026-10-22',
+    });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });

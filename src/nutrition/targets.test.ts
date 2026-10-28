@@ -6,6 +6,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import {
   targetsFrom,
   useCalculatedTargets,
+  useDayTargets,
   useNutritionTargets,
   useOwnTargets,
   useSetOwnTargets,
@@ -141,5 +142,63 @@ describe('useTargetBasis', () => {
       weeklyPaceKg: 0.5,
       activity: 'light',
     });
+  });
+});
+
+describe('useDayTargets', () => {
+  // 1 AM on the device, which may still be the day before on the server.
+  beforeEach(() => jest.useFakeTimers({ now: new Date(2026, 9, 28, 1), doNotFake: ['nextTick'] }));
+  afterEach(() => jest.useRealTimers());
+
+  it("asks the database for a day's targets, saying which day is today on the device", async () => {
+    rpc.mockResolvedValue({
+      data: { calories: 2800, protein_g: 150, carbs_g: 350, fat_g: 80 },
+      error: null,
+    } as never);
+    const { result } = await renderHook(() => useDayTargets('2026-10-27'));
+    await waitFor(() => expect(result.current.data?.calories).toBe(2800));
+    expect(rpc).toHaveBeenCalledWith('targets_of_day', {
+      on_day: '2026-10-27',
+      today: '2026-10-28',
+    });
+  });
+});
+
+describe('changing the targets in use', () => {
+  beforeEach(() => jest.useFakeTimers({ now: new Date(2026, 9, 28, 1), doNotFake: ['nextTick'] }));
+  afterEach(() => jest.useRealTimers());
+
+  it('writes own targets over today and the days after it', async () => {
+    rpc.mockResolvedValue({ data: null, error: null } as never);
+    jest
+      .mocked(supabase.from)
+      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
+    const { result } = await renderHook(() => useSetOwnTargets());
+    await act(() =>
+      result.current.mutateAsync({ calories: 3100, proteinG: 150, carbsG: 425, fatG: 80 }),
+    );
+    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
+  });
+
+  it('writes the calculated targets over today when they are back in use', async () => {
+    rpc.mockResolvedValue({ data: null, error: null } as never);
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    jest.mocked(supabase.from).mockReturnValue({ update: () => ({ eq }) } as never);
+    const { result } = await renderHook(() => useUseCalculatedTargets());
+    await act(() => result.current.mutateAsync());
+    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
+  });
+
+  it('fails when today cannot follow, so that the change is tried again', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
+    jest
+      .mocked(supabase.from)
+      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
+    const { result } = await renderHook(() => useSetOwnTargets());
+    await expect(
+      act(() =>
+        result.current.mutateAsync({ calories: 3100, proteinG: 150, carbsG: 425, fatG: 80 }),
+      ),
+    ).rejects.toEqual({ code: '22023' });
   });
 });

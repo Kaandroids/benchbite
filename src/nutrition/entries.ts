@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 
 import { foodColumns, type Amount, type FoodRef } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
+import { dayTargetsKey } from './targets';
 
 export type NewEntry = Amount & {
   /** YYYY-MM-DD. */
@@ -18,14 +19,15 @@ function amountColumns({ grams, portion }: Amount) {
 }
 
 /**
- * Loads a day's entries again, and the add screen's frequent foods and past meals, which are
- * counted from the entries of any day.
+ * Loads a day's entries again, with the targets the day kept from its first entry (ADR 0040), and
+ * the add screen's frequent foods and past meals, which are counted from the entries of any day.
  */
 function useReloadDay() {
   const queryClient = useQueryClient();
   return (day: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
+      queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
       queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
       queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
     ]);

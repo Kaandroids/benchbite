@@ -193,6 +193,9 @@ describe('changing entries', () => {
     const { result } = await renderHook(() => useRemoveEntry(), { queryClient });
     await act(() => result.current.mutateAsync(MILK));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['frequent-foods'] });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['nutrition-targets', 'day', '2026-10-27'],
+    });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
   });
 });

@@ -15,7 +15,7 @@ import { DaySummary } from './day-summary';
 import { DaySwitcher } from './day-switcher';
 import { MealList } from './meal-list';
 import { mealsOf, suggestedCalories, totalOf, useDayEntries, useDueMeal } from './meals';
-import { useNutritionTargets } from './targets';
+import { useDayTargets } from './targets';
 import { useWater } from './water';
 import { WaterCard } from './water-card';
 
@@ -27,7 +27,7 @@ export function NutritionScreen() {
   // The distance from today rather than the date, so that today stays today after midnight.
   const [daysBack, setDaysBack] = useState(0);
   const day = addDays(today, -daysBack);
-  const targets = useNutritionTargets();
+  const targets = useDayTargets(toIsoDate(day));
   const entries = useDayEntries(toIsoDate(day));
   const water = useWater(toIsoDate(day));
   const waterGoal = useWaterGoal();

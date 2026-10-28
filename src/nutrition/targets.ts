@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
@@ -41,6 +42,43 @@ export function useNutritionTargets() {
       return targetsFrom(data);
     },
   });
+}
+
+/** The query key of the targets a day kept, for anything that logs to it. */
+export const dayTargetsKey = (day: string) => ['nutrition-targets', 'day', day];
+
+/**
+ * The targets a day is measured against (ADR 0040): today the ones in use, a past day the ones it
+ * kept, or the ones in use when nothing was logged on it. The database decides; the device says
+ * which day is today.
+ */
+export function useDayTargets(day: string) {
+  return useQuery({
+    queryKey: dayTargetsKey(day),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('targets_of_day', {
+        on_day: day,
+        today: toIsoDate(new Date()),
+      });
+      if (error) {
+        throw error;
+      }
+      return targetsFrom(data);
+    },
+  });
+}
+
+/**
+ * Writes the targets in use over today and the days after it that kept some, after they changed:
+ * a day follows them while it lasts, and keeps the last ones once it is past (ADR 0040).
+ */
+export async function keepTargetsFromToday() {
+  const { error } = await supabase.rpc('refresh_day_nutrition_targets', {
+    from_day: toIsoDate(new Date()),
+  });
+  if (error) {
+    throw error;
+  }
 }
 
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */
@@ -108,6 +146,7 @@ export function useSetOwnTargets() {
       if (error) {
         throw error;
       }
+      await keepTargetsFromToday();
     },
     onSuccess: reload,
   });
@@ -129,6 +168,7 @@ export function useUseCalculatedTargets() {
       if (error) {
         throw error;
       }
+      await keepTargetsFromToday();
     },
     onSuccess: reload,
   });

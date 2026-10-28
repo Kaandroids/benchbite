@@ -66,6 +66,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      day_nutrition_targets: {
+        Row: {
+          calories: number;
+          carbs_g: number;
+          day: string;
+          fat_g: number;
+          protein_g: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          calories: number;
+          carbs_g: number;
+          day: string;
+          fat_g: number;
+          protein_g: number;
+          user_id: string;
+        };
+        Update: {
+          calories?: number;
+          carbs_g?: number;
+          day?: string;
+          fat_g?: number;
+          protein_g?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       exercise_translations: {
         Row: {
           exercise_id: string;
@@ -1339,6 +1367,7 @@ export type Database = {
         };
         Returns: undefined;
       };
+      refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
@@ -1404,6 +1433,16 @@ export type Database = {
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;
+      };
+      targets_of_day: {
+        Args: { on_day: string; today: string };
+        Returns: Database['public']['CompositeTypes']['nutrition_targets'];
+        SetofOptions: {
+          from: '*';
+          to: 'nutrition_targets';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       workout_limits: {
         Args: Record<PropertyKey, never>;

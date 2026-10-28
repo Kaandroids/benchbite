@@ -7,7 +7,7 @@ import { EntryScreen } from './entry-screen';
 import { useFood } from './foods';
 import { useDayEntries, type LoggedEntry } from './meals';
 import { takeRemovedEntry } from './removed-entry';
-import { useNutritionTargets } from './targets';
+import { useDayTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 const mockIsFocused = jest.fn(() => true);
@@ -17,7 +17,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
-jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
+jest.mock('./targets', () => ({ useDayTargets: jest.fn() }));
 jest.mock('./entries', () => ({
   ...jest.requireActual('./entries'),
   useUpdateEntry: jest.fn(),
@@ -61,7 +61,7 @@ beforeEach(() => {
     }),
   );
   jest
-    .mocked(useNutritionTargets)
+    .mocked(useDayTargets)
     .mockReturnValue(loaded({ calories: 2320, proteinG: 180, carbsG: 256, fatG: 64 }));
   jest
     .mocked(useUpdateEntry)

@@ -13,7 +13,7 @@ import { useRemoveEntry, useUpdateEntry } from './entries';
 import { useFood, type Portion } from './foods';
 import { totalOf, useDayEntries, type LoggedEntry } from './meals';
 import { handOverRemovedEntry } from './removed-entry';
-import { useNutritionTargets } from './targets';
+import { useDayTargets } from './targets';
 
 type EntryScreenProps = {
   id: number;
@@ -25,7 +25,7 @@ type EntryScreenProps = {
 export function EntryScreen({ id, day }: EntryScreenProps) {
   const { t } = useTranslation();
   const entries = useDayEntries(day);
-  const targets = useNutritionTargets();
+  const targets = useDayTargets(day);
   const removeEntry = useRemoveEntry();
   const navigation = useNavigation();
   const entry = entries.data?.find((item) => item.id === id);
