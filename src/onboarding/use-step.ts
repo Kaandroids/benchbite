@@ -6,6 +6,7 @@ import { BackHandler } from 'react-native';
 import { useOnboarding } from '@/providers/onboarding-provider';
 
 import {
+  canCloseFrom,
   canGoBackFrom,
   isPassing,
   nextStep,
@@ -82,6 +83,9 @@ export function useStep(step: Step) {
     }
   };
 
+  const close = () =>
+    router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'welcome' } });
+
   /** Saves the answers of this step and opens the next one, or finishes after the last. */
   const next = (answers: OnboardingAnswers = {}) => {
     if (leaving.current) {
@@ -101,6 +105,11 @@ export function useStep(step: Step) {
     answer,
     next,
     back: previous ? back : undefined,
+    /**
+     * Leaves the steps for the welcome screen, keeping the answers so far, so starting again finds
+     * them. Only on the questions.
+     */
+    close: canCloseFrom(step) ? close : undefined,
     /**
      * For a step's choice: saves the answer when it differs from the one saved, so tapping the
      * chosen card again does nothing. Continue then moves on.

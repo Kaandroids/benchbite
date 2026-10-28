@@ -12,6 +12,7 @@ export type StepMock = {
   answer: jest.Mock<void, [OnboardingAnswers]>;
   next: jest.Mock<void, [OnboardingAnswers?]>;
   back: jest.Mock<void, []>;
+  close: jest.Mock<void, []>;
   select: jest.Mock<void, [OnboardingAnswers]>;
 };
 
@@ -28,6 +29,7 @@ export function createStep(answers: OnboardingAnswers = {}): StepMock {
     answer,
     next: jest.fn(),
     back: jest.fn(),
+    close: jest.fn(),
     // Like the hook, saves only an answer that differs from the one given here.
     select: jest.fn((choice: OnboardingAnswers) => {
       const keys = Object.keys(choice) as (keyof OnboardingAnswers)[];
