@@ -8,6 +8,7 @@ import { useAddEntry } from './entries';
 import { useFood, type Food } from './foods';
 import { useDayEntries } from './meals';
 import { useFavouriteKeys, useSetFavourite } from './quick-foods';
+import { useRecipe } from './recipes';
 import { useNutritionTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -19,6 +20,7 @@ jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry:
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
 jest.mock('./quick-foods', () => ({ useFavouriteKeys: jest.fn(), useSetFavourite: jest.fn() }));
+jest.mock('./recipes', () => ({ useRecipe: jest.fn() }));
 
 const YOGHURT: Food = {
   ref: { kind: 'library', id: 'M141300' },
@@ -219,5 +221,51 @@ describe('AmountScreen', () => {
     jest.mocked(useFavouriteKeys).mockReturnValue(new Set(['M141300']));
     await render(<AmountScreen food={YOGHURT.ref} meal="lunch" day="2026-10-27" />);
     expect(screen.getByRole('button', { name: 'Remove from favourites' })).toBeSelected();
+  });
+
+  it('logs a recipe by the serving, shows what is in it and opens it to edit', async () => {
+    jest.mocked(useFood).mockReturnValue(
+      loaded({
+        ref: { kind: 'recipe', id: 9 },
+        name: 'Lentil soup',
+        per100g: { calories: 68, proteinG: 4, carbsG: 9, fatG: 1.5 },
+        portions: [{ unit: 'bowl', grams: 400 }],
+      }),
+    );
+    jest.mocked(useRecipe).mockReturnValue(
+      loaded({
+        id: 9,
+        name: 'Lentil soup',
+        servings: 4,
+        servingUnit: 'bowl',
+        ingredients: [
+          {
+            food: { kind: 'library', id: 'H801000' },
+            name: 'Red lentils',
+            per100g: { calories: 337, proteinG: 24, carbsG: 50, fatG: 1.5 },
+            grams: 250,
+            portion: null,
+          },
+          {
+            food: { kind: 'custom', id: 4 },
+            name: 'Water',
+            per100g: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+            grams: 1350,
+            portion: null,
+          },
+        ],
+      }),
+    );
+    await render(<AmountScreen food={{ kind: 'recipe', id: 9 }} meal="lunch" day="2026-10-27" />);
+    expect(screen.getByText('Recipe · 68 kcal per 100 g')).toBeTruthy();
+    expect(screen.getAllByText('1 bowl · 400 g').length).toBeGreaterThan(0);
+    expect(screen.getByText('In it · makes 4 bowls')).toBeTruthy();
+    expect(screen.getByText('Red lentils 250 g · Water 1,350 g')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/nutrition/edit-recipe/[id]',
+      params: { id: '9', meal: 'lunch', day: '2026-10-27' },
+    });
   });
 });
