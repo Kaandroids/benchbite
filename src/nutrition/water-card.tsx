@@ -22,7 +22,12 @@ function Glass({ full }: { full: boolean }) {
     <Svg width="100%" height="100%" viewBox="0 0 22 28">
       {full ? (
         <>
+          {/*
+           * Keyed apart from the empty outline: react-native-svg keeps a dash pattern on a path
+           * that stops passing one, so a glass filled after showing empty kept its dashes.
+           */}
           <Path
+            key="full"
             d={GLASS_OUTLINE}
             fill={colors.infoBackground}
             stroke={colors.info}
@@ -33,6 +38,7 @@ function Glass({ full }: { full: boolean }) {
         </>
       ) : (
         <Path
+          key="empty"
           d={GLASS_OUTLINE}
           fill="none"
           stroke={colors.placeholder}

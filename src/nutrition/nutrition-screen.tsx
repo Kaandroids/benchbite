@@ -60,9 +60,10 @@ export function NutritionScreen() {
       {/* Shown while another day loads, so that the day can be changed again at once. */}
       <DaySummary
         header={<DaySwitcher today={today} daysBack={daysBack} onChange={setDaysBack} />}
+        // Once the two it sums are in, whatever else is still loading.
         totals={
-          loaded && targets.data
-            ? { targets: targets.data, eaten: totalOf(entries.data ?? []) }
+          targets.data && entries.data
+            ? { targets: targets.data, eaten: totalOf(entries.data) }
             : null
         }
       />

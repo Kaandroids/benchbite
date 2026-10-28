@@ -1,6 +1,6 @@
 import { render, screen } from '@/test/render';
 
-import { Card } from './card';
+import { Card, CardDivider } from './card';
 import { Text } from './text';
 
 describe('Card', () => {
@@ -35,5 +35,17 @@ describe('Card as a list', () => {
       </Card>,
     );
     expect(screen.getByText('Bench press').parent!).toHaveStyle({ paddingVertical: 0, gap: 0 });
+  });
+
+  it('draws a divider across its padding, from border to border', async () => {
+    await render(
+      <Card>
+        <Text>Today</Text>
+        <CardDivider />
+      </Card>,
+    );
+    const divider = screen.getByText('Today').parent!.children[1] as never;
+    // The card's padding is the theme's large spacing, 16.
+    expect(divider).toHaveStyle({ marginHorizontal: -16 });
   });
 });

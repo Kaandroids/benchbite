@@ -158,7 +158,25 @@ describe('NutritionScreen', () => {
     mockDay(undefined, { isPending: true });
     await fireEvent.press(screen.getByLabelText('Previous day'));
     expect(screen.getByText('Yesterday')).toBeTruthy();
+    // The card stays, with the day's full date, while what it holds loads.
+    expect(screen.getByText('Monday, October 26')).toBeTruthy();
     expect(screen.getByLabelText('Previous day')).toBeEnabled();
     expect(screen.queryByText('kcal left')).toBeNull();
+  });
+
+  it('shows the totals once the targets and the day are in, while the water still loads', async () => {
+    jest.mocked(useWater).mockReturnValue(query(undefined, { isPending: true }));
+    await render(<NutritionScreen />);
+    expect(screen.getByText('kcal left')).toBeTruthy();
+    expect(screen.queryByText('Breakfast')).toBeNull();
+  });
+
+  it("does not repeat a weekday that is already the day's name", async () => {
+    await render(<NutritionScreen />);
+    for (let back = 0; back < 2; back += 1) {
+      await fireEvent.press(screen.getByLabelText('Previous day'));
+    }
+    expect(screen.getByText('Sunday')).toBeTruthy();
+    expect(screen.getByText('October 25')).toBeTruthy();
   });
 });

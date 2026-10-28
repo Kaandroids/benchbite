@@ -3,10 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { addDays, useDayFormat } from '@/i18n/dates';
+import { addDays } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
-import { useDayName } from './day-name';
+import { useDayLabel } from './day-name';
 import { LOGGABLE_DAYS } from './meals';
 
 type DaySwitcherProps = {
@@ -22,15 +22,13 @@ type DaySwitcherProps = {
  */
 export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
   const { t } = useTranslation();
-  const dayName = useDayName();
-  // In full, as the Today tab writes it: Tuesday, October 27.
-  const longDate = useDayFormat();
+  const dayLabel = useDayLabel();
   const { colors, radii, spacing } = useTheme();
   const day = addDays(today, -daysBack);
   const canGoBack = daysBack < LOGGABLE_DAYS;
   const canGoForward = daysBack > 0;
 
-  const name = dayName(day, daysBack);
+  const { name, date } = dayLabel(day, daysBack);
 
   const step = (icon: 'back' | 'forward', enabled: boolean, by: number) => (
     <Pressable
@@ -61,7 +59,7 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
           {name}
         </Text>
         <Text variant="caption" color="textMuted" align="center" numberOfLines={1}>
-          {longDate(day)}
+          {date}
         </Text>
       </View>
       {step('forward', canGoForward, 1)}
