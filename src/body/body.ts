@@ -4,8 +4,17 @@ import { toTenth } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
 
-type Goal = Database['public']['Enums']['goal_kind'];
-type ActivityLevel = Database['public']['Enums']['activity_level'];
+/** What the user wants to achieve, which shapes both the training and the calories. */
+export type Goal = Database['public']['Enums']['goal_kind'];
+/** How active the user is outside workouts. */
+export type ActivityLevel = Database['public']['Enums']['activity_level'];
+/** A goal that changes the weight, and so has a target weight and a pace. */
+export type WeightGoal = 'lose_fat' | 'build_muscle';
+
+/** Whether a goal changes the weight, and so asks for a target weight and a pace. */
+export function changesWeight(goal: Goal | undefined): goal is WeightGoal {
+  return goal === 'lose_fat' || goal === 'build_muscle';
+}
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
@@ -46,7 +55,7 @@ export type TargetWeightProblem = 'wrongDirection' | 'tooClose' | 'belowHealthy'
  * direction, as stored, and, when losing fat, not below a healthy weight for the height.
  */
 export function targetWeightProblem(
-  goal: 'lose_fat' | 'build_muscle',
+  goal: WeightGoal,
   weightKg: number,
   targetKg: number,
   heightCm: number,
@@ -66,11 +75,7 @@ export function targetWeightProblem(
 const DEFAULT_CHANGE_KG = { lose_fat: -5, build_muscle: 3 };
 
 /** The target weight to start from: a few kilograms in the goal's direction, but healthy. */
-export function defaultTargetKg(
-  goal: 'lose_fat' | 'build_muscle',
-  weightKg: number,
-  heightCm: number,
-): number {
+export function defaultTargetKg(goal: WeightGoal, weightKg: number, heightCm: number): number {
   return Math.max(minHealthyWeightKg(heightCm), weightKg + DEFAULT_CHANGE_KG[goal]);
 }
 
@@ -92,7 +97,7 @@ export function snapPace(value: number, range: PaceRange): number {
  * a week, and a surplus of at most 500 kcal, about 0.45 kilograms or one pound. Popular apps such
  * as MyFitnessPal stop at two pounds a week too.
  */
-export const PACE_RANGES: Record<'kg' | 'lb', Record<'lose_fat' | 'build_muscle', PaceRange>> = {
+export const PACE_RANGES: Record<'kg' | 'lb', Record<WeightGoal, PaceRange>> = {
   kg: {
     lose_fat: { min: 0.25, max: 0.9, step: 0.05, default: 0.5 },
     build_muscle: { min: 0.1, max: 0.45, step: 0.05, default: 0.25 },
@@ -136,9 +141,9 @@ export function weightGoal(answers: {
   goal?: Goal;
   targetWeightKg?: number;
   weeklyPaceKg?: number;
-}): { goal: 'lose_fat' | 'build_muscle'; targetKg: number; paceKg: number } | null {
+}): { goal: WeightGoal; targetKg: number; paceKg: number } | null {
   const { goal, targetWeightKg, weeklyPaceKg } = answers;
-  if ((goal !== 'lose_fat' && goal !== 'build_muscle') || !targetWeightKg || !weeklyPaceKg) {
+  if (!changesWeight(goal) || !targetWeightKg || !weeklyPaceKg) {
     return null;
   }
   return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg };

@@ -1,10 +1,9 @@
 import { useTranslation } from 'react-i18next';
 
+import type { ActivityLevel } from '@/body/body';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
-import { Constants, type Database } from '@/lib/database.types';
-
-type ActivityLevel = Database['public']['Enums']['activity_level'];
+import { Constants } from '@/lib/database.types';
 
 const ICONS: Record<ActivityLevel, IconName> = {
   sedentary: 'chair',

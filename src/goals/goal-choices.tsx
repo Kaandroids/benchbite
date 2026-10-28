@@ -1,11 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
 import { ChoiceCard } from '@/components/ui/choice-card';
-import { Constants, type Database } from '@/lib/database.types';
+import type { Goal } from '@/body/body';
+import { Constants } from '@/lib/database.types';
 
 import { GOAL_ICONS } from './goal-icons';
-
-type Goal = Database['public']['Enums']['goal_kind'];
 
 /** The goals to choose from, one card each. */
 export function GoalChoices({

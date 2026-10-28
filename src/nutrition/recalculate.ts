@@ -1,18 +1,11 @@
-import { targetWeightProblem } from '@/body/body';
+import { changesWeight, targetWeightProblem, type ActivityLevel, type Goal } from '@/body/body';
 import { toTenth } from '@/i18n/units';
-import { Constants, type Database } from '@/lib/database.types';
+import { Constants } from '@/lib/database.types';
 
 import type { NutritionTargets, TargetAnswers, TargetBasis } from './targets';
 
-type Goal = Database['public']['Enums']['goal_kind'];
-type ActivityLevel = Database['public']['Enums']['activity_level'];
-
 /** The steps of working the targets out again, each a screen. */
 export type RecalculateStep = 'goal' | 'target' | 'activity' | 'review';
-
-/** Whether a goal changes the weight, and so asks for a target and a pace. */
-export const changesWeight = (goal: Goal): goal is 'lose_fat' | 'build_muscle' =>
-  goal === 'lose_fat' || goal === 'build_muscle';
 
 /** The steps for a goal: the target and pace only for one that changes the weight. */
 export function stepsFor(goal: Goal): RecalculateStep[] {

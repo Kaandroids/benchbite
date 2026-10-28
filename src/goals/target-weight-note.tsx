@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { minHealthyWeightKg, type TargetWeightProblem } from '@/body/body';
+import { minHealthyWeightKg, type TargetWeightProblem, type WeightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useWeightFormat, type WeightUnit } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 type TargetWeightNoteProps = {
-  goal: 'lose_fat' | 'build_muscle';
+  goal: WeightGoal;
   weightKg: number;
   targetKg: number;
   heightCm: number;

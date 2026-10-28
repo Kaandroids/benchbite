@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { paceLevel, projectedDate, type PaceLevel } from '@/body/body';
+import { paceLevel, projectedDate, type PaceLevel, type WeightGoal } from '@/body/body';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
 import { useWeightFormat, type WeightUnit } from '@/i18n/units';
@@ -13,7 +13,7 @@ const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
 };
 
 type PaceNoteProps = {
-  goal: 'lose_fat' | 'build_muscle';
+  goal: WeightGoal;
   weightKg: number;
   targetKg: number;
   paceKg: number;

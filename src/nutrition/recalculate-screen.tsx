@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import {
+  changesWeight,
   defaultTargetKg,
   minHealthyWeightKg,
   PACE_RANGES,
@@ -46,7 +47,6 @@ import { MACROS } from './macro-targets';
 import {
   answerChanges,
   answersFrom,
-  changesWeight,
   paramsOf,
   stepsFor,
   targetsFromWas,
