@@ -15,7 +15,9 @@ was planned.
 - **Whole weeks:** the strip pages back one week at a time, Monday to Sunday, as the current week
   is shown.
 - **Back to the account's first week, never forward:** the first week is the one the plan started
-  in (`complete_onboarding()`, ADR 0041). Future weeks are not shown; today's week is the last.
+  in (`planned_days_kept.started_on`, ADR 0041), or the one the account was created in when there
+  is no start, as for users from before the onboarding recorded it. Future weeks are not shown;
+  today's week is the last.
 - **Only the calendar:** a past week shows its days with their streak marks and planned workouts,
   as the strip does now. Tapping a past day opens nothing more.
 - **History stays where it is:** what was done on a day is read in the workout history and the
