@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { allLoaded } from '@/components/load-state';
+import { Card } from '@/components/ui/card';
 import { PillButton } from '@/components/ui/pill-button';
+import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
-import { Card } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
 
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
@@ -19,6 +19,13 @@ import { totalOf, useDayEntries, type Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 import { useRecipe } from './recipes';
 import { useNutritionTargets } from './targets';
+
+/** What differs by the kind of food: the line under its name, and where it is edited, if at all. */
+const KINDS = {
+  library: { subtitle: 'nutrition.amount.per100g', edit: null },
+  custom: { subtitle: 'nutrition.amount.per100g', edit: '/nutrition/edit-food/[id]' },
+  recipe: { subtitle: 'nutrition.recipe.subtitle', edit: '/nutrition/edit-recipe/[id]' },
+} as const;
 
 type AmountScreenProps = {
   food: FoodRef;
@@ -43,6 +50,8 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const targets = useNutritionTargets();
   const queries = [food, entries, targets];
 
+  const kind = KINDS[ref.kind];
+
   if (allLoaded(queries) && food.data) {
     return (
       <AmountForm
@@ -50,25 +59,17 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
         // so that it does not keep a portion that is gone or a count beyond the new maximum.
         key={food.data.portions.map(({ unit, grams }) => `${unit}:${grams}`).join()}
         title={food.data.name}
-        subtitle={t(
-          ref.kind === 'recipe' ? 'nutrition.recipe.subtitle' : 'nutrition.amount.per100g',
-          {
-            calories: format(food.data.per100g.calories),
-          },
-        )}
+        subtitle={t(kind.subtitle, { calories: format(food.data.per100g.calories) })}
         action={
           <View style={[styles.actions, { gap: spacing.xs }]}>
             <FavouriteButton food={ref} name={food.data.name} />
             {/* Only a food or recipe of one's own can be changed. */}
-            {ref.kind !== 'library' ? (
+            {kind.edit ? (
               <PillButton
                 label={t('nutrition.food.editButton')}
                 onPress={() =>
                   router.push({
-                    pathname:
-                      ref.kind === 'recipe'
-                        ? '/nutrition/edit-recipe/[id]'
-                        : '/nutrition/edit-food/[id]',
+                    pathname: kind.edit,
                     params: { id: String(ref.id), meal, day },
                   })
                 }
