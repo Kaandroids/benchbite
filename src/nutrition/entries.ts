@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 
-import type { Amount, FoodRef } from './foods';
+import { foodColumns, type Amount, type FoodRef } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 
 export type NewEntry = Amount & {
@@ -12,16 +12,23 @@ export type NewEntry = Amount & {
   food: FoodRef;
 };
 
-/** A food as the meal_entries columns name it: a library food or one of one's own. */
-function foodColumns(food: FoodRef) {
-  return food.kind === 'custom'
-    ? { food_id: null, custom_food_id: food.id }
-    : { food_id: food.id, custom_food_id: null };
-}
-
 /** An amount as the meal_entries columns hold it. */
 function amountColumns({ grams, portion }: Amount) {
   return { grams, portion_unit: portion?.unit ?? null, portion_count: portion?.count ?? null };
+}
+
+/**
+ * Loads a day's entries again, and the add screen's frequent foods and past meals, which are
+ * counted from the entries of any day.
+ */
+function useReloadDay() {
+  const queryClient = useQueryClient();
+  return (day: string) =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
+      queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
+      queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
+    ]);
 }
 
 /**
@@ -29,7 +36,7 @@ function amountColumns({ grams, portion }: Amount) {
  * the day's entries are loaded again.
  */
 export function useAddEntry() {
-  const queryClient = useQueryClient();
+  const reload = useReloadDay();
   return useMutation({
     mutationFn: async (entry: NewEntry) => {
       const { error } = await supabase.from('meal_entries').insert({
@@ -42,8 +49,7 @@ export function useAddEntry() {
         throw error;
       }
     },
-    onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
+    onSuccess: (_data, entry) => reload(entry.day),
   });
 }
 
@@ -52,7 +58,7 @@ export function useAddEntry() {
  * values it was logged with.
  */
 export function useUpdateEntry() {
-  const queryClient = useQueryClient();
+  const reload = useReloadDay();
   return useMutation({
     mutationFn: async ({ id, amount }: { id: number; day: string; amount: Amount }) => {
       const { error } = await supabase
@@ -65,14 +71,14 @@ export function useUpdateEntry() {
     },
     // Not waited for, so that the screen that changed it can go back before its day reloads.
     onSuccess: (_data, { day }) => {
-      void queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) });
+      void reload(day);
     },
   });
 }
 
 /** Removes an entry from its day. It can be restored for an hour. */
 export function useRemoveEntry() {
-  const queryClient = useQueryClient();
+  const reload = useReloadDay();
   return useMutation({
     mutationFn: async (entry: LoggedEntry) => {
       const { error } = await supabase.from('meal_entries').delete().eq('id', entry.id);
@@ -82,7 +88,7 @@ export function useRemoveEntry() {
     },
     // Not waited for, so that the screen that removed it can go back before its day reloads.
     onSuccess: (_data, entry) => {
-      void queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) });
+      void reload(entry.day);
     },
   });
 }
@@ -92,7 +98,7 @@ export function useRemoveEntry() {
  * removal. The database keeps it for that long.
  */
 export function useRestoreEntry() {
-  const queryClient = useQueryClient();
+  const reload = useReloadDay();
   return useMutation({
     mutationFn: async (entry: LoggedEntry) => {
       const { error } = await supabase.rpc('restore_meal_entry', { entry_id: entry.id });
@@ -100,7 +106,29 @@ export function useRestoreEntry() {
         throw error;
       }
     },
-    onSuccess: (_data, entry) =>
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(entry.day) }),
+    onSuccess: (_data, entry) => reload(entry.day),
+  });
+}
+
+/**
+ * Adds copies of entries, such as the foods picked from a past meal, to a meal of a day in one
+ * step, with the same amounts (ADR 0037). Gives how many were added; foods that can no longer be
+ * logged are left out.
+ */
+export function useCopyEntries() {
+  const reload = useReloadDay();
+  return useMutation({
+    mutationFn: async ({ ids, day, meal }: { ids: number[]; day: string; meal: Meal }) => {
+      const { data, error } = await supabase.rpc('copy_meal_entries', {
+        entry_ids: ids,
+        to_day: day,
+        to_meal: meal,
+      });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: (_data, { day }) => reload(day),
   });
 }

@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
+import type { QueryData } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
+import { addDays, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { nameOf, refOfRow, type Amount, type FoodRef } from './foods';
@@ -109,17 +111,47 @@ export function totalsOf(row: {
 /** The query key of a day's entries, for anything that changes them. */
 export const dayEntriesKey = (day: string) => ['meal-entries', day];
 
+/** The columns of an entry that `loggedEntryOf` reads, with whether its food can still be logged. */
+const ENTRY_COLUMNS =
+  'id, day, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(archived_at, food_names(language, name)), custom_foods(name, archived_at)';
+
+const entriesQuery = () => supabase.from('meal_entries').select(ENTRY_COLUMNS);
+
+/** An entry as `ENTRY_COLUMNS` load it, typed from the generated database types. */
+type EntryRow = QueryData<ReturnType<typeof entriesQuery>>[number];
+
+/** An entry as `ENTRY_COLUMNS` load it, named in the language. */
+function loggedEntryOf(row: EntryRow, language: string): LoggedEntry {
+  return {
+    id: row.id,
+    day: row.day,
+    meal: row.meal,
+    food: refOfRow(row),
+    name: row.custom_foods
+      ? row.custom_foods.name
+      : nameOf(row.foods?.food_names ?? [], language, row.food_id ?? ''),
+    grams: row.grams,
+    portion:
+      row.portion_unit !== null && row.portion_count !== null
+        ? { unit: row.portion_unit, count: row.portion_count }
+        : null,
+    per100g: {
+      calories: row.kcal_per_100g,
+      proteinG: row.protein_per_100g,
+      carbsG: row.carbs_per_100g,
+      fatG: row.fat_per_100g,
+    },
+    ...totalsOf(row),
+  };
+}
+
 /** The signed-in user's entries of a day, YYYY-MM-DD, in the order they were logged. */
 export function useDayEntries(day: string) {
   const { i18n } = useTranslation();
   return useQuery({
     queryKey: [...dayEntriesKey(day), i18n.language],
     queryFn: async (): Promise<LoggedEntry[]> => {
-      const { data, error } = await supabase
-        .from('meal_entries')
-        .select(
-          'id, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(food_names(language, name)), custom_foods(name)',
-        )
+      const { data, error } = await entriesQuery()
         .eq('day', day)
         // A restored entry keeps its time, so it returns to its place.
         .order('created_at')
@@ -127,29 +159,47 @@ export function useDayEntries(day: string) {
       if (error) {
         throw error;
       }
-      return data.map((row) => {
-        return {
-          id: row.id,
-          day,
-          meal: row.meal,
-          food: refOfRow(row),
-          name: row.custom_foods
-            ? row.custom_foods.name
-            : nameOf(row.foods?.food_names ?? [], i18n.language, row.food_id ?? ''),
-          grams: row.grams,
-          portion:
-            row.portion_unit !== null && row.portion_count !== null
-              ? { unit: row.portion_unit, count: row.portion_count }
-              : null,
-          per100g: {
-            calories: row.kcal_per_100g,
-            proteinG: row.protein_per_100g,
-            carbsG: row.carbs_per_100g,
-            fatG: row.fat_per_100g,
-          },
-          ...totalsOf(row),
-        };
-      });
+      return data.map((row) => loggedEntryOf(row, i18n.language));
+    },
+  });
+}
+
+/** The entries of a meal on the latest day before `day` that has it, up to a week back. */
+export type PastMeal = { day: string; entries: LoggedEntry[] };
+
+/**
+ * The meal to add again on a day, as it was last eaten in the week before, or null. Entries of
+ * foods that can no longer be logged are left out, as copying would leave them out.
+ */
+export function usePastMeal(day: string, meal: Meal) {
+  const { i18n } = useTranslation();
+  return useQuery({
+    // Not under the day's key: it changes with the entries of the days before, which reload it.
+    queryKey: ['past-meal', meal, day, i18n.language],
+    queryFn: async (): Promise<PastMeal | null> => {
+      const { data, error } = await entriesQuery()
+        .eq('meal', meal)
+        .lt('day', day)
+        .gte('day', toIsoDate(addDays(fromIsoDate(day), -LOGGABLE_DAYS)))
+        .order('day', { ascending: false })
+        .order('created_at')
+        .order('id');
+      if (error) {
+        throw error;
+      }
+      const loggable = data.filter(
+        (row) => (row.foods?.archived_at ?? row.custom_foods?.archived_at ?? null) === null,
+      );
+      const latest = loggable[0]?.day;
+      if (latest === undefined) {
+        return null;
+      }
+      return {
+        day: latest,
+        entries: loggable
+          .filter((row) => row.day === latest)
+          .map((row) => loggedEntryOf(row, i18n.language)),
+      };
     },
   });
 }

@@ -10,6 +10,8 @@ type PillButtonProps = {
   /** `soft` for a light action such as Edit, `primary` for one that saves. */
   variant?: 'soft' | 'primary';
   disabled?: boolean;
+  /** What screen readers say instead of the label, when the label alone is too short. */
+  accessibilityLabel?: string;
 };
 
 /** A small rounded button for a screen's top bar, such as Edit or Save. */
@@ -18,12 +20,14 @@ export function PillButton({
   onPress,
   variant = 'soft',
   disabled = false,
+  accessibilityLabel,
 }: PillButtonProps) {
   const { colors, radii, spacing } = useTheme();
   const primary = variant === 'primary';
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}

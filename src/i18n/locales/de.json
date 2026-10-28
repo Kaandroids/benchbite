@@ -363,6 +363,58 @@
       "over": "Ziel erreicht · +{{ml}} ml",
       "add": "Ein Glas hinzufügen, {{ml}} ml",
       "remove": "Ein Glas entfernen"
+    },
+    "quick": {
+      "tabs": "Lebensmittellisten",
+      "frequent": "Häufig",
+      "favourites": "Favoriten",
+      "mine": "Eigenes",
+      "often": {
+        "breakfast": "Oft zum Frühstück",
+        "lunch": "Oft zum Mittagessen",
+        "dinner": "Oft zum Abendessen",
+        "snack": "Oft als Snack"
+      },
+      "last": {
+        "breakfast": "Dein letztes Frühstück",
+        "lunch": "Dein letztes Mittagessen",
+        "dinner": "Dein letztes Abendessen",
+        "snack": "Dein letzter Snack"
+      },
+      "lastSize_one": "{{count}} Lebensmittel · {{calories}} kcal",
+      "lastSize_other": "{{count}} Lebensmittel · {{calories}} kcal",
+      "lastFoods": "{{day}} · {{names}}",
+      "addAll": "Alle hinzufügen",
+      "addAllLabel": "Alle {{count}} Lebensmittel von {{day}} hinzufügen",
+      "addedAll_one": "{{count}} Lebensmittel hinzugefügt",
+      "addedAll_other": "{{count}} Lebensmittel hinzugefügt",
+      "times": "{{count}}×",
+      "emptyFrequent": {
+        "breakfast": "Noch nichts zum Frühstück eingetragen",
+        "lunch": "Noch nichts zum Mittagessen eingetragen",
+        "dinner": "Noch nichts zum Abendessen eingetragen",
+        "snack": "Noch keine Snacks eingetragen"
+      },
+      "emptyFrequentText": "Suche oben nach einem Lebensmittel. Was du am häufigsten einträgst, findest du dann hier, mit einem Tipp.",
+      "noFavourites": "Noch keine Favoriten",
+      "noFavouritesText": "Tippe auf den Stern eines Lebensmittels, um es hier zu behalten.",
+      "favouritesNote": "Neueste zuerst. Tippe auf den Stern eines Lebensmittels, um es hinzuzufügen oder zu entfernen.",
+      "noMine": "Noch keine eigenen Lebensmittel",
+      "noMineText": "Lege eines mit der Schaltfläche unten von seinem Etikett an.",
+      "error": "Die Liste konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
+      "favourite": "Zu Favoriten hinzufügen",
+      "unfavourite": "Aus Favoriten entfernen",
+      "favouriteAdded": "Zu Favoriten hinzugefügt",
+      "favouriteRemoved": "Aus Favoriten entfernt",
+      "favouriteError": "Der Favorit konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "favouriteLimit": "Du kannst bis zu 500 Favoriten haben. Entferne einen, um einen neuen hinzuzufügen.",
+      "isFavourite": "Favorit",
+      "choose": "Auswählen",
+      "chooseLabel": "Lebensmittel von {{day}} auswählen",
+      "pickNote": "{{day}} · hake an, was du wieder hattest",
+      "addPicked_one": "{{count}} Lebensmittel hinzufügen · {{calories}} kcal",
+      "addPicked_other": "{{count}} Lebensmittel hinzufügen · {{calories}} kcal",
+      "pickNothing": "Hake ein Lebensmittel an"
     }
   },
   "workout": {

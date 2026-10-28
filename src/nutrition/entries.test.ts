@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import { useAddEntry, useRemoveEntry, useRestoreEntry, useUpdateEntry } from './entries';
+import {
+  useAddEntry,
+  useRemoveEntry,
+  useCopyEntries,
+  useRestoreEntry,
+  useUpdateEntry,
+} from './entries';
 import type { LoggedEntry } from './meals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
@@ -154,5 +160,38 @@ describe('useRestoreEntry', () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ error: { code: 'BB023' } } as never);
     const { result } = await renderHook(() => useRestoreEntry());
     await expect(act(() => result.current.mutateAsync(MILK))).rejects.toEqual({ code: 'BB023' });
+  });
+});
+
+describe('useCopyEntries', () => {
+  it('adds copies of the entries picked in one step and loads the lists again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 2, error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useCopyEntries(), { queryClient });
+    let added;
+    await act(async () => {
+      added = await result.current.mutateAsync({ ids: [4, 5], day: '2026-10-27', meal: 'lunch' });
+    });
+    expect(added).toBe(2);
+    expect(supabase.rpc).toHaveBeenCalledWith('copy_meal_entries', {
+      entry_ids: [4, 5],
+      to_day: '2026-10-27',
+      to_meal: 'lunch',
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
+  });
+});
+
+describe('changing entries', () => {
+  it('loads the frequent foods and past meals again, which count every day', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    jest.mocked(supabase.from).mockReturnValue({ delete: () => ({ eq }) } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useRemoveEntry(), { queryClient });
+    await act(() => result.current.mutateAsync(MILK));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['frequent-foods'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
   });
 });

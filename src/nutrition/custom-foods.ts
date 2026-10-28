@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 
 import type { Portion } from './foods';
 import type { Totals } from './meals';
+import { QUICK_FOOD_KEYS } from './quick-foods';
 
 /** A food of one's own as the form saves it: its name trimmed, its values per 100 g and one portion, if any. */
 export type CustomFoodValues = {
@@ -24,7 +25,7 @@ function columnsOf({ name, per100g, portion }: CustomFoodValues) {
   };
 }
 
-/** Search, the food's own screen and the days, which name it, show it changed. */
+/** Search, the food's own screen, the days and the add screen's lists show it changed. */
 function useReloadFoods() {
   const queryClient = useQueryClient();
   return () =>
@@ -32,6 +33,7 @@ function useReloadFoods() {
       queryClient.invalidateQueries({ queryKey: ['food-search'] }),
       queryClient.invalidateQueries({ queryKey: ['food'] }),
       queryClient.invalidateQueries({ queryKey: ['meal-entries'] }),
+      ...QUICK_FOOD_KEYS.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
     ]);
 }
 

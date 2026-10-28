@@ -15,9 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SearchField } from '@/components/ui/search-field';
-import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
@@ -34,8 +32,11 @@ import {
   type FoodResult,
 } from './foods';
 import { useAddEntry } from './entries';
+import { FoodRow } from './food-row';
 import type { Meal } from './meals';
 import { usePortionLabel } from './portion-label';
+import { useFavouriteKeys } from './quick-foods';
+import { QuickFoods, type QuickFoodRow } from './quick-foods-view';
 
 type FoodSearchScreenProps = {
   meal: Meal;
@@ -51,8 +52,9 @@ function quickAmountOf(food: FoodResult): Amount {
 }
 
 /**
- * Finds a food to add to a meal. A result opens the amount screen, or its + adds the food's
- * default portion at once.
+ * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
+ * the favourites and one's own foods (ADR 0037). A food opens the amount screen, or its + adds it
+ * at once: a frequent food as it was logged last, others by their default portion.
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
@@ -64,17 +66,18 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const term = useSettledQuery(typed);
   const search = useFoodSearch(term);
   const addEntry = useAddEntry();
+  const favourites = useFavouriteKeys();
   // The foods added from here, which show a check instead of their +, and the ones being saved,
   // whose + waits so that a double tap does not add them twice.
   const [added, setAdded] = useState<string[]>([]);
   const [saving, setSaving] = useState<string[]>([]);
 
   // Handled per call: callbacks passed to mutate() run only for the latest one.
-  const quickAdd = (food: FoodResult) => {
+  const quickAdd = (food: FoodResult, amount: Amount) => {
     const key = refKey(food.ref);
     setSaving((current) => [...current, key]);
     addEntry
-      .mutateAsync({ day, meal, food: food.ref, ...quickAmountOf(food) })
+      .mutateAsync({ day, meal, food: food.ref, ...amount })
       .then(() => {
         setAdded((current) => [...current, key]);
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -87,57 +90,35 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       .finally(() => setSaving((current) => current.filter((id) => id !== key)));
   };
 
-  const row = ({ item }: { item: FoodResult }) => {
-    const key = refKey(item.ref);
-    const quick = quickAmountOf(item);
-    const portion = item.portion
-      ? portionLabel(item.portion.unit, 1)
-      : t('nutrition.amount.inGrams', { grams: format(quick.grams) });
-    const done = added.includes(key);
+  const row = ({ food, index, amount = quickAmountOf(food), times }: QuickFoodRow) => {
+    const key = refKey(food.ref);
+    const portion = amount.portion
+      ? portionLabel(amount.portion.unit, amount.portion.count)
+      : t('nutrition.amount.inGrams', { grams: format(amount.grams) });
+    const detail = t(amount.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
+      portion,
+      grams: format(amount.grams),
+      calories: format(Math.round(amountOf(food.per100g, amount.grams).calories)),
+    });
     return (
-      <View
-        style={[
-          styles.row,
-          { gap: spacing.md, paddingVertical: spacing.md, borderTopColor: colors.border },
-        ]}
-      >
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            router.push({ pathname: '/nutrition/food/[id]', params: { id: key, meal, day } })
-          }
-          style={({ pressed }) => [styles.text, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <View style={[styles.name, { gap: spacing.sm }]}>
-            <Text variant="label" numberOfLines={2} style={styles.flexText}>
-              {item.name}
-            </Text>
-            {item.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
-          </View>
-          <Text variant="caption" color="textMuted">
-            {t(item.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
-              portion,
-              grams: format(quick.grams),
-              calories: format(Math.round(amountOf(item.per100g, quick.grams).calories)),
-            })}
-          </Text>
-        </Pressable>
-        {done ? (
-          <View style={styles.done}>
-            <Icon name="check" size={18} color="success" />
-          </View>
-        ) : (
-          <RoundIconButton
-            icon="plus"
-            color="primary"
-            background="iconBackground"
-            size={36}
-            label={t('nutrition.search.quickAdd', { portion, name: item.name })}
-            onPress={() => quickAdd(item)}
-            disabled={saving.includes(key)}
-          />
-        )}
-      </View>
+      <FoodRow
+        key={key}
+        food={food}
+        detail={
+          times === undefined
+            ? detail
+            : `${detail} · ${t('nutrition.quick.times', { count: times })}`
+        }
+        addLabel={t('nutrition.search.quickAdd', { portion, name: food.name })}
+        favourite={favourites.has(key)}
+        added={added.includes(key)}
+        adding={saving.includes(key)}
+        first={index === 0}
+        onOpen={() =>
+          router.push({ pathname: '/nutrition/food/[id]', params: { id: key, meal, day } })
+        }
+        onAdd={() => quickAdd(food, amount)}
+      />
     );
   };
 
@@ -145,7 +126,9 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   // ones stay, and an empty list is no answer yet.
   const current = term === typed && !search.isPlaceholderData && !search.isFetching;
   let body;
-  if (typed.length < MIN_QUERY_LENGTH) {
+  if (typed.length === 0) {
+    body = <QuickFoods meal={meal} day={day} renderRow={row} />;
+  } else if (typed.length < MIN_QUERY_LENGTH) {
     body = (
       <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
         {t('nutrition.search.hint')}
@@ -176,7 +159,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       <FlatList
         data={search.data}
         keyExtractor={(item) => refKey(item.ref)}
-        renderItem={row}
+        renderItem={({ item, index }) => row({ food: item, index })}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
       />
@@ -248,26 +231,5 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  text: {
-    flex: 1,
-  },
-  name: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flexText: {
-    flexShrink: 1,
-  },
-  done: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
