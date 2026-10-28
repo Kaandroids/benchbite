@@ -263,7 +263,8 @@
       "more": "Mehr",
       "inGrams": "{{grams}} g",
       "adds": "Das ergibt",
-      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal."
+      "dayWould": "Der Tag käme auf {{eaten}} von {{target}} kcal.",
+      "gramsUnit": "Gramm"
     },
     "addError": {
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",

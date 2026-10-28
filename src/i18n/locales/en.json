@@ -263,7 +263,8 @@
       "more": "More",
       "inGrams": "{{grams}} g",
       "adds": "This adds",
-      "dayWould": "The day would be {{eaten}} of {{target}} kcal."
+      "dayWould": "The day would be {{eaten}} of {{target}} kcal.",
+      "gramsUnit": "grams"
     },
     "addError": {
       "closedDay": "Meals can only be added to today and the week before.",

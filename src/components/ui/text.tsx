@@ -14,7 +14,7 @@ export type TextProps = NativeTextProps & {
 
 // Large text already fills the screen; letting it grow without limit with the system font size
 // would push content off screen. Body text keeps growing freely.
-const MAX_FONT_SCALE: Partial<Record<TypographyVariant, number>> = {
+export const MAX_FONT_SCALE: Partial<Record<TypographyVariant, number>> = {
   display: 1.3,
   hero: 1.3,
   title: 1.4,
