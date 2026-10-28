@@ -7,6 +7,14 @@ export function toIsoDate(date: Date): string {
 }
 
 /** The ISO weekday of a date, 1 for Monday to 7 for Sunday. */
+/**
+ * Today on the device, YYYY-MM-DD. Days follow the device (ADR 0034), so calls that depend on the
+ * day send it to the database, which checks it against its own (ADR 0041).
+ */
+export function deviceToday(): string {
+  return toIsoDate(new Date());
+}
+
 export function isoWeekday(date: Date): number {
   return ((date.getDay() + 6) % 7) + 1;
 }

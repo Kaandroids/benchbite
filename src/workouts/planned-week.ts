@@ -4,7 +4,7 @@ import { addDays, fromIsoDate, isoWeekday, toIsoDate, weekStart } from '@/i18n/d
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import { WORKOUTS_KEY, type WeekSession, type Workout } from './workouts';
+import { sessionOf, WORKOUTS_KEY, type WeekSession, type Workout } from './workouts';
 
 /** A workout planned on a day, as the database keeps or plans it (ADR 0041). */
 export type PlannedDay = {
@@ -58,15 +58,7 @@ export function plannedSessions(planned: readonly PlannedDay[], workouts: readon
     const workout = workouts.find((item) => item.id === row.workoutId);
     const weekday = isoWeekday(fromIsoDate(row.day));
     if (workout?.active) {
-      return {
-        weekday,
-        on: row.day,
-        workoutId: workout.id,
-        name: workout.name,
-        type: workout.type,
-        exercises: workout.exercises,
-        estimatedMinutes: workout.estimatedMinutes,
-      };
+      return { ...sessionOf(workout, weekday), on: row.day };
     }
     return {
       weekday,
@@ -77,6 +69,7 @@ export function plannedSessions(planned: readonly PlannedDay[], workouts: readon
       exercises: workout?.exercises ?? [],
       estimatedMinutes: workout?.estimatedMinutes ?? 0,
       gone: true,
+      deleted: workout === undefined,
     };
   });
 }

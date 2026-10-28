@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { toIsoDate } from '@/i18n/dates';
+import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
@@ -33,6 +33,18 @@ export type Workout = {
   exercises: WorkoutExercise[];
 };
 
+/** A workout as a session on a weekday. */
+export function sessionOf(workout: Workout, weekday: number): WeekSession {
+  return {
+    weekday,
+    workoutId: workout.id,
+    name: workout.name,
+    type: workout.type,
+    exercises: workout.exercises,
+    estimatedMinutes: workout.estimatedMinutes,
+  };
+}
+
 /** A workout on one day of the week. */
 export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimatedMinutes'> & {
   weekday: number;
@@ -41,6 +53,8 @@ export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimat
   on?: string;
   /** Whether the workout left the plan since, archived or deleted: shown, not started or moved. */
   gone?: boolean;
+  /** Whether it was deleted, so that its logs no longer say which workout they were. */
+  deleted?: boolean;
 };
 
 export const WORKOUTS_KEY = ['workouts'];
@@ -114,16 +128,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
 export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
   const sessions = workouts
     .filter((workout) => workout.active)
-    .flatMap((workout) =>
-      workout.weekdays.map((weekday) => ({
-        weekday,
-        workoutId: workout.id,
-        name: workout.name,
-        type: workout.type,
-        exercises: workout.exercises,
-        estimatedMinutes: workout.estimatedMinutes,
-      })),
-    )
+    .flatMap((workout) => workout.weekdays.map((weekday) => sessionOf(workout, weekday)))
     .sort((a, b) => a.weekday - b.weekday);
   return { sessions };
 }
@@ -154,11 +159,12 @@ export function useSetWorkoutActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      // With the device's today, so that the days before it keep the plan they had (ADR 0041).
+      // With the device's today, as every change to the plan, so that the days before it keep
+      // the plan they had (ADR 0041).
       const { error } = await supabase.rpc('set_workout_active', {
         workout_id: id,
         active,
-        today: toIsoDate(new Date()),
+        today: deviceToday(),
       });
       if (error) {
         throw error;
@@ -228,7 +234,7 @@ export function useSaveWorkout() {
     mutationFn: async (draft: WorkoutDraft) => {
       const { data, error } = await supabase.rpc('save_workout', {
         workout: draft,
-        today: toIsoDate(new Date()),
+        today: deviceToday(),
       });
       if (error) {
         throw error;
@@ -246,7 +252,7 @@ export function useDeleteWorkout() {
     mutationFn: async (id: number) => {
       const { error } = await supabase.rpc('delete_workout', {
         workout_id: id,
-        today: toIsoDate(new Date()),
+        today: deviceToday(),
       });
       if (error) {
         throw error;
