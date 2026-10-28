@@ -27,15 +27,22 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 - **The device says which day is today:** the app calls `keep_planned_days(today)` before every
   change, as days follow the device (ADR 0034). It refuses a day more than one from the server's.
   A trigger on `workouts` (insert, delete, a change of weekdays or active) keeps the days through
-  the server's yesterday in any case, so no change can reach a past day, whatever path it takes.
+  the day before the server's yesterday in any case, so no change can reach a past day whatever
+  path it takes, while a device a day behind the server still changes its today. A user being
+  deleted keeps nothing.
 - **Kept days are never written again,** and only the database writes them: clients read their
-  own rows, and the functions run with their owner's rights for the caller only.
-- **Moves stay with the days that keep them:** `drop_stale_moves()` deletes moves that no longer
-  fit the plan only from days after the last kept one; a kept day keeps its moves and skips with
-  the plan they were made for.
+  own rows, and the functions run with their owner's rights for the caller only. Calls for one
+  user wait for each other, and the last kept day only moves forward.
+- **One function reads a day's plan:** `planned_workouts(from_day, to_day, today)` returns each
+  day's workouts: kept days as kept, and the device's today and later days by the plan. Days
+  before the onboarding have none. The week, earlier weeks (#71) and streaks (#70) all read it, as
+  `targets_of_day()` decides a day's targets (ADR 0040).
+- **Moves stay with the days that keep them:** `drop_stale_moves()` keeps a move that lies wholly
+  within kept days, with the plan it was made for. A move into a day that follows the plan is
+  deleted when it no longer fits, as before.
 - **Days before:** the migration keeps the days from the end of each user's onboarding to
-  yesterday with the plan as it is when it runs, the closest there is to the one they had. A new
-  user's plan starts the day they finish the onboarding.
+  yesterday with the plan as it is when it runs, the closest there is to the one they had. A
+  user's first workout starts the plan without earlier days, whose plan is not known.
 
 ## Alternatives considered
 
@@ -54,6 +61,6 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 
 - Every place that changes the plan (saving, archiving or deleting a workout) calls
   `keep_planned_days` with the device's today first.
-- The week schedule takes each day's planned workouts instead of the weekdays: kept days from
-  `planned_days`, later days from the plan.
+- The week schedule takes each day's planned workouts from `planned_workouts()` instead of the
+  weekdays.
 - A past day of a deleted workout shows its name but can no longer be moved or started.
