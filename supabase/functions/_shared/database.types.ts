@@ -1081,6 +1081,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      can_be_logged: {
+        Args: { custom_food_id: number; food_id: string; recipe_id: number };
+        Returns: boolean;
+      };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_sets: { Args: { log: Json }; Returns: undefined };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };

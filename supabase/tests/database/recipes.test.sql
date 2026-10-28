@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -126,6 +126,26 @@ select throws_ok(
   null,
   'An ingredient weighs at most 5,000 g'
 );
+select throws_ok(
+  $$ select public.save_recipe(null, 'Chili', 1::smallint, 'plate',
+       jsonb_build_array(jsonb_build_object('food_id', 'C133000', 'grams', 3000),
+         jsonb_build_object('food_id', 'C133000', 'grams', 3000))) $$,
+  '22023',
+  null,
+  'A serving weighs at most 5,000 g, as an entry does'
+);
+select throws_ok(
+  $$ select public.save_recipe((select id from ids where key = 'porridge'), 'Porridge',
+       4::smallint, 'bowl', null) $$,
+  '22023',
+  null,
+  'A recipe cannot be saved without its ingredients'
+);
+select results_eq(
+  $$ select count(*)::integer from public.recipe_ingredients $$,
+  $$ values (1) $$,
+  'and keeps the ones it had'
+);
 
 -- Another user
 
@@ -153,6 +173,21 @@ select throws_ok(
   null,
   'nor star them'
 );
+select throws_ok(
+  $$ insert into public.recipe_ingredients (recipe_id, position, food_id, grams)
+     select id, 9, 'C133000', 100 from ids where key = 'porridge' $$,
+  '42501',
+  null,
+  'nor add ingredients to them'
+);
+delete from public.recipe_ingredients;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select count(*)::integer from public.recipe_ingredients $$,
+  $$ values (1) $$,
+  'nor remove them'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
   $$ select public.save_recipe(null, 'Borrowed', 1::smallint, 'bowl',
        jsonb_build_array(jsonb_build_object('custom_food_id',
@@ -205,6 +240,18 @@ select throws_ok(
 );
 
 select set_config('role', 'anon', true);
+select throws_ok(
+  $$ select * from public.recipes $$,
+  '42501',
+  null,
+  'Requests without a session cannot read recipes'
+);
+select throws_ok(
+  $$ select * from public.recipe_values $$,
+  '42501',
+  null,
+  'nor their values'
+);
 select throws_ok(
   $$ select public.save_recipe(null, 'Anon', 1::smallint, 'bowl',
        jsonb_build_array(jsonb_build_object('food_id', 'C133000', 'grams', 50))) $$,

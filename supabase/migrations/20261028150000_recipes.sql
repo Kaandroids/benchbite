@@ -184,8 +184,9 @@ revoke all on public.recipe_values from anon;
 grant select on public.recipe_values to authenticated;
 
 -- Adds a recipe, or changes one of the caller's, with all its ingredients in one step, and gives
--- its id. `ingredients` is a list of {food_id | custom_food_id, grams, portion_unit,
--- portion_count}, in the order shown. Runs as the caller, so the policies above apply.
+-- its id. `ingredients` is a list of 1 to 50 {food_id | custom_food_id, grams, portion_unit,
+-- portion_count}, in the order shown, and a serving weighs at most 5,000 g, as an entry does.
+-- Runs as the caller, so the policies above apply.
 create function public.save_recipe(
   recipe_id bigint,
   name text,
@@ -200,7 +201,8 @@ as $$
 declare
   saved_id bigint;
 begin
-  if jsonb_typeof(ingredients) <> 'array'
+  if ingredients is null
+    or jsonb_typeof(ingredients) <> 'array'
     or jsonb_array_length(ingredients) not between 1 and 50 then
     raise exception 'A recipe has 1 to 50 ingredients' using errcode = '22023';
   end if;
@@ -230,6 +232,15 @@ begin
     (item.value ->> 'portion_unit')::public.portion_unit,
     (item.value ->> 'portion_count')::numeric
   from jsonb_array_elements(ingredients) with ordinality as item(value, ordinality);
+
+  -- A serving is logged as one entry, which holds at most 5,000 g.
+  if (
+    select sum(i.grams) / save_recipe.servings
+    from public.recipe_ingredients i
+    where i.recipe_id = saved_id
+  ) > 5000 then
+    raise exception 'A serving weighs at most 5,000 g' using errcode = '22023';
+  end if;
 
   return saved_id;
 end;
@@ -375,6 +386,25 @@ begin
 end;
 $$;
 
+-- Whether the food a row names can still be logged: a library food still in the library, or a
+-- food or recipe of one's own that is not deleted. Every table that names a food by these three
+-- columns asks it, so that a new kind of food is added here once.
+create function public.can_be_logged(food_id text, custom_food_id bigint, recipe_id bigint)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    (select f.archived_at from public.foods f where f.id = can_be_logged.food_id),
+    (select c.archived_at from public.custom_foods c where c.id = can_be_logged.custom_food_id),
+    (select r.archived_at from public.recipes r where r.id = can_be_logged.recipe_id)
+  ) is null;
+$$;
+
+revoke execute on function public.can_be_logged(text, bigint, bigint) from public, anon;
+grant execute on function public.can_be_logged(text, bigint, bigint) to authenticated;
+
 -- Recipes can be starred too.
 alter table public.favourite_foods
   add column recipe_id bigint references public.recipes (id),
@@ -420,11 +450,8 @@ begin
   if (
     select count(*)
     from public.favourite_foods fav
-    left join public.foods f on f.id = fav.food_id
-    left join public.custom_foods c on c.id = fav.custom_food_id
-    left join public.recipes r on r.id = fav.recipe_id
     where fav.user_id = new.user_id
-      and coalesce(f.archived_at, c.archived_at, r.archived_at) is null
+      and public.can_be_logged(fav.food_id, fav.custom_food_id, fav.recipe_id)
   ) >= 500 then
     raise exception 'A user can have up to 500 favourite foods' using errcode = 'BB027';
   end if;
@@ -579,12 +606,9 @@ begin
   select copy_meal_entries.to_day, copy_meal_entries.to_meal, e.food_id, e.custom_food_id,
     e.recipe_id, e.grams, e.portion_unit, e.portion_count
   from public.meal_entries e
-  left join public.foods f on f.id = e.food_id
-  left join public.custom_foods c on c.id = e.custom_food_id
-  left join public.recipes r on r.id = e.recipe_id
   where e.user_id = (select auth.uid())
     and e.id = any (copy_meal_entries.entry_ids)
-    and coalesce(f.archived_at, c.archived_at, r.archived_at) is null
+    and public.can_be_logged(e.food_id, e.custom_food_id, e.recipe_id)
   order by e.created_at, e.id;
   get diagnostics added = row_count;
   return added;
@@ -657,14 +681,35 @@ as $$
     from scored
     where score >= 0.4
     order by food_id, custom_food_id, recipe_id, score desc
+  ),
+  -- Joined by kind with equal ids, so that only the matches are built: a recipe's values are
+  -- summed for the recipes found, not for all of them.
+  found as (
+    select f.id as food_id, null::bigint as custom_food_id, null::bigint as recipe_id,
+      coalesce(own.name, en.name) as name, f.kcal, f.protein_g, f.carbs_g, f.fat_g,
+      p.unit as portion_unit, p.grams as portion_grams, m.score
+    from matches m
+    join public.foods f on f.id = m.food_id and f.archived_at is null
+    join public.food_names en on en.food_id = f.id and en.language = 'en'
+    left join public.food_names own
+      on own.food_id = f.id and own.language = search_foods.language
+    join public.food_portions p on p.food_id = f.id and p.is_default
+    union all
+    select null, c.id, null, c.name, c.kcal, c.protein_g, c.carbs_g, c.fat_g, c.portion_unit,
+      c.portion_grams, m.score
+    from matches m
+    join public.custom_foods c on c.id = m.custom_food_id
+    union all
+    select null, null, r.id, r.name, v.kcal, v.protein_g, v.carbs_g, v.fat_g, r.serving_unit,
+      round(v.grams / r.servings, 1), m.score
+    from matches m
+    join public.recipes r on r.id = m.recipe_id
+    join public.recipe_values v on v.recipe_id = r.id
   )
-  select l.food_id, l.custom_food_id, l.recipe_id, l.name, l.kcal, l.protein_g, l.carbs_g,
-    l.fat_g, l.portion_unit, l.portion_grams
-  from matches m
-  join public.loggable_foods(search_foods.language) l
-    on l.food_id = m.food_id or l.custom_food_id = m.custom_food_id or l.recipe_id = m.recipe_id
-  order by m.score desc, l.food_id is not null, length(l.name), l.food_id, l.custom_food_id,
-    l.recipe_id
+  select food_id, custom_food_id, recipe_id, name, kcal, protein_g, carbs_g, fat_g, portion_unit,
+    portion_grams
+  from found
+  order by score desc, food_id is not null, length(name), food_id, custom_food_id, recipe_id
   limit 30;
 $$;
 
