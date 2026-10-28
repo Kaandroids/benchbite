@@ -54,16 +54,6 @@ function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Total
 
   return (
     <View style={{ gap: spacing.md }}>
-      {/* What was eaten and the goal, to read only: the goals change elsewhere. */}
-      <View style={styles.eatenLine}>
-        <Text variant="captionStrong" color="textMuted">
-          <Text variant="label">{format(Math.round(eaten.calories))}</Text>{' '}
-          {t('nutrition.kcalEaten')}
-        </Text>
-        <Text variant="captionStrong" color="textMuted">
-          {t('nutrition.goal', { calories: format(targets.calories) })}
-        </Text>
-      </View>
       <View style={[styles.row, { gap: spacing.lg }]}>
         <View
           accessible
@@ -150,11 +140,6 @@ const styles = StyleSheet.create({
   },
   macros: {
     flex: 1,
-  },
-  eatenLine: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
   },
   macroName: {
     flexDirection: 'row',

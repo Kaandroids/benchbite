@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { useWaterGoal } from '@/profile/water-goal';
-import { act, fireEvent, render, screen } from '@/test/render';
+import { fireEvent, render, screen } from '@/test/render';
 
 import { useDayEntries, type MealEntry } from './meals';
 import { NutritionScreen } from './nutrition-screen';
@@ -70,8 +70,11 @@ describe('NutritionScreen', () => {
     expect(screen.getByText('1,070')).toBeTruthy();
     expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.getByText('96 / 144 g')).toBeTruthy();
-    expect(screen.getByText('Goal 2,550 kcal')).toBeTruthy();
-    expect(screen.getByText('1,480')).toBeTruthy();
+    // The calories eaten of the goal sit on the goals button, not in the summary.
+    expect(
+      screen.getByRole('button', { name: '1,480 of 2,550 kcal eaten. Daily goals' }),
+    ).toBeTruthy();
+    expect(screen.getByText('/ 2,550 kcal')).toBeTruthy();
     expect(progress()[0]).toEqual(['1,480 of 2,550 kcal eaten', 58]);
 
     expect(screen.getByText(/2 items/)).toBeTruthy();
@@ -187,38 +190,16 @@ describe('NutritionScreen', () => {
     expect(screen.getByText('October 25')).toBeTruthy();
   });
 
-  it('fills the + of the meal due now only, on today only', async () => {
-    // Noon, with nothing logged: lunch is due.
+  it('gives each meal its own colour, its + included', async () => {
     await render(<NutritionScreen />);
-    const soft = background('Add to breakfast');
-    expect(background('Add to lunch')).not.toBe(soft);
-    expect(background('Add to dinner')).toBe(soft);
-
-    await fireEvent.press(screen.getByLabelText('Previous day'));
-    expect(background('Add to lunch')).toBe(soft);
-  });
-
-  it('points to no meal once the one due is logged', async () => {
-    mockDay([entry('lunch', 600)]);
-    await render(<NutritionScreen />);
-    const soft = background('Add to breakfast');
-    for (const meal of ['lunch', 'dinner']) {
-      expect(background(`Add to ${meal}`)).toBe(soft);
-    }
-  });
-
-  it('moves on to the next meal as the hour passes while the tab stays open', async () => {
-    jest.setSystemTime(new Date(2026, 9, 27, 10, 59));
-    await render(<NutritionScreen />);
-    expect(background('Add to breakfast')).not.toBe(background('Add to lunch'));
-    await act(async () => jest.advanceTimersByTime(2 * 60 * 1000));
-    expect(background('Add to lunch')).not.toBe(background('Add to breakfast'));
-    expect(background('Add to breakfast')).toBe(background('Add to dinner'));
+    const labels = ['Add to breakfast', 'Add to lunch', 'Add to dinner', 'Add a snack'];
+    const colours = labels.map(background);
+    expect(new Set(colours).size).toBe(4);
   });
 
   it('opens the daily goals', async () => {
     await render(<NutritionScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Goals' }));
+    await fireEvent.press(screen.getByRole('button', { name: /Daily goals/ }));
     expect(router.push).toHaveBeenCalledWith('/nutrition/goals');
   });
 });

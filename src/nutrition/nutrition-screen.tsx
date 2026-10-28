@@ -5,14 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
-import { PillButton } from '@/components/ui/pill-button';
 import { addDays, toIsoDate } from '@/i18n/dates';
 import { useWaterGoal } from '@/profile/water-goal';
 
 import { DaySummary } from './day-summary';
 import { DaySwitcher } from './day-switcher';
 import { MealList } from './meal-list';
-import { mealsOf, suggestedCalories, totalOf, useDayEntries, useDueMeal } from './meals';
+import { GoalsButton } from './goals-button';
+import { mealsOf, suggestedCalories, totalOf, useDayEntries } from './meals';
 import { useDayTargets } from './targets';
 import { useWater } from './water';
 import { WaterCard } from './water-card';
@@ -28,7 +28,6 @@ export function NutritionScreen() {
   const entries = useDayEntries(toIsoDate(day));
   const water = useWater(toIsoDate(day));
   const waterGoal = useWaterGoal();
-  const due = useDueMeal();
   const queries = [targets, entries, water, waterGoal];
 
   const loaded = allLoaded(queries);
@@ -39,7 +38,6 @@ export function NutritionScreen() {
       <>
         <MealList
           meals={meals}
-          due={daysBack === 0 ? due : undefined}
           suggested={targets.data ? suggestedCalories(targets.data.calories, meals) : new Map()}
           onOpen={(meal) =>
             router.push({ pathname: '/nutrition/meal', params: { meal, day: toIsoDate(day) } })
@@ -57,9 +55,12 @@ export function NutritionScreen() {
     <TabScreen queries={queries} gap="md">
       <TabHeader title={t('tabs.nutrition')}>
         {/* The goals the day is measured against, to see or change (ADR 0039). */}
-        <PillButton
-          icon="target"
-          label={t('nutrition.goals.button')}
+        <GoalsButton
+          calories={
+            targets.data && entries.data
+              ? { eaten: totalOf(entries.data).calories, goal: targets.data.calories }
+              : null
+          }
           onPress={() => router.push('/nutrition/goals')}
         />
       </TabHeader>

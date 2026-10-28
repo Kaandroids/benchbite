@@ -470,8 +470,6 @@
       "ingredient": "{{name}} {{amount}}",
       "full": "Ein Rezept hat höchstens 50 Zutaten."
     },
-    "kcalEaten": "kcal gegessen",
-    "goal": "Ziel {{calories}} kcal",
     "goals": {
       "button": "Ziele",
       "title": "Tagesziele",
@@ -497,7 +495,9 @@
       "save": "Ziele speichern",
       "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
       "reached": "Ziel erreicht",
-      "again": "Neu berechnen"
+      "again": "Neu berechnen",
+      "eatenOfGoal": "{{eaten}} von {{goal}} kcal gegessen. Tagesziele",
+      "ofGoal": "/ {{goal}} kcal"
     },
     "recalculate": {
       "sections": {
