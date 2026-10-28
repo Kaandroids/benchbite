@@ -75,6 +75,27 @@ describe('Screen', () => {
     expect(screen.getByText('Today · Tue, Oct 27')).toBeTruthy();
   });
 
+  it('makes a title larger on its own, shrinking a long one to fit on one line', async () => {
+    await render(
+      <Screen onBack={() => {}} title="Add to breakfast">
+        <Text>Body</Text>
+      </Screen>,
+    );
+    const title = screen.getByRole('header', { name: 'Add to breakfast' });
+    expect(title).toHaveStyle({ fontSize: 20 });
+    expect(title.props.adjustsFontSizeToFit).toBe(true);
+    expect(title.props.minimumFontScale).toBe(0.8);
+  });
+
+  it('keeps a title with a line under it at the smaller size', async () => {
+    await render(
+      <Screen onBack={() => {}} title="Breakfast" subtitle="Today · Tue, Oct 27">
+        <Text>Body</Text>
+      </Screen>,
+    );
+    expect(screen.getByRole('header', { name: 'Breakfast' })).toHaveStyle({ fontSize: 16 });
+  });
+
   it('keeps an empty text title in the middle, balanced against the back button', async () => {
     await render(
       <Screen onBack={() => {}} title="" subtitle="History">

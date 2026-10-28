@@ -8,6 +8,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
@@ -135,9 +136,11 @@ export function PickerScreen() {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <Text variant="label" accessibilityRole="header">
-          {t('picker.title')}
-        </Text>
+        <View style={styles.title}>
+          <ScreenTitle title={t('picker.title')} />
+        </View>
+        {/* Keeps the title in the middle, balanced against the cross. */}
+        <View style={styles.close} />
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
@@ -289,6 +292,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 52,
+  },
+  title: {
+    flex: 1,
   },
   close: {
     width: 44,

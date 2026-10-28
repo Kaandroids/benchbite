@@ -6,6 +6,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Card } from '@/components/ui/card';
 import { PillButton } from '@/components/ui/pill-button';
 import { Screen } from '@/components/ui/screen';
+import { ScreenTitle } from '@/components/ui/screen-title';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -117,11 +118,7 @@ export function ExerciseScreen({
         ) : undefined
       }
       // In the top bar, as on the other screens; long names take a second line.
-      title={
-        <Text variant="label" accessibilityRole="header" align="center" numberOfLines={2}>
-          {exercise.name}
-        </Text>
-      }
+      title={<ScreenTitle title={exercise.name} lines={2} />}
     >
       <View style={[styles.row, { gap: spacing.sm }]}>
         {pictures.map(({ path, end }) => (
