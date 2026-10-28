@@ -215,4 +215,10 @@ describe('NutritionScreen', () => {
     expect(background('Add to lunch')).not.toBe(background('Add to breakfast'));
     expect(background('Add to breakfast')).toBe(background('Add to dinner'));
   });
+
+  it('opens the daily goals', async () => {
+    await render(<NutritionScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Goals' }));
+    expect(router.push).toHaveBeenCalledWith('/nutrition/goals');
+  });
 });
