@@ -5,7 +5,6 @@ import { StyleSheet, View } from 'react-native';
 import { LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
-import { FormError } from '@/components/ui/form-error';
 import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
@@ -14,8 +13,8 @@ import { Text } from '@/components/ui/text';
 import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { useNutritionTargets, useRecalculateTargets } from '../targets';
-import { answerChanges, wasParam, type AnswerChange } from './answers';
+import { useNutritionTargets } from '../targets';
+import { answerChanges, paramsOf, wasParam, type AnswerChange } from './answers';
 import { leave, type StepProps } from './step';
 import { Was } from './was';
 
@@ -33,7 +32,6 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
   const { format } = useNumberFormat();
   const weightLabel = useWeightLabel();
   const inUse = useNutritionTargets();
-  const recalculate = useRecalculateTargets();
   const changes = answerChanges(basis, answers);
   const was = inUse.data;
 
@@ -61,15 +59,9 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
     if (!was) {
       return;
     }
-    recalculate.mutate(answers, {
-      onSuccess: () => {
-        // The steps close under the page with the new goals, so going back from it leaves.
-        router.dismissTo('/nutrition/goals');
-        router.push({
-          pathname: '/nutrition/recalculate/[step]',
-          params: { step: 'done', was: wasParam(was) },
-        });
-      },
+    router.push({
+      pathname: '/nutrition/recalculate/[step]',
+      params: { step: 'building', ...paramsOf(answers), was: wasParam(was) },
     });
   };
 
@@ -79,17 +71,11 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
       onBack={() => router.back()}
       onClose={leave}
       footer={
-        <View style={{ gap: spacing.md }}>
-          {recalculate.isError ? (
-            <FormError>{t('nutrition.recalculate.review.saveError')}</FormError>
-          ) : null}
-          <Button
-            label={t('nutrition.recalculate.review.calculate')}
-            loading={recalculate.isPending}
-            disabled={changes.length === 0 || !was}
-            onPress={calculate}
-          />
-        </View>
+        <Button
+          label={t('nutrition.recalculate.review.calculate')}
+          disabled={changes.length === 0 || !was}
+          onPress={calculate}
+        />
       }
     >
       <StepHeading

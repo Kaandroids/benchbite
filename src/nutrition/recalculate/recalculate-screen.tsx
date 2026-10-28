@@ -14,6 +14,7 @@ import {
   type RecalculateParams,
   type RecalculateStep,
 } from './answers';
+import { BuildingStep } from './building-step';
 import { DoneScreen } from './done-screen';
 import { GoalStep } from './goal-step';
 import { ReviewStep } from './review-step';
@@ -22,7 +23,8 @@ import { TargetStep } from './target-step';
 
 /**
  * Working the calculated targets out again (ADR 0039): the goal, the target weight and pace for a
- * goal that changes the weight, the activity, and the new targets against the ones in use. Each
+ * goal that changes the weight, the activity, the review, the save with the onboarding's
+ * animation, and the new targets against the ones in use. Each
  * step is a screen of its own, so going back is the usual swipe; the answers so far are its route
  * parameters. The saved answers are where each step starts.
  */
@@ -51,6 +53,9 @@ function StepScreen({ step, params }: { step: string; params: RecalculateParams 
 
   const weightKg = latest.data.weightKg;
   const answers = answersFrom(params, basis.data, weightKg);
+  if (step === 'building') {
+    return <BuildingStep answers={answers} weightKg={weightKg} unit={unit.data} was={params.was} />;
+  }
   const steps = stepsFor(answers.goal);
   const current = steps.includes(step as RecalculateStep) ? (step as RecalculateStep) : 'goal';
   const index = steps.indexOf(current);
