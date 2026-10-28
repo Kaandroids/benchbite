@@ -1,26 +1,31 @@
-import { Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
 
 import { ComingSoon } from '@/components/coming-soon';
-import { Text } from '@/components/ui/text';
+import { DevButton } from '@/dev/dev-button';
 import { SettingsButton } from '@/settings/settings-button';
+import { useTheme } from '@/theme';
 
 export default function ProgressTab() {
   const { t } = useTranslation();
+  const { spacing } = useTheme();
   return (
     <ComingSoon
       icon="chart"
       message={t('comingSoon.progress')}
       title={t('tabs.progress')}
-      action={<SettingsButton />}
-    >
-      {__DEV__ ? (
-        <Link href="/dev/components">
-          <Text variant="bodyStrong" color="primaryText">
-            Open the component gallery
-          </Text>
-        </Link>
-      ) : null}
-    </ComingSoon>
+      action={
+        <View style={[styles.actions, { gap: spacing.sm }]}>
+          <DevButton />
+          <SettingsButton />
+        </View>
+      }
+    />
   );
 }
+
+const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+  },
+});

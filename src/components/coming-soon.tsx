@@ -11,15 +11,13 @@ import { useTheme } from '@/theme';
 type ComingSoonProps = {
   icon: IconName;
   message: string;
-  /** Shown below the message, for example a link in development. */
-  children?: ReactNode;
   /** The tab's name at the top, with a button at its end such as the settings. */
   title?: string;
   action?: ReactNode;
 };
 
 /** Stands in for a tab whose screens are not built yet. */
-export function ComingSoon({ icon, message, children, title, action }: ComingSoonProps) {
+export function ComingSoon({ icon, message, title, action }: ComingSoonProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   return (
@@ -37,7 +35,6 @@ export function ComingSoon({ icon, message, children, title, action }: ComingSoo
         </View>
       ) : null}
       <MessageView icon={icon} title={t('comingSoon.title')} message={message} />
-      {children ? <View style={styles.extra}>{children}</View> : null}
     </SafeAreaView>
   );
 }
@@ -50,8 +47,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  extra: {
-    alignItems: 'center',
   },
 });
