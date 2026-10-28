@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import { LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
-import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
@@ -14,19 +13,12 @@ import { Text } from '@/components/ui/text';
 import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
+import { BASIS_ICONS } from '../basis-icons';
 import { useNutritionTargets } from '../targets';
 import { answerChanges, wasParam, type AnswerChange } from './answers';
 import { openSave } from './building-step';
 import { leave, type StepProps } from './step';
 import { Was } from './was';
-
-/** The icon of each changed answer on the review, as on the daily goals. */
-const CHANGE_ICONS: Record<AnswerChange['key'], IconName> = {
-  goal: 'target',
-  target: 'scale',
-  pace: 'speed',
-  activity: 'person',
-};
 
 export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
   const { t } = useTranslation();
@@ -117,7 +109,12 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
                     listDivider(index === 0, colors.border),
                   ]}
                 >
-                  <IconTile name={CHANGE_ICONS[change.key]} size={40} />
+                  <IconTile
+                    name={BASIS_ICONS[change.key].icon}
+                    color={BASIS_ICONS[change.key].color}
+                    background={BASIS_ICONS[change.key].background}
+                    size={40}
+                  />
                   <View style={styles.flex}>
                     <Text variant="captionStrong" color="textMuted">
                       {label}
