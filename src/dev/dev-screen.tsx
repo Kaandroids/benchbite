@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, listDivider } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 /** The tools, one row each. Text here is for developers only, so it is not translated. */
-const TOOLS: { icon: IconName; title: string; detail: string; href: '/dev/components' }[] = [
+const TOOLS: { icon: IconName; title: string; detail: string; href: Href }[] = [
   {
     icon: 'layers',
     title: 'Component gallery',
@@ -29,7 +29,7 @@ export function DevScreen() {
       <Card list>
         {TOOLS.map((tool, index) => (
           <Pressable
-            key={tool.href}
+            key={tool.title}
             accessibilityRole="button"
             accessibilityLabel={tool.title}
             accessibilityHint={tool.detail}
