@@ -28,7 +28,7 @@ is usually cooked for several people or days, so one serving is what gets eaten 
 - **Everywhere a food is:** `loggable_foods()`, search, favourites, frequent foods and copying a
   past meal include recipes (ADR 0037).
 - **Limits:** up to 100 recipes per user (`BB028`), 500 counting deleted ones (`BB029`), and 50
-  ingredients per recipe. Names are unique per user, compared as search compares them.
+  ingredients per recipe. A serving weighs at most 5,000 g, as an entry does. Names are unique per user, compared as search compares them.
 - **Cooked weight is not asked for:** water lost or taken up in cooking would change the values
   per 100 g but not per serving, and servings are how a dish is logged. Water can be added as an
   ingredient where it matters for grams.
@@ -46,5 +46,9 @@ is usually cooked for several people or days, so one serving is what gets eaten 
 ## Consequences
 
 - Every place that names a food handles a third kind, through `FoodRef` in the app.
+- In the database a food is named by one column per kind (`food_id`, `custom_food_id`,
+  `recipe_id`), exactly one set. Another kind would mean a column on entries, removed entries and
+  favourites, a branch in `copy_food_values()` and `can_be_logged()`, and a part in
+  `loggable_foods()` and `search_foods()`, whose result types change with it.
 - A recipe's values follow its ingredients, so a food of one's own changed later changes the
   recipe for the next entry, but not for past ones.
