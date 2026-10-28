@@ -605,6 +605,58 @@ export type Database = {
           },
         ];
       };
+      planned_days: {
+        Row: {
+          day: string;
+          id: number;
+          name: string | null;
+          type: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          id?: never;
+          name?: string | null;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id: string;
+          workout_id?: number | null;
+        };
+        Update: {
+          day?: string;
+          id?: never;
+          name?: string | null;
+          type?: Database['public']['Enums']['workout_type'] | null;
+          user_id?: string;
+          workout_id?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'planned_days_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      planned_days_kept: {
+        Row: {
+          through: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          through: string;
+          user_id: string;
+        };
+        Update: {
+          through?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1242,6 +1294,8 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      keep_planned_days: { Args: { today: string }; Returns: undefined };
+      keep_user_planned_days: { Args: { owner: string; through: string }; Returns: undefined };
       last_sets: {
         Args: { exercise_ids: string[] };
         Returns: {
