@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(43);
+select plan(44);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -256,6 +256,25 @@ $$;
 select ok(pg_temp.fits(909, null), 'A workout a kept day planned can be skipped there, though its weekdays changed');
 select ok(pg_temp.fits(909, 4), 'and moved to a later free day');
 select ok(not pg_temp.fits(910, null), 'while one the kept day did not plan cannot, though that is its weekday now');
+
+-- J's device is a day ahead of the server: J kept through the server's today, whose Push J then
+-- took off its weekday. Seen on the server's date, that kept day still plans Push.
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000aa', 'j@example.com');
+insert into public.planned_days_kept (user_id, through)
+values ('00000000-0000-0000-0000-0000000000aa', current_date);
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, type, estimated_minutes, weekdays)
+overriding system value
+select 911, '00000000-0000-0000-0000-0000000000aa', 'Push', 'push', 45,
+  array[(extract(isodow from current_date)::smallint % 7) + 1];
+insert into public.planned_days (user_id, day, workout_id, name, type)
+values ('00000000-0000-0000-0000-0000000000aa', current_date, 911, 'Push', 'push');
+set local session_replication_role = origin;
+select ok(
+  (select public.move_fits(w, current_date, null, current_date) from public.workouts w where w.id = 911),
+  'A kept day up to the server''s today plans what it kept, for a device a day ahead'
+);
 
 -- ----------------------------------------------------------------------------------------------
 -- Reading a day's plan
