@@ -1284,6 +1284,16 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_planned_by_weekdays: {
+        Args: {
+          day: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
+      };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
       kept_through: { Args: { latest: string; owner: string }; Returns: string };
@@ -1467,7 +1477,7 @@ export type Database = {
         };
         Returns: number;
       };
-      save_workout: { Args: { today?: string; workout: Json }; Returns: number };
+      save_workout: { Args: { today: string; workout: Json }; Returns: number };
       search_foods: {
         Args: { language: string; query: string; recipes?: boolean };
         Returns: {
