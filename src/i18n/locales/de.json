@@ -252,7 +252,8 @@
       "added": "{{name}} hinzugefügt",
       "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Eigenes"
+      "mine": "Eigenes",
+      "done": "Fertig"
     },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",

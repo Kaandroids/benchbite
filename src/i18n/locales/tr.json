@@ -252,7 +252,8 @@
       "added": "{{name}} eklendi",
       "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Benim"
+      "mine": "Benim",
+      "done": "Bitti"
     },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",
