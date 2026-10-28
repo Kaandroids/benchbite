@@ -1,3 +1,5 @@
+import { fromIsoDate, isoWeekday } from '@/i18n/dates';
+
 import type { WeekSession } from './workouts';
 import {
   canUndo,
@@ -394,15 +396,16 @@ describe('upcomingWorkouts', () => {
 describe('sessions planned on one day', () => {
   // Wednesday, October 21.
   const today = new Date(2026, 9, 21, 9, 0);
-  const kept = (on: string, workoutId: number, gone = false): WeekSession => ({
+  const kept = (on: string, workoutId: number, left?: 'archived' | 'deleted'): WeekSession => ({
     workoutId,
-    weekday: new Date(`${on}T00:00`).getDay() || 7,
+    weekday: isoWeekday(fromIsoDate(on)),
     on,
     name: null,
     type: 'push',
     exercises: [],
     estimatedMinutes: 45,
-    gone,
+    gone: left !== undefined,
+    deleted: left === 'deleted',
   });
 
   it('plans a session with a day on that day only, not every week on its weekday', () => {
@@ -413,7 +416,7 @@ describe('sessions planned on one day', () => {
 
   it("counts a log without a workout for a workout that left the plan, as a deleted one's are", () => {
     const schedule = weekSchedule(
-      [kept('2026-10-19', 9, true)],
+      [kept('2026-10-19', 9, 'deleted')],
       [],
       [{ workoutId: null, startedOn: '2026-10-19' }],
       today,
@@ -422,9 +425,25 @@ describe('sessions planned on one day', () => {
     expect(schedule.days[0]?.extras).toBe(0);
   });
 
+  it("leaves a deleted extra's log to no archived workout, whose logs keep it", () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [],
+      [{ workoutId: null, startedOn: '2026-10-19' }],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('missed');
+    expect(schedule.days[0]?.extras).toBe(1);
+  });
+
+  it('does not ask to count a workout that left the plan for its missed day', () => {
+    const schedule = weekSchedule([kept('2026-10-19', 9, 'archived')], [], [], today);
+    expect(startMove(schedule, 9, '2026-10-21')).toBeNull();
+  });
+
   it('does not offer a workout that left the plan to catch up', () => {
     const schedule = weekSchedule(
-      [kept('2026-10-19', 9, true), kept('2026-10-20', 1)],
+      [kept('2026-10-19', 9, 'deleted'), kept('2026-10-20', 1)],
       [],
       [],
       today,

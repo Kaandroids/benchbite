@@ -102,7 +102,7 @@ export function weekSchedule(
     const finishedOne = ({ session }: Entry) => {
       // A deleted workout's logs no longer say which workout they were.
       const own = logs.indexOf(session.workoutId);
-      const log = own < 0 && session.gone ? logs.indexOf(null) : own;
+      const log = own < 0 && session.deleted ? logs.indexOf(null) : own;
       if (log >= 0) {
         logs.splice(log, 1);
       }
@@ -271,6 +271,7 @@ export function startMove(
       .filter(
         (workout) =>
           workout.session.workoutId === workoutId &&
+          !workout.session.gone &&
           (workout.status === 'missed' || (workout.status === 'planned' && day.date > today)),
       )
       .map((workout): StartMove => ({
