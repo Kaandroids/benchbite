@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -68,7 +68,8 @@ select lives_ok(
   'A few kcal over, from rounding, is allowed'
 );
 select throws_ok(
-  $$ update public.own_nutrition_targets set calories = 500 $$,
+  $$ update public.own_nutrition_targets
+     set calories = 500, protein_g = 20, carbs_g = 50, fat_g = 10 $$,
   '23514',
   null,
   'The calories stay within limits'
@@ -114,6 +115,12 @@ select throws_ok(
   null,
   'A target weight has to suit the goal'
 );
+select throws_ok(
+  $$ select public.recalculate_nutrition_targets('lose_fat', 79.96, 0.5, 'light') $$,
+  'BB031',
+  null,
+  'as it is saved: 79.96 kg rounds to the current 80 kg'
+);
 
 -- Other users and requests without a session
 
@@ -123,6 +130,27 @@ select is_empty(
   $$ select * from public.own_nutrition_targets $$,
   'Users do not see the targets of others'
 );
+update public.own_nutrition_targets set calories = 3000;
+select throws_ok(
+  $$ insert into public.own_nutrition_targets (user_id, calories, protein_g, carbs_g, fat_g)
+     values ('00000000-0000-0000-0000-00000000000a', 2000, 100, 200, 50) $$,
+  '42501',
+  null,
+  'nor set them'
+);
+select throws_ok(
+  $$ delete from public.own_nutrition_targets $$,
+  '42501',
+  null,
+  'Nobody deletes targets, as going back to the calculated ones keeps them'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select calories from public.own_nutrition_targets $$,
+  $$ values (2200) $$,
+  'Others cannot change a user''s targets'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 
 select set_config('role', 'anon', true);
 select throws_ok(
@@ -130,6 +158,30 @@ select throws_ok(
   '42501',
   null,
   'Requests without a session cannot read targets'
+);
+select throws_ok(
+  $$ select * from public.own_nutrition_targets $$,
+  '42501',
+  null,
+  'nor own targets'
+);
+select throws_ok(
+  $$ select public.calculated_nutrition_targets() $$,
+  '42501',
+  null,
+  'nor the calculated ones'
+);
+select throws_ok(
+  $$ select public.preview_nutrition_targets('lose_fat', 75, 0.5, 'light') $$,
+  '42501',
+  null,
+  'nor preview new ones'
+);
+select throws_ok(
+  $$ select public.recalculate_nutrition_targets('lose_fat', 75, 0.5, 'light') $$,
+  '42501',
+  null,
+  'nor save new answers'
 );
 
 select * from finish();
