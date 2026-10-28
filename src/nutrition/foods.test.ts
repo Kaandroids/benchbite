@@ -123,7 +123,11 @@ describe('useFoodSearch', () => {
         },
       ]),
     );
-    expect(supabase.rpc).toHaveBeenCalledWith('search_foods', { query: 'oat', language: 'en' });
+    expect(supabase.rpc).toHaveBeenCalledWith('search_foods', {
+      query: 'oat',
+      language: 'en',
+      recipes: true,
+    });
   });
 
   it("finds the user's own foods, which may have no portion", async () => {

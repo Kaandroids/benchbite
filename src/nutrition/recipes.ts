@@ -103,16 +103,16 @@ export function useRecipe(id: number) {
   });
 }
 
-/** The user's recipes that can be logged, by name, each with one serving as its portion. */
-export function useRecipes() {
-  const { i18n } = useTranslation();
+/**
+ * The user's recipes that can be logged, by name, each with one serving as its portion; loaded
+ * only while `enabled`, such as while their list shows.
+ */
+export function useRecipes({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ['recipes', i18n.language],
+    queryKey: ['recipes'],
+    enabled,
     queryFn: async (): Promise<FoodResult[]> => {
-      const { data, error } = await supabase
-        .rpc('loggable_foods', { language: i18n.language })
-        .not('recipe_id', 'is', null)
-        .order('name');
+      const { data, error } = await supabase.rpc('list_recipes');
       if (error) {
         throw error;
       }

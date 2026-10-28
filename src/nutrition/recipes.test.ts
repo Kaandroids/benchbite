@@ -108,7 +108,7 @@ describe('useRecipe', () => {
 
 describe('useRecipes', () => {
   it("lists the user's recipes that can be logged, by name", async () => {
-    const order = jest.fn().mockResolvedValue({
+    jest.mocked(supabase.rpc).mockResolvedValue({
       data: [
         {
           food_id: null,
@@ -124,17 +124,21 @@ describe('useRecipes', () => {
         },
       ],
       error: null,
-    });
-    const not = jest.fn(() => ({ order }));
-    jest.mocked(supabase.rpc).mockReturnValue({ not } as never);
+    } as never);
     const { result } = await renderHook(() => useRecipes());
     await waitFor(() => expect(result.current.data).toHaveLength(1));
-    expect(supabase.rpc).toHaveBeenCalledWith('loggable_foods', { language: 'en' });
-    expect(not).toHaveBeenCalledWith('recipe_id', 'is', null);
+    expect(supabase.rpc).toHaveBeenCalledWith('list_recipes');
     expect(result.current.data?.[0]).toMatchObject({
       ref: { kind: 'recipe', id: 3 },
       portion: { unit: 'bowl', grams: 400 },
     });
+  });
+
+  it('loads nothing while not enabled', async () => {
+    jest.mocked(supabase.rpc).mockClear();
+    const { result } = await renderHook(() => useRecipes({ enabled: false }));
+    expect(result.current.data).toBeUndefined();
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 });
 
