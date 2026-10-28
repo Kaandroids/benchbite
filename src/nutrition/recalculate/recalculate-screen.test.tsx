@@ -161,7 +161,7 @@ describe('the target step', () => {
   });
 
   it('keeps Continue off for a target on the wrong side, without a pace', async () => {
-    open({ step: 'target', goal: 'lose_fat', target: '79.5' });
+    open({ step: 'target', goal: 'lose_fat', target: '79.5', pace: '0.5' });
     await render(<RecalculateScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Higher target' }));
     expect(
@@ -172,7 +172,7 @@ describe('the target step', () => {
   });
 
   it('offers the lowest healthy target for one that is too low', async () => {
-    open({ step: 'target', goal: 'lose_fat', target: '60' });
+    open({ step: 'target', goal: 'lose_fat', target: '60', pace: '0.5' });
     await render(<RecalculateScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Lower target' }));
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();

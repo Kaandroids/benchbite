@@ -76,8 +76,8 @@ describe('answersFrom', () => {
       answersFrom({ goal: 'fly', target: 'abc', pace: '-1', activity: 'asleep' }, basis, 80),
     ).toEqual({ goal: 'lose_fat', targetWeightKg: 75, weeklyPaceKg: 0.5, activity: 'light' });
     expect(answersFrom({ goal: 'lose_fat', target: '74', pace: '0' }, basis, 80)).toMatchObject({
-      targetWeightKg: 74,
-      weeklyPaceKg: null,
+      targetWeightKg: 75,
+      weeklyPaceKg: 0.5,
     });
   });
 });
@@ -94,6 +94,22 @@ describe('a target from the parameters', () => {
     expect(
       answersFrom({ goal: 'build_muscle', target: '70', pace: '0.25' }, basis, 80),
     ).toMatchObject({ targetWeightKg: null, weeklyPaceKg: null });
+  });
+});
+
+describe('a pace from the parameters', () => {
+  it('has to come with the target, within what the slider offers in either unit', () => {
+    for (const pace of [undefined, '5', '0.05']) {
+      expect(answersFrom({ goal: 'lose_fat', target: '74', pace }, basis, 80)).toMatchObject({
+        targetWeightKg: 75,
+        weeklyPaceKg: 0.5,
+      });
+    }
+    // 2 lb a week.
+    expect(answersFrom({ goal: 'lose_fat', target: '74', pace: '0.91' }, basis, 80)).toMatchObject({
+      targetWeightKg: 74,
+      weeklyPaceKg: 0.91,
+    });
   });
 });
 

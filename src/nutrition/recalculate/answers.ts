@@ -1,4 +1,10 @@
-import { changesWeight, targetWeightProblem, type ActivityLevel, type Goal } from '@/body/body';
+import {
+  changesWeight,
+  isPaceInRange,
+  targetWeightProblem,
+  type ActivityLevel,
+  type Goal,
+} from '@/body/body';
 import { toTenth } from '@/i18n/units';
 import { Constants } from '@/lib/database.types';
 
@@ -50,9 +56,15 @@ export function answersFrom(
     return { goal, targetWeightKg: null, weeklyPaceKg: null, activity };
   }
   const target = positive(params.target);
-  // Checked as the target step checks it, so a link cannot skip to saving one it refuses.
-  if (target !== null && targetWeightProblem(goal, weightKg, target, basis.heightCm) === null) {
-    return { goal, targetWeightKg: target, weeklyPaceKg: positive(params.pace), activity };
+  const pace = positive(params.pace);
+  // Checked as the target step checks them, so a link cannot skip to saving what it refuses.
+  if (
+    target !== null &&
+    pace !== null &&
+    targetWeightProblem(goal, weightKg, target, basis.heightCm) === null &&
+    (isPaceInRange('kg', goal, pace) || isPaceInRange('lb', goal, pace))
+  ) {
+    return { goal, targetWeightKg: target, weeklyPaceKg: pace, activity };
   }
   const keepsSaved =
     goal === basis.goal &&
