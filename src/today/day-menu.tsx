@@ -72,11 +72,7 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
       } else if (movedFrom) {
         detail = <MovedFrom date={movedFrom} />;
         action = undo(session, fromOn, t('today.dayMenu.undo'));
-      } else if (
-        // A workout that left the plan can be neither moved nor skipped.
-        !session.gone &&
-        moveTargets(schedule, session.workoutId, fromOn, todayOn).length > 0
-      ) {
+      } else if (moveTargets(schedule, session.workoutId, fromOn, todayOn).length > 0) {
         action = (
           <Button
             variant="secondary"

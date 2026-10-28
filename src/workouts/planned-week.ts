@@ -68,8 +68,7 @@ export function plannedSessions(planned: readonly PlannedDay[], workouts: readon
       type: row.type,
       exercises: workout?.exercises ?? [],
       estimatedMinutes: workout?.estimatedMinutes ?? 0,
-      gone: true,
-      deleted: workout === undefined,
+      left: workout === undefined ? 'deleted' : 'archived',
     };
   });
 }

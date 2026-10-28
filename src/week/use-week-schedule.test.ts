@@ -68,7 +68,7 @@ describe('useCachedWeekSchedule with kept days', () => {
       }),
       expect.objectContaining({
         status: 'done',
-        session: expect.objectContaining({ name: 'Legs', gone: true }),
+        session: expect.objectContaining({ name: 'Legs', left: 'deleted' }),
       }),
     ]);
   });

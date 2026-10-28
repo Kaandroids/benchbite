@@ -404,8 +404,7 @@ describe('sessions planned on one day', () => {
     type: 'push',
     exercises: [],
     estimatedMinutes: 45,
-    gone: left !== undefined,
-    deleted: left === 'deleted',
+    left,
   });
 
   it('plans a session with a day on that day only, not every week on its weekday', () => {
@@ -434,6 +433,28 @@ describe('sessions planned on one day', () => {
     );
     expect(schedule.days[0]?.workouts[0]?.status).toBe('missed');
     expect(schedule.days[0]?.extras).toBe(1);
+  });
+
+  it('counts the move of a workout that left the plan to a later day as a skip of its day', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [{ workoutId: 9, fromOn: '2026-10-19', toOn: '2026-10-22' }],
+      [],
+      today,
+    );
+    expect(schedule.days[0]?.workouts[0]?.status).toBe('skipped');
+    expect(schedule.days[3]?.workouts).toEqual([]);
+  });
+
+  it('neither moves nor undoes a workout that left the plan', () => {
+    const schedule = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [{ workoutId: 9, fromOn: '2026-10-19', toOn: null }],
+      [],
+      today,
+    );
+    expect(moveTargets(schedule, 9, '2026-10-19', '2026-10-21')).toEqual([]);
+    expect(canUndo(schedule, 9, '2026-10-19')).toBe(false);
   });
 
   it('does not ask to count a workout that left the plan for its missed day', () => {

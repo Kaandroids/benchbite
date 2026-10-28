@@ -13,9 +13,9 @@ import { useWeek, useWorkouts, WORKOUTS_KEY, type Workout } from '@/workouts/wor
 
 /**
  * The week of `today` after its moves, with the workouts finished in it (ADR 0028), and the
- * queries it comes from, all of them in `queries`. Each day is planned as the database says: past days as they kept their
- * plan, today and later by the plan (ADR 0041). Until they have loaded, the missing ones count as
- * empty.
+ * queries it waits for. Each day is planned as the database says: past days as they kept their
+ * plan, today and later by the plan (ADR 0041). Until the queries have loaded, the missing ones
+ * count as empty.
  */
 export function useWeekSchedule(today: Date) {
   const plan = useWeek();
@@ -29,9 +29,10 @@ export function useWeekSchedule(today: Date) {
     finished.data ?? [],
     today,
   );
-  // Everything the week waits for, so that callers need not list it again.
-  const queries = [plan, workouts, planned, moves, finished];
-  return { schedule, plan, finished, queries };
+  // Everything the week waits for, so that callers need not list it again. The plan and the
+  // workouts are one query.
+  const queries = [plan, planned, moves, finished];
+  return { schedule, plan, queries };
 }
 
 /**
