@@ -1,10 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 
 import type { Portion } from './foods';
 import type { Totals } from './meals';
-import { QUICK_FOOD_KEYS } from './quick-foods';
+import { useReloadFoods } from './quick-foods';
 
 /** A food of one's own as the form saves it: its name trimmed, its values per 100 g and one portion, if any. */
 export type CustomFoodValues = {
@@ -23,18 +23,6 @@ function columnsOf({ name, per100g, portion }: CustomFoodValues) {
     portion_unit: portion?.unit ?? null,
     portion_grams: portion?.grams ?? null,
   };
-}
-
-/** Search, the food's own screen, the days and the add screen's lists show it changed. */
-function useReloadFoods() {
-  const queryClient = useQueryClient();
-  return () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['food-search'] }),
-      queryClient.invalidateQueries({ queryKey: ['food'] }),
-      queryClient.invalidateQueries({ queryKey: ['meal-entries'] }),
-      ...QUICK_FOOD_KEYS.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-    ]);
 }
 
 /** Adds a food of one's own and gives its id, to log it right away (ADR 0036). */

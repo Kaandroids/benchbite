@@ -17,6 +17,7 @@ describe('useFrequentFoods', () => {
         {
           food_id: 'C133000',
           custom_food_id: null,
+          recipe_id: null,
           name: 'Haferflocken',
           ...values,
           times: 14,
@@ -27,6 +28,7 @@ describe('useFrequentFoods', () => {
         {
           food_id: null,
           custom_food_id: 4,
+          recipe_id: null,
           name: 'Protein pudding',
           ...values,
           times: 7,
@@ -64,6 +66,7 @@ describe('useFavouriteFoods', () => {
         {
           food_id: 'C133000',
           custom_food_id: null,
+          recipe_id: null,
           name: 'Oat flakes',
           ...values,
           portion_unit: 'serving',
