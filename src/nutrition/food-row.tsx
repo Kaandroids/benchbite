@@ -81,6 +81,7 @@ export function FoodRow({
           food.name,
           favourite ? t('nutrition.quick.isFavourite') : null,
           food.ref.kind === 'custom' ? t('nutrition.search.mine') : null,
+          food.ref.kind === 'recipe' ? t('nutrition.recipe.tag') : null,
           detail,
         ]
           .filter(Boolean)
@@ -94,6 +95,7 @@ export function FoodRow({
           </Text>
           {favourite ? <Star filled size={14} /> : null}
           {food.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
+          {food.ref.kind === 'recipe' ? <Tag label={t('nutrition.recipe.tag')} /> : null}
         </View>
         <Text variant="caption" color="textMuted">
           {detail}

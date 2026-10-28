@@ -6,6 +6,7 @@ import { FoodSearchScreen } from './food-search-screen';
 import { useAddEntry, useCopyEntries } from './entries';
 import { useFoodSearch, type FoodResult } from './foods';
 import { usePastMeal, type LoggedEntry } from './meals';
+import { useRecipes } from './recipes';
 import {
   useFavouriteFoods,
   useFavouriteKeys,
@@ -22,6 +23,7 @@ jest.mock('./entries', () => ({
   useCopyEntries: jest.fn(),
 }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), usePastMeal: jest.fn() }));
+jest.mock('./recipes', () => ({ useRecipes: jest.fn() }));
 jest.mock('./quick-foods', () => ({
   useFrequentFoods: jest.fn(),
   useFavouriteFoods: jest.fn(),
@@ -80,6 +82,7 @@ beforeEach(() => {
   jest.mocked(useFavouriteFoods).mockReturnValue(loaded([]));
   jest.mocked(useFavouriteKeys).mockReturnValue(new Set());
   jest.mocked(useMyFoods).mockReturnValue(loaded([]));
+  jest.mocked(useRecipes).mockReturnValue(loaded([]));
 });
 
 describe('FoodSearchScreen', () => {
@@ -322,6 +325,43 @@ describe('FoodSearchScreen', () => {
 
       await fireEvent.press(screen.getByRole('button', { name: 'Mine' }));
       expect(screen.getByText('No foods of your own yet')).toBeTruthy();
+    });
+
+    it('lists the recipes, adds a serving with +, and starts a new one', async () => {
+      mutateAsync.mockResolvedValue(undefined);
+      jest.mocked(useRecipes).mockReturnValue(
+        loaded([
+          {
+            ref: { kind: 'recipe', id: 9 },
+            name: 'Lentil soup',
+            per100g: { calories: 68, proteinG: 4, carbsG: 9, fatG: 1.5 },
+            portion: { unit: 'bowl', grams: 400 },
+          },
+        ]),
+      );
+      await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Recipes' }));
+      expect(screen.getByLabelText('Lentil soup, Recipe, 1 bowl · 400 g · 272 kcal')).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Add 1 bowl of Lentil soup'));
+      expect(mutateAsync).toHaveBeenCalledWith({
+        day: '2026-10-27',
+        meal: 'lunch',
+        food: { kind: 'recipe', id: 9 },
+        grams: 400,
+        portion: { unit: 'bowl', count: 1 },
+      });
+
+      await fireEvent.press(screen.getByRole('button', { name: 'New recipe' }));
+      expect(router.push).toHaveBeenCalledWith({
+        pathname: '/nutrition/recipe/new',
+        params: { meal: 'lunch', day: '2026-10-27' },
+      });
+    });
+
+    it('says how to start when there are no recipes yet', async () => {
+      await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Recipes' }));
+      expect(screen.getByText('No recipes yet')).toBeTruthy();
     });
 
     it('says when a list cannot be loaded', async () => {
