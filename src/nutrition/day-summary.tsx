@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -19,12 +20,38 @@ const RADIUS = (RING - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 type DaySummaryProps = {
-  targets: NutritionTargets;
-  eaten: Totals;
+  /** Across the top, such as the day it sums up and the way to another. */
+  header: ReactNode;
+  /** Null while the day loads, or before there are targets: the card holds its header only. */
+  totals: { targets: NutritionTargets; eaten: Totals } | null;
 };
 
-/** The calories left as a ring, and the protein, carbs and fat eaten against their targets. */
-export function DaySummary({ targets, eaten }: DaySummaryProps) {
+/**
+ * A day's summary: its header, then the calories left as a ring, and the protein, carbs and fat
+ * eaten against their targets.
+ */
+export function DaySummary({ header, totals }: DaySummaryProps) {
+  const { colors, spacing } = useTheme();
+  return (
+    <Card>
+      {header}
+      {totals ? (
+        <>
+          {/* Across the whole card, to set the day apart from what it holds. */}
+          <View
+            style={[
+              styles.separator,
+              { backgroundColor: colors.border, marginHorizontal: -spacing.lg },
+            ]}
+          />
+          <DayTotals {...totals} />
+        </>
+      ) : null}
+    </Card>
+  );
+}
+
+function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Totals }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -32,7 +59,7 @@ export function DaySummary({ targets, eaten }: DaySummaryProps) {
   const share = targets.calories > 0 ? clamp(eaten.calories / targets.calories, 0, 1) : 0;
 
   return (
-    <Card style={[styles.row, { gap: spacing.lg }]}>
+    <View style={[styles.row, { gap: spacing.lg }]}>
       <View
         accessible
         accessibilityRole="progressbar"
@@ -94,11 +121,14 @@ export function DaySummary({ targets, eaten }: DaySummaryProps) {
           </View>
         ))}
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  separator: {
+    height: StyleSheet.hairlineWidth,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
