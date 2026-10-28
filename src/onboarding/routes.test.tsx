@@ -18,6 +18,7 @@ import WorkoutTab from '@/app/(app)/workout/index';
 import CreateAccountRoute from '@/app/account/create';
 import SessionExerciseDetails from '@/app/session/exercise/[id]';
 import SessionExerciseHistory from '@/app/session/exercise/history';
+import DevTools from '@/app/dev/tools';
 import SettingsRoute from '@/app/settings';
 import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
@@ -185,6 +186,7 @@ const APP_ROUTES = {
   'session/exercise/history': SessionExerciseHistory,
   'account/create': CreateAccountRoute,
   'account/login': LogInRoute,
+  'dev/tools': DevTools,
   'dev/components': () => <Text>Component gallery</Text>,
 };
 
@@ -412,9 +414,11 @@ describe('app tabs', () => {
     expect(screen.getByText('Workout in progress')).toBeOnTheScreen();
   });
 
-  it('links to the component gallery in development', async () => {
-    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
-    await act(() => router.navigate('/dev/components'));
+  it('opens the developer tools beside the settings, and the component gallery from them', async () => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/progress' });
+    await act(() => fireEvent.press(screen.getByRole('button', { name: 'Developer tools' })));
+    expect(app.getPathname()).toBe('/dev/tools');
+    await act(() => fireEvent.press(screen.getByRole('button', { name: 'Component gallery' })));
     expect(app.getPathname()).toBe('/dev/components');
     expect(screen.getByText('Component gallery')).toBeOnTheScreen();
   });
