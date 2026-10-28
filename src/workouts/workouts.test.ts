@@ -1,3 +1,4 @@
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import { testWorkout } from '@/workouts/test-data';
@@ -164,9 +165,10 @@ describe('useWeek', () => {
 });
 
 describe('useSetWorkoutActive', () => {
-  it('switches the workout at once and saves it', async () => {
+  it("switches the workout at once and saves it with the device's today", async () => {
+    jest.useFakeTimers({ now: new Date(2026, 9, 28, 23), doNotFake: ['nextTick', 'setImmediate'] });
     order.mockResolvedValue({ data: [row(1, [1]), row(2, [3])], error: null });
-    eq.mockResolvedValue({ error: null });
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
     const queryClient = createTestQueryClient();
     const { result } = await renderHook(
       () => ({ workouts: useWorkouts(), setActive: useSetWorkoutActive() }),
@@ -175,16 +177,22 @@ describe('useSetWorkoutActive', () => {
     await waitFor(() => expect(result.current.workouts.data).toHaveLength(2));
     order.mockResolvedValue({ data: [row(1, [1], { active: false }), row(2, [3])], error: null });
     await act(() => result.current.setActive.mutateAsync({ id: 1, active: false }));
-    expect(update).toHaveBeenCalledWith({ active: false });
-    expect(eq).toHaveBeenCalledWith('id', 1);
+    expect(supabase.rpc).toHaveBeenCalledWith('set_workout_active', {
+      workout_id: 1,
+      active: false,
+      today: '2026-10-28',
+    });
     await waitFor(() =>
       expect(result.current.workouts.data?.map((item) => item.active)).toEqual([false, true]),
     );
+    jest.useRealTimers();
   });
 
   it('puts the workout back if saving fails', async () => {
     order.mockResolvedValue({ data: [row(1, [1])], error: null });
-    eq.mockResolvedValue({ error: { code: '42501', message: 'permission denied' } });
+    jest
+      .mocked(supabase.rpc)
+      .mockResolvedValue({ data: null, error: { code: '42501', message: 'denied' } } as never);
     const { result } = await renderHook(() => ({
       workouts: useWorkouts(),
       setActive: useSetWorkoutActive(),
@@ -216,7 +224,10 @@ describe('useSaveWorkout', () => {
       id = await result.current.mutateAsync(draft);
     });
     expect(id).toBe(12);
-    expect(supabase.rpc).toHaveBeenCalledWith('save_workout', { workout: draft });
+    expect(supabase.rpc).toHaveBeenCalledWith('save_workout', {
+      workout: draft,
+      today: toIsoDate(new Date()),
+    });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });
 
@@ -230,14 +241,16 @@ describe('useSaveWorkout', () => {
 
 describe('useDeleteWorkout', () => {
   it('deletes the workout, drops it from the list at once and loads the workouts again', async () => {
-    eq.mockResolvedValue({ error: null });
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
     const queryClient = createTestQueryClient();
     queryClient.setQueryData(['workouts'], [{ id: 4 }, { id: 5 }]);
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
     const { result } = await renderHook(() => useDeleteWorkout(), { queryClient });
     await act(() => result.current.mutateAsync(4));
-    expect(remove).toHaveBeenCalled();
-    expect(eq).toHaveBeenCalledWith('id', 4);
+    expect(supabase.rpc).toHaveBeenCalledWith('delete_workout', {
+      workout_id: 4,
+      today: toIsoDate(new Date()),
+    });
     expect(queryClient.getQueryData(['workouts'])).toEqual([{ id: 5 }]);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });

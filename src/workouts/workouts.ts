@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { toIsoDate } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
@@ -36,6 +37,10 @@ export type Workout = {
 export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimatedMinutes'> & {
   weekday: number;
   workoutId: number;
+  /** The one day it is planned on, YYYY-MM-DD, as a kept day (ADR 0041); without it, every week. */
+  on?: string;
+  /** Whether the workout left the plan since, archived or deleted: shown, not started or moved. */
+  gone?: boolean;
 };
 
 export const WORKOUTS_KEY = ['workouts'];
@@ -149,7 +154,12 @@ export function useSetWorkoutActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      const { error } = await supabase.from('workouts').update({ active }).eq('id', id);
+      // With the device's today, so that the days before it keep the plan they had (ADR 0041).
+      const { error } = await supabase.rpc('set_workout_active', {
+        workout_id: id,
+        active,
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
@@ -216,7 +226,10 @@ export function useSaveWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (draft: WorkoutDraft) => {
-      const { data, error } = await supabase.rpc('save_workout', { workout: draft });
+      const { data, error } = await supabase.rpc('save_workout', {
+        workout: draft,
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
@@ -231,7 +244,10 @@ export function useDeleteWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('workouts').delete().eq('id', id);
+      const { error } = await supabase.rpc('delete_workout', {
+        workout_id: id,
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
