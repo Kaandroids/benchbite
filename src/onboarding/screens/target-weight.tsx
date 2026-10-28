@@ -19,7 +19,7 @@ import { CenteredContent } from './centered-content';
  */
 export function TargetWeightStep() {
   const { t } = useTranslation();
-  const { answers, progress, next, back, close } = useStep('target-weight');
+  const { answers, next, bar } = useStep('target-weight');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const weightKg = answers.weightKg ?? 72;
   const heightCm = answers.heightCm ?? 172;
@@ -32,9 +32,7 @@ export function TargetWeightStep() {
   if (goal === 'lose_fat' && isTooLightToLose(weightKg, heightCm)) {
     return (
       <Screen
-        progress={progress}
-        onBack={back}
-        onClose={close}
+        {...bar}
         footer={
           <Button label={t('goals.targetWeight.changeGoal')} onPress={() => returnTo('goal')} />
         }
@@ -48,9 +46,7 @@ export function TargetWeightStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
+      {...bar}
       footer={
         <Button
           label={t('common.continue')}

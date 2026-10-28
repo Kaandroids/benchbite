@@ -30,7 +30,7 @@ export function RemindersStep() {
   const { colors, radii, spacing } = useTheme();
   const weekdayName = useWeekdayFormat('short');
   const formatTime = useTimeFormat();
-  const { answers, progress, next, back, close } = useStep('reminders');
+  const { answers, next, bar } = useStep('reminders');
   const [minutes, setMinutes] = useState(answers.reminderMinutes ?? DEFAULT_TIME);
   const [enabling, setEnabling] = useState(false);
   const sessions = answers.plan ? planDays(answers.plan) : [];
@@ -65,9 +65,7 @@ export function RemindersStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
+      {...bar}
       footer={
         <View style={{ gap: spacing.sm }}>
           <Button

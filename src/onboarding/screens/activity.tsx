@@ -23,14 +23,12 @@ type ActivityLevel = NonNullable<OnboardingAnswers['activityLevel']>;
  */
 export function ActivityStep() {
   const { t } = useTranslation();
-  const { answers, progress, back, close, select, next } = useStep('activity');
+  const { answers, select, next, bar } = useStep('activity');
   const level = answers.activityLevel;
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
+      {...bar}
       footer={<Button label={t('common.continue')} disabled={!level} onPress={() => next()} />}
     >
       <StepHeading

@@ -180,6 +180,15 @@ describe('useStep', () => {
     }
   });
 
+  it('gives the top bar its progress, back and cross together', async () => {
+    const { result } = await renderStep('height', { goal: 'lose_fat' });
+    expect(result.current.bar).toEqual({
+      progress: result.current.progress,
+      onBack: result.current.back,
+      onClose: result.current.close,
+    });
+  });
+
   it('has no back on the first step', async () => {
     const { result } = await renderStep('welcome');
     expect(result.current.back).toBeUndefined();

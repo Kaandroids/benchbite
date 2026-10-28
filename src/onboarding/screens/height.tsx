@@ -38,7 +38,7 @@ const clampHeight = (cm: number) => clamp(cm, HEIGHT_RANGE_CM.min, HEIGHT_RANGE_
 export function HeightStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, next, back, close } = useStep('height');
+  const { answers, next, bar } = useStep('height');
   const [unit, setUnit] = useState<HeightUnit>(answers.heightUnit ?? defaultUnits().height);
   const [heightCm, setHeightCm] = useState(
     answers.heightCm ?? DEFAULT_HEIGHT_CM[answers.sex ?? 'unspecified'],
@@ -47,9 +47,7 @@ export function HeightStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
+      {...bar}
       footer={
         <Button label={t('common.continue')} onPress={() => next({ heightCm, heightUnit: unit })} />
       }

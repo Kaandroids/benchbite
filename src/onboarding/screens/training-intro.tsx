@@ -32,18 +32,13 @@ const AnimatedRect = Animated.createAnimatedComponent(Rect);
 export function TrainingIntroStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, next, back, close } = useStep('training-intro');
+  const { answers, next, bar } = useStep('training-intro');
   const name = answers.displayName;
   // The training questions: the steps of the flow between this one and building the plan.
   const questions = stepsBetween('training-intro', 'building', answers).length;
 
   return (
-    <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
-      footer={<Button label={t('common.continue')} onPress={() => next()} />}
-    >
+    <Screen {...bar} footer={<Button label={t('common.continue')} onPress={() => next()} />}>
       <CenteredContent>
         <View style={[styles.center, { gap: spacing.xl }]}>
           <HalfPlate />

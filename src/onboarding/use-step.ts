@@ -105,12 +105,15 @@ export function useStep(step: Step) {
     moveOn(answers);
   };
 
+  const progress = {
+    sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
+    ...progressOf(step),
+  };
+  const close = canCloseFrom(step) ? () => returnTo('welcome') : undefined;
+
   return {
     answers: draft.answers,
-    progress: {
-      sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
-      ...progressOf(step),
-    },
+    progress,
     /** Saves answers without moving on, for example to withdraw one. */
     answer,
     next,
@@ -119,7 +122,9 @@ export function useStep(step: Step) {
      * Leaves the steps for the welcome screen, keeping the answers so far, so starting again finds
      * them. Only on the questions.
      */
-    close: canCloseFrom(step) ? () => returnTo('welcome') : undefined,
+    close,
+    /** The top bar of the step's screen, to spread into it: the progress, back and the cross. */
+    bar: { progress, onBack: previous ? back : undefined, onClose: close },
     /**
      * For a step's choice: saves the answer when it differs from the one saved, so tapping the
      * chosen card again does nothing. Continue then moves on.

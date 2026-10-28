@@ -51,17 +51,12 @@ const TIP_MS = 150;
 export function GoalInsightStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, next, back, close } = useStep('goal-insight');
+  const { answers, next, bar } = useStep('goal-insight');
   const goal = answers.goal ?? 'stay_healthy';
   const name = answers.displayName;
 
   return (
-    <Screen
-      progress={progress}
-      onBack={back}
-      onClose={close}
-      footer={<Button label={t('common.continue')} onPress={() => next()} />}
-    >
+    <Screen {...bar} footer={<Button label={t('common.continue')} onPress={() => next()} />}>
       <View style={[styles.flex, { gap: spacing.xl }]}>
         <Stage minHeight={STAGE_MIN_HEIGHT}>
           <GoalScene goal={goal} />
