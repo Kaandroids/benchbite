@@ -13,6 +13,9 @@ import type { NutritionTargets, TargetAnswers, TargetBasis } from '../targets';
 /** The steps of working the targets out again, each a screen. */
 export type RecalculateStep = 'goal' | 'target' | 'activity' | 'review';
 
+/** Every page of the route: the steps, the save, and the page after saving. */
+export type RecalculateRoute = RecalculateStep | 'building' | 'done';
+
 /** The steps for a goal: the target and pace only for one that changes the weight. */
 export function stepsFor(goal: Goal): RecalculateStep[] {
   return changesWeight(goal)
@@ -26,8 +29,10 @@ export type RecalculateParams = {
   target?: string;
   pace?: string;
   activity?: string;
-  /** On the page after saving: the targets in use before, as `calories,protein,carbs,fat`. */
+  /** On the save and the page after it: the targets in use before, as `calories,protein,carbs,fat`. */
   was?: string;
+  /** On the save: the key the review opened it with. */
+  save?: string;
 };
 
 const oneOf = <T extends string>(options: readonly T[], value: string | undefined) =>

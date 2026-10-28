@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -14,7 +15,8 @@ import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { useNutritionTargets } from '../targets';
-import { answerChanges, paramsOf, wasParam, type AnswerChange } from './answers';
+import { answerChanges, wasParam, type AnswerChange } from './answers';
+import { openSave } from './building-step';
 import { leave, type StepProps } from './step';
 import { Was } from './was';
 
@@ -55,14 +57,19 @@ export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
     }
   };
 
+  // Pressed once until the review shows again, so that a double tap opens one save.
+  const opening = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      opening.current = false;
+    }, []),
+  );
   const calculate = () => {
-    if (!was) {
+    if (!was || opening.current) {
       return;
     }
-    router.push({
-      pathname: '/nutrition/recalculate/[step]',
-      params: { step: 'building', ...paramsOf(answers), was: wasParam(was) },
-    });
+    opening.current = true;
+    openSave(answers, wasParam(was));
   };
 
   return (
