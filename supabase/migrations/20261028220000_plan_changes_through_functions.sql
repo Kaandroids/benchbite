@@ -3,21 +3,21 @@
 
 -- Whether the plan as it is puts the workout on `day`: active, on one of its weekdays. Keeping
 -- days, reading them, judging moves and settling moves all ask this.
-create function public.plans_by_weekdays(workout public.workouts, day date)
+create function public.is_planned_by_weekdays(workout public.workouts, day date)
 returns boolean
 language sql
 immutable
 set search_path = ''
 as $$
-  select (plans_by_weekdays.workout).active
-    and extract(isodow from plans_by_weekdays.day)::smallint
-      = any((plans_by_weekdays.workout).weekdays);
+  select (is_planned_by_weekdays.workout).active
+    and extract(isodow from is_planned_by_weekdays.day)::smallint
+      = any((is_planned_by_weekdays.workout).weekdays);
 $$;
 
-revoke execute on function public.plans_by_weekdays(public.workouts, date)
+revoke execute on function public.is_planned_by_weekdays(public.workouts, date)
   from public, anon, authenticated;
 
--- As before (20261028200000), by plans_by_weekdays().
+-- As before (20261028200000), by is_planned_by_weekdays().
 create or replace function public.plan_by_weekdays(owner uuid, from_day date, to_day date)
 returns table (day date, workout_id bigint, name text, type public.workout_type)
 language sql
@@ -28,10 +28,10 @@ as $$
   from generate_series(plan_by_weekdays.from_day, plan_by_weekdays.to_day, '1 day') d
   join public.workouts w
     on w.user_id = plan_by_weekdays.owner
-    and public.plans_by_weekdays(w, d::date);
+    and public.is_planned_by_weekdays(w, d::date);
 $$;
 
--- As before (20261028210000), by plans_by_weekdays() for a day that is not kept.
+-- As before (20261028210000), by is_planned_by_weekdays() for a day that is not kept.
 create or replace function public.plans_workout_on(workout public.workouts, day date, on_day date)
 returns boolean
 language sql
@@ -47,11 +47,46 @@ as $$
           and p.day = plans_workout_on.day
           and p.workout_id = (plans_workout_on.workout).id
       )
-    else public.plans_by_weekdays(plans_workout_on.workout, plans_workout_on.day)
+    else public.is_planned_by_weekdays(plans_workout_on.workout, plans_workout_on.day)
   end;
 $$;
 
--- As before (20261028200000), by plans_by_weekdays().
+-- As before (20261028210000), with a move's target judged by is_planned_by_weekdays().
+create or replace function public.move_fits(
+  source public.workouts, from_on date, to_on date, on_day date
+)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select source.active
+    and public.plans_workout_on(source, from_on, on_day)
+    and date_trunc('week', from_on)
+      between date_trunc('week', on_day - 1) and date_trunc('week', on_day + 1)
+    and (
+      to_on is null
+      or (
+        to_on <> from_on
+        and date_trunc('week', to_on) = date_trunc('week', from_on)
+        and to_on >= on_day - 1
+        and not (
+          public.is_planned_by_weekdays(source, to_on)
+          and not exists (
+            select 1 from public.workout_moves m
+            where m.workout_id = source.id and m.from_on = move_fits.to_on
+          )
+        )
+        and not exists (
+          select 1 from public.workout_moves m
+          where m.workout_id = source.id and m.to_on = move_fits.to_on
+            and m.from_on <> move_fits.from_on
+        )
+      )
+    );
+$$;
+
+-- As before (20261028200000), by is_planned_by_weekdays().
 create or replace function public.settle_moves(workout public.workouts, kept date, deleted boolean)
 returns void
 language plpgsql
@@ -68,10 +103,10 @@ begin
         or not (settle_moves.workout).active
         or (
           m.from_on > settle_moves.kept
-          and not public.plans_by_weekdays(settle_moves.workout, m.from_on)
+          and not public.is_planned_by_weekdays(settle_moves.workout, m.from_on)
         )
         or (
-          public.plans_by_weekdays(settle_moves.workout, m.to_on)
+          public.is_planned_by_weekdays(settle_moves.workout, m.to_on)
           and not exists (
             select 1 from public.workout_moves o
             where o.workout_id = m.workout_id and o.from_on = m.to_on
