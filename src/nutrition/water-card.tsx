@@ -71,7 +71,8 @@ export function WaterCard({ day, drunk, goal }: { day: string; drunk: number; go
   };
 
   return (
-    <Card>
+    // A notch smaller than the other cards: tighter padding and smaller glasses.
+    <Card style={{ padding: spacing.md, gap: spacing.sm }}>
       <View style={[styles.row, { gap: spacing.md }]}>
         <View
           style={[styles.tile, { borderRadius: radii.md, backgroundColor: colors.infoBackground }]}
@@ -147,10 +148,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  // Shares the width with the others, up to the size a goal of 2 L draws them at.
+  // Shares the width with the others, up to a size that keeps the card low.
   glass: {
     flex: 1,
-    maxWidth: 28,
+    maxWidth: 24,
     aspectRatio: 22 / 28,
   },
 });
