@@ -2,7 +2,7 @@ import { changesWeight, targetWeightProblem, type ActivityLevel, type Goal } fro
 import { toTenth } from '@/i18n/units';
 import { Constants } from '@/lib/database.types';
 
-import type { NutritionTargets, TargetAnswers, TargetBasis } from './targets';
+import type { NutritionTargets, TargetAnswers, TargetBasis } from '../targets';
 
 /** The steps of working the targets out again, each a screen. */
 export type RecalculateStep = 'goal' | 'target' | 'activity' | 'review';

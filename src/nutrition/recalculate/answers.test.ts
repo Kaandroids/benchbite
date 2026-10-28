@@ -5,8 +5,8 @@ import {
   stepsFor,
   targetsFromWas,
   wasParam,
-} from './recalculate';
-import type { TargetBasis } from './targets';
+} from './answers';
+import type { TargetBasis } from '../targets';
 
 // Saved: losing fat from 80 to 75 kg at 0.5 kg a week, lightly active, 180 cm tall.
 const basis: TargetBasis = {

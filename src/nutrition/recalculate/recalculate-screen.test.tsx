@@ -3,16 +3,16 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { fireEvent, render, screen } from '@/test/render';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
+import { useNutritionTargets, useRecalculateTargets, useTargetBasis } from '../targets';
 import { RecalculateScreen } from './recalculate-screen';
-import { useNutritionTargets, useRecalculateTargets, useTargetBasis } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), dismissTo: jest.fn() },
   useLocalSearchParams: jest.fn(),
 }));
-jest.mock('./targets', () => ({
-  ...jest.requireActual('./targets'),
+jest.mock('../targets', () => ({
+  ...jest.requireActual('../targets'),
   useTargetBasis: jest.fn(),
   useNutritionTargets: jest.fn(),
   useRecalculateTargets: jest.fn(),
