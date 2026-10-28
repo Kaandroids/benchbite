@@ -27,13 +27,11 @@ export function useWeekMoves(today: Date) {
       if (error) {
         throw error;
       }
-      // A deleted workout's moves stay with its kept days (ADR 0041); the week leaves them out
-      // until it reads those days.
-      return data.flatMap((row) =>
-        row.workout_id === null
-          ? []
-          : [{ workoutId: row.workout_id, fromOn: row.from_on, toOn: row.to_on }],
-      );
+      return data.map((row) => ({
+        workoutId: row.workout_id,
+        fromOn: row.from_on,
+        toOn: row.to_on,
+      }));
     },
   });
 }
