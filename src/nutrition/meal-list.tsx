@@ -6,7 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
@@ -20,16 +20,22 @@ type MealListProps = {
   onOpen: (meal: Meal) => void;
   /** Opens the search to add a food to the meal. */
   onAdd: (meal: Meal) => void;
-  /** The meal due now, whose + stands out while it is empty; none on other days. */
-  due?: Meal;
+};
+
+/** Each meal's colour and its background, for its icon and its +. */
+const MEAL_COLORS: Record<Meal, { color: keyof ColorTokens; background: keyof ColorTokens }> = {
+  breakfast: { color: 'breakfast', background: 'breakfastBackground' },
+  lunch: { color: 'lunch', background: 'lunchBackground' },
+  dinner: { color: 'dinner', background: 'dinnerBackground' },
+  snack: { color: 'snack', background: 'snackBackground' },
 };
 
 /**
  * One row per meal with only its totals, so a day with many entries still fits. An empty meal
- * shows the calories suggested for it. Only the meal due now, while empty, has a filled +, so
- * that the screen has one main action.
+ * shows the calories suggested for it. Each meal has its own colour, so that the meals read apart
+ * and the screen is not all orange.
  */
-export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps) {
+export function MealList({ meals, suggested, onOpen, onAdd }: MealListProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -45,7 +51,7 @@ export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps
         };
         const calories = suggested.get(meal);
         const logged = items > 0;
-        const next = meal === due && !logged;
+        const { color, background } = MEAL_COLORS[meal];
         return (
           <View
             key={meal}
@@ -63,19 +69,16 @@ export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps
                 { gap: spacing.md, opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              {/* An empty meal's tile is lighter, not grey, so that it reads as not yet logged
+              {/* An empty meal's icon is lighter, not grey, so that it reads as not yet logged
                   rather than off. */}
               <View
                 style={[
                   styles.tile,
-                  {
-                    borderRadius: radii.md,
-                    backgroundColor: logged ? colors.iconBackground : colors.selected,
-                  },
+                  { borderRadius: radii.md, backgroundColor: colors[background] },
                 ]}
               >
                 <View style={{ opacity: logged ? 1 : 0.6 }}>
-                  <Icon name={icon} size={20} color="primary" />
+                  <Icon name={icon} size={20} color={color} />
                 </View>
               </View>
               <View style={styles.text}>
@@ -118,8 +121,8 @@ export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps
             </Pressable>
             <RoundIconButton
               icon="plus"
-              color={next ? 'onPrimary' : 'primary'}
-              background={next ? 'primaryButton' : 'iconBackground'}
+              color={color}
+              background={background}
               size={40}
               label={t(`nutrition.addTo.${meal}`)}
               onPress={() => onAdd(meal)}

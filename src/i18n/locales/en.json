@@ -470,8 +470,6 @@
       "ingredient": "{{name}} {{amount}}",
       "full": "A recipe holds up to 50 ingredients."
     },
-    "kcalEaten": "kcal eaten",
-    "goal": "Goal {{calories}} kcal",
     "goals": {
       "button": "Goals",
       "title": "Daily goals",
@@ -497,7 +495,9 @@
       "save": "Save goals",
       "saveError": "The goals could not be saved. Check your connection and try again.",
       "reached": "Target reached",
-      "again": "Calculate again"
+      "again": "Calculate again",
+      "eatenOfGoal": "{{eaten}} of {{goal}} kcal eaten. Daily goals",
+      "ofGoal": "/ {{goal}} kcal"
     },
     "recalculate": {
       "sections": {
