@@ -39,7 +39,7 @@ Days already keep their nutrition targets in the same way (ADR 0040).
   clients read it, returns each day's workouts for up to a year: kept days as kept, and the
   device's today and later days by the plan. Days before the plan started have none. The week,
   earlier weeks (#71) and streaks (#70) all read it, as `targets_of_day()` decides a day's targets
-  (ADR 0040). One rule, `plans_by_weekdays()`, says which days the plan puts a workout on, for
+  (ADR 0040). One rule, `is_planned_by_weekdays()`, says which days the plan puts a workout on, for
   keeping, reading, judging moves and settling them, so a day reads the same before and after it
   is kept.
 - **The plan starts on the device's day:** the app sends its today with the onboarding's answers,
