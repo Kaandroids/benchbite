@@ -1,5 +1,6 @@
 // Calculating and saving the onboarding's result: the nutrition targets, the workout plan and
 // the save that completes the onboarding. The rules live on the server (ADR 0009, ADR 0010).
+import { toIsoDate } from '@/i18n/dates';
 import { isDbError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { targetsFrom, type NutritionTargets } from '@/nutrition/targets';
@@ -63,7 +64,11 @@ export function refusedAnswer(error: unknown): RefusedAnswer | null {
 export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPlan) {
   // The calculated result is sent as the plan, not again as an answer.
   const { plan: _plan, targets: _targets, reminderMinutes: _reminder, ...onlyAnswers } = answers;
-  const { error } = await supabase.rpc('complete_onboarding', { answers: onlyAnswers, plan });
+  // The device's today starts the plan (ADR 0041), as days follow the device.
+  const { error } = await supabase.rpc('complete_onboarding', {
+    answers: { ...onlyAnswers, today: toIsoDate(new Date()) },
+    plan,
+  });
   // Saved before, for example by a request whose answer was lost.
   if (error && !isDbError(error, 'onboardingCompleted')) {
     throw error;

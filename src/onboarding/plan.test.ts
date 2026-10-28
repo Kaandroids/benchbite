@@ -189,6 +189,10 @@ describe('generatePlan', () => {
 });
 
 describe('saveOnboarding', () => {
+  // Late in the evening on the device, which may be tomorrow on the server.
+  beforeEach(() => jest.useFakeTimers({ now: new Date(2026, 9, 28, 23), doNotFake: ['nextTick'] }));
+  afterEach(() => jest.useRealTimers());
+
   it('saves the answers without the calculated result, and the plan', async () => {
     rpc.mockResolvedValue({ data: null, error: null });
     const answers: OnboardingAnswers = {
@@ -198,7 +202,10 @@ describe('saveOnboarding', () => {
       reminderMinutes: 18 * 60,
     };
     await saveOnboarding(answers, PLAN);
-    expect(rpc).toHaveBeenCalledWith('complete_onboarding', { answers: ANSWERS, plan: PLAN });
+    expect(rpc).toHaveBeenCalledWith('complete_onboarding', {
+      answers: { ...ANSWERS, today: '2026-10-28' },
+      plan: PLAN,
+    });
   });
 
   it('does not change the answers it saves', async () => {
