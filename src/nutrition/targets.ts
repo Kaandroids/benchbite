@@ -49,28 +49,36 @@ export const dayTargetsKey = (day: string) => ['nutrition-targets', 'day', day];
 
 /**
  * The targets a day is measured against (ADR 0040): today the ones in use, a past day the ones it
- * kept with its first entry. A past day without any, as nothing was logged on it, takes the ones
- * in use.
+ * kept, or the ones in use when nothing was logged on it. The database decides; the device says
+ * which day is today.
  */
 export function useDayTargets(day: string) {
-  const current = useNutritionTargets();
-  const past = day < toIsoDate(new Date());
-  const kept = useQuery({
+  return useQuery({
     queryKey: dayTargetsKey(day),
-    enabled: past,
-    queryFn: async (): Promise<NutritionTargets | null> => {
-      const { data, error } = await supabase
-        .from('day_nutrition_targets')
-        .select('calories, protein_g, carbs_g, fat_g')
-        .eq('day', day)
-        .maybeSingle();
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('targets_of_day', {
+        on_day: day,
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      return data ? targetsFrom(data) : null;
+      return targetsFrom(data);
     },
   });
-  return past && kept.data !== null ? kept : current;
+}
+
+/**
+ * Writes the targets in use over today and the days after it that kept some, after they changed:
+ * a day follows them while it lasts, and keeps the last ones once it is past (ADR 0040).
+ */
+export async function keepTargetsFromToday() {
+  const { error } = await supabase.rpc('refresh_day_nutrition_targets', {
+    from_day: toIsoDate(new Date()),
+  });
+  if (error) {
+    throw error;
+  }
 }
 
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */
@@ -138,6 +146,7 @@ export function useSetOwnTargets() {
       if (error) {
         throw error;
       }
+      await keepTargetsFromToday();
     },
     onSuccess: reload,
   });
@@ -159,6 +168,7 @@ export function useUseCalculatedTargets() {
       if (error) {
         throw error;
       }
+      await keepTargetsFromToday();
     },
     onSuccess: reload,
   });

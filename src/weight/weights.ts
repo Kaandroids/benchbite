@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
+import { keepTargetsFromToday } from '@/nutrition/targets';
 import { useSession } from '@/providers/session-provider';
 
 export type WeightEntry = {
@@ -69,6 +70,8 @@ export function useLogWeight() {
       if (error) {
         throw error;
       }
+      // The calculated targets follow the weight, and today with them.
+      await keepTargetsFromToday();
     },
     onSuccess: () =>
       Promise.all([
