@@ -16,6 +16,7 @@ export const ICONS = {
   camera: { ios: 'camera', android: 'photo_camera', web: 'photo_camera' },
   chair: { ios: 'chair', android: 'chair', web: 'chair' },
   chart: { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' },
+  code: { ios: 'chevron.left.forwardslash.chevron.right', android: 'code', web: 'code' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   close: { ios: 'xmark', android: 'close', web: 'close' },
   down: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },
