@@ -3,19 +3,19 @@
 -- were (#241, ADR 0041). Days keep their nutrition targets in the same way (ADR 0040).
 
 -- The workouts planned on a day before it was kept: the active ones on its weekday. Written only
--- by keep_user_planned_days(). The name and type stay when the workout is deleted.
+-- by keep_user_planned_days(). The workout's id, name and type stay when it is deleted, so that a
+-- kept day still says which workout it planned, and which of them a move took.
 create table public.planned_days (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
   day date not null,
-  workout_id bigint references public.workouts (id) on delete set null,
+  workout_id bigint not null,
   name text,
   type public.workout_type
 );
 
 create unique index planned_days_workout_day_key
   on public.planned_days (user_id, day, workout_id);
-create index planned_days_workout_id_idx on public.planned_days (workout_id);
 
 -- How far each user's plan is kept, and the day it started. Days up to `through` are planned as
 -- planned_days says, none of a day's rows meaning a day without workouts, and later days by the
@@ -84,8 +84,7 @@ revoke execute on function public.lock_planned_days(uuid) from public, anon, aut
 
 -- The workouts a user's plan as it is now puts on each day from `from_day` to `to_day`: the
 -- active ones on the day's weekday. Keeping days and reading days both take the plan from here,
--- so that a day reads the same before and after it is kept. Runs as its caller, so users only
--- reach their own workouts.
+-- so that a day reads the same before and after it is kept. Only those two call it.
 create function public.plan_by_weekdays(owner uuid, from_day date, to_day date)
 returns table (day date, workout_id bigint, name text, type public.workout_type)
 language sql
@@ -100,15 +99,15 @@ as $$
     and extract(isodow from d)::smallint = any(w.weekdays);
 $$;
 
-revoke execute on function public.plan_by_weekdays(uuid, date, date) from public, anon;
-grant execute on function public.plan_by_weekdays(uuid, date, date) to authenticated;
+revoke execute on function public.plan_by_weekdays(uuid, date, date)
+  from public, anon, authenticated;
 
 -- Keeps a user's plan as it is now for the days after the last kept one, up to `through`. Days
 -- already kept are never written again: calls for a user wait for each other, and the last kept
 -- day only moves forward. A user without kept days starts there without any: the plan before it
--- is not known.
+-- is not known. Returns the last kept day.
 create function public.keep_user_planned_days(owner uuid, through date)
-returns void
+returns date
 language plpgsql
 -- Writes planned_days and planned_days_kept, which users may only read.
 security definer
@@ -120,7 +119,7 @@ begin
   perform public.lock_planned_days(owner);
   kept := (select k.through from public.planned_days_kept k where k.user_id = owner);
   if kept >= keep_user_planned_days.through then
-    return;
+    return kept;
   end if;
   if kept is not null then
     insert into public.planned_days (user_id, day, workout_id, name, type)
@@ -132,6 +131,7 @@ begin
   values (owner, keep_user_planned_days.through)
   on conflict (user_id) do update
   set through = greatest(public.planned_days_kept.through, excluded.through);
+  return keep_user_planned_days.through;
 end;
 $$;
 
@@ -159,8 +159,8 @@ $$;
 
 revoke execute on function public.start_user_plan(uuid, date) from public, anon, authenticated;
 
--- Keeps the caller's plan through the day before `today`, the device's today: the app calls it
--- before changing the plan, so that the change counts from today.
+-- Keeps the caller's plan through the day before `today`, the device's today, so that a change
+-- made next counts from today. The functions that change the plan call it first.
 create function public.keep_planned_days(today date)
 returns void
 language plpgsql
@@ -179,13 +179,10 @@ $$;
 revoke execute on function public.keep_planned_days(date) from public, anon;
 grant execute on function public.keep_planned_days(date) to authenticated;
 
--- A deleted workout's moves stay on the days that keep them: the move points at no workout then,
--- as the kept day does. Moves from later days go with the workout, as before.
-alter table public.workout_moves
-  alter column workout_id drop not null,
-  drop constraint workout_moves_workout_id_fkey,
-  add constraint workout_moves_workout_id_fkey
-    foreign key (workout_id) references public.workouts (id) on delete set null;
+-- A deleted workout's moves stay on the days that keep them, with its id, as the kept days keep
+-- it; the trigger below deletes those of later days, as the cascade did. Moves are written only
+-- by the database, for workouts that exist then.
+alter table public.workout_moves drop constraint workout_moves_workout_id_fkey;
 
 -- Settles a workout's moves when the plan changes to `workout`, or the workout is deleted. A move
 -- into a kept day, or within kept days, stays as it went. Of the moves into later days, those that
@@ -243,20 +240,17 @@ security definer
 set search_path = ''
 as $$
 declare
-  owner uuid := case when tg_op = 'DELETE' then old.user_id else new.user_id end;
+  changed public.workouts := case when tg_op = 'DELETE' then old else new end;
+  kept date;
 begin
-  if not exists (select 1 from auth.users u where u.id = owner) then
-    return case when tg_op = 'DELETE' then old else new end;
+  if not exists (select 1 from auth.users u where u.id = changed.user_id) then
+    return changed;
   end if;
-  perform public.keep_user_planned_days(owner, public.last_day_past_everywhere());
+  kept := public.keep_user_planned_days(changed.user_id, public.last_day_past_everywhere());
   if tg_op <> 'INSERT' then
-    perform public.settle_moves(
-      case when tg_op = 'DELETE' then old else new end,
-      (select k.through from public.planned_days_kept k where k.user_id = owner),
-      tg_op = 'DELETE'
-    );
+    perform public.settle_moves(changed, kept, tg_op = 'DELETE');
   end if;
-  return case when tg_op = 'DELETE' then old else new end;
+  return changed;
 end;
 $$;
 
@@ -284,22 +278,15 @@ create function public.planned_workouts(from_day date, to_day date, today date)
 returns table (day date, workout_id bigint, name text, type public.workout_type)
 language sql
 stable
+-- Calls plan_by_weekdays(), which users may not; it reads the caller's rows only.
+security definer
 set search_path = ''
 as $$
   with bounds as (
     select
       -- Never today or later, even when the server kept a day ahead of the device's.
       least(k.through, planned_workouts.today - 1) as kept,
-      greatest(
-        planned_workouts.from_day,
-        coalesce(
-          k.started_on,
-          (
-            select p.onboarding_completed_at::date from public.profiles p
-            where p.user_id = (select auth.uid())
-          )
-        )
-      ) as first_day,
+      greatest(planned_workouts.from_day, k.started_on) as first_day,
       least(planned_workouts.to_day, planned_workouts.from_day + 366) as last_day
     from (select 1) one
     left join public.planned_days_kept k on k.user_id = (select auth.uid())
@@ -319,6 +306,132 @@ $$;
 
 revoke execute on function public.planned_workouts(date, date, date) from public, anon;
 grant execute on function public.planned_workouts(date, date, date) to authenticated;
+
+-- As before (20261026090000), and with the device's today keeps the days before it first, in the
+-- same transaction as the change (ADR 0041). The app sends it; without it, the trigger keeps
+-- the days the server knows to be past.
+drop function public.save_workout(jsonb);
+create function public.save_workout(workout jsonb, today date default null)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller_id uuid := (select auth.uid());
+  saved_id bigint := (workout ->> 'id')::bigint;
+  items jsonb := coalesce(workout -> 'exercises', '[]');
+  days smallint[] := array(
+    select value::smallint from jsonb_array_elements_text(coalesce(workout -> 'weekdays', '[]'))
+  );
+  max_exercises integer;
+  max_workouts integer;
+  minutes smallint;
+begin
+  if caller_id is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+
+  perform public.lock_user_limits(caller_id);
+  -- The days before the device's today keep the plan they had (ADR 0041).
+  if save_workout.today is not null then
+    perform public.keep_planned_days(save_workout.today);
+  end if;
+
+  select l.exercises, l.workouts into max_exercises, max_workouts from public.workout_limits() l;
+
+  if jsonb_array_length(items) not between 1 and max_exercises then
+    raise exception 'A workout needs 1 to % exercises', max_exercises using errcode = 'BB008';
+  end if;
+  -- Workouts from the plan builder count too, archived ones as well.
+  if saved_id is null
+    and (select count(*) from public.workouts w where w.user_id = caller_id) >= max_workouts then
+    raise exception 'A user can have up to % workouts', max_workouts using errcode = 'BB009';
+  end if;
+  -- Unknown exercises are left to the foreign key.
+  if exists (
+    select 1
+    from jsonb_array_elements(items) e
+    join public.exercises x on x.id = e ->> 'exerciseId'
+    where not public.target_suits(x.metrics, e -> 'target')
+  ) then
+    raise exception 'A target does not suit its exercise' using errcode = 'BB007';
+  end if;
+
+  -- Five minutes to warm up, as in the plan builder.
+  minutes := least(180, ceil((
+    300 + (select sum(public.exercise_seconds(e)) from jsonb_array_elements(items) e)
+  ) / 60.0));
+
+  if saved_id is null then
+    insert into public.workouts (user_id, name, weekdays, estimated_minutes)
+    values (caller_id, workout ->> 'name', days, minutes)
+    returning id into saved_id;
+  else
+    update public.workouts w
+    set name = workout ->> 'name', weekdays = days, estimated_minutes = minutes
+    where w.id = saved_id and w.user_id = caller_id;
+    if not found then
+      raise exception 'Workout not found' using errcode = 'BB006';
+    end if;
+    delete from public.workout_exercises where workout_id = saved_id;
+  end if;
+
+  -- A slot belongs to a plan's exercises only, so one sent with a hand-made workout is dropped.
+  perform public.insert_workout_exercises(
+    saved_id,
+    caller_id,
+    (
+      select coalesce(jsonb_agg(e.value - 'slot' order by e.ordinality), '[]'::jsonb)
+      from jsonb_array_elements(items) with ordinality e
+    )
+  );
+
+  return saved_id;
+end;
+$$;
+
+
+revoke execute on function public.save_workout(jsonb, date) from public, anon;
+grant execute on function public.save_workout(jsonb, date) to authenticated;
+
+-- Archives a workout or brings it back, keeping the days before the device's today first.
+create function public.set_workout_active(workout_id bigint, active boolean, today date)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  perform public.keep_planned_days(set_workout_active.today);
+  update public.workouts w
+  set active = set_workout_active.active
+  where w.id = set_workout_active.workout_id;
+  if not found then
+    raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+end;
+$$;
+
+revoke execute on function public.set_workout_active(bigint, boolean, date) from public, anon;
+grant execute on function public.set_workout_active(bigint, boolean, date) to authenticated;
+
+-- Deletes a workout, keeping the days before the device's today first.
+create function public.delete_workout(workout_id bigint, today date)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  perform public.keep_planned_days(delete_workout.today);
+  delete from public.workouts w where w.id = delete_workout.workout_id;
+  if not found then
+    raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+end;
+$$;
+
+revoke execute on function public.delete_workout(bigint, date) from public, anon;
+grant execute on function public.delete_workout(bigint, date) to authenticated;
 
 -- As before (20261026180000), and starts the plan on the device's today, `answers.today`.
 create or replace function public.complete_onboarding(answers jsonb, plan jsonb)
@@ -411,8 +524,23 @@ begin
   );
 
   -- The plan starts on the device's today, sent with the answers (ADR 0041), before any
-  -- workout of it is saved; without one, on the server's.
-  perform public.start_user_plan(caller_id, coalesce((answers ->> 'today')::date, current_date));
+  -- workout of it is saved. Without one, or with a device clock more than a day off, it starts on
+  -- the server's, so that the onboarding can always be finished.
+  perform public.start_user_plan(
+    caller_id,
+    coalesce(
+      (
+        select t.day
+        from (
+          select case
+            when answers ->> 'today' ~ '^\d{4}-\d{2}-\d{2}$' then (answers ->> 'today')::date
+          end as day
+        ) t
+        where t.day between current_date - 1 and current_date + 1
+      ),
+      current_date
+    )
+  );
 
   -- Only goals that change the weight keep a target weight and a pace.
   insert into public.goals (user_id, kind, target_weight_kg, weekly_pace_kg)
@@ -493,9 +621,15 @@ from (
 ) u
 on conflict (user_id) do nothing;
 
-do $$
-begin
-  perform public.keep_user_planned_days(k.user_id, public.last_day_past_everywhere())
-  from public.planned_days_kept k;
-end;
-$$;
+-- Set at once without the lock of keep_user_planned_days(): nothing else runs during the
+-- migration, and a lock per user would be held until it ends.
+insert into public.planned_days (user_id, day, workout_id, name, type)
+select k.user_id, p.day, p.workout_id, p.name, p.type
+from public.planned_days_kept k
+cross join lateral public.plan_by_weekdays(
+  k.user_id, k.through + 1, public.last_day_past_everywhere()
+) p
+on conflict do nothing;
+
+update public.planned_days_kept
+set through = greatest(through, public.last_day_past_everywhere());

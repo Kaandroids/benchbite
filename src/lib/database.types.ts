@@ -612,7 +612,7 @@ export type Database = {
           name: string | null;
           type: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
-          workout_id: number | null;
+          workout_id: number;
         };
         ComputedFields: never;
         Insert: {
@@ -621,7 +621,7 @@ export type Database = {
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id: string;
-          workout_id?: number | null;
+          workout_id: number;
         };
         Update: {
           day?: string;
@@ -629,17 +629,9 @@ export type Database = {
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
           user_id?: string;
-          workout_id?: number | null;
+          workout_id?: number;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'planned_days_workout_id_fkey';
-            columns: ['workout_id'];
-            isOneToOne: false;
-            referencedRelation: 'workouts';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       planned_days_kept: {
         Row: {
@@ -1065,7 +1057,7 @@ export type Database = {
           id: number;
           to_on: string | null;
           user_id: string;
-          workout_id: number | null;
+          workout_id: number;
         };
         ComputedFields: never;
         Insert: {
@@ -1074,7 +1066,7 @@ export type Database = {
           id?: never;
           to_on?: string | null;
           user_id: string;
-          workout_id?: number | null;
+          workout_id: number;
         };
         Update: {
           created_at?: string;
@@ -1082,17 +1074,9 @@ export type Database = {
           id?: never;
           to_on?: string | null;
           user_id?: string;
-          workout_id?: number | null;
+          workout_id?: number;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'workout_moves_workout_id_fkey';
-            columns: ['workout_id'];
-            isOneToOne: false;
-            referencedRelation: 'workouts';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       workouts: {
         Row: {
@@ -1233,6 +1217,7 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       exercise_bests: {
@@ -1299,7 +1284,7 @@ export type Database = {
         Returns: undefined;
       };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
-      keep_user_planned_days: { Args: { owner: string; through: string }; Returns: undefined };
+      keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
       last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
         Args: { exercise_ids: string[] };
@@ -1469,7 +1454,7 @@ export type Database = {
         };
         Returns: number;
       };
-      save_workout: { Args: { workout: Json }; Returns: number };
+      save_workout: { Args: { today?: string; workout: Json }; Returns: number };
       search_foods: {
         Args: { language: string; query: string; recipes?: boolean };
         Returns: {
@@ -1494,6 +1479,10 @@ export type Database = {
           weight_kg: number;
         };
         Returns: boolean;
+      };
+      set_workout_active: {
+        Args: { active: boolean; today: string; workout_id: number };
+        Returns: undefined;
       };
       sets_of: {
         Args: { log: Json };
