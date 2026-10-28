@@ -1,14 +1,14 @@
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, ActivityIndicator, FlatList, Modal, View } from 'react-native';
+import { AccessibilityInfo, FlatList, Modal, StyleSheet, View } from 'react-native';
 
 import { allLoaded } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
-import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
@@ -16,7 +16,6 @@ import { AmountForm } from './amount-form';
 import { FoodLoadState } from './food-load-state';
 import { FoodRow, useRowLabels } from './food-row';
 import {
-  MIN_QUERY_LENGTH,
   quickAmountOf,
   refKey,
   useFood,
@@ -25,23 +24,35 @@ import {
   type Amount,
   type FoodResult,
 } from './foods';
+import { useFavouriteFoods, useMyFoods } from './quick-foods';
+import { EmptyList } from './quick-foods-view';
 import type { Ingredient } from './recipes';
+import { SearchResults } from './search-results';
 
 type IngredientPickerProps = {
   /** The recipe's name, in the title, or empty while it has none. */
   recipeName: string;
   /** An ingredient to change the amount of, rather than finding new ones. */
   changing?: Ingredient;
+  /** Whether the recipe holds as many ingredients as it may, so that no more go in. */
+  full: boolean;
   onPick: (ingredient: Ingredient) => void;
   onClose: () => void;
 };
 
 /**
- * Finds foods to put in a recipe, in a screen of its own over the form: + adds a food's default
- * portion, and a food opens its amount. Recipes are not offered, as a recipe holds foods only.
- * With `changing`, it opens at that ingredient's amount.
+ * Finds foods to put in a recipe, in a screen of its own over the form: before anything is typed
+ * the favourites and one's own foods, then search. + adds a food's default portion, and a food
+ * opens its amount. Recipes are not offered, as a recipe holds foods only. With `changing`, it
+ * opens at that ingredient's amount.
  */
-export function IngredientPicker({ recipeName, changing, onPick, onClose }: IngredientPickerProps) {
+export function IngredientPicker({
+  recipeName,
+  changing,
+  full,
+  onPick,
+  onClose,
+}: IngredientPickerProps) {
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       {changing ? (
@@ -56,33 +67,50 @@ export function IngredientPicker({ recipeName, changing, onPick, onClose }: Ingr
           }}
         />
       ) : (
-        <IngredientSearch recipeName={recipeName} onPick={onPick} onClose={onClose} />
+        <IngredientSearch recipeName={recipeName} full={full} onPick={onPick} onClose={onClose} />
       )}
     </Modal>
   );
 }
 
+type Tab = 'favourites' | 'mine';
+
+/** A food that can go into a recipe: a library food or one of one's own. */
+type IngredientFood = FoodResult & { ref: Ingredient['food'] };
+
+const isIngredient = (food: FoodResult): food is IngredientFood => food.ref.kind !== 'recipe';
+
 function IngredientSearch({
   recipeName,
+  full,
   onPick,
   onClose,
 }: Omit<IngredientPickerProps, 'changing'>) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const rowLabels = useRowLabels();
   const [query, setQuery] = useState('');
   const typed = query.trim();
   const term = useSettledQuery(typed);
-  const search = useFoodSearch(term);
+  // A recipe holds foods only, so search leaves recipes out.
+  const search = useFoodSearch(term, { recipes: false });
+  const [tab, setTab] = useState<Tab>('favourites');
+  const favourites = useFavouriteFoods();
+  const mine = useMyFoods();
   // The foods added from here, which show a check instead of their +.
   const [added, setAdded] = useState<string[]>([]);
   const [opened, setOpened] = useState<Ingredient['food'] | null>(null);
 
-  const add = (food: FoodResult & { ref: Ingredient['food'] }, amount: Amount) => {
-    onPick({ food: food.ref, name: food.name, per100g: food.per100g, ...amount });
-    setAdded((current) => [...current, refKey(food.ref)]);
+  const add = (ingredient: Ingredient) => {
+    if (full) {
+      return;
+    }
+    onPick(ingredient);
+    setAdded((current) => [...current, refKey(ingredient.food)]);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    AccessibilityInfo.announceForAccessibility(t('nutrition.recipe.added', { name: food.name }));
+    AccessibilityInfo.announceForAccessibility(
+      t('nutrition.recipe.added', { name: ingredient.name }),
+    );
   };
 
   if (opened) {
@@ -92,72 +120,48 @@ function IngredientSearch({
         submitLabel="addToRecipe"
         onBack={() => setOpened(null)}
         onPick={(ingredient) => {
-          onPick(ingredient);
-          setAdded((current) => [...current, refKey(ingredient.food)]);
+          add(ingredient);
           setOpened(null);
         }}
       />
     );
   }
 
-  // A recipe holds foods, not other recipes.
-  const foods = (search.data ?? []).filter(
-    (food): food is FoodResult & { ref: Ingredient['food'] } => food.ref.kind !== 'recipe',
-  );
-  const current = term === typed && !search.isPlaceholderData && !search.isFetching;
-  let body;
-  if (typed.length < MIN_QUERY_LENGTH) {
-    body = (
-      <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
-        {t('nutrition.recipe.searchHint')}
-      </Text>
-    );
-  } else if (search.isError) {
-    body = (
-      <View style={{ padding: spacing.xl }}>
-        <Note tone="danger">{t('nutrition.search.error')}</Note>
-      </View>
-    );
-  } else if (search.data === undefined || (foods.length === 0 && !current)) {
-    body = (
-      <ActivityIndicator
-        color={colors.primary}
-        accessibilityLabel={t('common.loading')}
-        style={{ padding: spacing.xl }}
+  const row = (food: FoodResult, index: number) => {
+    if (!isIngredient(food)) {
+      return null;
+    }
+    const amount = quickAmountOf(food);
+    const { portion, detail } = rowLabels(food, amount);
+    return (
+      <FoodRow
+        food={food}
+        detail={detail}
+        addLabel={t('nutrition.search.quickAdd', { portion, name: food.name })}
+        added={added.includes(refKey(food.ref))}
+        // Nothing more goes in once the recipe is full.
+        adding={full}
+        first={index === 0}
+        onOpen={() => setOpened(food.ref)}
+        onAdd={() => add({ food: food.ref, name: food.name, per100g: food.per100g, ...amount })}
       />
     );
-  } else if (foods.length === 0) {
-    body = (
-      <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
-        {t('nutrition.search.noResults', { query: term })}
-      </Text>
-    );
-  } else {
-    body = (
-      <FlatList
-        data={foods}
-        keyExtractor={(food) => refKey(food.ref)}
-        renderItem={({ item: food, index }) => {
-          const amount = quickAmountOf(food);
-          const { portion, detail } = rowLabels(food, amount);
-          return (
-            <FoodRow
-              food={food}
-              detail={detail}
-              addLabel={t('nutrition.search.quickAdd', { portion, name: food.name })}
-              added={added.includes(refKey(food.ref))}
-              adding={false}
-              first={index === 0}
-              onOpen={() => setOpened(food.ref)}
-              onAdd={() => add(food, amount)}
-            />
-          );
-        }}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
-      />
-    );
-  }
+  };
+
+  // Before anything is typed: the favourites and one's own foods, without recipes.
+  const lists: Record<Tab, { query: typeof mine; foods: IngredientFood[]; empty: string[] }> = {
+    favourites: {
+      query: favourites,
+      foods: (favourites.data ?? []).filter(isIngredient),
+      empty: [t('nutrition.quick.noFavourites'), t('nutrition.quick.noFavouritesText')],
+    },
+    mine: {
+      query: mine,
+      foods: (mine.data ?? []).filter(isIngredient),
+      empty: [t('nutrition.quick.noMine'), t('nutrition.quick.noMineText')],
+    },
+  };
+  const list = lists[tab];
 
   return (
     <Screen
@@ -170,7 +174,7 @@ function IngredientSearch({
       footer={<Button label={t('common.done')} onPress={onClose} />}
       scrolls={false}
     >
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
         <SearchField
           label={t('nutrition.search.placeholder')}
           value={query}
@@ -178,8 +182,49 @@ function IngredientSearch({
           autoFocus
           maxLength={50}
         />
+        {full ? <Note tone="warning">{t('nutrition.recipe.full')}</Note> : null}
       </View>
-      {body}
+      {typed.length === 0 ? (
+        <FlatList
+          data={list.query.isError ? [] : list.foods}
+          keyExtractor={(food) => refKey(food.ref)}
+          renderItem={({ item, index }) => row(item, index)}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
+          ListHeaderComponent={
+            <View
+              accessibilityRole="tablist"
+              accessibilityLabel={t('nutrition.quick.tabs')}
+              style={[styles.chips, { gap: spacing.sm, paddingBottom: spacing.md }]}
+            >
+              {(Object.keys(lists) as Tab[]).map((value) => (
+                <Chip
+                  key={value}
+                  label={t(`nutrition.quick.${value}`)}
+                  selected={tab === value}
+                  onPress={() => setTab(value)}
+                />
+              ))}
+            </View>
+          }
+          ListEmptyComponent={
+            <EmptyList
+              query={list.query}
+              icon={tab === 'favourites' ? 'star' : 'edit'}
+              title={list.empty[0]!}
+              message={list.empty[1]!}
+            />
+          }
+        />
+      ) : (
+        <SearchResults
+          typed={typed}
+          term={term}
+          search={search}
+          hint={t('nutrition.recipe.searchHint')}
+          renderRow={row}
+        />
+      )}
     </Screen>
   );
 }
@@ -222,3 +267,10 @@ function IngredientAmount({
   }
   return <FoodLoadState gone={food.data === null} queries={[food]} onBack={onBack} />;
 }
+
+const styles = StyleSheet.create({
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+});

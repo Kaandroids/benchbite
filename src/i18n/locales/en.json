@@ -460,7 +460,8 @@
       "tag": "Recipe",
       "subtitle": "Recipe · {{calories}} kcal per 100 g",
       "inIt": "In it · makes {{portion}}",
-      "ingredient": "{{name}} {{amount}}"
+      "ingredient": "{{name}} {{amount}}",
+      "full": "A recipe holds up to 50 ingredients."
     }
   },
   "workout": {

@@ -460,7 +460,8 @@
       "tag": "Tarif",
       "subtitle": "Tarif · 100 g'da {{calories}} kcal",
       "inIt": "İçinde · {{portion}} çıkar",
-      "ingredient": "{{name}} {{amount}}"
+      "ingredient": "{{name}} {{amount}}",
+      "full": "Bir tarifte en fazla 50 malzeme olabilir."
     }
   },
   "workout": {

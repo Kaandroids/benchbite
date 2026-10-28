@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { useFood, useFoodSearch, type Food, type FoodResult } from './foods';
+import { useFavouriteFoods, useMyFoods } from './quick-foods';
 import { RecipeFormScreen } from './recipe-form-screen';
 import { useDeleteRecipe, useRecipe, useSaveRecipe, type Ingredient, type Recipe } from './recipes';
 
@@ -16,6 +17,11 @@ jest.mock('./foods', () => ({
   useFoodSearch: jest.fn(),
   // Typing settles at once here.
   useSettledQuery: (query: string) => query,
+}));
+jest.mock('./quick-foods', () => ({
+  ...jest.requireActual('./quick-foods'),
+  useFavouriteFoods: jest.fn(),
+  useMyFoods: jest.fn(),
 }));
 jest.mock('./recipes', () => ({
   ...jest.requireActual('./recipes'),
@@ -65,6 +71,8 @@ beforeEach(() => {
     isPlaceholderData: false,
   } as never);
   jest.mocked(useFood).mockReturnValue(loaded(ONION));
+  jest.mocked(useFavouriteFoods).mockReturnValue(loaded([LENTILS, SOUP]));
+  jest.mocked(useMyFoods).mockReturnValue(loaded([]));
 });
 
 const saveButton = () => screen.getByRole('button', { name: 'Save recipe' });
@@ -175,6 +183,48 @@ describe('RecipeFormScreen, new', () => {
       .mockReturnValue(mutation(save, { isError: true, error: { code: '23505' } }));
     await render(<RecipeFormScreen kind="new" meal="lunch" day="2026-10-28" />);
     expect(screen.getByText('You already have a recipe with this name.')).toBeTruthy();
+  });
+});
+
+describe('RecipeFormScreen, picking ingredients', () => {
+  it('offers the favourites and own foods before anything is typed, without recipes', async () => {
+    await render(<RecipeFormScreen kind="new" meal="lunch" day="2026-10-28" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add ingredient' }));
+    expect(screen.getByLabelText('Add 1 cup of Red lentils, dry')).toBeTruthy();
+    expect(screen.queryByText('Lentil soup')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Add 1 cup of Red lentils, dry'));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Mine' }));
+    expect(screen.getByText('No foods of your own yet')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByText('INGREDIENTS · 1')).toBeTruthy();
+  });
+
+  it('adds nothing more once the recipe holds 50 ingredients, and says so', async () => {
+    const ingredient: Ingredient = {
+      food: { kind: 'library', id: 'X' },
+      name: 'Salt',
+      per100g: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+      grams: 1,
+      portion: null,
+    };
+    jest.mocked(useRecipe).mockReturnValue(
+      loaded({
+        id: 9,
+        name: 'Long list',
+        servings: 1,
+        servingUnit: 'bowl',
+        ingredients: Array.from({ length: 49 }, () => ingredient),
+      }),
+    );
+    jest.mocked(useFavouriteFoods).mockReturnValue(loaded([LENTILS, { ...ONION, portion: null }]));
+    await render(<RecipeFormScreen kind="edit" id={9} meal="lunch" day="2026-10-28" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add ingredient' }));
+    await fireEvent.press(screen.getByLabelText('Add 1 cup of Red lentils, dry'));
+    expect(screen.getByText('A recipe holds up to 50 ingredients.')).toBeTruthy();
+    expect(screen.getByLabelText('Add 100 g of Onion')).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByText('INGREDIENTS · 50')).toBeTruthy();
   });
 });
 

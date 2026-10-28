@@ -14,11 +14,12 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { isDbError } from '@/lib/errors';
+import { dbErrorMessage } from '@/lib/errors';
 import { toTenth, useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { FoodLoadState } from './food-load-state';
+import { useRowLabels } from './food-row';
 import { MAX_NAME_LENGTH } from './food-form';
 import { amountOf, refKey } from './foods';
 import { IngredientPicker } from './ingredient-picker';
@@ -71,6 +72,7 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
   const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
   const portionLabel = usePortionLabel();
+  const rowLabels = useRowLabels();
   const fieldStyle = useFieldStyle();
   const saveRecipe = useSaveRecipe();
   const deleteRecipe = useDeleteRecipe();
@@ -85,15 +87,16 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
   const tooHeavy = totals.servingGrams > MAX_SERVING_GRAMS;
   const complete = recipe.name.trim() !== '' && recipe.ingredients.length > 0 && !tooHeavy;
   const serverError = saveRecipe.isError
-    ? isDbError(saveRecipe.error, 'uniqueViolation')
-      ? t('nutrition.recipe.nameTaken')
-      : isDbError(saveRecipe.error, 'recipeLimit')
-        ? t('nutrition.recipe.limit')
-        : isDbError(saveRecipe.error, 'recipeTotalLimit')
-          ? t('nutrition.recipe.totalLimit')
-          : isDbError(saveRecipe.error, 'recipeDeleted')
-            ? t('nutrition.recipe.deleted')
-            : t('nutrition.recipe.saveError')
+    ? dbErrorMessage(
+        saveRecipe.error,
+        [
+          ['uniqueViolation', t('nutrition.recipe.nameTaken')],
+          ['recipeLimit', t('nutrition.recipe.limit')],
+          ['recipeTotalLimit', t('nutrition.recipe.totalLimit')],
+          ['recipeDeleted', t('nutrition.recipe.deleted')],
+        ],
+        t('nutrition.recipe.saveError'),
+      )
     : deleteRecipe.isError
       ? t('nutrition.recipe.deleteError')
       : null;
@@ -148,10 +151,8 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
       return { ...current, ingredients };
     });
 
-  const amountLabel = ({ grams, portion }: Ingredient) =>
-    portion
-      ? `${portionLabel(portion.unit, portion.count)} · ${t('nutrition.amount.inGrams', { grams: format(grams) })}`
-      : t('nutrition.amount.inGrams', { grams: format(grams) });
+  const amountLabel = (ingredient: Ingredient) =>
+    rowLabels({ ...ingredient, ref: ingredient.food, portion: null }, ingredient).amount;
 
   const servingPortion = portionLabel(recipe.servingUnit, 1);
 
@@ -336,6 +337,7 @@ function RecipeFormBody(props: RecipeFormScreenProps & { initial: RecipeValues }
       {picking ? (
         <IngredientPicker
           recipeName={recipe.name}
+          full={recipe.ingredients.length >= MAX_INGREDIENTS}
           changing={
             picking.changing !== undefined ? recipe.ingredients[picking.changing] : undefined
           }
