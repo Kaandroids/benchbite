@@ -54,3 +54,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0036](0036-foods-of-ones-own.md)                            | Let people add foods of their own, private and archived on delete                  | Accepted               |
 | [0037](0037-frequent-and-favourite-foods.md)                 | Count frequent foods from the entries, and keep favourites in a table              | Accepted               |
 | [0038](0038-recipes.md)                                      | Sum recipes from their ingredients and log them by the serving                     | Accepted               |
+| [0039](0039-own-nutrition-targets.md)                        | Let people set their own targets and work the calculated ones out again            | Accepted               |
