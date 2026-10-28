@@ -51,11 +51,12 @@ type Tab = 'frequent' | 'favourites' | 'recipes' | 'mine';
  */
 export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const [tab, setTab] = useState<Tab>('frequent');
   const frequent = useFrequentFoods(meal);
   const favourites = useFavouriteFoods();
-  const recipes = useRecipes();
+  // Loaded only while their tab shows, as the other lists of the screen do not need them.
+  const recipes = useRecipes({ enabled: tab === 'recipes' });
   const mine = useMyFoods();
 
   // Each tab's list, and what it says while empty.
@@ -110,26 +111,7 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
   };
   const { query, rows, empty } = tabs[tab];
 
-  let emptyList: ReactElement;
-  if (query.isError) {
-    emptyList = <Note tone="danger">{t('nutrition.quick.error')}</Note>;
-  } else if (query.data === undefined) {
-    emptyList = (
-      <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />
-    );
-  } else {
-    emptyList = (
-      <Card style={[styles.empty, { gap: spacing.sm }]}>
-        <IconTile name={empty.icon} />
-        <Text variant="label" align="center">
-          {empty.title}
-        </Text>
-        <Text variant="caption" color="textMuted" align="center">
-          {empty.message}
-        </Text>
-      </Card>
-    );
-  }
+  const emptyList = <EmptyList query={query} {...empty} />;
 
   return (
     <FlatList
@@ -185,6 +167,42 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
         ) : undefined
       }
     />
+  );
+}
+
+/**
+ * What a list of foods shows while it has none: that it failed to load, a spinner, or what it is
+ * for and how to fill it.
+ */
+export function EmptyList({
+  query,
+  icon,
+  title,
+  message,
+}: {
+  query: { data?: unknown; isError: boolean };
+  icon: IconName;
+  title: string;
+  message: string;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  if (query.isError) {
+    return <Note tone="danger">{t('nutrition.quick.error')}</Note>;
+  }
+  if (query.data === undefined) {
+    return <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />;
+  }
+  return (
+    <Card style={[styles.empty, { gap: spacing.sm }]}>
+      <IconTile name={icon} />
+      <Text variant="label" align="center">
+        {title}
+      </Text>
+      <Text variant="caption" color="textMuted" align="center">
+        {message}
+      </Text>
+    </Card>
   );
 }
 
