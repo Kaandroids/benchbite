@@ -89,10 +89,6 @@
     "nutrition": "Ernährung",
     "progress": "Fortschritt"
   },
-  "comingSoon": {
-    "title": "Bald verfügbar",
-    "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
-  },
   "weight": {
     "title": "Gewicht",
     "none": "Noch kein Gewicht eingetragen.",

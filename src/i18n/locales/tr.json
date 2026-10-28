@@ -89,10 +89,6 @@
     "nutrition": "Beslenme",
     "progress": "İlerleme"
   },
-  "comingSoon": {
-    "title": "Yakında",
-    "progress": "Kilon ve ilerlemen yakında burada olacak."
-  },
   "weight": {
     "title": "Kilo",
     "none": "Henüz kilo girmedin.",
