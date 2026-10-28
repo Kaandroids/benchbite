@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(40);
+select plan(43);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -227,6 +227,35 @@ select results_eq(
   $$ values (907::bigint, 5, 2) $$,
   'A move into a kept day stays when the workout loses its day, is archived or is deleted'
 );
+
+-- ----------------------------------------------------------------------------------------------
+-- Moving from a kept day
+
+-- I's Push was on Tuesdays last week, as Tuesday kept; it is on Thursdays now. Seen on last week's
+-- Wednesday, the kept Tuesday's Push can still be skipped or moved.
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a9', 'i@example.com');
+insert into public.planned_days_kept (user_id, through)
+values ('00000000-0000-0000-0000-0000000000a9', date_trunc('week', current_date)::date - 5);
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, type, estimated_minutes, weekdays)
+overriding system value values
+  (909, '00000000-0000-0000-0000-0000000000a9', 'Push', 'push', 45, '{4}'),
+  (910, '00000000-0000-0000-0000-0000000000a9', 'Pull', 'pull', 45, '{2}');
+insert into public.planned_days (user_id, day, workout_id, name, type)
+values ('00000000-0000-0000-0000-0000000000a9', date_trunc('week', current_date)::date - 6, 909,
+  'Push', 'push');
+set local session_replication_role = origin;
+
+create function pg_temp.fits(workout_id bigint, to_day integer) returns boolean language sql as $$
+  select public.move_fits(w, monday + 1, case when to_day is null then null else monday + to_day end, monday + 2)
+  from public.workouts w, (select date_trunc('week', current_date)::date - 7 as monday) m
+  where w.id = fits.workout_id;
+$$;
+
+select ok(pg_temp.fits(909, null), 'A workout a kept day planned can be skipped there, though its weekdays changed');
+select ok(pg_temp.fits(909, 4), 'and moved to a later free day');
+select ok(not pg_temp.fits(910, null), 'while one the kept day did not plan cannot, though that is its weekday now');
 
 -- ----------------------------------------------------------------------------------------------
 -- Reading a day's plan

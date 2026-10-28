@@ -1407,6 +1407,17 @@ export type Database = {
           workout_id: number;
         }[];
       };
+      plans_workout_on: {
+        Args: {
+          day: string;
+          today: string;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
+      };
       preview_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];

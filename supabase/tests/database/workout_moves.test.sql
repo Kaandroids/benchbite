@@ -35,7 +35,9 @@ create function pg_temp.next_to_today() returns date language sql as $$
 $$;
 
 -- User a's workouts: one on Mondays and Thursdays, one archived on Mondays, one on weekends, one
--- on the day next to three days ago, and one on the day next to today.
+-- on the day next to three days ago, and one on the day next to today. Saved before this week,
+-- without kept days, so that every day of it is planned by their weekdays (ADR 0041).
+set local session_replication_role = replica;
 insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes)
   overriding system value values
   (910, '00000000-0000-0000-0000-00000000000a', 'Push', '{1,4}', true, 45),
@@ -47,6 +49,7 @@ update public.workouts set weekdays = array[extract(isodow from pg_temp.late_pla
 where id = 912;
 update public.workouts set weekdays = array[extract(isodow from pg_temp.next_to_today())::smallint]
 where id = 914;
+set local session_replication_role = origin;
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
