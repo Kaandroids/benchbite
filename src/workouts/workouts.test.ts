@@ -229,6 +229,8 @@ describe('useSaveWorkout', () => {
       today: toIsoDate(new Date()),
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+    // The database settles the workout's moves, so they load again too.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-moves'] });
   });
 
   it('fails with the error the database returns', async () => {

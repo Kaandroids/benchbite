@@ -1,8 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+
+import { MOVES_KEY } from './moves';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
@@ -51,10 +53,11 @@ export type WeekSession = Pick<Workout, 'name' | 'type' | 'exercises' | 'estimat
   workoutId: number;
   /** The one day it is planned on, YYYY-MM-DD, as a kept day (ADR 0041); without it, every week. */
   on?: string;
-  /** Whether the workout left the plan since, archived or deleted: shown, not started or moved. */
-  gone?: boolean;
-  /** Whether it was deleted, so that its logs no longer say which workout they were. */
-  deleted?: boolean;
+  /**
+   * How the workout left the plan since, if it did: shown, but not started, moved or undone. A
+   * deleted one's logs no longer say which workout they were.
+   */
+  left?: 'archived' | 'deleted';
 };
 
 export const WORKOUTS_KEY = ['workouts'];
@@ -133,6 +136,17 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
   return { sessions };
 }
 
+/**
+ * Loads the plan again after it changed: the workouts, with the planned days under them, and the
+ * moves, which the database settles when a workout changes (ADR 0041).
+ */
+function reloadPlan(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+  ]);
+}
+
 export function useWorkouts() {
   return useQuery({ queryKey: WORKOUTS_KEY, queryFn: fetchWorkouts });
 }
@@ -181,7 +195,7 @@ export function useSetWorkoutActive() {
     onError: (_error, _variables, context) => {
       queryClient.setQueryData(WORKOUTS_KEY, context?.previous);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    onSettled: () => reloadPlan(queryClient),
   });
 }
 
@@ -241,7 +255,7 @@ export function useSaveWorkout() {
       }
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
+    onSuccess: () => reloadPlan(queryClient),
   });
 }
 
@@ -263,7 +277,7 @@ export function useDeleteWorkout() {
       queryClient.setQueryData<Workout[]>(WORKOUTS_KEY, (workouts) =>
         workouts?.filter((workout) => workout.id !== id),
       );
-      void queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY });
+      void reloadPlan(queryClient);
     },
   });
 }
