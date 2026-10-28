@@ -541,8 +541,8 @@
         "wait": "Nur ein paar Sekunden.",
         "lines": {
           "goal": "Ziel: {{goal}}",
-          "losing": "{{pace}} pro Woche abnehmen, ab {{weight}}",
-          "gaining": "{{pace}} pro Woche zunehmen, ab {{weight}}",
+          "losing": "{{pace}} abnehmen, ab {{weight}}",
+          "gaining": "{{pace}} zunehmen, ab {{weight}}",
           "keeping": "Dein Gewicht von {{weight}} halten",
           "activity": "Aktivität: {{level}}",
           "calories": "Kalorien und Makros für jeden Tag"
