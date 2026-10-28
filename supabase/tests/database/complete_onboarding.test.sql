@@ -108,14 +108,14 @@ select throws_ok(
 create temp table early_workouts as
 select public.save_workout(jsonb_build_object('name', 'Early ' || n, 'weekdays', '[]'::jsonb,
   'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank', 'sets', 2,
-    'target', '{"seconds": 30}'::jsonb, 'restSeconds', 45)))) as id
+    'target', '{"seconds": 30}'::jsonb, 'restSeconds', 45))), current_date) as id
 from generate_series(1, 2) n;
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
   'BB009', null,
   'A plan does not take a user past the workout limit with the workouts saved before'
 );
-delete from public.workouts where id in (select id from early_workouts);
+select public.delete_workout(id, current_date) from early_workouts;
 select throws_ok(
   $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan('No_Such_Exercise')) $$,
   '23503', null,
