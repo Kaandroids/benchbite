@@ -1,7 +1,8 @@
 import { View } from 'react-native';
 
-import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+
+import { Text } from './text';
 
 /** A step's question, with a short line under it on why it is asked or what it sets. */
 export function StepHeading({ title, intro }: { title: string; intro: string }) {

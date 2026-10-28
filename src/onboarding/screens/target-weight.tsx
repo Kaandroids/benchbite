@@ -1,22 +1,17 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
+import { defaultTargetKg, isTooLightToLose, targetWeightProblem } from '@/body/body';
 import { Button } from '@/components/ui/button';
-import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useWeightFormat } from '@/i18n/units';
-import { useTheme } from '@/theme';
+import { TargetWeightNote } from '@/goals/target-weight-note';
+import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { WeightWheels } from '@/weight/weight-wheels';
 
-import { isTargetInGoalDirection, minHealthyWeightKg } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
-
-/** How far from the current weight the wheel starts. */
-const DEFAULT_CHANGE_KG = { lose_fat: -5, build_muscle: 3 };
 
 /**
  * The target weight for goals that change the weight. It has to lie in the goal's direction and,
@@ -25,52 +20,36 @@ const DEFAULT_CHANGE_KG = { lose_fat: -5, build_muscle: 3 };
  */
 export function TargetWeightStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
-  const formatWeight = useWeightFormat();
   const { answers, progress, next, back } = useStep('target-weight');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const weightKg = answers.weightKg ?? 72;
   const heightCm = answers.heightCm ?? 172;
   const unit = answers.weightUnit ?? 'kg';
-  const lowestKg = minHealthyWeightKg(heightCm);
   const [targetKg, setTargetKg] = useState(
-    answers.targetWeightKg ?? Math.max(lowestKg, weightKg + DEFAULT_CHANGE_KG[goal]),
+    answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, heightCm),
   );
 
-  const show = (kg: number) => formatWeight(kg, unit);
-
   // Someone already at the lower end of a healthy weight should not lose more.
-  if (goal === 'lose_fat' && weightKg <= lowestKg) {
+  if (goal === 'lose_fat' && isTooLightToLose(weightKg, heightCm)) {
     return (
       <Screen
         progress={progress}
         onBack={back}
         footer={
           <Button
-            label={t('onboarding.targetWeight.changeGoal')}
+            label={t('goals.targetWeight.changeGoal')}
             onPress={() =>
               router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'goal' } })
             }
           />
         }
       >
-        <View style={[styles.centeredContent, { gap: spacing.lg }]}>
-          <IconTile name="heart" size={88} />
-          <Text color="textMuted" align="center">
-            {t('onboarding.targetWeight.alreadyLow')}
-          </Text>
-        </View>
+        <TooLightToLose />
       </Screen>
     );
   }
 
-  const wrongDirection = !isTargetInGoalDirection(goal, weightKg, targetKg);
-  // In the goal's direction as shown, but saved as the current weight, as from pounds.
-  const tooClose =
-    wrongDirection && (goal === 'lose_fat' ? targetKg < weightKg : targetKg > weightKg);
-  const belowHealthy = goal === 'lose_fat' && targetKg < lowestKg;
-  const differenceKg = targetKg - weightKg;
-  const sign = differenceKg > 0 ? '+' : differenceKg < 0 ? '−' : '';
+  const problem = targetWeightProblem(goal, weightKg, targetKg, heightCm);
 
   return (
     <Screen
@@ -79,7 +58,7 @@ export function TargetWeightStep() {
       footer={
         <Button
           label={t('common.continue')}
-          disabled={wrongDirection || belowHealthy}
+          disabled={problem !== null}
           onPress={() => next({ targetWeightKg: targetKg })}
         />
       }
@@ -87,33 +66,15 @@ export function TargetWeightStep() {
       <Text variant="title">{t('onboarding.steps.target-weight.title')}</Text>
       <CenteredContent
         below={
-          <>
-            {wrongDirection ? (
-              <Text color="danger" align="center">
-                {tooClose
-                  ? t('onboarding.targetWeight.tooClose')
-                  : t(`onboarding.targetWeight.wrongDirection.${goal}`)}
-              </Text>
-            ) : belowHealthy ? (
-              <View style={{ gap: spacing.sm }}>
-                <Text color="danger" align="center">
-                  {t('onboarding.targetWeight.belowHealthy', { weight: show(lowestKg), unit })}
-                </Text>
-                <Button
-                  variant="secondary"
-                  label={t('onboarding.targetWeight.useLowest', { weight: show(lowestKg), unit })}
-                  onPress={() => setTargetKg(lowestKg)}
-                />
-              </View>
-            ) : (
-              <Text variant="bodyStrong" color="primaryText" align="center">
-                {t('onboarding.targetWeight.difference', {
-                  difference: `${sign}${show(Math.abs(differenceKg))}`,
-                  unit,
-                })}
-              </Text>
-            )}
-          </>
+          <TargetWeightNote
+            goal={goal}
+            weightKg={weightKg}
+            targetKg={targetKg}
+            heightCm={heightCm}
+            unit={unit}
+            problem={problem}
+            onUseLowest={setTargetKg}
+          />
         }
       >
         <WeightWheels
@@ -126,11 +87,3 @@ export function TargetWeightStep() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  centeredContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

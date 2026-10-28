@@ -488,7 +488,54 @@
       "limits": "Kalorien liegen zwischen 800 und 6.000 kcal; Eiweiß bis 500 g, Kohlenhydrate bis 1.000 g und Fett bis 400 g, in ganzen Zahlen.",
       "save": "Ziele speichern",
       "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
-      "reached": "Ziel erreicht"
+      "reached": "Ziel erreicht",
+      "again": "Neu berechnen"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Ziel",
+        "target": "Zielgewicht",
+        "activity": "Aktivität",
+        "review": "Prüfen"
+      },
+      "goal": {
+        "title": "Was ist jetzt dein Ziel?",
+        "intro": "Deine Tagesziele richten sich danach."
+      },
+      "target": {
+        "title": "Dein Zielgewicht und Tempo",
+        "intro": "Du wiegst jetzt {{weight}} {{unit}}, laut deinem letzten Gewicht.",
+        "weight": "Zielgewicht",
+        "lower": "Zielgewicht senken",
+        "higher": "Zielgewicht erhöhen",
+        "pace": "Tempo"
+      },
+      "activity": {
+        "title": "Wie aktiv ist dein Tag?",
+        "intro": "Dein Job und deine Wege. Workouts zählen extra."
+      },
+      "review": {
+        "title": "Prüfe deine Änderungen",
+        "intro": "Nur, was du geändert hast. Deine Größe und dein letztes Gewicht bleiben, wie sie sind.",
+        "labels": {
+          "goal": "Ziel",
+          "target": "Zielgewicht",
+          "pace": "Tempo",
+          "activity": "Aktivität"
+        },
+        "changed": "{{label}}: {{to}}, vorher {{from}}",
+        "none": "Du hast noch nichts geändert. Geh zurück, um dein Ziel, Zielgewicht, Tempo oder deine Aktivität zu ändern.",
+        "plan": "Dein Trainingsplan bleibt, wie er ist.",
+        "calculate": "Meine Ziele berechnen",
+        "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+      },
+      "done": {
+        "title": "Deine neuen Tagesziele",
+        "intro": "Aus deinen neuen Antworten berechnet und ab heute im Einsatz.",
+        "change": "{{to}} {{unit}}, vorher {{from}} {{unit}}",
+        "note": "Sie passen sich an, wenn sich dein Gewicht ändert. Vergangene Tage behalten ihre Ziele.",
+        "done": "Fertig"
+      }
     }
   },
   "workout": {
@@ -732,22 +779,10 @@
       }
     },
     "options": {
-      "goal": {
-        "lose_fat": "Fett verlieren",
-        "build_muscle": "Muskeln aufbauen",
-        "get_stronger": "Stärker werden",
-        "stay_healthy": "Gesund bleiben"
-      },
       "sex": {
         "female": "Weiblich",
         "male": "Männlich",
         "unspecified": "Keine Angabe"
-      },
-      "activityLevel": {
-        "sedentary": "Überwiegend sitzend",
-        "light": "Leicht aktiv",
-        "moderate": "Mäßig aktiv",
-        "active": "Sehr aktiv"
       },
       "experience": {
         "beginner": "Anfänger",
@@ -798,12 +833,6 @@
       "preview": "Auf Heute"
     },
     "goal": {
-      "descriptions": {
-        "lose_fat": "Fett verbrennen, Muskeln erhalten",
-        "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
-        "get_stronger": "Schritt für Schritt schwerer heben",
-        "stay_healthy": "Fit fühlen und in Balance bleiben"
-      },
       "effects": {
         "title": "Dein Plan mit diesem Ziel",
         "empty": "Wähle ein Ziel, um zu sehen, was es in deinem Plan festlegt.",
@@ -924,42 +953,8 @@
       "age": "Du wirst dieses Jahr {{count}}",
       "tooYoung": "Benchbite ist für Menschen ab 18 Jahren."
     },
-    "targetWeight": {
-      "difference": "{{difference}} {{unit}} ab heute",
-      "wrongDirection": {
-        "lose_fat": "Zum Abnehmen muss dein Ziel unter deinem aktuellen Gewicht liegen.",
-        "build_muscle": "Für Muskelaufbau muss dein Ziel über deinem aktuellen Gewicht liegen."
-      },
-      "tooClose": "Das liegt zu nah an deinem aktuellen Gewicht. Wähle ein etwas weiter entferntes Ziel.",
-      "belowHealthy": "Das liegt unter einem gesunden Gewicht für deine Größe. Das niedrigste gesunde Ziel ist {{weight}} {{unit}}.",
-      "useLowest": "{{weight}} {{unit}} als Ziel nehmen",
-      "alreadyLow": "Dein Gewicht liegt schon am unteren Ende des gesunden Bereichs, daher empfehlen wir kein Abnehmen. Muskelaufbau oder Gesundbleiben passen besser zu dir.",
-      "changeGoal": "Anderes Ziel wählen"
-    },
-    "pace": {
-      "perWeek": "{{value}} {{unit}} pro Woche",
-      "slower": "Langsamer",
-      "faster": "Schneller",
-      "levels": {
-        "ideal": "Ideal: gleichmäßig und durchhaltbar",
-        "ambitious": "Ehrgeizig: machbar, aber fordernd",
-        "aggressive": "Aggressiv: schwer durchzuhalten und weniger gesund"
-      },
-      "projected": "Du könntest {{weight}} {{unit}} bis zum {{date}} erreichen.",
-      "disclaimer": "Das sind Schätzungen, keine medizinische Beratung.",
-      "fastest": {
-        "lose_fat": "Das ist das schnellste Tempo, das wir empfehlen. Schneller abzunehmen kostet vor allem Muskeln und ist schwer durchzuhalten.",
-        "build_muscle": "Das ist das schnellste Tempo, das wir empfehlen. Schneller zuzunehmen baut vor allem Fett auf, keine Muskeln."
-      }
-    },
     "activity": {
       "intro": "Dein Job und deine Wege. Workouts zählen wir extra.",
-      "descriptions": {
-        "sedentary": "Bürojob, wenig Bewegung",
-        "light": "Einen Teil des Tages auf den Beinen",
-        "moderate": "Den größten Teil des Tages auf den Beinen",
-        "active": "Den ganzen Tag körperliche Arbeit"
-      },
       "calories": "Deine täglichen Kalorien",
       "more": "{{percent}} mehr als überwiegend sitzend",
       "base": "Der Ausgangspunkt für deine Kalorien",
@@ -1107,6 +1102,60 @@
       "why": "Warum wir fragen",
       "burn": "Männer und Frauen verbrennen in Ruhe unterschiedlich viele Kalorien.",
       "only": "Nur deine Kalorienziele nutzen das. Dein Training ändert sich nicht."
+    }
+  },
+  "goals": {
+    "goal": {
+      "lose_fat": "Fett verlieren",
+      "build_muscle": "Muskeln aufbauen",
+      "get_stronger": "Stärker werden",
+      "stay_healthy": "Gesund bleiben"
+    },
+    "goalDescriptions": {
+      "lose_fat": "Fett verbrennen, Muskeln erhalten",
+      "build_muscle": "Muskeln aufbauen mit leichtem Überschuss",
+      "get_stronger": "Schritt für Schritt schwerer heben",
+      "stay_healthy": "Fit fühlen und in Balance bleiben"
+    },
+    "activityLevel": {
+      "sedentary": "Überwiegend sitzend",
+      "light": "Leicht aktiv",
+      "moderate": "Mäßig aktiv",
+      "active": "Sehr aktiv"
+    },
+    "activityDescriptions": {
+      "sedentary": "Bürojob, wenig Bewegung",
+      "light": "Einen Teil des Tages auf den Beinen",
+      "moderate": "Den größten Teil des Tages auf den Beinen",
+      "active": "Den ganzen Tag körperliche Arbeit"
+    },
+    "targetWeight": {
+      "difference": "{{difference}} {{unit}} ab heute",
+      "wrongDirection": {
+        "lose_fat": "Zum Abnehmen muss dein Ziel unter deinem aktuellen Gewicht liegen.",
+        "build_muscle": "Für Muskelaufbau muss dein Ziel über deinem aktuellen Gewicht liegen."
+      },
+      "tooClose": "Das liegt zu nah an deinem aktuellen Gewicht. Wähle ein etwas weiter entferntes Ziel.",
+      "belowHealthy": "Das liegt unter einem gesunden Gewicht für deine Größe. Das niedrigste gesunde Ziel ist {{weight}} {{unit}}.",
+      "useLowest": "{{weight}} {{unit}} als Ziel nehmen",
+      "alreadyLow": "Dein Gewicht liegt schon am unteren Ende des gesunden Bereichs, daher empfehlen wir kein Abnehmen. Muskelaufbau oder Gesundbleiben passen besser zu dir.",
+      "changeGoal": "Anderes Ziel wählen"
+    },
+    "pace": {
+      "perWeek": "{{value}} {{unit}} pro Woche",
+      "slower": "Langsamer",
+      "faster": "Schneller",
+      "levels": {
+        "ideal": "Ideal: gleichmäßig und durchhaltbar",
+        "ambitious": "Ehrgeizig: machbar, aber fordernd",
+        "aggressive": "Aggressiv: schwer durchzuhalten und weniger gesund"
+      },
+      "projected": "Du könntest {{weight}} {{unit}} bis zum {{date}} erreichen.",
+      "disclaimer": "Das sind Schätzungen, keine medizinische Beratung.",
+      "fastest": {
+        "lose_fat": "Das ist das schnellste Tempo, das wir empfehlen. Schneller abzunehmen kostet vor allem Muskeln und ist schwer durchzuhalten.",
+        "build_muscle": "Das ist das schnellste Tempo, das wir empfehlen. Schneller zuzunehmen baut vor allem Fett auf, keine Muskeln."
+      }
     }
   },
   "session": {

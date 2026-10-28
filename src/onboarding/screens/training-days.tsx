@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { CheckBox } from '@/components/ui/check-box';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { backToBackRuns, MAX_TRAINING_DAYS, RECOMMENDED_DAYS } from '../training';
-import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];

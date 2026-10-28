@@ -488,7 +488,54 @@
       "limits": "Calories are 800 to 6,000 kcal; protein up to 500 g, carbs up to 1,000 g and fat up to 400 g, in whole numbers.",
       "save": "Save goals",
       "saveError": "The goals could not be saved. Check your connection and try again.",
-      "reached": "Target reached"
+      "reached": "Target reached",
+      "again": "Calculate again"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Goal",
+        "target": "Target",
+        "activity": "Activity",
+        "review": "Review"
+      },
+      "goal": {
+        "title": "What is your goal now?",
+        "intro": "Your daily goals follow from it."
+      },
+      "target": {
+        "title": "Your target and pace",
+        "intro": "You weigh {{weight}} {{unit}} now, from your latest weight.",
+        "weight": "Target weight",
+        "lower": "Lower target",
+        "higher": "Higher target",
+        "pace": "Pace"
+      },
+      "activity": {
+        "title": "How active is your day?",
+        "intro": "Your job and getting around. Workouts are counted separately."
+      },
+      "review": {
+        "title": "Check your changes",
+        "intro": "Only what you changed. Your height and latest weight stay as they are.",
+        "labels": {
+          "goal": "Goal",
+          "target": "Target weight",
+          "pace": "Pace",
+          "activity": "Activity"
+        },
+        "changed": "{{label}}: {{to}}, was {{from}}",
+        "none": "You have not changed anything yet. Go back to change your goal, target, pace or activity.",
+        "plan": "Your workout plan stays as it is.",
+        "calculate": "Calculate my goals",
+        "saveError": "The goals could not be saved. Check your connection and try again."
+      },
+      "done": {
+        "title": "Your new daily goals",
+        "intro": "Worked out from your new answers and in use from today.",
+        "change": "{{to}} {{unit}}, was {{from}} {{unit}}",
+        "note": "They follow along as your weight changes. Past days keep the goals they had.",
+        "done": "Done"
+      }
     }
   },
   "workout": {
@@ -732,22 +779,10 @@
       }
     },
     "options": {
-      "goal": {
-        "lose_fat": "Lose fat",
-        "build_muscle": "Build muscle",
-        "get_stronger": "Get stronger",
-        "stay_healthy": "Stay healthy"
-      },
       "sex": {
         "female": "Female",
         "male": "Male",
         "unspecified": "Prefer not to say"
-      },
-      "activityLevel": {
-        "sedentary": "Mostly sitting",
-        "light": "Lightly active",
-        "moderate": "Moderately active",
-        "active": "Very active"
       },
       "experience": {
         "beginner": "Beginner",
@@ -798,12 +833,6 @@
       "preview": "On Today"
     },
     "goal": {
-      "descriptions": {
-        "lose_fat": "Burn fat and keep your muscle",
-        "build_muscle": "Gain muscle with a small surplus",
-        "get_stronger": "Lift heavier, step by step",
-        "stay_healthy": "Feel fit and keep a balance"
-      },
       "effects": {
         "title": "Your plan with this goal",
         "empty": "Pick a goal to see what it sets in your plan.",
@@ -924,42 +953,8 @@
       "age": "You're turning {{count}} this year",
       "tooYoung": "Benchbite is for people aged 18 and over."
     },
-    "targetWeight": {
-      "difference": "{{difference}} {{unit}} from now",
-      "wrongDirection": {
-        "lose_fat": "To lose fat, your target has to be below your current weight.",
-        "build_muscle": "To build muscle, your target has to be above your current weight."
-      },
-      "tooClose": "This is too close to your current weight. Choose a target a little further away.",
-      "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
-      "useLowest": "Make {{weight}} {{unit}} my target",
-      "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",
-      "changeGoal": "Choose another goal"
-    },
-    "pace": {
-      "perWeek": "{{value}} {{unit}} per week",
-      "slower": "Slower",
-      "faster": "Faster",
-      "levels": {
-        "ideal": "Ideal: steady and sustainable",
-        "ambitious": "Ambitious: doable, but demanding",
-        "aggressive": "Aggressive: hard to keep up and less healthy"
-      },
-      "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
-      "disclaimer": "These are estimates, not medical advice.",
-      "fastest": {
-        "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
-        "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
-      }
-    },
     "activity": {
       "intro": "Your job and getting around. Workouts are counted separately.",
-      "descriptions": {
-        "sedentary": "Desk job, little walking",
-        "light": "On your feet some of the day",
-        "moderate": "On your feet most of the day",
-        "active": "Physical work all day"
-      },
       "calories": "Your daily calories",
       "more": "{{percent}} more than mostly sitting",
       "base": "The starting point for your calories",
@@ -1107,6 +1102,60 @@
       "why": "Why we ask",
       "burn": "Men and women burn a different number of calories at rest.",
       "only": "Only your calorie targets use it. Your training does not change."
+    }
+  },
+  "goals": {
+    "goal": {
+      "lose_fat": "Lose fat",
+      "build_muscle": "Build muscle",
+      "get_stronger": "Get stronger",
+      "stay_healthy": "Stay healthy"
+    },
+    "goalDescriptions": {
+      "lose_fat": "Burn fat and keep your muscle",
+      "build_muscle": "Gain muscle with a small surplus",
+      "get_stronger": "Lift heavier, step by step",
+      "stay_healthy": "Feel fit and keep a balance"
+    },
+    "activityLevel": {
+      "sedentary": "Mostly sitting",
+      "light": "Lightly active",
+      "moderate": "Moderately active",
+      "active": "Very active"
+    },
+    "activityDescriptions": {
+      "sedentary": "Desk job, little walking",
+      "light": "On your feet some of the day",
+      "moderate": "On your feet most of the day",
+      "active": "Physical work all day"
+    },
+    "targetWeight": {
+      "difference": "{{difference}} {{unit}} from now",
+      "wrongDirection": {
+        "lose_fat": "To lose fat, your target has to be below your current weight.",
+        "build_muscle": "To build muscle, your target has to be above your current weight."
+      },
+      "tooClose": "This is too close to your current weight. Choose a target a little further away.",
+      "belowHealthy": "This is below a healthy weight for your height. The lowest healthy target is {{weight}} {{unit}}.",
+      "useLowest": "Make {{weight}} {{unit}} my target",
+      "alreadyLow": "Your weight is already at the lower end of a healthy range, so losing fat is not recommended. Building muscle or staying healthy suits you better.",
+      "changeGoal": "Choose another goal"
+    },
+    "pace": {
+      "perWeek": "{{value}} {{unit}} per week",
+      "slower": "Slower",
+      "faster": "Faster",
+      "levels": {
+        "ideal": "Ideal: steady and sustainable",
+        "ambitious": "Ambitious: doable, but demanding",
+        "aggressive": "Aggressive: hard to keep up and less healthy"
+      },
+      "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
+      "disclaimer": "These are estimates, not medical advice.",
+      "fastest": {
+        "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
+        "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
+      }
     }
   },
   "session": {

@@ -22,6 +22,11 @@ type ScreenProps = {
   /** A button at the end of the top bar, such as Edit. */
   action?: ReactNode;
   /**
+   * Shows a cross at the end of the top bar, for leaving a flow of steps from any of them. It takes
+   * the place of `action`, so a screen has one or the other.
+   */
+  onClose?: () => void;
+  /**
    * A title in the middle of the top bar, instead of a progress bar: text, shown as the screen's
    * header on one line, or a component for a title that needs more.
    */
@@ -40,13 +45,27 @@ export function Screen({
   closes = false,
   footer,
   action,
+  onClose,
   title,
   subtitle,
   scrolls = true,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
-  const hasTopBar = progress !== undefined || onBack !== undefined || action !== undefined;
+  const end = onClose ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t('common.close')}
+      onPress={onClose}
+      hitSlop={8}
+      style={styles.back}
+    >
+      <Icon name="close" color="textMuted" />
+    </Pressable>
+  ) : (
+    action
+  );
+  const hasTopBar = progress !== undefined || onBack !== undefined || end !== undefined;
 
   return (
     <SafeAreaView
@@ -80,7 +99,7 @@ export function Screen({
             </View>
           )}
           {/* Keeps a title in the middle when there is a back button but no action. */}
-          {action ?? (title !== undefined && onBack ? <View style={styles.back} /> : null)}
+          {end ?? (title !== undefined && onBack ? <View style={styles.back} /> : null)}
         </View>
       ) : null}
       {scrolls ? (

@@ -8,11 +8,16 @@ import {
   PACE_RANGES,
   ageIn,
   bmi,
+  defaultTargetKg,
   isTargetInGoalDirection,
+  isPaceInRange,
+  isTooLightToLose,
   minHealthyWeightKg,
   paceLevel,
   projectedDate,
   snapPace,
+  startingPace,
+  targetWeightProblem,
 } from './body';
 
 describe('body rules', () => {
@@ -143,6 +148,63 @@ describe('body rules', () => {
     const from = new Date(2026, 0, 1);
     projectedDate(80, 75, 0.5, from);
     expect(from).toEqual(new Date(2026, 0, 1));
+  });
+});
+
+describe('target weights', () => {
+  // 180 cm: the lowest healthy weight is 60 kg.
+  it("accepts a target in the goal's direction", () => {
+    expect(targetWeightProblem('lose_fat', 80, 75, 180)).toBeNull();
+    expect(targetWeightProblem('build_muscle', 80, 83, 180)).toBeNull();
+  });
+
+  it('refuses a target on the wrong side of the current weight', () => {
+    expect(targetWeightProblem('lose_fat', 80, 85, 180)).toBe('wrongDirection');
+    expect(targetWeightProblem('lose_fat', 80, 80, 180)).toBe('wrongDirection');
+    expect(targetWeightProblem('build_muscle', 80, 78, 180)).toBe('wrongDirection');
+  });
+
+  it('tells a target that is stored as the current weight apart', () => {
+    expect(targetWeightProblem('lose_fat', 80, 79.96, 180)).toBe('tooClose');
+    expect(targetWeightProblem('build_muscle', 80, 80.04, 180)).toBe('tooClose');
+  });
+
+  it('refuses losing fat below a healthy weight', () => {
+    expect(targetWeightProblem('lose_fat', 70, 59.9, 180)).toBe('belowHealthy');
+    expect(targetWeightProblem('lose_fat', 70, 60, 180)).toBeNull();
+  });
+
+  it("starts a few kilograms in the goal's direction, but not below a healthy weight", () => {
+    expect(defaultTargetKg('lose_fat', 80, 180)).toBe(75);
+    expect(defaultTargetKg('build_muscle', 80, 180)).toBe(83);
+    expect(defaultTargetKg('lose_fat', 62, 180)).toBe(60);
+  });
+});
+
+describe('isPaceInRange', () => {
+  it('takes a pace the slider offers in the unit, from either unit', () => {
+    expect(isPaceInRange('kg', 'lose_fat', 0.68)).toBe(true);
+    // 2 lb a week, saved as 0.91 kg.
+    expect(isPaceInRange('kg', 'lose_fat', 0.91)).toBe(true);
+    expect(isPaceInRange('kg', 'lose_fat', 1.2)).toBe(false);
+    expect(isPaceInRange('lb', 'build_muscle', 0.1)).toBe(false);
+  });
+});
+
+describe('starting points', () => {
+  it('does not let someone at the lower end of a healthy weight lose more', () => {
+    expect(isTooLightToLose(60, 180)).toBe(true);
+    expect(isTooLightToLose(60.1, 180)).toBe(false);
+  });
+
+  it("starts the pace at the saved one, on the slider's steps, or at the default", () => {
+    expect(startingPace('kg', 'lose_fat', 0.75)).toBe(0.75);
+    expect(startingPace('kg', 'lose_fat', null)).toBe(0.5);
+    expect(startingPace('kg', 'build_muscle', undefined)).toBe(0.25);
+    // 1 lb a week comes back from kilograms as 0.99 lb.
+    expect(startingPace('lb', 'lose_fat', 0.45)).toBe(1);
+    // Saved before the fastest pace came down.
+    expect(startingPace('kg', 'lose_fat', 1.2)).toBe(0.9);
   });
 });
 

@@ -1,45 +1,28 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { startingPace } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
-import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
-import { useDateFormat } from '@/i18n/dates';
-import { paceIn, paceToKg, useNumberFormat, useWeightFormat } from '@/i18n/units';
-import type { ColorTokens } from '@/theme';
+import { PaceNote } from '@/goals/pace-note';
+import { PaceSlider } from '@/goals/pace-slider';
+import { paceToKg, useNumberFormat } from '@/i18n/units';
 
-import { PACE_RANGES, paceLevel, projectedDate, snapPace, type PaceLevel } from '../body';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
-
-const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
-  ideal: 'success',
-  ambitious: 'warning',
-  aggressive: 'danger',
-};
 
 /** How fast to reach the target, with how demanding that is and when the target is reached. */
 export function PaceStep() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
-  const formatWeight = useWeightFormat();
-  const formatDate = useDateFormat('long');
   const { answers, progress, next, back } = useStep('pace');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 72;
   const targetKg = answers.targetWeightKg ?? weightKg;
-  const paceRange = PACE_RANGES[unit][goal];
-  // A pace saved before the limits changed may lie outside them.
-  const [pace, setPace] = useState(() =>
-    answers.weeklyPaceKg === undefined
-      ? paceRange.default
-      : snapPace(paceIn(unit, answers.weeklyPaceKg), paceRange),
-  );
+  const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
   const paceKg = paceToKg(unit, pace);
-  const level = paceLevel(goal, weightKg, paceKg);
-  const date = formatDate(projectedDate(weightKg, targetKg, paceKg, new Date()));
 
   return (
     <Screen
@@ -53,45 +36,31 @@ export function PaceStep() {
       <CenteredContent
         below={
           <>
-            <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align="center">
-              {t(`onboarding.pace.levels.${level}`)}
-            </Text>
-            {pace >= paceRange.max ? (
-              <Text color="textMuted" align="center">
-                {t(`onboarding.pace.fastest.${goal}`)}
-              </Text>
-            ) : null}
-            <Text align="center">
-              {t('onboarding.pace.projected', {
-                weight: formatWeight(targetKg, unit),
-                unit,
-                date,
-              })}
-            </Text>
+            <PaceNote
+              goal={goal}
+              weightKg={weightKg}
+              targetKg={targetKg}
+              paceKg={paceKg}
+              unit={unit}
+            />
             <Text variant="caption" color="textMuted" align="center">
-              {t('onboarding.pace.disclaimer')}
+              {t('goals.pace.disclaimer')}
             </Text>
           </>
         }
       >
         <Text variant="display" align="center">
-          {t('onboarding.pace.perWeek', {
+          {t('goals.pace.perWeek', {
             value: format(pace, { minimumFractionDigits: 2 }),
             unit,
           })}
         </Text>
-        <Slider
-          accessibilityLabel={t('onboarding.steps.pace.title')}
+        <PaceSlider
+          goal={goal}
+          unit={unit}
           value={pace}
           onChange={setPace}
-          min={paceRange.min}
-          max={paceRange.max}
-          step={paceRange.step}
-          formatAccessibilityValue={(value) =>
-            t('onboarding.pace.perWeek', { value: format(value), unit })
-          }
-          minLabel={t('onboarding.pace.slower')}
-          maxLabel={t('onboarding.pace.faster')}
+          accessibilityLabel={t('onboarding.steps.pace.title')}
         />
       </CenteredContent>
     </Screen>

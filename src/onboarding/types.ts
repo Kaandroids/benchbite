@@ -1,3 +1,4 @@
+import type { Goal } from '@/body/body';
 import type { Database } from '@/lib/database.types';
 import type { SessionMinutes } from '@shared/plan/limits';
 
@@ -5,8 +6,7 @@ import type { NutritionTargets, WorkoutPlan } from './plan';
 
 type Enums = Database['public']['Enums'];
 
-/** What the user wants to achieve, which shapes both the training and the calories. */
-export type Goal = Enums['goal_kind'];
+export type { Goal };
 
 /**
  * The answers collected during the onboarding. Every field is optional until its step is

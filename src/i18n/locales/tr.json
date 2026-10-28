@@ -488,7 +488,54 @@
       "limits": "Kalori 800 ile 6.000 kcal arasında; protein en fazla 500 g, karbonhidrat 1.000 g ve yağ 400 g, tam sayı olarak.",
       "save": "Hedefleri kaydet",
       "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
-      "reached": "Hedefe ulaşıldı"
+      "reached": "Hedefe ulaşıldı",
+      "again": "Yeniden hesapla"
+    },
+    "recalculate": {
+      "sections": {
+        "goal": "Hedef",
+        "target": "Hedef kilo",
+        "activity": "Aktivite",
+        "review": "Kontrol"
+      },
+      "goal": {
+        "title": "Şimdiki hedefin ne?",
+        "intro": "Günlük hedeflerin buna göre belirlenir."
+      },
+      "target": {
+        "title": "Hedef kilon ve hızın",
+        "intro": "Son tartına göre şu an {{weight}} {{unit}} geliyorsun.",
+        "weight": "Hedef kilo",
+        "lower": "Hedefi düşür",
+        "higher": "Hedefi yükselt",
+        "pace": "Hız"
+      },
+      "activity": {
+        "title": "Günün ne kadar hareketli?",
+        "intro": "İşin ve gün içindeki yolların. Antrenmanlar ayrıca sayılır."
+      },
+      "review": {
+        "title": "Değişikliklerini kontrol et",
+        "intro": "Sadece değiştirdiklerin. Boyun ve son tartın olduğu gibi kalır.",
+        "labels": {
+          "goal": "Hedef",
+          "target": "Hedef kilo",
+          "pace": "Hız",
+          "activity": "Aktivite"
+        },
+        "changed": "{{label}}: {{to}}, önce {{from}}",
+        "none": "Henüz hiçbir şeyi değiştirmedin. Hedefini, hedef kilonu, hızını ya da aktiviteni değiştirmek için geri dön.",
+        "plan": "Antrenman planın olduğu gibi kalır.",
+        "calculate": "Hedeflerimi hesapla",
+        "saveError": "Hedefler kaydedilemedi. Bağlantını kontrol edip tekrar dene."
+      },
+      "done": {
+        "title": "Yeni günlük hedeflerin",
+        "intro": "Yeni cevaplarından hesaplandı ve bugünden itibaren geçerli.",
+        "change": "{{to}} {{unit}}, önce {{from}} {{unit}}",
+        "note": "Kilon değiştikçe bunlar da değişir. Geçmiş günler kendi hedeflerini korur.",
+        "done": "Tamam"
+      }
     }
   },
   "workout": {
@@ -732,22 +779,10 @@
       }
     },
     "options": {
-      "goal": {
-        "lose_fat": "Yağ yak",
-        "build_muscle": "Kas yap",
-        "get_stronger": "Güçlen",
-        "stay_healthy": "Sağlıklı kal"
-      },
       "sex": {
         "female": "Kadın",
         "male": "Erkek",
         "unspecified": "Belirtmek istemiyorum"
-      },
-      "activityLevel": {
-        "sedentary": "Çoğunlukla oturarak",
-        "light": "Az aktif",
-        "moderate": "Orta derecede aktif",
-        "active": "Çok aktif"
       },
       "experience": {
         "beginner": "Yeni başlayan",
@@ -798,12 +833,6 @@
       "preview": "Bugün ekranında"
     },
     "goal": {
-      "descriptions": {
-        "lose_fat": "Kasını korurken yağ yak",
-        "build_muscle": "Hafif bir kalori fazlasıyla kas kazan",
-        "get_stronger": "Adım adım daha ağır kaldır",
-        "stay_healthy": "Formda hisset, dengeni koru"
-      },
       "effects": {
         "title": "Bu hedefle planın",
         "empty": "Planında neyi belirlediğini görmek için bir hedef seç.",
@@ -924,42 +953,8 @@
       "age": "Bu yıl {{count}} yaşına giriyorsun",
       "tooYoung": "Benchbite 18 yaş ve üzeri içindir."
     },
-    "targetWeight": {
-      "difference": "Şu andan {{difference}} {{unit}}",
-      "wrongDirection": {
-        "lose_fat": "Yağ yakmak için hedefin şu anki kilonun altında olmalı.",
-        "build_muscle": "Kas yapmak için hedefin şu anki kilonun üstünde olmalı."
-      },
-      "tooClose": "Bu, mevcut kilona çok yakın. Biraz daha uzak bir hedef seç.",
-      "belowHealthy": "Bu, boyuna göre sağlıklı kilonun altında. En düşük sağlıklı hedef {{weight}} {{unit}}.",
-      "useLowest": "Hedefim {{weight}} {{unit}} olsun",
-      "alreadyLow": "Kilon zaten sağlıklı aralığın alt sınırında, bu yüzden yağ yakmayı önermiyoruz. Kas yapmak ya da sağlıklı kalmak sana daha uygun.",
-      "changeGoal": "Başka bir hedef seç"
-    },
-    "pace": {
-      "perWeek": "Haftada {{value}} {{unit}}",
-      "slower": "Daha yavaş",
-      "faster": "Daha hızlı",
-      "levels": {
-        "ideal": "İdeal: dengeli ve sürdürülebilir",
-        "ambitious": "İddialı: yapılabilir ama zorlayıcı",
-        "aggressive": "Agresif: sürdürmesi zor ve daha az sağlıklı"
-      },
-      "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
-      "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir.",
-      "fastest": {
-        "lose_fat": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo vermek çoğunlukla kas kaybına yol açar ve sürdürmesi zordur.",
-        "build_muscle": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo almak kas değil, çoğunlukla yağ ekler."
-      }
-    },
     "activity": {
       "intro": "İşin ve gün içindeki hareketin. Antrenmanları ayrıca sayarız.",
-      "descriptions": {
-        "sedentary": "Masa başı iş, az yürüyüş",
-        "light": "Günün bir kısmında ayakta",
-        "moderate": "Günün çoğunda ayakta",
-        "active": "Gün boyu fiziksel iş"
-      },
       "calories": "Günlük kalorin",
       "more": "Çoğunlukla oturana göre {{percent}} fazla",
       "base": "Kalorinin başlangıç noktası",
@@ -1107,6 +1102,60 @@
       "why": "Neden soruyoruz",
       "burn": "Kadınlar ve erkekler dinlenirken farklı miktarda kalori yakar.",
       "only": "Sadece kalori hedeflerin bunu kullanır. Antrenmanın değişmez."
+    }
+  },
+  "goals": {
+    "goal": {
+      "lose_fat": "Yağ yak",
+      "build_muscle": "Kas yap",
+      "get_stronger": "Güçlen",
+      "stay_healthy": "Sağlıklı kal"
+    },
+    "goalDescriptions": {
+      "lose_fat": "Kasını korurken yağ yak",
+      "build_muscle": "Hafif bir kalori fazlasıyla kas kazan",
+      "get_stronger": "Adım adım daha ağır kaldır",
+      "stay_healthy": "Formda hisset, dengeni koru"
+    },
+    "activityLevel": {
+      "sedentary": "Çoğunlukla oturarak",
+      "light": "Az aktif",
+      "moderate": "Orta derecede aktif",
+      "active": "Çok aktif"
+    },
+    "activityDescriptions": {
+      "sedentary": "Masa başı iş, az yürüyüş",
+      "light": "Günün bir kısmında ayakta",
+      "moderate": "Günün çoğunda ayakta",
+      "active": "Gün boyu fiziksel iş"
+    },
+    "targetWeight": {
+      "difference": "Şu andan {{difference}} {{unit}}",
+      "wrongDirection": {
+        "lose_fat": "Yağ yakmak için hedefin şu anki kilonun altında olmalı.",
+        "build_muscle": "Kas yapmak için hedefin şu anki kilonun üstünde olmalı."
+      },
+      "tooClose": "Bu, mevcut kilona çok yakın. Biraz daha uzak bir hedef seç.",
+      "belowHealthy": "Bu, boyuna göre sağlıklı kilonun altında. En düşük sağlıklı hedef {{weight}} {{unit}}.",
+      "useLowest": "Hedefim {{weight}} {{unit}} olsun",
+      "alreadyLow": "Kilon zaten sağlıklı aralığın alt sınırında, bu yüzden yağ yakmayı önermiyoruz. Kas yapmak ya da sağlıklı kalmak sana daha uygun.",
+      "changeGoal": "Başka bir hedef seç"
+    },
+    "pace": {
+      "perWeek": "Haftada {{value}} {{unit}}",
+      "slower": "Daha yavaş",
+      "faster": "Daha hızlı",
+      "levels": {
+        "ideal": "İdeal: dengeli ve sürdürülebilir",
+        "ambitious": "İddialı: yapılabilir ama zorlayıcı",
+        "aggressive": "Agresif: sürdürmesi zor ve daha az sağlıklı"
+      },
+      "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
+      "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir.",
+      "fastest": {
+        "lose_fat": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo vermek çoğunlukla kas kaybına yol açar ve sürdürmesi zordur.",
+        "build_muscle": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo almak kas değil, çoğunlukla yağ ekler."
+      }
     }
   },
   "session": {

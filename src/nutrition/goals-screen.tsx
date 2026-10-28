@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { projectedDate } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -15,7 +16,6 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useMonthDayFormat } from '@/i18n/dates';
 import { useNumberFormat, weightIn } from '@/i18n/units';
-import { projectedDate } from '@/onboarding/body';
 import { typography, useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
@@ -37,6 +37,7 @@ type Mode = 'calculated' | 'own';
 /**
  * The daily goals (ADR 0039): the calculated ones with what they are worked out from, or the
  * user's own, typed in. Choosing Calculated puts them back in use at once; one's own are saved.
+ * Calculate again asks for a new goal, target, pace and activity.
  */
 export function GoalsScreen() {
   const calculated = useCalculatedTargets();
@@ -105,7 +106,15 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
                 onPress={save}
               />
             </View>
-          ) : undefined
+          ) : (
+            <Button
+              label={t('nutrition.goals.again')}
+              disabled={useCalculated.isPending}
+              onPress={() =>
+                router.push({ pathname: '/nutrition/recalculate/[step]', params: { step: 'goal' } })
+              }
+            />
+          )
         }
       >
         <SegmentedControl
@@ -263,7 +272,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     {
       icon: 'target',
       label: t('nutrition.goals.goal'),
-      value: t(`onboarding.options.goal.${basis.goal}`),
+      value: t(`goals.goal.${basis.goal}`),
       detail: t(`onboarding.goal.effects.${basis.goal}.calories`),
     },
   ];
@@ -313,8 +322,8 @@ function BasisList({ basis }: { basis: TargetBasis }) {
   rows.push({
     icon: 'person',
     label: t('nutrition.goals.activity'),
-    value: t(`onboarding.options.activityLevel.${basis.activity}`),
-    detail: t(`onboarding.activity.descriptions.${basis.activity}`),
+    value: t(`goals.activityLevel.${basis.activity}`),
+    detail: t(`goals.activityDescriptions.${basis.activity}`),
   });
 
   return (

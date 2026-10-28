@@ -7,10 +7,10 @@ import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { StepHeading } from '../step-heading';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 

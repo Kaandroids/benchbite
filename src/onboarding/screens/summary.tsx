@@ -2,14 +2,16 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { projectedDate, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
+import { SuccessBadge } from '@/components/ui/success-badge';
 import { Text } from '@/components/ui/text';
 import { useShortDateFormat, useTimeFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat, useWeightLabel } from '@/i18n/units';
@@ -17,7 +19,6 @@ import { MACROS } from '@/nutrition/macro-targets';
 import { nextSession } from '@/workouts/next-session';
 import { useTheme } from '@/theme';
 
-import { projectedDate, weightGoal } from '../body';
 import { Confetti } from '../confetti';
 import { planDays } from '../plan-days';
 import { useStep } from '../use-step';
@@ -65,11 +66,7 @@ export function SummaryStep() {
       {/* Once the cards are in, so the burst comes as the result shows. */}
       <Confetti delay={CONFETTI_DELAY_MS} />
       <View style={[styles.center, { gap: spacing.sm, marginBottom: spacing.sm }]}>
-        <Animated.View entering={ZoomIn.springify().delay(100)}>
-          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-            <Icon name="check" size={40} color="onPrimary" />
-          </View>
-        </Animated.View>
+        <SuccessBadge />
         <Animated.View entering={FadeInDown.delay(STEP_MS * 2).duration(400)}>
           <Text variant="hero" align="center" accessibilityRole="header">
             {answers.displayName
@@ -194,13 +191,6 @@ function Tile({ delay, caption, value, detail }: TileProps) {
 const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
-  },
-  badge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',

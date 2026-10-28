@@ -9,12 +9,12 @@ import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
+import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
 import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
-import { StepHeading } from '../step-heading';
 import { useStep } from '../use-step';
 
 const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [

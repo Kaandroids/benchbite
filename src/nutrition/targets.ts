@@ -148,7 +148,8 @@ export function useSetOwnTargets() {
       }
       await keepTargetsFromToday();
     },
-    onSuccess: reload,
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }
 
@@ -170,7 +171,8 @@ export function useUseCalculatedTargets() {
       }
       await keepTargetsFromToday();
     },
-    onSuccess: reload,
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }
 
@@ -180,6 +182,8 @@ export type TargetBasis = {
   targetWeightKg: number | null;
   weeklyPaceKg: number | null;
   activity: Database['public']['Enums']['activity_level'];
+  /** For the lowest healthy target weight. */
+  heightCm: number;
 };
 
 /** The saved goal and activity the calculated targets come from; null before the onboarding. */
@@ -189,7 +193,7 @@ export function useTargetBasis() {
     queryFn: async (): Promise<TargetBasis | null> => {
       const [goal, profile] = await Promise.all([
         supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
-        supabase.from('profiles').select('activity_level').maybeSingle(),
+        supabase.from('profiles').select('activity_level, height_cm').maybeSingle(),
       ]);
       if (goal.error) {
         throw goal.error;
@@ -205,7 +209,36 @@ export function useTargetBasis() {
         targetWeightKg: goal.data.target_weight_kg,
         weeklyPaceKg: goal.data.weekly_pace_kg,
         activity: profile.data.activity_level,
+        heightCm: profile.data.height_cm,
       };
     },
+  });
+}
+
+/** A goal, target weight, pace and activity to work the targets out from (ADR 0039). */
+export type TargetAnswers = Pick<
+  TargetBasis,
+  'goal' | 'targetWeightKg' | 'weeklyPaceKg' | 'activity'
+>;
+
+/** Saves new answers and puts the calculated targets back in use, from today on. */
+export function useRecalculateTargets() {
+  const reload = useReloadTargets();
+  return useMutation({
+    mutationFn: async (answers: TargetAnswers) => {
+      const { error } = await supabase.rpc('recalculate_nutrition_targets', {
+        goal: answers.goal,
+        // Generated as numbers, though the function takes null for goals that keep the weight.
+        target_weight_kg: answers.targetWeightKg as number,
+        weekly_pace_kg: answers.weeklyPaceKg as number,
+        activity_level: answers.activity,
+      });
+      if (error) {
+        throw error;
+      }
+      await keepTargetsFromToday();
+    },
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }

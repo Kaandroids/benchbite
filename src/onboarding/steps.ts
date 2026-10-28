@@ -1,3 +1,5 @@
+import { changesWeight } from '@/body/body';
+
 import type { OnboardingAnswers } from './types';
 
 /** Every step of the onboarding in order. Each one is a route in src/app/onboarding/. */
@@ -27,15 +29,10 @@ export const STEPS = [
 
 export type Step = (typeof STEPS)[number];
 
-/** Only goals that change the weight ask for a target weight and a pace. */
-function changesWeight(answers: OnboardingAnswers): boolean {
-  return answers.goal === 'lose_fat' || answers.goal === 'build_muscle';
-}
-
 /** Whether the step is part of the flow for these answers. */
 export function isIncluded(step: Step, answers: OnboardingAnswers): boolean {
   if (step === 'target-weight' || step === 'pace') {
-    return changesWeight(answers);
+    return changesWeight(answers.goal);
   }
   return true;
 }

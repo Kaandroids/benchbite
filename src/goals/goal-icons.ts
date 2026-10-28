@@ -1,6 +1,5 @@
+import type { Goal } from '@/body/body';
 import type { IconName } from '@/components/ui/icon';
-
-import type { Goal } from './types';
 
 /** The icon of each goal, on the goal cards. */
 export const GOAL_ICONS: Record<Goal, IconName> = {

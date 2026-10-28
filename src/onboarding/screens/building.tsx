@@ -17,6 +17,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { PACE_RANGES, snapPace, weightGoal } from '@/body/body';
 import { BittenPlate } from '@/brand/bitten-plate';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
@@ -25,7 +26,6 @@ import { useWeekdayFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { PACE_RANGES, snapPace, weightGoal } from '../body';
 import { calculateTargets, generatePlan, type NutritionTargets, type WorkoutPlan } from '../plan';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
