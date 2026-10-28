@@ -96,7 +96,7 @@ export function MealList({ meals, suggested, onOpen, onAdd, due }: MealListProps
                     style={[styles.totals, { gap: spacing.sm }]}
                   >
                     <Text variant="caption" color="textMuted">
-                      {t('nutrition.mealCalories', values)}
+                      {t('nutrition.kcal', values)}
                     </Text>
                     {MACROS.map(({ key, color }) => (
                       <View key={key} style={[styles.totals, { gap: spacing.xs }]}>

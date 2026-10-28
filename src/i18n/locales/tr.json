@@ -461,9 +461,7 @@
       "inIt": "İçinde · {{portion}} çıkar",
       "ingredient": "{{name}} {{amount}}",
       "full": "Bir tarifte en fazla 50 malzeme olabilir."
-    },
-    "mealCalories": "{{calories}} kcal",
-    "eatenOfGoal": "{{eaten}} / {{goal}} kcal"
+    }
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
