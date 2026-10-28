@@ -307,11 +307,11 @@ describe('the page after saving', () => {
     expect(screen.getByLabelText('Calories: 3,400 kcal')).toBeTruthy();
   });
 
-  it('goes back to the daily goals when done', async () => {
+  it('goes back to the Nutrition tab when done', async () => {
     open({ step: 'done', was: '2500,150,300,70' });
     await render(<RecalculateScreen />);
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
-    expect(router.dismissTo).toHaveBeenCalledWith('/nutrition/goals');
+    expect(router.dismissTo).toHaveBeenCalledWith('/nutrition');
   });
 });

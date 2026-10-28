@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,7 +12,6 @@ import { useTheme } from '@/theme';
 import { useNutritionTargets } from '../targets';
 import { targetsFromWas } from './answers';
 import { Comparison } from './comparison';
-import { leave } from './step';
 
 /** The page after saving: the new goals against the ones in use before. */
 export function DoneScreen({ was }: { was: string | undefined }) {
@@ -22,7 +22,15 @@ export function DoneScreen({ was }: { was: string | undefined }) {
   const to = inUse.data;
 
   return (
-    <Screen footer={<Button label={t('nutrition.recalculate.done.done')} onPress={leave} />}>
+    <Screen
+      footer={
+        // Back to the day, which is measured against the new goals from now on.
+        <Button
+          label={t('nutrition.recalculate.done.done')}
+          onPress={() => router.dismissTo('/nutrition')}
+        />
+      }
+    >
       <View style={[styles.center, { gap: spacing.sm }]}>
         <SuccessBadge />
         <Text variant="title" align="center" accessibilityRole="header">
