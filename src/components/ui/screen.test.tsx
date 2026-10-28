@@ -30,6 +30,24 @@ describe('Screen', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
+  it('has a cross at the end that leaves a flow of steps, beside the back button', async () => {
+    const onBack = jest.fn();
+    const onClose = jest.fn();
+    await render(
+      <Screen
+        onBack={onBack}
+        onClose={onClose}
+        progress={{ sections: ['One', 'Two'], current: 0, value: 1, overall: 0.5 }}
+      >
+        <Text>Content</Text>
+      </Screen>,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(onBack).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+
   it('shows a progress bar only when given progress', async () => {
     await render(
       <Screen>
