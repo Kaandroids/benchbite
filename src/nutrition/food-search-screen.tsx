@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
@@ -54,7 +55,8 @@ function quickAmountOf(food: FoodResult): Amount {
 /**
  * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
  * the favourites and one's own foods (ADR 0037). A food opens the amount screen, or its + adds it
- * at once: a frequent food as it was logged last, others by their default portion.
+ * at once: a frequent food as it was logged last, others by their default portion. New food is
+ * in the top bar, and Done at the bottom goes back to the day.
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
@@ -172,18 +174,30 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       edges={['top', 'bottom']}
     >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
+        {/* Back, not close: what was added stays. */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
+          accessibilityLabel={t('common.back')}
           onPress={() => router.back()}
-          style={styles.close}
+          style={styles.side}
         >
-          <Icon name="close" color="textMuted" />
+          <Icon name="back" color="textMuted" />
         </Pressable>
         <Text variant="label" accessibilityRole="header" align="center" style={styles.title}>
           {t(`nutrition.addTo.${meal}`)}
         </Text>
-        <View style={styles.close} />
+        <View style={styles.side}>
+          <RoundIconButton
+            icon="plus"
+            color="primary"
+            background="iconBackground"
+            size={36}
+            label={t('nutrition.food.create')}
+            onPress={() =>
+              router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
+            }
+          />
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
@@ -199,13 +213,9 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
 
       <View style={styles.flex}>{body}</View>
       <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
-        <Button
-          label={t('nutrition.food.create')}
-          variant="secondary"
-          onPress={() =>
-            router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
-          }
-        />
+        {/* Foods are saved as they are added; this ends the screen, where a screen's main
+            button is, so that nothing else there is taken for it. */}
+        <Button label={t('nutrition.search.done')} onPress={() => router.back()} />
       </View>
     </SafeAreaView>
   );
@@ -223,7 +233,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 52,
   },
-  close: {
+  side: {
     width: 44,
     height: 44,
     alignItems: 'center',

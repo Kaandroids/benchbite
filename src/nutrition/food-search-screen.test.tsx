@@ -168,15 +168,22 @@ describe('FoodSearchScreen', () => {
     });
   });
 
-  it('opens a new food with what was typed', async () => {
+  it('opens a new food with what was typed from the top bar', async () => {
     mockSearch({ data: [] });
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
     await fireEvent.changeText(screen.getByLabelText('Search foods'), 'protein yog');
-    await fireEvent.press(screen.getByText('New food'));
+    await fireEvent.press(screen.getByRole('button', { name: 'New food' }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/nutrition/new-food',
       params: { meal: 'lunch', day: '2026-10-27', name: 'protein yog' },
     });
+  });
+
+  it('goes back to the day with the back arrow or Done', async () => {
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(router.back).toHaveBeenCalledTimes(2);
   });
 
   it('says when nothing matches', async () => {
