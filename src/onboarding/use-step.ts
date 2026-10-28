@@ -13,9 +13,22 @@ import {
   previousStep,
   progressOf,
   SECTIONS,
+  stepHref,
   type Step,
 } from './steps';
 import type { OnboardingAnswers } from './types';
+
+/**
+ * Goes back to an earlier step, leaving none of the steps after it to go back to. Every step is
+ * the same route, so going back to one by its address would only change the screen on top: the
+ * steps are closed down to the first, which becomes the step.
+ */
+export function returnTo(step: Step) {
+  if (router.canDismiss()) {
+    router.dismissAll();
+  }
+  router.replace(stepHref(step));
+}
 
 /**
  * What a step's screen needs: its answers so far, the progress, and moving on or back. The step
@@ -42,7 +55,7 @@ export function useStep(step: Step) {
     if (router.canGoBack()) {
       router.back();
     } else if (previous) {
-      router.replace({ pathname: '/onboarding/[step]', params: { step: previous } });
+      router.replace(stepHref(previous));
     }
   }, [previous]);
 
@@ -75,16 +88,13 @@ export function useStep(step: Step) {
     }
     // Recorded before the screen opens, so the step route knows the user reached it.
     setStep(following);
-    const href = { pathname: '/onboarding/[step]', params: { step: following } } as const;
+    const href = stepHref(following);
     if (isPassing(step)) {
       router.replace(href);
     } else {
       router.push(href);
     }
   };
-
-  const close = () =>
-    router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'welcome' } });
 
   /** Saves the answers of this step and opens the next one, or finishes after the last. */
   const next = (answers: OnboardingAnswers = {}) => {
@@ -109,7 +119,7 @@ export function useStep(step: Step) {
      * Leaves the steps for the welcome screen, keeping the answers so far, so starting again finds
      * them. Only on the questions.
      */
-    close: canCloseFrom(step) ? close : undefined,
+    close: canCloseFrom(step) ? () => returnTo('welcome') : undefined,
     /**
      * For a step's choice: saves the answer when it differs from the one saved, so tapping the
      * chosen card again does nothing. Continue then moves on.

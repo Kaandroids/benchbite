@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +9,7 @@ import { TargetWeightNote } from '@/goals/target-weight-note';
 import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { WeightWheels } from '@/weight/weight-wheels';
 
-import { useStep } from '../use-step';
+import { returnTo, useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
 /**
@@ -37,12 +36,7 @@ export function TargetWeightStep() {
         onBack={back}
         onClose={close}
         footer={
-          <Button
-            label={t('goals.targetWeight.changeGoal')}
-            onPress={() =>
-              router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'goal' } })
-            }
-          />
+          <Button label={t('goals.targetWeight.changeGoal')} onPress={() => returnTo('goal')} />
         }
       >
         <TooLightToLose />

@@ -17,6 +17,7 @@ import { useTheme } from '@/theme';
 
 import { refusedAnswer, saveOnboarding, type RefusedAnswer } from '../plan';
 import { planDays } from '../plan-days';
+import { stepHref } from '../steps';
 import { useStep } from '../use-step';
 import { WeightChart } from './weight-chart';
 
@@ -42,7 +43,7 @@ export function PlanStep() {
 
   if (!targets || !plan) {
     // Reached without a result, for example from an old draft: build it again.
-    return <Redirect href={{ pathname: '/onboarding/[step]', params: { step: 'building' } }} />;
+    return <Redirect href={stepHref('building')} />;
   }
 
   const unit = answers.weightUnit ?? 'kg';

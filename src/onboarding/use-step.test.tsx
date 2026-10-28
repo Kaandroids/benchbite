@@ -17,7 +17,8 @@ jest.mock('expo-router', () => {
       replace: jest.fn(),
       back: jest.fn(),
       canGoBack: jest.fn(),
-      dismissTo: jest.fn(),
+      canDismiss: jest.fn(() => true),
+      dismissAll: jest.fn(),
     },
     // The screen counts as focused while it is mounted.
     useFocusEffect: (effect: () => void | (() => void)) => useEffect(effect, [effect]),
@@ -164,7 +165,8 @@ describe('useStep', () => {
   it('closes the questions for the welcome screen, keeping the answers', async () => {
     const { result } = await renderStep('height', { goal: 'lose_fat' });
     result.current.close?.();
-    expect(router.dismissTo).toHaveBeenCalledWith({
+    expect(router.dismissAll).toHaveBeenCalled();
+    expect(router.replace).toHaveBeenCalledWith({
       pathname: '/onboarding/[step]',
       params: { step: 'welcome' },
     });

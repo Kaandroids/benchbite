@@ -96,6 +96,11 @@ export function canGoBackFrom(step: Step): boolean {
   return STEPS.indexOf(step) <= STEPS.indexOf('plan');
 }
 
+/** The address of a step's screen. */
+export function stepHref(step: Step) {
+  return { pathname: '/onboarding/[step]', params: { step } } as const;
+}
+
 /**
  * Whether the onboarding can be left for the welcome screen from the step: from the questions,
  * not while the plan is built or once it is shown, as it is saved from there.

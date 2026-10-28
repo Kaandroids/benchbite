@@ -1,14 +1,14 @@
-import { router } from 'expo-router';
-
 import { createStep } from '@/test/step-mock';
 import { fireEvent, render, screen } from '@/test/render';
 
 import { TargetWeightStep } from './target-weight';
 
 let mockStep = createStep();
-jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
-
-jest.mock('expo-router', () => ({ router: { dismissTo: jest.fn() } }));
+const mockReturnTo = jest.fn();
+jest.mock('@/onboarding/use-step', () => ({
+  useStep: () => mockStep,
+  returnTo: (step: string) => mockReturnTo(step),
+}));
 
 const LABEL = "What's your target weight?";
 
@@ -116,10 +116,7 @@ describe('TargetWeightStep', () => {
     expect(screen.getByText(/losing fat is not recommended/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Choose another goal' }));
-    expect(router.dismissTo).toHaveBeenCalledWith({
-      pathname: '/onboarding/[step]',
-      params: { step: 'goal' },
-    });
+    expect(mockReturnTo).toHaveBeenCalledWith('goal');
   });
 
   it('shows the target in pounds for users of pounds', async () => {
