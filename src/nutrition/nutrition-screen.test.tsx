@@ -170,4 +170,13 @@ describe('NutritionScreen', () => {
     expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.queryByText('Breakfast')).toBeNull();
   });
+
+  it("does not repeat a weekday that is already the day's name", async () => {
+    await render(<NutritionScreen />);
+    for (let back = 0; back < 2; back += 1) {
+      await fireEvent.press(screen.getByLabelText('Previous day'));
+    }
+    expect(screen.getByText('Sunday')).toBeTruthy();
+    expect(screen.getByText('October 25')).toBeTruthy();
+  });
 });

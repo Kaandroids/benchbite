@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { addDays, useDayFormat } from '@/i18n/dates';
+import { addDays, useDayFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { useDayName } from './day-name';
@@ -23,8 +23,10 @@ type DaySwitcherProps = {
 export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
   const { t } = useTranslation();
   const dayName = useDayName();
-  // In full, as the Today tab writes it: Tuesday, October 27.
+  // In full, as the Today tab writes it, unless the day's name is its weekday already: "Today",
+  // "Tuesday, October 27", but "Sunday", "October 25".
   const longDate = useDayFormat();
+  const monthDay = useMonthDayFormat();
   const { colors, radii, spacing } = useTheme();
   const day = addDays(today, -daysBack);
   const canGoBack = daysBack < LOGGABLE_DAYS;
@@ -61,7 +63,7 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
           {name}
         </Text>
         <Text variant="caption" color="textMuted" align="center" numberOfLines={1}>
-          {longDate(day)}
+          {daysBack <= 1 ? longDate(day) : monthDay(day)}
         </Text>
       </View>
       {step('forward', canGoForward, 1)}

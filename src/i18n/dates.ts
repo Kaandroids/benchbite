@@ -69,6 +69,13 @@ export function useDayFormat() {
   return (date: Date) => formatter.format(date);
 }
 
+/** Formats a day of this year without its weekday, for example "October 23". */
+export function useMonthDayFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, { month: 'long', day: 'numeric' });
+  return (date: Date) => formatter.format(date);
+}
+
 /** Formats a day briefly with its weekday, for example "Tue, Oct 27". */
 export function useWeekdayDateFormat() {
   const { i18n } = useTranslation();
