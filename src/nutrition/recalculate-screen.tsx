@@ -466,10 +466,7 @@ function DoneScreen({ was }: { was: string | undefined }) {
   const to = inUse.data;
 
   return (
-    <Screen
-      onClose={leave}
-      footer={<Button label={t('nutrition.recalculate.done.done')} onPress={leave} />}
-    >
+    <Screen footer={<Button label={t('nutrition.recalculate.done.done')} onPress={leave} />}>
       <View style={[styles.center, { gap: spacing.sm }]}>
         <SuccessBadge />
         <Text variant="title" align="center" accessibilityRole="header">
