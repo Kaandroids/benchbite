@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(33);
+select plan(40);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -84,14 +84,60 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 delete from public.workouts where id = 901;
 select results_eq(
-  $$ select count(*)::integer, count(workout_id)::integer, min(name) from public.planned_days $$,
-  $$ values (14, 0, 'Push') $$,
-  'Deleting the workout keeps its name on the days it was planned on'
+  $$ select count(*)::integer, count(*) filter (where workout_id = 901)::integer, min(name) from public.planned_days $$,
+  $$ values (14, 14, 'Push') $$,
+  'Deleting the workout keeps its id and name on the days it was planned on'
 );
 select results_eq(
   $$ select workout_id, from_on - current_date, to_on from public.workout_moves $$,
-  $$ values (null::bigint, -1, null::date) $$,
-  'and keeps the skip of a kept day, so that the day does not turn missed'
+  $$ values (901::bigint, -1, null::date) $$,
+  'and keeps the skip of a kept day with it, so that the day does not turn missed'
+);
+
+-- ----------------------------------------------------------------------------------------------
+-- The functions that change the plan keep the days before the device's today first
+
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000a8', 'h@example.com');
+insert into public.planned_days_kept (user_id, through)
+values ('00000000-0000-0000-0000-0000000000a8', current_date - 8);
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, type, estimated_minutes, weekdays)
+overriding system value values
+  (908, '00000000-0000-0000-0000-0000000000a8', 'Core', 'full_body', 20, '{1,2,3,4,5,6,7}');
+set local session_replication_role = origin;
+
+select pg_temp.sign_in('00000000-0000-0000-0000-0000000000a8');
+select public.save_workout(
+  jsonb_build_object('id', 908, 'name', 'Core', 'weekdays', jsonb_build_array(1),
+    'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank', 'sets', 2,
+      'target', jsonb_build_object('seconds', 30), 'restSeconds', 45))),
+  current_date
+);
+select results_eq(
+  $$ select (select through from public.planned_days_kept), (select count(*)::integer from public.planned_days) $$,
+  $$ values (current_date - 1, 7) $$,
+  'Saving a workout with the device''s today keeps the days before it with the plan they had'
+);
+select public.set_workout_active(908, false, current_date + 1);
+select is(pg_temp.through('00000000-0000-0000-0000-0000000000a8'), current_date,
+  'as does archiving it, from a device a day ahead'
+);
+select throws_ok(
+  $$ select public.delete_workout(908, current_date + 2) $$,
+  '22023',
+  null,
+  'A day that cannot be the device''s today changes nothing'
+);
+select lives_ok(
+  $$ select public.delete_workout(908, current_date) $$,
+  'Deleting it keeps the days too'
+);
+select throws_ok(
+  $$ select public.set_workout_active(901, true, current_date) $$,
+  'BB006',
+  null,
+  'Nobody archives or deletes the workouts of others'
 );
 
 -- ----------------------------------------------------------------------------------------------
@@ -178,7 +224,7 @@ delete from public.workouts where id = 907;
 select results_eq(
   $$ select workout_id, extract(isodow from from_on)::integer, extract(isodow from to_on)::integer
      from public.workout_moves where user_id = '00000000-0000-0000-0000-0000000000a7' $$,
-  $$ values (null::bigint, 5, 2) $$,
+  $$ values (907::bigint, 5, 2) $$,
   'A move into a kept day stays when the workout loses its day, is archived or is deleted'
 );
 
@@ -194,8 +240,8 @@ values ('00000000-0000-0000-0000-00000000000e', 'male', extract(year from curren
   180, 'kg', 'cm', 'moderate', 'beginner', 'gym', '{1,3,5}', 60, now() - interval '5 days');
 insert into public.planned_days_kept (user_id, through, started_on)
 values ('00000000-0000-0000-0000-00000000000e', current_date - 4, current_date - 5);
-insert into public.planned_days (user_id, day, name, type)
-select '00000000-0000-0000-0000-00000000000e', current_date - days, 'Old', 'push'
+insert into public.planned_days (user_id, day, workout_id, name, type)
+select '00000000-0000-0000-0000-00000000000e', current_date - days, 900, 'Old', 'push'
 from generate_series(4, 5) days;
 set local session_replication_role = replica;
 insert into public.workouts (id, user_id, name, type, estimated_minutes, weekdays)
@@ -270,6 +316,19 @@ select results_eq(
   'and a device ahead has no day before it planned'
 );
 
+reset role;
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000f3', 'f3@example.com');
+select pg_temp.sign_in('00000000-0000-0000-0000-0000000000f3');
+select lives_ok(
+  $$ select pg_temp.onboard(current_date + 3) $$,
+  'A device clock more than a day off still finishes the onboarding'
+);
+select results_eq(
+  $$ select started_on from public.planned_days_kept $$,
+  $$ values (current_date) $$,
+  'with the plan starting on the server''s day'
+);
+
 -- ----------------------------------------------------------------------------------------------
 -- Deleting a user
 
@@ -303,7 +362,7 @@ select throws_ok(
   'Users cannot keep anyone''s days but through keep_planned_days()'
 );
 select throws_ok(
-  $$ insert into public.planned_days (user_id, day, name) values ('00000000-0000-0000-0000-00000000000d', current_date, 'Fake') $$,
+  $$ insert into public.planned_days (user_id, day, workout_id, name) values ('00000000-0000-0000-0000-00000000000d', current_date, 1, 'Fake') $$,
   '42501',
   null,
   'Only the database writes the planned days'
