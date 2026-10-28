@@ -1,14 +1,23 @@
-import { router } from 'expo-router';
+import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 
 import { useSignIn } from '@/account/account';
 import { fireEvent, render, screen } from '@/test/render';
 
 import { DevAccountLink } from './dev-account-link';
 
-jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
-jest.mock('@/account/account', () => ({ useSignIn: jest.fn() }));
+jest.mock('@/account/account', () => ({
+  ...jest.requireActual('@/account/account'),
+  useSignIn: jest.fn(),
+}));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 const mutate = jest.fn();
+
+function failWith(error: Error) {
+  jest
+    .mocked(useSignIn)
+    .mockReturnValue({ mutate, isPending: false, isError: true, error } as never);
+}
 const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 
 beforeEach(() => {
@@ -21,21 +30,31 @@ afterAll(() => {
 });
 
 describe('DevAccountLink', () => {
-  it('signs in to the seeded account and opens the app', async () => {
+  it('signs in to the seeded account, leaving the rest to the session', async () => {
     await render(<DevAccountLink />);
     await fireEvent.press(screen.getByRole('button', { name: 'Use the dev account' }));
-    expect(mutate).toHaveBeenCalledWith(
-      { email: 'dev@benchbite.local', password: 'benchbite-dev' },
-      expect.anything(),
-    );
-    mutate.mock.calls[0][1].onSuccess();
-    expect(router.replace).toHaveBeenCalledWith('/');
+    expect(mutate).toHaveBeenCalledWith({
+      email: 'dev@benchbite.local',
+      password: 'benchbite-dev',
+    });
   });
 
   it('says how to seed the account when it is not there', async () => {
-    jest.mocked(useSignIn).mockReturnValue({ mutate, isPending: false, isError: true } as never);
+    failWith(new AuthApiError('Invalid login credentials', 400, 'invalid_credentials'));
     await render(<DevAccountLink />);
     expect(screen.getByText(/db reset/)).toBeTruthy();
+  });
+
+  it('says the local Supabase cannot be reached rather than to reset it', async () => {
+    failWith(new AuthRetryableFetchError('Network request failed', 0));
+    await render(<DevAccountLink />);
+    expect(screen.getByText(/cannot be reached/)).toBeTruthy();
+    expect(screen.queryByText(/db reset/)).toBeNull();
+  });
+
+  it('shows a note beside the link', async () => {
+    await render(<DevAccountLink note="This guest is signed out." />);
+    expect(screen.getByText('This guest is signed out.')).toBeTruthy();
   });
 
   it('is not there against a hosted project', async () => {
