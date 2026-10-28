@@ -1397,6 +1397,15 @@ export type Database = {
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      planned_workouts: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          day: string;
+          name: string;
+          type: Database['public']['Enums']['workout_type'];
+          workout_id: number;
+        }[];
+      };
       preview_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
