@@ -5,10 +5,33 @@ import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
+import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { Star } from './favourite-star';
-import type { FoodResult } from './foods';
+import { amountOf, type Amount, type FoodResult } from './foods';
+import { usePortionLabel } from './portion-label';
+
+/**
+ * What a row says of an amount of a food: the portions, such as "1 bowl", and a line with the
+ * portions, grams and calories, such as "1 bowl · 250 g · 208 kcal".
+ */
+export function useRowLabels() {
+  const { t } = useTranslation();
+  const { format } = useNumberFormat();
+  const portionLabel = usePortionLabel();
+  return (food: FoodResult, amount: Amount) => {
+    const portion = amount.portion
+      ? portionLabel(amount.portion.unit, amount.portion.count)
+      : t('nutrition.amount.inGrams', { grams: format(amount.grams) });
+    const detail = t(amount.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
+      portion,
+      grams: format(amount.grams),
+      calories: format(Math.round(amountOf(food.per100g, amount.grams).calories)),
+    });
+    return { portion, detail };
+  };
+}
 
 type FoodRowProps = {
   food: FoodResult;

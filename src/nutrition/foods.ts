@@ -123,6 +123,13 @@ export function amountOf(per100g: Totals, grams: number): Totals {
   };
 }
 
+/** What + on a food adds: one default portion, or `DEFAULT_GRAMS` of a food without one. */
+export function quickAmountOf(food: FoodResult): Amount {
+  return food.portion
+    ? { grams: food.portion.grams, portion: { unit: food.portion.unit, count: 1 } }
+    : { grams: DEFAULT_GRAMS, portion: null };
+}
+
 /** A typed query once typing has paused for `SEARCH_DELAY_MS`, so a search is not sent per key. */
 export function useSettledQuery(value: string): string {
   const [settled, setSettled] = useState(value);
