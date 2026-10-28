@@ -138,10 +138,20 @@
     },
     "missed": {
       "missedOn": "{{day}} günü kaçırıldı",
-      "hint": "{{session}}. Planına sadık kalmak için bu hafta boş bir günde yap.",
+      "count_one": "{{count}} kaçırılan antrenman",
+      "count_other": "{{count}} kaçırılan antrenman",
+      "catchUp": "Telafi et"
+    },
+    "catchUp": {
+      "title": "Telafi et",
+      "subtitle": "Kaçırdığın her antrenman için bu hafta boş bir gün seç ya da atla.",
+      "missedOn": "{{day}} kaçırıldı · {{session}}",
+      "today": "Bugün",
+      "moveLabel": "{{session}} antrenmanını taşı: {{day}}",
       "skip": "Atla",
-      "pickDay": "Gün seç",
-      "skipError": "Antrenman atlanamadı. Bağlantını kontrol edip tekrar dene."
+      "skipHint": "{{session}} antrenmanını bu hafta atlar",
+      "noDays": "Bu hafta taşıyabileceğin boş gün kalmadı.",
+      "done": "Tamam"
     },
     "pickDay": {
       "title": "{{day}} günkü {{session}} antrenmanını taşı",

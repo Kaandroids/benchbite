@@ -138,10 +138,20 @@
     },
     "missed": {
       "missedOn": "Am {{day}} verpasst",
-      "hint": "{{session}}. Hol es an einem freien Tag dieser Woche nach, damit dein Plan aufgeht.",
+      "count_one": "{{count}} verpasstes Workout",
+      "count_other": "{{count}} verpasste Workouts",
+      "catchUp": "Nachholen"
+    },
+    "catchUp": {
+      "title": "Nachholen",
+      "subtitle": "Wähle für jedes verpasste Workout einen freien Tag dieser Woche oder lass es aus.",
+      "missedOn": "Am {{day}} verpasst · {{session}}",
+      "today": "Heute",
+      "moveLabel": "{{session}} auf {{day}} verschieben",
       "skip": "Auslassen",
-      "pickDay": "Tag wählen",
-      "skipError": "Das Workout konnte nicht ausgelassen werden. Prüfe deine Verbindung und versuche es erneut."
+      "skipHint": "Lässt {{session}} diese Woche aus",
+      "noDays": "Diese Woche ist kein Tag mehr frei, um es zu verschieben.",
+      "done": "Fertig"
     },
     "pickDay": {
       "title": "{{session}} vom {{day}} verschieben",
