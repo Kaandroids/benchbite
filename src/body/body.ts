@@ -38,6 +38,42 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
   return goal === 'lose_fat' ? target < weight : target > weight;
 }
 
+/** Why a target weight cannot be saved. */
+export type TargetWeightProblem = 'wrongDirection' | 'tooClose' | 'belowHealthy';
+
+/**
+ * What keeps a target weight from being saved, or null when it can be: it has to lie in the goal's
+ * direction, as stored, and, when losing fat, not below a healthy weight for the height.
+ */
+export function targetWeightProblem(
+  goal: 'lose_fat' | 'build_muscle',
+  weightKg: number,
+  targetKg: number,
+  heightCm: number,
+): TargetWeightProblem | null {
+  if (!isTargetInGoalDirection(goal, weightKg, targetKg)) {
+    // In the goal's direction as shown, but stored as the current weight, as from pounds.
+    const shownInDirection = goal === 'lose_fat' ? targetKg < weightKg : targetKg > weightKg;
+    return shownInDirection ? 'tooClose' : 'wrongDirection';
+  }
+  if (goal === 'lose_fat' && targetKg < minHealthyWeightKg(heightCm)) {
+    return 'belowHealthy';
+  }
+  return null;
+}
+
+/** How far from the current weight a target starts. */
+const DEFAULT_CHANGE_KG = { lose_fat: -5, build_muscle: 3 };
+
+/** The target weight to start from: a few kilograms in the goal's direction, but healthy. */
+export function defaultTargetKg(
+  goal: 'lose_fat' | 'build_muscle',
+  weightKg: number,
+  heightCm: number,
+): number {
+  return Math.max(minHealthyWeightKg(heightCm), weightKg + DEFAULT_CHANGE_KG[goal]);
+}
+
 type PaceRange = { min: number; max: number; step: number; default: number };
 
 /**

@@ -8,11 +8,13 @@ import {
   PACE_RANGES,
   ageIn,
   bmi,
+  defaultTargetKg,
   isTargetInGoalDirection,
   minHealthyWeightKg,
   paceLevel,
   projectedDate,
   snapPace,
+  targetWeightProblem,
 } from './body';
 
 describe('body rules', () => {
@@ -143,6 +145,36 @@ describe('body rules', () => {
     const from = new Date(2026, 0, 1);
     projectedDate(80, 75, 0.5, from);
     expect(from).toEqual(new Date(2026, 0, 1));
+  });
+});
+
+describe('target weights', () => {
+  // 180 cm: the lowest healthy weight is 60 kg.
+  it("accepts a target in the goal's direction", () => {
+    expect(targetWeightProblem('lose_fat', 80, 75, 180)).toBeNull();
+    expect(targetWeightProblem('build_muscle', 80, 83, 180)).toBeNull();
+  });
+
+  it('refuses a target on the wrong side of the current weight', () => {
+    expect(targetWeightProblem('lose_fat', 80, 85, 180)).toBe('wrongDirection');
+    expect(targetWeightProblem('lose_fat', 80, 80, 180)).toBe('wrongDirection');
+    expect(targetWeightProblem('build_muscle', 80, 78, 180)).toBe('wrongDirection');
+  });
+
+  it('tells a target that is stored as the current weight apart', () => {
+    expect(targetWeightProblem('lose_fat', 80, 79.96, 180)).toBe('tooClose');
+    expect(targetWeightProblem('build_muscle', 80, 80.04, 180)).toBe('tooClose');
+  });
+
+  it('refuses losing fat below a healthy weight', () => {
+    expect(targetWeightProblem('lose_fat', 70, 59.9, 180)).toBe('belowHealthy');
+    expect(targetWeightProblem('lose_fat', 70, 60, 180)).toBeNull();
+  });
+
+  it("starts a few kilograms in the goal's direction, but not below a healthy weight", () => {
+    expect(defaultTargetKg('lose_fat', 80, 180)).toBe(75);
+    expect(defaultTargetKg('build_muscle', 80, 180)).toBe(83);
+    expect(defaultTargetKg('lose_fat', 62, 180)).toBe(60);
   });
 });
 
