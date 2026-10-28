@@ -61,6 +61,7 @@ describe('NutritionScreen', () => {
 
     expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-27');
     expect(screen.getByText('Today')).toBeTruthy();
+    expect(screen.getByText('Tuesday, October 27')).toBeTruthy();
     expect(screen.getByText('1,070')).toBeTruthy();
     expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.getByText('96 / 144 g')).toBeTruthy();
@@ -150,5 +151,14 @@ describe('NutritionScreen', () => {
     jest.mocked(useWater).mockReturnValue(query(undefined, { isPending: true }));
     await render(<NutritionScreen />);
     expect(screen.queryByText('Breakfast')).toBeNull();
+  });
+
+  it('keeps the day and its arrows while another day loads', async () => {
+    await render(<NutritionScreen />);
+    mockDay(undefined, { isPending: true });
+    await fireEvent.press(screen.getByLabelText('Previous day'));
+    expect(screen.getByText('Yesterday')).toBeTruthy();
+    expect(screen.getByLabelText('Previous day')).toBeEnabled();
+    expect(screen.queryByText('kcal left')).toBeNull();
   });
 });

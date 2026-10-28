@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabScreen } from '@/components/tab-screen';
@@ -32,14 +31,12 @@ export function NutritionScreen() {
   const waterGoal = useWaterGoal();
   const queries = [targets, entries, water, waterGoal];
 
+  const loaded = allLoaded(queries);
   let content = <LoadState queries={queries} />;
-  if (allLoaded(queries)) {
+  if (loaded) {
     const meals = mealsOf(entries.data ?? []);
     content = (
       <>
-        {targets.data ? (
-          <DaySummary targets={targets.data} eaten={totalOf(entries.data ?? [])} />
-        ) : null}
         <MealList
           meals={meals}
           suggested={targets.data ? suggestedCalories(targets.data.calories, meals) : new Map()}
@@ -57,24 +54,19 @@ export function NutritionScreen() {
 
   return (
     <TabScreen queries={queries} gap="md">
-      <View style={[styles.header, { gap: spacing.md, marginBottom: spacing.xs }]}>
-        <Text variant="title" accessibilityRole="header" style={styles.title}>
-          {t('tabs.nutrition')}
-        </Text>
-        <DaySwitcher today={today} daysBack={daysBack} onChange={setDaysBack} />
-      </View>
+      <Text variant="title" accessibilityRole="header" style={{ marginBottom: spacing.xs }}>
+        {t('tabs.nutrition')}
+      </Text>
+      {/* Shown while another day loads, so that the day can be changed again at once. */}
+      <DaySummary
+        header={<DaySwitcher today={today} daysBack={daysBack} onChange={setDaysBack} />}
+        totals={
+          loaded && targets.data
+            ? { targets: targets.data, eaten: totalOf(entries.data ?? []) }
+            : null
+        }
+      />
       {content}
     </TabScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    flexShrink: 1,
-  },
-});
