@@ -107,7 +107,12 @@ function mockData({
   targets = loaded<NutritionTargets | null>(TARGETS),
   finished = loaded<FinishedWorkout[]>([]),
   moves = loaded<WorkoutMove[]>([]),
-  moving = { isError: false, isPending: false, error: null as unknown },
+  moving = { isError: false, isPending: false, error: null as unknown } as {
+    isError: boolean;
+    isPending: boolean;
+    error: unknown;
+    variables?: WorkoutMove;
+  },
   undoing = { isError: false, isPending: false },
   name = null,
   eaten = loaded<MealEntry[]>([]),
@@ -116,7 +121,7 @@ function mockData({
   targets?: Query<NutritionTargets | null>;
   finished?: Query<FinishedWorkout[]>;
   moves?: Query<WorkoutMove[]>;
-  moving?: { isError: boolean; isPending: boolean; error: unknown };
+  moving?: { isError: boolean; isPending: boolean; error: unknown; variables?: WorkoutMove };
   undoing?: { isError: boolean; isPending: boolean };
   name?: string | null;
   eaten?: Query<MealEntry[]>;
@@ -331,31 +336,123 @@ describe('moving workouts', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('offers to skip a missed workout or to move it to a free day', async () => {
+  it('shows one missed workout with its day and size', async () => {
     mockData();
     await render(<TodayScreen />);
     expect(screen.getByText('Missed on Monday')).toBeTruthy();
-    expect(
-      screen.getByText(
-        '0 exercises · about 45 min. Do it on a free day this week to keep your plan on track.',
-      ),
-    ).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-    expect(move).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-19', toOn: null });
+    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
+  });
+
+  it('groups several missed workouts in one card', async () => {
+    // Thursday, after Monday's Push and Wednesday's Pull were missed.
+    jest.setSystemTime(THURSDAY);
+    mockData();
+    await render(<TodayScreen />);
+    expect(screen.getByText('2 missed workouts')).toBeTruthy();
+    expect(screen.getByText('Push, Pull')).toBeTruthy();
+    expect(screen.getByText('Monday, Wednesday')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Catch up' })).toHaveLength(1);
+  });
+
+  it('names a workout missed on several days once', async () => {
+    jest.setSystemTime(THURSDAY);
+    const push = session(1, 'push');
+    mockData({ plan: loaded<Plan | null>({ sessions: [push, { ...push, weekday: 3 }] }) });
+    await render(<TodayScreen />);
+    expect(screen.getByText('2 missed workouts')).toBeTruthy();
+    expect(screen.getByText('Push')).toBeTruthy();
+  });
+
+  it('names a day with several missed workouts once', async () => {
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(1, 'push'), { ...session(1, 'legs'), workoutId: 8 }],
+      }),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('2 missed workouts')).toBeTruthy();
+    expect(screen.getByText('Push, Legs')).toBeTruthy();
+    expect(screen.getByText('Monday')).toBeTruthy();
   });
 
   it('has no missed card once the workout is done or skipped', async () => {
     mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: null }]) });
     await render(<TodayScreen />);
     expect(screen.queryByText('Missed on Monday')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Catch up' })).toBeNull();
   });
 
-  it('moves a missed workout to the day picked, today first', async () => {
+  it('moves a missed workout to a free day with one tap, today first', async () => {
     mockData();
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Pick a day' }));
-    expect(screen.getByText("Move Monday's Push")).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    expect(screen.getByText('Missed Monday · 0 exercises · about 45 min')).toBeTruthy();
     // Today and the days after it, but not Friday: Push is not on it, Legs is.
+    expect(
+      screen
+        .getAllByRole('button', { name: /^Move Push to / })
+        .map((chip) => chip.props.accessibilityLabel),
+    ).toEqual([
+      'Move Push to Today',
+      'Move Push to Thursday',
+      'Move Push to Friday',
+      'Move Push to Saturday',
+      'Move Push to Sunday',
+    ]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move Push to Saturday' }));
+    expect(move).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-24' });
+  });
+
+  it('skips a missed workout from the sheet', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
+    expect(move).toHaveBeenCalledWith({ workoutId: 1, fromOn: '2026-10-19', toOn: null });
+  });
+
+  it('closes the sheet once every missed workout is moved or skipped', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    expect(screen.getByText('Missed Monday · 0 exercises · about 45 min')).toBeTruthy();
+    mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-24' }]) });
+    await screen.rerender(<TodayScreen />);
+    expect(
+      screen.queryByText('Pick a free day this week for each missed workout, or skip it.'),
+    ).toBeNull();
+  });
+
+  it('says when the day picked is no longer free', async () => {
+    mockData({ moving: { isError: true, isPending: false, error: { code: 'BB019' } } });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    expect(screen.getByText('That day is no longer free. Pick another one.')).toBeTruthy();
+  });
+
+  it('says when skipping failed', async () => {
+    mockData({
+      moving: {
+        isError: true,
+        isPending: false,
+        error: new Error('offline'),
+        variables: { workoutId: 1, fromOn: '2026-10-19', toOn: null },
+      },
+    });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    expect(
+      screen.getByText("We couldn't skip the workout. Check your connection and try again."),
+    ).toBeTruthy();
+  });
+
+  it('moves a workout to the day picked from the week card, today first', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByLabelText('Mon 19, Push, missed'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to another day' }));
+    expect(screen.getByText("Move Monday's Push")).toBeTruthy();
     const days = screen.getAllByRole('radio');
     expect(days).toHaveLength(5);
     expect(days[0]).toHaveAccessibleName('Wed Today Pull');
@@ -369,13 +466,6 @@ describe('moving workouts', () => {
     // The sheet closes once the move is saved.
     await act(() => move.mock.calls[0][1].onSuccess());
     expect(screen.queryByText("Move Monday's Push")).toBeNull();
-  });
-
-  it('says when the day picked is no longer free', async () => {
-    mockData({ moving: { isError: true, isPending: false, error: { code: 'BB019' } } });
-    await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Pick a day' }));
-    expect(screen.getByText('That day is no longer free. Pick another one.')).toBeTruthy();
   });
 
   it("opens a day's workouts from the week card and moves one from there", async () => {

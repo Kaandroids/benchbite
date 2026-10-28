@@ -11,12 +11,13 @@ import {
   useWeekdayFormat,
   weekdayOf,
 } from '@/i18n/dates';
-import { isDbError } from '@/lib/errors';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { useMoveWorkout } from '@/workouts/moves';
 import { moveTargets, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
+
+import { MoveError } from './move-error';
 
 type PickDayProps = {
   schedule: WeekSchedule;
@@ -51,8 +52,6 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
       { onSuccess: onDone },
     );
   };
-  // The day may have been taken elsewhere since the week loaded.
-  const refused = isDbError(moveWorkout.error, 'moveDoesNotFit');
 
   return (
     <>
@@ -91,7 +90,7 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
               <View style={styles.date}>
                 <Text variant="bodyStrong">{weekdayName(day.weekday)}</Text>
                 <Text variant="caption" color={isToday ? 'primaryText' : 'textMuted'}>
-                  {isToday ? t('today.pickDay.today') : shortDate(fromIsoDate(day.date))}
+                  {isToday ? t('today.move.today') : shortDate(fromIsoDate(day.date))}
                 </Text>
               </View>
               <Text color="textMuted" style={styles.flex} numberOfLines={1}>
@@ -110,11 +109,7 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
           );
         })}
       </View>
-      {moveWorkout.isError ? (
-        <Text variant="caption" color="danger" accessibilityRole="alert">
-          {refused ? t('today.pickDay.taken') : t('today.pickDay.error')}
-        </Text>
-      ) : null}
+      <MoveError move={moveWorkout} />
       <Button
         label={t('today.pickDay.move', { day: chosen ? longWeekday(chosen.weekday) : '' })}
         disabled={!chosen}

@@ -9,17 +9,26 @@ type ChipProps = {
   selected: boolean;
   onPress: () => void;
   disabled?: boolean;
+  /** What screen readers say instead of the label, when the label alone is too short. */
+  accessibilityLabel?: string;
 };
 
 /**
  * A rounded choice among several, such as a filter. A selected chip is tinted with an orange
  * border, like a selected card.
  */
-export function Chip({ label, selected, onPress, disabled = false }: ChipProps) {
+export function Chip({
+  label,
+  selected,
+  onPress,
+  disabled = false,
+  accessibilityLabel,
+}: ChipProps) {
   const { colors, radii } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}

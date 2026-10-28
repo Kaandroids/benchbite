@@ -24,6 +24,13 @@ export function useWorkoutName() {
     name ?? (type ? t(`workout.sessionTypes.${type}`) : '');
 }
 
+/** A workout's size, such as "6 exercises · about 45 min". */
+export function useSessionSize() {
+  const { t } = useTranslation();
+  return ({ exercises, estimatedMinutes }: Pick<Workout, 'exercises' | 'estimatedMinutes'>) =>
+    t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
+}
+
 /**
  * The sets and target of an exercise, such as "3 × 8–12 reps", "3 × 45 s" or "1 × 400 m · 2 min".
  */

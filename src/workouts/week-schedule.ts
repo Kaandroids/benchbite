@@ -205,10 +205,11 @@ export function moveTargets(
   );
 }
 
+/** A missed workout with the day it was missed on. */
+export type MissedWorkout = { workout: PlannedWorkout; day: ScheduleDay };
+
 /** This week's missed workouts, with the day each was missed on, earliest first. */
-export function missedWorkouts(
-  schedule: WeekSchedule,
-): { workout: PlannedWorkout; day: ScheduleDay }[] {
+export function missedWorkouts(schedule: WeekSchedule): MissedWorkout[] {
   return schedule.days.flatMap((day) =>
     day.workouts
       .filter((workout) => workout.status === 'missed')

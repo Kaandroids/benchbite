@@ -16,10 +16,11 @@ import { useDisplayName } from '@/profile/display-name';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
-import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
+import { hasWorkouts, missedWorkouts } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
 import { useGreeting } from './greeting';
+import { CatchUp } from './catch-up';
 import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PickDay } from './pick-day';
@@ -28,7 +29,9 @@ import { WorkoutCard } from './workout-card';
 
 /** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
 type SheetContent =
-  { kind: 'day'; date: string } | { kind: 'pick'; session: WeekSession; fromOn: string };
+  | { kind: 'day'; date: string }
+  | { kind: 'pick'; session: WeekSession; fromOn: string }
+  | { kind: 'catchUp' };
 
 /** The home tab: a greeting, the week, the daily targets, missed workouts and today's workout. */
 export function TodayScreen() {
@@ -52,8 +55,10 @@ export function TodayScreen() {
     sheet?.kind === 'day'
       ? schedule.days.find((day) => day.date === sheet.date && hasWorkouts(day))
       : undefined;
-  // A day left with nothing to show, for example after undoing the only move to it, closes.
-  if (sheet?.kind === 'day' && !sheetDay) {
+  const missed = missedWorkouts(schedule);
+  // A day left with nothing to show, for example after undoing the only move to it, closes, as
+  // does catching up once every missed workout is moved or skipped.
+  if ((sheet?.kind === 'day' && !sheetDay) || (sheet?.kind === 'catchUp' && missed.length === 0)) {
     setSheet(null);
   }
 
@@ -96,19 +101,13 @@ export function TodayScreen() {
             <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
           </Card>
         ) : null}
-        {missedWorkouts(schedule).map(({ workout, day }) => {
-          const fromOn = originOf(workout, day);
-          return (
-            <MissedCard
-              key={`${workout.session.workoutId}-${fromOn}`}
-              entering={cardEntering(2)}
-              workout={workout}
-              day={day}
-              canMove={moveTargets(schedule, workout.session.workoutId, fromOn, todayOn).length > 0}
-              onPickDay={() => setSheet({ kind: 'pick', session: workout.session, fromOn })}
-            />
-          );
-        })}
+        {missed.length > 0 ? (
+          <MissedCard
+            entering={cardEntering(2)}
+            missed={missed}
+            onCatchUp={() => setSheet({ kind: 'catchUp' })}
+          />
+        ) : null}
         {plan.data ? (
           <WorkoutCard
             entering={cardEntering(2)}
@@ -128,7 +127,14 @@ export function TodayScreen() {
         // One sheet whose content changes, as a modal cannot open while another one closes.
         sheet ? (
           <Sheet onClose={() => setSheet(null)}>
-            {sheet.kind === 'pick' ? (
+            {sheet.kind === 'catchUp' ? (
+              <CatchUp
+                missed={missed}
+                schedule={schedule}
+                today={today}
+                onDone={() => setSheet(null)}
+              />
+            ) : sheet.kind === 'pick' ? (
               <PickDay
                 schedule={schedule}
                 session={sheet.session}

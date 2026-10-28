@@ -1,42 +1,51 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
 import { Card, type CardProps } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
+import { PillButton } from '@/components/ui/pill-button';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useWorkoutName } from '@/workouts/format';
-import { useMoveWorkout } from '@/workouts/moves';
-import { originOf, type PlannedWorkout, type ScheduleDay } from '@/workouts/week-schedule';
+import { useSessionSize, useWorkoutName } from '@/workouts/format';
+import type { MissedWorkout } from '@/workouts/week-schedule';
 
 type MissedCardProps = {
+  /** This week's missed workouts with the day each was missed on, earliest first; at least one. */
+  missed: MissedWorkout[];
+  onCatchUp: () => void;
   /** How the card comes in, from the screen that places it. */
   entering?: CardProps['entering'];
-  workout: PlannedWorkout;
-  /** The day it was missed on. */
-  day: ScheduleDay;
-  /** Whether a day is left this week to move it to. */
-  canMove: boolean;
-  onPickDay: () => void;
 };
 
-/** A workout missed this week, to skip or to move to a free day (ADR 0028). */
-export function MissedCard({ workout, day, canMove, onPickDay, entering }: MissedCardProps) {
+/**
+ * The workouts missed this week in one compact card, however many there are, with one button that
+ * opens them to move to a free day or to skip (ADR 0028).
+ */
+export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
-  const moveWorkout = useMoveWorkout();
-  const { session } = workout;
+  const sessionSize = useSessionSize();
+  const [first] = missed;
+  if (!first) {
+    return null;
+  }
 
-  const skip = () =>
-    moveWorkout.mutate({
-      workoutId: session.workoutId,
-      fromOn: originOf(workout, day),
-      toOn: null,
-    });
+  let caption, title, detail;
+  if (missed.length === 1) {
+    const { session } = first.workout;
+    caption = t('today.missed.missedOn', { day: weekdayName(first.day.weekday) });
+    title = workoutName(session);
+    detail = sessionSize(session);
+  } else {
+    caption = t('today.missed.count', { count: missed.length });
+    // A workout missed on several days, or a day with several missed, is named once.
+    const once = (names: string[]) => [...new Set(names)].join(', ');
+    title = once(missed.map(({ workout }) => workoutName(workout.session)));
+    detail = once(missed.map(({ day }) => weekdayName(day.weekday)));
+  }
 
   return (
     <Card entering={entering}>
@@ -44,40 +53,16 @@ export function MissedCard({ workout, day, canMove, onPickDay, entering }: Misse
         <IconTile name="missed" />
         <View style={styles.text}>
           <Text variant="caption" color="primaryText">
-            {t('today.missed.missedOn', { day: weekdayName(day.weekday) })}
+            {caption}
           </Text>
-          <Text variant="headline">{workoutName(session)}</Text>
+          <Text variant="headline" numberOfLines={1}>
+            {title}
+          </Text>
+          <Text variant="caption" color="textMuted">
+            {detail}
+          </Text>
         </View>
-      </View>
-      <Text color="textMuted">
-        {t('today.missed.hint', {
-          session: t('workout.session', {
-            count: session.exercises.length,
-            minutes: session.estimatedMinutes,
-          }),
-        })}
-      </Text>
-      {moveWorkout.isError ? (
-        <Text variant="caption" color="danger" accessibilityRole="alert">
-          {t('today.missed.skipError')}
-        </Text>
-      ) : null}
-      <View style={[styles.row, { gap: spacing.md }]}>
-        <Button
-          variant="secondary"
-          label={t('today.missed.skip')}
-          loading={moveWorkout.isPending}
-          onPress={skip}
-          style={styles.flex}
-        />
-        {canMove ? (
-          <Button
-            label={t('today.missed.pickDay')}
-            disabled={moveWorkout.isPending}
-            onPress={onPickDay}
-            style={styles.flex}
-          />
-        ) : null}
+        <PillButton variant="primary" label={t('today.missed.catchUp')} onPress={onCatchUp} />
       </View>
     </Card>
   );
@@ -91,8 +76,5 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: 2,
-  },
-  flex: {
-    flex: 1,
   },
 });
