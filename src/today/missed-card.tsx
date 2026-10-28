@@ -38,7 +38,7 @@ export function MissedCard({ workout, day, canMove, onPickDay }: MissedCardProps
     });
 
   return (
-    <Card entering={FadeInDown.delay(100).duration(400)}>
+    <Card entering={FadeInDown.delay(200).duration(400)}>
       <View style={[styles.row, { gap: spacing.md }]}>
         <IconTile name="missed" />
         <View style={styles.text}>

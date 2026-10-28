@@ -48,7 +48,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
     }
     const done = todays.length > 0;
     return (
-      <Card entering={FadeInDown.delay(100).duration(400)}>
+      <Card entering={FadeInDown.delay(200).duration(400)}>
         <View style={[styles.row, { gap: spacing.md }]}>
           <IconTile name={done ? 'check' : 'moon'} />
           <View style={styles.text}>
@@ -76,7 +76,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
         onPress={() => openWorkout(session)}
         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
-        <Card entering={FadeInDown.delay(100).duration(400)}>
+        <Card entering={FadeInDown.delay(200).duration(400)}>
           <View style={[styles.row, { gap: spacing.md }]}>
             <IconTile name="dumbbell" />
             <View style={styles.text}>
@@ -103,7 +103,7 @@ export function WorkoutCard({ schedule, sessions, today }: WorkoutCardProps) {
 
   const done = todays.length - ahead.length;
   return (
-    <Card entering={FadeInDown.delay(100).duration(400)}>
+    <Card entering={FadeInDown.delay(200).duration(400)}>
       <View style={styles.text}>
         <Text variant="caption" color="primaryText">
           {t('today.workout.titleMany')}
