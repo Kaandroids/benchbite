@@ -1,8 +1,10 @@
-import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
+  FadeInDown,
   FadeOut,
   useAnimatedProps,
   useAnimatedReaction,
@@ -16,12 +18,13 @@ import Svg, { Circle } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { BittenPlate } from '@/brand/bitten-plate';
+import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 /** Each line about the work shows at least this long, so the work is seen being done. */
 const LINE_MS = 1100;
-/** How full the plate starts: the training intro shows it half full. */
+/** How full the plate starts: half, as the onboarding's training intro leaves it. */
 const START_SHARE = 0.5;
 /** How far the ring fills while the lines show; the rest fills once the work is done. */
 const WORKING_SHARE = 0.9;
@@ -44,7 +47,6 @@ type BuildingProps<T> = {
   /** Shown when the work fails. */
   error: string;
   work: () => Promise<T>;
-  failed: boolean;
   onDone: (result: T) => void;
   onFail: () => void;
 };
@@ -60,14 +62,13 @@ export function Building<T>({
   ready: readyLine,
   error,
   work: start,
-  failed,
   onDone,
   onFail,
 }: BuildingProps<T>) {
   const { colors, spacing } = useTheme();
   const count = lines.length;
   const [line, setLine] = useState(0);
-  // From half, where the training intro's plate left off.
+  const [failed, setFailed] = useState(false);
   const filled = useSharedValue(START_SHARE);
   const bite = useSharedValue(0);
   const crumbs = useSharedValue(0);
@@ -106,7 +107,10 @@ export function Building<T>({
         finish(result);
       } catch (cause) {
         console.warn('Could not finish the work', cause);
-        if (!cancelled) fail();
+        if (!cancelled) {
+          setFailed(true);
+          fail();
+        }
       }
     })();
     return () => {
@@ -170,6 +174,47 @@ export function Building<T>({
       </View>
     </View>
   );
+}
+
+/** One attempt at the work at a time: its key, how it went, and starting another. */
+export function useBuildingAttempt<T>() {
+  const [key, setKey] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const [done, setDone] = useState<{ result: T } | null>(null);
+  return {
+    /** The key of the attempt's `Building`; a new one starts it again. */
+    key,
+    failed,
+    done,
+    working: !failed && done === null,
+    onDone: useCallback((result: T) => setDone({ result }), []),
+    onFail: useCallback(() => setFailed(true), []),
+    retry: () => {
+      setFailed(false);
+      setKey((count) => count + 1);
+    },
+  };
+}
+
+type BuildingFooterProps<T> = {
+  attempt: ReturnType<typeof useBuildingAttempt<T>>;
+  /** The button that moves on once the work is done. */
+  label: string;
+  onPress: (result: T) => void;
+};
+
+/** Try again after a failure, or the button that moves on once the work is done. */
+export function BuildingFooter<T>({ attempt, label, onPress }: BuildingFooterProps<T>) {
+  const { t } = useTranslation();
+  const { done } = attempt;
+  if (attempt.failed) {
+    return <Button label={t('common.tryAgain')} onPress={attempt.retry} />;
+  }
+  return done ? (
+    <Animated.View entering={FadeInDown.duration(400)}>
+      <Button label={label} onPress={() => onPress(done.result)} />
+    </Animated.View>
+  ) : null;
 }
 
 /**

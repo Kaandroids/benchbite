@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { PACE_RANGES, snapPace, weightGoal } from '@/body/body';
-import { Building } from '@/components/building';
-import { Button } from '@/components/ui/button';
+import { Building, BuildingFooter, useBuildingAttempt } from '@/components/building';
 import { Screen } from '@/components/ui/screen';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat } from '@/i18n/units';
@@ -23,33 +20,19 @@ type Result = { targets: NutritionTargets; plan: WorkoutPlan };
 export function BuildingStep() {
   const { t } = useTranslation();
   const { answers, next, bar } = useStep('building');
-  const [attempt, setAttempt] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
+  const attempt = useBuildingAttempt<Result>();
   const lines = usePlanLines(answers);
 
   return (
     <Screen
       {...bar}
       footer={
-        failed ? (
-          <Button
-            label={t('common.tryAgain')}
-            onPress={() => {
-              setFailed(false);
-              setAttempt((count) => count + 1);
-            }}
-          />
-        ) : result ? (
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <Button label={t('onboarding.building.see')} onPress={() => next(result)} />
-          </Animated.View>
-        ) : undefined
+        <BuildingFooter attempt={attempt} label={t('onboarding.building.see')} onPress={next} />
       }
     >
       {/* A new key starts a fresh attempt. */}
       <Building
-        key={attempt}
+        key={attempt.key}
         title={t('onboarding.steps.building.title')}
         intro={
           answers.displayName
@@ -60,9 +43,8 @@ export function BuildingStep() {
         ready={t('onboarding.building.lines.ready')}
         error={t('onboarding.building.error')}
         work={() => build(answers)}
-        failed={failed}
-        onDone={setResult}
-        onFail={() => setFailed(true)}
+        onDone={attempt.onDone}
+        onFail={attempt.onFail}
       />
     </Screen>
   );
