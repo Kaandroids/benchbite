@@ -16,6 +16,8 @@ import type { Totals } from './meals';
 import type { NutritionTargets } from './targets';
 
 const RING = 96;
+/** The height of a caption line, which the note on what was eaten takes above the macros. */
+const NOTE_HEIGHT = 18;
 const STROKE = 10;
 const RADIUS = (RING - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -47,94 +49,84 @@ export function DaySummary({ header, totals }: DaySummaryProps) {
 
 function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Totals }) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const left = Math.round(targets.calories - eaten.calories);
   const share = targets.calories > 0 ? clamp(eaten.calories / targets.calories, 0, 1) : 0;
 
   return (
-    <View style={[styles.row, { gap: spacing.lg }]}>
-      <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={t('nutrition.ringLabel', {
-          eaten: format(Math.round(eaten.calories)),
-          target: format(targets.calories),
-        })}
-        accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
-        style={styles.ring}
-      >
-        <Svg width={RING} height={RING}>
-          <Circle
-            cx={RING / 2}
-            cy={RING / 2}
-            r={RADIUS}
-            fill="none"
-            stroke={colors.track}
-            strokeWidth={STROKE}
-          />
-          {share > 0 ? (
+    // The note on what was eaten sits above the macros without moving them, so that the ring
+    // stays level with their bars.
+    <View style={{ paddingTop: NOTE_HEIGHT }}>
+      <Text variant="caption" color="textMuted" style={[styles.note, { height: NOTE_HEIGHT }]}>
+        {format(Math.round(eaten.calories))}{' '}
+        {t('nutrition.calorieTarget', { target: format(targets.calories) })}
+      </Text>
+      <View style={[styles.row, { gap: spacing.lg }]}>
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel={t('nutrition.ringLabel', {
+            eaten: format(Math.round(eaten.calories)),
+            target: format(targets.calories),
+          })}
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
+          style={styles.ring}
+        >
+          <Svg width={RING} height={RING}>
             <Circle
               cx={RING / 2}
               cy={RING / 2}
               r={RADIUS}
               fill="none"
-              stroke={left < 0 ? colors.warning : colors.primary}
+              stroke={colors.track}
               strokeWidth={STROKE}
-              strokeLinecap="round"
-              strokeDasharray={`${share * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-              transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
             />
-          ) : null}
-        </Svg>
-        <View style={styles.center}>
-          <Text variant="headline">{format(Math.abs(left))}</Text>
-          <Text variant="caption" color="textMuted">
-            {left < 0 ? t('nutrition.over') : t('nutrition.left')}
-          </Text>
+            {share > 0 ? (
+              <Circle
+                cx={RING / 2}
+                cy={RING / 2}
+                r={RADIUS}
+                fill="none"
+                stroke={left < 0 ? colors.warning : colors.primary}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                strokeDasharray={`${share * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+                transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+              />
+            ) : null}
+          </Svg>
+          <View style={styles.center}>
+            <Text variant="headline">{format(Math.abs(left))}</Text>
+            <Text variant="caption" color="textMuted">
+              {left < 0 ? t('nutrition.over') : t('nutrition.left')}
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={[styles.macros, { gap: spacing.sm }]}>
-        {/* What was eaten against the goal, to read only: the goals change elsewhere. */}
-        <View
-          style={[
-            styles.eaten,
-            {
-              borderRadius: radii.full,
-              backgroundColor: colors.background,
-              paddingHorizontal: spacing.sm,
-            },
-          ]}
-        >
-          <Text variant="captionStrong" color="textMuted">
-            {t('nutrition.eatenOfGoal', {
-              eaten: format(Math.round(eaten.calories)),
-              goal: format(targets.calories),
-            })}
-          </Text>
-        </View>
-        {MACROS.map(({ key, grams, color }) => (
-          <View key={key} style={{ gap: spacing.xs }}>
-            <View style={styles.macroLine}>
-              <View style={[styles.macroName, { gap: spacing.xs }]}>
-                <MacroDot color={color} />
-                <Text variant="captionStrong" color="textMuted">
-                  {t(`nutrition.macros.${key}`)}
+        <View style={[styles.macros, { gap: spacing.sm }]}>
+          {MACROS.map(({ key, grams, color }) => (
+            <View key={key} style={{ gap: spacing.xs }}>
+              <View style={styles.macroLine}>
+                <View style={[styles.macroName, { gap: spacing.xs }]}>
+                  <MacroDot color={color} />
+                  <Text variant="captionStrong" color="textMuted">
+                    {t(`nutrition.macros.${key}`)}
+                  </Text>
+                </View>
+                <Text variant="captionStrong">
+                  {format(Math.round(eaten[grams]))}{' '}
+                  {t('nutrition.gramTarget', { target: format(targets[grams]) })}
                 </Text>
               </View>
-              <Text variant="captionStrong">
-                {format(Math.round(eaten[grams]))}{' '}
-                {t('nutrition.gramTarget', { target: format(targets[grams]) })}
-              </Text>
+              <ProgressBar
+                value={targets[grams] > 0 ? eaten[grams] / targets[grams] : 0}
+                color={color}
+                size="thin"
+                accessibilityLabel={t(`nutrition.macros.${key}`)}
+              />
             </View>
-            <ProgressBar
-              value={targets[grams] > 0 ? eaten[grams] / targets[grams] : 0}
-              color={color}
-              size="thin"
-              accessibilityLabel={t(`nutrition.macros.${key}`)}
-            />
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -157,10 +149,10 @@ const styles = StyleSheet.create({
   macros: {
     flex: 1,
   },
-  eaten: {
-    alignSelf: 'flex-end',
-    minHeight: 24,
-    justifyContent: 'center',
+  note: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
   },
   macroName: {
     flexDirection: 'row',
