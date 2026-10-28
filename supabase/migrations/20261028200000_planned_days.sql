@@ -41,8 +41,9 @@ revoke all on public.planned_days, public.planned_days_kept from anon;
 revoke insert, update, delete, truncate on public.planned_days, public.planned_days_kept
   from authenticated;
 
--- The latest day that is past on every device, as time zones put the device's today at most a day
--- from the server's. Days through it can be kept without asking the device.
+-- The latest day that is past on every device: the day before the earliest the device's today can
+-- be, a day before the server's (the window of assert_device_today()). Days through it can be kept
+-- without asking the device.
 create function public.last_day_past_everywhere()
 returns date
 language sql
@@ -71,13 +72,40 @@ $$;
 
 revoke execute on function public.assert_device_today(date) from public, anon, authenticated;
 
+-- The device's today as sent, when it can be one by assert_device_today(); else the server's, for
+-- a call that must not fail on a device clock that is off.
+create function public.device_today_or_server(sent text)
+returns date
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select t.day
+      from (
+        select case
+          when device_today_or_server.sent ~ '^\d{4}-\d{2}-\d{2}$'
+            then device_today_or_server.sent::date
+        end as day
+      ) t
+      where t.day between current_date - 1 and current_date + 1
+    ),
+    current_date
+  );
+$$;
+
+revoke execute on function public.device_today_or_server(text) from public, anon, authenticated;
+
 -- Makes the calls that keep a user's days wait for each other, until the transaction ends.
 create function public.lock_planned_days(owner uuid)
 returns void
 language sql
 set search_path = ''
 as $$
-  select pg_advisory_xact_lock(hashtextextended('planned_days ' || lock_planned_days.owner::text, 0));
+  select pg_advisory_xact_lock(
+    hashtextextended('planned_days ' || lock_planned_days.owner::text, 0)
+  );
 $$;
 
 revoke execute on function public.lock_planned_days(uuid) from public, anon, authenticated;
@@ -273,7 +301,7 @@ drop function public.drop_stale_moves();
 -- The caller's planned workouts on each day from `from_day` to `to_day`, a year at most: kept
 -- days as they were kept, and today, the device's today, and later days by the plan as it is.
 -- Days before the plan started have none. Everything that shows or counts the plan of a day reads
--- this. A deleted workout's days have no workout id.
+-- this. A deleted workout's days keep its id, though the workout is gone: show their name and type.
 create function public.planned_workouts(from_day date, to_day date, today date)
 returns table (day date, workout_id bigint, name text, type public.workout_type)
 language sql
@@ -333,7 +361,11 @@ begin
   end if;
 
   perform public.lock_user_limits(caller_id);
-  -- The days before the device's today keep the plan they had (ADR 0041).
+  -- The days before the device's today keep the plan they had (ADR 0041), after the workout's row
+  -- is locked, as in set_workout_active(). `today` is optional only until the app sends it.
+  if saved_id is not null then
+    perform 1 from public.workouts w where w.id = saved_id and w.user_id = caller_id for update;
+  end if;
   if save_workout.today is not null then
     perform public.keep_planned_days(save_workout.today);
   end if;
@@ -402,6 +434,9 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- The workout's row before the plan's lock, in the order a direct change takes them, so that the
+  -- two never wait on each other.
+  perform 1 from public.workouts w where w.id = set_workout_active.workout_id for update;
   perform public.keep_planned_days(set_workout_active.today);
   update public.workouts w
   set active = set_workout_active.active
@@ -422,6 +457,8 @@ language plpgsql
 set search_path = ''
 as $$
 begin
+  -- The workout's row before the plan's lock, as in set_workout_active().
+  perform 1 from public.workouts w where w.id = delete_workout.workout_id for update;
   perform public.keep_planned_days(delete_workout.today);
   delete from public.workouts w where w.id = delete_workout.workout_id;
   if not found then
@@ -526,21 +563,7 @@ begin
   -- The plan starts on the device's today, sent with the answers (ADR 0041), before any
   -- workout of it is saved. Without one, or with a device clock more than a day off, it starts on
   -- the server's, so that the onboarding can always be finished.
-  perform public.start_user_plan(
-    caller_id,
-    coalesce(
-      (
-        select t.day
-        from (
-          select case
-            when answers ->> 'today' ~ '^\d{4}-\d{2}-\d{2}$' then (answers ->> 'today')::date
-          end as day
-        ) t
-        where t.day between current_date - 1 and current_date + 1
-      ),
-      current_date
-    )
-  );
+  perform public.start_user_plan(caller_id, public.device_today_or_server(answers ->> 'today'));
 
   -- Only goals that change the weight keep a target weight and a pace.
   insert into public.goals (user_id, kind, target_weight_kg, weekly_pace_kg)
