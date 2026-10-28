@@ -66,6 +66,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      day_nutrition_targets: {
+        Row: {
+          calories: number;
+          carbs_g: number;
+          day: string;
+          fat_g: number;
+          protein_g: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          calories: number;
+          carbs_g: number;
+          day: string;
+          fat_g: number;
+          protein_g: number;
+          user_id: string;
+        };
+        Update: {
+          calories?: number;
+          carbs_g?: number;
+          day?: string;
+          fat_g?: number;
+          protein_g?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       exercise_translations: {
         Row: {
           exercise_id: string;
