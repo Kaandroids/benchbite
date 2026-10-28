@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabScreen } from '@/components/tab-screen';
+import { cardEntering } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { DevButton } from '@/dev/dev-button';
 import { SettingsButton } from '@/settings/settings-button';
@@ -29,6 +30,7 @@ export function ProgressScreen() {
       </View>
       {allLoaded(queries) ? (
         <WeightCard
+          entering={cardEntering(0)}
           latest={latestWeight.data ?? null}
           unit={weightUnit.data ?? 'kg'}
           today={new Date()}

@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, type CardProps } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
@@ -13,6 +12,8 @@ import { useMoveWorkout } from '@/workouts/moves';
 import { originOf, type PlannedWorkout, type ScheduleDay } from '@/workouts/week-schedule';
 
 type MissedCardProps = {
+  /** How the card comes in, from the screen that places it. */
+  entering?: CardProps['entering'];
   workout: PlannedWorkout;
   /** The day it was missed on. */
   day: ScheduleDay;
@@ -22,7 +23,7 @@ type MissedCardProps = {
 };
 
 /** A workout missed this week, to skip or to move to a free day (ADR 0028). */
-export function MissedCard({ workout, day, canMove, onPickDay }: MissedCardProps) {
+export function MissedCard({ workout, day, canMove, onPickDay, entering }: MissedCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
@@ -38,7 +39,7 @@ export function MissedCard({ workout, day, canMove, onPickDay }: MissedCardProps
     });
 
   return (
-    <Card entering={FadeInDown.delay(200).duration(400)}>
+    <Card entering={entering}>
       <View style={[styles.row, { gap: spacing.md }]}>
         <IconTile name="missed" />
         <View style={styles.text}>

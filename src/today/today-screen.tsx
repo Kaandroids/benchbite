@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { FadeInDown } from 'react-native-reanimated';
 
 import { TabScreen } from '@/components/tab-screen';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, cardEntering } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
@@ -85,13 +84,14 @@ export function TodayScreen() {
     content = (
       <>
         <WeekCard
+          entering={cardEntering(0)}
           today={today}
           streak={streak}
           schedule={schedule}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
         />
         {targets.data ? (
-          <Card entering={FadeInDown.delay(100).duration(400)}>
+          <Card entering={cardEntering(1)}>
             <Text variant="headline">{t('today.targets')}</Text>
             <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
           </Card>
@@ -101,6 +101,7 @@ export function TodayScreen() {
           return (
             <MissedCard
               key={`${workout.session.workoutId}-${fromOn}`}
+              entering={cardEntering(2)}
               workout={workout}
               day={day}
               canMove={moveTargets(schedule, workout.session.workoutId, fromOn, todayOn).length > 0}
@@ -109,7 +110,12 @@ export function TodayScreen() {
           );
         })}
         {plan.data ? (
-          <WorkoutCard schedule={schedule} sessions={plan.data.sessions} today={today} />
+          <WorkoutCard
+            entering={cardEntering(2)}
+            schedule={schedule}
+            sessions={plan.data.sessions}
+            today={today}
+          />
         ) : null}
       </>
     );
