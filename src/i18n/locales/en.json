@@ -9,7 +9,8 @@
     "sets_one": "{{count}} set",
     "sets_other": "{{count}} sets",
     "keepEditing": "Keep editing",
-    "discard": "Discard"
+    "discard": "Discard",
+    "done": "Done"
   },
   "sessionError": {
     "title": "Couldn’t connect",
@@ -252,8 +253,7 @@
       "added": "{{name}} added",
       "error": "The search failed. Check your connection and try again.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Mine",
-      "done": "Done"
+      "mine": "Mine"
     },
     "amount": {
       "per100g": "{{calories}} kcal per 100 g",

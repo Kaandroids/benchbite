@@ -9,7 +9,8 @@
     "sets_one": "{{count}} set",
     "sets_other": "{{count}} set",
     "keepEditing": "Düzenlemeye devam et",
-    "discard": "Sil"
+    "discard": "Sil",
+    "done": "Bitti"
   },
   "sessionError": {
     "title": "Bağlanılamadı",
@@ -252,8 +253,7 @@
       "added": "{{name}} eklendi",
       "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Benim",
-      "done": "Bitti"
+      "mine": "Benim"
     },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",

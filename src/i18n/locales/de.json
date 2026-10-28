@@ -9,7 +9,8 @@
     "sets_one": "{{count}} Satz",
     "sets_other": "{{count}} Sätze",
     "keepEditing": "Weiter bearbeiten",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "done": "Fertig"
   },
   "sessionError": {
     "title": "Keine Verbindung",
@@ -252,8 +253,7 @@
       "added": "{{name}} hinzugefügt",
       "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Eigenes",
-      "done": "Fertig"
+      "mine": "Eigenes"
     },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",
