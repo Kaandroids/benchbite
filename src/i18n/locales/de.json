@@ -146,21 +146,23 @@
       "title": "Nachholen",
       "subtitle": "Wähle für jedes verpasste Workout einen freien Tag dieser Woche oder lass es aus.",
       "missedOn": "Am {{day}} verpasst · {{session}}",
-      "today": "Heute",
       "moveLabel": "{{session}} auf {{day}} verschieben",
       "skip": "Auslassen",
       "skipHint": "Lässt {{session}} diese Woche aus",
       "noDays": "Diese Woche ist kein Tag mehr frei, um es zu verschieben.",
       "done": "Fertig"
     },
+    "move": {
+      "today": "Heute",
+      "error": "Das Workout konnte nicht verschoben werden. Prüfe deine Verbindung und versuche es erneut.",
+      "skipError": "Das Workout konnte nicht ausgelassen werden. Prüfe deine Verbindung und versuche es erneut.",
+      "taken": "Dieser Tag ist nicht mehr frei. Wähle einen anderen."
+    },
     "pickDay": {
       "title": "{{session}} vom {{day}} verschieben",
       "subtitle": "Wähle einen Tag dieser Woche.",
-      "today": "Heute",
       "rest": "Ruhetag",
-      "move": "Auf {{day}} verschieben",
-      "error": "Das Workout konnte nicht verschoben werden. Prüfe deine Verbindung und versuche es erneut.",
-      "taken": "Dieser Tag ist nicht mehr frei. Wähle einen anderen."
+      "move": "Auf {{day}} verschieben"
     },
     "dayMenu": {
       "planned_zero": "Keine Workouts geplant",

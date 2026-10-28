@@ -107,7 +107,12 @@ function mockData({
   targets = loaded<NutritionTargets | null>(TARGETS),
   finished = loaded<FinishedWorkout[]>([]),
   moves = loaded<WorkoutMove[]>([]),
-  moving = { isError: false, isPending: false, error: null as unknown },
+  moving = { isError: false, isPending: false, error: null as unknown } as {
+    isError: boolean;
+    isPending: boolean;
+    error: unknown;
+    variables?: WorkoutMove;
+  },
   undoing = { isError: false, isPending: false },
   name = null,
   eaten = loaded<MealEntry[]>([]),
@@ -116,7 +121,7 @@ function mockData({
   targets?: Query<NutritionTargets | null>;
   finished?: Query<FinishedWorkout[]>;
   moves?: Query<WorkoutMove[]>;
-  moving?: { isError: boolean; isPending: boolean; error: unknown };
+  moving?: { isError: boolean; isPending: boolean; error: unknown; variables?: WorkoutMove };
   undoing?: { isError: boolean; isPending: boolean };
   name?: string | null;
   eaten?: Query<MealEntry[]>;
@@ -424,6 +429,22 @@ describe('moving workouts', () => {
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
     expect(screen.getByText('That day is no longer free. Pick another one.')).toBeTruthy();
+  });
+
+  it('says when skipping failed', async () => {
+    mockData({
+      moving: {
+        isError: true,
+        isPending: false,
+        error: new Error('offline'),
+        variables: { workoutId: 1, fromOn: '2026-10-19', toOn: null },
+      },
+    });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
+    expect(
+      screen.getByText("We couldn't skip the workout. Check your connection and try again."),
+    ).toBeTruthy();
   });
 
   it('moves a workout to the day picked from the week card, today first', async () => {

@@ -146,21 +146,23 @@
       "title": "Telafi et",
       "subtitle": "Kaçırdığın her antrenman için bu hafta boş bir gün seç ya da atla.",
       "missedOn": "{{day}} kaçırıldı · {{session}}",
-      "today": "Bugün",
       "moveLabel": "{{session}} antrenmanını taşı: {{day}}",
       "skip": "Atla",
       "skipHint": "{{session}} antrenmanını bu hafta atlar",
       "noDays": "Bu hafta taşıyabileceğin boş gün kalmadı.",
       "done": "Tamam"
     },
+    "move": {
+      "today": "Bugün",
+      "error": "Antrenman taşınamadı. Bağlantını kontrol edip tekrar dene.",
+      "skipError": "Antrenman atlanamadı. Bağlantını kontrol edip tekrar dene.",
+      "taken": "Bu gün artık boş değil. Başka bir gün seç."
+    },
     "pickDay": {
       "title": "{{day}} günkü {{session}} antrenmanını taşı",
       "subtitle": "Bu hafta bir gün seç.",
-      "today": "Bugün",
       "rest": "Dinlenme günü",
-      "move": "{{day}} gününe taşı",
-      "error": "Antrenman taşınamadı. Bağlantını kontrol edip tekrar dene.",
-      "taken": "Bu gün artık boş değil. Başka bir gün seç."
+      "move": "{{day}} gününe taşı"
     },
     "dayMenu": {
       "planned_zero": "Planlanmış antrenman yok",

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat } from '@/i18n/dates';
-import { isDbError } from '@/lib/errors';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import { useMoveWorkout } from '@/workouts/moves';
@@ -17,6 +16,8 @@ import {
   type ScheduleDay,
   type WeekSchedule,
 } from '@/workouts/week-schedule';
+
+import { MoveError } from './move-error';
 
 type CatchUpProps = {
   schedule: WeekSchedule;
@@ -76,10 +77,8 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
 
   const move = (toOn: string | null) =>
     moveWorkout.mutate({ workoutId: session.workoutId, fromOn, toOn });
-  // The day may have been taken elsewhere since the week loaded.
-  const refused = isDbError(moveWorkout.error, 'moveDoesNotFit');
   const dayLabel = (target: ScheduleDay) =>
-    target.date === todayOn ? t('today.catchUp.today') : shortWeekday(target.weekday);
+    target.date === todayOn ? t('today.move.today') : shortWeekday(target.weekday);
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -126,11 +125,7 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
           {t('today.catchUp.noDays')}
         </Text>
       )}
-      {moveWorkout.isError ? (
-        <Text variant="caption" color="danger" accessibilityRole="alert">
-          {refused ? t('today.pickDay.taken') : t('today.pickDay.error')}
-        </Text>
-      ) : null}
+      <MoveError move={moveWorkout} />
     </View>
   );
 }

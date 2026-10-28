@@ -146,21 +146,23 @@
       "title": "Catch up",
       "subtitle": "Pick a free day this week for each missed workout, or skip it.",
       "missedOn": "Missed {{day}} · {{session}}",
-      "today": "Today",
       "moveLabel": "Move {{session}} to {{day}}",
       "skip": "Skip",
       "skipHint": "Skips {{session}} this week",
       "noDays": "No day is left this week to move it to.",
       "done": "Done"
     },
+    "move": {
+      "today": "Today",
+      "error": "We couldn't move the workout. Check your connection and try again.",
+      "skipError": "We couldn't skip the workout. Check your connection and try again.",
+      "taken": "That day is no longer free. Pick another one."
+    },
     "pickDay": {
       "title": "Move {{day}}'s {{session}}",
       "subtitle": "Pick a day this week.",
-      "today": "Today",
       "rest": "Rest day",
-      "move": "Move to {{day}}",
-      "error": "We couldn't move the workout. Check your connection and try again.",
-      "taken": "That day is no longer free. Pick another one."
+      "move": "Move to {{day}}"
     },
     "dayMenu": {
       "planned_zero": "No workouts planned",
