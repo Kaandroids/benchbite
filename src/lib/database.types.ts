@@ -1209,6 +1209,21 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      list_recipes: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          carbs_g: number;
+          custom_food_id: number;
+          fat_g: number;
+          food_id: string;
+          kcal: number;
+          name: string;
+          portion_grams: number;
+          portion_unit: Database['public']['Enums']['portion_unit'];
+          protein_g: number;
+          recipe_id: number;
+        }[];
+      };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
@@ -1283,7 +1298,7 @@ export type Database = {
       };
       save_workout: { Args: { workout: Json }; Returns: number };
       search_foods: {
-        Args: { language: string; query: string };
+        Args: { language: string; query: string; recipes?: boolean };
         Returns: {
           carbs_g: number;
           custom_food_id: number;
