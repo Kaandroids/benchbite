@@ -9,7 +9,8 @@
     "sets_one": "{{count}} set",
     "sets_other": "{{count}} set",
     "keepEditing": "Düzenlemeye devam et",
-    "discard": "Sil"
+    "discard": "Sil",
+    "done": "Bitti"
   },
   "sessionError": {
     "title": "Bağlanılamadı",

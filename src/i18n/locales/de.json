@@ -9,7 +9,8 @@
     "sets_one": "{{count}} Satz",
     "sets_other": "{{count}} Sätze",
     "keepEditing": "Weiter bearbeiten",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "done": "Fertig"
   },
   "sessionError": {
     "title": "Keine Verbindung",

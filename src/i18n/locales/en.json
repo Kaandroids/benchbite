@@ -9,7 +9,8 @@
     "sets_one": "{{count}} set",
     "sets_other": "{{count}} sets",
     "keepEditing": "Keep editing",
-    "discard": "Discard"
+    "discard": "Discard",
+    "done": "Done"
   },
   "sessionError": {
     "title": "Couldn’t connect",

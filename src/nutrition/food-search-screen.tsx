@@ -2,19 +2,12 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AccessibilityInfo,
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { AccessibilityInfo, ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
 import { Note } from '@/components/ui/note';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
+import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
@@ -54,7 +47,8 @@ function quickAmountOf(food: FoodResult): Amount {
 /**
  * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
  * the favourites and one's own foods (ADR 0037). A food opens the amount screen, or its + adds it
- * at once: a frequent food as it was logged last, others by their default portion.
+ * at once: a frequent food as it was logged last, others by their default portion. New food is
+ * in the top bar, and Done at the bottom goes back to the day.
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
@@ -167,25 +161,30 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
+    <Screen
+      // Back, not close: what was added stays.
+      onBack={() => router.back()}
+      title={t(`nutrition.addTo.${meal}`)}
+      action={
+        // As wide as the back button, so that the title stays in the middle.
+        <View style={styles.action}>
+          <RoundIconButton
+            icon="plus"
+            color="primary"
+            background="iconBackground"
+            size={36}
+            label={t('nutrition.food.create')}
+            onPress={() =>
+              router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
+            }
+          />
+        </View>
+      }
+      // Foods are saved as they are added; Done ends the screen, where a screen's main button is,
+      // so that nothing else there is taken for it.
+      footer={<Button label={t('common.done')} onPress={() => router.back()} />}
+      scrolls={false}
     >
-      <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={() => router.back()}
-          style={styles.close}
-        >
-          <Icon name="close" color="textMuted" />
-        </Pressable>
-        <Text variant="label" accessibilityRole="header" align="center" style={styles.title}>
-          {t(`nutrition.addTo.${meal}`)}
-        </Text>
-        <View style={styles.close} />
-      </View>
-
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
         <SearchField
           label={t('nutrition.search.placeholder')}
@@ -196,40 +195,14 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         />
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
       </View>
-
-      <View style={styles.flex}>{body}</View>
-      <View style={{ paddingHorizontal: spacing.xl, paddingVertical: spacing.md }}>
-        <Button
-          label={t('nutrition.food.create')}
-          variant="secondary"
-          onPress={() =>
-            router.push({ pathname: '/nutrition/new-food', params: { meal, day, name: typed } })
-          }
-        />
-      </View>
-    </SafeAreaView>
+      {body}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 52,
-  },
-  close: {
+  action: {
     width: 44,
-    height: 44,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    flex: 1,
   },
 });
