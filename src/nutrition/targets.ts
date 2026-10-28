@@ -221,23 +221,18 @@ export type TargetAnswers = Pick<
   'goal' | 'targetWeightKg' | 'weeklyPaceKg' | 'activity'
 >;
 
-/** The arguments of the database's functions for the answers. */
-function answersArgs(answers: TargetAnswers) {
-  return {
-    goal: answers.goal,
-    // Generated as numbers, though the functions take null for goals that keep the weight.
-    target_weight_kg: answers.targetWeightKg as number,
-    weekly_pace_kg: answers.weeklyPaceKg as number,
-    activity_level: answers.activity,
-  };
-}
-
 /** Saves new answers and puts the calculated targets back in use, from today on. */
 export function useRecalculateTargets() {
   const reload = useReloadTargets();
   return useMutation({
     mutationFn: async (answers: TargetAnswers) => {
-      const { error } = await supabase.rpc('recalculate_nutrition_targets', answersArgs(answers));
+      const { error } = await supabase.rpc('recalculate_nutrition_targets', {
+        goal: answers.goal,
+        // Generated as numbers, though the function takes null for goals that keep the weight.
+        target_weight_kg: answers.targetWeightKg as number,
+        weekly_pace_kg: answers.weeklyPaceKg as number,
+        activity_level: answers.activity,
+      });
       if (error) {
         throw error;
       }
