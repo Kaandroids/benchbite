@@ -13,7 +13,7 @@ import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { isDbError } from '@/lib/errors';
+import { dbErrorMessage } from '@/lib/errors';
 import { toTenth, useNumberFormat } from '@/i18n/units';
 import { typography, useTheme } from '@/theme';
 
@@ -82,15 +82,16 @@ function FoodFormBody(props: FoodFormScreenProps & { initial: FoodForm }) {
   const problem = result.kind === 'problem' ? result : null;
   // Why saving or deleting failed, above the button that saves.
   const serverError = failed.isError
-    ? isDbError(failed.error, 'uniqueViolation')
-      ? t('nutrition.food.nameTaken')
-      : isDbError(failed.error, 'customFoodLimit')
-        ? t('nutrition.food.limit')
-        : isDbError(failed.error, 'customFoodTotalLimit')
-          ? t('nutrition.food.totalLimit')
-          : isDbError(failed.error, 'customFoodDeleted')
-            ? t('nutrition.food.deleted')
-            : t('nutrition.food.saveError')
+    ? dbErrorMessage(
+        failed.error,
+        [
+          ['uniqueViolation', t('nutrition.food.nameTaken')],
+          ['customFoodLimit', t('nutrition.food.limit')],
+          ['customFoodTotalLimit', t('nutrition.food.totalLimit')],
+          ['customFoodDeleted', t('nutrition.food.deleted')],
+        ],
+        t('nutrition.food.saveError'),
+      )
     : deleteFood.isError
       ? t('nutrition.food.deleteError')
       : null;

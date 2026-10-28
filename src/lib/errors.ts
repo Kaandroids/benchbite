@@ -28,3 +28,15 @@ type DbError = keyof typeof DB_ERRORS;
 export function isDbError(error: unknown, name: DbError): boolean {
   return (error as { code?: unknown } | null)?.code === DB_ERRORS[name];
 }
+
+/**
+ * The message for the first of `messages` whose error the database refused a request with, or
+ * `fallback` for any other failure.
+ */
+export function dbErrorMessage(
+  error: unknown,
+  messages: [DbError, string][],
+  fallback: string,
+): string {
+  return messages.find(([name]) => isDbError(error, name))?.[1] ?? fallback;
+}

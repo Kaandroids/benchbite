@@ -13,8 +13,8 @@ import { amountOf, type Amount, type FoodResult } from './foods';
 import { usePortionLabel } from './portion-label';
 
 /**
- * What a row says of an amount of a food: the portions, such as "1 bowl", and a line with the
- * portions, grams and calories, such as "1 bowl · 250 g · 208 kcal".
+ * What a row says of an amount of a food: the portions, such as "1 bowl", the amount, such as
+ * "1 bowl · 250 g", and a line with the calories too, such as "1 bowl · 250 g · 208 kcal".
  */
 export function useRowLabels() {
   const { t } = useTranslation();
@@ -29,7 +29,8 @@ export function useRowLabels() {
       grams: format(amount.grams),
       calories: format(Math.round(amountOf(food.per100g, amount.grams).calories)),
     });
-    return { portion, detail };
+    const grams = t('nutrition.amount.inGrams', { grams: format(amount.grams) });
+    return { portion, amount: amount.portion ? `${portion} · ${grams}` : grams, detail };
   };
 }
 
