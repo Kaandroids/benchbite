@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { useWaterGoal } from '@/profile/water-goal';
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen } from '@/test/render';
 
 import { useDayEntries, type MealEntry } from './meals';
 import { NutritionScreen } from './nutrition-screen';
@@ -204,5 +204,14 @@ describe('NutritionScreen', () => {
     for (const meal of ['lunch', 'dinner']) {
       expect(background(`Add to ${meal}`)).toBe(soft);
     }
+  });
+
+  it('moves on to the next meal as the hour passes while the tab stays open', async () => {
+    jest.setSystemTime(new Date(2026, 9, 27, 10, 59));
+    await render(<NutritionScreen />);
+    expect(background('Add to breakfast')).not.toBe(background('Add to lunch'));
+    await act(async () => jest.advanceTimersByTime(2 * 60 * 1000));
+    expect(background('Add to lunch')).not.toBe(background('Add to breakfast'));
+    expect(background('Add to breakfast')).toBe(background('Add to dinner'));
   });
 });
