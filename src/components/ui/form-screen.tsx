@@ -18,6 +18,8 @@ type FormScreenProps = {
   onBack?: () => void;
   /** Shows the back button as a cross, for leaving without saving. */
   closes?: boolean;
+  /** Shows a cross at the end of the top bar, for leaving a flow of steps. */
+  onClose?: () => void;
   /** Shows the progress through the sections of a flow at the top. */
   progress?: SectionProgressProps;
 };
@@ -30,12 +32,13 @@ export function FormScreen({
   footer,
   onBack,
   closes = false,
+  onClose,
   progress,
 }: FormScreenProps) {
   const { spacing } = useTheme();
   return (
     <KeyboardAvoiding>
-      <Screen onBack={onBack} closes={closes} progress={progress} footer={footer}>
+      <Screen onBack={onBack} closes={closes} onClose={onClose} progress={progress} footer={footer}>
         <View style={{ gap: spacing.xs }}>
           <Text variant="title" accessibilityRole="header">
             {title}

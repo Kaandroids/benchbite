@@ -22,7 +22,7 @@ const DEFAULT_WEIGHT_KG: Record<NonNullable<OnboardingAnswers['sex']>, number> =
 /** The current weight in kilograms or pounds; it is stored in kilograms either way. */
 export function WeightStep() {
   const { t } = useTranslation();
-  const { answers, progress, next, back } = useStep('weight');
+  const { answers, next, bar } = useStep('weight');
   const [unit, setUnit] = useState<WeightUnit>(answers.weightUnit ?? defaultUnits().weight);
   const [weightKg, setWeightKg] = useState(
     answers.weightKg ?? DEFAULT_WEIGHT_KG[answers.sex ?? 'unspecified'],
@@ -30,8 +30,7 @@ export function WeightStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button label={t('common.continue')} onPress={() => next({ weightKg, weightUnit: unit })} />
       }

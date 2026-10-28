@@ -22,15 +22,14 @@ const DEFAULT_AGE = 30;
 export function BirthYearStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, next, back } = useStep('birth-year');
+  const { answers, next, bar } = useStep('birth-year');
   const [birthYear, setBirthYear] = useState(answers.birthYear ?? THIS_YEAR - DEFAULT_AGE);
   const age = ageIn(THIS_YEAR, birthYear);
   const tooYoung = age < MIN_AGE;
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button
           label={t('common.continue')}

@@ -37,7 +37,7 @@ const PARTS: { key: keyof SessionTime; color: keyof ColorTokens; opacity: number
 export function SessionLengthStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, next } = useStep('session-length');
+  const { answers, next, bar } = useStep('session-length');
   const [minutes, setMinutes] = useState<SessionMinutes>(answers.sessionMinutes ?? DEFAULT_MINUTES);
   const preview = useLengthPreview(answers, minutes);
   const label = (value: SessionMinutes) =>
@@ -47,8 +47,7 @@ export function SessionLengthStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button label={t('common.continue')} onPress={() => next({ sessionMinutes: minutes })} />
       }

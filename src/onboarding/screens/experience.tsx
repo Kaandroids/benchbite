@@ -25,13 +25,12 @@ const LEVELS = Constants.public.Enums.experience;
  */
 export function ExperienceStep() {
   const { t } = useTranslation();
-  const { answers, progress, back, select, next } = useStep('experience');
+  const { answers, select, next, bar } = useStep('experience');
   const experience = answers.experience;
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={<Button label={t('common.continue')} disabled={!experience} onPress={() => next()} />}
     >
       <StepHeading

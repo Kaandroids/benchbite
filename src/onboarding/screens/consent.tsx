@@ -35,7 +35,7 @@ const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
 export function ConsentStep() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const { answers, progress, answer, next, back } = useStep('consent');
+  const { answers, answer, next, bar } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
   const [explaining, setExplaining] = useState(false);
   const saved = answers.consentedPolicyVersion;
@@ -61,7 +61,8 @@ export function ConsentStep() {
   if (explaining) {
     return (
       <Screen
-        progress={progress}
+        {...bar}
+        // Back to the consent itself, which the explanation is part of.
         onBack={() => setExplaining(false)}
         footer={
           <Button
@@ -81,8 +82,7 @@ export function ConsentStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <View style={{ gap: spacing.md }}>
           <Button

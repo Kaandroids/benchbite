@@ -5,13 +5,16 @@ import { BackHandler } from 'react-native';
 
 import { useOnboarding } from '@/providers/onboarding-provider';
 
+import { returnTo } from './navigation';
 import {
+  canCloseFrom,
   canGoBackFrom,
   isPassing,
   nextStep,
   previousStep,
   progressOf,
   SECTIONS,
+  stepHref,
   type Step,
 } from './steps';
 import type { OnboardingAnswers } from './types';
@@ -41,7 +44,7 @@ export function useStep(step: Step) {
     if (router.canGoBack()) {
       router.back();
     } else if (previous) {
-      router.replace({ pathname: '/onboarding/[step]', params: { step: previous } });
+      router.replace(stepHref(previous));
     }
   }, [previous]);
 
@@ -74,7 +77,7 @@ export function useStep(step: Step) {
     }
     // Recorded before the screen opens, so the step route knows the user reached it.
     setStep(following);
-    const href = { pathname: '/onboarding/[step]', params: { step: following } } as const;
+    const href = stepHref(following);
     if (isPassing(step)) {
       router.replace(href);
     } else {
@@ -91,16 +94,26 @@ export function useStep(step: Step) {
     moveOn(answers);
   };
 
+  const progress = {
+    sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
+    ...progressOf(step),
+  };
+  const onBack = previous ? back : undefined;
+  /** Leaves the steps for the welcome screen, keeping the answers, so starting again finds them. */
+  const onClose = canCloseFrom(step) ? () => returnTo('welcome') : undefined;
+
   return {
     answers: draft.answers,
-    progress: {
-      sections: SECTIONS.map((section) => t(`onboarding.sections.${section}`)),
-      ...progressOf(step),
-    },
+    progress,
     /** Saves answers without moving on, for example to withdraw one. */
     answer,
     next,
-    back: previous ? back : undefined,
+    back: onBack,
+    /**
+     * The top bar of the step's screen, to spread into it: the progress, back, and on the
+     * questions a cross to the welcome screen.
+     */
+    bar: { progress, onBack, onClose },
     /**
      * For a step's choice: saves the answer when it differs from the one saved, so tapping the
      * chosen card again does nothing. Continue then moves on.

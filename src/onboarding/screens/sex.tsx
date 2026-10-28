@@ -29,12 +29,11 @@ const PAIR: { sex: Sex; icon: IconName }[] = [
 export function SexStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, back, select, next } = useStep('sex');
+  const { answers, select, next, bar } = useStep('sex');
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button label={t('common.continue')} disabled={!answers.sex} onPress={() => next()} />
       }

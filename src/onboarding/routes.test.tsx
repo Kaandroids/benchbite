@@ -28,8 +28,9 @@ import { useOnboarding } from '@/providers/onboarding-provider';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { onboardingValue, sessionValue } from '@/test/context-mocks';
 
-import type { Step } from './steps';
+import { stepHref, type Step } from './steps';
 import type { OnboardingAnswers } from './types';
+import { returnTo } from './navigation';
 
 // The step screens are replaced by their names: these tests are about which one opens.
 jest.mock('@/onboarding/screens', () => {
@@ -230,6 +231,27 @@ describe('onboarding routes', () => {
     const app = await renderRouter(ONBOARDING_ROUTES, { initialUrl: '/onboarding/pace' });
     expect(app.getPathname()).toBe('/onboarding/activity');
     expect(screen.getByText('Step activity')).toBeOnTheScreen();
+  });
+});
+
+describe('going back to an earlier step', () => {
+  it('leaves none of the steps after it to go back to', async () => {
+    setOnboarding('goal');
+    const app = await renderRouter(ONBOARDING_ROUTES, { initialUrl: '/onboarding/welcome' });
+    await act(() => router.push(stepHref('nickname')));
+    await act(() => router.push(stepHref('goal')));
+    await act(() => returnTo('welcome'));
+    expect(app.getPathname()).toBe('/onboarding/welcome');
+    expect(screen.getByText('Step welcome')).toBeOnTheScreen();
+    expect(router.canGoBack()).toBe(false);
+  });
+
+  it('opens the step after resuming, with nothing before it in the history', async () => {
+    setOnboarding('target-weight', { goal: 'lose_fat' });
+    const app = await renderRouter(ONBOARDING_ROUTES, { initialUrl: '/onboarding' });
+    await act(() => returnTo('goal'));
+    expect(app.getPathname()).toBe('/onboarding/goal');
+    expect(router.canGoBack()).toBe(false);
   });
 });
 

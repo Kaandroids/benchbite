@@ -25,7 +25,7 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 export function TrainingDaysStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { answers, progress, next, back } = useStep('training-days');
+  const { answers, next, bar } = useStep('training-days');
   const recommended = RECOMMENDED_DAYS[answers.experience ?? 'beginner'];
   const [chosen, setChosen] = useState(answers.trainingDaysChosen ?? false);
   const [days, setDays] = useState(
@@ -56,8 +56,7 @@ export function TrainingDaysStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button
           label={t('common.continue')}

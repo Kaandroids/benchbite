@@ -16,7 +16,7 @@ import { CenteredContent } from './centered-content';
 export function PaceStep() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
-  const { answers, progress, next, back } = useStep('pace');
+  const { answers, next, bar } = useStep('pace');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 72;
@@ -26,8 +26,7 @@ export function PaceStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button label={t('common.continue')} onPress={() => next({ weeklyPaceKg: paceKg })} />
       }

@@ -32,13 +32,12 @@ const FACTS: { key: 'need' | 'exercises' | 'progress'; icon: IconName }[] = [
  */
 export function SetupStep() {
   const { t } = useTranslation();
-  const { answers, progress, back, select, next } = useStep('setup');
+  const { answers, select, next, bar } = useStep('setup');
   const setup = answers.setup;
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={<Button label={t('common.continue')} disabled={!setup} onPress={() => next()} />}
     >
       <StepHeading title={t('onboarding.steps.setup.title')} intro={t('onboarding.setup.intro')} />

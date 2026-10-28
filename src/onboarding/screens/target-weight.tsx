@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +9,7 @@ import { TargetWeightNote } from '@/goals/target-weight-note';
 import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { WeightWheels } from '@/weight/weight-wheels';
 
+import { returnTo } from '../navigation';
 import { useStep } from '../use-step';
 import { CenteredContent } from './centered-content';
 
@@ -20,7 +20,7 @@ import { CenteredContent } from './centered-content';
  */
 export function TargetWeightStep() {
   const { t } = useTranslation();
-  const { answers, progress, next, back } = useStep('target-weight');
+  const { answers, next, bar } = useStep('target-weight');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const weightKg = answers.weightKg ?? 72;
   const heightCm = answers.heightCm ?? 172;
@@ -33,15 +33,9 @@ export function TargetWeightStep() {
   if (goal === 'lose_fat' && isTooLightToLose(weightKg, heightCm)) {
     return (
       <Screen
-        progress={progress}
-        onBack={back}
+        {...bar}
         footer={
-          <Button
-            label={t('goals.targetWeight.changeGoal')}
-            onPress={() =>
-              router.dismissTo({ pathname: '/onboarding/[step]', params: { step: 'goal' } })
-            }
-          />
+          <Button label={t('goals.targetWeight.changeGoal')} onPress={() => returnTo('goal')} />
         }
       >
         <TooLightToLose />
@@ -53,8 +47,7 @@ export function TargetWeightStep() {
 
   return (
     <Screen
-      progress={progress}
-      onBack={back}
+      {...bar}
       footer={
         <Button
           label={t('common.continue')}

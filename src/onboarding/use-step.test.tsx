@@ -12,7 +12,14 @@ import { useStep } from './use-step';
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual<typeof import('react')>('react');
   return {
-    router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: jest.fn() },
+    router: {
+      push: jest.fn(),
+      replace: jest.fn(),
+      back: jest.fn(),
+      canGoBack: jest.fn(),
+      canDismiss: jest.fn(() => true),
+      dismissAll: jest.fn(),
+    },
     // The screen counts as focused while it is mounted.
     useFocusEffect: (effect: () => void | (() => void)) => useEffect(effect, [effect]),
   };
@@ -152,6 +159,32 @@ describe('useStep', () => {
     expect(router.replace).toHaveBeenCalledWith({
       pathname: '/onboarding/[step]',
       params: { step: 'weight' },
+    });
+  });
+
+  it('closes the questions for the welcome screen, keeping the answers', async () => {
+    const { result } = await renderStep('height', { goal: 'lose_fat' });
+    result.current.bar.onClose?.();
+    expect(router.dismissAll).toHaveBeenCalled();
+    expect(router.replace).toHaveBeenCalledWith({
+      pathname: '/onboarding/[step]',
+      params: { step: 'welcome' },
+    });
+    expect(answer).not.toHaveBeenCalled();
+  });
+
+  it('has no close on the welcome screen, while the plan is built or once it is shown', async () => {
+    for (const step of ['welcome', 'building', 'plan', 'summary'] as const) {
+      const { result } = await renderStep(step);
+      expect(result.current.bar.onClose).toBeUndefined();
+    }
+  });
+
+  it('gives the top bar the progress and the way back', async () => {
+    const { result } = await renderStep('height', { goal: 'lose_fat' });
+    expect(result.current.bar).toMatchObject({
+      progress: result.current.progress,
+      onBack: result.current.back,
     });
   });
 
