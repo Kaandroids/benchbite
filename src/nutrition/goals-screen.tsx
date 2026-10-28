@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -7,7 +7,8 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { FormError } from '@/components/ui/form-error';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { type IconName } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -72,9 +73,14 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
   const result = readTargetsForm(form);
 
   const choose = (next: Mode) => {
+    // One switch at a time, so that a quick Save cannot reach the server before it.
+    if (useCalculated.isPending) {
+      return;
+    }
     setMode(next);
     if (next === 'calculated' && own?.inUse) {
-      useCalculated.mutate();
+      // Back to one's own when the switch fails, as they are still the ones in use.
+      useCalculated.mutate(undefined, { onError: () => setMode('own') });
     }
   };
   const save = () => {
@@ -95,7 +101,7 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
               <Button
                 label={t('nutrition.goals.save')}
                 loading={setOwn.isPending}
-                disabled={result.kind !== 'valid'}
+                disabled={result.kind !== 'valid' || useCalculated.isPending}
                 onPress={save}
               />
             </View>
@@ -113,7 +119,7 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
         />
         {mode === 'calculated' ? (
           <>
-            <TargetsCard targets={calculated} />
+            <ReadTargets targets={calculated} />
             {basis ? <BasisList basis={basis} /> : null}
             <Text variant="caption" color="textMuted">
               {t('nutrition.goals.note')}
@@ -122,7 +128,7 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
           </>
         ) : (
           <>
-            <TargetsCard form={form} onChange={(change) => setForm({ ...form, ...change })} />
+            <EditTargets form={form} onChange={(change) => setForm({ ...form, ...change })} />
             {result.kind === 'tooMuchMacros' ? (
               <FormError>
                 {t('nutrition.goals.tooMuch', {
@@ -147,102 +153,105 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
   );
 }
 
-const FIELDS = [
-  { key: 'protein', form: 'protein' },
-  { key: 'carbs', form: 'carbs' },
-  { key: 'fat', form: 'fat' },
-] as const;
-
-/** The calories and macros, to read, or with `form` to type in. */
-function TargetsCard(
-  props:
-    | { targets: NutritionTargets }
-    | { form: TargetsForm; onChange: (change: Partial<TargetsForm>) => void },
-) {
+/** The calories, then each macro with its dot: one row frame, with what it holds on the right. */
+function TargetRows({ value }: { value: (field: keyof TargetsForm, first: boolean) => ReactNode }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const { format } = useNumberFormat();
-
-  const value = (field: keyof TargetsForm, unit: string, large = false) => {
-    // An input's font without its line height, which iOS draws above the middle of the box.
-    const font = large ? typography.headline : typography.label;
-    if ('targets' in props) {
-      const targets = props.targets;
-      const number =
-        field === 'calories'
-          ? targets.calories
-          : targets[MACROS.find(({ key }) => key === field)!.grams];
-      return (
-        <Text
-          variant={large ? 'headline' : 'label'}
-          color={large ? 'primaryText' : 'text'}
-          style={styles.number}
-        >
-          {format(number)}{' '}
-          <Text variant="bodyStrong" color="textMuted">
-            {unit}
-          </Text>
-        </Text>
-      );
-    }
-    return (
-      <View style={[styles.value, { gap: spacing.xs }]}>
-        <TextInput
-          accessibilityLabel={
-            field === 'calories' ? t('nutrition.goals.calories') : t(`nutrition.macros.${field}`)
-          }
-          value={props.form[field]}
-          onChangeText={(text) => props.onChange({ [field]: text })}
-          keyboardType="number-pad"
-          selectTextOnFocus
-          maxLength={4}
-          style={[
-            styles.number,
-            styles.input,
-            {
-              fontFamily: font.fontFamily,
-              fontSize: font.fontSize,
-              color: large ? colors.primaryText : colors.text,
-              borderBottomColor: colors.border,
-              minWidth: large ? 88 : 56,
-            },
-          ]}
-        />
-        <Text variant="bodyStrong" color="textMuted">
-          {unit}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <Card list>
       <View style={[styles.row, { paddingVertical: spacing.md }]}>
         <Text variant="label" style={styles.name}>
           {t('nutrition.goals.calories')}
         </Text>
-        {value('calories', 'kcal', true)}
+        {value('calories', true)}
       </View>
-      {FIELDS.map(({ key, form }) => (
+      {MACROS.map(({ key, color }) => (
         <View
           key={key}
           style={[styles.row, { paddingVertical: spacing.md }, listDivider(false, colors.border)]}
         >
           <View style={[styles.name, styles.row, { gap: spacing.sm }]}>
-            <MacroDot color={MACROS.find((macro) => macro.key === key)!.color} />
+            <MacroDot color={color} />
             <Text variant="label">{t(`nutrition.macros.${key}`)}</Text>
           </View>
-          {value(form, 'g')}
+          {value(key, false)}
         </View>
       ))}
     </Card>
   );
 }
 
+/** The goals to read. */
+function ReadTargets({ targets }: { targets: NutritionTargets }) {
+  const { format } = useNumberFormat();
+  const grams = { protein: targets.proteinG, carbs: targets.carbsG, fat: targets.fatG };
+  return (
+    <TargetRows
+      value={(field, large) => (
+        <Text variant={large ? 'headline' : 'label'} color={large ? 'primaryText' : 'text'}>
+          {format(field === 'calories' ? targets.calories : grams[field])}{' '}
+          <Text variant="bodyStrong" color="textMuted">
+            {large ? 'kcal' : 'g'}
+          </Text>
+        </Text>
+      )}
+    />
+  );
+}
+
+/** The goals to type in. */
+function EditTargets({
+  form,
+  onChange,
+}: {
+  form: TargetsForm;
+  onChange: (change: Partial<TargetsForm>) => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  return (
+    <TargetRows
+      value={(field, large) => {
+        // An input's font without its line height, which iOS draws above the middle of the box.
+        const font = large ? typography.headline : typography.label;
+        return (
+          <View style={[styles.value, { gap: spacing.xs }]}>
+            <TextInput
+              accessibilityLabel={
+                field === 'calories'
+                  ? t('nutrition.goals.calories')
+                  : t(`nutrition.macros.${field}`)
+              }
+              value={form[field]}
+              onChangeText={(text) => onChange({ [field]: text })}
+              keyboardType="number-pad"
+              selectTextOnFocus
+              maxLength={4}
+              style={[
+                styles.input,
+                {
+                  fontFamily: font.fontFamily,
+                  fontSize: font.fontSize,
+                  color: large ? colors.primaryText : colors.text,
+                  borderBottomColor: colors.border,
+                  minWidth: large ? 88 : 56,
+                },
+              ]}
+            />
+            <Text variant="bodyStrong" color="textMuted">
+              {large ? 'kcal' : 'g'}
+            </Text>
+          </View>
+        );
+      }}
+    />
+  );
+}
+
 /** What the calculated goals are worked out from, as a list. */
 function BasisList({ basis }: { basis: TargetBasis }) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const monthDay = useMonthDayFormat();
   const latest = useLatestWeight();
@@ -259,18 +268,24 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     },
   ];
   if (current !== null) {
+    // At or past the target, the targets keep the weight, as calculate_nutrition_targets() does.
+    const target = basis.targetWeightKg;
+    const reached =
+      target !== null &&
+      ((basis.goal === 'lose_fat' && current <= target) ||
+        (basis.goal === 'build_muscle' && current >= target));
     rows.push(
-      basis.targetWeightKg !== null
+      target !== null && !reached
         ? {
             icon: 'scale',
             label: t('nutrition.goals.weight'),
             value: t('nutrition.goals.weightChange', {
               from: weight(current),
-              to: weight(basis.targetWeightKg),
+              to: weight(target),
               unit,
             }),
             detail: t('nutrition.goals.toGo', {
-              difference: weight(Math.abs(current - basis.targetWeightKg)),
+              difference: weight(Math.abs(current - target)),
               unit,
             }),
           }
@@ -278,10 +293,10 @@ function BasisList({ basis }: { basis: TargetBasis }) {
             icon: 'scale',
             label: t('nutrition.goals.weight'),
             value: t('nutrition.goals.weightNow', { weight: weight(current), unit }),
-            detail: t('nutrition.goals.keeping'),
+            detail: reached ? t('nutrition.goals.reached') : t('nutrition.goals.keeping'),
           },
     );
-    if (basis.targetWeightKg !== null && basis.weeklyPaceKg !== null) {
+    if (target !== null && !reached && basis.weeklyPaceKg !== null) {
       rows.push({
         icon: 'speed',
         label: t('nutrition.goals.pace'),
@@ -290,9 +305,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
           unit,
         }),
         detail: t('nutrition.goals.by', {
-          date: monthDay(
-            projectedDate(current, basis.targetWeightKg, basis.weeklyPaceKg, new Date()),
-          ),
+          date: monthDay(projectedDate(current, target, basis.weeklyPaceKg, new Date())),
         }),
       });
     }
@@ -321,14 +334,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
               listDivider(index === 0, colors.border),
             ]}
           >
-            <View
-              style={[
-                styles.tile,
-                { borderRadius: radii.md, backgroundColor: colors.iconBackground },
-              ]}
-            >
-              <Icon name={row.icon} size={20} color="primary" />
-            </View>
+            <IconTile name={row.icon} size={40} />
             <View style={styles.name}>
               <Text variant="label">{row.value}</Text>
               <Text variant="caption" color="textMuted">
@@ -357,17 +363,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
   },
-  number: {
-    textAlign: 'right',
-  },
   input: {
+    textAlign: 'right',
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: 0,
-  },
-  tile: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

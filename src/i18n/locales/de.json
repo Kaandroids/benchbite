@@ -487,7 +487,8 @@
       "tooMuch": "Eiweiß, Kohlenhydrate und Fett ergeben {{macros}} kcal, mehr als die {{calories}} kcal des Ziels. Senke ein Makro oder erhöhe die Kalorien.",
       "limits": "Kalorien liegen zwischen 800 und 6.000 kcal; Eiweiß bis 500 g, Kohlenhydrate bis 1.000 g und Fett bis 400 g, in ganzen Zahlen.",
       "save": "Ziele speichern",
-      "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut."
+      "saveError": "Die Ziele konnten nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "reached": "Ziel erreicht"
     }
   },
   "workout": {

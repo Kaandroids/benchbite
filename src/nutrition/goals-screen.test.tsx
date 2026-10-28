@@ -33,6 +33,8 @@ const useCalculated = jest.fn();
 beforeEach(() => {
   jest.useFakeTimers({ now: new Date(2026, 9, 28, 12), doNotFake: ['nextTick'] });
   jest.clearAllMocks();
+  // A test below makes the switch fail; the others start from a plain one.
+  useCalculated.mockReset();
   jest
     .mocked(useCalculatedTargets)
     .mockReturnValue(loaded({ calories: 1940, proteinG: 135, carbsG: 229, fatG: 54 }));
@@ -95,5 +97,44 @@ describe('GoalsScreen', () => {
     await fireEvent.press(screen.getByRole('radio', { name: 'Calculated' }));
     expect(useCalculated).toHaveBeenCalled();
     expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it('says the target is reached, without a pace, once the weight is at or past it', async () => {
+    jest
+      .mocked(useLatestWeight)
+      .mockReturnValue(loaded({ weightKg: 74.6, measuredOn: '2026-10-28' }));
+    await render(<GoalsScreen />);
+    expect(screen.getByLabelText('Weight: 74.6 kg, Target reached')).toBeTruthy();
+    expect(screen.queryByLabelText(/^Pace/)).toBeNull();
+    expect(screen.queryByText(/to go/)).toBeNull();
+  });
+
+  it('keeps Save off while the switch to Calculated is saving', async () => {
+    jest
+      .mocked(useOwnTargets)
+      .mockReturnValue(
+        loaded({ targets: { calories: 2200, proteinG: 160, carbsG: 240, fatG: 65 }, inUse: true }),
+      );
+    jest
+      .mocked(useUseCalculatedTargets)
+      .mockReturnValue({ mutate: useCalculated, isPending: true } as never);
+    await render(<GoalsScreen />);
+    expect(screen.getByRole('button', { name: 'Save goals' })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Calculated' }));
+    expect(useCalculated).not.toHaveBeenCalled();
+  });
+
+  it('goes back to My own when the switch to Calculated fails', async () => {
+    jest
+      .mocked(useOwnTargets)
+      .mockReturnValue(
+        loaded({ targets: { calories: 2200, proteinG: 160, carbsG: 240, fatG: 65 }, inUse: true }),
+      );
+    useCalculated.mockImplementation((_: unknown, { onError }: { onError: () => void }) =>
+      onError(),
+    );
+    await render(<GoalsScreen />);
+    await fireEvent.press(screen.getByRole('radio', { name: 'Calculated' }));
+    expect(screen.getByRole('radio', { name: 'My own' })).toBeChecked();
   });
 });
