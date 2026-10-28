@@ -27,9 +27,10 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 - **The device says which day is today:** the app calls `keep_planned_days(today)` before every
   change, as days follow the device (ADR 0034). It refuses a day more than one from the server's.
   A trigger on `workouts` (insert, delete, a change of weekdays or active) keeps the days through
-  the day before the server's yesterday in any case, so no change can reach a past day whatever
-  path it takes, while a device a day behind the server still changes its today. A user being
-  deleted keeps nothing.
+  the last day past on every device, the day before the server's yesterday, in any case, so no
+  change can reach a past day whatever path it takes, while a device a day behind the server
+  still changes its today. A user being deleted keeps nothing. Every function that takes the
+  device's today checks it the same way (`assert_device_today()`), the day targets too.
 - **Kept days are never written again,** and only the database writes them: clients read their
   own rows, and the functions run with their owner's rights for the caller only. Calls for one
   user wait for each other, and the last kept day only moves forward.
@@ -40,16 +41,16 @@ Days already keep their nutrition targets in the same way (ADR 0040).
   both take the plan from `plan_by_weekdays()`, so a day reads the same before and after it is
   kept.
 - **The plan starts on the device's day:** the app sends its today with the onboarding's answers,
-  and finishing the onboarding records it as the day the plan started, so that neither the days
+  and `complete_onboarding()` records it as the day the plan started, so that neither the days
   before it nor today are lost to the server's date.
-- **Moves stay with the days that keep them:** a move wholly within kept days stays, with the plan
-  it was made for. When a workout no longer fits, as when its weekdays change or it is archived or
-  deleted, a move from a kept day into a later one becomes a skip of the kept day, which frees the
-  target and leaves the kept day as it went; moves from later days go, as before. A deleted
-  workout's moves on kept days stay without a workout, as its kept days do.
-- **Days before:** the migration keeps the days from the end of each user's onboarding through the
-  day before the server's yesterday with the plan as it is when it runs, the closest there is to
-  the one they had.
+- **Moves stay with the days that keep them:** the same trigger settles a workout's moves when its
+  weekdays change or it is archived or deleted. A move into a kept day stays, with the plan it was
+  made for. Of the moves into later days, those that no longer fit go, as before, unless they come
+  from a kept day: that one becomes a skip of it, which frees the target and leaves the kept day as
+  it went. A deleted workout's moves on kept days stay without a workout, as its kept days do.
+- **Days before:** the migration keeps the days from the end of each user's onboarding, or a guest's
+  first workout, through the last day past on every device with the plan as it is when it runs,
+  the closest there is to the one they had.
 
 ## Alternatives considered
 
