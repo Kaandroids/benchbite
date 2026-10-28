@@ -179,6 +179,43 @@ describe('useRecalculateTargets', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
+  it('reloads the targets when today cannot follow, as the answers are saved', async () => {
+    rpc.mockImplementation(((name: string) =>
+      Promise.resolve({
+        data: null,
+        error: name === 'refresh_day_nutrition_targets' ? { code: '22023' } : null,
+      })) as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useRecalculateTargets(), { queryClient });
+    await act(() =>
+      result.current.mutate({
+        goal: 'lose_fat',
+        targetWeightKg: 75,
+        weeklyPaceKg: 0.5,
+        activity: 'light',
+      }),
+    );
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
+  });
+
+  it('reloads own targets too when today cannot follow them', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
+    jest
+      .mocked(supabase.from)
+      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useSetOwnTargets(), { queryClient });
+    await act(() =>
+      result.current.mutate({ calories: 3100, proteinG: 150, carbsG: 425, fatG: 80 }),
+    );
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
+  });
+
   it('keeps today as it was when the answers are refused', async () => {
     rpc.mockResolvedValue({ data: null, error: { code: 'BB031' } } as never);
     const { result } = await renderHook(() => useRecalculateTargets());

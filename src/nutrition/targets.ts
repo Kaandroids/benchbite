@@ -148,7 +148,8 @@ export function useSetOwnTargets() {
       }
       await keepTargetsFromToday();
     },
-    onSuccess: reload,
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }
 
@@ -170,7 +171,8 @@ export function useUseCalculatedTargets() {
       }
       await keepTargetsFromToday();
     },
-    onSuccess: reload,
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }
 
@@ -241,6 +243,7 @@ export function useRecalculateTargets() {
       }
       await keepTargetsFromToday();
     },
-    onSuccess: reload,
+    // Also after a failure, as the first write may have been saved.
+    onSettled: reload,
   });
 }
