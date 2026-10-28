@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@/test/render';
 
 import {
   mealsOf,
+  scaled,
   suggestedCalories,
   totalOf,
   useDayEntries,
@@ -28,6 +29,17 @@ describe('totalOf', () => {
       proteinG: 20,
       carbsG: 40,
       fatG: 10,
+    });
+  });
+});
+
+describe('scaled', () => {
+  it('multiplies every value', () => {
+    expect(scaled({ calories: 400, proteinG: 20, carbsG: 40, fatG: 8 }, 0.25)).toEqual({
+      calories: 100,
+      proteinG: 5,
+      carbsG: 10,
+      fatG: 2,
     });
   });
 });
@@ -85,6 +97,7 @@ describe('useDayEntries', () => {
     meal: 'breakfast',
     food_id: 'C133000',
     custom_food_id: null,
+    recipe_id: null,
     grams: 50,
     portion_unit: 'serving',
     portion_count: 1,
@@ -140,6 +153,7 @@ describe('useDayEntries', () => {
           ...row,
           food_id: null,
           custom_food_id: 12,
+          recipe_id: null,
           foods: null,
           custom_foods: { name: 'Protein yoghurt' },
         },
@@ -176,6 +190,7 @@ describe('usePastMeal', () => {
     meal: 'lunch',
     food_id: `F${id}`,
     custom_food_id: null,
+    recipe_id: null,
     grams: 100,
     portion_unit: null,
     portion_count: null,
@@ -232,6 +247,7 @@ describe('usePastMeal', () => {
         ...entryRow(3, '2026-10-25', 'My pudding'),
         food_id: null,
         custom_food_id: 9,
+        recipe_id: null,
         foods: null,
         custom_foods: { name: 'My pudding', archived_at: '2026-10-26' },
       },

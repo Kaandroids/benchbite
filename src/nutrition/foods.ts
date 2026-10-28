@@ -19,6 +19,14 @@ export function portionOf(unit: PortionUnit | null, grams: number | null): Porti
 /** A number of portions, such as 2 slices. */
 export type PickedPortion = { unit: PortionUnit; count: number };
 
+/** The portions a row's nullable unit and count picked, or null when grams were entered. */
+export function pickedPortionOf(
+  unit: PortionUnit | null,
+  count: number | null,
+): PickedPortion | null {
+  return unit !== null && count !== null ? { unit, count } : null;
+}
+
 /** An amount of a food: grams, and the portions they were picked in, or null for grams. */
 export type Amount = { grams: number; portion: PickedPortion | null };
 
@@ -55,14 +63,26 @@ export function refOf(key: string): FoodRef {
 export function refOfRow(row: {
   food_id: string | null;
   custom_food_id: number | null;
-  recipe_id?: number | null;
+  recipe_id: number | null;
 }): FoodRef {
-  if (row.recipe_id !== undefined && row.recipe_id !== null) {
+  if (row.recipe_id !== null) {
     return { kind: 'recipe', id: row.recipe_id };
   }
   return row.custom_food_id !== null
     ? { kind: 'custom', id: row.custom_food_id }
     : { kind: 'library', id: row.food_id ?? '' };
+}
+
+/** The column of entries and favourites that names a food of its kind. */
+export function columnOf(food: FoodRef): 'food_id' | 'custom_food_id' | 'recipe_id' {
+  switch (food.kind) {
+    case 'library':
+      return 'food_id';
+    case 'custom':
+      return 'custom_food_id';
+    case 'recipe':
+      return 'recipe_id';
+  }
 }
 
 /** A food as the columns of entries and favourites name it: exactly one of the three is set. */
@@ -219,7 +239,7 @@ async function recipeFood(id: number): Promise<Food | null> {
       .maybeSingle(),
     supabase
       .from('recipe_values')
-      .select('grams, kcal, protein_g, carbs_g, fat_g')
+      .select('kcal, protein_g, carbs_g, fat_g, serving_grams')
       .eq('recipe_id', id)
       .maybeSingle(),
   ]);
@@ -236,11 +256,7 @@ async function recipeFood(id: number): Promise<Food | null> {
     ref: { kind: 'recipe', id: recipe.data.id },
     name: recipe.data.name,
     per100g: totalsOf(values.data),
-    portions: [
-      {
-        unit: recipe.data.serving_unit,
-        grams: Math.round(((values.data.grams ?? 0) / recipe.data.servings) * 10) / 10,
-      },
-    ],
+    // The view works out a serving, as search and the lists do.
+    portions: [{ unit: recipe.data.serving_unit, grams: values.data.serving_grams ?? 0 }],
   };
 }

@@ -7,7 +7,7 @@ import type { Database } from '@/lib/database.types';
 import { addDays, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
-import { nameOf, refOfRow, type Amount, type FoodRef } from './foods';
+import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './foods';
 
 import type { NutritionTargets } from './targets';
 
@@ -59,6 +59,16 @@ function add(a: Totals, b: Totals): Totals {
 /** What the entries add up to. */
 export function totalOf(entries: Totals[]): Totals {
   return entries.reduce(add, NOTHING);
+}
+
+/** Totals multiplied by a factor, such as a recipe's shared out by its servings. */
+export function scaled(totals: Totals, factor: number): Totals {
+  return {
+    calories: totals.calories * factor,
+    proteinG: totals.proteinG * factor,
+    carbsG: totals.carbsG * factor,
+    fatG: totals.fatG * factor,
+  };
 }
 
 export type MealSummary = (typeof MEALS)[number] & { items: number; totals: Totals };
@@ -132,10 +142,7 @@ function loggedEntryOf(row: EntryRow, language: string): LoggedEntry {
       row.custom_foods?.name ??
       nameOf(row.foods?.food_names ?? [], language, row.food_id ?? ''),
     grams: row.grams,
-    portion:
-      row.portion_unit !== null && row.portion_count !== null
-        ? { unit: row.portion_unit, count: row.portion_count }
-        : null,
+    portion: pickedPortionOf(row.portion_unit, row.portion_count),
     per100g: {
       calories: row.kcal_per_100g,
       proteinG: row.protein_per_100g,
