@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(33);
+select plan(35);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -72,6 +72,15 @@ select results_eq(
      where recipe_id is not null $$,
   $$ values ('Porridge', 200.0) $$,
   'Search finds a recipe by its name, with a serving'
+);
+select is_empty(
+  $$ select * from public.search_foods('porridge', 'en', false) where recipe_id is not null $$,
+  'and leaves recipes out when asked, as for a recipe''s ingredients'
+);
+select results_eq(
+  $$ select recipe_id is not null, name, portion_grams from public.list_recipes() $$,
+  $$ values (true, 'Porridge', 200.0) $$,
+  'The user''s recipes are listed with a serving'
 );
 
 insert into public.favourite_foods (recipe_id) select id from ids where key = 'porridge';

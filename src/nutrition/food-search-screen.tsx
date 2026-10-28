@@ -2,22 +2,17 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
-import { Text } from '@/components/ui/text';
-import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
 import {
-  amountOf,
-  DEFAULT_GRAMS,
-  MIN_QUERY_LENGTH,
+  quickAmountOf,
   useFoodSearch,
   useSettledQuery,
   refKey,
@@ -25,24 +20,17 @@ import {
   type FoodResult,
 } from './foods';
 import { useAddEntry } from './entries';
-import { FoodRow } from './food-row';
+import { FoodRow, useRowLabels } from './food-row';
 import type { Meal } from './meals';
-import { usePortionLabel } from './portion-label';
 import { useFavouriteKeys } from './quick-foods';
 import { QuickFoods, type QuickFoodRow } from './quick-foods-view';
+import { SearchResults } from './search-results';
 
 type FoodSearchScreenProps = {
   meal: Meal;
   /** The day the food is added to, YYYY-MM-DD. */
   day: string;
 };
-
-/** What + on a result adds: one default portion, or `DEFAULT_GRAMS` of a food without one. */
-function quickAmountOf(food: FoodResult): Amount {
-  return food.portion
-    ? { grams: food.portion.grams, portion: { unit: food.portion.unit, count: 1 } }
-    : { grams: DEFAULT_GRAMS, portion: null };
-}
 
 /**
  * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
@@ -52,9 +40,8 @@ function quickAmountOf(food: FoodResult): Amount {
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
-  const { format } = useNumberFormat();
-  const portionLabel = usePortionLabel();
+  const { spacing } = useTheme();
+  const rowLabels = useRowLabels();
   const [query, setQuery] = useState('');
   const typed = query.trim();
   const term = useSettledQuery(typed);
@@ -86,14 +73,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
 
   const row = ({ food, index, amount = quickAmountOf(food), times }: QuickFoodRow) => {
     const key = refKey(food.ref);
-    const portion = amount.portion
-      ? portionLabel(amount.portion.unit, amount.portion.count)
-      : t('nutrition.amount.inGrams', { grams: format(amount.grams) });
-    const detail = t(amount.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
-      portion,
-      grams: format(amount.grams),
-      calories: format(Math.round(amountOf(food.per100g, amount.grams).calories)),
-    });
+    const { portion, detail } = rowLabels(food, amount);
     return (
       <FoodRow
         key={key}
@@ -116,50 +96,18 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
     );
   };
 
-  // The results belong to what is typed only once its search has finished; until then the last
-  // ones stay, and an empty list is no answer yet.
-  const current = term === typed && !search.isPlaceholderData && !search.isFetching;
-  let body;
-  if (typed.length === 0) {
-    body = <QuickFoods meal={meal} day={day} renderRow={row} />;
-  } else if (typed.length < MIN_QUERY_LENGTH) {
-    body = (
-      <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
-        {t('nutrition.search.hint')}
-      </Text>
-    );
-  } else if (search.isError) {
-    body = (
-      <View style={{ padding: spacing.xl }}>
-        <Note tone="danger">{t('nutrition.search.error')}</Note>
-      </View>
-    );
-  } else if (search.data === undefined || (search.data.length === 0 && !current)) {
-    body = (
-      <ActivityIndicator
-        color={colors.primary}
-        accessibilityLabel={t('common.loading')}
-        style={{ padding: spacing.xl }}
+  const body =
+    typed.length === 0 ? (
+      <QuickFoods meal={meal} day={day} renderRow={row} />
+    ) : (
+      <SearchResults
+        typed={typed}
+        term={term}
+        search={search}
+        hint={t('nutrition.search.hint')}
+        renderRow={(food, index) => row({ food, index })}
       />
     );
-  } else if (search.data.length === 0) {
-    body = (
-      <Text variant="body" color="textMuted" style={{ padding: spacing.xl }}>
-        {t('nutrition.search.noResults', { query: term })}
-      </Text>
-    );
-  } else {
-    body = (
-      <FlatList
-        data={search.data}
-        keyExtractor={(item) => refKey(item.ref)}
-        renderItem={({ item, index }) => row({ food: item, index })}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}
-      />
-    );
-  }
-
   return (
     <Screen
       // Back, not close: what was added stays.

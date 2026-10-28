@@ -11,10 +11,19 @@ type Query = Parameters<typeof LoadState>[0]['queries'][number];
  * A screen about one food while it loads, or when it is gone: taken out of the library, or a food
  * of one's own deleted.
  */
-export function FoodLoadState({ gone, queries }: { gone: boolean; queries: Query[] }) {
+export function FoodLoadState({
+  gone,
+  queries,
+  onBack = () => router.back(),
+}: {
+  gone: boolean;
+  queries: Query[];
+  /** What the back arrow does, when the screen shows in a sheet of its own. */
+  onBack?: () => void;
+}) {
   const { t } = useTranslation();
   return (
-    <Screen onBack={() => router.back()}>
+    <Screen onBack={onBack}>
       {gone ? (
         <MessageView
           icon="meal"

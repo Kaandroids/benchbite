@@ -5,10 +5,34 @@ import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
+import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { Star } from './favourite-star';
-import type { FoodResult } from './foods';
+import { amountOf, type Amount, type FoodResult } from './foods';
+import { usePortionLabel } from './portion-label';
+
+/**
+ * What a row says of an amount of a food: the portions, such as "1 bowl", the amount, such as
+ * "1 bowl · 250 g", and a line with the calories too, such as "1 bowl · 250 g · 208 kcal".
+ */
+export function useRowLabels() {
+  const { t } = useTranslation();
+  const { format } = useNumberFormat();
+  const portionLabel = usePortionLabel();
+  return (food: FoodResult, amount: Amount) => {
+    const portion = amount.portion
+      ? portionLabel(amount.portion.unit, amount.portion.count)
+      : t('nutrition.amount.inGrams', { grams: format(amount.grams) });
+    const detail = t(amount.portion ? 'nutrition.search.result' : 'nutrition.search.resultGrams', {
+      portion,
+      grams: format(amount.grams),
+      calories: format(Math.round(amountOf(food.per100g, amount.grams).calories)),
+    });
+    const grams = t('nutrition.amount.inGrams', { grams: format(amount.grams) });
+    return { portion, amount: amount.portion ? `${portion} · ${grams}` : grams, detail };
+  };
+}
 
 type FoodRowProps = {
   food: FoodResult;
@@ -58,6 +82,7 @@ export function FoodRow({
           food.name,
           favourite ? t('nutrition.quick.isFavourite') : null,
           food.ref.kind === 'custom' ? t('nutrition.search.mine') : null,
+          food.ref.kind === 'recipe' ? t('nutrition.recipe.tag') : null,
           detail,
         ]
           .filter(Boolean)
@@ -71,6 +96,7 @@ export function FoodRow({
           </Text>
           {favourite ? <Star filled size={14} /> : null}
           {food.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
+          {food.ref.kind === 'recipe' ? <Tag label={t('nutrition.recipe.tag')} /> : null}
         </View>
         <Text variant="caption" color="textMuted">
           {detail}

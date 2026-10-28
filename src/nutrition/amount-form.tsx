@@ -43,6 +43,8 @@ type AmountFormProps = {
   subtitle: string;
   /** At the end of the top bar, such as Edit. */
   action?: ReactNode;
+  /** What the back arrow does; it goes back a screen unless the form shows in a sheet of its own. */
+  onBack?: () => void;
   per100g: Totals;
   /** The food's portions, the default first; none leaves grams only. */
   portions: Portion[];
@@ -79,6 +81,7 @@ export function AmountForm({
   title,
   subtitle,
   action,
+  onBack = () => router.back(),
   per100g,
   portions,
   initial,
@@ -135,7 +138,7 @@ export function AmountForm({
   return (
     <KeyboardAvoiding>
       <Screen
-        onBack={() => router.back()}
+        onBack={onBack}
         title={title}
         subtitle={subtitle}
         action={action}

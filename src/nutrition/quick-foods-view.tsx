@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -23,6 +24,7 @@ import { refKey, type Amount, type FoodResult } from './foods';
 import { totalOf, usePastMeal, type LoggedEntry, type Meal, type PastMeal } from './meals';
 import { usePortionLabel } from './portion-label';
 import { useFavouriteFoods, useFrequentFoods, useMyFoods } from './quick-foods';
+import { useRecipes } from './recipes';
 
 /** A food in one of the lists, with what + adds and, for a frequent food, how often it was logged. */
 export type QuickFoodRow = {
@@ -40,18 +42,21 @@ type QuickFoodsProps = {
   renderRow: (row: QuickFoodRow) => ReactElement;
 };
 
-type Tab = 'frequent' | 'favourites' | 'mine';
+type Tab = 'frequent' | 'favourites' | 'recipes' | 'mine';
 
 /**
  * What the add screen offers before anything is typed (ADR 0037): the foods logged most at the
- * meal with the meal as it was last eaten, the favourites, and one's own foods.
+ * meal with the meal as it was last eaten, the favourites, the recipes with a way to add one
+ * (ADR 0038), and one's own foods.
  */
 export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const [tab, setTab] = useState<Tab>('frequent');
   const frequent = useFrequentFoods(meal);
   const favourites = useFavouriteFoods();
+  // Loaded only while their tab shows, as the other lists of the screen do not need them.
+  const recipes = useRecipes({ enabled: tab === 'recipes' });
   const mine = useMyFoods();
 
   // Each tab's list, and what it says while empty.
@@ -85,6 +90,15 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
         message: t('nutrition.quick.noFavouritesText'),
       },
     },
+    recipes: {
+      query: recipes,
+      rows: (recipes.data ?? []).map((food) => ({ food })),
+      empty: {
+        icon: 'meal',
+        title: t('nutrition.quick.noRecipes'),
+        message: t('nutrition.quick.noRecipesText'),
+      },
+    },
     mine: {
       query: mine,
       rows: (mine.data ?? []).map((food) => ({ food })),
@@ -97,26 +111,7 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
   };
   const { query, rows, empty } = tabs[tab];
 
-  let emptyList: ReactElement;
-  if (query.isError) {
-    emptyList = <Note tone="danger">{t('nutrition.quick.error')}</Note>;
-  } else if (query.data === undefined) {
-    emptyList = (
-      <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />
-    );
-  } else {
-    emptyList = (
-      <Card style={[styles.empty, { gap: spacing.sm }]}>
-        <IconTile name={empty.icon} />
-        <Text variant="label" align="center">
-          {empty.title}
-        </Text>
-        <Text variant="caption" color="textMuted" align="center">
-          {empty.message}
-        </Text>
-      </Card>
-    );
-  }
+  const emptyList = <EmptyList query={query} {...empty} />;
 
   return (
     <FlatList
@@ -142,6 +137,15 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
             ))}
           </View>
           {tab === 'frequent' ? <PastMealCard meal={meal} day={day} /> : null}
+          {tab === 'recipes' ? (
+            <Button
+              label={t('nutrition.quick.newRecipe')}
+              variant="secondary"
+              onPress={() =>
+                router.push({ pathname: '/nutrition/recipe/new', params: { meal, day } })
+              }
+            />
+          ) : null}
           {tab === 'frequent' && rows.length > 0 ? (
             <Text variant="captionStrong" color="textMuted">
               {t(`nutrition.quick.often.${meal}`)}
@@ -163,6 +167,42 @@ export function QuickFoods({ meal, day, renderRow }: QuickFoodsProps) {
         ) : undefined
       }
     />
+  );
+}
+
+/**
+ * What a list of foods shows while it has none: that it failed to load, a spinner, or what it is
+ * for and how to fill it.
+ */
+export function EmptyList({
+  query,
+  icon,
+  title,
+  message,
+}: {
+  query: { data?: unknown; isError: boolean };
+  icon: IconName;
+  title: string;
+  message: string;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  if (query.isError) {
+    return <Note tone="danger">{t('nutrition.quick.error')}</Note>;
+  }
+  if (query.data === undefined) {
+    return <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />;
+  }
+  return (
+    <Card style={[styles.empty, { gap: spacing.sm }]}>
+      <IconTile name={icon} />
+      <Text variant="label" align="center">
+        {title}
+      </Text>
+      <Text variant="caption" color="textMuted" align="center">
+        {message}
+      </Text>
+    </Card>
   );
 }
 

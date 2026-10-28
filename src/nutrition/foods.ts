@@ -123,6 +123,13 @@ export function amountOf(per100g: Totals, grams: number): Totals {
   };
 }
 
+/** What + on a food adds: one default portion, or `DEFAULT_GRAMS` of a food without one. */
+export function quickAmountOf(food: FoodResult): Amount {
+  return food.portion
+    ? { grams: food.portion.grams, portion: { unit: food.portion.unit, count: 1 } }
+    : { grams: DEFAULT_GRAMS, portion: null };
+}
+
 /** A typed query once typing has paused for `SEARCH_DELAY_MS`, so a search is not sent per key. */
 export function useSettledQuery(value: string): string {
   const [settled, setSettled] = useState(value);
@@ -134,20 +141,21 @@ export function useSettledQuery(value: string): string {
 }
 
 /**
- * Searches the food library by name in the app language and in English, and the user's own foods
- * (ADR 0035, 0036). The last results stay while the next ones load. Nothing is searched below
- * `MIN_QUERY_LENGTH`.
+ * Searches the food library by name in the app language and in English, the user's own foods and,
+ * unless `recipes` is false, their recipes (ADR 0035, 0036, 0038). The last results stay while the
+ * next ones load. Nothing is searched below `MIN_QUERY_LENGTH`.
  */
-export function useFoodSearch(term: string) {
+export function useFoodSearch(term: string, { recipes = true }: { recipes?: boolean } = {}) {
   const { i18n } = useTranslation();
   return useQuery({
-    queryKey: ['food-search', i18n.language, term],
+    queryKey: ['food-search', i18n.language, term, recipes],
     enabled: term.length >= MIN_QUERY_LENGTH,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<FoodResult[]> => {
       const { data, error } = await supabase.rpc('search_foods', {
         query: term,
         language: i18n.language,
+        recipes,
       });
       if (error) {
         throw error;
