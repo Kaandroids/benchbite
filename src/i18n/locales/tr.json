@@ -207,7 +207,6 @@
     },
     "items_one": "{{count}} öğe",
     "items_other": "{{count}} öğe",
-    "mealTotals": "{{calories}} kcal · P {{protein}} · K {{carbs}} · Y {{fat}}",
     "mealTotalsLabel": "{{calories}} kcal, {{protein}} g protein, {{carbs}} g karbonhidrat, {{fat}} g yağ",
     "suggested": "Önerilen {{calories}} kcal",
     "nothingLogged": "Henüz bir şey eklenmedi",
@@ -462,7 +461,9 @@
       "inIt": "İçinde · {{portion}} çıkar",
       "ingredient": "{{name}} {{amount}}",
       "full": "Bir tarifte en fazla 50 malzeme olabilir."
-    }
+    },
+    "mealCalories": "{{calories}} kcal",
+    "eatenOfGoal": "{{eaten}} / {{goal}} kcal"
   },
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
