@@ -1,9 +1,15 @@
 import { useTranslation } from 'react-i18next';
 
-import { paceLevel, projectedDate, type PaceLevel, type WeightGoal } from '@/body/body';
+import {
+  PACE_RANGES,
+  paceLevel,
+  projectedDate,
+  type PaceLevel,
+  type WeightGoal,
+} from '@/body/body';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
-import { useWeightFormat, type WeightUnit } from '@/i18n/units';
+import { paceIn, useWeightFormat, type WeightUnit } from '@/i18n/units';
 import type { ColorTokens } from '@/theme';
 
 const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
@@ -17,8 +23,6 @@ type PaceNoteProps = {
   weightKg: number;
   targetKg: number;
   paceKg: number;
-  /** Whether the pace is the fastest one offered. */
-  fastest: boolean;
   unit: WeightUnit;
   align?: 'center' | 'left';
 };
@@ -29,7 +33,6 @@ export function PaceNote({
   weightKg,
   targetKg,
   paceKg,
-  fastest,
   unit,
   align = 'center',
 }: PaceNoteProps) {
@@ -37,6 +40,7 @@ export function PaceNote({
   const formatWeight = useWeightFormat();
   const formatDate = useDateFormat('long');
   const level = paceLevel(goal, weightKg, paceKg);
+  const fastest = paceIn(unit, paceKg) >= PACE_RANGES[unit][goal].max;
   return (
     <>
       <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align={align}>

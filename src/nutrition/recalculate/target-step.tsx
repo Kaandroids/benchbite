@@ -8,20 +8,19 @@ import {
   defaultTargetKg,
   isPaceInRange,
   isTooLightToLose,
-  PACE_RANGES,
   startingPace,
   targetWeightProblem,
 } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { IconTile } from '@/components/ui/icon-tile';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
-import { Slider } from '@/components/ui/slider';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { PaceNote } from '@/goals/pace-note';
+import { PaceSlider } from '@/goals/pace-slider';
 import { TargetWeightNote } from '@/goals/target-weight-note';
+import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { paceToKg, useNumberFormat, useWeightFormat, weightIn, weightToKg } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
@@ -38,7 +37,6 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
   const { format } = useNumberFormat();
   const formatWeight = useWeightFormat();
   const goal = changesWeight(answers.goal) ? answers.goal : 'lose_fat';
-  const paceRange = PACE_RANGES[unit][goal];
   const [targetKg, setTargetKg] = useState(
     answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, basis.heightCm),
   );
@@ -56,12 +54,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
           <Button label={t('onboarding.targetWeight.changeGoal')} onPress={() => router.back()} />
         }
       >
-        <View style={[styles.centered, { gap: spacing.lg }]}>
-          <IconTile name="heart" size={88} />
-          <Text color="textMuted" align="center">
-            {t('onboarding.targetWeight.alreadyLow')}
-          </Text>
-        </View>
+        <TooLightToLose />
       </Screen>
     );
   }
@@ -143,28 +136,21 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
               {t('onboarding.pace.perWeek', { value: format(pace), unit })}
             </Text>
           </View>
-          <Slider
-            accessibilityLabel={t('nutrition.recalculate.target.pace')}
+          <PaceSlider
+            goal={goal}
+            unit={unit}
             value={pace}
             onChange={(value) => {
               setPace(value);
               setPaceMoved(true);
             }}
-            min={paceRange.min}
-            max={paceRange.max}
-            step={paceRange.step}
-            formatAccessibilityValue={(value) =>
-              t('onboarding.pace.perWeek', { value: format(value), unit })
-            }
-            minLabel={t('onboarding.pace.slower')}
-            maxLabel={t('onboarding.pace.faster')}
+            accessibilityLabel={t('nutrition.recalculate.target.pace')}
           />
           <PaceNote
             goal={goal}
             weightKg={weightKg}
             targetKg={targetKg}
             paceKg={paceKg}
-            fastest={pace >= paceRange.max}
             unit={unit}
             align="left"
           />
@@ -184,10 +170,5 @@ const styles = StyleSheet.create({
   },
   center: {
     alignItems: 'center',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

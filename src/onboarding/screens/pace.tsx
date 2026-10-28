@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PACE_RANGES, startingPace } from '@/body/body';
+import { startingPace } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
-import { Slider } from '@/components/ui/slider';
 import { Text } from '@/components/ui/text';
 import { PaceNote } from '@/goals/pace-note';
+import { PaceSlider } from '@/goals/pace-slider';
 import { paceToKg, useNumberFormat } from '@/i18n/units';
 
 import { useStep } from '../use-step';
@@ -21,7 +21,6 @@ export function PaceStep() {
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 72;
   const targetKg = answers.targetWeightKg ?? weightKg;
-  const paceRange = PACE_RANGES[unit][goal];
   const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
   const paceKg = paceToKg(unit, pace);
 
@@ -42,7 +41,6 @@ export function PaceStep() {
               weightKg={weightKg}
               targetKg={targetKg}
               paceKg={paceKg}
-              fastest={pace >= paceRange.max}
               unit={unit}
             />
             <Text variant="caption" color="textMuted" align="center">
@@ -57,18 +55,12 @@ export function PaceStep() {
             unit,
           })}
         </Text>
-        <Slider
-          accessibilityLabel={t('onboarding.steps.pace.title')}
+        <PaceSlider
+          goal={goal}
+          unit={unit}
           value={pace}
           onChange={setPace}
-          min={paceRange.min}
-          max={paceRange.max}
-          step={paceRange.step}
-          formatAccessibilityValue={(value) =>
-            t('onboarding.pace.perWeek', { value: format(value), unit })
-          }
-          minLabel={t('onboarding.pace.slower')}
-          maxLabel={t('onboarding.pace.faster')}
+          accessibilityLabel={t('onboarding.steps.pace.title')}
         />
       </CenteredContent>
     </Screen>

@@ -1,15 +1,13 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
 import { defaultTargetKg, isTooLightToLose, targetWeightProblem } from '@/body/body';
 import { Button } from '@/components/ui/button';
-import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TargetWeightNote } from '@/goals/target-weight-note';
-import { useTheme } from '@/theme';
+import { TooLightToLose } from '@/goals/too-light-to-lose';
 import { WeightWheels } from '@/weight/weight-wheels';
 
 import { useStep } from '../use-step';
@@ -22,7 +20,6 @@ import { CenteredContent } from './centered-content';
  */
 export function TargetWeightStep() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { answers, progress, next, back } = useStep('target-weight');
   const goal = answers.goal === 'build_muscle' ? 'build_muscle' : 'lose_fat';
   const weightKg = answers.weightKg ?? 72;
@@ -47,12 +44,7 @@ export function TargetWeightStep() {
           />
         }
       >
-        <View style={[styles.centeredContent, { gap: spacing.lg }]}>
-          <IconTile name="heart" size={88} />
-          <Text color="textMuted" align="center">
-            {t('onboarding.targetWeight.alreadyLow')}
-          </Text>
-        </View>
+        <TooLightToLose />
       </Screen>
     );
   }
@@ -95,11 +87,3 @@ export function TargetWeightStep() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  centeredContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
