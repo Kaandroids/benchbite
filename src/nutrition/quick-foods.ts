@@ -18,7 +18,7 @@ import { totalsOf, type Meal } from './meals';
 export type FrequentFood = FoodResult & { times: number; amount: Amount };
 
 /** The query keys of the lists of the add screen, for anything that changes a food in them. */
-export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-foods']];
+export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-foods'], ['recipes']];
 
 /** The foods the user logged most at a meal in the last 90 days (ADR 0037). */
 export function useFrequentFoods(meal: Meal) {
@@ -94,12 +94,13 @@ export function useSetFavourite() {
         }
         return;
       }
-      // By the one column that names the food: an equal filter on the other, null, matches nothing.
+      // By the one column that names the food: an equal filter on the others, null, matches
+      // nothing.
       const query = supabase.from('favourite_foods').delete();
       const { error } =
-        food.kind === 'custom'
-          ? await query.eq('custom_food_id', food.id)
-          : await query.eq('food_id', food.id);
+        food.kind === 'library'
+          ? await query.eq('food_id', food.id)
+          : await query.eq(food.kind === 'custom' ? 'custom_food_id' : 'recipe_id', food.id);
       if (error) {
         throw error;
       }

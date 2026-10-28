@@ -113,7 +113,7 @@ export const dayEntriesKey = (day: string) => ['meal-entries', day];
 
 /** The columns of an entry that `loggedEntryOf` reads, with whether its food can still be logged. */
 const ENTRY_COLUMNS =
-  'id, day, meal, food_id, custom_food_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(archived_at, food_names(language, name)), custom_foods(name, archived_at)';
+  'id, day, meal, food_id, custom_food_id, recipe_id, grams, portion_unit, portion_count, kcal_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, kcal, protein_g, carbs_g, fat_g, foods(archived_at, food_names(language, name)), custom_foods(name, archived_at), recipes(name, archived_at)';
 
 const entriesQuery = () => supabase.from('meal_entries').select(ENTRY_COLUMNS);
 
@@ -127,9 +127,10 @@ function loggedEntryOf(row: EntryRow, language: string): LoggedEntry {
     day: row.day,
     meal: row.meal,
     food: refOfRow(row),
-    name: row.custom_foods
-      ? row.custom_foods.name
-      : nameOf(row.foods?.food_names ?? [], language, row.food_id ?? ''),
+    name:
+      row.recipes?.name ??
+      row.custom_foods?.name ??
+      nameOf(row.foods?.food_names ?? [], language, row.food_id ?? ''),
     grams: row.grams,
     portion:
       row.portion_unit !== null && row.portion_count !== null
@@ -188,7 +189,11 @@ export function usePastMeal(day: string, meal: Meal) {
         throw error;
       }
       const loggable = data.filter(
-        (row) => (row.foods?.archived_at ?? row.custom_foods?.archived_at ?? null) === null,
+        (row) =>
+          (row.foods?.archived_at ??
+            row.custom_foods?.archived_at ??
+            row.recipes?.archived_at ??
+            null) === null,
       );
       const latest = loggable[0]?.day;
       if (latest === undefined) {

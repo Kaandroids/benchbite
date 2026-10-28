@@ -95,7 +95,7 @@ describe('useSetFavourite', () => {
     await act(() =>
       result.current.mutateAsync({ food: { kind: 'custom', id: 4 }, favourite: true }),
     );
-    expect(insert).toHaveBeenCalledWith({ food_id: null, custom_food_id: 4 });
+    expect(insert).toHaveBeenCalledWith({ food_id: null, custom_food_id: 4, recipe_id: null });
     await act(() =>
       result.current.mutateAsync({ food: { kind: 'library', id: 'C133000' }, favourite: true }),
     );

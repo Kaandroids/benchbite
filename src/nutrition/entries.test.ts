@@ -52,6 +52,7 @@ describe('useAddEntry', () => {
       meal: 'breakfast',
       food_id: 'C133000',
       custom_food_id: null,
+      recipe_id: null,
       grams: 100,
       portion_unit: 'serving',
       portion_count: 2,
