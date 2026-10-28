@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -88,6 +88,11 @@ select results_eq(
   $$ values (14, 0, 'Push') $$,
   'Deleting the workout keeps its name on the days it was planned on'
 );
+select results_eq(
+  $$ select workout_id, from_on - current_date, to_on from public.workout_moves $$,
+  $$ values (null::bigint, -1, null::date) $$,
+  'and keeps the skip of a kept day, so that the day does not turn missed'
+);
 
 -- ----------------------------------------------------------------------------------------------
 -- Changes the app did not announce
@@ -133,18 +138,23 @@ set local session_replication_role = origin;
 
 update public.workouts set weekdays = '{1,2,4}' where id = 904;
 select results_eq(
-  $$ select extract(isodow from from_on)::integer from public.workout_moves where workout_id = 904 $$,
-  $$ values (1) $$,
-  'A move into a day that is now the workout''s own goes, while one within kept days stays'
+  $$ select extract(isodow from from_on)::integer, extract(isodow from to_on)::integer
+     from public.workout_moves where workout_id = 904 order by from_on $$,
+  $$ values (1, 2), (2, null) $$,
+  'A move from a kept day into one that is now the workout''s own becomes a skip, so the kept day stays as it went; one within kept days stays'
 );
+update public.workout_moves set to_on = monday + 4
+from (select date_trunc('week', current_date + 7)::date as monday) w
+where workout_id = 904 and to_on is null;
 insert into public.workout_moves (user_id, workout_id, from_on, to_on)
-select '00000000-0000-0000-0000-00000000000d', 904, monday + 1, monday + 4
+select '00000000-0000-0000-0000-00000000000d', 904, monday + 7, null
 from (select date_trunc('week', current_date + 7)::date as monday) w;
 update public.workouts set active = false where id = 904;
 select results_eq(
-  $$ select extract(isodow from from_on)::integer from public.workout_moves where workout_id = 904 $$,
-  $$ values (1) $$,
-  'as does a move of an archived workout out of the kept days'
+  $$ select extract(isodow from from_on)::integer, extract(isodow from to_on)::integer
+     from public.workout_moves where workout_id = 904 order by from_on $$,
+  $$ values (1, 2), (2, null) $$,
+  'Archiving it turns a move from a kept day into a skip too, and drops those of later days'
 );
 
 -- ----------------------------------------------------------------------------------------------
@@ -157,8 +167,9 @@ insert into public.profiles (user_id, sex, birth_year, height_cm, weight_unit, h
   onboarding_completed_at)
 values ('00000000-0000-0000-0000-00000000000e', 'male', extract(year from current_date) - 30,
   180, 'kg', 'cm', 'moderate', 'beginner', 'gym', '{1,3,5}', 60, now() - interval '5 days');
-insert into public.planned_days_kept (user_id, through)
-values ('00000000-0000-0000-0000-00000000000e', current_date - 4);
+-- Finishing the onboarding started E's plan; it is set to five days ago, as it was then.
+update public.planned_days_kept set through = current_date - 4, started_on = current_date - 5
+where user_id = '00000000-0000-0000-0000-00000000000e';
 insert into public.planned_days (user_id, day, name, type)
 select '00000000-0000-0000-0000-00000000000e', current_date - days, 'Old', 'push'
 from generate_series(4, 5) days;
@@ -178,6 +189,61 @@ select results_eq(
   $$ select name from public.planned_workouts(current_date - 4, current_date - 4, current_date - 4) $$,
   $$ values ('New') $$,
   'From the device''s today on, days follow the plan, whatever the server kept'
+);
+
+select results_eq(
+  $$ select count(distinct day)::integer from public.planned_workouts(current_date - 5, current_date + 1000, current_date) $$,
+  $$ values (367) $$,
+  'A range is read for a year at most'
+);
+
+-- ----------------------------------------------------------------------------------------------
+-- The day the plan starts
+
+reset role;
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000f1', 'f1@example.com'),
+  ('00000000-0000-0000-0000-0000000000f2', 'f2@example.com');
+
+-- Six training days, at most as many as allowed: every day but the server's today, so that the
+-- days around it are training days.
+create function pg_temp.days() returns jsonb language sql as $$
+  select jsonb_agg(d) from generate_series(1, 7) d where d <> extract(isodow from current_date);
+$$;
+
+create function pg_temp.onboard(today date) returns void language sql as $$
+  select public.complete_onboarding(
+    jsonb_build_object(
+      'goal', 'stay_healthy', 'consentedPolicyVersion', '2026-10-21', 'sex', 'female',
+      'birthYear', extract(year from current_date)::integer - 30, 'heightCm', 168, 'weightKg', 70,
+      'activityLevel', 'light', 'experience', 'beginner',
+      'trainingDays', pg_temp.days(), 'setup', 'gym',
+      'sessionMinutes', 45, 'weightUnit', 'kg', 'heightUnit', 'cm', 'today', today
+    ),
+    jsonb_build_object('sessions', jsonb_build_array(jsonb_build_object(
+      'weekdays', pg_temp.days(), 'type', 'full_body',
+      'estimatedMinutes', 30, 'exercises', jsonb_build_array(jsonb_build_object(
+        'exerciseId', 'Plank', 'slot', 'core', 'sets', 2,
+        'target', jsonb_build_object('seconds', 30), 'restSeconds', 45)))))
+  );
+$$;
+
+-- F1's device is a day behind the server, as in an evening west of UTC.
+select pg_temp.sign_in('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.onboard(current_date - 1);
+select results_eq(
+  $$ select day - current_date from public.planned_workouts(current_date - 3, current_date - 1, current_date - 1) $$,
+  $$ values (-1) $$,
+  'The plan starts on the device''s day the onboarding is finished, so a device behind the server keeps its today'
+);
+
+-- F2's device is a day ahead, as in a morning east of UTC.
+select pg_temp.sign_in('00000000-0000-0000-0000-0000000000f2');
+select pg_temp.onboard(current_date + 1);
+select results_eq(
+  $$ select day - current_date from public.planned_workouts(current_date - 3, current_date + 1, current_date + 1) $$,
+  $$ values (1) $$,
+  'and a device ahead has no day before it planned'
 );
 
 -- ----------------------------------------------------------------------------------------------
