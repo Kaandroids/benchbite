@@ -10,6 +10,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import { useTheme } from '@/theme';
 
+import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import type { Totals } from './meals';
 import type { NutritionTargets } from './targets';
@@ -46,7 +47,7 @@ export function DaySummary({ header, totals }: DaySummaryProps) {
 
 function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Totals }) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const { format } = useNumberFormat();
   const left = Math.round(targets.calories - eaten.calories);
   const share = targets.calories > 0 ? clamp(eaten.calories / targets.calories, 0, 1) : 0;
@@ -94,12 +95,33 @@ function DayTotals({ targets, eaten }: { targets: NutritionTargets; eaten: Total
         </View>
       </View>
       <View style={[styles.macros, { gap: spacing.sm }]}>
+        {/* What was eaten against the goal, to read only: the goals change elsewhere. */}
+        <View
+          style={[
+            styles.eaten,
+            {
+              borderRadius: radii.full,
+              backgroundColor: colors.background,
+              paddingHorizontal: spacing.sm,
+            },
+          ]}
+        >
+          <Text variant="captionStrong" color="textMuted">
+            {t('nutrition.eatenOfGoal', {
+              eaten: format(Math.round(eaten.calories)),
+              goal: format(targets.calories),
+            })}
+          </Text>
+        </View>
         {MACROS.map(({ key, grams, color }) => (
           <View key={key} style={{ gap: spacing.xs }}>
             <View style={styles.macroLine}>
-              <Text variant="captionStrong" color="textMuted">
-                {t(`nutrition.macros.${key}`)}
-              </Text>
+              <View style={[styles.macroName, { gap: spacing.xs }]}>
+                <MacroDot color={color} />
+                <Text variant="captionStrong" color="textMuted">
+                  {t(`nutrition.macros.${key}`)}
+                </Text>
+              </View>
               <Text variant="captionStrong">
                 {format(Math.round(eaten[grams]))}{' '}
                 {t('nutrition.gramTarget', { target: format(targets[grams]) })}
@@ -134,6 +156,15 @@ const styles = StyleSheet.create({
   },
   macros: {
     flex: 1,
+  },
+  eaten: {
+    alignSelf: 'flex-end',
+    minHeight: 24,
+    justifyContent: 'center',
+  },
+  macroName: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   macroLine: {
     flexDirection: 'row',
