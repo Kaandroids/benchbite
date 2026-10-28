@@ -18,14 +18,15 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 ## Decision
 
 - **A past day keeps its plan:** `planned_days` holds, for each kept day, the workouts planned on
-  it: the active workouts on its weekday, with their name and type, which stay if the workout is
-  later deleted. `planned_days_kept` holds the last kept day per user. Up to it, a day is planned
+  it: the active workouts on its weekday, with their id, name and type, which stay if the workout
+  is later deleted, as its moves keep its id. `planned_days_kept` holds the last kept day per user. Up to it, a day is planned
   as its rows say, no rows meaning a day without workouts; after it, by the plan as it is.
 - **A change counts from today:** before the plan changes, the days since the last kept one up to
   yesterday are kept with the plan they had. Today and later days follow the changed plan, so
   a workout done today and then taken off today's plan counts as an extra.
-- **The device says which day is today:** the app calls `keep_planned_days(today)` before every
-  change, as days follow the device (ADR 0034). It refuses a day more than one from the server's.
+- **The device says which day is today:** the functions that change the plan take the device's
+  today and keep the days before it in the same transaction as the change: `save_workout`,
+  `set_workout_active` and `delete_workout`, as days follow the device (ADR 0034). It refuses a day more than one from the server's.
   A trigger on `workouts` (insert, delete, a change of weekdays or active) keeps the days through
   the last day past on every device, the day before the server's yesterday, in any case, so no
   change can reach a past day whatever path it takes, while a device a day behind the server
@@ -34,7 +35,8 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 - **Kept days are never written again,** and only the database writes them: clients read their
   own rows, and the functions run with their owner's rights for the caller only. Calls for one
   user wait for each other, and the last kept day only moves forward.
-- **One function reads a day's plan:** `planned_workouts(from_day, to_day, today)` returns each
+- **One function reads a day's plan:** `planned_workouts(from_day, to_day, today)`, the only way
+  clients read it, returns each
   day's workouts for up to a year: kept days as kept, and the device's today and later days by
   the plan. Days before the plan started have none. The week, earlier weeks (#71) and streaks
   (#70) all read it, as `targets_of_day()` decides a day's targets (ADR 0040). Keeping and reading
@@ -42,7 +44,8 @@ Days already keep their nutrition targets in the same way (ADR 0040).
   kept.
 - **The plan starts on the device's day:** the app sends its today with the onboarding's answers,
   and `complete_onboarding()` records it as the day the plan started, so that neither the days
-  before it nor today are lost to the server's date.
+  before it nor today are lost to the server's date. A device clock more than a day off starts it
+  on the server's day instead, so that the onboarding can always be finished.
 - **Moves stay with the days that keep them:** the same trigger settles a workout's moves when its
   weekdays change or it is archived or deleted. A move into a kept day stays, with the plan it was
   made for. Of the moves into later days, those that no longer fit go, as before, unless they come
@@ -67,10 +70,11 @@ Days already keep their nutrition targets in the same way (ADR 0040).
 
 ## Consequences
 
-- Every place that changes the plan (saving, archiving or deleting a workout) calls
-  `keep_planned_days` with the device's today first.
+- Every place in the app that changes the plan (saving, archiving or deleting a workout) calls
+  the function for it with the device's today. Without it, the trigger still keeps the days the
+  server knows to be past.
 - The week schedule takes each day's planned workouts from `planned_workouts()` instead of the
   weekdays.
 - A past day of a deleted workout shows its name but can no longer be moved or started; its moves
-  and skips point at no workout, as the day does.
+  and skips keep its id, as the day does.
 - The app sends `today` with the onboarding's answers.
