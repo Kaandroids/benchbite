@@ -1,4 +1,5 @@
 import {
+  canCloseFrom,
   canGoBackFrom,
   isIncluded,
   isPassing,
@@ -94,6 +95,15 @@ describe('steps', () => {
     expect(previousStep('reminders', {})).toBeNull();
     expect(canGoBackFrom('summary')).toBe(false);
     expect(previousStep('summary', {})).toBeNull();
+  });
+
+  it('can be closed from the questions only', () => {
+    expect(canCloseFrom('welcome')).toBe(false);
+    expect(canCloseFrom('nickname')).toBe(true);
+    expect(canCloseFrom('session-length')).toBe(true);
+    expect(canCloseFrom('building')).toBe(false);
+    expect(canCloseFrom('plan')).toBe(false);
+    expect(canCloseFrom('reminders')).toBe(false);
   });
 
   it('drops answers of steps that left the flow', () => {

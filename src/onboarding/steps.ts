@@ -96,6 +96,14 @@ export function canGoBackFrom(step: Step): boolean {
   return STEPS.indexOf(step) <= STEPS.indexOf('plan');
 }
 
+/**
+ * Whether the onboarding can be left for the welcome screen from the step: from the questions,
+ * not while the plan is built or once it is shown, as it is saved from there.
+ */
+export function canCloseFrom(step: Step): boolean {
+  return step !== 'welcome' && !isPassing(step) && STEPS.indexOf(step) < STEPS.indexOf('plan');
+}
+
 /** The step that going back opens, or null if there is none. */
 export function previousStep(step: Step, answers: OnboardingAnswers): Step | null {
   if (!canGoBackFrom(step)) {
