@@ -93,6 +93,15 @@
     "title": "Bald verfügbar",
     "progress": "Hier findest du bald dein Gewicht und deine Fortschritte."
   },
+  "weight": {
+    "title": "Gewicht",
+    "none": "Noch kein Gewicht eingetragen.",
+    "loggedToday": "Heute eingetragen",
+    "loggedOn": "Eingetragen am {{date}}",
+    "saveError": "Wir konnten dein Gewicht nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
+    "decrease": "Gewicht verringern",
+    "increase": "Gewicht erhöhen"
+  },
   "today": {
     "loading": "Wird geladen",
     "greeting": {
@@ -159,15 +168,6 @@
       "movedTo": "Auf {{day}} verschoben",
       "note": "Eine Verschiebung gilt nur für diese Woche. Nächste Woche sind deine Workouts wieder an ihren Tagen.",
       "error": "Die Verschiebung konnte nicht rückgängig gemacht werden. Prüfe deine Verbindung und versuche es erneut."
-    },
-    "weight": {
-      "title": "Gewicht",
-      "none": "Noch kein Gewicht eingetragen.",
-      "loggedToday": "Heute eingetragen",
-      "loggedOn": "Eingetragen am {{date}}",
-      "saveError": "Wir konnten dein Gewicht nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
-      "decrease": "Gewicht verringern",
-      "increase": "Gewicht erhöhen"
     },
     "error": {
       "title": "Heute konnte nicht geladen werden",

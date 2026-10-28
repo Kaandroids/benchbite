@@ -5,6 +5,7 @@ import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { act, fireEvent, render, screen } from '@/test/render';
+import { SAVE_DELAY_MS } from '@/weight/weight-card';
 import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
 import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
 import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
@@ -12,7 +13,6 @@ import { useWeek, type WeekSession } from '@/workouts/workouts';
 
 import { greetingOf } from './greeting';
 import { TodayScreen } from './today-screen';
-import { SAVE_DELAY_MS } from './weight-card';
 
 jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));

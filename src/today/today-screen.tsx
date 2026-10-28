@@ -17,6 +17,7 @@ import { useDisplayName } from '@/profile/display-name';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
+import { WeightCard } from '@/weight/weight-card';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 import { hasWorkouts, missedWorkouts, moveTargets, originOf } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
@@ -26,7 +27,6 @@ import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PickDay } from './pick-day';
 import { WeekCard } from './week-card';
-import { WeightCard } from './weight-card';
 import { WorkoutCard } from './workout-card';
 
 /** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
