@@ -1,13 +1,13 @@
 import type { ComponentProps } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useTheme, type Theme } from '@/theme';
 
 /** The space between a card's border and its content, unless its style changes it. */
 const cardPadding = (spacing: Theme['spacing']) => spacing.lg;
 
-type CardProps = Pick<ComponentProps<typeof Animated.View>, 'entering' | 'children'> & {
+export type CardProps = Pick<ComponentProps<typeof Animated.View>, 'entering' | 'children'> & {
   /** A list of rows, which space themselves: no padding above and below, and no gap. */
   list?: boolean;
   /** Changes the padding, the gap or the layout, such as a row. */
@@ -36,6 +36,15 @@ export function Card({ entering, children, list = false, style }: CardProps) {
       {children}
     </Animated.View>
   );
+}
+
+/**
+ * How a card on a screen of cards comes in: it falls into place a moment after the one above it.
+ * The screen gives each card its `position`, from 0 at the top, so the cards don't need to know
+ * where they sit.
+ */
+export function cardEntering(position: number) {
+  return FadeInDown.delay(position * 100).duration(400);
 }
 
 /**

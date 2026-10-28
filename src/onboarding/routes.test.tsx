@@ -108,6 +108,15 @@ jest.mock('@/history/exercise-history-screen', () => {
     ),
   };
 });
+// The Progress tab loads the weight; these tests only use its buttons.
+jest.mock('@/weight/weights', () => {
+  const loaded = { isPending: false, isError: false, isFetching: false, refetch: jest.fn() };
+  return {
+    useLatestWeight: () => ({ ...loaded, data: null }),
+    useWeightUnit: () => ({ ...loaded, data: 'kg' }),
+  };
+});
+jest.mock('@/weight/weight-card', () => ({ WeightCard: () => null }));
 jest.mock('@/settings/settings-screen', () => {
   const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SettingsScreen: () => <MockText>Settings screen</MockText> };

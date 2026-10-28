@@ -89,9 +89,14 @@
     "nutrition": "Nutrition",
     "progress": "Progress"
   },
-  "comingSoon": {
-    "title": "Coming soon",
-    "progress": "Your weight and progress will be here."
+  "weight": {
+    "title": "Weight",
+    "none": "No weight logged yet.",
+    "loggedToday": "Logged today",
+    "loggedOn": "Logged on {{date}}",
+    "saveError": "We couldn't save your weight. Check your connection and try again.",
+    "decrease": "Decrease weight",
+    "increase": "Increase weight"
   },
   "today": {
     "loading": "Loading",
@@ -133,19 +138,31 @@
     },
     "missed": {
       "missedOn": "Missed on {{day}}",
-      "hint": "{{session}}. Do it on a free day this week to keep your plan on track.",
+      "count_one": "{{count}} missed workout",
+      "count_other": "{{count}} missed workouts",
+      "catchUp": "Catch up"
+    },
+    "catchUp": {
+      "title": "Catch up",
+      "subtitle": "Pick a free day this week for each missed workout, or skip it.",
+      "missedOn": "Missed {{day}} · {{session}}",
+      "moveLabel": "Move {{session}} to {{day}}",
       "skip": "Skip",
-      "pickDay": "Pick a day",
-      "skipError": "We couldn't skip the workout. Check your connection and try again."
+      "skipHint": "Skips {{session}} this week",
+      "noDays": "No day is left this week to move it to.",
+      "done": "Done"
+    },
+    "move": {
+      "today": "Today",
+      "error": "We couldn't move the workout. Check your connection and try again.",
+      "skipError": "We couldn't skip the workout. Check your connection and try again.",
+      "taken": "That day is no longer free. Pick another one."
     },
     "pickDay": {
       "title": "Move {{day}}'s {{session}}",
       "subtitle": "Pick a day this week.",
-      "today": "Today",
       "rest": "Rest day",
-      "move": "Move to {{day}}",
-      "error": "We couldn't move the workout. Check your connection and try again.",
-      "taken": "That day is no longer free. Pick another one."
+      "move": "Move to {{day}}"
     },
     "dayMenu": {
       "planned_zero": "No workouts planned",
@@ -159,15 +176,6 @@
       "movedTo": "Moved to {{day}}",
       "note": "A move only changes this week. Next week your workouts are back on their days.",
       "error": "We couldn't undo the move. Check your connection and try again."
-    },
-    "weight": {
-      "title": "Weight",
-      "none": "No weight logged yet.",
-      "loggedToday": "Logged today",
-      "loggedOn": "Logged on {{date}}",
-      "saveError": "We couldn't save your weight. Check your connection and try again.",
-      "decrease": "Decrease weight",
-      "increase": "Increase weight"
     },
     "error": {
       "title": "Today couldn't load",

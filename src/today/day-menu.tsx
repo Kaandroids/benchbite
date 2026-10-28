@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useWorkoutName } from '@/workouts/format';
+import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import { useUndoMove } from '@/workouts/moves';
 import {
   canUndo,
@@ -38,6 +38,7 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
   const formatDay = useDayFormat();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
+  const sessionSize = useSessionSize();
   const undoMove = useUndoMove();
   const todayOn = toIsoDate(today);
 
@@ -61,12 +62,7 @@ export function DayMenu({ schedule, day, today, onMove }: DayMenuProps) {
     ...day.workouts.map((workout, index) => {
       const { session, status, movedFrom } = workout;
       const fromOn = originOf(workout, day);
-      let detail = caption(
-        t('workout.session', {
-          count: session.exercises.length,
-          minutes: session.estimatedMinutes,
-        }),
-      );
+      let detail = caption(sessionSize(session));
       let action: ReactNode = null;
       if (status === 'done') {
         detail = caption(t('today.dayMenu.done'));
