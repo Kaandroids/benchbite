@@ -26,14 +26,12 @@ export function Comparison({ from, to }: { from: NutritionTargets; to: Nutrition
           ? `${format(now)} ${unit}`
           : t('nutrition.recalculate.done.change', { from: format(was), to: format(now), unit }),
       node: (
-        <Text variant="label">
-          {was !== now ? <Was value={format(was)} variant="bodyStrong" /> : null}
+        <Text>
+          {was !== now ? <Was value={format(was)} variant="body" /> : null}
           <Text variant={large ? 'headline' : 'label'} color={large ? 'primaryText' : 'text'}>
             {format(now)}{' '}
           </Text>
-          <Text variant="bodyStrong" color="textMuted">
-            {unit}
-          </Text>
+          <Text color="textMuted">{unit}</Text>
         </Text>
       ),
     };
@@ -42,7 +40,7 @@ export function Comparison({ from, to }: { from: NutritionTargets; to: Nutrition
   const rows: { key: string; name: ReactNode; label: string; value: ReturnType<typeof value> }[] = [
     {
       key: 'calories',
-      name: <Text variant="label">{t('nutrition.goals.calories')}</Text>,
+      name: <Text>{t('nutrition.goals.calories')}</Text>,
       label: t('nutrition.goals.calories'),
       value: value(from.calories, to.calories, true),
     },
@@ -51,7 +49,7 @@ export function Comparison({ from, to }: { from: NutritionTargets; to: Nutrition
       name: (
         <View style={[styles.row, { gap: spacing.sm }]}>
           <MacroDot color={color} />
-          <Text variant="label">{t(`nutrition.macros.${key}`)}</Text>
+          <Text>{t(`nutrition.macros.${key}`)}</Text>
         </View>
       ),
       label: t(`nutrition.macros.${key}`),

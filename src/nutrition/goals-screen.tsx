@@ -8,7 +8,6 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { FormError } from '@/components/ui/form-error';
-import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
@@ -19,6 +18,7 @@ import { useNumberFormat, weightIn } from '@/i18n/units';
 import { typography, useTheme } from '@/theme';
 import { useLatestWeight, useWeightUnit } from '@/weight/weights';
 
+import { BASIS_ICONS } from './basis-icons';
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
 import {
@@ -169,7 +169,7 @@ function TargetRows({ value }: { value: (field: keyof TargetsForm, first: boolea
   return (
     <Card list>
       <View style={[styles.row, { paddingVertical: spacing.md }]}>
-        <Text variant="label" style={styles.name}>
+        <Text color="textMuted" style={styles.name}>
           {t('nutrition.goals.calories')}
         </Text>
         {value('calories', true)}
@@ -181,7 +181,7 @@ function TargetRows({ value }: { value: (field: keyof TargetsForm, first: boolea
         >
           <View style={[styles.name, styles.row, { gap: spacing.sm }]}>
             <MacroDot color={color} />
-            <Text variant="label">{t(`nutrition.macros.${key}`)}</Text>
+            <Text>{t(`nutrition.macros.${key}`)}</Text>
           </View>
           {value(key, false)}
         </View>
@@ -199,9 +199,7 @@ function ReadTargets({ targets }: { targets: NutritionTargets }) {
       value={(field, large) => (
         <Text variant={large ? 'headline' : 'label'} color={large ? 'primaryText' : 'text'}>
           {format(field === 'calories' ? targets.calories : grams[field])}{' '}
-          <Text variant="bodyStrong" color="textMuted">
-            {large ? 'kcal' : 'g'}
-          </Text>
+          <Text color="textMuted">{large ? 'kcal' : 'g'}</Text>
         </Text>
       )}
     />
@@ -247,9 +245,7 @@ function EditTargets({
                 },
               ]}
             />
-            <Text variant="bodyStrong" color="textMuted">
-              {large ? 'kcal' : 'g'}
-            </Text>
+            <Text color="textMuted">{large ? 'kcal' : 'g'}</Text>
           </View>
         );
       }}
@@ -268,9 +264,9 @@ function BasisList({ basis }: { basis: TargetBasis }) {
   const current = latest.data?.weightKg ?? null;
   const weight = (kg: number) => format(weightIn(unit, kg));
 
-  const rows: { icon: IconName; label: string; value: string; detail: string }[] = [
+  const rows: { key: keyof typeof BASIS_ICONS; label: string; value: string; detail: string }[] = [
     {
-      icon: 'target',
+      key: 'goal',
       label: t('nutrition.goals.goal'),
       value: t(`goals.goal.${basis.goal}`),
       detail: t(`onboarding.goal.effects.${basis.goal}.calories`),
@@ -286,7 +282,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     rows.push(
       target !== null && !reached
         ? {
-            icon: 'scale',
+            key: 'target',
             label: t('nutrition.goals.weight'),
             value: t('nutrition.goals.weightChange', {
               from: weight(current),
@@ -299,7 +295,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
             }),
           }
         : {
-            icon: 'scale',
+            key: 'target',
             label: t('nutrition.goals.weight'),
             value: t('nutrition.goals.weightNow', { weight: weight(current), unit }),
             detail: reached ? t('nutrition.goals.reached') : t('nutrition.goals.keeping'),
@@ -307,7 +303,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     );
     if (target !== null && !reached && basis.weeklyPaceKg !== null) {
       rows.push({
-        icon: 'speed',
+        key: 'pace',
         label: t('nutrition.goals.pace'),
         value: t('nutrition.goals.perWeek', {
           value: format(weightIn(unit, basis.weeklyPaceKg)),
@@ -320,7 +316,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
     }
   }
   rows.push({
-    icon: 'person',
+    key: 'activity',
     label: t('nutrition.goals.activity'),
     value: t(`goals.activityLevel.${basis.activity}`),
     detail: t(`goals.activityDescriptions.${basis.activity}`),
@@ -334,7 +330,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
       <Card list>
         {rows.map((row, index) => (
           <View
-            key={row.label}
+            key={row.key}
             accessible
             accessibilityLabel={`${row.label}: ${row.value}, ${row.detail}`}
             style={[
@@ -343,14 +339,19 @@ function BasisList({ basis }: { basis: TargetBasis }) {
               listDivider(index === 0, colors.border),
             ]}
           >
-            <IconTile name={row.icon} size={40} />
+            <IconTile
+              name={BASIS_ICONS[row.key].icon}
+              color={BASIS_ICONS[row.key].color}
+              background={BASIS_ICONS[row.key].background}
+              size={40}
+            />
             <View style={styles.name}>
               <Text variant="label">{row.value}</Text>
               <Text variant="caption" color="textMuted">
                 {row.detail}
               </Text>
             </View>
-            <Text variant="captionStrong" color="textMuted">
+            <Text variant="caption" color="textMuted">
               {row.label}
             </Text>
           </View>
