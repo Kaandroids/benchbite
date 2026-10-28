@@ -35,7 +35,8 @@ const positive = (value: string | undefined) => {
 /**
  * The answers from the route parameters, and the saved ones for what is not answered yet. The
  * saved target and pace carry over only to the same goal, and only while they still suit it; a
- * new weight may have passed the target. Parameters the app did not write are ignored.
+ * new weight may have passed the target. Parameters the app did not write, or a target the target
+ * step would refuse, are ignored.
  */
 export function answersFrom(
   params: RecalculateParams,
@@ -49,7 +50,8 @@ export function answersFrom(
     return { goal, targetWeightKg: null, weeklyPaceKg: null, activity };
   }
   const target = positive(params.target);
-  if (target !== null) {
+  // Checked as the target step checks it, so a link cannot skip to saving one it refuses.
+  if (target !== null && targetWeightProblem(goal, weightKg, target, basis.heightCm) === null) {
     return { goal, targetWeightKg: target, weeklyPaceKg: positive(params.pace), activity };
   }
   const keepsSaved =

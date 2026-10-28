@@ -82,6 +82,21 @@ describe('answersFrom', () => {
   });
 });
 
+describe('a target from the parameters', () => {
+  it('is checked as the target step checks it', () => {
+    // Below a healthy weight for 180 cm, on the wrong side, and stored as the current weight.
+    for (const target of ['30', '85', '79.96']) {
+      expect(answersFrom({ goal: 'lose_fat', target, pace: '0.9' }, basis, 80)).toMatchObject({
+        targetWeightKg: 75,
+        weeklyPaceKg: 0.5,
+      });
+    }
+    expect(
+      answersFrom({ goal: 'build_muscle', target: '70', pace: '0.25' }, basis, 80),
+    ).toMatchObject({ targetWeightKg: null, weeklyPaceKg: null });
+  });
+});
+
 describe('paramsOf', () => {
   it('carries the answers to the next step and back', () => {
     const answers = {
