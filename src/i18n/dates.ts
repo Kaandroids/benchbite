@@ -6,7 +6,6 @@ export function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** The ISO weekday of a date, 1 for Monday to 7 for Sunday. */
 /**
  * Today on the device, YYYY-MM-DD. Days follow the device (ADR 0034), so calls that depend on the
  * day send it to the database, which checks it against its own (ADR 0041).
@@ -15,6 +14,7 @@ export function deviceToday(): string {
   return toIsoDate(new Date());
 }
 
+/** The ISO weekday of a date, 1 for Monday to 7 for Sunday. */
 export function isoWeekday(date: Date): number {
   return ((date.getDay() + 6) % 7) + 1;
 }
