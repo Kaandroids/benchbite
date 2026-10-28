@@ -18,7 +18,7 @@ import { useFood, type FoodRef } from './foods';
 import { totalOf, useDayEntries, type Meal } from './meals';
 import { usePortionLabel } from './portion-label';
 import { useRecipe } from './recipes';
-import { useNutritionTargets } from './targets';
+import { useDayTargets } from './targets';
 
 /** What differs by the kind of food: the line under its name, and where it is edited, if at all. */
 const KINDS = {
@@ -47,7 +47,7 @@ export function AmountScreen({ food: ref, meal, day }: AmountScreenProps) {
   const food = useFood(ref);
   const addEntry = useAddEntry();
   const entries = useDayEntries(day);
-  const targets = useNutritionTargets();
+  const targets = useDayTargets(day);
   const queries = [food, entries, targets];
 
   const kind = KINDS[ref.kind];

@@ -9,7 +9,7 @@ import { useFood, type Food } from './foods';
 import { useDayEntries } from './meals';
 import { useFavouriteKeys, useSetFavourite } from './quick-foods';
 import { useRecipe } from './recipes';
-import { useNutritionTargets } from './targets';
+import { useDayTargets } from './targets';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({
@@ -18,7 +18,7 @@ jest.mock('expo-router', () => ({
 jest.mock('./foods', () => ({ ...jest.requireActual('./foods'), useFood: jest.fn() }));
 jest.mock('./entries', () => ({ ...jest.requireActual('./entries'), useAddEntry: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
-jest.mock('./targets', () => ({ useNutritionTargets: jest.fn() }));
+jest.mock('./targets', () => ({ useDayTargets: jest.fn() }));
 jest.mock('./quick-foods', () => ({ useFavouriteKeys: jest.fn(), useSetFavourite: jest.fn() }));
 jest.mock('./recipes', () => ({ useRecipe: jest.fn() }));
 
@@ -47,7 +47,7 @@ beforeEach(() => {
       loaded([{ meal: 'breakfast', calories: 960, proteinG: 40, carbsG: 100, fatG: 30 }]),
     );
   jest
-    .mocked(useNutritionTargets)
+    .mocked(useDayTargets)
     .mockReturnValue(loaded({ calories: 2550, proteinG: 144, carbsG: 300, fatG: 85 }));
   jest
     .mocked(useAddEntry)
