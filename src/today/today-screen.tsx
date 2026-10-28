@@ -101,11 +101,13 @@ export function TodayScreen() {
             <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
           </Card>
         ) : null}
-        <MissedCard
-          entering={cardEntering(2)}
-          missed={missed}
-          onCatchUp={() => setSheet({ kind: 'catchUp' })}
-        />
+        {missed.length > 0 ? (
+          <MissedCard
+            entering={cardEntering(2)}
+            missed={missed}
+            onCatchUp={() => setSheet({ kind: 'catchUp' })}
+          />
+        ) : null}
         {plan.data ? (
           <WorkoutCard
             entering={cardEntering(2)}
@@ -126,7 +128,12 @@ export function TodayScreen() {
         sheet ? (
           <Sheet onClose={() => setSheet(null)}>
             {sheet.kind === 'catchUp' ? (
-              <CatchUp schedule={schedule} today={today} onDone={() => setSheet(null)} />
+              <CatchUp
+                missed={missed}
+                schedule={schedule}
+                today={today}
+                onDone={() => setSheet(null)}
+              />
             ) : sheet.kind === 'pick' ? (
               <PickDay
                 schedule={schedule}

@@ -9,7 +9,7 @@ import { useTheme } from '@/theme';
 import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import { useMoveWorkout } from '@/workouts/moves';
 import {
-  missedWorkouts,
+  type MissedWorkout,
   moveTargets,
   originOf,
   type PlannedWorkout,
@@ -20,6 +20,8 @@ import {
 import { MoveError } from './move-error';
 
 type CatchUpProps = {
+  /** This week's missed workouts with the day each was missed on, earliest first. */
+  missed: MissedWorkout[];
   schedule: WeekSchedule;
   today: Date;
   onDone: () => void;
@@ -29,7 +31,7 @@ type CatchUpProps = {
  * This week's missed workouts, each to move to a free day with one tap or to skip (ADR 0028). A
  * workout leaves the list once it is moved or skipped.
  */
-export function CatchUp({ schedule, today, onDone }: CatchUpProps) {
+export function CatchUp({ missed, schedule, today, onDone }: CatchUpProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   return (
@@ -40,7 +42,7 @@ export function CatchUp({ schedule, today, onDone }: CatchUpProps) {
         </Text>
         <Text color="textMuted">{t('today.catchUp.subtitle')}</Text>
       </View>
-      {missedWorkouts(schedule).map(({ workout, day }) => (
+      {missed.map(({ workout, day }) => (
         <View
           key={`${workout.session.workoutId}-${originOf(workout, day)}`}
           style={{ paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}
@@ -78,8 +80,6 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
 
   const move = (toOn: string | null) =>
     moveWorkout.mutate({ workoutId: session.workoutId, fromOn, toOn });
-  const dayLabel = (target: ScheduleDay) =>
-    target.date === todayOn ? t('today.move.today') : shortWeekday(target.weekday);
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -104,19 +104,22 @@ function MissedRow({ schedule, workout, day, today }: MissedRowProps) {
       </View>
       {targets.length > 0 ? (
         <View style={[styles.days, { gap: spacing.sm }]}>
-          {targets.map((target) => (
-            <Chip
-              key={target.date}
-              label={dayLabel(target)}
-              accessibilityLabel={t('today.catchUp.moveLabel', {
-                session: name,
-                day: target.date === todayOn ? dayLabel(target) : weekdayName(target.weekday),
-              })}
-              selected={moveWorkout.isPending && moveWorkout.variables?.toOn === target.date}
-              disabled={moveWorkout.isPending}
-              onPress={() => move(target.date)}
-            />
-          ))}
+          {targets.map((target) => {
+            const isToday = target.date === todayOn;
+            return (
+              <Chip
+                key={target.date}
+                label={isToday ? t('today.move.today') : shortWeekday(target.weekday)}
+                accessibilityLabel={t('today.catchUp.moveLabel', {
+                  session: name,
+                  day: isToday ? t('today.move.today') : weekdayName(target.weekday),
+                })}
+                selected={moveWorkout.isPending && moveWorkout.variables?.toOn === target.date}
+                disabled={moveWorkout.isPending}
+                onPress={() => move(target.date)}
+              />
+            );
+          })}
         </View>
       ) : (
         <Text variant="caption" color="textMuted">

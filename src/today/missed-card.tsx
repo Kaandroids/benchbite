@@ -8,11 +8,11 @@ import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useSessionSize, useWorkoutName } from '@/workouts/format';
-import type { PlannedWorkout, ScheduleDay } from '@/workouts/week-schedule';
+import type { MissedWorkout } from '@/workouts/week-schedule';
 
 type MissedCardProps = {
-  /** This week's missed workouts with the day each was missed on, earliest first. */
-  missed: { workout: PlannedWorkout; day: ScheduleDay }[];
+  /** This week's missed workouts with the day each was missed on, earliest first; at least one. */
+  missed: MissedWorkout[];
   onCatchUp: () => void;
   /** How the card comes in, from the screen that places it. */
   entering?: CardProps['entering'];
