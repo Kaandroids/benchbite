@@ -5,14 +5,20 @@ import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { act, fireEvent, render, screen } from '@/test/render';
+import { plannedOf, workoutsOf } from '@/test/planned-week';
 import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
 import type { FinishedWorkout, WorkoutMove } from '@/workouts/week-schedule';
-import { useWeek, type WeekSession } from '@/workouts/workouts';
+import { usePlannedWeek } from '@/workouts/planned-week';
+import { useWeek, useWorkouts, type WeekSession } from '@/workouts/workouts';
 
 import { greetingOf } from './greeting';
 import { TodayScreen } from './today-screen';
 
-jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn() }));
+jest.mock('@/workouts/workouts', () => ({ useWeek: jest.fn(), useWorkouts: jest.fn() }));
+jest.mock('@/workouts/planned-week', () => ({
+  ...jest.requireActual('@/workouts/planned-week'),
+  usePlannedWeek: jest.fn(),
+}));
 jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
 jest.mock('@/workouts/moves', () => ({
   useWeekMoves: jest.fn(),
@@ -132,6 +138,13 @@ function mockData({
   jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
   jest.mocked(useWeekMoves).mockReturnValue(moves as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
+  const sessions = plan.data?.sessions ?? [];
+  jest.mocked(useWorkouts).mockReturnValue(loaded(workoutsOf(sessions)) as never);
+  jest
+    .mocked(usePlannedWeek)
+    .mockReturnValue(
+      (plan.isPending ? pending() : loaded(plannedOf(sessions, '2026-10-19'))) as never,
+    );
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useDayEntries).mockReturnValue(eaten as never);
   return { plan, targets, eaten };

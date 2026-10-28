@@ -26,8 +26,12 @@ export function ReminderSync() {
     return () => subscription.remove();
   }, []);
 
-  const { schedule, plan, moves, finished } = useWeekSchedule(fromIsoDate(today));
-  const loaded = plan.data !== undefined && moves.data !== undefined && finished.data !== undefined;
+  const { schedule, plan, planned, moves, finished } = useWeekSchedule(fromIsoDate(today));
+  const loaded =
+    plan.data !== undefined &&
+    planned.data !== undefined &&
+    moves.data !== undefined &&
+    finished.data !== undefined;
   const reminders: Reminder[] | null = loaded
     ? upcomingWorkouts(schedule, plan.data?.sessions ?? [], fromIsoDate(today), REMINDER_DAYS).map(
         reminderFor,
