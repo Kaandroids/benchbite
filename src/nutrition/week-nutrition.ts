@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
+import { scaled, totalOf } from './meals';
 import type { NutritionTargets } from './targets';
 
 /** What was eaten on a day, and the targets it is measured against (day_nutrition()). */
@@ -26,15 +27,6 @@ export type WeekNutrition = {
   targets: NutritionTargets | null;
 };
 
-const NONE: NutritionTargets = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
-
-const add = (a: NutritionTargets, b: NutritionTargets): NutritionTargets => ({
-  calories: a.calories + b.calories,
-  proteinG: a.proteinG + b.proteinG,
-  carbsG: a.carbsG + b.carbsG,
-  fatG: a.fatG + b.fatG,
-});
-
 /**
  * The week's days added up: only the days logged count, so that a day without entries does not
  * count as eaten nothing (ADR 0046). Null when no day was logged.
@@ -44,18 +36,13 @@ export function weekNutrition(days: readonly DayNutrition[]): WeekNutrition | nu
   if (logged.length === 0) {
     return null;
   }
-  const eaten = logged.reduce((sum, day) => add(sum, day.eaten), NONE);
+  const eaten = totalOf(logged.map((day) => day.eaten));
   const withTargets = logged.flatMap((day) => (day.targets ? [day.targets] : []));
   return {
     days: logged.length,
     eaten,
-    average: {
-      calories: eaten.calories / logged.length,
-      proteinG: eaten.proteinG / logged.length,
-      carbsG: eaten.carbsG / logged.length,
-      fatG: eaten.fatG / logged.length,
-    },
-    targets: withTargets.length > 0 ? withTargets.reduce(add, NONE) : null,
+    average: scaled(eaten, 1 / logged.length),
+    targets: withTargets.length > 0 ? totalOf(withTargets) : null,
   };
 }
 
