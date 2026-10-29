@@ -1,6 +1,6 @@
 import { AppState } from 'react-native';
 
-import { useFinishedThisWeek } from '@/history/history';
+import { useFinishedInWeek } from '@/history/history';
 import { plannedOf, workoutsOf } from '@/test/planned-week';
 import { act, render, waitFor } from '@/test/render';
 import { useWeekMoves } from '@/workouts/moves';
@@ -22,7 +22,7 @@ jest.mock('@/workouts/planned-week', () => ({
   usePlannedWeek: jest.fn(),
 }));
 jest.mock('@/workouts/moves', () => ({ useWeekMoves: jest.fn() }));
-jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
+jest.mock('@/history/history', () => ({ useFinishedInWeek: jest.fn() }));
 jest.mock('./reminders', () => ({
   REMINDER_DAYS: 28,
   scheduleReminders: jest.fn(() => Promise.resolve()),
@@ -61,7 +61,7 @@ function mockWeek(moves: WorkoutMove[] = [], loaded = true) {
     .mocked(usePlannedWeek)
     .mockReturnValue({ data: loaded ? plannedOf(SESSIONS, '2026-10-19') : undefined } as never);
   jest.mocked(useWeekMoves).mockReturnValue({ data: loaded ? moves : undefined } as never);
-  jest.mocked(useFinishedThisWeek).mockReturnValue({ data: loaded ? [] : undefined } as never);
+  jest.mocked(useFinishedInWeek).mockReturnValue({ data: loaded ? [] : undefined } as never);
 }
 
 const scheduled = () => jest.mocked(scheduleReminders).mock.calls.at(-1)?.[0] ?? [];

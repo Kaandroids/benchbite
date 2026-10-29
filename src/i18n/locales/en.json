@@ -122,7 +122,36 @@
       "extra_other": "{{count}} extra workouts",
       "progress_one": "{{done}} of {{count}} workout this week",
       "progress_other": "{{done}} of {{count}} workouts this week",
-      "open": "Shows the day's workouts"
+      "open": "Shows the day's workouts",
+      "firstWeek": "your first week",
+      "previous": "Previous week",
+      "next": "Next week",
+      "backToToday": "Back to today",
+      "streak": {
+        "done": "counted for the streak",
+        "frozen": "frozen"
+      }
+    },
+    "pastWeek": {
+      "workouts": {
+        "title": "Workouts",
+        "count": "{{done}} of {{count}}",
+        "none": "No workouts this week",
+        "missed": "{{day}}: {{workout}} missed",
+        "open": "Opens the workout"
+      },
+      "macros": {
+        "title": "Calories and macros",
+        "average": "avg {{kcal}} kcal",
+        "thousands": "{{value}}k",
+        "none": "No meals logged this week",
+        "day": "{{day}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g carbs, {{fat}} g fat",
+        "overTarget": "over the target",
+        "notLogged": "{{day}}: nothing logged"
+      },
+      "summary": {
+        "title": "Week summary"
+      }
     },
     "workout": {
       "title": "Today's workout",
@@ -232,6 +261,7 @@
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "averageGrams": "avg {{grams}} g",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Today",

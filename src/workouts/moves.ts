@@ -16,17 +16,17 @@ export function reloadMoves(queryClient: QueryClient) {
   ]);
 }
 
-/** The query key of the moves of the week of `today`. */
-export function weekMovesKey(today: Date) {
-  return [...MOVES_KEY, toIsoDate(weekStart(today))];
+/** The query key of the moves of the week of `week`. */
+export function weekMovesKey(week: Date) {
+  return [...MOVES_KEY, toIsoDate(weekStart(week))];
 }
 
-/** This week's moves of the signed-in user's workouts, the week of `today` (ADR 0028). */
-export function useWeekMoves(today: Date) {
-  const monday = weekStart(today);
+/** The moves of the signed-in user's workouts from the days of the week of `week` (ADR 0028). */
+export function useWeekMoves(week: Date) {
+  const monday = weekStart(week);
   const sunday = addDays(monday, 6);
   return useQuery({
-    queryKey: weekMovesKey(today),
+    queryKey: weekMovesKey(week),
     queryFn: async (): Promise<WorkoutMove[]> => {
       const { data, error } = await supabase
         .from('workout_moves')

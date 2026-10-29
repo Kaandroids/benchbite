@@ -56,18 +56,19 @@ export type DayState =
 type Entry = { session: WeekSession; movedFrom: string | null; skipped: boolean };
 
 /**
- * The week of `today` from the plan's sessions, this week's moves and the workouts finished this
- * week (ADR 0028). A planned workout is done when a workout of it started on its day; the other
- * finished workouts are extras. Moves that no longer fit the plan, such as from a day the
- * workout is no longer on, are ignored.
+ * The week of `week`, by default the week of `today`, from the plan's sessions, the week's moves
+ * and the workouts finished in it (ADR 0028). A planned workout is done when a workout of it
+ * started on its day; the other finished workouts are extras. Moves that no longer fit the plan,
+ * such as from a day the workout is no longer on, are ignored.
  */
 export function weekSchedule(
   sessions: readonly WeekSession[],
   moves: readonly WorkoutMove[],
   finished: readonly FinishedWorkout[],
   today: Date,
+  week: Date = today,
 ): WeekSchedule {
-  const monday = weekStart(today);
+  const monday = weekStart(week);
   const dates = Array.from({ length: 7 }, (_, index) => toIsoDate(addDays(monday, index)));
   const todayOn = toIsoDate(today);
   const moveOf = new Map(moves.map((move) => [`${move.workoutId}|${move.fromOn}`, move]));

@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { toIsoDate, weekStart } from '@/i18n/dates';
+import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
@@ -183,21 +183,22 @@ export function useRecentLogs(count: number) {
   });
 }
 
-/** The query key of the workouts finished in the week of `today`. */
-export function finishedWeekKey(today: Date) {
-  return [...LOGS_KEY, 'week', weekStart(today).getTime()];
+/** The query key of the workouts finished in the week of `week`. */
+export function finishedWeekKey(week: Date) {
+  return [...LOGS_KEY, 'week', weekStart(week).getTime()];
 }
 
-/** The workouts finished in the week of `today`, with the day each started, for the Today tab. */
-export function useFinishedThisWeek(today: Date) {
-  const start = weekStart(today);
+/** The workouts finished in the week of `week`, with the day each started, for the Today tab. */
+export function useFinishedInWeek(week: Date) {
+  const start = weekStart(week);
   return useQuery({
-    queryKey: finishedWeekKey(today),
+    queryKey: finishedWeekKey(week),
     queryFn: async (): Promise<FinishedWorkout[]> => {
       const { data, error } = await supabase
         .from('workout_logs')
         .select('workout_id, started_at')
-        .gte('started_at', start.toISOString());
+        .gte('started_at', start.toISOString())
+        .lt('started_at', addDays(start, 7).toISOString());
       if (error) {
         throw error;
       }
@@ -205,6 +206,36 @@ export function useFinishedThisWeek(today: Date) {
         workoutId: row.workout_id,
         startedOn: toIsoDate(new Date(row.started_at)),
       }));
+    },
+  });
+}
+
+/** The query key of the workouts finished in the week of `week`, under the week's finished ones. */
+export function weekLogsKey(week: Date) {
+  return [...LOGS_KEY, 'week', 'logs', weekStart(week).getTime()];
+}
+
+/**
+ * The workouts finished in the week of `week`, in the order they started, for a past week; not
+ * loaded until `enabled`.
+ */
+export function useWeekLogs(week: Date, enabled = true) {
+  const start = weekStart(week);
+  return useQuery({
+    queryKey: weekLogsKey(week),
+    enabled,
+    queryFn: async (): Promise<LogSummary[]> => {
+      const { data, error } = await supabase
+        .from('workout_log_summaries')
+        .select('*')
+        .gte('started_at', start.toISOString())
+        .lt('started_at', addDays(start, 7).toISOString())
+        .order('started_at')
+        .order('id');
+      if (error) {
+        throw error;
+      }
+      return data.map(toSummary);
     },
   });
 }

@@ -122,7 +122,36 @@
       "extra_other": "{{count}} zusätzliche Trainings",
       "progress_one": "{{done}} von {{count}} Training diese Woche",
       "progress_other": "{{done}} von {{count}} Trainings diese Woche",
-      "open": "Zeigt die Workouts des Tages"
+      "open": "Zeigt die Workouts des Tages",
+      "firstWeek": "deine erste Woche",
+      "previous": "Vorherige Woche",
+      "next": "Nächste Woche",
+      "backToToday": "Zurück zu heute",
+      "streak": {
+        "done": "zählte für die Serie",
+        "frozen": "eingefroren"
+      }
+    },
+    "pastWeek": {
+      "workouts": {
+        "title": "Trainings",
+        "count": "{{done}} von {{count}}",
+        "none": "Keine Trainings diese Woche",
+        "missed": "{{day}}: {{workout}} verpasst",
+        "open": "Öffnet das Training"
+      },
+      "macros": {
+        "title": "Kalorien und Makros",
+        "average": "Ø {{kcal}} kcal",
+        "thousands": "{{value}}k",
+        "none": "Diese Woche keine Mahlzeiten erfasst",
+        "day": "{{day}}: {{kcal}} kcal, {{protein}} g Eiweiß, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
+        "overTarget": "über dem Ziel",
+        "notLogged": "{{day}}: nichts erfasst"
+      },
+      "summary": {
+        "title": "Wochenübersicht"
+      }
     },
     "workout": {
       "title": "Heutiges Training",
@@ -232,6 +261,7 @@
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "averageGrams": "Ø {{grams}} g",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Heute",

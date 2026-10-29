@@ -192,7 +192,7 @@ export default function ComponentGallery() {
         </View>
         <WeekCard
           today={new Date()}
-          streak={sampleStreak(new Date(), true)}
+          streakDays={sampleStreak(new Date(), true).days}
           schedule={sampleWeek(new Date())}
           onDayPress={() => undefined}
         />

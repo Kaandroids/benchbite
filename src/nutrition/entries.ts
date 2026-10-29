@@ -6,6 +6,7 @@ import { STREAK_KEY } from '@/streak/streak';
 import { foodColumns, type Amount, type FoodRef } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 import { dayTargetsKey } from './targets';
+import { WEEK_NUTRITION_KEY } from './week-nutrition';
 
 export type NewEntry = Amount & {
   /** YYYY-MM-DD. */
@@ -21,8 +22,9 @@ function amountColumns({ grams, portion }: Amount) {
 
 /**
  * Loads a day's entries again, with the targets the day kept from its first entry (ADR 0040), the
- * add screen's frequent foods and past meals, which are counted from the entries of any day, and
- * the streak, which counts the day's calories (ADR 0042).
+ * add screen's frequent foods and past meals, which are counted from the entries of any day, the
+ * weeks' nutrition, which sums the day up (ADR 0046), and the streak, which counts the day's
+ * calories (ADR 0042).
  */
 function useReloadDay() {
   const queryClient = useQueryClient();
@@ -32,6 +34,7 @@ function useReloadDay() {
       queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
       queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
       queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
+      queryClient.invalidateQueries({ queryKey: WEEK_NUTRITION_KEY }),
       queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
     ]);
 }

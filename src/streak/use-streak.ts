@@ -33,6 +33,26 @@ async function fetchMissedDays(missed: string[], today: string): Promise<MissedD
   }));
 }
 
+/** How each day of the week of `week` counted for the streak (streak_states()), by its date. */
+async function fetchCountedDays(week: Date, today: string): Promise<Record<string, DayStatus>> {
+  const monday = weekStart(week);
+  const { data, error } = await supabase.rpc('streak_states', {
+    from_day: toIsoDate(monday),
+    to_day: toIsoDate(addDays(monday, 6)),
+    today,
+  });
+  if (error) {
+    throw error;
+  }
+  const days: Record<string, DayStatus> = {};
+  for (const { day, state } of data) {
+    if (state === 'done' || state === 'frozen') {
+      days[day] = state;
+    }
+  }
+  return days;
+}
+
 // In development, the component gallery can show a sample on the Today tab instead.
 let sample: Streak | null = null;
 const listeners = new Set<() => void>();
@@ -53,26 +73,12 @@ export function useStreak(today: Date) {
   const query = useQuery({
     queryKey: [...STREAK_KEY, todayOn],
     queryFn: async (): Promise<{ streak: Streak; streakBreak: StreakBreak | null }> => {
-      const monday = weekStart(today);
-      const [streak, states] = await Promise.all([
+      const [streak, days] = await Promise.all([
         supabase.rpc('streak', { today: todayOn }).single(),
-        supabase.rpc('streak_states', {
-          from_day: toIsoDate(monday),
-          to_day: toIsoDate(addDays(monday, 6)),
-          today: todayOn,
-        }),
+        fetchCountedDays(today, todayOn),
       ]);
       if (streak.error) {
         throw streak.error;
-      }
-      if (states.error) {
-        throw states.error;
-      }
-      const days: Record<string, DayStatus> = {};
-      for (const { day, state } of states.data) {
-        if (state === 'done' || state === 'frozen') {
-          days[day] = state;
-        }
       }
       const { count, counted_today, freezes, missed, saved_count } = streak.data;
       return {
@@ -122,5 +128,35 @@ export function useAnswerBreak() {
       }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+  });
+}
+
+/**
+ * How each day of the week of `week` counted for the streak, as seen on the device's `today`; not
+ * loaded until `enabled`.
+ */
+export function useWeekStreak(today: Date, week: Date, enabled = true) {
+  const todayOn = toIsoDate(today);
+  return useQuery({
+    queryKey: [...STREAK_KEY, 'week', toIsoDate(weekStart(week)), todayOn],
+    enabled,
+    queryFn: () => fetchCountedDays(week, todayOn),
+  });
+}
+
+/**
+ * The user's first day, back to which the week strip pages (ADR 0043): the day their plan started,
+ * or the day the account was created.
+ */
+export function useStreakStart() {
+  return useQuery({
+    queryKey: [...STREAK_KEY, 'start'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('streak_start');
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
   });
 }

@@ -122,7 +122,36 @@
       "extra_other": "{{count}} ekstra antrenman",
       "progress_one": "Bu hafta {{count}} antrenmandan {{done}}",
       "progress_other": "Bu hafta {{count}} antrenmandan {{done}}",
-      "open": "Günün antrenmanlarını gösterir"
+      "open": "Günün antrenmanlarını gösterir",
+      "firstWeek": "ilk haftan",
+      "previous": "Önceki hafta",
+      "next": "Sonraki hafta",
+      "backToToday": "Bugüne dön",
+      "streak": {
+        "done": "seriye sayıldı",
+        "frozen": "donduruldu"
+      }
+    },
+    "pastWeek": {
+      "workouts": {
+        "title": "Antrenmanlar",
+        "count": "{{done}} / {{count}}",
+        "none": "Bu hafta antrenman yok",
+        "missed": "{{day}}: {{workout}} kaçırıldı",
+        "open": "Antrenmanı açar"
+      },
+      "macros": {
+        "title": "Kalori ve makrolar",
+        "average": "ort. {{kcal}} kcal",
+        "thousands": "{{value}}B",
+        "none": "Bu hafta öğün girilmedi",
+        "day": "{{day}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g karbonhidrat, {{fat}} g yağ",
+        "overTarget": "hedefin üstünde",
+        "notLogged": "{{day}}: bir şey girilmedi"
+      },
+      "summary": {
+        "title": "Hafta özeti"
+      }
     },
     "workout": {
       "title": "Bugünün antrenmanı",
@@ -232,6 +261,7 @@
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "averageGrams": "ort. {{grams}} g",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Bugün",

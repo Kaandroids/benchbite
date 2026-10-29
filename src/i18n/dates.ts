@@ -84,6 +84,18 @@ export function useMonthDayFormat() {
   return (date: Date) => formatter.format(date);
 }
 
+/** Formats a week by its first and last day, for example "October 19 – 25". */
+export function useWeekRangeFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, { month: 'long', day: 'numeric' });
+  return (start: Date) => {
+    const end = addDays(start, 6);
+    return formatter.formatRange
+      ? formatter.formatRange(start, end)
+      : `${formatter.format(start)} – ${formatter.format(end)}`;
+  };
+}
+
 /** Formats a day briefly with its weekday, for example "Tue, Oct 27". */
 export function useWeekdayDateFormat() {
   const { i18n } = useTranslation();

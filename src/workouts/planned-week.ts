@@ -15,21 +15,21 @@ export type PlannedDay = {
   type: Database['public']['Enums']['workout_type'] | null;
 };
 
-/** The planned days of the week of `today`; under the workouts, so changing them reloads it. */
-export const plannedWeekKey = (today: Date) => [
+/** The planned days of the week of `week`; under the workouts, so changing them reloads it. */
+export const plannedWeekKey = (week: Date) => [
   ...WORKOUTS_KEY,
   'planned',
-  toIsoDate(weekStart(today)),
+  toIsoDate(weekStart(week)),
 ];
 
 /**
- * The workouts planned on each day of the week of `today`: past days as they kept them, today and
- * later by the plan. The device says which day is today.
+ * The workouts planned on each day of the week of `week`, by default the week of `today`: past
+ * days as they kept them, today and later by the plan. The device says which day is today.
  */
-export function usePlannedWeek(today: Date) {
-  const monday = weekStart(today);
+export function usePlannedWeek(today: Date, week: Date = today) {
+  const monday = weekStart(week);
   return useQuery({
-    queryKey: plannedWeekKey(today),
+    queryKey: plannedWeekKey(week),
     queryFn: async (): Promise<PlannedDay[]> => {
       const { data, error } = await supabase.rpc('planned_workouts', {
         from_day: toIsoDate(monday),

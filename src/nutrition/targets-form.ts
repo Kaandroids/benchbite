@@ -20,9 +20,14 @@ export function targetsFormOf(targets: NutritionTargets): TargetsForm {
   };
 }
 
+/** The kcal in a gram of each macro. */
+export const KCAL_PER_GRAM = { proteinG: 4, carbsG: 4, fatG: 9 } as const;
+
 /** What protein, carbs and fat make in kcal, at 4, 4 and 9 kcal per gram. */
 export function macroCalories({ proteinG, carbsG, fatG }: Omit<NutritionTargets, 'calories'>) {
-  return 4 * proteinG + 4 * carbsG + 9 * fatG;
+  return (
+    KCAL_PER_GRAM.proteinG * proteinG + KCAL_PER_GRAM.carbsG * carbsG + KCAL_PER_GRAM.fatG * fatG
+  );
 }
 
 export type TargetsResult =
