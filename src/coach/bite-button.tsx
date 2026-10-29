@@ -9,6 +9,7 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -18,12 +19,12 @@ import { BiteAvatar } from './bite-avatar';
 
 const SIZE = 60;
 const RING = 3;
-/** How far it bobs up, in pixels. */
-const BOB = 1.5;
+/** How far it bounces, in pixels: up from where it sits, and down to the ground it bounces off. */
+const BOUNCE = { up: 1.5, down: 1.5 };
 
 /**
- * Bite in the middle of the tab bar (ADR 0048), bobbing gently unless the user asks for less
- * motion: pressing it opens its chat over the tabs.
+ * Bite in the middle of the tab bar (ADR 0048), bouncing gently as off the ground unless the user
+ * asks for less motion: pressing it opens its chat over the tabs.
  */
 export function BiteButton() {
   const { t } = useTranslation();
@@ -36,8 +37,15 @@ export function BiteButton() {
       bob.set(0);
       return;
     }
+    // Slowing as it rises, speeding up as it falls, and off the ground again at once.
     bob.set(
-      withRepeat(withTiming(-BOB, { duration: 1600, easing: Easing.inOut(Easing.sin) }), -1, true),
+      withRepeat(
+        withSequence(
+          withTiming(-BOUNCE.up, { duration: 520, easing: Easing.out(Easing.quad) }),
+          withTiming(BOUNCE.down, { duration: 520, easing: Easing.in(Easing.quad) }),
+        ),
+        -1,
+      ),
     );
   }, [reduceMotion, bob]);
   const bobStyle = useAnimatedStyle(() => ({ transform: [{ translateY: bob.get() }] }));
