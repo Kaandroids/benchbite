@@ -59,3 +59,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0041](0041-keep-each-days-planned-workouts.md)              | Keep each day's planned workouts with the day                                      | Accepted               |
 | [0042](0042-daily-streak-rules.md)                           | Count streak days by workouts and calories, and freeze by choice                   | Accepted               |
 | [0043](0043-past-weeks-on-the-week-strip.md)                 | Page the week strip back to the account's first week, to read only                 | Accepted               |
+| [0044](0044-streak-calories-and-workout-days.md)             | Count a day's calories up to its target, and keep the device's day of each workout | Accepted               |
