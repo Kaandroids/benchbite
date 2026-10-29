@@ -260,10 +260,11 @@ Deno.test('tells a stream that broke off from a finished one', async () => {
   });
 });
 
-Deno.test('throws the error a stream reports after it began', async () => {
+Deno.test('throws the error a stream reports after it began, with what it used', async () => {
   const { model } = gemini(() =>
     sse([
-      'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}]}\r\n\r\n',
+      'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}],' +
+        '"usageMetadata":{"promptTokenCount":120,"candidatesTokenCount":8}}\r\n\r\n',
       'data: {"error":{"code":503,"message":"Overloaded"}}\r\n\r\n',
     ]),
   );
@@ -275,7 +276,45 @@ Deno.test('throws the error a stream reports after it began', async () => {
     [error.status, error.retryable, error.message],
     [503, true, 'Gemini: 503 Overloaded'],
   );
+  assertEquals(error.usage, {
+    model: 'gemini-chat',
+    inputTokens: 120,
+    outputTokens: 8,
+    thinkingTokens: 0,
+    cachedInputTokens: 0,
+  });
 });
+
+Deno.test(
+  'throws a retryable model error when the stream breaks off, with what it used',
+  async () => {
+    const encoder = new TextEncoder();
+    const { model } = gemini(() => {
+      // One event, then the connection drops before the next.
+      let pulls = 0;
+      const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (pulls++ > 0) return controller.error(new Error('connection reset'));
+          controller.enqueue(
+            encoder.encode(
+              'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}],' +
+                '"usageMetadata":{"promptTokenCount":120,"candidatesTokenCount":8}}\r\n\r\n',
+            ),
+          );
+        },
+      });
+      return new Response(body);
+    });
+
+    const error = await assertRejects(async () => {
+      for await (const _ of model.stream(request));
+    }, ModelError);
+    assertEquals(
+      [error.retryable, error.message, error.usage?.outputTokens],
+      [true, 'Gemini: the stream broke off: connection reset', 8],
+    );
+  },
+);
 
 Deno.test('throws a model error, retryable for limits and outages only', async () => {
   const limited = gemini(() =>

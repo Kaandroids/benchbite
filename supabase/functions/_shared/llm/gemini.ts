@@ -69,13 +69,26 @@ export class GeminiModel implements LanguageModel {
     const { model, response } = await this.#call(request, 'streamGenerateContent?alt=sse');
     let last: GeminiResponse = {};
     let usage: GeminiResponse['usageMetadata'];
-    for await (const chunk of serverSentEvents(response.body!)) {
+    // What the call used so far, which a failure part-way reports, as it is billed.
+    const used = () => usageOf({ ...last, usageMetadata: usage }, model);
+    const chunks = serverSentEvents(response.body!)[Symbol.asyncIterator]();
+    while (true) {
+      let next: IteratorResult<GeminiResponse>;
+      try {
+        next = await chunks.next();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new ModelError(`Gemini: the stream broke off: ${message}`, 503, true, used());
+      }
+      if (next.done) break;
+      const chunk = next.value;
       if (chunk.error) {
         const status = chunk.error.code ?? 500;
         throw new ModelError(
           `Gemini: ${status} ${chunk.error.message}`,
           status,
           isRetryable(status),
+          used(),
         );
       }
       last = chunk;
@@ -88,7 +101,7 @@ export class GeminiModel implements LanguageModel {
     }
     yield {
       type: 'done',
-      usage: usageOf({ ...last, usageMetadata: usage }, model),
+      usage: used(),
       // Only the last chunk of a stream says why it ended: without it, the stream broke off.
       finish: finishOf(last, 'other'),
     };
