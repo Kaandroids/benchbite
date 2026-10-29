@@ -1601,6 +1601,28 @@
         "title": "Henüz rekor yok",
         "message": "Bir antrenmanda bir egzersizin en iyisini geçtiğinde rekorların burada görünür."
       }
+    },
+    "streak": {
+      "title": "Seri",
+      "calendar": "Seri takvimi",
+      "previous": "Önceki ay",
+      "next": "Sonraki ay",
+      "states": {
+        "done": "seriye sayıldı",
+        "frozen": "donduruldu",
+        "missed": "kaçırıldı"
+      },
+      "legend": {
+        "done": "Sayıldı",
+        "frozen": "Donduruldu",
+        "missed": "Kaçırıldı"
+      },
+      "done": "gün sayıldı",
+      "frozen": "gün donduruldu",
+      "longest": "en uzun seri",
+      "freezes_one": "{{count}} freeze kaldı",
+      "freezes_other": "{{count}} freeze kaldı",
+      "error": "Serin yüklenemedi."
     }
   }
 }

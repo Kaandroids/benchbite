@@ -17,7 +17,7 @@ import {
   useRecordHistory,
   type BeatenRecord,
 } from '@/history/record-history';
-import { fromIsoDate, useShortDateFormat } from '@/i18n/dates';
+import { fromIsoDate, useMonthYearFormat, useShortDateFormat } from '@/i18n/dates';
 
 import { RecordRow, useExerciseName } from './record-row';
 
@@ -36,6 +36,7 @@ export function RecordsScreen() {
   const today = new Date();
   const thisMonth = monthOf(today);
   const shortDate = useShortDateFormat(today);
+  const monthTitle = useMonthYearFormat(today);
   const title = t('progress.records.title');
 
   if (!allLoaded([records, library])) {
@@ -60,11 +61,7 @@ export function RecordsScreen() {
 
   const exercises = new Map(library.data?.map((exercise) => [exercise.id, exercise]));
   const nameOf = (record: BeatenRecord) => exerciseName(exercises.get(record.exerciseId));
-  const monthName = (month: string) =>
-    new Intl.DateTimeFormat(i18n.language, {
-      month: 'long',
-      ...(month.startsWith(String(today.getFullYear())) ? {} : { year: 'numeric' }),
-    }).format(fromIsoDate(`${month}-01`));
+  const monthName = (month: string) => monthTitle(fromIsoDate(`${month}-01`));
   const groups: { title: string; records: BeatenRecord[] }[] =
     order === 'latest'
       ? byMonth(all).map(([month, inMonth]) => ({

@@ -17,6 +17,7 @@ import {
   weekdayOf,
 } from '@/i18n/dates';
 import type { DayStatus } from '@/streak/streak';
+import { StreakMark } from '@/streak/streak-mark';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
@@ -167,16 +168,10 @@ function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
 }
 
 /** Under a day's name: a flame when it counted for the streak, a snowflake when it was frozen. */
-function StreakMark({ status }: { status: DayStatus | undefined }) {
+function DayStreakMark({ status }: { status: DayStatus | undefined }) {
   return (
     <View testID={status ? `streak-${status}` : undefined} style={styles.streakMark}>
-      {status ? (
-        <Icon
-          name={status === 'done' ? 'flame' : 'snowflake'}
-          size={STREAK_MARK_SIZE}
-          color={status === 'done' ? 'primary' : 'frozen'}
-        />
-      ) : null}
+      {status ? <StreakMark state={status} size={STREAK_MARK_SIZE} /> : null}
     </View>
   );
 }
@@ -336,7 +331,7 @@ export function WeekCard({
                 >
                   {weekdayName(day.weekday)}
                 </Text>
-                <StreakMark status={streakDays[day.date]} />
+                <DayStreakMark status={streakDays[day.date]} />
               </Pressable>
             );
           })}

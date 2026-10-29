@@ -1,7 +1,19 @@
+import type { Database } from '@/lib/database.types';
 import type { Workout } from '@/workouts/workouts';
 
 /** How a past day counted for the streak; a day without a status broke it or is still open. */
 export type DayStatus = 'done' | 'frozen';
+
+/** How a day went for the streak (streak_states()): counted, frozen, missed, or today still open. */
+export type DayState = Database['public']['Enums']['streak_state'];
+
+/** A day that has a mark: counted, frozen or missed. */
+export type MarkedState = Exclude<DayState, 'open'>;
+
+/** The day's state when it has a mark, or undefined for a day open or without one. */
+export function markedOf(state: DayState | undefined): MarkedState | undefined {
+  return state && state !== 'open' ? state : undefined;
+}
 
 export type Streak = {
   /** Days in a row, today included once it is done. */
@@ -39,3 +51,21 @@ export type StreakBreak = {
 export const NO_STREAK: Streak = { count: 0, doneToday: false, days: {} };
 
 export const STREAK_KEY = ['streak'];
+
+/**
+ * The most days in a row that kept the streak among `days`, from the earliest: counted or frozen,
+ * as streak() counts its days since the last one missed. A day still open neither adds nor breaks.
+ */
+export function longestRun(days: readonly DayState[]): number {
+  let longest = 0;
+  let run = 0;
+  for (const state of days) {
+    if (state === 'missed') {
+      run = 0;
+    } else if (state !== 'open') {
+      run += 1;
+      longest = Math.max(longest, run);
+    }
+  }
+  return longest;
+}

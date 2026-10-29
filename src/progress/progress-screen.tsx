@@ -16,11 +16,13 @@ import { useLatestWeight, useWeightUnit, WEIGHTS_KEY } from '@/weight/weights';
 
 import { NutritionCard } from './nutrition-card';
 import { RecordsButton } from './records-button';
+import { StreakButton } from './streak-button';
 import { TrainingCard } from './training-card';
 
 /**
  * The progress tab (ADR 0047): the weight to log, with its chart and target, what was eaten and
- * how training went over a range, and the records beaten, with the settings and developer tools at the top.
+ * how training went over a range, the records beaten and the streak, with the settings and
+ * developer tools at the top.
  */
 export function ProgressScreen() {
   const { t } = useTranslation();
@@ -69,6 +71,7 @@ export function ProgressScreen() {
           <NutritionCard entering={cardEntering(1)} today={today} />
           <TrainingCard entering={cardEntering(2)} today={today} />
           <RecordsButton entering={cardEntering(3)} today={today} />
+          <StreakButton entering={cardEntering(4)} today={today} />
         </>
       ) : (
         <LoadState queries={queries} />

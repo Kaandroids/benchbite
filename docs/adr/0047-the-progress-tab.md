@@ -28,14 +28,12 @@ personal records or the streak beyond this week (#275).
     width; longer ranges keep the same cells and scroll back from today. The database gives each
     day, at most a year of them, with its planned workouts done and missed as the streak counts
     them, from the day the streak starts.
-  - **Personal records** and the **streak calendar:** each a button that opens its own screen,
-    the streak month by month with the marks of the week card (ADR 0042).
-  - **Records:** each time a workout beat the best before it of a kind of record of an exercise,
-    the latest first by month, or each exercise's latest by its name, with the exercise's picture
-    and how much the best was beaten. A first value beats nothing (ADR 0025), and a workout that
-    beat several kinds of one exercise shows the first of them, so that one set is listed once.
-    The records and an exercise's history count the same way, from `record_candidates()`
-    (ADR 0024). A record opens its exercise's history within the tab.
+  - **Personal records** and the **streak calendar:** each a button that opens its own screen.
+  - **Streak calendar:** the streak month by month, each day a tile tinted with a badge of its
+    mark: the week card's flame when it counted, its snowflake when it was frozen, and a grey flame
+    put out when it was missed, apart from the orange of the streak. It pages back to the month the
+    streak started in (ADR 0043). Under it the month's days counted and frozen, its longest run of
+    them, and the freezes left. Tapping a day does nothing, as on the week strip.
 - **Each card is its own pull request**, the weight card first.
 
 ## Alternatives considered

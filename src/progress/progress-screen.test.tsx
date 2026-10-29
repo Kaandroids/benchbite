@@ -15,6 +15,7 @@ jest.mock('@/nutrition/targets', () => ({ useTargetBasis: () => ({ data: null })
 jest.mock('./nutrition-card', () => ({ NutritionCard: () => null }));
 jest.mock('./training-card', () => ({ TrainingCard: () => null }));
 jest.mock('./records-button', () => ({ RecordsButton: () => null }));
+jest.mock('./streak-button', () => ({ StreakButton: () => null }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
