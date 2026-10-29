@@ -104,7 +104,6 @@ export function RecordsScreen() {
                 record={record}
                 exercise={findExercise(library.data, record.exerciseId)}
                 today={today}
-                recent={record.day.startsWith(thisMonth)}
                 divider={index > 0}
               />
             ))}

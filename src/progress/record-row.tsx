@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import type { LibraryExercise } from '@/exercises/library';
+import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
+import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import type { BeatenRecord } from '@/history/record-history';
 import { fromIsoDate, useShortDateFormat } from '@/i18n/dates';
 import { setKindOf } from '@/sets/fields';
@@ -16,13 +16,14 @@ type RecordRowProps = {
   /** Undefined for an exercise no longer in the library. */
   exercise: LibraryExercise | undefined;
   today: Date;
-  /** A record of this month, marked in the brand's colour. */
-  recent: boolean;
   divider: boolean;
 };
 
-/** A record beaten: the exercise, its kind and day, its value and gain. Opens the exercise. */
-export function RecordRow({ record, exercise, today, recent, divider }: RecordRowProps) {
+/**
+ * A record beaten: the exercise's picture and name, the record's kind and day, its value and gain.
+ * Opens the exercise.
+ */
+export function RecordRow({ record, exercise, today, divider }: RecordRowProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const formatRecord = useRecordFormat();
@@ -53,12 +54,7 @@ export function RecordRow({ record, exercise, today, recent, divider }: RecordRo
         },
       ]}
     >
-      <IconTile
-        name="trophy"
-        size={40}
-        color={recent ? 'primary' : 'textMuted'}
-        background={recent ? 'iconBackground' : 'track'}
-      />
+      <ExerciseThumbnail path={thumbnailOf(exercise)} size={44} name={name} />
       <View style={styles.flex}>
         <Text variant="label" numberOfLines={1}>
           {name}
