@@ -25,17 +25,20 @@ export type Database = {
     Tables: {
       ai_calls_in_flight: {
         Row: {
+          call_id: string;
           feature: Database['public']['Enums']['ai_feature'];
           started_at: string;
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
+          call_id?: string;
           feature: Database['public']['Enums']['ai_feature'];
           started_at?: string;
           user_id: string;
         };
         Update: {
+          call_id?: string;
           feature?: Database['public']['Enums']['ai_feature'];
           started_at?: string;
           user_id?: string;
@@ -1784,6 +1787,7 @@ export type Database = {
       record_ai_usage: {
         Args: {
           cached_input_tokens: number;
+          call_id: string;
           feature: Database['public']['Enums']['ai_feature'];
           input_tokens: number;
           model: string;
@@ -2079,6 +2083,7 @@ export type Database = {
         budget_usd: number | null;
         used_usd: number | null;
         resets_at: string | null;
+        call_id: string | null;
       };
       break_workout: {
         id: number | null;

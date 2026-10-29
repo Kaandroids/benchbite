@@ -59,10 +59,12 @@ create index ai_usage_user_month_idx on public.ai_usage (user_id, created_at);
 
 -- The calls running now, one per user and feature, so that requests sent at once cannot all pass
 -- the limit before the first is recorded. A call that never recorded, as when its function
--- crashed, stops holding its place after a while.
+-- crashed, stops holding its place after ten minutes, longer than an Edge Function may run.
 create table public.ai_calls_in_flight (
   user_id uuid not null references auth.users (id) on delete cascade,
   feature public.ai_feature not null,
+  -- The call holding the place, which only it frees.
+  call_id uuid not null default gen_random_uuid(),
   started_at timestamptz not null default now(),
   primary key (user_id, feature)
 );
@@ -116,7 +118,9 @@ create type public.ai_access as (
   reason public.ai_access_reason,
   budget_usd numeric,
   used_usd numeric,
-  resets_at timestamptz
+  resets_at timestamptz,
+  -- The call start_ai_call() started, which record_ai_usage() ends.
+  call_id uuid
 );
 
 -- The calling user's budget this month and whether it lets them call a model: the one place
@@ -179,8 +183,10 @@ begin
     -- Takes the place, or a place a call left behind; a call holding it keeps it.
     insert into public.ai_calls_in_flight (user_id, feature)
     values ((select auth.uid()), start_ai_call.feature)
-    on conflict on constraint ai_calls_in_flight_pkey do update set started_at = now()
-    where public.ai_calls_in_flight.started_at < now() - interval '2 minutes';
+    on conflict on constraint ai_calls_in_flight_pkey do update
+      set call_id = gen_random_uuid(), started_at = now()
+      where public.ai_calls_in_flight.started_at < now() - interval '10 minutes'
+    returning public.ai_calls_in_flight.call_id into result.call_id;
     if not found then
       result.reason := 'call_in_progress';
     end if;
@@ -195,10 +201,11 @@ grant execute on function public.start_ai_call(public.ai_feature, text) to authe
 
 -- Records a call of a model, ends it, and returns what it cost, at the price in force when it
 -- was made. Edge Functions call it after every call they started, also when it failed, with the
--- tokens it used. Only they may, with the service role.
+-- tokens it used and the call_id start_ai_call() gave. Only they may, with the service role.
 create function public.record_ai_usage(
   user_id uuid,
   feature public.ai_feature,
+  call_id uuid,
   model text,
   input_tokens integer,
   cached_input_tokens integer,
@@ -232,13 +239,13 @@ begin
   )
   returning cost_usd into cost;
 
-  delete from public.ai_calls_in_flight c
-  where c.user_id = record_ai_usage.user_id and c.feature = record_ai_usage.feature;
+  -- Only its own place: a place it held too long may be another call's now.
+  delete from public.ai_calls_in_flight c where c.call_id = record_ai_usage.call_id;
   return cost;
 end;
 $$;
 
-revoke all on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
+revoke all on function public.record_ai_usage(uuid, public.ai_feature, uuid, text, integer, integer, integer, integer)
   from public, anon, authenticated;
-grant execute on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
+grant execute on function public.record_ai_usage(uuid, public.ai_feature, uuid, text, integer, integer, integer, integer)
   to service_role;
