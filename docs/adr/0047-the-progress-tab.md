@@ -21,9 +21,11 @@ personal records or the streak beyond this week (#275).
     against the targets of the days logged, with each macro's average a day. The database gives
     each day, at most a year of them, and whether it kept its target as the streak counts it; the
     app groups the days into weeks and months.
-  - **Training:** a heat map of the days, darker the longer the workouts were, with missed
-    planned workouts marked, over the same ranges, then how much of the plan was done, the time
-    trained and the weight lifted.
+  - **Training:** a heat map of the days, a column a week, darker the longer the workouts were
+    in four steps from 1, 30, 60 and 90 minutes, with missed planned workouts outlined, over the
+    same ranges, then how much of the plan was done, the time trained and the weight lifted
+    against the range before. The database gives each day, at most a year of them, with its
+    planned workouts done and missed as the streak counts them, from the day the streak starts.
   - **Personal records** and the **streak calendar:** each a button that opens its own screen,
     the records as a list of the latest per exercise, the streak month by month with the marks of
     the week card (ADR 0042).
