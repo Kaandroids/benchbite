@@ -3,10 +3,14 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
+import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
 import { keepTargetsFromToday } from '@/nutrition/targets';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
+
+/** The query keys of the weights, which logging one reloads. */
+export const WEIGHTS_KEY = ['weights'];
 
 export type WeightEntry = {
   weightKg: number;
@@ -31,7 +35,7 @@ export function useWeightUnit() {
 /** The signed-in user's latest weight, or null before the first one. */
 export function useLatestWeight() {
   return useQuery({
-    queryKey: ['weights', 'latest'],
+    queryKey: [...WEIGHTS_KEY, 'latest'],
     queryFn: async (): Promise<WeightEntry | null> => {
       const { data, error } = await supabase
         .from('weight_entries')
@@ -54,7 +58,7 @@ export function useLatestWeight() {
 export function useWeightHistory(range: ProgressRange, today: Date) {
   const from = toIsoDate(rangeStart(range, today));
   return useQuery({
-    queryKey: ['weights', 'history', from],
+    queryKey: [...WEIGHTS_KEY, 'history', from],
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<WeightEntry[]> => {
       const { data, error } = await supabase
@@ -108,11 +112,13 @@ export function useLogWeight() {
       // The calculated targets follow the weight, and today with them.
       await keepTargetsFromToday();
     },
-    // Today's calories are counted for the streak against the targets, which follow the weight.
+    // Today's calories are counted for the streak and charted against the targets, which follow
+    // the weight.
     onSuccess: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['weights'] }),
+        queryClient.invalidateQueries({ queryKey: WEIGHTS_KEY }),
         queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
+        queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
         queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
       ]),
   });

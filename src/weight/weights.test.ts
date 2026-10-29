@@ -92,6 +92,7 @@ describe('useLogWeight', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: STREAK_KEY });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'days'] });
   });
 
   it('saves one weight at a time, in the order they were made', async () => {

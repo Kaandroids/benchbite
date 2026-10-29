@@ -103,6 +103,7 @@ describe('useSetOwnTargets', () => {
       { onConflict: 'user_id' },
     );
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'days'] });
   });
 });
 

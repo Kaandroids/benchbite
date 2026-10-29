@@ -10,9 +10,8 @@ import { DevButton } from '@/dev/dev-button';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
 import { useTargetBasis } from '@/nutrition/targets';
 import { SettingsButton } from '@/settings/settings-button';
-
 import { WeightCard } from '@/weight/weight-card';
-import { useLatestWeight, useWeightUnit } from '@/weight/weights';
+import { useLatestWeight, useWeightUnit, WEIGHTS_KEY } from '@/weight/weights';
 
 import { NutritionCard } from './nutrition-card';
 
@@ -34,7 +33,7 @@ export function ProgressScreen() {
     {
       refetch: () =>
         Promise.all(
-          [['weights'], NUTRITION_DAYS_KEY].map((queryKey) =>
+          [WEIGHTS_KEY, NUTRITION_DAYS_KEY].map((queryKey) =>
             queryClient.refetchQueries({ queryKey, type: 'active' }),
           ),
         ),
