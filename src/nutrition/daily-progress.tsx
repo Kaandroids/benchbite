@@ -23,13 +23,13 @@ type DailyProgressProps = {
   eaten: NutritionTargets;
 };
 
+const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
+
 /** How much of the day's calories and macros was eaten, large, against the targets, small. */
 export function DailyProgress({ targets, eaten }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
-  const share = (nutrient: Nutrient) =>
-    targets[nutrient] > 0 ? eaten[nutrient] / targets[nutrient] : 0;
 
   return (
     <>
@@ -40,29 +40,54 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
             {t('nutrition.calorieTarget', { target: format(targets.calories) })}
           </Text>
         </Text>
-        <ProgressBar value={share('calories')} accessibilityLabel={t('nutrition.calorieLabel')} />
+        <ProgressBar
+          value={shareOf(eaten.calories, targets.calories)}
+          accessibilityLabel={t('nutrition.calorieLabel')}
+        />
       </View>
-      <View style={[styles.macros, { gap: spacing.md }]}>
-        {MACROS.map(({ key, nutrient, color }) => (
-          <View key={key} style={[styles.macro, { gap: spacing.xs }]}>
-            <Text variant="caption" color="textMuted">
-              {t(`nutrition.macros.${key}`)}
-            </Text>
-            <Text variant="headline">
-              {format(Math.round(eaten[nutrient]))}{' '}
-              <Text variant="caption" color="textMuted">
-                {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
-              </Text>
-            </Text>
-            <ProgressBar
-              value={share(nutrient)}
-              color={color}
-              accessibilityLabel={t(`nutrition.macros.${key}`)}
-            />
-          </View>
-        ))}
-      </View>
+      <MacroColumns targets={targets} eaten={eaten} />
     </>
+  );
+}
+
+type MacroColumnsProps = DailyProgressProps & {
+  /** What was eaten on an average day, shown under each macro, for a span of days. */
+  average?: NutritionTargets;
+};
+
+/** Protein, carbs and fat side by side, each eaten against its target. */
+export function MacroColumns({ targets, eaten, average }: MacroColumnsProps) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const { format } = useNumberFormat();
+  return (
+    <View style={[styles.macros, { gap: spacing.md }]}>
+      {MACROS.map(({ key, nutrient, color }) => (
+        <View key={key} style={[styles.macro, { gap: spacing.xs }]}>
+          <Text variant="caption" color="textMuted">
+            {t(`nutrition.macros.${key}`)}
+          </Text>
+          <Text variant="headline">
+            {format(Math.round(eaten[nutrient]))}{' '}
+            <Text variant="caption" color="textMuted">
+              {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
+            </Text>
+          </Text>
+          <ProgressBar
+            value={shareOf(eaten[nutrient], targets[nutrient])}
+            color={color}
+            accessibilityLabel={t(`nutrition.macros.${key}`)}
+          />
+          {average ? (
+            <Text variant="caption" color="textMuted">
+              {t('nutrition.averageGrams', {
+                grams: format(Math.round(average[nutrient])),
+              })}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+    </View>
   );
 }
 
