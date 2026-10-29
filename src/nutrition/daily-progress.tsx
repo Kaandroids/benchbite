@@ -68,7 +68,8 @@ export function MacroColumns({ targets, eaten, average }: MacroColumnsProps) {
           <Text variant="caption" color="textMuted">
             {t(`nutrition.macros.${key}`)}
           </Text>
-          <Text variant="headline">
+          {/* On one line, smaller where a large amount needs it. */}
+          <Text variant="headline" numberOfLines={1} adjustsFontSizeToFit>
             {format(Math.round(eaten[nutrient]))}{' '}
             <Text variant="caption" color="textMuted">
               {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
