@@ -23,7 +23,9 @@ glass in our own views, also in Expo Go.
   as on Android, it is the app's surface with a hairline border and a soft shadow. The shape,
   the layout and the motion are the same on both.
 - **Bite is no tab:** it rises out of the middle on the brand's orange and opens its chat over
-  the tabs, at `/bite`. It has no label, as the mascot says what it is.
+  the tabs, at `/bite`. It has no label, as the mascot says what it is. While it waits it bounces
+  gently as off the ground, squashing a little as it lands, blinks, and now and then looks to
+  either side.
 - **Changing tab** glides the chosen tab's pill over to it in a fifth of a second, easing out, and
   pops its icon; the screens fade. With the system's reduced motion on, nothing moves.
 - **The bar floats**, so a tab's screen leaves room under its content for it
