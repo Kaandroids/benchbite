@@ -1286,6 +1286,20 @@ export type Database = {
           workout_id: number;
         }[];
       };
+      days_nutrition: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          carbs_g: number;
+          day: string;
+          fat_g: number;
+          kcal: number;
+          protein_g: number;
+          target_calories: number;
+          target_carbs_g: number;
+          target_fat_g: number;
+          target_protein_g: number;
+        }[];
+      };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
