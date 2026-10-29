@@ -1,15 +1,21 @@
--- What AI costs: a call is priced at the price in force when it was made, a user reads only their
--- own usage, and a call starts only for a user with an account, under the monthly limit, on a
+-- What AI costs: a call is priced by the model and at the price it started on, a user reads only
+-- their own usage, and a call starts only for a user with an account and a budget, under it, on a
 -- priced model, and with no call of the same feature running.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false),
-  ('00000000-0000-0000-0000-00000000000c', null, true);
+  ('00000000-0000-0000-0000-00000000000c', null, true),
+  ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false);
+
+-- A and B have a plan's budget; D has none.
+insert into public.ai_budgets (user_id, monthly_limit_usd) values
+  ('00000000-0000-0000-0000-00000000000a', 4),
+  ('00000000-0000-0000-0000-00000000000b', 4);
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -62,12 +68,13 @@ select results_eq(
 set local role service_role;
 
 -- 1,000,000 input tokens, 400,000 of them cached, and 100,000 output tokens on Flash-Lite:
--- 600,000 × $0.30 + 400,000 × $0.03 + 100,000 × $2.50, per million.
+-- 600,000 × $0.30 + 400,000 × $0.03 + 100,000 × $2.50, per million. The call reports another
+-- model, which it was not started on.
 select is(
   public.record_ai_usage(
     '00000000-0000-0000-0000-00000000000a', 'coach_chat',
     (select call_id from public.ai_calls_in_flight where feature = 'coach_chat'),
-    'gemini-3.5-flash-lite', 1000000, 400000, 100000, 20000
+    'unknown-model', 1000000, 400000, 100000, 20000
   ),
   0.442000::numeric,
   'A call costs its input, cached input and output at the model''s prices'
@@ -77,7 +84,7 @@ select results_eq(
        thinking_tokens, cost_usd
      from public.ai_usage $$,
   $$ values ('coach_chat', 'gemini-3.5-flash-lite', 1000000, 400000, 100000, 20000, 0.442000) $$,
-  'and is recorded with its tokens'
+  'and is recorded with its tokens, under the model it was started on'
 );
 select is(
   public.record_ai_usage(
@@ -97,7 +104,25 @@ select throws_ok(
   $$ select public.record_ai_usage(
        '00000000-0000-0000-0000-00000000000a', 'coach_chat', null, 'unknown-model', 1, 0, 1, 0) $$,
   'BB033', null,
-  'A model without a price is not recorded'
+  'A call without a place is priced by the model it reports, which needs a price'
+);
+
+-- A call that started before a price change is priced, and counted, as of its start.
+insert into public.ai_calls_in_flight (user_id, feature, model, call_id, started_at) values
+  ('00000000-0000-0000-0000-00000000000d', 'review', 'gemini-3.8-flash',
+   '00000000-0000-0000-0000-0000000000ff', '2026-12-31 23:59:50+00');
+select is(
+  public.record_ai_usage(
+    '00000000-0000-0000-0000-00000000000d', 'review', '00000000-0000-0000-0000-0000000000ff',
+    'gemini-3.8-flash', 0, 0, 1000000, 0
+  ),
+  3.750000::numeric,
+  'A call is priced at the price in force when it started'
+);
+select is(
+  (select created_at from public.ai_usage where feature = 'review'),
+  '2026-12-31 23:59:50+00'::timestamptz,
+  'and counts toward the month it started in'
 );
 select throws_ok(
   $$ select public.record_ai_usage(
@@ -214,6 +239,14 @@ select results_eq(
   $$ select allowed, reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
   $$ values (false, 'account_required'::public.ai_access_reason) $$,
   'nor does a guest, as AI needs an account'
+);
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');
+select results_eq(
+  $$ select allowed, reason, budget_usd
+     from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ values (false, 'plan_required'::public.ai_access_reason, 0::numeric) $$,
+  'nor a user without a budget, which is nothing by default'
 );
 
 select set_config('role', 'anon', true);
