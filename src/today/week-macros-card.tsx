@@ -5,8 +5,8 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { isOverTarget, type DayNutrition, type NutritionSummary } from '@/nutrition/day-nutrition';
 import { Average } from '@/nutrition/average';
+import { isOverTarget, type DayNutrition, type NutritionSummary } from '@/nutrition/day-nutrition';
 import { MacroBars } from '@/nutrition/macro-bars';
 import { useTheme } from '@/theme';
 
