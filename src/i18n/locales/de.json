@@ -184,7 +184,34 @@
   },
   "streak": {
     "label_one": "{{count}} Tag in Folge",
-    "label_other": "{{count}} Tage in Folge"
+    "label_other": "{{count}} Tage in Folge",
+    "break": {
+      "title": "Deine Serie ist gerissen",
+      "oneDay": "{{day}} hat nicht gezählt.",
+      "days_one": "{{count}} Tag hat nicht gezählt.",
+      "days_other": "{{count}} Tage haben nicht gezählt.",
+      "notEnough_one": "Du hast {{count}} Freeze: nicht genug, um alle abzudecken.",
+      "notEnough_other": "Du hast {{count}} Freezes: nicht genug, um alle abzudecken.",
+      "noFreezes": "Du hast keine Freezes mehr.",
+      "forgot": "Eine Mahlzeit vergessen?",
+      "forgotHint": "Trag sie nach, dann kann der Tag noch zählen.",
+      "log": "Nachtragen",
+      "logDay": "{{day}} nachtragen",
+      "tooLate": "Kann nicht mehr nachgetragen werden",
+      "freezes_one": "Du hast {{count}} Freeze",
+      "freezes_other": "Du hast {{count}} Freezes",
+      "freeze_one": "{{count}} Freeze nutzen, {{keep}}",
+      "freeze_other": "{{count}} Freezes nutzen, {{keep}}",
+      "keepDays_one": "{{count}} Tag behalten",
+      "keepDays_other": "{{count}} Tage behalten",
+      "startAgain": "Neu anfangen",
+      "newStreak": "Neue Serie starten",
+      "error": "Die Serie konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "kept_one": "Serie gehalten: {{day}} ist eingefroren. {{count}} Freeze übrig.",
+      "kept_other": "Serie gehalten: {{day}} ist eingefroren. {{count}} Freezes übrig.",
+      "keptDays_one": "Serie gehalten: {{days}} Tage eingefroren. {{count}} Freeze übrig.",
+      "keptDays_other": "Serie gehalten: {{days}} Tage eingefroren. {{count}} Freezes übrig."
+    }
   },
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",

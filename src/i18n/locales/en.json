@@ -184,7 +184,34 @@
   },
   "streak": {
     "label_one": "{{count}}-day streak",
-    "label_other": "{{count}}-day streak"
+    "label_other": "{{count}}-day streak",
+    "break": {
+      "title": "Your streak broke",
+      "oneDay": "{{day}} didn't count.",
+      "days_one": "{{count}} day didn't count.",
+      "days_other": "{{count}} days didn't count.",
+      "notEnough_one": "You have {{count}} freeze: not enough to cover them all.",
+      "notEnough_other": "You have {{count}} freezes: not enough to cover them all.",
+      "noFreezes": "You have no freezes left.",
+      "forgot": "Forgot to log a meal?",
+      "forgotHint": "Log it, and the day may still count.",
+      "log": "Log it",
+      "logDay": "Log {{day}}",
+      "tooLate": "Can no longer be logged",
+      "freezes_one": "You have {{count}} freeze",
+      "freezes_other": "You have {{count}} freezes",
+      "freeze_one": "Use {{count}} freeze, {{keep}}",
+      "freeze_other": "Use {{count}} freezes, {{keep}}",
+      "keepDays_one": "keep {{count}} day",
+      "keepDays_other": "keep {{count}} days",
+      "startAgain": "Start again",
+      "newStreak": "Start a new streak",
+      "error": "The streak could not be saved. Check your connection and try again.",
+      "kept_one": "Streak kept: {{day}} is frozen. {{count}} freeze left.",
+      "kept_other": "Streak kept: {{day}} is frozen. {{count}} freezes left.",
+      "keptDays_one": "Streak kept: {{days}} days frozen. {{count}} freeze left.",
+      "keptDays_other": "Streak kept: {{days}} days frozen. {{count}} freezes left."
+    }
   },
   "nutrition": {
     "calories": "{{calories}} kcal a day",

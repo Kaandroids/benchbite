@@ -111,6 +111,17 @@ describe('NutritionScreen', () => {
     expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-21');
   });
 
+  it('opens the day it is sent to each time it is sent', async () => {
+    await render(<NutritionScreen open={{ day: '2026-10-24', at: '1' }} />);
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-24');
+    // Stepping on stays until the day is sent again, the same day too.
+    await fireEvent.press(screen.getByLabelText('Next day'));
+    await screen.rerender(<NutritionScreen open={{ day: '2026-10-24', at: '1' }} />);
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-25');
+    await screen.rerender(<NutritionScreen open={{ day: '2026-10-24', at: '2' }} />);
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-24');
+  });
+
   it('moves on to the new day after midnight', async () => {
     jest.setSystemTime(new Date(2026, 9, 27, 23, 30));
     await render(<NutritionScreen />);

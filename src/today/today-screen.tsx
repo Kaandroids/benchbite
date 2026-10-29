@@ -8,11 +8,14 @@ import { Card, cardEntering } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
+import { Toast } from '@/components/ui/toast';
 import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
+import { useBreakPrompt } from '@/streak/break-prompt';
+import { BreakSheet } from '@/streak/break-sheet';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -41,7 +44,7 @@ export function TodayScreen() {
   const name = useDisplayName().data;
   const greeting = useGreeting();
   const today = new Date();
-  const { streak, failed: streakFailed, retry: retryStreak } = useStreak(today);
+  const { streak, streakBreak, failed: streakFailed, retry: retryStreak } = useStreak(today);
   const { schedule, plan, queries: weekQueries } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
@@ -54,6 +57,7 @@ export function TodayScreen() {
       ...(streakFailed ? [retryStreak()] : []),
     ]);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
+  const prompt = useBreakPrompt(streakBreak);
 
   const sheetDay =
     sheet?.kind === 'day'
@@ -124,12 +128,27 @@ export function TodayScreen() {
     );
   }
 
+  const showBreak =
+    streakBreak !== null &&
+    prompt.open &&
+    sheet === null &&
+    !queries.some((query) => query.isPending);
+
   return (
     <TabScreen
       queries={queries}
       overlay={
         // One sheet whose content changes, as a modal cannot open while another one closes.
-        sheet ? (
+        showBreak ? (
+          <Sheet onClose={prompt.close}>
+            <BreakSheet
+              streakBreak={streakBreak}
+              today={today}
+              onLog={prompt.log}
+              onAnswered={prompt.setMessage}
+            />
+          </Sheet>
+        ) : sheet ? (
           <Sheet onClose={() => setSheet(null)}>
             {sheet.kind === 'catchUp' ? (
               <CatchUp
@@ -155,6 +174,8 @@ export function TodayScreen() {
               />
             ) : null}
           </Sheet>
+        ) : prompt.message ? (
+          <Toast message={prompt.message} onHide={prompt.hideMessage} />
         ) : null
       }
     >

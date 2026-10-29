@@ -9,6 +9,18 @@ export type Streak = {
   days: Record<string, DayStatus>;
 };
 
+/**
+ * Missed days whose break the user has not answered yet (ADR 0042): they can freeze them, one
+ * freeze a day, when they have enough, or start again.
+ */
+export type StreakBreak = {
+  /** The missed days, as YYYY-MM-DD, from the earliest. */
+  missed: string[];
+  freezes: number;
+  /** The streak if the missed days were frozen. */
+  savedCount: number;
+};
+
 /** The streak until it loads, and of a user without one. */
 export const NO_STREAK: Streak = { count: 0, doneToday: false, days: {} };
 
