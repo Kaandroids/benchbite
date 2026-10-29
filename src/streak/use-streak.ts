@@ -131,11 +131,15 @@ export function useAnswerBreak() {
   });
 }
 
-/** How each day of the week of `week` counted for the streak, as seen on the device's `today`. */
-export function useWeekStreak(today: Date, week: Date) {
+/**
+ * How each day of the week of `week` counted for the streak, as seen on the device's `today`; not
+ * loaded until `enabled`.
+ */
+export function useWeekStreak(today: Date, week: Date, enabled = true) {
   const todayOn = toIsoDate(today);
   return useQuery({
     queryKey: [...STREAK_KEY, 'week', toIsoDate(weekStart(week)), todayOn],
+    enabled,
     queryFn: () => fetchCountedDays(week, todayOn),
   });
 }

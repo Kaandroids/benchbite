@@ -215,11 +215,15 @@ export function weekLogsKey(week: Date) {
   return [...LOGS_KEY, 'week', 'logs', weekStart(week).getTime()];
 }
 
-/** The workouts finished in the week of `week`, in the order they started, for a past week. */
-export function useWeekLogs(week: Date) {
+/**
+ * The workouts finished in the week of `week`, in the order they started, for a past week; not
+ * loaded until `enabled`.
+ */
+export function useWeekLogs(week: Date, enabled = true) {
   const start = weekStart(week);
   return useQuery({
     queryKey: weekLogsKey(week),
+    enabled,
     queryFn: async (): Promise<LogSummary[]> => {
       const { data, error } = await supabase
         .from('workout_log_summaries')

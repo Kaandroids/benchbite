@@ -56,12 +56,13 @@ export const WEEK_NUTRITION_KEY = ['meal-entries', 'week'];
 
 /**
  * What was eaten on each day of the week of `week`, with the targets each day kept, as seen on the
- * device's `today` (ADR 0046).
+ * device's `today` (ADR 0046); not loaded until `enabled`.
  */
-export function useWeekNutrition(today: Date, week: Date) {
+export function useWeekNutrition(today: Date, week: Date, enabled = true) {
   const monday = weekStart(week);
   return useQuery({
     queryKey: [...WEEK_NUTRITION_KEY, toIsoDate(monday)],
+    enabled,
     queryFn: async (): Promise<DayNutrition[]> => {
       const { data, error } = await supabase.rpc('day_nutrition', {
         from_day: toIsoDate(monday),
