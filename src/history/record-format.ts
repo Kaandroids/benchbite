@@ -5,7 +5,7 @@ import { minutesAndSeconds } from '@/lib/time';
 import type { SetKind } from '@/sets/fields';
 
 import type { ProgressPoint } from './exercise-history';
-import type { Scale } from './progress-chart';
+import type { Scale } from '@/components/progress-chart';
 
 /** What the progress chart can show, depending on what the exercise records. */
 export type ProgressMetric =

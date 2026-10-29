@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
-import { ProgressChart } from '@/history/progress-chart';
+import { ProgressChart } from '@/components/progress-chart';
 import { fromIsoDate, toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useWeightFormat, weightIn, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
