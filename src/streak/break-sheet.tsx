@@ -106,12 +106,13 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
       {answer.isError ? <FormError>{t('streak.break.error')}</FormError> : null}
       {enough ? (
         <View style={{ gap: spacing.sm }}>
-          <View style={[styles.row, styles.centerRow, { gap: spacing.xs }]}>
-            <Icon name="snowflake" size={18} color="textMuted" />
-            <Text variant="bodyStrong" color="textMuted">
-              {t('streak.break.freezes', { count: freezes })}
-            </Text>
-          </View>
+          <Button
+            label={t('streak.break.startAgain')}
+            variant="secondary"
+            loading={answer.isPending && !answer.variables?.useFreezes}
+            disabled={answer.isPending}
+            onPress={() => answerWith(false)}
+          />
           <Button
             label={t('streak.break.freeze', {
               count: missed.length,
@@ -121,17 +122,12 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
             disabled={answer.isPending}
             onPress={() => answerWith(true)}
           />
-          {/* Quiet, as freezing is what the sheet offers. */}
-          <Pressable
-            accessibilityRole="button"
-            disabled={answer.isPending}
-            onPress={() => answerWith(false)}
-            style={[styles.quiet, { paddingVertical: spacing.md }]}
-          >
-            <Text variant="label" color="textMuted">
-              {t('streak.break.startAgain')}
+          <View style={[styles.row, styles.centerRow, { gap: spacing.xs }]}>
+            <Icon name="snowflake" size={18} color="textMuted" />
+            <Text variant="bodyStrong" color="textMuted">
+              {t('streak.break.freezes', { count: freezes })}
             </Text>
-          </Pressable>
+          </View>
         </View>
       ) : (
         <Button
@@ -161,9 +157,6 @@ const styles = StyleSheet.create({
   },
   centerRow: {
     justifyContent: 'center',
-  },
-  quiet: {
-    alignItems: 'center',
   },
   flex: {
     flex: 1,
