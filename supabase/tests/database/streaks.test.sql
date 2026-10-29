@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(43);
+select plan(44);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -77,6 +77,19 @@ insert into public.workout_moves (user_id, workout_id, from_on, to_on, settled)
 select pg_temp.done(921, pg_temp.w(7));
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.w(d), 1500)
 from generate_series(7, 9) d;
+-- Thursday and Friday: Squat planned on both, skipped on Friday and moved there from Thursday,
+-- and done on Friday.
+insert into public.workouts (id, user_id, name, weekdays, active, estimated_minutes)
+  overriding system value
+  values (923, '00000000-0000-0000-0000-00000000000a', 'Squat', '{}', true, 45);
+insert into public.planned_days (user_id, day, workout_id, name) values
+  ('00000000-0000-0000-0000-00000000000a', pg_temp.w(10), 923, 'Squat'),
+  ('00000000-0000-0000-0000-00000000000a', pg_temp.w(11), 923, 'Squat');
+insert into public.workout_moves (user_id, workout_id, from_on, to_on) values
+  ('00000000-0000-0000-0000-00000000000a', 923, pg_temp.w(11), null),
+  ('00000000-0000-0000-0000-00000000000a', 923, pg_temp.w(10), pg_temp.w(11));
+select pg_temp.done(923, pg_temp.w(11));
+select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.w(11), 1500);
 -- A move to Wednesday from Saturday, a day the workout is not planned on.
 insert into public.workout_moves (user_id, workout_id, from_on, to_on)
   values ('00000000-0000-0000-0000-00000000000a', 920, pg_temp.w(12), pg_temp.w(9));
@@ -170,6 +183,11 @@ select is(
   (select state::text from public.streak_states(pg_temp.w(9), pg_temp.w(9), current_date)),
   'done',
   'A move from a day the workout is not planned on does not count on the day it moved to'
+);
+select is(
+  (select state::text from public.streak_states(pg_temp.w(11), pg_temp.w(11), current_date)),
+  'done',
+  'A workout skipped on a day and moved there from another counts by the move'
 );
 
 reset role;
