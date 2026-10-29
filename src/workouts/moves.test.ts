@@ -39,6 +39,8 @@ describe('useMoveWorkout', () => {
       to_on: '2026-10-21',
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: MOVES_KEY });
+    // A moved workout counts on its new day.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-logs', 'days'] });
   });
 
   it('loads the moves again when the move is refused', async () => {
