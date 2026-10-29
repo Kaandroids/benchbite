@@ -8,6 +8,8 @@ export const ICONS = {
   account: { ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' },
   archive: { ios: 'archivebox', android: 'inventory_2', web: 'inventory_2' },
   arrow: { ios: 'arrow.right', android: 'arrow_forward', web: 'arrow_forward' },
+  arrowDown: { ios: 'arrow.down', android: 'arrow_downward', web: 'arrow_downward' },
+  arrowUp: { ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },

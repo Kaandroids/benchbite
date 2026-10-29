@@ -96,7 +96,25 @@
     "loggedOn": "{{date}} tarihinde girildi",
     "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene.",
     "decrease": "Kiloyu azalt",
-    "increase": "Kiloyu artır"
+    "increase": "Kiloyu artır",
+    "target": "Hedef {{weight}} {{unit}}",
+    "targetBy": "Hedef {{weight}} {{unit}} · {{date}}",
+    "change": {
+      "month": "Bir ayda {{weight}} {{unit}}",
+      "threeMonths": "3 ayda {{weight}} {{unit}}",
+      "sixMonths": "6 ayda {{weight}} {{unit}}",
+      "year": "Bir yılda {{weight}} {{unit}}"
+    },
+    "range": {
+      "month": "1A",
+      "threeMonths": "3A",
+      "sixMonths": "6A",
+      "year": "Yıl"
+    },
+    "rangeLabel": "Kilo aralığı",
+    "chart_one": "Kilon, {{count}} kayıt",
+    "chart_other": "Kilon, {{count}} kayıt boyunca",
+    "noneInRange": "Bu aralıkta kilo girilmedi."
   },
   "today": {
     "loading": "Yükleniyor",

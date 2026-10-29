@@ -96,7 +96,25 @@
     "loggedOn": "Logged on {{date}}",
     "saveError": "We couldn't save your weight. Check your connection and try again.",
     "decrease": "Decrease weight",
-    "increase": "Increase weight"
+    "increase": "Increase weight",
+    "target": "Target {{weight}} {{unit}}",
+    "targetBy": "Target {{weight}} {{unit}} · by {{date}}",
+    "change": {
+      "month": "{{weight}} {{unit}} in a month",
+      "threeMonths": "{{weight}} {{unit}} in 3 months",
+      "sixMonths": "{{weight}} {{unit}} in 6 months",
+      "year": "{{weight}} {{unit}} in a year"
+    },
+    "range": {
+      "month": "1M",
+      "threeMonths": "3M",
+      "sixMonths": "6M",
+      "year": "Year"
+    },
+    "rangeLabel": "Weight over",
+    "chart_one": "Your weight, {{count}} entry",
+    "chart_other": "Your weight over {{count}} entries",
+    "noneInRange": "No weight logged in this range."
   },
   "today": {
     "loading": "Loading",
