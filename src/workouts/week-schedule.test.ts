@@ -8,6 +8,7 @@ import {
   moveTargets,
   nextWorkouts,
   originOf,
+  skippedToday,
   startMove,
   upcomingWorkouts,
   weekSchedule,
@@ -139,6 +140,41 @@ describe('weekSchedule', () => {
     expect(summary(weekSchedule(SESSIONS, moves, [], WEDNESDAY))).toEqual(
       summary(weekSchedule(SESSIONS, [], [], WEDNESDAY)),
     );
+  });
+});
+
+describe('settled moves', () => {
+  it('leave a workout off the day it moved from, unlike a skip the user made', () => {
+    const schedule = weekSchedule(
+      SESSIONS,
+      [
+        { workoutId: 1, fromOn: '2026-10-19', toOn: null, settled: true },
+        { workoutId: 2, fromOn: '2026-10-20', toOn: null },
+      ],
+      [],
+      WEDNESDAY,
+    );
+    expect(summary(schedule).slice(0, 2)).toEqual([
+      { date: '2026-10-19', workouts: [], movedAway: [], extras: 0 },
+      { date: '2026-10-20', workouts: ['2:skipped'], movedAway: [], extras: 0 },
+    ]);
+  });
+});
+
+describe('skippedToday', () => {
+  it('tells a workout skipped today from one skipped another day', () => {
+    const schedule = weekSchedule(
+      [session(4, 3), session(5, 2)],
+      [
+        { workoutId: 4, fromOn: '2026-10-21', toOn: null },
+        { workoutId: 5, fromOn: '2026-10-20', toOn: null },
+      ],
+      [],
+      WEDNESDAY,
+    );
+    expect(skippedToday(schedule, 4, '2026-10-21')).toBe(true);
+    expect(skippedToday(schedule, 5, '2026-10-21')).toBe(false);
+    expect(skippedToday(schedule, 1, '2026-10-21')).toBe(false);
   });
 });
 

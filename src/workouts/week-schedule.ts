@@ -4,9 +4,16 @@ import type { WeekSession } from './workouts';
 
 /**
  * A workout moved from one of its days to another day of the same week, or skipped on it when
- * `toOn` is null. Days are YYYY-MM-DD on the device.
+ * `toOn` is null. Days are YYYY-MM-DD on the device. A settled move is one the database turned
+ * into a skip as the workout left the day it moved to (ADR 0041): it moved away, unlike a skip the
+ * user made (ADR 0044).
  */
-export type WorkoutMove = { workoutId: number; fromOn: string; toOn: string | null };
+export type WorkoutMove = {
+  workoutId: number;
+  fromOn: string;
+  toOn: string | null;
+  settled?: boolean;
+};
 
 /** A finished workout: which workout it was, and the day it started as YYYY-MM-DD. */
 export type FinishedWorkout = { workoutId: number | null; startedOn: string };
@@ -72,6 +79,10 @@ export function weekSchedule(
     const onDay = (item: WeekSession) => (item.on ? item.on === date : item.weekday === index + 1);
     for (const session of sessions.filter(onDay)) {
       const move = moveOf.get(`${session.workoutId}|${date}`);
+      // A move the database settled took the workout away from the day, with nowhere to show it.
+      if (move?.settled) {
+        continue;
+      }
       const to = move?.toOn ? dates.indexOf(move.toOn) : -1;
       // A workout that left the plan is not on a day still to come: its move there counts as a
       // skip of its day, as the database turns it into one.
@@ -262,6 +273,20 @@ export function canUndo(schedule: WeekSchedule, workoutId: number, fromOn: strin
           ofWorkout(workout) && workout.movedFrom === fromOn && workout.status === 'done',
       ),
     )
+  );
+}
+
+/**
+ * Whether the workout was skipped today, as seen on `today` as YYYY-MM-DD: starting it today undoes
+ * the skip, so that today keeps it, for the week and the streak alike (ADR 0044).
+ */
+export function skippedToday(schedule: WeekSchedule, workoutId: number, today: string): boolean {
+  return schedule.days.some(
+    (day) =>
+      day.date === today &&
+      day.workouts.some(
+        (workout) => workout.session.workoutId === workoutId && workout.status === 'skipped',
+      ),
   );
 }
 

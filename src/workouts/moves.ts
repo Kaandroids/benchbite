@@ -30,7 +30,7 @@ export function useWeekMoves(today: Date) {
     queryFn: async (): Promise<WorkoutMove[]> => {
       const { data, error } = await supabase
         .from('workout_moves')
-        .select('workout_id, from_on, to_on')
+        .select('workout_id, from_on, to_on, settled')
         .gte('from_on', toIsoDate(monday))
         .lte('from_on', toIsoDate(sunday));
       if (error) {
@@ -40,6 +40,7 @@ export function useWeekMoves(today: Date) {
         workoutId: row.workout_id,
         fromOn: row.from_on,
         toOn: row.to_on,
+        settled: row.settled,
       }));
     },
   });
