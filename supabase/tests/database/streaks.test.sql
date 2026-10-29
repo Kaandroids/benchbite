@@ -5,13 +5,15 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(40);
+select plan(43);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
   ('00000000-0000-0000-0000-00000000000c', 'c@example.com'),
-  ('00000000-0000-0000-0000-00000000000d', 'd@example.com');
+  ('00000000-0000-0000-0000-00000000000d', 'd@example.com'),
+  ('00000000-0000-0000-0000-00000000000e', 'e@example.com'),
+  ('00000000-0000-0000-0000-00000000000f', 'f@example.com');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -87,14 +89,23 @@ from generate_series(4, 6) d;
 select pg_temp.eat('00000000-0000-0000-0000-00000000000b', current_date - d, 2000)
 from generate_series(1, 2) d;
 
--- Users c and d, from twelve days ago, have eaten nothing. User d reads the streak for the first
--- time today; users b and c read it on their first day, with nothing to answer yet.
+-- User c, from five days ago, and users d and e, from twelve days ago, have eaten nothing. User
+-- f, from twelve days ago, ate to the target every day but ten days ago and yesterday. User d
+-- reads the streak for the first time today; the others read it on their first day, with
+-- nothing to answer yet.
 insert into public.planned_days_kept (user_id, through, started_on) values
-  ('00000000-0000-0000-0000-00000000000c', current_date - 1, current_date - 12),
-  ('00000000-0000-0000-0000-00000000000d', current_date - 1, current_date - 12);
+  ('00000000-0000-0000-0000-00000000000c', current_date - 1, current_date - 5),
+  ('00000000-0000-0000-0000-00000000000d', current_date - 1, current_date - 12),
+  ('00000000-0000-0000-0000-00000000000e', current_date - 1, current_date - 12),
+  ('00000000-0000-0000-0000-00000000000f', current_date - 1, current_date - 12);
 insert into public.user_streaks (user_id) values
   ('00000000-0000-0000-0000-00000000000b'),
-  ('00000000-0000-0000-0000-00000000000c');
+  ('00000000-0000-0000-0000-00000000000c'),
+  ('00000000-0000-0000-0000-00000000000e'),
+  ('00000000-0000-0000-0000-00000000000f');
+select pg_temp.eat('00000000-0000-0000-0000-00000000000f', current_date - d, 1000)
+from generate_series(2, 12) d
+where d <> 10;
 
 set local session_replication_role = origin;
 
@@ -245,13 +256,13 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
 
 select results_eq(
   $$ select count, cardinality(missed), saved_count from public.streak(current_date) $$,
-  $$ values (0, 12, 12) $$,
+  $$ values (0, 5, 5) $$,
   'Every missed day not answered is listed'
 );
 select is(
   (select count(*)::integer from public.streak_days),
-  4,
-  'Days that can no longer be logged are kept'
+  0,
+  'Days that can still be logged are not kept yet'
 );
 select throws_ok(
   $$ select public.answer_streak_break(current_date, true) $$,
@@ -269,8 +280,28 @@ select results_eq(
 );
 select is(
   (select count(*)::integer from public.streak_days),
-  12,
+  5,
   'Answering keeps every day through yesterday'
+);
+
+-- A break reaching back more than a week ends by itself (ADR 0045).
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000e');
+select results_eq(
+  $$ select count, freezes, missed from public.streak(current_date) $$,
+  $$ values (0, 3, '{}'::date[]) $$,
+  'A break reaching back more than a week ends by itself, without spending freezes'
+);
+select results_eq(
+  $$ select (select count(*)::integer from public.streak_days), answered_through
+     from public.user_streaks $$,
+  $$ values (12, current_date - 1) $$,
+  'The days of a break that ended by itself are answered and kept'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000f');
+select results_eq(
+  $$ select count, missed, saved_count from public.streak(current_date) $$,
+  $$ values (0, array[current_date - 1], 9) $$,
+  'An old break ends by itself, and a later missed day still asks to be answered'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');

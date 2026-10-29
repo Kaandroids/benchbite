@@ -1205,6 +1205,7 @@ export type Database = {
     Functions: {
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
+      answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
@@ -1239,6 +1240,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      calories_count: { Args: { kcal: number; target: number }; Returns: boolean };
       can_be_logged: {
         Args: { custom_food_id: number; food_id: string; recipe_id: number };
         Returns: boolean;
@@ -1265,12 +1267,22 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      day_calories: {
+        Args: { from_day: string; to_day: string };
+        Returns: {
+          day: string;
+          kcal: number;
+        }[];
+      };
       day_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
+          counts: boolean;
           day: string;
           done: boolean;
+          name: string;
           skipped: boolean;
+          type: Database['public']['Enums']['workout_type'];
           workout_id: number;
         }[];
       };
@@ -1318,6 +1330,7 @@ export type Database = {
         }[];
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
+      first_day_of_break: { Args: { today: string }; Returns: string };
       food_name_key: { Args: { name: string }; Returns: string };
       frequent_foods: {
         Args: { for_meal: Database['public']['Enums']['meal']; language: string };
@@ -1471,6 +1484,13 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      my_streak_states: {
+        Args: { first_open: string; today: string };
+        Returns: {
+          day: string;
+          state: Database['public']['Enums']['streak_state'];
+        }[];
+      };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       plan_by_weekdays: {
@@ -1614,6 +1634,16 @@ export type Database = {
           saved_count: number;
         }[];
       };
+      streak_break_days: {
+        Args: { days: string[]; today: string };
+        Returns: {
+          calories_count: boolean;
+          day: string;
+          eaten: number;
+          target: number;
+          workouts: Database['public']['CompositeTypes']['break_workout'][];
+        }[];
+      };
       streak_start: { Args: Record<PropertyKey, never>; Returns: string };
       streak_states: {
         Args: { from_day: string; to_day: string; today: string };
@@ -1750,6 +1780,12 @@ export type Database = {
       workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
     };
     CompositeTypes: {
+      break_workout: {
+        id: number | null;
+        name: string | null;
+        type: Database['public']['Enums']['workout_type'] | null;
+        skipped: boolean | null;
+      };
       nutrition_targets: {
         calories: number | null;
         protein_g: number | null;
