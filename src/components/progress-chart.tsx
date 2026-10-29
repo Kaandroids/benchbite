@@ -79,6 +79,20 @@ export function ticksOf(values: readonly number[], scale: Scale): number[] {
 }
 
 /**
+ * Whether a target is near enough the values to scale the chart to it: within twice their spread,
+ * or two units. A farther one would flatten the line, so it is pinned to the chart's edge instead.
+ */
+export function isNear(values: readonly number[], target: number): boolean {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const margin = Math.max(2 * (max - min), 2);
+  return target >= min - margin && target <= max + margin;
+}
+
+/** Up to how close to either end, in points, the middle date is left out. */
+const LABEL_ROOM = 60;
+
+/**
  * A value's progress as a line, oldest on the left: an exercise's over its workouts, evenly
  * spaced, or the weight over its days.
  */
@@ -97,10 +111,9 @@ export function ProgressChart({
   const [width, setWidth] = useState(0);
   const day = useShortDateFormat(new Date());
 
-  const ticks = ticksOf(
-    [...points.map((point) => point.value), ...(target ? [target.value] : [])],
-    scale,
-  );
+  const values = points.map((point) => point.value);
+  const targetNear = target !== undefined && values.length > 0 && isNear(values, target.value);
+  const ticks = ticksOf([...values, ...(target && targetNear ? [target.value] : [])], scale);
   const low = ticks[0] ?? 0;
   const high = ticks[ticks.length - 1] ?? low + 1;
   const y = (value: number) => {
@@ -116,12 +129,31 @@ export function ProgressChart({
       : byDate && span > 0
         ? AXIS + (((points[index]?.date.getTime() ?? first) - first) * (right - AXIS)) / span
         : AXIS + (index * (right - AXIS)) / (points.length - 1);
-  // The first and the last day, and the middle one when there is room between them.
-  const labelled = [
-    0,
-    ...(points.length >= 5 ? [Math.floor((points.length - 1) / 2)] : []),
-    points.length - 1,
-  ].filter((index, position, all) => all.indexOf(index) === position);
+  // The first and the last day, and the middle one when there is room between them: by date, the
+  // point nearest the middle day, which may still sit close to an end.
+  const middle = byDate
+    ? points.reduce(
+        (nearest, point, index) =>
+          Math.abs(point.date.getTime() - first - span / 2) <
+          Math.abs((points[nearest]?.date.getTime() ?? first) - first - span / 2)
+            ? index
+            : nearest,
+        0,
+      )
+    : Math.floor((points.length - 1) / 2);
+  const roomy = x(middle) - x(0) >= LABEL_ROOM && x(points.length - 1) - x(middle) >= LABEL_ROOM;
+  const labelled = [0, ...(points.length >= 5 && roomy ? [middle] : []), points.length - 1].filter(
+    (index, position, all) => all.indexOf(index) === position,
+  );
+  // A far target sits on the edge on its side of the line, with an arrow its way.
+  const targetBelow =
+    target !== undefined && values.length > 0 && target.value < Math.min(...values);
+  const targetY = !target ? 0 : targetNear ? y(target.value) : y(targetBelow ? low : high);
+  const targetLabel = !target
+    ? ''
+    : targetNear
+      ? target.label
+      : `${target.label} ${targetBelow ? '↓' : '↑'}`;
   const last = points[points.length - 1];
   const before = points[points.length - 2];
   // The last value goes above its point, or left of it when the line comes down from above; a
@@ -164,21 +196,21 @@ export function ProgressChart({
               <Line
                 x1={AXIS}
                 x2={width}
-                y1={y(target.value)}
-                y2={y(target.value)}
+                y1={targetY}
+                y2={targetY}
                 stroke={colors.success}
                 strokeWidth={1.5}
                 strokeDasharray="5 5"
               />
               <SvgText
                 x={width}
-                y={y(target.value) + (inverted ? 14 : -5)}
+                y={targetY + (inverted ? 14 : -5)}
                 textAnchor="end"
                 {...font}
                 fontFamily={fonts.extraBold}
                 fill={colors.success}
               >
-                {target.label}
+                {targetLabel}
               </SvgText>
             </>
           ) : null}
