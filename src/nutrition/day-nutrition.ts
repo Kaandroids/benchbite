@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
@@ -65,14 +65,21 @@ export const NUTRITION_DAYS_KEY = ['meal-entries', 'days'];
 
 /**
  * What was eaten on each day from `from` to `to`, at most a year, with the targets each day kept,
- * as seen on the device's `today` (ADR 0046); not loaded until `enabled`.
+ * as seen on the device's `today` (ADR 0046); not loaded until `enabled`. A chart whose range
+ * changes keeps the last days until the new ones load.
  */
-export function useDayNutrition(today: Date, from: Date, to: Date, enabled = true) {
+export function useDayNutrition(
+  today: Date,
+  from: Date,
+  to: Date,
+  { enabled = true, keepLast = false }: { enabled?: boolean; keepLast?: boolean } = {},
+) {
   const fromDay = toIsoDate(from);
   const toDay = toIsoDate(to);
   return useQuery({
     queryKey: [...NUTRITION_DAYS_KEY, fromDay, toDay],
     enabled,
+    placeholderData: keepLast ? keepPreviousData : undefined,
     queryFn: async (): Promise<DayNutrition[]> => {
       const { data, error } = await supabase.rpc('day_nutrition', {
         from_day: fromDay,
@@ -118,5 +125,5 @@ function dayNutritionOf(row: DayNutritionRow): DayNutrition {
  */
 export function useWeekNutrition(today: Date, week: Date, enabled = true) {
   const monday = weekStart(week);
-  return useDayNutrition(today, monday, addDays(monday, 6), enabled);
+  return useDayNutrition(today, monday, addDays(monday, 6), { enabled });
 }
