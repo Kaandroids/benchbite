@@ -1,14 +1,23 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Card, type CardProps } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
-import { toIsoDate, useDayFormat, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
+import { TextLink } from '@/components/ui/text-link';
+import {
+  fromIsoDate,
+  toIsoDate,
+  useDayFormat,
+  useWeekdayFormat,
+  useWeekRangeFormat,
+  weekdayOf,
+} from '@/i18n/dates';
 import { StreakBadge } from '@/streak/streak-badge';
-import type { Streak } from '@/streak/streak';
+import type { DayStatus, Streak } from '@/streak/streak';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
@@ -22,6 +31,9 @@ import {
 const RING_SIZE = 32;
 const REST_SIZE = 8;
 const BADGE_SIZE = 18;
+const STREAK_MARK_SIZE = 13;
+/** Days before the user's first day, which did not count yet. */
+const BEFORE_START_OPACITY = 0.45;
 
 type WeekCardProps = {
   /** How the card comes in, from the screen that places it. */
@@ -30,8 +42,22 @@ type WeekCardProps = {
   streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
-  /** Opens a day with workouts, or with workouts that moved away from it. */
-  onDayPress: (day: ScheduleDay) => void;
+  /** How each day of the week counted for the streak, by its date. */
+  streakDays?: Record<string, DayStatus>;
+  /** The user's first day, YYYY-MM-DD; the days before it are faded. */
+  startedOn?: string;
+  /**
+   * Opens a day with workouts, or with workouts that moved away from it; a past week's days open
+   * nothing (ADR 0043).
+   */
+  onDayPress?: (day: ScheduleDay) => void;
+  /** Shows the week before; absent on the first week. */
+  onPrevious?: () => void;
+  /** Shows the week after, and back to today; absent on this week. */
+  onNext?: () => void;
+  onBackToToday?: () => void;
+  /** Shows a spinner in place of the days, while a week paged to loads. */
+  loading?: boolean;
   /** Shown under the days, inside the card. */
   children?: ReactNode;
 };
@@ -142,6 +168,21 @@ function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
   );
 }
 
+/** Under a day's name: a flame when it counted for the streak, a snowflake when it was frozen. */
+function StreakMark({ status }: { status: DayStatus | undefined }) {
+  return (
+    <View testID={status ? `streak-${status}` : undefined} style={styles.streakMark}>
+      {status ? (
+        <Icon
+          name={status === 'done' ? 'flame' : 'snowflake'}
+          size={STREAK_MARK_SIZE}
+          color={status === 'done' ? 'primary' : 'frozen'}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 /** An SVG arc of the given share of a circle, clockwise from the top. */
 function arc(radius: number, share: number): string {
   const center = RING_SIZE / 2;
@@ -152,24 +193,39 @@ function arc(radius: number, share: number): string {
 }
 
 /**
- * Today's date, the streak and the week from Monday to Sunday: a ring for each day with workouts,
- * which fills as they are done, and a dot for each rest day. Moved, missed, skipped and extra
- * workouts each have their own mark (ADR 0028).
+ * The week from Monday to Sunday under its title and the streak: a ring for each day with
+ * workouts, which fills as they are done, and a dot for each rest day. Moved, missed, skipped and
+ * extra workouts each have their own mark (ADR 0028), and each day that counted for the streak a
+ * flame or a snowflake under it (ADR 0042). This week is titled with today's date; a past week,
+ * reached with the arrows back to the user's first week, with its days (ADR 0043).
  */
 export function WeekCard({
   today,
   streak,
   schedule,
+  streakDays = {},
+  startedOn,
   onDayPress,
+  onPrevious,
+  onNext,
+  onBackToToday,
+  loading = false,
   children,
   entering,
 }: WeekCardProps) {
   const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
   const weekdayName = useWeekdayFormat('short');
   const longWeekday = useWeekdayFormat();
   const workoutName = useWorkoutName();
   const todayOn = toIsoDate(today);
   const formatDay = useDayFormat();
+  const weekRange = useWeekRangeFormat();
+  const monday = schedule.days[0]!.date;
+  const past = schedule.days[6]!.date < todayOn;
+  // A user still in their first week has no other week to page to.
+  const pages = onPrevious !== undefined || onNext !== undefined;
+  const firstWeek = startedOn !== undefined && startedOn >= monday;
 
   const labelOf = (day: ScheduleDay) =>
     [
@@ -186,49 +242,113 @@ export function WeekCard({
         t('today.week.movedTo', { day: longWeekday(weekdayOf(away.toOn)) }),
       ]),
       ...(day.extras > 0 ? [t('today.week.extra', { count: day.extras })] : []),
+      ...(streakDays[day.date] ? [t(`today.week.streak.${streakDays[day.date]!}`)] : []),
     ].join(', ');
+
+  const progress = [
+    ...(schedule.planned > 0 && !loading
+      ? [
+          t(past ? 'today.week.progressPast' : 'today.week.progress', {
+            done: schedule.done,
+            count: schedule.planned,
+          }),
+        ]
+      : []),
+    ...(firstWeek ? [t('today.week.firstWeek')] : []),
+  ].join(' · ');
 
   return (
     <Card entering={entering}>
-      <View style={styles.header}>
+      <View style={[styles.header, { gap: spacing.xs }]}>
+        {pages ? (
+          <RoundIconButton
+            icon="left"
+            color="text"
+            background="surface"
+            label={t('today.week.previous')}
+            disabled={!onPrevious}
+            onPress={() => onPrevious?.()}
+          />
+        ) : null}
         <View style={styles.flex}>
-          <Text variant="headline" accessibilityRole="header">
-            {formatDay(today)}
+          <Text
+            variant="headline"
+            accessibilityRole="header"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {past ? weekRange(fromIsoDate(monday)) : formatDay(today)}
           </Text>
-          {schedule.planned > 0 ? (
-            <Text variant="caption" color="textMuted" style={styles.bold}>
-              {t('today.week.progress', { done: schedule.done, count: schedule.planned })}
-            </Text>
+          {progress || onBackToToday ? (
+            <View style={[styles.progress, { gap: spacing.sm }]}>
+              {progress ? (
+                <Text variant="caption" color="textMuted" style={styles.bold}>
+                  {progress}
+                </Text>
+              ) : null}
+              {onBackToToday ? (
+                <TextLink label={t('today.week.backToToday')} onPress={onBackToToday} />
+              ) : null}
+            </View>
           ) : null}
         </View>
         <StreakBadge streak={streak} />
+        {pages ? (
+          <RoundIconButton
+            icon="forward"
+            color="text"
+            background="surface"
+            label={t('today.week.next')}
+            disabled={!onNext}
+            onPress={() => onNext?.()}
+          />
+        ) : null}
       </View>
-      <View style={styles.week}>
-        {schedule.days.map((day) => {
-          const isToday = day.date === todayOn;
-          const opens = hasWorkouts(day);
-          return (
-            <Pressable
-              key={day.date}
-              accessible
-              accessibilityRole={opens ? 'button' : undefined}
-              accessibilityLabel={labelOf(day)}
-              accessibilityHint={opens ? t('today.week.open') : undefined}
-              accessibilityState={{ selected: isToday }}
-              onPress={opens ? () => onDayPress(day) : undefined}
-              style={({ pressed }) => [styles.day, { opacity: pressed ? 0.6 : 1 }]}
-            >
-              <DayMark day={day} state={dayState(day, todayOn)} />
-              <Text
-                variant={isToday ? 'captionStrong' : 'caption'}
-                color={isToday ? 'primaryText' : 'textMuted'}
-                style={isToday ? null : styles.bold}
+      <View>
+        <View
+          // Kept in place while the week loads, so that the card does not change its height.
+          style={[styles.week, loading ? styles.hidden : null]}
+          accessibilityElementsHidden={loading}
+          importantForAccessibility={loading ? 'no-hide-descendants' : 'auto'}
+        >
+          {schedule.days.map((day) => {
+            const isToday = day.date === todayOn;
+            const opens = onDayPress !== undefined && hasWorkouts(day);
+            const beforeStart = startedOn !== undefined && day.date < startedOn;
+            return (
+              <Pressable
+                key={day.date}
+                accessible
+                accessibilityRole={opens ? 'button' : undefined}
+                accessibilityLabel={labelOf(day)}
+                accessibilityHint={opens ? t('today.week.open') : undefined}
+                accessibilityState={{ selected: isToday }}
+                onPress={opens ? () => onDayPress(day) : undefined}
+                style={({ pressed }) => [
+                  styles.day,
+                  { opacity: beforeStart ? BEFORE_START_OPACITY : pressed ? 0.6 : 1 },
+                ]}
               >
-                {weekdayName(day.weekday)}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <DayMark day={day} state={dayState(day, todayOn)} />
+                <Text
+                  variant={isToday ? 'captionStrong' : 'caption'}
+                  color={isToday ? 'primaryText' : 'textMuted'}
+                  style={isToday ? null : styles.bold}
+                >
+                  {weekdayName(day.weekday)}
+                </Text>
+                <StreakMark status={streakDays[day.date]} />
+              </Pressable>
+            );
+          })}
+        </View>
+        {loading ? (
+          <ActivityIndicator
+            style={StyleSheet.absoluteFill}
+            color={colors.primary}
+            accessibilityLabel={t('today.loading')}
+          />
+        ) : null}
       </View>
       {children}
     </Card>
@@ -238,8 +358,12 @@ export function WeekCard({
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+  },
+  progress: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
   },
   flex: {
     flex: 1,
@@ -250,10 +374,19 @@ const styles = StyleSheet.create({
   week: {
     flexDirection: 'row',
   },
+  hidden: {
+    opacity: 0,
+  },
   day: {
     flex: 1,
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+  },
+  streakMark: {
+    width: STREAK_MARK_SIZE,
+    height: STREAK_MARK_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mark: {
     width: RING_SIZE,

@@ -117,4 +117,81 @@ describe('WeekCard', () => {
     );
     expect(screen.getByLabelText('Tue 20')).not.toHaveProp('accessibilityRole', 'button');
   });
+
+  it('marks the days that counted for the streak, and fades the days before the first', async () => {
+    await render(
+      <WeekCard
+        today={WEDNESDAY}
+        streak={NO_STREAK}
+        schedule={weekSchedule([], [], [], WEDNESDAY)}
+        streakDays={{ '2026-10-20': 'done', '2026-10-21': 'frozen' }}
+        startedOn="2026-10-20"
+      />,
+    );
+    expect(screen.getByLabelText('Tue 20, counted for the streak')).toBeTruthy();
+    expect(screen.getByLabelText('Wed 21, frozen')).toBeTruthy();
+    expect(screen.getByTestId('streak-done')).toBeTruthy();
+    expect(screen.getByTestId('streak-frozen')).toBeTruthy();
+    expect(screen.getByLabelText('Mon 19')).toHaveStyle({ opacity: 0.45 });
+    expect(screen.getByLabelText('Thu 22')).toHaveStyle({ opacity: 1 });
+    expect(screen.getByText('your first week')).toBeTruthy();
+  });
+
+  it('titles a past week with its days, opens none of them and pages from it', async () => {
+    const onPrevious = jest.fn();
+    const onNext = jest.fn();
+    const onBackToToday = jest.fn();
+    const lastWeek = new Date(2026, 9, 14, 9, 0);
+    await render(
+      <WeekCard
+        today={WEDNESDAY}
+        streak={NO_STREAK}
+        schedule={weekSchedule(
+          [session(1, 1, 'push'), session(2, 3, 'pull')],
+          [],
+          [{ workoutId: 1, startedOn: '2026-10-12' }],
+          WEDNESDAY,
+          lastWeek,
+        )}
+        onPrevious={onPrevious}
+        onNext={onNext}
+        onBackToToday={onBackToToday}
+      />,
+    );
+    expect(screen.getByText('October 12 – 18')).toBeTruthy();
+    expect(screen.getByText('1 of 2 workouts')).toBeTruthy();
+    expect(screen.getByLabelText('Wed 14, Pull, missed').props.accessibilityRole).toBeUndefined();
+    await fireEvent.press(screen.getByLabelText('Previous week'));
+    await fireEvent.press(screen.getByLabelText('Next week'));
+    await fireEvent.press(screen.getByText('Back to today'));
+    expect(onPrevious).toHaveBeenCalled();
+    expect(onNext).toHaveBeenCalled();
+    expect(onBackToToday).toHaveBeenCalled();
+  });
+
+  it('cannot page back from the first week', async () => {
+    await render(
+      <WeekCard
+        today={WEDNESDAY}
+        streak={NO_STREAK}
+        schedule={weekSchedule([], [], [], WEDNESDAY)}
+        onNext={jest.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('Previous week')).toBeDisabled();
+    expect(screen.getByLabelText('Next week')).toBeEnabled();
+  });
+
+  it('hides the days while a week loads', async () => {
+    await render(
+      <WeekCard
+        today={WEDNESDAY}
+        streak={NO_STREAK}
+        schedule={weekSchedule([], [], [], WEDNESDAY)}
+        loading
+      />,
+    );
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+    expect(screen.queryByLabelText('Mon 19')).toBeNull();
+  });
 });

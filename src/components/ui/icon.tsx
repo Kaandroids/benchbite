@@ -34,6 +34,7 @@ export const ICONS = {
   heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
   home: { ios: 'house', android: 'home', web: 'home' },
   info: { ios: 'info', android: 'info_i', web: 'info_i' },
+  left: { ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' },
   layers: { ios: 'square.stack.3d.up', android: 'layers', web: 'layers' },
   logOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout', web: 'logout' },
   man: { ios: 'figure.stand', android: 'man', web: 'man' },
