@@ -56,8 +56,8 @@ describe('useStreak', () => {
 
   it('reads the freezes the user has', async () => {
     mockStreak();
+    // Not checked before it loads: the mocked load can finish before the first render is read.
     const { result } = await renderHook(() => useStreak(THURSDAY).freezes);
-    expect(result.current).toBeUndefined();
     await waitFor(() => expect(result.current).toBe(3));
   });
 
