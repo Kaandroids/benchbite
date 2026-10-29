@@ -1,11 +1,10 @@
-import { useScrollToTop } from 'expo-router';
-import { useRef, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, type ScrollViewInstance } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { spacing as spacingTokens, useTheme } from '@/theme';
 
-import { useTabBarSpace } from './tab-bar';
+import { useTabScroll } from './tab-space';
 
 type TabScreenProps = {
   /** What pulling down loads again. */
@@ -21,10 +20,7 @@ type TabScreenProps = {
 export function TabScreen({ queries, children, gap = 'lg', overlay }: TabScreenProps) {
   const { colors, spacing } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-  const barSpace = useTabBarSpace();
-  // Tapping the open tab again scrolls back to the top.
-  const scrollView = useRef<ScrollViewInstance>(null);
-  useScrollToTop(scrollView);
+  const { ref, barSpace } = useTabScroll();
   const refresh = async () => {
     setRefreshing(true);
     try {
@@ -38,7 +34,7 @@ export function TabScreen({ queries, children, gap = 'lg', overlay }: TabScreenP
     // The tab bar floats over the bottom, so the content scrolls past it.
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        ref={scrollView}
+        ref={ref}
         contentContainerStyle={[
           styles.content,
           { padding: spacing.xl, paddingBottom: barSpace + spacing.xl, gap: spacing[gap] },

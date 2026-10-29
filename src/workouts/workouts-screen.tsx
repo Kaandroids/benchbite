@@ -1,18 +1,11 @@
-import { router, useScrollToTop } from 'expo-router';
-import { useRef, type ReactNode } from 'react';
+import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  type ScrollViewInstance,
-} from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
-import { useTabBarSpace } from '@/components/tab-bar';
+import { useTabScroll } from '@/components/tab-space';
 import { TabHeader } from '@/components/tab-header';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -33,10 +26,7 @@ import { useWorkoutLimits, useWorkouts } from './workouts';
 export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const barSpace = useTabBarSpace();
-  // Tapping the open tab again scrolls back to the top.
-  const scrollView = useRef<ScrollViewInstance>(null);
-  useScrollToTop(scrollView);
+  const { ref, barSpace } = useTabScroll();
   const workouts = useWorkouts();
   const limits = useWorkoutLimits();
   const session = useActiveSession(useUserId());
@@ -58,7 +48,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
     // The tab bar floats over the bottom, so the content scrolls past it.
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        ref={scrollView}
+        ref={ref}
         contentContainerStyle={[
           styles.content,
           { padding: spacing.xl, paddingBottom: barSpace + spacing.xl, gap: spacing.md },
