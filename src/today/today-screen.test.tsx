@@ -125,6 +125,15 @@ const finishedOn = (...dates: string[]): FinishedWorkout[] =>
 
 const answer = jest.fn();
 
+/** A missed day that only its meals kept from counting. */
+const noMeals = (day: string) => ({
+  day,
+  workouts: [],
+  eaten: 0,
+  target: 2000,
+  caloriesCount: false,
+});
+
 /** The streak with a break to answer, or none. */
 function mockStreak(streakBreak: StreakBreak | null) {
   jest.mocked(useStreak).mockReturnValue({
@@ -589,7 +598,11 @@ describe('moving workouts', () => {
 
   it('asks to answer a break of the streak, and says how a freeze kept it', async () => {
     mockData({});
-    mockStreak({ missed: ['2026-10-20'], freezes: 3, savedCount: 6 });
+    mockStreak({
+      days: [noMeals('2026-10-20')],
+      freezes: 3,
+      savedCount: 6,
+    });
     await render(<TodayScreen />);
     expect(screen.getByText('Your streak broke')).toBeTruthy();
     expect(screen.getByText("Tuesday, October 20 didn't count.")).toBeTruthy();
@@ -608,9 +621,13 @@ describe('moving workouts', () => {
 
   it('opens a missed day to log, out of the way until the tab shows again', async () => {
     mockData({});
-    mockStreak({ missed: ['2026-10-20'], freezes: 3, savedCount: 6 });
+    mockStreak({
+      days: [noMeals('2026-10-20')],
+      freezes: 3,
+      savedCount: 6,
+    });
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByRole('link', { name: 'Log Tue, Oct 20' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Log Tue, Oct 20' }));
     expect(router.navigate).toHaveBeenCalledWith({
       pathname: '/nutrition',
       params: { day: '2026-10-20', at: expect.any(String) },
@@ -620,14 +637,22 @@ describe('moving workouts', () => {
 
   it('lets a closed break wait, and asks again once another day is missed', async () => {
     mockData({});
-    mockStreak({ missed: ['2026-10-19'], freezes: 3, savedCount: 6 });
+    mockStreak({
+      days: [noMeals('2026-10-19')],
+      freezes: 3,
+      savedCount: 6,
+    });
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByText('Your streak broke')).toBeNull();
     await screen.rerender(<TodayScreen />);
     expect(screen.queryByText('Your streak broke')).toBeNull();
 
-    mockStreak({ missed: ['2026-10-19', '2026-10-20'], freezes: 3, savedCount: 7 });
+    mockStreak({
+      days: [noMeals('2026-10-19'), noMeals('2026-10-20')],
+      freezes: 3,
+      savedCount: 7,
+    });
     await screen.rerender(<TodayScreen />);
     expect(screen.getByText('Your streak broke')).toBeTruthy();
   });

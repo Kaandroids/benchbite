@@ -144,6 +144,7 @@ export function TodayScreen() {
             <BreakSheet
               streakBreak={streakBreak}
               today={today}
+              schedule={schedule}
               onLog={prompt.log}
               onAnswered={prompt.setMessage}
             />

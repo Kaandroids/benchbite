@@ -193,8 +193,6 @@
       "notEnough_one": "You have {{count}} freeze: not enough to cover them all.",
       "notEnough_other": "You have {{count}} freezes: not enough to cover them all.",
       "noFreezes": "You have no freezes left.",
-      "forgot": "Forgot to log a meal?",
-      "forgotHint": "Log it, and the day may still count.",
       "log": "Log it",
       "logDay": "Log {{day}}",
       "tooLate": "Can no longer be logged",
@@ -210,7 +208,17 @@
       "kept_one": "Streak kept: {{day}} is frozen. {{count}} freeze left.",
       "kept_other": "Streak kept: {{day}} is frozen. {{count}} freezes left.",
       "keptDays_one": "Streak kept: {{days}} days frozen. {{count}} freeze left.",
-      "keptDays_other": "Streak kept: {{days}} days frozen. {{count}} freezes left."
+      "keptDays_other": "Streak kept: {{days}} days frozen. {{count}} freezes left.",
+      "notDone": "{{name}} not done",
+      "skipped": "{{name}} skipped",
+      "postpone": "Postpone",
+      "postponeLabel": "Postpone {{name}}",
+      "cannotMove": "Can no longer move",
+      "noMeals": "No meals logged",
+      "over": "Over the target by {{kcal}} kcal",
+      "onlyFreeze": "Only a freeze",
+      "moved": "{{name}} moved to {{day}}.",
+      "movedToday": "{{name}} moved to today."
     }
   },
   "nutrition": {

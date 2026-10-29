@@ -4,7 +4,34 @@ import { useSyncExternalStore } from 'react';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
-import { NO_STREAK, STREAK_KEY, type DayStatus, type Streak, type StreakBreak } from './streak';
+import {
+  NO_STREAK,
+  STREAK_KEY,
+  type DayStatus,
+  type MissedDay,
+  type Streak,
+  type StreakBreak,
+} from './streak';
+
+/** Why each missed day of a break did not count (streak_break_days()). */
+async function fetchMissedDays(missed: string[], today: string): Promise<MissedDay[]> {
+  const { data, error } = await supabase.rpc('streak_break_days', { days: missed, today });
+  if (error) {
+    throw error;
+  }
+  return data.map((row) => ({
+    day: row.day,
+    workouts: row.workouts.map((workout) => ({
+      id: workout.id as number,
+      name: workout.name,
+      type: workout.type,
+      skipped: workout.skipped as boolean,
+    })),
+    eaten: row.eaten,
+    target: row.target,
+    caloriesCount: row.calories_count,
+  }));
+}
 
 // In development, the component gallery can show a sample on the Today tab instead.
 let sample: Streak | null = null;
@@ -50,7 +77,14 @@ export function useStreak(today: Date) {
       const { count, counted_today, freezes, missed, saved_count } = streak.data;
       return {
         streak: { count, doneToday: counted_today, days },
-        streakBreak: missed.length > 0 ? { missed, freezes, savedCount: saved_count } : null,
+        streakBreak:
+          missed.length > 0
+            ? {
+                days: await fetchMissedDays(missed, todayOn),
+                freezes,
+                savedCount: saved_count,
+              }
+            : null,
       };
     },
   });

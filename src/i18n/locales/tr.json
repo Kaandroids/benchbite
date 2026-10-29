@@ -193,8 +193,6 @@
       "notEnough_one": "{{count}} freeze'in var: hepsini kapatmaya yetmiyor.",
       "notEnough_other": "{{count}} freeze'in var: hepsini kapatmaya yetmiyor.",
       "noFreezes": "Hiç freeze'in kalmadı.",
-      "forgot": "Yemek kaydetmeyi mi unuttun?",
-      "forgotHint": "Kaydet, gün yine de sayılabilir.",
       "log": "Kaydet",
       "logDay": "{{day}} gününü kaydet",
       "tooLate": "Artık kaydedilemez",
@@ -210,7 +208,17 @@
       "kept_one": "Seri korundu: {{day}} donduruldu. {{count}} freeze kaldı.",
       "kept_other": "Seri korundu: {{day}} donduruldu. {{count}} freeze kaldı.",
       "keptDays_one": "Seri korundu: {{days}} gün donduruldu. {{count}} freeze kaldı.",
-      "keptDays_other": "Seri korundu: {{days}} gün donduruldu. {{count}} freeze kaldı."
+      "keptDays_other": "Seri korundu: {{days}} gün donduruldu. {{count}} freeze kaldı.",
+      "notDone": "{{name}} yapılmadı",
+      "skipped": "{{name}} atlandı",
+      "postpone": "Ertele",
+      "postponeLabel": "{{name}} antrenmanını ertele",
+      "cannotMove": "Artık ertelenemez",
+      "noMeals": "Yemek kaydı yok",
+      "over": "Hedefin {{kcal}} kcal üstünde",
+      "onlyFreeze": "Sadece freeze ile",
+      "moved": "{{name}} ertelendi: {{day}}.",
+      "movedToday": "{{name}} bugüne ertelendi."
     }
   },
   "nutrition": {

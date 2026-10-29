@@ -1,20 +1,56 @@
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen } from '@/test/render';
+
+import { useMoveWorkout } from '@/workouts/moves';
+import { weekSchedule } from '@/workouts/week-schedule';
+import type { WeekSession } from '@/workouts/workouts';
 
 import { BreakSheet } from './break-sheet';
+import type { MissedDay, StreakBreak } from './streak';
 import { useAnswerBreak } from './use-streak';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./use-streak', () => ({ useAnswerBreak: jest.fn() }));
+jest.mock('@/workouts/moves', () => ({ useMoveWorkout: jest.fn() }));
 
 // A Thursday.
 const TODAY = new Date(2026, 9, 29, 9, 0);
 const answer = jest.fn();
+const move = jest.fn();
+
+// Lower body on Wednesday of this week, not done.
+const LOWER: WeekSession = {
+  workoutId: 7,
+  weekday: 3,
+  name: 'Lower body',
+  type: null,
+  exercises: [],
+  estimatedMinutes: 45,
+};
+const SCHEDULE = weekSchedule([LOWER], [], [], TODAY);
+
+/** A missed day that only its meals kept from counting, unless said otherwise. */
+const missedDay = (day: string, change: Partial<MissedDay> = {}): MissedDay => ({
+  day,
+  workouts: [],
+  eaten: 0,
+  target: 2000,
+  caloriesCount: false,
+  ...change,
+});
+const breakOf = (days: MissedDay[], freezes: number, savedCount: number): StreakBreak => ({
+  days,
+  freezes,
+  savedCount,
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest
     .mocked(useAnswerBreak)
     .mockReturnValue({ mutate: answer, isPending: false, isError: false } as never);
+  jest
+    .mocked(useMoveWorkout)
+    .mockReturnValue({ mutateAsync: move, isPending: false, isError: false } as never);
 });
 
 describe('BreakSheet', () => {
@@ -22,8 +58,9 @@ describe('BreakSheet', () => {
     const onAnswered = jest.fn();
     await render(
       <BreakSheet
-        streakBreak={{ missed: ['2026-10-26', '2026-10-27'], freezes: 3, savedCount: 9 }}
+        streakBreak={breakOf([missedDay('2026-10-26'), missedDay('2026-10-27')], 3, 9)}
         today={TODAY}
+        schedule={SCHEDULE}
         onLog={jest.fn()}
         onAnswered={onAnswered}
       />,
@@ -40,8 +77,9 @@ describe('BreakSheet', () => {
     const onAnswered = jest.fn();
     await render(
       <BreakSheet
-        streakBreak={{ missed: ['2026-10-28'], freezes: 1, savedCount: 4 }}
+        streakBreak={breakOf([missedDay('2026-10-28')], 1, 4)}
         today={TODAY}
+        schedule={SCHEDULE}
         onLog={jest.fn()}
         onAnswered={onAnswered}
       />,
@@ -56,12 +94,13 @@ describe('BreakSheet', () => {
     const onLog = jest.fn();
     await render(
       <BreakSheet
-        streakBreak={{
-          missed: ['2026-10-19', '2026-10-20', '2026-10-26', '2026-10-27'],
-          freezes: 3,
-          savedCount: 14,
-        }}
+        streakBreak={breakOf(
+          ['2026-10-19', '2026-10-20', '2026-10-26', '2026-10-27'].map((day) => missedDay(day)),
+          3,
+          14,
+        )}
         today={TODAY}
+        schedule={SCHEDULE}
         onLog={onLog}
         onAnswered={jest.fn()}
       />,
@@ -71,7 +110,7 @@ describe('BreakSheet', () => {
     ).toBeTruthy();
     expect(screen.queryByRole('button', { name: /freeze/ })).toBeNull();
     expect(screen.getAllByText('Can no longer be logged')).toHaveLength(2);
-    await fireEvent.press(screen.getByRole('link', { name: 'Log Mon, Oct 26' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Log Mon, Oct 26' }));
     expect(onLog).toHaveBeenCalledWith('2026-10-26');
     await fireEvent.press(screen.getByRole('button', { name: 'Start a new streak' }));
     expect(answer).toHaveBeenCalledWith({ today: TODAY, useFreezes: false }, expect.anything());
@@ -80,8 +119,9 @@ describe('BreakSheet', () => {
   it('says when there are no freezes left, and keeps one day in the singular', async () => {
     await render(
       <BreakSheet
-        streakBreak={{ missed: ['2026-10-28'], freezes: 0, savedCount: 1 }}
+        streakBreak={breakOf([missedDay('2026-10-28')], 0, 1)}
         today={TODAY}
+        schedule={SCHEDULE}
         onLog={jest.fn()}
         onAnswered={jest.fn()}
       />,
@@ -95,12 +135,102 @@ describe('BreakSheet', () => {
   it('keeps a single day in the singular', async () => {
     await render(
       <BreakSheet
-        streakBreak={{ missed: ['2026-10-28'], freezes: 1, savedCount: 1 }}
+        streakBreak={breakOf([missedDay('2026-10-28')], 1, 1)}
         today={TODAY}
+        schedule={SCHEDULE}
         onLog={jest.fn()}
         onAnswered={jest.fn()}
       />,
     );
     expect(screen.getByRole('button', { name: 'Use 1 freeze, keep 1 day' })).toBeTruthy();
+  });
+
+  it('says what kept each day, and offers to postpone a workout of this week', async () => {
+    const onAnswered = jest.fn();
+    await render(
+      <BreakSheet
+        streakBreak={breakOf(
+          [
+            missedDay('2026-10-25', {
+              workouts: [{ id: 3, name: 'Push', type: null, skipped: false }],
+              eaten: 1500,
+              caloriesCount: true,
+            }),
+            missedDay('2026-10-28', {
+              workouts: [{ id: 7, name: 'Lower body', type: null, skipped: false }],
+              eaten: 2240,
+            }),
+          ],
+          3,
+          9,
+        )}
+        today={TODAY}
+        schedule={SCHEDULE}
+        onLog={jest.fn()}
+        onAnswered={onAnswered}
+      />,
+    );
+    expect(screen.getByText('Push not done')).toBeTruthy();
+    expect(screen.getByText('Can no longer move')).toBeTruthy();
+    expect(screen.getByText('Lower body not done')).toBeTruthy();
+    expect(screen.getByText('Over the target by 240 kcal')).toBeTruthy();
+    expect(screen.getByText('Only a freeze')).toBeTruthy();
+
+    let saved: () => void = () => {};
+    move.mockReturnValue(new Promise<void>((resolve) => (saved = resolve)));
+    await fireEvent.press(screen.getByRole('button', { name: 'Postpone Lower body' }));
+    await fireEvent.press(screen.getByLabelText('Move Lower body to Today'));
+    expect(move).toHaveBeenCalledWith({ workoutId: 7, fromOn: '2026-10-28', toOn: '2026-10-29' });
+
+    // The moves reload first: the workout left Wednesday, but its row keeps the chosen day.
+    jest.mocked(useMoveWorkout).mockReturnValue({
+      mutateAsync: move,
+      isPending: true,
+      isError: false,
+      variables: { workoutId: 7, fromOn: '2026-10-28', toOn: '2026-10-29' },
+    } as never);
+    await screen.rerender(
+      <BreakSheet
+        streakBreak={breakOf(
+          [
+            missedDay('2026-10-28', {
+              workouts: [{ id: 7, name: 'Lower body', type: null, skipped: false }],
+              eaten: 2240,
+            }),
+          ],
+          3,
+          9,
+        )}
+        today={TODAY}
+        schedule={weekSchedule(
+          [LOWER],
+          [{ workoutId: 7, fromOn: '2026-10-28', toOn: '2026-10-29' }],
+          [],
+          TODAY,
+        )}
+        onLog={jest.fn()}
+        onAnswered={onAnswered}
+      />,
+    );
+    expect(screen.queryByText('Can no longer move')).toBeNull();
+    expect(screen.getByLabelText('Move Lower body to Today')).toBeSelected();
+
+    // Said once saved, though the sheet is gone by then.
+    await screen.unmount();
+    await act(async () => saved());
+    expect(onAnswered).toHaveBeenCalledWith('Lower body moved to today.');
+  });
+
+  it('rounds how far over the target up', async () => {
+    await render(
+      <BreakSheet
+        streakBreak={breakOf([missedDay('2026-10-28', { eaten: 2000.4 })], 1, 2)}
+        today={TODAY}
+        schedule={SCHEDULE}
+        onLog={jest.fn()}
+        onAnswered={jest.fn()}
+      />,
+    );
+    expect(screen.getByText('Over the target by 1 kcal')).toBeTruthy();
   });
 });

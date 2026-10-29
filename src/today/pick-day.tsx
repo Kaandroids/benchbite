@@ -17,7 +17,7 @@ import { useMoveWorkout } from '@/workouts/moves';
 import { moveTargets, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
-import { MoveError } from './move-error';
+import { MoveError } from '@/workouts/move-error';
 
 type PickDayProps = {
   schedule: WeekSchedule;

@@ -13,7 +13,7 @@ export function useBreakPrompt(streakBreak: StreakBreak | null) {
   const [away, setAway] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   useFocusEffect(useCallback(() => setAway(false), []));
-  const key = streakBreak?.missed.join() ?? null;
+  const key = streakBreak?.days.map(({ day }) => day).join() ?? null;
 
   return {
     /** Whether the break shows, once nothing else is in the way. */

@@ -1,40 +1,48 @@
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Card, listDivider } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { fromIsoDate, useDayFormat, useWeekdayDateFormat } from '@/i18n/dates';
+import { fromIsoDate, useDayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { canLog } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
+import type { WeekSchedule } from '@/workouts/week-schedule';
 
+import { MissedDayRows } from './missed-day';
 import type { StreakBreak } from './streak';
 import { useAnswerBreak } from './use-streak';
 
 type BreakSheetProps = {
   streakBreak: StreakBreak;
   today: Date;
+  /** This week, for postponing a missed workout of it. */
+  schedule: WeekSchedule;
   /** Opens a missed day that can still be logged. */
   onLog: (day: string) => void;
-  /** Called once the break is answered, with a message on the freezes used, none without. */
+  /**
+   * Called once the break is answered or a workout postponed, with a message on the freezes used
+   * or where the workout went, none when starting again.
+   */
   onAnswered: (message: string | null) => void;
 };
 
 /**
- * The streak broke on missed days (ADR 0042): each can still be logged within the week, and they
- * can be frozen, one freeze each, when the freezes cover them all; else the streak starts again.
+ * The streak broke on missed days (ADR 0042). Each day says what kept it from counting, with what
+ * mends it first: postponing a workout of this week, logging a meal within the week (#278). They
+ * can also be frozen, one freeze each, when the freezes cover them all; else the streak starts
+ * again.
  */
-export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheetProps) {
+export function BreakSheet({ streakBreak, today, schedule, onLog, onAnswered }: BreakSheetProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const dayFormat = useDayFormat();
-  const shortDay = useWeekdayDateFormat();
   const answer = useAnswerBreak();
-  const { missed, freezes, savedCount } = streakBreak;
+  const { freezes, savedCount } = streakBreak;
+  const missed = streakBreak.days.map(({ day }) => day);
   const enough = freezes >= missed.length;
   const day = (date: string) => dayFormat(fromIsoDate(date));
 
@@ -69,39 +77,19 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
             : ` ${freezes === 0 ? t('streak.break.noFreezes') : t('streak.break.notEnough', { count: freezes })}`}
         </Text>
       </View>
-      <Card list>
-        <View style={{ paddingVertical: spacing.md }}>
-          <Text variant="bodyStrong">{t('streak.break.forgot')}</Text>
-          <Text variant="caption" color="textMuted">
-            {t('streak.break.forgotHint')}
-          </Text>
+      <Card>
+        <View style={{ gap: spacing.lg }}>
+          {streakBreak.days.map((missedDay) => (
+            <MissedDayRows
+              key={missedDay.day}
+              missedDay={missedDay}
+              schedule={schedule}
+              today={today}
+              onLog={onLog}
+              onMoved={onAnswered}
+            />
+          ))}
         </View>
-        {missed.map((date) => (
-          <View
-            key={date}
-            style={[styles.row, { paddingVertical: spacing.md }, listDivider(false, colors.border)]}
-          >
-            <Text variant="bodyStrong" style={styles.flex}>
-              {shortDay(fromIsoDate(date))}
-            </Text>
-            {canLog(date, today) ? (
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel={t('streak.break.logDay', { day: shortDay(fromIsoDate(date)) })}
-                onPress={() => onLog(date)}
-                hitSlop={8}
-              >
-                <Text variant="label" color="primaryText">
-                  {t('streak.break.log')}
-                </Text>
-              </Pressable>
-            ) : (
-              <Text variant="caption" color="textMuted">
-                {t('streak.break.tooLate')}
-              </Text>
-            )}
-          </View>
-        ))}
       </Card>
       {answer.isError ? <FormError>{t('streak.break.error')}</FormError> : null}
       {enough ? (
