@@ -9,14 +9,14 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
-import { addDays, daysBetween, fromIsoDate, toIsoDate, weekStart } from '@/i18n/dates';
+import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { useBreakPrompt } from '@/streak/break-prompt';
 import { BreakSheet } from '@/streak/break-sheet';
-import { useStreak, useStreakStart } from '@/streak/use-streak';
+import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
 import { hasWorkouts, missedWorkouts } from '@/workouts/week-schedule';
@@ -28,7 +28,9 @@ import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PastWeek } from './past-week';
 import { PickDay } from './pick-day';
+import { usePastWeek } from './use-past-week';
 import { WeekCard } from './week-card';
+import { useWeekPaging } from './week-paging';
 import { WorkoutCard } from './workout-card';
 
 /** What the sheet over the screen shows: a day of the week card, or the days to move a workout to. */
@@ -62,14 +64,8 @@ export function TodayScreen() {
     ]);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
   const prompt = useBreakPrompt(streakBreak);
-  // How many weeks back the week shown is, 0 for this week; not before the user's first week.
-  const [weeksBack, setWeeksBack] = useState(0);
-  const startedOn = useStreakStart().data ?? undefined;
-  const firstWeeksBack = startedOn
-    ? Math.max(0, Math.round(daysBetween(weekStart(fromIsoDate(startedOn)), weekStart(today)) / 7))
-    : 0;
-  const showPrevious =
-    weeksBack < firstWeeksBack ? () => setWeeksBack((back) => back + 1) : undefined;
+  const paging = useWeekPaging(today);
+  const pastWeek = usePastWeek(today, paging.week, paging.weeksBack > 0);
 
   const sheetDay =
     sheet?.kind === 'day'
@@ -105,16 +101,16 @@ export function TodayScreen() {
         <ActivityIndicator color={colors.primary} accessibilityLabel={t('today.loading')} />
       </View>
     );
-  } else if (weeksBack > 0) {
+  } else if (paging.weeksBack > 0) {
     content = (
       <PastWeek
         today={today}
-        week={addDays(today, -7 * weeksBack)}
         streak={streak}
-        startedOn={startedOn}
-        onPrevious={showPrevious}
-        onNext={() => setWeeksBack((back) => back - 1)}
-        onBackToToday={() => setWeeksBack(0)}
+        data={pastWeek}
+        startedOn={paging.startedOn}
+        onPrevious={paging.onPrevious}
+        onNext={paging.onNext}
+        onBackToToday={paging.onBackToToday}
       />
     );
   } else {
@@ -125,10 +121,9 @@ export function TodayScreen() {
           today={today}
           streak={streak}
           schedule={schedule}
-          streakDays={streak.days}
-          startedOn={startedOn}
+          startedOn={paging.startedOn}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
-          onPrevious={showPrevious}
+          onPrevious={paging.onPrevious}
         />
         {targets.data ? (
           <Card entering={cardEntering(1)}>
@@ -163,7 +158,8 @@ export function TodayScreen() {
 
   return (
     <TabScreen
-      queries={queries}
+      // Pulling down loads again the week shown.
+      queries={paging.weeksBack > 0 ? pastWeek.queries : queries}
       overlay={
         // One sheet whose content changes, as a modal cannot open while another one closes.
         showBreak ? (

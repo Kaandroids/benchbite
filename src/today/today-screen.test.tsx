@@ -64,11 +64,14 @@ jest.mock('@/streak/use-streak', () => ({
   useStreakStart: jest.fn(),
 }));
 // A past week loads its own data, tested with it.
+jest.mock('./use-past-week', () => ({
+  usePastWeek: (_today: Date, week: Date) => ({ week, queries: [] }),
+}));
 jest.mock('./past-week', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
-    PastWeek: ({ week, onNext }: { week: Date; onNext: () => void }) => (
-      <Text onPress={onNext}>{`Week of ${week.toDateString()}`}</Text>
+    PastWeek: ({ data, onNext }: { data: { week: Date }; onNext: () => void }) => (
+      <Text onPress={onNext}>{`Week of ${data.week.toDateString()}`}</Text>
     ),
   };
 });

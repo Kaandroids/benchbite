@@ -4,13 +4,11 @@ import { StyleSheet } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, cardEntering } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { useWeekLogs } from '@/history/history';
-import { useWeekNutrition, weekNutrition } from '@/nutrition/week-nutrition';
+import { weekNutrition } from '@/nutrition/week-nutrition';
 import type { Streak } from '@/streak/streak';
-import { useWeekStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
-import { useWeekSchedule } from '@/week/use-week-schedule';
 
+import type { PastWeekData } from './use-past-week';
 import { WeekCard } from './week-card';
 import { WeekMacrosCard } from './week-macros-card';
 import { WeekSummaryCard } from './week-summary-card';
@@ -18,15 +16,15 @@ import { WeekWorkoutsCard } from './week-workouts-card';
 
 type PastWeekProps = {
   today: Date;
-  /** A day of the week shown. */
-  week: Date;
   streak: Streak;
+  /** What the week shows, from usePastWeek(). */
+  data: PastWeekData;
   /** The user's first day, YYYY-MM-DD. */
   startedOn?: string;
   /** Absent on the user's first week. */
   onPrevious?: () => void;
-  onNext: () => void;
-  onBackToToday: () => void;
+  onNext?: () => void;
+  onBackToToday?: () => void;
 };
 
 /**
@@ -35,8 +33,8 @@ type PastWeekProps = {
  */
 export function PastWeek({
   today,
-  week,
   streak,
+  data,
   startedOn,
   onPrevious,
   onNext,
@@ -44,14 +42,10 @@ export function PastWeek({
 }: PastWeekProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const { schedule, queries: scheduleQueries } = useWeekSchedule(today, week);
-  const streakDays = useWeekStreak(today, week);
-  const logs = useWeekLogs(week);
-  const nutrition = useWeekNutrition(today, week);
-  const queries = [...scheduleQueries, streakDays, logs, nutrition];
+  const { schedule, queries } = data;
   const failed = queries.filter((query) => query.isError && query.data === undefined);
   const loading = queries.some((query) => query.isPending);
-  const summary = weekNutrition(nutrition.data ?? []);
+  const summary = weekNutrition(data.nutrition);
 
   let cards;
   if (failed.length > 0) {
@@ -70,8 +64,8 @@ export function PastWeek({
   } else if (!loading) {
     cards = (
       <>
-        <WeekWorkoutsCard entering={cardEntering(1)} logs={logs.data ?? []} schedule={schedule} />
-        <WeekMacrosCard entering={cardEntering(2)} days={nutrition.data ?? []} week={summary} />
+        <WeekWorkoutsCard entering={cardEntering(1)} logs={data.logs} schedule={schedule} />
+        <WeekMacrosCard entering={cardEntering(2)} days={data.nutrition} week={summary} />
         {summary?.targets ? (
           <WeekSummaryCard
             entering={cardEntering(3)}
@@ -88,7 +82,7 @@ export function PastWeek({
         today={today}
         streak={streak}
         schedule={schedule}
-        streakDays={streakDays.data}
+        streakDays={data.streakDays}
         startedOn={startedOn}
         loading={loading || failed.length > 0}
         onPrevious={onPrevious}

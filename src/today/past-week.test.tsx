@@ -12,6 +12,7 @@ import { weekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
 import { PastWeek } from './past-week';
+import { usePastWeek } from './use-past-week';
 
 jest.mock('@/week/use-week-schedule', () => ({ useWeekSchedule: jest.fn() }));
 jest.mock('@/streak/use-streak', () => ({ useWeekStreak: jest.fn() }));
@@ -123,16 +124,19 @@ function mockWeek({
   return { logs, nutrition, streak };
 }
 
-const renderWeek = () =>
-  render(
+function LastWeek() {
+  return (
     <PastWeek
       today={TODAY}
-      week={LAST_WEEK}
       streak={NO_STREAK}
+      data={usePastWeek(TODAY, LAST_WEEK, true)}
       onNext={jest.fn()}
       onBackToToday={jest.fn()}
-    />,
+    />
   );
+}
+
+const renderWeek = () => render(<LastWeek />);
 
 describe('PastWeek', () => {
   beforeEach(() => jest.clearAllMocks());
