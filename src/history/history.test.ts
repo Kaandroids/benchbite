@@ -8,6 +8,7 @@ import {
   durationMinutes,
   fetchLogSummaries,
   useDeleteLog,
+  weekLogsKey,
   useEditLog,
   useLoggedSets,
   useLogSummaries,
@@ -154,6 +155,8 @@ describe('useDeleteLog', () => {
       // The streak counts the day's workouts.
       ['streak'],
     ]);
+    // A past week's workouts are under the week's.
+    expect(weekLogsKey(new Date(2026, 9, 14)).slice(0, 2)).toEqual(['workout-logs', 'week']);
   });
 });
 

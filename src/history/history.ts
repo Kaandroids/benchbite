@@ -210,11 +210,16 @@ export function useFinishedInWeek(week: Date) {
   });
 }
 
+/** The query key of the workouts finished in the week of `week`, under the week's finished ones. */
+export function weekLogsKey(week: Date) {
+  return [...LOGS_KEY, 'week', 'logs', weekStart(week).getTime()];
+}
+
 /** The workouts finished in the week of `week`, in the order they started, for a past week. */
 export function useWeekLogs(week: Date) {
   const start = weekStart(week);
   return useQuery({
-    queryKey: [...LOGS_KEY, 'week-logs', start.getTime()],
+    queryKey: weekLogsKey(week),
     queryFn: async (): Promise<LogSummary[]> => {
       const { data, error } = await supabase
         .from('workout_log_summaries')
