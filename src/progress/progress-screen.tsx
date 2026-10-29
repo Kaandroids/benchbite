@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { changesWeight } from '@/body/body';
+import { weightGoal } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
@@ -22,14 +22,13 @@ export function ProgressScreen() {
   const basis = useTargetBasis();
   const queries = [latestWeight, weightUnit];
   // The chart shows the target without waiting for it.
-  const goal =
-    basis.data && changesWeight(basis.data.goal) && basis.data.targetWeightKg !== null
-      ? {
-          goal: basis.data.goal,
-          targetKg: basis.data.targetWeightKg,
-          paceKg: basis.data.weeklyPaceKg,
-        }
-      : null;
+  const goal = basis.data
+    ? weightGoal({
+        goal: basis.data.goal,
+        targetWeightKg: basis.data.targetWeightKg ?? undefined,
+        weeklyPaceKg: basis.data.weeklyPaceKg ?? undefined,
+      })
+    : null;
 
   return (
     <TabScreen queries={queries} gap="md">
