@@ -6,36 +6,38 @@ import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { thumbnailOf, type LibraryExercise } from '@/exercises/library';
 import type { BeatenRecord } from '@/history/record-history';
-import { fromIsoDate, useShortDateFormat } from '@/i18n/dates';
-import { setKindOf } from '@/sets/fields';
-import { useRecordFormat, useRecordGainFormat } from '@/sets/records';
+import { addsWeight } from '@/sets/fields';
+import { useRecordFormat, useRecordGainFormat, useRecordKindLabel } from '@/sets/records';
 import { useTheme } from '@/theme';
 
 type RecordRowProps = {
   record: BeatenRecord;
   /** Undefined for an exercise no longer in the library. */
   exercise: LibraryExercise | undefined;
-  today: Date;
+  /** The record's day, written out. */
+  day: string;
   divider: boolean;
 };
+
+/** An exercise's name, or a word for one no longer in the library. */
+export function useExerciseName() {
+  const { t } = useTranslation();
+  return (exercise: LibraryExercise | undefined) => exercise?.name ?? t('progress.records.unknown');
+}
 
 /**
  * A record beaten: the exercise's picture and name, the record's kind and day, its value and gain.
  * Opens the exercise.
  */
-export function RecordRow({ record, exercise, today, divider }: RecordRowProps) {
+export function RecordRow({ record, exercise, day, divider }: RecordRowProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const formatRecord = useRecordFormat();
   const formatGain = useRecordGainFormat();
-  const day = useShortDateFormat(today);
-  const addedWeight =
-    exercise !== undefined && setKindOf(exercise.metrics, { reps: { min: 1, max: 1 } }).addedWeight;
-  const kind =
-    record.kind === 'heaviest' && addedWeight
-      ? t('exerciseHistory.kinds.heaviestAdded')
-      : t(`exerciseHistory.kinds.${record.kind}`);
-  const name = exercise?.name ?? t('progress.records.unknown');
+  const kindLabel = useRecordKindLabel();
+  const exerciseName = useExerciseName();
+  const kind = kindLabel(record.kind, exercise !== undefined && addsWeight(exercise.metrics));
+  const name = exerciseName(exercise);
 
   return (
     <Pressable
@@ -60,7 +62,7 @@ export function RecordRow({ record, exercise, today, divider }: RecordRowProps) 
           {name}
         </Text>
         <Text variant="caption" color="textMuted" numberOfLines={1}>
-          {`${kind} · ${day(fromIsoDate(record.day))}`}
+          {`${kind} · ${day}`}
         </Text>
       </View>
       <View style={styles.value}>

@@ -9,11 +9,17 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
-import { findExercise, useExerciseLibrary } from '@/exercises/library';
-import { latestByExercise, useRecordHistory, type BeatenRecord } from '@/history/record-history';
-import { fromIsoDate } from '@/i18n/dates';
+import { useExerciseLibrary } from '@/exercises/library';
+import {
+  byMonth,
+  latestByExercise,
+  monthOf,
+  useRecordHistory,
+  type BeatenRecord,
+} from '@/history/record-history';
+import { fromIsoDate, useShortDateFormat } from '@/i18n/dates';
 
-import { RecordRow } from './record-row';
+import { RecordRow, useExerciseName } from './record-row';
 
 type Order = 'latest' | 'exercise';
 
@@ -26,8 +32,10 @@ export function RecordsScreen() {
   const records = useRecordHistory();
   const library = useExerciseLibrary();
   const [order, setOrder] = useState<Order>('latest');
+  const exerciseName = useExerciseName();
   const today = new Date();
-  const thisMonth = toMonth(today);
+  const thisMonth = monthOf(today);
+  const shortDate = useShortDateFormat(today);
   const title = t('progress.records.title');
 
   if (!allLoaded([records, library])) {
@@ -50,34 +58,27 @@ export function RecordsScreen() {
     );
   }
 
-  const nameOf = (record: BeatenRecord) =>
-    findExercise(library.data, record.exerciseId)?.name ?? '';
+  const exercises = new Map(library.data?.map((exercise) => [exercise.id, exercise]));
+  const nameOf = (record: BeatenRecord) => exerciseName(exercises.get(record.exerciseId));
   const monthName = (month: string) =>
     new Intl.DateTimeFormat(i18n.language, {
       month: 'long',
       ...(month.startsWith(String(today.getFullYear())) ? {} : { year: 'numeric' }),
     }).format(fromIsoDate(`${month}-01`));
-  let groups: { title: string; records: BeatenRecord[] }[];
-  if (order === 'latest') {
-    const byMonth = new Map<string, BeatenRecord[]>();
-    for (const record of all) {
-      const month = record.day.slice(0, 7);
-      byMonth.set(month, [...(byMonth.get(month) ?? []), record]);
-    }
-    groups = [...byMonth].map(([month, inMonth]) => ({
-      title: month === thisMonth ? t('progress.records.thisMonth') : monthName(month),
-      records: inMonth,
-    }));
-  } else {
-    groups = [
-      {
-        title: '',
-        records: latestByExercise(all).sort((a, b) =>
-          nameOf(a).localeCompare(nameOf(b), i18n.language),
-        ),
-      },
-    ];
-  }
+  const groups: { title: string; records: BeatenRecord[] }[] =
+    order === 'latest'
+      ? byMonth(all).map(([month, inMonth]) => ({
+          title: month === thisMonth ? t('progress.records.thisMonth') : monthName(month),
+          records: inMonth,
+        }))
+      : [
+          {
+            title: '',
+            records: latestByExercise(all).sort((a, b) =>
+              nameOf(a).localeCompare(nameOf(b), i18n.language),
+            ),
+          },
+        ];
 
   return (
     <Screen onBack={() => router.back()} title={title}>
@@ -102,8 +103,8 @@ export function RecordsScreen() {
               <RecordRow
                 key={`${record.logId}-${record.exerciseId}`}
                 record={record}
-                exercise={findExercise(library.data, record.exerciseId)}
-                today={today}
+                exercise={exercises.get(record.exerciseId)}
+                day={shortDate(fromIsoDate(record.day))}
                 divider={index > 0}
               />
             ))}
@@ -112,11 +113,6 @@ export function RecordsScreen() {
       ))}
     </Screen>
   );
-}
-
-/** YYYY-MM of a date. */
-function toMonth(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
 const styles = StyleSheet.create({

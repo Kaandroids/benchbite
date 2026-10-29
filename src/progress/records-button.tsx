@@ -11,6 +11,8 @@ import { recordsThisMonth, useRecordHistory } from '@/history/record-history';
 import { useRecordFormat } from '@/sets/records';
 import { useTheme } from '@/theme';
 
+import { useExerciseName } from './record-row';
+
 type RecordsButtonProps = {
   entering?: CardProps['entering'];
   today: Date;
@@ -25,6 +27,7 @@ export function RecordsButton({ entering, today }: RecordsButtonProps) {
   const records = useRecordHistory();
   const library = useExerciseLibrary();
   const formatRecord = useRecordFormat();
+  const exerciseName = useExerciseName();
 
   const latest = records.data?.[0];
   const recent = records.data ? recordsThisMonth(records.data, today).length : 0;
@@ -33,7 +36,7 @@ export function RecordsButton({ entering, today }: RecordsButtonProps) {
     summary = latest
       ? [
           ...(recent > 0 ? [t('progress.records.newThisMonth', { count: recent })] : []),
-          `${findExercise(library.data, latest.exerciseId)?.name ?? ''} ${formatRecord(latest)}`,
+          `${exerciseName(findExercise(library.data, latest.exerciseId))} ${formatRecord(latest)}`,
         ].join(' · ')
       : t('progress.records.none');
   }
