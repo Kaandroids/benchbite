@@ -316,6 +316,13 @@ Deno.test(
   },
 );
 
+Deno.test('throws a retryable model error when a whole answer breaks off', async () => {
+  const { model } = gemini(() => new Response('{"candidates":[{"content":'));
+
+  const error = await assertRejects(() => model.generate(request), ModelError);
+  assertEquals([error.status, error.retryable], [503, true]);
+});
+
 Deno.test('throws a model error, retryable for limits and outages only', async () => {
   const limited = gemini(() =>
     Response.json({ error: { message: 'Quota exceeded' } }, { status: 429 }),

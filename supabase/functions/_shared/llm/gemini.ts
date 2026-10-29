@@ -57,7 +57,14 @@ export class GeminiModel implements LanguageModel {
 
   async generate(request: ModelRequest): Promise<ModelResponse> {
     const { model, response } = await this.#call(request, 'generateContent');
-    const body = (await response.json()) as GeminiResponse;
+    let body: GeminiResponse;
+    try {
+      body = await response.json();
+    } catch (error) {
+      // As when the connection drops before the whole answer came; what it used is unknown.
+      const message = error instanceof Error ? error.message : String(error);
+      throw new ModelError(`Gemini: the answer broke off: ${message}`, 503, true);
+    }
     return {
       parts: answerParts(body).map(fromGeminiPart),
       usage: usageOf(body, model),
