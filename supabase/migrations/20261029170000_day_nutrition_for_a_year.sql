@@ -1,7 +1,11 @@
 -- The Progress tab charts what was eaten over up to a year (ADR 0047), so day_nutrition() reads a
--- year of days rather than a month: as before (20261029150000), only the bound changes.
+-- year of days rather than a month, 367 over a 29 February. Each day also says whether its
+-- calories kept its target as the streak counts them (calories_count()), so that the app does not
+-- repeat that rule. As before (20261029150000) otherwise; a new column needs the function dropped.
 
-create or replace function public.day_nutrition(from_day date, to_day date, today date)
+drop function public.day_nutrition(date, date, date);
+
+create function public.day_nutrition(from_day date, to_day date, today date)
 returns table (
   day date,
   kcal numeric,
@@ -12,7 +16,8 @@ returns table (
   target_calories integer,
   target_protein_g integer,
   target_carbs_g integer,
-  target_fat_g integer
+  target_fat_g integer,
+  kept_target boolean
 )
 language plpgsql
 stable
@@ -27,7 +32,7 @@ begin
   with bounds as (
     select
       day_nutrition.from_day as first_day,
-      least(day_nutrition.to_day, day_nutrition.from_day + 365) as last_day
+      least(day_nutrition.to_day, day_nutrition.from_day + 366) as last_day
   ),
   days as (
     select d::date as day
@@ -47,10 +52,14 @@ begin
     t.calories,
     t.protein_g,
     t.carbs_g,
-    t.fat_g
+    t.fat_g,
+    coalesce(public.calories_count(e.kcal, t.calories), false)
   from days d
   cross join lateral public.targets_of_day(d.day, day_nutrition.today) t
   left join eaten e on e.day = d.day
   order by d.day;
 end;
 $$;
+
+revoke execute on function public.day_nutrition(date, date, date) from public, anon;
+grant execute on function public.day_nutrition(date, date, date) to authenticated;
