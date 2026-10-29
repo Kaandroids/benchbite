@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { useWaterGoal } from '@/profile/water-goal';
@@ -10,7 +10,10 @@ import { useDayTargets, type NutritionTargets } from './targets';
 import { useWater } from './water';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn() },
+  useLocalSearchParams: jest.fn(() => ({})),
+}));
 jest.mock('./targets', () => ({ useDayTargets: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./water', () => ({ ...jest.requireActual('./water'), useWater: jest.fn() }));
@@ -109,6 +112,16 @@ describe('NutritionScreen', () => {
 
     await fireEvent.press(screen.getByLabelText('Next day'));
     expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-21');
+  });
+
+  it('opens the day it is sent to, once', async () => {
+    jest.mocked(useLocalSearchParams).mockReturnValue({ day: '2026-10-24' });
+    await render(<NutritionScreen />);
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-24');
+    // Stepping on is not undone by the same day sent before.
+    await fireEvent.press(screen.getByLabelText('Next day'));
+    expect(jest.mocked(useDayEntries)).toHaveBeenLastCalledWith('2026-10-25');
+    jest.mocked(useLocalSearchParams).mockReturnValue({});
   });
 
   it('moves on to the new day after midnight', async () => {
