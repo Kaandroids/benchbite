@@ -5,6 +5,7 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { KCAL_PER_GRAM } from '@/nutrition/targets';
 import { isOverTarget, type DayNutrition, type WeekNutrition } from '@/nutrition/week-nutrition';
 import { fonts, useTheme } from '@/theme';
 
@@ -12,15 +13,11 @@ const CHART_HEIGHT = 120;
 const BAR_WIDTH = 22;
 const EMPTY_HEIGHT = 3;
 
-/** The macros from the top of a bar down, with the kilocalories in each gram. */
-const LAYERS: {
-  key: 'fat' | 'carbs' | 'protein';
-  grams: keyof DayNutrition['eaten'];
-  kcal: number;
-}[] = [
-  { key: 'fat', grams: 'fatG', kcal: 9 },
-  { key: 'carbs', grams: 'carbsG', kcal: 4 },
-  { key: 'protein', grams: 'proteinG', kcal: 4 },
+/** The macros from the top of a bar down. */
+const LAYERS: { key: 'fat' | 'carbs' | 'protein'; grams: keyof typeof KCAL_PER_GRAM }[] = [
+  { key: 'fat', grams: 'fatG' },
+  { key: 'carbs', grams: 'carbsG' },
+  { key: 'protein', grams: 'proteinG' },
 ];
 
 type WeekMacrosCardProps = {
@@ -85,7 +82,7 @@ export function WeekMacrosCard({ entering, days, week }: WeekMacrosCardProps) {
               const logged = day.entries > 0;
               const layers = LAYERS.map((layer) => ({
                 ...layer,
-                kcal: day.eaten[layer.grams] * layer.kcal,
+                kcal: day.eaten[layer.grams] * KCAL_PER_GRAM[layer.grams],
               }));
               const fromMacros = layers.reduce((sum, layer) => sum + layer.kcal, 0);
               const height = tallest > 0 ? (day.eaten.calories / tallest) * CHART_HEIGHT : 0;

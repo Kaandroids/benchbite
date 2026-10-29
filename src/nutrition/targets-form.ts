@@ -1,6 +1,6 @@
 import { parseDecimal } from '@/lib/math';
 
-import type { NutritionTargets } from './targets';
+import { KCAL_PER_GRAM, type NutritionTargets } from './targets';
 
 // The limits of the own_nutrition_targets table (migration 20261028180000), checked here first so
 // that Save stays off for targets the database would refuse.
@@ -22,7 +22,9 @@ export function targetsFormOf(targets: NutritionTargets): TargetsForm {
 
 /** What protein, carbs and fat make in kcal, at 4, 4 and 9 kcal per gram. */
 export function macroCalories({ proteinG, carbsG, fatG }: Omit<NutritionTargets, 'calories'>) {
-  return 4 * proteinG + 4 * carbsG + 9 * fatG;
+  return (
+    KCAL_PER_GRAM.proteinG * proteinG + KCAL_PER_GRAM.carbsG * carbsG + KCAL_PER_GRAM.fatG * fatG
+  );
 }
 
 export type TargetsResult =
