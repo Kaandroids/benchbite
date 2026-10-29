@@ -1424,6 +1424,7 @@
     "metricsLabel": "Grafiğin gösterdiği",
     "sessions": "Antrenmanlar · {{count}}",
     "pace": "{{time}} /km",
+    "volumeGain": "+{{kilograms}} kg hacim",
     "empty": {
       "title": "Henüz geçmiş yok",
       "message": "Bu hareketi bir antrenmanda yaptığında setlerin ve rekorların burada görünür."

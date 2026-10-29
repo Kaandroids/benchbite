@@ -1,6 +1,6 @@
 import { renderHook } from '@/test/render';
 
-import { useRecordFormat, useRecordGainFormat } from './records';
+import { useRecordFormat, useRecordGainFormat, useRecordKindLabel } from './records';
 
 const set = { weightKg: 80, reps: 8, seconds: null, meters: null };
 
@@ -23,11 +23,22 @@ describe('useRecordGainFormat', () => {
     const { result } = await renderHook(() => useRecordGainFormat());
     const gain = result.current;
     expect(gain({ kind: 'heaviest', value: 82.5, previous: 80 })).toBe('+2.5 kg');
-    expect(gain({ kind: 'one_rep_max', value: 99.6, previous: 95.4 })).toBe('+5 kg');
+    expect(gain({ kind: 'one_rep_max', value: 99.2, previous: 98.7 })).toBe('+0.5 kg');
+    // 80 kg × 8 over 85 kg × 7: more volume, though lighter.
+    expect(gain({ kind: 'best_set', value: 640, previous: 595 })).toBe('+45 kg volume');
     expect(gain({ kind: 'most_reps', value: 12, previous: 10 })).toBe('+2');
     expect(gain({ kind: 'longest_time', value: 130, previous: 105 })).toBe('+0:25');
     expect(gain({ kind: 'longest_distance', value: 2500, previous: 2000 })).toBe('+500 m');
     // A lower pace is faster.
     expect(gain({ kind: 'best_pace', value: 220, previous: 240 })).toBe('−0:20 /km');
+  });
+});
+
+describe('useRecordKindLabel', () => {
+  it('names the heaviest of an exercise that adds weight as weight added', async () => {
+    const { result } = await renderHook(() => useRecordKindLabel());
+    expect(result.current('heaviest', false)).toBe('Heaviest');
+    expect(result.current('heaviest', true)).toBe('Heaviest added');
+    expect(result.current('one_rep_max', true)).toBe('Est. 1RM');
   });
 });

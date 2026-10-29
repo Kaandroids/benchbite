@@ -8,7 +8,10 @@ import type { SetValues } from './values';
 // Kept apart from the queries, so that code without the database, such as a workout in progress,
 // can use them.
 
-/** The kinds of record, in the order they are shown (ADR 0024). */
+/**
+ * The kinds of record, in the order they are shown (ADR 0024). record_history() keeps the same
+ * order to pick the first kind a workout beat; change both together.
+ */
 export const RECORD_KINDS = [
   'heaviest',
   'one_rep_max',
@@ -48,9 +51,18 @@ export function useRecordFormat() {
   };
 }
 
+/** The name of a kind of record; the heaviest of an exercise that adds weight is of that weight. */
+export function useRecordKindLabel() {
+  const { t } = useTranslation();
+  return (kind: RecordKind, addedWeight: boolean) =>
+    kind === 'heaviest' && addedWeight
+      ? t('exerciseHistory.kinds.heaviestAdded')
+      : t(`exerciseHistory.kinds.${kind}`);
+}
+
 /**
- * How much a record beat the best before it, in the record's unit: "+2.5 kg", "+2", "+0:25", or
- * "−0:20 /km" for a faster pace.
+ * How much a record beat the best before it, in the record's unit: "+2.5 kg", "+45 kg volume" for
+ * a best set, "+2", "+0:25", or "−0:20 /km" for a faster pace.
  */
 export function useRecordGainFormat() {
   const { t } = useTranslation();
@@ -58,11 +70,13 @@ export function useRecordGainFormat() {
   return ({ kind, value, previous }: { kind: RecordKind; value: number; previous: number }) => {
     switch (kind) {
       case 'heaviest':
-      case 'best_set':
-        return `+${format(value - previous, { maximumFractionDigits: 1 })} kg`;
       case 'one_rep_max':
-        // As the record shows it, in whole kilograms.
-        return `+${format(Math.round(value) - Math.round(previous))} kg`;
+        return `+${format(value - previous, { maximumFractionDigits: 1 })} kg`;
+      case 'best_set':
+        // Weight × reps, which a lighter set of more reps can beat.
+        return t('exerciseHistory.volumeGain', {
+          kilograms: format(value - previous, { maximumFractionDigits: 1 }),
+        });
       case 'most_reps':
         return `+${format(value - previous)}`;
       case 'longest_time':

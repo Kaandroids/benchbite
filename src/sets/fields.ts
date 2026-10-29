@@ -15,6 +15,11 @@ export type SetKind = {
   addedWeight: boolean;
 };
 
+/** Whether an exercise of reps takes weight added to the body rather than lifted, as a pull-up. */
+export function addsWeight(metrics: LibraryExercise['metrics']): boolean {
+  return metrics.includes('reps') && !metrics.includes('weight');
+}
+
 export function setKindOf(
   metrics: LibraryExercise['metrics'] | undefined,
   target: WorkoutTarget,
@@ -24,7 +29,7 @@ export function setKindOf(
     return {
       fields: ['weightKg', 'reps'],
       timed: false,
-      addedWeight: !(metrics ?? []).includes('weight'),
+      addedWeight: metrics ? addsWeight(metrics) : true,
     };
   }
   const distance = metrics ? metrics.includes('distance') : 'meters' in target && !!target.meters;

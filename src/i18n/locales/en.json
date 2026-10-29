@@ -1424,6 +1424,7 @@
     "metricsLabel": "What the chart shows",
     "sessions": "Sessions · {{count}}",
     "pace": "{{time}} /km",
+    "volumeGain": "+{{kilograms}} kg volume",
     "empty": {
       "title": "No history yet",
       "message": "Log this exercise in a workout and your sets and records show up here."

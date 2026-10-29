@@ -1424,6 +1424,7 @@
     "metricsLabel": "Was das Diagramm zeigt",
     "sessions": "Trainings · {{count}}",
     "pace": "{{time}} /km",
+    "volumeGain": "+{{kilograms}} kg Volumen",
     "empty": {
       "title": "Noch kein Verlauf",
       "message": "Trainiere diese Übung in einem Workout, dann erscheinen hier deine Sätze und Rekorde."
