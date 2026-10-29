@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/text';
 import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { KCAL_PER_GRAM } from '@/nutrition/targets-form';
-import { isOverTarget, type DayNutrition, type WeekNutrition } from '@/nutrition/week-nutrition';
+import { isOverTarget, type DayNutrition, type NutritionSummary } from '@/nutrition/day-nutrition';
 import { fonts, useTheme } from '@/theme';
 
 const CHART_HEIGHT = 120;
@@ -24,7 +24,7 @@ type WeekMacrosCardProps = {
   entering?: CardProps['entering'];
   /** Each day of the week, from Monday. */
   days: DayNutrition[];
-  week: WeekNutrition | null;
+  week: NutritionSummary | null;
 };
 
 /**

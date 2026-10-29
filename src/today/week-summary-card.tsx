@@ -4,11 +4,11 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import type { NutritionTargets } from '@/nutrition/targets';
-import type { WeekNutrition } from '@/nutrition/week-nutrition';
+import type { NutritionSummary } from '@/nutrition/day-nutrition';
 
 type WeekSummaryCardProps = {
   entering?: CardProps['entering'];
-  week: WeekNutrition;
+  week: NutritionSummary;
   /** The targets of the days logged, which the week has. */
   targets: NutritionTargets;
 };

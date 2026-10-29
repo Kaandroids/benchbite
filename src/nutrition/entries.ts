@@ -6,7 +6,7 @@ import { STREAK_KEY } from '@/streak/streak';
 import { foodColumns, type Amount, type FoodRef } from './foods';
 import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 import { dayTargetsKey } from './targets';
-import { WEEK_NUTRITION_KEY } from './week-nutrition';
+import { NUTRITION_DAYS_KEY } from './day-nutrition';
 
 export type NewEntry = Amount & {
   /** YYYY-MM-DD. */
@@ -34,7 +34,7 @@ function useReloadDay() {
       queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
       queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
       queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
-      queryClient.invalidateQueries({ queryKey: WEEK_NUTRITION_KEY }),
+      queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
       queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
     ]);
 }

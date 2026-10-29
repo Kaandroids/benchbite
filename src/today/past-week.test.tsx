@@ -2,8 +2,8 @@ import { router } from 'expo-router';
 
 import type { LogSummary } from '@/history/history';
 import { useWeekLogs } from '@/history/history';
-import type { DayNutrition } from '@/nutrition/week-nutrition';
-import { useWeekNutrition } from '@/nutrition/week-nutrition';
+import type { DayNutrition } from '@/nutrition/day-nutrition';
+import { useWeekNutrition } from '@/nutrition/day-nutrition';
 import { useWeekStreak } from '@/streak/use-streak';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -19,8 +19,8 @@ jest.mock('@/history/history', () => ({
   ...jest.requireActual('@/history/history'),
   useWeekLogs: jest.fn(),
 }));
-jest.mock('@/nutrition/week-nutrition', () => ({
-  ...jest.requireActual('@/nutrition/week-nutrition'),
+jest.mock('@/nutrition/day-nutrition', () => ({
+  ...jest.requireActual('@/nutrition/day-nutrition'),
   useWeekNutrition: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));

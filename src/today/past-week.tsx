@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, cardEntering } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { weekNutrition } from '@/nutrition/week-nutrition';
+import { nutritionSummary } from '@/nutrition/day-nutrition';
 import { useTheme } from '@/theme';
 
 import type { PastWeekData } from './use-past-week';
@@ -42,7 +42,7 @@ export function PastWeek({
   const { schedule, queries } = data;
   const failed = queries.filter((query) => query.isError && query.data === undefined);
   const loading = queries.some((query) => query.isPending);
-  const summary = weekNutrition(data.nutrition);
+  const summary = nutritionSummary(data.nutrition);
 
   let cards;
   if (failed.length > 0) {
