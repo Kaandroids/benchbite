@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
@@ -75,8 +75,9 @@ function subscribe(listener: () => void) {
 
 /**
  * The signed-in user's streak on the device's `today` (streak(), ADR 0042), with how each day of
- * this week went (streak_states()), the freezes they have and a break to answer. It shows none until it loads; when
- * loading again fails, it keeps the last one, says it failed and can be tried again.
+ * this week went (streak_states()), the freezes they have and a break to answer. It shows none
+ * until it loads; when loading again fails, it keeps the last one, says it failed and can be tried
+ * again.
  */
 export function useStreak(today: Date) {
   const shown = useSyncExternalStore(subscribe, () => sample);
@@ -188,7 +189,6 @@ export function useMonthStreak(today: Date, month: Date) {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   return useQuery({
     queryKey: [...STREAK_KEY, 'month', toIsoDate(first), todayOn],
-    placeholderData: keepPreviousData,
     queryFn: () =>
       fetchDayStates(first, new Date(month.getFullYear(), month.getMonth() + 1, 0), todayOn),
   });
