@@ -38,10 +38,10 @@ export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const targets = useNutritionTargets();
-  const streak = useStreak();
   const name = useDisplayName().data;
   const greeting = useGreeting();
   const today = new Date();
+  const streak = useStreak(today);
   const { schedule, plan, queries: weekQueries } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
