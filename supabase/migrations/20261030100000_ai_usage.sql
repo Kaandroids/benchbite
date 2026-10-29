@@ -1,8 +1,8 @@
--- What AI costs, and a limit on it per user and month (#288, #322, ADR 0051). Every Edge Function
--- that calls a model starts the call with start_ai_call(), which sets the most it may cost aside
--- from the user's budget, and records it with record_ai_usage() after it, also when it failed,
--- so that a user can never spend past their budget. Functions report tokens; only the database
--- knows prices.
+-- What AI costs, and a limit on it per user and month (#288, #322, ADR 0051). A call here is one
+-- request to a model. Edge Functions start each with start_ai_call(), which sets the most it may
+-- cost aside from the user's budget, and record it with record_ai_usage() after it, also when it
+-- failed, so that a user can never spend past their budget. Functions report tokens; only the
+-- database knows prices.
 --
 -- New error codes:
 --   BB033  no price is known for the model at the time of the call
@@ -33,8 +33,7 @@ values
   ('gemini-3.8-flash', '2027-01-01', 1.50, 0.15, 7.50);
 
 -- How large a call of each feature may be: the most it may send and answer, reasoning included.
--- A call's answer is cut at max_output_tokens; the most it may cost, set aside when it starts,
--- is worked out from both.
+-- A call that would send more is refused; its answer is cut at max_output_tokens.
 create table public.ai_feature_limits (
   feature public.ai_feature primary key,
   max_input_tokens integer not null check (max_input_tokens > 0),
@@ -47,16 +46,8 @@ insert into public.ai_feature_limits (feature, max_input_tokens, max_output_toke
   ('meal_photo', 8000, 1024),
   ('review', 100000, 4096);
 
--- One row: the settings every user's AI calls share. A user without a budget of their own has
--- the default, which is nothing: AI comes with a plan, which sets a budget (ai_budgets).
-create table public.ai_settings (
-  id boolean primary key default true check (id),
-  default_monthly_limit_usd numeric(8, 2) not null check (default_monthly_limit_usd >= 0)
-);
-
-insert into public.ai_settings (default_monthly_limit_usd) values (0);
-
--- What a user may spend on AI a month, set by their plan, or by hand in development.
+-- What a user may spend on AI a month, set by their plan, or by hand in development. Without one,
+-- nothing: AI comes with a plan.
 create table public.ai_budgets (
   user_id uuid primary key references auth.users (id) on delete cascade,
   monthly_limit_usd numeric(8, 2) not null check (monthly_limit_usd >= 0),
@@ -89,8 +80,8 @@ create index ai_usage_user_month_idx on public.ai_usage (user_id, created_at);
 
 -- The calls running now, one per user and feature, each with the most it may cost, which counts
 -- toward the user's budget until the call is recorded. A call that never recorded, as when its
--- function was stopped, gives its place up after ten minutes, longer than an Edge Function may
--- run, and is counted as left behind.
+-- function was stopped, is counted at that most after ten minutes, longer than an Edge Function
+-- may run.
 create table public.ai_calls_in_flight (
   call_id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -102,11 +93,10 @@ create table public.ai_calls_in_flight (
   unique (user_id, feature)
 );
 
--- Users read their own usage; nobody but the service role writes it. Prices, limits, settings,
--- budgets and the calls in flight are read only through the functions below.
+-- Users read their own usage; nobody but the service role writes it. Prices, limits, budgets and
+-- the calls in flight are read only through the functions below.
 alter table public.ai_model_prices enable row level security;
 alter table public.ai_feature_limits enable row level security;
-alter table public.ai_settings enable row level security;
 alter table public.ai_budgets enable row level security;
 alter table public.ai_usage enable row level security;
 alter table public.ai_calls_in_flight enable row level security;
@@ -115,8 +105,8 @@ create policy "Users read their own AI usage"
   on public.ai_usage for select to authenticated
   using ((select auth.uid()) = user_id);
 
-revoke all on public.ai_model_prices, public.ai_feature_limits, public.ai_settings,
-  public.ai_budgets, public.ai_usage, public.ai_calls_in_flight from anon, authenticated;
+revoke all on public.ai_model_prices, public.ai_feature_limits, public.ai_budgets, public.ai_usage,
+  public.ai_calls_in_flight from anon, authenticated;
 grant select on public.ai_usage to authenticated;
 
 -- The price of a model in force at a time, or null when none is known.
@@ -170,15 +160,16 @@ create type public.ai_access_reason as enum (
   'plan_required',
   -- The month's budget is used up, or too little of it is left for the call, until resets_at.
   'limit_reached',
+  -- The call would send more than its feature allows.
+  'request_too_large',
   -- The model has no price, so its cost could not be counted.
   'unpriced_model',
   -- A call of the same feature is still running.
   'call_in_progress'
 );
 
--- What ai_access() says, and start_ai_call() with it. The app reads ai_access(), which never
--- refuses for 'unpriced_model' or 'call_in_progress' and sets neither call_id nor
--- max_output_tokens: those are start_ai_call()'s.
+-- Whether a user may call a model this month, which the app shows. It refuses only for
+-- 'account_required', 'plan_required' and 'limit_reached'.
 create type public.ai_access as (
   allowed boolean,
   -- Set when not allowed.
@@ -186,10 +177,15 @@ create type public.ai_access as (
   budget_usd numeric,
   -- What the month's calls cost, and what the calls running now may still cost.
   used_usd numeric,
-  resets_at timestamptz,
-  -- The call start_ai_call() started, which record_ai_usage() ends.
+  resets_at timestamptz
+);
+
+-- What start_ai_call() says: whether the call may go ahead, and if so, under which id and where
+-- its answer is cut, reasoning included.
+create type public.ai_call as (
+  allowed boolean,
+  reason public.ai_access_reason,
   call_id uuid,
-  -- Where the call's answer is cut, reasoning included.
   max_output_tokens integer
 );
 
@@ -199,7 +195,7 @@ create function public.ai_access()
 returns public.ai_access
 language plpgsql
 stable
--- Reads the settings, budgets and calls, which callers may not, and whether the user is a guest.
+-- Reads the budgets and calls, which callers may not, and whether the user is a guest.
 security definer
 set search_path = ''
 as $$
@@ -211,10 +207,8 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
 
-  -- Nothing without a budget, also if the settings were ever lost.
   result.budget_usd := coalesce(
     (select b.monthly_limit_usd from public.ai_budgets b where b.user_id = (select auth.uid())),
-    (select s.default_monthly_limit_usd from public.ai_settings s),
     0
   );
   result.resets_at := month_start + interval '1 month';
@@ -241,33 +235,17 @@ $$;
 revoke all on function public.ai_access() from public, anon;
 grant execute on function public.ai_access() to authenticated;
 
--- Counts a call left behind at the most it could have cost, and frees its place.
-create function public.abandon_ai_call(held public.ai_calls_in_flight)
-returns void
-language sql
-set search_path = ''
-as $$
-  insert into public.ai_usage (
-    call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
-    thinking_tokens, cost_usd, estimated, created_at
-  )
-  values (
-    held.call_id, held.user_id, held.feature, held.model, 0, 0, 0, 0, held.reserved_usd, true,
-    held.started_at
-  );
-  delete from public.ai_calls_in_flight c where c.call_id = held.call_id;
-$$;
-
-revoke all on function public.abandon_ai_call(public.ai_calls_in_flight)
-  from public, anon, authenticated;
-
--- Starts a call of a model for the calling user and sets the most it may cost aside from their
--- budget: when ai_access() allows it, the model has a price, enough budget is left for the call,
--- and no call of the same feature is running. Edge Functions call it with the user's token
--- before the model, cut the answer at max_output_tokens, and end the call with
--- record_ai_usage().
-create function public.start_ai_call(feature public.ai_feature, model text)
-returns public.ai_access
+-- Starts a call of a model for the calling user, which sends `input_tokens`, and sets the most it
+-- may cost aside from their budget: when ai_access() allows it, the call sends no more than its
+-- feature allows, the model has a price, enough budget is left for the call, and no call of the
+-- same feature is running. Edge Functions call it with the user's token before each request to
+-- the model, cut the answer at max_output_tokens, and end the call with record_ai_usage().
+create function public.start_ai_call(
+  feature public.ai_feature,
+  model text,
+  input_tokens integer
+)
+returns public.ai_call
 language plpgsql
 -- Writes the calls in flight and usage, which callers may not.
 security definer
@@ -277,44 +255,48 @@ declare
   limits public.ai_feature_limits;
   price public.ai_model_prices;
   reserved numeric;
-  held public.ai_calls_in_flight;
-  result public.ai_access;
+  access public.ai_access;
+  result public.ai_call;
 begin
   if (select auth.uid()) is null then
     raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  if input_tokens is null or input_tokens < 0 then
+    raise exception 'input_tokens must be a count' using errcode = '22023';
   end if;
 
   -- One start at a time per user, so that each one sees what the one before set aside.
   perform pg_advisory_xact_lock(hashtextextended((select auth.uid())::text, 0));
 
-  -- A call of the feature left behind is counted now, so that its place can be taken.
-  select * into held from public.ai_calls_in_flight c
-  where c.user_id = (select auth.uid()) and c.feature = start_ai_call.feature;
-  if found and held.started_at < now() - interval '10 minutes' then
-    perform public.abandon_ai_call(held);
-    held := null;
-  end if;
+  -- Calls left behind are counted at their most now, which frees their places.
+  perform public.record_ai_usage(c.call_id, 0, 0, 0, 0, known => false)
+  from public.ai_calls_in_flight c
+  where c.user_id = (select auth.uid()) and c.started_at < now() - interval '10 minutes';
 
-  result := public.ai_access();
-  if not result.allowed then
-    return result;
-  end if;
-
-  select * into limits from public.ai_feature_limits l where l.feature = start_ai_call.feature;
-  price := public.ai_model_price(model, now());
-  if price is null then
-    result.reason := 'unpriced_model';
-  elsif held.call_id is not null then
-    result.reason := 'call_in_progress';
-  else
-    reserved := public.ai_cost(price, limits.max_input_tokens, 0, limits.max_output_tokens);
-    if result.used_usd + reserved > result.budget_usd then
-      result.reason := 'limit_reached';
+  access := public.ai_access();
+  result.reason := access.reason;
+  if access.allowed then
+    select * into limits from public.ai_feature_limits l where l.feature = start_ai_call.feature;
+    price := public.ai_model_price(model, now());
+    if input_tokens > limits.max_input_tokens then
+      result.reason := 'request_too_large';
+    elsif price is null then
+      result.reason := 'unpriced_model';
+    elsif exists (
+      select 1 from public.ai_calls_in_flight c
+      where c.user_id = (select auth.uid()) and c.feature = start_ai_call.feature
+    ) then
+      result.reason := 'call_in_progress';
     else
-      insert into public.ai_calls_in_flight (user_id, feature, model, reserved_usd)
-      values ((select auth.uid()), start_ai_call.feature, start_ai_call.model, reserved)
-      returning call_id into result.call_id;
-      result.max_output_tokens := limits.max_output_tokens;
+      reserved := public.ai_cost(price, input_tokens, 0, limits.max_output_tokens);
+      if access.used_usd + reserved > access.budget_usd then
+        result.reason := 'limit_reached';
+      else
+        insert into public.ai_calls_in_flight (user_id, feature, model, reserved_usd)
+        values ((select auth.uid()), start_ai_call.feature, start_ai_call.model, reserved)
+        returning call_id into result.call_id;
+        result.max_output_tokens := limits.max_output_tokens;
+      end if;
     end if;
   end if;
   result.allowed := result.reason is null;
@@ -322,15 +304,16 @@ begin
 end;
 $$;
 
-revoke all on function public.start_ai_call(public.ai_feature, text) from public, anon;
-grant execute on function public.start_ai_call(public.ai_feature, text) to authenticated;
+revoke all on function public.start_ai_call(public.ai_feature, text, integer) from public, anon;
+grant execute on function public.start_ai_call(public.ai_feature, text, integer) to authenticated;
 
 -- Records a call start_ai_call() started, with the tokens it used, and returns what it cost.
 -- The call is priced by the model it was started on, at the price in force when it started, and
 -- counts toward that month. When what it used is not `known`, as when its answer broke off
--- before the provider said, it is counted at the most it could have cost. A call left behind
--- that records after all replaces that with what it did cost. Edge Functions call it after every
--- call they started, also when it failed; only they may, with the service role.
+-- before the provider said, or it was left behind, it is counted at the most it could have cost;
+-- a call left behind that records after all replaces that with what it did cost. Edge Functions
+-- call it after every call they started, also when it failed; only they may, with the service
+-- role.
 create function public.record_ai_usage(
   call_id uuid,
   input_tokens integer,

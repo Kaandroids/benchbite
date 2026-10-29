@@ -50,9 +50,8 @@ export type Database = {
           reserved_usd: number;
           started_at: string;
           user_id: string;
-          abandon_ai_call: undefined | null;
         };
-        ComputedFields: 'abandon_ai_call';
+        ComputedFields: never;
         Insert: {
           call_id?: string;
           feature: Database['public']['Enums']['ai_feature'];
@@ -112,22 +111,6 @@ export type Database = {
           model?: string;
           output_usd?: number;
           valid_from?: string;
-        };
-        Relationships: [];
-      };
-      ai_settings: {
-        Row: {
-          default_monthly_limit_usd: number;
-          id: boolean;
-        };
-        ComputedFields: never;
-        Insert: {
-          default_monthly_limit_usd: number;
-          id?: boolean;
-        };
-        Update: {
-          default_monthly_limit_usd?: number;
-          id?: boolean;
         };
         Relationships: [];
       };
@@ -1436,15 +1419,6 @@ export type Database = {
       };
     };
     Functions: {
-      abandon_ai_call: {
-        Args: {
-          held: Omit<
-            Database['public']['Tables']['ai_calls_in_flight']['Row'],
-            Database['public']['Tables']['ai_calls_in_flight']['ComputedFields']
-          >;
-        };
-        Returns: undefined;
-      };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
@@ -1976,11 +1950,15 @@ export type Database = {
         Returns: undefined;
       };
       start_ai_call: {
-        Args: { feature: Database['public']['Enums']['ai_feature']; model: string };
-        Returns: Database['public']['CompositeTypes']['ai_access'];
+        Args: {
+          feature: Database['public']['Enums']['ai_feature'];
+          input_tokens: number;
+          model: string;
+        };
+        Returns: Database['public']['CompositeTypes']['ai_call'];
         SetofOptions: {
           from: '*';
-          to: 'ai_access';
+          to: 'ai_call';
           isOneToOne: true;
           isSetofReturn: false;
         };
@@ -2043,6 +2021,7 @@ export type Database = {
         | 'account_required'
         | 'plan_required'
         | 'limit_reached'
+        | 'request_too_large'
         | 'unpriced_model'
         | 'call_in_progress';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
@@ -2157,6 +2136,10 @@ export type Database = {
         budget_usd: number | null;
         used_usd: number | null;
         resets_at: string | null;
+      };
+      ai_call: {
+        allowed: boolean | null;
+        reason: Database['public']['Enums']['ai_access_reason'] | null;
         call_id: string | null;
         max_output_tokens: number | null;
       };
@@ -2288,6 +2271,7 @@ export const Constants = {
         'account_required',
         'plan_required',
         'limit_reached',
+        'request_too_large',
         'unpriced_model',
         'call_in_progress',
       ],
