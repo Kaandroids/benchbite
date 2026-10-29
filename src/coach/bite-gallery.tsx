@@ -5,11 +5,7 @@ import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import { BiteButton } from './bite-button';
-import type { BiteExpression } from './bite-expressions';
-import type { BiteState } from './bite-face';
-
-const EXPRESSIONS: BiteExpression[] = ['neutral', 'happy', 'sad', 'angry', 'surprised', 'thinking'];
-const STATES: BiteState[] = ['idle', 'thinking', 'talking', 'listening'];
+import { BITE_EXPRESSIONS, BITE_STATES } from './bite-expressions';
 const SIZES = [32, 48, 72, 112];
 
 /** Bite in the component gallery: every expression, every live state, its sizes and its button. */
@@ -19,7 +15,7 @@ export function BiteGallery() {
     <View style={{ gap: spacing.lg }}>
       <Text variant="label">Expressions</Text>
       <View style={[styles.grid, { gap: spacing.lg }]}>
-        {EXPRESSIONS.map((expression) => (
+        {BITE_EXPRESSIONS.map((expression) => (
           <Sample key={expression} label={expression}>
             <BiteAvatar size={88} expression={expression} />
           </Sample>
@@ -27,7 +23,7 @@ export function BiteGallery() {
       </View>
       <Text variant="label">Live states</Text>
       <View style={[styles.grid, { gap: spacing.lg }]}>
-        {STATES.map((state) => (
+        {BITE_STATES.map((state) => (
           <Sample key={state} label={state}>
             <BiteAvatar size={88} state={state} />
           </Sample>
