@@ -1,6 +1,6 @@
 # 0042. Count streak days by workouts and calories, and freeze by choice
 
-- **Status:** Accepted, calorie rule amended by ADR-0044
+- **Status:** Accepted, amended by ADR-0044
 - **Date:** 2026-10-29
 
 ## Context

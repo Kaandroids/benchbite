@@ -27,8 +27,11 @@ done: a workout started at half past midnight in Berlin is the day before in UTC
   anyway. A move that the database turned into a skip, as the workout was archived, deleted or
   left the day it moved to (ADR 0041), is marked `settled` and leaves its day to the calories, as
   the move did.
-- **Users from before start their streak on the day it ships:** the days before it could not have
-  counted, so their breaks are answered through the day before.
+- **A streak starts on the user's first read of it:** the days before it could not be seen to
+  count, so their breaks are answered through the day before, for users from before the streak
+  and for a new user, whose first read is the day the plan starts.
+- **A day is `done`, `frozen` or `missed`, and today `open` until it is done,** the names the app
+  uses for a day's mark.
 - **The streak is worked out in Postgres** as ADR 0042 sets out: `day_workouts()` gives each day's
   workouts after moves and whether they were done or skipped, `streak_states()` how each day
   went, `streak()` the days in a row and a break to answer, and `answer_streak_break()` freezes
@@ -48,8 +51,10 @@ done: a workout started at half past midnight in Berlin is the day before in UTC
 - Eating a little under the target counts, eating over it misses the day; a day over the target can
   only be saved by a freeze.
 - The app sends `startedOn` with each finished workout.
-- The week card still works out a day's workouts in the app (`weekSchedule()`), and shows a workout
-  skipped but done as done; reading `day_workouts()` instead would give both one rule.
+- The week card still works out a day's workouts in the app (`weekSchedule()`) and differs in two
+  places: it shows a workout skipped but done as done, and reads a settled move as a skip. Reading
+  `day_workouts()` instead would give both one rule (#268).
 - Days become final once they can no longer be logged, which `last_day_closed_to_logging()` names
   for the meal and water checks and the streak alike.
-- A few logs from before, started near midnight, may count for the day before or after.
+- A log without `startedOn` but with a move takes the move's day, which is the device's. A few
+  logs from before, started near midnight, may count for the day before or after.
