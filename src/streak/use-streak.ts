@@ -33,10 +33,19 @@ async function fetchMissedDays(missed: string[], today: string): Promise<MissedD
   }));
 }
 
-/** The days of streak_states() that counted, by their date. */
-function countedDays(states: { day: string; state: string }[]): Record<string, DayStatus> {
+/** How each day of the week of `week` counted for the streak (streak_states()), by its date. */
+async function fetchCountedDays(week: Date, today: string): Promise<Record<string, DayStatus>> {
+  const monday = weekStart(week);
+  const { data, error } = await supabase.rpc('streak_states', {
+    from_day: toIsoDate(monday),
+    to_day: toIsoDate(addDays(monday, 6)),
+    today,
+  });
+  if (error) {
+    throw error;
+  }
   const days: Record<string, DayStatus> = {};
-  for (const { day, state } of states) {
+  for (const { day, state } of data) {
     if (state === 'done' || state === 'frozen') {
       days[day] = state;
     }
@@ -64,22 +73,13 @@ export function useStreak(today: Date) {
   const query = useQuery({
     queryKey: [...STREAK_KEY, todayOn],
     queryFn: async (): Promise<{ streak: Streak; streakBreak: StreakBreak | null }> => {
-      const monday = weekStart(today);
-      const [streak, states] = await Promise.all([
+      const [streak, days] = await Promise.all([
         supabase.rpc('streak', { today: todayOn }).single(),
-        supabase.rpc('streak_states', {
-          from_day: toIsoDate(monday),
-          to_day: toIsoDate(addDays(monday, 6)),
-          today: todayOn,
-        }),
+        fetchCountedDays(today, todayOn),
       ]);
       if (streak.error) {
         throw streak.error;
       }
-      if (states.error) {
-        throw states.error;
-      }
-      const days = countedDays(states.data);
       const { count, counted_today, freezes, missed, saved_count } = streak.data;
       return {
         streak: { count, doneToday: counted_today, days },
@@ -133,21 +133,10 @@ export function useAnswerBreak() {
 
 /** How each day of the week of `week` counted for the streak, as seen on the device's `today`. */
 export function useWeekStreak(today: Date, week: Date) {
-  const monday = weekStart(week);
   const todayOn = toIsoDate(today);
   return useQuery({
-    queryKey: [...STREAK_KEY, 'week', toIsoDate(monday), todayOn],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('streak_states', {
-        from_day: toIsoDate(monday),
-        to_day: toIsoDate(addDays(monday, 6)),
-        today: todayOn,
-      });
-      if (error) {
-        throw error;
-      }
-      return countedDays(data);
-    },
+    queryKey: [...STREAK_KEY, 'week', toIsoDate(weekStart(week)), todayOn],
+    queryFn: () => fetchCountedDays(week, todayOn),
   });
 }
 
