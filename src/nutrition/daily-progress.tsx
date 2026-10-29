@@ -70,7 +70,10 @@ function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
           <Text variant="headline" numberOfLines={1} adjustsFontSizeToFit>
             {format(Math.round(eaten[nutrient]))}{' '}
             <Text variant="caption" color="textMuted">
-              {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
+              {/* A span's totals are long, so its targets leave the unit to the average. */}
+              {t(average ? 'nutrition.spanTarget' : 'nutrition.gramTarget', {
+                target: format(targets[nutrient]),
+              })}
             </Text>
           </Text>
           <ProgressBar
@@ -80,7 +83,7 @@ function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
           />
           {average ? (
             <Average
-              value={t('nutrition.grams', { grams: format(Math.round(average[nutrient])) })}
+              value={t('nutrition.grams', { count: Math.round(average[nutrient]) })}
               style={styles.average}
             />
           ) : null}
