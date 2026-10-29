@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
-import { addDays, fromIsoDate, toIsoDate } from '@/i18n/dates';
+import { addDays, daysBetween, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { nameOf, pickedPortionOf, refOfRow, type Amount, type FoodRef } from './foods';
@@ -18,6 +18,12 @@ export type Totals = NutritionTargets;
 
 /** How many days before today meals can be logged; the database allows the same (ADR 0034). */
 export const LOGGABLE_DAYS = 7;
+
+/** Whether a day, as YYYY-MM-DD, can still be logged on the device's `today`. */
+export function canLog(day: string, today: Date): boolean {
+  const back = daysBetween(fromIsoDate(day), today);
+  return back >= 0 && back <= LOGGABLE_DAYS;
+}
 
 /**
  * The meals in the order of the day, with their icon and the share of the day's calories they
