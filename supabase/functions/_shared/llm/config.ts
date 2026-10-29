@@ -21,14 +21,13 @@ export const MODELS: Record<Task, ModelConfig> = {
   review: { model: 'gemini-3.8-flash', thinking: 'medium' },
 };
 
-const ENV_NAMES: Record<Task, string> = {
-  chat: 'LLM_MODEL_CHAT',
-  mealPhoto: 'LLM_MODEL_MEAL_PHOTO',
-  review: 'LLM_MODEL_REVIEW',
-};
+/** Where the settings are read from: `Deno.env`, or a stand-in in tests. */
+export type Env = { get(name: string): string | undefined };
 
 /** A task's model and settings, with the environment's model where it names one. */
-export function modelFor(task: Task, env: { get(name: string): string | undefined }): ModelConfig {
-  const model = env.get(ENV_NAMES[task])?.trim();
+export function modelFor(task: Task, env: Env): ModelConfig {
+  // mealPhoto → LLM_MODEL_MEAL_PHOTO
+  const name = `LLM_MODEL_${task.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
+  const model = env.get(name)?.trim();
   return model ? { ...MODELS[task], model } : MODELS[task];
 }

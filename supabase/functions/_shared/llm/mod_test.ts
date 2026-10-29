@@ -1,6 +1,7 @@
 import { assertEquals, assertInstanceOf, assertThrows } from '@std/assert';
 import { GeminiModel } from './gemini.ts';
-import { languageModel, MODELS, modelFor } from './mod.ts';
+import { MODELS } from './config.ts';
+import { languageModel, modelFor } from './mod.ts';
 
 const env = (values: Record<string, string>) => ({ get: (name: string) => values[name] });
 
@@ -41,4 +42,8 @@ Deno.test("takes a task's model from the environment where it names one", () => 
     thinking: 'low',
   });
   assertEquals(modelFor('review', env({ LLM_MODEL_CHAT: 'gemini-other' })), MODELS.review);
+  assertEquals(
+    modelFor('mealPhoto', env({ LLM_MODEL_MEAL_PHOTO: 'gemini-other' })).model,
+    'gemini-other',
+  );
 });

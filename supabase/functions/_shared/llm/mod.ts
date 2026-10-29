@@ -1,12 +1,10 @@
 // The language model of the Edge Functions (ADR 0049): import from here, not from a provider.
-import { modelFor } from './config.ts';
+import { type Env, modelFor } from './config.ts';
 import { GeminiModel } from './gemini.ts';
 import type { LanguageModel } from './types.ts';
 
 export * from './types.ts';
-export { MODELS, modelFor } from './config.ts';
-
-type Env = { get(name: string): string | undefined };
+export { modelFor } from './config.ts';
 
 /**
  * The model the environment sets up. `GEMINI_BACKEND=studio` calls the Gemini Developer API with
