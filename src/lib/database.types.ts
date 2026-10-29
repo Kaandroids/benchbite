@@ -1614,6 +1614,15 @@ export type Database = {
           saved_count: number;
         }[];
       };
+      streak_break_days: {
+        Args: { today: string };
+        Returns: {
+          day: string;
+          eaten: number;
+          target: number;
+          workouts: Json;
+        }[];
+      };
       streak_start: { Args: Record<PropertyKey, never>; Returns: string };
       streak_states: {
         Args: { from_day: string; to_day: string; today: string };
