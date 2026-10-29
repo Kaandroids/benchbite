@@ -4,9 +4,9 @@ import { toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
+import { STREAK_KEY } from '@/streak/streak';
 import type { FinishedWorkout } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
-import { STREAK_KEY } from '@/streak/streak';
 
 export const LOGS_KEY = ['workout-logs'];
 
