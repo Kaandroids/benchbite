@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(39);
+select plan(40);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -74,7 +74,10 @@ insert into public.workout_moves (user_id, workout_id, from_on, to_on, settled)
   values ('00000000-0000-0000-0000-00000000000a', 922, pg_temp.w(8), null, true);
 select pg_temp.done(921, pg_temp.w(7));
 select pg_temp.eat('00000000-0000-0000-0000-00000000000a', pg_temp.w(d), 1500)
-from generate_series(7, 8) d;
+from generate_series(7, 9) d;
+-- A move to Wednesday from Saturday, a day the workout is not planned on.
+insert into public.workout_moves (user_id, workout_id, from_on, to_on)
+  values ('00000000-0000-0000-0000-00000000000a', 920, pg_temp.w(12), pg_temp.w(9));
 
 -- User b, from six days ago: rest days, all eaten to the target but three days ago.
 insert into public.planned_days_kept (user_id, through, started_on)
@@ -151,6 +154,11 @@ select is(
   (select state from public.streak_states(pg_temp.w(8), pg_temp.w(8), current_date)),
   'done',
   'A move that settling turned into a skip leaves its day to the calories'
+);
+select is(
+  (select state::text from public.streak_states(pg_temp.w(9), pg_temp.w(9), current_date)),
+  'done',
+  'A move from a day the workout is not planned on does not count on the day it moved to'
 );
 
 reset role;
