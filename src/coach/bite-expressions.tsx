@@ -1,14 +1,32 @@
 import { Ellipse, Path } from 'react-native-svg';
 
-/** The ink of Bite's features, and its cheeks, as drawn on the white plate. */
-export const INK = '#16171A';
-const BLUSH = '#FF6A10';
-const FLUSH = '#E5484D';
-const TEAR = '#4E9BE0';
-const TONGUE = '#FF6A7A';
+import { BRAND_ORANGE } from '@/brand/mark';
 
-/** How Bite looks (ADR 0048, #293): its face for what it says. */
-export type BiteExpression = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'thinking';
+/** Bite's colours: its plate, its features and its cheeks, as drawn on the brand's orange. */
+export const PALETTE = {
+  plate: '#FFFFFF',
+  rim: '#FFD9C2',
+  ink: '#16171A',
+  blush: BRAND_ORANGE,
+  flush: '#E5484D',
+  tear: '#4E9BE0',
+  tongue: '#FF6A7A',
+};
+
+/** How Bite looks (#293): its face for what it says. */
+export const BITE_EXPRESSIONS = [
+  'neutral',
+  'happy',
+  'sad',
+  'angry',
+  'surprised',
+  'thinking',
+] as const;
+export type BiteExpression = (typeof BITE_EXPRESSIONS)[number];
+
+/** What Bite is doing (#293): waiting, working out a reply, saying it, or listening to the user. */
+export const BITE_STATES = ['idle', 'thinking', 'talking', 'listening'] as const;
+export type BiteState = (typeof BITE_STATES)[number];
 
 /** Round eyes, which blink and look about; the happy face has closed ones instead. */
 export type BiteEyes = {
@@ -22,15 +40,30 @@ export type BiteEyes = {
   glint?: { dx: number; dy: number; r: number };
 };
 
-type Face = {
+/** A curved brow: its start, the curve's control point and its end, as x and y. */
+export type Brow = readonly [number, number, number, number, number, number];
+
+/** Raised brows, as surprised and listening have them. */
+export const RAISED_BROWS: readonly [Brow, Brow] = [
+  [31, 33, 37, 28, 43, 32],
+  [57, 32, 63, 28, 69, 33],
+];
+
+/** The path of a brow, lifted by `lift`; a worklet, as the listening brows lift on the UI thread. */
+export function browPath([x1, y1, cx, cy, x2, y2]: Brow, lift = 0) {
+  'worklet';
+  return `M${x1} ${y1 + lift} Q${cx} ${cy + lift} ${x2} ${y2 + lift}`;
+}
+
+export type Face = {
   eyes: BiteEyes | null;
   /** Everything else of the face that does not move: brows, cheeks, closed eyes, tears. */
   features: React.ReactNode;
-  /** The mouth, which talking replaces with a moving one. */
+  /** The mouth; null where the state draws a moving one. */
   mouth: React.ReactNode;
 };
 
-const cheeks = (opacity: number, rx = 5, ry = 3, cy = 55, color = BLUSH) => (
+const cheeks = (opacity: number, rx = 5, ry = 3, cy = 55, color = PALETTE.blush) => (
   <>
     <Ellipse cx="29" cy={cy} rx={rx} ry={ry} fill={color} opacity={opacity} />
     <Ellipse cx="71" cy={cy} rx={rx} ry={ry} fill={color} opacity={opacity} />
@@ -38,7 +71,7 @@ const cheeks = (opacity: number, rx = 5, ry = 3, cy = 55, color = BLUSH) => (
 );
 
 const line = (d: string, width = 3) => (
-  <Path d={d} fill="none" stroke={INK} strokeWidth={width} strokeLinecap="round" />
+  <Path d={d} fill="none" stroke={PALETTE.ink} strokeWidth={width} strokeLinecap="round" />
 );
 
 /** Each expression's face, drawn on the plate's 100 × 100 box, as approved on the canvas. */
@@ -59,8 +92,8 @@ export const FACES: Record<BiteExpression, Face> = {
     ),
     mouth: (
       <>
-        <Path d="M39 56 H61 Q61 72 50 72 Q39 72 39 56 Z" fill={INK} />
-        <Ellipse cx="50" cy="68.4" rx="5" ry="2.6" fill={TONGUE} />
+        <Path d="M39 56 H61 Q61 72 50 72 Q39 72 39 56 Z" fill={PALETTE.ink} />
+        <Ellipse cx="50" cy="68.4" rx="5" ry="2.6" fill={PALETTE.tongue} />
       </>
     ),
   },
@@ -70,7 +103,7 @@ export const FACES: Record<BiteExpression, Face> = {
       <>
         {line('M31 37 L43 33')}
         {line('M57 33 L69 37')}
-        <Path d="M33 52 Q30.5 56.5 33 58 Q35.5 56.5 33 52 Z" fill={TEAR} />
+        <Path d="M33 52 Q30.5 56.5 33 58 Q35.5 56.5 33 52 Z" fill={PALETTE.tear} />
       </>
     ),
     mouth: line('M42 67 Q50 59.5 58 67', 3.6),
@@ -81,7 +114,7 @@ export const FACES: Record<BiteExpression, Face> = {
       <>
         {line('M31 34 L44 39', 3.4)}
         {line('M56 39 L69 34', 3.4)}
-        {cheeks(0.45, 5.5, 3.2, 55, FLUSH)}
+        {cheeks(0.45, 5.5, 3.2, 55, PALETTE.flush)}
       </>
     ),
     mouth: line('M41 65 Q50 60 59 65', 3.6),
@@ -90,12 +123,12 @@ export const FACES: Record<BiteExpression, Face> = {
     eyes: { left: 38, right: 62, cy: 44, rx: 6, ry: 6, glint: { dx: 2, dy: -2, r: 2 } },
     features: (
       <>
-        {line('M31 33 Q37 28 43 32')}
-        {line('M57 32 Q63 28 69 33')}
+        {line(browPath(RAISED_BROWS[0]))}
+        {line(browPath(RAISED_BROWS[1]))}
         {cheeks(0.4, 5, 3, 56)}
       </>
     ),
-    mouth: <Ellipse cx="50" cy="64" rx="5.5" ry="7" fill={INK} />,
+    mouth: <Ellipse cx="50" cy="64" rx="5.5" ry="7" fill={PALETTE.ink} />,
   },
   thinking: {
     eyes: { left: 40, right: 64, cy: 43, rx: 4.6, ry: 4.6, glint: { dx: 1.8, dy: -1.8, r: 1.5 } },
@@ -110,14 +143,15 @@ export const FACES: Record<BiteExpression, Face> = {
   },
 };
 
-/** While listening, Bite's eyes are wide, its brows up and its mouth a small round one. */
-export const LISTENING_EYES: BiteEyes = {
-  left: 38,
-  right: 62,
-  cy: 44,
-  rx: 5.4,
-  ry: 5.4,
-  glint: { dx: 1.8, dy: -1.8, r: 1.8 },
+/**
+ * How a live state changes the expression's face, while Bite moves: talking draws its own mouth,
+ * and listening has wide eyes and cheeks of its own, its brows and mouth moving with its breath.
+ */
+export const STATE_FACES: Partial<Record<BiteState, Partial<Face>>> = {
+  talking: { mouth: null },
+  listening: {
+    eyes: { left: 38, right: 62, cy: 44, rx: 5.4, ry: 5.4, glint: { dx: 1.8, dy: -1.8, r: 1.8 } },
+    features: cheeks(0.45),
+    mouth: null,
+  },
 };
-
-export const LISTENING_CHEEKS = cheeks(0.45);
