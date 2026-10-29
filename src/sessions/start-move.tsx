@@ -11,7 +11,7 @@ import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useCachedWeekSchedule } from '@/week/use-week-schedule';
 import { useWorkoutName } from '@/workouts/format';
-import { startMove, type StartMove } from '@/workouts/week-schedule';
+import { skippedToday, startMove, type StartMove } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
 
 /** A workout started on a day it is not planned, and the planned day it could count for. */
@@ -65,6 +65,10 @@ export function useStartMove() {
   return async (workout: Workout, today: Date): Promise<{ fromOn?: string } | null> => {
     // Without the week, as offline before it ever loaded, the workout is an extra one.
     const schedule = cachedWeek(today);
+    // A workout skipped today is today's again once started, without asking.
+    if (schedule && skippedToday(schedule, workout.id, toIsoDate(today))) {
+      return { fromOn: toIsoDate(today) };
+    }
     const move = schedule ? startMove(schedule, workout.id, toIsoDate(today)) : null;
     if (!move) {
       return {};

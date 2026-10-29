@@ -106,6 +106,27 @@ describe('useStartMove', () => {
     await expect(choice).resolves.toEqual({ fromOn: '2026-10-19' });
   });
 
+  it('undoes a skip of today without asking, so that today keeps the workout', async () => {
+    const wednesday: WeekSession = { ...PUSH, workoutId: 1, weekday: 3 };
+    jest
+      .mocked(useCachedWeekSchedule)
+      .mockReturnValue(() =>
+        weekSchedule(
+          [wednesday],
+          [{ workoutId: 1, fromOn: '2026-10-21', toOn: null }],
+          [],
+          WEDNESDAY,
+        ),
+      );
+    await render(<Harness />);
+    let choice: Promise<unknown> = Promise.resolve();
+    await act(() => {
+      choice = startMove(PUSH, WEDNESDAY);
+    });
+    await expect(choice).resolves.toEqual({ fromOn: '2026-10-21' });
+    expect(screen.queryByRole('header')).toBeNull();
+  });
+
   it('starts an extra workout, or not at all when cancelled', async () => {
     jest
       .mocked(useCachedWeekSchedule)
