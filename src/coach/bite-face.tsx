@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import Animated, {
   cancelAnimation,
+  Easing,
   useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
@@ -21,6 +22,8 @@ const INK = '#16171A';
 const CHEEK = '#FF6A10';
 
 const EYE = 4.8;
+/** How far it bobs up, as a share of its size: a few pixels in the tab bar. */
+const BOB = 0.05;
 
 /**
  * Bite, the coach (#293): a bitten plate with a face, here with its neutral look. Unless the user
@@ -49,12 +52,14 @@ export function BiteFace({ size }: { size: number }) {
         -1,
       ),
     );
-    bob.set(withRepeat(withTiming(-1.5, { duration: 1300 }), -1, true));
+    bob.set(
+      withRepeat(withTiming(-BOB, { duration: 1600, easing: Easing.inOut(Easing.sin) }), -1, true),
+    );
   }, [reduceMotion, eye, bob]);
 
   const eyeProps = useAnimatedProps(() => ({ ry: eye.get() }));
   const bobStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: (bob.get() * size) / 100 }],
+    transform: [{ translateY: bob.get() * size }],
   }));
 
   return (
