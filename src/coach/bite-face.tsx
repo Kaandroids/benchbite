@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import Animated, {
+  cancelAnimation,
   useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
@@ -32,6 +33,11 @@ export function BiteFace({ size }: { size: number }) {
 
   useEffect(() => {
     if (reduceMotion) {
+      // Also when the user asks for less motion while it is moving.
+      cancelAnimation(eye);
+      cancelAnimation(bob);
+      eye.set(EYE);
+      bob.set(0);
       return;
     }
     eye.set(
