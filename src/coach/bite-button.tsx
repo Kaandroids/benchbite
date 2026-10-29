@@ -94,7 +94,7 @@ export function BiteButton() {
           },
         ]}
       >
-        <BiteAvatar size={SIZE - 2 * RING} idle />
+        <BiteAvatar size={SIZE - 2 * RING} looksAbout />
       </Pressable>
     </Animated.View>
   );

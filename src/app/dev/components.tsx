@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 
 import { AnimatedSplash } from '@/brand/animated-splash';
+import { BiteGallery } from '@/coach/bite-gallery';
 import { HEIGHT_RANGE_CM } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { ChoiceCard } from '@/components/ui/choice-card';
@@ -182,6 +183,10 @@ export default function ComponentGallery() {
         <Modal visible={splash !== null} transparent animationType="none" statusBarTranslucent>
           {splash ? <AnimatedSplash scheme={splash} onDone={() => setSplash(null)} /> : null}
         </Modal>
+      </Section>
+
+      <Section title="Bite">
+        <BiteGallery />
       </Section>
 
       <Section title="Streak">
