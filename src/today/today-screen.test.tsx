@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 
-import { useFinishedThisWeek } from '@/history/history';
+import { useFinishedInWeek } from '@/history/history';
 import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
@@ -25,7 +25,7 @@ jest.mock('@/workouts/planned-week', () => ({
   ...jest.requireActual('@/workouts/planned-week'),
   usePlannedWeek: jest.fn(),
 }));
-jest.mock('@/history/history', () => ({ useFinishedThisWeek: jest.fn() }));
+jest.mock('@/history/history', () => ({ useFinishedInWeek: jest.fn() }));
 jest.mock('@/workouts/moves', () => ({
   useWeekMoves: jest.fn(),
   useMoveWorkout: jest.fn(),
@@ -177,7 +177,7 @@ function mockData({
   jest.mocked(useDisplayName).mockReturnValue({ data: name } as never);
   jest.mocked(useMoveWorkout).mockReturnValue({ mutate: move, ...moving } as never);
   jest.mocked(useUndoMove).mockReturnValue({ mutate: undo, ...undoing } as never);
-  jest.mocked(useFinishedThisWeek).mockReturnValue(finished as never);
+  jest.mocked(useFinishedInWeek).mockReturnValue(finished as never);
   jest.mocked(useWeekMoves).mockReturnValue(moves as never);
   jest.mocked(useWeek).mockReturnValue(plan as never);
   const sessions = plan.data?.sessions ?? [];
