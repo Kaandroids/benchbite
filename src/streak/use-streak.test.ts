@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { act, renderHook, waitFor } from '@/test/render';
+import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import { NO_STREAK } from './streak';
 import { sampleStreak } from './sample-streak';
@@ -37,7 +37,7 @@ describe('useStreak', () => {
 
   it('reads the streak on the device’s today, with this week’s done and frozen days', async () => {
     mockStreak();
-    const { result } = await renderHook(() => useStreak(THURSDAY));
+    const { result } = await renderHook(() => useStreak(THURSDAY).streak);
     expect(result.current).toEqual(NO_STREAK);
     await waitFor(() =>
       expect(result.current).toEqual({
@@ -54,9 +54,28 @@ describe('useStreak', () => {
     });
   });
 
+  it('shows none when it cannot load, and can be tried again', async () => {
+    const failed = { data: null, error: new Error('offline') };
+    jest
+      .mocked(supabase.rpc)
+      .mockImplementation(((name: string) =>
+        name === 'streak'
+          ? { single: () => Promise.resolve(failed) }
+          : Promise.resolve(failed)) as never);
+    const { result } = await renderHook(() => useStreak(THURSDAY), {
+      queryClient: createTestQueryClient(),
+    });
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    expect(result.current.streak).toEqual(NO_STREAK);
+
+    mockStreak();
+    await act(() => result.current.retry());
+    await waitFor(() => expect(result.current.streak.count).toBe(3));
+  });
+
   it('shows a sample streak and goes back to the user’s', async () => {
     mockStreak();
-    const { result } = await renderHook(() => useStreak(THURSDAY));
+    const { result } = await renderHook(() => useStreak(THURSDAY).streak);
     const sample = sampleStreak(THURSDAY, true);
     await act(() => showSampleStreak(sample));
     expect(result.current).toBe(sample);
