@@ -9,14 +9,14 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
-import { toIsoDate } from '@/i18n/dates';
+import { addDays, daysBetween, fromIsoDate, toIsoDate, weekStart } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { useBreakPrompt } from '@/streak/break-prompt';
 import { BreakSheet } from '@/streak/break-sheet';
-import { useStreak } from '@/streak/use-streak';
+import { useStreak, useStreakStart } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
 import { hasWorkouts, missedWorkouts } from '@/workouts/week-schedule';
@@ -26,6 +26,7 @@ import { useGreeting } from './greeting';
 import { CatchUp } from './catch-up';
 import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
+import { PastWeek } from './past-week';
 import { PickDay } from './pick-day';
 import { WeekCard } from './week-card';
 import { WorkoutCard } from './workout-card';
@@ -36,7 +37,10 @@ type SheetContent =
   | { kind: 'pick'; session: WeekSession; fromOn: string }
   | { kind: 'catchUp' };
 
-/** The home tab: a greeting, the week, the daily targets, missed workouts and today's workout. */
+/**
+ * The home tab: a greeting, the week, the daily targets, missed workouts and today's workout. The
+ * week pages back to the user's first week, which shows a past week's own cards (ADR 0043).
+ */
 export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -58,6 +62,14 @@ export function TodayScreen() {
     ]);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
   const prompt = useBreakPrompt(streakBreak);
+  // How many weeks back the week shown is, 0 for this week; not before the user's first week.
+  const [weeksBack, setWeeksBack] = useState(0);
+  const startedOn = useStreakStart().data ?? undefined;
+  const firstWeeksBack = startedOn
+    ? Math.max(0, Math.round(daysBetween(weekStart(fromIsoDate(startedOn)), weekStart(today)) / 7))
+    : 0;
+  const showPrevious =
+    weeksBack < firstWeeksBack ? () => setWeeksBack((back) => back + 1) : undefined;
 
   const sheetDay =
     sheet?.kind === 'day'
@@ -93,6 +105,18 @@ export function TodayScreen() {
         <ActivityIndicator color={colors.primary} accessibilityLabel={t('today.loading')} />
       </View>
     );
+  } else if (weeksBack > 0) {
+    content = (
+      <PastWeek
+        today={today}
+        week={addDays(today, -7 * weeksBack)}
+        streak={streak}
+        startedOn={startedOn}
+        onPrevious={showPrevious}
+        onNext={() => setWeeksBack((back) => back - 1)}
+        onBackToToday={() => setWeeksBack(0)}
+      />
+    );
   } else {
     content = (
       <>
@@ -101,7 +125,10 @@ export function TodayScreen() {
           today={today}
           streak={streak}
           schedule={schedule}
+          streakDays={streak.days}
+          startedOn={startedOn}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
+          onPrevious={showPrevious}
         />
         {targets.data ? (
           <Card entering={cardEntering(1)}>

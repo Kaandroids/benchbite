@@ -5,7 +5,7 @@ import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { NO_STREAK, type StreakBreak } from '@/streak/streak';
-import { useAnswerBreak, useStreak } from '@/streak/use-streak';
+import { useAnswerBreak, useStreak, useStreakStart } from '@/streak/use-streak';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { plannedOf, workoutsOf } from '@/test/planned-week';
 import { useMoveWorkout, useUndoMove, useWeekMoves } from '@/workouts/moves';
@@ -61,7 +61,17 @@ jest.mock('expo-router', () => {
 jest.mock('@/streak/use-streak', () => ({
   useStreak: jest.fn(),
   useAnswerBreak: jest.fn(),
+  useStreakStart: jest.fn(),
 }));
+// A past week loads its own data, tested with it.
+jest.mock('./past-week', () => {
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    PastWeek: ({ week, onNext }: { week: Date; onNext: () => void }) => (
+      <Text onPress={onNext}>{`Week of ${week.toDateString()}`}</Text>
+    ),
+  };
+});
 
 type Query<T> = {
   data?: T;
@@ -134,8 +144,9 @@ const noMeals = (day: string) => ({
   caloriesCount: false,
 });
 
-/** The streak with a break to answer, or none. */
-function mockStreak(streakBreak: StreakBreak | null) {
+/** The streak with a break to answer, or none, of a user who started on `startedOn`. */
+function mockStreak(streakBreak: StreakBreak | null, startedOn = '2026-10-05') {
+  jest.mocked(useStreakStart).mockReturnValue({ data: startedOn } as never);
   jest.mocked(useStreak).mockReturnValue({
     streak: NO_STREAK,
     streakBreak,
@@ -382,6 +393,39 @@ describe('TodayScreen', () => {
     for (const query of [plan, targets, eaten]) {
       expect(query.refetch).toHaveBeenCalled();
     }
+  });
+});
+
+describe('paging the week', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('has no arrows in the first week, and says it is the first', async () => {
+    mockStreak(null, '2026-10-20');
+    mockData();
+    await render(<TodayScreen />);
+    expect(screen.getByText('0 of 3 workouts this week · your first week')).toBeTruthy();
+    expect(screen.queryByLabelText('Previous week')).toBeNull();
+    expect(screen.queryByLabelText('Next week')).toBeNull();
+  });
+
+  it('pages back to the first week and forward to this one', async () => {
+    mockStreak(null, '2026-10-07');
+    mockData();
+    await render(<TodayScreen />);
+    expect(screen.getByLabelText('Next week')).toBeDisabled();
+    await act(() => fireEvent.press(screen.getByLabelText('Previous week')));
+    expect(screen.getByText(`Week of ${new Date(2026, 9, 14, 9, 0).toDateString()}`)).toBeTruthy();
+    expect(screen.queryByText('Your daily targets')).toBeNull();
+    // The past week pages on with its own card, given a way back.
+    await act(() =>
+      fireEvent.press(screen.getByText(`Week of ${new Date(2026, 9, 14, 9, 0).toDateString()}`)),
+    );
+    expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
+    expect(screen.getByText('Your daily targets')).toBeTruthy();
   });
 });
 
