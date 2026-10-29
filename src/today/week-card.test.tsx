@@ -155,7 +155,8 @@ describe('WeekCard', () => {
       />,
     );
     expect(screen.getByText('October 12 – 18')).toBeTruthy();
-    expect(screen.getByText('1 of 2 workouts')).toBeTruthy();
+    // Its workouts are counted in its own card.
+    expect(screen.queryByText(/workouts/)).toBeNull();
     expect(screen.getByLabelText('Wed 14, Pull, missed').props.accessibilityRole).toBeUndefined();
     await fireEvent.press(screen.getByLabelText('Previous week'));
     await fireEvent.press(screen.getByLabelText('Next week'));

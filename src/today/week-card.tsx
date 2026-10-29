@@ -242,17 +242,15 @@ export function WeekCard({
       ...(streakDays[day.date] ? [t(`today.week.streak.${streakDays[day.date]!}`)] : []),
     ].join(', ');
 
-  const progress = [
-    ...(schedule.planned > 0 && !loading
-      ? [
-          t(past ? 'today.week.progressPast' : 'today.week.progress', {
-            done: schedule.done,
-            count: schedule.planned,
-          }),
-        ]
-      : []),
-    ...(firstWeek ? [t('today.week.firstWeek')] : []),
-  ].join(' · ');
+  // A past week counts its workouts in its own card (ADR 0046), so it only leads back.
+  const progress = past
+    ? ''
+    : [
+        ...(schedule.planned > 0 && !loading
+          ? [t('today.week.progress', { done: schedule.done, count: schedule.planned })]
+          : []),
+        ...(firstWeek ? [t('today.week.firstWeek')] : []),
+      ].join(' · ');
 
   return (
     <Card entering={entering}>
@@ -284,7 +282,12 @@ export function WeekCard({
                 </Text>
               ) : null}
               {onBackToToday ? (
-                <TextLink label={t('today.week.backToToday')} onPress={onBackToToday} />
+                <TextLink
+                  icon="calendar"
+                  label={t('today.week.backToToday')}
+                  onPress={onBackToToday}
+                  align="start"
+                />
               ) : null}
             </View>
           ) : null}

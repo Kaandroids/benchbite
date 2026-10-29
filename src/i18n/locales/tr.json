@@ -123,8 +123,6 @@
       "progress_one": "Bu hafta {{count}} antrenmandan {{done}}",
       "progress_other": "Bu hafta {{count}} antrenmandan {{done}}",
       "open": "Günün antrenmanlarını gösterir",
-      "progressPast_one": "{{count}} antrenmandan {{done}}",
-      "progressPast_other": "{{count}} antrenmandan {{done}}",
       "firstWeek": "ilk haftan",
       "previous": "Önceki hafta",
       "next": "Sonraki hafta",

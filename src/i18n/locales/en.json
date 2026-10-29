@@ -123,8 +123,6 @@
       "progress_one": "{{done}} of {{count}} workout this week",
       "progress_other": "{{done}} of {{count}} workouts this week",
       "open": "Shows the day's workouts",
-      "progressPast_one": "{{done}} of {{count}} workout",
-      "progressPast_other": "{{done}} of {{count}} workouts",
       "firstWeek": "your first week",
       "previous": "Previous week",
       "next": "Next week",
