@@ -154,6 +154,7 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'exercise'],
       // The Progress tab's heat map and the streak count the day's workouts.
       ['workout-logs', 'days'],
+      ['workout-logs', 'records'],
       ['streak'],
     ]);
     // A past week's workouts are under the week's.

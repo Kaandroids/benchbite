@@ -47,3 +47,31 @@ export function useRecordFormat() {
     }
   };
 }
+
+/**
+ * How much a record beat the best before it, in the record's unit: "+2.5 kg", "+2", "+0:25", or
+ * "−0:20 /km" for a faster pace.
+ */
+export function useRecordGainFormat() {
+  const { t } = useTranslation();
+  const { format } = useNumberFormat();
+  return ({ kind, value, previous }: { kind: RecordKind; value: number; previous: number }) => {
+    switch (kind) {
+      case 'heaviest':
+      case 'best_set':
+        return `+${format(value - previous, { maximumFractionDigits: 1 })} kg`;
+      case 'one_rep_max':
+        // As the record shows it, in whole kilograms.
+        return `+${format(Math.round(value) - Math.round(previous))} kg`;
+      case 'most_reps':
+        return `+${format(value - previous)}`;
+      case 'longest_time':
+      case 'most_time':
+        return `+${minutesAndSeconds(value - previous)}`;
+      case 'longest_distance':
+        return `+${format(value - previous)} m`;
+      case 'best_pace':
+        return `−${t('exerciseHistory.pace', { time: minutesAndSeconds(Math.round(previous - value)) })}`;
+    }
+  };
+}
