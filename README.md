@@ -219,7 +219,8 @@ See [ADR 0010](docs/adr/0010-plan-builder-edge-function.md).
 
 The AI coach calls Gemini from the Edge Functions
 ([ADR 0049](docs/adr/0049-gemini-behind-our-own-model-interface.md)). To try it locally, copy
-`supabase/functions/.env.example` to `supabase/functions/.env` and set `GEMINI_API_KEY` to a key
+`supabase/functions/.env.example` to `supabase/functions/.env`, which sets `GEMINI_BACKEND=studio`,
+and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
 they need no key.
 

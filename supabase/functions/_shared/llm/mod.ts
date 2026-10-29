@@ -9,11 +9,13 @@ export { MODELS, modelFor } from './config.ts';
 type Env = { get(name: string): string | undefined };
 
 /**
- * The model the environment sets up. `GEMINI_BACKEND=studio` (the default) calls the Gemini
- * Developer API with `GEMINI_API_KEY`; `vertex`, Vertex AI in the EU, comes before the release.
+ * The model the environment sets up. `GEMINI_BACKEND=studio` calls the Gemini Developer API with
+ * `GEMINI_API_KEY`, for test data only; `vertex`, Vertex AI in the EU, comes before the release.
+ * There is no default, so that no project calls the Developer API without saying so.
  */
 export function languageModel(env: Env = Deno.env): LanguageModel {
-  const backend = env.get('GEMINI_BACKEND') ?? 'studio';
+  const backend = env.get('GEMINI_BACKEND');
+  if (!backend) throw new Error('GEMINI_BACKEND is not set');
   if (backend === 'vertex') throw new Error('GEMINI_BACKEND=vertex is not supported yet');
   if (backend !== 'studio') throw new Error(`Unknown GEMINI_BACKEND: ${backend}`);
   const apiKey = env.get('GEMINI_API_KEY');

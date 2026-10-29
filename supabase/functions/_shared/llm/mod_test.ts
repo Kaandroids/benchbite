@@ -4,12 +4,24 @@ import { languageModel, MODELS, modelFor } from './mod.ts';
 
 const env = (values: Record<string, string>) => ({ get: (name: string) => values[name] });
 
-Deno.test('sets up Gemini through its API key by default', () => {
-  assertInstanceOf(languageModel(env({ GEMINI_API_KEY: 'key' })), GeminiModel);
+Deno.test('sets up Gemini through its API key', () => {
+  assertInstanceOf(
+    languageModel(env({ GEMINI_BACKEND: 'studio', GEMINI_API_KEY: 'key' })),
+    GeminiModel,
+  );
 });
 
-Deno.test('refuses a missing key, Vertex for now, and an unknown backend', () => {
-  assertThrows(() => languageModel(env({})), Error, 'GEMINI_API_KEY is not set');
+Deno.test('refuses a missing backend or key, Vertex for now, and an unknown backend', () => {
+  assertThrows(
+    () => languageModel(env({ GEMINI_API_KEY: 'key' })),
+    Error,
+    'GEMINI_BACKEND is not set',
+  );
+  assertThrows(
+    () => languageModel(env({ GEMINI_BACKEND: 'studio' })),
+    Error,
+    'GEMINI_API_KEY is not set',
+  );
   assertThrows(
     () => languageModel(env({ GEMINI_BACKEND: 'vertex', GEMINI_API_KEY: 'key' })),
     Error,

@@ -25,7 +25,7 @@ month, and it runs in the EU on Vertex AI.
 - **Each task has its model in one place** (`config.ts`): chat on Gemini 3.5 Flash-Lite, a meal
   photo and the reviews on Gemini 3.8 Flash, each with how much it reasons. `LLM_MODEL_<TASK>`
   overrides a model without a change to the code.
-- **Two backends.** `GEMINI_BACKEND=studio` uses the Gemini Developer API with `GEMINI_API_KEY`,
+- **Two backends, chosen explicitly** by `GEMINI_BACKEND`, which has no default. `studio` uses the Gemini Developer API with `GEMINI_API_KEY`,
   for development, with test data only. `vertex`, Vertex AI in an EU region, must replace it
   before the app is released; until then it is refused.
 - **The key is an Edge Function secret**: `supabase/functions/.env` locally, ignored by Git, and
