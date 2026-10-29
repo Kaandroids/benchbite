@@ -16,8 +16,8 @@ import {
 } from '@/i18n/dates';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 
-/** How many weeks fit the map's width; longer ranges scroll back from today. */
-const SHOWN_WEEKS = 13;
+/** The weeks of three months, which fill the width; longer ranges scroll back from today. */
+const SHOWN_WEEKS = 14;
 const MAX_PITCH = 26;
 const GAP = 3;
 const WEEKDAY_WIDTH = 30;
@@ -116,8 +116,11 @@ export function HeatMap({ days, today, accessibilityLabel }: HeatMapProps) {
             ref={scroll}
             horizontal
             showsHorizontalScrollIndicator={weeks > SHOWN_WEEKS}
-            // Open on today, also after the range changes.
-            onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
+            // Open on today, also after the range changes. Android ignores a scroll in the same
+            // frame as the new size.
+            onContentSizeChange={() =>
+              requestAnimationFrame(() => scroll.current?.scrollToEnd({ animated: false }))
+            }
           >
             <View>
               <View style={{ height: MONTH_HEIGHT }}>
