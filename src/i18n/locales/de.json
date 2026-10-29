@@ -193,8 +193,6 @@
       "notEnough_one": "Du hast {{count}} Freeze: nicht genug, um alle abzudecken.",
       "notEnough_other": "Du hast {{count}} Freezes: nicht genug, um alle abzudecken.",
       "noFreezes": "Du hast keine Freezes mehr.",
-      "forgot": "Eine Mahlzeit vergessen?",
-      "forgotHint": "Trag sie nach, dann kann der Tag noch zählen.",
       "log": "Nachtragen",
       "logDay": "{{day}} nachtragen",
       "tooLate": "Kann nicht mehr nachgetragen werden",
@@ -210,7 +208,18 @@
       "kept_one": "Serie gehalten: {{day}} ist eingefroren. {{count}} Freeze übrig.",
       "kept_other": "Serie gehalten: {{day}} ist eingefroren. {{count}} Freezes übrig.",
       "keptDays_one": "Serie gehalten: {{days}} Tage eingefroren. {{count}} Freeze übrig.",
-      "keptDays_other": "Serie gehalten: {{days}} Tage eingefroren. {{count}} Freezes übrig."
+      "keptDays_other": "Serie gehalten: {{days}} Tage eingefroren. {{count}} Freezes übrig.",
+      "notDone": "{{name}} nicht gemacht",
+      "skipped": "{{name}} übersprungen",
+      "postpone": "Verschieben",
+      "postponeLabel": "{{name}} verschieben",
+      "cannotMove": "Nicht mehr verschiebbar",
+      "noMeals": "Keine Mahlzeiten eingetragen",
+      "over": "{{kcal}} kcal über dem Ziel",
+      "onlyFreeze": "Nur mit einem Freeze",
+      "moved": "{{name}} auf {{day}} verschoben.",
+      "moveError": "Das Workout konnte nicht verschoben werden. Prüfe deine Verbindung und versuche es erneut.",
+      "movedToday": "{{name}} auf heute verschoben."
     }
   },
   "nutrition": {
