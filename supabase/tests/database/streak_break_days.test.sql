@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(14);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -109,6 +109,11 @@ select is(
    where day = pg_temp.other(2)),
   400::numeric,
   'A day over its target gives how far over it is'
+);
+select results_eq(
+  $$ select day, calories_count from public.streak_break_days(pg_temp.days(), current_date) $$,
+  $$ select d, d in (pg_temp.x(), pg_temp.y()) from unnest(pg_temp.days()) d order by d $$,
+  'Each day says whether its calories kept it, as the streak counts them'
 );
 
 -- Workouts deleted since keep the names of their days.
