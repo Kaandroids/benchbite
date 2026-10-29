@@ -263,7 +263,7 @@
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "günde ort. {{grams}} g",
+    "averageGrams": "ort. {{grams}} g",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Bugün",

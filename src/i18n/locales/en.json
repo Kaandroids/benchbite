@@ -263,7 +263,7 @@
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "avg {{grams}} g a day",
+    "averageGrams": "avg {{grams}} g",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Today",

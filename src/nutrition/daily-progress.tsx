@@ -21,13 +21,15 @@ type DailyProgressProps = {
   targets: NutritionTargets;
   /** What was eaten today, in the same units as the targets. */
   eaten: NutritionTargets;
+  /** What was eaten on an average day, shown small under each macro, for a span of days. */
+  average?: NutritionTargets;
 };
 
 /** How much of a target was eaten, none for a target of none. */
-export const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
+const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
 
 /** How much of the day's calories and macros was eaten, large, against the targets, small. */
-export function DailyProgress({ targets, eaten }: DailyProgressProps) {
+export function DailyProgress({ targets, eaten, average }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -46,18 +48,13 @@ export function DailyProgress({ targets, eaten }: DailyProgressProps) {
           accessibilityLabel={t('nutrition.calorieLabel')}
         />
       </View>
-      <MacroColumns targets={targets} eaten={eaten} />
+      <MacroColumns targets={targets} eaten={eaten} average={average} />
     </>
   );
 }
 
-type MacroColumnsProps = DailyProgressProps & {
-  /** What was eaten on an average day, shown under each macro, for a span of days. */
-  average?: NutritionTargets;
-};
-
 /** Protein, carbs and fat side by side, each eaten against its target. */
-export function MacroColumns({ targets, eaten, average }: MacroColumnsProps) {
+function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -81,7 +78,7 @@ export function MacroColumns({ targets, eaten, average }: MacroColumnsProps) {
             accessibilityLabel={t(`nutrition.macros.${key}`)}
           />
           {average ? (
-            <Text variant="caption" color="textMuted">
+            <Text variant="caption" color="textMuted" style={styles.average}>
               {t('nutrition.averageGrams', {
                 grams: format(Math.round(average[nutrient])),
               })}
@@ -99,5 +96,9 @@ const styles = StyleSheet.create({
   },
   macro: {
     flex: 1,
+  },
+  average: {
+    fontSize: 12,
+    lineHeight: 16,
   },
 });
