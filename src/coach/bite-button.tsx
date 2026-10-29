@@ -37,7 +37,9 @@ export function BiteButton() {
       bob.set(0);
       return;
     }
-    // Slowing as it rises, speeding up as it falls, and off the ground again at once.
+    // Slowing as it rises, speeding up as it falls, and off the ground again at once. Each round
+    // starts and ends on the ground, as a repeat goes back to where it started.
+    bob.set(BOUNCE.down);
     bob.set(
       withRepeat(
         withSequence(
