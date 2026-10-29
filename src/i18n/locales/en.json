@@ -1621,7 +1621,8 @@
       "frozen": "days frozen",
       "longest": "longest streak",
       "freezes_one": "{{count}} freeze left",
-      "freezes_other": "{{count}} freezes left"
+      "freezes_other": "{{count}} freezes left",
+      "error": "We couldn't load your streak."
     }
   }
 }

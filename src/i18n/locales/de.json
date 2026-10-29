@@ -1621,7 +1621,8 @@
       "frozen": "Tage eingefroren",
       "longest": "längste Serie",
       "freezes_one": "Noch {{count}} Freeze",
-      "freezes_other": "Noch {{count}} Freezes"
+      "freezes_other": "Noch {{count}} Freezes",
+      "error": "Deine Serie konnte nicht geladen werden."
     }
   }
 }

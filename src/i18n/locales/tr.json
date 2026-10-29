@@ -1621,7 +1621,8 @@
       "frozen": "gün donduruldu",
       "longest": "en uzun seri",
       "freezes_one": "{{count}} freeze kaldı",
-      "freezes_other": "{{count}} freeze kaldı"
+      "freezes_other": "{{count}} freeze kaldı",
+      "error": "Serin yüklenemedi."
     }
   }
 }

@@ -59,6 +59,28 @@ describe('StreakCalendarScreen', () => {
   });
 });
 
+describe('StreakCalendarScreen while loading', () => {
+  it("shows nothing of a month until its days load, not the last month's", async () => {
+    await render(<StreakCalendarScreen />);
+    jest.mocked(useMonthStreak).mockReturnValue({ data: undefined, isError: false } as never);
+    await fireEvent.press(screen.getByLabelText('Previous month'));
+    expect(screen.getByText('September 2026')).toBeTruthy();
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+    expect(screen.queryByText('days counted')).toBeNull();
+  });
+
+  it('says when the days could not load, and loads them again', async () => {
+    const refetch = jest.fn();
+    jest
+      .mocked(useMonthStreak)
+      .mockReturnValue({ data: undefined, isError: true, refetch } as never);
+    await render(<StreakCalendarScreen />);
+    expect(screen.getByText("We couldn't load your streak.")).toBeTruthy();
+    await fireEvent.press(screen.getByText('Try again'));
+    expect(refetch).toHaveBeenCalled();
+  });
+});
+
 describe('StreakButton', () => {
   it('says the streak and the freezes left, and opens the calendar', async () => {
     await render(<StreakButton today={TODAY} />);
