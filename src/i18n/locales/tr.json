@@ -155,7 +155,6 @@
       },
       "macros": {
         "title": "Kalori ve makrolar",
-        "average": "ort. {{kcal}} kcal",
         "thousands": "{{value}}B",
         "none": "Bu hafta öğün girilmedi",
         "day": "{{day}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g karbonhidrat, {{fat}} g yağ",
@@ -265,7 +264,7 @@
   },
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
-    "grams": "{{count}} g",
+    "grams": "{{grams}} g",
     "macros": {
       "protein": "Protein",
       "carbs": "Karbonhidrat",
@@ -274,7 +273,7 @@
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "ort. {{grams}} g",
+    "average": "ortalama {{value}}",
     "target": "Hedef",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {

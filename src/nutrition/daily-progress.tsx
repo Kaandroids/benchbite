@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
+import { Average } from './average';
 import type { NutritionTargets } from './targets';
 
 type Nutrient = keyof NutritionTargets;
@@ -78,11 +79,10 @@ function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
             accessibilityLabel={t(`nutrition.macros.${key}`)}
           />
           {average ? (
-            <Text variant="caption" color="textMuted" style={styles.average}>
-              {t('nutrition.averageGrams', {
-                grams: format(Math.round(average[nutrient])),
-              })}
-            </Text>
+            <Average
+              value={t('nutrition.grams', { grams: format(Math.round(average[nutrient])) })}
+              style={styles.average}
+            />
           ) : null}
         </View>
       ))}

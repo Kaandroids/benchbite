@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { isOverTarget, type DayNutrition, type NutritionSummary } from '@/nutrition/day-nutrition';
+import { Average } from '@/nutrition/average';
 import { MacroBars } from '@/nutrition/macro-bars';
 import { useTheme } from '@/theme';
 
@@ -56,11 +57,10 @@ export function WeekMacrosCard({ entering, days, week }: WeekMacrosCardProps) {
           {t('today.pastWeek.macros.title')}
         </Text>
         {week ? (
-          <Text variant="captionStrong" color="textMuted">
-            {t('today.pastWeek.macros.average', {
-              kcal: format(Math.round(week.average.calories)),
-            })}
-          </Text>
+          <Average
+            strong
+            value={t('nutrition.kcal', { calories: format(Math.round(week.average.calories)) })}
+          />
         ) : null}
       </View>
       {week ? (

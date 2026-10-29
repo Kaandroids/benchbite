@@ -156,7 +156,7 @@ describe('PastWeek', () => {
   it("shows each day's calories and macros, a day over its target and one not logged", async () => {
     mockWeek();
     await renderWeek();
-    expect(screen.getByText('avg 2,150 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('2,150 kcal on average')).toBeTruthy();
     expect(
       screen.getByLabelText('Monday: 1,800 kcal, 150 g protein, 200 g carbs, 60 g fat'),
     ).toBeTruthy();
@@ -174,14 +174,14 @@ describe('PastWeek', () => {
     await renderWeek();
     expect(screen.getByText('Week summary')).toBeTruthy();
     expect(screen.getByText('4,300 / 4,000 kcal')).toBeTruthy();
-    expect(screen.getAllByText('avg 150 g')).toHaveLength(1);
-    expect(screen.getByText('avg 200 g')).toBeTruthy();
+    expect(screen.getAllByLabelText('150 g on average')).toHaveLength(1);
+    expect(screen.getByLabelText('200 g on average')).toBeTruthy();
   });
 
   it('has no summary without targets', async () => {
     mockWeek({ nutrition: loaded([day(WEEK_DAYS[0]!, 1800, null)]) });
     await renderWeek();
-    expect(screen.getByText('avg 1,800 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('1,800 kcal on average')).toBeTruthy();
     expect(screen.queryByText('Week summary')).toBeNull();
   });
 

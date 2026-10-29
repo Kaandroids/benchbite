@@ -155,7 +155,6 @@
       },
       "macros": {
         "title": "Kalorien und Makros",
-        "average": "Ø {{kcal}} kcal",
         "thousands": "{{value}}k",
         "none": "Diese Woche keine Mahlzeiten erfasst",
         "day": "{{day}}: {{kcal}} kcal, {{protein}} g Eiweiß, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
@@ -265,7 +264,7 @@
   },
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",
-    "grams": "{{count}} g",
+    "grams": "{{grams}} g",
     "macros": {
       "protein": "Protein",
       "carbs": "Kohlenhydrate",
@@ -274,7 +273,7 @@
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "Ø {{grams}} g",
+    "average": "im Schnitt {{value}}",
     "target": "Ziel",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
