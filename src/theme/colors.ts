@@ -64,6 +64,14 @@ export type ColorTokens = {
   frozenBackground: string;
   /** A workout planned for today or later, lighter than a finished one. */
   planned: string;
+  /**
+   * The shades of the training heat map, from a short day to a long one, over `track` for a day
+   * without a workout. Each one stands apart from the next in lightness.
+   */
+  heat1: string;
+  heat2: string;
+  heat3: string;
+  heat4: string;
   /** Behind exercise pictures, which are drawn on white, in both themes. */
   imageBackground: string;
   /** The thumb of on/off switches. */
@@ -122,6 +130,10 @@ export const lightColors: ColorTokens = {
   frozen: '#1D4ED8', // 5.5:1 on frozenBackground
   frozenBackground: '#DBEAFE',
   planned: '#FFC9A8',
+  heat1: '#FFC9A8',
+  heat2: '#FB8A4C',
+  heat3: '#F25A00',
+  heat4: '#C24800',
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(22, 23, 26, 0.45)',
@@ -174,6 +186,10 @@ export const darkColors: ColorTokens = {
   frozen: '#93C5FD', // 6.4:1 on frozenBackground
   frozenBackground: '#1E3A5F',
   planned: '#A8561C',
+  heat1: '#5C3418',
+  heat2: '#8F4A17',
+  heat3: '#D45A00',
+  heat4: '#FF8A3D',
   imageBackground: '#FFFFFF',
   switchThumb: '#FFFFFF',
   scrim: 'rgba(0, 0, 0, 0.6)',
