@@ -210,6 +210,27 @@ export function useFinishedInWeek(week: Date) {
   });
 }
 
+/** The workouts finished in the week of `week`, in the order they started, for a past week. */
+export function useWeekLogs(week: Date) {
+  const start = weekStart(week);
+  return useQuery({
+    queryKey: [...LOGS_KEY, 'week-logs', start.getTime()],
+    queryFn: async (): Promise<LogSummary[]> => {
+      const { data, error } = await supabase
+        .from('workout_log_summaries')
+        .select('*')
+        .gte('started_at', start.toISOString())
+        .lt('started_at', addDays(start, 7).toISOString())
+        .order('started_at')
+        .order('id');
+      if (error) {
+        throw error;
+      }
+      return data.map(toSummary);
+    },
+  });
+}
+
 /** One finished workout, or null when it does not exist. */
 export function useLogSummary(id: number) {
   return useQuery({
