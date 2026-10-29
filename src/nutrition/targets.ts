@@ -13,9 +13,6 @@ export type NutritionTargets = {
   fatG: number;
 };
 
-/** The kcal in a gram of each macro. */
-export const KCAL_PER_GRAM = { proteinG: 4, carbsG: 4, fatG: 9 } as const;
-
 type TargetsRow = Database['public']['CompositeTypes']['nutrition_targets'];
 
 /** The targets from the database's result, or null where it has none. */

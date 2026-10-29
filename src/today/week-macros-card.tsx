@@ -5,7 +5,7 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { KCAL_PER_GRAM } from '@/nutrition/targets';
+import { KCAL_PER_GRAM } from '@/nutrition/targets-form';
 import { isOverTarget, type DayNutrition, type WeekNutrition } from '@/nutrition/week-nutrition';
 import { fonts, useTheme } from '@/theme';
 
