@@ -87,7 +87,8 @@
     "today": "Today",
     "workout": "Workout",
     "nutrition": "Nutrition",
-    "progress": "Progress"
+    "progress": "Progress",
+    "bite": "Talk to Bite"
   },
   "weight": {
     "title": "Weight",
@@ -1624,5 +1625,9 @@
       "freezes_other": "{{count}} freezes left",
       "error": "We couldn't load your streak."
     }
+  },
+  "bite": {
+    "title": "Bite",
+    "soon": "Chatting with Bite comes soon."
   }
 }

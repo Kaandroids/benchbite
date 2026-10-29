@@ -87,7 +87,8 @@
     "today": "Bugün",
     "workout": "Antrenman",
     "nutrition": "Beslenme",
-    "progress": "İlerleme"
+    "progress": "İlerleme",
+    "bite": "Bite ile konuş"
   },
   "weight": {
     "title": "Kilo",
@@ -1624,5 +1625,9 @@
       "freezes_other": "{{count}} freeze kaldı",
       "error": "Serin yüklenemedi."
     }
+  },
+  "bite": {
+    "title": "Bite",
+    "soon": "Bite ile sohbet yakında geliyor."
   }
 }

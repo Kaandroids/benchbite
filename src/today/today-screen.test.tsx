@@ -56,6 +56,7 @@ jest.mock('expo-router', () => {
     router: { push: jest.fn(), navigate: jest.fn() },
     // Runs once on mount, as the screen comes into focus.
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+    useScrollToTop: jest.fn(),
   };
 });
 jest.mock('@/streak/use-streak', () => ({

@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
+import { useTabScroll } from '@/components/tab-space';
 import { TabHeader } from '@/components/tab-header';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -25,6 +26,7 @@ import { useWorkoutLimits, useWorkouts } from './workouts';
 export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
+  const { ref, barSpace } = useTabScroll();
   const workouts = useWorkouts();
   const limits = useWorkoutLimits();
   const session = useActiveSession(useUserId());
@@ -43,13 +45,14 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   };
 
   return (
-    // Inside a tab, the bottom inset includes the tab bar, which covers the content on iOS.
-    <SafeAreaView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      edges={['top', 'bottom']}
-    >
+    // The tab bar floats over the bottom, so the content scrolls past it.
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
-        contentContainerStyle={[styles.content, { padding: spacing.xl, gap: spacing.md }]}
+        ref={ref}
+        contentContainerStyle={[
+          styles.content,
+          { padding: spacing.xl, paddingBottom: barSpace + spacing.xl, gap: spacing.md },
+        ]}
       >
         <TabHeader title={t('workout.title')}>
           <Pressable
