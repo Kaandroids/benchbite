@@ -1,4 +1,4 @@
-import { niceStep, ticksOf } from './progress-chart';
+import { isNear, niceStep, ticksOf } from './progress-chart';
 
 jest.mock('react-native-svg', () => ({}));
 
@@ -42,5 +42,19 @@ describe('ticksOf', () => {
     expect(ticksOf([0.5], 'decimal')).toEqual([0, 1, 2]);
     expect(ticksOf([0], 'whole')).toEqual([0, 1]);
     expect(ticksOf([-5, 5], 'decimal')).toEqual([-5, 0, 5]);
+  });
+});
+
+describe('isNear', () => {
+  it('takes a target within twice the spread of the values, or two units', () => {
+    expect(isNear([84, 85, 86], 81)).toBe(true);
+    expect(isNear([85, 85.4], 83.5)).toBe(true);
+  });
+
+  it('leaves out a far target, which would flatten the line', () => {
+    expect(isNear([84, 85, 86], 60)).toBe(false);
+    expect(isNear([84, 85, 86], 95)).toBe(false);
+    // Scaled to the values alone, the axis keeps their kilograms apart.
+    expect(ticksOf([84, 85, 86], 'whole')).toEqual([84, 85, 86]);
   });
 });

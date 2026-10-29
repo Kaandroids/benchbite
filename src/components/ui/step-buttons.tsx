@@ -6,6 +6,9 @@ import { Icon } from './icon';
 
 /** How faded the minus button is next to plus. */
 const QUIET_OPACITY = 0.55;
+/** The size of each half of the joined buttons, wide enough to tap with a thumb. */
+const JOINED_WIDTH = 52;
+const JOINED_HEIGHT = 44;
 
 type StepButtonsProps = {
   onDecrease: () => void;
@@ -14,8 +17,10 @@ type StepButtonsProps = {
   increaseLabel: string;
   canDecrease?: boolean;
   canIncrease?: boolean;
-  /** The buttons' width and height. */
+  /** The buttons' width and height, when separate. */
   size?: number;
+  /** `joined` puts both in one outlined pill, quieter beside a large value. */
+  variant?: 'separate' | 'joined';
 };
 
 /**
@@ -30,8 +35,10 @@ export function StepButtons({
   canDecrease = true,
   canIncrease = true,
   size = 48,
+  variant = 'separate',
 }: StepButtonsProps) {
   const { colors, radii, spacing } = useTheme();
+  const joined = variant === 'joined';
   const button = (
     icon: 'minus' | 'plus',
     label: string,
@@ -45,25 +52,54 @@ export function StepButtons({
       accessibilityState={{ disabled: !enabled }}
       disabled={!enabled}
       onPress={onPress}
-      hitSlop={4}
+      hitSlop={joined ? undefined : 4}
       style={({ pressed }) => [
         styles.button,
-        {
-          width: size,
-          height: size,
-          borderRadius: radii.full,
-          backgroundColor: pressed ? colors.selected : colors.iconBackground,
-          opacity: !enabled ? 0.3 : quiet && !pressed ? QUIET_OPACITY : 1,
-        },
+        joined
+          ? {
+              width: JOINED_WIDTH,
+              height: '100%',
+              backgroundColor: pressed ? colors.selected : undefined,
+              opacity: enabled ? 1 : 0.3,
+            }
+          : {
+              width: size,
+              height: size,
+              borderRadius: radii.full,
+              backgroundColor: pressed ? colors.selected : colors.iconBackground,
+              opacity: !enabled ? 0.3 : quiet && !pressed ? QUIET_OPACITY : 1,
+            },
       ]}
     >
-      <Icon name={icon} color="primary" />
+      <Icon name={icon} size={joined ? 20 : undefined} color={joined ? 'primaryText' : 'primary'} />
     </Pressable>
   );
+  const minus = button('minus', decreaseLabel, onDecrease, canDecrease, true);
+  const plus = button('plus', increaseLabel, onIncrease, canIncrease, false);
+  if (joined) {
+    return (
+      <View
+        style={[
+          styles.row,
+          styles.joined,
+          {
+            height: JOINED_HEIGHT,
+            borderRadius: radii.full,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
+        {minus}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        {plus}
+      </View>
+    );
+  }
   return (
     <View style={[styles.row, { gap: spacing.sm }]}>
-      {button('minus', decreaseLabel, onDecrease, canDecrease, true)}
-      {button('plus', increaseLabel, onIncrease, canIncrease, false)}
+      {minus}
+      {plus}
     </View>
   );
 }
@@ -76,5 +112,13 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  joined: {
+    borderWidth: 1.5,
+    overflow: 'hidden',
+  },
+  divider: {
+    width: 1.5,
+    height: 22,
   },
 });

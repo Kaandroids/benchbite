@@ -10,6 +10,7 @@ import {
   bmi,
   defaultTargetKg,
   isTargetInGoalDirection,
+  isTargetReached,
   isPaceInRange,
   isTooLightToLose,
   minHealthyWeightKg,
@@ -178,6 +179,19 @@ describe('target weights', () => {
     expect(defaultTargetKg('lose_fat', 80, 180)).toBe(75);
     expect(defaultTargetKg('build_muscle', 80, 180)).toBe(83);
     expect(defaultTargetKg('lose_fat', 62, 180)).toBe(60);
+  });
+});
+
+describe('isTargetReached', () => {
+  it('is reached at or past the target in the direction of the goal', () => {
+    expect(isTargetReached('lose_fat', 80, 80)).toBe(true);
+    expect(isTargetReached('lose_fat', 80.1, 80)).toBe(false);
+    expect(isTargetReached('build_muscle', 75, 74)).toBe(true);
+    expect(isTargetReached('build_muscle', 73.9, 74)).toBe(false);
+  });
+
+  it('is never reached by a goal that keeps the weight', () => {
+    expect(isTargetReached('get_stronger', 80, 80)).toBe(false);
   });
 });
 

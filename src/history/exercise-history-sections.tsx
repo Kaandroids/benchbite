@@ -23,7 +23,7 @@ import {
   type ProgressPoint,
 } from './exercise-history';
 import { useTotalFormat } from './format';
-import { ProgressChart } from './progress-chart';
+import { ProgressChart } from '@/components/progress-chart';
 import {
   defaultRange,
   lowerIsBetter,

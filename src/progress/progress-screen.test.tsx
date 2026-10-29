@@ -7,7 +7,10 @@ jest.mock('@/weight/weights', () => ({
   useLatestWeight: jest.fn(),
   useLogWeight: jest.fn(),
   useWeightUnit: jest.fn(),
+  useWeightHistory: () => ({ data: [], isPending: false }),
+  weightChange: () => null,
 }));
+jest.mock('@/nutrition/targets', () => ({ useTargetBasis: () => ({ data: null }) }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 type Query<T> = {

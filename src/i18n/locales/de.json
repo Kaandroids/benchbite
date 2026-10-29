@@ -96,7 +96,26 @@
     "loggedOn": "Eingetragen am {{date}}",
     "saveError": "Wir konnten dein Gewicht nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
     "decrease": "Gewicht verringern",
-    "increase": "Gewicht erhöhen"
+    "increase": "Gewicht erhöhen",
+    "target": "Ziel {{weight}} {{unit}}",
+    "targetBy": "Ziel {{weight}} {{unit}} · bis {{date}}",
+    "change": {
+      "month": "{{weight}} {{unit}} in einem Monat",
+      "threeMonths": "{{weight}} {{unit}} in 3 Monaten",
+      "sixMonths": "{{weight}} {{unit}} in 6 Monaten",
+      "year": "{{weight}} {{unit}} in einem Jahr"
+    },
+    "range": {
+      "month": "1M",
+      "threeMonths": "3M",
+      "sixMonths": "6M",
+      "year": "Jahr"
+    },
+    "rangeLabel": "Gewicht über",
+    "chart_one": "Dein Gewicht, {{count}} Eintrag",
+    "chart_other": "Dein Gewicht über {{count}} Einträge",
+    "noneInRange": "In diesem Zeitraum kein Gewicht eingetragen.",
+    "historyError": "Deine Gewichte konnten nicht geladen werden."
   },
   "today": {
     "loading": "Wird geladen",

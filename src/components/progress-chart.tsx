@@ -30,7 +30,16 @@ type ProgressChartProps = {
   inverted?: boolean;
   /** Says what the chart shows, in a sentence for screen readers. */
   description: string;
+  /** A value to reach, drawn as a dashed line with its label over it. */
+  target?: { value: number; label: string };
+  /** Places the points by their dates rather than evenly, for values logged now and then. */
+  byDate?: boolean;
+  /** False where the last value shows beside the chart already. */
+  labelLast?: boolean;
 };
+
+/** Up to how many points each get a dot; more are only the line, with a dot on the last. */
+const DOTTED_POINTS = 20;
 
 /**
  * The smallest round step that is at least `step`: 1, 2, 2.5 or 5 times a power of ten, without
@@ -69,7 +78,24 @@ export function ticksOf(values: readonly number[], scale: Scale): number[] {
   return ticks;
 }
 
-/** An exercise's progress as a line over its workouts, oldest on the left, evenly spaced. */
+/**
+ * Whether a target is near enough the values to scale the chart to it: within twice their spread,
+ * or two units. A farther one would flatten the line, so it is pinned to the chart's edge instead.
+ */
+export function isNear(values: readonly number[], target: number): boolean {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const margin = Math.max(2 * (max - min), 2);
+  return target >= min - margin && target <= max + margin;
+}
+
+/** Up to how close to either end, in points, the middle date is left out. */
+const LABEL_ROOM = 60;
+
+/**
+ * A value's progress as a line, oldest on the left: an exercise's over its workouts, evenly
+ * spaced, or the weight over its days.
+ */
 export function ProgressChart({
   points,
   formatValue,
@@ -77,15 +103,17 @@ export function ProgressChart({
   scale,
   inverted = false,
   description,
+  target,
+  byDate = false,
+  labelLast = true,
 }: ProgressChartProps) {
   const { colors } = useTheme();
   const [width, setWidth] = useState(0);
   const day = useShortDateFormat(new Date());
 
-  const ticks = ticksOf(
-    points.map((point) => point.value),
-    scale,
-  );
+  const values = points.map((point) => point.value);
+  const targetNear = target !== undefined && values.length > 0 && isNear(values, target.value);
+  const ticks = ticksOf([...values, ...(target && targetNear ? [target.value] : [])], scale);
   const low = ticks[0] ?? 0;
   const high = ticks[ticks.length - 1] ?? low + 1;
   const y = (value: number) => {
@@ -93,16 +121,39 @@ export function ProgressChart({
     return TOP + (inverted ? share : 1 - share) * (HEIGHT - TOP - BOTTOM);
   };
   const right = width - END;
+  const first = points[0]?.date.getTime() ?? 0;
+  const span = (points[points.length - 1]?.date.getTime() ?? 0) - first;
   const x = (index: number) =>
     points.length === 1
       ? (AXIS + right) / 2
-      : AXIS + (index * (right - AXIS)) / (points.length - 1);
-  // The first and the last day, and the middle one when there is room between them.
-  const labelled = [
-    0,
-    ...(points.length >= 5 ? [Math.floor((points.length - 1) / 2)] : []),
-    points.length - 1,
-  ].filter((index, position, all) => all.indexOf(index) === position);
+      : byDate && span > 0
+        ? AXIS + (((points[index]?.date.getTime() ?? first) - first) * (right - AXIS)) / span
+        : AXIS + (index * (right - AXIS)) / (points.length - 1);
+  // The first and the last day, and the middle one when there is room between them: by date, the
+  // point nearest the middle day, which may still sit close to an end.
+  const middle = byDate
+    ? points.reduce(
+        (nearest, point, index) =>
+          Math.abs(point.date.getTime() - first - span / 2) <
+          Math.abs((points[nearest]?.date.getTime() ?? first) - first - span / 2)
+            ? index
+            : nearest,
+        0,
+      )
+    : Math.floor((points.length - 1) / 2);
+  const roomy = x(middle) - x(0) >= LABEL_ROOM && x(points.length - 1) - x(middle) >= LABEL_ROOM;
+  const labelled = [0, ...(points.length >= 5 && roomy ? [middle] : []), points.length - 1].filter(
+    (index, position, all) => all.indexOf(index) === position,
+  );
+  // A far target sits on the edge on its side of the line, with an arrow its way.
+  const targetBelow =
+    target !== undefined && values.length > 0 && target.value < Math.min(...values);
+  const targetY = !target ? 0 : targetNear ? y(target.value) : y(targetBelow ? low : high);
+  const targetLabel = !target
+    ? ''
+    : targetNear
+      ? target.label
+      : `${target.label} ${targetBelow ? '↓' : '↑'}`;
   const last = points[points.length - 1];
   const before = points[points.length - 2];
   // The last value goes above its point, or left of it when the line comes down from above; a
@@ -140,6 +191,29 @@ export function ProgressChart({
               {formatTick(tick)}
             </SvgText>
           ))}
+          {target ? (
+            <>
+              <Line
+                x1={AXIS}
+                x2={width}
+                y1={targetY}
+                y2={targetY}
+                stroke={colors.success}
+                strokeWidth={1.5}
+                strokeDasharray="5 5"
+              />
+              <SvgText
+                x={width}
+                y={targetY + (inverted ? 14 : -5)}
+                textAnchor="end"
+                {...font}
+                fontFamily={fonts.extraBold}
+                fill={colors.success}
+              >
+                {targetLabel}
+              </SvgText>
+            </>
+          ) : null}
           {labelled.map((index) => (
             <SvgText
               key={index}
@@ -169,18 +243,20 @@ export function ProgressChart({
               strokeLinecap="round"
             />
           ) : null}
-          {points.map((point, index) => (
-            <Circle
-              key={index}
-              cx={x(index)}
-              cy={y(point.value)}
-              r={index === points.length - 1 ? 5 : 4}
-              fill={colors.primary}
-              stroke={colors.surface}
-              strokeWidth={2}
-            />
-          ))}
-          {[true, false].map((halo) => (
+          {points.map((point, index) =>
+            points.length > DOTTED_POINTS && index < points.length - 1 ? null : (
+              <Circle
+                key={index}
+                cx={x(index)}
+                cy={y(point.value)}
+                r={index === points.length - 1 ? 5 : 4}
+                fill={colors.primary}
+                stroke={colors.surface}
+                strokeWidth={2}
+              />
+            ),
+          )}
+          {(labelLast ? [true, false] : []).map((halo) => (
             <SvgText
               key={String(halo)}
               x={valueAt.x}

@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { projectedDate } from '@/body/body';
+import { isTargetReached, projectedDate } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -275,10 +275,7 @@ function BasisList({ basis }: { basis: TargetBasis }) {
   if (current !== null) {
     // At or past the target, the targets keep the weight, as calculate_nutrition_targets() does.
     const target = basis.targetWeightKg;
-    const reached =
-      target !== null &&
-      ((basis.goal === 'lose_fat' && current <= target) ||
-        (basis.goal === 'build_muscle' && current >= target));
+    const reached = target !== null && isTargetReached(basis.goal, current, target);
     rows.push(
       target !== null && !reached
         ? {

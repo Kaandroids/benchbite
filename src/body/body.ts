@@ -47,6 +47,17 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
   return goal === 'lose_fat' ? target < weight : target > weight;
 }
 
+/**
+ * Whether the weight has reached the target of a goal that changes it: at or past it in the goal's
+ * direction. The targets then keep the weight, as calculate_nutrition_targets() does.
+ */
+export function isTargetReached(goal: Goal, weightKg: number, targetKg: number): boolean {
+  return (
+    (goal === 'lose_fat' && weightKg <= targetKg) ||
+    (goal === 'build_muscle' && weightKg >= targetKg)
+  );
+}
+
 /** Whether the weight is already at the lower end of a healthy one, so that losing fat is not. */
 export function isTooLightToLose(weightKg: number, heightCm: number): boolean {
   return weightKg <= minHealthyWeightKg(heightCm);
