@@ -174,8 +174,8 @@ describe('PastWeek', () => {
     await renderWeek();
     expect(screen.getByText('Week summary')).toBeTruthy();
     expect(screen.getByText('4,300 / 4,000 kcal')).toBeTruthy();
-    expect(screen.getAllByText('avg 150 g a day')).toHaveLength(1);
-    expect(screen.getByText('avg 200 g a day')).toBeTruthy();
+    expect(screen.getAllByText('avg 150 g')).toHaveLength(1);
+    expect(screen.getByText('avg 200 g')).toBeTruthy();
   });
 
   it('has no summary without targets', async () => {
