@@ -34,7 +34,12 @@ type ProgressChartProps = {
   target?: { value: number; label: string };
   /** Places the points by their dates rather than evenly, for values logged now and then. */
   byDate?: boolean;
+  /** False where the last value shows beside the chart already. */
+  labelLast?: boolean;
 };
+
+/** Up to how many points each get a dot; more are only the line, with a dot on the last. */
+const DOTTED_POINTS = 20;
 
 /**
  * The smallest round step that is at least `step`: 1, 2, 2.5 or 5 times a power of ten, without
@@ -86,6 +91,7 @@ export function ProgressChart({
   description,
   target,
   byDate = false,
+  labelLast = true,
 }: ProgressChartProps) {
   const { colors } = useTheme();
   const [width, setWidth] = useState(0);
@@ -205,18 +211,20 @@ export function ProgressChart({
               strokeLinecap="round"
             />
           ) : null}
-          {points.map((point, index) => (
-            <Circle
-              key={index}
-              cx={x(index)}
-              cy={y(point.value)}
-              r={index === points.length - 1 ? 5 : 4}
-              fill={colors.primary}
-              stroke={colors.surface}
-              strokeWidth={2}
-            />
-          ))}
-          {[true, false].map((halo) => (
+          {points.map((point, index) =>
+            points.length > DOTTED_POINTS && index < points.length - 1 ? null : (
+              <Circle
+                key={index}
+                cx={x(index)}
+                cy={y(point.value)}
+                r={index === points.length - 1 ? 5 : 4}
+                fill={colors.primary}
+                stroke={colors.surface}
+                strokeWidth={2}
+              />
+            ),
+          )}
+          {(labelLast ? [true, false] : []).map((halo) => (
             <SvgText
               key={String(halo)}
               x={valueAt.x}
