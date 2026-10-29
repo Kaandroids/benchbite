@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -38,14 +38,14 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select allowed, reason, budget_usd, used_usd,
-       resets_at = date_trunc('month', now(), 'UTC') + interval '1 month'
+       resets_at = date_trunc('month', now(), 'UTC') + interval '1 month', call_id is not null
      from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
-  $$ values (true, null::public.ai_access_reason, 4.00::numeric, 0::numeric, true) $$,
+  $$ values (true, null::public.ai_access_reason, 4.00::numeric, 0::numeric, true, true) $$,
   'A user under the limit starts a call, until the month resets'
 );
 select results_eq(
-  $$ select allowed, reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
-  $$ values (false, 'call_in_progress'::public.ai_access_reason) $$,
+  $$ select allowed, reason, call_id from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ values (false, 'call_in_progress'::public.ai_access_reason, null::uuid) $$,
   'but not a second of the same feature while the first runs'
 );
 select results_eq(
@@ -65,8 +65,9 @@ set local role service_role;
 -- 600,000 × $0.30 + 400,000 × $0.03 + 100,000 × $2.50, per million.
 select is(
   public.record_ai_usage(
-    '00000000-0000-0000-0000-00000000000a', 'coach_chat', 'gemini-3.5-flash-lite',
-    1000000, 400000, 100000, 20000
+    '00000000-0000-0000-0000-00000000000a', 'coach_chat',
+    (select call_id from public.ai_calls_in_flight where feature = 'coach_chat'),
+    'gemini-3.5-flash-lite', 1000000, 400000, 100000, 20000
   ),
   0.442000::numeric,
   'A call costs its input, cached input and output at the model''s prices'
@@ -80,7 +81,9 @@ select results_eq(
 );
 select is(
   public.record_ai_usage(
-    '00000000-0000-0000-0000-00000000000a', 'meal_photo', 'gemini-3.8-flash', 1, 0, 0, 0
+    '00000000-0000-0000-0000-00000000000a', 'meal_photo',
+    (select call_id from public.ai_calls_in_flight where feature = 'meal_photo'),
+    'gemini-3.8-flash', 1, 0, 0, 0
   ),
   0.000001::numeric,
   'A cost is returned as it is stored, to a millionth of a dollar'
@@ -92,13 +95,13 @@ select is_empty(
 
 select throws_ok(
   $$ select public.record_ai_usage(
-       '00000000-0000-0000-0000-00000000000a', 'coach_chat', 'unknown-model', 1, 0, 1, 0) $$,
+       '00000000-0000-0000-0000-00000000000a', 'coach_chat', null, 'unknown-model', 1, 0, 1, 0) $$,
   'BB033', null,
   'A model without a price is not recorded'
 );
 select throws_ok(
   $$ select public.record_ai_usage(
-       '00000000-0000-0000-0000-00000000000a', 'coach_chat', 'gemini-3.5-flash-lite', 10, 20, 1, 0) $$,
+       '00000000-0000-0000-0000-00000000000a', 'coach_chat', null, 'gemini-3.5-flash-lite', 10, 20, 1, 0) $$,
   '23514', null,
   'nor more cached tokens than input'
 );
@@ -114,24 +117,48 @@ select results_eq(
 
 -- A call that never recorded, as when its function crashed, stops holding its place.
 set local role service_role;
-update public.ai_calls_in_flight set started_at = now() - interval '3 minutes'
-where user_id = '00000000-0000-0000-0000-00000000000a';
+create temporary table left_behind on commit drop as
+  select call_id from public.ai_calls_in_flight
+  where user_id = '00000000-0000-0000-0000-00000000000a';
+update public.ai_calls_in_flight set started_at = now() - interval '9 minutes';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select allowed from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ values (false) $$,
+  'A call keeps its place for ten minutes'
+);
+
+set local role service_role;
+update public.ai_calls_in_flight set started_at = now() - interval '11 minutes';
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select allowed from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
   $$ values (true) $$,
-  'A call left behind gives its place up after two minutes'
+  'and gives it up after them'
+);
+
+-- The call left behind records at last, and frees only its own place.
+set local role service_role;
+select public.record_ai_usage(
+  '00000000-0000-0000-0000-00000000000a', 'coach_chat', (select call_id from left_behind),
+  'gemini-3.5-flash-lite', 0, 0, 0, 0
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ values ('call_in_progress'::public.ai_access_reason) $$,
+  'A call that recorded late leaves the place of the call that took it over'
 );
 
 select results_eq(
   $$ select model from public.ai_usage order by id $$,
-  $$ values ('gemini-3.5-flash-lite'), ('gemini-3.8-flash') $$,
+  $$ values ('gemini-3.5-flash-lite'), ('gemini-3.8-flash'), ('gemini-3.5-flash-lite') $$,
   'Users read their own usage'
 );
 select throws_ok(
   $$ select public.record_ai_usage(
-       '00000000-0000-0000-0000-00000000000a', 'coach_chat', 'gemini-3.5-flash-lite', 0, 0, 0, 0) $$,
+       '00000000-0000-0000-0000-00000000000a', 'coach_chat', null, 'gemini-3.5-flash-lite', 0, 0, 0, 0) $$,
   '42501', null,
   'and record none themselves'
 );
