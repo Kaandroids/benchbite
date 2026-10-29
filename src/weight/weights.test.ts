@@ -7,7 +7,6 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
 import {
-  rangeStart,
   useLatestWeight,
   useLogWeight,
   useWeightHistory,
@@ -93,6 +92,7 @@ describe('useLogWeight', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: STREAK_KEY });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'days'] });
   });
 
   it('saves one weight at a time, in the order they were made', async () => {
@@ -146,14 +146,6 @@ describe('useWeightHistory', () => {
       ]),
     );
     expect(gte).toHaveBeenCalledWith('measured_on', '2026-09-29');
-  });
-});
-
-describe('rangeStart', () => {
-  it('goes back whole months from today', () => {
-    const today = new Date(2026, 9, 29, 9, 0);
-    expect(rangeStart('threeMonths', today)).toEqual(new Date(2026, 6, 29));
-    expect(rangeStart('year', today)).toEqual(new Date(2025, 9, 29));
   });
 });
 

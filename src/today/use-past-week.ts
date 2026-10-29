@@ -1,5 +1,5 @@
 import { useWeekLogs } from '@/history/history';
-import { useWeekNutrition } from '@/nutrition/week-nutrition';
+import { useWeekNutrition } from '@/nutrition/day-nutrition';
 import { useWeekStreak } from '@/streak/use-streak';
 import { useWeekSchedule } from '@/week/use-week-schedule';
 

@@ -84,6 +84,13 @@ export function useMonthDayFormat() {
   return (date: Date) => formatter.format(date);
 }
 
+/** Formats a month by its short name, for example "Oct". */
+export function useMonthFormat() {
+  const { i18n } = useTranslation();
+  const formatter = new Intl.DateTimeFormat(i18n.language, { month: 'short' });
+  return (date: Date) => formatter.format(date);
+}
+
 /** Formats a week by its first and last day, for example "October 19 – 25". */
 export function useWeekRangeFormat() {
   const { i18n } = useTranslation();

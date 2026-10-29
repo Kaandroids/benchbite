@@ -105,12 +105,6 @@
       "sixMonths": "{{weight}} {{unit}} in 6 months",
       "year": "{{weight}} {{unit}} in a year"
     },
-    "range": {
-      "month": "1M",
-      "threeMonths": "3M",
-      "sixMonths": "6M",
-      "year": "Year"
-    },
     "rangeLabel": "Weight over",
     "chart_one": "Your weight, {{count}} entry",
     "chart_other": "Your weight over {{count}} entries",
@@ -161,7 +155,6 @@
       },
       "macros": {
         "title": "Calories and macros",
-        "average": "avg {{kcal}} kcal",
         "thousands": "{{value}}k",
         "none": "No meals logged this week",
         "day": "{{day}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g carbs, {{fat}} g fat",
@@ -280,7 +273,9 @@
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "avg {{grams}} g",
+    "spanTarget": "/ {{target}}",
+    "average": "{{value}} on average",
+    "target": "Target",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Today",
@@ -1551,5 +1546,25 @@
     "nameMessage": "How Benchbite greets you. Leave it empty to be greeted without a name.",
     "save": "Save",
     "notSaved": "Couldn’t save the name. Try again."
+  },
+  "progress": {
+    "range": {
+      "month": "1M",
+      "threeMonths": "3M",
+      "sixMonths": "6M",
+      "year": "Year"
+    },
+    "eating": {
+      "title": "Calories and macros",
+      "rangeLabel": "Eating over",
+      "weekOf": "Week of {{date}}",
+      "bar": "{{span}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g carbs, {{fat}} g fat a day",
+      "notLogged": "{{span}}: nothing logged",
+      "overTarget": "over the target",
+      "logged_one": "{{count}} day logged, {{within}} within the target",
+      "logged_other": "{{count}} days logged, {{within}} within the target",
+      "none": "No meals logged in this range.",
+      "error": "We couldn't load your meals."
+    }
   }
 }

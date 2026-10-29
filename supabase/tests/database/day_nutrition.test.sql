@@ -1,9 +1,9 @@
--- day_nutrition() gives what the caller ate on each day of a range, at most a month, against the
+-- day_nutrition() gives what the caller ate on each day of a range, at most a year, against the
 -- targets each day kept (ADR 0040, ADR 0046). Only the caller's own.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -66,9 +66,20 @@ select results_eq(
   'Today gives the targets in use'
 );
 select is(
-  (select count(*)::integer from public.day_nutrition(current_date - 60, current_date, current_date)),
-  31,
-  'A range gives at most a month of days'
+  (select count(*)::integer from public.day_nutrition(current_date - 400, current_date, current_date)),
+  367,
+  'A range gives at most a year of days, and one more for a 29 February'
+);
+select is(
+  (select max(day) from public.day_nutrition('2027-10-29', '2028-10-29', current_date)),
+  '2028-10-29'::date,
+  'A year over a 29 February reaches its last day'
+);
+select results_eq(
+  $$ select kept_target
+     from public.day_nutrition(current_date - 3, current_date - 1, current_date) $$,
+  $$ values (true), (false), (true) $$,
+  'Each day says whether its calories kept its target, none for a day without entries'
 );
 select is(
   (select count(*)::integer from public.day_nutrition(current_date, current_date - 3, current_date)),

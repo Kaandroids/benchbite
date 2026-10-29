@@ -2,8 +2,8 @@ import { router } from 'expo-router';
 
 import type { LogSummary } from '@/history/history';
 import { useWeekLogs } from '@/history/history';
-import type { DayNutrition } from '@/nutrition/week-nutrition';
-import { useWeekNutrition } from '@/nutrition/week-nutrition';
+import type { DayNutrition } from '@/nutrition/day-nutrition';
+import { useWeekNutrition } from '@/nutrition/day-nutrition';
 import { useWeekStreak } from '@/streak/use-streak';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -19,8 +19,8 @@ jest.mock('@/history/history', () => ({
   ...jest.requireActual('@/history/history'),
   useWeekLogs: jest.fn(),
 }));
-jest.mock('@/nutrition/week-nutrition', () => ({
-  ...jest.requireActual('@/nutrition/week-nutrition'),
+jest.mock('@/nutrition/day-nutrition', () => ({
+  ...jest.requireActual('@/nutrition/day-nutrition'),
   useWeekNutrition: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -60,6 +60,7 @@ const day = (date: string, calories: number, targets: DayNutrition['targets'] = 
   eaten: { calories, proteinG: 150, carbsG: 200, fatG: 60 },
   entries: calories > 0 ? 2 : 0,
   targets,
+  keptTarget: targets !== null && calories > 0 && calories <= targets.calories,
 });
 
 type Query<T> = {
@@ -156,7 +157,7 @@ describe('PastWeek', () => {
   it("shows each day's calories and macros, a day over its target and one not logged", async () => {
     mockWeek();
     await renderWeek();
-    expect(screen.getByText('avg 2,150 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('2,150 kcal on average')).toBeTruthy();
     expect(
       screen.getByLabelText('Monday: 1,800 kcal, 150 g protein, 200 g carbs, 60 g fat'),
     ).toBeTruthy();
@@ -174,14 +175,14 @@ describe('PastWeek', () => {
     await renderWeek();
     expect(screen.getByText('Week summary')).toBeTruthy();
     expect(screen.getByText('4,300 / 4,000 kcal')).toBeTruthy();
-    expect(screen.getAllByText('avg 150 g')).toHaveLength(1);
-    expect(screen.getByText('avg 200 g')).toBeTruthy();
+    expect(screen.getAllByLabelText('150 g on average')).toHaveLength(1);
+    expect(screen.getByLabelText('200 g on average')).toBeTruthy();
   });
 
   it('has no summary without targets', async () => {
     mockWeek({ nutrition: loaded([day(WEEK_DAYS[0]!, 1800, null)]) });
     await renderWeek();
-    expect(screen.getByText('avg 1,800 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('1,800 kcal on average')).toBeTruthy();
     expect(screen.queryByText('Week summary')).toBeNull();
   });
 

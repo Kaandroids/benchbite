@@ -11,6 +11,9 @@ jest.mock('@/weight/weights', () => ({
   weightChange: () => null,
 }));
 jest.mock('@/nutrition/targets', () => ({ useTargetBasis: () => ({ data: null }) }));
+// What was eaten is tested with its card.
+jest.mock('./nutrition-card', () => ({ NutritionCard: () => null }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 type Query<T> = {

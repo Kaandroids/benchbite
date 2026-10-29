@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 
+import { NUTRITION_DAYS_KEY } from './day-nutrition';
+
 export type NutritionTargets = {
   calories: number;
   proteinG: number;
@@ -126,11 +128,12 @@ export function useOwnTargets() {
 /** Everything that reads targets: the ones in use, the calculated ones and the user's own. */
 function useReloadTargets() {
   const queryClient = useQueryClient();
-  // Today's calories are counted for the streak against the targets in use.
+  // Today's calories are counted for the streak and charted against the targets in use.
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
       queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+      queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
     ]);
 }
 

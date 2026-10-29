@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
+import { Average } from './average';
 import type { NutritionTargets } from './targets';
 
 type Nutrient = keyof NutritionTargets;
@@ -69,7 +70,10 @@ function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
           <Text variant="headline" numberOfLines={1} adjustsFontSizeToFit>
             {format(Math.round(eaten[nutrient]))}{' '}
             <Text variant="caption" color="textMuted">
-              {t('nutrition.gramTarget', { target: format(targets[nutrient]) })}
+              {/* A span's totals are long, so its targets leave the unit to the average. */}
+              {t(average ? 'nutrition.spanTarget' : 'nutrition.gramTarget', {
+                target: format(targets[nutrient]),
+              })}
             </Text>
           </Text>
           <ProgressBar
@@ -78,11 +82,10 @@ function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
             accessibilityLabel={t(`nutrition.macros.${key}`)}
           />
           {average ? (
-            <Text variant="caption" color="textMuted" style={styles.average}>
-              {t('nutrition.averageGrams', {
-                grams: format(Math.round(average[nutrient])),
-              })}
-            </Text>
+            <Average
+              value={t('nutrition.grams', { count: Math.round(average[nutrient]) })}
+              style={styles.average}
+            />
           ) : null}
         </View>
       ))}

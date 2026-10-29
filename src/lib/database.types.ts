@@ -1286,6 +1286,7 @@ export type Database = {
           entries: number;
           fat_g: number;
           kcal: number;
+          kept_target: boolean;
           protein_g: number;
           target_calories: number;
           target_carbs_g: number;

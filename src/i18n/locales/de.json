@@ -105,12 +105,6 @@
       "sixMonths": "{{weight}} {{unit}} in 6 Monaten",
       "year": "{{weight}} {{unit}} in einem Jahr"
     },
-    "range": {
-      "month": "1M",
-      "threeMonths": "3M",
-      "sixMonths": "6M",
-      "year": "Jahr"
-    },
     "rangeLabel": "Gewicht über",
     "chart_one": "Dein Gewicht, {{count}} Eintrag",
     "chart_other": "Dein Gewicht über {{count}} Einträge",
@@ -161,7 +155,6 @@
       },
       "macros": {
         "title": "Kalorien und Makros",
-        "average": "Ø {{kcal}} kcal",
         "thousands": "{{value}}k",
         "none": "Diese Woche keine Mahlzeiten erfasst",
         "day": "{{day}}: {{kcal}} kcal, {{protein}} g Eiweiß, {{carbs}} g Kohlenhydrate, {{fat}} g Fett",
@@ -280,7 +273,9 @@
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
-    "averageGrams": "Ø {{grams}} g",
+    "spanTarget": "/ {{target}}",
+    "average": "im Schnitt {{value}}",
+    "target": "Ziel",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Heute",
@@ -1551,5 +1546,25 @@
     "nameMessage": "So begrüßt dich Benchbite. Lass das Feld leer, um ohne Namen begrüßt zu werden.",
     "save": "Speichern",
     "notSaved": "Der Name konnte nicht gespeichert werden. Versuch es noch einmal."
+  },
+  "progress": {
+    "range": {
+      "month": "1M",
+      "threeMonths": "3M",
+      "sixMonths": "6M",
+      "year": "Jahr"
+    },
+    "eating": {
+      "title": "Kalorien und Makros",
+      "rangeLabel": "Ernährung über",
+      "weekOf": "Woche vom {{date}}",
+      "bar": "{{span}}: {{kcal}} kcal, {{protein}} g Eiweiß, {{carbs}} g Kohlenhydrate, {{fat}} g Fett pro Tag",
+      "notLogged": "{{span}}: nichts erfasst",
+      "overTarget": "über dem Ziel",
+      "logged_one": "{{count}} Tag erfasst, {{within}} im Ziel",
+      "logged_other": "{{count}} Tage erfasst, {{within}} im Ziel",
+      "none": "In diesem Zeitraum keine Mahlzeiten erfasst.",
+      "error": "Deine Mahlzeiten konnten nicht geladen werden."
+    }
   }
 }
