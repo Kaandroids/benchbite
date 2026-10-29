@@ -15,9 +15,12 @@ personal records or the streak beyond this week (#275).
   - **Weight:** the latest weight with joined − and + buttons to log today's, how much it changed
     in the range, and a chart of it over 1, 3 or 6 months or a year, placed by date, with the
     target weight as a dashed line and the day it is reached at the chosen pace.
-  - **Calories and macros:** each day's macros as a bar, as a past week shows them (ADR 0046),
-    over a month, 3 or 6 months or a year, then the range summed up against the targets of the
-    days logged, with each macro's average a day.
+  - **Calories and macros:** the macros as bars, as a past week shows them (ADR 0046): a bar a
+    day over a month, a week over 3 or 6 months and a month over a year, each an average day of
+    its days logged, against the average target as a dashed line. Then the range summed up
+    against the targets of the days logged, with each macro's average a day. The database gives
+    each day, at most a year of them, and whether it kept its target as the streak counts it; the
+    app groups the days into weeks and months.
   - **Training:** a heat map of the days, darker the longer the workouts were, with missed
     planned workouts marked, over the same ranges, then how much of the plan was done, the time
     trained and the weight lifted.
