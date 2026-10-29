@@ -68,7 +68,7 @@ export function WeekWorkoutsCard({ entering, logs, schedule }: WeekWorkoutsCardP
               styles.row,
               {
                 gap: spacing.md,
-                borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
+                borderTopWidth: index > 0 ? 1 : 0,
                 borderTopColor: colors.border,
                 opacity: pressed ? 0.6 : 1,
               },

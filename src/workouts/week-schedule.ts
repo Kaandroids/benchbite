@@ -57,9 +57,9 @@ type Entry = { session: WeekSession; movedFrom: string | null; skipped: boolean 
 
 /**
  * The week of `week`, by default the week of `today`, from the plan's sessions, the week's moves
- * and the workouts finished in it (ADR 0028). A planned workout is done when a workout of it started on its day; the other
- * finished workouts are extras. Moves that no longer fit the plan, such as from a day the
- * workout is no longer on, are ignored.
+ * and the workouts finished in it (ADR 0028). A planned workout is done when a workout of it
+ * started on its day; the other finished workouts are extras. Moves that no longer fit the plan,
+ * such as from a day the workout is no longer on, are ignored.
  */
 export function weekSchedule(
   sessions: readonly WeekSession[],
