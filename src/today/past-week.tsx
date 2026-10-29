@@ -67,10 +67,7 @@ export function PastWeek({
         <WeekWorkoutsCard entering={cardEntering(1)} logs={data.logs} schedule={schedule} />
         <WeekMacrosCard entering={cardEntering(2)} days={data.nutrition} week={summary} />
         {summary?.targets ? (
-          <WeekSummaryCard
-            entering={cardEntering(3)}
-            week={{ ...summary, targets: summary.targets }}
-          />
+          <WeekSummaryCard entering={cardEntering(3)} week={summary} targets={summary.targets} />
         ) : null}
       </>
     );

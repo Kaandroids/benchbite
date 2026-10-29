@@ -23,7 +23,8 @@ type DailyProgressProps = {
   eaten: NutritionTargets;
 };
 
-const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
+/** How much of a target was eaten, none for a target of none. */
+export const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
 
 /** How much of the day's calories and macros was eaten, large, against the targets, small. */
 export function DailyProgress({ targets, eaten }: DailyProgressProps) {
