@@ -29,10 +29,11 @@ personal records or the streak beyond this week (#275).
     day, at most a year of them, with its planned workouts done and missed as the streak counts
     them, from the day the streak starts.
   - **Personal records** and the **streak calendar:** each a button that opens its own screen.
-  - **Streak calendar:** the streak month by month, each day with the week card's flame when it
-    counted, a snowflake when it was frozen and a red cross when it was missed, paged back to the
-    month the streak started in (ADR 0043). Under it the month's days counted and frozen, its
-    longest run of them, and the freezes left. Tapping a day does nothing, as on the week strip.
+  - **Streak calendar:** the streak month by month, each day a tile tinted with a badge of its
+    mark: the week card's flame when it counted, its snowflake when it was frozen, and a grey flame
+    put out when it was missed, apart from the orange of the streak. It pages back to the month the
+    streak started in (ADR 0043). Under it the month's days counted and frozen, its longest run of
+    them, and the freezes left. Tapping a day does nothing, as on the week strip.
 - **Each card is its own pull request**, the weight card first.
 
 ## Alternatives considered
