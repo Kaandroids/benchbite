@@ -151,6 +151,8 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'recent'],
       ['workout-logs', 'week'],
       ['workout-logs', 'exercise'],
+      // The streak counts the day's workouts.
+      ['streak'],
     ]);
   });
 });

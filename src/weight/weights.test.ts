@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
+import { STREAK_KEY } from '@/streak/streak';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
@@ -84,6 +85,7 @@ describe('useLogWeight', () => {
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: STREAK_KEY });
   });
 
   it('saves one weight at a time, in the order they were made', async () => {

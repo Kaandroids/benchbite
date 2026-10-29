@@ -5,9 +5,11 @@ export type Streak = {
   /** Days in a row, today included once it is done. */
   count: number;
   doneToday: boolean;
-  /** The status of each counted day, by its date as YYYY-MM-DD. */
+  /** The status of each counted day of this week, by its date as YYYY-MM-DD. */
   days: Record<string, DayStatus>;
 };
 
-/** Streaks are not recorded yet (#70); until they are, every user has none. */
+/** The streak until it loads, and of a user without one. */
 export const NO_STREAK: Streak = { count: 0, doneToday: false, days: {} };
+
+export const STREAK_KEY = ['streak'];

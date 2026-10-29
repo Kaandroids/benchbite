@@ -4,7 +4,7 @@ import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
-import { MOVES_KEY } from './moves';
+import { reloadMoves } from './moves';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
@@ -138,12 +138,12 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
 
 /**
  * Loads the plan again after it changed: the workouts, with the planned days under them, and the
- * moves, which the database settles when a workout changes (ADR 0041).
+ * moves, which the database settles when a workout changes (ADR 0041), and the streak.
  */
 function reloadPlan(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
-    queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+    reloadMoves(queryClient),
   ]);
 }
 
