@@ -3,6 +3,27 @@
 -- without meals can still be logged within the week. A break that reaches back more than a week
 -- ends by itself, as starting again (ADR 0045).
 
+-- The first day a break of the streak holds on the device's `today`: a week before it. Earlier
+-- missed days end by themselves (ADR 0045).
+create function public.first_day_of_break(today date)
+returns date
+language sql
+immutable
+set search_path = ''
+as $$
+  select first_day_of_break.today - 7;
+$$;
+
+-- Whether a day's calories keep it: more than none and no more than its target (ADR 0044).
+create function public.calories_count(kcal numeric, target integer)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(calories_count.kcal, 0) > 0 and calories_count.kcal <= calories_count.target;
+$$;
+
 -- The calories the caller ate on each day from `from_day` to `to_day` that has entries, as both
 -- the streak and the reasons of a break count them.
 create function public.day_calories(from_day date, to_day date)
@@ -131,8 +152,8 @@ as $$
     select
       d.day,
       coalesce(w.all_done, true)
-        and coalesce(e.kcal, 0) > 0
-        and e.kcal <= (public.targets_of_day(d.day, streak_states.today)).calories as counts
+        and public.calories_count(e.kcal, (public.targets_of_day(d.day, streak_states.today)).calories)
+        as counts
     from days d
     left join workouts w on w.day = d.day
     left join eaten e on e.day = d.day
@@ -167,9 +188,28 @@ as $$
   from public.streak_states(my_streak_states.first_open, my_streak_states.today, my_streak_states.today) s;
 $$;
 
--- As before (20261029110000), but a break that reaches back more than a week, to a day that can no
--- longer be logged, ends by itself as starting again (ADR 0045): its run of missed days is
--- answered without spending freezes, and only later missed days ask to be answered.
+-- Answers the caller's breaks through `through`, on the device's `today`: keeps the days through it
+-- with how they went, and records them as answered. Returns the first day not kept.
+create function public.answer_breaks_through(through date, today date)
+returns date
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  first_open date := public.keep_streak_days(answer_breaks_through.through, answer_breaks_through.today);
+begin
+  update public.user_streaks u
+  set answered_through = greatest(u.answered_through, answer_breaks_through.through)
+  where u.user_id = (select auth.uid());
+  return first_open;
+end;
+$$;
+
+-- As before (20261029110000), but a break that reaches back to a missed day more than a week before
+-- the device's today ends by itself, as starting again (ADR 0045): its whole run of missed days is
+-- answered without spending freezes, and only later missed days ask to be answered. The days are
+-- worked out once and read from there.
 create or replace function public.streak(today date)
 returns table (
   count integer,
@@ -186,6 +226,8 @@ as $$
 declare
   mine public.user_streaks;
   first_open date;
+  days date[];
+  states public.streak_state[];
   old_missed date;
   run_end date;
 begin
@@ -201,27 +243,27 @@ begin
     ),
     streak.today
   );
+  select array_agg(s.day order by s.day), array_agg(s.state order by s.day)
+  into days, states
+  from public.my_streak_states(first_open, streak.today) s;
 
-  -- The last missed day not answered yet that is more than a week old, and the end of its run.
-  select max(s.day) into old_missed
-  from public.my_streak_states(first_open, streak.today) s
-  where s.state = 'missed'
-    and s.day > coalesce(mine.answered_through, '-infinity')
-    and s.day < streak.today - 7;
+  -- The last missed day not answered yet before the break's first day, and the end of its run.
+  select max(d.day) into old_missed
+  from unnest(days, states) d (day, state)
+  where d.state = 'missed'
+    and d.day > coalesce(mine.answered_through, '-infinity')
+    and d.day < public.first_day_of_break(streak.today);
   if old_missed is not null then
-    select coalesce(min(s.day) - 1, streak.today - 1) into run_end
-    from public.my_streak_states(first_open, streak.today) s
-    where s.day > old_missed and s.state <> 'missed';
-    first_open := least(public.keep_streak_days(run_end, streak.today), streak.today);
-    update public.user_streaks u
-    set answered_through = greatest(u.answered_through, run_end)
-    where u.user_id = (select auth.uid())
-    returning * into mine;
+    select coalesce(min(d.day) - 1, streak.today - 1) into run_end
+    from unnest(days, states) d (day, state)
+    where d.day > old_missed and d.state <> 'missed';
+    perform public.answer_breaks_through(run_end, streak.today);
+    select * into mine from public.user_streaks u where u.user_id = (select auth.uid());
   end if;
 
   return query
   with states as (
-    select s.day, s.state from public.my_streak_states(first_open, streak.today) s
+    select d.day, d.state from unnest(days, states) d (day, state)
   ),
   -- The last missed day before today, and the last one whose break was answered.
   breaks as (
@@ -261,6 +303,45 @@ begin
 end;
 $$;
 
+-- As before (20261029110000), answering through yesterday as a long break ends by itself.
+create or replace function public.answer_streak_break(today date, use_freezes boolean)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  mine public.user_streaks;
+  missed date[];
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  perform public.assert_device_today(answer_streak_break.today);
+  mine := public.lock_user_streak(answer_streak_break.today);
+  perform public.keep_streak_days(answer_streak_break.today - 1, answer_streak_break.today);
+
+  select coalesce(array_agg(k.day), '{}') into missed
+  from public.streak_days k
+  where k.user_id = (select auth.uid())
+    and k.result = 'missed'
+    and k.day > coalesce(mine.answered_through, '-infinity')
+    and k.day < answer_streak_break.today;
+
+  if use_freezes and cardinality(missed) > 0 then
+    if mine.freezes < cardinality(missed) then
+      raise exception 'Not enough freezes for the missed days' using errcode = 'BB032';
+    end if;
+    update public.streak_days k set result = 'frozen'
+    where k.user_id = (select auth.uid()) and k.day = any (missed);
+    update public.user_streaks s set freezes = s.freezes - cardinality(missed)
+    where s.user_id = (select auth.uid());
+  end if;
+
+  perform public.answer_breaks_through(answer_streak_break.today - 1, answer_streak_break.today);
+end;
+$$;
+
 -- A workout of a missed day that kept it from counting, for the break to offer what mends it.
 create type public.break_workout as (
   id bigint,
@@ -270,15 +351,16 @@ create type public.break_workout as (
 );
 
 -- What each of the caller's `days` missed, on the device's `today`: its workouts that did not
--- keep it, the calories eaten and its calorie target. Callers pass the days streak() lists as
--- missed for the break; days more than a week before today, which a break no longer holds, and
--- days from today on are left out.
+-- keep it, the calories eaten, its calorie target and whether they kept it. Callers pass the days
+-- streak() lists as missed for the break; days before the break's first day and from today on
+-- are left out.
 create function public.streak_break_days(days date[], today date)
 returns table (
   day date,
   workouts public.break_workout[],
   eaten numeric,
-  target integer
+  target integer,
+  calories_count boolean
 )
 language plpgsql
 stable
@@ -296,7 +378,7 @@ begin
   with missed as (
     select distinct d as day
     from unnest(streak_break_days.days) d
-    where d between streak_break_days.today - 7 and streak_break_days.today - 1
+    where d between public.first_day_of_break(streak_break_days.today) and streak_break_days.today - 1
   ),
   bounds as (
     select min(m.day) as first_day, max(m.day) as last_day from missed m
@@ -318,8 +400,10 @@ begin
     m.day,
     coalesce(w.workouts, '{}'),
     coalesce(e.kcal, 0),
-    (public.targets_of_day(m.day, streak_break_days.today)).calories
+    t.calories,
+    public.calories_count(e.kcal, t.calories)
   from missed m
+  cross join lateral public.targets_of_day(m.day, streak_break_days.today) t
   left join workouts w on w.day = m.day
   left join eaten e on e.day = m.day
   order by m.day;
@@ -327,8 +411,11 @@ end;
 $$;
 
 revoke execute on function
+  public.first_day_of_break(date),
+  public.calories_count(numeric, integer),
   public.day_calories(date, date),
-  public.my_streak_states(date, date)
+  public.my_streak_states(date, date),
+  public.answer_breaks_through(date, date)
 from public, anon, authenticated;
 
 revoke execute on function public.streak_break_days(date[], date) from public, anon;
