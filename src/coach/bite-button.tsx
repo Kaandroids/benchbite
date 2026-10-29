@@ -20,7 +20,7 @@ import { BiteAvatar } from './bite-avatar';
 const SIZE = 60;
 const RING = 3;
 /** How far it bounces, in pixels: up from where it sits, and down to the ground it bounces off. */
-const BOUNCE = { up: 1.5, down: 1.5 };
+const BOUNCE = { up: 1.5, down: 3 };
 
 /**
  * Bite in the middle of the tab bar (ADR 0048), bouncing gently as off the ground unless the user
@@ -41,8 +41,8 @@ export function BiteButton() {
     bob.set(
       withRepeat(
         withSequence(
-          withTiming(-BOUNCE.up, { duration: 520, easing: Easing.out(Easing.quad) }),
-          withTiming(BOUNCE.down, { duration: 520, easing: Easing.in(Easing.quad) }),
+          withTiming(-BOUNCE.up, { duration: 800, easing: Easing.out(Easing.quad) }),
+          withTiming(BOUNCE.down, { duration: 800, easing: Easing.in(Easing.quad) }),
         ),
         -1,
       ),
