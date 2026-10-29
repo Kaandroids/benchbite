@@ -1,5 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -10,11 +9,12 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
-import { fromIsoDate, toIsoDate, useDayFormat } from '@/i18n/dates';
+import { toIsoDate } from '@/i18n/dates';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
+import { useBreakPrompt } from '@/streak/break-prompt';
 import { BreakSheet } from '@/streak/break-sheet';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
@@ -45,7 +45,6 @@ export function TodayScreen() {
   const greeting = useGreeting();
   const today = new Date();
   const { streak, streakBreak, failed: streakFailed, retry: retryStreak } = useStreak(today);
-  const dayFormat = useDayFormat();
   const { schedule, plan, queries: weekQueries } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
@@ -58,12 +57,7 @@ export function TodayScreen() {
       ...(streakFailed ? [retryStreak()] : []),
     ]);
   const [sheet, setSheet] = useState<SheetContent | null>(null);
-  // A break of the streak asks to be answered; closed, it waits until the app opens again, and
-  // while a missed day is being logged, until the tab shows again.
-  const [breakClosed, setBreakClosed] = useState(false);
-  const [breakAway, setBreakAway] = useState(false);
-  const [kept, setKept] = useState<string | null>(null);
-  useFocusEffect(useCallback(() => setBreakAway(false), []));
+  const prompt = useBreakPrompt(streakBreak);
 
   const sheetDay =
     sheet?.kind === 'day'
@@ -136,11 +130,9 @@ export function TodayScreen() {
 
   const showBreak =
     streakBreak !== null &&
-    !breakClosed &&
-    !breakAway &&
+    prompt.open &&
     sheet === null &&
     !queries.some((query) => query.isPending);
-  const hideKept = useCallback(() => setKept(null), []);
 
   return (
     <TabScreen
@@ -148,28 +140,12 @@ export function TodayScreen() {
       overlay={
         // One sheet whose content changes, as a modal cannot open while another one closes.
         showBreak ? (
-          <Sheet onClose={() => setBreakClosed(true)}>
+          <Sheet onClose={prompt.close}>
             <BreakSheet
               streakBreak={streakBreak}
               today={today}
-              onLog={(day) => {
-                setBreakAway(true);
-                router.navigate({ pathname: '/nutrition', params: { day } });
-              }}
-              onAnswered={(frozen) => {
-                if (frozen === 0) {
-                  return;
-                }
-                const left = streakBreak.freezes - frozen;
-                setKept(
-                  frozen === 1
-                    ? t('streak.break.kept', {
-                        count: left,
-                        day: dayFormat(fromIsoDate(streakBreak.missed[0]!)),
-                      })
-                    : t('streak.break.keptDays', { count: left, days: frozen }),
-                );
-              }}
+              onLog={prompt.log}
+              onAnswered={prompt.setMessage}
             />
           </Sheet>
         ) : sheet ? (
@@ -198,8 +174,8 @@ export function TodayScreen() {
               />
             ) : null}
           </Sheet>
-        ) : kept ? (
-          <Toast message={kept} onHide={hideKept} />
+        ) : prompt.message ? (
+          <Toast message={prompt.message} onHide={prompt.hideMessage} />
         ) : null
       }
     >

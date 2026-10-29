@@ -380,6 +380,7 @@ describe('moving workouts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
+    mockStreak(null);
   });
   afterEach(() => jest.useRealTimers());
 
@@ -605,15 +606,29 @@ describe('moving workouts', () => {
     ).toBeTruthy();
   });
 
-  it('opens a missed day to log, and lets the break wait once closed', async () => {
+  it('opens a missed day to log, out of the way until the tab shows again', async () => {
     mockData({});
     mockStreak({ missed: ['2026-10-20'], freezes: 3, savedCount: 6 });
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('link', { name: 'Log Tue, Oct 20' }));
     expect(router.navigate).toHaveBeenCalledWith({
       pathname: '/nutrition',
-      params: { day: '2026-10-20' },
+      params: { day: '2026-10-20', at: expect.any(String) },
     });
     expect(screen.queryByText('Your streak broke')).toBeNull();
+  });
+
+  it('lets a closed break wait, and asks again once another day is missed', async () => {
+    mockData({});
+    mockStreak({ missed: ['2026-10-19'], freezes: 3, savedCount: 6 });
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText('Your streak broke')).toBeNull();
+    await screen.rerender(<TodayScreen />);
+    expect(screen.queryByText('Your streak broke')).toBeNull();
+
+    mockStreak({ missed: ['2026-10-19', '2026-10-20'], freezes: 3, savedCount: 7 });
+    await screen.rerender(<TodayScreen />);
+    expect(screen.getByText('Your streak broke')).toBeTruthy();
   });
 });
