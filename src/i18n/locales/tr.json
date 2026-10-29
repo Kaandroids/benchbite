@@ -114,7 +114,8 @@
     "rangeLabel": "Kilo aralığı",
     "chart_one": "Kilon, {{count}} kayıt",
     "chart_other": "Kilon, {{count}} kayıt boyunca",
-    "noneInRange": "Bu aralıkta kilo girilmedi."
+    "noneInRange": "Bu aralıkta kilo girilmedi.",
+    "historyError": "Kiloların yüklenemedi."
   },
   "today": {
     "loading": "Yükleniyor",

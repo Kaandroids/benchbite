@@ -22,8 +22,16 @@ function mockLog(log = { isError: false, isPending: false }) {
   jest.mocked(useLogWeight).mockReturnValue({ mutate, reset, ...log } as never);
 }
 
-function mockHistory(entries: WeightEntry[] = [MONDAYS]) {
-  jest.mocked(useWeightHistory).mockReturnValue({ data: entries, isPending: false } as never);
+const refetch = jest.fn();
+
+/** The range's weights, or none loaded (null). */
+function mockHistory(entries: WeightEntry[] | null = [MONDAYS], isError = false) {
+  jest.mocked(useWeightHistory).mockReturnValue({
+    data: entries ?? undefined,
+    isPending: entries === null && !isError,
+    isError,
+    refetch,
+  } as never);
 }
 
 beforeEach(() => {
@@ -141,4 +149,22 @@ it('says when the range has no weight', async () => {
   mockHistory([]);
   await render(<WeightCard latest={MONDAYS} unit="kg" today={WEDNESDAY} />);
   expect(screen.getByText('No weight logged in this range.')).toBeTruthy();
+});
+
+it('leaves out a weight that did not change in the range', async () => {
+  mockHistory([
+    { weightKg: 85, measuredOn: '2026-08-01' },
+    { weightKg: 85, measuredOn: '2026-10-21' },
+  ]);
+  await render(<WeightCard latest={TODAYS} unit="kg" today={WEDNESDAY} />);
+  expect(screen.queryByText(/in 3 months/)).toBeNull();
+});
+
+it('says when the weights could not load, and loads them again', async () => {
+  mockHistory(null, true);
+  await render(<WeightCard latest={MONDAYS} unit="kg" today={WEDNESDAY} />);
+  expect(screen.getByText("We couldn't load your weights.")).toBeTruthy();
+  expect(screen.queryByText('No weight logged in this range.')).toBeNull();
+  await fireEvent.press(screen.getByText('Try again'));
+  expect(refetch).toHaveBeenCalled();
 });

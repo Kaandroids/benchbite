@@ -114,7 +114,8 @@
     "rangeLabel": "Gewicht über",
     "chart_one": "Dein Gewicht, {{count}} Eintrag",
     "chart_other": "Dein Gewicht über {{count}} Einträge",
-    "noneInRange": "In diesem Zeitraum kein Gewicht eingetragen."
+    "noneInRange": "In diesem Zeitraum kein Gewicht eingetragen.",
+    "historyError": "Deine Gewichte konnten nicht geladen werden."
   },
   "today": {
     "loading": "Wird geladen",

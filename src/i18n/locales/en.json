@@ -114,7 +114,8 @@
     "rangeLabel": "Weight over",
     "chart_one": "Your weight, {{count}} entry",
     "chart_other": "Your weight over {{count}} entries",
-    "noneInRange": "No weight logged in this range."
+    "noneInRange": "No weight logged in this range.",
+    "historyError": "We couldn't load your weights."
   },
   "today": {
     "loading": "Loading",
