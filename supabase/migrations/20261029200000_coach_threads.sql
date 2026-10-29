@@ -5,6 +5,8 @@
 
 create type public.coach_role as enum ('user', 'bite');
 
+-- The faces Bite answers with. Its thinking face is left out: it shows while Bite works out a
+-- reply, never on an answer. The app's faces derive from this list (src/coach/bite-expressions.tsx).
 create type public.bite_expression as enum ('neutral', 'happy', 'sad', 'angry', 'surprised');
 
 create table public.coach_threads (
@@ -18,6 +20,7 @@ create table public.coach_threads (
   archived_at timestamptz
 );
 
+create index coach_threads_user_id_idx on public.coach_threads (user_id);
 create index coach_threads_history_idx
   on public.coach_threads (user_id, last_message_at desc)
   where archived_at is null;
@@ -36,7 +39,8 @@ create table public.coach_messages (
   ),
   -- The face Bite makes as it answers.
   expression public.bite_expression,
-  -- What Bite's answer used, for the usage log (#288).
+  -- What Bite's answer used, as a record of the message; the usage log of #288 is what counts
+  -- toward the user's limit.
   model text check (length(model) between 1 and 100),
   input_tokens integer check (input_tokens >= 0),
   output_tokens integer check (output_tokens >= 0),
@@ -58,7 +62,6 @@ create index coach_messages_thread_idx on public.coach_messages (thread_id, id);
 create function public.touch_coach_thread()
 returns trigger
 language plpgsql
-security definer
 set search_path = ''
 as $$
 begin
