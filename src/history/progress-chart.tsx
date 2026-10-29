@@ -30,6 +30,10 @@ type ProgressChartProps = {
   inverted?: boolean;
   /** Says what the chart shows, in a sentence for screen readers. */
   description: string;
+  /** A value to reach, drawn as a dashed line with its label over it. */
+  target?: { value: number; label: string };
+  /** Places the points by their dates rather than evenly, for values logged now and then. */
+  byDate?: boolean;
 };
 
 /**
@@ -69,7 +73,10 @@ export function ticksOf(values: readonly number[], scale: Scale): number[] {
   return ticks;
 }
 
-/** An exercise's progress as a line over its workouts, oldest on the left, evenly spaced. */
+/**
+ * A value's progress as a line, oldest on the left: an exercise's over its workouts, evenly
+ * spaced, or the weight over its days.
+ */
 export function ProgressChart({
   points,
   formatValue,
@@ -77,13 +84,15 @@ export function ProgressChart({
   scale,
   inverted = false,
   description,
+  target,
+  byDate = false,
 }: ProgressChartProps) {
   const { colors } = useTheme();
   const [width, setWidth] = useState(0);
   const day = useShortDateFormat(new Date());
 
   const ticks = ticksOf(
-    points.map((point) => point.value),
+    [...points.map((point) => point.value), ...(target ? [target.value] : [])],
     scale,
   );
   const low = ticks[0] ?? 0;
@@ -93,10 +102,14 @@ export function ProgressChart({
     return TOP + (inverted ? share : 1 - share) * (HEIGHT - TOP - BOTTOM);
   };
   const right = width - END;
+  const first = points[0]?.date.getTime() ?? 0;
+  const span = (points[points.length - 1]?.date.getTime() ?? 0) - first;
   const x = (index: number) =>
     points.length === 1
       ? (AXIS + right) / 2
-      : AXIS + (index * (right - AXIS)) / (points.length - 1);
+      : byDate && span > 0
+        ? AXIS + (((points[index]?.date.getTime() ?? first) - first) * (right - AXIS)) / span
+        : AXIS + (index * (right - AXIS)) / (points.length - 1);
   // The first and the last day, and the middle one when there is room between them.
   const labelled = [
     0,
@@ -140,6 +153,29 @@ export function ProgressChart({
               {formatTick(tick)}
             </SvgText>
           ))}
+          {target ? (
+            <>
+              <Line
+                x1={AXIS}
+                x2={width}
+                y1={y(target.value)}
+                y2={y(target.value)}
+                stroke={colors.success}
+                strokeWidth={1.5}
+                strokeDasharray="5 5"
+              />
+              <SvgText
+                x={width}
+                y={y(target.value) + (inverted ? 14 : -5)}
+                textAnchor="end"
+                {...font}
+                fontFamily={fonts.extraBold}
+                fill={colors.success}
+              >
+                {target.label}
+              </SvgText>
+            </>
+          ) : null}
           {labelled.map((index) => (
             <SvgText
               key={index}
