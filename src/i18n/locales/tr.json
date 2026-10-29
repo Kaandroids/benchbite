@@ -264,7 +264,7 @@
   },
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
-    "grams": "{{grams}} g",
+    "grams": "{{count}} g",
     "macros": {
       "protein": "Protein",
       "carbs": "Karbonhidrat",
@@ -273,6 +273,7 @@
     "calorieLabel": "Kalori",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "spanTarget": "/ {{target}}",
     "average": "ortalama {{value}}",
     "target": "Hedef",
     "macroGrams": "{{grams}} g {{macro}}",
@@ -1552,6 +1553,18 @@
       "threeMonths": "3A",
       "sixMonths": "6A",
       "year": "Yıl"
+    },
+    "eating": {
+      "title": "Kalori ve makrolar",
+      "rangeLabel": "Beslenme aralığı",
+      "weekOf": "{{date}} haftası",
+      "bar": "{{span}}: günde {{kcal}} kcal, {{protein}} g protein, {{carbs}} g karbonhidrat, {{fat}} g yağ",
+      "notLogged": "{{span}}: bir şey girilmedi",
+      "overTarget": "hedefin üstünde",
+      "logged_one": "{{count}} gün girildi, {{within}} gün hedefte",
+      "logged_other": "{{count}} gün girildi, {{within}} gün hedefte",
+      "none": "Bu aralıkta öğün girilmedi.",
+      "error": "Öğünlerin yüklenemedi."
     }
   }
 }

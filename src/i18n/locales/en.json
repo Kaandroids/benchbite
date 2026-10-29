@@ -264,7 +264,7 @@
   },
   "nutrition": {
     "calories": "{{calories}} kcal a day",
-    "grams": "{{grams}} g",
+    "grams": "{{count}} g",
     "macros": {
       "protein": "Protein",
       "carbs": "Carbs",
@@ -273,6 +273,7 @@
     "calorieLabel": "Calories",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "spanTarget": "/ {{target}}",
     "average": "{{value}} on average",
     "target": "Target",
     "macroGrams": "{{grams}} g {{macro}}",
@@ -1552,6 +1553,18 @@
       "threeMonths": "3M",
       "sixMonths": "6M",
       "year": "Year"
+    },
+    "eating": {
+      "title": "Calories and macros",
+      "rangeLabel": "Eating over",
+      "weekOf": "Week of {{date}}",
+      "bar": "{{span}}: {{kcal}} kcal, {{protein}} g protein, {{carbs}} g carbs, {{fat}} g fat a day",
+      "notLogged": "{{span}}: nothing logged",
+      "overTarget": "over the target",
+      "logged_one": "{{count}} day logged, {{within}} within the target",
+      "logged_other": "{{count}} days logged, {{within}} within the target",
+      "none": "No meals logged in this range.",
+      "error": "We couldn't load your meals."
     }
   }
 }

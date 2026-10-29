@@ -264,7 +264,7 @@
   },
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",
-    "grams": "{{grams}} g",
+    "grams": "{{count}} g",
     "macros": {
       "protein": "Protein",
       "carbs": "Kohlenhydrate",
@@ -273,6 +273,7 @@
     "calorieLabel": "Kalorien",
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
+    "spanTarget": "/ {{target}}",
     "average": "im Schnitt {{value}}",
     "target": "Ziel",
     "macroGrams": "{{grams}} g {{macro}}",
@@ -1552,6 +1553,18 @@
       "threeMonths": "3M",
       "sixMonths": "6M",
       "year": "Jahr"
+    },
+    "eating": {
+      "title": "Kalorien und Makros",
+      "rangeLabel": "Ernährung über",
+      "weekOf": "Woche vom {{date}}",
+      "bar": "{{span}}: {{kcal}} kcal, {{protein}} g Eiweiß, {{carbs}} g Kohlenhydrate, {{fat}} g Fett pro Tag",
+      "notLogged": "{{span}}: nichts erfasst",
+      "overTarget": "über dem Ziel",
+      "logged_one": "{{count}} Tag erfasst, {{within}} im Ziel",
+      "logged_other": "{{count}} Tage erfasst, {{within}} im Ziel",
+      "none": "In diesem Zeitraum keine Mahlzeiten erfasst.",
+      "error": "Deine Mahlzeiten konnten nicht geladen werden."
     }
   }
 }
