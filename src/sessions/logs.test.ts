@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { STREAK_KEY } from '@/streak/streak';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
 import { MOVES_KEY } from '@/workouts/moves';
@@ -78,6 +79,7 @@ describe('useLogWorkout', () => {
       plannedExercises: 1,
       plannedSets: 3,
       startedAt: 'a',
+      startedOn: '2026-10-29',
       finishedAt: 'b',
       exercises: [],
     };
@@ -88,7 +90,8 @@ describe('useLogWorkout', () => {
       await expect(result.current.mutateAsync(log)).resolves.toBe(12);
     });
     expect(supabase.rpc).toHaveBeenCalledWith('log_workout', { log });
-    // The log may bring a move, so the week's moves are loaded again too.
+    // The log may bring a move, so the week's moves are loaded again too, and the streak.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: MOVES_KEY });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: STREAK_KEY });
   });
 });

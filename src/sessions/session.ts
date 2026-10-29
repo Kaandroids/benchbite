@@ -3,6 +3,7 @@
 import { randomUUID } from 'expo-crypto';
 import { useSyncExternalStore } from 'react';
 
+import { toIsoDate } from '@/i18n/dates';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { SET_LIMITS } from '@/sets/fields';
 import { MAX_SETS, type SetValues } from '@/sets/values';
@@ -390,6 +391,8 @@ export function toLog(value: Session, finishedAt = Date.now()) {
     plannedExercises: value.planned.exercises,
     plannedSets: value.planned.sets,
     startedAt: new Date(value.startedAt).toISOString(),
+    // The device's day it started on, which the streak counts it for (ADR 0044).
+    startedOn: toIsoDate(new Date(value.startedAt)),
     finishedAt: new Date(Math.max(finishedAt, value.startedAt + 1000)).toISOString(),
     exercises: value.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,

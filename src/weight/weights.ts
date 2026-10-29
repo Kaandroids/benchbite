@@ -5,6 +5,7 @@ import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { keepTargetsFromToday } from '@/nutrition/targets';
 import { useSession } from '@/providers/session-provider';
+import { STREAK_KEY } from '@/streak/streak';
 
 export type WeightEntry = {
   weightKg: number;
@@ -73,10 +74,12 @@ export function useLogWeight() {
       // The calculated targets follow the weight, and today with them.
       await keepTargetsFromToday();
     },
+    // Today's calories are counted for the streak against the targets, which follow the weight.
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['weights'] }),
         queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
+        queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
       ]),
   });
 }

@@ -1,11 +1,20 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
+import { STREAK_KEY } from '@/streak/streak';
 
 import type { WorkoutMove } from './week-schedule';
 
 export const MOVES_KEY = ['workout-moves'];
+
+/** Loads the moves again, and the streak, which counts a moved workout on its new day. */
+export function reloadMoves(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+  ]);
+}
 
 /** The query key of the moves of the week of `today`. */
 export function weekMovesKey(today: Date) {
@@ -57,7 +66,7 @@ export function useMoveWorkout() {
       }
     },
     // A refused move means the week changed elsewhere, so it is loaded again either way.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+    onSettled: () => reloadMoves(queryClient),
   });
 }
 
@@ -76,6 +85,6 @@ export function useUndoMove() {
         throw error;
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+    onSettled: () => reloadMoves(queryClient),
   });
 }
