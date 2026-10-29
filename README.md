@@ -217,6 +217,13 @@ at `http://127.0.0.1:54321/functions/v1/<name>`, and `pnpm supabase functions se
 with their logs in the terminal. Code shared between functions is in `supabase/functions/_shared/`.
 See [ADR 0010](docs/adr/0010-plan-builder-edge-function.md).
 
+The AI coach calls Gemini from the Edge Functions
+([ADR 0049](docs/adr/0049-gemini-behind-our-own-model-interface.md)). To try it locally, copy
+`supabase/functions/.env.example` to `supabase/functions/.env`, which sets `GEMINI_BACKEND=studio`,
+and set `GEMINI_API_KEY` to a key
+from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
+they need no key.
+
 ### Run the app
 
 With the local Supabase stack running:
@@ -278,7 +285,8 @@ The hosted Supabase project is deployed by the **Deploy** workflow in GitHub Act
 ([ADR 0030](docs/adr/0030-deploy-supabase-from-github-actions.md)). It links the project, pushes the
 settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
 the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
-`SUPABASE_DB_PASSWORD` from the repository's `production` environment. Start it from the Actions tab
+`SUPABASE_DB_PASSWORD` from the repository's `production` environment. The Edge Functions' own
+secrets, such as `GEMINI_API_KEY`, are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
 
 ### Install on an iPhone

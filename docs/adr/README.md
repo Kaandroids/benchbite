@@ -64,3 +64,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0046](0046-past-weeks-show-their-workouts-and-meals.md)     | A past week shows its workouts, its days' macros and a summary                          | Accepted                      |
 | [0047](0047-the-progress-tab.md)                             | The Progress tab: weight, eating and training over a range, then records and the streak | Accepted                      |
 | [0048](0048-our-own-tab-bar-with-bite.md)                    | Draw our own tab bar, with Bite in its middle                                           | Accepted                      |
+| [0049](0049-gemini-behind-our-own-model-interface.md)        | Gemini behind our own language model interface                                          | Accepted                      |
