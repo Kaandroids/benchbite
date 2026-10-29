@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
-import { NO_STREAK } from './streak';
+import { longestRun, NO_STREAK } from './streak';
 import { sampleStreak } from './sample-streak';
-import { showSampleStreak, useStreak } from './use-streak';
+import { showSampleStreak, useMonthStreak, useStreak } from './use-streak';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 
@@ -54,6 +54,13 @@ describe('useStreak', () => {
     });
   });
 
+  it('reads the freezes the user has', async () => {
+    mockStreak();
+    const { result } = await renderHook(() => useStreak(THURSDAY).freezes);
+    expect(result.current).toBeUndefined();
+    await waitFor(() => expect(result.current).toBe(3));
+  });
+
   it('shows none when it cannot load, and can be tried again', async () => {
     const failed = { data: null, error: new Error('offline') };
     jest
@@ -100,5 +107,33 @@ describe('sampleStreak', () => {
 
   it('counts today once it is done', () => {
     expect(sampleStreak(THURSDAY, true).count).toBe(5);
+  });
+});
+
+describe('useMonthStreak', () => {
+  it('reads how each day of the month went, missed and open ones too', async () => {
+    mockStreak();
+    const { result } = await renderHook(() => useMonthStreak(THURSDAY, new Date(2026, 9, 5)));
+    await waitFor(() =>
+      expect(result.current.data).toEqual({
+        '2026-10-19': 'done',
+        '2026-10-20': 'frozen',
+        '2026-10-21': 'missed',
+        '2026-10-22': 'done',
+      }),
+    );
+    expect(supabase.rpc).toHaveBeenCalledWith('streak_states', {
+      from_day: '2026-10-01',
+      to_day: '2026-10-31',
+      today: '2026-10-22',
+    });
+  });
+});
+
+describe('longestRun', () => {
+  it('counts the days in a row that kept the streak, frozen ones too', () => {
+    expect(longestRun(['done', 'frozen', 'done', 'missed', 'done', 'done'])).toBe(3);
+    expect(longestRun(['missed', 'done', 'open'])).toBe(1);
+    expect(longestRun([])).toBe(0);
   });
 });

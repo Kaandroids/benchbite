@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import {
   NO_STREAK,
   STREAK_KEY,
+  type DayState,
   type DayStatus,
   type MissedDay,
   type Streak,
@@ -33,19 +34,29 @@ async function fetchMissedDays(missed: string[], today: string): Promise<MissedD
   }));
 }
 
-/** How each day of the week of `week` counted for the streak (streak_states()), by its date. */
-async function fetchCountedDays(week: Date, today: string): Promise<Record<string, DayStatus>> {
-  const monday = weekStart(week);
+/** How each day from `from` to `to` went for the streak (streak_states()), by its date. */
+async function fetchDayStates(
+  from: Date,
+  to: Date,
+  today: string,
+): Promise<Record<string, DayState>> {
   const { data, error } = await supabase.rpc('streak_states', {
-    from_day: toIsoDate(monday),
-    to_day: toIsoDate(addDays(monday, 6)),
+    from_day: toIsoDate(from),
+    to_day: toIsoDate(to),
     today,
   });
   if (error) {
     throw error;
   }
+  return Object.fromEntries(data.map(({ day, state }) => [day, state]));
+}
+
+/** How each day of the week of `week` counted for the streak, by its date. */
+async function fetchCountedDays(week: Date, today: string): Promise<Record<string, DayStatus>> {
+  const monday = weekStart(week);
+  const states = await fetchDayStates(monday, addDays(monday, 6), today);
   const days: Record<string, DayStatus> = {};
-  for (const { day, state } of data) {
+  for (const [day, state] of Object.entries(states)) {
     if (state === 'done' || state === 'frozen') {
       days[day] = state;
     }
@@ -64,7 +75,7 @@ function subscribe(listener: () => void) {
 
 /**
  * The signed-in user's streak on the device's `today` (streak(), ADR 0042), with how each day of
- * this week went (streak_states()) and a break to answer. It shows none until it loads; when
+ * this week went (streak_states()), the freezes they have and a break to answer. It shows none until it loads; when
  * loading again fails, it keeps the last one, says it failed and can be tried again.
  */
 export function useStreak(today: Date) {
@@ -72,7 +83,11 @@ export function useStreak(today: Date) {
   const todayOn = toIsoDate(today);
   const query = useQuery({
     queryKey: [...STREAK_KEY, todayOn],
-    queryFn: async (): Promise<{ streak: Streak; streakBreak: StreakBreak | null }> => {
+    queryFn: async (): Promise<{
+      streak: Streak;
+      freezes: number;
+      streakBreak: StreakBreak | null;
+    }> => {
       const [streak, days] = await Promise.all([
         supabase.rpc('streak', { today: todayOn }).single(),
         fetchCountedDays(today, todayOn),
@@ -83,6 +98,7 @@ export function useStreak(today: Date) {
       const { count, counted_today, freezes, missed, saved_count } = streak.data;
       return {
         streak: { count, doneToday: counted_today, days },
+        freezes,
         streakBreak:
           missed.length > 0
             ? {
@@ -97,6 +113,8 @@ export function useStreak(today: Date) {
   // Read while rendering, so that a change of them renders again.
   return {
     streak: shown ?? query.data?.streak ?? NO_STREAK,
+    /** The freezes the user has, once loaded. */
+    freezes: query.data?.freezes,
     streakBreak: shown ? null : (query.data?.streakBreak ?? null),
     failed: query.isError,
     retry: query.refetch,
@@ -158,5 +176,20 @@ export function useStreakStart() {
       }
       return data;
     },
+  });
+}
+
+/**
+ * How each day of the month of `month` went for the streak, as seen on the device's `today`, by
+ * its date: done, frozen, missed or open. Days before the streak starts and after today have none.
+ */
+export function useMonthStreak(today: Date, month: Date) {
+  const todayOn = toIsoDate(today);
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  return useQuery({
+    queryKey: [...STREAK_KEY, 'month', toIsoDate(first), todayOn],
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      fetchDayStates(first, new Date(month.getFullYear(), month.getMonth() + 1, 0), todayOn),
   });
 }
