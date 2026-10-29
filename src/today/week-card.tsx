@@ -42,7 +42,7 @@ type WeekCardProps = {
   streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
-  /** How each day of the week counted for the streak, by its date. */
+  /** How each day of the week counted for the streak, by its date; this week's by default. */
   streakDays?: Record<string, DayStatus>;
   /** The user's first day, YYYY-MM-DD; the days before it are faded. */
   startedOn?: string;
@@ -203,7 +203,7 @@ export function WeekCard({
   today,
   streak,
   schedule,
-  streakDays = {},
+  streakDays = streak.days,
   startedOn,
   onDayPress,
   onPrevious,
