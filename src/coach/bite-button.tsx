@@ -17,7 +17,7 @@ import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 
-const SIZE = 60;
+const SIZE = 66;
 const RING = 3;
 /** How far it bounces, in pixels: up from where it sits, and down to the ground it bounces off. */
 const BOUNCE = { up: 1.5, down: 4 };
@@ -67,7 +67,7 @@ export function BiteButton() {
           },
         ]}
       >
-        <BiteAvatar size={SIZE - 2 * RING} />
+        <BiteAvatar size={SIZE - 2 * RING} idle />
       </Pressable>
     </Animated.View>
   );
