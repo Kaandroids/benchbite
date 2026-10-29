@@ -6,7 +6,14 @@ import { STREAK_KEY } from '@/streak/streak';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import { sessionValue } from '@/test/context-mocks';
 
-import { useLatestWeight, useLogWeight, useWeightUnit } from './weights';
+import {
+  rangeStart,
+  useLatestWeight,
+  useLogWeight,
+  useWeightHistory,
+  useWeightUnit,
+  weightChange,
+} from './weights';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
@@ -114,5 +121,55 @@ describe('useLogWeight', () => {
     upsert.mockResolvedValue({ error });
     const { result } = await renderHook(() => useLogWeight());
     await act(() => expect(result.current.mutateAsync(10)).rejects.toBe(error));
+  });
+});
+
+describe('useWeightHistory', () => {
+  it("loads the range's weights, oldest first", async () => {
+    const gte = jest.fn(() => ({
+      order: jest.fn().mockResolvedValue({
+        data: [
+          { weight_kg: 86.4, measured_on: '2026-10-01' },
+          { weight_kg: 85, measured_on: '2026-10-29' },
+        ],
+        error: null,
+      }),
+    }));
+    jest.mocked(supabase.from).mockReturnValue({ select: () => ({ gte }) } as never);
+    const { result } = await renderHook(() =>
+      useWeightHistory('month', new Date(2026, 9, 29, 9, 0)),
+    );
+    await waitFor(() =>
+      expect(result.current.data).toEqual([
+        { weightKg: 86.4, measuredOn: '2026-10-01' },
+        { weightKg: 85, measuredOn: '2026-10-29' },
+      ]),
+    );
+    expect(gte).toHaveBeenCalledWith('measured_on', '2026-09-29');
+  });
+});
+
+describe('rangeStart', () => {
+  it('goes back whole months from today', () => {
+    const today = new Date(2026, 9, 29, 9, 0);
+    expect(rangeStart('threeMonths', today)).toEqual(new Date(2026, 6, 29));
+    expect(rangeStart('year', today)).toEqual(new Date(2025, 9, 29));
+  });
+});
+
+describe('weightChange', () => {
+  it('is the last weight less the first, to a tenth', () => {
+    expect(
+      weightChange([
+        { weightKg: 86.4, measuredOn: '2026-10-01' },
+        { weightKg: 85.9, measuredOn: '2026-10-15' },
+        { weightKg: 85, measuredOn: '2026-10-29' },
+      ]),
+    ).toBe(-1.4);
+  });
+
+  it('is unknown with fewer than two weights', () => {
+    expect(weightChange([{ weightKg: 85, measuredOn: '2026-10-29' }])).toBeNull();
+    expect(weightChange([])).toBeNull();
   });
 });
