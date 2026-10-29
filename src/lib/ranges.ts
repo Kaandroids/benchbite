@@ -15,9 +15,9 @@ const RANGE_MONTHS: Record<ProgressRange, number> = {
   year: 12,
 };
 
-/** The first day of a range that ends on `today`. */
+/** The first day of a range that ends on `today`: the same day months back, or that month's last. */
 export function rangeStart(range: ProgressRange, today: Date): Date {
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  start.setMonth(start.getMonth() - RANGE_MONTHS[range]);
-  return start;
+  const month = today.getMonth() - RANGE_MONTHS[range];
+  const lastDay = new Date(today.getFullYear(), month + 1, 0).getDate();
+  return new Date(today.getFullYear(), month, Math.min(today.getDate(), lastDay));
 }
