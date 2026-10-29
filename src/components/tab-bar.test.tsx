@@ -1,10 +1,8 @@
-import { router } from 'expo-router';
+import { Text } from 'react-native';
 
 import { fireEvent, render, screen } from '@/test/render';
 
 import { TabBar } from './tab-bar';
-
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 const ROUTES = ['index', 'workout', 'nutrition', 'progress'].map((name) => ({
   key: `${name}-key`,
@@ -21,6 +19,8 @@ function renderBar(index: number, defaultPrevented = false) {
       emitter={{ emit } as never}
       navigateToTab={navigateToTab}
       insets={{ top: 0, right: 0, bottom: 34, left: 0 }}
+      middle={<Text>Middle</Text>}
+      hidden={false}
     />,
   ).then(() => ({ emit, navigateToTab }));
 }
@@ -39,7 +39,7 @@ it('shows the four tabs around Bite, the open one selected', async () => {
     ['Nutrition', true],
     ['Progress', false],
   ]);
-  expect(screen.getByRole('button', { name: 'Talk to Bite' })).toBeTruthy();
+  expect(screen.getByText('Middle')).toBeTruthy();
 });
 
 it('opens another tab, telling the tab it was pressed', async () => {
@@ -58,10 +58,4 @@ it('only tells the open tab it was pressed again, which scrolls it to the top', 
   await fireEvent.press(screen.getByRole('tab', { name: 'Today' }));
   expect(emit).toHaveBeenCalled();
   expect(navigateToTab).not.toHaveBeenCalled();
-});
-
-it('opens Bite over the tabs', async () => {
-  await renderBar(0);
-  await fireEvent.press(screen.getByRole('button', { name: 'Talk to Bite' }));
-  expect(router.push).toHaveBeenCalledWith('/bite');
 });

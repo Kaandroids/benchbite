@@ -4,12 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { BRAND_ORANGE } from '@/brand/mark';
 import { useTheme } from '@/theme';
 
-import { BiteFace } from './bite-face';
-
-const SIZE = 120;
+import { BiteAvatar } from './bite-avatar';
 
 /** The chat with Bite, opened from the middle of the tab bar; the chat itself comes with #294. */
 export function BiteScreen() {
@@ -18,9 +15,7 @@ export function BiteScreen() {
   return (
     <Screen onBack={() => router.back()} title={t('bite.title')}>
       <View style={[styles.center, { gap: spacing.lg }]}>
-        <View style={[styles.face, { backgroundColor: BRAND_ORANGE }]}>
-          <BiteFace size={SIZE - 20} />
-        </View>
+        <BiteAvatar size={120} />
         <Text color="textMuted" align="center">
           {t('bite.soon')}
         </Text>
@@ -32,13 +27,6 @@ export function BiteScreen() {
 const styles = StyleSheet.create({
   center: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  face: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

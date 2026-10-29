@@ -1,11 +1,12 @@
 import { usePathname } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
-import { TABS, TabBar } from '@/components/tab-bar';
+import { BiteButton } from '@/coach/bite-button';
+import { TABS, TabBar, tabPath } from '@/components/tab-bar';
 import { useTheme } from '@/theme';
 
 /** The tabs' own screens; the screens they open cover the tab bar. */
-const TAB_ROOTS = ['/', '/workout', '/nutrition', '/progress'];
+const TAB_ROOTS = TABS.map((tab) => tabPath(tab.name));
 
 /**
  * The app's main screens behind our own tab bar (ADR 0048): a floating capsule, glass on iOS 26,
@@ -17,7 +18,9 @@ export default function AppLayout() {
   const pathname = usePathname();
   return (
     <Tabs
-      tabBar={(props) => (TAB_ROOTS.includes(pathname) ? <TabBar {...props} /> : null)}
+      tabBar={(props) => (
+        <TabBar {...props} middle={<BiteButton />} hidden={!TAB_ROOTS.includes(pathname)} />
+      )}
       screenOptions={{
         headerShown: false,
         animation: 'fade',
