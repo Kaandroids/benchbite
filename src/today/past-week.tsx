@@ -26,8 +26,8 @@ type PastWeekProps = {
 };
 
 /**
- * A past week, read only (ADR 0043, ADR 0046): its days with their streak marks, then its
- * workouts, its days' calories and macros, and a summary of what was eaten.
+ * A past week, read only (ADR 0043, ADR 0046): its days with their streak marks, then its days'
+ * calories and macros, a summary of what was eaten, and its workouts.
  */
 export function PastWeek({
   today,
@@ -61,11 +61,12 @@ export function PastWeek({
   } else if (!loading) {
     cards = (
       <>
-        <WeekWorkoutsCard entering={cardEntering(1)} logs={data.logs} schedule={schedule} />
-        <WeekMacrosCard entering={cardEntering(2)} days={data.nutrition} week={summary} />
+        {/* The days' meals first: the strip already shows how the workouts went. */}
+        <WeekMacrosCard entering={cardEntering(1)} days={data.nutrition} week={summary} />
         {summary?.targets ? (
-          <WeekSummaryCard entering={cardEntering(3)} week={summary} targets={summary.targets} />
+          <WeekSummaryCard entering={cardEntering(2)} week={summary} targets={summary.targets} />
         ) : null}
+        <WeekWorkoutsCard entering={cardEntering(3)} logs={data.logs} schedule={schedule} />
       </>
     );
   }
