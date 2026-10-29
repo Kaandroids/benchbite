@@ -6,9 +6,9 @@ import { Card, listDivider } from '@/components/ui/card';
 import { FormError } from '@/components/ui/form-error';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { daysBetween, fromIsoDate, useDayFormat, useWeekdayDateFormat } from '@/i18n/dates';
+import { fromIsoDate, useDayFormat, useWeekdayDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { LOGGABLE_DAYS } from '@/nutrition/meals';
+import { canLog } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 
 import type { StreakBreak } from './streak';
@@ -19,8 +19,8 @@ type BreakSheetProps = {
   today: Date;
   /** Opens a missed day that can still be logged. */
   onLog: (day: string) => void;
-  /** Called once the break is answered, with the days frozen, none when starting again. */
-  onAnswered: (frozen: number) => void;
+  /** Called once the break is answered, with a message on the freezes used, none without. */
+  onAnswered: (message: string | null) => void;
 };
 
 /**
@@ -36,12 +36,19 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
   const answer = useAnswerBreak();
   const { missed, freezes, savedCount } = streakBreak;
   const enough = freezes >= missed.length;
-  const loggable = (day: string) => daysBetween(fromIsoDate(day), today) <= LOGGABLE_DAYS;
+  const day = (date: string) => dayFormat(fromIsoDate(date));
 
+  /** What freezing the missed days did: which day, or how many, and the freezes left. */
+  const kept = () => {
+    const left = freezes - missed.length;
+    return missed.length === 1
+      ? t('streak.break.kept', { count: left, day: day(missed[0]!) })
+      : t('streak.break.keptDays', { count: left, days: format(missed.length) });
+  };
   const answerWith = (useFreezes: boolean) =>
     answer.mutate(
       { today, useFreezes },
-      { onSuccess: () => onAnswered(useFreezes ? missed.length : 0) },
+      { onSuccess: () => onAnswered(useFreezes ? kept() : null) },
     );
 
   return (
@@ -55,10 +62,11 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
         </Text>
         <Text color="textMuted" align="center">
           {missed.length === 1
-            ? t('streak.break.oneDay', { day: dayFormat(fromIsoDate(missed[0]!)) })
-            : enough
-              ? t('streak.break.days', { count: missed.length })
-              : t('streak.break.notEnough', { count: missed.length, freezes })}
+            ? t('streak.break.oneDay', { day: day(missed[0]!) })
+            : t('streak.break.days', { count: missed.length })}
+          {enough
+            ? null
+            : ` ${freezes === 0 ? t('streak.break.noFreezes') : t('streak.break.notEnough', { count: freezes })}`}
         </Text>
       </View>
       <Card list>
@@ -68,19 +76,19 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
             {t('streak.break.forgotHint')}
           </Text>
         </View>
-        {missed.map((day) => (
+        {missed.map((date) => (
           <View
-            key={day}
+            key={date}
             style={[styles.row, { paddingVertical: spacing.md }, listDivider(false, colors.border)]}
           >
             <Text variant="bodyStrong" style={styles.flex}>
-              {shortDay(fromIsoDate(day))}
+              {shortDay(fromIsoDate(date))}
             </Text>
-            {loggable(day) ? (
+            {canLog(date, today) ? (
               <Pressable
                 accessibilityRole="link"
-                accessibilityLabel={t('streak.break.logDay', { day: shortDay(fromIsoDate(day)) })}
-                onPress={() => onLog(day)}
+                accessibilityLabel={t('streak.break.logDay', { day: shortDay(fromIsoDate(date)) })}
+                onPress={() => onLog(date)}
                 hitSlop={8}
               >
                 <Text variant="label" color="primaryText">
@@ -105,17 +113,25 @@ export function BreakSheet({ streakBreak, today, onLog, onAnswered }: BreakSheet
             </Text>
           </View>
           <Button
-            label={t('streak.break.freeze', { count: missed.length, days: format(savedCount) })}
+            label={t('streak.break.freeze', {
+              count: missed.length,
+              keep: t('streak.break.keepDays', { count: savedCount }),
+            })}
             loading={answer.isPending && answer.variables?.useFreezes}
             disabled={answer.isPending}
             onPress={() => answerWith(true)}
           />
-          <Button
-            label={t('streak.break.startAgain')}
-            variant="ghost"
+          {/* Quiet, as freezing is what the sheet offers. */}
+          <Pressable
+            accessibilityRole="button"
             disabled={answer.isPending}
             onPress={() => answerWith(false)}
-          />
+            style={[styles.quiet, { paddingVertical: spacing.md }]}
+          >
+            <Text variant="label" color="textMuted">
+              {t('streak.break.startAgain')}
+            </Text>
+          </Pressable>
         </View>
       ) : (
         <Button
@@ -145,6 +161,9 @@ const styles = StyleSheet.create({
   },
   centerRow: {
     justifyContent: 'center',
+  },
+  quiet: {
+    alignItems: 'center',
   },
   flex: {
     flex: 1,

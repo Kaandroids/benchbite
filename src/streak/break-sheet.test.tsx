@@ -33,7 +33,7 @@ describe('BreakSheet', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Use 2 freezes, keep 9 days' }));
     expect(answer).toHaveBeenCalledWith({ today: TODAY, useFreezes: true }, expect.anything());
     answer.mock.calls[0][1].onSuccess();
-    expect(onAnswered).toHaveBeenCalledWith(2);
+    expect(onAnswered).toHaveBeenCalledWith('Streak kept: 2 days frozen. 1 freeze left.');
   });
 
   it('starts again when asked', async () => {
@@ -49,7 +49,7 @@ describe('BreakSheet', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Start again' }));
     expect(answer).toHaveBeenCalledWith({ today: TODAY, useFreezes: false }, expect.anything());
     answer.mock.calls[0][1].onSuccess();
-    expect(onAnswered).toHaveBeenCalledWith(0);
+    expect(onAnswered).toHaveBeenCalledWith(null);
   });
 
   it('offers only a new streak without enough freezes, and logs the days still open', async () => {
@@ -67,9 +67,7 @@ describe('BreakSheet', () => {
       />,
     );
     expect(
-      screen.getByText(
-        "4 days didn't count, and you have 3 freezes: not enough to cover them all.",
-      ),
+      screen.getByText("4 days didn't count. You have 3 freezes: not enough to cover them all."),
     ).toBeTruthy();
     expect(screen.queryByRole('button', { name: /freeze/ })).toBeNull();
     expect(screen.getAllByText('Can no longer be logged')).toHaveLength(2);
@@ -77,5 +75,32 @@ describe('BreakSheet', () => {
     expect(onLog).toHaveBeenCalledWith('2026-10-26');
     await fireEvent.press(screen.getByRole('button', { name: 'Start a new streak' }));
     expect(answer).toHaveBeenCalledWith({ today: TODAY, useFreezes: false }, expect.anything());
+  });
+
+  it('says when there are no freezes left, and keeps one day in the singular', async () => {
+    await render(
+      <BreakSheet
+        streakBreak={{ missed: ['2026-10-28'], freezes: 0, savedCount: 1 }}
+        today={TODAY}
+        onLog={jest.fn()}
+        onAnswered={jest.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("Wednesday, October 28 didn't count. You have no freezes left."),
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Start a new streak' })).toBeTruthy();
+  });
+
+  it('keeps a single day in the singular', async () => {
+    await render(
+      <BreakSheet
+        streakBreak={{ missed: ['2026-10-28'], freezes: 1, savedCount: 1 }}
+        today={TODAY}
+        onLog={jest.fn()}
+        onAnswered={jest.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Use 1 freeze, keep 1 day' })).toBeTruthy();
   });
 });
