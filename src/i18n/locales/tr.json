@@ -184,7 +184,31 @@
   },
   "streak": {
     "label_one": "{{count}} günlük seri",
-    "label_other": "{{count}} günlük seri"
+    "label_other": "{{count}} günlük seri",
+    "break": {
+      "title": "Serin bozuldu",
+      "oneDay": "{{day}} sayılmadı.",
+      "days_one": "{{count}} gün sayılmadı.",
+      "days_other": "{{count}} gün sayılmadı.",
+      "notEnough_one": "{{count}} gün sayılmadı ve {{freezes}} freeze'in var: kapatmaya yetmiyor.",
+      "notEnough_other": "{{count}} gün sayılmadı ve {{freezes}} freeze'in var: hepsini kapatmaya yetmiyor.",
+      "forgot": "Yemek kaydetmeyi mi unuttun?",
+      "forgotHint": "Kaydet, gün yine de sayılabilir.",
+      "log": "Kaydet",
+      "logDay": "{{day}} gününü kaydet",
+      "tooLate": "Artık kaydedilemez",
+      "freezes_one": "{{count}} freeze'in var",
+      "freezes_other": "{{count}} freeze'in var",
+      "freeze_one": "{{count}} freeze kullan, {{days}} günü koru",
+      "freeze_other": "{{count}} freeze kullan, {{days}} günü koru",
+      "startAgain": "Yeniden başla",
+      "newStreak": "Yeni seri başlat",
+      "error": "Seri kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "kept_one": "Seri korundu: {{day}} donduruldu. {{count}} freeze kaldı.",
+      "kept_other": "Seri korundu: {{day}} donduruldu. {{count}} freeze kaldı.",
+      "keptDays_one": "Seri korundu: {{days}} gün donduruldu. {{count}} freeze kaldı.",
+      "keptDays_other": "Seri korundu: {{days}} gün donduruldu. {{count}} freeze kaldı."
+    }
   },
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
