@@ -67,4 +67,3 @@ describe('isOverTarget', () => {
     expect(isOverTarget(day('2026-10-19', 5000, 1, null))).toBe(false);
   });
 });
-
