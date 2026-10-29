@@ -218,7 +218,6 @@
       "over": "Hedefin {{kcal}} kcal üstünde",
       "onlyFreeze": "Sadece freeze ile",
       "moved": "{{name}} ertelendi: {{day}}.",
-      "moveError": "Antrenman taşınamadı. Bağlantını kontrol edip tekrar dene.",
       "movedToday": "{{name}} bugüne ertelendi."
     }
   },

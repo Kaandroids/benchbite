@@ -41,7 +41,8 @@ export function BreakSheet({ streakBreak, today, schedule, onLog, onAnswered }: 
   const { format } = useNumberFormat();
   const dayFormat = useDayFormat();
   const answer = useAnswerBreak();
-  const { missed, freezes, savedCount } = streakBreak;
+  const { freezes, savedCount } = streakBreak;
+  const missed = streakBreak.days.map(({ day }) => day);
   const enough = freezes >= missed.length;
   const day = (date: string) => dayFormat(fromIsoDate(date));
 

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Chip } from '@/components/ui/chip';
 import { PillButton } from '@/components/ui/pill-button';
 import { Text } from '@/components/ui/text';
 import { fromIsoDate, toIsoDate, useWeekdayDateFormat, useWeekdayFormat } from '@/i18n/dates';
@@ -10,8 +9,15 @@ import { useNumberFormat } from '@/i18n/units';
 import { canLog } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
+import { MoveDayChips } from '@/workouts/move-day-chips';
+import { MoveError } from '@/workouts/move-error';
 import { useMoveWorkout } from '@/workouts/moves';
-import { moveTargets, originOf, type WeekSchedule } from '@/workouts/week-schedule';
+import {
+  moveTargets,
+  originOf,
+  type ScheduleDay,
+  type WeekSchedule,
+} from '@/workouts/week-schedule';
 
 import type { MissedDay } from './streak';
 
@@ -66,7 +72,7 @@ export function MissedDayRows({ missedDay, schedule, today, onLog, onMoved }: Mi
             )}
           </Reason>
         ) : (
-          <Reason text={t('streak.break.over', { kcal: format(Math.round(eaten - target)) })}>
+          <Reason text={t('streak.break.over', { kcal: format(Math.ceil(eaten - target)) })}>
             <Muted>{t('streak.break.onlyFreeze')}</Muted>
           </Reason>
         )}
@@ -89,9 +95,9 @@ function WorkoutReason({ workout, day, schedule, today, onMoved }: WorkoutReason
   const { spacing } = useTheme();
   const workoutName = useWorkoutName();
   const weekday = useWeekdayFormat();
-  const shortWeekday = useWeekdayFormat('short');
   const moveWorkout = useMoveWorkout();
-  const [open, setOpen] = useState(false);
+  // The free days as they were when opened, so that they stay while the moved workout reloads.
+  const [open, setOpen] = useState<{ fromOn: string; targets: ScheduleDay[] } | null>(null);
   const name = workoutName(workout);
   const todayOn = toIsoDate(today);
 
@@ -100,56 +106,49 @@ function WorkoutReason({ workout, day, schedule, today, onMoved }: WorkoutReason
   const planned = scheduleDay?.workouts.find((item) => item.session.workoutId === workout.id);
   const fromOn = planned && scheduleDay ? originOf(planned, scheduleDay) : null;
   const targets = fromOn ? moveTargets(schedule, workout.id, fromOn, todayOn) : [];
-  const dayName = (date: string, weekdayOf: number) =>
-    date === todayOn ? t('today.move.today') : weekday(weekdayOf);
+
+  const postpone = (toOn: string) => {
+    if (!open) {
+      return;
+    }
+    const target = open.targets.find((other) => other.date === toOn);
+    // Said once the move is saved, though the day may have left the break by then.
+    moveWorkout.mutateAsync({ workoutId: workout.id, fromOn: open.fromOn, toOn }).then(
+      () =>
+        onMoved(
+          toOn === todayOn
+            ? t('streak.break.movedToday', { name })
+            : t('streak.break.moved', { name, day: weekday(target?.weekday ?? 1) }),
+        ),
+      // MoveError says what went wrong.
+      () => {},
+    );
+  };
 
   return (
     <View style={{ gap: spacing.sm }}>
       <Reason text={t(workout.skipped ? 'streak.break.skipped' : 'streak.break.notDone', { name })}>
-        {targets.length > 0 ? (
+        {open || targets.length > 0 ? (
           <PillButton
             label={t('streak.break.postpone')}
             accessibilityLabel={t('streak.break.postponeLabel', { name })}
-            onPress={() => setOpen(!open)}
+            disabled={moveWorkout.isPending}
+            onPress={() => setOpen(open ? null : fromOn ? { fromOn, targets } : null)}
           />
         ) : (
           <Muted>{t('streak.break.cannotMove')}</Muted>
         )}
       </Reason>
-      {open && fromOn ? (
-        <View style={[styles.days, { gap: spacing.sm }]}>
-          {targets.map((target) => (
-            <Chip
-              key={target.date}
-              label={target.date === todayOn ? t('today.move.today') : shortWeekday(target.weekday)}
-              accessibilityLabel={t('today.catchUp.moveLabel', {
-                session: name,
-                day: dayName(target.date, target.weekday),
-              })}
-              selected={moveWorkout.isPending && moveWorkout.variables?.toOn === target.date}
-              disabled={moveWorkout.isPending}
-              onPress={() =>
-                moveWorkout.mutate(
-                  { workoutId: workout.id, fromOn, toOn: target.date },
-                  {
-                    onSuccess: () =>
-                      onMoved(
-                        target.date === todayOn
-                          ? t('streak.break.movedToday', { name })
-                          : t('streak.break.moved', { name, day: weekday(target.weekday) }),
-                      ),
-                  },
-                )
-              }
-            />
-          ))}
-        </View>
+      {open ? (
+        <MoveDayChips
+          targets={open.targets}
+          today={today}
+          name={name}
+          move={moveWorkout}
+          onMove={postpone}
+        />
       ) : null}
-      {moveWorkout.isError ? (
-        <Text variant="caption" color="danger">
-          {t('streak.break.moveError')}
-        </Text>
-      ) : null}
+      <MoveError move={moveWorkout} />
     </View>
   );
 }
@@ -186,9 +185,5 @@ const styles = StyleSheet.create({
   },
   muted: {
     maxWidth: 140,
-  },
-  days: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
   },
 });

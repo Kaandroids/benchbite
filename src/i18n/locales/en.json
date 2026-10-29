@@ -218,7 +218,6 @@
       "over": "Over the target by {{kcal}} kcal",
       "onlyFreeze": "Only a freeze",
       "moved": "{{name}} moved to {{day}}.",
-      "moveError": "The workout could not be moved. Check your connection and try again.",
       "movedToday": "{{name}} moved to today."
     }
   },

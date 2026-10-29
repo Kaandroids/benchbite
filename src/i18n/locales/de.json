@@ -218,7 +218,6 @@
       "over": "{{kcal}} kcal über dem Ziel",
       "onlyFreeze": "Nur mit einem Freeze",
       "moved": "{{name}} auf {{day}} verschoben.",
-      "moveError": "Das Workout konnte nicht verschoben werden. Prüfe deine Verbindung und versuche es erneut.",
       "movedToday": "{{name}} auf heute verschoben."
     }
   },
