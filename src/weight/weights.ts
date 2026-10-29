@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
@@ -63,11 +63,15 @@ export function rangeStart(range: WeightRange, today: Date): Date {
   return start;
 }
 
-/** The signed-in user's weights from the start of `range` to `today`, oldest first. */
+/**
+ * The signed-in user's weights from the start of `range` to `today`, oldest first. Another range
+ * keeps the last one shown until it loads.
+ */
 export function useWeightHistory(range: WeightRange, today: Date) {
   const from = toIsoDate(rangeStart(range, today));
   return useQuery({
     queryKey: ['weights', 'history', from],
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<WeightEntry[]> => {
       const { data, error } = await supabase
         .from('weight_entries')
