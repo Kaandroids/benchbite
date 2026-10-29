@@ -22,8 +22,11 @@ The model behind Bite can change (ADR 0049), and a stored conversation has to ou
   results, cards, and paths of photos and voice in storage), never a provider's request shape.
   The chat function (#292) defines and checks the parts; the table only keeps them to 50 parts
   and 64 KB.
-- **Bite's messages carry their expression, model and tokens** in columns of their own, so that
-  usage can be summed without reading the content. A user's message has none of them.
+- **Bite's messages carry their expression, model and tokens** in columns of their own, as a
+  record of what each answer used. A user's message has none of them. The expressions are the
+  faces Bite answers with; its thinking face only shows while it works out a reply.
+- **The usage log of #288 is what counts toward a user's limit,** not these columns: meal photos
+  and reviews call the model too, and never reach a conversation.
 - **Only the chat function writes them,** with the service role, after it has verified the user,
   their consent and their limit: it creates the thread with its first message and adds both
   messages of a turn together. A trigger keeps the thread's last message time.
@@ -47,4 +50,4 @@ The model behind Bite can change (ADR 0049), and a stored conversation has to ou
 - The chat function has to validate the parts it writes; the database checks only their size.
 - The app lists the history from `coach_threads` and opens a thread from `coach_messages`, both
   directly under row level security.
-- Usage per user and month is a sum over `coach_messages`, or over the usage log that #288 adds.
+- A chat answer's tokens are kept twice, here and in the usage log; only the log counts.
