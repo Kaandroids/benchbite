@@ -5,12 +5,13 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
-import { fromIsoDate, useShortDateFormat } from '@/i18n/dates';
+import { fromIsoDate, useMonthFormat, useShortDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { Average } from '@/nutrition/average';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { nutritionSummary, useDayNutrition } from '@/nutrition/day-nutrition';
 import { MacroBars } from '@/nutrition/macro-bars';
+import { NOTHING } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
@@ -28,20 +29,25 @@ type NutritionCardProps = {
  * targets of its days logged.
  */
 export function NutritionCard({ entering, today }: NutritionCardProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const shortDate = useShortDateFormat(today);
-  const monthName = new Intl.DateTimeFormat(i18n.language, { month: 'short' });
+  const monthName = useMonthFormat();
   const [range, setRange] = useState<ProgressRange>('month');
   const days = useDayNutrition(today, rangeStart(range, today), today, { keepLast: true });
-  const span = SPAN_OF[range];
+  // While a new range loads, the last days keep the bars of the range they were loaded for.
+  const [shownRange, setShownRange] = useState(range);
+  if (days.data && !days.isPlaceholderData && shownRange !== range) {
+    setShownRange(range);
+  }
+  const span = SPAN_OF[shownRange];
   const summary = days.data ? nutritionSummary(days.data) : null;
 
   // Along the axis, a span's first day or its month; read out, a week says it is one.
   const axisNameOf = (spanStart: string) => {
     const date = fromIsoDate(spanStart);
-    return span === 'month' ? monthName.format(date) : shortDate(date);
+    return span === 'month' ? monthName(date) : shortDate(date);
   };
   const nameOf = (spanStart: string) =>
     span === 'week'
@@ -92,7 +98,7 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
           <MacroBars
             bars={spans.map((item) => ({
               key: item.start,
-              eaten: item.summary?.average ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+              eaten: item.summary?.average ?? NOTHING,
               logged: item.summary !== null,
               over: item.over,
               accessibilityLabel: labelOf(item),

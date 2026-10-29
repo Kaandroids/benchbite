@@ -22,10 +22,11 @@ const day = (date: string, calories: number): DayNutrition => ({
 
 const refetch = jest.fn();
 
-function mockDays(days: DayNutrition[] | null, isError = false) {
+function mockDays(days: DayNutrition[] | null, isError = false, isPlaceholderData = false) {
   jest.mocked(useDayNutrition).mockReturnValue({
     data: days ?? undefined,
     isError,
+    isPlaceholderData,
     refetch,
   } as never);
 }
@@ -62,6 +63,16 @@ it('averages longer ranges by week', async () => {
   });
   expect(
     screen.getByLabelText('Week of Oct 19: 2,000 kcal, 150 g protein, 200 g carbs, 60 g fat a day'),
+  ).toBeTruthy();
+});
+
+it('keeps the bars of the last range while a new one loads', async () => {
+  mockDays([day('2026-10-27', 1800), day('2026-10-28', 2200)]);
+  await render(<NutritionCard today={TODAY} />);
+  mockDays([day('2026-10-27', 1800), day('2026-10-28', 2200)], false, true);
+  await fireEvent.press(screen.getByText('3M'));
+  expect(
+    screen.getByLabelText('Oct 27: 1,800 kcal, 150 g protein, 200 g carbs, 60 g fat a day'),
   ).toBeTruthy();
 });
 
