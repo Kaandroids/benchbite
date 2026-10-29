@@ -87,7 +87,8 @@
     "today": "Heute",
     "workout": "Training",
     "nutrition": "Ernährung",
-    "progress": "Fortschritt"
+    "progress": "Fortschritt",
+    "bite": "Mit Bite sprechen"
   },
   "weight": {
     "title": "Gewicht",
@@ -1624,5 +1625,9 @@
       "freezes_other": "Noch {{count}} Freezes",
       "error": "Deine Serie konnte nicht geladen werden."
     }
+  },
+  "bite": {
+    "title": "Bite",
+    "soon": "Der Chat mit Bite kommt bald."
   }
 }
