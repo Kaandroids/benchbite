@@ -23,10 +23,30 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_budgets: {
+        Row: {
+          monthly_limit_usd: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          monthly_limit_usd: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          monthly_limit_usd?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       ai_calls_in_flight: {
         Row: {
           call_id: string;
           feature: Database['public']['Enums']['ai_feature'];
+          model: string;
           started_at: string;
           user_id: string;
         };
@@ -34,12 +54,14 @@ export type Database = {
         Insert: {
           call_id?: string;
           feature: Database['public']['Enums']['ai_feature'];
+          model: string;
           started_at?: string;
           user_id: string;
         };
         Update: {
           call_id?: string;
           feature?: Database['public']['Enums']['ai_feature'];
+          model?: string;
           started_at?: string;
           user_id?: string;
         };
@@ -72,17 +94,17 @@ export type Database = {
       };
       ai_settings: {
         Row: {
+          default_monthly_limit_usd: number;
           id: boolean;
-          monthly_limit_usd: number;
         };
         ComputedFields: never;
         Insert: {
+          default_monthly_limit_usd: number;
           id?: boolean;
-          monthly_limit_usd: number;
         };
         Update: {
+          default_monthly_limit_usd?: number;
           id?: boolean;
-          monthly_limit_usd?: number;
         };
         Relationships: [];
       };
@@ -1970,7 +1992,11 @@ export type Database = {
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
       ai_access_reason:
-        'account_required' | 'limit_reached' | 'unpriced_model' | 'call_in_progress';
+        | 'account_required'
+        | 'plan_required'
+        | 'limit_reached'
+        | 'unpriced_model'
+        | 'call_in_progress';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_role: 'user' | 'bite';
@@ -2209,7 +2235,13 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
-      ai_access_reason: ['account_required', 'limit_reached', 'unpriced_model', 'call_in_progress'],
+      ai_access_reason: [
+        'account_required',
+        'plan_required',
+        'limit_reached',
+        'unpriced_model',
+        'call_in_progress',
+      ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_role: ['user', 'bite'],

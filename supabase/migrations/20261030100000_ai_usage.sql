@@ -30,14 +30,21 @@ values
   ('gemini-3.8-flash', '2026-01-01', 0.75, 0.075, 3.75),
   ('gemini-3.8-flash', '2027-01-01', 1.50, 0.15, 7.50);
 
--- One row: the settings every user's AI calls share. The limit will come from the user's plan
--- once the AI features are premium; then only ai_access() changes.
+-- One row: the settings every user's AI calls share. A user without a budget of their own has
+-- the default, which is nothing: AI comes with a plan, which sets a budget (ai_budgets).
 create table public.ai_settings (
   id boolean primary key default true check (id),
-  monthly_limit_usd numeric(8, 2) not null check (monthly_limit_usd >= 0)
+  default_monthly_limit_usd numeric(8, 2) not null check (default_monthly_limit_usd >= 0)
 );
 
-insert into public.ai_settings (monthly_limit_usd) values (4);
+insert into public.ai_settings (default_monthly_limit_usd) values (0);
+
+-- What a user may spend on AI a month, set by their plan, or by hand in development.
+create table public.ai_budgets (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  monthly_limit_usd numeric(8, 2) not null check (monthly_limit_usd >= 0),
+  updated_at timestamptz not null default now()
+);
 
 -- One row per model call.
 create table public.ai_usage (
@@ -65,14 +72,17 @@ create table public.ai_calls_in_flight (
   feature public.ai_feature not null,
   -- The call holding the place, which only it frees.
   call_id uuid not null default gen_random_uuid(),
+  -- The model it was started on, and when, by which it is priced when it is recorded.
+  model text not null,
   started_at timestamptz not null default now(),
   primary key (user_id, feature)
 );
 
--- Users read their own usage; nobody but the service role writes it. Prices, settings and the
--- calls in flight are read only through the functions below.
+-- Users read their own usage; nobody but the service role writes it. Prices, settings, budgets
+-- and the calls in flight are read only through the functions below.
 alter table public.ai_model_prices enable row level security;
 alter table public.ai_settings enable row level security;
+alter table public.ai_budgets enable row level security;
 alter table public.ai_usage enable row level security;
 alter table public.ai_calls_in_flight enable row level security;
 
@@ -80,8 +90,8 @@ create policy "Users read their own AI usage"
   on public.ai_usage for select to authenticated
   using ((select auth.uid()) = user_id);
 
-revoke all on public.ai_model_prices, public.ai_settings, public.ai_usage, public.ai_calls_in_flight
-  from anon, authenticated;
+revoke all on public.ai_model_prices, public.ai_settings, public.ai_budgets, public.ai_usage,
+  public.ai_calls_in_flight from anon, authenticated;
 grant select on public.ai_usage to authenticated;
 
 -- The price of a model in force at a time, or null when none is known.
@@ -104,6 +114,8 @@ grant execute on function public.ai_model_price(text, timestamptz) to service_ro
 create type public.ai_access_reason as enum (
   -- AI needs an account; guests have none.
   'account_required',
+  -- The user has no budget for AI, which a plan gives.
+  'plan_required',
   -- The month's budget is used up, until resets_at.
   'limit_reached',
   -- The model has no price, so its cost could not be counted.
@@ -112,6 +124,9 @@ create type public.ai_access_reason as enum (
   'call_in_progress'
 );
 
+-- What ai_access() says, and start_ai_call() with it. The app reads ai_access(), which never
+-- refuses for 'unpriced_model' or 'call_in_progress' and never sets call_id: those are
+-- start_ai_call()'s.
 create type public.ai_access as (
   allowed boolean,
   -- Set when not allowed.
@@ -129,7 +144,7 @@ create function public.ai_access()
 returns public.ai_access
 language plpgsql
 stable
--- Reads the settings, which callers may not, and whether the user is a guest.
+-- Reads the settings and budgets, which callers may not, and whether the user is a guest.
 security definer
 set search_path = ''
 as $$
@@ -141,7 +156,10 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
 
-  select s.monthly_limit_usd into result.budget_usd from public.ai_settings s;
+  select coalesce(
+    (select b.monthly_limit_usd from public.ai_budgets b where b.user_id = (select auth.uid())),
+    (select s.default_monthly_limit_usd from public.ai_settings s)
+  ) into result.budget_usd;
   result.resets_at := month_start + interval '1 month';
   select coalesce(sum(u.cost_usd), 0) into result.used_usd
   from public.ai_usage u
@@ -149,6 +167,8 @@ begin
 
   if (select u.is_anonymous from auth.users u where u.id = (select auth.uid())) then
     result.reason := 'account_required';
+  elsif result.budget_usd = 0 then
+    result.reason := 'plan_required';
   elsif result.used_usd >= result.budget_usd then
     result.reason := 'limit_reached';
   end if;
@@ -181,10 +201,10 @@ begin
     result.reason := 'unpriced_model';
   else
     -- Takes the place, or a place a call left behind; a call holding it keeps it.
-    insert into public.ai_calls_in_flight (user_id, feature)
-    values ((select auth.uid()), start_ai_call.feature)
+    insert into public.ai_calls_in_flight (user_id, feature, model)
+    values ((select auth.uid()), start_ai_call.feature, start_ai_call.model)
     on conflict on constraint ai_calls_in_flight_pkey do update
-      set call_id = gen_random_uuid(), started_at = now()
+      set call_id = gen_random_uuid(), model = excluded.model, started_at = now()
       where public.ai_calls_in_flight.started_at < now() - interval '10 minutes'
     returning public.ai_calls_in_flight.call_id into result.call_id;
     if not found then
@@ -199,9 +219,12 @@ $$;
 revoke all on function public.start_ai_call(public.ai_feature, text) from public, anon;
 grant execute on function public.start_ai_call(public.ai_feature, text) to authenticated;
 
--- Records a call of a model, ends it, and returns what it cost, at the price in force when it
--- was made. Edge Functions call it after every call they started, also when it failed, with the
--- tokens it used and the call_id start_ai_call() gave. Only they may, with the service role.
+-- Records a call of a model, ends it, and returns what it cost. Edge Functions call it after
+-- every call they started, also when it failed, with the tokens it used and the call_id
+-- start_ai_call() gave. The call is priced by the model it was started on, at the price in force
+-- when it started, and counts toward that month; `model` and now() only stand in for a call that
+-- held its place so long that another took it over. Only Edge Functions may, with the service
+-- role.
 create function public.record_ai_usage(
   user_id uuid,
   feature public.ai_feature,
@@ -217,25 +240,33 @@ language plpgsql
 set search_path = ''
 as $$
 declare
-  price public.ai_model_prices := public.ai_model_price(model, now());
+  started public.ai_calls_in_flight;
+  priced_model text;
+  at timestamptz;
+  price public.ai_model_prices;
   cost numeric;
 begin
+  select * into started from public.ai_calls_in_flight c where c.call_id = record_ai_usage.call_id;
+  priced_model := coalesce(started.model, record_ai_usage.model);
+  at := coalesce(started.started_at, now());
+  price := public.ai_model_price(priced_model, at);
   if price is null then
-    raise exception 'No price is known for model %', model using errcode = 'BB033';
+    raise exception 'No price is known for model %', priced_model using errcode = 'BB033';
   end if;
 
   insert into public.ai_usage (
     user_id, feature, model, input_tokens, cached_input_tokens, output_tokens, thinking_tokens,
-    cost_usd
+    cost_usd, created_at
   )
   values (
-    record_ai_usage.user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
-    thinking_tokens,
+    record_ai_usage.user_id, feature, priced_model, input_tokens, cached_input_tokens,
+    output_tokens, thinking_tokens,
     (
       (input_tokens - cached_input_tokens) * price.input_usd
       + cached_input_tokens * price.cached_input_usd
       + output_tokens * price.output_usd
-    ) / 1000000
+    ) / 1000000,
+    at
   )
   returning cost_usd into cost;
 
