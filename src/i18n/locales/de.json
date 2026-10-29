@@ -1565,6 +1565,25 @@
       "logged_other": "{{count}} Tage erfasst, {{within}} im Ziel",
       "none": "In diesem Zeitraum keine Mahlzeiten erfasst.",
       "error": "Deine Mahlzeiten konnten nicht geladen werden."
+    },
+    "training": {
+      "title": "Training",
+      "rangeLabel": "Training über",
+      "workouts": "{{done}} von {{planned}} Workouts",
+      "map_one": "{{count}} Tag trainiert, {{missed}} mit verpasstem geplantem Workout",
+      "map_other": "{{count}} Tage trainiert, {{missed}} mit verpasstem geplantem Workout",
+      "less": "Weniger",
+      "more": "Mehr",
+      "missed": "Verpasst",
+      "planDone": "des Plans erledigt",
+      "trained": "trainiert",
+      "lifted": "gehoben",
+      "minutes": "{{minutes}} Min.",
+      "hours": "{{hours}} Std.",
+      "kilograms": "{{kilograms}} kg",
+      "tonnes": "{{tonnes}} t",
+      "none": "In diesem Zeitraum keine Workouts.",
+      "error": "Deine Workouts konnten nicht geladen werden."
     }
   }
 }

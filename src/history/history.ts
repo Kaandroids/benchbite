@@ -9,6 +9,11 @@ import type { FinishedWorkout } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
 
 export const LOGS_KEY = ['workout-logs'];
+/**
+ * The query keys of the days trained (useDayTraining()), which logging, editing or deleting a
+ * workout reloads, and changing the plan or moving a workout, which change what was missed.
+ */
+export const TRAINING_DAYS_KEY = [...LOGS_KEY, 'days'];
 
 /** A finished workout at a glance (workout_log_summaries). */
 export type LogSummary = {
@@ -302,6 +307,7 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'exercise'] }),
+        queryClient.invalidateQueries({ queryKey: TRAINING_DAYS_KEY }),
         queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
       ]),
   });

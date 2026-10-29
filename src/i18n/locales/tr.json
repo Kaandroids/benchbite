@@ -1565,6 +1565,25 @@
       "logged_other": "{{count}} gün girildi, {{within}} gün hedefte",
       "none": "Bu aralıkta öğün girilmedi.",
       "error": "Öğünlerin yüklenemedi."
+    },
+    "training": {
+      "title": "Antrenman",
+      "rangeLabel": "Antrenman aralığı",
+      "workouts": "{{planned}} antrenmandan {{done}} tanesi",
+      "map_one": "{{count}} gün antrenman, {{missed}} gün planlı antrenman kaçırıldı",
+      "map_other": "{{count}} gün antrenman, {{missed}} gün planlı antrenman kaçırıldı",
+      "less": "Az",
+      "more": "Çok",
+      "missed": "Kaçırılan",
+      "planDone": "plan tamamlandı",
+      "trained": "antrenman süresi",
+      "lifted": "kaldırılan",
+      "minutes": "{{minutes}} dk",
+      "hours": "{{hours}} sa",
+      "kilograms": "{{kilograms}} kg",
+      "tonnes": "{{tonnes}} t",
+      "none": "Bu aralıkta antrenman yok.",
+      "error": "Antrenmanların yüklenemedi."
     }
   }
 }

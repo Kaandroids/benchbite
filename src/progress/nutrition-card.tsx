@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { RangeControl } from '@/components/range-control';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { TextLink } from '@/components/ui/text-link';
 import { fromIsoDate, useMonthFormat, useShortDateFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { Average } from '@/nutrition/average';
 import { DailyProgress } from '@/nutrition/daily-progress';
 import { nutritionSummary, useDayNutrition } from '@/nutrition/day-nutrition';
@@ -14,9 +15,8 @@ import { MacroBars } from '@/nutrition/macro-bars';
 import { NOTHING } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 
+import { CardLoadState } from './card-load-state';
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
-import { RangeControl } from '@/components/range-control';
-import { rangeStart, type ProgressRange } from '@/lib/ranges';
 
 type NutritionCardProps = {
   entering?: CardProps['entering'];
@@ -68,23 +68,8 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
         ].join(', ');
 
   let content;
-  if (days.isError && days.data === undefined) {
-    content = (
-      <View style={[styles.placeholder, { gap: spacing.sm }]}>
-        <Text variant="caption" color="textMuted" align="center">
-          {t('progress.eating.error')}
-        </Text>
-        <TextLink label={t('common.tryAgain')} onPress={() => void days.refetch()} />
-      </View>
-    );
-  } else if (days.data === undefined) {
-    content = (
-      <ActivityIndicator
-        style={styles.placeholder}
-        color={colors.primary}
-        accessibilityLabel={t('common.loading')}
-      />
-    );
+  if (days.data === undefined) {
+    content = <CardLoadState query={days} error={t('progress.eating.error')} />;
   } else {
     const spans = nutritionSpans(days.data, span);
     const ends = [spans[0], spans[Math.floor((spans.length - 1) / 2)], spans[spans.length - 1]];
@@ -155,11 +140,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  placeholder: {
-    height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   summary: {
     borderTopWidth: StyleSheet.hairlineWidth,

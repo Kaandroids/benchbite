@@ -1294,6 +1294,16 @@ export type Database = {
           target_protein_g: number;
         }[];
       };
+      day_training: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          day: string;
+          done: number;
+          lifted_kg: number;
+          minutes: number;
+          missed: number;
+        }[];
+      };
       day_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
