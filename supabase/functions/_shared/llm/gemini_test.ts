@@ -238,6 +238,44 @@ Deno.test(
   },
 );
 
+Deno.test('tells a stream that broke off from a finished one', async () => {
+  const { model } = gemini(() =>
+    sse(['data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}]}\r\n\r\n']),
+  );
+
+  const events: StreamEvent[] = [];
+  for await (const event of model.stream(request)) events.push(event);
+
+  assertEquals(events.at(-1), {
+    type: 'done',
+    usage: {
+      model: 'gemini-chat',
+      inputTokens: 0,
+      outputTokens: 0,
+      thinkingTokens: 0,
+      cachedInputTokens: 0,
+    },
+    finish: 'other',
+  });
+});
+
+Deno.test('throws the error a stream reports after it began', async () => {
+  const { model } = gemini(() =>
+    sse([
+      'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}]}\r\n\r\n',
+      'data: {"error":{"code":503,"message":"Overloaded"}}\r\n\r\n',
+    ]),
+  );
+
+  const error = await assertRejects(async () => {
+    for await (const _ of model.stream(request));
+  }, ModelError);
+  assertEquals(
+    [error.status, error.retryable, error.message],
+    [503, true, 'Gemini: 503 Overloaded'],
+  );
+});
+
 Deno.test('throws a model error, retryable for limits and outages only', async () => {
   const limited = gemini(() =>
     Response.json({ error: { message: 'Quota exceeded' } }, { status: 429 }),

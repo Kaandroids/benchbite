@@ -44,6 +44,8 @@ type GeminiResponse = {
     cachedContentTokenCount?: number;
   };
   modelVersion?: string;
+  /** An error the stream reports after it began, in place of an answer. */
+  error?: { code?: number; message?: string };
 };
 
 export class GeminiModel implements LanguageModel {
@@ -68,6 +70,14 @@ export class GeminiModel implements LanguageModel {
     let last: GeminiResponse = {};
     let usage: GeminiResponse['usageMetadata'];
     for await (const chunk of serverSentEvents(response.body!)) {
+      if (chunk.error) {
+        const status = chunk.error.code ?? 500;
+        throw new ModelError(
+          `Gemini: ${status} ${chunk.error.message}`,
+          status,
+          isRetryable(status),
+        );
+      }
       last = chunk;
       // Each chunk counts the whole call so far; the last one that counts is the total.
       usage = chunk.usageMetadata ?? usage;
@@ -79,7 +89,8 @@ export class GeminiModel implements LanguageModel {
     yield {
       type: 'done',
       usage: usageOf({ ...last, usageMetadata: usage }, model),
-      finish: finishOf(last),
+      // Only the last chunk of a stream says why it ended: without it, the stream broke off.
+      finish: finishOf(last, 'other'),
     };
   }
 
@@ -183,10 +194,12 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   };
 }
 
-function finishOf(response: GeminiResponse): Finish {
+/** Why the answer ended; `unsaid` when Gemini gives no reason. */
+function finishOf(response: GeminiResponse, unsaid: Finish = 'stop'): Finish {
   if (response.promptFeedback?.blockReason) return 'blocked';
   switch (response.candidates?.[0]?.finishReason) {
     case undefined:
+      return unsaid;
     case 'STOP':
       return 'stop';
     case 'MAX_TOKENS':
@@ -235,9 +248,16 @@ function eventData(event: string): string {
 async function modelError(response: Response): Promise<ModelError> {
   const body = await response.json().catch(() => undefined);
   const message = body?.error?.message ?? response.statusText;
-  // Too many requests and passing outages are worth another try; a wrong request is not.
-  const retryable = response.status === 429 || response.status >= 500;
-  return new ModelError(`Gemini: ${response.status} ${message}`, response.status, retryable);
+  return new ModelError(
+    `Gemini: ${response.status} ${message}`,
+    response.status,
+    isRetryable(response.status),
+  );
+}
+
+/** Too many requests and passing outages are worth another try; a wrong request is not. */
+function isRetryable(status: number): boolean {
+  return status === 429 || status >= 500;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
