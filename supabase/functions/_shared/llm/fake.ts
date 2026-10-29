@@ -1,6 +1,13 @@
 // A language model for tests, which answers from a script and keeps the requests it was sent, so
 // that no test calls a real model (ADR 0049).
-import type { LanguageModel, ModelRequest, ModelResponse, StreamEvent, Usage } from './types.ts';
+import {
+  type LanguageModel,
+  type ModelRequest,
+  type ModelResponse,
+  type StreamEvent,
+  streamedPart,
+  type Usage,
+} from './types.ts';
 
 /** A turn of the script: the response itself, or the parts of an answer that stopped. */
 export type FakeTurn = ModelResponse | ModelResponse['parts'];
@@ -29,7 +36,8 @@ export class FakeModel implements LanguageModel {
   async *stream(request: ModelRequest): AsyncIterable<StreamEvent> {
     const { parts, usage, finish } = this.#next(request);
     for (const part of parts) {
-      if (part.type === 'text' || part.type === 'toolCall') yield part;
+      const event = streamedPart(part);
+      if (event) yield event;
     }
     yield { type: 'done', usage, finish };
   }

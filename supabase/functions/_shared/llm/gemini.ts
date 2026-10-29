@@ -9,6 +9,7 @@ import {
   type ModelResponse,
   type Part,
   type StreamEvent,
+  streamedPart,
   type Task,
   type Usage,
 } from './types.ts';
@@ -82,8 +83,8 @@ export class GeminiModel implements LanguageModel {
       // Each chunk counts the whole call so far; the last one that counts is the total.
       usage = chunk.usageMetadata ?? usage;
       for (const part of answerParts(chunk)) {
-        const event = fromGeminiPart(part);
-        if (event.type === 'text' || event.type === 'toolCall') yield event;
+        const event = streamedPart(fromGeminiPart(part));
+        if (event) yield event;
       }
     }
     yield {
@@ -110,7 +111,7 @@ export class GeminiModel implements LanguageModel {
 }
 
 /** Our request in Gemini's terms. */
-export function toGeminiRequest(request: ModelRequest, config: ModelConfig) {
+function toGeminiRequest(request: ModelRequest, config: ModelConfig) {
   return {
     ...(request.system && { systemInstruction: { parts: [{ text: request.system }] } }),
     contents: request.messages.map((message) => ({
@@ -217,9 +218,7 @@ function finishOf(response: GeminiResponse, unsaid: Finish = 'stop'): Finish {
 }
 
 /** The JSON of each event of a server-sent event stream, as `alt=sse` sends them. */
-export async function* serverSentEvents(
-  body: ReadableStream<Uint8Array>,
-): AsyncIterable<GeminiResponse> {
+async function* serverSentEvents(body: ReadableStream<Uint8Array>): AsyncIterable<GeminiResponse> {
   let buffer = '';
   for await (const text of body.pipeThrough(new TextDecoderStream())) {
     // On the whole buffer, as a read can end between the two characters of a line break.
