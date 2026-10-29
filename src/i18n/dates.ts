@@ -45,6 +45,27 @@ export function weekStart(date: Date): Date {
   return addDays(date, 1 - isoWeekday(date));
 }
 
+/** How many months `to` is after `from`, by the calendar, whatever their days. */
+export function monthsBetween(from: Date, to: Date): number {
+  return (to.getFullYear() - from.getFullYear()) * 12 + to.getMonth() - from.getMonth();
+}
+
+/** The weeks of the month of `month`, from Monday, each day of the months beside it as null. */
+export function monthWeeks(month: Date): (Date | null)[][] {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const weeks: (Date | null)[][] = [];
+  for (let monday = weekStart(first); monday <= end; monday = addDays(monday, 7)) {
+    weeks.push(
+      [0, 1, 2, 3, 4, 5, 6].map((offset) => {
+        const day = addDays(monday, offset);
+        return day.getMonth() === month.getMonth() ? day : null;
+      }),
+    );
+  }
+  return weeks;
+}
+
 /**
  * Names ISO weekdays in the app language, for example "Monday" or "Mon". Like numbers, they
  * follow the app language rather than the device region.
@@ -89,6 +110,18 @@ export function useMonthFormat() {
   const { i18n } = useTranslation();
   const formatter = new Intl.DateTimeFormat(i18n.language, { month: 'short' });
   return (date: Date) => formatter.format(date);
+}
+
+/**
+ * Formats a month with its year, for example "October 2026"; with `today`, the year only when it is
+ * not today's, for example "October" and "September 2025".
+ */
+export function useMonthYearFormat(today?: Date) {
+  const { i18n } = useTranslation();
+  const withYear = new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' });
+  const withoutYear = new Intl.DateTimeFormat(i18n.language, { month: 'long' });
+  return (date: Date) =>
+    (today && date.getFullYear() === today.getFullYear() ? withoutYear : withYear).format(date);
 }
 
 /** Formats a week by its first and last day, for example "October 19 – 25". */

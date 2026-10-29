@@ -6,8 +6,11 @@ import {
   daysBetween,
   fromIsoDate,
   isoWeekday,
+  monthsBetween,
+  monthWeeks,
   toIsoDate,
   useDateFormat,
+  useMonthYearFormat,
   useShortDateFormat,
   useClockFormat,
   useTimeFormat,
@@ -188,5 +191,33 @@ describe('useClockFormat', () => {
     await act(() => i18n.changeLanguage('de'));
     const { result: german } = await renderHook(() => useClockFormat());
     expect(german.current(evening.getTime())).toBe('18:30');
+  });
+});
+
+describe('monthsBetween', () => {
+  it('counts calendar months, across years too', () => {
+    expect(monthsBetween(new Date(2026, 8, 30), new Date(2026, 9, 1))).toBe(1);
+    expect(monthsBetween(new Date(2025, 10, 14), new Date(2026, 1, 2))).toBe(3);
+    expect(monthsBetween(new Date(2026, 9, 1), new Date(2026, 9, 31))).toBe(0);
+  });
+});
+
+describe('monthWeeks', () => {
+  it('splits a month into weeks from Monday, leaving out the days of the months beside it', () => {
+    // October 2026 starts on a Thursday and ends on a Saturday.
+    const weeks = monthWeeks(new Date(2026, 9, 15));
+    expect(weeks).toHaveLength(5);
+    expect(weeks[0]?.map((day) => day?.getDate() ?? null)).toEqual([null, null, null, 1, 2, 3, 4]);
+    expect(weeks[4]?.map((day) => day?.getDate() ?? null)).toEqual([26, 27, 28, 29, 30, 31, null]);
+  });
+});
+
+describe('useMonthYearFormat', () => {
+  it('names the month with its year, or without it in the year of today', async () => {
+    const { result } = await renderHook(() => useMonthYearFormat());
+    expect(result.current(new Date(2026, 9, 1))).toBe('October 2026');
+    const thisYear = await renderHook(() => useMonthYearFormat(new Date(2026, 9, 29)));
+    expect(thisYear.result.current(new Date(2026, 8, 1))).toBe('September');
+    expect(thisYear.result.current(new Date(2025, 8, 1))).toBe('September 2025');
   });
 });
