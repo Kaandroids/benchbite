@@ -22,12 +22,13 @@ the AI features will be for premium users, with a limit from their plan.
 - **`ai_access()` is the one place that decides on the limit,** with the budget, what is used and
   when it resets. Guests may not call a model, as AI needs an account; a user who has reached the
   limit may not until the month resets.
-- **Start before, record after:** a function starts the call with `start_ai_call()` and the
-  user's token, calls the model, and records the call with what it used, also when it failed
-  (`_shared/ai_usage.ts`). Starting refuses what the limit refuses, a model without a price, so
-  that no call goes uncounted, and a second call of a feature while one runs, so that requests
-  sent at once go over the limit by one call at most per feature. A call that never recorded
-  gives its place up after two minutes.
+- **Start before, record after:** a function runs every call of a model through `withAiCall()`
+  (`_shared/ai_usage.ts`), which starts it with `start_ai_call()` and the user's token, and
+  records it afterwards with what it used, also when it failed part-way, as the provider bills
+  that too. Starting refuses what the limit refuses, a model without a price, so that no call
+  goes uncounted, and a second call of a feature while one runs, so that requests sent at once go
+  over the limit by one call at most per feature. Each call holds its place by its own id, and a
+  call that never recorded gives the place up after ten minutes, longer than a function may run.
 - **The features are the model interface's tasks:** a function names one `ai_feature`, which
   picks the model (ADR 0049) and is what its usage is recorded under.
 - **This log is what counts.** The tokens kept on Bite's messages (ADR 0050) only record what an
