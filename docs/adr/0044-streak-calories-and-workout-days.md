@@ -18,10 +18,20 @@ done: a workout started at half past midnight in Berlin is the day before in UTC
   target.
 - **A finished workout keeps the device's day it started on** (`workout_logs.started_on`), as meal
   entries keep theirs (ADR 0034). `log_workout()` takes it as `startedOn`, within a day of the
-  start in UTC. A log without it, from an app from before, keeps the start's day in UTC, and so do
-  the logs from before this decision.
-- **The streak is worked out in Postgres** as ADR 0042 sets out: `streak_states()` gives how each
-  day went, `streak()` the days in a row and a break to answer, and `answer_streak_break()` freezes
+  start in UTC, and checks the move that comes with the log against it. A log without it, from an
+  app from before, keeps the start's day in UTC, and so do the logs from before this decision.
+- **A finished workout keeps the workout it was started from** (`source_workout_id`) after that
+  workout is deleted, as the days it was planned on keep it (ADR 0041), so that a deleted workout
+  still counts on the days it was done.
+- **Only the user's skips miss a day:** a skipped workout misses its day even when it was done
+  anyway. A move that the database turned into a skip, as the workout was archived, deleted or
+  left the day it moved to (ADR 0041), is marked `settled` and leaves its day to the calories, as
+  the move did.
+- **Users from before start their streak on the day it ships:** the days before it could not have
+  counted, so their breaks are answered through the day before.
+- **The streak is worked out in Postgres** as ADR 0042 sets out: `day_workouts()` gives each day's
+  workouts after moves and whether they were done or skipped, `streak_states()` how each day
+  went, `streak()` the days in a row and a break to answer, and `answer_streak_break()` freezes
   the missed days or starts again. `streak_days` keeps final days and `user_streaks` each user's
   freezes and the last day whose break was answered; clients only read them.
 
@@ -38,4 +48,8 @@ done: a workout started at half past midnight in Berlin is the day before in UTC
 - Eating a little under the target counts, eating over it misses the day; a day over the target can
   only be saved by a freeze.
 - The app sends `startedOn` with each finished workout.
+- The week card still works out a day's workouts in the app (`weekSchedule()`), and shows a workout
+  skipped but done as done; reading `day_workouts()` instead would give both one rule.
+- Days become final once they can no longer be logged, which `last_day_closed_to_logging()` names
+  for the meal and water checks and the streak alike.
 - A few logs from before, started near midnight, may count for the day before or after.
