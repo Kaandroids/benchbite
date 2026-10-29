@@ -1,3 +1,4 @@
+import { toIsoDate } from '@/i18n/dates';
 import { Storage } from 'expo-sqlite/kv-store';
 
 import { MAX_SETS } from '@/sets/values';
@@ -262,6 +263,8 @@ describe('finishing', () => {
   it('sends the id the workout got when it started, a new one for each workout', () => {
     const first = start();
     expect(toLog(first, NOW + 60_000).clientId).toBe(first.id);
+    // The device's day it started on, which the streak counts it for.
+    expect(toLog(first, NOW + 60_000).startedOn).toBe(toIsoDate(new Date(NOW)));
     expect(first.id).toMatch(/^[0-9a-f-]{36}$/);
     expect(start().id).not.toBe(first.id);
   });
@@ -288,6 +291,7 @@ describe('finishing', () => {
       plannedExercises: 3,
       plannedSets: 4,
       startedAt: new Date(NOW).toISOString(),
+      startedOn: toIsoDate(new Date(NOW)),
       finishedAt: new Date(NOW + 3_600_000).toISOString(),
       exercises: [
         {
