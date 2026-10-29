@@ -23,6 +23,87 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_model_prices: {
+        Row: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        Update: {
+          cached_input_usd?: number;
+          input_usd?: number;
+          model?: string;
+          output_usd?: number;
+          valid_from?: string;
+        };
+        Relationships: [];
+      };
+      ai_settings: {
+        Row: {
+          id: boolean;
+          monthly_limit_usd: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: boolean;
+          monthly_limit_usd: number;
+        };
+        Update: {
+          id?: boolean;
+          monthly_limit_usd?: number;
+        };
+        Relationships: [];
+      };
+      ai_usage: {
+        Row: {
+          cached_input_tokens: number;
+          cost_usd: number;
+          created_at: string;
+          feature: Database['public']['Enums']['ai_feature'];
+          id: number;
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          thinking_tokens: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_input_tokens: number;
+          cost_usd: number;
+          created_at?: string;
+          feature: Database['public']['Enums']['ai_feature'];
+          id?: never;
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          thinking_tokens: number;
+          user_id: string;
+        };
+        Update: {
+          cached_input_tokens?: number;
+          cost_usd?: number;
+          created_at?: string;
+          feature?: Database['public']['Enums']['ai_feature'];
+          id?: never;
+          input_tokens?: number;
+          model?: string;
+          output_tokens?: number;
+          thinking_tokens?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_messages: {
         Row: {
           cached_input_tokens: number | null;
@@ -1284,6 +1365,16 @@ export type Database = {
     Functions: {
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
+      ai_access: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['ai_access'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_access';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
@@ -1655,6 +1746,18 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_ai_usage: {
+        Args: {
+          cached_input_tokens: number;
+          feature: Database['public']['Enums']['ai_feature'];
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          thinking_tokens: number;
+          user_id: string;
+        };
+        Returns: number;
+      };
       record_candidates: {
         Args: { exercise_id: string };
         Returns: {
@@ -1817,6 +1920,7 @@ export type Database = {
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
+      ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_role: 'user' | 'bite';
       equipment:
@@ -1922,6 +2026,13 @@ export type Database = {
       workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
     };
     CompositeTypes: {
+      ai_access: {
+        allowed: boolean | null;
+        reason: string | null;
+        budget_usd: number | null;
+        used_usd: number | null;
+        resets_at: string | null;
+      };
       break_workout: {
         id: number | null;
         name: string | null;
@@ -2046,6 +2157,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
+      ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_role: ['user', 'bite'],
       equipment: [
