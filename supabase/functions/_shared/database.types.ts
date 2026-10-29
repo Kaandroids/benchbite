@@ -23,6 +23,25 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_calls_in_flight: {
+        Row: {
+          feature: Database['public']['Enums']['ai_feature'];
+          started_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          feature: Database['public']['Enums']['ai_feature'];
+          started_at?: string;
+          user_id: string;
+        };
+        Update: {
+          feature?: Database['public']['Enums']['ai_feature'];
+          started_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       ai_model_prices: {
         Row: {
           cached_input_usd: number;
@@ -1375,6 +1394,22 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      ai_model_price: {
+        Args: { at: string; model: string };
+        Returns: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'ai_model_prices';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
@@ -1866,6 +1901,16 @@ export type Database = {
         };
         Returns: undefined;
       };
+      start_ai_call: {
+        Args: { feature: Database['public']['Enums']['ai_feature']; model: string };
+        Returns: Database['public']['CompositeTypes']['ai_access'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_access';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
       streak: {
         Args: { today: string };
@@ -1920,6 +1965,8 @@ export type Database = {
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
+      ai_access_reason:
+        'account_required' | 'limit_reached' | 'unpriced_model' | 'call_in_progress';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_role: 'user' | 'bite';
@@ -2028,7 +2075,7 @@ export type Database = {
     CompositeTypes: {
       ai_access: {
         allowed: boolean | null;
-        reason: string | null;
+        reason: Database['public']['Enums']['ai_access_reason'] | null;
         budget_usd: number | null;
         used_usd: number | null;
         resets_at: string | null;
@@ -2157,6 +2204,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
+      ai_access_reason: ['account_required', 'limit_reached', 'unpriced_model', 'call_in_progress'],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_role: ['user', 'bite'],

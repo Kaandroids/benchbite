@@ -1,11 +1,12 @@
 -- What AI costs, and a limit on it per user and month (#288, ADR 0051). Every Edge Function that
--- calls a model asks ai_access() first and records the call with record_ai_usage() after it, so
--- that one user can never run up an unbounded bill. Functions report tokens; only the database
--- knows prices.
+-- calls a model starts the call with start_ai_call() and records it with record_ai_usage() after
+-- it, also when it failed, so that one user can never run up an unbounded bill. Functions report
+-- tokens; only the database knows prices.
 --
 -- New error codes:
 --   BB033  no price is known for the model at the time of the call
 
+-- What a call is for. The Edge Functions' model interface names its tasks after these.
 create type public.ai_feature as enum ('coach_chat', 'coach_voice', 'meal_photo', 'review');
 
 -- The price of each model per million tokens, from a time on. A change of price is a new row, so
@@ -56,81 +57,70 @@ create table public.ai_usage (
 -- A user's calls of a month, as ai_access() sums them.
 create index ai_usage_user_month_idx on public.ai_usage (user_id, created_at);
 
--- Users read their own usage; nobody but the service role writes it. Prices and settings are
--- read only through the functions below.
+-- The calls running now, one per user and feature, so that requests sent at once cannot all pass
+-- the limit before the first is recorded. A call that never recorded, as when its function
+-- crashed, stops holding its place after a while.
+create table public.ai_calls_in_flight (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  feature public.ai_feature not null,
+  started_at timestamptz not null default now(),
+  primary key (user_id, feature)
+);
+
+-- Users read their own usage; nobody but the service role writes it. Prices, settings and the
+-- calls in flight are read only through the functions below.
 alter table public.ai_model_prices enable row level security;
 alter table public.ai_settings enable row level security;
 alter table public.ai_usage enable row level security;
+alter table public.ai_calls_in_flight enable row level security;
 
 create policy "Users read their own AI usage"
   on public.ai_usage for select to authenticated
   using ((select auth.uid()) = user_id);
 
-revoke all on public.ai_model_prices, public.ai_settings, public.ai_usage from anon, authenticated;
+revoke all on public.ai_model_prices, public.ai_settings, public.ai_usage, public.ai_calls_in_flight
+  from anon, authenticated;
 grant select on public.ai_usage to authenticated;
 
--- Records a call of a model and returns what it cost, at the price in force when it was made.
--- Only Edge Functions call it, with the service role.
-create function public.record_ai_usage(
-  user_id uuid,
-  feature public.ai_feature,
-  model text,
-  input_tokens integer,
-  cached_input_tokens integer,
-  output_tokens integer,
-  thinking_tokens integer
-)
-returns numeric
-language plpgsql
+-- The price of a model in force at a time, or null when none is known.
+create function public.ai_model_price(model text, at timestamptz)
+returns public.ai_model_prices
+language sql
+stable
 set search_path = ''
 as $$
-declare
-  price public.ai_model_prices;
-  cost numeric;
-begin
-  select * into price from public.ai_model_prices p
-  where p.model = record_ai_usage.model and p.valid_from <= now()
+  select * from public.ai_model_prices p
+  where p.model = ai_model_price.model and p.valid_from <= at
   order by p.valid_from desc
   limit 1;
-  if not found then
-    raise exception 'No price is known for model %', model using errcode = 'BB033';
-  end if;
-
-  cost := (
-    (input_tokens - cached_input_tokens) * price.input_usd
-    + cached_input_tokens * price.cached_input_usd
-    + output_tokens * price.output_usd
-  ) / 1000000;
-
-  insert into public.ai_usage (
-    user_id, feature, model, input_tokens, cached_input_tokens, output_tokens, thinking_tokens,
-    cost_usd
-  )
-  values (
-    record_ai_usage.user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
-    thinking_tokens, cost
-  );
-  return cost;
-end;
 $$;
 
-revoke all on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
-  from public, anon, authenticated;
-grant execute on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
-  to service_role;
+revoke all on function public.ai_model_price(text, timestamptz) from public, anon, authenticated;
+grant execute on function public.ai_model_price(text, timestamptz) to service_role;
 
--- Whether the calling user may call a model now: the one place that decides. A month is a
--- calendar month in UTC. Guests may not, as AI needs an account; a user over the limit may not
--- until the month resets. Two calls at the same moment may go a little over, which is accepted.
+-- Why a user may not call a model now.
+create type public.ai_access_reason as enum (
+  -- AI needs an account; guests have none.
+  'account_required',
+  -- The month's budget is used up, until resets_at.
+  'limit_reached',
+  -- The model has no price, so its cost could not be counted.
+  'unpriced_model',
+  -- A call of the same feature is still running.
+  'call_in_progress'
+);
+
 create type public.ai_access as (
   allowed boolean,
-  -- 'account_required' or 'limit_reached' when not allowed.
-  reason text,
+  -- Set when not allowed.
+  reason public.ai_access_reason,
   budget_usd numeric,
   used_usd numeric,
   resets_at timestamptz
 );
 
+-- The calling user's budget this month and whether it lets them call a model: the one place
+-- that decides on the limit. A month is a calendar month in UTC.
 create function public.ai_access()
 returns public.ai_access
 language plpgsql
@@ -165,3 +155,90 @@ $$;
 
 revoke all on function public.ai_access() from public, anon;
 grant execute on function public.ai_access() to authenticated;
+
+-- Starts a call of a model for the calling user, when ai_access() allows it, the model has a
+-- price and no call of the same feature is running. Edge Functions call it with the user's token
+-- before the model, and record_ai_usage() ends the call.
+create function public.start_ai_call(feature public.ai_feature, model text)
+returns public.ai_access
+language plpgsql
+-- Writes the calls in flight, which callers may not.
+security definer
+set search_path = ''
+as $$
+declare
+  result public.ai_access := public.ai_access();
+begin
+  if not result.allowed then
+    return result;
+  end if;
+
+  if public.ai_model_price(model, now()) is null then
+    result.reason := 'unpriced_model';
+  else
+    -- Takes the place, or a place a call left behind; a call holding it keeps it.
+    insert into public.ai_calls_in_flight (user_id, feature)
+    values ((select auth.uid()), start_ai_call.feature)
+    on conflict on constraint ai_calls_in_flight_pkey do update set started_at = now()
+    where public.ai_calls_in_flight.started_at < now() - interval '2 minutes';
+    if not found then
+      result.reason := 'call_in_progress';
+    end if;
+  end if;
+  result.allowed := result.reason is null;
+  return result;
+end;
+$$;
+
+revoke all on function public.start_ai_call(public.ai_feature, text) from public, anon;
+grant execute on function public.start_ai_call(public.ai_feature, text) to authenticated;
+
+-- Records a call of a model, ends it, and returns what it cost, at the price in force when it
+-- was made. Edge Functions call it after every call they started, also when it failed, with the
+-- tokens it used. Only they may, with the service role.
+create function public.record_ai_usage(
+  user_id uuid,
+  feature public.ai_feature,
+  model text,
+  input_tokens integer,
+  cached_input_tokens integer,
+  output_tokens integer,
+  thinking_tokens integer
+)
+returns numeric
+language plpgsql
+set search_path = ''
+as $$
+declare
+  price public.ai_model_prices := public.ai_model_price(model, now());
+  cost numeric;
+begin
+  if price is null then
+    raise exception 'No price is known for model %', model using errcode = 'BB033';
+  end if;
+
+  insert into public.ai_usage (
+    user_id, feature, model, input_tokens, cached_input_tokens, output_tokens, thinking_tokens,
+    cost_usd
+  )
+  values (
+    record_ai_usage.user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
+    thinking_tokens,
+    (
+      (input_tokens - cached_input_tokens) * price.input_usd
+      + cached_input_tokens * price.cached_input_usd
+      + output_tokens * price.output_usd
+    ) / 1000000
+  )
+  returning cost_usd into cost;
+
+  delete from public.ai_calls_in_flight c
+  where c.user_id = record_ai_usage.user_id and c.feature = record_ai_usage.feature;
+  return cost;
+end;
+$$;
+
+revoke all on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
+  from public, anon, authenticated;
+grant execute on function public.record_ai_usage(uuid, public.ai_feature, text, integer, integer, integer, integer)
+  to service_role;
