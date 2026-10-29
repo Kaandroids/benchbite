@@ -40,13 +40,15 @@ type MacroBarsProps = {
   bars: readonly MacroBar[];
   /** The calories of the target, a dashed line across the bars. */
   target?: number;
+  /** Names along the bars where they are too many to name each: the first, middle and last. */
+  axis?: readonly string[];
 };
 
 /**
  * Days or spans of days as bars of their macros (ADR 0046): each as tall as its calories, made of
  * its protein, carbs and fat by their calories, in the macros' colours, with their legend.
  */
-export function MacroBars({ bars, target }: MacroBarsProps) {
+export function MacroBars({ bars, target, axis }: MacroBarsProps) {
   const { t } = useTranslation();
   const { colors, spacing, radii } = useTheme();
   const tallest = Math.max(...bars.map((bar) => bar.eaten.calories), target ?? 0);
@@ -135,6 +137,27 @@ export function MacroBars({ bars, target }: MacroBarsProps) {
             ))}
           </View>
         ) : null}
+        {axis ? (
+          <View style={[styles.row, styles.axis]} importantForAccessibility="no-hide-descendants">
+            {axis.map((name, index) => (
+              <Text
+                key={index}
+                variant="caption"
+                color="textMuted"
+                style={[
+                  styles.label,
+                  styles.cell,
+                  {
+                    textAlign:
+                      index === 0 ? 'left' : index === axis.length - 1 ? 'right' : 'center',
+                  },
+                ]}
+              >
+                {name}
+              </Text>
+            ))}
+          </View>
+        ) : null}
       </View>
       <View style={[styles.row, styles.legend, { gap: spacing.md }]}>
         {[...LAYERS].reverse().map((layer) => (
@@ -206,6 +229,9 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fonts.bold,
     marginTop: 4,
+  },
+  axis: {
+    justifyContent: 'space-between',
   },
   legend: {
     flexWrap: 'wrap',
