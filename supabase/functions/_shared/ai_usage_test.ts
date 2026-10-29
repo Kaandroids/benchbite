@@ -1,7 +1,8 @@
 import { assertEquals, assertRejects } from '@std/assert';
 
 import { type AiAccess, type AiCallContext, withAiCall } from './ai_usage.ts';
-import { ModelError, type Usage } from './llm/mod.ts';
+import { FAKE_USAGE, FakeModel } from './llm/fake.ts';
+import { ModelError, type StreamEvent } from './llm/mod.ts';
 
 const ACCESS: AiAccess = {
   allowed: true,
@@ -10,62 +11,36 @@ const ACCESS: AiAccess = {
   used_usd: 1.2,
   resets_at: '2026-11-01T00:00:00+00:00',
   call_id: 'call-1',
+  max_output_tokens: 2048,
 };
 
-const USAGE: Usage = {
-  model: 'gemini-3.5-flash-lite',
-  inputTokens: 1000,
-  cachedInputTokens: 400,
-  outputTokens: 100,
-  thinkingTokens: 20,
-};
+const HI = { role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hi' }] };
 
-const NOTHING_USED = {
-  ...USAGE,
-  inputTokens: 0,
-  cachedInputTokens: 0,
-  outputTokens: 0,
-  thinkingTokens: 0,
-};
-
-/** The two clients of a call, the first answering with `access`, and the calls each was asked. */
-function clients(access: AiAccess, recordError: { message: string } | null = null) {
+/**
+ * The context of a call: the database answering with `access`, recording with the errors given
+ * in turn, and `model`; with the calls each client was asked.
+ */
+function context(
+  model: FakeModel,
+  access: AiAccess = ACCESS,
+  recordErrors: ({ message: string } | null)[] = [],
+) {
   const calls: { client: string; name: string; args: unknown }[] = [];
   const client = (name: string) =>
     ({
       rpc: (fn: string, args: unknown) => {
         calls.push({ client: name, name: fn, args });
-        return Promise.resolve(
-          fn === 'start_ai_call'
-            ? { data: access, error: null }
-            : { data: recordError ? null : 0.0004, error: recordError },
-        );
+        if (fn === 'start_ai_call') return Promise.resolve({ data: access, error: null });
+        return Promise.resolve({ data: 0.0004, error: recordErrors.shift() ?? null });
       },
     }) as unknown as AiCallContext['supabase'];
-  const context: AiCallContext = {
+  const ctx: AiCallContext = {
     supabase: client('user'),
     admin: client('admin'),
-    userId: 'user-1',
     env: { get: () => undefined },
+    model,
   };
-  return { context, calls };
-}
-
-function recorded(usage: Usage) {
-  return {
-    client: 'admin',
-    name: 'record_ai_usage',
-    args: {
-      user_id: 'user-1',
-      feature: 'coach_chat',
-      call_id: 'call-1',
-      model: usage.model,
-      input_tokens: usage.inputTokens,
-      cached_input_tokens: usage.cachedInputTokens,
-      output_tokens: usage.outputTokens,
-      thinking_tokens: usage.thinkingTokens,
-    },
-  };
+  return { ctx, calls };
 }
 
 const START = {
@@ -74,79 +49,172 @@ const START = {
   args: { feature: 'coach_chat', model: 'gemini-3.5-flash-lite' },
 };
 
-Deno.test("starts the call on the task's model, runs it and records its usage", async () => {
-  const { context, calls } = clients(ACCESS);
+function recorded(tokens: [number, number, number, number], known = true) {
+  const [input, cached, output, thinking] = tokens;
+  return {
+    client: 'admin',
+    name: 'record_ai_usage',
+    args: {
+      call_id: 'call-1',
+      input_tokens: input,
+      cached_input_tokens: cached,
+      output_tokens: output,
+      thinking_tokens: thinking,
+      known,
+    },
+  };
+}
 
-  const done = await withAiCall(context, 'coach_chat', () =>
-    Promise.resolve({ result: 'Hello!', usage: USAGE }),
+const FAKE_TOKENS: [number, number, number, number] = [
+  FAKE_USAGE.inputTokens,
+  FAKE_USAGE.cachedInputTokens,
+  FAKE_USAGE.outputTokens,
+  FAKE_USAGE.thinkingTokens,
+];
+
+Deno.test("starts the call on the task's model, runs it and records what it used", async () => {
+  const model = new FakeModel([{ type: 'text', text: 'Hello!' }]);
+  const { ctx, calls } = context(model);
+
+  const done = await withAiCall(ctx, 'coach_chat', async (bite) => {
+    const answer = await bite.generate({ messages: [HI] });
+    return answer.parts;
+  });
+
+  assertEquals(done, { access: ACCESS, result: [{ type: 'text', text: 'Hello!' }] });
+  assertEquals(calls, [START, recorded(FAKE_TOKENS)]);
+});
+
+Deno.test('fills in the task, and cuts the answer where the limit says', async () => {
+  const model = new FakeModel([], []);
+  const { ctx } = context(model);
+
+  await withAiCall(ctx, 'coach_chat', async (bite) => {
+    await bite.generate({ messages: [HI] });
+    await bite.generate({ messages: [HI], maxOutputTokens: 100_000 });
+  });
+
+  assertEquals(
+    model.requests.map(({ task, maxOutputTokens }) => ({ task, maxOutputTokens })),
+    [
+      { task: 'coach_chat', maxOutputTokens: 2048 },
+      { task: 'coach_chat', maxOutputTokens: 2048 },
+    ],
   );
-
-  assertEquals(done, { access: ACCESS, result: 'Hello!' });
-  assertEquals(calls, [START, recorded(USAGE)]);
 });
 
 Deno.test("starts the call on the environment's model where it names one", async () => {
-  const { context, calls } = clients(ACCESS);
+  const { ctx, calls } = context(new FakeModel());
 
-  await withAiCall({ ...context, env: { get: () => 'gemini-3.8-flash' } }, 'coach_chat', () =>
-    Promise.resolve({ result: null, usage: USAGE }),
+  await withAiCall({ ...ctx, env: { get: () => 'gemini-3.8-flash' } }, 'coach_chat', () =>
+    Promise.resolve(),
   );
 
   assertEquals(calls[0].args, { feature: 'coach_chat', model: 'gemini-3.8-flash' });
 });
 
 Deno.test('runs nothing when the user may not make the call', async () => {
-  const refused = { ...ACCESS, allowed: false, reason: 'plan_required' as const, call_id: null };
-  const { context, calls } = clients(refused);
+  const refused: AiAccess = {
+    ...ACCESS,
+    allowed: false,
+    reason: 'plan_required',
+    call_id: null,
+    max_output_tokens: null,
+  };
+  const { ctx, calls } = context(new FakeModel(), refused);
   let ran = false;
 
-  const done = await withAiCall(context, 'coach_chat', () => {
+  const done = await withAiCall(ctx, 'coach_chat', () => {
     ran = true;
-    return Promise.resolve({ result: 'Hello!', usage: USAGE });
+    return Promise.resolve();
   });
 
   assertEquals([done, ran], [{ access: refused }, false]);
   assertEquals(calls, [START]);
 });
 
-Deno.test('records what a failed call used, and throws its error on', async () => {
-  const { context, calls } = clients(ACCESS);
-  const partial = { ...USAGE, outputTokens: 8, thinkingTokens: 0 };
+Deno.test("records what the model used when the call's own code then fails", async () => {
+  const { ctx, calls } = context(new FakeModel([{ type: 'text', text: 'Hello!' }]));
 
   await assertRejects(
     () =>
-      withAiCall(context, 'coach_chat', () =>
-        Promise.reject(new ModelError('Gemini: 503 Overloaded', 503, true, partial)),
-      ),
-    ModelError,
-    'Overloaded',
+      withAiCall(ctx, 'coach_chat', async (bite) => {
+        await bite.generate({ messages: [HI] });
+        throw new Error('The app closed the stream');
+      }),
+    Error,
+    'closed the stream',
   );
-  assertEquals(calls, [START, recorded(partial)]);
+  assertEquals(calls, [START, recorded(FAKE_TOKENS)]);
 });
 
-Deno.test('records nothing used when a call fails before the model', async () => {
-  const { context, calls } = clients(ACCESS);
+Deno.test('records what a stream used when the call stops reading it', async () => {
+  const { ctx, calls } = context(
+    new FakeModel([
+      { type: 'text', text: 'Hel' },
+      { type: 'text', text: 'lo!' },
+    ]),
+  );
+
+  await withAiCall(ctx, 'coach_chat', async (bite) => {
+    const events: StreamEvent[] = [];
+    for await (const event of bite.stream({ messages: [HI] })) {
+      events.push(event);
+      break;
+    }
+    return events;
+  });
+
+  assertEquals(calls, [START, recorded(FAKE_TOKENS)]);
+});
+
+Deno.test('counts a model call that never said what it used at its most', async () => {
+  const failing = {
+    generate: () => Promise.reject(new ModelError('Gemini: the answer broke off', 503, true)),
+    stream: () => {
+      throw new Error('unused');
+    },
+  };
+  const { ctx, calls } = context(new FakeModel());
 
   await assertRejects(
-    () => withAiCall(context, 'coach_chat', () => Promise.reject(new Error('Bad input'))),
+    () =>
+      withAiCall({ ...ctx, model: failing }, 'coach_chat', (bite) =>
+        bite.generate({ messages: [HI] }),
+      ),
+    ModelError,
+  );
+  assertEquals(calls, [START, recorded([0, 0, 0, 0], false)]);
+});
+
+Deno.test('records nothing used when the call fails before the model', async () => {
+  const { ctx, calls } = context(new FakeModel());
+
+  await assertRejects(
+    () => withAiCall(ctx, 'coach_chat', () => Promise.reject(new Error('Bad input'))),
     Error,
     'Bad input',
   );
-  assertEquals(calls, [START, recorded(NOTHING_USED)]);
+  assertEquals(calls, [START, recorded([0, 0, 0, 0])]);
 });
 
-Deno.test('gives the result when recording fails, and logs it', async () => {
-  const { context } = clients(ACCESS, { message: 'No price is known' });
+Deno.test('tries recording once more, and logs it when that fails too', async () => {
+  const once = context(new FakeModel([]), ACCESS, [{ message: 'Connection reset' }]);
+  await withAiCall(once.ctx, 'coach_chat', (bite) => bite.generate({ messages: [HI] }));
+  assertEquals(once.calls.length, 3);
+
   const logged: unknown[] = [];
   const error = console.error;
   console.error = (...args: unknown[]) => logged.push(...args);
   try {
-    const done = await withAiCall(context, 'coach_chat', () =>
-      Promise.resolve({ result: 'Hello!', usage: USAGE }),
-    );
+    const twice = context(new FakeModel([]), ACCESS, [
+      { message: 'Connection reset' },
+      { message: 'Connection reset' },
+    ]);
+    const done = await withAiCall(twice.ctx, 'coach_chat', () => Promise.resolve('Hello!'));
 
     assertEquals(done.result, 'Hello!');
-    assertEquals(logged, ['record_ai_usage: No price is known']);
+    assertEquals(logged, ['record_ai_usage: Connection reset']);
   } finally {
     console.error = error;
   }
