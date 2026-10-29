@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
 
 import { RangeControl } from '@/components/range-control';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { TextLink } from '@/components/ui/text-link';
+import { trainingSummary, useDayTraining } from '@/history/day-training';
 import { addDays } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { useTheme } from '@/theme';
-import { trainingSummary, useDayTraining } from '@/workouts/day-training';
 
-import { HEAT_COLORS, HeatMap } from './heat-map';
+import { CardLoadState } from './card-load-state';
+import { HeatMap, HeatMapLegend } from './heat-map';
+
+/** A month is too short to show how training went; the map fills its width from three. */
+const TRAINING_RANGES: readonly ProgressRange[] = ['threeMonths', 'sixMonths', 'year'];
 
 type TrainingCardProps = {
   entering?: CardProps['entering'];
@@ -31,9 +33,9 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
   const { format } = useNumberFormat();
   const [range, setRange] = useState<ProgressRange>('threeMonths');
   const start = rangeStart(range, today);
-  const days = useDayTraining(today, start, today, { keepLast: true });
+  const days = useDayTraining(today, start, today);
   const before = addDays(start, -1);
-  const last = useDayTraining(today, rangeStart(range, before), before, { keepLast: true });
+  const last = useDayTraining(today, rangeStart(range, before), before);
   const summary = days.data ? trainingSummary(days.data) : null;
   const lastLifted =
     last.data && !last.isPlaceholderData && !days.isPlaceholderData
@@ -54,23 +56,8 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
         });
 
   let content;
-  if (days.isError && days.data === undefined) {
-    content = (
-      <View style={[styles.placeholder, { gap: spacing.sm }]}>
-        <Text variant="caption" color="textMuted" align="center">
-          {t('progress.training.error')}
-        </Text>
-        <TextLink label={t('common.tryAgain')} onPress={() => void days.refetch()} />
-      </View>
-    );
-  } else if (days.data === undefined || summary === null) {
-    content = (
-      <ActivityIndicator
-        style={styles.placeholder}
-        color={colors.primary}
-        accessibilityLabel={t('common.loading')}
-      />
-    );
+  if (days.data === undefined || summary === null) {
+    content = <CardLoadState query={days} error={t('progress.training.error')} />;
   } else if (summary.days === 0 && summary.planned === 0) {
     content = (
       <Text variant="caption" color="textMuted">
@@ -92,38 +79,7 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
             missed: summary.planned - summary.done,
           })}
         />
-        <View
-          style={[styles.legend, { gap: spacing.xs }]}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        >
-          <Text variant="caption" color="textMuted">
-            {t('progress.training.less')}
-          </Text>
-          {HEAT_COLORS.map((color) => (
-            <View key={color} style={[styles.swatch, { backgroundColor: colors[color] }]} />
-          ))}
-          <Text variant="caption" color="textMuted">
-            {t('progress.training.more')}
-          </Text>
-          <View style={styles.flex} />
-          <Svg width={12} height={12}>
-            <Rect
-              x={0.75}
-              y={0.75}
-              width={10.5}
-              height={10.5}
-              rx={3}
-              fill="none"
-              stroke={colors.danger}
-              strokeWidth={1.5}
-              strokeDasharray="3 2"
-            />
-          </Svg>
-          <Text variant="caption" color="textMuted">
-            {t('progress.training.missed')}
-          </Text>
-        </View>
+        <HeatMapLegend />
         <View style={[styles.stats, { gap: spacing.md, borderTopColor: colors.border }]}>
           <Stat
             value={
@@ -168,6 +124,7 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
         value={range}
         onChange={setRange}
         accessibilityLabel={t('progress.training.rangeLabel')}
+        ranges={TRAINING_RANGES}
       />
       {content}
     </Card>
@@ -208,20 +165,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  placeholder: {
-    height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  swatch: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
   },
   stats: {
     flexDirection: 'row',

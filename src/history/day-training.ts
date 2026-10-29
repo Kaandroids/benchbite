@@ -1,9 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
-import { TRAINING_DAYS_KEY } from '@/history/history';
 import { toIsoDate } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+
+import { TRAINING_DAYS_KEY } from './history';
 
 /** How the user trained on a day (day_training()). */
 export type DayTraining = {
@@ -41,29 +42,16 @@ export function trainingSummary(days: readonly DayTraining[]): TrainingSummary {
   );
 }
 
-/** From how many minutes of a day each shade of the heat map stands for, lightest first. */
-export const HEAT_MINUTES = [1, 30, 60, 90] as const;
-
-/** A day's shade in the heat map: 0 without a workout, then 1 to 4 by the minutes trained. */
-export function heatLevel(minutes: number): number {
-  return HEAT_MINUTES.filter((from) => minutes >= from).length;
-}
-
 /**
  * How the user trained on each day from `from` to `to`, at most a year, as seen on the device's
- * `today` (ADR 0047). A chart whose range changes keeps the last days until the new ones load.
+ * `today` (ADR 0047). When the range changes, the last days stay until the new ones load.
  */
-export function useDayTraining(
-  today: Date,
-  from: Date,
-  to: Date,
-  { keepLast = false }: { keepLast?: boolean } = {},
-) {
+export function useDayTraining(today: Date, from: Date, to: Date) {
   const fromDay = toIsoDate(from);
   const toDay = toIsoDate(to);
   return useQuery({
     queryKey: [...TRAINING_DAYS_KEY, fromDay, toDay],
-    placeholderData: keepLast ? keepPreviousData : undefined,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<DayTraining[]> => {
       const { data, error } = await supabase.rpc('day_training', {
         from_day: fromDay,

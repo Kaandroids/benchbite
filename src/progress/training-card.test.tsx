@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@/test/render';
-import { useDayTraining, type DayTraining } from '@/workouts/day-training';
+import { useDayTraining, type DayTraining } from '@/history/day-training';
 
 import { TrainingCard } from './training-card';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/workouts/day-training', () => ({
-  ...jest.requireActual('@/workouts/day-training'),
+jest.mock('@/history/day-training', () => ({
+  ...jest.requireActual('@/history/day-training'),
   useDayTraining: jest.fn(),
 }));
 
@@ -47,10 +47,8 @@ it('sums up three months of training against the plan and the range before', asy
     [day('2026-07-20', 60, 3200, 1)],
   );
   await render(<TrainingCard today={TODAY} />);
-  expect(useDayTraining).toHaveBeenCalledWith(TODAY, TODAY_START, TODAY, { keepLast: true });
-  expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2026, 3, 28), new Date(2026, 6, 28), {
-    keepLast: true,
-  });
+  expect(useDayTraining).toHaveBeenCalledWith(TODAY, TODAY_START, TODAY);
+  expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2026, 3, 28), new Date(2026, 6, 28));
   expect(screen.getByText('2 of 3 workouts')).toBeTruthy();
   expect(screen.getByLabelText('2 days trained, 1 with a planned workout missed')).toBeTruthy();
   expect(screen.getByText('67%')).toBeTruthy();
@@ -69,13 +67,13 @@ it('gives short times in minutes and light weights in kilograms', async () => {
   expect(screen.queryByText(/workouts$/)).toBeNull();
 });
 
-it('loads the range chosen', async () => {
+it('loads the range chosen, from three months', async () => {
   mockDays([day('2026-10-28', 45)]);
   await render(<TrainingCard today={TODAY} />);
   await fireEvent.press(screen.getByText('Year'));
-  expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2025, 9, 29), TODAY, {
-    keepLast: true,
-  });
+  expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2025, 9, 29), TODAY);
+  // A month is too short for the map.
+  expect(screen.queryByText('1M')).toBeNull();
 });
 
 it('says when there was no training in the range', async () => {

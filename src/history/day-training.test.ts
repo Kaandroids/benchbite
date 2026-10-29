@@ -1,4 +1,4 @@
-import { heatLevel, trainingSummary, type DayTraining } from './day-training';
+import { trainingSummary, type DayTraining } from './day-training';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -19,11 +19,5 @@ describe('trainingSummary', () => {
       minutes: 90,
       liftedKg: 1200,
     });
-  });
-});
-
-describe('heatLevel', () => {
-  it('shades a day darker the longer it was trained', () => {
-    expect([0, 1, 29, 30, 59, 60, 89, 90, 240].map(heatLevel)).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4]);
   });
 });
