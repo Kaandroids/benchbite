@@ -16,15 +16,20 @@ the AI features will be for premium users, with a limit from their plan.
   only Edge Functions write them, with the service role, through `record_ai_usage()`.
 - **Only the database knows prices.** `ai_model_prices` holds each model's price per million
   tokens from a date on, filled by migrations; `record_ai_usage()` prices a call at the price in
-  force and stores the cost, so a change of price leaves past calls as they were. A model without
-  a price is refused (BB033), so it is noticed rather than counted as free.
+  force and stores the cost, so a change of price leaves past calls as they were. A call is priced
+  by the model asked for, not the version the provider says answered.
 - **The limit is $4 per user and calendar month in UTC,** in `ai_settings`.
-- **`ai_access()` is the one place that decides** whether the user may call a model, with the
-  budget, what is used and when it resets. Guests may not, as AI needs an account; a user who has
-  reached the limit may not until the month resets.
-- **Check before, record after:** a function asks `ai_access()` with the user's token, calls the
-  model, and records the call (`_shared/ai_usage.ts`). Two calls at the same moment may go a
-  little over the limit, which is accepted.
+- **`ai_access()` is the one place that decides on the limit,** with the budget, what is used and
+  when it resets. Guests may not call a model, as AI needs an account; a user who has reached the
+  limit may not until the month resets.
+- **Start before, record after:** a function starts the call with `start_ai_call()` and the
+  user's token, calls the model, and records the call with what it used, also when it failed
+  (`_shared/ai_usage.ts`). Starting refuses what the limit refuses, a model without a price, so
+  that no call goes uncounted, and a second call of a feature while one runs, so that requests
+  sent at once go over the limit by one call at most per feature. A call that never recorded
+  gives its place up after two minutes.
+- **The features are the model interface's tasks:** a function names one `ai_feature`, which
+  picks the model (ADR 0049) and is what its usage is recorded under.
 - **This log is what counts.** The tokens kept on Bite's messages (ADR 0050) only record what an
   answer used.
 
@@ -35,7 +40,7 @@ the AI features will be for premium users, with a limit from their plan.
 - **Prices in the Edge Functions:** no table, but a price change would need a deploy, and every
   function would carry its own copy.
 - **Reserving the cost before the call:** keeps the limit exactly, but the cost is only known
-  after the answer, and a failed call would have to give its reservation back.
+  after the answer; one call at a time per feature bounds how far over it can go instead.
 - **The provider's own budget alerts:** they cap the project, not a user.
 
 ## Consequences
