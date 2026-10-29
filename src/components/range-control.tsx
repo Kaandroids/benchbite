@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { SegmentedControl } from '@/components/ui/segmented-control';
 
-import { PROGRESS_RANGES, type ProgressRange } from './ranges';
+import { PROGRESS_RANGES, type ProgressRange } from '@/lib/ranges';
 
 type RangeControlProps = {
   value: ProgressRange;

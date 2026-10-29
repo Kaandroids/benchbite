@@ -5,7 +5,7 @@ import {
   type NutritionSummary,
 } from '@/nutrition/day-nutrition';
 
-import type { ProgressRange } from './ranges';
+import type { ProgressRange } from '@/lib/ranges';
 
 /** What one bar of the eating chart stands for. */
 export type Span = 'day' | 'week' | 'month';

@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useWeightFormat, weightIn, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
-import type { ProgressRange } from '@/progress/ranges';
+import type { ProgressRange } from '@/lib/ranges';
 import { fonts, useTheme } from '@/theme';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
 import { useLogWeight, useWeightHistory, weightChange, type WeightEntry } from '@/weight/weights';

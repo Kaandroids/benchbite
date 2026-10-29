@@ -14,8 +14,8 @@ import { MacroBars } from '@/nutrition/macro-bars';
 import { useTheme } from '@/theme';
 
 import { averageTarget, nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
-import { RangeControl } from './range-control';
-import { rangeStart, type ProgressRange } from './ranges';
+import { RangeControl } from '@/components/range-control';
+import { rangeStart, type ProgressRange } from '@/lib/ranges';
 
 type NutritionCardProps = {
   entering?: CardProps['entering'];

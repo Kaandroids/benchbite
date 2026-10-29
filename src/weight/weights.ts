@@ -4,7 +4,7 @@ import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { keepTargetsFromToday } from '@/nutrition/targets';
-import { rangeStart, type ProgressRange } from '@/progress/ranges';
+import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 

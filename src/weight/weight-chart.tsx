@@ -6,8 +6,8 @@ import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { fromIsoDate } from '@/i18n/dates';
 import { useNumberFormat, weightIn, type WeightUnit } from '@/i18n/units';
-import { RangeControl } from '@/progress/range-control';
-import type { ProgressRange } from '@/progress/ranges';
+import { RangeControl } from '@/components/range-control';
+import type { ProgressRange } from '@/lib/ranges';
 import { useTheme } from '@/theme';
 
 import type { WeightEntry } from './weights';
