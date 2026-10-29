@@ -29,7 +29,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0011](0011-onboarding-flow.md)                              | Guide new users through an onboarding flow kept on the device until it is finished      | Accepted                      |
 | [0012](0012-local-workout-reminders.md)                      | Remind people to train with local notifications                                         | Superseded by ADR-0029        |
 | [0013](0013-onboarding-written-by-definer-function.md)       | Write the onboarding only through a function with its owner's rights                    | Accepted                      |
-| [0014](0014-native-tab-bar.md)                               | Use the system's tab bar for the main screens                                           | Accepted                      |
+| [0014](0014-native-tab-bar.md)                               | Use the system's tab bar for the main screens                                           | Superseded by ADR-0048        |
 | [0015](0015-server-data-with-tanstack-query.md)              | Load and cache the user's data with TanStack Query                                      | Accepted                      |
 | [0016](0016-workouts-instead-of-a-weekly-plan.md)            | Store workouts on weekdays instead of one weekly plan                                   | Accepted                      |
 | [0017](0017-save-workouts-through-a-function.md)             | Save workouts through a function that checks their targets                              | Accepted                      |
@@ -63,3 +63,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0045](0045-long-breaks-end-by-themselves.md)                | A break reaching back more than a week ends by itself                                   | Accepted                      |
 | [0046](0046-past-weeks-show-their-workouts-and-meals.md)     | A past week shows its workouts, its days' macros and a summary                          | Accepted                      |
 | [0047](0047-the-progress-tab.md)                             | The Progress tab: weight, eating and training over a range, then records and the streak | Accepted                      |
+| [0048](0048-our-own-tab-bar-with-bite.md)                    | Draw our own tab bar, with Bite in its middle                                           | Accepted                      |

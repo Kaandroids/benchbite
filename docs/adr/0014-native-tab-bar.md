@@ -1,6 +1,6 @@
 # 0014. Use the system's tab bar for the main screens
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0048
 - **Date:** 2026-10-22
 
 ## Context
