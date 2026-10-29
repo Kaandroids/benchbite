@@ -36,8 +36,9 @@ alter table public.workout_logs alter column started_on set not null;
 
 create index workout_logs_user_id_started_on_idx on public.workout_logs (user_id, started_on);
 
--- As before, with the device's day of the start, `startedOn`, within a day of the start in UTC.
--- The move that comes with the log is checked against that day.
+-- As before (20261025090000), with the device's day of the start, `startedOn`, within a day of
+-- the start in UTC. An app from before sends none, but a move to the day the workout started on,
+-- which is the device's. The move is checked against that day.
 create or replace function public.log_workout(log jsonb)
 returns bigint
 language plpgsql
@@ -68,6 +69,11 @@ begin
     if found then
       return new_log_id;
     end if;
+  end if;
+
+  -- An app from before sends no day, but a move to the day the workout started on, the device's.
+  if device_day is null and abs(move_to - (started at time zone 'UTC')::date) <= 1 then
+    device_day := move_to;
   end if;
 
   if started is null or finished is null or finished <= started
