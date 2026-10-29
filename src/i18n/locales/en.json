@@ -1565,6 +1565,25 @@
       "logged_other": "{{count}} days logged, {{within}} within the target",
       "none": "No meals logged in this range.",
       "error": "We couldn't load your meals."
+    },
+    "training": {
+      "title": "Training",
+      "rangeLabel": "Training over",
+      "workouts": "{{done}} of {{planned}} workouts",
+      "map_one": "{{count}} day trained, {{missed}} with a planned workout missed",
+      "map_other": "{{count}} days trained, {{missed}} with a planned workout missed",
+      "less": "Less",
+      "more": "More",
+      "missed": "Missed",
+      "planDone": "of planned done",
+      "trained": "trained",
+      "lifted": "lifted",
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h",
+      "kilograms": "{{kilograms}} kg",
+      "tonnes": "{{tonnes}} t",
+      "none": "No workouts in this range.",
+      "error": "We couldn't load your workouts."
     }
   }
 }
