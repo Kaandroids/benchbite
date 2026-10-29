@@ -38,16 +38,6 @@ function startOf(day: string, span: Span): string {
   }
 }
 
-/** The calories of an average day's target, over the days logged that have targets. */
-export function averageTarget(days: readonly DayNutrition[]): number | null {
-  const targets = days.flatMap((day) =>
-    day.entries > 0 && day.targets ? [day.targets.calories] : [],
-  );
-  return targets.length > 0
-    ? targets.reduce((sum, calories) => sum + calories, 0) / targets.length
-    : null;
-}
-
 /** The days, from the first, grouped into spans of `span`, each summed up over its days logged. */
 export function nutritionSpans(days: readonly DayNutrition[], span: Span): NutritionSpan[] {
   const groups = new Map<string, DayNutrition[]>();
@@ -57,11 +47,11 @@ export function nutritionSpans(days: readonly DayNutrition[], span: Span): Nutri
   }
   return [...groups].map(([start, spanDays]) => {
     const summary = nutritionSummary(spanDays);
-    const target = averageTarget(spanDays);
+    const target = summary?.averageTargets;
     return {
       start,
       summary,
-      over: summary !== null && target !== null && summary.average.calories > target,
+      over: !!summary && !!target && summary.average.calories > target.calories,
     };
   });
 }

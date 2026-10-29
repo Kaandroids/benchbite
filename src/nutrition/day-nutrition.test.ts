@@ -1,4 +1,4 @@
-import { isOverTarget, keptTarget, nutritionSummary, type DayNutrition } from './day-nutrition';
+import { isOverTarget, nutritionSummary, type DayNutrition } from './day-nutrition';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -14,6 +14,7 @@ const day = (
   eaten: { calories, proteinG: calories / 20, carbsG: calories / 10, fatG: calories / 40 },
   entries,
   targets,
+  keptTarget: targets !== null && calories > 0 && calories <= targets.calories,
 });
 
 describe('nutritionSummary', () => {
@@ -30,6 +31,7 @@ describe('nutritionSummary', () => {
       eaten: { calories: 4000, proteinG: 200, carbsG: 400, fatG: 100 },
       average: { calories: 2000, proteinG: 100, carbsG: 200, fatG: 50 },
       targets: { calories: 4000, proteinG: 300, carbsG: 400, fatG: 120 },
+      averageTargets: TARGETS,
     });
   });
 
@@ -39,6 +41,17 @@ describe('nutritionSummary', () => {
 
   it('has no targets for a user without them', () => {
     expect(nutritionSummary([day('2026-10-19', 1800, 1, null)])?.targets).toBeNull();
+  });
+
+  it('averages the targets over the days logged that have them', () => {
+    expect(
+      nutritionSummary([
+        day('2026-10-19', 1800),
+        day('2026-10-20', 1800, 1, { ...TARGETS, calories: 2400 }),
+        day('2026-10-21', 1800, 1, null),
+        day('2026-10-22', 0, 0, { ...TARGETS, calories: 9000 }),
+      ])?.averageTargets?.calories,
+    ).toBe(2200);
   });
 
   it('is null for a week without entries', () => {
@@ -55,11 +68,3 @@ describe('isOverTarget', () => {
   });
 });
 
-describe('keptTarget', () => {
-  it('keeps the target with more than none and no more than it, as the streak does', () => {
-    expect(keptTarget(day('2026-10-19', 2000))).toBe(true);
-    expect(keptTarget(day('2026-10-19', 0, 1))).toBe(false);
-    expect(keptTarget(day('2026-10-19', 2001))).toBe(false);
-    expect(keptTarget(day('2026-10-19', 1500, 1, null))).toBe(false);
-  });
-});

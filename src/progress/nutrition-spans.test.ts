@@ -1,6 +1,6 @@
 import type { DayNutrition } from '@/nutrition/day-nutrition';
 
-import { averageTarget, nutritionSpans } from './nutrition-spans';
+import { nutritionSpans } from './nutrition-spans';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -11,6 +11,7 @@ const day = (date: string, calories: number, targets: DayNutrition['targets'] = 
   eaten: { calories, proteinG: 100, carbsG: 200, fatG: 50 },
   entries: calories > 0 ? 1 : 0,
   targets,
+  keptTarget: false,
 });
 
 describe('nutritionSpans', () => {
@@ -39,21 +40,5 @@ describe('nutritionSpans', () => {
   it('groups the days of a year by month', () => {
     const spans = nutritionSpans([day('2026-09-30', 1800), day('2026-10-01', 1900)], 'month');
     expect(spans.map((span) => span.start)).toEqual(['2026-09-01', '2026-10-01']);
-  });
-});
-
-describe('averageTarget', () => {
-  it('averages the targets of the days logged that have them', () => {
-    expect(
-      averageTarget([
-        day('2026-10-19', 1800),
-        day('2026-10-20', 1800, { ...TARGETS, calories: 2400 }),
-        day('2026-10-21', 0, { ...TARGETS, calories: 9000 }),
-      ]),
-    ).toBe(2200);
-  });
-
-  it('is unknown without targets', () => {
-    expect(averageTarget([day('2026-10-19', 1800, null)])).toBeNull();
   });
 });

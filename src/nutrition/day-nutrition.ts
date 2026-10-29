@@ -15,6 +15,8 @@ export type DayNutrition = {
   entries: number;
   /** Null for a user without targets. */
   targets: NutritionTargets | null;
+  /** Whether its calories kept its target, as the streak counts them (ADR 0044). */
+  keptTarget: boolean;
 };
 
 /** What was eaten in a span of days on the days logged, against their targets. */
@@ -28,6 +30,8 @@ export type NutritionSummary = {
   average: NutritionTargets;
   /** The targets of the days logged, added up; null when none of them has targets. */
   targets: NutritionTargets | null;
+  /** The targets of an average day logged that has them; null when none has. */
+  averageTargets: NutritionTargets | null;
 };
 
 /**
@@ -41,23 +45,20 @@ export function nutritionSummary(days: readonly DayNutrition[]): NutritionSummar
   }
   const eaten = totalOf(logged.map((day) => day.eaten));
   const withTargets = logged.flatMap((day) => (day.targets ? [day.targets] : []));
+  const targets = withTargets.length > 0 ? totalOf(withTargets) : null;
   return {
     days: logged.length,
-    withinTarget: logged.filter(keptTarget).length,
+    withinTarget: logged.filter((day) => day.keptTarget).length,
     eaten,
     average: scaled(eaten, 1 / logged.length),
-    targets: withTargets.length > 0 ? totalOf(withTargets) : null,
+    targets,
+    averageTargets: targets && scaled(targets, 1 / withTargets.length),
   };
 }
 
 /** Whether a day's calories went over its target. */
 export function isOverTarget(day: DayNutrition): boolean {
   return day.targets !== null && day.eaten.calories > day.targets.calories;
-}
-
-/** Whether a day's calories were more than none and no more than its target (calories_count()). */
-export function keptTarget(day: DayNutrition): boolean {
-  return day.targets !== null && day.eaten.calories > 0 && !isOverTarget(day);
 }
 
 /** The query keys of what was eaten on spans of days, which changing an entry reloads. */
@@ -116,6 +117,7 @@ function dayNutritionOf(row: DayNutritionRow): DayNutrition {
             carbsG: row.target_carbs_g,
             fatG: row.target_fat_g,
           },
+    keptTarget: row.kept_target,
   };
 }
 

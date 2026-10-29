@@ -60,6 +60,7 @@ const day = (date: string, calories: number, targets: DayNutrition['targets'] = 
   eaten: { calories, proteinG: 150, carbsG: 200, fatG: 60 },
   entries: calories > 0 ? 2 : 0,
   targets,
+  keptTarget: targets !== null && calories > 0 && calories <= targets.calories,
 });
 
 type Query<T> = {

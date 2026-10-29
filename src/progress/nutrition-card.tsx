@@ -13,7 +13,7 @@ import { nutritionSummary, useDayNutrition } from '@/nutrition/day-nutrition';
 import { MacroBars } from '@/nutrition/macro-bars';
 import { useTheme } from '@/theme';
 
-import { averageTarget, nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
+import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
 import { RangeControl } from '@/components/range-control';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 
@@ -81,7 +81,6 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
     );
   } else {
     const spans = nutritionSpans(days.data, span);
-    const target = averageTarget(days.data) ?? undefined;
     const ends = [spans[0], spans[Math.floor((spans.length - 1) / 2)], spans[spans.length - 1]];
     content =
       summary === null ? (
@@ -98,7 +97,7 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
               over: item.over,
               accessibilityLabel: labelOf(item),
             }))}
-            target={target}
+            target={summary.averageTargets?.calories}
             axis={ends.map((item) => (item ? axisNameOf(item.start) : ''))}
           />
           {summary.targets ? (

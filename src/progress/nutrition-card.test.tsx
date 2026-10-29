@@ -17,6 +17,7 @@ const day = (date: string, calories: number): DayNutrition => ({
   eaten: { calories, proteinG: 150, carbsG: 200, fatG: 60 },
   entries: calories > 0 ? 1 : 0,
   targets: TARGETS,
+  keptTarget: calories > 0 && calories <= TARGETS.calories,
 });
 
 const refetch = jest.fn();
