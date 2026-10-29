@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -53,7 +54,7 @@ type TabBarProps = BottomTabBarProps & {
 
 /**
  * The app's tab bar (ADR 0048): a capsule floating over the content, glass where the system has it,
- * with a button rising out of its middle. The open tab's pill slides over to it and its icon pops.
+ * with a button rising out of its middle. The open tab's pill glides over to it and its icon pops.
  */
 export function TabBar({ state, emitter, navigateToTab, middle, hidden }: TabBarProps) {
   const { t } = useTranslation();
@@ -72,7 +73,11 @@ export function TabBar({ state, emitter, navigateToTab, middle, hidden }: TabBar
       return;
     }
     const x = slotOf(state.index) * slot;
-    pill.set(placed.current && !reduceMotion ? withSpring(x, { damping: 16, stiffness: 180 }) : x);
+    pill.set(
+      placed.current && !reduceMotion
+        ? withTiming(x, { duration: 220, easing: Easing.out(Easing.cubic) })
+        : x,
+    );
     placed.current = true;
   }, [state.index, slot, width, reduceMotion, pill]);
   const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pill.get() }] }));

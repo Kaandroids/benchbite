@@ -24,8 +24,8 @@ glass in our own views, also in Expo Go.
   the layout and the motion are the same on both.
 - **Bite is no tab:** it rises out of the middle on the brand's orange and opens its chat over
   the tabs, at `/bite`. It has no label, as the mascot says what it is.
-- **Changing tab** slides the chosen tab's pill over to it with a spring and pops its icon; the
-  screens fade. With the system's reduced motion on, nothing moves.
+- **Changing tab** glides the chosen tab's pill over to it in a fifth of a second, easing out, and
+  pops its icon; the screens fade. With the system's reduced motion on, nothing moves.
 - **The bar floats**, so a tab's screen leaves room under its content for it
   (`useTabBarSpace()`), and pressing the open tab again scrolls it to the top, as the system's
   bar did.
