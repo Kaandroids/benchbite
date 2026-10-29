@@ -65,3 +65,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0047](0047-the-progress-tab.md)                             | The Progress tab: weight, eating and training over a range, then records and the streak | Accepted                      |
 | [0048](0048-our-own-tab-bar-with-bite.md)                    | Draw our own tab bar, with Bite in its middle                                           | Accepted                      |
 | [0049](0049-gemini-behind-our-own-model-interface.md)        | Gemini behind our own language model interface                                          | Accepted                      |
+| [0050](0050-bites-conversations-in-threads.md)               | Bite's conversations in threads, written only by the chat function                      | Accepted                      |
