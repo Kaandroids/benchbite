@@ -1424,6 +1424,7 @@
     "metricsLabel": "Was das Diagramm zeigt",
     "sessions": "Trainings · {{count}}",
     "pace": "{{time}} /km",
+    "volumeGain": "+{{kilograms}} kg Volumen",
     "empty": {
       "title": "Noch kein Verlauf",
       "message": "Trainiere diese Übung in einem Workout, dann erscheinen hier deine Sätze und Rekorde."
@@ -1584,6 +1585,22 @@
       "tonnes": "{{tonnes}} t",
       "none": "In diesem Zeitraum keine Workouts.",
       "error": "Deine Workouts konnten nicht geladen werden."
+    },
+    "records": {
+      "title": "Persönliche Rekorde",
+      "latest": "Neueste",
+      "byExercise": "Nach Übung",
+      "order": "Rekorde sortiert nach",
+      "thisMonth": "Diesen Monat",
+      "open": "Öffnet den Verlauf der Übung",
+      "unknown": "Übung",
+      "newThisMonth_one": "{{count}} neuer diesen Monat",
+      "newThisMonth_other": "{{count}} neue diesen Monat",
+      "none": "Übertriff eine Bestleistung, um einen aufzustellen",
+      "empty": {
+        "title": "Noch keine Rekorde",
+        "message": "Übertriff in einem Workout die Bestleistung einer Übung, dann erscheinen deine Rekorde hier."
+      }
     }
   }
 }

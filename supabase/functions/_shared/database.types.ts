@@ -1576,6 +1576,37 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_candidates: {
+        Args: { exercise_id: string };
+        Returns: {
+          exercise_position: number;
+          kind: string;
+          log_id: number;
+          lower_is_better: boolean;
+          meters: number;
+          reps: number;
+          seconds: number;
+          set_position: number;
+          started_at: string;
+          value: number;
+          weight_kg: number;
+        }[];
+      };
+      record_history: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          achieved_on: string;
+          exercise_id: string;
+          kind: string;
+          log_id: number;
+          meters: number;
+          previous: number;
+          reps: number;
+          seconds: number;
+          value: number;
+          weight_kg: number;
+        }[];
+      };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {

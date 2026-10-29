@@ -29,8 +29,13 @@ personal records or the streak beyond this week (#275).
     day, at most a year of them, with its planned workouts done and missed as the streak counts
     them, from the day the streak starts.
   - **Personal records** and the **streak calendar:** each a button that opens its own screen,
-    the records as a list of the latest per exercise, the streak month by month with the marks of
-    the week card (ADR 0042).
+    the streak month by month with the marks of the week card (ADR 0042).
+  - **Records:** each time a workout beat the best before it of a kind of record of an exercise,
+    the latest first by month, or each exercise's latest by its name, with the exercise's picture
+    and how much the best was beaten. A first value beats nothing (ADR 0025), and a workout that
+    beat several kinds of one exercise shows the first of them, so that one set is listed once.
+    The records and an exercise's history count the same way, from `record_candidates()`
+    (ADR 0024). A record opens its exercise's history within the tab.
 - **Each card is its own pull request**, the weight card first.
 
 ## Alternatives considered

@@ -10,7 +10,7 @@ import { Text } from '@/components/ui/text';
 import { useShortDateFormat } from '@/i18n/dates';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, type SetKind } from '@/sets/fields';
-import { useRecordFormat } from '@/sets/records';
+import { useRecordFormat, useRecordKindLabel } from '@/sets/records';
 import { SetChips } from '@/sets/set-chips';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -43,10 +43,8 @@ export function RecordsCard({ records, kind }: { records: ExerciseRecord[]; kind
   const { colors, radii, spacing } = useTheme();
   const formatRecord = useRecordFormat();
   const day = useShortDateFormat(new Date());
-  const label = (record: ExerciseRecord) =>
-    record.kind === 'heaviest' && kind.addedWeight
-      ? t('exerciseHistory.kinds.heaviestAdded')
-      : t(`exerciseHistory.kinds.${record.kind}`);
+  const kindLabel = useRecordKindLabel();
+  const label = (record: ExerciseRecord) => kindLabel(record.kind, kind.addedWeight);
   return (
     <Card>
       <CardHeading icon="trophy" title={t('exerciseHistory.records')} />

@@ -59,8 +59,28 @@ export type ExerciseHistory = {
 };
 
 // Postgres numerics arrive as numbers, and the generated types do not say they can be null.
-const numberOrNull = (value: number | null | undefined) =>
+export const numberOrNull = (value: number | null | undefined) =>
   value === null || value === undefined ? null : Number(value);
+
+/** Whether a row is of a kind of record the app knows. */
+export function isRecordKind<T extends { kind: string }>(row: T): row is T & { kind: RecordKind } {
+  return (RECORD_KINDS as readonly string[]).includes(row.kind);
+}
+
+/** The set of a record's row. */
+export function setValuesOf(row: {
+  weight_kg: number | null;
+  reps: number | null;
+  seconds: number | null;
+  meters: number | null;
+}): SetValues {
+  return {
+    weightKg: numberOrNull(row.weight_kg),
+    reps: numberOrNull(row.reps),
+    seconds: numberOrNull(row.seconds),
+    meters: numberOrNull(row.meters),
+  };
+}
 
 type SetRow = {
   log_id: number;
@@ -163,19 +183,12 @@ export function useExerciseHistory(exerciseId: string) {
       }
       return {
         records: records.data
-          .filter((row): row is typeof row & { kind: RecordKind } =>
-            (RECORD_KINDS as readonly string[]).includes(row.kind),
-          )
+          .filter(isRecordKind)
           .sort((a, b) => RECORD_KINDS.indexOf(a.kind) - RECORD_KINDS.indexOf(b.kind))
           .map((row) => ({
             kind: row.kind,
             value: Number(row.value),
-            set: {
-              weightKg: numberOrNull(row.weight_kg),
-              reps: numberOrNull(row.reps),
-              seconds: numberOrNull(row.seconds),
-              meters: numberOrNull(row.meters),
-            },
+            set: setValuesOf(row),
             logId: row.log_id,
             achievedAt: new Date(row.achieved_at),
             place:

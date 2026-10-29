@@ -14,6 +14,8 @@ export const LOGS_KEY = ['workout-logs'];
  * workout reloads, and changing the plan or moving a workout, which change what was missed.
  */
 export const TRAINING_DAYS_KEY = [...LOGS_KEY, 'days'];
+/** The query key of the records beaten across exercises (useRecordHistory()). */
+export const RECORDS_KEY = [...LOGS_KEY, 'records'];
 
 /** A finished workout at a glance (workout_log_summaries). */
 export type LogSummary = {
@@ -308,6 +310,7 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'exercise'] }),
         queryClient.invalidateQueries({ queryKey: TRAINING_DAYS_KEY }),
+        queryClient.invalidateQueries({ queryKey: RECORDS_KEY }),
         queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
       ]),
   });
