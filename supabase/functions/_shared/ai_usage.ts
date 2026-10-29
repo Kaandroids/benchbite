@@ -4,7 +4,7 @@
 import type { SupabaseContext } from '@supabase/server';
 
 import type { Database } from './database.types.ts';
-import { ModelError, type Task, type Usage } from './llm/mod.ts';
+import { type Env, ModelError, modelFor, type Task, type Usage } from './llm/mod.ts';
 
 export type AiAccess = Database['public']['CompositeTypes']['ai_access'];
 
@@ -16,24 +16,30 @@ export type AiCallContext = {
   /** A client with the service role (`supabaseAdmin`), which alone may record usage. */
   admin: Client;
   userId: string;
+  /** Where the task's model is read from, as `languageModel()` reads it; `Deno.env` by default. */
+  env?: Env;
 };
 
+/** What a call of a model gives back, and what it used. */
+export type AiCallResult<T> = { result: T; usage: Usage };
+
 /**
- * Runs `call`, a call of `model` for `task`, when the user may make it, and records what it used.
- * `call` returns its usage; when it throws, what a `ModelError` says it used is recorded, or
- * nothing used, and the error is thrown on. Returns the access, which says by `allowed` whether
- * `call` ran, and by `reason` why not.
+ * Runs `call` for `task` when the user may make it, and records what it used. The call is
+ * started on the model `languageModel()` runs the task on, and priced by it. When `call` throws,
+ * what a `ModelError` says it used is recorded, or nothing used, and the error is thrown on.
+ * Returns the access, which says by `allowed` whether `call` ran and by `reason` why not, and the
+ * call's result when it ran.
  */
-export async function withAiCall(
-  { supabase, admin, userId }: AiCallContext,
+export async function withAiCall<T>(
+  { supabase, admin, userId, env = Deno.env }: AiCallContext,
   task: Task,
-  model: string,
-  call: () => Promise<Usage>,
-): Promise<AiAccess> {
+  call: () => Promise<AiCallResult<T>>,
+): Promise<{ access: AiAccess; result?: T }> {
+  const { model } = modelFor(task, env);
   const started = await supabase.rpc('start_ai_call', { feature: task, model });
   if (started.error) throw new Error(`start_ai_call: ${started.error.message}`);
   const access = started.data;
-  if (!access.allowed || !access.call_id) return access;
+  if (!access.allowed || !access.call_id) return { access };
 
   let usage: Usage = {
     model,
@@ -43,8 +49,9 @@ export async function withAiCall(
     thinkingTokens: 0,
   };
   try {
-    usage = await call();
-    return access;
+    const done = await call();
+    usage = done.usage;
+    return { access, result: done.result };
   } catch (error) {
     if (error instanceof ModelError && error.usage) usage = error.usage;
     throw error;
@@ -59,7 +66,7 @@ export async function withAiCall(
       output_tokens: usage.outputTokens,
       thinking_tokens: usage.thinkingTokens,
     });
-    // Not seen when `call` threw, whose error matters more; logged, as the call went uncounted.
+    // Logged, not thrown: the call's own result or error matters more to the caller.
     if (recorded.error) console.error(`record_ai_usage: ${recorded.error.message}`);
   }
 }

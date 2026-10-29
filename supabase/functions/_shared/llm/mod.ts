@@ -4,7 +4,7 @@ import { GeminiModel } from './gemini.ts';
 import type { LanguageModel } from './types.ts';
 
 export * from './types.ts';
-export { modelFor } from './config.ts';
+export { type Env, modelFor } from './config.ts';
 
 /**
  * The model the environment sets up. `GEMINI_BACKEND=studio` calls the Gemini Developer API with

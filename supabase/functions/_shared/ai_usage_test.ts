@@ -20,20 +20,33 @@ const USAGE: Usage = {
   thinkingTokens: 20,
 };
 
-/** The two clients of a call, answering with `access`, and the calls each was asked. */
-function clients(access: AiAccess) {
+const NOTHING_USED = {
+  ...USAGE,
+  inputTokens: 0,
+  cachedInputTokens: 0,
+  outputTokens: 0,
+  thinkingTokens: 0,
+};
+
+/** The two clients of a call, the first answering with `access`, and the calls each was asked. */
+function clients(access: AiAccess, recordError: { message: string } | null = null) {
   const calls: { client: string; name: string; args: unknown }[] = [];
   const client = (name: string) =>
     ({
       rpc: (fn: string, args: unknown) => {
         calls.push({ client: name, name: fn, args });
-        return Promise.resolve({ data: fn === 'start_ai_call' ? access : 0.0004, error: null });
+        return Promise.resolve(
+          fn === 'start_ai_call'
+            ? { data: access, error: null }
+            : { data: recordError ? null : 0.0004, error: recordError },
+        );
       },
     }) as unknown as AiCallContext['supabase'];
   const context: AiCallContext = {
     supabase: client('user'),
     admin: client('admin'),
     userId: 'user-1',
+    env: { get: () => undefined },
   };
   return { context, calls };
 }
@@ -61,32 +74,38 @@ const START = {
   args: { feature: 'coach_chat', model: 'gemini-3.5-flash-lite' },
 };
 
-Deno.test('starts the call as the user, runs it and records its usage', async () => {
+Deno.test("starts the call on the task's model, runs it and records its usage", async () => {
   const { context, calls } = clients(ACCESS);
 
-  const access = await withAiCall(context, 'coach_chat', 'gemini-3.5-flash-lite', () =>
-    Promise.resolve(USAGE),
+  const done = await withAiCall(context, 'coach_chat', () =>
+    Promise.resolve({ result: 'Hello!', usage: USAGE }),
   );
 
-  assertEquals(access, ACCESS);
+  assertEquals(done, { access: ACCESS, result: 'Hello!' });
   assertEquals(calls, [START, recorded(USAGE)]);
 });
 
+Deno.test("starts the call on the environment's model where it names one", async () => {
+  const { context, calls } = clients(ACCESS);
+
+  await withAiCall({ ...context, env: { get: () => 'gemini-3.8-flash' } }, 'coach_chat', () =>
+    Promise.resolve({ result: null, usage: USAGE }),
+  );
+
+  assertEquals(calls[0].args, { feature: 'coach_chat', model: 'gemini-3.8-flash' });
+});
+
 Deno.test('runs nothing when the user may not make the call', async () => {
-  const { context, calls } = clients({
-    ...ACCESS,
-    allowed: false,
-    reason: 'limit_reached',
-    call_id: null,
-  });
+  const refused = { ...ACCESS, allowed: false, reason: 'plan_required' as const, call_id: null };
+  const { context, calls } = clients(refused);
   let ran = false;
 
-  const access = await withAiCall(context, 'coach_chat', 'gemini-3.5-flash-lite', () => {
+  const done = await withAiCall(context, 'coach_chat', () => {
     ran = true;
-    return Promise.resolve(USAGE);
+    return Promise.resolve({ result: 'Hello!', usage: USAGE });
   });
 
-  assertEquals([access.allowed, access.reason, ran], [false, 'limit_reached', false]);
+  assertEquals([done, ran], [{ access: refused }, false]);
   assertEquals(calls, [START]);
 });
 
@@ -96,7 +115,7 @@ Deno.test('records what a failed call used, and throws its error on', async () =
 
   await assertRejects(
     () =>
-      withAiCall(context, 'coach_chat', 'gemini-3.5-flash-lite', () =>
+      withAiCall(context, 'coach_chat', () =>
         Promise.reject(new ModelError('Gemini: 503 Overloaded', 503, true, partial)),
       ),
     ModelError,
@@ -109,21 +128,26 @@ Deno.test('records nothing used when a call fails before the model', async () =>
   const { context, calls } = clients(ACCESS);
 
   await assertRejects(
-    () =>
-      withAiCall(context, 'coach_chat', 'gemini-3.5-flash-lite', () =>
-        Promise.reject(new Error('Bad input')),
-      ),
+    () => withAiCall(context, 'coach_chat', () => Promise.reject(new Error('Bad input'))),
     Error,
     'Bad input',
   );
-  assertEquals(calls, [
-    START,
-    recorded({
-      ...USAGE,
-      inputTokens: 0,
-      cachedInputTokens: 0,
-      outputTokens: 0,
-      thinkingTokens: 0,
-    }),
-  ]);
+  assertEquals(calls, [START, recorded(NOTHING_USED)]);
+});
+
+Deno.test('gives the result when recording fails, and logs it', async () => {
+  const { context } = clients(ACCESS, { message: 'No price is known' });
+  const logged: unknown[] = [];
+  const error = console.error;
+  console.error = (...args: unknown[]) => logged.push(...args);
+  try {
+    const done = await withAiCall(context, 'coach_chat', () =>
+      Promise.resolve({ result: 'Hello!', usage: USAGE }),
+    );
+
+    assertEquals(done.result, 'Hello!');
+    assertEquals(logged, ['record_ai_usage: No price is known']);
+  } finally {
+    console.error = error;
+  }
 });
