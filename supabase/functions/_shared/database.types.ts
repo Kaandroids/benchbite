@@ -1270,7 +1270,9 @@ export type Database = {
         Returns: {
           day: string;
           done: boolean;
+          name: string;
           skipped: boolean;
+          type: Database['public']['Enums']['workout_type'];
           workout_id: number;
         }[];
       };
@@ -1615,7 +1617,7 @@ export type Database = {
         }[];
       };
       streak_break_days: {
-        Args: { today: string };
+        Args: { days: string[]; today: string };
         Returns: {
           day: string;
           eaten: number;
