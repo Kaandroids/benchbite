@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -117,6 +117,19 @@ select is_empty($$ select 1 from public.coach_messages $$, 'nor their messages')
 
 update public.coach_threads set title = 'Mine' where id = 1;
 delete from public.coach_threads where id = 1;
+
+-- Without an account, nothing of it can be read or changed.
+select set_config('role', 'anon', true);
+
+select throws_ok(
+  $$ select 1 from public.coach_threads $$, '42501', null, 'Guests read no threads'
+);
+select throws_ok(
+  $$ select 1 from public.coach_messages $$, '42501', null, 'nor messages'
+);
+select throws_ok(
+  $$ update public.coach_threads set title = 'Mine' $$, '42501', null, 'and change no thread'
+);
 
 -- A deletes the thread, and its messages with it.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
