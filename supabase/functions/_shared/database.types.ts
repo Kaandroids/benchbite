@@ -1044,6 +1044,7 @@ export type Database = {
           planned_exercise_ids: string[] | null;
           planned_exercises: number | null;
           planned_sets: number | null;
+          source_workout_id: number | null;
           started_at: string;
           started_on: string;
           type: Database['public']['Enums']['workout_type'] | null;
@@ -1060,6 +1061,7 @@ export type Database = {
           planned_exercise_ids?: string[] | null;
           planned_exercises?: number | null;
           planned_sets?: number | null;
+          source_workout_id?: number | null;
           started_at: string;
           started_on: string;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1075,6 +1077,7 @@ export type Database = {
           planned_exercise_ids?: string[] | null;
           planned_exercises?: number | null;
           planned_sets?: number | null;
+          source_workout_id?: number | null;
           started_at?: string;
           started_on?: string;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1096,6 +1099,7 @@ export type Database = {
           created_at: string;
           from_on: string;
           id: number;
+          settled: boolean;
           to_on: string | null;
           user_id: string;
           workout_id: number;
@@ -1105,6 +1109,7 @@ export type Database = {
           created_at?: string;
           from_on: string;
           id?: never;
+          settled?: boolean;
           to_on?: string | null;
           user_id: string;
           workout_id: number;
@@ -1113,6 +1118,7 @@ export type Database = {
           created_at?: string;
           from_on?: string;
           id?: never;
+          settled?: boolean;
           to_on?: string | null;
           user_id?: string;
           workout_id?: number;
@@ -1259,6 +1265,15 @@ export type Database = {
         }[];
       };
       custom_exercise_limit: { Args: Record<PropertyKey, never>; Returns: number };
+      day_workouts: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          day: string;
+          done: boolean;
+          skipped: boolean;
+          workout_id: number;
+        }[];
+      };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
@@ -1337,9 +1352,10 @@ export type Database = {
         Returns: boolean;
       };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
-      keep_streak_days: { Args: { through: string; today: string }; Returns: undefined };
+      keep_streak_days: { Args: { through: string; today: string }; Returns: string };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
       kept_through: { Args: { latest: string; owner: string }; Returns: string };
+      last_day_closed_to_logging: { Args: Record<PropertyKey, never>; Returns: string };
       last_day_past_everywhere: { Args: Record<PropertyKey, never>; Returns: string };
       last_sets: {
         Args: { exercise_ids: string[] };
