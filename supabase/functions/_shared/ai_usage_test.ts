@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from '@std/assert';
 
-import { aiAccess, recordAiUsage } from './ai_usage.ts';
+import { type AiAccess, recordAiUsage, startAiCall } from './ai_usage.ts';
 
 /** A database that answers every call with `result`, keeping what it was asked. */
 function database(result: { data: unknown; error: { message: string } | null }) {
@@ -10,12 +10,12 @@ function database(result: { data: unknown; error: { message: string } | null }) 
       calls.push({ name, args });
       return Promise.resolve(result);
     },
-  } as unknown as Parameters<typeof aiAccess>[0];
+  } as unknown as Parameters<typeof startAiCall>[0];
   return { client, calls };
 }
 
-Deno.test("asks the database for the user's access", async () => {
-  const access = {
+Deno.test('asks the database to start a call', async () => {
+  const access: AiAccess = {
     allowed: false,
     reason: 'limit_reached',
     budget_usd: 4,
@@ -24,8 +24,10 @@ Deno.test("asks the database for the user's access", async () => {
   };
   const { client, calls } = database({ data: access, error: null });
 
-  assertEquals(await aiAccess(client), access);
-  assertEquals(calls, [{ name: 'ai_access', args: undefined }]);
+  assertEquals(await startAiCall(client, 'coach_chat', 'gemini-3.5-flash-lite'), access);
+  assertEquals(calls, [
+    { name: 'start_ai_call', args: { feature: 'coach_chat', model: 'gemini-3.5-flash-lite' } },
+  ]);
 });
 
 Deno.test('records the tokens of a call, which the database prices', async () => {
@@ -59,7 +61,11 @@ Deno.test('records the tokens of a call, which the database prices', async () =>
 Deno.test('says so when the database fails', async () => {
   const { client } = database({ data: null, error: { message: 'No price is known' } });
 
-  await assertRejects(() => aiAccess(client), Error, 'ai_access: No price is known');
+  await assertRejects(
+    () => startAiCall(client, 'review', 'x'),
+    Error,
+    'start_ai_call: No price is known',
+  );
   await assertRejects(
     () =>
       recordAiUsage(client, 'user-1', 'review', {
