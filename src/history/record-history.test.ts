@@ -1,4 +1,4 @@
-import { latestByExercise, recordsThisMonth, type BeatenRecord } from './record-history';
+import { byMonth, latestByExercise, recordsThisMonth, type BeatenRecord } from './record-history';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -27,4 +27,11 @@ it('keeps the records of the month of today', () => {
 
 it("keeps each exercise's latest record", () => {
   expect(latestByExercise(RECORDS).map((r) => r.day)).toEqual(['2026-10-27', '2026-10-21']);
+});
+
+it('groups the records by month, in the order they come', () => {
+  expect(byMonth(RECORDS).map(([month, records]) => [month, records.length])).toEqual([
+    ['2026-10', 2],
+    ['2026-09', 1],
+  ]);
 });
