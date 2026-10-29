@@ -4,6 +4,7 @@ import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { keepTargetsFromToday } from '@/nutrition/targets';
+import { rangeStart, type ProgressRange } from '@/progress/ranges';
 import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 
@@ -46,28 +47,11 @@ export function useLatestWeight() {
   });
 }
 
-/** How far back the weight chart reaches. */
-export type WeightRange = 'month' | 'threeMonths' | 'sixMonths' | 'year';
-
-const RANGE_MONTHS: Record<WeightRange, number> = {
-  month: 1,
-  threeMonths: 3,
-  sixMonths: 6,
-  year: 12,
-};
-
-/** The first day of a range that ends on `today`. */
-export function rangeStart(range: WeightRange, today: Date): Date {
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  start.setMonth(start.getMonth() - RANGE_MONTHS[range]);
-  return start;
-}
-
 /**
  * The signed-in user's weights from the start of `range` to `today`, oldest first. Another range
  * keeps the last one shown until it loads.
  */
-export function useWeightHistory(range: WeightRange, today: Date) {
+export function useWeightHistory(range: ProgressRange, today: Date) {
   const from = toIsoDate(rangeStart(range, today));
   return useQuery({
     queryKey: ['weights', 'history', from],

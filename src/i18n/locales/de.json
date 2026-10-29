@@ -105,12 +105,6 @@
       "sixMonths": "{{weight}} {{unit}} in 6 Monaten",
       "year": "{{weight}} {{unit}} in einem Jahr"
     },
-    "range": {
-      "month": "1M",
-      "threeMonths": "3M",
-      "sixMonths": "6M",
-      "year": "Jahr"
-    },
     "rangeLabel": "Gewicht über",
     "chart_one": "Dein Gewicht, {{count}} Eintrag",
     "chart_other": "Dein Gewicht über {{count}} Einträge",
@@ -1551,5 +1545,13 @@
     "nameMessage": "So begrüßt dich Benchbite. Lass das Feld leer, um ohne Namen begrüßt zu werden.",
     "save": "Speichern",
     "notSaved": "Der Name konnte nicht gespeichert werden. Versuch es noch einmal."
+  },
+  "progress": {
+    "range": {
+      "month": "1M",
+      "threeMonths": "3M",
+      "sixMonths": "6M",
+      "year": "Jahr"
+    }
   }
 }

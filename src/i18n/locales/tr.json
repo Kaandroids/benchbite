@@ -105,12 +105,6 @@
       "sixMonths": "6 ayda {{weight}} {{unit}}",
       "year": "Bir yılda {{weight}} {{unit}}"
     },
-    "range": {
-      "month": "1A",
-      "threeMonths": "3A",
-      "sixMonths": "6A",
-      "year": "Yıl"
-    },
     "rangeLabel": "Kilo aralığı",
     "chart_one": "Kilon, {{count}} kayıt",
     "chart_other": "Kilon, {{count}} kayıt boyunca",
@@ -1551,5 +1545,13 @@
     "nameMessage": "Benchbite seni böyle selamlar. Adsız selamlanmak için boş bırak.",
     "save": "Kaydet",
     "notSaved": "Ad kaydedilemedi. Tekrar dene."
+  },
+  "progress": {
+    "range": {
+      "month": "1A",
+      "threeMonths": "3A",
+      "sixMonths": "6A",
+      "year": "Yıl"
+    }
   }
 }

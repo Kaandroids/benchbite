@@ -2,16 +2,15 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ProgressChart } from '@/components/progress-chart';
-import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { fromIsoDate } from '@/i18n/dates';
 import { useNumberFormat, weightIn, type WeightUnit } from '@/i18n/units';
+import { RangeControl } from '@/progress/range-control';
+import type { ProgressRange } from '@/progress/ranges';
 import { useTheme } from '@/theme';
 
-import type { WeightEntry, WeightRange } from './weights';
-
-const RANGES: readonly WeightRange[] = ['month', 'threeMonths', 'sixMonths', 'year'];
+import type { WeightEntry } from './weights';
 
 type WeightChartProps = {
   /** The weights of the range, oldest first; undefined until they load. */
@@ -22,8 +21,8 @@ type WeightChartProps = {
   unit: WeightUnit;
   /** The weight to reach in the user's unit, with its label. */
   target?: { value: number; label: string };
-  range: WeightRange;
-  onRangeChange: (range: WeightRange) => void;
+  range: ProgressRange;
+  onRangeChange: (range: ProgressRange) => void;
 };
 
 /** The weights of a range as a line by date, with the target, and the ranges to choose from. */
@@ -87,8 +86,7 @@ export function WeightChart({
   return (
     <>
       {chart}
-      <SegmentedControl
-        options={RANGES.map((value) => ({ value, label: t(`weight.range.${value}`) }))}
+      <RangeControl
         value={range}
         onChange={onRangeChange}
         accessibilityLabel={t('weight.rangeLabel')}

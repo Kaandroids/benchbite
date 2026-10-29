@@ -11,15 +11,10 @@ import { Text } from '@/components/ui/text';
 import { toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useWeightFormat, weightIn, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
+import type { ProgressRange } from '@/progress/ranges';
 import { fonts, useTheme } from '@/theme';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
-import {
-  useLogWeight,
-  useWeightHistory,
-  weightChange,
-  type WeightEntry,
-  type WeightRange,
-} from '@/weight/weights';
+import { useLogWeight, useWeightHistory, weightChange, type WeightEntry } from '@/weight/weights';
 
 import { WeightChart } from './weight-chart';
 
@@ -53,7 +48,7 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
   const formatDate = useDateFormat('medium');
   const monthDay = useMonthDayFormat();
   const logWeight = useLogWeight();
-  const [range, setRange] = useState<WeightRange>('threeMonths');
+  const [range, setRange] = useState<ProgressRange>('threeMonths');
   const history = useWeightHistory(range, today);
   const [draftKg, setDraftKg] = useState<number | null>(null);
   const pending = useRef<{ timer: ReturnType<typeof setTimeout>; save: () => void } | null>(null);
