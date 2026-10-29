@@ -9,7 +9,7 @@ import type { WorkoutMove } from './week-schedule';
 export const MOVES_KEY = ['workout-moves'];
 
 /** Loads the moves again, and the streak, which counts a moved workout on its new day. */
-function reloadMoves(queryClient: QueryClient) {
+export function reloadMoves(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
     queryClient.invalidateQueries({ queryKey: STREAK_KEY }),

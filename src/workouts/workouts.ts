@@ -3,9 +3,8 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
-import { STREAK_KEY } from '@/streak/streak';
 
-import { MOVES_KEY } from './moves';
+import { reloadMoves } from './moves';
 
 type Enums = Database['public']['Enums'];
 export type Muscle = Enums['muscle'];
@@ -144,8 +143,7 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
 function reloadPlan(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
-    queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
-    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+    reloadMoves(queryClient),
   ]);
 }
 
