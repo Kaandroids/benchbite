@@ -29,7 +29,8 @@ revoke execute on function public.day_calories(date, date) from public, anon, au
 
 -- The calories and macros the caller ate on each day from `from_day` to `to_day`, at most a month
 -- of them, with the number of entries and the targets each day is measured against
--- (targets_of_day(), ADR 0040) on the device's `today`. A day without entries has eaten none; its
+-- (targets_of_day(), ADR 0040) on the device's `today`, which must be today on the server give or
+-- take a day (assert_device_today()). A day without entries has eaten none; its
 -- targets are null for a user who has none in use.
 create function public.day_nutrition(from_day date, to_day date, today date)
 returns table (
@@ -44,11 +45,16 @@ returns table (
   target_carbs_g integer,
   target_fat_g integer
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = ''
 as $$
+#variable_conflict use_column
+begin
+  perform public.assert_device_today(day_nutrition.today);
+
+  return query
   with bounds as (
     select
       day_nutrition.from_day as first_day,
@@ -57,6 +63,10 @@ as $$
   days as (
     select d::date as day
     from bounds b, generate_series(b.first_day, b.last_day, interval '1 day') d
+  ),
+  eaten as (
+    select c.day, c.kcal, c.protein_g, c.carbs_g, c.fat_g, c.entries
+    from bounds b, public.day_calories(b.first_day, b.last_day) c
   )
   select
     d.day,
@@ -71,10 +81,9 @@ as $$
     t.fat_g
   from days d
   cross join lateral public.targets_of_day(d.day, day_nutrition.today) t
-  left join (
-    select c.* from bounds b, public.day_calories(b.first_day, b.last_day) c
-  ) e on e.day = d.day
+  left join eaten e on e.day = d.day
   order by d.day;
+end;
 $$;
 
 revoke execute on function public.day_nutrition(date, date, date) from public, anon;
