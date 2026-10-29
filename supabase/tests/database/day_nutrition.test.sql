@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -69,6 +69,21 @@ select is(
   (select count(*)::integer from public.day_nutrition(current_date - 60, current_date, current_date)),
   31,
   'A range gives at most a month of days'
+);
+select is(
+  (select count(*)::integer from public.day_nutrition(current_date, current_date - 3, current_date)),
+  0,
+  'A range that ends before it starts gives no days'
+);
+select throws_ok(
+  $$ select * from public.day_nutrition(current_date - 3, current_date, null) $$,
+  '22023', null,
+  'A missing today is refused'
+);
+select throws_ok(
+  $$ select * from public.day_nutrition(current_date - 3, current_date, current_date + 5) $$,
+  '22023', null,
+  'A today that is not the device''s today is refused'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
