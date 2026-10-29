@@ -1,6 +1,6 @@
 # 0043. Page the week strip back to the account's first week, to read only
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0046
 - **Date:** 2026-10-29
 
 ## Context

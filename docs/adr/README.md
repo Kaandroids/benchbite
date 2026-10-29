@@ -58,6 +58,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0040](0040-day-nutrition-targets.md)                        | Keep each day's targets with the day                                               | Accepted                      |
 | [0041](0041-keep-each-days-planned-workouts.md)              | Keep each day's planned workouts with the day                                      | Accepted                      |
 | [0042](0042-daily-streak-rules.md)                           | Count streak days by workouts and calories, and freeze by choice                   | Accepted, amended by ADR-0044 |
-| [0043](0043-past-weeks-on-the-week-strip.md)                 | Page the week strip back to the account's first week, to read only                 | Accepted                      |
+| [0043](0043-past-weeks-on-the-week-strip.md)                 | Page the week strip back to the account's first week, to read only                 | Accepted, amended by ADR-0046 |
 | [0044](0044-streak-calories-and-workout-days.md)             | Count a day's calories up to its target, and keep the device's day of each workout | Accepted                      |
 | [0045](0045-long-breaks-end-by-themselves.md)                | A break reaching back more than a week ends by itself                              | Accepted                      |
+| [0046](0046-past-weeks-show-their-workouts-and-meals.md)     | A past week shows its workouts, its days' macros and a summary                     | Accepted                      |
