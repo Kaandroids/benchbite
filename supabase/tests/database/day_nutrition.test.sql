@@ -1,9 +1,9 @@
--- days_nutrition() gives what the caller ate on each day of a range, at most a month, against the
+-- day_nutrition() gives what the caller ate on each day of a range, at most a month, against the
 -- targets each day kept (ADR 0040, ADR 0046). Only the caller's own.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(8);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -42,7 +42,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select day, kcal, protein_g, carbs_g, fat_g
-     from public.days_nutrition(current_date - 3, current_date - 1, current_date) $$,
+     from public.day_nutrition(current_date - 3, current_date - 1, current_date) $$,
   $$ values
        (current_date - 3, 1000.0::numeric, 100.0::numeric, 100.0::numeric, 50.0::numeric),
        (current_date - 2, 0::numeric, 0::numeric, 0::numeric, 0::numeric),
@@ -50,32 +50,42 @@ select results_eq(
   'Each day of the range sums its own entries, none for a day without them'
 );
 select results_eq(
+  $$ select entries from public.day_nutrition(current_date - 3, current_date - 1, current_date) $$,
+  $$ values (2), (0), (1) $$,
+  'Each day gives how many entries it has'
+);
+select results_eq(
   $$ select target_calories, target_protein_g, target_carbs_g, target_fat_g
-     from public.days_nutrition(current_date - 3, current_date - 3, current_date) $$,
+     from public.day_nutrition(current_date - 3, current_date - 3, current_date) $$,
   $$ values (1800, 120, 200, 60) $$,
   'A past day gives the targets it kept'
 );
 select results_eq(
-  $$ select target_calories from public.days_nutrition(current_date, current_date, current_date) $$,
+  $$ select target_calories from public.day_nutrition(current_date, current_date, current_date) $$,
   $$ values (2000) $$,
   'Today gives the targets in use'
 );
 select is(
-  (select count(*)::integer from public.days_nutrition(current_date - 60, current_date, current_date)),
+  (select count(*)::integer from public.day_nutrition(current_date - 60, current_date, current_date)),
   31,
   'A range gives at most a month of days'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is(
-  (select kcal from public.days_nutrition(current_date - 3, current_date - 3, current_date)),
+  (select kcal from public.day_nutrition(current_date - 3, current_date - 3, current_date)),
   900.0::numeric,
   'Another user gets only their own entries'
+);
+select is(
+  (select target_calories from public.day_nutrition(current_date, current_date, current_date)),
+  null,
+  'A user without targets in use gets none'
 );
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
-  $$ select * from public.days_nutrition(current_date - 3, current_date, current_date) $$,
+  $$ select * from public.day_nutrition(current_date - 3, current_date, current_date) $$,
   '42501', null,
   'Anon gets nothing'
 );
