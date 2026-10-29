@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@/test/render';
-import { NO_STREAK } from '@/streak/streak';
 import { weekSchedule, type FinishedWorkout, type WorkoutMove } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
@@ -27,7 +26,6 @@ const renderWeek = (
   render(
     <WeekCard
       today={WEDNESDAY}
-      streak={NO_STREAK}
       schedule={weekSchedule(sessions, moves, finished, WEDNESDAY)}
       onDayPress={onDayPress}
     />,
@@ -122,7 +120,6 @@ describe('WeekCard', () => {
     await render(
       <WeekCard
         today={WEDNESDAY}
-        streak={NO_STREAK}
         schedule={weekSchedule([], [], [], WEDNESDAY)}
         streakDays={{ '2026-10-20': 'done', '2026-10-21': 'frozen' }}
         startedOn="2026-10-20"
@@ -145,7 +142,6 @@ describe('WeekCard', () => {
     await render(
       <WeekCard
         today={WEDNESDAY}
-        streak={NO_STREAK}
         schedule={weekSchedule(
           [session(1, 1, 'push'), session(2, 3, 'pull')],
           [],
@@ -173,7 +169,6 @@ describe('WeekCard', () => {
     await render(
       <WeekCard
         today={WEDNESDAY}
-        streak={NO_STREAK}
         schedule={weekSchedule([], [], [], WEDNESDAY)}
         onNext={jest.fn()}
       />,
@@ -184,12 +179,7 @@ describe('WeekCard', () => {
 
   it('hides the days while a week loads', async () => {
     await render(
-      <WeekCard
-        today={WEDNESDAY}
-        streak={NO_STREAK}
-        schedule={weekSchedule([], [], [], WEDNESDAY)}
-        loading
-      />,
+      <WeekCard today={WEDNESDAY} schedule={weekSchedule([], [], [], WEDNESDAY)} loading />,
     );
     expect(screen.getByLabelText('Loading')).toBeTruthy();
     expect(screen.queryByLabelText('Mon 19')).toBeNull();

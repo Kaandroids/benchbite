@@ -16,6 +16,7 @@ import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
 import { useBreakPrompt } from '@/streak/break-prompt';
 import { BreakSheet } from '@/streak/break-sheet';
+import { StreakBadge } from '@/streak/streak-badge';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -105,7 +106,6 @@ export function TodayScreen() {
     content = (
       <PastWeek
         today={today}
-        streak={streak}
         data={pastWeek}
         startedOn={paging.startedOn}
         onPrevious={paging.onPrevious}
@@ -119,8 +119,8 @@ export function TodayScreen() {
         <WeekCard
           entering={cardEntering(0)}
           today={today}
-          streak={streak}
           schedule={schedule}
+          streakDays={streak.days}
           startedOn={paging.startedOn}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
           onPrevious={paging.onPrevious}
@@ -203,9 +203,12 @@ export function TodayScreen() {
         ) : null
       }
     >
-      <Text variant="title" accessibilityRole="header">
-        {greeting(today, name)}
-      </Text>
+      <View style={[styles.title, { gap: spacing.md }]}>
+        <Text variant="title" accessibilityRole="header" style={styles.flex}>
+          {greeting(today, name)}
+        </Text>
+        <StreakBadge streak={streak} />
+      </View>
       {content}
     </TabScreen>
   );
@@ -215,5 +218,12 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     justifyContent: 'center',
+  },
+  title: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flex: {
+    flex: 1,
   },
 });

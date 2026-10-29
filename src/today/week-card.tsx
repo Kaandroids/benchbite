@@ -16,8 +16,7 @@ import {
   useWeekRangeFormat,
   weekdayOf,
 } from '@/i18n/dates';
-import { StreakBadge } from '@/streak/streak-badge';
-import type { DayStatus, Streak } from '@/streak/streak';
+import type { DayStatus } from '@/streak/streak';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 import {
@@ -39,10 +38,9 @@ type WeekCardProps = {
   /** How the card comes in, from the screen that places it. */
   entering?: CardProps['entering'];
   today: Date;
-  streak: Streak;
   /** The week after its moves, with the workouts finished in it (ADR 0028). */
   schedule: WeekSchedule;
-  /** How each day of the week counted for the streak, by its date; this week's by default. */
+  /** How each day of the week counted for the streak, by its date. */
   streakDays?: Record<string, DayStatus>;
   /** The user's first day, YYYY-MM-DD; the days before it are faded. */
   startedOn?: string;
@@ -193,7 +191,7 @@ function arc(radius: number, share: number): string {
 }
 
 /**
- * The week from Monday to Sunday under its title and the streak: a ring for each day with
+ * The week from Monday to Sunday under its title: a ring for each day with
  * workouts, which fills as they are done, and a dot for each rest day. Moved, missed, skipped and
  * extra workouts each have their own mark (ADR 0028), and each day that counted for the streak a
  * flame or a snowflake under it (ADR 0042). This week is titled with today's date; a past week,
@@ -201,9 +199,8 @@ function arc(radius: number, share: number): string {
  */
 export function WeekCard({
   today,
-  streak,
   schedule,
-  streakDays = streak.days,
+  streakDays = {},
   startedOn,
   onDayPress,
   onPrevious,
@@ -292,7 +289,6 @@ export function WeekCard({
             </View>
           ) : null}
         </View>
-        <StreakBadge streak={streak} />
         {pages ? (
           <RoundIconButton
             icon="forward"

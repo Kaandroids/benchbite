@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, cardEntering } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { weekNutrition } from '@/nutrition/week-nutrition';
-import type { Streak } from '@/streak/streak';
 import { useTheme } from '@/theme';
 
 import type { PastWeekData } from './use-past-week';
@@ -16,7 +15,6 @@ import { WeekWorkoutsCard } from './week-workouts-card';
 
 type PastWeekProps = {
   today: Date;
-  streak: Streak;
   /** What the week shows, from usePastWeek(). */
   data: PastWeekData;
   /** The user's first day, YYYY-MM-DD. */
@@ -33,7 +31,6 @@ type PastWeekProps = {
  */
 export function PastWeek({
   today,
-  streak,
   data,
   startedOn,
   onPrevious,
@@ -77,7 +74,6 @@ export function PastWeek({
     <>
       <WeekCard
         today={today}
-        streak={streak}
         schedule={schedule}
         streakDays={data.streakDays}
         startedOn={startedOn}

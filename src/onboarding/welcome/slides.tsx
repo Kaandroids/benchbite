@@ -82,7 +82,7 @@ function PlanIllustration() {
   return (
     <WeekCard
       today={friday}
-      streak={EXAMPLE_STREAK}
+      streakDays={EXAMPLE_STREAK.days}
       schedule={sampleSchedule(friday)}
       onDayPress={() => undefined}
     >

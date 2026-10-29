@@ -4,7 +4,6 @@ import type { LogSummary } from '@/history/history';
 import { useWeekLogs } from '@/history/history';
 import type { DayNutrition } from '@/nutrition/week-nutrition';
 import { useWeekNutrition } from '@/nutrition/week-nutrition';
-import { NO_STREAK } from '@/streak/streak';
 import { useWeekStreak } from '@/streak/use-streak';
 import { act, fireEvent, render, screen } from '@/test/render';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -128,7 +127,6 @@ function LastWeek() {
   return (
     <PastWeek
       today={TODAY}
-      streak={NO_STREAK}
       data={usePastWeek(TODAY, LAST_WEEK, true)}
       onNext={jest.fn()}
       onBackToToday={jest.fn()}
