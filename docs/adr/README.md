@@ -66,3 +66,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0048](0048-our-own-tab-bar-with-bite.md)                    | Draw our own tab bar, with Bite in its middle                                           | Accepted                      |
 | [0049](0049-gemini-behind-our-own-model-interface.md)        | Gemini behind our own language model interface                                          | Accepted                      |
 | [0050](0050-bites-conversations-in-threads.md)               | Bite's conversations in threads, written only by the chat function                      | Accepted                      |
+| [0051](0051-ai-usage-and-a-monthly-limit.md)                 | What AI costs, and a limit per user and month                                           | Accepted                      |
