@@ -224,6 +224,15 @@ and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
 they need no key.
 
+AI comes with a plan, so a user has no budget for it until they get one
+([ADR 0051](docs/adr/0051-ai-usage-and-a-monthly-limit.md)). To give your local account one, run
+in Studio's SQL editor:
+
+```sql
+insert into public.ai_budgets (user_id, monthly_limit_usd)
+select id, 4 from auth.users where email = 'you@example.com';
+```
+
 ### Run the app
 
 With the local Supabase stack running:

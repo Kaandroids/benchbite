@@ -15,15 +15,21 @@ the AI features will be for premium users, with a limit from their plan.
   cached input, output and the reasoning within it), and what it cost. Users read their own rows;
   only Edge Functions write them, with the service role, through `record_ai_usage()`.
 - **Only the database knows prices.** `ai_model_prices` holds each model's price per million
-  tokens from a date on, filled by migrations; `record_ai_usage()` prices a call at the price in
-  force and stores the cost, so a change of price leaves past calls as they were. A call is priced
-  by the model asked for, not the version the provider says answered.
-- **The limit is $4 per user and calendar month in UTC,** in `ai_settings`.
+  tokens from a date on, filled by migrations; `record_ai_usage()` prices a call by the model it
+  was started on, at the price in force when it started, and stores the cost, so a change of
+  price leaves past calls as they were.
+- **A user's limit is their budget per calendar month in UTC,** in `ai_budgets`, which their plan
+  will set. Without one they have the default in `ai_settings`, which is nothing: AI comes with a
+  plan. In development, a budget is set by hand.
+- **The bill as a whole is capped at the provider,** with a budget on the Google Cloud project,
+  not in the database: per-user budgets of nothing by default already keep new accounts from
+  adding to it.
 - **`ai_access()` is the one place that decides on the limit,** with the budget, what is used and
-  when it resets. Guests may not call a model, as AI needs an account; a user who has reached the
-  limit may not until the month resets.
+  when it resets. Guests may not call a model, as AI needs an account; a user without a budget may
+  not, as it needs a plan; a user who has reached the limit may not until the month resets.
 - **Start before, record after:** a function runs every call of a model through `withAiCall()`
-  (`_shared/ai_usage.ts`), which starts it with `start_ai_call()` and the user's token, and
+  (`_shared/ai_usage.ts`), which starts it on the task's model with `start_ai_call()` and the
+  user's token, and
   records it afterwards with what it used, also when it failed part-way, as the provider bills
   that too. Starting refuses what the limit refuses, a model without a price, so that no call
   goes uncounted, and a second call of a feature while one runs, so that requests sent at once go
