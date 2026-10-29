@@ -109,7 +109,8 @@ $$;
 -- exercise, the latest first: the record, the best it beat, and the set that beat it. A first
 -- value is no record, as nothing was beaten (ADR 0025), and equalling the best is none either
 -- (ADR 0024). A workout that beat several kinds of one exercise gives the first of them in the
--- order the app shows the kinds, so that one set is not listed once for each.
+-- order the app shows the kinds (RECORD_KINDS in src/sets/records.ts; change both together), so
+-- that one set is not listed once for each.
 create function public.record_history()
 returns table (
   exercise_id text,
