@@ -10,7 +10,7 @@ import { useDayTargets, type NutritionTargets } from './targets';
 import { useWater } from './water';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() }, useScrollToTop: jest.fn() }));
 jest.mock('./targets', () => ({ useDayTargets: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
 jest.mock('./water', () => ({ ...jest.requireActual('./water'), useWater: jest.fn() }));

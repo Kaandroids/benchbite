@@ -15,7 +15,10 @@ import { WorkoutsScreen } from './workouts-screen';
 jest.mock('@/exercises/images', () => ({
   exerciseImageUrl: (path: string) => `https://images.test/${path}`,
 }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn() },
+  useScrollToTop: jest.fn(),
+}));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
   useWorkouts: jest.fn(),

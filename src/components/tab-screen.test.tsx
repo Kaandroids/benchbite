@@ -4,6 +4,8 @@ import { act, render, screen } from '@/test/render';
 
 import { TabScreen } from './tab-screen';
 
+jest.mock('expo-router', () => ({ useScrollToTop: jest.fn() }));
+
 describe('TabScreen', () => {
   it('shows its content and the overlay, and loads the queries again when pulled down', async () => {
     const queries = [{ refetch: jest.fn(async () => 1) }, { refetch: jest.fn(async () => 2) }];

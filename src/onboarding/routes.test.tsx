@@ -19,6 +19,7 @@ import CreateAccountRoute from '@/app/account/create';
 import SessionExerciseDetails from '@/app/session/exercise/[id]';
 import SessionExerciseHistory from '@/app/session/exercise/history';
 import DevTools from '@/app/dev/tools';
+import BiteRoute from '@/app/bite';
 import SettingsRoute from '@/app/settings';
 import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
@@ -191,6 +192,7 @@ const APP_ROUTES = {
   '(app)/nutrition/index': NutritionTab,
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
+  bite: BiteRoute,
   'session/index': () => <Text>Workout in progress</Text>,
   'session/exercise/[id]': SessionExerciseDetails,
   'session/exercise/history': SessionExerciseHistory,
@@ -357,11 +359,12 @@ describe('account screens', () => {
   });
 });
 
-/** The native tabs in order, as titles; the focused one is the only one that takes touches. */
+/** The tabs in order, as names, and which of them is open. */
 function tabs() {
-  return screen.container
-    .queryAll((node) => String(node.type).startsWith('RNSTabsScreen'))
-    .map((tab) => ({ title: tab.props.title, focused: tab.props.pointerEvents !== 'none' }));
+  return screen.queryAllByRole('tab').map((tab) => ({
+    title: tab.props.accessibilityLabel,
+    focused: tab.props.accessibilityState?.selected === true,
+  }));
 }
 
 describe('app tabs', () => {
@@ -401,7 +404,18 @@ describe('app tabs', () => {
     await act(() => router.navigate(path));
     expect(app.getPathname()).toBe(path.split('?')[0]);
     expect(screen.getByText(text)).toBeOnTheScreen();
-    expect(tabs().filter((tab) => tab.focused)).toEqual([{ title: 'Workout', focused: true }]);
+    // A screen the tab opens covers the tab bar, except the tab's own.
+    expect(tabs().filter((tab) => tab.focused)).toEqual(
+      path === '/workout' ? [{ title: 'Workout', focused: true }] : [],
+    );
+  });
+
+  it('opens Bite from the middle of the tab bar, over the tabs', async () => {
+    const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
+    await act(() => fireEvent.press(screen.getByRole('button', { name: 'Talk to Bite' })));
+    expect(app.getPathname()).toBe('/bite');
+    expect(screen.getByText('Chatting with Bite comes soon.')).toBeOnTheScreen();
+    expect(tabs()).toEqual([]);
   });
 
   it('opens the settings from the Progress tab', async () => {
