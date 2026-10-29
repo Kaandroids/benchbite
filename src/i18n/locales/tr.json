@@ -1584,6 +1584,22 @@
       "tonnes": "{{tonnes}} t",
       "none": "Bu aralıkta antrenman yok.",
       "error": "Antrenmanların yüklenemedi."
+    },
+    "records": {
+      "title": "Kişisel rekorlar",
+      "latest": "En yeni",
+      "byExercise": "Egzersize göre",
+      "order": "Rekorların sıralaması",
+      "thisMonth": "Bu ay",
+      "open": "Egzersizin geçmişini açar",
+      "unknown": "Egzersiz",
+      "newThisMonth_one": "Bu ay {{count}} yeni",
+      "newThisMonth_other": "Bu ay {{count}} yeni",
+      "none": "Bir egzersizde en iyini geç, rekor kır",
+      "empty": {
+        "title": "Henüz rekor yok",
+        "message": "Bir antrenmanda bir egzersizin en iyisini geçtiğinde rekorların burada görünür."
+      }
     }
   }
 }

@@ -1584,6 +1584,22 @@
       "tonnes": "{{tonnes}} t",
       "none": "No workouts in this range.",
       "error": "We couldn't load your workouts."
+    },
+    "records": {
+      "title": "Personal records",
+      "latest": "Latest",
+      "byExercise": "By exercise",
+      "order": "Records listed by",
+      "thisMonth": "This month",
+      "open": "Opens the exercise's history",
+      "unknown": "Exercise",
+      "newThisMonth_one": "{{count}} new this month",
+      "newThisMonth_other": "{{count}} new this month",
+      "none": "Beat a best of an exercise to set one",
+      "empty": {
+        "title": "No records yet",
+        "message": "Beat the best of an exercise in a workout and your records show up here."
+      }
     }
   }
 }
