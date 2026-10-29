@@ -4,9 +4,16 @@ import type { WeekSession } from './workouts';
 
 /**
  * A workout moved from one of its days to another day of the same week, or skipped on it when
- * `toOn` is null. Days are YYYY-MM-DD on the device.
+ * `toOn` is null. Days are YYYY-MM-DD on the device. A settled move is one the database turned
+ * into a skip as the workout left the day it moved to (ADR 0041): it moved away, unlike a skip the
+ * user made (ADR 0044).
  */
-export type WorkoutMove = { workoutId: number; fromOn: string; toOn: string | null };
+export type WorkoutMove = {
+  workoutId: number;
+  fromOn: string;
+  toOn: string | null;
+  settled?: boolean;
+};
 
 /** A finished workout: which workout it was, and the day it started as YYYY-MM-DD. */
 export type FinishedWorkout = { workoutId: number | null; startedOn: string };
@@ -72,12 +79,14 @@ export function weekSchedule(
     const onDay = (item: WeekSession) => (item.on ? item.on === date : item.weekday === index + 1);
     for (const session of sessions.filter(onDay)) {
       const move = moveOf.get(`${session.workoutId}|${date}`);
+      // A move the database settled took the workout away from the day, with nowhere to show it.
+      // A workout that left the plan, moved to a day still to come, is the same before the
+      // database settles it (ADR 0041).
+      if (move?.settled || (move?.toOn && session.left !== undefined && move.toOn >= todayOn)) {
+        continue;
+      }
       const to = move?.toOn ? dates.indexOf(move.toOn) : -1;
-      // A workout that left the plan is not on a day still to come: its move there counts as a
-      // skip of its day, as the database turns it into one.
-      const skipped =
-        move?.toOn === null || (session.left !== undefined && (move?.toOn ?? '') >= todayOn);
-      if (move && skipped) {
+      if (move && move.toOn === null) {
         entries[index]!.push({ session, movedFrom: null, skipped: true });
       } else if (move && to >= 0 && to !== index) {
         moving.push({ session, from: index, to });
@@ -275,10 +284,16 @@ export type StartMove = {
   missed: boolean;
 };
 
+/** Whether a start move only undoes the skip of today, which needs no asking. */
+export function undoesSkipOfToday(move: StartMove, today: string): boolean {
+  return move.fromOn === today && move.on === today;
+}
+
 /**
  * The planned day a workout started on `today` as YYYY-MM-DD can count for (ADR 0028): its
- * earliest missed day this week, else its next planned one. A workout moved away from today counts
- * for today again by undoing the move. Null when it is planned today, or no day of it can move to
+ * earliest missed day this week, else its skip of today, else its next planned one. A workout
+ * moved away from or skipped on today counts for today again by undoing the move or the skip, when
+ * the Undo button could (`canUndo()`). Null when it is planned today, or no day of it can move to
  * today.
  */
 export function startMove(
@@ -291,7 +306,9 @@ export function startMove(
       .filter(
         (workout) =>
           workout.session.workoutId === workoutId &&
-          (workout.status === 'missed' || (workout.status === 'planned' && day.date > today)),
+          (workout.status === 'missed' ||
+            (workout.status === 'skipped' && day.date === today) ||
+            (workout.status === 'planned' && day.date > today)),
       )
       .map((workout): StartMove => ({
         fromOn: originOf(workout, day),

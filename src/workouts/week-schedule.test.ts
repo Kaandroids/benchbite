@@ -142,6 +142,24 @@ describe('weekSchedule', () => {
   });
 });
 
+describe('settled moves', () => {
+  it('leave a workout off the day it moved from, unlike a skip the user made', () => {
+    const schedule = weekSchedule(
+      SESSIONS,
+      [
+        { workoutId: 1, fromOn: '2026-10-19', toOn: null, settled: true },
+        { workoutId: 2, fromOn: '2026-10-20', toOn: null },
+      ],
+      [],
+      WEDNESDAY,
+    );
+    expect(summary(schedule).slice(0, 2)).toEqual([
+      { date: '2026-10-19', workouts: [], movedAway: [], extras: 0 },
+      { date: '2026-10-20', workouts: ['2:skipped'], movedAway: [], extras: 0 },
+    ]);
+  });
+});
+
 describe('dayState', () => {
   const stateOf = (moves: WorkoutMove[], finished: { workoutId: number; startedOn: string }[]) =>
     weekSchedule(SESSIONS, moves, finished, WEDNESDAY).days.map((day) =>
@@ -316,6 +334,28 @@ describe('startMove', () => {
     finished: { workoutId: number; startedOn: string }[] = [],
   ) => startMove(weekSchedule(SESSIONS, moves, finished, WEDNESDAY), workoutId, '2026-10-21');
 
+  it("undoes today's skip, after its missed days, unless the Undo button could not", () => {
+    // Pull (2) skipped on Wednesday, then on Monday, missed.
+    const skippedToday = (moves: WorkoutMove[]) =>
+      startMove(
+        weekSchedule([session(2, 3), session(2, 1)], moves, [], WEDNESDAY),
+        2,
+        '2026-10-21',
+      );
+    const skip = { workoutId: 2, fromOn: '2026-10-21', toOn: null };
+    expect(skippedToday([skip, { workoutId: 2, fromOn: '2026-10-19', toOn: null }])).toEqual({
+      fromOn: '2026-10-21',
+      on: '2026-10-21',
+      missed: false,
+    });
+    // Monday's missed one comes first.
+    expect(skippedToday([skip])).toEqual({ fromOn: '2026-10-19', on: '2026-10-19', missed: true });
+    // Monday's moved onto Wednesday: the skip stays, as Undo could not undo it either.
+    expect(
+      skippedToday([skip, { workoutId: 2, fromOn: '2026-10-19', toOn: '2026-10-21' }]),
+    ).toBeNull();
+  });
+
   it("moves a workout's earliest missed day to today", () => {
     expect(moveOf(1)).toEqual({ fromOn: '2026-10-19', on: '2026-10-19', missed: true });
     expect(moveOf(2)).toEqual({ fromOn: '2026-10-20', on: '2026-10-20', missed: true });
@@ -435,15 +475,22 @@ describe('sessions planned on one day', () => {
     expect(schedule.days[0]?.extras).toBe(1);
   });
 
-  it('counts the move of a workout that left the plan to a later day as a skip of its day', () => {
-    const schedule = weekSchedule(
+  it('leaves a workout that left the plan, moved to a later day, off both days, as once settled', () => {
+    const before = weekSchedule(
       [kept('2026-10-19', 9, 'archived')],
       [{ workoutId: 9, fromOn: '2026-10-19', toOn: '2026-10-22' }],
       [],
       today,
     );
-    expect(schedule.days[0]?.workouts[0]?.status).toBe('skipped');
-    expect(schedule.days[3]?.workouts).toEqual([]);
+    const settled = weekSchedule(
+      [kept('2026-10-19', 9, 'archived')],
+      [{ workoutId: 9, fromOn: '2026-10-19', toOn: null, settled: true }],
+      [],
+      today,
+    );
+    expect(before.days[0]?.workouts).toEqual([]);
+    expect(before.days[3]?.workouts).toEqual([]);
+    expect(summary(before)).toEqual(summary(settled));
   });
 
   it('neither moves nor undoes a workout that left the plan', () => {
