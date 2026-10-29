@@ -1601,6 +1601,27 @@
         "title": "No records yet",
         "message": "Beat the best of an exercise in a workout and your records show up here."
       }
+    },
+    "streak": {
+      "title": "Streak",
+      "calendar": "Streak calendar",
+      "previous": "Previous month",
+      "next": "Next month",
+      "states": {
+        "done": "counted for the streak",
+        "frozen": "frozen",
+        "missed": "missed"
+      },
+      "legend": {
+        "done": "Counted",
+        "frozen": "Frozen",
+        "missed": "Missed"
+      },
+      "done": "days counted",
+      "frozen": "days frozen",
+      "longest": "longest streak",
+      "freezes_one": "{{count}} freeze left",
+      "freezes_other": "{{count}} freezes left"
     }
   }
 }

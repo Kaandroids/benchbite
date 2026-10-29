@@ -1601,6 +1601,27 @@
         "title": "Noch keine Rekorde",
         "message": "Übertriff in einem Workout die Bestleistung einer Übung, dann erscheinen deine Rekorde hier."
       }
+    },
+    "streak": {
+      "title": "Serie",
+      "calendar": "Serienkalender",
+      "previous": "Voriger Monat",
+      "next": "Nächster Monat",
+      "states": {
+        "done": "für die Serie gezählt",
+        "frozen": "eingefroren",
+        "missed": "verpasst"
+      },
+      "legend": {
+        "done": "Gezählt",
+        "frozen": "Eingefroren",
+        "missed": "Verpasst"
+      },
+      "done": "Tage gezählt",
+      "frozen": "Tage eingefroren",
+      "longest": "längste Serie",
+      "freezes_one": "Noch {{count}} Freeze",
+      "freezes_other": "Noch {{count}} Freezes"
     }
   }
 }
