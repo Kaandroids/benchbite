@@ -23,6 +23,85 @@ export type Database = {
   };
   public: {
     Tables: {
+      coach_messages: {
+        Row: {
+          cached_input_tokens: number | null;
+          content: NonNullable<Json>;
+          created_at: string;
+          expression: Database['public']['Enums']['bite_expression'] | null;
+          id: number;
+          input_tokens: number | null;
+          model: string | null;
+          output_tokens: number | null;
+          role: Database['public']['Enums']['coach_role'];
+          thinking_tokens: number | null;
+          thread_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_input_tokens?: number | null;
+          content: NonNullable<Json>;
+          created_at?: string;
+          expression?: Database['public']['Enums']['bite_expression'] | null;
+          id?: never;
+          input_tokens?: number | null;
+          model?: string | null;
+          output_tokens?: number | null;
+          role: Database['public']['Enums']['coach_role'];
+          thinking_tokens?: number | null;
+          thread_id: number;
+        };
+        Update: {
+          cached_input_tokens?: number | null;
+          content?: NonNullable<Json>;
+          created_at?: string;
+          expression?: Database['public']['Enums']['bite_expression'] | null;
+          id?: never;
+          input_tokens?: number | null;
+          model?: string | null;
+          output_tokens?: number | null;
+          role?: Database['public']['Enums']['coach_role'];
+          thinking_tokens?: number | null;
+          thread_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'coach_messages_thread_id_fkey';
+            columns: ['thread_id'];
+            isOneToOne: false;
+            referencedRelation: 'coach_threads';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      coach_threads: {
+        Row: {
+          archived_at: string | null;
+          created_at: string;
+          id: number;
+          last_message_at: string;
+          title: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          archived_at?: string | null;
+          created_at?: string;
+          id?: never;
+          last_message_at?: string;
+          title?: string | null;
+          user_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          created_at?: string;
+          id?: never;
+          last_message_at?: string;
+          title?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       custom_foods: {
         Row: {
           archived_at: string | null;
@@ -1738,6 +1817,8 @@ export type Database = {
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
+      bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
+      coach_role: 'user' | 'bite';
       equipment:
         | 'barbell'
         | 'dumbbell'
@@ -1965,6 +2046,8 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
+      bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
+      coach_role: ['user', 'bite'],
       equipment: [
         'barbell',
         'dumbbell',

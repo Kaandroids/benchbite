@@ -1,6 +1,7 @@
 import { Ellipse, Path } from 'react-native-svg';
 
 import { BRAND_ORANGE } from '@/brand/mark';
+import { Constants } from '@/lib/database.types';
 
 /** Bite's colours: its plate, its features and its cheeks, as drawn on the brand's orange. */
 export const PALETTE = {
@@ -13,15 +14,11 @@ export const PALETTE = {
   tongue: '#FF6A7A',
 };
 
-/** How Bite looks (#293): its face for what it says. */
-export const BITE_EXPRESSIONS = [
-  'neutral',
-  'happy',
-  'sad',
-  'angry',
-  'surprised',
-  'thinking',
-] as const;
+/** The faces Bite answers with, which its messages keep (`bite_expression`, #291). */
+export const ANSWER_EXPRESSIONS = Constants.public.Enums.bite_expression;
+
+/** How Bite looks (#293): its face for what it says, and while it works out a reply. */
+export const BITE_EXPRESSIONS = [...ANSWER_EXPRESSIONS, 'thinking'] as const;
 export type BiteExpression = (typeof BITE_EXPRESSIONS)[number];
 
 /** What Bite is doing (#293): waiting, working out a reply, saying it, or listening to the user. */
