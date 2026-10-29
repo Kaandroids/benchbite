@@ -55,7 +55,7 @@ export function useMoveWorkout() {
   return useMutation({
     // One move at a time, so that on a slow connection an earlier move cannot land last.
     scope: { id: 'workout-moves' },
-    mutationFn: async ({ workoutId, fromOn, toOn }: WorkoutMove) => {
+    mutationFn: async ({ workoutId, fromOn, toOn }: Omit<WorkoutMove, 'settled'>) => {
       const { error } = await supabase.rpc('move_workout', {
         workout_id: workoutId,
         from_on: fromOn,
