@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
 import type { FinishedWorkout } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
+import { STREAK_KEY } from '@/streak/streak';
 
 export const LOGS_KEY = ['workout-logs'];
 
@@ -270,6 +271,7 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'recent'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'week'] }),
         queryClient.invalidateQueries({ queryKey: [...LOGS_KEY, 'exercise'] }),
+        queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
       ]),
   });
 }

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { deviceToday } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import { STREAK_KEY } from '@/streak/streak';
 
 import { MOVES_KEY } from './moves';
 
@@ -138,12 +139,13 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
 
 /**
  * Loads the plan again after it changed: the workouts, with the planned days under them, and the
- * moves, which the database settles when a workout changes (ADR 0041).
+ * moves, which the database settles when a workout changes (ADR 0041), and the streak.
  */
 function reloadPlan(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
     queryClient.invalidateQueries({ queryKey: MOVES_KEY }),
+    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
   ]);
 }
 
