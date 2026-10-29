@@ -219,6 +219,25 @@ Deno.test('streams the text as it comes and ends with the usage of the whole cal
   ]);
 });
 
+Deno.test(
+  'reads events split inside a line break, and a last one without a blank line',
+  async () => {
+    const { model } = gemini(() =>
+      sse([
+        'data: {"candidates":[{"content":{"parts":[{"text":"One"}]}}]}\r\n\r',
+        '\ndata: {"candidates":[{"content":{"parts":[{"text":"Two"}]}}]}\r',
+        '\n\r\ndata: {"candidates":[{"content":{"parts":[{"text":"Three"}]},"finishReason":"STOP"}]}',
+      ]),
+    );
+
+    const texts: string[] = [];
+    for await (const event of model.stream(request))
+      if (event.type === 'text') texts.push(event.text);
+
+    assertEquals(texts, ['One', 'Two', 'Three']);
+  },
+);
+
 Deno.test('throws a model error, retryable for limits and outages only', async () => {
   const limited = gemini(() =>
     Response.json({ error: { message: 'Quota exceeded' } }, { status: 429 }),

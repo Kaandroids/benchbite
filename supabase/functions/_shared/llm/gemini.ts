@@ -209,19 +209,27 @@ export async function* serverSentEvents(
 ): AsyncIterable<GeminiResponse> {
   let buffer = '';
   for await (const text of body.pipeThrough(new TextDecoderStream())) {
-    buffer += text.replaceAll('\r\n', '\n');
+    // On the whole buffer, as a read can end between the two characters of a line break.
+    buffer = (buffer + text).replaceAll('\r\n', '\n');
     let end;
     while ((end = buffer.indexOf('\n\n')) !== -1) {
       const event = buffer.slice(0, end);
       buffer = buffer.slice(end + 2);
-      const data = event
-        .split('\n')
-        .filter((line) => line.startsWith('data:'))
-        .map((line) => line.slice(5).trimStart())
-        .join('\n');
+      const data = eventData(event);
       if (data) yield JSON.parse(data);
     }
   }
+  // The last event, if the stream ended without a blank line after it.
+  const data = eventData(buffer);
+  if (data) yield JSON.parse(data);
+}
+
+function eventData(event: string): string {
+  return event
+    .split('\n')
+    .filter((line) => line.startsWith('data:'))
+    .map((line) => line.slice(5).trimStart())
+    .join('\n');
 }
 
 async function modelError(response: Response): Promise<ModelError> {
