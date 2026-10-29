@@ -64,14 +64,17 @@ export function isOverTarget(day: DayNutrition): boolean {
   return day.targets !== null && day.eaten.calories > day.targets.calories;
 }
 
+/** The query keys of what was eaten in each week, which changing an entry reloads. */
+export const WEEK_NUTRITION_KEY = ['meal-entries', 'week'];
+
 /**
  * What was eaten on each day of the week of `week`, with the targets each day kept, as seen on the
- * device's `today` (ADR 0046). Under the meal entries, so logging a meal reloads it.
+ * device's `today` (ADR 0046).
  */
 export function useWeekNutrition(today: Date, week: Date) {
   const monday = weekStart(week);
   return useQuery({
-    queryKey: ['meal-entries', 'week', toIsoDate(monday)],
+    queryKey: [...WEEK_NUTRITION_KEY, toIsoDate(monday)],
     queryFn: async (): Promise<DayNutrition[]> => {
       const { data, error } = await supabase.rpc('day_nutrition', {
         from_day: toIsoDate(monday),

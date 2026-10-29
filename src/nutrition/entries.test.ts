@@ -58,6 +58,8 @@ describe('useAddEntry', () => {
       portion_count: 2,
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-27'] });
+    // A past week sums the day up.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'week'] });
   });
 
   it("logs a food of the user's own by its id", async () => {
