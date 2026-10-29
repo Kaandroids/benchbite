@@ -47,14 +47,17 @@ export type Database = {
           call_id: string;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
+          reserved_usd: number;
           started_at: string;
           user_id: string;
+          abandon_ai_call: undefined | null;
         };
-        ComputedFields: never;
+        ComputedFields: 'abandon_ai_call';
         Insert: {
           call_id?: string;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
+          reserved_usd: number;
           started_at?: string;
           user_id: string;
         };
@@ -62,8 +65,28 @@ export type Database = {
           call_id?: string;
           feature?: Database['public']['Enums']['ai_feature'];
           model?: string;
+          reserved_usd?: number;
           started_at?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_feature_limits: {
+        Row: {
+          feature: Database['public']['Enums']['ai_feature'];
+          max_input_tokens: number;
+          max_output_tokens: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          feature: Database['public']['Enums']['ai_feature'];
+          max_input_tokens: number;
+          max_output_tokens: number;
+        };
+        Update: {
+          feature?: Database['public']['Enums']['ai_feature'];
+          max_input_tokens?: number;
+          max_output_tokens?: number;
         };
         Relationships: [];
       };
@@ -111,8 +134,10 @@ export type Database = {
       ai_usage: {
         Row: {
           cached_input_tokens: number;
+          call_id: string;
           cost_usd: number;
           created_at: string;
+          estimated: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           id: number;
           input_tokens: number;
@@ -124,8 +149,10 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           cached_input_tokens: number;
+          call_id: string;
           cost_usd: number;
           created_at?: string;
+          estimated?: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           id?: never;
           input_tokens: number;
@@ -136,8 +163,10 @@ export type Database = {
         };
         Update: {
           cached_input_tokens?: number;
+          call_id?: string;
           cost_usd?: number;
           created_at?: string;
+          estimated?: boolean;
           feature?: Database['public']['Enums']['ai_feature'];
           id?: never;
           input_tokens?: number;
@@ -1407,6 +1436,15 @@ export type Database = {
       };
     };
     Functions: {
+      abandon_ai_call: {
+        Args: {
+          held: Omit<
+            Database['public']['Tables']['ai_calls_in_flight']['Row'],
+            Database['public']['Tables']['ai_calls_in_flight']['ComputedFields']
+          >;
+        };
+        Returns: undefined;
+      };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
@@ -1418,6 +1456,18 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      ai_cost: {
+        Args: {
+          cached_input_tokens: number;
+          input_tokens: number;
+          output_tokens: number;
+          price: Omit<
+            Database['public']['Tables']['ai_model_prices']['Row'],
+            Database['public']['Tables']['ai_model_prices']['ComputedFields']
+          >;
+        };
+        Returns: number;
       };
       ai_model_price: {
         Args: { at: string; model: string };
@@ -1810,12 +1860,10 @@ export type Database = {
         Args: {
           cached_input_tokens: number;
           call_id: string;
-          feature: Database['public']['Enums']['ai_feature'];
           input_tokens: number;
-          model: string;
+          known?: boolean;
           output_tokens: number;
           thinking_tokens: number;
-          user_id: string;
         };
         Returns: number;
       };
@@ -2110,6 +2158,7 @@ export type Database = {
         used_usd: number | null;
         resets_at: string | null;
         call_id: string | null;
+        max_output_tokens: number | null;
       };
       break_workout: {
         id: number | null;
