@@ -22,8 +22,8 @@ workouts and calories (ADR 0042, ADR 0044), so the week should show both.
   - **Week summary:** the calories eaten against the targets of the days logged, as one bar, and
     protein, carbs and fat each against their targets with their average a day.
 - **Days read as they were kept:** each day's targets are the ones it kept (ADR 0040), from
-  `days_nutrition(from_day, to_day, today)`, which sums each day's entries with its targets for up
-  to a month of days.
+  `day_nutrition(from_day, to_day, today)`, which gives each day's entries, summed by the same
+  `day_calories()` the streak reads, with its targets for up to a month of days.
 - **The strip itself stays as ADR 0043 says:** whole weeks, back to the first week, never
   forward, and a day opens nothing.
 
