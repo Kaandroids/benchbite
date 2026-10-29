@@ -59,7 +59,8 @@ begin
   )
   select
     d.day,
-    coalesce(round(g.minutes), 0)::integer,
+    -- Up to the next minute, so that a day with a workout never reads as none.
+    coalesce(ceil(g.minutes), 0)::integer,
     coalesce(g.lifted_kg, 0),
     coalesce(p.done, 0)::integer,
     coalesce(p.missed, 0)::integer

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -42,6 +42,11 @@ from unnest(array[12, 3, 2]) d;
 -- not planned five days ago for 30 minutes.
 select pg_temp.log(800, '00000000-0000-0000-0000-00000000000a', 930, current_date - 3, 90);
 select pg_temp.log(801, '00000000-0000-0000-0000-00000000000a', null, current_date - 5, 30);
+-- A workout of 20 seconds six days ago.
+insert into public.workout_logs (id, user_id, name, started_at, finished_at, started_on)
+  overriding system value
+  values (803, '00000000-0000-0000-0000-00000000000a', 'Push', current_date - 6 + time '18:00',
+    current_date - 6 + time '18:00:20', current_date - 6);
 insert into public.logged_sets (log_id, user_id, exercise_position, set_position, exercise_id,
   weight_kg, reps, seconds)
 values
@@ -66,6 +71,11 @@ select results_eq(
      from public.day_training(current_date - 5, current_date - 5, current_date) $$,
   $$ values (30, 0, 0) $$,
   'A workout that was not planned gives its minutes'
+);
+select is(
+  (select minutes from public.day_training(current_date - 6, current_date - 6, current_date)),
+  1,
+  'A workout shorter than a minute counts as one'
 );
 select results_eq(
   $$ select done, missed from public.day_training(current_date, current_date, current_date) $$,
