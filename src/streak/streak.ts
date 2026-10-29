@@ -1,3 +1,5 @@
+import type { Workout } from '@/workouts/workouts';
+
 /** How a past day counted for the streak; a day without a status broke it or is still open. */
 export type DayStatus = 'done' | 'frozen';
 
@@ -9,6 +11,18 @@ export type Streak = {
   days: Record<string, DayStatus>;
 };
 
+/** What kept a missed day from counting (streak_break_days(), #278). */
+export type MissedDay = {
+  /** YYYY-MM-DD. */
+  day: string;
+  /** Its workouts not done, or skipped. */
+  workouts: (Pick<Workout, 'name' | 'type'> & { id: number; skipped: boolean })[];
+  eaten: number;
+  target: number;
+  /** Whether the calories eaten kept the day: more than none and no more than the target. */
+  caloriesCount: boolean;
+};
+
 /**
  * Missed days whose break the user has not answered yet (ADR 0042): they can freeze them, one
  * freeze a day, when they have enough, or start again.
@@ -16,6 +30,8 @@ export type Streak = {
 export type StreakBreak = {
   /** The missed days, as YYYY-MM-DD, from the earliest. */
   missed: string[];
+  /** Why each missed day did not count, from the earliest. */
+  days: MissedDay[];
   freezes: number;
   /** The streak if the missed days were frozen. */
   savedCount: number;
