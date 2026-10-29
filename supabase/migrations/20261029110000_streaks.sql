@@ -16,7 +16,7 @@ as $$
   select current_date - 9;
 $$;
 
--- As before, with the window named.
+-- As before (20261027210000), with the window named.
 create or replace function public.check_log_day()
 returns trigger
 language plpgsql
@@ -41,7 +41,7 @@ grant execute on function public.last_day_closed_to_logging() to authenticated;
 -- calories, as the move did.
 alter table public.workout_moves add column settled boolean not null default false;
 
--- As before, marking the moves it turns into skips.
+-- As before (20261028220000), marking the moves it turns into skips.
 create or replace function public.settle_moves(workout public.workouts, kept date, deleted boolean)
 returns void
 language plpgsql
@@ -79,7 +79,7 @@ end;
 $$;
 
 
--- As before; moving a day again is the user's move, not a settled one.
+-- As before (20261024200000); moving a day again is the user's move, not a settled one.
 create or replace function public.save_move(
   source public.workouts, from_on date, to_on date, on_day date
 )
@@ -106,18 +106,19 @@ $$;
 -- ------------------------------------------------------------------------------------------------
 -- Streak days and freezes
 
-create type public.streak_result as enum ('counted', 'frozen', 'missed');
+-- How a day went for the streak; `open` is today until it is done.
+create type public.streak_state as enum ('done', 'frozen', 'missed', 'open');
 
 -- Final days and how they went. Days not kept yet are worked out when read.
 create table public.streak_days (
   user_id uuid not null references auth.users (id) on delete cascade,
   day date not null,
-  result public.streak_result not null,
+  result public.streak_state not null check (result <> 'open'),
   primary key (user_id, day)
 );
 
--- Each user's freezes and the last day whose break they answered. A user without a row has the 3
--- freezes every user starts with and has answered nothing yet.
+-- Each user's freezes and the last day whose break they answered. The row is made on the user's
+-- first read, with the 3 freezes every user starts with.
 create table public.user_streaks (
   user_id uuid primary key references auth.users (id) on delete cascade,
   freezes integer not null default 3 check (freezes >= 0),
@@ -139,11 +140,6 @@ create policy "Users read their freezes"
 revoke all on public.streak_days, public.user_streaks from anon, authenticated;
 grant select on public.streak_days, public.user_streaks to authenticated;
 
--- Users from before start their streak today, as the days before it could not have counted: no
--- break before today is theirs to answer.
-insert into public.user_streaks (user_id, answered_through)
-select u.id, current_date - 1 from auth.users u;
-
 -- ------------------------------------------------------------------------------------------------
 -- Working days out
 
@@ -162,8 +158,8 @@ as $$
   );
 $$;
 
--- The caller's workouts of each day from `from_day` to `to_day`, at most a year as
--- planned_workouts() gives: those planned on it that did not move away, and those moved to it.
+-- The caller's workouts of each day from `from_day` to `to_day`, at most the year that
+-- planned_workouts() reads: those planned on it that did not move away, and those moved to it.
 -- Each is done when a workout of it started on the day, though it was deleted since, and skipped
 -- when the user skipped it on the day; a move that settling turned into a skip moved it away.
 create function public.day_workouts(from_day date, to_day date, today date)
@@ -211,12 +207,12 @@ as $$
 $$;
 
 -- How each of the caller's days from `from_day` to `to_day` went, from their first day to the
--- device's today, at most a year as day_workouts() gives: past days kept as kept, the others
+-- device's today, at most a year (366 days, as planned_workouts() reads): past days kept as kept, the others
 -- worked out. A day counts when each of its workouts was done and none was skipped, though done
 -- anyway, and more than none but no more than its target's calories were eaten. Today is open
 -- until it counts, and always worked out.
 create function public.streak_states(from_day date, to_day date, today date)
-returns table (day date, state text)
+returns table (day date, state public.streak_state)
 language sql
 stable
 security definer
@@ -255,19 +251,20 @@ as $$
   select
     o.day,
     case
-      when k.result is not null and o.day < streak_states.today then k.result::text
-      when o.counts then 'counted'
+      when k.result is not null and o.day < streak_states.today then k.result
+      when o.counts then 'done'
       when o.day >= streak_states.today then 'open'
       else 'missed'
-    end
+    end::public.streak_state
   from worked_out o
   left join public.streak_days k on k.user_id = (select auth.uid()) and k.day = o.day
   order by o.day;
 $$;
 
 -- Locks the caller's streak, so that keeping days and answering a break wait for each other, and
--- returns it, with the freezes every user starts with.
-create function public.lock_user_streak()
+-- returns it. On the first read it starts on the device's today: the days before could not be
+-- seen to count, so their breaks are answered, also for users from before the streak.
+create function public.lock_user_streak(today date)
 returns public.user_streaks
 language plpgsql
 security definer
@@ -276,14 +273,16 @@ as $$
 declare
   streak public.user_streaks;
 begin
-  insert into public.user_streaks (user_id) values ((select auth.uid())) on conflict do nothing;
+  insert into public.user_streaks (user_id, answered_through)
+  values ((select auth.uid()), lock_user_streak.today - 1)
+  on conflict do nothing;
   select * into streak from public.user_streaks s where s.user_id = (select auth.uid()) for update;
   return streak;
 end;
 $$;
 
 -- Keeps the caller's days through `through` that are not kept yet, with how they went, and
--- returns the first day not kept. A year at a time, as streak_states() works out at most a year.
+-- returns the first day not kept. 366 days at a time, as streak_states() works out no more.
 create function public.keep_streak_days(through date, today date)
 returns date
 language plpgsql
@@ -298,7 +297,7 @@ declare
 begin
   while next_day <= keep_streak_days.through loop
     insert into public.streak_days (user_id, day, result)
-    select (select auth.uid()), s.day, s.state::public.streak_result
+    select (select auth.uid()), s.day, s.state
     from public.streak_states(
       next_day, least(keep_streak_days.through, next_day + 365), keep_streak_days.today
     ) s
@@ -338,7 +337,7 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
   perform public.assert_device_today(streak.today);
-  mine := public.lock_user_streak();
+  mine := public.lock_user_streak(streak.today);
   -- Today is always worked out, also when the device's day went back past a kept one.
   first_open := least(
     public.keep_streak_days(
@@ -349,7 +348,7 @@ begin
 
   return query
   with states as (
-    select k.day, k.result::text as state
+    select k.day, k.result as state
     from public.streak_days k
     where k.user_id = (select auth.uid()) and k.day < first_open
     union all
@@ -367,7 +366,7 @@ begin
     where s.day < streak.today
   ),
   today_state as (
-    select coalesce(bool_or(s.state = 'counted'), false) as counted
+    select coalesce(bool_or(s.state = 'done'), false) as counted
     from states s
     where s.day = streak.today
   )
@@ -411,7 +410,7 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
   perform public.assert_device_today(answer_streak_break.today);
-  mine := public.lock_user_streak();
+  mine := public.lock_user_streak(answer_streak_break.today);
   perform public.keep_streak_days(answer_streak_break.today - 1, answer_streak_break.today);
 
   select coalesce(array_agg(k.day), '{}') into missed
@@ -440,7 +439,7 @@ $$;
 revoke execute on function
   public.streak_start(),
   public.day_workouts(date, date, date),
-  public.lock_user_streak(),
+  public.lock_user_streak(date),
   public.keep_streak_days(date, date)
 from public, anon, authenticated;
 
