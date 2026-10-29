@@ -894,18 +894,18 @@ export type Database = {
       streak_days: {
         Row: {
           day: string;
-          result: Database['public']['Enums']['streak_result'];
+          result: Database['public']['Enums']['streak_state'];
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
           day: string;
-          result: Database['public']['Enums']['streak_result'];
+          result: Database['public']['Enums']['streak_state'];
           user_id: string;
         };
         Update: {
           day?: string;
-          result?: Database['public']['Enums']['streak_result'];
+          result?: Database['public']['Enums']['streak_state'];
           user_id?: string;
         };
         Relationships: [];
@@ -1411,7 +1411,7 @@ export type Database = {
       lock_planned_days: { Args: { owner: string }; Returns: undefined };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       lock_user_streak: {
-        Args: Record<PropertyKey, never>;
+        Args: { today: string };
         Returns: {
           answered_through: string | null;
           freezes: number;
@@ -1619,7 +1619,7 @@ export type Database = {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
           day: string;
-          state: string;
+          state: Database['public']['Enums']['streak_state'];
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
@@ -1744,7 +1744,7 @@ export type Database = {
         | 'can'
         | 'bottle';
       sex: 'female' | 'male' | 'unspecified';
-      streak_result: 'counted' | 'frozen' | 'missed';
+      streak_state: 'done' | 'frozen' | 'missed' | 'open';
       training_setup: 'gym' | 'dumbbells' | 'bodyweight';
       weight_unit: 'kg' | 'lb';
       workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
@@ -1971,7 +1971,7 @@ export const Constants = {
         'bottle',
       ],
       sex: ['female', 'male', 'unspecified'],
-      streak_result: ['counted', 'frozen', 'missed'],
+      streak_state: ['done', 'frozen', 'missed', 'open'],
       training_setup: ['gym', 'dumbbells', 'bodyweight'],
       weight_unit: ['kg', 'lb'],
       workout_type: ['full_body', 'upper', 'lower', 'push', 'pull', 'legs'],
