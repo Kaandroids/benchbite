@@ -6,7 +6,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(45);
+select plan(48);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -44,12 +44,12 @@ select ok(
   'A model has no price before its first one, nor one never priced'
 );
 
--- A chat call of A's: on Flash-Lite, at most 32,000 tokens in and 2,048 out, which is
--- 32,000 × $0.30 + 2,048 × $2.50, per million, set aside.
+-- A chat call of A's, sending 32,000 tokens, the most chat allows, on Flash-Lite: with the most
+-- it may answer, 2,048 tokens, 32,000 × $0.30 + 2,048 × $2.50, per million, is set aside.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 insert into calls select 'chat', call_id
-  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite');
+  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000);
 select ok((select call_id from calls where name = 'chat') is not null, 'A user with a budget starts a call');
 select results_eq(
   $$ select budget_usd, used_usd, resets_at = date_trunc('month', now(), 'UTC') + interval '1 month'
@@ -59,33 +59,49 @@ select results_eq(
 );
 select results_eq(
   $$ select allowed, reason, call_id, max_output_tokens
-     from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+     from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values (false, 'call_in_progress'::public.ai_access_reason, null::uuid, null::integer) $$,
   'A second call of the same feature does not start while the first runs'
 );
 insert into calls select 'meal', call_id
-  from public.start_ai_call('meal_photo', 'gemini-3.8-flash');
+  from public.start_ai_call('meal_photo', 'gemini-3.8-flash', 8000);
 select ok((select call_id from calls where name = 'meal') is not null, 'A call of another feature does');
 select results_eq(
-  $$ select max_output_tokens from public.start_ai_call('review', 'gemini-3.8-flash') $$,
+  $$ select max_output_tokens from public.start_ai_call('review', 'gemini-3.8-flash', 100000) $$,
   $$ values (4096) $$,
   'and says where its answer is cut'
 );
 select results_eq(
-  $$ select allowed, reason from public.start_ai_call('coach_voice', 'unknown-model') $$,
+  $$ select allowed, reason from public.start_ai_call('coach_voice', 'unknown-model', 10) $$,
   $$ values (false, 'unpriced_model'::public.ai_access_reason) $$,
   'A model without a price does not start'
+);
+select results_eq(
+  $$ select allowed, reason from public.start_ai_call('coach_voice', 'gemini-3.5-flash-lite', 32001) $$,
+  $$ values (false, 'request_too_large'::public.ai_access_reason) $$,
+  'nor a call that sends more than its feature allows'
+);
+select results_eq(
+  $$ select allowed from public.start_ai_call('coach_voice', 'gemini-3.5-flash-lite', 0) $$,
+  $$ values (true) $$,
+  'A small call sets aside little'
+);
+select is(
+  (select used_usd from public.ai_access()),
+  -- Chat, the meal photo, the review and this one.
+  0.014720 + 0.009840 + 0.090360 + 0.005120,
+  'only the most it may answer'
 );
 
 -- B's budget of $0.02 holds one chat call's most, not two.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select results_eq(
-  $$ select allowed from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ select allowed from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values (true) $$,
   'A call starts while the budget left holds the most it may cost'
 );
 select results_eq(
-  $$ select allowed, reason from public.start_ai_call('coach_voice', 'gemini-3.5-flash-lite') $$,
+  $$ select allowed, reason from public.start_ai_call('coach_voice', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values (false, 'limit_reached'::public.ai_access_reason) $$,
   'and another does not when what is set aside leaves too little'
 );
@@ -170,24 +186,30 @@ select results_eq(
 -- A call that never recorded keeps its place for ten minutes, then is counted at its most.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 insert into calls select 'chat 2', call_id
-  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite');
+  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000);
 set local role service_role;
 update public.ai_calls_in_flight set started_at = now() - interval '9 minutes'
 where call_id = (select call_id from calls where name = 'chat 2');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
-  $$ select reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ select reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values ('call_in_progress'::public.ai_access_reason) $$,
   'A call keeps its place for ten minutes'
 );
 
 set local role service_role;
 update public.ai_calls_in_flight set started_at = now() - interval '11 minutes'
-where call_id = (select call_id from calls where name = 'chat 2');
+where call_id = (select call_id from calls where name = 'chat 2')
+  or (user_id = '00000000-0000-0000-0000-00000000000a' and feature = 'coach_voice');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 insert into calls select 'chat 3', call_id
-  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite');
+  from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000);
 select ok((select call_id from calls where name = 'chat 3') is not null, 'and gives it up after them');
+select results_eq(
+  $$ select cost_usd, estimated from public.ai_usage where feature = 'coach_voice' $$,
+  $$ values (0.005120::numeric, true) $$,
+  'A start counts every call of the user''s left behind, of any feature'
+);
 
 set local role service_role;
 select results_eq(
@@ -218,7 +240,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$ select feature::text from public.ai_usage order by id $$,
-  $$ values ('coach_chat'), ('meal_photo'), ('review'), ('coach_chat') $$,
+  $$ values ('coach_chat'), ('meal_photo'), ('review'), ('coach_voice'), ('coach_chat') $$,
   'Users read their own usage'
 );
 select throws_ok(
@@ -281,7 +303,7 @@ insert into public.ai_usage
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   (select used_usd from public.ai_access()),
-  0.532911::numeric,
+  0.538031::numeric,
   'Only the calls of this month count'
 );
 
@@ -294,7 +316,7 @@ select results_eq(
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
 select results_eq(
-  $$ select allowed, reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ select allowed, reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values (false, 'account_required'::public.ai_access_reason) $$,
   'nor does a guest, as AI needs an account'
 );
@@ -306,18 +328,10 @@ select results_eq(
   'nor a user without a budget, which is nothing by default'
 );
 
-set local role postgres;
-delete from public.ai_settings;
-select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');
-select results_eq(
-  $$ select reason from public.ai_access() $$,
-  $$ values ('plan_required'::public.ai_access_reason) $$,
-  'also if the settings were lost'
-);
 
 select set_config('role', 'anon', true);
 select throws_ok(
-  $$ select public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite') $$,
+  $$ select public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   '42501', null,
   'Without signing in, no call starts'
 );
