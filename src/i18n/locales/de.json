@@ -275,6 +275,7 @@
     "calorieTarget": "/ {{target}} kcal",
     "gramTarget": "/ {{target}} g",
     "averageGrams": "Ø {{grams}} g",
+    "target": "Ziel",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Heute",
