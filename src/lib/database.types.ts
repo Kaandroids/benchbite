@@ -1270,8 +1270,27 @@ export type Database = {
       day_calories: {
         Args: { from_day: string; to_day: string };
         Returns: {
+          carbs_g: number;
           day: string;
+          entries: number;
+          fat_g: number;
           kcal: number;
+          protein_g: number;
+        }[];
+      };
+      day_nutrition: {
+        Args: { from_day: string; to_day: string; today: string };
+        Returns: {
+          carbs_g: number;
+          day: string;
+          entries: number;
+          fat_g: number;
+          kcal: number;
+          protein_g: number;
+          target_calories: number;
+          target_carbs_g: number;
+          target_fat_g: number;
+          target_protein_g: number;
         }[];
       };
       day_workouts: {
@@ -1284,20 +1303,6 @@ export type Database = {
           skipped: boolean;
           type: Database['public']['Enums']['workout_type'];
           workout_id: number;
-        }[];
-      };
-      days_nutrition: {
-        Args: { from_day: string; to_day: string; today: string };
-        Returns: {
-          carbs_g: number;
-          day: string;
-          fat_g: number;
-          kcal: number;
-          protein_g: number;
-          target_calories: number;
-          target_carbs_g: number;
-          target_fat_g: number;
-          target_protein_g: number;
         }[];
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
