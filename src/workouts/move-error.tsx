@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/ui/text';
 import { isDbError } from '@/lib/errors';
-import type { WorkoutMove } from '@/workouts/week-schedule';
+import type { WorkoutMove } from './week-schedule';
 
 type MoveErrorProps = {
   /** The move that failed, with its error, from `useMoveWorkout`. */

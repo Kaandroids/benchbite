@@ -599,7 +599,6 @@ describe('moving workouts', () => {
   it('asks to answer a break of the streak, and says how a freeze kept it', async () => {
     mockData({});
     mockStreak({
-      missed: ['2026-10-20'],
       days: [noMeals('2026-10-20')],
       freezes: 3,
       savedCount: 6,
@@ -623,7 +622,6 @@ describe('moving workouts', () => {
   it('opens a missed day to log, out of the way until the tab shows again', async () => {
     mockData({});
     mockStreak({
-      missed: ['2026-10-20'],
       days: [noMeals('2026-10-20')],
       freezes: 3,
       savedCount: 6,
@@ -640,7 +638,6 @@ describe('moving workouts', () => {
   it('lets a closed break wait, and asks again once another day is missed', async () => {
     mockData({});
     mockStreak({
-      missed: ['2026-10-19'],
       days: [noMeals('2026-10-19')],
       freezes: 3,
       savedCount: 6,
@@ -652,7 +649,6 @@ describe('moving workouts', () => {
     expect(screen.queryByText('Your streak broke')).toBeNull();
 
     mockStreak({
-      missed: ['2026-10-19', '2026-10-20'],
       days: [noMeals('2026-10-19'), noMeals('2026-10-20')],
       freezes: 3,
       savedCount: 7,
