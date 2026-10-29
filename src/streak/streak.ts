@@ -28,9 +28,7 @@ export type MissedDay = {
  * freeze a day, when they have enough, or start again.
  */
 export type StreakBreak = {
-  /** The missed days, as YYYY-MM-DD, from the earliest. */
-  missed: string[];
-  /** Why each missed day did not count, from the earliest. */
+  /** The missed days and why each did not count, from the earliest. */
   days: MissedDay[];
   freezes: number;
   /** The streak if the missed days were frozen. */

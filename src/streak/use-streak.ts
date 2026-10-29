@@ -80,7 +80,6 @@ export function useStreak(today: Date) {
         streakBreak:
           missed.length > 0
             ? {
-                missed,
                 days: await fetchMissedDays(missed, todayOn),
                 freezes,
                 savedCount: saved_count,
