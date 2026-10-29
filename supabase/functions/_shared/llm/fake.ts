@@ -6,6 +6,7 @@ import {
   type ModelResponse,
   type StreamEvent,
   streamedPart,
+  type Task,
   type Usage,
 } from './types.ts';
 
@@ -22,11 +23,21 @@ export const FAKE_USAGE: Usage = {
 
 export class FakeModel implements LanguageModel {
   readonly requests: ModelRequest[] = [];
+  /** What `countTokens()` says every request sends. */
+  inputTokens = FAKE_USAGE.inputTokens;
   readonly #turns: FakeTurn[];
 
   /** Each call takes the next turn of the script; a call after the last one throws. */
   constructor(...turns: FakeTurn[]) {
     this.#turns = turns;
+  }
+
+  model(_task: Task): string {
+    return 'fake';
+  }
+
+  countTokens(_request: ModelRequest): Promise<number> {
+    return Promise.resolve(this.inputTokens);
   }
 
   generate(request: ModelRequest): Promise<ModelResponse> {
@@ -46,10 +57,6 @@ export class FakeModel implements LanguageModel {
     this.requests.push(request);
     const turn = this.#turns.shift();
     if (!turn) throw new Error(`FakeModel: no turn left for request ${this.requests.length}`);
-    const response: ModelResponse = Array.isArray(turn)
-      ? { parts: turn, usage: FAKE_USAGE, finish: 'stop' }
-      : turn;
-    request.onUsage?.(response.usage);
-    return response;
+    return Array.isArray(turn) ? { parts: turn, usage: FAKE_USAGE, finish: 'stop' } : turn;
   }
 }

@@ -55,6 +55,24 @@ export class GeminiModel implements LanguageModel {
     this.#options = options;
   }
 
+  model(task: Task): string {
+    return this.#options.models(task).model;
+  }
+
+  async countTokens(request: ModelRequest): Promise<number> {
+    const config = this.#options.models(request.task);
+    // What it sends: the answer's settings are not counted.
+    const { generationConfig: _, ...content } = toGeminiRequest(request, config);
+    const response = await this.#post(config.model, 'countTokens', {
+      generateContentRequest: { model: `models/${config.model}`, ...content },
+    });
+    const body = (await response.json()) as { totalTokens?: number };
+    if (typeof body.totalTokens !== 'number') {
+      throw new ModelError('Gemini: countTokens gave no count', 502, true, false);
+    }
+    return body.totalTokens;
+  }
+
   async generate(request: ModelRequest): Promise<ModelResponse> {
     const { model, response } = await this.#call(request, 'generateContent');
     let body: GeminiResponse;
@@ -62,11 +80,13 @@ export class GeminiModel implements LanguageModel {
       body = await response.json();
     } catch (error) {
       // As when the connection drops before the whole answer came; what it used is unknown.
-      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, 503, true);
+      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, 503, true, true);
     }
-    const usage = usageOf(body, model);
-    request.onUsage?.(usage);
-    return { parts: answerParts(body).map(fromGeminiPart), usage, finish: finishOf(body) };
+    return {
+      parts: answerParts(body).map(fromGeminiPart),
+      usage: usageOf(body, model),
+      finish: finishOf(body),
+    };
   }
 
   async *stream(request: ModelRequest): AsyncIterable<StreamEvent> {
@@ -75,33 +95,41 @@ export class GeminiModel implements LanguageModel {
     let usage: GeminiResponse['usageMetadata'];
     const used = () => usageOf({ ...last, usageMetadata: usage }, model);
     const chunks = serverSentEvents(response.body!)[Symbol.asyncIterator]();
-    while (true) {
-      let next: IteratorResult<GeminiResponse>;
-      try {
-        next = await chunks.next();
-      } catch (error) {
-        throw new ModelError(`Gemini: the stream broke off: ${messageOf(error)}`, 503, true);
+    try {
+      while (true) {
+        let next: IteratorResult<GeminiResponse>;
+        try {
+          next = await chunks.next();
+        } catch (error) {
+          throw new ModelError(
+            `Gemini: the stream broke off: ${messageOf(error)}`,
+            503,
+            true,
+            true,
+          );
+        }
+        if (next.done) break;
+        const chunk = next.value;
+        if (chunk.error) {
+          const status = chunk.error.code ?? 500;
+          throw new ModelError(
+            `Gemini: ${status} ${chunk.error.message}`,
+            status,
+            isRetryable(status),
+            true,
+          );
+        }
+        last = chunk;
+        // Each chunk counts the whole call so far; the last one that counts is the total.
+        usage = chunk.usageMetadata ?? usage;
+        for (const part of answerParts(chunk)) {
+          const event = streamedPart(fromGeminiPart(part));
+          if (event) yield event;
+        }
       }
-      if (next.done) break;
-      const chunk = next.value;
-      if (chunk.error) {
-        const status = chunk.error.code ?? 500;
-        throw new ModelError(
-          `Gemini: ${status} ${chunk.error.message}`,
-          status,
-          isRetryable(status),
-        );
-      }
-      last = chunk;
-      // Each chunk counts the whole call so far, which is billed even if the stream breaks off.
-      if (chunk.usageMetadata) {
-        usage = chunk.usageMetadata;
-        request.onUsage?.(used());
-      }
-      for (const part of answerParts(chunk)) {
-        const event = streamedPart(fromGeminiPart(part));
-        if (event) yield event;
-      }
+    } finally {
+      // Left before its end, the stream closes its connection, so that the request stops.
+      await chunks.return?.();
     }
     yield {
       type: 'done',
@@ -113,16 +141,18 @@ export class GeminiModel implements LanguageModel {
 
   async #call(request: ModelRequest, method: string) {
     const config = this.#options.models(request.task);
-    const response = await (this.#options.fetch ?? fetch)(
-      `${BASE_URL}/models/${config.model}:${method}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': this.#options.apiKey },
-        body: JSON.stringify(toGeminiRequest(request, config)),
-      },
-    );
-    if (!response.ok) throw await modelError(response);
+    const response = await this.#post(config.model, method, toGeminiRequest(request, config));
     return { model: config.model, response };
+  }
+
+  async #post(model: string, method: string, body: unknown): Promise<Response> {
+    const response = await (this.#options.fetch ?? fetch)(`${BASE_URL}/models/${model}:${method}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': this.#options.apiKey },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw await modelError(response);
+    return response;
   }
 }
 
@@ -202,7 +232,7 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   const usage = response.usageMetadata ?? {};
   const thinkingTokens = usage.thoughtsTokenCount ?? 0;
   return {
-    // The model asked for, which is priced (ADR 0051), not the version Gemini says answered.
+    // The model asked for, not the version Gemini says answered.
     model,
     inputTokens: usage.promptTokenCount ?? 0,
     // Gemini counts the reasoning apart from the answer, but bills both as output.
@@ -264,10 +294,12 @@ function eventData(event: string): string {
 async function modelError(response: Response): Promise<ModelError> {
   const body = await response.json().catch(() => undefined);
   const message = body?.error?.message ?? response.statusText;
+  // Refused before answering, which Gemini does not bill.
   return new ModelError(
     `Gemini: ${response.status} ${message}`,
     response.status,
     isRetryable(response.status),
+    false,
   );
 }
 
