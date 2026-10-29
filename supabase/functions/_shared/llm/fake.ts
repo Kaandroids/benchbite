@@ -46,6 +46,10 @@ export class FakeModel implements LanguageModel {
     this.requests.push(request);
     const turn = this.#turns.shift();
     if (!turn) throw new Error(`FakeModel: no turn left for request ${this.requests.length}`);
-    return Array.isArray(turn) ? { parts: turn, usage: FAKE_USAGE, finish: 'stop' } : turn;
+    const response: ModelResponse = Array.isArray(turn)
+      ? { parts: turn, usage: FAKE_USAGE, finish: 'stop' }
+      : turn;
+    request.onUsage?.(response.usage);
+    return response;
   }
 }

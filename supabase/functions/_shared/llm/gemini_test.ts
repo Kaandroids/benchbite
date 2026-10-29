@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from '@std/assert';
 import { GeminiModel } from './gemini.ts';
-import { ModelError, type ModelRequest, type StreamEvent } from './types.ts';
+import { ModelError, type ModelRequest, type StreamEvent, type Usage } from './types.ts';
 
 const CHAT = { model: 'gemini-chat', thinking: 'low' } as const;
 
@@ -260,33 +260,37 @@ Deno.test('tells a stream that broke off from a finished one', async () => {
   });
 });
 
-Deno.test('throws the error a stream reports after it began, with what it used', async () => {
-  const { model } = gemini(() =>
-    sse([
-      'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}],' +
-        '"usageMetadata":{"promptTokenCount":120,"candidatesTokenCount":8}}\r\n\r\n',
-      'data: {"error":{"code":503,"message":"Overloaded"}}\r\n\r\n',
-    ]),
-  );
+Deno.test(
+  'throws the error a stream reports after it began, having told what it used',
+  async () => {
+    const { model } = gemini(() =>
+      sse([
+        'data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}],' +
+          '"usageMetadata":{"promptTokenCount":120,"candidatesTokenCount":8}}\r\n\r\n',
+        'data: {"error":{"code":503,"message":"Overloaded"}}\r\n\r\n',
+      ]),
+    );
 
-  const error = await assertRejects(async () => {
-    for await (const _ of model.stream(request));
-  }, ModelError);
-  assertEquals(
-    [error.status, error.retryable, error.message],
-    [503, true, 'Gemini: 503 Overloaded'],
-  );
-  assertEquals(error.usage, {
-    model: 'gemini-chat',
-    inputTokens: 120,
-    outputTokens: 8,
-    thinkingTokens: 0,
-    cachedInputTokens: 0,
-  });
-});
+    const reported: Usage[] = [];
+    const error = await assertRejects(async () => {
+      for await (const _ of model.stream({ ...request, onUsage: (usage) => reported.push(usage) }));
+    }, ModelError);
+    assertEquals(
+      [error.status, error.retryable, error.message],
+      [503, true, 'Gemini: 503 Overloaded'],
+    );
+    assertEquals(reported.at(-1), {
+      model: 'gemini-chat',
+      inputTokens: 120,
+      outputTokens: 8,
+      thinkingTokens: 0,
+      cachedInputTokens: 0,
+    });
+  },
+);
 
 Deno.test(
-  'throws a retryable model error when the stream breaks off, with what it used',
+  'throws a retryable model error when the stream breaks off, having told what it used',
   async () => {
     const encoder = new TextEncoder();
     const { model } = gemini(() => {
@@ -306,11 +310,12 @@ Deno.test(
       return new Response(body);
     });
 
+    const reported: Usage[] = [];
     const error = await assertRejects(async () => {
-      for await (const _ of model.stream(request));
+      for await (const _ of model.stream({ ...request, onUsage: (usage) => reported.push(usage) }));
     }, ModelError);
     assertEquals(
-      [error.retryable, error.message, error.usage?.outputTokens],
+      [error.retryable, error.message, reported.at(-1)?.outputTokens],
       [true, 'Gemini: the stream broke off: connection reset', 8],
     );
   },

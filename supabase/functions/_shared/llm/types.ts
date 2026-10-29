@@ -52,7 +52,13 @@ export type ModelRequest = {
   tools?: Tool[];
   /** Asks for JSON in this shape instead of free text. */
   responseSchema?: JsonSchema;
+  /** Where the answer is cut, reasoning included. */
   maxOutputTokens?: number;
+  /**
+   * Told what the call has used so far, as it goes and at its end, so that a call that fails or
+   * is stopped part-way is still counted (ADR 0051).
+   */
+  onUsage?: (usage: Usage) => void;
 };
 
 /** What a call used, which the costs are worked out from (#288). */
@@ -94,16 +100,12 @@ export interface LanguageModel {
   stream(request: ModelRequest): AsyncIterable<StreamEvent>;
 }
 
-/**
- * A call the provider refused or failed; `retryable` for limits and passing outages. `usage` is
- * what a call that failed part-way had used, which is billed all the same.
- */
+/** A call the provider refused or failed; `retryable` for limits and passing outages. */
 export class ModelError extends Error {
   constructor(
     message: string,
     readonly status: number,
     readonly retryable: boolean,
-    readonly usage?: Usage,
   ) {
     super(message);
     this.name = 'ModelError';

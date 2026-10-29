@@ -62,21 +62,17 @@ export class GeminiModel implements LanguageModel {
       body = await response.json();
     } catch (error) {
       // As when the connection drops before the whole answer came; what it used is unknown.
-      const message = error instanceof Error ? error.message : String(error);
-      throw new ModelError(`Gemini: the answer broke off: ${message}`, 503, true);
+      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, 503, true);
     }
-    return {
-      parts: answerParts(body).map(fromGeminiPart),
-      usage: usageOf(body, model),
-      finish: finishOf(body),
-    };
+    const usage = usageOf(body, model);
+    request.onUsage?.(usage);
+    return { parts: answerParts(body).map(fromGeminiPart), usage, finish: finishOf(body) };
   }
 
   async *stream(request: ModelRequest): AsyncIterable<StreamEvent> {
     const { model, response } = await this.#call(request, 'streamGenerateContent?alt=sse');
     let last: GeminiResponse = {};
     let usage: GeminiResponse['usageMetadata'];
-    // What the call used so far, which a failure part-way reports, as it is billed.
     const used = () => usageOf({ ...last, usageMetadata: usage }, model);
     const chunks = serverSentEvents(response.body!)[Symbol.asyncIterator]();
     while (true) {
@@ -84,8 +80,7 @@ export class GeminiModel implements LanguageModel {
       try {
         next = await chunks.next();
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new ModelError(`Gemini: the stream broke off: ${message}`, 503, true, used());
+        throw new ModelError(`Gemini: the stream broke off: ${messageOf(error)}`, 503, true);
       }
       if (next.done) break;
       const chunk = next.value;
@@ -95,12 +90,14 @@ export class GeminiModel implements LanguageModel {
           `Gemini: ${status} ${chunk.error.message}`,
           status,
           isRetryable(status),
-          used(),
         );
       }
       last = chunk;
-      // Each chunk counts the whole call so far; the last one that counts is the total.
-      usage = chunk.usageMetadata ?? usage;
+      // Each chunk counts the whole call so far, which is billed even if the stream breaks off.
+      if (chunk.usageMetadata) {
+        usage = chunk.usageMetadata;
+        request.onUsage?.(used());
+      }
       for (const part of answerParts(chunk)) {
         const event = streamedPart(fromGeminiPart(part));
         if (event) yield event;
@@ -272,6 +269,10 @@ async function modelError(response: Response): Promise<ModelError> {
     response.status,
     isRetryable(response.status),
   );
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /** Too many requests and passing outages are worth another try; a wrong request is not. */
