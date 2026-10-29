@@ -19,29 +19,28 @@ the AI features will be for premium users, with a limit from their plan.
   was started on, at the price in force when it started, and stores the cost, so a change of
   price leaves past calls as they were.
 - **A user's limit is their budget per calendar month in UTC,** in `ai_budgets`, which their plan
-  will set. Without one they have the default in `ai_settings`, which is nothing: AI comes with a
-  plan. In development, a budget is set by hand.
+  will set. Without one it is nothing: AI comes with a plan. In development, a budget is set by
+  hand.
 - **The bill as a whole is capped at the provider,** with a budget on the Google Cloud project,
   not in the database: per-user budgets of nothing by default already keep new accounts from
   adding to it.
 - **`ai_access()` is the one place that decides on the limit,** with the budget, what is used and
   when it resets. Guests may not call a model, as AI needs an account; a user without a budget may
   not, as it needs a plan; a user who has reached the limit may not until the month resets.
-- **The most a call may cost is set aside before it runs.** `ai_feature_limits` holds how much a
-  call of each feature may send and answer. `start_ai_call()`, with the user's token, works out
-  the most the call may cost from them and the price, starts it only when that much of the budget
-  is left, and keeps it in `ai_calls_in_flight` as spent until the call is recorded. So requests
-  sent at once cannot go over the budget, and the answer is cut at the feature's
-  `max_output_tokens`. It also refuses a model without a price, so no call goes uncounted, and a
-  second call of a feature while one runs.
-- **Every call is recorded, however it ends.** A function calls a model only through
-  `withAiCall()` (`_shared/ai_usage.ts`), which starts the call on the task's model, hands the
-  function that model for the task alone, and is told by it what the call used as it goes
-  (`onUsage`, each streamed chunk included). Whatever happens next, also when the function's own
-  code throws or stops reading a stream, it records the last it was told. A model called that
-  never said is counted at the most it could have cost, and so is a call that never recorded, as
-  when its function was stopped, once its place is taken over after ten minutes; one that records
-  after all replaces that with what it did cost.
+- **A call is one request to a model, and the most it may cost is set aside before it runs.** A
+  function calls a model only through `aiModel()` (`_shared/ai_usage.ts`), the model for one
+  task. Before each request it counts what the request sends with the provider
+  (`countTokens()`, which costs nothing), and `start_ai_call()`, with the user's token, refuses
+  it if that is more than the feature allows (`ai_feature_limits`), if the model has no price, if
+  a call of the feature is still running, or if the budget left cannot pay for it at its most:
+  what it sends, and the most it may answer. That most is kept in `ai_calls_in_flight` as spent
+  until the call is recorded, so requests sent at once cannot go over the budget, and the answer
+  is cut at the feature's `max_output_tokens`. A chat that calls tools makes one call per request.
+- **Every call is recorded, however it ends:** at what it used when the answer came whole, at
+  nothing when the provider refused the request, and at its most when what it used is not known:
+  a stream left or broken off before its end, which also stops the request, or a call that never
+  recorded, as when its function was stopped, once ten minutes have passed. A call that records
+  after all replaces its most with what it did cost.
 - **The features are the model interface's tasks:** a function names one `ai_feature`, which
   picks the model (ADR 0049) and is what its usage is recorded under.
 - **This log is what counts.** The tokens kept on Bite's messages (ADR 0050) only record what an
@@ -62,6 +61,8 @@ the AI features will be for premium users, with a limit from their plan.
 - A new model needs a price in a migration before a function may use it.
 - A new feature needs its limits in a migration, and a new task starts with the `ai_feature`
   enum, which the model interface's tasks are.
+- Each request to a model waits for a count of its tokens first, a call to the provider of about
+  a tenth of a second.
 - A call near the end of a budget may be refused although it would have cost less than the most
   set aside for it.
 - The premium plan changes `ai_access()` only; the callers stay the same.
