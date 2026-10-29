@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
+import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
 type TextLinkProps = {
@@ -11,6 +12,8 @@ type TextLinkProps = {
   size?: 'small' | 'regular';
   /** `start` to sit under left-aligned text, such as a field's error. */
   align?: 'center' | 'start';
+  /** A small icon before the label, in its colour. */
+  icon?: IconName;
 };
 
 /** A link without a button's frame, such as to the privacy policy. */
@@ -20,7 +23,9 @@ export function TextLink({
   tone = 'primary',
   size = 'small',
   align = 'center',
+  icon,
 }: TextLinkProps) {
+  const color = tone === 'primary' ? 'primaryText' : 'textMuted';
   return (
     <Pressable
       accessibilityRole="button"
@@ -31,10 +36,8 @@ export function TextLink({
         { alignSelf: align === 'start' ? 'flex-start' : 'center', opacity: pressed ? 0.6 : 1 },
       ]}
     >
-      <Text
-        variant={size === 'small' ? 'captionStrong' : 'label'}
-        color={tone === 'primary' ? 'primaryText' : 'textMuted'}
-      >
+      {icon ? <Icon name={icon} size={size === 'small' ? 14 : 16} color={color} /> : null}
+      <Text variant={size === 'small' ? 'captionStrong' : 'label'} color={color}>
         {label}
       </Text>
     </Pressable>
@@ -43,6 +46,9 @@ export function TextLink({
 
 const styles = StyleSheet.create({
   link: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingVertical: 4,
   },
 });
