@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(39);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -84,13 +84,14 @@ from generate_series(4, 6) d;
 select pg_temp.eat('00000000-0000-0000-0000-00000000000b', current_date - d, 2000)
 from generate_series(1, 2) d;
 
--- Users c and d, from twelve days ago, have eaten nothing. User d is from before the streak, so
--- the days before today are answered.
+-- Users c and d, from twelve days ago, have eaten nothing. User d reads the streak for the first
+-- time today; users b and c read it on their first day, with nothing to answer yet.
 insert into public.planned_days_kept (user_id, through, started_on) values
   ('00000000-0000-0000-0000-00000000000c', current_date - 1, current_date - 12),
   ('00000000-0000-0000-0000-00000000000d', current_date - 1, current_date - 12);
-insert into public.user_streaks (user_id, answered_through)
-  values ('00000000-0000-0000-0000-00000000000d', current_date - 1);
+insert into public.user_streaks (user_id) values
+  ('00000000-0000-0000-0000-00000000000b'),
+  ('00000000-0000-0000-0000-00000000000c');
 
 set local session_replication_role = origin;
 
@@ -100,20 +101,20 @@ set local session_replication_role = origin;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
-  $$ select day, state from public.streak_states(pg_temp.w(-3), pg_temp.w(6), current_date) $$,
+  $$ select day, state::text from public.streak_states(pg_temp.w(-3), pg_temp.w(6), current_date) $$,
   $$ values
-       (pg_temp.w(0), 'counted'),
+       (pg_temp.w(0), 'done'),
        (pg_temp.w(1), 'missed'),
        (pg_temp.w(2), 'missed'),
-       (pg_temp.w(3), 'counted'),
-       (pg_temp.w(4), 'counted'),
+       (pg_temp.w(3), 'done'),
+       (pg_temp.w(4), 'done'),
        (pg_temp.w(5), 'missed'),
        (pg_temp.w(6), 'missed') $$,
   'A day counts with its workouts done and its calories eaten, from the first day on'
 );
 select is(
   (select state from public.streak_states(pg_temp.w(0), pg_temp.w(0), current_date)),
-  'counted',
+  'done',
   'A workout started on its day counts'
 );
 select is(
@@ -128,12 +129,12 @@ select is(
 );
 select is(
   (select state from public.streak_states(pg_temp.w(3), pg_temp.w(4), current_date) order by day limit 1),
-  'counted',
+  'done',
   'A workout moved away leaves its day to the calories'
 );
 select is(
   (select state from public.streak_states(pg_temp.w(4), pg_temp.w(4), current_date)),
-  'counted',
+  'done',
   'A workout counts on the day it moved to'
 );
 select is(
@@ -148,7 +149,7 @@ select is(
 );
 select is(
   (select state from public.streak_states(pg_temp.w(8), pg_temp.w(8), current_date)),
-  'counted',
+  'done',
   'A move that settling turned into a skip leaves its day to the calories'
 );
 
@@ -157,7 +158,7 @@ delete from public.workouts where id = 921;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   (select state from public.streak_states(pg_temp.w(7), pg_temp.w(7), current_date)),
-  'counted',
+  'done',
   'A workout deleted since still counts on the day it was done'
 );
 
@@ -176,11 +177,6 @@ select results_eq(
   $$ values (2, false, 3, array[current_date - 3], 6) $$,
   'A missed day breaks the streak, and the break lists it with the streak it would save'
 );
-select is(
-  (select count(*)::integer from public.user_streaks),
-  1,
-  'Every user starts with 3 freezes'
-);
 
 reset role;
 set local session_replication_role = replica;
@@ -194,12 +190,12 @@ select results_eq(
 );
 select is(
   (select state from public.streak_states(current_date, current_date, current_date)),
-  'counted',
+  'done',
   'Today counts once its calories are eaten'
 );
 select is(
   (select state from public.streak_states(current_date - 1, current_date - 1, current_date)),
-  'counted',
+  'done',
   'Exactly the target counts'
 );
 
@@ -273,7 +269,12 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');
 select results_eq(
   $$ select count, missed from public.streak(current_date) $$,
   $$ values (0, '{}'::date[]) $$,
-  'Users from before the streak have no break to answer'
+  'The days before the first read have no break to answer'
+);
+select results_eq(
+  $$ select freezes, answered_through from public.user_streaks $$,
+  $$ values (3, current_date - 1) $$,
+  'The first read starts the streak with 3 freezes'
 );
 
 -- ----------------------------------------------------------------------------------------------
@@ -298,7 +299,7 @@ select throws_ok(
 );
 select throws_ok(
   $$ insert into public.streak_days (user_id, day, result)
-     values ('00000000-0000-0000-0000-00000000000c', current_date - 1, 'counted') $$,
+     values ('00000000-0000-0000-0000-00000000000c', current_date - 1, 'done') $$,
   '42501', null,
   'Streak days are not written directly'
 );
@@ -357,6 +358,15 @@ select is(
   pg_temp.last_started_on(),
   ((now() - interval '10 minutes') at time zone 'UTC')::date,
   'A log without the day keeps the start''s day in UTC'
+);
+select public.log_workout(
+  pg_temp.log(null) || jsonb_build_object('move', jsonb_build_object(
+    'from', pg_temp.w(0), 'to', ((now() - interval '10 minutes') at time zone 'UTC')::date + 1))
+);
+select is(
+  pg_temp.last_started_on(),
+  ((now() - interval '10 minutes') at time zone 'UTC')::date + 1,
+  'A log without the day keeps the day of the move that comes with it'
 );
 
 select * from finish();
