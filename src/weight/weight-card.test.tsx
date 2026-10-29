@@ -1,9 +1,14 @@
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { SAVE_DELAY_MS, WeightCard } from './weight-card';
-import { useLogWeight, type WeightEntry } from './weights';
+import { useLogWeight, useWeightHistory, type WeightEntry } from './weights';
 
-jest.mock('./weights', () => ({ useLogWeight: jest.fn() }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('./weights', () => ({
+  ...jest.requireActual('./weights'),
+  useLogWeight: jest.fn(),
+  useWeightHistory: jest.fn(),
+}));
 
 // A Wednesday.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
@@ -17,10 +22,15 @@ function mockLog(log = { isError: false, isPending: false }) {
   jest.mocked(useLogWeight).mockReturnValue({ mutate, reset, ...log } as never);
 }
 
+function mockHistory(entries: WeightEntry[] = [MONDAYS]) {
+  jest.mocked(useWeightHistory).mockReturnValue({ data: entries, isPending: false } as never);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   mockLog();
+  mockHistory();
 });
 afterEach(() => jest.useRealTimers());
 
@@ -88,4 +98,47 @@ it('says when saving failed', async () => {
   expect(
     screen.getByText("We couldn't save your weight. Check your connection and try again."),
   ).toBeTruthy();
+});
+
+it('keeps a later change while an earlier one is saved (#153)', async () => {
+  let settle = () => {};
+  mutate.mockImplementationOnce((_kg: number, { onSettled }: { onSettled: () => void }) => {
+    settle = onSettled;
+  });
+  await render(<WeightCard latest={TODAYS} unit="kg" today={WEDNESDAY} />);
+  await press('Increase weight');
+  await act(() => jest.advanceTimersByTime(SAVE_DELAY_MS));
+  await press('Increase weight');
+  // The first save settles while the second change waits: the card keeps showing it.
+  await act(() => settle());
+  expect(screen.getByText('80.2 kg')).toBeTruthy();
+});
+
+it('says how much the weight changed in the range, toward the target', async () => {
+  mockHistory([
+    { weightKg: 86.4, measuredOn: '2026-08-01' },
+    { weightKg: 85, measuredOn: '2026-10-21' },
+  ]);
+  await render(
+    <WeightCard
+      latest={{ weightKg: 85, measuredOn: '2026-10-21' }}
+      unit="kg"
+      today={WEDNESDAY}
+      goal={{ goal: 'lose_fat', targetKg: 80, paceKg: 0.5 }}
+    />,
+  );
+  expect(screen.getByText('1.4 kg in 3 months')).toHaveStyle({ color: '#15803D' });
+  expect(screen.getByLabelText('Your weight over 2 entries')).toBeTruthy();
+});
+
+it('changes the range of the chart', async () => {
+  await render(<WeightCard latest={TODAYS} unit="kg" today={WEDNESDAY} />);
+  await fireEvent.press(screen.getByText('Year'));
+  expect(useWeightHistory).toHaveBeenLastCalledWith('year', WEDNESDAY);
+});
+
+it('says when the range has no weight', async () => {
+  mockHistory([]);
+  await render(<WeightCard latest={MONDAYS} unit="kg" today={WEDNESDAY} />);
+  expect(screen.getByText('No weight logged in this range.')).toBeTruthy();
 });
