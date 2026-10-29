@@ -3,7 +3,7 @@ import { FAKE_USAGE, FakeModel } from './fake.ts';
 import type { ModelRequest, StreamEvent } from './types.ts';
 
 const request: ModelRequest = {
-  task: 'chat',
+  task: 'coach_chat',
   messages: [{ role: 'user', parts: [{ type: 'text', text: 'Hi' }] }],
 };
 

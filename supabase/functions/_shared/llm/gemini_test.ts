@@ -41,7 +41,7 @@ const USAGE = {
 };
 
 const request: ModelRequest = {
-  task: 'chat',
+  task: 'coach_chat',
   system: 'You are Bite.',
   messages: [
     {
@@ -122,7 +122,7 @@ Deno.test('leaves out what the request does not use', async () => {
   const { model, calls } = gemini(() => Response.json({ candidates: [] }));
 
   await model.generate({
-    task: 'chat',
+    task: 'coach_chat',
     messages: [{ role: 'user', parts: [{ type: 'text', text: 'Hi' }] }],
   });
 
@@ -148,6 +148,7 @@ Deno.test('reads the answer without the reasoning, and the usage with it', async
         },
       ],
       usageMetadata: USAGE,
+      // The version that answered, which the usage leaves for the model asked for.
       modelVersion: 'gemini-chat-001',
     }),
   );
@@ -158,7 +159,7 @@ Deno.test('reads the answer without the reasoning, and the usage with it', async
       { type: 'toolCall', name: 'logMeal', args: { kcal: 600 } },
     ],
     usage: {
-      model: 'gemini-chat-001',
+      model: 'gemini-chat',
       inputTokens: 120,
       outputTokens: 42,
       thinkingTokens: 12,

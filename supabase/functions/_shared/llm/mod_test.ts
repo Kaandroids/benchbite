@@ -36,14 +36,14 @@ Deno.test('refuses a missing backend or key, Vertex for now, and an unknown back
 });
 
 Deno.test("takes a task's model from the environment where it names one", () => {
-  assertEquals(modelFor('chat', env({})), MODELS.chat);
-  assertEquals(modelFor('chat', env({ LLM_MODEL_CHAT: ' gemini-other ' })), {
+  assertEquals(modelFor('coach_chat', env({})), MODELS.coach_chat);
+  assertEquals(modelFor('coach_chat', env({ LLM_MODEL_COACH_CHAT: ' gemini-other ' })), {
     model: 'gemini-other',
     thinking: 'low',
   });
-  assertEquals(modelFor('review', env({ LLM_MODEL_CHAT: 'gemini-other' })), MODELS.review);
+  assertEquals(modelFor('review', env({ LLM_MODEL_COACH_CHAT: 'gemini-other' })), MODELS.review);
   assertEquals(
-    modelFor('mealPhoto', env({ LLM_MODEL_MEAL_PHOTO: 'gemini-other' })).model,
+    modelFor('meal_photo', env({ LLM_MODEL_MEAL_PHOTO: 'gemini-other' })).model,
     'gemini-other',
   );
 });

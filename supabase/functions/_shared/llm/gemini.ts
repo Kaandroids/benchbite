@@ -44,7 +44,6 @@ type GeminiResponse = {
     thoughtsTokenCount?: number;
     cachedContentTokenCount?: number;
   };
-  modelVersion?: string;
   /** An error the stream reports after it began, in place of an answer. */
   error?: { code?: number; message?: string };
 };
@@ -186,7 +185,8 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   const usage = response.usageMetadata ?? {};
   const thinkingTokens = usage.thoughtsTokenCount ?? 0;
   return {
-    model: response.modelVersion ?? model,
+    // The model asked for, which is priced (ADR 0051), not the version Gemini says answered.
+    model,
     inputTokens: usage.promptTokenCount ?? 0,
     // Gemini counts the reasoning apart from the answer, but bills both as output.
     outputTokens: (usage.candidatesTokenCount ?? 0) + thinkingTokens,

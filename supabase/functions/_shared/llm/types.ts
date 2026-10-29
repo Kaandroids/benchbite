@@ -1,6 +1,8 @@
 // The language model as the Edge Functions see it (ADR 0049): our own messages, tools and events,
 // which each provider translates, so that the provider can change in one place.
 
+import type { Database } from '../database.types.ts';
+
 /** A JSON Schema, as tools and structured output describe their data. */
 export type JsonSchema = Record<string, unknown>;
 
@@ -36,8 +38,11 @@ export type Tool = {
   parameters: JsonSchema;
 };
 
-/** What a call is for; each task has its own model and settings (`config.ts`). */
-export type Task = 'chat' | 'mealPhoto' | 'review';
+/**
+ * What a call is for: the feature its usage is recorded under (ADR 0051), each with its own model
+ * and settings (`config.ts`).
+ */
+export type Task = Database['public']['Enums']['ai_feature'];
 
 export type ModelRequest = {
   task: Task;
@@ -52,6 +57,7 @@ export type ModelRequest = {
 
 /** What a call used, which the costs are worked out from (#288). */
 export type Usage = {
+  /** The model asked for, by which the call is priced. */
   model: string;
   inputTokens: number;
   outputTokens: number;

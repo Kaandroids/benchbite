@@ -11,13 +11,14 @@ export type ModelConfig = {
 };
 
 /**
- * Chat runs on Flash-Lite, which also takes voice; a meal photo and the reviews on Flash, which
- * reads photos and writes longer texts better (#289). `LLM_MODEL_<TASK>` overrides a model, such
- * as `LLM_MODEL_CHAT=gemini-3.8-flash`.
+ * Chat and voice notes run on Flash-Lite, which takes audio; a meal photo and the reviews on Flash,
+ * which reads photos and writes longer texts better (#289). `LLM_MODEL_<TASK>` overrides a model,
+ * such as `LLM_MODEL_COACH_CHAT=gemini-3.8-flash`; the model needs a price (ADR 0051).
  */
 export const MODELS: Record<Task, ModelConfig> = {
-  chat: { model: 'gemini-3.5-flash-lite', thinking: 'low' },
-  mealPhoto: { model: 'gemini-3.8-flash', thinking: 'low' },
+  coach_chat: { model: 'gemini-3.5-flash-lite', thinking: 'low' },
+  coach_voice: { model: 'gemini-3.5-flash-lite', thinking: 'low' },
+  meal_photo: { model: 'gemini-3.8-flash', thinking: 'low' },
   review: { model: 'gemini-3.8-flash', thinking: 'medium' },
 };
 
@@ -26,8 +27,6 @@ export type Env = { get(name: string): string | undefined };
 
 /** A task's model and settings, with the environment's model where it names one. */
 export function modelFor(task: Task, env: Env): ModelConfig {
-  // mealPhoto → LLM_MODEL_MEAL_PHOTO
-  const name = `LLM_MODEL_${task.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}`;
-  const model = env.get(name)?.trim();
+  const model = env.get(`LLM_MODEL_${task.toUpperCase()}`)?.trim();
   return model ? { ...MODELS[task], model } : MODELS[task];
 }
