@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,20 +18,22 @@ import { useDayTargets } from './targets';
 import { useWater } from './water';
 import { WaterCard } from './water-card';
 
+type NutritionScreenProps = {
+  /** A day to open, as YYYY-MM-DD, each time `at` changes. */
+  open?: { day: string; at: string };
+};
+
 /** The nutrition tab: a day's calories and macros against the targets, its meals and water. */
-export function NutritionScreen() {
+export function NutritionScreen({ open }: NutritionScreenProps) {
   const { t } = useTranslation();
   const today = new Date();
   // The distance from today rather than the date, so that today stays today after midnight.
   const [daysBack, setDaysBack] = useState(0);
-  // A day to open, as from the streak's break; each one is opened once.
-  const { day: dayParam } = useLocalSearchParams<{ day?: string }>();
+  // Each day sent is opened once, also the same day sent again.
   const [opened, setOpened] = useState<string | undefined>(undefined);
-  if (dayParam !== opened) {
-    setOpened(dayParam);
-    if (dayParam) {
-      setDaysBack(clamp(daysBetween(fromIsoDate(dayParam), today), 0, LOGGABLE_DAYS));
-    }
+  if (open && open.at !== opened) {
+    setOpened(open.at);
+    setDaysBack(clamp(daysBetween(fromIsoDate(open.day), today), 0, LOGGABLE_DAYS));
   }
   const day = addDays(today, -daysBack);
   const targets = useDayTargets(toIsoDate(day));
