@@ -7,9 +7,9 @@ import {
 } from '@/body/body';
 import { toTenth } from '@/i18n/units';
 import { Constants } from '@/lib/database.types';
+import { oneOf } from '@/lib/one-of';
 
 import type { NutritionTargets, TargetAnswers, TargetBasis } from '../targets';
-import { oneOf } from '@/lib/one-of';
 
 /** The steps of working the targets out again, each a screen. */
 export type RecalculateStep = 'goal' | 'target' | 'activity' | 'review';
