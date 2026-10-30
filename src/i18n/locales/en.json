@@ -1566,6 +1566,14 @@
       "sixMonths": "6M",
       "year": "Year"
     },
+    "summary": {
+      "title": "Summary",
+      "caption": "Summary · {{range}}",
+      "month": "Last month",
+      "threeMonths": "Last 3 months",
+      "sixMonths": "Last 6 months",
+      "year": "Last year"
+    },
     "eating": {
       "title": "Calories and macros",
       "rangeLabel": "Eating over",

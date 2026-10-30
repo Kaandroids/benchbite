@@ -1566,6 +1566,14 @@
       "sixMonths": "6A",
       "year": "Yıl"
     },
+    "summary": {
+      "title": "Özet",
+      "caption": "Özet · {{range}}",
+      "month": "Son 1 ay",
+      "threeMonths": "Son 3 ay",
+      "sixMonths": "Son 6 ay",
+      "year": "Son 1 yıl"
+    },
     "eating": {
       "title": "Kalori ve makrolar",
       "rangeLabel": "Beslenme aralığı",

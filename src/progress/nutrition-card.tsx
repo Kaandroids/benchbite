@@ -17,6 +17,7 @@ import { useTheme } from '@/theme';
 
 import { CardLoadState } from './card-load-state';
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
+import { SummaryBox } from './summary-box';
 
 type NutritionCardProps = {
   entering?: CardProps['entering'];
@@ -24,13 +25,13 @@ type NutritionCardProps = {
 };
 
 /**
- * What was eaten over a range (ADR 0047): a bar of macros for each day of a month, or each week
- * or month of longer ranges, against the average target, then the range summed up against the
- * targets of its days logged.
+ * What was eaten over a range (ADR 0047): the range summed up against the targets of its days
+ * logged, then a bar of macros for each day of a month, or each week or month of longer ranges,
+ * against the average target, with the range to choose under it (#335).
  */
 export function NutritionCard({ entering, today }: NutritionCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { format } = useNumberFormat();
   const shortDate = useShortDateFormat(today);
   const monthName = useMonthFormat();
@@ -80,19 +81,16 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
         </Text>
       ) : (
         <>
-          <MacroBars
-            bars={spans.map((item) => ({
-              key: item.start,
-              eaten: item.summary?.average ?? NOTHING,
-              logged: item.summary !== null,
-              over: item.over,
-              accessibilityLabel: labelOf(item),
-            }))}
-            target={summary.averageTargets?.calories}
-            axis={ends.map((item) => (item ? axisNameOf(item.start) : ''))}
-          />
           {summary.targets ? (
-            <View style={[styles.summary, { gap: spacing.md, borderTopColor: colors.border }]}>
+            <SummaryBox>
+              <View style={[styles.summaryTitle, { gap: spacing.sm }]}>
+                <Text variant="label" accessibilityRole="header" style={styles.flex}>
+                  {t('progress.summary.title')}
+                </Text>
+                <Text variant="caption" color="textMuted">
+                  {t(`progress.summary.${shownRange}`)}
+                </Text>
+              </View>
               <Text variant="caption" color="textMuted">
                 {t('progress.eating.logged', {
                   count: summary.days,
@@ -104,8 +102,19 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
                 eaten={summary.eaten}
                 average={summary.average}
               />
-            </View>
+            </SummaryBox>
           ) : null}
+          <MacroBars
+            bars={spans.map((item) => ({
+              key: item.start,
+              eaten: item.summary?.average ?? NOTHING,
+              logged: item.summary !== null,
+              over: item.over,
+              accessibilityLabel: labelOf(item),
+            }))}
+            target={summary.averageTargets?.calories}
+            axis={ends.map((item) => (item ? axisNameOf(item.start) : ''))}
+          />
         </>
       );
   }
@@ -118,17 +127,16 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
         </Text>
         {summary ? (
           <Average
-            strong
             value={t('nutrition.kcal', { calories: format(Math.round(summary.average.calories)) })}
           />
         ) : null}
       </View>
+      {content}
       <RangeControl
         value={range}
         onChange={setRange}
         accessibilityLabel={t('progress.eating.rangeLabel')}
       />
-      {content}
     </Card>
   );
 }
@@ -141,8 +149,8 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  summary: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
+  summaryTitle: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
 });

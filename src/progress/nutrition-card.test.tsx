@@ -49,6 +49,8 @@ it('charts each day of the month and sums them up against their targets', async 
       'Oct 29: 2,200 kcal, 150 g protein, 200 g carbs, 60 g fat a day, over the target',
     ),
   ).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'Summary' })).toBeTruthy();
+  expect(screen.getByText('Last month')).toBeTruthy();
   expect(screen.getByText('2 days logged, 1 within the target')).toBeTruthy();
   expect(screen.getByText('4,000 / 4,000 kcal')).toBeTruthy();
   expect(screen.getByText('300 / 300')).toBeTruthy();
@@ -64,6 +66,7 @@ it('averages longer ranges by week', async () => {
   expect(
     screen.getByLabelText('Week of Oct 19: 2,000 kcal, 150 g protein, 200 g carbs, 60 g fat a day'),
   ).toBeTruthy();
+  expect(screen.getByText('Last 3 months')).toBeTruthy();
 });
 
 it('keeps the bars of the last range while a new one loads', async () => {
