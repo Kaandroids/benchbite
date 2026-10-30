@@ -131,6 +131,13 @@ export function useChat() {
       const controller = new AbortController();
       abort.current = controller;
 
+      /** Says why the user may not go on, or why Bite could not answer. */
+      const explain = (reason: string) => {
+        const refusal = oneOf(REFUSALS, reason);
+        if (refusal) setRefusal(refusal);
+        else setFailure(oneOf(FAILURES, reason) ?? 'unavailable');
+      };
+
       const onEvent = (event: ChatEvent) => {
         switch (event.event) {
           case 'expression':
@@ -149,16 +156,13 @@ export function useChat() {
             ended = true;
             threadId.current = event.threadId;
             if (event.interrupted) cut = 'cut_off';
-            // What the model broke off can be asked again; a refusal shows once access is read.
-            if (event.interrupted === 'failed') setFailure('unavailable');
+            if (event.reason) explain(event.reason);
             return;
           case 'error': {
             ended = true;
             // A new thread the function dropped again: the next message starts its own.
             if (event.dropped) threadId.current = threadBefore;
-            const refusal = oneOf(REFUSALS, event.reason);
-            if (refusal) setRefusal(refusal);
-            else setFailure(oneOf(FAILURES, event.reason) ?? 'unavailable');
+            explain(event.reason);
             // An answer that came whole but was not saved did not stop short.
             if (event.reason !== 'not_saved') cut = 'cut_off';
             return;

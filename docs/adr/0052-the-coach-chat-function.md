@@ -18,7 +18,8 @@ the model is limited and counted (ADR 0051).
   thread, `thread` with its id first, so that the app keeps it however the answer ends;
   `expression`, then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at
   the end either `done` with the thread and message, and `interrupted` in it when the answer
-  stopped short, with why (`failed`, `refused`, `stopped` or `cut`), or `error` with a reason when Bite saved no answer (`plan_required`,
+  stopped short, with why (`failed`, `refused`, `stopped` or `cut`) and the `reason` of a failure
+  or refusal, or `error` with a reason when Bite saved no answer (`plan_required`,
   `limit_reached`, `blocked`, `unavailable`…).
   The events, the request, the tools' names and the longest message are written once, in
   `_shared/coach/chat.ts`, which the app imports too.

@@ -41,8 +41,17 @@ export type ChatEvent<Expression extends string = string> =
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
   | { event: 'text'; text: string }
-  /** The turn is saved; `interrupted` says why when the answer stopped before its end. */
-  | { event: 'done'; threadId: number; messageId: number; interrupted?: Interruption }
+  /**
+   * The turn is saved; `interrupted` says why when the answer stopped before its end, and
+   * `reason` what failed or was refused, as an error's does.
+   */
+  | {
+      event: 'done';
+      threadId: number;
+      messageId: number;
+      interrupted?: Interruption;
+      reason?: string;
+    }
   /**
    * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
    * is kept once the model was asked; `dropped` when the new thread begun for it is gone again.

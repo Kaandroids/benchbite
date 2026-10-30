@@ -252,13 +252,35 @@ it('offers to try again an answer the model broke off, but not one cut at its li
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   await stream.send(
     { event: 'text', text: 'Today' },
-    { event: 'done', threadId: 7, messageId: 11, interrupted: 'failed' },
+    { event: 'done', threadId: 7, messageId: 11, interrupted: 'failed', reason: 'unavailable' },
   );
   await stream.end();
 
   expect(screen.getByText("Bite couldn't answer just now. Try again.")).toBeOnTheScreen();
   await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   expect(stream.request()?.message).toBe('And today?');
+});
+
+it('says why an answer was refused after it began', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'text', text: 'Let me check.' },
+    {
+      event: 'done',
+      threadId: 7,
+      messageId: 9,
+      interrupted: 'refused',
+      reason: 'call_in_progress',
+    },
+  );
+  await stream.end();
+
+  expect(screen.getByText('Cut off')).toBeOnTheScreen();
+  expect(
+    screen.getByText('Bite is answering on another device. Try again in a moment.'),
+  ).toBeOnTheScreen();
 });
 
 it('says when Bite answers on another device', async () => {

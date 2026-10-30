@@ -350,6 +350,7 @@ Deno.test('keeps what was said when the budget runs out after a lookup', async (
     threadId: 100,
     messageId: 102,
     interrupted: 'refused',
+    reason: 'limit_reached',
   });
   assertEquals(inserted.length, 2);
 });
@@ -382,6 +383,7 @@ Deno.test('says an answer the model broke off failed, and keeps what was said', 
     threadId: 100,
     messageId: 102,
     interrupted: 'failed',
+    reason: 'unavailable',
   });
   assertEquals(inserted.length, 2);
 });

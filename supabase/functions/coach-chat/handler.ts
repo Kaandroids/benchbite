@@ -290,18 +290,29 @@ async function answer(
     return send({ event: 'error', reason, ...(dropped && { dropped: true }) });
   }
   // What came is kept, as when the app stops the answer, and said to have stopped short.
-  const interrupted: Interruption | undefined = refused
-    ? 'refused'
-    : failure
-      ? 'failed'
-      : isStopped()
-        ? 'stopped'
-        : turn.finish !== 'stop'
-          ? 'cut'
-          : undefined;
+  const interrupted = interruption(failure, refused, isStopped(), turn.finish);
   const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
-  send({ event: 'done', threadId, messageId, ...(interrupted && { interrupted }) });
+  send({
+    event: 'done',
+    threadId,
+    messageId,
+    ...(interrupted && { interrupted }),
+    ...(failure && { reason: failure }),
+  });
+}
+
+/** Why an answer with text stopped before its end, if it did. */
+function interruption(
+  failure: string | undefined,
+  refused: boolean,
+  stopped: boolean,
+  finish: Finish | undefined,
+): Interruption | undefined {
+  if (refused) return 'refused';
+  if (failure) return 'failed';
+  if (stopped) return 'stopped';
+  if (finish !== 'stop') return 'cut';
 }
 
 async function lookUp(
