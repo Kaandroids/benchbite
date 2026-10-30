@@ -9,7 +9,7 @@ import { fonts, useTheme, type ColorTokens } from '@/theme';
 
 type PlanRowProps = {
   icon: IconName;
-  /** The icon's and the caption's colour, on `background` behind the icon, apart from orange. */
+  /** The colour of the icon, the caption and the round button; the icon sits on `background`. */
   color: keyof ColorTokens;
   background: keyof ColorTokens;
   /** The line above the title, such as the day a workout was missed on. */

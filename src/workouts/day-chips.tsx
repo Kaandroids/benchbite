@@ -27,7 +27,6 @@ export function DayChips({ weekdays, muted = false, today }: DayChipsProps) {
   return (
     <View style={[styles.row, { gap: spacing.xs }]}>
       {days.map(({ label, isToday }) => {
-        // In the breakfast colours, so that the days don't add to the orange of the list (#334).
         const filled = isToday && !muted;
         return (
           <View
@@ -38,6 +37,7 @@ export function DayChips({ weekdays, muted = false, today }: DayChipsProps) {
               styles.chip,
               {
                 borderRadius: radii.sm,
+                // Breakfast colours, so that the days don't add to the list's orange (#334).
                 backgroundColor: muted
                   ? colors.track
                   : filled
