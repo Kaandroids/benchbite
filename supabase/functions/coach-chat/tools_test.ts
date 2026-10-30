@@ -63,6 +63,7 @@ const LEGS = {
   id: 3,
   name: 'Legs',
   type: null,
+  active: true,
   weekdays: [1, 4],
   workout_exercises: [
     {
@@ -103,11 +104,32 @@ const NAMES = [
 /** The user's plan and the library, and what `rpc` answers, with the calls made to it. */
 function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = {}) {
   const calls: { name: string; args: unknown }[] = [];
-  const query = (data: unknown) => {
+  // Filters by equality, and, as PostgREST, fails the request ordered by a table it does not
+  // embed.
+  const query = (rows: Record<string, unknown>[]) => {
+    let columns = '';
+    let error: unknown = null;
+    const filters: [string, unknown][] = [];
+    const result = () => ({
+      data: rows.filter((row) => filters.every(([column, value]) => row[column] === value)),
+      error,
+    });
     const builder: Record<string, unknown> = {
-      then: (resolve: (value: unknown) => void) => resolve({ data, error: null }),
+      select: (selected: string) => ((columns = selected), builder),
+      eq: (column: string, value: unknown) => {
+        filters.push([column, value]);
+        return builder;
+      },
+      in: () => builder,
+      order: (_column: string, options?: { referencedTable?: string }) => {
+        if (options?.referencedTable && !columns.includes(options.referencedTable)) {
+          error = { code: 'PGRST108', message: `'${options.referencedTable}' is not embedded` };
+        }
+        return builder;
+      },
+      maybeSingle: () => Promise.resolve({ data: result().data[0] ?? null, error }),
+      then: (resolve: (value: unknown) => void) => resolve(result()),
     };
-    for (const method of ['select', 'eq', 'in', 'order']) builder[method] = () => builder;
     return builder;
   };
   const supabase = {
@@ -250,3 +272,26 @@ Deno.test('leaves the targets in use off the card when they cannot be read', asy
     proposal: { kind: 'targets', id: 43, to },
   });
 });
+
+Deno.test(
+  "refuses a workout that is not one of the user's active ones, proposing nothing",
+  async () => {
+    const { context, calls } = planContext({ propose_coach_swaps: { data: 44 } });
+    const swap = {
+      replace: 'Plank',
+      with: 'Leg_Press',
+      sets: 3,
+      target: { seconds: 30 },
+      why: 'x',
+    };
+
+    const result = await runTool(
+      'propose_workout_change',
+      { workoutId: 9, swaps: [swap] },
+      context,
+    );
+
+    assertEquals(result, { error: "That workout is not the user's." });
+    assertEquals(calls, []);
+  },
+);
