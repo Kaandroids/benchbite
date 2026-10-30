@@ -2,26 +2,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ACCESS_KEY, REFUSALS, type Refusal } from '@/ai/access';
+import { ACCESS_KEY, type Refusal } from '@/ai/access';
 import { deviceToday } from '@/i18n/dates';
-import { oneOf } from '@/lib/one-of';
 
+import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import {
   type BiteExpressionName,
   type ChatEvent,
   ChatRequestError,
   streamChat,
 } from './chat-stream';
-
-/** Why Bite gave no answer to one message; any other reason is said as unavailable. */
-const FAILURES = [
-  'unavailable',
-  'blocked',
-  'not_saved',
-  'request_too_large',
-  'call_in_progress',
-] as const;
-export type Failure = (typeof FAILURES)[number];
 
 export type ChatMessage = {
   id: string;
@@ -32,7 +22,7 @@ export type ChatMessage = {
   /** A question Bite gave no answer to. */
   unanswered?: boolean;
   /** An answer that stopped short: stopped by the user, or cut off. */
-  cut?: 'stopped' | 'cut_off';
+  cut?: Ending['cut'];
 };
 
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
@@ -75,6 +65,16 @@ export function useChat() {
         .map((m) => (m.id === questionId ? { ...m, unanswered: true } : m));
     });
 
+  /** Shows how a message ended, and keeps the thread the next one goes on in. */
+  const finish = (ending: Ending, questionId: string, biteId: string) => {
+    threadId.current = ending.threadId;
+    setStatus('idle');
+    setTool(undefined);
+    if (ending.failure) setFailure(ending.failure);
+    if (ending.refusal) setRefusal(ending.refusal);
+    settle(questionId, biteId, ending.cut);
+  };
+
   const run = async (text: string) => {
     const message = text.trim();
     if (!message || abort.current) return;
@@ -85,23 +85,14 @@ export function useChat() {
       { id: questionId, role: 'user', text: message },
       { id: biteId, role: 'bite', text: '' },
     ]);
-    let cut: ChatMessage['cut'];
-    // Whether the answer ended as the function ends it, with `done` or `error`.
-    let ended = false;
-    const threadBefore = threadId.current;
+    let ending = beginning(threadId.current);
     setStatus('thinking');
     setFailure(undefined);
     const controller = new AbortController();
     abort.current = controller;
 
-    /** Says why the user may not go on, or why Bite could not answer. */
-    const explain = (reason: string) => {
-      const refusal = oneOf(REFUSALS, reason);
-      if (refusal) setRefusal(refusal);
-      else setFailure(oneOf(FAILURES, reason) ?? 'unavailable');
-    };
-
     const onEvent = (event: ChatEvent) => {
+      ending = afterEvent(ending, event);
       switch (event.event) {
         case 'expression':
           return updateBite(biteId, (m) => ({ ...m, expression: event.expression }));
@@ -112,57 +103,28 @@ export function useChat() {
         case 'text':
           setStatus('answering');
           return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
-        case 'thread':
-          threadId.current = event.threadId;
-          return;
-        case 'done':
-          ended = true;
-          threadId.current = event.threadId;
-          if (event.interrupted) cut = 'cut_off';
-          if (event.reason) explain(event.reason);
-          return;
-        case 'error': {
-          ended = true;
-          // A new thread the function dropped again: the next message starts its own.
-          if (event.dropped) threadId.current = threadBefore;
-          explain(event.reason);
-          // An answer that came whole but was not saved did not stop short.
-          if (event.reason !== 'not_saved') cut = 'cut_off';
-          return;
-        }
       }
     };
 
     try {
       await streamChat(
-        {
-          message,
-          threadId: threadId.current,
-          language: i18n.language,
-          today: deviceToday(),
-        },
+        { message, threadId: threadId.current, language: i18n.language, today: deviceToday() },
         onEvent,
         controller.signal,
       );
-      // An answer that ends without its end, as when the connection closed, stopped short.
-      if (!ended) {
-        setFailure('unavailable');
-        cut = 'cut_off';
-      }
+      ending = afterStream(ending, 'closed');
     } catch (error) {
-      // A thread that is gone is left: the next message starts a new one.
-      if (error instanceof ChatRequestError && error.status === 404) threadId.current = undefined;
       // Stopped by the user, or no answer came: what came stays.
-      if (controller.signal.aborted) cut = 'stopped';
-      else {
-        setFailure('unavailable');
-        cut = 'cut_off';
-      }
+      ending = controller.signal.aborted
+        ? afterStream(ending, 'stopped')
+        : afterStream(
+            ending,
+            'failed',
+            error instanceof ChatRequestError ? error.status : undefined,
+          );
     } finally {
       abort.current = undefined;
-      setStatus('idle');
-      setTool(undefined);
-      settle(questionId, biteId, cut);
+      finish(ending, questionId, biteId);
       // What the message cost counts toward the month's budget.
       void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
     }
