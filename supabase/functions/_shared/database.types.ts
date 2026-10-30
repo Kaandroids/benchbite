@@ -1569,6 +1569,14 @@ export type Database = {
       };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      apply_coach_change: {
+        Args: {
+          change: Json;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          today: string;
+        };
+        Returns: undefined;
+      };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       calculate_nutrition_targets: {
@@ -1619,6 +1627,7 @@ export type Database = {
         Returns: boolean;
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
+      check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
@@ -1976,6 +1985,7 @@ export type Database = {
           change: Json;
           kind: Database['public']['Enums']['coach_proposal_kind'];
           thread_id: number;
+          today: string;
         };
         Returns: number;
       };
@@ -2044,6 +2054,7 @@ export type Database = {
         };
         Returns: boolean;
       };
+      save_own_nutrition_targets: { Args: { targets: Json; today: string }; Returns: undefined };
       save_recipe: {
         Args: {
           ingredients: Json;
@@ -2071,7 +2082,6 @@ export type Database = {
           recipe_id: number;
         }[];
       };
-      set_own_targets: { Args: { targets: Json }; Returns: undefined };
       set_suits: {
         Args: {
           meters: number;
@@ -2168,6 +2178,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
