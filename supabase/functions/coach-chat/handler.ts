@@ -3,9 +3,22 @@
 // of events, while Bite may look things up with its tools, and the turn is saved to its thread.
 import { z } from 'zod';
 
-import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
+import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
+import {
+  type ChatEvent as Event,
+  type ChatReason,
+  type ChatRequest as Body,
+  type Interruption,
+  MAX_MESSAGE_LENGTH,
+} from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
-import type { Finish, LanguageModel, Message, Part } from '../_shared/llm/mod.ts';
+import {
+  type Finish,
+  type LanguageModel,
+  type Message,
+  ModelError,
+  type Part,
+} from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   type Expression,
@@ -35,12 +48,12 @@ export type ChatContext = {
 const ChatRequest = z.object({
   /** The thread to go on with; a new one without. */
   threadId: z.number().int().positive().optional(),
-  message: z.string().trim().min(1).max(4000),
+  message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
   /** The app's language, which Bite answers in. */
   language: z.enum(LANGUAGES),
   /** The user's day, as their device has it. */
   today: DAY,
-});
+}) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
 
 /** How many earlier messages Bite reads of a thread. */
@@ -60,16 +73,8 @@ const MAX_PARTS = 50;
  */
 const MAX_CONTENT_BYTES = 50_000;
 
-/** What the app is told as the answer comes, each a server-sent event. */
-export type ChatEvent =
-  | { event: 'expression'; expression: Expression }
-  | { event: 'tool_start'; name: string }
-  | { event: 'tool_end'; name: string }
-  | { event: 'text'; text: string }
-  /** The turn is saved; `interrupted` when the answer stopped before its end. */
-  | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
-  /** Nothing was saved, and why. */
-  | { event: 'error'; reason: string };
+/** What the app is told as the answer comes, each a server-sent event (ADR 0052). */
+export type ChatEvent = Event<Expression>;
 
 export async function handleChatRequest(req: Request, context: ChatContext): Promise<Response> {
   if (req.method !== 'POST') {
@@ -185,9 +190,31 @@ async function answer(
     'coach_chat',
   );
   const turn = new Turn(send);
-  let failure: string | undefined;
+  const outcome: Outcome = { refused: false, asked: false };
+  let threadId = request.threadId;
+
+  // Nothing is written for a user who may not ask Bite now.
+  try {
+    await checkAiAccess(context.supabase);
+  } catch (error) {
+    if (error instanceof AiRefusedError) return send({ event: 'error', reason: error.reason });
+    logError('Could not read the access to Bite', error);
+    return send({ event: 'error', reason: 'unavailable' });
+  }
 
   try {
+    // A new thread is started at once, so that the app keeps it however the answer ends; it goes
+    // again if the message is refused after all.
+    if (!threadId) {
+      const created = await context.admin
+        .from('coach_threads')
+        .insert({ user_id: context.userId })
+        .select('id')
+        .single();
+      if (created.error) throw created.error;
+      threadId = created.data.id;
+      send({ event: 'thread', threadId });
+    }
     const snapshot = await loadSnapshot(context.supabase, request.today);
     const messages: Message[] = [
       ...history,
@@ -213,6 +240,7 @@ async function answer(
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
+        outcome.asked = true;
         if (isStopped()) break;
         if (event.type === 'text') {
           turn.said(event.text);
@@ -247,24 +275,71 @@ async function answer(
       );
     }
   } catch (error) {
-    if (error instanceof AiRefusedError) failure = error.reason;
-    else {
+    if (error instanceof AiRefusedError) {
+      outcome.failure = error.reason;
+      outcome.refused = true;
+    } else {
       logError('Bite could not answer', error);
-      failure = 'unavailable';
+      outcome.failure = 'unavailable';
+      // A provider's error that was billed comes from a request that was made; one refused
+      // outright, as a token count over the provider's rate, cost nothing and keeps nothing.
+      if (error instanceof ModelError && error.billed) outcome.asked = true;
     }
   }
 
-  if (!turn.text.trim()) {
-    return send({
-      event: 'error',
-      reason: failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable'),
-    });
+  if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
+  const end = ending(outcome, {
+    said: turn.text.trim() !== '',
+    stopped: isStopped(),
+    finish: turn.finish,
+    newThread: !request.threadId,
+  });
+  if (end.keep !== 'turn') {
+    const dropped = end.dropThread && (await keepAlive(dropThread(context, threadId)));
+    if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
+    return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
-  // What came is kept, as when the app stops the answer, and said to have stopped short.
-  const interrupted = failure !== undefined || isStopped() || turn.finish !== 'stop';
-  const saved = await keepAlive(save(context, request, turn));
-  if (!saved) return send({ event: 'error', reason: 'not_saved' });
-  send({ event: 'done', ...saved, ...(interrupted && { interrupted: true }) });
+  const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
+  if (!messageId) return send({ event: 'error', reason: 'not_saved' });
+  send({
+    event: 'done',
+    threadId,
+    messageId,
+    ...(end.interrupted && { interrupted: end.interrupted }),
+    ...(end.reason && { reason: end.reason }),
+  });
+}
+
+/** How the requests of an answer went: why they failed, if refused, and if the model was asked. */
+export type Outcome = { failure?: ChatReason; refused: boolean; asked: boolean };
+
+/**
+ * What is kept of a message, and what the app is told. An answer with text is kept as a turn,
+ * saying why it stopped short if it did. Without text, a question the model was asked stays in
+ * the thread unanswered, as the app shows it, so that Bite sees it next time; one that never
+ * reached the model, or was refused, is not kept, and a thread begun for it goes again.
+ */
+export function ending(
+  { failure, refused, asked }: Outcome,
+  answer: { said: boolean; stopped: boolean; finish?: Finish; newThread: boolean },
+):
+  | { keep: 'turn'; interrupted?: Interruption; reason?: ChatReason }
+  | { keep: 'question' | 'nothing'; reason: ChatReason; dropThread: boolean } {
+  if (answer.said) {
+    return { keep: 'turn', interrupted: interruption(), reason: failure };
+  }
+  const reason = failure ?? (answer.finish === 'blocked' ? 'blocked' : 'unavailable');
+  // A question the model blocked is not kept either: sent again with every later message, it
+  // would be blocked again, at a cost each time.
+  const keep = asked && !refused && reason !== 'blocked' ? 'question' : 'nothing';
+  return { keep, reason, dropThread: keep === 'nothing' && answer.newThread };
+
+  function interruption(): Interruption | undefined {
+    if (refused) return 'refused';
+    if (failure) return 'failed';
+    if (answer.stopped) return 'stopped';
+    if (answer.finish !== 'stop') return 'cut';
+  }
 }
 
 async function lookUp(
@@ -279,26 +354,32 @@ async function lookUp(
   return result;
 }
 
-/** Saves the user's message and Bite's answer, in a new thread when there is none yet. */
-async function save(
+/** The user's message as the thread keeps it. */
+function question(threadId: number, request: ChatRequest) {
+  return {
+    thread_id: threadId,
+    role: 'user' as const,
+    content: [{ type: 'text', text: request.message }],
+  };
+}
+
+/** Saves a question Bite gave no answer to. */
+async function saveQuestion(context: ChatContext, threadId: number, request: ChatRequest) {
+  const saved = await context.admin.from('coach_messages').insert(question(threadId, request));
+  if (saved.error) logError('Could not save the question', saved.error);
+}
+
+/** Saves the user's message and Bite's answer to the thread, and gives Bite's message's id. */
+async function saveTurn(
   context: ChatContext,
+  threadId: number,
   request: ChatRequest,
   turn: Turn,
-): Promise<{ threadId: number; messageId: number } | undefined> {
-  let threadId = request.threadId;
-  if (!threadId) {
-    const thread = await context.admin
-      .from('coach_threads')
-      .insert({ user_id: context.userId })
-      .select('id')
-      .single();
-    if (thread.error) return void logError('Could not start a thread', thread.error);
-    threadId = thread.data.id;
-  }
+): Promise<number | undefined> {
   const messages = await context.admin
     .from('coach_messages')
     .insert([
-      { thread_id: threadId, role: 'user', content: [{ type: 'text', text: request.message }] },
+      question(threadId, request),
       {
         thread_id: threadId,
         role: 'bite',
@@ -314,7 +395,26 @@ async function save(
     .select('id')
     .order('id');
   if (messages.error) return void logError('Could not save the messages', messages.error);
-  return { threadId, messageId: messages.data[messages.data.length - 1].id };
+  return messages.data[messages.data.length - 1].id;
+}
+
+/**
+ * Drops a thread begun for a message that is not kept, and says whether it did: another request
+ * may have answered in it meanwhile, and then it stays.
+ */
+async function dropThread(context: ChatContext, threadId: number): Promise<boolean> {
+  const kept = await context.admin
+    .from('coach_messages')
+    .select('id')
+    .eq('thread_id', threadId)
+    .limit(1);
+  if (kept.error || kept.data.length) {
+    if (kept.error) logError('Could not read the thread to drop', kept.error);
+    return false;
+  }
+  const dropped = await context.admin.from('coach_threads').delete().eq('id', threadId);
+  if (dropped.error) logError('Could not drop an empty thread', dropped.error);
+  return !dropped.error;
 }
 
 /**

@@ -3,10 +3,12 @@
 // level security decides what it sees, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
+import type { CoachToolName } from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import type { Language } from './prompt.ts';
+import { workoutName } from './workout.ts';
 
 export type ToolContext = { supabase: Client; language: Language; today: string };
 
@@ -16,7 +18,8 @@ const MAX_DAYS = 31;
 const QUERY = z.string().trim().min(2).max(80);
 
 type CoachTool<A extends z.ZodType> = {
-  name: string;
+  /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
+  name: CoachToolName;
   description: string;
   /** The arguments, which the model is told of and its calls are checked against. */
   args: A;
@@ -47,7 +50,7 @@ const TOOLS = [
       const plans = Map.groupBy(read(planned), (workout) => workout.day);
       return read(training).map((day) => ({
         day: day.day,
-        planned: plans.get(day.day)?.map((workout) => workout.name) ?? [],
+        planned: plans.get(day.day)?.map(workoutName) ?? [],
         done: day.done,
         missed: day.missed,
         minutes: day.minutes,

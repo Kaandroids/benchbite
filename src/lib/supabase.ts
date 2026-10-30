@@ -17,6 +17,14 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
+/** The address of an Edge Function, for a call that reads its answer as it streams. */
+export function functionUrl(name: string): string {
+  return `${supabaseUrl}/functions/v1/${name}`;
+}
+
+/** The project's publishable key, which every request to it carries. */
+export const publishableKey: string = supabasePublishableKey;
+
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
     storage: localStorage,

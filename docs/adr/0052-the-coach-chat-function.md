@@ -14,11 +14,15 @@ the model is limited and counted (ADR 0051).
 ## Decision
 
 - **An Edge Function, `coach-chat`,** takes the message, the thread to go on with (none for a new
-  one), the app's language and the user's day, and answers as server-sent events: `expression`,
-  then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at the end either
-  `done` with the thread and message, and `interrupted: true` in it when the answer stopped
-  short, or `error` with a reason when nothing was saved (`plan_required`, `limit_reached`, `blocked`,
-  `unavailable`…).
+  one), the app's language and the user's day, and answers as server-sent events: for a new
+  thread, `thread` with its id first, so that the app keeps it however the answer ends;
+  `expression`, then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at
+  the end either `done` with the thread and message, and `interrupted` in it when the answer
+  stopped short, with why (`failed`, `refused`, `stopped` or `cut`) and the `reason` of a failure
+  or refusal, or `error` with a reason when Bite saved no answer (`plan_required`,
+  `limit_reached`, `blocked`, `unavailable`…).
+  The events, the request, the tools' names and the longest message are written once, in
+  `_shared/coach/chat.ts`, which the app imports too.
 - **What Bite is told, in order:** fixed instructions (its character, safety rules and its face),
   the same for every user so that the provider can cache them; the thread's last 20 messages, as
   text, Bite's with their faces; and the new message, with a snapshot of the user before it,
@@ -38,9 +42,16 @@ the model is limited and counted (ADR 0051).
   answer without one is neutral.
 - **The turn is saved when the answer is done,** or when it stops short with text already given
   (the app stopped it, the budget ran out after a lookup, it was cut at the token limit): the
-  thread, if new, the user's message, and Bite's, with its lookups and their results, its face,
-  and what its requests used. The lookups are trimmed to what a message may hold. An answer with
-  no text saves nothing.
+  user's message and Bite's, with its lookups and their results, its face,
+  and what its requests used. The lookups are trimmed to what a message may hold. When Bite
+  said nothing, a question the model was asked stays in the thread without an answer, as the app
+  shows it, so that Bite sees it next time. A message that never reached the model, as when it
+  was refused, stopped first or the call could not start, or one the model blocked, which would
+  be blocked again with every later message, is not kept, though the app still shows it
+  unanswered, to ask again; a thread started for it goes again, which the error says with
+  `dropped`, unless another request answered in it meanwhile. As nothing is sent after a stop,
+  the app gives up a new thread it stopped before any text by itself, and one too long to go on
+  with (`request_too_large`).
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered

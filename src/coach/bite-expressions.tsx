@@ -16,6 +16,7 @@ export const PALETTE = {
 
 /** The faces Bite answers with, which its messages keep (`bite_expression`, #291). */
 export const ANSWER_EXPRESSIONS = Constants.public.Enums.bite_expression;
+export type AnswerExpression = (typeof ANSWER_EXPRESSIONS)[number];
 
 /** How Bite looks (#293): its face for what it says, and while it works out a reply. */
 export const BITE_EXPRESSIONS = [...ANSWER_EXPRESSIONS, 'thinking'] as const;

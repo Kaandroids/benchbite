@@ -3,6 +3,7 @@
 // decides what Bite may see; what cannot be read is left out rather than failing the answer.
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+import { workoutName } from './workout.ts';
 
 type GoalKind = Database['public']['Enums']['goal_kind'];
 
@@ -105,7 +106,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   if (planned.data) {
     const done = trained.data?.[0]?.done ?? 0;
     snapshot.workouts = planned.data.length
-      ? `${planned.data.map((w) => w.name).join(', ')} planned, ${done} done`
+      ? `${planned.data.map(workoutName).join(', ')} planned, ${done} done`
       : done
         ? `none planned, ${done} done`
         : 'rest day';
