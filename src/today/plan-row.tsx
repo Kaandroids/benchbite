@@ -9,7 +9,7 @@ import { fonts, useTheme, type ColorTokens } from '@/theme';
 
 type PlanRowProps = {
   icon: IconName;
-  /** The colour of the icon, the caption and the round button; the icon sits on `background`. */
+  /** The colour of the icons and the caption; the icon and the round button sit on `background`. */
   color: keyof ColorTokens;
   background: keyof ColorTokens;
   /** The line above the title, such as the day a workout was missed on. */
@@ -54,8 +54,8 @@ export function PlanRow({
       </View>
       <RoundIconButton
         icon={actionIcon}
-        color="onPrimary"
-        background={color}
+        color={color}
+        background={background}
         size={44}
         label={actionLabel}
         onPress={onAction}
