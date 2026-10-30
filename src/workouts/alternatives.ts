@@ -86,17 +86,6 @@ export function useAlternativeError() {
     );
 }
 
-/** What a request to the database gives, or what it refused it with, thrown. */
-async function call<Result>(
-  request: PromiseLike<{ data: Result; error: null } | { data: null; error: unknown }>,
-): Promise<Result> {
-  const response = await request;
-  if (response.error) {
-    throw response.error;
-  }
-  return response.data as Result;
-}
-
 /**
  * Puts an alternative in use from today on. Its exercises become the workout's, so the whole plan
  * loads again.
@@ -104,13 +93,15 @@ async function call<Result>(
 export function useSwitchAlternative() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (alternativeId: number) =>
-      call(
-        supabase.rpc('use_workout_alternative', {
-          alternative_id: alternativeId,
-          today: deviceToday(),
-        }),
-      ),
+    mutationFn: async (alternativeId: number) => {
+      const { error } = await supabase.rpc('use_workout_alternative', {
+        alternative_id: alternativeId,
+        today: deviceToday(),
+      });
+      if (error) {
+        throw error;
+      }
+    },
     // A refused switch may mean the alternatives changed elsewhere, so they load again either way.
     onSettled: () => reloadPlan(queryClient),
   });
@@ -120,14 +111,17 @@ export function useSwitchAlternative() {
 export function useAddAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () =>
-      call(
-        supabase.rpc('add_workout_alternative', {
-          // No name or exercises: an unnamed copy of the one in use.
-          workout_id: workoutId,
-          today: deviceToday(),
-        }),
-      ),
+    mutationFn: async () => {
+      // No name or exercises: an unnamed copy of the one in use.
+      const { data, error } = await supabase.rpc('add_workout_alternative', {
+        workout_id: workoutId,
+        today: deviceToday(),
+      });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
   });
 }
@@ -136,8 +130,15 @@ export function useAddAlternative(workoutId: number) {
 export function useRenameAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, name }: { id: number; name: string }) =>
-      call(supabase.rpc('rename_workout_alternative', { alternative_id: id, name })),
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+      const { error } = await supabase.rpc('rename_workout_alternative', {
+        alternative_id: id,
+        name,
+      });
+      if (error) {
+        throw error;
+      }
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
   });
 }
@@ -146,8 +147,14 @@ export function useRenameAlternative(workoutId: number) {
 export function useDeleteAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (alternativeId: number) =>
-      call(supabase.rpc('delete_workout_alternative', { alternative_id: alternativeId })),
+    mutationFn: async (alternativeId: number) => {
+      const { error } = await supabase.rpc('delete_workout_alternative', {
+        alternative_id: alternativeId,
+      });
+      if (error) {
+        throw error;
+      }
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
   });
 }
@@ -167,13 +174,15 @@ export function useReorderAlternatives(workoutId: number) {
     mutationKey,
     // One order at a time, so that on a slow connection an earlier one cannot land last.
     scope: { id: `workout-alternatives-${workoutId}` },
-    mutationFn: (ids: number[]) =>
-      call(
-        supabase.rpc('reorder_workout_alternatives', {
-          workout_id: workoutId,
-          alternative_ids: ids,
-        }),
-      ),
+    mutationFn: async (ids: number[]) => {
+      const { error } = await supabase.rpc('reorder_workout_alternatives', {
+        workout_id: workoutId,
+        alternative_ids: ids,
+      });
+      if (error) {
+        throw error;
+      }
+    },
     onMutate: async (ids) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<WorkoutAlternative[]>(key);
