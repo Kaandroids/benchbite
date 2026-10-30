@@ -1,11 +1,6 @@
 // Rules for body data, goals and paces. They only decide what the onboarding and changing the
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
-import {
-  MIN_HEALTHY_BMI,
-  PACE_LEVELS,
-  paceLevel as levelOf,
-  type PaceLevel,
-} from '@shared/body/limits';
+import { MIN_HEALTHY_BMI, paceLevel as levelOf, type PaceLevel } from '@shared/body/limits';
 
 import { paceIn, paceToKg, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
@@ -129,24 +124,27 @@ export const PACE_RANGES: Record<'kg' | 'lb', Record<WeightGoal, PaceRange>> = {
 };
 
 /**
- * The paces the slider offers the user, in the unit: losing stops at the share of body weight a
- * week past which the app calls a pace aggressive (#332, ADR 0054), on the slider's steps, where
- * that comes before the fastest the targets allow.
+ * The paces the slider offers the user, in the unit: losing stops a step before the app would
+ * call the pace aggressive for their weight (#332, ADR 0054), once saved in kilograms, where that
+ * comes before the fastest the targets allow; `byWeight` when it does.
  */
-export function paceRange(unit: WeightUnit, goal: WeightGoal, weightKg: number): PaceRange {
+export function paceRange(
+  unit: WeightUnit,
+  goal: WeightGoal,
+  weightKg: number,
+): PaceRange & { byWeight: boolean } {
   const range = PACE_RANGES[unit][goal];
-  if (goal !== 'lose_fat') {
-    return range;
-  }
-  const forWeight = paceIn(unit, (weightKg * PACE_LEVELS.losing[1]) / 100);
-  // Down to a step, and a hair over, as 1.5 % may land a rounding below one.
-  const steps = Math.floor((forWeight - range.min) / range.step + 1e-9);
-  let max = clamp(Math.round((range.min + steps * range.step) * 100) / 100, range.min, range.max);
-  // Saved in kilograms to a hundredth, a pace in pounds can come back over the share: a step less.
-  while (max > range.min && levelOf(true, weightKg, paceToKg(unit, max)) === 'aggressive') {
+  let max = range.max;
+  // A weight not known yet stops nothing.
+  while (
+    goal === 'lose_fat' &&
+    weightKg > 0 &&
+    max > range.min &&
+    levelOf(true, weightKg, paceToKg(unit, max)) === 'aggressive'
+  ) {
     max = Math.round((max - range.step) * 100) / 100;
   }
-  return { ...range, max, default: Math.min(range.default, max) };
+  return { ...range, max, default: Math.min(range.default, max), byWeight: max < range.max };
 }
 
 /**
@@ -187,21 +185,36 @@ export function isPaceHeldUp(
   return achievableKg != null && achievableKg < chosenKg - 0.01;
 }
 
-/** The pace a goal is dated by: what the targets give where the floor holds them up, else the chosen one. */
-export function datingPace(chosenKg: number, achievableKg?: number | null): number {
-  return isPaceHeldUp(chosenKg, achievableKg) ? achievableKg : chosenKg;
-}
+/**
+ * How a goal is reached: at the chosen pace, at the slower one the floor holds the targets to
+ * (ADR 0054), or not at all, when they keep the weight; with when it is reached.
+ */
+export type GoalPace =
+  | { kind: 'chosen' | 'heldUp'; paceKg: number; date: Date }
+  | { kind: 'none'; paceKg: 0; date: null };
 
-/** When the target is reached at the pace the targets give; null when they keep the weight. */
-export function goalDate(
+export function goalPace(
   weightKg: number,
   targetKg: number,
   chosenKg: number,
   achievableKg: number | null | undefined,
   from: Date,
-): Date | null {
-  const pace = datingPace(chosenKg, achievableKg);
-  return pace > 0 ? projectedDate(weightKg, targetKg, pace, from) : null;
+): GoalPace {
+  if (!isPaceHeldUp(chosenKg, achievableKg)) {
+    return {
+      kind: 'chosen',
+      paceKg: chosenKg,
+      date: projectedDate(weightKg, targetKg, chosenKg, from),
+    };
+  }
+  if (achievableKg <= 0) {
+    return { kind: 'none', paceKg: 0, date: null };
+  }
+  return {
+    kind: 'heldUp',
+    paceKg: achievableKg,
+    date: projectedDate(weightKg, targetKg, achievableKg, from),
+  };
 }
 
 /** How demanding a weekly pace is for the goal, as a share of body weight. */

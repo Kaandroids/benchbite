@@ -12,8 +12,7 @@ import {
   defaultTargetKg,
   isTargetInGoalDirection,
   isTargetReached,
-  datingPace,
-  goalDate,
+  goalPace,
   isPaceHeldUp,
   isPaceInRange,
   isTooLightToLose,
@@ -240,21 +239,33 @@ describe('dating the goal', () => {
   const from = new Date(2026, 0, 1);
 
   it('dates by the chosen pace, unless the floor holds the targets below it', () => {
-    expect(datingPace(0.9, 0.56)).toBe(0.56);
-    expect(datingPace(0.5, 0.49)).toBe(0.5);
-    expect(datingPace(0.5, null)).toBe(0.5);
-    expect(isPaceHeldUp(0.9, 0.56)).toBe(true);
-    expect(isPaceHeldUp(0.5, 0.5)).toBe(false);
+    // 5 kg at 0.5 kg a week takes 10 weeks.
+    expect(goalPace(80, 75, 0.5, null, from)).toEqual({
+      kind: 'chosen',
+      paceKg: 0.5,
+      date: new Date(2026, 2, 12),
+    });
+    // Within rounding, the chosen pace still.
+    expect(goalPace(80, 75, 0.5, 0.49, from).kind).toBe('chosen');
+    expect(goalPace(80, 75, 0.9, 0.5, from)).toEqual({
+      kind: 'heldUp',
+      paceKg: 0.5,
+      date: new Date(2026, 2, 12),
+    });
   });
 
   it('gives no date when the targets keep the weight', () => {
+    expect(goalPace(50, 47, 0.5, 0, from)).toEqual({ kind: 'none', paceKg: 0, date: null });
     expect(isPaceHeldUp(0.5, 0)).toBe(true);
-    expect(goalDate(50, 47, 0.5, 0, from)).toBeNull();
-    expect(goalDate(80, 75, 0.5, null, from)).toEqual(new Date(2026, 2, 12));
   });
 
   it('keeps the paces of a goal to gain', () => {
-    expect(paceRange('kg', 'build_muscle', 45)).toEqual(PACE_RANGES.kg.build_muscle);
+    expect(paceRange('kg', 'build_muscle', 45)).toEqual({
+      ...PACE_RANGES.kg.build_muscle,
+      byWeight: false,
+    });
+    expect(paceRange('kg', 'lose_fat', 55).byWeight).toBe(true);
+    expect(paceRange('kg', 'lose_fat', 60).byWeight).toBe(false);
   });
 });
 

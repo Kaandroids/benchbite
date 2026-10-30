@@ -2,14 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PACE_LEVELS } from '@shared/body/limits';
 
-import {
-  PACE_RANGES,
-  paceLevel,
-  paceRange,
-  projectedDate,
-  type PaceLevel,
-  type WeightGoal,
-} from '@/body/body';
+import { paceLevel, paceRange, projectedDate, type PaceLevel, type WeightGoal } from '@/body/body';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat, useWeightFormat, type WeightUnit } from '@/i18n/units';
@@ -47,7 +40,7 @@ export function PaceNote({
   const range = paceRange(unit, goal, weightKg);
   const fastest = paceIn(unit, paceKg) >= range.max;
   // At the fastest pace for a light user's weight, rather than at the fastest the targets allow.
-  const forWeight = range.max < PACE_RANGES[unit][goal].max;
+  const forWeight = range.byWeight;
   return (
     <>
       <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align={align}>

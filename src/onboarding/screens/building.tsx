@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { PACE_RANGES, snapPace, weightGoal } from '@/body/body';
+import { paceRange, snapPace, weightGoal } from '@/body/body';
 import { Building, BuildingFooter, useBuildingAttempt } from '@/components/building';
 import { Screen } from '@/components/ui/screen';
 import { useWeekdayFormat } from '@/i18n/dates';
@@ -76,9 +76,12 @@ function usePlanLines(answers: OnboardingAnswers): string[] {
   // Read back as the pace step shows it, on the slider's steps, so the line repeats the choice.
   const pace =
     aim &&
-    `${format(snapPace(paceIn(unit, aim.paceKg), PACE_RANGES[unit][aim.goal]), {
-      maximumFractionDigits: 2,
-    })} ${unit}`;
+    `${format(
+      snapPace(paceIn(unit, aim.paceKg), paceRange(unit, aim.goal, answers.weightKg ?? 0)),
+      {
+        maximumFractionDigits: 2,
+      },
+    )} ${unit}`;
   const days = answers.trainingDays ?? [];
   return [
     aim
