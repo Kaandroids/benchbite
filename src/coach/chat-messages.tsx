@@ -20,6 +20,14 @@ import { useTheme } from '@/theme';
 import { BiteAvatar } from './bite-avatar';
 import type { ChatMessage, ChatStatus } from './use-chat';
 
+/** Bite's face beside its messages. */
+const AVATAR = 32;
+type Spacing = ReturnType<typeof useTheme>['spacing'];
+/** The room between Bite's face and its message. */
+const avatarGap = (spacing: Spacing) => spacing.md - 2;
+/** Where Bite's messages begin, past its face, as what goes under them does. */
+const pastAvatar = (spacing: Spacing) => AVATAR + avatarGap(spacing);
+
 type ChatMessagesProps = {
   messages: ChatMessage[];
   status: ChatStatus;
@@ -119,11 +127,11 @@ const BiteMessage = memo(function BiteMessage({
   const expression = message.expression ?? 'neutral';
   return (
     <View style={{ gap: spacing.xs }}>
-      <View style={[styles.bite, { gap: spacing.md - 2 }]}>
+      <View style={[styles.bite, { gap: avatarGap(spacing) }]}>
         {talking ? (
-          <BiteAvatar size={32} expression={expression} state="talking" />
+          <BiteAvatar size={AVATAR} expression={expression} state="talking" />
         ) : (
-          <BiteAvatar size={32} expression={expression} />
+          <BiteAvatar size={AVATAR} expression={expression} />
         )}
         <View
           style={[
@@ -141,7 +149,7 @@ const BiteMessage = memo(function BiteMessage({
       </View>
       {/* An answer that stopped short says so, under it. */}
       {message.cut ? (
-        <Text variant="caption" color="textMuted" style={styles.under}>
+        <Text variant="caption" color="textMuted" style={{ marginLeft: pastAvatar(spacing) }}>
           {t(message.cut === 'stopped' ? 'bite.stopped' : 'bite.cutOff')}
         </Text>
       ) : null}
@@ -152,8 +160,8 @@ const BiteMessage = memo(function BiteMessage({
 function Thinking({ tool }: { tool?: string }) {
   const { spacing } = useTheme();
   return (
-    <View style={[styles.row, { gap: spacing.md - 2 }]}>
-      <BiteAvatar size={32} state="thinking" />
+    <View style={[styles.row, { gap: avatarGap(spacing) }]}>
+      <BiteAvatar size={AVATAR} state="thinking" />
       <ToolLine tool={tool} />
     </View>
   );
@@ -167,7 +175,11 @@ function ToolLine({ tool, indent = false }: { tool?: string; indent?: boolean })
   const line = known ? t(`bite.tools.${known}`) : undefined;
   return (
     <View
-      style={[styles.row, styles.flex, { gap: spacing.md - 2, marginLeft: indent ? 42 : 0 }]}
+      style={[
+        styles.row,
+        styles.flex,
+        { gap: avatarGap(spacing), marginLeft: indent ? pastAvatar(spacing) : 0 },
+      ]}
       accessible
       accessibilityLabel={line ?? t('bite.thinking')}
       accessibilityLiveRegion="polite"
@@ -214,10 +226,6 @@ function Dot({ delay, color }: { delay: number; color: string }) {
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
-  },
-  /** Under Bite's answer, past its face. */
-  under: {
-    marginLeft: 42,
   },
   bubble: {
     maxWidth: '80%',
