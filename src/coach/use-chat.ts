@@ -147,6 +147,8 @@ export function useChat() {
             ended = true;
             threadId.current = event.threadId;
             if (event.interrupted) cut = 'cut_off';
+            // What the model broke off can be asked again; a refusal shows once access is read.
+            if (event.interrupted === 'failed') setFailure('unavailable');
             return;
           case 'error': {
             ended = true;

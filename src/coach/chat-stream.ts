@@ -11,8 +11,16 @@ export type ChatEvent =
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
   | { event: 'text'; text: string }
-  /** The turn is saved; `interrupted` when the answer stopped before its end. */
-  | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
+  /**
+   * The turn is saved; `interrupted` says why when the answer stopped before its end: the model
+   * failed, the user may not go on, it was stopped, or the model cut it.
+   */
+  | {
+      event: 'done';
+      threadId: number;
+      messageId: number;
+      interrupted?: 'failed' | 'refused' | 'stopped' | 'cut';
+    }
   /**
    * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
    * is kept unless the user may not ask now.

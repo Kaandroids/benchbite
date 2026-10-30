@@ -235,6 +235,32 @@ it('says an answer was cut off, and tries the question again', async () => {
   expect(streamChat).toHaveBeenCalledTimes(2);
 });
 
+it('offers to try again an answer the model broke off, but not one cut at its limit', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'text', text: 'Your week' },
+    { event: 'done', threadId: 7, messageId: 9, interrupted: 'cut' },
+  );
+  await stream.end();
+
+  expect(screen.getByText('Cut off')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And today?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  await stream.send(
+    { event: 'text', text: 'Today' },
+    { event: 'done', threadId: 7, messageId: 11, interrupted: 'failed' },
+  );
+  await stream.end();
+
+  expect(screen.getByText("Bite couldn't answer just now. Try again.")).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+  expect(stream.request()?.message).toBe('And today?');
+});
+
 it('says when Bite answers on another device', async () => {
   const stream = liveStream();
   await render(<BiteScreen />);
