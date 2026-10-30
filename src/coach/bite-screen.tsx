@@ -32,18 +32,11 @@ export function BiteScreen() {
   const { fromChats } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
-  const savedProposals = proposalIds(saved.data?.messages ?? []);
-  // Its proposals show where they stand from the start, as one decided folds into a line.
-  const states = useProposalStates(savedProposals);
   // A saved chat opens on its messages as they are now, never on ones kept from before.
-  if (
-    opened.waiting ||
-    (threadId !== undefined && !saved.isFetchedAfterMount) ||
-    (savedProposals.length > 0 && states.isPending)
-  ) {
+  if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
       <Screen onBack={() => router.back()} closes={!fromChats}>
-        <LoadState queries={savedProposals.length > 0 ? [saved, states] : [saved]} />
+        <LoadState queries={[saved]} />
       </Screen>
     );
   }
@@ -85,6 +78,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const chat = useChat(start);
+  // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
+  const proposalsOnScreen = proposalIds(chat.messages);
+  const proposals = useProposalStates(proposalsOnScreen);
   const access = useAiAccess();
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
@@ -122,9 +118,15 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               onAsk={refusal ? undefined : following(chat.send)}
               continueWith={continueWith}
             />
+          ) : proposalsOnScreen.length > 0 && proposals.isPending ? (
+            // A saved chat's proposals show where they stand from the start, as a decided one
+            // folds into a line, rather than offering Apply a moment.
+            <LoadState queries={[proposals]} />
           ) : (
             <ChatMessages
               messages={chat.messages}
+              proposals={proposals.data}
+              loadingProposals={proposals.isFetching}
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}

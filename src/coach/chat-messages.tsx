@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, useMemo } from 'react';
+import { Fragment, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -20,7 +20,7 @@ import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import { ProposalCard } from './proposal-card';
-import { type ProposalState, proposalIds, useProposalStates } from './proposals';
+import type { ProposalState } from './proposals';
 import type { ChatMessage, ChatStatus } from './use-chat';
 import { useMomentFormat } from './use-moment-format';
 
@@ -39,6 +39,10 @@ type ChatMessagesProps = {
   tool?: string;
   /** Asks an unanswered question again; without it, as when the user may not ask, it is not offered. */
   onAskAgain?: (question: ChatMessage) => void;
+  /** Where the proposals stand, by id, once loaded. */
+  proposals?: Map<number, ProposalState>;
+  /** Whether where they stand is loading. */
+  loadingProposals: boolean;
 };
 
 /**
@@ -46,11 +50,16 @@ type ChatMessagesProps = {
  * changes it proposed under it. Bite's last message thinks while it waits, with what it is looking
  * up, and talks while its text comes (boards 2 and 3).
  */
-export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  status,
+  tool,
+  onAskAgain,
+  proposals,
+  loadingProposals,
+}: ChatMessagesProps) {
   const { spacing } = useTheme();
   const moment = useMomentFormat();
-  const ids = useMemo(() => proposalIds(messages), [messages]);
-  const proposals = useProposalStates(ids);
   // Bite thinks on under a change it proposed before a word.
   const proposing = !!messages.at(-1)?.proposals?.length;
   // A conversation over more than one day shows when each day of it began (board 18).
@@ -78,8 +87,8 @@ export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessage
               status={status}
               tool={tool}
               onAskAgain={onAskAgain}
-              states={proposals.data}
-              loadingStates={proposals.isFetching}
+              proposals={proposals}
+              loadingProposals={loadingProposals}
             />
           </Fragment>
         );
@@ -92,32 +101,39 @@ export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessage
   );
 }
 
-type ProposalStates = {
-  /** Where the proposals stand, by id, once loaded. */
-  states?: Map<number, ProposalState>;
-  /** Whether where they stand is loading. */
-  loadingStates: boolean;
+type MessageRowProps = Pick<
+  ChatMessagesProps,
+  'status' | 'tool' | 'onAskAgain' | 'proposals' | 'loadingProposals'
+> & {
+  message: ChatMessage;
+  last: boolean;
 };
 
-type MessageRowProps = Pick<ChatMessagesProps, 'status' | 'tool' | 'onAskAgain'> &
-  ProposalStates & {
-    message: ChatMessage;
-    last: boolean;
-  };
-
 /** A message: the user's, Bite's, or Bite's last one thinking while it waits. */
-function MessageRow({ message, last, status, tool, onAskAgain, ...states }: MessageRowProps) {
+function MessageRow({
+  message,
+  last,
+  status,
+  tool,
+  onAskAgain,
+  proposals,
+  loadingProposals,
+}: MessageRowProps) {
   if (message.role === 'user') {
     return <UserMessage message={message} onAskAgain={onAskAgain} />;
   }
-  if (last && status === 'thinking' && !message.text && !message.proposals?.length) {
+  const proposed = !!message.proposals?.length;
+  if (last && status === 'thinking' && !message.text && !proposed) {
     return <Thinking tool={tool} />;
   }
+  // Only a message with proposals gets where they stand, so that the others render again only
+  // when they change, not when a proposal is decided.
   return (
     <BiteMessage
       message={message}
       talking={last && status !== 'idle'}
-      {...(message.proposals?.length ? states : { loadingStates: false })}
+      proposals={proposed ? proposals : undefined}
+      loadingProposals={proposed && loadingProposals}
     />
   );
 }
@@ -176,9 +192,9 @@ const UserMessage = memo(function UserMessage({
 const BiteMessage = memo(function BiteMessage({
   message,
   talking,
-  states,
-  loadingStates,
-}: ProposalStates & {
+  proposals,
+  loadingProposals,
+}: Pick<ChatMessagesProps, 'proposals' | 'loadingProposals'> & {
   message: ChatMessage;
   talking: boolean;
 }) {
@@ -211,13 +227,13 @@ const BiteMessage = memo(function BiteMessage({
             </View>
           ) : null}
           {message.proposals?.map((card) => {
-            const state = states?.get(card.id);
+            const state = proposals?.get(card.id);
             return (
               <View key={card.id} style={styles.proposal}>
                 <ProposalCard
                   card={card}
                   state={state}
-                  waiting={state === undefined && loadingStates}
+                  waiting={state === undefined && loadingProposals}
                 />
               </View>
             );
