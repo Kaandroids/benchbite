@@ -9,7 +9,8 @@ create table public.workout_alternatives (
   workout_id bigint not null references public.workouts (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   -- The order of the chips. Checked at the end of each statement, so that one update can reorder.
-  position smallint not null check (position between 1 and 5),
+  -- How many a workout may have is workout_limits()', which add_workout_alternative() keeps to.
+  position smallint not null check (position >= 1),
   -- Optional; the app shows an unnamed one as "Alternative N".
   name text check (char_length(name) between 1 and 12 and name = btrim(name)),
   in_use boolean not null,
