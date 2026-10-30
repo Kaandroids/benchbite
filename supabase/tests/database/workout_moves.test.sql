@@ -226,12 +226,13 @@ select results_eq(
   'A user undoes their own move'
 );
 
--- Changing a workout's days or archiving it deletes this week's moves that no longer fit.
+-- Changing a workout's days or archiving it deletes the moves still to come that no longer fit.
+-- They are next week's, so that they are still to come whatever day the tests run on.
 reset role;
 delete from public.workout_moves where workout_id = 913;
 insert into public.workout_moves (user_id, workout_id, from_on, to_on) values
-  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(6), pg_temp.day(5)),
-  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7), pg_temp.day(3)),
+  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(6) + 7, pg_temp.day(5) + 7),
+  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7) + 7, pg_temp.day(3) + 7),
   ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7) - 14, pg_temp.day(6) - 14);
 update public.workouts set weekdays = '{5,6}' where id = 913;
 select results_eq(
