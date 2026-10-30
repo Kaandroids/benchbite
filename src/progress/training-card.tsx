@@ -79,6 +79,7 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
     content = (
       <>
         <SummaryBox>
+          {/* A caption, unlike the eating card's titled summary, as the approved design has it. */}
           <Caption>
             {t('progress.summary.caption', { range: t(`progress.summary.${shownRange}`) })}
           </Caption>

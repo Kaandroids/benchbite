@@ -83,6 +83,7 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
         <>
           {summary.targets ? (
             <SummaryBox>
+              {/* A title, unlike the training card's caption, as the approved design has it. */}
               <View style={[styles.summaryTitle, { gap: spacing.sm }]}>
                 <Text variant="label" accessibilityRole="header" style={styles.flex}>
                   {t('progress.summary.title')}
