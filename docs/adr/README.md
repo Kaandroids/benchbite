@@ -71,5 +71,5 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0053](0053-bite-errs-on-the-safe-side.md)                   | Bite errs on the safe side when the snapshot is missing or unsafe                       | Accepted                      |
 | [0054](0054-a-pace-the-user-can-keep.md)                     | A pace the user can keep, and the date it really gives                                  | Accepted                      |
 | [0055](0055-bite-s-chat-history.md)                          | Bite's chat history: named by the first message, opened by recency                      | Accepted                      |
-| [0057](0057-stop-bite-on-the-server-too.md)                  | Stop Bite's answer on the server too                                                    | Accepted                      |
 | [0056](0056-count-a-call-after-its-place-is-taken.md)        | A model call's input is counted after its place is taken                                | Accepted                      |
+| [0057](0057-stop-bite-on-the-server-too.md)                  | Stop Bite's answer on the server too                                                    | Accepted                      |
