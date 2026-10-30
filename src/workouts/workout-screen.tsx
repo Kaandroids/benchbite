@@ -248,7 +248,12 @@ export function WorkoutScreen({ id }: { id: number }) {
 
       {startSheet}
       {managing ? (
-        <AlternativesSheets workout={workout} onClose={() => setManaging(false)} />
+        <AlternativesSheets
+          workout={workout}
+          running={running}
+          onRunning={askToFinish}
+          onClose={() => setManaging(false)}
+        />
       ) : null}
     </Screen>
   );

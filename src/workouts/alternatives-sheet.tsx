@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import { useFieldStyle } from '@/components/ui/field';
-import { Icon } from '@/components/ui/icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { PillButton } from '@/components/ui/pill-button';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
@@ -22,12 +22,16 @@ import {
   useDeleteAlternative,
   useRenameAlternative,
   useReorderAlternatives,
+  useSwitchAlternative,
   useWorkoutAlternatives,
+  type NewAlternative,
   type WorkoutAlternative,
 } from './alternatives';
 import { useWorkoutLimits, type Workout } from './workouts';
 
-const ROW_HEIGHT = 60;
+const ROW_HEIGHT = 64;
+const MENU_ITEM_HEIGHT = 44;
+const MENU_WIDTH = 180;
 
 /** Before any is added, the workout's own exercises as the first alternative, in use. */
 const OWN: WorkoutAlternative = {
@@ -38,34 +42,63 @@ const OWN: WorkoutAlternative = {
   exerciseCount: null,
 };
 
-/** An alternative to name: one in the list, or one just added. */
-type Naming = Pick<WorkoutAlternative, 'id' | 'name' | 'position'>;
+/**
+ * An alternative to name: one in the list, or one just added, which `use` puts in use once named,
+ * as Add does.
+ */
+type Naming = Pick<WorkoutAlternative, 'id' | 'name' | 'position'> & { use?: boolean };
 
-type Shown = { kind: 'manage' } | { kind: 'name'; alternative: Naming } | null;
+type Shown = { kind: 'manage'; error?: string } | { kind: 'name'; alternative: Naming } | null;
+
+type AlternativesSheetsProps = {
+  workout: Workout;
+  /** Whether the workout is running, which putting another in use would change under it. */
+  running: boolean;
+  /** Called, once the sheets have closed, instead of putting one in use while it runs. */
+  onRunning: () => void;
+  onClose: () => void;
+};
 
 /**
- * The sheets for a workout's alternatives: the list to manage them, and one to name an
- * alternative, which goes back to the list once done. Rendered while open; `onClose` closes them.
+ * The sheets for a workout's alternatives: the list to choose the one in use and manage them, and
+ * one to name an alternative. Naming one goes back to the list, except for one just added, which
+ * is put in use and closes the sheets, so that the workout shows it to fill in. Rendered while
+ * open; `onClose` closes them.
  */
 export function AlternativesSheets({
   workout,
+  running,
+  onRunning,
   onClose,
-}: {
-  workout: Workout;
-  onClose: () => void;
-}) {
+}: AlternativesSheetsProps) {
   const [shown, setShown] = useState<Shown>({ kind: 'manage' });
+  const use = useSwitchAlternative();
+  const errorOf = useAlternativeError();
   // One sheet closes before the next opens, as iOS shows one at a time.
   const show = (next: Shown) => {
     setShown(null);
     afterSheetCloses(() => setShown(next));
   };
+
+  const named = (alternative: Naming) => {
+    if (!alternative.use || running) {
+      show({ kind: 'manage' });
+      return;
+    }
+    setShown(null);
+    use.mutate(alternative.id, {
+      onSuccess: onClose,
+      onError: (error) =>
+        afterSheetCloses(() => setShown({ kind: 'manage', error: errorOf(error, 'switch') })),
+    });
+  };
+
   if (shown?.kind === 'name') {
     return (
       <NameAlternativeSheet
         workoutId={workout.id}
         alternative={shown.alternative}
-        onClose={() => show({ kind: 'manage' })}
+        onClose={() => named(shown.alternative)}
       />
     );
   }
@@ -73,7 +106,13 @@ export function AlternativesSheets({
     return (
       <ManageAlternativesSheet
         workout={workout}
+        initialError={shown.error}
         onClose={onClose}
+        onRunning={() => {
+          onClose();
+          afterSheetCloses(onRunning);
+        }}
+        running={running}
         onName={(alternative) => show({ kind: 'name', alternative })}
       />
     );
@@ -83,26 +122,45 @@ export function AlternativesSheets({
 
 type ManageProps = {
   workout: Workout;
+  running: boolean;
+  initialError: string | undefined;
   onClose: () => void;
+  onRunning: () => void;
   onName: (alternative: Naming) => void;
 };
 
+/** The ⋯ menu open on an alternative, at its place in the list. */
+type Menu = { alternative: WorkoutAlternative; index: number };
+
 /**
- * The workout's alternatives in order, each to rename, delete unless in use, or drag into another
- * place, and a button to add a copy of the one in use while there is room.
+ * The workout's alternatives in order. Tapping one puts it in use; each has a menu to rename,
+ * duplicate or delete it unless in use, and they can be dragged into another order. While there is
+ * room, a row at the end adds an empty one.
  */
-function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
+function ManageAlternativesSheet({
+  workout,
+  running,
+  initialError,
+  onClose,
+  onRunning,
+  onName,
+}: ManageProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const alternatives = useWorkoutAlternatives(workout.id);
   const limits = useWorkoutLimits();
   const add = useAddAlternative(workout.id);
+  const use = useSwitchAlternative();
   const remove = useDeleteAlternative(workout.id);
   const reorder = useReorderAlternatives(workout.id);
   const nameOf = useAlternativeName();
   const errorOf = useAlternativeError();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
+  const [menu, setMenu] = useState<Menu | null>(null);
+  // Where the list starts in the sheet, to place a menu by its row.
+  const [listTop, setListTop] = useState(0);
 
+  const loaded = alternatives.data !== undefined;
   const rows = alternatives.data ?? [];
   const max = limits.data?.alternatives;
   // A workout without alternatives is one set of exercises: the first, in use.
@@ -113,17 +171,38 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
     (failure: unknown): void =>
       setError(errorOf(failure, action));
 
-  const exercisesOf = (alternative: WorkoutAlternative) =>
-    alternative.inUse
-      ? t('workout.alternatives.inUse', { count: workout.exercises.length })
-      : t('workout.alternatives.exercises', { count: alternative.exerciseCount ?? 0 });
+  // The one being put in use shows as chosen until the alternatives have loaded with it.
+  const chosenId = use.isPending ? use.variables : rows.find((row) => row.inUse)?.id;
+  const isChosen = (alternative: WorkoutAlternative) =>
+    rows.length === 0 || alternative.id === chosenId;
 
-  const onAdd = () => {
+  const sizeOf = (alternative: WorkoutAlternative) => {
+    const exercises = alternative.inUse
+      ? workout.exercises.length
+      : (alternative.exerciseCount ?? 0);
+    return exercises === 0
+      ? t('workout.alternatives.noExercises')
+      : t('workout.alternatives.exercises', { count: exercises });
+  };
+
+  const onUse = (alternative: WorkoutAlternative) => {
+    if (isChosen(alternative) || use.isPending) return;
+    // As the chips: it would change the exercises of the workout running.
+    if (running) {
+      onRunning();
+      return;
+    }
     setError(null);
-    add.mutate(undefined, {
+    use.mutate(alternative.id, { onError: failed('switch') });
+  };
+
+  /** Adds an alternative, then asks for its name; one that starts empty is then put in use. */
+  const onAdd = (from: NewAlternative) => {
+    setError(null);
+    add.mutate(from, {
       // The new one is last, after the workout's own when it is the first added.
-      onSuccess: (id) => onName({ id, name: null, position: count + 1 }),
-      onError: failed('add'),
+      onSuccess: (id) => onName({ id, name: null, position: count + 1, use: 'empty' in from }),
+      onError: failed('empty' in from ? 'add' : 'duplicate'),
     });
   };
 
@@ -135,7 +214,7 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
       [
         { text: t('workout.alternatives.cancel'), style: 'cancel' },
         {
-          text: t('workout.alternatives.deleteConfirm'),
+          text: t('workout.alternatives.delete'),
           style: 'destructive',
           onPress: () => {
             setError(null);
@@ -154,49 +233,87 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
     );
   };
 
-  /**
-   * An alternative's row; without `actions` for the workout's own, which cannot be renamed or
-   * deleted.
-   */
-  const row = (alternative: WorkoutAlternative, actions = true) => {
+  const row = (alternative: WorkoutAlternative, index: number) => {
     const name = nameOf(alternative);
+    const chosen = isChosen(alternative);
     return (
-      <View style={[styles.row, { gap: spacing.xs }]}>
-        <View style={styles.text}>
-          <View style={[styles.row, { gap: spacing.xs }]}>
+      <View style={[styles.row, { height: ROW_HEIGHT, gap: spacing.sm }]}>
+        <Pressable
+          accessibilityRole="radio"
+          accessibilityLabel={name}
+          accessibilityHint={sizeOf(alternative)}
+          accessibilityState={{ checked: chosen }}
+          onPress={() => onUse(alternative)}
+          style={({ pressed }) => [
+            styles.row,
+            styles.text,
+            { height: ROW_HEIGHT, gap: spacing.md, opacity: pressed && !chosen ? 0.6 : 1 },
+          ]}
+        >
+          <Radio checked={chosen} />
+          <View style={styles.text}>
             <Text variant="bodyStrong" numberOfLines={1}>
               {name}
             </Text>
-            {alternative.inUse ? <Icon name="check" size={16} color="primaryText" /> : null}
+            <Text variant="caption" color="textMuted">
+              {sizeOf(alternative)}
+            </Text>
           </View>
-          <Text variant="caption" color="textMuted">
-            {exercisesOf(alternative)}
-          </Text>
-        </View>
-        {actions ? (
-          <>
-            <RoundIconButton
-              icon="edit"
-              color="textMuted"
-              background="surface"
-              size={44}
-              label={t('workout.alternatives.rename', { name })}
-              onPress={() => onName(alternative)}
-            />
-            {/* The one in use is the workout, which another must replace before it can go. */}
-            <RoundIconButton
-              icon="trash"
-              color="danger"
-              background="surface"
-              size={44}
-              disabled={alternative.inUse}
-              label={t('workout.alternatives.delete', { name })}
-              onPress={() => onDelete(alternative)}
-            />
-          </>
-        ) : null}
+        </Pressable>
+        <RoundIconButton
+          icon="more"
+          color="textMuted"
+          background={
+            menu?.alternative.id === alternative.id ? 'track' : chosen ? 'selected' : 'surface'
+          }
+          size={40}
+          label={t('workout.alternatives.more', { name })}
+          onPress={() => setMenu({ alternative, index })}
+        />
       </View>
     );
+  };
+
+  // The rows are tinted when chosen, across the whole width of the list.
+  const tint = (alternative: WorkoutAlternative) => ({
+    paddingHorizontal: spacing.md,
+    backgroundColor: isChosen(alternative) ? colors.selected : colors.surface,
+  });
+
+  /** The menu's actions: the workout's own before any is added can only be duplicated. */
+  const actions = (alternative: WorkoutAlternative): MenuAction[] => {
+    const own = rows.length === 0;
+    return [
+      ...(own
+        ? []
+        : [
+            {
+              key: 'rename',
+              icon: 'edit' as const,
+              label: t('workout.alternatives.rename'),
+              onPress: () => onName(alternative),
+            },
+          ]),
+      {
+        key: 'duplicate',
+        icon: 'copy',
+        label: t('workout.alternatives.duplicate'),
+        disabled: full,
+        onPress: () => onAdd({ copyOf: own ? null : alternative.id }),
+      },
+      // The one in use is the workout, which another must replace before it can go.
+      ...(own || alternative.inUse
+        ? []
+        : [
+            {
+              key: 'delete',
+              icon: 'trash' as const,
+              label: t('workout.alternatives.delete'),
+              danger: true,
+              onPress: () => onDelete(alternative),
+            },
+          ]),
+    ];
   };
 
   return (
@@ -205,69 +322,260 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
         <Text variant="headline" accessibilityRole="header">
           {t('workout.alternatives.title')}
         </Text>
-        <Text color="textMuted">{t('workout.alternatives.body')}</Text>
+        <Text color="textMuted">
+          {rows.length >= 2 ? t('workout.alternatives.body') : t('workout.alternatives.bodyEmpty')}
+        </Text>
       </View>
-      <Card list style={{ paddingHorizontal: spacing.md }}>
-        {alternatives.data === undefined ? (
-          // Not the single row, which would read as a workout without alternatives.
-          <View style={[styles.row, styles.single, { height: ROW_HEIGHT, gap: spacing.sm }]}>
-            {alternatives.isError ? (
-              <>
-                <Text
-                  variant="caption"
-                  color="danger"
-                  accessibilityRole="alert"
+      {loaded && rows.length === 0 ? <Example /> : null}
+      <View onLayout={(event) => setListTop(event.nativeEvent.layout.y)}>
+        <Card list style={[styles.list, { paddingHorizontal: 0 }]}>
+          {!loaded ? (
+            // Not the single row, which would read as a workout without alternatives.
+            <View
+              style={[
+                styles.row,
+                styles.single,
+                { height: ROW_HEIGHT, gap: spacing.sm, paddingHorizontal: spacing.md },
+              ]}
+            >
+              {alternatives.isError ? (
+                <>
+                  <Text
+                    variant="caption"
+                    color="danger"
+                    accessibilityRole="alert"
+                    style={styles.text}
+                  >
+                    {t('workout.alternatives.loadError')}
+                  </Text>
+                  <PillButton
+                    label={t('common.tryAgain')}
+                    onPress={() => void alternatives.refetch()}
+                  />
+                </>
+              ) : (
+                <ActivityIndicator
+                  color={colors.primary}
+                  accessibilityLabel={t('common.loading')}
                   style={styles.text}
-                >
-                  {t('workout.alternatives.loadError')}
-                </Text>
-                <PillButton
-                  label={t('common.tryAgain')}
-                  onPress={() => void alternatives.refetch()}
                 />
-              </>
-            ) : (
-              <ActivityIndicator
-                color={colors.primary}
-                accessibilityLabel={t('common.loading')}
-                style={styles.text}
+              )}
+            </View>
+          ) : rows.length > 0 ? (
+            // Gestures in a modal need a root of their own on Android; sized by the list, not flex.
+            <GestureHandlerRootView style={styles.gestureRoot}>
+              <ReorderList
+                items={rows}
+                keyOf={(alternative) => String(alternative.id)}
+                rowHeight={ROW_HEIGHT}
+                labelOf={nameOf}
+                onMove={onMove}
+                onDragChange={() => setMenu(null)}
+                rowStyle={tint}
+                renderItem={row}
               />
-            )}
-          </View>
-        ) : rows.length > 0 ? (
-          // Gestures in a modal need a root of their own on Android; sized by the list, not flex.
-          <GestureHandlerRootView style={styles.gestureRoot}>
-            <ReorderList
-              items={rows}
-              keyOf={(alternative) => String(alternative.id)}
-              rowHeight={ROW_HEIGHT}
-              labelOf={nameOf}
-              onMove={onMove}
-              renderItem={(alternative) => row(alternative)}
-            />
-          </GestureHandlerRootView>
-        ) : (
-          <View style={[styles.single, { height: ROW_HEIGHT }]}>{row(OWN, false)}</View>
-        )}
-      </Card>
+            </GestureHandlerRootView>
+          ) : (
+            <View style={tint(OWN)}>{row(OWN, 0)}</View>
+          )}
+          {loaded && !full ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('workout.alternatives.add')}
+              accessibilityHint={t('workout.alternatives.addNote')}
+              accessibilityState={{ disabled: add.isPending }}
+              disabled={add.isPending}
+              onPress={() => onAdd({ empty: true })}
+              style={({ pressed }) => [
+                styles.row,
+                listDivider(false, colors.border),
+                {
+                  height: ROW_HEIGHT,
+                  gap: spacing.md,
+                  paddingHorizontal: spacing.md,
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <View style={[styles.addIcon, { borderRadius: radii.full }]}>
+                {add.isPending ? (
+                  <ActivityIndicator color={colors.textMuted} />
+                ) : (
+                  <Icon name="plus" size={20} color="textMuted" />
+                )}
+              </View>
+              <View style={styles.text}>
+                <Text variant="bodyStrong">{t('workout.alternatives.add')}</Text>
+                <Text variant="caption" color="textMuted">
+                  {t('workout.alternatives.addNote')}
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
+        </Card>
+      </View>
+      {loaded && full ? (
+        <Text variant="caption" color="textMuted" align="center">
+          {t('workout.alternatives.full', { max })}
+        </Text>
+      ) : null}
       {error ? (
         <Text variant="caption" color="danger" accessibilityRole="alert">
           {error}
         </Text>
       ) : null}
-      <View style={{ gap: spacing.sm }}>
-        <Button
-          label={t('workout.alternatives.add')}
-          variant="secondary"
-          disabled={full || alternatives.data === undefined}
-          loading={add.isPending}
-          onPress={onAdd}
+      {menu ? (
+        <AlternativeMenu
+          actions={actions(menu.alternative)}
+          // Under the first row, and over the others, so that it stays on the sheet.
+          top={
+            menu.index === 0
+              ? listTop + ROW_HEIGHT - spacing.sm
+              : listTop +
+                menu.index * ROW_HEIGHT +
+                spacing.sm -
+                menuHeight(actions(menu.alternative))
+          }
+          right={spacing.xl + spacing.sm}
+          onClose={() => setMenu(null)}
         />
-        <Text variant="caption" color="textMuted" align="center">
-          {full ? t('workout.alternatives.full', { max }) : t('workout.alternatives.addNote')}
-        </Text>
-      </View>
+      ) : null}
     </Sheet>
+  );
+}
+
+/** The mark of the one in use: a ring, filled when checked. */
+function Radio({ checked }: { checked: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.radio, { borderColor: checked ? colors.primary : colors.border }]}>
+      {checked ? <View style={[styles.radioDot, { backgroundColor: colors.primary }]} /> : null}
+    </View>
+  );
+}
+
+/** What alternatives are for, before a workout has any: a gym and a home version side by side. */
+function Example() {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const tile = (name: string, exercises: string) => (
+    <View
+      style={[
+        styles.text,
+        {
+          gap: 2,
+          padding: spacing.md,
+          borderRadius: radii.md,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+      ]}
+    >
+      <Text variant="captionStrong">{name}</Text>
+      <Text variant="caption" color="textMuted" numberOfLines={1}>
+        {exercises}
+      </Text>
+    </View>
+  );
+  return (
+    // Says nothing the line above does not, so screen readers skip it.
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.row, { gap: spacing.sm }]}
+    >
+      {tile(t('workout.alternatives.example.gym'), t('workout.alternatives.example.gymExercises'))}
+      {tile(
+        t('workout.alternatives.example.home'),
+        t('workout.alternatives.example.homeExercises'),
+      )}
+    </View>
+  );
+}
+
+type MenuAction = {
+  key: string;
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+};
+
+function menuHeight(actions: MenuAction[]) {
+  return actions.length * MENU_ITEM_HEIGHT + 2 * 6;
+}
+
+/**
+ * A small menu over the sheet at `top` and `right`, which closes on a tap anywhere else in the
+ * sheet or on an action, before the action runs.
+ */
+function AlternativeMenu({
+  actions,
+  top,
+  right,
+  onClose,
+}: {
+  actions: MenuAction[];
+  top: number;
+  right: number;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('common.close')}
+        onPress={onClose}
+        style={StyleSheet.absoluteFill}
+      />
+      <View
+        accessibilityRole="menu"
+        style={[
+          styles.menu,
+          {
+            top,
+            right,
+            width: MENU_WIDTH,
+            paddingVertical: 6,
+            borderRadius: radii.md,
+            borderColor: colors.border,
+            backgroundColor: colors.elevated,
+          },
+        ]}
+      >
+        {actions.map((action) => (
+          <Pressable
+            key={action.key}
+            accessibilityRole="menuitem"
+            accessibilityLabel={action.label}
+            accessibilityState={{ disabled: action.disabled ?? false }}
+            disabled={action.disabled}
+            onPress={() => {
+              onClose();
+              action.onPress();
+            }}
+            style={({ pressed }) => [
+              styles.row,
+              {
+                height: MENU_ITEM_HEIGHT,
+                gap: spacing.md,
+                paddingHorizontal: spacing.lg,
+                opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Icon name={action.icon} size={18} color={action.danger ? 'danger' : 'text'} />
+            <Text variant="body" color={action.danger ? 'danger' : 'text'}>
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </>
   );
 }
 
@@ -375,11 +683,42 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  list: {
+    overflow: 'hidden',
+  },
   gestureRoot: {
     alignSelf: 'stretch',
   },
   single: {
     justifyContent: 'center',
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  addIcon: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menu: {
+    position: 'absolute',
+    borderWidth: 1,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   field: {
     justifyContent: 'center',
