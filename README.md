@@ -224,8 +224,8 @@ and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
 they need no key.
 
-Scheduled jobs call Edge Functions with the project URL and secret key they read from Vault, as
-`purge-coach-media` removes the photos of deleted chats
+A scheduled job calls `purge-coach-media`, which removes the photos of deleted chats, with the
+project URL and secret key it reads from Vault
 ([ADR 0063](docs/adr/0063-purge-chat-photos-from-a-queue.md)). Store the local stack's in its
 Vault once, and again after `pnpm supabase db reset`:
 
@@ -284,7 +284,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |
 | `pnpm icons`            | Draw the app icons and the splash image from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
-| `pnpm vault:local`      | Store the local URL and secret key for scheduled jobs |
+| `pnpm vault:local`      | Store the local URL and secret key for the purge      |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](CONTRIBUTING.md) lists what it
@@ -308,7 +308,7 @@ the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJ
 secrets, such as `GEMINI_API_KEY`, are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
 
-Scheduled jobs read the project URL and a secret API key from the project's Vault
+The scheduled photo purge reads the project URL and a secret API key from the project's Vault
 ([ADR 0063](docs/adr/0063-purge-chat-photos-from-a-queue.md)). Set them once, in the dashboard's
 SQL editor, with the project's reference and its `default` secret key from Project Settings →
 API Keys, which `purge-coach-media` accepts:
