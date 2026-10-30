@@ -274,10 +274,10 @@ describe('TodayScreen', () => {
     expect(screen.queryByText('Name of exercise-0')).toBeNull();
   });
 
-  it("opens today's workout", async () => {
+  it("opens today's workout with its round button", async () => {
     mockData();
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByHintText('Opens the workout'));
+    await fireEvent.press(screen.getByRole('button', { name: "Open today's workout" }));
     // The sessions of the test week use their weekday as the workout's id.
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
   });

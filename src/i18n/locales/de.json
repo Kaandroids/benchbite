@@ -173,6 +173,7 @@
       "next": "Nächstes: {{day}} · {{session}}",
       "tomorrow": "morgen",
       "open": "Öffnet das Workout",
+      "openLabel": "Heutiges Training öffnen",
       "titleMany": "Heutige Trainings",
       "doneOf": "{{done}} von {{count}} erledigt",
       "movedFrom": "Verschoben von {{day}}",

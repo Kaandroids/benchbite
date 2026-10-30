@@ -173,6 +173,7 @@
       "next": "Sıradaki: {{day}} · {{session}}",
       "tomorrow": "yarın",
       "open": "Antrenmanı açar",
+      "openLabel": "Bugünün antrenmanını aç",
       "titleMany": "Bugünün antrenmanları",
       "doneOf": "{{count}} antrenmandan {{done}} tamamlandı",
       "movedFrom": "{{day}} gününden taşındı",
