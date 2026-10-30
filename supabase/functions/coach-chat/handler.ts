@@ -43,6 +43,8 @@ export type ChatContext = {
   userId: string;
   /** For tests; the language model by default. */
   model?: LanguageModel;
+  /** For tests; how often a stop is looked for while the answer comes, STOP_CHECK_MS by default. */
+  stopCheckMs?: number;
 };
 
 const ChatRequest = z.object({
@@ -151,6 +153,7 @@ class Stop {
     private readonly requestId: string | undefined,
   ) {}
 
+  /** The app closed the request, so nothing more can be sent to it. */
   get cancelled() {
     return this.#cancelled;
   }
@@ -166,7 +169,8 @@ class Stop {
 
   async look({ now = false } = {}): Promise<boolean> {
     if (this.stopped || !this.requestId) return this.stopped;
-    if (!now && Date.now() - this.#lookedAt < STOP_CHECK_MS) return false;
+    const every = this.context.stopCheckMs ?? STOP_CHECK_MS;
+    if (!now && Date.now() - this.#lookedAt < every) return false;
     this.#lookedAt = Date.now();
     const { data, error } = await this.context.admin
       .from('coach_stops')
@@ -185,7 +189,8 @@ class Stop {
     const { error } = await this.context.admin
       .from('coach_stops')
       .delete()
-      .eq('request_id', this.requestId);
+      .eq('request_id', this.requestId)
+      .eq('user_id', this.context.userId);
     if (error) logError('Could not remove a stop', error);
   }
 }
@@ -301,7 +306,8 @@ async function answer(
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
         outcome.asked = true;
-        if (await stop.look()) break;
+        // The end of a round is kept whatever comes, so that what the answer used is too.
+        if (event.type !== 'done' && (await stop.look())) break;
         if (event.type === 'text') {
           turn.said(event.text);
           spoken.push(event);
@@ -322,12 +328,15 @@ async function answer(
 
       const results: Part[] = [];
       for (const [index, call] of calls.entries()) {
+        if (await stop.look({ now: true })) break;
         const result =
           index < MAX_CALLS_PER_ROUND
             ? await lookUp(call, toolContext, send)
             : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
         results.push({ type: 'toolResult', id: call.id, name: call.name, result });
       }
+      // Stopped among its lookups, the round ends as one stopped before them.
+      if (stop.stopped) break;
       turn.trace.push(...calls, ...results);
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },
