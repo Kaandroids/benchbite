@@ -1,12 +1,11 @@
 import type { ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
 
-import type { Database } from '@/lib/database.types';
 import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
 
-export type BiteExpressionName = Database['public']['Enums']['bite_expression'];
+import type { AnswerExpression } from './bite-expressions';
 
 /** What coach-chat tells the app as Bite answers, one server-sent event each (ADR 0052). */
-export type ChatEvent = SharedChatEvent<BiteExpressionName>;
+export type ChatEvent = SharedChatEvent<AnswerExpression>;
 
 export type { ChatRequest };
 

@@ -5,20 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { ACCESS_KEY, type Refusal } from '@/ai/access';
 import { deviceToday } from '@/i18n/dates';
 
+import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
-import {
-  type BiteExpressionName,
-  type ChatEvent,
-  ChatRequestError,
-  streamChat,
-} from './chat-stream';
+import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
 
 export type ChatMessage = {
   id: string;
   role: 'user' | 'bite';
   text: string;
   /** The face Bite answers with, once it is known. */
-  expression?: BiteExpressionName;
+  expression?: AnswerExpression;
   /** A question Bite gave no answer to. */
   unanswered?: boolean;
   /** An answer that stopped short: stopped by the user, or cut off. */
