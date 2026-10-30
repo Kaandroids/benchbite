@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAiAccess } from '@/ai/access';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
@@ -15,9 +14,7 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useChat } from './use-chat';
-
-/** How close to the end of the chat counts as reading its end. */
-const END_SLACK = 40;
+import { useFollowEnd } from './use-follow-end';
 
 /** The chat with Bite (#294, ADR 0052), opened from the middle of the tab bar. */
 export function BiteScreen() {
@@ -25,27 +22,15 @@ export function BiteScreen() {
   const { spacing } = useTheme();
   const chat = useChat();
   const access = useAiAccess();
-  const scroll = useRef<ScrollViewInstance>(null);
-  // Whether the user reads the end of the chat, which then follows what comes; scrolled up, they
-  // stay where they read.
-  const atEnd = useRef(true);
-  const height = useRef(0);
-  const toEnd = () => scroll.current?.scrollToEnd({ animated: chat.status === 'idle' });
+  const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
-  /** Whatever the user asks, the chat follows it down. */
-  const following =
-    <A extends unknown[]>(ask: (...args: A) => void) =>
-    (...args: A) => {
-      atEnd.current = true;
-      ask(...args);
-    };
 
   return (
     <Screen onBack={() => router.back()} closes title={t('bite.title')} scrolls={false}>
       <KeyboardAvoiding>
         <ScrollView
-          ref={scroll}
+          {...scrollProps}
           style={styles.flex}
           contentContainerStyle={[
             styles.content,
@@ -53,17 +38,6 @@ export function BiteScreen() {
             { padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.lg },
           ]}
           keyboardShouldPersistTaps="handled"
-          scrollEventThrottle={100}
-          onScroll={({ nativeEvent: { contentOffset, layoutMeasurement, contentSize } }) => {
-            atEnd.current =
-              contentOffset.y + layoutMeasurement.height >= contentSize.height - END_SLACK;
-          }}
-          onContentSizeChange={() => atEnd.current && toEnd()}
-          onLayout={({ nativeEvent }) => {
-            // The keyboard opening shrinks the chat: the end stays in sight.
-            if (nativeEvent.layout.height < height.current && atEnd.current) toEnd();
-            height.current = nativeEvent.layout.height;
-          }}
         >
           {chat.messages.length === 0 ? (
             <ChatWelcome onAsk={refusal ? undefined : following(chat.send)} />
