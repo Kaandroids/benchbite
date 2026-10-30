@@ -237,6 +237,10 @@ const OWN_SEPARATORS = [',', ' (', ' -'];
  * that agrees where it does not is another food, as apple sauce is to an apple. The user's own
  * food or recipe comes first, when it is the same food; otherwise the library's, best first as
  * search_foods() orders them.
+ *
+ * An own food of exactly the searched name is taken whatever its calories, as an item with no
+ * match is saved and logged by that name, which log_meal_estimate() then finds as that food
+ * (ADR 0060): the estimate shows what will be logged.
  */
 export function bestMatch(
   searchName: string,
@@ -245,6 +249,8 @@ export function bestMatch(
 ): FoundFood | undefined {
   const key = nameKey(searchName);
   if (key.length < FOOD_QUERY_LENGTH.min) return undefined;
+  const ownOfName = found.find((row) => row.custom_food_id !== null && nameKey(row.name) === key);
+  if (ownOfName) return ownOfName;
   const agrees = (row: FoundFood) => {
     const difference = Math.abs(row.kcal - estimatedKcal);
     return (

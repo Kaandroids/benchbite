@@ -244,6 +244,12 @@ Deno.test("prefers the user's own food or recipe when it is the same food", asyn
   // Nor is the user's food when its calories are far from the photo's.
   const heavy = food({ custom_food_id: 8, name: 'Banana, fried' }, 250);
   assertEquals(bestMatch('Banana', 90, [heavy, library]), library);
+  // But an own food of exactly the name is the one an estimated item would be logged as.
+  const exactOwn = food({ custom_food_id: 9, name: 'banana' }, 250);
+  assertEquals(bestMatch('Banana', 90, [library, exactOwn]), exactOwn);
+  // A recipe of the name is not, unless its calories agree.
+  const recipe = food({ recipe_id: 6, name: 'Banana' }, 250);
+  assertEquals(bestMatch('Banana', 90, [recipe, library]), library);
 
   const model = new FakeModel(
     answer({ isFood: true, items: [{ ...ITEMS[0], searchName: 'Banana' }], note: '' }),
