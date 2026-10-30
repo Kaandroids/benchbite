@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
 
-import type { Muscle, Workout, WorkoutTarget } from './workouts';
+import type { Muscle, WeekSession, Workout, WorkoutTarget } from './workouts';
 
 /**
  * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and
@@ -24,11 +24,20 @@ export function useWorkoutName() {
     name ?? (type ? t(`workout.sessionTypes.${type}`) : '');
 }
 
-/** A workout's size, such as "6 exercises · about 45 min". */
+/**
+ * A workout's size, such as "6 exercises · about 45 min", or "No exercises yet" for one whose empty
+ * alternative is in use (ADR 0064). One that left the plan keeps its size.
+ */
 export function useSessionSize() {
   const { t } = useTranslation();
-  return ({ exercises, estimatedMinutes }: Pick<Workout, 'exercises' | 'estimatedMinutes'>) =>
-    t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
+  return ({
+    exercises,
+    estimatedMinutes,
+    left,
+  }: Pick<Workout, 'exercises' | 'estimatedMinutes'> & Pick<WeekSession, 'left'>) =>
+    exercises.length === 0 && left === undefined
+      ? t('workout.noExercises')
+      : t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
 }
 
 /**
