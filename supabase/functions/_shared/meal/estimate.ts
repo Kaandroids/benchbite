@@ -57,6 +57,12 @@ export type Per100 = { kcal: number; proteinG: number; carbsG: number; fatG: num
 export type EstimateItem = {
   /** What the item is, in the user's language. */
   name: string;
+  /**
+   * The item as the food library names it ("Rice, boiled"), which it was searched by, or its
+   * name when the model gave none; an item that is `estimated` is saved by it as the user's own
+   * food when it is logged (#357).
+   */
+  searchName: string;
   /** The amount seen, in whole grams. */
   grams: number;
   /** How sure the estimate is, from 0 to 1. */

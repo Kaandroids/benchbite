@@ -11,12 +11,41 @@ import {
 import type { JsonSchema, Part } from '../_shared/llm/mod.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 
+/**
+ * How the food library names foods, per language: names it has, and the words it uses for how a
+ * food is prepared, which the model is asked to keep to, so that its search names find the foods
+ * and an item saved as the user's own food is named in their language (ADR 0060).
+ */
+export const SEARCH_NAMES: Record<Language, { examples: string[]; preparations: string }> = {
+  en: {
+    examples: ['Pasta, boiled', 'Chicken breast, grilled'],
+    preparations: 'boiled for anything cooked in water, then fried, grilled, roasted or raw',
+  },
+  de: {
+    examples: ['Nudeln, gekocht', 'Hähnchenbrustfilet, gegrillt'],
+    preparations: 'gekocht for anything cooked in water, then gebraten, gegrillt or roh',
+  },
+  tr: {
+    examples: ['Makarna, haşlanmış', 'Tavuk göğsü, ızgara'],
+    preparations:
+      'haşlanmış for anything cooked in water, then tavada or kızarmış, ızgara, fırında or çiğ',
+  },
+};
+
+const searchNameLines = Object.entries(SEARCH_NAMES)
+  .map(
+    ([language, { examples, preparations }]) =>
+      `  - ${LANGUAGE_NAMES[language as Language]}: such as ${examples.map((name) => `"${name}"`).join(' or ')}; ${preparations}.`,
+  )
+  .join('\n');
+
 export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and nutrition app. You estimate a meal from one to three photos of it.
 
 # What to give
 - items: each food you see, at most ${MAX_ESTIMATE_ITEMS}. A dish eaten as one, such as a pizza or a soup, is one item; separate foods on a plate are one item each, a sauce or dressing too when it is visible.
 - name: the item, short, in the reply language.
-- searchName: the item as a food database names it, in the reply language, the plain food first and then how it is prepared, such as "Pasta, boiled" or "Chicken breast, grilled", with the usual words: boiled for anything cooked in water, then fried, grilled, roasted or raw. No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
+- searchName: the item as the food database names it, always in the reply language, never in English unless the reply language is English: the plain food first and then how it is prepared, with the database's words for that language. No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
+${searchNameLines}
 - grams: the amount in the photos as served, by eye; cooked weight for cooked food. Judge the size by the plate, the cutlery and the hands.
 - confidence: from 0 to 1, how sure you are of the item and its amount together.
 - per100: kcal, protein, carbohydrate and fat in grams per 100 g of the item as served, your best estimate. It is used only when the database has no match.
