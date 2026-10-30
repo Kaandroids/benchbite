@@ -229,7 +229,7 @@ const TOOLS = [
       "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises, with their ids, sets and targets.",
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
-      const workouts = read(await activeWorkouts(supabase, WORKOUT_WITH_EXERCISES));
+      const workouts = read(await planWorkouts(supabase));
       const names = await exerciseNames(
         supabase,
         language,
@@ -277,7 +277,9 @@ const TOOLS = [
         .max(5),
     }),
     run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
-      const workout = read(await activeWorkouts(supabase, 'id, name, type', workoutId))[0];
+      const found = await workoutForCard(supabase, workoutId);
+      if (found.error) throw found.error;
+      const workout = found.data;
       if (!workout) return { error: REFUSALS.BB006 };
       // Named before proposing, which also finds an id that does not exist, so that a proposal is
       // never left without its card.
@@ -424,19 +426,26 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
   );
 }
 
-/** A workout with its exercises, as get_workouts reads them. */
-const WORKOUT_WITH_EXERCISES =
-  'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)';
-
-/**
- * The user's active workouts, as row level security lets them, or the one `id` names, with
- * `columns`, their exercises in order.
- */
-function activeWorkouts<Columns extends string>(supabase: Client, columns: Columns, id?: number) {
-  const query = supabase.from('workouts').select(columns).eq('active', true);
-  return (id === undefined ? query : query.eq('id', id))
+/** The user's active workouts with their exercises in order, as row level security lets them. */
+function planWorkouts(supabase: Client) {
+  return supabase
+    .from('workouts')
+    .select(
+      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)',
+    )
+    .eq('active', true)
     .order('id')
     .order('position', { referencedTable: 'workout_exercises' });
+}
+
+/** One of the user's active workouts, by its id, with what its card names it by. */
+function workoutForCard(supabase: Client, id: number) {
+  return supabase
+    .from('workouts')
+    .select('id, name, type')
+    .eq('active', true)
+    .eq('id', id)
+    .maybeSingle();
 }
 
 /**
