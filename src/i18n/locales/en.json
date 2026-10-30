@@ -687,6 +687,7 @@
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",
     "session_other": "{{count}} exercises · about {{minutes}} min",
+    "noExercises": "No exercises yet",
     "sessionTypes": {
       "full_body": "Full body",
       "upper": "Upper body",
@@ -776,6 +777,14 @@
       "resume": "Back to the workout"
     },
     "startWorkout": "Start workout",
+    "empty": {
+      "title": "{{name}} has no exercises yet",
+      "bodyOne": "Add the exercises for {{name}}. {{other}} stays as it is.",
+      "bodyOthers": "Add the exercises for {{name}}. The other alternatives stay as they are.",
+      "body": "Add the exercises for this workout to start it.",
+      "add": "Add exercises",
+      "startHint": "Add an exercise to start."
+    },
     "toArchive": "Move to archive",
     "fromArchive": "Bring back from the archive",
     "days": "Days",
@@ -804,7 +813,6 @@
       },
       "exercises_one": "{{count}} exercise",
       "exercises_other": "{{count}} exercises",
-      "noExercises": "No exercises yet",
       "more": "More for {{name}}",
       "rename": "Rename",
       "duplicate": "Duplicate",
@@ -1630,7 +1638,8 @@
       "title": "Today: {{session}}",
       "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",
       "body_other": "{{count}} exercises, about {{minutes}} min. You've got this!",
-      "bodyMany": "{{count}} workouts, about {{minutes}} min in all. You've got this!"
+      "bodyMany": "{{count}} workouts, about {{minutes}} min in all. You've got this!",
+      "bodyEmpty": "No exercises yet. Add some before you start."
     }
   },
   "profile": {

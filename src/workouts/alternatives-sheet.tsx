@@ -181,7 +181,7 @@ function ManageAlternativesSheet({
       ? workout.exercises.length
       : (alternative.exerciseCount ?? 0);
     return exercises === 0
-      ? t('workout.alternatives.noExercises')
+      ? t('workout.noExercises')
       : t('workout.alternatives.exercises', { count: exercises });
   };
 

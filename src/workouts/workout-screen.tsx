@@ -24,6 +24,7 @@ import { useTheme } from '@/theme';
 
 import { AlternativesSheets } from './alternatives-sheet';
 import { DayChips } from './day-chips';
+import { EmptyWorkout } from './empty-workout';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
@@ -76,6 +77,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   }
 
   const name = workoutName(workout);
+  // As when an empty alternative was just put in use: nothing to show or start until it is edited.
+  const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const stats = [
     {
@@ -135,6 +138,14 @@ export function WorkoutScreen({ id }: { id: number }) {
       { text: t('workout.running.resume'), onPress: () => router.push('/session') },
     ]);
 
+  const onEdit = () => {
+    if (running) {
+      askToFinish();
+      return;
+    }
+    router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
+  };
+
   const onDelete = () => {
     if (running) {
       askToFinish();
@@ -161,11 +172,22 @@ export function WorkoutScreen({ id }: { id: number }) {
     <Screen
       onBack={() => router.back()}
       title={name}
-      subtitle={mainMuscles(workout)
-        .map((muscle) => t(`workout.muscles.${muscle}`))
-        .join(' · ')}
+      subtitle={
+        empty
+          ? t('workout.noExercises')
+          : mainMuscles(workout)
+              .map((muscle) => t(`workout.muscles.${muscle}`))
+              .join(' · ')
+      }
       footer={
-        workout.active ? (
+        workout.active && empty && !running ? (
+          <View style={{ gap: spacing.sm }}>
+            <Button label={t('workout.startWorkout')} disabled />
+            <Text variant="caption" color="textMuted" align="center">
+              {t('workout.empty.startHint')}
+            </Text>
+          </View>
+        ) : workout.active ? (
           <Button
             label={running ? t('session.resume') : t('workout.startWorkout')}
             onPress={() => start(workout)}
@@ -183,42 +205,39 @@ export function WorkoutScreen({ id }: { id: number }) {
             label={t('workout.alternatives.title')}
             onPress={() => setManaging(true)}
           />
-          <PillButton
-            label={t('workout.edit')}
-            onPress={() => {
-              if (running) {
-                askToFinish();
-                return;
-              }
-              router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
-            }}
-          />
+          <PillButton label={t('workout.edit')} onPress={onEdit} />
         </View>
       }
     >
       <WorkoutAlternatives workoutId={workout.id} running={running} onRunning={askToFinish} />
 
+      {empty ? <EmptyWorkout workoutId={workout.id} name={name} onAdd={onEdit} /> : null}
+
       {/* One card of even columns over the workout's days, like a finished workout's figures over
           when it started and ended. */}
-      <StatColumns
-        stats={stats}
-        footer={
-          <View style={[styles.days, { gap: spacing.sm }]}>
-            <Text variant="caption" color="textMuted">
-              {t('workout.days')}
-            </Text>
-            <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-          </View>
-        }
-      />
+      {empty ? null : (
+        <StatColumns
+          stats={stats}
+          footer={
+            <View style={[styles.days, { gap: spacing.sm }]}>
+              <Text variant="caption" color="textMuted">
+                {t('workout.days')}
+              </Text>
+              <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+            </View>
+          }
+        />
+      )}
 
-      <Card>
-        <View>
-          {workout.exercises.map((exercise, index) =>
-            row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
-          )}
-        </View>
-      </Card>
+      {empty ? null : (
+        <Card>
+          <View>
+            {workout.exercises.map((exercise, index) =>
+              row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
+            )}
+          </View>
+        </Card>
+      )}
 
       {/* Switching a workout off moves it to the archive, and back. */}
       <Pressable
