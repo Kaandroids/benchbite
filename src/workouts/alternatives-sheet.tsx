@@ -28,6 +28,15 @@ import { useWorkoutLimits, type Workout } from './workouts';
 
 const ROW_HEIGHT = 60;
 
+/** Before any is added, the workout's own exercises as the first alternative, in use. */
+const OWN: WorkoutAlternative = {
+  id: 0,
+  position: 1,
+  name: null,
+  inUse: true,
+  exerciseCount: null,
+};
+
 /** An alternative to name: one in the list, or one just added. */
 type Naming = Pick<WorkoutAlternative, 'id' | 'name' | 'position'>;
 
@@ -103,7 +112,7 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
     (failure: unknown): void =>
       setError(errorOf(failure, action));
 
-  const exercisesOf = (alternative: Pick<WorkoutAlternative, 'inUse' | 'exerciseCount'>) =>
+  const exercisesOf = (alternative: WorkoutAlternative) =>
     alternative.inUse
       ? t('workout.alternatives.inUse', { count: workout.exercises.length })
       : t('workout.alternatives.exercises', { count: alternative.exerciseCount ?? 0 });
@@ -145,7 +154,8 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
     reorder.mutate(ids, { onError: failed('reorder') });
   };
 
-  const row = (alternative: WorkoutAlternative) => {
+  /** An alternative's row; without `actions`, the workout's own, which cannot be renamed or deleted. */
+  const row = (alternative: WorkoutAlternative, actions = true) => {
     const name = nameOf(alternative);
     return (
       <View style={[styles.row, { gap: spacing.xs }]}>
@@ -160,24 +170,28 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
             {exercisesOf(alternative)}
           </Text>
         </View>
-        <RoundIconButton
-          icon="edit"
-          color="textMuted"
-          background="surface"
-          size={44}
-          label={t('workout.alternatives.rename', { name })}
-          onPress={() => onName(alternative)}
-        />
-        {/* The one in use is the workout, which another must replace before it can go. */}
-        <RoundIconButton
-          icon="trash"
-          color="danger"
-          background="surface"
-          size={44}
-          disabled={alternative.inUse}
-          label={t('workout.alternatives.delete', { name })}
-          onPress={() => onDelete(alternative)}
-        />
+        {actions ? (
+          <>
+            <RoundIconButton
+              icon="edit"
+              color="textMuted"
+              background="surface"
+              size={44}
+              label={t('workout.alternatives.rename', { name })}
+              onPress={() => onName(alternative)}
+            />
+            {/* The one in use is the workout, which another must replace before it can go. */}
+            <RoundIconButton
+              icon="trash"
+              color="danger"
+              background="surface"
+              size={44}
+              disabled={alternative.inUse}
+              label={t('workout.alternatives.delete', { name })}
+              onPress={() => onDelete(alternative)}
+            />
+          </>
+        ) : null}
       </View>
     );
   };
@@ -226,20 +240,11 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
               rowHeight={ROW_HEIGHT}
               labelOf={nameOf}
               onMove={onMove}
-              renderItem={row}
+              renderItem={(alternative) => row(alternative)}
             />
           </GestureHandlerRootView>
         ) : (
-          // Before any is added, the workout's own exercises, which cannot be renamed or deleted.
-          <View style={[styles.single, { height: ROW_HEIGHT }]}>
-            <View style={[styles.row, { gap: spacing.xs }]}>
-              <Text variant="bodyStrong">{nameOf({ name: null, position: 1 })}</Text>
-              <Icon name="check" size={16} color="primaryText" />
-            </View>
-            <Text variant="caption" color="textMuted">
-              {exercisesOf({ inUse: true, exerciseCount: null })}
-            </Text>
-          </View>
+          <View style={[styles.single, { height: ROW_HEIGHT }]}>{row(OWN, false)}</View>
         )}
       </Card>
       {error ? (
