@@ -1255,6 +1255,7 @@
       },
       "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
       "disclaimer": "These are estimates, not medical advice.",
+      "fastestForWeight": "This is the fastest pace for your weight: {{percent}}% of it a week. Losing faster mostly costs muscle and is hard to keep up.",
       "fastest": {
         "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
         "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."

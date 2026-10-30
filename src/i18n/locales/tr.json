@@ -1255,6 +1255,7 @@
       },
       "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
       "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir.",
+      "fastestForWeight": "Bu, kilona göre önerdiğimiz en hızlı tempo: haftada kilonun %{{percent}}'i. Daha hızlı vermek çoğunlukla kas kaybettirir ve sürdürmesi zordur.",
       "fastest": {
         "lose_fat": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo vermek çoğunlukla kas kaybına yol açar ve sürdürmesi zordur.",
         "build_muscle": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo almak kas değil, çoğunlukla yağ ekler."

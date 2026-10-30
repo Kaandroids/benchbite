@@ -1,15 +1,18 @@
 import { useTranslation } from 'react-i18next';
 
+import { PACE_LEVELS } from '@shared/body/limits';
+
 import {
-  PACE_RANGES,
+  isPaceCappedByWeight,
   paceLevel,
+  paceRange,
   projectedDate,
   type PaceLevel,
   type WeightGoal,
 } from '@/body/body';
 import { Text } from '@/components/ui/text';
 import { useDateFormat } from '@/i18n/dates';
-import { paceIn, useWeightFormat, type WeightUnit } from '@/i18n/units';
+import { paceIn, useNumberFormat, useWeightFormat, type WeightUnit } from '@/i18n/units';
 import type { ColorTokens } from '@/theme';
 
 const LEVEL_COLORS: Record<PaceLevel, keyof ColorTokens> = {
@@ -38,9 +41,12 @@ export function PaceNote({
 }: PaceNoteProps) {
   const { t } = useTranslation();
   const formatWeight = useWeightFormat();
+  const { format } = useNumberFormat();
   const formatDate = useDateFormat('long');
   const level = paceLevel(goal, weightKg, paceKg);
-  const fastest = paceIn(unit, paceKg) >= PACE_RANGES[unit][goal].max;
+  const fastest = paceIn(unit, paceKg) >= paceRange(unit, goal, weightKg).max;
+  // At the fastest pace for a light user's weight, rather than at the fastest the targets allow.
+  const forWeight = isPaceCappedByWeight(unit, goal, weightKg);
   return (
     <>
       <Text variant="bodyStrong" color={LEVEL_COLORS[level]} align={align}>
@@ -48,7 +54,9 @@ export function PaceNote({
       </Text>
       {fastest ? (
         <Text color="textMuted" align={align}>
-          {t(`goals.pace.fastest.${goal}`)}
+          {forWeight
+            ? t('goals.pace.fastestForWeight', { percent: format(PACE_LEVELS.losing[1]) })
+            : t(`goals.pace.fastest.${goal}`)}
         </Text>
       ) : null}
       <Text align={align}>

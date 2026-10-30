@@ -21,7 +21,7 @@ export function PaceStep() {
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 72;
   const targetKg = answers.targetWeightKg ?? weightKg;
-  const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
+  const [pace, setPace] = useState(() => startingPace(unit, goal, weightKg, answers.weeklyPaceKg));
   const paceKg = paceToKg(unit, pace);
 
   return (
@@ -57,6 +57,7 @@ export function PaceStep() {
         <PaceSlider
           goal={goal}
           unit={unit}
+          weightKg={weightKg}
           value={pace}
           onChange={setPace}
           accessibilityLabel={t('onboarding.steps.pace.title')}

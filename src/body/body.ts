@@ -1,6 +1,11 @@
 // Rules for body data, goals and paces. They only decide what the onboarding and changing the
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
-import { MIN_HEALTHY_BMI, paceLevel as levelOf, type PaceLevel } from '@shared/body/limits';
+import {
+  MIN_HEALTHY_BMI,
+  PACE_LEVELS,
+  paceLevel as levelOf,
+  type PaceLevel,
+} from '@shared/body/limits';
 
 import { paceIn, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
@@ -124,21 +129,49 @@ export const PACE_RANGES: Record<'kg' | 'lb', Record<WeightGoal, PaceRange>> = {
 };
 
 /**
+ * The paces the slider offers the user, in the unit: losing stops at the share of body weight a
+ * week past which the app calls a pace aggressive (#332, ADR 0054), on the slider's steps, where
+ * that comes before the fastest the targets allow.
+ */
+export function paceRange(unit: WeightUnit, goal: WeightGoal, weightKg: number): PaceRange {
+  const range = PACE_RANGES[unit][goal];
+  if (goal !== 'lose_fat') {
+    return range;
+  }
+  const forWeight = paceIn(unit, (weightKg * PACE_LEVELS.losing[1]) / 100);
+  // Down to a step, and a hair over, as 1.5 % may land a rounding below one.
+  const steps = Math.floor((forWeight - range.min) / range.step + 1e-9);
+  const max = clamp(Math.round((range.min + steps * range.step) * 100) / 100, range.min, range.max);
+  return { ...range, max, default: Math.min(range.default, max) };
+}
+
+/** Whether the slider stops short of its fastest pace for the user's weight. */
+export function isPaceCappedByWeight(unit: WeightUnit, goal: WeightGoal, weightKg: number) {
+  return paceRange(unit, goal, weightKg).max < PACE_RANGES[unit][goal].max;
+}
+
+/**
  * The pace the slider starts at, in the unit: the saved one on the slider's steps, as one saved
  * before the limits changed may lie outside them, or the default.
  */
 export function startingPace(
   unit: WeightUnit,
   goal: WeightGoal,
+  weightKg: number,
   savedKg: number | null | undefined,
 ): number {
-  const range = PACE_RANGES[unit][goal];
+  const range = paceRange(unit, goal, weightKg);
   return savedKg == null ? range.default : snapPace(paceIn(unit, savedKg), range);
 }
 
-/** Whether a pace in kilograms lies within what the slider offers in the unit. */
-export function isPaceInRange(unit: WeightUnit, goal: WeightGoal, paceKg: number): boolean {
-  const range = PACE_RANGES[unit][goal];
+/** Whether a pace in kilograms lies within what the slider offers the user in the unit. */
+export function isPaceInRange(
+  unit: WeightUnit,
+  goal: WeightGoal,
+  weightKg: number,
+  paceKg: number,
+): boolean {
+  const range = paceRange(unit, goal, weightKg);
   const pace = paceIn(unit, paceKg);
   // A hundredth either way, as a pace comes back from the other unit rounded.
   return pace >= range.min - 0.01 && pace <= range.max + 0.01;

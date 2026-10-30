@@ -42,6 +42,27 @@ describe('PaceStep', () => {
     expect(screen.getByText('Ambitious: doable, but demanding')).toBeTruthy();
   });
 
+  it("stops losing at the fastest pace for a light user's weight", async () => {
+    mockStep = createStep({
+      weightKg: 55,
+      targetWeightKg: 50,
+      weightUnit: 'kg',
+      goal: 'lose_fat',
+      weeklyPaceKg: 0.75,
+    });
+    await render(<PaceStep />);
+    await sliderAction('increment');
+    await sliderAction('increment');
+    // 1.5 % of 55 kg is 0.825 kg, on the slider's steps 0.8.
+    expect(screen.getByText('0.80 kg per week')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'This is the fastest pace for your weight: 1.5% of it a week. Losing faster mostly costs muscle and is hard to keep up.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(FASTEST_LOSS)).toBeNull();
+  });
+
   it('notes the fastest pace for building muscle too', async () => {
     mockStep = createStep({
       ...BODY,

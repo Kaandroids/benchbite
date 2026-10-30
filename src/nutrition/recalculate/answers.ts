@@ -65,7 +65,7 @@ export function answersFrom(
     target !== null &&
     pace !== null &&
     targetWeightProblem(goal, weightKg, target, basis.heightCm) === null &&
-    (isPaceInRange('kg', goal, pace) || isPaceInRange('lb', goal, pace))
+    (isPaceInRange('kg', goal, weightKg, pace) || isPaceInRange('lb', goal, weightKg, pace))
   ) {
     return { goal, targetWeightKg: target, weeklyPaceKg: pace, activity };
   }
