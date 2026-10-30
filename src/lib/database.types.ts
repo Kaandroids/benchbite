@@ -1535,6 +1535,16 @@ export type Database = {
         Args: { entry_ids: number[]; to_day: string; to_meal: Database['public']['Enums']['meal'] };
         Returns: number;
       };
+      count_ai_call: {
+        Args: { call_id: string; input_tokens: number };
+        Returns: Database['public']['CompositeTypes']['ai_call'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_call';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       create_exercise: { Args: { exercise: Json }; Returns: string };
       custom_exercise_fields: {
         Args: { exercise: Json };
