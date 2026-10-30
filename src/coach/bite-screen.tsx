@@ -6,6 +6,7 @@ import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-nat
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
 import { ChatComposer } from './chat-composer';
@@ -31,6 +32,7 @@ export function BiteScreen() {
   const toEnd = () => scroll.current?.scrollToEnd({ animated: chat.status === 'idle' });
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
+  const lastQuestion = chat.messages.findLast((message) => message.role === 'user');
 
   return (
     <Screen onBack={() => router.back()} closes title={t('bite.title')} scrolls={false}>
@@ -59,12 +61,28 @@ export function BiteScreen() {
           {chat.messages.length === 0 ? (
             <ChatWelcome onAsk={refusal ? undefined : chat.send} />
           ) : (
-            <ChatMessages messages={chat.messages} status={chat.status} tool={chat.tool} />
+            <ChatMessages
+              messages={chat.messages}
+              status={chat.status}
+              tool={chat.tool}
+              onAskAgain={refusal || chat.status !== 'idle' ? undefined : chat.askAgain}
+            />
           )}
           {chat.failure ? (
-            <Text variant="caption" color="danger" accessibilityLiveRegion="polite">
-              {t(`bite.failures.${chat.failure}`)}
-            </Text>
+            <View style={[styles.failure, { gap: spacing.sm }]}>
+              <Text
+                variant="caption"
+                color="danger"
+                accessibilityLiveRegion="polite"
+                style={styles.flex}
+              >
+                {t(`bite.failures.${chat.failure}`)}
+              </Text>
+              {/* An unanswered question offers to ask again itself. */}
+              {chat.status === 'idle' && !lastQuestion?.unanswered ? (
+                <TextLink label={t('common.tryAgain')} onPress={chat.retry} />
+              ) : null}
+            </View>
           ) : null}
         </ScrollView>
         <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.sm }}>
@@ -85,6 +103,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+  },
+  failure: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   /** The conversation sits on the composer, as chats do. */
   bottom: {
