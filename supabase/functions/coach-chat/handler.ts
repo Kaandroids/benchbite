@@ -3,7 +3,7 @@
 // of events, while Bite may look things up with its tools, and the turn is saved to its thread.
 import { z } from 'zod';
 
-import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
+import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
 import {
   type ChatEvent as Event,
   type ChatRequest as Body,
@@ -186,13 +186,12 @@ async function answer(
   let threadId = request.threadId;
 
   // Nothing is written for a user who may not ask Bite now.
-  const access = await context.supabase.rpc('ai_access');
-  if (access.error) {
-    logError('Could not read the access to Bite', access.error);
+  try {
+    await checkAiAccess(context.supabase);
+  } catch (error) {
+    if (error instanceof AiRefusedError) return send({ event: 'error', reason: error.reason });
+    logError('Could not read the access to Bite', error);
     return send({ event: 'error', reason: 'unavailable' });
-  }
-  if (!access.data.allowed) {
-    return send({ event: 'error', reason: access.data.reason ?? 'limit_reached' });
   }
 
   try {
