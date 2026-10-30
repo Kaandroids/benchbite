@@ -1266,6 +1266,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      workout_alternatives: {
+        Row: {
+          exercises: Json | null;
+          id: number;
+          in_use: boolean;
+          name: string | null;
+          position: number;
+          user_id: string;
+          workout_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          exercises?: Json | null;
+          id?: never;
+          in_use: boolean;
+          name?: string | null;
+          position: number;
+          user_id: string;
+          workout_id: number;
+        };
+        Update: {
+          exercises?: Json | null;
+          id?: never;
+          in_use?: boolean;
+          name?: string | null;
+          position?: number;
+          user_id?: string;
+          workout_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workout_alternatives_workout_id_fkey';
+            columns: ['workout_id'];
+            isOneToOne: false;
+            referencedRelation: 'workouts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       workout_exercises: {
         Row: {
           exercise_id: string;
@@ -1512,6 +1551,10 @@ export type Database = {
         Returns: number;
       };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
+      add_workout_alternative: {
+        Args: { exercises: Json; name: string; today: string; workout_id: number };
+        Returns: number;
+      };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
         Args: Record<PropertyKey, never>;
@@ -1724,6 +1767,7 @@ export type Database = {
         Returns: Database['public']['Enums']['coach_proposal_status'];
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
+      delete_workout_alternative: { Args: { alternative_id: number }; Returns: undefined };
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
@@ -1858,6 +1902,25 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      lock_own_alternative: {
+        Args: { alternative_id: number };
+        Returns: {
+          exercises: Json | null;
+          id: number;
+          in_use: boolean;
+          name: string | null;
+          position: number;
+          user_id: string;
+          workout_id: number;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'workout_alternatives';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      lock_own_workout: { Args: { workout_id: number }; Returns: undefined };
       lock_planned_days: { Args: { owner: string }; Returns: undefined };
       lock_user_limits: { Args: { user_id: string }; Returns: undefined };
       lock_user_streak: {
@@ -2052,6 +2115,15 @@ export type Database = {
         }[];
       };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
+      rename_workout_alternative: {
+        Args: { alternative_id: number; name: string };
+        Returns: undefined;
+      };
+      renumber_workout_alternatives: { Args: { workout_id: number }; Returns: undefined };
+      reorder_workout_alternatives: {
+        Args: { alternative_ids: number[]; workout_id: number };
+        Returns: undefined;
+      };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
@@ -2190,10 +2262,15 @@ export type Database = {
         };
       };
       use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
+      use_workout_alternative: {
+        Args: { alternative_id: number; today: string; workout_id: number };
+        Returns: undefined;
+      };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
+          alternatives: number;
           exercises: number;
           workouts: number;
         }[];
