@@ -778,7 +778,20 @@
     "startWorkout": "Training starten",
     "toArchive": "Ins Archiv verschieben",
     "fromArchive": "Aus dem Archiv holen",
-    "days": "Tage"
+    "days": "Tage",
+    "alternatives": {
+      "unnamed": "Alternative {{position}}",
+      "errors": {
+        "limit": "Ein Workout kann bis zu {{max}} Alternativen haben.",
+        "inUse": "Die aktive Alternative kann nicht gelöscht werden. Wechsle zuerst zu einer anderen.",
+        "gone": "Diese Alternative gibt es nicht mehr.",
+        "switch": "Der Wechsel hat nicht geklappt. Versuch es noch einmal.",
+        "add": "Die Alternative konnte nicht hinzugefügt werden. Versuch es noch einmal.",
+        "rename": "Sie konnte nicht umbenannt werden. Versuch es noch einmal.",
+        "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
+        "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
+      }
+    }
   },
   "exercise": {
     "start": "Start",

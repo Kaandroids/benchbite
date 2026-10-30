@@ -778,7 +778,20 @@
     "startWorkout": "Antrenmanı başlat",
     "toArchive": "Arşive taşı",
     "fromArchive": "Arşivden geri al",
-    "days": "Günler"
+    "days": "Günler",
+    "alternatives": {
+      "unnamed": "Alternatif {{position}}",
+      "errors": {
+        "limit": "Bir antrenmanın en fazla {{max}} alternatifi olabilir.",
+        "inUse": "Kullanımdaki alternatif silinemez. Önce başka birine geç.",
+        "gone": "Bu alternatif artık yok.",
+        "switch": "Geçiş yapılamadı. Tekrar dene.",
+        "add": "Alternatif eklenemedi. Tekrar dene.",
+        "rename": "Yeniden adlandırılamadı. Tekrar dene.",
+        "delete": "Silinemedi. Tekrar dene.",
+        "reorder": "Sıralama kaydedilemedi. Tekrar dene."
+      }
+    }
   },
   "exercise": {
     "start": "Başlangıç",
