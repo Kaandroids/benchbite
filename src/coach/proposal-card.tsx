@@ -1,11 +1,12 @@
 import type { DayTargets, ProposalCard as Card } from '@shared/coach/chat';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { useNumberFormat } from '@/i18n/units';
 import { radii, spacing, useTheme, type ColorTokens } from '@/theme';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
@@ -59,9 +60,9 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
           action={
             // Undo stands as long as nothing changed what applying left.
             refused === 'changed' || refused === 'outOfDate' ? undefined : (
-              <TextButton
+              <TextLink
                 label={t('bite.proposal.undo')}
-                color="primaryText"
+                size="regular"
                 disabled={decide.isPending}
                 onPress={() => choose('undo')}
               />
@@ -102,9 +103,10 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
               loading={decide.isPending && decide.variables === 'apply'}
               onPress={() => choose('apply')}
             />
-            <TextButton
+            <TextLink
               label={t('bite.proposal.keep')}
-              color="textMuted"
+              tone="muted"
+              size="regular"
               disabled={waiting || decide.isPending}
               onPress={() => choose('keep')}
             />
@@ -302,8 +304,7 @@ function DecidedLine({
           backgroundColor: colors.surface,
           borderColor: colors.border,
           gap: spacing.sm,
-          paddingLeft: spacing.md,
-          paddingRight: action ? spacing.xs : spacing.md,
+          paddingHorizontal: spacing.md,
         },
       ]}
     >
@@ -329,37 +330,6 @@ function Refusal({ failure }: { failure: ProposalFailure }) {
     >
       {t(`bite.proposal.refusals.${failure}`)}
     </Text>
-  );
-}
-
-/** A button without a frame, 44 points high: Keep as is, and Undo. */
-function TextButton({
-  label,
-  color,
-  disabled,
-  onPress,
-}: {
-  label: string;
-  color: keyof ColorTokens;
-  disabled?: boolean;
-  onPress: () => void;
-}) {
-  const { spacing } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.textButton,
-        { paddingHorizontal: spacing.md, opacity: pressed || disabled ? 0.6 : 1 },
-      ]}
-    >
-      <Text variant="label" color={color}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -422,7 +392,7 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.lg,
   },
   line: {
     flexDirection: 'row',
@@ -430,9 +400,5 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderWidth: 1,
     borderRadius: radii.md + 2,
-  },
-  textButton: {
-    minHeight: 44,
-    justifyContent: 'center',
   },
 });
