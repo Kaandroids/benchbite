@@ -1,7 +1,14 @@
 import * as Haptics from 'expo-haptics';
 import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
+import {
+  AccessibilityInfo,
+  StyleSheet,
+  View,
+  type AccessibilityActionEvent,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedReaction,
@@ -30,6 +37,8 @@ type ReorderListProps<T> = {
   labelOf: (item: T) => string;
   /** Called when a drag starts and ends, for example to stop the page from scrolling meanwhile. */
   onDragChange?: (dragging: boolean) => void;
+  /** Changes a row's look, such as its background or padding. */
+  rowStyle?: (item: T) => StyleProp<ViewStyle>;
 };
 
 const SLIDE = { duration: 180 };
@@ -72,6 +81,7 @@ export function ReorderList<T>({
   renderItem,
   labelOf,
   onDragChange,
+  rowStyle,
 }: ReorderListProps<T>) {
   const { t } = useTranslation();
   const keys = items.map(keyOf);
@@ -97,6 +107,7 @@ export function ReorderList<T>({
           onMove={onMove}
           onDragChange={onDragChange}
           label={labelOf(item)}
+          style={rowStyle?.(item)}
           onStep={(to) => {
             onMove(index, to);
             AccessibilityInfo.announceForAccessibility(
@@ -120,6 +131,7 @@ type ReorderRowProps = {
   onMove: (from: number, to: number) => void;
   onDragChange: ((dragging: boolean) => void) | undefined;
   label: string;
+  style: StyleProp<ViewStyle>;
   /** Moves the row to the place, as a screen reader's action does. */
   onStep: (to: number) => void;
   children: ReactNode;
@@ -134,6 +146,7 @@ function ReorderRow({
   onMove,
   onDragChange,
   label,
+  style: rowStyle,
   onStep,
   children,
 }: ReorderRowProps) {
@@ -213,6 +226,7 @@ function ReorderRow({
       style={[
         styles.row,
         { height: rowHeight, gap: spacing.sm, backgroundColor: colors.surface },
+        rowStyle,
         style,
       ]}
     >
