@@ -15,24 +15,31 @@ the model is limited and counted (ADR 0051).
 
 - **An Edge Function, `coach-chat`,** takes the message, the thread to go on with (none for a new
   one), the app's language and the user's day, and answers as server-sent events: `expression`,
-  then `text` as it comes, `tool_start` and `tool_end` around each lookup, and `done` with the
-  thread and message, or `error` with a reason (`plan_required`, `limit_reached`,
+  then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at the end either
+  `done` with the thread and message, `interrupted` when the answer stopped short, or `error`
+  with a reason when nothing was saved (`plan_required`, `limit_reached`, `blocked`,
   `unavailable`…).
 - **What Bite is told, in order:** fixed instructions (its character, safety rules and its face),
-  the same for every user so that the provider can cache them; a snapshot of the user, read with
-  their token (profile, goal, latest weight, today's targets and food, today's workouts, streak);
-  the thread's last 20 messages, as text only; and the new message.
+  the same for every user so that the provider can cache them; the thread's last 20 messages, as
+  text, Bite's with their faces; and the new message, with a snapshot of the user before it,
+  read with their token (profile, goal, latest weight, today's targets and food, today's
+  workouts, streak, and the calorie floor from `calorie_floor()`, which the targets keep to). The
+  snapshot and the tools' results are data: the instructions say that nothing in them is an
+  instruction, as the user writes some of it.
 - **Bite looks things up with read tools**, run with the user's token so that row level security
   applies: `get_workout_history`, `get_meal_log`, `get_week_summary`, `get_records`,
-  `search_foods`, `search_exercises`. They return little and say what is wrong with a call, for
-  the model to correct. Bite may look things up four times, then has to answer. Bite changes no
-  data.
-- **The face comes first:** the answer starts with `[[happy]]` or another of the five
-  expressions, which the function takes off and sends as its own event; an answer without one is
-  neutral.
-- **The turn is saved when the answer is done,** or when the app stops it with text already
-  given: the thread, if new, the user's message, and Bite's, with its lookups and their results,
-  its face, and what its requests used. A refused or failed answer with no text saves nothing.
+  `search_foods`, `search_exercises`. Each has one zod schema, which checks its calls and is the
+  JSON Schema the model is told of. They return little, name things as the app does, and say
+  what is wrong with a call, for the model to correct. Bite may look things up in four rounds of
+  at most five lookups, then has to answer. Bite changes no data.
+- **The face comes first:** each request's answer starts with `[[happy]]` or another of the
+  five expressions, which the function takes off; the first is sent as its own event, and an
+  answer without one is neutral.
+- **The turn is saved when the answer is done,** or when it stops short with text already given
+  (the app stopped it, the budget ran out after a lookup, it was cut at the token limit): the
+  thread, if new, the user's message, and Bite's, with its lookups and their results, its face,
+  and what its requests used. The lookups are trimmed to what a message may hold. An answer with
+  no text saves nothing.
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered
