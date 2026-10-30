@@ -67,12 +67,12 @@ it('opens a chat, or a new one', async () => {
   await fireEvent.press(screen.getByText('Lunch ideas'));
   expect(router.dismissTo).toHaveBeenCalledWith({
     pathname: '/bite',
-    params: { thread: '2', fresh: '' },
+    params: { thread: '2', fresh: '', offer: '' },
   });
   await fireEvent.press(screen.getByRole('button', { name: 'New chat' }));
   expect(router.dismissTo).toHaveBeenLastCalledWith({
     pathname: '/bite',
-    params: { thread: '', fresh: expect.stringMatching(/^\d+$/) },
+    params: { thread: '', fresh: expect.stringMatching(/^\d+$/), offer: '' },
   });
 });
 
