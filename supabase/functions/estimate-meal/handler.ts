@@ -11,12 +11,11 @@ import {
   type EstimateRequest as Body,
   type EstimateResponse,
   MAX_ESTIMATE_ITEMS,
-  MAX_MEAL_PHOTOS,
   MAX_NOTE_LENGTH,
   MEAL_PHOTO_TYPES,
 } from '../_shared/meal/estimate.ts';
 import { matchItems } from '../_shared/meal/match.ts';
-import { BASE64, decodedBytes, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
 import { parseJson, readBody } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -40,7 +39,7 @@ const Photo = z.object({
 });
 
 const EstimateRequest = z.object({
-  photos: z.array(Photo).min(1).max(MAX_MEAL_PHOTOS),
+  photos: z.array(Photo).min(1).max(MAX_PHOTOS),
   language: z.enum(LANGUAGES),
   meal: z.enum(Constants.public.Enums.meal).optional(),
   note: z.string().trim().max(MAX_NOTE_LENGTH).optional(),

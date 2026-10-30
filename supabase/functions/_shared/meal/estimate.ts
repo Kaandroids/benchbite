@@ -1,15 +1,11 @@
 // What the app and estimate-meal tell each other (#299, ADR 0059), shared by both, so that they
 // agree. This file imports only what the app can bundle too.
 import type { FoodRef } from '../foods.ts';
-import { MAX_PHOTOS } from '../photos.ts';
 
 /** The kinds of photo the function takes; the app scales them down before it sends them. */
 export const MEAL_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 export type MealPhotoType = (typeof MEAL_PHOTO_TYPES)[number];
-
-/** How many photos of the same meal one estimate takes; their sizes are limited in `photos.ts`. */
-export const MAX_MEAL_PHOTOS = MAX_PHOTOS;
 
 /** The longest correction the user may write, in characters. */
 export const MAX_NOTE_LENGTH = 300;
@@ -28,7 +24,7 @@ export type PreviousItem = { name: string; grams: number };
 
 /** Photos of a meal to estimate, or to estimate again with the user's correction. */
 export type EstimateRequest = {
-  /** One to `MAX_MEAL_PHOTOS` photos of the same meal. */
+  /** One to `MAX_PHOTOS` photos of the same meal, within the limits of `photos.ts`. */
   photos: MealPhoto[];
   /** The app's language, which names and Bite's note are in. */
   language: string;
