@@ -49,8 +49,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Benchbite uses your photos to show how your own exercises are done.",
-          "cameraPermission": "Benchbite uses the camera to take photos of how your own exercises are done."
+          "photosPermission": "Benchbite uses your photos to show how your own exercises are done and to estimate the meals in them.",
+          "cameraPermission": "Benchbite uses the camera to take photos of how your own exercises are done and of meals to estimate."
         }
       ]
     ],

@@ -1,10 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
@@ -25,6 +26,7 @@ import type { Meal } from './meals';
 import { useFavouriteKeys } from './quick-foods';
 import { QuickFoods, type QuickFoodRow } from './quick-foods-view';
 import { SearchResults } from './search-results';
+import { useLoggedEstimate } from './use-logged-estimate';
 
 type FoodSearchScreenProps = {
   meal: Meal;
@@ -36,7 +38,8 @@ type FoodSearchScreenProps = {
  * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
  * the favourites and one's own foods (ADR 0037). A food opens the amount screen, or its + adds it
  * at once: a frequent food as it was logged last, others by their default portion. New food is
- * in the top bar, and Done at the bottom goes back to the day.
+ * in the top bar, the camera beside the search logs a meal from photos (#299), and Done at the
+ * bottom goes back to the day.
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
@@ -52,6 +55,24 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   // whose + waits so that a double tap does not add them twice.
   const [added, setAdded] = useState<string[]>([]);
   const [saving, setSaving] = useState<string[]>([]);
+  const photoMeal = useLoggedEstimate({
+    meal,
+    day,
+    onAdded: useCallback((keys: string[]) => setAdded((current) => [...current, ...keys]), []),
+    // Each food once: one also added by hand keeps its check.
+    onUndone: useCallback(
+      (keys: string[]) =>
+        setAdded((current) => {
+          const left = [...keys];
+          return current.filter((key) => {
+            const index = left.indexOf(key);
+            if (index !== -1) left.splice(index, 1);
+            return index === -1;
+          });
+        }),
+      [],
+    ),
+  });
 
   // Handled per call: callbacks passed to mutate() run only for the latest one.
   const quickAdd = (food: FoodResult, amount: Amount) => {
@@ -130,25 +151,51 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       }
       // Foods are saved as they are added; Done ends the screen, where a screen's main button is,
       // so that nothing else there is taken for it.
-      footer={<Button label={t('common.done')} onPress={() => router.back()} />}
+      footer={
+        <View style={{ gap: spacing.md }}>
+          {photoMeal.toast}
+          <Button label={t('common.done')} onPress={() => router.back()} />
+        </View>
+      }
       scrolls={false}
     >
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
-        <SearchField
-          label={t('nutrition.search.placeholder')}
-          value={query}
-          onChangeText={setQuery}
-          autoFocus
-          maxLength={50}
-        />
+        <View style={[styles.searchRow, { gap: spacing.sm }]}>
+          <View style={styles.search}>
+            <SearchField
+              label={t('nutrition.search.placeholder')}
+              value={query}
+              onChangeText={setQuery}
+              autoFocus
+              maxLength={50}
+            />
+          </View>
+          <RoundIconButton
+            icon="camera"
+            color="primary"
+            background="iconBackground"
+            size={48}
+            label={t('nutrition.photo.camera')}
+            onPress={photoMeal.openSheet}
+          />
+        </View>
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
+        {photoMeal.undoFailed ? <Note tone="danger">{t('nutrition.photo.undoError')}</Note> : null}
       </View>
       {body}
+      {photoMeal.sheet}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  search: {
+    flex: 1,
+  },
   action: {
     width: 44,
     alignItems: 'center',

@@ -5,7 +5,9 @@ import {
   useAddEntry,
   useRemoveEntry,
   useCopyEntries,
+  useLogEstimate,
   useRestoreEntry,
+  useUndoEstimate,
   useUpdateEntry,
 } from './entries';
 import type { LoggedEntry } from './meals';
@@ -199,5 +201,88 @@ describe('changing entries', () => {
       queryKey: ['nutrition-targets', 'day', '2026-10-27'],
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['past-meal'] });
+  });
+});
+
+describe('useLogEstimate', () => {
+  it('logs found foods by their id and the rest by their values, in one call', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({
+      data: [
+        { entry_id: 11, custom_food_id: null, created_food: false, kcal: 234 },
+        { entry_id: 12, custom_food_id: 5, created_food: true, kcal: 46.6 },
+        // The user's own Dal, at its own values.
+        { entry_id: 13, custom_food_id: 3, created_food: false, kcal: 180 },
+      ],
+      error: null,
+    } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useLogEstimate(), { queryClient });
+
+    const logged = await act(() =>
+      result.current.mutateAsync({
+        day: '2026-10-30',
+        meal: 'dinner',
+        entries: [
+          { food: { kind: 'library', id: 'C352032' }, grams: 200 },
+          {
+            name: 'Mango chutney',
+            grams: 20,
+            per100g: { calories: 233, proteinG: 0.5, carbsG: 57, fatG: 0.3 },
+          },
+          {
+            name: 'Dal',
+            grams: 150,
+            per100g: { calories: 140, proteinG: 6, carbsG: 14, fatG: 7 },
+          },
+        ],
+      }),
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith('log_meal_estimate', {
+      day: '2026-10-30',
+      meal: 'dinner',
+      items: [
+        { food_id: 'C352032', custom_food_id: null, recipe_id: null, grams: 200 },
+        { name: 'Mango chutney', grams: 20, kcal: 233, protein_g: 0.5, carbs_g: 57, fat_g: 0.3 },
+        { name: 'Dal', grams: 150, kcal: 140, protein_g: 6, carbs_g: 14, fat_g: 7 },
+      ],
+    });
+    expect(logged).toEqual({
+      day: '2026-10-30',
+      entryIds: [11, 12, 13],
+      foods: [
+        { kind: 'library', id: 'C352032' },
+        { kind: 'custom', id: 5 },
+        { kind: 'custom', id: 3 },
+      ],
+      createdFoodIds: [5],
+      calories: 460.6,
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-30'] });
+    // A new food of one's own shows in the lists of one's foods.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['food-search'] });
+  });
+});
+
+describe('useUndoEstimate', () => {
+  it('takes the entries and the foods it made back in one call', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
+    const { result } = await renderHook(() => useUndoEstimate());
+
+    await act(() =>
+      result.current.mutateAsync({
+        day: '2026-10-30',
+        entryIds: [11, 12],
+        foods: [],
+        createdFoodIds: [5],
+        calories: 280,
+      }),
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith('undo_meal_estimate', {
+      entry_ids: [11, 12],
+      food_ids: [5],
+    });
   });
 });
