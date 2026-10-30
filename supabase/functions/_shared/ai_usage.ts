@@ -60,6 +60,21 @@ export async function checkAiAccess(supabase: Client): Promise<void> {
   if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
 }
 
+/**
+ * How long a count with the provider may take while the user's place is held; one that takes
+ * longer gives the place up at nothing, rather than holding it until the call is left behind.
+ */
+const COUNT_TIMEOUT_MS = 10_000;
+
+/** `promise`, or an error once `ms` have passed without it. */
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 /** How long to wait after each failed try to record a call, before the next; the last has none. */
 const RECORD_RETRIES_MS = [250, 1000, undefined];
 
@@ -98,7 +113,7 @@ export function aiModel(context: AiContext, task: Task): AiModel {
     const callId = placed.call_id;
     let call: AiCall;
     try {
-      const inputTokens = await inner.countTokens(full);
+      const inputTokens = await withTimeout(inner.countTokens(full), COUNT_TIMEOUT_MS);
       const counted = await context.supabase.rpc('count_ai_call', {
         call_id: callId,
         input_tokens: inputTokens,
