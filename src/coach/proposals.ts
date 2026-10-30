@@ -141,6 +141,8 @@ export function useDecideProposal(card: ProposalCard) {
       queryClient.setQueriesData<StateRow[]>({ queryKey: PROPOSALS_KEY }, (rows) =>
         rows?.map((row) => (row.id === card.id ? { ...row, status } : row)),
       );
+      // A list loading meanwhile, as when Bite proposed again, may have read it as it was.
+      void queryClient.invalidateQueries({ queryKey: PROPOSALS_KEY });
       if (decision !== 'keep') {
         void reloadChanged(queryClient, card);
       }

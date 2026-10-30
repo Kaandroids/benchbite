@@ -103,6 +103,8 @@ describe('useDecideProposal', () => {
     );
     await waitFor(() => expect(result.current.states.isSuccess).toBe(true));
 
+    // As the database has it once applied, which the states load again.
+    proposalRows([{ id: 7, status: 'applied', expires_at: '2026-11-06T12:00:00Z' }]);
     await act(() => result.current.decide.mutateAsync('apply'));
 
     expect(supabase.rpc).toHaveBeenCalledWith('decide_coach_proposal', {
@@ -111,6 +113,7 @@ describe('useDecideProposal', () => {
       today: '2026-10-30',
     });
     await waitFor(() => expect(result.current.states.data?.get(7)?.status).toBe('applied'));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['coach-proposals'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });
 
@@ -134,7 +137,9 @@ describe('useDecideProposal', () => {
 
     await act(() => result.current.mutateAsync('keep'));
 
-    expect(invalidate).not.toHaveBeenCalled();
+    // Only where the proposals stand loads again.
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['coach-proposals'] });
   });
 
   it('loads where the proposals stand again when one is out of date', async () => {

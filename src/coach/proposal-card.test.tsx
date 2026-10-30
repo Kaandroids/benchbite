@@ -1,12 +1,12 @@
 import type { ProposalCard as Card } from '@shared/coach/chat';
 
 import { supabase } from '@/lib/supabase';
-import { fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen } from '@/test/render';
 
 import { ProposalCard } from './proposal-card';
-import type { ProposalState } from './proposals';
+import { type ProposalState, useProposalStates } from './proposals';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 
 const WORKOUT: Card = {
   kind: 'workout',
@@ -173,4 +173,38 @@ it('waits for where a proposal stands before it may be applied', async () => {
 
   expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Keep as is' })).toBeDisabled();
+});
+
+it('stays applied when Bite proposes again while Apply is sent', async () => {
+  // The first list says the card is pending; the next, with the new proposal, never comes.
+  jest.mocked(supabase.from).mockReturnValueOnce({
+    select: () => ({
+      in: () =>
+        Promise.resolve({
+          data: [{ id: 8, status: 'pending', expires_at: '2099-01-01T00:00:00Z' }],
+          error: null,
+        }),
+    }),
+  } as never);
+  jest
+    .mocked(supabase.from)
+    .mockReturnValue({ select: () => ({ in: () => new Promise(() => {}) }) } as never);
+  let applied: (value: unknown) => void = () => {};
+  jest.mocked(supabase.rpc).mockReturnValue(
+    new Promise((resolve) => {
+      applied = resolve;
+    }) as never,
+  );
+  function Chat({ ids }: { ids: number[] }) {
+    const states = useProposalStates(ids);
+    return <ProposalCard card={TARGETS} state={states.data?.get(8)} />;
+  }
+  await render(<Chat ids={[8]} />);
+  await fireEvent.press(await screen.findByRole('button', { name: 'Apply' }));
+
+  await screen.rerender(<Chat ids={[8, 9]} />);
+  await act(async () => applied({ data: 'applied', error: null }));
+
+  expect(screen.getByText('Applied: 2,100 kcal and 150 g protein a day')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
 });

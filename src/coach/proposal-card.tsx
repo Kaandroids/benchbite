@@ -1,5 +1,5 @@
 import type { DayTargets, ProposalCard as Card } from '@shared/coach/chat';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import {
   type ProposalDecision,
   type ProposalFailure,
   type ProposalState,
+  type ProposalStatus,
   proposalFailure,
   useDecideProposal,
 } from './proposals';
@@ -36,15 +37,17 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
   const { t } = useTranslation();
   const decide = useDecideProposal(card);
   const summary = useSummary();
-  // Where it stands as loaded, or as the user just decided it when that could not load.
-  const status = state?.status ?? decide.data ?? 'pending';
+  // What the user decided here wins over where it stood when loaded: states loading again, as for
+  // a new proposal, may still hold it as it was before.
+  const [decided, setDecided] = useState<ProposalStatus>();
+  const status = decided ?? state?.status ?? 'pending';
   // A refusal says why on the card while the proposal stands where it was refused: an undo is
   // refused applied, the rest pending.
   const refused =
     decide.isError && (decide.variables === 'undo') === (status === 'applied')
       ? proposalFailure(decide.error)
       : undefined;
-  const choose = (decision: ProposalDecision) => decide.mutate(decision);
+  const choose = (decision: ProposalDecision) => decide.mutate(decision, { onSuccess: setDecided });
 
   if (status === 'applied') {
     return (
