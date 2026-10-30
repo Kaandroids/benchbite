@@ -43,3 +43,17 @@ AppState.addEventListener('change', (state) => {
     void supabase.auth.stopAutoRefresh();
   }
 });
+
+/**
+ * The headers of a JSON request to an Edge Function: the publishable key, and the signed-in
+ * user's token, which the function checks.
+ */
+export async function functionHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return {
+    'content-type': 'application/json',
+    apikey: publishableKey,
+    ...(token && { authorization: `Bearer ${token}` }),
+  };
+}

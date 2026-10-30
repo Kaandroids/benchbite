@@ -1,7 +1,7 @@
 import type { ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
 import { randomUUID } from 'expo-crypto';
 
-import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
+import { functionHeaders, functionUrl, supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 
@@ -62,15 +62,9 @@ export async function streamChat(
   };
   signal?.addEventListener('abort', stop, { once: true });
   try {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
     const response = await fetch(functionUrl('coach-chat'), {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        apikey: publishableKey,
-        ...(token && { authorization: `Bearer ${token}` }),
-      },
+      headers: await functionHeaders(),
       body: JSON.stringify({ ...request, requestId }),
       signal,
     });
