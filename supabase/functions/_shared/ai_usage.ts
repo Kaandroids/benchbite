@@ -1,5 +1,5 @@
-// The usage limit as the Edge Functions see it (#288, #322, ADR 0051): a model is called only
-// through aiModel(), whose every request counts what it sends, starts a call that sets the most
+// The usage limit as the Edge Functions see it (#288, #322, ADR 0051, ADR 0056): a model is called
+// only through aiModel(), whose every request starts a call, counts what it sends, sets the most
 // it may cost aside, and records what it used, however the request ends. The database knows the
 // prices and the limit; a function only reports tokens.
 import type { Database } from './database.types.ts';
@@ -60,6 +60,21 @@ export async function checkAiAccess(supabase: Client): Promise<void> {
   if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
 }
 
+/**
+ * How long a count with the provider may take while the user's place is held; one that takes
+ * longer gives the place up at nothing, rather than holding it until the call is left behind.
+ */
+const COUNT_TIMEOUT_MS = 10_000;
+
+/** `promise`, or an error once `ms` have passed without it. */
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 /** How long to wait after each failed try to record a call, before the next; the last has none. */
 const RECORD_RETRIES_MS = [250, 1000, undefined];
 
@@ -67,8 +82,8 @@ const RECORD_RETRIES_MS = [250, 1000, undefined];
 type Used = Usage | 'nothing' | 'unknown';
 
 /**
- * The model for `task`, for the user of `context`. Each request counts what it sends, starts a
- * call on the task's model that sets the most it may cost aside from the user's budget, cuts the
+ * The model for `task`, for the user of `context`. Each request starts a call on the task's model,
+ * counts what it sends, sets the most the call may cost aside from the user's budget, cuts the
  * answer where the task's limit says, and records the call however it ends: at what it used, at
  * nothing when the provider refused it, or at its most when that is not known, as when a stream
  * is left or breaks off before its end. A request the user may not make throws
@@ -83,21 +98,41 @@ export function aiModel(context: AiContext, task: Task): AiModel {
 
     // A copy of its own, so that what is counted is what is sent, whatever the caller changes.
     const full: ModelRequest = { ...structuredClone(request), task };
-    const inputTokens = await inner.countTokens(full);
+    // The user's one place for the feature is taken before anything goes to the provider, so that
+    // parallel requests stop at call_in_progress rather than each counting with it (ADR 0056).
     const started = await context.supabase.rpc('start_ai_call', {
       feature: task,
       model: inner.model(task),
-      input_tokens: inputTokens,
+      input_tokens: 0,
     });
     if (started.error) throw new Error(`start_ai_call: ${started.error.message}`);
-    const call: AiCall = started.data;
-    if (!call.allowed || !call.call_id || !call.max_output_tokens) {
+    const placed: AiCall = started.data;
+    if (!placed.allowed || !placed.call_id) {
+      throw new AiRefusedError(placed.reason ?? 'limit_reached');
+    }
+    const callId = placed.call_id;
+    let call: AiCall;
+    try {
+      const inputTokens = await withTimeout(inner.countTokens(full), COUNT_TIMEOUT_MS);
+      const counted = await context.supabase.rpc('count_ai_call', {
+        call_id: callId,
+        input_tokens: inputTokens,
+      });
+      if (counted.error) throw new Error(`count_ai_call: ${counted.error.message}`);
+      call = counted.data;
+    } catch (error) {
+      // Nothing went to the model: the place is given up at no cost.
+      await keepAlive(record(context.admin, callId, 'nothing'));
+      throw error;
+    }
+    // A count refused gives the place up itself.
+    if (!call.allowed || !call.max_output_tokens) {
       throw new AiRefusedError(call.reason ?? 'limit_reached');
     }
     const limit = call.max_output_tokens;
     const asked = request.maxOutputTokens;
     full.maxOutputTokens = Number.isInteger(asked) && asked! > 0 ? Math.min(asked!, limit) : limit;
-    return { full, callId: call.call_id };
+    return { full, callId };
   }
 
   return {
