@@ -17,12 +17,15 @@ for everyone (#329).
 - **`aiModel()` takes the place first:** `start_ai_call()` with no input, which only sets the
   answer's most aside and holds the user's place for the feature. Parallel requests stop there,
   before anything goes to the provider.
-- **Then it counts,** and gives the count to `count_ai_call()`, which checks it as
-  `start_ai_call()` checks a count it is given: within the feature's input limit, and with room
-  in the budget for the call with that input. It sets the call's reservation to match, or, when
-  it refuses, gives the place up.
-- **A count that fails** with the provider, or a refusal, records the call at nothing, as
-  nothing went to the model.
+- **Then it counts,** within 10 seconds, and gives the count to `count_ai_call()`. It decides as
+  `start_ai_call()` does, with one rule both share (`ai_call_refusal()`): within the feature's
+  input limit, a priced model, and room in the budget for the call with that input. It sets the
+  call's reservation to match, once per call, or, when it refuses, gives the place up without a
+  record, as the call never reached the model.
+- **A count that fails** with the provider, or takes too long, or cannot be set, records the call
+  at nothing, which frees the place.
+- **`start_ai_call()` still takes a count,** as its tests and any caller that knows the count at
+  once rely on, and a call started with one is counted already; `aiModel()` gives none.
 
 ## Alternatives considered
 
@@ -35,5 +38,5 @@ for everyone (#329).
 ## Consequences
 
 A user has at most one count per feature with the provider at a time. Each request makes one
-more call to the database. `start_ai_call()` still takes a count, so a caller that already knows
-it may give it at once.
+more call to the database, and a count that hangs holds the user's place for at most 10
+seconds.
