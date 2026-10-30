@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
@@ -21,6 +23,7 @@ import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
 import { AlternativeChips } from './alternative-chips';
+import { AlternativesSheets } from './alternatives-sheet';
 import { useAlternativeError, useSwitchAlternative, useWorkoutAlternatives } from './alternatives';
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
@@ -57,6 +60,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const switchAlternative = useSwitchAlternative();
   const alternativeError = useAlternativeError();
   const limits = useWorkoutLimits();
+  const [managing, setManaging] = useState(false);
 
   if (!allLoaded([workouts])) {
     return (
@@ -178,16 +182,27 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : undefined
       }
       action={
-        <PillButton
-          label={t('workout.edit')}
-          onPress={() => {
-            if (running) {
-              askToFinish();
-              return;
-            }
-            router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
-          }}
-        />
+        <View style={[styles.actions, { gap: spacing.sm }]}>
+          <RoundIconButton
+            icon="layers"
+            color="text"
+            background="surface"
+            bordered
+            size={40}
+            label={t('workout.alternatives.title')}
+            onPress={() => setManaging(true)}
+          />
+          <PillButton
+            label={t('workout.edit')}
+            onPress={() => {
+              if (running) {
+                askToFinish();
+                return;
+              }
+              router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
+            }}
+          />
+        </View>
       }
     >
       {shownAlternatives ? (
@@ -267,11 +282,18 @@ export function WorkoutScreen({ id }: { id: number }) {
       </Pressable>
 
       {startSheet}
+      {managing ? (
+        <AlternativesSheets workout={workout} onClose={() => setManaging(false)} />
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   archive: {
     height: 52,
     flexDirection: 'row',

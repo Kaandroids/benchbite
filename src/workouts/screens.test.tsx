@@ -431,6 +431,14 @@ describe('WorkoutScreen', () => {
       { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 2 },
     ];
 
+    it('opens them from the top bar, with one set of exercises too', async () => {
+      mockWorkouts([pull]);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Alternatives' }));
+      expect(screen.getByText('Add alternative')).toBeTruthy();
+      expect(screen.getByText('In use · 4 exercises')).toBeTruthy();
+    });
+
     it('shows no chips for a workout without alternatives', async () => {
       mockWorkouts([pull]);
       await render(<WorkoutScreen id={7} />);
