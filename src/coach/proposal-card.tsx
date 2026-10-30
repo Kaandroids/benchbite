@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
@@ -166,7 +166,7 @@ function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> 
                 to: swap.to,
                 detail,
               })}
-              style={[styles.row, rowDivider(index, colors)]}
+              style={[styles.row, listDivider(index === 0, colors.border)]}
             >
               <Change from={swap.from} to={<Text variant="bodyStrong">{swap.to}</Text>} />
               <Text variant="caption" color="textMuted">
@@ -220,7 +220,12 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
                   ? t('bite.proposal.targetLabel', { name, from: was, to })
                   : t('bite.proposal.newTargetLabel', { name, to })
               }
-              style={[styles.row, styles.target, rowDivider(index, colors), { gap: spacing.sm }]}
+              style={[
+                styles.row,
+                styles.target,
+                listDivider(index === 0, colors.border),
+                { gap: spacing.sm },
+              ]}
             >
               <Text variant="bodyStrong" style={styles.flex}>
                 {name}
@@ -257,11 +262,6 @@ function Change({ from, to }: { from?: string; to: ReactNode }) {
       {to}
     </View>
   );
-}
-
-/** The thin line above each row but the first. */
-function rowDivider(index: number, colors: ColorTokens) {
-  return index === 0 ? null : { borderTopWidth: 1, borderTopColor: colors.track };
 }
 
 /** A decided proposal, folded into a line: what became of it, and Undo after Apply. */
