@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
 import { Constants, type Database } from '../_shared/database.types.ts';
+import { FOOD_QUERY_LENGTH, foodNameKey } from '../_shared/foods.ts';
 import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
 import {
   type EstimateFood,
@@ -209,16 +210,13 @@ async function matchItems(
   );
 }
 
-/** The shortest and longest query search_foods() searches. */
-const QUERY_LENGTH = { min: 2, max: 50 };
-
 /** The foods search_foods() finds, or none when it cannot search; the item is then estimated. */
 async function searchFoods(
   supabase: Client,
   language: Language,
   query: string,
 ): Promise<FoundFood[]> {
-  if (query.length < QUERY_LENGTH.min || query.length > QUERY_LENGTH.max) return [];
+  if (query.length < FOOD_QUERY_LENGTH.min || query.length > FOOD_QUERY_LENGTH.max) return [];
   const { data, error } = await supabase.rpc('search_foods', { query, language });
   if (error) {
     logError('Could not search the foods', error);
@@ -235,15 +233,15 @@ async function searchFoods(
  */
 export function bestMatch(searchName: string, found: FoundFood[]): FoundFood | undefined {
   const food = nameKey(searchName).split(',')[0].trim();
-  if (food.length < QUERY_LENGTH.min) return undefined;
+  if (food.length < FOOD_QUERY_LENGTH.min) return undefined;
   const matches = found.filter((row) => nameKey(row.name).includes(food));
   const own = matches.find((row) => row.food_id === null && nameKey(row.name).startsWith(food));
   return own ?? matches[0];
 }
 
-/** A name as search_foods() compares it (food_name_key()). */
+/** A name as search_foods() compares it, trimmed. */
 function nameKey(name: string): string {
-  return name.replace(/[İı]/g, 'i').toLowerCase().trim();
+  return foodNameKey(name).trim();
 }
 
 /** A found food as a meal entry names it. */

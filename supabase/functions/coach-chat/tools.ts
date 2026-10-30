@@ -6,6 +6,7 @@
 import { z } from 'zod';
 
 import type { CoachToolName, DayTargets, ProposalCard } from '../_shared/coach/chat.ts';
+import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -24,6 +25,9 @@ export type ToolContext = {
 const MAX_DAYS = 31;
 
 const QUERY = z.string().trim().min(2).max(80);
+
+/** A food name, as long as search_foods() searches. */
+const FOOD_QUERY = z.string().trim().min(FOOD_QUERY_LENGTH.min).max(FOOD_QUERY_LENGTH.max);
 
 /** Why Bite proposes a change, in the user's language, as the card shows it. */
 const WHY = z.string().trim().min(1).max(120);
@@ -175,7 +179,7 @@ const TOOLS = [
     name: 'search_foods',
     description:
       "Foods in the library and the user's own foods and recipes that match a name, with their values per 100 g and their usual portion in grams.",
-    args: z.object({ query: QUERY.describe('A food name, such as "oat flakes".') }),
+    args: z.object({ query: FOOD_QUERY.describe('A food name, such as "oat flakes".') }),
     run: async ({ query }, { supabase, language }) =>
       read(await supabase.rpc('search_foods', { language, query }))
         .slice(0, 10)
