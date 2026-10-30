@@ -75,3 +75,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0057](0057-stop-bite-on-the-server-too.md)                  | Stop Bite's answer on the server too                                                    | Accepted                      |
 | [0058](0058-bite-proposes-the-user-applies.md)               | Bite proposes, the user applies                                                         | Accepted                      |
 | [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted                      |
+| [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
