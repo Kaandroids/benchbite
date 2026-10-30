@@ -6,20 +6,23 @@
 ## Context
 
 Bite's conversations are kept in threads (ADR 0050). The user should find an earlier one, go on
-with it, start a new one, and rename or delete them (#295). ADR 0050 left the name of a thread to
-Bite, after its first answer; that would be a call to the model for every new thread. And a
-thread that is opened again sends its last 20 messages to the model with every message (ADR
-0052), so going on in a long, old thread by default costs more than starting a fresh one.
+with it, start a new one, and rename or delete them (#295). The first schema (#291) left the name
+of a thread to Bite, after its first answer; that would be a call to the model for every new
+thread. And a thread that is opened again sends its last 20 messages to the model with every
+message (ADR 0052), so going on in a long, old thread by default costs more than starting a
+fresh one.
 
 ## Decision
 
 - **A thread is named after its first message from the user:** its first words, up to 40
   characters, cut where a word ends. A trigger does it, so whoever writes the message, the name
-  follows; the user may rename it. No model is asked.
-- **The history is one function,** `my_coach_threads(search)`: the caller's threads that are not
-  archived, latest first, with the last message's text and the face of Bite's last answer. A
-  search finds a word in the name or the last message only, not the whole conversation, which
-  would need an index of every message for a first version.
+  follows; the user may rename it, or clear it, and a later message does not name it again. No
+  model is asked.
+- **The history is one function,** `my_coach_threads(search, before_at, before_id)`: the
+  caller's threads that have a message and are not archived, latest first, 50 at a time, with
+  the last message's text and the face of Bite's last answer. A search finds a word in the name
+  or the whole last message, as food search matches (İ and ı as i), not the whole
+  conversation, which would need an index of every message for a first version.
 - **Bite opens on the last thread** when its last message came in the last 6 hours, and on a new,
   empty one otherwise, with the last thread offered as "Continue" and a link to all chats. A
   conversation that goes on the same day stays one; a new day starts fresh unless the user goes
