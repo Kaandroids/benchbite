@@ -442,3 +442,11 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/estimate-meal/index.ts"
+
+# Removes the photos of deleted chats (ADR 0063). Only the pg_cron job calls it, with the secret
+# API key, which the function checks; the key is no JWT, so the platform's JWT check is off.
+[functions.purge-coach-media]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/purge-coach-media/index.ts"
