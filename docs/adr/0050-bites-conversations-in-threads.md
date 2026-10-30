@@ -1,6 +1,6 @@
 # 0050. Bite's conversations in threads, written only by the chat function
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0062
 - **Date:** 2026-10-29
 
 ## Context

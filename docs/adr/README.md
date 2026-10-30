@@ -65,7 +65,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0047](0047-the-progress-tab.md)                             | The Progress tab: weight, eating and training over a range, then records and the streak | Accepted                      |
 | [0048](0048-our-own-tab-bar-with-bite.md)                    | Draw our own tab bar, with Bite in its middle                                           | Accepted                      |
 | [0049](0049-gemini-behind-our-own-model-interface.md)        | Gemini behind our own language model interface                                          | Accepted, amended by ADR-0051 |
-| [0050](0050-bites-conversations-in-threads.md)               | Bite's conversations in threads, written only by the chat function                      | Accepted                      |
+| [0050](0050-bites-conversations-in-threads.md)               | Bite's conversations in threads, written only by the chat function                      | Accepted, amended by ADR-0062 |
 | [0051](0051-ai-usage-and-a-monthly-limit.md)                 | What AI costs, and a limit per user and month                                           | Accepted                      |
 | [0052](0052-the-coach-chat-function.md)                      | Bite answers in a stream of events, from a prompt, a snapshot and read tools            | Accepted                      |
 | [0053](0053-bite-errs-on-the-safe-side.md)                   | Bite errs on the safe side when the snapshot is missing or unsafe                       | Accepted                      |
@@ -74,6 +74,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0056](0056-count-a-call-after-its-place-is-taken.md)        | A model call's input is counted after its place is taken                                | Accepted                      |
 | [0057](0057-stop-bite-on-the-server-too.md)                  | Stop Bite's answer on the server too                                                    | Accepted                      |
 | [0058](0058-bite-proposes-the-user-applies.md)               | Bite proposes, the user applies                                                         | Accepted                      |
-| [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted                      |
+| [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted, amended by ADR-0062 |
 | [0060](0060-logging-an-estimated-meal.md)                    | Log an estimated meal in one step, saving foods the library lacks as the user's own     | Accepted                      |
 | [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
+| [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted                      |
