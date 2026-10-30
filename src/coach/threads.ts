@@ -10,7 +10,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-import type { Json } from '@/lib/database.types';
+import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
@@ -37,6 +37,19 @@ export type ThreadSummary = {
 
 type Cursor = { at: string; id: number };
 
+/** A row of `my_coach_threads()` as the app reads it. */
+function toSummary(
+  row: Database['public']['Functions']['my_coach_threads']['Returns'][number],
+): ThreadSummary {
+  return {
+    id: row.id,
+    title: row.title,
+    lastMessageAt: new Date(row.last_message_at),
+    lastMessage: row.last_message,
+    expression: row.expression,
+  };
+}
+
 /** The user's threads, latest first, a page at a time, found by `search` when it is given. */
 export function useThreads(search: string) {
   const term = search.trim();
@@ -61,14 +74,7 @@ export function useThreads(search: string) {
         ? { at: last.last_message_at, id: last.id }
         : undefined;
     },
-    select: (data) =>
-      data.pages.flat().map((row): ThreadSummary => ({
-        id: row.id,
-        title: row.title,
-        lastMessageAt: new Date(row.last_message_at),
-        lastMessage: row.last_message,
-        expression: row.expression,
-      })),
+    select: (data) => data.pages.flat().map(toSummary),
   });
 }
 
@@ -144,7 +150,7 @@ export function threadTitle(text: string): string | null {
 }
 
 /** How long after its last message Bite opens on a thread again, rather than a new one. */
-export const RECENT_MS = 6 * 60 * 60 * 1000;
+const RECENT_MS = 6 * 60 * 60 * 1000;
 
 /**
  * The user's latest chat, which Bite opens on while it is recent (ADR 0055), and otherwise offers
@@ -155,23 +161,16 @@ export function useLastThread(wanted: boolean) {
     queryKey: [...THREADS_KEY, 'last'],
     enabled: wanted,
     staleTime: 0,
+    // Read once as Bite opens, which decides on it; never again under the open chat.
+    refetchOnWindowFocus: false,
     // Bite waits for it before it shows; one that fails opens a new chat at once, not after tries.
     retry: false,
     queryFn: async (): Promise<ThreadSummary | null> => {
-      const { data, error } = await supabase.rpc('my_coach_threads');
+      const { data, error } = await supabase.rpc('my_coach_threads', { page_size: 1 });
       if (error) {
         throw error;
       }
-      const row = data[0];
-      return row
-        ? {
-            id: row.id,
-            title: row.title,
-            lastMessageAt: new Date(row.last_message_at),
-            lastMessage: row.last_message,
-            expression: row.expression,
-          }
-        : null;
+      return data[0] ? toSummary(data[0]) : null;
     },
   });
 }

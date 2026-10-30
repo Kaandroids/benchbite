@@ -7,7 +7,9 @@ import { BiteScreen } from './bite-screen';
 import { useLastThread, useThreadMessages } from './threads';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
-let mockParams: { thread?: string; fresh?: string } = {};
+// A new chat by default; the tab bar's opening, without params, is tested on its own.
+const NEW_CHAT = { thread: '', fresh: '1' };
+let mockParams: { thread?: string; fresh?: string; offer?: string } = NEW_CHAT;
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -57,6 +59,8 @@ function liveStream() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // No saved chat unless a test opens one.
+  jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
   access();
 });
 
@@ -400,7 +404,7 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
 
   await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
   expect(router.push).toHaveBeenCalledWith('/bite/chats');
-  mockParams = {};
+  mockParams = NEW_CHAT;
 });
 
 it('starts a new chat when the saved one is gone', async () => {
@@ -411,7 +415,7 @@ it('starts a new chat when the saved one is gone', async () => {
     .mockReturnValue({ isFetchedAfterMount: true, data: null } as never);
   await render(<BiteScreen />);
   expect(screen.getByRole('button', { name: 'How was my week?' })).toBeTruthy();
-  mockParams = {};
+  mockParams = NEW_CHAT;
 });
 
 it('waits for a saved chat as it is now, not as it was kept', async () => {
@@ -425,7 +429,7 @@ it('waits for a saved chat as it is now, not as it was kept', async () => {
   } as never);
   await render(<BiteScreen />);
   expect(screen.queryByText('Kept from before')).toBeNull();
-  mockParams = {};
+  mockParams = NEW_CHAT;
 });
 
 describe('opened from the tab bar', () => {
@@ -437,44 +441,55 @@ describe('opened from the tab bar', () => {
     expression: 'neutral' as const,
   });
   afterEach(() => {
+    mockParams = NEW_CHAT;
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: null } as never);
-    jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
   });
 
-  it('goes on in the last chat while it is recent', async () => {
+  it('goes on in the last chat while it is recent, deciding once', async () => {
+    mockParams = {};
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(2) } as never);
-    jest.mocked(useThreadMessages).mockImplementation(
-      (threadId) =>
-        (threadId === 9
-          ? {
-              isFetchedAfterMount: true,
-              data: {
-                title: 'Knee pain on squats',
-                messages: [{ id: 'stored-1', role: 'bite', text: 'Try leg press.' }],
-              },
-            }
-          : { data: undefined }) as never,
-    );
     await render(<BiteScreen />);
-    expect(screen.getByText('Try leg press.')).toBeTruthy();
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '', offer: '' });
   });
 
-  it('starts a new chat after six hours, offering the last to continue and all chats', async () => {
+  it('starts a new chat after six hours, offering the last', async () => {
+    mockParams = {};
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
+    await render(<BiteScreen />);
+    expect(router.setParams).toHaveBeenCalledWith({
+      thread: '',
+      fresh: expect.stringMatching(/^\d+$/),
+      offer: '9',
+    });
+  });
+
+  it('offers the last chat to continue, and all chats', async () => {
+    mockParams = { thread: '', fresh: '1', offer: '9' };
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
     await render(<BiteScreen />);
     expect(screen.getByText('CONTINUE')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /Knee pain on squats/ }));
-    expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '' });
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '', offer: '' });
     await fireEvent.press(screen.getByRole('button', { name: 'All chats' }));
     expect(router.push).toHaveBeenCalledWith('/bite/chats');
   });
 
   it('offers nothing to continue on a new chat asked for from the chats', async () => {
-    mockParams = { thread: '', fresh: '1' };
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
     await render(<BiteScreen />);
     expect(screen.queryByText('CONTINUE')).toBeNull();
-    mockParams = {};
+  });
+
+  it('keeps a new chat open when its own first message makes it the last chat', async () => {
+    const stream = liveStream();
+    const { rerender } = await render(<BiteScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+    await stream.send({ event: 'thread', threadId: 9 }, { event: 'text', text: 'A quiet week.' });
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(0) } as never);
+    await rerender(<BiteScreen />);
+    expect(screen.getByText('A quiet week.')).toBeTruthy();
+    expect(router.setParams).not.toHaveBeenCalled();
+    expect(stream.aborted()).toBeFalsy();
   });
 });
 
@@ -494,6 +509,6 @@ it('shows when each day of a chat over several days began', async () => {
   await render(<BiteScreen />);
   expect(screen.getByText(/^Yesterday /)).toBeTruthy();
   expect(screen.getByText(/^Today /)).toBeTruthy();
-  mockParams = {};
+  mockParams = NEW_CHAT;
   jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
 });

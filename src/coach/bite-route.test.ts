@@ -1,6 +1,7 @@
 import { chatOf } from './bite-route';
 
 jest.mock('expo-router', () => ({ router: {} }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 describe('chatOf', () => {
   it('opens a saved thread by its id', () => {

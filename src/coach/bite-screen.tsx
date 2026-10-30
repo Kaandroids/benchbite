@@ -1,5 +1,4 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -16,8 +15,9 @@ import { ChatComposer } from './chat-composer';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
-import { isRecent, type ThreadSummary, useLastThread, useThreadMessages } from './threads';
-import { type BiteParams, chatOf, continueChat } from './bite-route';
+import { useThreadMessages } from './threads';
+import { type BiteParams, continueChat, useOpenedChat } from './bite-route';
+import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
@@ -27,18 +27,11 @@ import { useFollowEnd } from './use-follow-end';
  * it to continue otherwise (ADR 0055).
  */
 export function BiteScreen() {
-  const asked = chatOf(useLocalSearchParams<BiteParams>());
-  const latest = useLastThread(asked.latest);
-  const [now] = useState(() => new Date());
-  const recent =
-    asked.latest && latest.data && isRecent(latest.data, now) ? latest.data : undefined;
-  const threadId = asked.threadId ?? recent?.id;
-  const key = recent ? `thread-${recent.id}` : asked.key;
+  const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
+  const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
-  // The last chat is looked at before anything shows; if it cannot be read, a new chat opens.
-  const waiting =
-    (asked.latest && latest.isPending) || (threadId !== undefined && !saved.isFetchedAfterMount);
-  if (waiting) {
+  // A saved chat opens on its messages as they are now, never on ones kept from before.
+  if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
       <Screen onBack={() => router.back()} closes>
         <LoadState queries={[saved]} />
@@ -56,7 +49,13 @@ export function BiteScreen() {
   ) : (
     <Chat
       key={threadId === undefined ? key : `gone-${threadId}`}
-      last={asked.latest && !recent ? (latest.data ?? undefined) : undefined}
+      continueWith={
+        opened.offer && {
+          thread: opened.offer,
+          onContinue: continueChat,
+          onAllChats: () => router.push('/bite/chats'),
+        }
+      }
     />
   );
 }
@@ -66,10 +65,10 @@ type ChatProps = {
   title?: string;
   start?: Parameters<typeof useChat>[0];
   /** The last chat, no longer recent, which a new chat offers to continue. */
-  last?: ThreadSummary;
+  continueWith?: ContinueWith;
 };
 
-function Chat({ title, start, last }: ChatProps) {
+function Chat({ title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const chat = useChat(start);
@@ -107,9 +106,7 @@ function Chat({ title, start, last }: ChatProps) {
           {chat.messages.length === 0 ? (
             <ChatWelcome
               onAsk={refusal ? undefined : following(chat.send)}
-              last={last}
-              onContinue={continueChat}
-              onAllChats={() => router.push('/bite/chats')}
+              continueWith={continueWith}
             />
           ) : (
             <ChatMessages
