@@ -1,8 +1,9 @@
 import { assertEquals } from '@std/assert';
 
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
+import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
-import { content, handleChatRequest } from './handler.ts';
+import { content, ending, handleChatRequest } from './handler.ts';
 
 type Row = Record<string, unknown>;
 
@@ -12,6 +13,7 @@ type Row = Record<string, unknown>;
  */
 function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[]> = {}) {
   const inserted: { table: string; rows: Row[] }[] = [];
+  const deleted: string[] = [];
   let nextId = 100;
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
@@ -36,6 +38,12 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         inserted.push({ table, rows: list });
         return query(table, list);
       },
+      delete: () => ({
+        eq: (_column: string, id: unknown) => {
+          deleted.push(`${table} ${id}`);
+          return Promise.resolve({ error: null });
+        },
+      }),
     }),
     rpc: (name: string) =>
       Promise.resolve({
@@ -43,7 +51,7 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         error: null,
       }),
   } as unknown as ChatContext['supabase'];
-  return { client, inserted };
+  return { client, inserted, deleted };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
@@ -51,7 +59,7 @@ const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tok
 function context(model: FakeModel, rpc: Record<string, unknown> = {}, tables = {}) {
   const db = database({ start_ai_call: STARTED, record_ai_usage: 0.001, ...rpc }, tables);
   const ctx: ChatContext = { supabase: db.client, admin: db.client, userId: 'user-1', model };
-  return { ctx, inserted: db.inserted };
+  return { ctx, inserted: db.inserted, deleted: db.deleted };
 }
 
 const ask = (body: unknown) =>
@@ -86,6 +94,8 @@ Deno.test('answers a new message in a new thread, with its expression first', as
 
   assertEquals(response.headers.get('content-type'), 'text/event-stream');
   assertEquals(await events(response), [
+    // The thread first, so that the app keeps it however the answer ends.
+    { event: 'thread', threadId: 100 },
     { event: 'expression', expression: 'happy' },
     { event: 'text', text: 'Yes, ' },
     { event: 'text', text: '140 g!' },
@@ -152,7 +162,8 @@ Deno.test('looks things up with a tool, then answers', async () => {
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.slice(0, 3), [
+  assertEquals(answer.slice(0, 4), [
+    { event: 'thread', threadId: 100 },
     { event: 'tool_start', name: 'get_records' },
     { event: 'tool_end', name: 'get_records' },
     { event: 'expression', expression: 'surprised' },
@@ -189,15 +200,16 @@ Deno.test('looks things up with a tool, then answers', async () => {
   assertEquals(inserted[1].rows[1].input_tokens, 2 * FAKE_USAGE.inputTokens);
 });
 
-Deno.test('says why when the user may not use Bite, and saves nothing', async () => {
-  const { ctx, inserted } = context(new FakeModel(), {
+Deno.test('says why when the user may not use Bite, and keeps nothing of it', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel(), {
     ai_access: { allowed: false, reason: 'limit_reached' },
   });
 
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
     { event: 'error', reason: 'limit_reached' },
   ]);
-  assertEquals(inserted, []);
+  // Nothing is written before the access is checked.
+  assertEquals([inserted, deleted], [[], []]);
 });
 
 Deno.test('goes on with a thread, reading its earlier messages as text', async () => {
@@ -249,6 +261,27 @@ Deno.test('refuses a thread the user cannot read, and a request that is not vali
   assertEquals(get.status, 405);
 });
 
+Deno.test('drops a new thread when the request is refused after it began', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel(), {
+    start_ai_call: {
+      allowed: false,
+      reason: 'call_in_progress',
+      call_id: null,
+      max_output_tokens: null,
+    },
+  });
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'call_in_progress', dropped: true },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
+});
+
 Deno.test("takes a later request's face off, and goes on after a space", async () => {
   const model = new FakeModel(
     [
@@ -270,17 +303,63 @@ Deno.test("takes a later request's face off, and goes on after a space", async (
   assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, said);
 });
 
-Deno.test('says why when an answer comes without text, and saves nothing', async () => {
+Deno.test('keeps nothing of a question the model blocked', async () => {
   const blocked = context(new FakeModel({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }));
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), blocked.ctx)), [
-    { event: 'error', reason: 'blocked' },
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'blocked', dropped: true },
   ]);
+  assertEquals(blocked.deleted, ['coach_threads 100']);
+});
+
+Deno.test('says why when an answer comes without text, and keeps the question', async () => {
   const faceOnly = context(new FakeModel([{ type: 'text', text: '[[sad]]' }]));
   assertEquals((await events(await handleChatRequest(ask(MESSAGE), faceOnly.ctx))).at(-1), {
     event: 'error',
     reason: 'unavailable',
   });
-  assertEquals([blocked.inserted, faceOnly.inserted], [[], []]);
+  // The question stays in its thread without an answer, as the app shows it.
+  assertEquals(
+    faceOnly.inserted.map(({ table }) => table),
+    ['coach_threads', 'coach_messages'],
+  );
+  assertEquals(
+    faceOnly.inserted[1].rows.map(({ role }) => role),
+    ['user'],
+  );
+  assertEquals(faceOnly.deleted, []);
+});
+
+/** A model the provider refuses outright, as a token count over its rate: nothing is billed. */
+class RateLimitedModel extends FakeModel {
+  override countTokens(_request: ModelRequest): Promise<number> {
+    return Promise.reject(
+      new ModelError('rate limited', { status: 429, retryable: true, billed: false }),
+    );
+  }
+}
+
+Deno.test('keeps nothing when the provider refuses the request outright', async () => {
+  const { ctx, inserted, deleted } = context(new RateLimitedModel());
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable', dropped: true },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
+});
+
+Deno.test('leaves a thread to drop that another request answered in meanwhile', async () => {
+  const { ctx, deleted } = context(new RateLimitedModel(), {}, { coach_messages: [{ id: 5 }] });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'error', reason: 'unavailable' });
+  assertEquals(deleted, []);
 });
 
 Deno.test('keeps what was said when the budget runs out after a lookup', async () => {
@@ -289,18 +368,24 @@ Deno.test('keeps what was said when the budget runs out after a lookup', async (
     { type: 'toolCall', name: 'get_records', args: {} },
   ]);
   const { ctx, inserted } = context(model);
-  // The budget is enough for the first request, not the second.
+  // The budget is enough for the check before the thread and the first request, not the second.
   const client = ctx.supabase as unknown as { rpc: (name: string, args?: unknown) => unknown };
   const rpc = client.rpc;
   let asked = 0;
   client.rpc = (name, args) =>
-    name === 'ai_access' && asked++ > 0
+    name === 'ai_access' && asked++ > 1
       ? Promise.resolve({ data: { allowed: false, reason: 'limit_reached' }, error: null })
       : rpc(name, args);
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+  assertEquals(answer.at(-1), {
+    event: 'done',
+    threadId: 100,
+    messageId: 102,
+    interrupted: 'refused',
+    reason: 'limit_reached',
+  });
   assertEquals(inserted.length, 2);
 });
 
@@ -314,7 +399,94 @@ Deno.test('says an answer cut at the token limit stopped short', async () => {
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: 'cut' });
+});
+
+Deno.test('says an answer the model broke off failed, and keeps what was said', async () => {
+  // The second request finds no turn left, and fails.
+  const model = new FakeModel([
+    { type: 'text', text: '[[neutral]] Let me check.' },
+    { type: 'toolCall', name: 'get_records', args: {} },
+  ]);
+  const { ctx, inserted } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), {
+    event: 'done',
+    threadId: 100,
+    messageId: 102,
+    interrupted: 'failed',
+    reason: 'unavailable',
+  });
+  assertEquals(inserted.length, 2);
+});
+
+/** A model whose every request fails at the provider, after it was made. */
+class FailingModel extends FakeModel {
+  override stream(_request: ModelRequest): AsyncIterable<StreamEvent> {
+    return {
+      [Symbol.asyncIterator]: () => ({
+        next: () =>
+          Promise.reject(
+            new ModelError('overloaded', { status: 503, retryable: true, billed: true }),
+          ),
+      }),
+    };
+  }
+}
+
+Deno.test('keeps the question when the model fails before a word', async () => {
+  const { ctx, inserted, deleted } = context(new FailingModel());
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable' },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads', 'coach_messages'],
+  );
+  assertEquals(deleted, []);
+});
+
+Deno.test('drops a new thread, and says so, when the model could not be asked', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel());
+  const client = ctx.supabase as unknown as { rpc: (name: string, args?: unknown) => unknown };
+  const rpc = client.rpc;
+  client.rpc = (name, args) =>
+    name === 'start_ai_call'
+      ? Promise.resolve({ data: null, error: { message: 'down' } })
+      : rpc(name, args);
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable', dropped: true },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
+});
+
+Deno.test('keeps nothing when the answer is stopped before the model is asked', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const { ctx, inserted, deleted } = context(model);
+
+  const response = await handleChatRequest(ask(MESSAGE), ctx);
+  await response.body!.cancel();
+  // The function goes on after the stop until it has dropped the new thread.
+  for (let tick = 0; tick < 100 && !deleted.length; tick++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  assertEquals(model.requests, []);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
 });
 
 Deno.test('answers more lookups than a round may make with an error', async () => {
@@ -342,4 +514,49 @@ Deno.test('keeps a message within what a message may hold', () => {
   assertEquals(content([call, small], 'Hi').length, 3);
   assertEquals(content([call, big], 'Hi')[1], { ...big, result: { omitted: true } });
   assertEquals(content(Array(60).fill(call), 'Hi').length, 50);
+});
+
+Deno.test('keeps what came of a message, and says why it ended', () => {
+  const answer = { said: false, stopped: false, finish: 'stop' as const, newThread: true };
+  const asked = { refused: false, asked: true };
+  const notAsked = { failure: 'unavailable' as const, refused: false, asked: false };
+  const refused = { failure: 'limit_reached' as const, refused: true, asked: false };
+
+  assertEquals(ending(asked, { ...answer, said: true }), {
+    keep: 'turn',
+    interrupted: undefined,
+    reason: undefined,
+  });
+  assertEquals(ending(asked, { ...answer, said: true, finish: 'length' }).keep, 'turn');
+  assertEquals(ending({ ...refused, asked: true }, { ...answer, said: true }), {
+    keep: 'turn',
+    interrupted: 'refused',
+    reason: 'limit_reached',
+  });
+  assertEquals(ending(asked, { ...answer, said: true, stopped: true }), {
+    keep: 'turn',
+    interrupted: 'stopped',
+    reason: undefined,
+  });
+  // Without text: the question once the model was asked, else nothing, and a new thread goes.
+  assertEquals(ending(asked, { ...answer, finish: 'stop' }), {
+    keep: 'question',
+    reason: 'unavailable',
+    dropThread: false,
+  });
+  assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
+    keep: 'nothing',
+    reason: 'blocked',
+    dropThread: true,
+  });
+  assertEquals(ending(notAsked, answer), {
+    keep: 'nothing',
+    reason: 'unavailable',
+    dropThread: true,
+  });
+  assertEquals(ending(refused, { ...answer, newThread: false }), {
+    keep: 'nothing',
+    reason: 'limit_reached',
+    dropThread: false,
+  });
 });

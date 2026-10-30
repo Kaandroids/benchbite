@@ -50,6 +50,16 @@ export class AiRefusedError extends Error {
   }
 }
 
+/**
+ * Makes sure the user of `supabase`, a client with their token, may call a model now: throws
+ * `AiRefusedError` with the reason when not, and an error when that cannot be read.
+ */
+export async function checkAiAccess(supabase: Client): Promise<void> {
+  const access = await supabase.rpc('ai_access');
+  if (access.error) throw new Error(`ai_access: ${access.error.message}`);
+  if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
+}
+
 /** How long to wait after each failed try to record a call, before the next; the last has none. */
 const RECORD_RETRIES_MS = [250, 1000, undefined];
 
@@ -69,9 +79,7 @@ export function aiModel(context: AiContext, task: Task): AiModel {
 
   async function start(request: AiRequest) {
     // Who may not call a model at all is told so before anything is sent to the provider.
-    const access = await context.supabase.rpc('ai_access');
-    if (access.error) throw new Error(`ai_access: ${access.error.message}`);
-    if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
+    await checkAiAccess(context.supabase);
 
     // A copy of its own, so that what is counted is what is sent, whatever the caller changes.
     const full: ModelRequest = { ...structuredClone(request), task };
