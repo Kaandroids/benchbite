@@ -317,7 +317,7 @@ function isRetryable(status: number): boolean {
 }
 
 /**
- * A response schema as Gemini takes it: without `$schema`, with an exclusive bound as an inclusive
+ * A response schema as Gemini takes it: without `$schema` and defaults, with an exclusive bound as an inclusive
  * one, which is all its structured output knows, and with a string's length limits also in its
  * description, as Gemini ignores `minLength` and `maxLength` but the model reads descriptions.
  * What the model then answers is checked against the full schema all the same.
@@ -325,7 +325,8 @@ function isRetryable(status: number): boolean {
 export function geminiSchema(schema: JsonSchema): JsonSchema {
   const translated: JsonSchema = {};
   for (const [key, value] of Object.entries(schema)) {
-    if (key === '$schema') continue;
+    // Not keywords of Gemini's structured output.
+    if (key === '$schema' || key === 'default') continue;
     if (key === 'exclusiveMinimum') translated.minimum ??= value;
     else if (key === 'exclusiveMaximum') translated.maximum ??= value;
     else if (key === 'properties' && isObject(value)) {

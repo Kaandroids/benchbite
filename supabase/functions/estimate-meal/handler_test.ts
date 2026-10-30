@@ -401,3 +401,19 @@ Deno.test('takes photos at their largest', async () => {
   assertEquals(response.status, 200);
   assertEquals(model.requests.length, 1);
 });
+
+Deno.test(
+  'estimates an item whose search name is too long to search, keeping the rest',
+  async () => {
+    const long = { ...ITEMS[0], searchName: 'Rice, '.repeat(10) };
+    const model = new FakeModel(answer({ isFood: true, items: [long], note: '' }));
+    const { ctx, searched } = context(model);
+
+    const response = await handleEstimateRequest(ask(REQUEST), ctx);
+
+    assertEquals(response.status, 200);
+    const [item] = (await response.json()).items;
+    assertEquals([item.estimated, item.per100.kcal], [true, 130]);
+    assertEquals(searched, []);
+  },
+);

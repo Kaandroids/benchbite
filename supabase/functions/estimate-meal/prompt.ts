@@ -34,7 +34,8 @@ export const ModelOutput = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1).max(100),
-        searchName: z.string().trim().max(FOOD_QUERY_LENGTH.max),
+        // A longer name finds nothing; its item is estimated rather than the answer lost.
+        searchName: z.string().trim().max(FOOD_QUERY_LENGTH.max).catch(''),
         grams: z.number().positive().max(5000),
         confidence: z.number().min(0).max(1),
         per100: z.object({

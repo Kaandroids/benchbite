@@ -374,7 +374,10 @@ Deno.test('sends a response schema as Gemini takes it, its string limits told in
         items: {
           type: 'array',
           maxItems: 3,
-          items: { type: 'object', properties: { name: { type: 'string', maxLength: 50 } } },
+          items: {
+            type: 'object',
+            properties: { name: { type: 'string', maxLength: 50, default: '' } },
+          },
         },
         note: { type: 'string', description: 'A note.', maxLength: 200 },
       },
