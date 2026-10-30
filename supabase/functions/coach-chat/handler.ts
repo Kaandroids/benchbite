@@ -10,6 +10,7 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
 import {
@@ -201,6 +202,8 @@ class Turn {
   text = '';
   /** The tool calls and their results, in order, as the message keeps them. */
   trace: Part[] = [];
+  /** Whether a change was proposed, whose card is an answer even without words. */
+  proposed = false;
   usage = { model: undefined as string | undefined, input: 0, cached: 0, output: 0, thinking: 0 };
   /** Why the last request's answer ended. */
   finish?: Finish;
@@ -296,6 +299,7 @@ async function answer(
       supabase: context.supabase,
       language: request.language,
       today: request.today,
+      threadId,
     };
 
     for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
@@ -333,6 +337,7 @@ async function answer(
           index < MAX_CALLS_PER_ROUND
             ? await lookUp(call, toolContext, send)
             : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
+        if ((result as { proposal?: unknown } | null)?.proposal) turn.proposed = true;
         results.push({ type: 'toolResult', id: call.id, name: call.name, result });
       }
       // Stopped among its lookups, the round ends as one stopped before them.
@@ -358,7 +363,8 @@ async function answer(
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
-    said: turn.text.trim() !== '',
+    // A proposal made is kept with its card, even if the model ended without a word.
+    said: turn.text.trim() !== '' || turn.proposed,
     stopped: stop.stopped,
     finish: turn.finish,
     newThread: !request.threadId,
@@ -420,6 +426,9 @@ async function lookUp(
   // What the user named things comes back with it, and may not pass for a snapshot either.
   const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
+  // A proposed change is shown as a card under the answer; the message keeps it with the result.
+  const proposal = (result as { proposal?: ProposalCard } | null)?.proposal;
+  if (proposal) send({ event: 'proposal', proposal });
   return result;
 }
 

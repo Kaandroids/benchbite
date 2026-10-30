@@ -682,3 +682,45 @@ Deno.test('keeps what came of a message, and says why it ended', () => {
     dropThread: false,
   });
 });
+
+Deno.test('shows a proposed change as a card, and keeps it with the answer', async () => {
+  const to = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+  const model = new FakeModel(
+    [{ type: 'toolCall', id: 'c1', name: 'propose_targets_change', args: to }],
+    [{ type: 'text', text: '[[happy]] Here is what I would change.' }],
+  );
+  const { ctx, inserted } = context(model, {
+    propose_coach_change: 42,
+    my_nutrition_targets: { calories: 1900, protein_g: 130, carbs_g: 200, fat_g: 60 },
+  });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  const proposal = {
+    kind: 'targets' as const,
+    id: 42,
+    from: { calories: 1900, proteinG: 130, carbsG: 200, fatG: 60 },
+    to,
+  };
+  assertEquals(
+    answer.filter((e) => e.event === 'proposal'),
+    [{ event: 'proposal', proposal }],
+  );
+  // The message keeps the card in its lookup's result, to show it when the chat is read back.
+  const content = inserted[1].rows[1].content as { type: string; result?: unknown }[];
+  assertEquals(content.find((part) => part.type === 'toolResult')?.result, { proposal });
+});
+
+Deno.test('keeps a proposed change though the model said nothing after it', async () => {
+  const to = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+  const model = new FakeModel(
+    [{ type: 'toolCall', id: 'c1', name: 'propose_targets_change', args: to }],
+    [],
+  );
+  const { ctx, inserted } = context(model, { propose_coach_change: 42 });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
+  assertEquals(inserted[1].rows.length, 2);
+});
