@@ -1629,6 +1629,7 @@ export type Database = {
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
+      clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
@@ -1715,7 +1716,11 @@ export type Database = {
         }[];
       };
       decide_coach_proposal: {
-        Args: { decision: string; proposal_id: number; today: string };
+        Args: {
+          decision: Database['public']['Enums']['coach_proposal_decision'];
+          proposal_id: number;
+          today: string;
+        };
         Returns: Database['public']['Enums']['coach_proposal_status'];
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
@@ -1869,6 +1874,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      log_weight: { Args: { today: string; weight_kg: number }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
         Args: { language: string };
@@ -1994,6 +2000,7 @@ export type Database = {
           activity_level: Database['public']['Enums']['activity_level'];
           goal: Database['public']['Enums']['goal_kind'];
           target_weight_kg: number;
+          today?: string;
           weekly_pace_kg: number;
         };
         Returns: undefined;
@@ -2200,6 +2207,7 @@ export type Database = {
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
+      coach_proposal_decision: 'apply' | 'keep' | 'undo';
       coach_proposal_kind: 'workout' | 'targets';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
       coach_role: 'user' | 'bite';
@@ -2454,6 +2462,7 @@ export const Constants = {
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
+      coach_proposal_decision: ['apply', 'keep', 'undo'],
       coach_proposal_kind: ['workout', 'targets'],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
       coach_role: ['user', 'bite'],
