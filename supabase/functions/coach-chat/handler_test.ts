@@ -2,7 +2,7 @@ import { assertEquals } from '@std/assert';
 
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
-import { handleChatRequest } from './handler.ts';
+import { content, handleChatRequest } from './handler.ts';
 
 type Row = Record<string, unknown>;
 
@@ -127,13 +127,15 @@ Deno.test('tells the model who it is and what the user is up to', async () => {
   await (await handleChatRequest(ask({ ...MESSAGE, language: 'tr' }), ctx)).text();
 
   const { system, tools, messages } = model.requests[0];
+  // The rules alone, the same for everyone; the snapshot goes with the message, as data.
   assertEquals(system!.startsWith('You are Bite'), true);
-  assertEquals(system!.includes('Reply in: Turkish'), true);
-  assertEquals(system!.includes('Eaten today: 1450 kcal · 95 g protein'), true);
+  assertEquals(system!.includes('Eaten today'), false);
   assertEquals(tools?.map((tool) => tool.name).includes('get_meal_log'), true);
-  assertEquals(messages, [
-    { role: 'user', parts: [{ type: 'text', text: 'Did I eat enough protein?' }] },
-  ]);
+  const [snapshot, message] = messages[0].parts as { type: 'text'; text: string }[];
+  assertEquals(snapshot.text.startsWith('<snapshot>'), true);
+  assertEquals(snapshot.text.includes('Reply in: Turkish'), true);
+  assertEquals(snapshot.text.includes('Eaten today: 1450 kcal · 95 g protein'), true);
+  assertEquals(message, { type: 'text', text: 'Did I eat enough protein?' });
 });
 
 Deno.test('looks things up with a tool, then answers', async () => {
@@ -172,9 +174,12 @@ Deno.test('looks things up with a tool, then answers', async () => {
           exercise: 'squat',
           kind: 'weight',
           on: '2026-10-29',
+          value: undefined,
+          previous: undefined,
           weightKg: 120,
           reps: undefined,
-          previous: undefined,
+          seconds: undefined,
+          meters: undefined,
         },
       ],
     },
@@ -205,6 +210,7 @@ Deno.test('goes on with a thread, reading its earlier messages as text', async (
       coach_messages: [
         {
           role: 'bite',
+          expression: 'happy',
           content: [
             { type: 'toolCall', name: 'get_plan', args: {} },
             { type: 'text', text: 'Push day.' },
@@ -217,10 +223,10 @@ Deno.test('goes on with a thread, reading its earlier messages as text', async (
 
   const answer = await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
 
-  // Newest first from the database, oldest first to the model.
+  // Newest first from the database, oldest first to the model, Bite's with its face.
   assertEquals(model.requests[0].messages.slice(0, 2), [
     { role: 'user', parts: [{ type: 'text', text: 'What is today?' }] },
-    { role: 'model', parts: [{ type: 'text', text: 'Push day.' }] },
+    { role: 'model', parts: [{ type: 'text', text: '[[happy]] Push day.' }] },
   ]);
   assertEquals(answer.at(-1), { event: 'done', threadId: 7, messageId: 101 });
   assertEquals(
@@ -241,4 +247,110 @@ Deno.test('refuses a thread the user cannot read, and a request that is not vali
   assertEquals(notJson.status, 400);
   const get = await handleChatRequest(new Request('http://localhost/coach-chat'), ctx);
   assertEquals(get.status, 405);
+});
+
+Deno.test('keeps a message within what a message may hold', async () => {
+  const { content } = await import('./handler.ts');
+  const call = { type: 'toolCall' as const, name: 'get_meal_log', args: { day: '2026-10-01' } };
+  const big = { type: 'toolResult' as const, name: 'get_meal_log', result: 'x'.repeat(70_000) };
+  const small = { type: 'toolResult' as const, name: 'get_meal_log', result: [] };
+
+  assertEquals(content([call, small], 'Hi').length, 3);
+  assertEquals(content([call, big], 'Hi')[1], { ...big, result: { omitted: true } });
+  assertEquals(content(Array(60).fill(call), 'Hi').length, 50);
+});
+
+Deno.test("takes a later request's face off, and goes on after a space", async () => {
+  const model = new FakeModel(
+    [
+      { type: 'text', text: '[[neutral]] Let me look.' },
+      { type: 'toolCall', name: 'get_records', args: {} },
+    ],
+    [{ type: 'text', text: '[[happy]] You hit 120 kg!' }],
+  );
+  const { ctx, inserted } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(
+    answer.filter((e) => e.event === 'expression'),
+    [{ event: 'expression', expression: 'neutral' }],
+  );
+  const said = answer.flatMap((e) => (e.event === 'text' ? [e.text] : [])).join('');
+  assertEquals(said, 'Let me look. You hit 120 kg!');
+  assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, said);
+});
+
+Deno.test('says why when an answer comes without text, and saves nothing', async () => {
+  const blocked = context(new FakeModel({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }));
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), blocked.ctx)), [
+    { event: 'error', reason: 'blocked' },
+  ]);
+  const faceOnly = context(new FakeModel([{ type: 'text', text: '[[sad]]' }]));
+  assertEquals((await events(await handleChatRequest(ask(MESSAGE), faceOnly.ctx))).at(-1), {
+    event: 'error',
+    reason: 'unavailable',
+  });
+  assertEquals([blocked.inserted, faceOnly.inserted], [[], []]);
+});
+
+Deno.test('keeps what was said when the budget runs out after a lookup', async () => {
+  const model = new FakeModel([
+    { type: 'text', text: '[[neutral]] Let me check.' },
+    { type: 'toolCall', name: 'get_records', args: {} },
+  ]);
+  const { ctx, inserted } = context(model);
+  // The budget is enough for the first request, not the second.
+  const client = ctx.supabase as unknown as { rpc: (name: string, args?: unknown) => unknown };
+  const rpc = client.rpc;
+  let asked = 0;
+  client.rpc = (name, args) =>
+    name === 'ai_access' && asked++ > 0
+      ? Promise.resolve({ data: { allowed: false, reason: 'limit_reached' }, error: null })
+      : rpc(name, args);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+  assertEquals(inserted.length, 2);
+});
+
+Deno.test('says an answer cut at the token limit stopped short', async () => {
+  const cut = {
+    parts: [{ type: 'text' as const, text: '[[happy]] Your week was' }],
+    usage: FAKE_USAGE,
+    finish: 'length' as const,
+  };
+  const { ctx } = context(new FakeModel(cut));
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+});
+
+Deno.test('answers more lookups than a round may make with an error', async () => {
+  const many = Array.from({ length: 7 }, (_, i) => ({
+    type: 'toolCall' as const,
+    id: `c${i}`,
+    name: 'search_foods',
+    args: { query: 'oats' },
+  }));
+  const model = new FakeModel(many, [{ type: 'text', text: '[[neutral]] Oats.' }]);
+  const { ctx } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.filter((e) => e.event === 'tool_start').length, 5);
+  const results = model.requests[1].messages[2].parts as { result: unknown }[];
+  assertEquals(results.at(-1)?.result, { error: 'At most 5 lookups at once; ask for fewer.' });
+});
+
+Deno.test('keeps a message within what a message may hold', () => {
+  const call = { type: 'toolCall' as const, name: 'get_meal_log', args: { day: '2026-10-01' } };
+  const big = { type: 'toolResult' as const, name: 'get_meal_log', result: 'x'.repeat(70_000) };
+  const small = { type: 'toolResult' as const, name: 'get_meal_log', result: [] };
+
+  assertEquals(content([call, small], 'Hi').length, 3);
+  assertEquals(content([call, big], 'Hi')[1], { ...big, result: { omitted: true } });
+  assertEquals(content(Array(60).fill(call), 'Hi').length, 50);
 });

@@ -4,11 +4,12 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
-import type { Json } from '../_shared/database.types.ts';
-import { type LanguageModel, type Message, ModelError, type Part } from '../_shared/llm/mod.ts';
-import { type Expression, readExpression, snapshotText, SYSTEM } from './prompt.ts';
-import { type Client, loadSnapshot } from './snapshot.ts';
-import { runTool, TOOL_DEFINITIONS } from './tools.ts';
+import type { Database, Json } from '../_shared/database.types.ts';
+import type { Finish, LanguageModel, Message, Part } from '../_shared/llm/mod.ts';
+import { type Client, logError } from '../_shared/supabase.ts';
+import { type Expression, FaceReader, LANGUAGES, marker, snapshotText, SYSTEM } from './prompt.ts';
+import { loadSnapshot } from './snapshot.ts';
+import { DAY, runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
   /** A client with the user's token. */
@@ -25,10 +26,11 @@ const ChatRequest = z.object({
   threadId: z.number().int().positive().optional(),
   message: z.string().trim().min(1).max(4000),
   /** The app's language, which Bite answers in. */
-  language: z.enum(['en', 'de', 'tr']),
+  language: z.enum(LANGUAGES),
   /** The user's day, as their device has it. */
-  today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  today: DAY,
 });
+type ChatRequest = z.infer<typeof ChatRequest>;
 
 /** How many earlier messages Bite reads of a thread. */
 const HISTORY = 20;
@@ -36,13 +38,22 @@ const HISTORY = 20;
 /** How many times Bite may look things up before it has to answer. */
 const MAX_TOOL_ROUNDS = 4;
 
+/** How many lookups one round may make; more are answered with an error. */
+const MAX_CALLS_PER_ROUND = 5;
+
+/** What a saved message may hold (`coach_messages.content`), the answer's text part included. */
+const MAX_PARTS = 50;
+const MAX_CONTENT_BYTES = 60_000;
+
 /** What the app is told as the answer comes, each a server-sent event. */
 export type ChatEvent =
   | { event: 'expression'; expression: Expression }
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
   | { event: 'text'; text: string }
-  | { event: 'done'; threadId: number; messageId: number }
+  /** The turn is saved; `interrupted` when the answer stopped before its end. */
+  | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
+  /** Nothing was saved, and why. */
   | { event: 'error'; reason: string };
 
 export async function handleChatRequest(req: Request, context: ChatContext): Promise<Response> {
@@ -70,7 +81,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     if (!thread.data) return Response.json({ error: 'thread_not_found' }, { status: 404 });
     const messages = await context.supabase
       .from('coach_messages')
-      .select('role, content')
+      .select('role, content, expression')
       .eq('thread_id', request.threadId)
       .order('id', { ascending: false })
       .limit(HISTORY);
@@ -101,16 +112,54 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   });
 }
 
-type Turn = {
+/** Bite's answer as it comes, and what is saved of it. */
+class Turn {
   expression?: Expression;
-  text: string;
+  text = '';
   /** The tool calls and their results, in order, as the message keeps them. */
-  trace: Part[];
-  usage: { model?: string; input: number; cached: number; output: number; thinking: number };
-};
+  trace: Part[] = [];
+  usage = { model: undefined as string | undefined, input: 0, cached: 0, output: 0, thinking: 0 };
+  /** Why the last request's answer ended. */
+  finish?: Finish;
+  #face = new FaceReader();
+  #roundText = '';
+
+  constructor(private readonly send: (event: ChatEvent) => void) {}
+
+  /** A new request's answer starts, with its own face to read off. */
+  round() {
+    this.#face = new FaceReader();
+    this.#roundText = '';
+  }
+
+  said(text: string) {
+    this.#show(this.#face.push(text));
+  }
+
+  /** The end of a request's answer: what was held back while it might have been a face. */
+  ended() {
+    this.#show(this.#face.end());
+  }
+
+  #show({ expression, text }: { expression?: Expression; text: string }) {
+    // The answer's face is the first one; later requests' faces are only taken off.
+    if (expression && !this.expression) {
+      this.expression = expression;
+      this.send({ event: 'expression', expression });
+    }
+    if (!text) return;
+    // A request's answer after another's goes on after a space.
+    if (!this.#roundText && this.text && !/\s$/.test(this.text) && !/^\s/.test(text)) {
+      text = ` ${text}`;
+    }
+    this.#roundText += text;
+    this.text += text;
+    this.send({ event: 'text', text });
+  }
+}
 
 async function answer(
-  request: z.infer<typeof ChatRequest>,
+  request: ChatRequest,
   history: Message[],
   context: ChatContext,
   send: (event: ChatEvent) => void,
@@ -120,33 +169,21 @@ async function answer(
     { supabase: context.supabase, admin: context.admin, model: context.model },
     'coach_chat',
   );
-  const turn: Turn = {
-    text: '',
-    trace: [],
-    usage: { input: 0, cached: 0, output: 0, thinking: 0 },
-  };
-  let start = '';
-  const said = (text: string) => {
-    if (turn.expression) {
-      if (!text) return;
-      turn.text += text;
-      return send({ event: 'text', text });
-    }
-    // The answer starts with its expression, which the app shows before the text.
-    start += text;
-    const read = readExpression(start);
-    if (!read) return;
-    turn.expression = read.expression;
-    send({ event: 'expression', expression: read.expression });
-    if (read.rest) said(read.rest);
-  };
+  const turn = new Turn(send);
+  let failure: string | undefined;
 
   try {
     const snapshot = await loadSnapshot(context.supabase, request.today);
-    const system = `${SYSTEM}\n\n${snapshotText(snapshot, request.language)}`;
     const messages: Message[] = [
       ...history,
-      { role: 'user', parts: [{ type: 'text', text: request.message }] },
+      // The snapshot goes with the message, as data apart from the rules.
+      {
+        role: 'user',
+        parts: [
+          { type: 'text', text: snapshotText(snapshot, request.language) },
+          { type: 'text', text: request.message },
+        ],
+      },
     ];
     const toolContext = {
       supabase: context.supabase,
@@ -159,10 +196,11 @@ async function answer(
       const tools = round < MAX_TOOL_ROUNDS ? TOOL_DEFINITIONS : undefined;
       const spoken: Part[] = [];
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
-      for await (const event of bite.stream({ system, messages, tools })) {
+      turn.round();
+      for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
         if (isStopped()) break;
         if (event.type === 'text') {
-          said(event.text);
+          turn.said(event.text);
           spoken.push(event);
         } else if (event.type === 'toolCall') {
           calls.push(event);
@@ -173,15 +211,18 @@ async function answer(
           turn.usage.cached += usage.cachedInputTokens;
           turn.usage.output += usage.outputTokens;
           turn.usage.thinking += usage.thinkingTokens;
+          turn.finish = event.finish;
         }
       }
+      turn.ended();
       if (!calls.length || isStopped()) break;
 
       const results: Part[] = [];
-      for (const call of calls) {
-        send({ event: 'tool_start', name: call.name });
-        const result = await runTool(call.name, call.args, toolContext);
-        send({ event: 'tool_end', name: call.name });
+      for (const [index, call] of calls.entries()) {
+        const result =
+          index < MAX_CALLS_PER_ROUND
+            ? await lookUp(call, toolContext, send)
+            : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
         results.push({ type: 'toolResult', id: call.id, name: call.name, result });
       }
       turn.trace.push(...calls, ...results);
@@ -190,31 +231,42 @@ async function answer(
         { role: 'user', parts: results },
       );
     }
-    // An answer too short to tell its expression by is said as it is.
-    if (!turn.expression && start) {
-      turn.expression = 'neutral';
-      send({ event: 'expression', expression: 'neutral' });
-      turn.text += start;
-      send({ event: 'text', text: start });
-    }
   } catch (error) {
-    if (error instanceof AiRefusedError) return send({ event: 'error', reason: error.reason });
-    if (!(error instanceof ModelError)) console.error('Bite could not answer', error);
-    // What came is kept, as when the app stops the answer.
-    if (!turn.text) return send({ event: 'error', reason: 'unavailable' });
-    send({ event: 'error', reason: 'interrupted' });
+    if (error instanceof AiRefusedError) failure = error.reason;
+    else {
+      logError('Bite could not answer', error);
+      failure = 'unavailable';
+    }
   }
 
-  if (!turn.text.trim()) return;
+  if (!turn.text.trim()) {
+    return send({
+      event: 'error',
+      reason: failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable'),
+    });
+  }
+  // What came is kept, as when the app stops the answer, and said to have stopped short.
+  const interrupted = failure !== undefined || isStopped() || turn.finish !== 'stop';
   const saved = await keepAlive(save(context, request, turn));
-  if (saved) send({ event: 'done', ...saved });
-  else send({ event: 'error', reason: 'not_saved' });
+  if (!saved) return send({ event: 'error', reason: 'not_saved' });
+  send({ event: 'done', ...saved, ...(interrupted && { interrupted: true }) });
+}
+
+async function lookUp(
+  call: Extract<Part, { type: 'toolCall' }>,
+  context: Parameters<typeof runTool>[2],
+  send: (event: ChatEvent) => void,
+): Promise<unknown> {
+  send({ event: 'tool_start', name: call.name });
+  const result = await runTool(call.name, call.args, context);
+  send({ event: 'tool_end', name: call.name });
+  return result;
 }
 
 /** Saves the user's message and Bite's answer, in a new thread when there is none yet. */
 async function save(
   context: ChatContext,
-  request: z.infer<typeof ChatRequest>,
+  request: ChatRequest,
   turn: Turn,
 ): Promise<{ threadId: number; messageId: number } | undefined> {
   let threadId = request.threadId;
@@ -224,7 +276,7 @@ async function save(
       .insert({ user_id: context.userId })
       .select('id')
       .single();
-    if (thread.error) return void console.error('Could not start a thread', thread.error);
+    if (thread.error) return void logError('Could not start a thread', thread.error);
     threadId = thread.data.id;
   }
   const messages = await context.admin
@@ -234,10 +286,7 @@ async function save(
       {
         thread_id: threadId,
         role: 'bite',
-        content: [
-          ...turn.trace,
-          { type: 'text', text: turn.text.trim() },
-        ] as unknown as NonNullable<Json>,
+        content: content(turn.trace, turn.text.trim()) as unknown as NonNullable<Json>,
         expression: turn.expression ?? 'neutral',
         model: turn.usage.model,
         input_tokens: turn.usage.input,
@@ -248,12 +297,34 @@ async function save(
     ])
     .select('id')
     .order('id');
-  if (messages.error) return void console.error('Could not save the messages', messages.error);
+  if (messages.error) return void logError('Could not save the messages', messages.error);
   return { threadId, messageId: messages.data[messages.data.length - 1].id };
 }
 
-/** An earlier message as Bite reads it: its text alone, without the lookups behind it. */
-function toMessage(row: { role: 'user' | 'bite'; content: Json }): Message[] {
+/**
+ * Bite's message as it is kept: its lookups and their results, then its text, within what a
+ * message may hold. Too large, the results are left out first, then the lookups.
+ */
+export function content(trace: Part[], text: string): Part[] {
+  const answer: Part = { type: 'text', text };
+  const fits = (parts: Part[]) =>
+    parts.length <= MAX_PARTS &&
+    new TextEncoder().encode(JSON.stringify(parts)).length <= MAX_CONTENT_BYTES;
+  const whole = [...trace.slice(0, MAX_PARTS - 1), answer];
+  if (fits(whole)) return whole;
+  const without = whole.map((part) =>
+    part.type === 'toolResult' ? { ...part, result: { omitted: true } } : part,
+  );
+  return fits(without) ? without : [answer];
+}
+
+/** An earlier message as Bite reads it: its text alone, a face before Bite's, as it wrote it. */
+function toMessage(
+  row: Pick<
+    Database['public']['Tables']['coach_messages']['Row'],
+    'role' | 'content' | 'expression'
+  >,
+): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
   const text = parts
     .flatMap((part) =>
@@ -267,10 +338,12 @@ function toMessage(row: { role: 'user' | 'bite'; content: Json }): Message[] {
     )
     .join('\n');
   if (!text) return [];
-  return [{ role: row.role === 'bite' ? 'model' : 'user', parts: [{ type: 'text', text }] }];
+  if (row.role === 'user') return [{ role: 'user', parts: [{ type: 'text', text }] }];
+  const face = marker(row.expression ?? 'neutral');
+  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${text}` }] }];
 }
 
 function failed(message: string, error: unknown): Response {
-  console.error(message, error);
+  logError(message, error);
   return Response.json({ error: 'unavailable' }, { status: 500 });
 }
