@@ -2,7 +2,7 @@ import { assertEquals } from '@std/assert';
 
 import type { Client } from '../_shared/supabase.ts';
 import { snapshotText } from './prompt.ts';
-import { loadSnapshot } from './snapshot.ts';
+import { loadSnapshot, workoutName } from './snapshot.ts';
 
 const PROFILE = {
   display_name: 'Sam',
@@ -51,8 +51,7 @@ Deno.test('keeps the rest of the profile when the floor cannot be read', async (
   assertEquals(text.includes('Calorie floor'), false);
 });
 
-Deno.test('names a workout without a name by its type', async () => {
-  const { workoutName } = await import('./snapshot.ts');
+Deno.test('names a workout without a name by its type', () => {
   assertEquals(workoutName({ name: '', type: 'full_body' }), 'full body');
   assertEquals(workoutName({ name: 'Push', type: 'push' }), 'Push');
 });
