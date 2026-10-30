@@ -22,7 +22,13 @@ const REFUSALS = [
 export type Refusal = (typeof REFUSALS)[number];
 
 /** Why Bite gave no answer to one message; any other reason is said as unavailable. */
-const FAILURES = ['unavailable', 'blocked', 'not_saved', 'request_too_large'] as const;
+const FAILURES = [
+  'unavailable',
+  'blocked',
+  'not_saved',
+  'request_too_large',
+  'call_in_progress',
+] as const;
 export type Failure = (typeof FAILURES)[number];
 
 /** Whether the user may chat with Bite this month, and when the month's budget resets. */
@@ -48,6 +54,10 @@ export type ChatMessage = {
   text: string;
   /** The face Bite answers with, once it is known. */
   expression?: BiteExpressionName;
+  /** A question Bite gave no answer to. */
+  unanswered?: boolean;
+  /** An answer that stopped short: stopped by the user, or cut off. */
+  cut?: 'stopped' | 'cut_off';
 };
 
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
@@ -78,10 +88,21 @@ export function useChat() {
       setMessages((all) => all.map((message) => (message.id === id ? update(message) : message))),
     [],
   );
-  /** Bite's message goes when nothing of it came. */
-  const dropIfEmpty = useCallback(
-    (id: string) =>
-      setMessages((all) => all.filter((message) => message.id !== id || message.text !== '')),
+  /**
+   * How a message to Bite ended: an answer that stopped short says so; when nothing of it came,
+   * it goes, and the question says it was not answered.
+   */
+  const settle = useCallback(
+    (questionId: string, biteId: string, cut?: ChatMessage['cut']) =>
+      setMessages((all) => {
+        const bite = all.find((message) => message.id === biteId);
+        if (bite?.text) {
+          return cut ? all.map((m) => (m.id === biteId ? { ...m, cut } : m)) : all;
+        }
+        return all
+          .filter((message) => message.id !== biteId)
+          .map((m) => (m.id === questionId ? { ...m, unanswered: true } : m));
+      }),
     [],
   );
 
@@ -90,11 +111,13 @@ export function useChat() {
       const message = text.trim();
       if (!message || abort.current) return;
       const biteId = `bite-${++count.current}`;
+      const questionId = `user-${count.current}`;
       setMessages((all) => [
         ...all,
-        { id: `user-${count.current}`, role: 'user', text: message },
+        { id: questionId, role: 'user', text: message },
         { id: biteId, role: 'bite', text: '' },
       ]);
+      let cut: ChatMessage['cut'];
       setStatus('thinking');
       setFailure(undefined);
       const controller = new AbortController();
@@ -112,13 +135,17 @@ export function useChat() {
             setStatus('answering');
             return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
           case 'thread':
+            threadId.current = event.threadId;
+            return;
           case 'done':
             threadId.current = event.threadId;
+            if (event.interrupted) cut = 'cut_off';
             return;
           case 'error': {
             const refusal = oneOf(REFUSALS, event.reason);
             if (refusal) setRefusal(refusal);
             else setFailure(oneOf(FAILURES, event.reason) ?? 'unavailable');
+            cut = 'cut_off';
             return;
           }
         }
@@ -137,17 +164,21 @@ export function useChat() {
         );
       } catch {
         // Stopped by the user, or no answer came: what came stays.
-        if (!controller.signal.aborted) setFailure('unavailable');
+        if (controller.signal.aborted) cut = 'stopped';
+        else {
+          setFailure('unavailable');
+          cut = 'cut_off';
+        }
       } finally {
         abort.current = undefined;
         setStatus('idle');
         setTool(undefined);
-        dropIfEmpty(biteId);
+        settle(questionId, biteId, cut);
         // What the message cost counts toward the month's budget.
         void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
       }
     },
-    [dropIfEmpty, i18n.language, queryClient, updateBite],
+    [i18n.language, queryClient, settle, updateBite],
   );
 
   /** Sends a message to Bite; its answer comes into the messages as it is written. */
@@ -156,5 +187,21 @@ export function useChat() {
   /** Stops Bite's answer; what came of it stays. */
   const stop = useCallback(() => abort.current?.abort(), []);
 
-  return { messages, status, tool, failure, refusal, send, stop };
+  /** Asks an unanswered question again: it moves down, to be answered there. */
+  const askAgain = useCallback(
+    (question: ChatMessage) => {
+      if (abort.current) return;
+      setMessages((all) => all.filter((message) => message.id !== question.id));
+      send(question.text);
+    },
+    [send],
+  );
+
+  /** Asks the last question again, as after a failure. */
+  const retry = useCallback(() => {
+    const last = messages.findLast((message) => message.role === 'user');
+    if (last) send(last.text);
+  }, [messages, send]);
+
+  return { messages, status, tool, failure, refusal, send, stop, retry, askAgain };
 }
