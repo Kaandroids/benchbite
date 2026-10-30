@@ -10,7 +10,7 @@ import { useTheme } from '@/theme';
 import { MacroDot } from '../macro-dot';
 import { MACROS } from '../macro-targets';
 import { type NutritionTargets } from '../targets';
-import { Was } from './was';
+import { Was } from '@/components/ui/was';
 
 /** The new targets, each beside the one in use now when it changes. */
 export function Comparison({ from, to }: { from: NutritionTargets; to: NutritionTargets }) {
