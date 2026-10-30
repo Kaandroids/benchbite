@@ -1667,7 +1667,10 @@
       "get_week_summary": "Schaue mir deine Woche an…",
       "get_records": "Schaue mir deine Rekorde an…",
       "search_foods": "Suche Lebensmittel…",
-      "search_exercises": "Suche Übungen…"
+      "search_exercises": "Suche Übungen…",
+      "get_workouts": "Schaue mir deinen Plan an…",
+      "propose_workout_change": "Bereite eine Trainingsänderung vor…",
+      "propose_targets_change": "Bereite neue Ziele vor…"
     },
     "failures": {
       "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",

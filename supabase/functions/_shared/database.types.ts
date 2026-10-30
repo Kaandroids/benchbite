@@ -1995,6 +1995,10 @@ export type Database = {
         };
         Returns: number;
       };
+      propose_coach_swaps: {
+        Args: { swaps: Json; thread_id: number; today: string; workout_id: number };
+        Returns: number;
+      };
       recalculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];

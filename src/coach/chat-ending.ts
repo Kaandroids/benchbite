@@ -52,6 +52,8 @@ export function afterEvent(ending: Ending, event: ChatEvent): Ending {
     case 'thread':
       return { ...ending, threadId: event.threadId };
     case 'text':
+    // A proposal's card is an answer too, as the function keeps it (ADR 0058).
+    case 'proposal':
       return { ...ending, said: true };
     case 'done':
       return explained(

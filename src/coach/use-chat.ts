@@ -1,3 +1,4 @@
+import type { ProposalCard } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +42,8 @@ export type ChatMessage = {
   cut?: Ending['cut'];
   /** When it was written, which separates the days of a conversation. */
   createdAt?: Date;
+  /** The changes Bite proposed with it (ADR 0058). */
+  proposals?: ProposalCard[];
 };
 
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
@@ -77,7 +80,8 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const settle = (questionId: string, biteId: string, cut?: ChatMessage['cut']) =>
     setMessages((all) => {
       const bite = all.find((message) => message.id === biteId);
-      if (bite?.text) {
+      // A proposal's card is an answer, though Bite said nothing with it.
+      if (bite?.text || bite?.proposals?.length) {
         return cut ? all.map((m) => (m.id === biteId ? { ...m, cut } : m)) : all;
       }
       return all
@@ -124,6 +128,11 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
         case 'text':
           setStatus('answering');
           return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
+        case 'proposal':
+          return updateBite(biteId, (m) => ({
+            ...m,
+            proposals: [...(m.proposals ?? []), event.proposal],
+          }));
       }
     };
 

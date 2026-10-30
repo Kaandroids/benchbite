@@ -338,6 +338,28 @@ it('says why an answer was refused after it began', async () => {
   ).toBeOnTheScreen();
 });
 
+it('keeps an answer that is only a proposal, rather than offering to ask again', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    {
+      event: 'proposal',
+      proposal: {
+        kind: 'targets',
+        id: 42,
+        to: { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 },
+      },
+    },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
+  expect(screen.queryByText(/couldn't answer/)).toBeNull();
+});
+
 it('says when Bite answers on another device', async () => {
   const stream = liveStream();
   await render(<BiteScreen />);

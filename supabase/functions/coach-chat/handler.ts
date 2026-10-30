@@ -10,6 +10,7 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
 import {
@@ -296,6 +297,7 @@ async function answer(
       supabase: context.supabase,
       language: request.language,
       today: request.today,
+      threadId,
     };
 
     for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
@@ -335,8 +337,12 @@ async function answer(
             : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
         results.push({ type: 'toolResult', id: call.id, name: call.name, result });
       }
-      // Stopped among its lookups, the round ends as one stopped before them.
-      if (stop.stopped) break;
+      if (stop.stopped) {
+        // Stopped among its lookups, the round keeps those that ended, each call with its result,
+        // as a proposal made among them is saved, and its card with it.
+        turn.trace.push(...calls.slice(0, results.length), ...results);
+        break;
+      }
       turn.trace.push(...calls, ...results);
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },
@@ -358,7 +364,8 @@ async function answer(
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
-    said: turn.text.trim() !== '',
+    // A proposal made is kept with its card, even if the model ended without a word.
+    said: turn.text.trim() !== '' || turn.trace.some(isProposal),
     stopped: stop.stopped,
     finish: turn.finish,
     newThread: !request.threadId,
@@ -420,7 +427,26 @@ async function lookUp(
   // What the user named things comes back with it, and may not pass for a snapshot either.
   const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
+  // A proposed change is shown as a card under the answer; the message keeps it with the result.
+  const proposal = proposalOf(result);
+  if (proposal) send({ event: 'proposal', proposal });
   return result;
+}
+
+/** A proposal as Bite reads it back in the history. */
+function proposalText(proposal: ProposalCard): string {
+  if (proposal.kind === 'targets') {
+    const { calories, proteinG, carbsG, fatG } = proposal.to;
+    return `(Proposed targets: ${calories} kcal, ${proteinG} g protein, ${carbsG} g carbs, ${fatG} g fat.)`;
+  }
+  const workout = proposal.workout.name ?? proposal.workout.type ?? 'a workout';
+  const swaps = proposal.swaps.map((swap) => `${swap.from} → ${swap.to}`).join(', ');
+  return `(Proposed for ${workout}: ${swaps}.)`;
+}
+
+/** The card of a change a tool proposed, as its result holds it. */
+function proposalOf(result: unknown): ProposalCard | undefined {
+  return (result as { proposal?: ProposalCard } | null)?.proposal;
 }
 
 /** The user's message as the thread keeps it. */
@@ -500,12 +526,29 @@ export function content(trace: Part[], text: string): Part[] {
   const fits = (parts: Part[]) =>
     parts.length <= MAX_PARTS &&
     new TextEncoder().encode(JSON.stringify(parts)).length <= MAX_CONTENT_BYTES;
-  const whole = [...trace.slice(0, MAX_PARTS - 1), answer];
+  // A proposal's card is kept whatever else goes, as the chat shows it when read back.
+  const proposals = trace.filter(isProposal);
+  const room = MAX_PARTS - 1 - proposals.length;
+  const kept: Part[] = [];
+  let others = 0;
+  for (const part of trace) {
+    if (isProposal(part)) {
+      kept.push(part);
+    } else if (others < room) {
+      kept.push(part);
+      others++;
+    }
+  }
+  const whole = [...kept, answer];
   if (fits(whole)) return whole;
   const without = whole.map((part) =>
-    part.type === 'toolResult' ? { ...part, result: { omitted: true } } : part,
+    part.type === 'toolResult' && !isProposal(part) ? { ...part, result: { omitted: true } } : part,
   );
-  return fits(without) ? without : [answer];
+  return fits(without) ? without : [...proposals, answer];
+}
+
+function isProposal(part: Part): boolean {
+  return part.type === 'toolResult' && proposalOf(part.result) !== undefined;
 }
 
 /**
@@ -520,17 +563,24 @@ function toMessage(
   >,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
-  const text = parts
-    .flatMap((part) =>
-      part &&
-      typeof part === 'object' &&
-      !Array.isArray(part) &&
-      part.type === 'text' &&
-      typeof part.text === 'string'
-        ? [part.text]
-        : [],
-    )
-    .join('\n');
+  const said = parts.flatMap((part) =>
+    part &&
+    typeof part === 'object' &&
+    !Array.isArray(part) &&
+    part.type === 'text' &&
+    typeof part.text === 'string'
+      ? [part.text]
+      : [],
+  );
+  // What Bite proposed, so that it knows on later messages, whether or not it said a word.
+  const proposed = parts.flatMap((part) => {
+    const proposal =
+      part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
+        ? proposalOf(part.result)
+        : undefined;
+    return proposal ? [proposalText(proposal)] : [];
+  });
+  const text = [...said.filter(Boolean), ...proposed].join('\n');
   if (!text) return [];
   if (row.role === 'user')
     return [{ role: 'user', parts: [{ type: 'text', text: untagged(text) }] }];

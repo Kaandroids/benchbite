@@ -1,21 +1,45 @@
-// What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks and
-// records, and the food and exercise libraries. Each tool reads with the user's token, so row
-// level security decides what it sees, and returns little, to keep the answer cheap.
+// What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
+// records and plan, and the food and exercise libraries; and the changes it may propose, which the
+// user applies (ADR 0058). Each tool runs with the user's token, so row level security and the
+// database's functions decide what it sees and may do, and returns little, to keep the answer
+// cheap.
 import { z } from 'zod';
 
-import type { CoachToolName } from '../_shared/coach/chat.ts';
+import type { CoachToolName, DayTargets, ProposalCard } from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import type { Language } from './prompt.ts';
 import { workoutName } from './workout.ts';
 
-export type ToolContext = { supabase: Client; language: Language; today: string };
+export type ToolContext = {
+  supabase: Client;
+  language: Language;
+  today: string;
+  /** The thread the answer goes on in, which a proposal belongs to. */
+  threadId: number;
+};
 
 /** The most days one look at the history may cover. */
 const MAX_DAYS = 31;
 
 const QUERY = z.string().trim().min(2).max(80);
+
+/** Why Bite proposes a change, in the user's language, as the card shows it. */
+const WHY = z.string().trim().min(1).max(120);
+
+/** What the database's refusals of a proposal mean, for the model to correct it. */
+const REFUSALS: Record<string, string> = {
+  BB006: "That workout is not the user's.",
+  BB007:
+    'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
+  BB008: 'Too many exercises for a workout.',
+  BB037: "The calories are under the user's calorie floor.",
+  BB038: 'The user has too many changes waiting; ask them to decide those first.',
+  BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
+  BB040: 'Swaps may not replace an exercise twice, or one another.',
+  '23514': 'The values are out of range, or the macros add up to more than the calories.',
+};
 
 type CoachTool<A extends z.ZodType> = {
   /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
@@ -199,6 +223,143 @@ const TOOLS = [
       return [...found].slice(0, 10).map(([id, name]) => ({ id, name }));
     },
   }),
+  tool({
+    name: 'get_workouts',
+    description:
+      "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises, with their ids, sets and targets.",
+    args: z.object({}),
+    run: async (_args, { supabase, language }) => {
+      const workouts = read(await activeWorkouts(supabase, WORKOUT_WITH_EXERCISES));
+      const names = await exerciseNames(
+        supabase,
+        language,
+        workouts.flatMap((w) => w.workout_exercises.map((e) => e.exercise_id)),
+      );
+      return workouts.map((workout) => ({
+        id: workout.id,
+        name: workoutName(workout),
+        weekdays: workout.weekdays,
+        exercises: workout.workout_exercises.map((e) => ({
+          id: e.exercise_id,
+          name: names.get(e.exercise_id) ?? e.exercise_id,
+          sets: e.sets,
+          target: targetOf(e),
+        })),
+      }));
+    },
+  }),
+  tool({
+    name: 'propose_workout_change',
+    description:
+      "Proposes swapping exercises of one of the user's workouts, which the user applies or keeps as it is; it changes nothing itself. The change is permanent and counts from today. Take the workout and its exercise ids from get_workouts, and the new exercises' ids from search_exercises.",
+    args: z.object({
+      workoutId: z.number().int().positive(),
+      swaps: z
+        .array(
+          z.object({
+            replace: z.string().min(1).describe('The id of the exercise in the workout.'),
+            with: z.string().min(1).describe("The new exercise's id."),
+            sets: z.number().int().min(1).max(10),
+            target: z
+              .object({
+                reps: z.object({ min: z.number().int().min(1), max: z.number().int().min(1) }),
+                seconds: z.number().int().min(1),
+                meters: z.number().int().min(1),
+              })
+              .partial()
+              .describe(
+                'Reps for an exercise counted in reps, seconds for a timed one, meters for a distance.',
+              ),
+            why: WHY,
+          }),
+        )
+        .min(1)
+        .max(5),
+    }),
+    run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
+      const workout = read(await activeWorkouts(supabase, 'id, name, type', workoutId))[0];
+      if (!workout) return { error: REFUSALS.BB006 };
+      // Named before proposing, which also finds an id that does not exist, so that a proposal is
+      // never left without its card.
+      const names = await exerciseNames(
+        supabase,
+        language,
+        swaps.flatMap((swap) => [swap.replace, swap.with]),
+      );
+      const unknown = swaps.find((swap) => !names.has(swap.with));
+      if (unknown)
+        return { error: `There is no exercise ${unknown.with}; find it with search_exercises.` };
+      const proposed = await supabase.rpc('propose_coach_swaps', {
+        thread_id: threadId,
+        workout_id: workoutId,
+        swaps: swaps.map(({ replace, with: put, sets, target }) => ({
+          replace,
+          with: put,
+          sets,
+          target,
+        })),
+        today,
+      });
+      if (proposed.error) return refused(proposed.error);
+      const proposal: ProposalCard = {
+        kind: 'workout',
+        id: proposed.data,
+        workout: { name: workout.name, type: workout.type },
+        swaps: swaps.map((swap) => ({
+          from: names.get(swap.replace) ?? swap.replace,
+          to: names.get(swap.with)!,
+          sets: swap.sets,
+          target: swap.target,
+          why: swap.why,
+        })),
+      };
+      return { proposal };
+    },
+  }),
+  tool({
+    name: 'propose_targets_change',
+    description:
+      "Proposes new daily calories and macros as the user's own targets, which the user applies or keeps as they are; it changes nothing itself. They count from today. Never under the calorie floor, and protein × 4 + carbs × 4 + fat × 9 must not exceed the calories.",
+    args: z.object({
+      calories: z.number().int().min(800).max(6000),
+      proteinG: z.number().int().min(0),
+      carbsG: z.number().int().min(0),
+      fatG: z.number().int().min(0),
+    }),
+    run: async (targets, { supabase, today, threadId }) => {
+      const [current, proposed] = await Promise.all([
+        supabase.rpc('my_nutrition_targets'),
+        supabase.rpc('propose_coach_change', {
+          thread_id: threadId,
+          kind: 'targets',
+          change: targets,
+          today,
+        }),
+      ]);
+      if (proposed.error) return refused(proposed.error);
+      // The targets in use, as the user sees them now; none before the onboarding is saved, and
+      // left out when they cannot be read, so that the card does not say there were none.
+      if (current.error) logError('Could not read the targets in use for a card', current.error);
+      const now = current.data;
+      const from: DayTargets<number | null> | null | undefined = current.error
+        ? undefined
+        : now?.calories != null
+          ? {
+              calories: now.calories,
+              proteinG: now.protein_g,
+              carbsG: now.carbs_g,
+              fatG: now.fat_g,
+            }
+          : null;
+      const proposal: ProposalCard = {
+        kind: 'targets',
+        id: proposed.data,
+        ...(from !== undefined && { from }),
+        to: targets,
+      };
+      return { proposal };
+    },
+  }),
 ];
 
 /** The tools as the model is told of them, their arguments as JSON Schema. */
@@ -261,4 +422,48 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
       return [row.id, translated.get(row.id) ?? row.name];
     }),
   );
+}
+
+/** A workout with its exercises, as get_workouts reads them. */
+const WORKOUT_WITH_EXERCISES =
+  'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)';
+
+/**
+ * The user's active workouts, as row level security lets them, or the one `id` names, with
+ * `columns`, their exercises in order.
+ */
+function activeWorkouts<Columns extends string>(supabase: Client, columns: Columns, id?: number) {
+  const query = supabase.from('workouts').select(columns).eq('active', true);
+  return (id === undefined ? query : query.eq('id', id))
+    .order('id')
+    .order('position', { referencedTable: 'workout_exercises' });
+}
+
+/**
+ * An exercise's target as save_workout() takes it. As saved_workout() reads it in the database
+ * (20261030230000_coach_proposals.sql): change both together.
+ */
+function targetOf(e: {
+  target_reps_min: number | null;
+  target_reps_max: number | null;
+  target_seconds: number | null;
+  target_meters: number | null;
+}): { reps?: { min: number; max?: number }; seconds?: number; meters?: number } {
+  return {
+    ...(e.target_reps_min !== null && {
+      reps: {
+        min: e.target_reps_min,
+        ...(e.target_reps_max !== null && { max: e.target_reps_max }),
+      },
+    }),
+    ...(e.target_seconds !== null && { seconds: e.target_seconds }),
+    ...(e.target_meters !== null && { meters: e.target_meters }),
+  };
+}
+
+/** A proposal the database refused, said so that the model can correct it. */
+function refused(error: { code?: string; message?: string }) {
+  const meaning = error.code ? REFUSALS[error.code] : undefined;
+  if (!meaning) logError('A proposal could not be made', error);
+  return { error: meaning ?? 'The change could not be proposed just now.' };
 }

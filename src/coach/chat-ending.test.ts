@@ -108,3 +108,31 @@ it('shows an answer stopped by the user as stopped, and one stopped otherwise as
     'stopped',
   );
 });
+
+const PROPOSAL = {
+  kind: 'targets' as const,
+  id: 42,
+  to: { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 },
+};
+
+it('takes a proposal for an answer, though Bite said nothing with it', () => {
+  const ending = afterStream(
+    read(
+      undefined,
+      { event: 'thread', threadId: 7 },
+      { event: 'proposal', proposal: PROPOSAL },
+      { event: 'done', threadId: 7, messageId: 9 },
+    ),
+    'closed',
+  );
+  expect(ending).toMatchObject({ said: true, threadId: 7 });
+  expect(ending.failure).toBeUndefined();
+});
+
+it('keeps the new thread of an answer stopped after its proposal', () => {
+  const ending = afterStream(
+    read(undefined, { event: 'thread', threadId: 7 }, { event: 'proposal', proposal: PROPOSAL }),
+    'stopped',
+  );
+  expect(ending.threadId).toBe(7);
+});
