@@ -22,7 +22,17 @@ export type Snapshot = {
     /** The least the targets ever ask for, which Bite never goes below. */
     calorieFloor?: number;
   };
-  goal?: { kind: GoalKind; targetWeightKg?: number; weeklyPaceKg?: number };
+  goal?: {
+    kind: GoalKind;
+    targetWeightKg?: number;
+    weeklyPaceKg?: number;
+    /**
+     * The pace of loss the targets really give (ADR 0054), which the calorie floor can hold below
+     * the chosen one, 0 when they keep the weight; unknown without a goal to lose, or while the
+     * user's own targets are in use.
+     */
+    achievablePaceKg?: number;
+  };
   /** The latest weight, in kg. */
   weightKg?: number;
   targets?: Macros;
@@ -38,7 +48,7 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 /** Reads the user's snapshot on `today`, a date of their device. */
 export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, weight, nutrition, planned, trained, streak] = await Promise.all([
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak] = await Promise.all([
     supabase
       .from('profiles')
       .select(
@@ -46,6 +56,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       )
       .maybeSingle(),
     supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
+    supabase.rpc('my_achievable_weekly_pace_kg'),
     supabase
       .from('weight_entries')
       .select('weight_kg')
@@ -57,7 +68,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     supabase.rpc('day_training', day),
     supabase.rpc('streak', { today }),
   ]);
-  const results = { profile, goal, weight, nutrition, planned, trained, streak };
+  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -90,6 +101,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       kind: g.kind,
       targetWeightKg: g.target_weight_kg ?? undefined,
       weeklyPaceKg: g.weekly_pace_kg ?? undefined,
+      achievablePaceKg: typeof pace.data === 'number' ? pace.data : undefined,
     };
   }
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;

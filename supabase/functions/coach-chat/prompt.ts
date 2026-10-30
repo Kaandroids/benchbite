@@ -1,7 +1,14 @@
 // What Bite is told (#292, ADR 0052): who it is and its rules, the same for every user so that the
 // provider can cache them, and the user's snapshot, sent with the message as data apart from the
 // rules. Also how the face an answer starts with is read off it.
-import { bmi, MIN_HEALTHY_BMI, PACE_LEVELS, paceLevel } from '../_shared/body/limits.ts';
+import {
+  bmi,
+  isPaceHeldUp,
+  isTargetReached,
+  MIN_HEALTHY_BMI,
+  PACE_LEVELS,
+  paceLevel,
+} from '../_shared/body/limits.ts';
 import { Constants } from '../_shared/database.types.ts';
 import type { Macros, Snapshot } from './snapshot.ts';
 
@@ -58,6 +65,7 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 - You are not a doctor. Do not diagnose. For pain, injury, dizziness or anything that lasts or gets worse, tell the user to stop that exercise and see a doctor or physiotherapist.
 - Never suggest eating below the calorie floor the snapshot gives, fasting for days, or losing more than ${FASTEST_LOSS}% of body weight a week; up to ${IDEAL_LOSS}% keeps the most muscle. If the user asks for more, explain why not, kindly.
 - Targets the snapshot marks as below the floor are not to be coached toward, though the user set them: say kindly that they are too low, and work with the floor instead.
+- A goal the snapshot marks as held up: the targets give the slower pace it names, or none. Date the goal and plan by that pace, as the app does, never by the chosen one. One it marks as reached: say so, and plan to keep the weight.
 - A goal the snapshot marks as too low or too fast: do not plan toward it. Be gentle, as with signs of an eating disorder. One it marks as ambitious: plan toward it if asked, and say once, kindly, that a slower pace keeps more muscle. One it marks as not checked: give no numbers toward it.
 - The app does not ask whether the user is pregnant or breastfeeding, so you do not know. If they say they are, give no weight loss advice and refer them to their doctor.
 - If the snapshot says the profile could not be read, give no weight loss numbers.
@@ -145,7 +153,7 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
  * A goal to gain is not marked: an underweight user gaining is what is wanted.
  */
 function goalText(goal: NonNullable<Snapshot['goal']>, heightCm?: number, weightKg?: number) {
-  const { kind, targetWeightKg, weeklyPaceKg } = goal;
+  const { kind, targetWeightKg, weeklyPaceKg, achievablePaceKg } = goal;
   const losing =
     kind === 'lose_fat' || (!!targetWeightKg && !!weightKg && targetWeightKg < weightKg);
   const parts = [kind.replaceAll('_', ' ')];
@@ -153,11 +161,27 @@ function goalText(goal: NonNullable<Snapshot['goal']>, heightCm?: number, weight
     parts.push(`to ${targetWeightKg} kg`);
     if (losing) parts.push(targetMark(targetWeightKg, heightCm));
   }
-  if (weeklyPaceKg) {
+  const reached =
+    !!targetWeightKg && weightKg !== undefined && isTargetReached(kind, weightKg, targetWeightKg);
+  if (reached) {
+    // The targets then keep the weight, which is no pace held up.
+    parts.push('(reached: the targets keep the weight now)');
+  } else if (weeklyPaceKg) {
     parts.push(`at ${weeklyPaceKg} kg a week`);
     if (losing) parts.push(paceMark(weeklyPaceKg, weightKg));
+    parts.push(heldUpMark(weeklyPaceKg, achievablePaceKg));
   }
   return parts.filter(Boolean).join(' ');
+}
+
+/**
+ * What the targets really give when they give less than the chosen pace (ADR 0054), as the app
+ * decides it, without a cause: the calorie floor or the cap on a day's deficit can hold them.
+ */
+function heldUpMark(weeklyPaceKg: number, achievablePaceKg?: number): string {
+  if (!isPaceHeldUp(weeklyPaceKg, achievablePaceKg)) return '';
+  if (achievablePaceKg <= 0) return '(held up: the targets keep the weight, so no loss)';
+  return `(held up: the targets give only ${achievablePaceKg} kg a week)`;
 }
 
 function targetMark(targetWeightKg: number, heightCm?: number): string {

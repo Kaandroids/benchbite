@@ -203,5 +203,28 @@ Deno.test(
       goalLine({ kind: 'stay_healthy', targetWeightKg: 35, weeklyPaceKg: 1.5 }, 60),
       'Goal: stay healthy to 35 kg (too low: a body mass index of 10.8, under 18.5) at 1.5 kg a week (too fast: 2.5% of body weight a week, over 1.5%)',
     );
+
+    // The pace the targets really give, when the floor holds it below the chosen one.
+    const goal = { kind: 'lose_fat' as const, targetWeightKg: 80, weeklyPaceKg: 0.5 };
+    assertEquals(
+      goalLine({ ...goal, achievablePaceKg: 0.3 }, 90),
+      'Goal: lose fat to 80 kg at 0.5 kg a week (held up: the targets give only 0.3 kg a week)',
+    );
+    assertEquals(
+      goalLine({ ...goal, achievablePaceKg: 0 }, 90),
+      'Goal: lose fat to 80 kg at 0.5 kg a week (held up: the targets keep the weight, so no loss)',
+    );
+    // A goal reached is no pace held up, though its targets keep the weight too.
+    assertEquals(
+      goalLine({ ...goal, achievablePaceKg: 0 }, 79.5),
+      'Goal: lose fat to 80 kg (reached: the targets keep the weight now)',
+    );
+    // Not by rounding, nor when it is not known.
+    for (const achievablePaceKg of [0.5, 0.49, undefined]) {
+      assertEquals(
+        goalLine({ ...goal, achievablePaceKg }, 90),
+        'Goal: lose fat to 80 kg at 0.5 kg a week',
+      );
+    }
   },
 );

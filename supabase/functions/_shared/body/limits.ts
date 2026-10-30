@@ -1,5 +1,6 @@
-// Where a body goal stops being healthy, shared with the app, which shows the same limits when a
-// goal is set, so that Bite judges a goal as the app does (ADR 0053).
+// Where a body goal stops being healthy, when it is reached and when its pace is held up, shared
+// with the app, which shows the same limits when a goal is set, so that Bite judges a goal as the
+// app does (ADR 0053, ADR 0054).
 // This file imports nothing, so that the app can bundle it.
 
 /** The lower end of a healthy body mass index. */
@@ -24,4 +25,27 @@ export function paceLevel(losing: boolean, weightKg: number, weeklyPaceKg: numbe
   const percent = Math.round((weeklyPaceKg / weightKg) * 10000) / 100;
   const [ideal, ambitious] = PACE_LEVELS[losing ? 'losing' : 'gaining'];
   return percent <= ideal ? 'ideal' : percent <= ambitious ? 'ambitious' : 'aggressive';
+}
+
+/**
+ * Whether the weight has reached the target of a goal that changes it: at or past it in the goal's
+ * direction. The targets then keep the weight, as calculate_nutrition_targets() does.
+ */
+export function isTargetReached(goal: string, weightKg: number, targetKg: number): boolean {
+  return (
+    (goal === 'lose_fat' && weightKg <= targetKg) ||
+    (goal === 'build_muscle' && weightKg >= targetKg)
+  );
+}
+
+/**
+ * Whether the targets give less than the chosen pace (ADR 0054), by more than rounding, as the
+ * calorie floor or the cap on a day's deficit can hold them; `achievableKg` is what they give, 0
+ * when they keep the weight, null when it is not known.
+ */
+export function isPaceHeldUp(
+  chosenKg: number,
+  achievableKg?: number | null,
+): achievableKg is number {
+  return achievableKg != null && achievableKg < chosenKg - 0.01;
 }

@@ -1,6 +1,11 @@
 // Rules for body data, goals and paces. They only decide what the onboarding and changing the
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
-import { MIN_HEALTHY_BMI, paceLevel as levelOf, type PaceLevel } from '@shared/body/limits';
+import {
+  isPaceHeldUp,
+  MIN_HEALTHY_BMI,
+  paceLevel as levelOf,
+  type PaceLevel,
+} from '@shared/body/limits';
 
 import { paceIn, paceToKg, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
@@ -20,9 +25,16 @@ export function changesWeight(goal: Goal | undefined): goal is WeightGoal {
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
-// The lower end of a healthy body mass index, below which targets are not allowed, and how a
-// pace is judged: shared with Bite (ADR 0053).
-export { bmi, MIN_HEALTHY_BMI, type PaceLevel } from '@shared/body/limits';
+// The lower end of a healthy body mass index, below which targets are not allowed, how a pace is
+// judged, when a goal is reached and when the floor holds its pace up: shared with Bite (ADR 0053,
+// ADR 0054).
+export {
+  bmi,
+  isPaceHeldUp,
+  isTargetReached,
+  MIN_HEALTHY_BMI,
+  type PaceLevel,
+} from '@shared/body/limits';
 
 /** Heights the database accepts. */
 export const HEIGHT_RANGE_CM = { min: 100, max: 250 };
@@ -44,17 +56,6 @@ export function isTargetInGoalDirection(goal: Goal, weightKg: number, targetKg: 
   const weight = toTenth(weightKg);
   const target = toTenth(targetKg);
   return goal === 'lose_fat' ? target < weight : target > weight;
-}
-
-/**
- * Whether the weight has reached the target of a goal that changes it: at or past it in the goal's
- * direction. The targets then keep the weight, as calculate_nutrition_targets() does.
- */
-export function isTargetReached(goal: Goal, weightKg: number, targetKg: number): boolean {
-  return (
-    (goal === 'lose_fat' && weightKg <= targetKg) ||
-    (goal === 'build_muscle' && weightKg >= targetKg)
-  );
 }
 
 /** Whether the weight is already at the lower end of a healthy one, so that losing fat is not. */
@@ -172,17 +173,6 @@ export function isPaceInRange(
   const pace = paceIn(unit, paceKg);
   // A hundredth either way, as a pace comes back from the other unit rounded.
   return pace >= range.min - 0.01 && pace <= range.max + 0.01;
-}
-
-/**
- * Whether the floor holds the targets below the chosen pace (ADR 0054), by more than rounding;
- * `achievableKg` is what they give, 0 when they keep the weight, null when it is not known.
- */
-export function isPaceHeldUp(
-  chosenKg: number,
-  achievableKg?: number | null,
-): achievableKg is number {
-  return achievableKg != null && achievableKg < chosenKg - 0.01;
 }
 
 /**
