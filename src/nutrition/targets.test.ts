@@ -89,33 +89,31 @@ describe('useOwnTargets', () => {
 });
 
 describe('useSetOwnTargets', () => {
-  it('saves the targets in use and reloads every target', async () => {
-    const upsert = jest.fn().mockResolvedValue({ error: null });
-    jest.mocked(supabase.from).mockReturnValue({ upsert } as never);
+  it('saves the targets in use from today and reloads every target', async () => {
+    rpc.mockResolvedValue({ data: null, error: null } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useSetOwnTargets(), { queryClient });
     await act(() =>
       result.current.mutateAsync({ calories: 2200, proteinG: 160, carbsG: 240, fatG: 65 }),
     );
-    expect(upsert).toHaveBeenCalledWith(
-      { calories: 2200, protein_g: 160, carbs_g: 240, fat_g: 65, in_use: true },
-      { onConflict: 'user_id' },
-    );
+    expect(rpc).toHaveBeenCalledWith('save_own_nutrition_targets', {
+      targets: { calories: 2200, proteinG: 160, carbsG: 240, fatG: 65, inUse: true },
+      today: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'days'] });
   });
 });
 
 describe('useUseCalculatedTargets', () => {
-  it("puts the calculated targets back in use, keeping the user's own", async () => {
-    const eq = jest.fn().mockResolvedValue({ error: null });
-    const update = jest.fn(() => ({ eq }));
-    jest.mocked(supabase.from).mockReturnValue({ update } as never);
+  it("puts the calculated targets back in use from today, keeping the user's own", async () => {
+    rpc.mockResolvedValue({ data: null, error: null } as never);
     const { result } = await renderHook(() => useUseCalculatedTargets());
     await act(() => result.current.mutateAsync());
-    expect(update).toHaveBeenCalledWith({ in_use: false });
-    expect(eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(rpc).toHaveBeenCalledWith('use_calculated_nutrition_targets', {
+      today: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
   });
 });
 
@@ -172,24 +170,20 @@ describe('useRecalculateTargets', () => {
         activity: 'moderate',
       }),
     );
-    expect(rpc).toHaveBeenNthCalledWith(1, 'recalculate_nutrition_targets', {
+    // Today follows them in the same call.
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('recalculate_nutrition_targets', {
       goal: 'stay_healthy',
       target_weight_kg: null,
       weekly_pace_kg: null,
       activity_level: 'moderate',
-    });
-    expect(rpc).toHaveBeenNthCalledWith(2, 'refresh_day_nutrition_targets', {
-      from_day: '2026-10-28',
+      today: '2026-10-28',
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
-  it('reloads the targets when today cannot follow, as the answers are saved', async () => {
-    rpc.mockImplementation(((name: string) =>
-      Promise.resolve({
-        data: null,
-        error: name === 'refresh_day_nutrition_targets' ? { code: '22023' } : null,
-      })) as never);
+  it('reloads the targets when the change fails', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useRecalculateTargets(), { queryClient });
@@ -202,15 +196,11 @@ describe('useRecalculateTargets', () => {
       }),
     );
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
-  it('reloads own targets too when today cannot follow them', async () => {
+  it('reloads own targets too when they cannot be saved', async () => {
     rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
-    jest
-      .mocked(supabase.from)
-      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useSetOwnTargets(), { queryClient });
@@ -261,32 +251,27 @@ describe('changing the targets in use', () => {
   beforeEach(() => jest.useFakeTimers({ now: new Date(2026, 9, 28, 1), doNotFake: ['nextTick'] }));
   afterEach(() => jest.useRealTimers());
 
-  it('writes own targets over today and the days after it', async () => {
+  it('writes own targets over today and the days after it, in the same call', async () => {
     rpc.mockResolvedValue({ data: null, error: null } as never);
-    jest
-      .mocked(supabase.from)
-      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
     const { result } = await renderHook(() => useSetOwnTargets());
     await act(() =>
       result.current.mutateAsync({ calories: 3100, proteinG: 150, carbsG: 425, fatG: 80 }),
     );
-    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
+    expect(rpc).toHaveBeenCalledWith('save_own_nutrition_targets', {
+      targets: { calories: 3100, proteinG: 150, carbsG: 425, fatG: 80, inUse: true },
+      today: '2026-10-28',
+    });
   });
 
   it('writes the calculated targets over today when they are back in use', async () => {
     rpc.mockResolvedValue({ data: null, error: null } as never);
-    const eq = jest.fn().mockResolvedValue({ error: null });
-    jest.mocked(supabase.from).mockReturnValue({ update: () => ({ eq }) } as never);
     const { result } = await renderHook(() => useUseCalculatedTargets());
     await act(() => result.current.mutateAsync());
-    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
+    expect(rpc).toHaveBeenCalledWith('use_calculated_nutrition_targets', { today: '2026-10-28' });
   });
 
-  it('fails when today cannot follow, so that the change is tried again', async () => {
+  it('fails when the targets cannot be saved, so that the change is tried again', async () => {
     rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
-    jest
-      .mocked(supabase.from)
-      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
     const { result } = await renderHook(() => useSetOwnTargets());
     await expect(
       act(() =>

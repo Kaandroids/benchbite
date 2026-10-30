@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/lib/database.types';
 import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
@@ -71,19 +70,6 @@ export function useDayTargets(day: string) {
   });
 }
 
-/**
- * Writes the targets in use over today and the days after it that kept some, after they changed:
- * a day follows them while it lasts, and keeps the last ones once it is past (ADR 0040).
- */
-export async function keepTargetsFromToday() {
-  const { error } = await supabase.rpc('refresh_day_nutrition_targets', {
-    from_day: toIsoDate(new Date()),
-  });
-  if (error) {
-    throw error;
-  }
-}
-
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */
 export function useCalculatedTargets() {
   return useQuery({
@@ -137,50 +123,38 @@ function useReloadTargets() {
     ]);
 }
 
-/** Sets the user's own targets and puts them in use. */
+/**
+ * Sets the user's own targets and puts them in use, from today on, in one call
+ * (save_own_nutrition_targets(), which Bite's proposals use too, ADR 0058).
+ */
 export function useSetOwnTargets() {
   const reload = useReloadTargets();
   return useMutation({
     mutationFn: async (targets: NutritionTargets) => {
-      const { error } = await supabase.from('own_nutrition_targets').upsert(
-        {
-          calories: targets.calories,
-          protein_g: targets.proteinG,
-          carbs_g: targets.carbsG,
-          fat_g: targets.fatG,
-          in_use: true,
-        },
-        { onConflict: 'user_id' },
-      );
+      const { error } = await supabase.rpc('save_own_nutrition_targets', {
+        targets: { ...targets, inUse: true },
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }
 
-/** Puts the calculated targets back in use, keeping the user's own for next time. */
+/** Puts the calculated targets back in use, from today on, keeping the user's own for next time. */
 export function useUseCalculatedTargets() {
   const reload = useReloadTargets();
-  const session = useSession();
   return useMutation({
     mutationFn: async () => {
-      if (session.status !== 'ready') {
-        throw new Error('Not signed in');
-      }
-      const { error } = await supabase
-        .from('own_nutrition_targets')
-        .update({ in_use: false })
-        .eq('user_id', session.session.user.id);
+      const { error } = await supabase.rpc('use_calculated_nutrition_targets', {
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }
@@ -257,13 +231,12 @@ export function useRecalculateTargets() {
         target_weight_kg: answers.targetWeightKg as number,
         weekly_pace_kg: answers.weeklyPaceKg as number,
         activity_level: answers.activity,
+        today: toIsoDate(new Date()),
       });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }

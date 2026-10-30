@@ -217,6 +217,57 @@ export type Database = {
           },
         ];
       };
+      coach_proposals: {
+        Row: {
+          after: Json | null;
+          before: Json | null;
+          change: NonNullable<Json>;
+          created_at: string;
+          decided_at: string | null;
+          expires_at: string;
+          id: number;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          status: Database['public']['Enums']['coach_proposal_status'];
+          thread_id: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          after?: Json | null;
+          before?: Json | null;
+          change: NonNullable<Json>;
+          created_at?: string;
+          decided_at?: string | null;
+          expires_at?: string;
+          id?: never;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          status?: Database['public']['Enums']['coach_proposal_status'];
+          thread_id: number;
+          user_id: string;
+        };
+        Update: {
+          after?: Json | null;
+          before?: Json | null;
+          change?: NonNullable<Json>;
+          created_at?: string;
+          decided_at?: string | null;
+          expires_at?: string;
+          id?: never;
+          kind?: Database['public']['Enums']['coach_proposal_kind'];
+          status?: Database['public']['Enums']['coach_proposal_status'];
+          thread_id?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'coach_proposals_thread_id_fkey';
+            columns: ['thread_id'];
+            isOneToOne: false;
+            referencedRelation: 'coach_threads';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       coach_stops: {
         Row: {
           created_at: string;
@@ -1518,6 +1569,14 @@ export type Database = {
       };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      apply_coach_change: {
+        Args: {
+          change: Json;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          today: string;
+        };
+        Returns: undefined;
+      };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       calculate_nutrition_targets: {
@@ -1568,8 +1627,14 @@ export type Database = {
         Returns: boolean;
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
+      check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
+      clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_message_text: { Args: { content: Json }; Returns: string };
+      coach_proposal_state: {
+        Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
+        Returns: Json;
+      };
       coach_thread_title: { Args: { message: string }; Returns: string };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       copy_meal_entries: {
@@ -1649,6 +1714,14 @@ export type Database = {
           type: Database['public']['Enums']['workout_type'];
           workout_id: number;
         }[];
+      };
+      decide_coach_proposal: {
+        Args: {
+          decision: Database['public']['Enums']['coach_proposal_decision'];
+          proposal_id: number;
+          today: string;
+        };
+        Returns: Database['public']['Enums']['coach_proposal_status'];
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       device_today_or_server: { Args: { sent: string }; Returns: string };
@@ -1801,6 +1874,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      log_weight: { Args: { today: string; weight_kg: number }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
         Args: { language: string };
@@ -1912,11 +1986,21 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      propose_coach_change: {
+        Args: {
+          change: Json;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          thread_id: number;
+          today: string;
+        };
+        Returns: number;
+      };
       recalculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
           goal: Database['public']['Enums']['goal_kind'];
           target_weight_kg: number;
+          today?: string;
           weekly_pace_kg: number;
         };
         Returns: undefined;
@@ -1977,6 +2061,7 @@ export type Database = {
         };
         Returns: boolean;
       };
+      save_own_nutrition_targets: { Args: { targets: Json; today: string }; Returns: undefined };
       save_recipe: {
         Args: {
           ingredients: Json;
@@ -1988,6 +2073,7 @@ export type Database = {
         Returns: number;
       };
       save_workout: { Args: { today: string; workout: Json }; Returns: number };
+      saved_workout: { Args: { workout_id: number }; Returns: Json };
       search_foods: {
         Args: { language: string; query: string; recipes?: boolean };
         Returns: {
@@ -2099,6 +2185,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
@@ -2120,6 +2207,9 @@ export type Database = {
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
+      coach_proposal_decision: 'apply' | 'keep' | 'undo';
+      coach_proposal_kind: 'workout' | 'targets';
+      coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
       coach_role: 'user' | 'bite';
       equipment:
         | 'barbell'
@@ -2372,6 +2462,9 @@ export const Constants = {
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
+      coach_proposal_decision: ['apply', 'keep', 'undo'],
+      coach_proposal_kind: ['workout', 'targets'],
+      coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
       coach_role: ['user', 'bite'],
       equipment: [
         'barbell',
