@@ -27,7 +27,7 @@ export function StreakButton({ entering, today }: StreakButtonProps) {
     >
       <Card entering={entering}>
         <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile name="flame" />
+          <IconTile name="flame" color="snack" background="snackBackground" />
           <View style={styles.text}>
             <Text variant="label">{t('progress.streak.calendar')}</Text>
             <Text variant="caption" color="textMuted" numberOfLines={1}>
