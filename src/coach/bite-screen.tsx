@@ -14,12 +14,8 @@ import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useAiAccess, useChat } from './use-chat';
 
-/** Reasons Bite gives no answer, each with its own line; any other is said as unavailable. */
-const FAILURES = ['unavailable', 'blocked', 'not_saved', 'request_too_large'] as const;
-type Failure = (typeof FAILURES)[number];
-
-const failureOf = (reason: string): Failure =>
-  FAILURES.find((failure) => failure === reason) ?? 'unavailable';
+/** How close to the end of the chat counts as reading its end. */
+const END_SLACK = 40;
 
 /** The chat with Bite (#294, ADR 0052), opened from the middle of the tab bar. */
 export function BiteScreen() {
@@ -28,6 +24,11 @@ export function BiteScreen() {
   const chat = useChat();
   const access = useAiAccess();
   const scroll = useRef<ScrollViewInstance>(null);
+  // Whether the user reads the end of the chat, which then follows what comes; scrolled up, they
+  // stay where they read.
+  const atEnd = useRef(true);
+  const height = useRef(0);
+  const toEnd = () => scroll.current?.scrollToEnd({ animated: chat.status === 'idle' });
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
 
@@ -43,7 +44,17 @@ export function BiteScreen() {
             { padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.lg },
           ]}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+          scrollEventThrottle={100}
+          onScroll={({ nativeEvent: { contentOffset, layoutMeasurement, contentSize } }) => {
+            atEnd.current =
+              contentOffset.y + layoutMeasurement.height >= contentSize.height - END_SLACK;
+          }}
+          onContentSizeChange={() => atEnd.current && toEnd()}
+          onLayout={({ nativeEvent }) => {
+            // The keyboard opening shrinks the chat: the end stays in sight.
+            if (nativeEvent.layout.height < height.current && atEnd.current) toEnd();
+            height.current = nativeEvent.layout.height;
+          }}
         >
           {chat.messages.length === 0 ? (
             <ChatWelcome onAsk={refusal ? undefined : chat.send} />
@@ -52,7 +63,7 @@ export function BiteScreen() {
           )}
           {chat.failure ? (
             <Text variant="caption" color="danger" accessibilityLiveRegion="polite">
-              {t(`bite.failures.${failureOf(chat.failure)}`)}
+              {t(`bite.failures.${chat.failure}`)}
             </Text>
           ) : null}
         </ScrollView>
