@@ -23,4 +23,12 @@ describe('TextLink', () => {
     await render(<TextLink label="Log in" size="regular" onPress={jest.fn()} />);
     expect(screen.getByText('Log in')).toHaveStyle({ fontSize: 16 });
   });
+
+  it('ignores presses while disabled', async () => {
+    const onPress = jest.fn();
+    await render(<TextLink label="Undo" disabled onPress={onPress} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+    expect(onPress).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+  });
 });
