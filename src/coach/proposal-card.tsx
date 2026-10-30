@@ -161,7 +161,7 @@ function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> 
             .join(' · ');
           return (
             <View
-              key={`${swap.from}-${swap.to}`}
+              key={index}
               accessible
               accessibilityLabel={t('bite.proposal.swapLabel', {
                 from: swap.from,
