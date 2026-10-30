@@ -3,12 +3,15 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 
 import { Text } from '@/components/ui/text';
+import { useNumberFormat } from '@/i18n/units';
 import { fonts, useTheme } from '@/theme';
 
 import type { NutritionTargets } from './targets';
 import { KCAL_PER_GRAM } from './targets-form';
 
 const CHART_HEIGHT = 120;
+/** Room above the tallest bar or the target, so that neither touches the top, nor the label. */
+const HEADROOM = 1.2;
 const MAX_BAR_WIDTH = 22;
 const EMPTY_HEIGHT = 3;
 /** From how many bars they stand closer together. */
@@ -51,7 +54,8 @@ type MacroBarsProps = {
 export function MacroBars({ bars, target, axis }: MacroBarsProps) {
   const { t } = useTranslation();
   const { colors, spacing, radii } = useTheme();
-  const tallest = Math.max(...bars.map((bar) => bar.eaten.calories), target ?? 0);
+  const { format } = useNumberFormat();
+  const tallest = HEADROOM * Math.max(...bars.map((bar) => bar.eaten.calories), target ?? 0);
   const heightOf = (kcal: number) => (tallest > 0 ? (kcal / tallest) * CHART_HEIGHT : 0);
   const gap = bars.length >= MANY_BARS ? 2 : spacing.xs;
   const amounts = bars.some((bar) => bar.amount !== undefined);
@@ -119,7 +123,11 @@ export function MacroBars({ bars, target, axis }: MacroBarsProps) {
               pointerEvents="none"
               style={[styles.target, { top: CHART_HEIGHT - heightOf(target) - 1 }]}
             >
-              <DashedLine color={colors.textMuted} />
+              {/* Its label stands for the target in the legend, at the line's end, over it. */}
+              <Text variant="caption" color="success" style={styles.targetLabel}>
+                {t('nutrition.targetLine', { calories: format(Math.round(target)) })}
+              </Text>
+              <DashedLine color={colors.success} />
             </View>
           ) : null}
         </View>
@@ -168,16 +176,6 @@ export function MacroBars({ bars, target, axis }: MacroBarsProps) {
             </Text>
           </View>
         ))}
-        {target ? (
-          <View style={[styles.legendItem, { gap: spacing.xs }]}>
-            <View style={styles.targetSwatch}>
-              <DashedLine color={colors.textMuted} />
-            </View>
-            <Text variant="caption" color="textMuted">
-              {t('nutrition.target')}
-            </Text>
-          </View>
-        ) : null}
       </View>
     </>
   );
@@ -187,7 +185,7 @@ export function MacroBars({ bars, target, axis }: MacroBarsProps) {
 function DashedLine({ color }: { color: string }) {
   return (
     <Svg width="100%" height={2}>
-      <Line x1="0" x2="100%" y1="1" y2="1" stroke={color} strokeWidth={1.5} strokeDasharray="4 4" />
+      <Line x1="0" x2="100%" y1="1" y2="1" stroke={color} strokeWidth={2} strokeDasharray="6 4" />
     </Svg>
   );
 }
@@ -224,7 +222,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    opacity: 0.6,
+  },
+  targetLabel: {
+    position: 'absolute',
+    right: 0,
+    bottom: 4,
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    lineHeight: 16,
   },
   label: {
     fontFamily: fonts.bold,
@@ -244,8 +249,5 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 2,
-  },
-  targetSwatch: {
-    width: 12,
   },
 });

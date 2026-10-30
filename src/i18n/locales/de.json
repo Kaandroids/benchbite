@@ -277,7 +277,7 @@
     "gramTarget": "/ {{target}} g",
     "spanTarget": "/ {{target}}",
     "average": "im Schnitt {{value}}",
-    "target": "Ziel",
+    "targetLine": "Ziel {{calories}} kcal",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Heute",

@@ -277,7 +277,7 @@
     "gramTarget": "/ {{target}} g",
     "spanTarget": "/ {{target}}",
     "average": "ortalama {{value}}",
-    "target": "Hedef",
+    "targetLine": "Hedef {{calories}} kcal",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Bugün",
