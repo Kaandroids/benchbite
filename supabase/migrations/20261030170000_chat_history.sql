@@ -18,7 +18,9 @@ as $$
   from words w;
 $$;
 
--- The text of a message, its text parts in order.
+-- The text of a message, its text parts in order, joined by spaces for one line. The chat
+-- function reads the same parts for the model, joined by lines (toMessage() in
+-- supabase/functions/coach-chat/handler.ts).
 create function public.coach_message_text(content jsonb)
 returns text
 language sql
@@ -30,16 +32,22 @@ as $$
   where part ->> 'type' = 'text';
 $$;
 
--- Names a thread after its first message from the user, when it has no name yet.
+-- Names a thread after its first message from the user. Only that one: a name the user cleared
+-- later stays cleared.
 create function public.name_coach_thread()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  update public.coach_threads
+  update public.coach_threads t
   set title = public.coach_thread_title(public.coach_message_text(new.content))
-  where id = new.thread_id and title is null;
+  where t.id = new.thread_id
+    and t.title is null
+    and not exists (
+      select 1 from public.coach_messages m
+      where m.thread_id = new.thread_id and m.role = 'user' and m.id < new.id
+    );
   return null;
 end;
 $$;
@@ -51,10 +59,20 @@ create trigger coach_messages_name_thread
   for each row when (new.role = 'user')
   execute function public.name_coach_thread();
 
--- The caller's threads for the history, latest first: the name, when the last message came, its
--- text and Bite's last face; `search` finds a word in the name or the last message. Archived
--- threads are left out. Runs as the caller, so the policies keep it to their own.
-create function public.my_coach_threads(search text default null)
+comment on column public.coach_threads.title is
+  'Named after the first message from the user by coach_messages_name_thread (ADR 0055); the user may rename it.';
+
+-- The caller's threads for the history, latest first, 50 at a time: the name, when the last
+-- message came, its text cut for a line, and Bite's last face. `search` finds a word in the name
+-- or the whole last message, as food search does, İ and ı as i. The next page starts before the
+-- last thread of this one, `before_at` and `before_id`. Threads without a message yet, as while
+-- Bite answers the first one, and archived threads are left out. Runs as the caller, so the
+-- policies keep it to their own.
+create function public.my_coach_threads(
+  search text default null,
+  before_at timestamptz default null,
+  before_id bigint default null
+)
 returns table (
   id bigint,
   title text,
@@ -66,14 +84,10 @@ language sql
 stable
 set search_path = ''
 as $$
-  with pattern as (
-    -- The word as it is, with LIKE's wildcards taken literally.
-    select '%' || regexp_replace(trim(search), '([\\%_])', '\\\1', 'g') || '%' as text
-  )
-  select t.id, t.title, t.last_message_at, last.text, face.expression
+  select t.id, t.title, t.last_message_at, left(last.text, 200), face.expression
   from public.coach_threads t
-  left join lateral (
-    select left(public.coach_message_text(m.content), 200) as text
+  join lateral (
+    select public.coach_message_text(m.content) as text
     from public.coach_messages m
     where m.thread_id = t.id
     order by m.id desc
@@ -86,20 +100,22 @@ as $$
     order by m.id desc
     limit 1
   ) face on true
-  cross join pattern p
   where t.archived_at is null
+    and (before_at is null or (t.last_message_at, t.id) < (before_at, coalesce(before_id, 0)))
     and (
       coalesce(trim(search), '') = ''
-      or t.title ilike p.text
-      or last.text ilike p.text
+      or position(public.food_name_key(trim(search)) in public.food_name_key(coalesce(t.title, ''))) > 0
+      or position(public.food_name_key(trim(search)) in public.food_name_key(coalesce(last.text, ''))) > 0
     )
   order by t.last_message_at desc, t.id desc
-  limit 200;
+  limit 50;
 $$;
 
-revoke execute on function public.coach_thread_title(text) from public, anon;
-grant execute on function public.coach_thread_title(text) to authenticated;
+-- Only the trigger names a thread, as whoever writes the message: the chat function.
+revoke execute on function public.coach_thread_title(text) from public, anon, authenticated;
+grant execute on function public.coach_thread_title(text) to service_role;
+-- The trigger and the history, which runs as the caller, both read a message's text.
 revoke execute on function public.coach_message_text(jsonb) from public, anon;
-grant execute on function public.coach_message_text(jsonb) to authenticated;
-revoke execute on function public.my_coach_threads(text) from public, anon;
-grant execute on function public.my_coach_threads(text) to authenticated;
+grant execute on function public.coach_message_text(jsonb) to authenticated, service_role;
+revoke execute on function public.my_coach_threads(text, timestamptz, bigint) from public, anon;
+grant execute on function public.my_coach_threads(text, timestamptz, bigint) to authenticated;
