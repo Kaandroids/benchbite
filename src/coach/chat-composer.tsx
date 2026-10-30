@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
+import { MAX_MESSAGE_LENGTH } from '@shared/coach/chat';
+
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
-
-/** The longest message coach-chat takes. */
-export const MAX_MESSAGE_LENGTH = 4000;
 
 type ChatComposerProps = {
   onSend: (text: string) => void;

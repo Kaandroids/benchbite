@@ -1,40 +1,14 @@
+import type { ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
+
 import type { Database } from '@/lib/database.types';
 import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
 
 export type BiteExpressionName = Database['public']['Enums']['bite_expression'];
 
 /** What coach-chat tells the app as Bite answers, one server-sent event each (ADR 0052). */
-export type ChatEvent =
-  /** A new thread, first, so that the app keeps it however the answer ends. */
-  | { event: 'thread'; threadId: number }
-  | { event: 'expression'; expression: BiteExpressionName }
-  | { event: 'tool_start'; name: string }
-  | { event: 'tool_end'; name: string }
-  | { event: 'text'; text: string }
-  /**
-   * The turn is saved; `interrupted` says why when the answer stopped before its end: the model
-   * failed, the user may not go on, it was stopped, or the model cut it.
-   */
-  | {
-      event: 'done';
-      threadId: number;
-      messageId: number;
-      interrupted?: 'failed' | 'refused' | 'stopped' | 'cut';
-    }
-  /**
-   * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
-   * is kept once the model was asked; `dropped` when the new thread begun for it is gone again.
-   */
-  | { event: 'error'; reason: string; dropped?: true };
+export type ChatEvent = SharedChatEvent<BiteExpressionName>;
 
-export type ChatRequest = {
-  message: string;
-  /** The thread to go on with; a new one without. */
-  threadId?: number;
-  language: string;
-  /** The user's day, YYYY-MM-DD. */
-  today: string;
-};
+export type { ChatRequest };
 
 /**
  * Reads the server-sent events in `buffer` that are complete, and returns them with what is left

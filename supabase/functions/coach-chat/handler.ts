@@ -4,6 +4,12 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
+import {
+  type ChatEvent as Event,
+  type ChatRequest as Body,
+  type Interruption,
+  MAX_MESSAGE_LENGTH,
+} from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
 import {
   type Finish,
@@ -31,12 +37,12 @@ export type ChatContext = {
 const ChatRequest = z.object({
   /** The thread to go on with; a new one without. */
   threadId: z.number().int().positive().optional(),
-  message: z.string().trim().min(1).max(4000),
+  message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
   /** The app's language, which Bite answers in. */
   language: z.enum(LANGUAGES),
   /** The user's day, as their device has it. */
   today: DAY,
-});
+}) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
 
 /** How many earlier messages Bite reads of a thread. */
@@ -56,21 +62,8 @@ const MAX_PARTS = 50;
  */
 const MAX_CONTENT_BYTES = 50_000;
 
-/** What the app is told as the answer comes, each a server-sent event. */
-export type ChatEvent =
-  /** A new thread, first, so that the app keeps it however the answer ends. */
-  | { event: 'thread'; threadId: number }
-  | { event: 'expression'; expression: Expression }
-  | { event: 'tool_start'; name: string }
-  | { event: 'tool_end'; name: string }
-  | { event: 'text'; text: string }
-  /** The turn is saved; `interrupted` says why when the answer stopped before its end. */
-  | { event: 'done'; threadId: number; messageId: number; interrupted?: Interruption }
-  /**
-   * Bite saved no answer, and why. The question is kept once the model was asked; `dropped` when
-   * the new thread begun for it is gone again.
-   */
-  | { event: 'error'; reason: string; dropped?: true };
+/** What the app is told as the answer comes, each a server-sent event (ADR 0052). */
+export type ChatEvent = Event<Expression>;
 
 export async function handleChatRequest(req: Request, context: ChatContext): Promise<Response> {
   if (req.method !== 'POST') {
@@ -173,12 +166,6 @@ class Turn {
     this.send({ event: 'text', text });
   }
 }
-
-/**
- * Why an answer stopped before its end: the model failed, the user may not go on, the request was
- * stopped, or the model cut it, as at the token limit.
- */
-export type Interruption = 'failed' | 'refused' | 'stopped' | 'cut';
 
 async function answer(
   request: ChatRequest,

@@ -11,22 +11,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { COACH_TOOLS } from '@shared/coach/chat';
+
 import { Text } from '@/components/ui/text';
 import { oneOf } from '@/lib/one-of';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import type { ChatMessage, ChatStatus } from './use-chat';
-
-/** The tools Bite looks things up with, each with its line while it does (ADR 0052). */
-const TOOLS = [
-  'get_workout_history',
-  'get_meal_log',
-  'get_week_summary',
-  'get_records',
-  'search_foods',
-  'search_exercises',
-] as const;
 
 type ChatMessagesProps = {
   messages: ChatMessage[];
@@ -171,7 +163,7 @@ function Thinking({ tool }: { tool?: string }) {
 function ToolLine({ tool, indent = false }: { tool?: string; indent?: boolean }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const known = oneOf(TOOLS, tool);
+  const known = oneOf(COACH_TOOLS, tool);
   const line = known ? t(`bite.tools.${known}`) : undefined;
   return (
     <View

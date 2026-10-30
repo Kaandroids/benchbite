@@ -3,6 +3,7 @@
 // level security decides what it sees, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
+import type { CoachToolName } from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
@@ -17,7 +18,8 @@ const MAX_DAYS = 31;
 const QUERY = z.string().trim().min(2).max(80);
 
 type CoachTool<A extends z.ZodType> = {
-  name: string;
+  /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
+  name: CoachToolName;
   description: string;
   /** The arguments, which the model is told of and its calls are checked against. */
   args: A;

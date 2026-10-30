@@ -20,6 +20,8 @@ the model is limited and counted (ADR 0051).
   the end either `done` with the thread and message, and `interrupted` in it when the answer
   stopped short, with why (`failed`, `refused`, `stopped` or `cut`), or `error` with a reason when Bite saved no answer (`plan_required`,
   `limit_reached`, `blocked`, `unavailable`…).
+  The events, the request, the tools' names and the longest message are written once, in
+  `_shared/coach/chat.ts`, which the app imports too.
 - **What Bite is told, in order:** fixed instructions (its character, safety rules and its face),
   the same for every user so that the provider can cache them; the thread's last 20 messages, as
   text, Bite's with their faces; and the new message, with a snapshot of the user before it,
