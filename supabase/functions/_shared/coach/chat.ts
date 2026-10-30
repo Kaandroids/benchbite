@@ -4,7 +4,10 @@
 /** The longest message the user may send, in characters. */
 export const MAX_MESSAGE_LENGTH = 4000;
 
-/** The tools Bite looks things up with; the app says what Bite is doing by their names. */
+/**
+ * The tools Bite looks things up and proposes changes with; the app says what Bite is doing by
+ * their names.
+ */
 export const COACH_TOOLS = [
   'get_workout_history',
   'get_meal_log',
@@ -12,6 +15,9 @@ export const COACH_TOOLS = [
   'get_records',
   'search_foods',
   'search_exercises',
+  'get_workouts',
+  'propose_workout_change',
+  'propose_targets_change',
 ] as const;
 
 export type CoachToolName = (typeof COACH_TOOLS)[number];
@@ -51,6 +57,23 @@ export type ChatReason =
  */
 export type Interruption = 'failed' | 'refused' | 'stopped' | 'cut';
 
+/** A day's calories and macros. */
+export type ProposedTargets = { calories: number; proteinG: number; carbsG: number; fatG: number };
+
+/**
+ * A change Bite proposed (ADR 0058), as its card shows it: exercises swapped in a workout, in the
+ * user's language, or the targets in use and the new ones. The user applies it, keeps things as
+ * they are, or undoes it, by its `id` (decide_coach_proposal()).
+ */
+export type ProposalCard =
+  | {
+      kind: 'workout';
+      id: number;
+      workout: string;
+      swaps: { from: string; to: string; detail: string; why?: string }[];
+    }
+  | { kind: 'targets'; id: number; from: ProposedTargets | null; to: ProposedTargets };
+
 /** What the app is told as Bite answers, one server-sent event each, with Bite's faces. */
 export type ChatEvent<Expression extends string = string> =
   /** A new thread, first, so that the app keeps it however the answer ends. */
@@ -59,6 +82,8 @@ export type ChatEvent<Expression extends string = string> =
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
   | { event: 'text'; text: string }
+  /** A change Bite proposed, shown as a card under its answer. */
+  | { event: 'proposal'; proposal: ProposalCard }
   /**
    * The turn is saved; `interrupted` says why when the answer stopped before its end, and
    * `reason` what failed or was refused, as an error's does.
