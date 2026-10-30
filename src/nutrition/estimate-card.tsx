@@ -102,6 +102,12 @@ export function EstimateCard({ meal, items, onOpen }: EstimateCardProps) {
   );
 }
 
+/**
+ * How far a total and its label may shrink to stay on one line in its quarter of the card, as
+ * "Kohlenhydrate" does on a narrow phone.
+ */
+const TOTAL_MIN_SCALE = 0.7;
+
 function Total({
   value,
   label,
@@ -113,10 +119,24 @@ function Total({
 }) {
   return (
     <View accessible accessibilityLabel={`${value} ${label}`} style={styles.total}>
-      <Text variant="label" color={color} align="center">
+      <Text
+        variant="label"
+        color={color}
+        align="center"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={TOTAL_MIN_SCALE}
+      >
         {value}
       </Text>
-      <Text variant="caption" color="textMuted" align="center">
+      <Text
+        variant="caption"
+        color="textMuted"
+        align="center"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={TOTAL_MIN_SCALE}
+      >
         {label}
       </Text>
     </View>

@@ -136,6 +136,11 @@ describe('MealPhotoScreen', () => {
     expect(screen.getByLabelText('13 g Protein')).toBeTruthy();
     expect(screen.getByLabelText('21 g Carbs')).toBeTruthy();
     expect(screen.getByLabelText('14 g Fat')).toBeTruthy();
+    // Each total and its label stay on one line, shrinking to fit, as "Kohlenhydrate" must.
+    for (const text of ['270', 'kcal', '21 g', 'Carbs']) {
+      expect(screen.getByText(text)).toHaveProp('numberOfLines', 1);
+      expect(screen.getByText(text)).toHaveProp('adjustsFontSizeToFit', true);
+    }
   });
 
   it('changes the grams of a food in the amount form', async () => {
