@@ -1,8 +1,11 @@
 // The user's state as Bite sees it before each answer (#292): who they are, their goal, today's
 // targets and food, their plan and streak. Read with the user's token, so row level security
 // decides what Bite may see; what cannot be read is left out rather than failing the answer.
+import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { workoutName } from './workout.ts';
+
+type GoalKind = Database['public']['Enums']['goal_kind'];
 
 export type Macros = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 
@@ -16,11 +19,10 @@ export type Snapshot = {
     sex: string;
     heightCm: number;
     weightUnit: string;
-    pregnantOrBreastfeeding: boolean;
     /** The least the targets ever ask for, which Bite never goes below. */
     calorieFloor?: number;
   };
-  goal?: string;
+  goal?: { kind: GoalKind; targetWeightKg?: number; weeklyPaceKg?: number };
   /** The latest weight, in kg. */
   weightKg?: number;
   targets?: Macros;
@@ -40,7 +42,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     supabase
       .from('profiles')
       .select(
-        'display_name, birth_year, sex, height_cm, weight_unit, pregnant_or_breastfeeding, experience, training_setup, training_days, session_minutes, calorie_floor',
+        'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor',
       )
       .maybeSingle(),
     supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
@@ -72,7 +74,6 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       sex: p.sex,
       heightCm: p.height_cm,
       weightUnit: p.weight_unit,
-      pregnantOrBreastfeeding: p.pregnant_or_breastfeeding,
       // The floor the targets keep to (calorie_floor()), which Bite never goes below.
       calorieFloor: p.calorie_floor ?? undefined,
     };
@@ -85,13 +86,11 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   }
   const g = goal.data;
   if (g) {
-    snapshot.goal = [
-      g.kind.replaceAll('_', ' '),
-      g.target_weight_kg && `to ${g.target_weight_kg} kg`,
-      g.weekly_pace_kg && `at ${g.weekly_pace_kg} kg a week`,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    snapshot.goal = {
+      kind: g.kind,
+      targetWeightKg: g.target_weight_kg ?? undefined,
+      weeklyPaceKg: g.weekly_pace_kg ?? undefined,
+    };
   }
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;
   const n = nutrition.data?.[0];

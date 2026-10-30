@@ -20,7 +20,17 @@ import {
   type Part,
 } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
-import { type Expression, FaceReader, LANGUAGES, marker, snapshotText, SYSTEM } from './prompt.ts';
+import {
+  type Expression,
+  FaceReader,
+  LANGUAGES,
+  marker,
+  messageText,
+  snapshotText,
+  SYSTEM,
+  untagged,
+  untaggedAll,
+} from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
@@ -213,7 +223,7 @@ async function answer(
         role: 'user',
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
-          { type: 'text', text: request.message },
+          { type: 'text', text: messageText(request.message) },
         ],
       },
     ];
@@ -338,7 +348,8 @@ async function lookUp(
   send: (event: ChatEvent) => void,
 ): Promise<unknown> {
   send({ event: 'tool_start', name: call.name });
-  const result = await runTool(call.name, call.args, context);
+  // What the user named things comes back with it, and may not pass for a snapshot either.
+  const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
   return result;
 }
@@ -443,9 +454,11 @@ function toMessage(
     )
     .join('\n');
   if (!text) return [];
-  if (row.role === 'user') return [{ role: 'user', parts: [{ type: 'text', text }] }];
+  if (row.role === 'user')
+    return [{ role: 'user', parts: [{ type: 'text', text: untagged(text) }] }];
   const face = marker(row.expression ?? 'neutral');
-  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${text}` }] }];
+  // Bite may have repeated what the user wrote.
+  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${untagged(text)}` }] }];
 }
 
 function failed(message: string, error: unknown): Response {
