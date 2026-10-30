@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
 import {
   type ChatEvent as Event,
+  type ChatReason,
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
@@ -179,10 +180,7 @@ async function answer(
     'coach_chat',
   );
   const turn = new Turn(send);
-  let failure: string | undefined;
-  let refused = false;
-  // Whether a request reached the model; a message that never did is not kept.
-  let asked = false;
+  const outcome: Outcome = { refused: false, asked: false };
   let threadId = request.threadId;
 
   // Nothing is written for a user who may not ask Bite now.
@@ -232,7 +230,7 @@ async function answer(
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
-        asked = true;
+        outcome.asked = true;
         if (isStopped()) break;
         if (event.type === 'text') {
           turn.said(event.text);
@@ -268,50 +266,67 @@ async function answer(
     }
   } catch (error) {
     if (error instanceof AiRefusedError) {
-      failure = error.reason;
-      refused = true;
+      outcome.failure = error.reason;
+      outcome.refused = true;
     } else {
       logError('Bite could not answer', error);
-      failure = 'unavailable';
+      outcome.failure = 'unavailable';
       // A provider's error comes from a request that was made.
-      if (error instanceof ModelError) asked = true;
+      if (error instanceof ModelError) outcome.asked = true;
     }
   }
 
-  if (!threadId) return send({ event: 'error', reason: failure ?? 'unavailable' });
-  if (!turn.text.trim()) {
-    const reason = failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable');
-    // A question that reached the model stays in the thread without an answer, as the app shows
-    // it, so that Bite sees it next time too; one that did not, as when refused, is not kept.
-    const dropped = (refused || !asked) && !request.threadId;
-    if (dropped) await keepAlive(dropThread(context, threadId));
-    else if (asked && !refused) await keepAlive(saveQuestion(context, threadId, request));
-    return send({ event: 'error', reason, ...(dropped && { dropped: true }) });
+  if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
+  const end = ending(outcome, {
+    said: turn.text.trim() !== '',
+    stopped: isStopped(),
+    finish: turn.finish,
+    newThread: !request.threadId,
+  });
+  if (end.keep !== 'turn') {
+    if (end.dropThread) await keepAlive(dropThread(context, threadId));
+    else if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
+    return send({ event: 'error', reason: end.reason, ...(end.dropThread && { dropped: true }) });
   }
-  // What came is kept, as when the app stops the answer, and said to have stopped short.
-  const interrupted = interruption(failure, refused, isStopped(), turn.finish);
   const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
   send({
     event: 'done',
     threadId,
     messageId,
-    ...(interrupted && { interrupted }),
-    ...(failure && { reason: failure }),
+    ...(end.interrupted && { interrupted: end.interrupted }),
+    ...(end.reason && { reason: end.reason }),
   });
 }
 
-/** Why an answer with text stopped before its end, if it did. */
-function interruption(
-  failure: string | undefined,
-  refused: boolean,
-  stopped: boolean,
-  finish: Finish | undefined,
-): Interruption | undefined {
-  if (refused) return 'refused';
-  if (failure) return 'failed';
-  if (stopped) return 'stopped';
-  if (finish !== 'stop') return 'cut';
+/** How the requests of an answer went: why they failed, if refused, and if the model was asked. */
+export type Outcome = { failure?: ChatReason; refused: boolean; asked: boolean };
+
+/**
+ * What is kept of a message, and what the app is told. An answer with text is kept as a turn,
+ * saying why it stopped short if it did. Without text, a question the model was asked stays in
+ * the thread unanswered, as the app shows it, so that Bite sees it next time; one that never
+ * reached the model, or was refused, is not kept, and a thread begun for it goes again.
+ */
+export function ending(
+  { failure, refused, asked }: Outcome,
+  answer: { said: boolean; stopped: boolean; finish?: Finish; newThread: boolean },
+):
+  | { keep: 'turn'; interrupted?: Interruption; reason?: ChatReason }
+  | { keep: 'question' | 'nothing'; reason: ChatReason; dropThread: boolean } {
+  if (answer.said) {
+    return { keep: 'turn', interrupted: interruption(), reason: failure };
+  }
+  const reason = failure ?? (answer.finish === 'blocked' ? 'blocked' : 'unavailable');
+  const keep = asked && !refused ? 'question' : 'nothing';
+  return { keep, reason, dropThread: keep === 'nothing' && answer.newThread };
+
+  function interruption(): Interruption | undefined {
+    if (refused) return 'refused';
+    if (failure) return 'failed';
+    if (answer.stopped) return 'stopped';
+    if (answer.finish !== 'stop') return 'cut';
+  }
 }
 
 async function lookUp(

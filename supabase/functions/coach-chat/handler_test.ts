@@ -3,7 +3,7 @@ import { assertEquals } from '@std/assert';
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
-import { content, handleChatRequest } from './handler.ts';
+import { content, ending, handleChatRequest } from './handler.ts';
 
 type Row = Record<string, unknown>;
 
@@ -480,4 +480,44 @@ Deno.test('keeps a message within what a message may hold', () => {
   assertEquals(content([call, small], 'Hi').length, 3);
   assertEquals(content([call, big], 'Hi')[1], { ...big, result: { omitted: true } });
   assertEquals(content(Array(60).fill(call), 'Hi').length, 50);
+});
+
+Deno.test('keeps what came of a message, and says why it ended', () => {
+  const answer = { said: false, stopped: false, finish: 'stop' as const, newThread: true };
+  const asked = { refused: false, asked: true };
+  const notAsked = { failure: 'unavailable' as const, refused: false, asked: false };
+  const refused = { failure: 'limit_reached' as const, refused: true, asked: false };
+
+  assertEquals(ending(asked, { ...answer, said: true }), {
+    keep: 'turn',
+    interrupted: undefined,
+    reason: undefined,
+  });
+  assertEquals(ending(asked, { ...answer, said: true, finish: 'length' }).keep, 'turn');
+  assertEquals(ending({ ...refused, asked: true }, { ...answer, said: true }), {
+    keep: 'turn',
+    interrupted: 'refused',
+    reason: 'limit_reached',
+  });
+  assertEquals(ending(asked, { ...answer, said: true, stopped: true }), {
+    keep: 'turn',
+    interrupted: 'stopped',
+    reason: undefined,
+  });
+  // Without text: the question once the model was asked, else nothing, and a new thread goes.
+  assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
+    keep: 'question',
+    reason: 'blocked',
+    dropThread: false,
+  });
+  assertEquals(ending(notAsked, answer), {
+    keep: 'nothing',
+    reason: 'unavailable',
+    dropThread: true,
+  });
+  assertEquals(ending(refused, { ...answer, newThread: false }), {
+    keep: 'nothing',
+    reason: 'limit_reached',
+    dropThread: false,
+  });
 });

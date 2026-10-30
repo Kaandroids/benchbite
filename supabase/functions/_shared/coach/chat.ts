@@ -28,6 +28,22 @@ export type ChatRequest = {
 };
 
 /**
+ * Why Bite gave no answer, or stopped short: the reasons of `ai_access()` and `start_ai_call()`,
+ * and the function's own, `unavailable` for any failure, `blocked` by the model's safety rules,
+ * and `not_saved` for an answer that could not be kept.
+ */
+export type ChatReason =
+  | 'account_required'
+  | 'plan_required'
+  | 'limit_reached'
+  | 'request_too_large'
+  | 'unpriced_model'
+  | 'call_in_progress'
+  | 'unavailable'
+  | 'blocked'
+  | 'not_saved';
+
+/**
  * Why an answer stopped before its end: the model failed, the user may not go on, the request was
  * stopped, or the model cut it, as at the token limit.
  */
@@ -50,10 +66,10 @@ export type ChatEvent<Expression extends string = string> =
       threadId: number;
       messageId: number;
       interrupted?: Interruption;
-      reason?: string;
+      reason?: ChatReason;
     }
   /**
    * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
    * is kept once the model was asked; `dropped` when the new thread begun for it is gone again.
    */
-  | { event: 'error'; reason: string; dropped?: true };
+  | { event: 'error'; reason: ChatReason; dropped?: true };
