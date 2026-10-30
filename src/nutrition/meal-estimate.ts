@@ -163,3 +163,18 @@ export function confidenceOf(
       : items.reduce((sum, item, index) => sum + item.confidence * weights[index]!, 0) / total;
   return value >= 0.75 ? 'high' : value >= 0.5 ? 'medium' : 'low';
 }
+
+/** The photos' local URIs as a route parameter, and back; a parameter that is not one gives none. */
+export const photosParam = {
+  format: (photos: string[]) => JSON.stringify(photos),
+  parse: (param: string | undefined): string[] => {
+    try {
+      const photos: unknown = JSON.parse(param ?? '[]');
+      return Array.isArray(photos)
+        ? photos.filter((uri): uri is string => typeof uri === 'string').slice(0, MAX_MEAL_PHOTOS)
+        : [];
+    } catch {
+      return [];
+    }
+  },
+};
