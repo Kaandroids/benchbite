@@ -9,7 +9,7 @@ import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from '
 
 // A new chat by default; the tab bar's opening, without params, is tested on its own.
 const NEW_CHAT = { thread: '', fresh: '1' };
-let mockParams: { thread?: string; fresh?: string; offer?: string } = NEW_CHAT;
+let mockParams: { thread?: string; fresh?: string; offer?: string; from?: string } = NEW_CHAT;
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -445,6 +445,24 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
 
   await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
   expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  mockParams = NEW_CHAT;
+});
+
+it('goes back to the chats from a chat opened over them', async () => {
+  liveStream();
+  mockParams = { thread: '7', from: 'chats' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
+    data: { title: 'Knee pain on squats', messages: [] },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
+
+  expect(router.back).toHaveBeenCalledTimes(2);
+  expect(router.push).not.toHaveBeenCalled();
   mockParams = NEW_CHAT;
 });
 

@@ -5,7 +5,9 @@ import { act, fireEvent, render, screen } from '@/test/render';
 import { ChatsScreen } from './chats-screen';
 import { useDeleteThread, useRenameThread, useThreads, type ThreadSummary } from './threads';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), dismissTo: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn() },
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./threads', () => ({
   ...jest.requireActual('./threads'),
@@ -62,12 +64,12 @@ it('lists the chats by day, with their last message', async () => {
   expect(screen.getByText('Try leg press today.')).toBeTruthy();
 });
 
-it('opens a chat, or a new one', async () => {
+it('opens a chat over the chats, or a new one in place of the chat under them', async () => {
   await render(<ChatsScreen />);
   await fireEvent.press(screen.getByText('Lunch ideas'));
-  expect(router.dismissTo).toHaveBeenCalledWith({
+  expect(router.push).toHaveBeenCalledWith({
     pathname: '/bite',
-    params: { thread: '2', fresh: '', offer: '' },
+    params: { thread: '2', fresh: '', offer: '', from: 'chats' },
   });
   await fireEvent.press(screen.getByRole('button', { name: 'New chat' }));
   expect(router.dismissTo).toHaveBeenLastCalledWith({

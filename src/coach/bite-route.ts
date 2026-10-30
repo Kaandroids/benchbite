@@ -7,19 +7,27 @@ import { isRecent, type ThreadSummary, useLastThread } from './threads';
 
 /**
  * The params of `/bite`: a saved thread, or a new chat with a key of its own, which may offer the
- * last chat to continue (`offer`, its id).
+ * last chat to continue (`offer`, its id). `from` is `chats` for a chat opened over the chats,
+ * which it goes back to.
  */
-export type BiteParams = { thread?: string; fresh?: string; offer?: string };
+export type BiteParams = { thread?: string; fresh?: string; offer?: string; from?: string };
 
-/** Opens the chat under the chats: a thread of the history, or, without one, a new chat. */
+/**
+ * Opens a chat from the chats: a thread of the history over them, to go back to them from it, or,
+ * without one, a new chat in place of the one under them.
+ */
 export function openChat(thread?: number) {
-  router.dismissTo({
-    pathname: '/bite',
+  if (thread === undefined) {
     // A new chat's key is new each time, so that it starts empty even over one that was open.
-    params:
-      thread === undefined
-        ? { thread: '', fresh: String(Date.now()), offer: '' }
-        : { thread: String(thread), fresh: '', offer: '' },
+    router.dismissTo({
+      pathname: '/bite',
+      params: { thread: '', fresh: String(Date.now()), offer: '' },
+    });
+    return;
+  }
+  router.push({
+    pathname: '/bite',
+    params: { thread: String(thread), fresh: '', offer: '', from: 'chats' },
   });
 }
 
