@@ -1280,7 +1280,7 @@ export type Database = {
         Insert: {
           exercises?: Json | null;
           id?: never;
-          in_use: boolean;
+          in_use?: never;
           name?: string | null;
           position: number;
           user_id: string;
@@ -1289,7 +1289,7 @@ export type Database = {
         Update: {
           exercises?: Json | null;
           id?: never;
-          in_use?: boolean;
+          in_use?: never;
           name?: string | null;
           position?: number;
           user_id?: string;
@@ -2119,7 +2119,6 @@ export type Database = {
         Args: { alternative_id: number; name: string };
         Returns: undefined;
       };
-      renumber_workout_alternatives: { Args: { workout_id: number }; Returns: undefined };
       reorder_workout_alternatives: {
         Args: { alternative_ids: number[]; workout_id: number };
         Returns: undefined;
@@ -2263,13 +2262,14 @@ export type Database = {
       };
       use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       use_workout_alternative: {
-        Args: { alternative_id: number; today: string; workout_id: number };
+        Args: { alternative_id: number; today: string };
         Returns: undefined;
       };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
+          alternative_name_length: number;
           alternatives: number;
           exercises: number;
           workouts: number;
