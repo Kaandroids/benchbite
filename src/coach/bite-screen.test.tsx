@@ -246,3 +246,44 @@ it('says when Bite answers on another device', async () => {
     screen.getByText('Bite is answering on another device. Try again in a moment.'),
   ).toBeOnTheScreen();
 });
+
+it('forgets the new thread of a message that was refused', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'error', reason: 'call_in_progress' },
+  );
+  await stream.end();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
+
+  expect(stream.request()?.threadId).toBeUndefined();
+});
+
+it('says an answer was cut off when it ends without its end', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'text', text: 'Your week' });
+
+  await stream.end();
+
+  expect(screen.getByText('Cut off')).toBeOnTheScreen();
+  expect(screen.getByText("Bite couldn't answer just now. Try again.")).toBeOnTheScreen();
+});
+
+it('does not call an answer cut off that came whole but was not saved', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'text', text: 'A good week.' },
+    { event: 'error', reason: 'not_saved' },
+  );
+  await stream.end();
+
+  expect(screen.getByText("This answer couldn't be saved.")).toBeOnTheScreen();
+  expect(screen.queryByText('Cut off')).toBeNull();
+});
