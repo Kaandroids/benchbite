@@ -52,10 +52,18 @@ Deno.test("writes the snapshot as data, in the user's units and language", () =>
     'Reply in: German',
     'User: Sam · 28 years · male · 182 cm · 82.4 kg',
     'Units: pounds',
-    'Calorie floor: 1500 kcal a day',
     'Pregnant or breastfeeding: no',
+    'Calorie floor: 1500 kcal a day',
     'Goal: lose fat to 78 kg',
     "Today's workouts: Pull planned, 0 done",
     '</snapshot>',
   ]);
+});
+
+Deno.test('names every face in the rules', async () => {
+  const { SYSTEM } = await import('./prompt.ts');
+  assertEquals(
+    SYSTEM.includes('[[neutral]], [[happy]], [[sad]], [[angry]] or [[surprised]]'),
+    true,
+  );
 });
