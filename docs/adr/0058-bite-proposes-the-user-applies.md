@@ -16,8 +16,10 @@ card in the chat that the user applies or keeps as it is, with Undo (boards 4, 5
   user, which writes a row to `coach_proposals`: a workout as `save_workout()` takes it, or the
   user's own targets. Users read their proposals but write them only through the functions.
 - **Bite's tools:** `get_workouts` reads the plan with the exercises' ids; `propose_workout_change`
-  swaps exercises of one workout and proposes it whole, and `propose_targets_change` proposes new
-  targets. Each returns the card the chat shows (`proposal` event), which the message keeps in the
+  names the exercises and calls `propose_coach_swaps(thread_id, workout_id, swaps, today)`, which
+  builds the whole workout from `saved_workout()` in the database and refuses an exercise not in
+  it (`BB039`), or one swapped twice, into another swap or in the workout twice (`BB040`), as the
+  card could not show what applying does; `propose_targets_change` proposes new targets. Each returns the card the chat shows (`proposal` event), which the message keeps in the
   tool's result, so that a chat read back shows it too. A proposal is an answer even when the model
   adds no words.
 - **A proposal keeps what it replaces** (`before`), read by `coach_proposal_state()`: the workout
