@@ -211,6 +211,25 @@ export type Database = {
           },
         ];
       };
+      coach_stops: {
+        Row: {
+          created_at: string;
+          request_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          request_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          request_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_threads: {
         Row: {
           archived_at: string | null;
@@ -2004,6 +2023,7 @@ export type Database = {
         };
       };
       start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
+      stop_coach_request: { Args: { request_id: string }; Returns: undefined };
       streak: {
         Args: { today: string };
         Returns: {
