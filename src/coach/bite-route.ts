@@ -10,19 +10,35 @@ import { isRecent, type ThreadSummary, useLastThread } from './threads';
  * last chat to continue (`offer`, its id). `from` is `chats` for a chat opened over the chats,
  * which it goes back to.
  */
-export type BiteParams = { thread?: string; fresh?: string; offer?: string; from?: string };
+export type BiteParams = { thread?: string; fresh?: string; offer?: string; from?: 'chats' };
+
+/** The params of `/bite/chats`: `current`, the id of the saved chat under them, if any. */
+export type ChatsParams = { current?: string };
+
+/** Opens the chats over the chat, naming its thread, `current`, if it has one. */
+export function openChats(current?: number) {
+  router.push({
+    pathname: '/bite/chats',
+    params: current === undefined ? {} : { current: String(current) },
+  });
+}
 
 /**
  * Opens a chat from the chats: a thread of the history over them, to go back to them from it, or,
- * without one, a new chat in place of the one under them.
+ * without one, a new chat in place of the one under them. The thread under them, `current`, is
+ * gone back to rather than opened again, so that it is never open twice.
  */
-export function openChat(thread?: number) {
+export function openChat(thread?: number, current?: string) {
   if (thread === undefined) {
     // A new chat's key is new each time, so that it starts empty even over one that was open.
     router.dismissTo({
       pathname: '/bite',
       params: { thread: '', fresh: String(Date.now()), offer: '' },
     });
+    return;
+  }
+  if (String(thread) === current) {
+    router.back();
     return;
   }
   router.push({
@@ -49,6 +65,8 @@ export function useOpenedChat(params: BiteParams): {
   waiting: boolean;
   /** The last chat, no longer recent, which a new chat offers to continue. */
   offer?: ThreadSummary;
+  /** Opened over the chats, which it goes back to, as on board 18. */
+  fromChats: boolean;
 } {
   const asked = chatOf(params);
   const last = useLastThread(asked.latest);
@@ -68,6 +86,7 @@ export function useOpenedChat(params: BiteParams): {
     waiting: asked.latest,
     offer:
       params.offer && lastThread && String(lastThread.id) === params.offer ? lastThread : undefined,
+    fromChats: params.from === 'chats',
   };
 }
 

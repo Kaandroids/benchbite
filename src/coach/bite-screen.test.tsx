@@ -443,8 +443,12 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
   expect(stream.request()?.threadId).toBe(7);
 
+  // The chats know the chat under them, to go back to it rather than open it twice.
   await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
-  expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  expect(router.push).toHaveBeenCalledWith({
+    pathname: '/bite/chats',
+    params: { current: '7' },
+  });
   mockParams = NEW_CHAT;
 });
 
@@ -530,7 +534,7 @@ describe('opened from the tab bar', () => {
     await fireEvent.press(screen.getByRole('button', { name: /Knee pain on squats/ }));
     expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '', offer: '' });
     await fireEvent.press(screen.getByRole('button', { name: 'All chats' }));
-    expect(router.push).toHaveBeenCalledWith('/bite/chats');
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/bite/chats', params: {} });
   });
 
   it('offers nothing to continue on a new chat asked for from the chats', async () => {

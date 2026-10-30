@@ -16,7 +16,7 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useThreadMessages } from './threads';
-import { type BiteParams, continueChat, useOpenedChat } from './bite-route';
+import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
@@ -27,10 +27,8 @@ import { useFollowEnd } from './use-follow-end';
  * it to continue otherwise (ADR 0055).
  */
 export function BiteScreen() {
-  const params = useLocalSearchParams<BiteParams>();
-  const opened = useOpenedChat(params);
-  // Opened over the chats, as on board 18, the chat goes back to them rather than closing.
-  const fromChats = params.from === 'chats';
+  const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
+  const { fromChats } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   // A saved chat opens on its messages as they are now, never on ones kept from before.
@@ -58,7 +56,7 @@ export function BiteScreen() {
         opened.offer && {
           thread: opened.offer,
           onContinue: continueChat,
-          onAllChats: () => router.push('/bite/chats'),
+          onAllChats: () => openChats(),
         }
       }
     />
@@ -95,7 +93,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
           icon="history"
           label={t('bite.chats.title')}
           // The chats are under a chat opened from them.
-          onPress={() => (fromChats ? router.back() : router.push('/bite/chats'))}
+          onPress={() => (fromChats ? router.back() : openChats(chat.threadId))}
         />
       }
       scrolls={false}

@@ -5,8 +5,10 @@ import { act, fireEvent, render, screen } from '@/test/render';
 import { ChatsScreen } from './chats-screen';
 import { useDeleteThread, useRenameThread, useThreads, type ThreadSummary } from './threads';
 
+let mockParams: { current?: string } = {};
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), dismissTo: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => mockParams,
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./threads', () => ({
@@ -76,6 +78,17 @@ it('opens a chat over the chats, or a new one in place of the chat under them', 
     pathname: '/bite',
     params: { thread: '', fresh: expect.stringMatching(/^\d+$/), offer: '' },
   });
+});
+
+it('goes back to the chat under the chats rather than open it twice', async () => {
+  mockParams = { current: '2' };
+  await render(<ChatsScreen />);
+
+  await fireEvent.press(screen.getByText('Lunch ideas'));
+
+  expect(router.back).toHaveBeenCalled();
+  expect(router.push).not.toHaveBeenCalled();
+  mockParams = {};
 });
 
 it('deletes a chat once its Undo has gone, and not when it is undone', async () => {

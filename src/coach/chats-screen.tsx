@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
@@ -23,7 +23,7 @@ import {
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
-import { openChat } from './bite-route';
+import { type ChatsParams, openChat } from './bite-route';
 import { groupThreads, timeKind, type ThreadGroup } from './thread-groups';
 import {
   MAX_THREAD_TITLE_LENGTH,
@@ -47,6 +47,7 @@ type Section = { group: ThreadGroup; data: ThreadSummary[] };
  */
 export function ChatsScreen() {
   const { t } = useTranslation();
+  const { current } = useLocalSearchParams<ChatsParams>();
   const { spacing } = useTheme();
   const [search, setSearch] = useState('');
   const [term, setTerm] = useState('');
@@ -124,7 +125,7 @@ export function ChatsScreen() {
               today={today}
               first={index === 0}
               last={index === section.data.length - 1}
-              onOpen={() => openChat(item.id)}
+              onOpen={() => openChat(item.id, current)}
               onOptions={() => setOptions(item)}
             />
           )}
