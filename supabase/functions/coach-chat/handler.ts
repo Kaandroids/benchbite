@@ -434,7 +434,11 @@ export function content(trace: Part[], text: string): Part[] {
   return fits(without) ? without : [answer];
 }
 
-/** An earlier message as Bite reads it: its text alone, a face before Bite's, as it wrote it. */
+/**
+ * An earlier message as Bite reads it: its text alone, a face before Bite's, as it wrote it. The
+ * history reads the same parts for a line, joined by spaces (coach_message_text() in the
+ * chat_history migration).
+ */
 function toMessage(
   row: Pick<
     Database['public']['Tables']['coach_messages']['Row'],
