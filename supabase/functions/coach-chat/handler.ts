@@ -52,7 +52,7 @@ const MAX_CONTENT_BYTES = 50_000;
 
 /** What the app is told as the answer comes, each a server-sent event. */
 export type ChatEvent =
-  /** A new thread, first, as soon as Bite starts to answer, so the app keeps it however it ends. */
+  /** A new thread, first, so that the app keeps it however the answer ends. */
   | { event: 'thread'; threadId: number }
   | { event: 'expression'; expression: Expression }
   | { event: 'tool_start'; name: string }
@@ -60,7 +60,10 @@ export type ChatEvent =
   | { event: 'text'; text: string }
   /** The turn is saved; `interrupted` when the answer stopped before its end. */
   | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
-  /** Nothing was saved, and why. */
+  /**
+   * Bite saved no answer, and why. The question is kept unless the user may not ask now, as
+   * when the budget is used up.
+   */
   | { event: 'error'; reason: string };
 
 export async function handleChatRequest(req: Request, context: ChatContext): Promise<Response> {
@@ -178,7 +181,8 @@ async function answer(
   );
   const turn = new Turn(send);
   let failure: string | undefined;
-  // A new thread is started once Bite answers, which a refused message never gets to.
+  let refused = false;
+  // A new thread is started at once, and goes again if the message is refused.
   let threadId = request.threadId;
   let started = false;
   const thread = async () => {
@@ -195,6 +199,7 @@ async function answer(
   };
 
   try {
+    await thread();
     const snapshot = await loadSnapshot(context.supabase, request.today);
     const messages: Message[] = [
       ...history,
@@ -221,7 +226,6 @@ async function answer(
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
         if (isStopped()) break;
-        if (event.type !== 'done') await thread();
         if (event.type === 'text') {
           turn.said(event.text);
           spoken.push(event);
@@ -255,20 +259,26 @@ async function answer(
       );
     }
   } catch (error) {
-    if (error instanceof AiRefusedError) failure = error.reason;
-    else {
+    if (error instanceof AiRefusedError) {
+      failure = error.reason;
+      refused = true;
+    } else {
       logError('Bite could not answer', error);
       failure = 'unavailable';
     }
   }
 
-  if (!turn.text.trim() || !threadId) {
-    // A thread started for an answer that said nothing goes again.
-    if (started && threadId) await keepAlive(dropThread(context, threadId));
-    return send({
-      event: 'error',
-      reason: failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable'),
-    });
+  if (!threadId) return send({ event: 'error', reason: failure ?? 'unavailable' });
+  if (!turn.text.trim()) {
+    const reason = failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable');
+    // A refused question is not asked; any other stays in the thread without an answer, as the
+    // app shows it, so that Bite sees it next time too.
+    if (refused) {
+      if (started) await keepAlive(dropThread(context, threadId));
+    } else {
+      await keepAlive(save(context, threadId, request));
+    }
+    return send({ event: 'error', reason });
   }
   // What came is kept, as when the app stops the answer, and said to have stopped short.
   const interrupted = failure !== undefined || isStopped() || turn.finish !== 'stop';
@@ -288,17 +298,27 @@ async function lookUp(
   return result;
 }
 
-/** Saves the user's message and Bite's answer to the thread, and gives Bite's message's id. */
+/** Saves the user's message to the thread, with Bite's answer and its id when there is one. */
 async function save(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
-  turn: Turn,
+  turn?: Turn,
 ): Promise<number | undefined> {
+  const question = {
+    thread_id: threadId,
+    role: 'user' as const,
+    content: [{ type: 'text', text: request.message }],
+  };
+  if (!turn) {
+    const saved = await context.admin.from('coach_messages').insert(question);
+    if (saved.error) logError('Could not save the question', saved.error);
+    return;
+  }
   const messages = await context.admin
     .from('coach_messages')
     .insert([
-      { thread_id: threadId, role: 'user', content: [{ type: 'text', text: request.message }] },
+      question,
       {
         thread_id: threadId,
         role: 'bite',

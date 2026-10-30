@@ -199,15 +199,21 @@ Deno.test('looks things up with a tool, then answers', async () => {
   assertEquals(inserted[1].rows[1].input_tokens, 2 * FAKE_USAGE.inputTokens);
 });
 
-Deno.test('says why when the user may not use Bite, and saves nothing', async () => {
-  const { ctx, inserted } = context(new FakeModel(), {
+Deno.test('says why when the user may not use Bite, and keeps nothing of it', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel(), {
     ai_access: { allowed: false, reason: 'limit_reached' },
   });
 
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
     { event: 'error', reason: 'limit_reached' },
   ]);
-  assertEquals(inserted, []);
+  // The thread started for it goes again, and the question is not asked.
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
 });
 
 Deno.test('goes on with a thread, reading its earlier messages as text', async () => {
@@ -280,9 +286,10 @@ Deno.test("takes a later request's face off, and goes on after a space", async (
   assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, said);
 });
 
-Deno.test('says why when an answer comes without text, and saves nothing', async () => {
+Deno.test('says why when an answer comes without text, and keeps the question', async () => {
   const blocked = context(new FakeModel({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }));
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), blocked.ctx)), [
+    { event: 'thread', threadId: 100 },
     { event: 'error', reason: 'blocked' },
   ]);
   const faceOnly = context(new FakeModel([{ type: 'text', text: '[[sad]]' }]));
@@ -290,13 +297,18 @@ Deno.test('says why when an answer comes without text, and saves nothing', async
     event: 'error',
     reason: 'unavailable',
   });
-  // A thread started for an answer that said nothing goes again.
-  assertEquals(blocked.inserted, []);
-  assertEquals(
-    faceOnly.inserted.map(({ table }) => table),
-    ['coach_threads'],
-  );
-  assertEquals(faceOnly.deleted, ['coach_threads 100']);
+  // The question stays in its thread without an answer, as the app shows it.
+  for (const { inserted, deleted } of [blocked, faceOnly]) {
+    assertEquals(
+      inserted.map(({ table }) => table),
+      ['coach_threads', 'coach_messages'],
+    );
+    assertEquals(
+      inserted[1].rows.map(({ role }) => role),
+      ['user'],
+    );
+    assertEquals(deleted, []);
+  }
 });
 
 Deno.test('keeps what was said when the budget runs out after a lookup', async () => {
