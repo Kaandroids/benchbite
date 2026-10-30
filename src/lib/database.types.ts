@@ -1874,6 +1874,14 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      log_meal_estimate: {
+        Args: { day: string; items: Json; meal: Database['public']['Enums']['meal'] };
+        Returns: {
+          created_food: boolean;
+          custom_food_id: number;
+          entry_id: number;
+        }[];
+      };
       log_weight: { Args: { today: string; weight_kg: number }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
