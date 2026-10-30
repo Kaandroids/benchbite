@@ -1,4 +1,4 @@
-import { afterEvent, afterStream, beginning, type Ending } from './chat-ending';
+import { afterEvent, afterStream, beginning, cutOf, type Ending } from './chat-ending';
 import type { ChatEvent } from './chat-stream';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -93,4 +93,18 @@ it('starts a new thread when its thread is gone, and keeps it on any other failu
   });
   expect(afterStream(read(7), 'failed', 500).threadId).toBe(7);
   expect(afterStream(read(7), 'failed').threadId).toBe(7);
+});
+
+it('shows an answer stopped by the user as stopped, and one stopped otherwise as cut off', () => {
+  expect(cutOf('stopped')).toBe('stopped');
+  expect(['cut', 'failed', 'refused'].map((why) => cutOf(why as never))).toEqual([
+    'cut_off',
+    'cut_off',
+    'cut_off',
+  ]);
+  expect([cutOf(null), cutOf(undefined)]).toEqual([undefined, undefined]);
+  // Told by the function, as when it saw the stop itself.
+  expect(read(7, { event: 'done', threadId: 7, messageId: 9, interrupted: 'stopped' }).cut).toBe(
+    'stopped',
+  );
 });

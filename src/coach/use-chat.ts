@@ -192,6 +192,8 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
 
   return {
     messages,
+    /** The thread the chat goes on in, once it has one. */
+    thread: () => threadId.current,
     status,
     tool,
     failure,

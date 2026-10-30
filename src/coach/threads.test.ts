@@ -1,4 +1,4 @@
-import { messageText } from './threads';
+import { messageText, storedMessages } from './threads';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -16,5 +16,42 @@ describe('messageText', () => {
   it('reads nothing of content that is not a list of parts', () => {
     expect(messageText(null)).toBe('');
     expect(messageText({ type: 'text', text: 'x' })).toBe('');
+  });
+});
+
+describe('storedMessages', () => {
+  const row = (id: number, role: 'user' | 'bite', interrupted: string | null = null) => ({
+    id,
+    role,
+    content: [{ type: 'text', text: `Message ${id}` }],
+    expression: role === 'bite' ? ('happy' as const) : null,
+    interrupted: interrupted as 'stopped' | 'cut' | null,
+    created_at: '2026-10-30T12:00:00Z',
+  });
+
+  it('says how an answer that stopped short ended, as it did when it came', () => {
+    const messages = storedMessages([
+      row(1, 'user'),
+      row(2, 'bite', 'stopped'),
+      row(3, 'user'),
+      row(4, 'bite', 'cut'),
+      row(5, 'user'),
+      row(6, 'bite'),
+    ]);
+
+    expect(messages.map((message) => message.cut)).toEqual([
+      undefined,
+      'stopped',
+      undefined,
+      'cut_off',
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('shows a question no answer followed as not answered', () => {
+    const messages = storedMessages([row(1, 'user'), row(2, 'bite'), row(3, 'user')]);
+
+    expect(messages.map((message) => message.unanswered)).toEqual([undefined, undefined, true]);
   });
 });
