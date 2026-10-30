@@ -191,3 +191,58 @@ it('shows a lookup Bite makes after it started writing', async () => {
   expect(screen.getByText('Let me check.')).toBeOnTheScreen();
   expect(screen.getByText('Checking your records…')).toBeOnTheScreen();
 });
+
+it('says an answer was stopped, under what came of it', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'text', text: 'Your week' });
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+
+  expect(screen.getByText('Stopped')).toBeOnTheScreen();
+});
+
+it('says a question was not answered, and asks it again', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+
+  expect(screen.getByText('Not answered')).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
+
+  expect(streamChat).toHaveBeenCalledTimes(2);
+  expect(stream.request()).toMatchObject({ message: 'How was my week?' });
+  // It moves down, to be answered there, rather than staying unanswered above.
+  expect(screen.getAllByText('How was my week?')).toHaveLength(1);
+  expect(screen.queryByText('Not answered')).toBeNull();
+});
+
+it('says an answer was cut off, and tries the question again', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'text', text: 'Your week' },
+    { event: 'error', reason: 'unavailable' },
+  );
+  await stream.end();
+
+  expect(screen.getByText('Cut off')).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+
+  expect(streamChat).toHaveBeenCalledTimes(2);
+});
+
+it('says when Bite answers on another device', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'error', reason: 'call_in_progress' });
+  await stream.end();
+
+  expect(
+    screen.getByText('Bite is answering on another device. Try again in a moment.'),
+  ).toBeOnTheScreen();
+});
