@@ -17,8 +17,8 @@ the model is limited and counted (ADR 0051).
   one), the app's language and the user's day, and answers as server-sent events: for a new
   thread, `thread` with its id first, so that the app keeps it however the answer ends;
   `expression`, then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at
-  the end either `done` with the thread and message, and `interrupted: true` in it when the
-  answer stopped short, or `error` with a reason when Bite saved no answer (`plan_required`,
+  the end either `done` with the thread and message, and `interrupted` in it when the answer
+  stopped short, with why (`failed`, `refused`, `stopped` or `cut`), or `error` with a reason when Bite saved no answer (`plan_required`,
   `limit_reached`, `blocked`, `unavailable`…).
 - **What Bite is told, in order:** fixed instructions (its character, safety rules and its face),
   the same for every user so that the provider can cache them; the thread's last 20 messages, as
@@ -41,8 +41,9 @@ the model is limited and counted (ADR 0051).
   (the app stopped it, the budget ran out after a lookup, it was cut at the token limit): the
   user's message and Bite's, with its lookups and their results, its face,
   and what its requests used. The lookups are trimmed to what a message may hold. When Bite
-  said nothing, the question stays in the thread without an answer, as the app shows it, so that
-  Bite sees it next time; a refused message is not kept, and a thread started for it goes again.
+  said nothing, a question the model was asked stays in the thread without an answer, as the app
+  shows it, so that Bite sees it next time; a message that never reached the model, as when it
+  was refused or stopped first, is not kept, and a thread started for it goes again.
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered

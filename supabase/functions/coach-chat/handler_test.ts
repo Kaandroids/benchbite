@@ -1,6 +1,7 @@
 import { assertEquals } from '@std/assert';
 
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
+import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, handleChatRequest } from './handler.ts';
 
@@ -344,7 +345,12 @@ Deno.test('keeps what was said when the budget runs out after a lookup', async (
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+  assertEquals(answer.at(-1), {
+    event: 'done',
+    threadId: 100,
+    messageId: 102,
+    interrupted: 'refused',
+  });
   assertEquals(inserted.length, 2);
 });
 
@@ -358,7 +364,73 @@ Deno.test('says an answer cut at the token limit stopped short', async () => {
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: true });
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: 'cut' });
+});
+
+Deno.test('says an answer the model broke off failed, and keeps what was said', async () => {
+  // The second request finds no turn left, and fails.
+  const model = new FakeModel([
+    { type: 'text', text: '[[neutral]] Let me check.' },
+    { type: 'toolCall', name: 'get_records', args: {} },
+  ]);
+  const { ctx, inserted } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), {
+    event: 'done',
+    threadId: 100,
+    messageId: 102,
+    interrupted: 'failed',
+  });
+  assertEquals(inserted.length, 2);
+});
+
+/** A model whose every request fails at the provider, after it was made. */
+class FailingModel extends FakeModel {
+  override stream(_request: ModelRequest): AsyncIterable<StreamEvent> {
+    return {
+      [Symbol.asyncIterator]: () => ({
+        next: () =>
+          Promise.reject(
+            new ModelError('overloaded', { status: 503, retryable: true, billed: true }),
+          ),
+      }),
+    };
+  }
+}
+
+Deno.test('keeps the question when the model fails before a word', async () => {
+  const { ctx, inserted, deleted } = context(new FailingModel());
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable' },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads', 'coach_messages'],
+  );
+  assertEquals(deleted, []);
+});
+
+Deno.test('keeps nothing when the answer is stopped before the model is asked', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const { ctx, inserted, deleted } = context(model);
+
+  const response = await handleChatRequest(ask(MESSAGE), ctx);
+  await response.body!.cancel();
+  // The function goes on after the stop until it has dropped the new thread.
+  for (let tick = 0; tick < 100 && !deleted.length; tick++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  assertEquals(model.requests, []);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
 });
 
 Deno.test('answers more lookups than a round may make with an error', async () => {

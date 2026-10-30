@@ -5,7 +5,13 @@ import { z } from 'zod';
 
 import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
-import type { Finish, LanguageModel, Message, Part } from '../_shared/llm/mod.ts';
+import {
+  type Finish,
+  type LanguageModel,
+  type Message,
+  ModelError,
+  type Part,
+} from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { type Expression, FaceReader, LANGUAGES, marker, snapshotText, SYSTEM } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
@@ -58,8 +64,8 @@ export type ChatEvent =
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
   | { event: 'text'; text: string }
-  /** The turn is saved; `interrupted` when the answer stopped before its end. */
-  | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
+  /** The turn is saved; `interrupted` says why when the answer stopped before its end. */
+  | { event: 'done'; threadId: number; messageId: number; interrupted?: Interruption }
   /**
    * Bite saved no answer, and why. The question is kept unless the user may not ask now, as
    * when the budget is used up.
@@ -168,6 +174,12 @@ class Turn {
   }
 }
 
+/**
+ * Why an answer stopped before its end: the model failed, the user may not go on, the request was
+ * stopped, or the model cut it, as at the token limit.
+ */
+export type Interruption = 'failed' | 'refused' | 'stopped' | 'cut';
+
 async function answer(
   request: ChatRequest,
   history: Message[],
@@ -182,6 +194,8 @@ async function answer(
   const turn = new Turn(send);
   let failure: string | undefined;
   let refused = false;
+  // Whether a request reached the model; a message that never did is not kept.
+  let asked = false;
   let threadId = request.threadId;
 
   // Nothing is written for a user who may not ask Bite now.
@@ -232,6 +246,7 @@ async function answer(
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
+        asked = true;
         if (isStopped()) break;
         if (event.type === 'text') {
           turn.said(event.text);
@@ -272,15 +287,17 @@ async function answer(
     } else {
       logError('Bite could not answer', error);
       failure = 'unavailable';
+      // A provider's error comes from a request that was made.
+      if (error instanceof ModelError) asked = true;
     }
   }
 
   if (!threadId) return send({ event: 'error', reason: failure ?? 'unavailable' });
   if (!turn.text.trim()) {
     const reason = failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable');
-    // A refused question is not asked; any other stays in the thread without an answer, as the
-    // app shows it, so that Bite sees it next time too.
-    if (refused) {
+    // A question that reached the model stays in the thread without an answer, as the app shows
+    // it, so that Bite sees it next time too; one that did not, as when refused, is not kept.
+    if (refused || !asked) {
       if (!request.threadId) await keepAlive(dropThread(context, threadId));
     } else {
       await keepAlive(saveQuestion(context, threadId, request));
@@ -288,10 +305,18 @@ async function answer(
     return send({ event: 'error', reason });
   }
   // What came is kept, as when the app stops the answer, and said to have stopped short.
-  const interrupted = failure !== undefined || isStopped() || turn.finish !== 'stop';
+  const interrupted: Interruption | undefined = refused
+    ? 'refused'
+    : failure
+      ? 'failed'
+      : isStopped()
+        ? 'stopped'
+        : turn.finish !== 'stop'
+          ? 'cut'
+          : undefined;
   const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
-  send({ event: 'done', threadId, messageId, ...(interrupted && { interrupted: true }) });
+  send({ event: 'done', threadId, messageId, ...(interrupted && { interrupted }) });
 }
 
 async function lookUp(
