@@ -53,6 +53,8 @@ const ChatRequest = z.object({
   language: z.enum(LANGUAGES),
   /** The user's day, as their device has it. */
   today: DAY,
+  /** The name the app stops this request by. */
+  requestId: z.uuid().optional(),
 }) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
 
@@ -109,27 +111,83 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     history = messages.data.reverse().flatMap(toMessage);
   }
 
-  let stopped = false;
+  const stop = new Stop(context, request.requestId);
   const body = new ReadableStream<Uint8Array>({
     start: (controller) => {
       const encoder = new TextEncoder();
       const send = (event: ChatEvent) => {
-        if (stopped) return;
+        if (stop.cancelled) return;
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
-      return answer(request, history, context, send, () => stopped).finally(() => {
-        if (!stopped) controller.close();
+      return answer(request, history, context, send, stop).finally(() => {
+        if (!stop.cancelled) controller.close();
+        return keepAlive(stop.forget());
       });
     },
     // The app stopped the answer: what came is kept, and the model is stopped.
-    cancel: () => {
-      stopped = true;
-    },
+    cancel: () => stop.cancel(),
   });
   return new Response(body, {
     headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' },
   });
+}
+
+/** How often the function looks whether the app stopped the answer, while it comes. */
+const STOP_CHECK_MS = 1000;
+
+/**
+ * Whether the app stopped the answer (#327, ADR 0057): its request was closed, which does not
+ * always reach the function, or it said so with stop_coach_request(), which the function reads
+ * when asked to `look`, at most once a second unless `now`.
+ */
+class Stop {
+  #cancelled = false;
+  #asked = false;
+  #lookedAt = 0;
+
+  constructor(
+    private readonly context: ChatContext,
+    private readonly requestId: string | undefined,
+  ) {}
+
+  get cancelled() {
+    return this.#cancelled;
+  }
+
+  /** Whether the answer was stopped, as far as is known now. */
+  get stopped() {
+    return this.#cancelled || this.#asked;
+  }
+
+  cancel() {
+    this.#cancelled = true;
+  }
+
+  async look({ now = false } = {}): Promise<boolean> {
+    if (this.stopped || !this.requestId) return this.stopped;
+    if (!now && Date.now() - this.#lookedAt < STOP_CHECK_MS) return false;
+    this.#lookedAt = Date.now();
+    const { data, error } = await this.context.admin
+      .from('coach_stops')
+      .select('request_id')
+      .eq('request_id', this.requestId)
+      .eq('user_id', this.context.userId)
+      .maybeSingle();
+    if (error) logError('Could not look for a stop', error);
+    this.#asked = !!data;
+    return this.#asked;
+  }
+
+  /** Removes the stop of this request, if the app sent one. */
+  async forget() {
+    if (!this.requestId) return;
+    const { error } = await this.context.admin
+      .from('coach_stops')
+      .delete()
+      .eq('request_id', this.requestId);
+    if (error) logError('Could not remove a stop', error);
+  }
 }
 
 /** Bite's answer as it comes, and what is saved of it. */
@@ -183,7 +241,7 @@ async function answer(
   history: Message[],
   context: ChatContext,
   send: (event: ChatEvent) => void,
-  isStopped: () => boolean,
+  stop: Stop,
 ): Promise<void> {
   const bite = aiModel(
     { supabase: context.supabase, admin: context.admin, model: context.model },
@@ -203,6 +261,8 @@ async function answer(
   }
 
   try {
+    // A message stopped before anything began leaves nothing behind.
+    if (await stop.look({ now: true })) return;
     // A new thread is started at once, so that the app keeps it however the answer ends; it goes
     // again if the message is refused after all.
     if (!threadId) {
@@ -233,7 +293,7 @@ async function answer(
       today: request.today,
     };
 
-    for (let round = 0; round <= MAX_TOOL_ROUNDS && !isStopped(); round++) {
+    for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
       // The last round is told to answer with what it has.
       const tools = round < MAX_TOOL_ROUNDS ? TOOL_DEFINITIONS : undefined;
       const spoken: Part[] = [];
@@ -241,7 +301,7 @@ async function answer(
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
         outcome.asked = true;
-        if (isStopped()) break;
+        if (await stop.look()) break;
         if (event.type === 'text') {
           turn.said(event.text);
           spoken.push(event);
@@ -258,7 +318,7 @@ async function answer(
         }
       }
       turn.ended();
-      if (!calls.length || isStopped()) break;
+      if (!calls.length || stop.stopped) break;
 
       const results: Part[] = [];
       for (const [index, call] of calls.entries()) {
@@ -290,7 +350,7 @@ async function answer(
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
     said: turn.text.trim() !== '',
-    stopped: isStopped(),
+    stopped: stop.stopped,
     finish: turn.finish,
     newThread: !request.threadId,
   });
