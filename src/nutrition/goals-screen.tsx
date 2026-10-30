@@ -151,7 +151,7 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
             ) : (
               <>
                 {/* Allowed, as some eat less under a doctor's care, but not without a word. */}
-                {basis?.calorieFloor && result.targets.calories < basis.calorieFloor ? (
+                {basis?.calorieFloor != null && result.targets.calories < basis.calorieFloor ? (
                   <Note tone="warning">
                     {t('nutrition.goals.belowFloor', {
                       calories: format(result.targets.calories),

@@ -185,7 +185,10 @@ export function useUseCalculatedTargets() {
   });
 }
 
-/** What the calculated targets are worked out from: the goal, its target and pace, and activity. */
+/**
+ * What the targets are worked out from and kept to: the goal, its target and pace, activity, the
+ * height and the calorie floor.
+ */
 export type TargetBasis = {
   goal: Database['public']['Enums']['goal_kind'];
   targetWeightKg: number | null;
@@ -197,7 +200,7 @@ export type TargetBasis = {
   calorieFloor: number | null;
 };
 
-/** The saved goal and activity the calculated targets come from; null before the onboarding. */
+/** The saved goal, activity, height and floor the targets come from; null before the onboarding. */
 export function useTargetBasis() {
   return useQuery({
     queryKey: ['nutrition-targets', 'basis'],

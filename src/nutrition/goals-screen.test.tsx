@@ -102,7 +102,10 @@ describe('GoalsScreen', () => {
 
     expect(screen.getByText(`1,400 kcal is below ${warning}`)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Save goals' }));
-    expect(setOwn).toHaveBeenCalled();
+    expect(setOwn).toHaveBeenCalledWith(
+      { calories: 1400, proteinG: 135, carbsG: 100, fatG: 54 },
+      expect.anything(),
+    );
   });
 
   it('keeps Save off while the macros make more than the calories', async () => {
