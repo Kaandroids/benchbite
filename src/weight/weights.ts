@@ -4,9 +4,7 @@ import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
-import { keepTargetsFromToday } from '@/nutrition/targets';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
-import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 
 /** The query keys of the weights, which logging one reloads. */
@@ -90,27 +88,18 @@ export function weightChange(entries: readonly WeightEntry[]): number | null {
  */
 export function useLogWeight() {
   const queryClient = useQueryClient();
-  const session = useSession();
   return useMutation({
     // One save at a time, so that on a slow connection an earlier weight cannot land last.
     scope: { id: 'log-weight' },
+    // The calculated targets follow the weight, and today with them, in the same call.
     mutationFn: async (weightKg: number) => {
-      if (session.status !== 'ready') {
-        throw new Error('Not signed in');
-      }
-      const { error } = await supabase.from('weight_entries').upsert(
-        {
-          user_id: session.session.user.id,
-          weight_kg: weightKg,
-          measured_on: toIsoDate(new Date()),
-        },
-        { onConflict: 'user_id,measured_on' },
-      );
+      const { error } = await supabase.rpc('log_weight', {
+        weight_kg: weightKg,
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      // The calculated targets follow the weight, and today with them.
-      await keepTargetsFromToday();
     },
     // Today's calories are counted for the streak and charted against the targets, which follow
     // the weight.

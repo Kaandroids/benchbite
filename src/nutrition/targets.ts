@@ -70,19 +70,6 @@ export function useDayTargets(day: string) {
   });
 }
 
-/**
- * Writes the targets in use over today and the days after it that kept some, after they changed:
- * a day follows them while it lasts, and keeps the last ones once it is past (ADR 0040).
- */
-export async function keepTargetsFromToday() {
-  const { error } = await supabase.rpc('refresh_day_nutrition_targets', {
-    from_day: toIsoDate(new Date()),
-  });
-  if (error) {
-    throw error;
-  }
-}
-
 /** The calculated targets, whether or not the user uses their own (ADR 0039). */
 export function useCalculatedTargets() {
   return useQuery({
@@ -244,13 +231,12 @@ export function useRecalculateTargets() {
         target_weight_kg: answers.targetWeightKg as number,
         weekly_pace_kg: answers.weeklyPaceKg as number,
         activity_level: answers.activity,
+        today: toIsoDate(new Date()),
       });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }

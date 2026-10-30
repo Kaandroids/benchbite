@@ -170,24 +170,20 @@ describe('useRecalculateTargets', () => {
         activity: 'moderate',
       }),
     );
-    expect(rpc).toHaveBeenNthCalledWith(1, 'recalculate_nutrition_targets', {
+    // Today follows them in the same call.
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('recalculate_nutrition_targets', {
       goal: 'stay_healthy',
       target_weight_kg: null,
       weekly_pace_kg: null,
       activity_level: 'moderate',
-    });
-    expect(rpc).toHaveBeenNthCalledWith(2, 'refresh_day_nutrition_targets', {
-      from_day: '2026-10-28',
+      today: '2026-10-28',
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
-  it('reloads the targets when today cannot follow, as the answers are saved', async () => {
-    rpc.mockImplementation(((name: string) =>
-      Promise.resolve({
-        data: null,
-        error: name === 'refresh_day_nutrition_targets' ? { code: '22023' } : null,
-      })) as never);
+  it('reloads the targets when the change fails', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useRecalculateTargets(), { queryClient });
@@ -200,15 +196,11 @@ describe('useRecalculateTargets', () => {
       }),
     );
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', { from_day: '2026-10-28' });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
   });
 
-  it('reloads own targets too when today cannot follow them', async () => {
+  it('reloads own targets too when they cannot be saved', async () => {
     rpc.mockResolvedValue({ data: null, error: { code: '22023' } } as never);
-    jest
-      .mocked(supabase.from)
-      .mockReturnValue({ upsert: jest.fn().mockResolvedValue({ error: null }) } as never);
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useSetOwnTargets(), { queryClient });

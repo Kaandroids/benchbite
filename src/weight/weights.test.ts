@@ -76,18 +76,15 @@ describe('useLogWeight', () => {
   afterEach(() => jest.useRealTimers());
 
   it("saves the weight for today's date on the device and loads the weights and targets again", async () => {
-    upsert.mockResolvedValue({ error: null });
     const queryClient: QueryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { result } = await renderHook(() => useLogWeight(), { queryClient });
     await act(() => result.current.mutateAsync(79.5));
-    expect(upsert).toHaveBeenCalledWith(
-      { user_id: 'user-1', weight_kg: 79.5, measured_on: '2026-10-22' },
-      { onConflict: 'user_id,measured_on' },
-    );
-    // Today follows the targets the new weight gives, on the device's date (ADR 0040).
-    expect(supabase.rpc).toHaveBeenCalledWith('refresh_day_nutrition_targets', {
-      from_day: '2026-10-22',
+    // Today follows the targets the new weight gives, on the device's date, in the same call
+    // (ADR 0040).
+    expect(supabase.rpc).toHaveBeenCalledWith('log_weight', {
+      weight_kg: 79.5,
+      today: '2026-10-22',
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
@@ -97,28 +94,33 @@ describe('useLogWeight', () => {
 
   it('saves one weight at a time, in the order they were made', async () => {
     let finishFirst = () => {};
-    upsert
+    jest
+      .mocked(supabase.rpc)
       .mockReturnValueOnce(
         new Promise((resolve) => {
-          finishFirst = () => resolve({ error: null });
-        }),
+          finishFirst = () => resolve({ data: null, error: null });
+        }) as never,
       )
-      .mockResolvedValueOnce({ error: null });
+      .mockResolvedValueOnce({ data: null, error: null } as never);
     const { result } = await renderHook(() => useLogWeight());
     await act(async () => {
       result.current.mutate(79.6);
       result.current.mutate(79.7);
     });
     // The second waits for the first, so the first cannot reach the database last.
-    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
     await act(async () => finishFirst());
-    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(2));
-    expect(upsert.mock.calls.map(([entry]) => entry.weight_kg)).toEqual([79.6, 79.7]);
+    await waitFor(() => expect(supabase.rpc).toHaveBeenCalledTimes(2));
+    expect(
+      jest
+        .mocked(supabase.rpc)
+        .mock.calls.map(([, args]) => (args as { weight_kg: number }).weight_kg),
+    ).toEqual([79.6, 79.7]);
   });
 
   it('fails with the error the database returns', async () => {
     const error = { code: '23514', message: 'check violation' };
-    upsert.mockResolvedValue({ error });
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error } as never);
     const { result } = await renderHook(() => useLogWeight());
     await act(() => expect(result.current.mutateAsync(10)).rejects.toBe(error));
   });
