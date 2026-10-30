@@ -1574,7 +1574,13 @@ export type Database = {
       };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       add_workout_alternative: {
-        Args: { exercises?: Json; name?: string; today: string; workout_id: number };
+        Args: {
+          exercises?: Json;
+          name?: string;
+          source_alternative_id?: number;
+          today: string;
+          workout_id: number;
+        };
         Returns: number;
       };
       age_in_years: { Args: { birth_year: number }; Returns: number };
