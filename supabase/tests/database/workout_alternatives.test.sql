@@ -5,11 +5,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(47);
+select plan(49);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.com');
+  ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.com');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -375,6 +376,39 @@ select throws_ok(
 select lives_ok(
   $$ select public.use_workout_alternative(pg_temp.id('thrust'), current_date) $$,
   'so that the alternative can still be put in use'
+);
+
+-- C's exercise is made without the functions, so that C has not taken the user's lock yet.
+reset role;
+insert into public.exercises (
+  id, owner_id, name, level, category, primary_muscles, secondary_muscles, instructions,
+  image_paths, metrics
+) values (
+  'custom-step-up', '00000000-0000-0000-0000-00000000000c', 'Step up', 'beginner', 'strength',
+  '{glutes}', '{}', '{}', '{}', '{weight,reps}'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
+select public.edit_exercise('custom-step-up', pg_temp.thrust('["weight", "reps"]'));
+reset role;
+select ok(
+  exists (
+    select 1 from pg_locks l
+    where l.locktype = 'advisory' and l.pid = pg_backend_pid()
+      and ((l.classid::bigint << 32) | l.objid::bigint)
+        = hashtextextended('limits:00000000-0000-0000-0000-00000000000c', 0)
+  ),
+  'Editing an exercise takes the user''s lock, as adding and using alternatives do'
+);
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ select public.add_workout_alternative(
+    911, null,
+    '[{"exerciseId": "custom-step-up", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 12}}}]',
+    current_date
+  ) $$,
+  'BB015', null,
+  'An alternative cannot have another user''s exercise'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');

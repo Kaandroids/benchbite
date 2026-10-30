@@ -311,7 +311,7 @@ grant execute on function public.reorder_workout_alternatives(bigint, bigint[]) 
 
 -- As before (20261024150000_keep_targets_suited.sql), and an alternative not in use keeps a
 -- target for the exercise too: changing what it records would leave that alternative one that
--- can never be put in use again, nor edited.
+-- can never be put in use again, nor edited. It takes the user's lock, as those functions do.
 create or replace function public.edit_exercise(exercise_id text, exercise jsonb)
 returns void
 language plpgsql
@@ -323,6 +323,9 @@ declare
   current_metrics public.exercise_metric[];
   fields record;
 begin
+  -- The user's lock first, as add_workout_alternative() and use_workout_alternative() take it, so
+  -- that an alternative is never added with an exercise whose metrics change meanwhile.
+  perform public.lock_user_limits(caller_id);
   select x.metrics into current_metrics
   from public.exercises x
   where x.id = edit_exercise.exercise_id and x.owner_id = caller_id
