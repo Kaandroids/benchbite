@@ -100,32 +100,6 @@ begin
 end;
 $$;
 
--- Numbers the alternatives of `workout_id` 1, 2, … in their order, after one is deleted. A single
--- one left is the workout itself, so it goes too, and the workout has no alternatives again.
-create function public.renumber_workout_alternatives(workout_id bigint)
-returns void
-language plpgsql
-set search_path = ''
-as $$
-begin
-  if (
-    select count(*) from public.workout_alternatives a
-    where a.workout_id = renumber_workout_alternatives.workout_id
-  ) = 1 then
-    delete from public.workout_alternatives a
-    where a.workout_id = renumber_workout_alternatives.workout_id;
-    return;
-  end if;
-  update public.workout_alternatives a set position = n.position
-  from (
-    select o.id, row_number() over (order by o.position)::smallint as position
-    from public.workout_alternatives o
-    where o.workout_id = renumber_workout_alternatives.workout_id
-  ) n
-  where a.id = n.id and a.position <> n.position;
-end;
-$$;
-
 -- Adds an alternative to the caller's `workout_id`, named `name` (blank for none), and gives its
 -- id. Without `exercises` it is a copy of the one in use; with them, they must make a workout that
 -- save_workout() saves, which is tried on the device's `today` and rolled back, so that its own
@@ -273,7 +247,22 @@ begin
     raise exception 'The alternative in use cannot be deleted' using errcode = 'BB042';
   end if;
   delete from public.workout_alternatives a where a.id = alternative.id;
-  perform public.renumber_workout_alternatives(alternative.workout_id);
+
+  -- A single one left is the workout itself, so it goes too.
+  if (
+    select count(*) from public.workout_alternatives a where a.workout_id = alternative.workout_id
+  ) = 1 then
+    delete from public.workout_alternatives a where a.workout_id = alternative.workout_id;
+    return;
+  end if;
+  -- The others close the gap, in their order.
+  update public.workout_alternatives a set position = n.position
+  from (
+    select o.id, row_number() over (order by o.position)::smallint as position
+    from public.workout_alternatives o
+    where o.workout_id = alternative.workout_id
+  ) n
+  where a.id = n.id and a.position <> n.position;
 end;
 $$;
 
@@ -312,8 +301,6 @@ $$;
 -- The helpers run only inside the functions above.
 revoke all on function public.lock_own_workout(bigint) from public, anon, authenticated;
 revoke all on function public.lock_own_alternative(bigint) from public, anon, authenticated;
-revoke all on function public.renumber_workout_alternatives(bigint)
-  from public, anon, authenticated;
 
 revoke all on function public.add_workout_alternative(bigint, text, jsonb, date) from public, anon;
 grant execute on function public.add_workout_alternative(bigint, text, jsonb, date) to authenticated;
