@@ -12,7 +12,7 @@ card in the chat that the user applies or keeps as it is, with Undo (boards 4, 5
 
 ## Decision
 
-- **Bite only proposes.** Its tools call `propose_coach_change(thread_id, kind, change)` as the
+- **Bite only proposes.** Its tools call `propose_coach_change(thread_id, kind, change, today)` as the
   user, which writes a row to `coach_proposals`: a workout as `save_workout()` takes it, or the
   user's own targets. Users read their proposals but write them only through the functions.
 - **A proposal keeps what it replaces** (`before`), read by `coach_proposal_state()`: the workout
@@ -23,6 +23,10 @@ card in the chat that the user applies or keeps as it is, with Undo (boards 4, 5
   `save_own_nutrition_targets()` for the targets, which this decision adds and the app now uses
   too: it saves them and keeps today's targets (ADR 0040) in one call. Their checks, and the days
   kept before today (ADR 0041), hold the same for Bite.
+- **Every path that changes the targets keeps today's in the same call:** saving one's own
+  targets, going back to the calculated ones (`use_calculated_nutrition_targets()`), a new goal
+  (`recalculate_nutrition_targets(..., today)`) and a logged weight (`log_weight()`), where the app
+  did it in a second call that could fail alone.
 - **A proposal must apply when it is made:** it is tried through those functions and rolled
   back, so that one that never could is refused at once with their own errors, and Bite can
   correct it.
@@ -47,5 +51,8 @@ card in the chat that the user applies or keeps as it is, with Undo (boards 4, 5
 
 - The model never holds a right the user does not have, and every change is one tap to undo.
 - A proposal can go stale, and then says so rather than applying.
+- Undo puts the workout back as it was, but not the moves a change of its weekdays ended: a
+  session moved from a day the change took off the plan stays where the plan now puts it. The
+  card says so when a change moves the days, and the user moves the session again if they want.
 - The cards say "From today" rather than the design's "From tomorrow" and "Today only", until
   scheduled changes and alternative workouts come.
