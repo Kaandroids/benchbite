@@ -239,25 +239,15 @@ Deno.test(
   },
 );
 
-Deno.test('tells a stream that broke off from a finished one', async () => {
+Deno.test('throws a billed model error when a stream ends before its answer did', async () => {
   const { model } = gemini(() =>
     sse(['data: {"candidates":[{"content":{"parts":[{"text":"Pas"}]}}]}\r\n\r\n']),
   );
 
-  const events: StreamEvent[] = [];
-  for await (const event of model.stream(request)) events.push(event);
-
-  assertEquals(events.at(-1), {
-    type: 'done',
-    usage: {
-      model: 'gemini-chat',
-      inputTokens: 0,
-      outputTokens: 0,
-      thinkingTokens: 0,
-      cachedInputTokens: 0,
-    },
-    finish: 'other',
-  });
+  const error = await assertRejects(async () => {
+    for await (const _ of model.stream(request));
+  }, ModelError);
+  assertEquals([error.retryable, error.billed], [true, true]);
 });
 
 Deno.test('throws the error a stream reports after it began, as billed', async () => {
@@ -338,7 +328,7 @@ Deno.test('stops the request when the stream is left before its end', async () =
   assertEquals(cancelled, true);
 });
 
-Deno.test("counts what a request sends, without the answer's settings", async () => {
+Deno.test('counts what a request sends, its response schema included', async () => {
   const { model, calls } = gemini(() => Response.json({ totalTokens: 321 }));
 
   assertEquals(await model.countTokens(request), 321);
@@ -348,7 +338,11 @@ Deno.test("counts what a request sends, without the answer's settings", async ()
   );
   const body = calls[0].body as { generateContentRequest: Record<string, unknown> };
   assertEquals(body.generateContentRequest.model, 'models/gemini-chat');
-  assertEquals(body.generateContentRequest.generationConfig, undefined);
+  // With the response schema, which the request sends too.
+  assertEquals(
+    (body.generateContentRequest.generationConfig as Record<string, unknown>).responseJsonSchema,
+    { type: 'object' },
+  );
   assertEquals((body.generateContentRequest.contents as unknown[]).length, 3);
 });
 

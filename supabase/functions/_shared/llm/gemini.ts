@@ -16,6 +16,9 @@ import {
 
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
+/** An answer whose connection ended before it did: worth another try, and billed for what came. */
+const BROKE_OFF = { status: 503, retryable: true, billed: true };
+
 export type GeminiOptions = {
   apiKey: string;
   /** The model and settings of each task. */
@@ -61,14 +64,19 @@ export class GeminiModel implements LanguageModel {
 
   async countTokens(request: ModelRequest): Promise<number> {
     const config = this.#options.models(request.task);
-    // What it sends: the answer's settings are not counted.
-    const { generationConfig: _, ...content } = toGeminiRequest(request, config);
     const response = await this.#post(config.model, 'countTokens', {
-      generateContentRequest: { model: `models/${config.model}`, ...content },
+      generateContentRequest: {
+        model: `models/${config.model}`,
+        ...toGeminiRequest(request, config),
+      },
     });
     const body = (await response.json()) as { totalTokens?: number };
     if (typeof body.totalTokens !== 'number') {
-      throw new ModelError('Gemini: countTokens gave no count', 502, true, false);
+      throw new ModelError('Gemini: countTokens gave no count', {
+        status: 502,
+        retryable: true,
+        billed: false,
+      });
     }
     return body.totalTokens;
   }
@@ -80,7 +88,7 @@ export class GeminiModel implements LanguageModel {
       body = await response.json();
     } catch (error) {
       // As when the connection drops before the whole answer came; what it used is unknown.
-      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, 503, true, true);
+      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, BROKE_OFF);
     }
     return {
       parts: answerParts(body).map(fromGeminiPart),
@@ -101,23 +109,23 @@ export class GeminiModel implements LanguageModel {
         try {
           next = await chunks.next();
         } catch (error) {
-          throw new ModelError(
-            `Gemini: the stream broke off: ${messageOf(error)}`,
-            503,
-            true,
-            true,
-          );
+          throw new ModelError(`Gemini: the stream broke off: ${messageOf(error)}`, BROKE_OFF);
         }
-        if (next.done) break;
+        if (next.done) {
+          // A stream that ends cleanly but without its last chunk was cut off all the same.
+          if (!last.candidates?.[0]?.finishReason && !last.promptFeedback?.blockReason) {
+            throw new ModelError('Gemini: the stream ended before its answer did', BROKE_OFF);
+          }
+          break;
+        }
         const chunk = next.value;
         if (chunk.error) {
           const status = chunk.error.code ?? 500;
-          throw new ModelError(
-            `Gemini: ${status} ${chunk.error.message}`,
+          throw new ModelError(`Gemini: ${status} ${chunk.error.message}`, {
             status,
-            isRetryable(status),
-            true,
-          );
+            retryable: isRetryable(status),
+            billed: true,
+          });
         }
         last = chunk;
         // Each chunk counts the whole call so far; the last one that counts is the total.
@@ -134,8 +142,7 @@ export class GeminiModel implements LanguageModel {
     yield {
       type: 'done',
       usage: used(),
-      // Only the last chunk of a stream says why it ended: without it, the stream broke off.
-      finish: finishOf(last, 'other'),
+      finish: finishOf(last),
     };
   }
 
@@ -242,12 +249,10 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   };
 }
 
-/** Why the answer ended; `unsaid` when Gemini gives no reason. */
-function finishOf(response: GeminiResponse, unsaid: Finish = 'stop'): Finish {
+function finishOf(response: GeminiResponse): Finish {
   if (response.promptFeedback?.blockReason) return 'blocked';
   switch (response.candidates?.[0]?.finishReason) {
     case undefined:
-      return unsaid;
     case 'STOP':
       return 'stop';
     case 'MAX_TOKENS':
@@ -295,12 +300,11 @@ async function modelError(response: Response): Promise<ModelError> {
   const body = await response.json().catch(() => undefined);
   const message = body?.error?.message ?? response.statusText;
   // Refused before answering, which Gemini does not bill.
-  return new ModelError(
-    `Gemini: ${response.status} ${message}`,
-    response.status,
-    isRetryable(response.status),
-    false,
-  );
+  return new ModelError(`Gemini: ${response.status} ${message}`, {
+    status: response.status,
+    retryable: isRetryable(response.status),
+    billed: false,
+  });
 }
 
 function messageOf(error: unknown): string {

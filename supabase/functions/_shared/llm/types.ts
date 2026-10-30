@@ -108,13 +108,18 @@ export interface LanguageModel {
  * failed part-way, having used what is not known.
  */
 export class ModelError extends Error {
+  readonly status: number;
+  readonly retryable: boolean;
+  readonly billed: boolean;
+
   constructor(
     message: string,
-    readonly status: number,
-    readonly retryable: boolean,
-    readonly billed: boolean,
+    { status, retryable, billed }: { status: number; retryable: boolean; billed: boolean },
   ) {
     super(message);
+    this.status = status;
+    this.retryable = retryable;
+    this.billed = billed;
     this.name = 'ModelError';
   }
 }
