@@ -229,3 +229,13 @@ Deno.test(
     }
   },
 );
+
+Deno.test("gives the device's local time after the date, when the app sent it", () => {
+  const snapshot = { date: '2026-10-30', weekday: 'Friday' };
+  const lines = (s: Snapshot) => snapshotText(s, 'en').split('\n').slice(1, 3);
+  assertEquals(lines({ ...snapshot, time: '19:30' }), [
+    'Date: 2026-10-30, Friday',
+    'Local time: 19:30',
+  ]);
+  assertEquals(lines(snapshot), ['Date: 2026-10-30, Friday', 'Reply in: English']);
+});

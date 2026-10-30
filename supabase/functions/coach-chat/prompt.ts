@@ -101,6 +101,7 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
   const { profile, goal, weightKg, targets, eaten, training, workouts, streak } = snapshot;
   const lines = [
     `Date: ${snapshot.date}, ${snapshot.weekday}`,
+    ...(snapshot.time ? [`Local time: ${snapshot.time}`] : []),
     `Reply in: ${LANGUAGE_NAMES[language]}`,
   ];
   if (profile) {

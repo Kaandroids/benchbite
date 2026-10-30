@@ -13,6 +13,8 @@ export type Snapshot = {
   /** The user's day, as their device has it. */
   date: string;
   weekday: string;
+  /** The device's local time, HH:MM, when the app sent it. */
+  time?: string;
   profile?: {
     name?: string;
     age: number;
@@ -45,8 +47,12 @@ export type Snapshot = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/** Reads the user's snapshot on `today`, a date of their device. */
-export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
+/** Reads the user's snapshot on `today`, a date of their device, at `time` there. */
+export async function loadSnapshot(
+  supabase: Client,
+  today: string,
+  time?: string,
+): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
   const [profile, goal, pace, weight, nutrition, planned, trained, streak] = await Promise.all([
     supabase
@@ -76,6 +82,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   const snapshot: Snapshot = {
     date: today,
     weekday: WEEKDAYS[(new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7],
+    ...(time && { time }),
   };
   const p = profile.data;
   if (p) {
