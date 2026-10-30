@@ -8,6 +8,7 @@ import { Card, listDivider } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { Was } from '@/components/ui/was';
 import { useNumberFormat } from '@/i18n/units';
 import { radii, spacing, useTheme, type ColorTokens } from '@/theme';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
@@ -170,7 +171,10 @@ function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> 
               })}
               style={[styles.row, listDivider(index === 0, colors.border)]}
             >
-              <Change from={swap.from} to={<Text variant="bodyStrong">{swap.to}</Text>} />
+              <Text variant="bodyStrong">
+                <Was value={swap.from} variant="body" />
+                {swap.to}
+              </Text>
               <Text variant="caption" color="textMuted">
                 {detail}
               </Text>
@@ -232,37 +236,17 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
               <Text variant="bodyStrong" style={styles.flex}>
                 {name}
               </Text>
-              <Change
-                from={was}
-                to={
-                  <Text variant="label" color={color}>
-                    {to}
-                  </Text>
-                }
-              />
+              <Text variant="label">
+                {was !== undefined ? <Was value={was} variant="body" /> : null}
+                <Text variant="label" color={color}>
+                  {to}
+                </Text>
+              </Text>
             </View>
           );
         })}
       </View>
     </>
-  );
-}
-
-/** What was, struck through, an arrow, and what comes; only what comes when nothing was. */
-function Change({ from, to }: { from?: string; to: ReactNode }) {
-  const { spacing } = useTheme();
-  return (
-    <View style={[styles.change, { gap: spacing.sm }]}>
-      {from !== undefined ? (
-        <>
-          <Text color="textMuted" style={styles.struck}>
-            {from}
-          </Text>
-          <Icon name="arrow" size={14} color="textMuted" />
-        </>
-      ) : null}
-      {to}
-    </View>
   );
 }
 
@@ -357,14 +341,6 @@ const styles = StyleSheet.create({
   target: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  change: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  struck: {
-    textDecorationLine: 'line-through',
   },
   buttons: {
     flexDirection: 'row',
