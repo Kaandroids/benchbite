@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(45);
+select plan(47);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -345,6 +345,37 @@ select is_empty(
   'Deleting down to one leaves the workout without alternatives'
 );
 select is(pg_temp.saved(911) -> 'exercises', pg_temp.gym(), 'and as it is');
+
+-- ----------------------------------------------------------------------------------------------
+-- Custom exercises
+
+create function pg_temp.thrust(metrics jsonb) returns jsonb language sql as $$
+  select jsonb_build_object(
+    'name', 'Hip thrust', 'metrics', metrics, 'primaryMuscles', '["glutes"]'::jsonb
+  );
+$$;
+
+create temporary table thrust on commit drop as
+  select public.create_exercise(pg_temp.thrust('["weight", "reps"]')) as id;
+grant select on thrust to authenticated;
+insert into ids select 'thrust', public.add_workout_alternative(
+  911,
+  'Thrust',
+  jsonb_build_array(jsonb_build_object(
+    'exerciseId', (select id from thrust), 'sets', 3, 'restSeconds', 60,
+    'target', '{"reps": {"min": 8, "max": 12}}'::jsonb
+  )),
+  current_date
+);
+select throws_ok(
+  $$ select public.edit_exercise((select id from thrust), pg_temp.thrust('["duration"]')) $$,
+  'BB018', null,
+  'What an exercise records cannot change while an alternative not in use has it'
+);
+select lives_ok(
+  $$ select public.use_workout_alternative(911, pg_temp.id('thrust'), current_date) $$,
+  'so that the alternative can still be put in use'
+);
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select public.delete_workout(pg_temp.id('arms'), current_date);

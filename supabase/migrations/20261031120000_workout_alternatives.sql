@@ -332,3 +332,63 @@ revoke all on function public.delete_workout_alternative(bigint) from public, an
 grant execute on function public.delete_workout_alternative(bigint) to authenticated;
 revoke all on function public.reorder_workout_alternatives(bigint, bigint[]) from public, anon;
 grant execute on function public.reorder_workout_alternatives(bigint, bigint[]) to authenticated;
+
+-- As before (20261024150000_keep_targets_suited.sql), and an alternative not in use keeps a
+-- target for the exercise too: changing what it records would leave that alternative one that
+-- can never be put in use again, nor edited.
+create or replace function public.edit_exercise(exercise_id text, exercise jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller_id uuid := auth.uid();
+  current_metrics public.exercise_metric[];
+  fields record;
+begin
+  select x.metrics into current_metrics
+  from public.exercises x
+  where x.id = edit_exercise.exercise_id and x.owner_id = caller_id
+  for update;
+  if not found then
+    raise exception 'Exercise not found' using errcode = 'BB015';
+  end if;
+  select * into fields from public.custom_exercise_fields(exercise);
+  if fields.metrics <> current_metrics and exists (
+    select 1 from public.logged_sets s where s.exercise_id = edit_exercise.exercise_id
+  ) then
+    raise exception 'What the exercise records cannot change once it is logged'
+      using errcode = 'BB016';
+  end if;
+  -- A workout keeps a target that suits what the exercise records, archived workouts too, and
+  -- their alternatives.
+  if fields.metrics <> current_metrics and (
+    exists (
+      select 1 from public.workout_exercises w where w.exercise_id = edit_exercise.exercise_id
+    )
+    or exists (
+      select 1 from public.workout_alternatives a
+      where a.user_id = caller_id
+        and a.exercises @> jsonb_build_array(
+          jsonb_build_object('exerciseId', edit_exercise.exercise_id)
+        )
+    )
+  ) then
+    raise exception 'What the exercise records cannot change while a workout has it'
+      using errcode = 'BB018';
+  end if;
+  update public.exercises x set
+    name = fields.name,
+    level = fields.level,
+    category =
+      (case when 'distance' = any(fields.metrics) then 'cardio' else 'strength' end)::public.exercise_category,
+    equipment = fields.equipment,
+    primary_muscles = fields.primary_muscles,
+    secondary_muscles = fields.secondary_muscles,
+    instructions = fields.instructions,
+    image_paths = fields.image_paths,
+    metrics = fields.metrics
+  where x.id = edit_exercise.exercise_id;
+end;
+$$;
