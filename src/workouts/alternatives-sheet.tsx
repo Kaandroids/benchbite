@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useFieldStyle } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
+import { PillButton } from '@/components/ui/pill-button';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
@@ -82,7 +83,7 @@ type ManageProps = {
  */
 function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const alternatives = useWorkoutAlternatives(workout.id);
   const limits = useWorkoutLimits();
   const add = useAddAlternative(workout.id);
@@ -190,7 +191,33 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
         <Text color="textMuted">{t('workout.alternatives.body')}</Text>
       </View>
       <Card list style={{ paddingHorizontal: spacing.md }}>
-        {rows.length > 1 ? (
+        {alternatives.data === undefined ? (
+          // Not the single row, which would read as a workout without alternatives.
+          <View style={[styles.row, styles.single, { height: ROW_HEIGHT, gap: spacing.sm }]}>
+            {alternatives.isError ? (
+              <>
+                <Text
+                  variant="caption"
+                  color="danger"
+                  accessibilityRole="alert"
+                  style={styles.text}
+                >
+                  {t('workout.alternatives.loadError')}
+                </Text>
+                <PillButton
+                  label={t('common.tryAgain')}
+                  onPress={() => void alternatives.refetch()}
+                />
+              </>
+            ) : (
+              <ActivityIndicator
+                color={colors.primary}
+                accessibilityLabel={t('common.loading')}
+                style={styles.text}
+              />
+            )}
+          </View>
+        ) : rows.length > 0 ? (
           // Gestures in a modal need a root of their own on Android; sized by the list, not flex.
           <GestureHandlerRootView style={styles.gestureRoot}>
             <ReorderList

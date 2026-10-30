@@ -93,6 +93,28 @@ it('shows the workout as the only one before any is added', async () => {
   expect(screen.queryByRole('button', { name: /^Delete/ })).toBeNull();
 });
 
+it('shows neither the workout alone nor Add while the alternatives load', async () => {
+  jest.mocked(useWorkoutAlternatives).mockReturnValue({ data: undefined, isError: false } as never);
+  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  expect(screen.getByLabelText('Loading')).toBeTruthy();
+  expect(screen.queryByText('Alternative 1')).toBeNull();
+  expect(
+    screen.getByRole('button', { name: 'Add alternative' }).props.accessibilityState,
+  ).toMatchObject({ disabled: true });
+});
+
+it('says the alternatives did not load, and loads them again', async () => {
+  const refetch = jest.fn();
+  jest
+    .mocked(useWorkoutAlternatives)
+    .mockReturnValue({ data: undefined, isError: true, refetch } as never);
+  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  expect(screen.getByText("We couldn't load the alternatives.")).toBeTruthy();
+  expect(screen.queryByText('Alternative 1')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
+  expect(refetch).toHaveBeenCalled();
+});
+
 it('adds a copy of the one in use, then asks for its name', async () => {
   await render(<AlternativesSheets workout={workout} onClose={onClose} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));

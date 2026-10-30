@@ -791,6 +791,7 @@
         "delete": "Silinemedi. Tekrar dene.",
         "reorder": "Sıralama kaydedilemedi. Tekrar dene."
       },
+      "loadError": "Alternatifler yüklenemedi.",
       "title": "Alternatifler",
       "body": "Bu antrenman için başka egzersiz setleri, örneğin ev için. Kullanımdaki her yerde antrenmanın kendisidir. Sırayı değiştirmek için sürükle.",
       "inUse_one": "Kullanımda · {{count}} egzersiz",

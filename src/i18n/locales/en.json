@@ -791,6 +791,7 @@
         "delete": "We couldn't delete it. Try again.",
         "reorder": "We couldn't save the order. Try again."
       },
+      "loadError": "We couldn't load the alternatives.",
       "title": "Alternatives",
       "body": "Other sets of exercises for this workout, such as for home. The one in use is the workout everywhere. Drag to change their order.",
       "inUse_one": "In use · {{count}} exercise",

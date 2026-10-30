@@ -791,6 +791,7 @@
         "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
         "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
       },
+      "loadError": "Die Alternativen konnten nicht geladen werden.",
       "title": "Alternativen",
       "body": "Andere Übungen für dieses Workout, etwa für zu Hause. Die aktive Alternative ist überall das Workout. Ziehe sie, um die Reihenfolge zu ändern.",
       "inUse_one": "Aktiv · {{count}} Übung",
