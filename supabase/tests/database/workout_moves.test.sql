@@ -226,12 +226,14 @@ select results_eq(
   'A user undoes their own move'
 );
 
--- Changing a workout's days or archiving it deletes this week's moves that no longer fit.
+-- Changing a workout's days or archiving it deletes the moves of days not yet kept that no longer
+-- fit; days up to two days ago are kept as they went (ADR 0041). The moves are next week's, so that
+-- no day of theirs is kept whatever day the tests run on.
 reset role;
 delete from public.workout_moves where workout_id = 913;
 insert into public.workout_moves (user_id, workout_id, from_on, to_on) values
-  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(6), pg_temp.day(5)),
-  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7), pg_temp.day(3)),
+  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(6) + 7, pg_temp.day(5) + 7),
+  ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7) + 7, pg_temp.day(3) + 7),
   ('00000000-0000-0000-0000-00000000000a', 913, pg_temp.day(7) - 14, pg_temp.day(6) - 14);
 update public.workouts set weekdays = '{5,6}' where id = 913;
 select results_eq(
@@ -239,10 +241,12 @@ select results_eq(
   $$ values (pg_temp.day(7) - 14) $$,
   'Moves from a day the workout left, or to a day it is now on, are deleted, earlier weeks stay'
 );
+insert into public.workout_moves (user_id, workout_id, from_on, to_on) values
+  ('00000000-0000-0000-0000-00000000000a', 910, pg_temp.day(4) + 7, null);
 update public.workouts set active = false where id = 910;
 select is_empty(
-  $$ select 1 from public.workout_moves where workout_id = 910 $$,
-  'Archiving a workout deletes its moves of this week'
+  $$ select 1 from public.workout_moves where workout_id = 910 and from_on >= current_date $$,
+  'Archiving a workout deletes its moves still to come'
 );
 
 select * from finish();
