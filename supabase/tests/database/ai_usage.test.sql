@@ -6,7 +6,14 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(54);
+select plan(55);
+
+-- A meal photo's estimate of up to twelve items fits in its answer (ADR 0059).
+select is(
+  (select max_output_tokens from public.ai_feature_limits where feature = 'meal_photo'),
+  3000,
+  'a meal photo may answer in 3,000 tokens'
+);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -93,7 +100,7 @@ select results_eq(
 select is(
   (select used_usd from public.ai_access()),
   -- Chat, the meal photo, the review and this one.
-  0.014720 + 0.009840 + 0.090360 + 0.005120,
+  0.014720 + 0.017250 + 0.090360 + 0.005120,
   'only the most it may answer'
 );
 
