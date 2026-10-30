@@ -184,6 +184,7 @@ async function matchItems(
       const food = bestMatch(item.searchName, item.per100.kcal, await search(item.searchName));
       return {
         name: item.name,
+        searchName: item.searchName || item.name,
         grams: Math.max(1, Math.round(item.grams)),
         confidence: Math.round(item.confidence * 100) / 100,
         ...(food

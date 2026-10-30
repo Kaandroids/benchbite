@@ -135,6 +135,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
     items: [
       {
         name: 'Rice',
+        searchName: 'White rice, boiled',
         grams: 182,
         confidence: 0.83,
         food: { ref: { kind: 'library', id: 'C352032' }, name: 'White rice, boiled' },
@@ -143,6 +144,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
       },
       {
         name: 'Grilled chicken',
+        searchName: 'Chicken breast, grilled',
         grams: 120,
         confidence: 0.7,
         food: { ref: { kind: 'library', id: 'V416172' }, name: 'Chicken breast, grilled' },
@@ -153,6 +155,8 @@ Deno.test('estimates the items, with the values of the foods they match', async 
       // Mango alone is not mango chutney: the model's values, marked as estimated.
       {
         name: 'Mango chutney',
+        // What an estimated item is saved as, when it is logged (#357).
+        searchName: 'Mango chutney',
         grams: 20,
         confidence: 0.4,
         per100: { kcal: 233.3, proteinG: 0.5, carbsG: 57, fatG: 0.3 },
@@ -451,6 +455,8 @@ Deno.test(
     assertEquals(response.status, 200);
     const [item] = (await response.json()).items;
     assertEquals([item.estimated, item.per100.kcal], [true, 130]);
+    // It is named by what it is, as the search name the model gave was dropped.
+    assertEquals(item.searchName, 'Rice');
     assertEquals(searched, []);
   },
 );
