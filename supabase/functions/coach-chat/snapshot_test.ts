@@ -69,9 +69,7 @@ Deno.test('tells Bite the pace the targets really give, as the app dates the goa
   );
   assertEquals(held.goal?.achievablePaceKg, 0.32);
   assertEquals(
-    snapshotText(held, 'en').includes(
-      '(held up: the calorie floor lets the targets give only 0.32 kg a week)',
-    ),
+    snapshotText(held, 'en').includes('(held up: the targets give only 0.32 kg a week)'),
     true,
   );
 
