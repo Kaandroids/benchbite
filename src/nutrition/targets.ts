@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/lib/database.types';
 import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
 import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
@@ -137,50 +136,38 @@ function useReloadTargets() {
     ]);
 }
 
-/** Sets the user's own targets and puts them in use. */
+/**
+ * Sets the user's own targets and puts them in use, from today on, in one call
+ * (save_own_nutrition_targets(), which Bite's proposals use too, ADR 0058).
+ */
 export function useSetOwnTargets() {
   const reload = useReloadTargets();
   return useMutation({
     mutationFn: async (targets: NutritionTargets) => {
-      const { error } = await supabase.from('own_nutrition_targets').upsert(
-        {
-          calories: targets.calories,
-          protein_g: targets.proteinG,
-          carbs_g: targets.carbsG,
-          fat_g: targets.fatG,
-          in_use: true,
-        },
-        { onConflict: 'user_id' },
-      );
+      const { error } = await supabase.rpc('save_own_nutrition_targets', {
+        targets: { ...targets, inUse: true },
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }
 
-/** Puts the calculated targets back in use, keeping the user's own for next time. */
+/** Puts the calculated targets back in use, from today on, keeping the user's own for next time. */
 export function useUseCalculatedTargets() {
   const reload = useReloadTargets();
-  const session = useSession();
   return useMutation({
     mutationFn: async () => {
-      if (session.status !== 'ready') {
-        throw new Error('Not signed in');
-      }
-      const { error } = await supabase
-        .from('own_nutrition_targets')
-        .update({ in_use: false })
-        .eq('user_id', session.session.user.id);
+      const { error } = await supabase.rpc('use_calculated_nutrition_targets', {
+        today: toIsoDate(new Date()),
+      });
       if (error) {
         throw error;
       }
-      await keepTargetsFromToday();
     },
-    // Also after a failure, as the first write may have been saved.
     onSettled: reload,
   });
 }
