@@ -1,6 +1,7 @@
 import { assertEquals } from '@std/assert';
 
-import { FaceReader, messageText, untagged, untaggedAll, snapshotText } from './prompt.ts';
+import { untagged } from '../_shared/prompt.ts';
+import { FaceReader, messageText, untaggedAll, snapshotText } from './prompt.ts';
 import type { Snapshot } from './snapshot.ts';
 
 const read = (...chunks: string[]) => {

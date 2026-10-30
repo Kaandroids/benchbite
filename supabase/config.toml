@@ -434,3 +434,11 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/coach-chat/index.ts"
+
+# Estimates a meal from photos (ADR 0059). The platform verifies the user's JWT before the
+# function runs.
+[functions.estimate-meal]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/estimate-meal/index.ts"

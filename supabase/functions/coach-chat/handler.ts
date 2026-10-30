@@ -20,16 +20,15 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
+import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   type Expression,
   FaceReader,
-  LANGUAGES,
   marker,
   messageText,
   snapshotText,
   SYSTEM,
-  untagged,
   untaggedAll,
 } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';

@@ -1,5 +1,6 @@
 import { assertEquals } from '@std/assert';
 
+import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { ToolContext } from './tools.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
@@ -34,7 +35,8 @@ Deno.test("tells the model each tool's arguments as JSON Schema, from their chec
   assertEquals('$schema' in history.parameters, false);
   const search = TOOL_DEFINITIONS.find((tool) => tool.name === 'search_foods')!;
   const query = (search.parameters.properties as Record<string, { maxLength?: number }>).query;
-  assertEquals(query.maxLength, 80);
+  // As long as search_foods() searches.
+  assertEquals(query.maxLength, FOOD_QUERY_LENGTH.max);
 });
 
 Deno.test('answers a wrong call with what is wrong, for the model to correct', async () => {

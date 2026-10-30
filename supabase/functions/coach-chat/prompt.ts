@@ -10,13 +10,8 @@ import {
   paceLevel,
 } from '../_shared/body/limits.ts';
 import { Constants } from '../_shared/database.types.ts';
+import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 import type { Macros, Snapshot } from './snapshot.ts';
-
-/** The app's languages, which Bite answers in. */
-export const LANGUAGES = ['en', 'de', 'tr'] as const;
-export type Language = (typeof LANGUAGES)[number];
-
-const LANGUAGE_NAMES: Record<Language, string> = { en: 'English', de: 'German', tr: 'Turkish' };
 
 /** The faces Bite answers with (`bite_expression`). */
 export const EXPRESSIONS = Constants.public.Enums.bite_expression;
@@ -82,17 +77,6 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 
 # Your face
 Start every answer with your expression in double brackets, then the answer: ${listOf(EXPRESSIONS.map(marker))}. "Angry" only in play, such as at a skipped leg day, never at the user.`;
-
-/**
- * Text the user wrote, as it goes into the prompt: every `<`, in any form, gives way to `‹`, so
- * that nothing in it can pass for the start or end of a snapshot or a message.
- */
-export function untagged(text: string): string {
-  return text
-    .normalize('NFKC')
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
-    .replaceAll('<', '‹');
-}
 
 /** `untagged()` on every string in a value, as a tool's result. */
 export function untaggedAll(value: unknown): unknown {

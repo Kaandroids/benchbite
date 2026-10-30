@@ -3,6 +3,7 @@
 import type { ModelConfig } from './config.ts';
 import {
   type Finish,
+  type JsonSchema,
   type LanguageModel,
   ModelError,
   type ModelRequest,
@@ -186,7 +187,7 @@ function toGeminiRequest(request: ModelRequest, config: ModelConfig) {
       ...(request.maxOutputTokens && { maxOutputTokens: request.maxOutputTokens }),
       ...(request.responseSchema && {
         responseMimeType: 'application/json',
-        responseJsonSchema: request.responseSchema,
+        responseJsonSchema: geminiSchema(request.responseSchema),
       }),
     },
   };
@@ -313,6 +314,36 @@ function messageOf(error: unknown): string {
 /** Too many requests and passing outages are worth another try; a wrong request is not. */
 function isRetryable(status: number): boolean {
   return status === 429 || status >= 500;
+}
+
+/**
+ * A response schema as Gemini takes it: without `$schema` and defaults, with an exclusive bound as an inclusive
+ * one, which is all its structured output knows, and with a string's length limits also in its
+ * description, as Gemini ignores `minLength` and `maxLength` but the model reads descriptions.
+ * What the model then answers is checked against the full schema all the same.
+ */
+export function geminiSchema(schema: JsonSchema): JsonSchema {
+  const translated: JsonSchema = {};
+  for (const [key, value] of Object.entries(schema)) {
+    // Not keywords of Gemini's structured output.
+    if (key === '$schema' || key === 'default') continue;
+    if (key === 'exclusiveMinimum') translated.minimum ??= value;
+    else if (key === 'exclusiveMaximum') translated.maximum ??= value;
+    else if (key === 'properties' && isObject(value)) {
+      translated.properties = Object.fromEntries(
+        Object.entries(value).map(([name, property]) => [
+          name,
+          isObject(property) ? geminiSchema(property) : property,
+        ]),
+      );
+    } else if (key === 'items' && isObject(value)) translated.items = geminiSchema(value);
+    else translated[key] = value;
+  }
+  if (schema.type === 'string' && typeof schema.maxLength === 'number') {
+    const limit = `At most ${schema.maxLength} characters.`;
+    translated.description = schema.description ? `${schema.description} ${limit}` : limit;
+  }
+  return translated;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
