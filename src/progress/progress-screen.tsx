@@ -70,10 +70,14 @@ export function ProgressScreen() {
             today={today}
             goal={goal}
           />
-          <NutritionCard entering={cardEntering(1)} today={today} />
-          <TrainingCard entering={cardEntering(2)} today={today} />
-          <RecordsButton entering={cardEntering(3)} today={today} />
-          <StreakButton entering={cardEntering(4)} today={today} />
+          <NutritionCard
+            summaryEntering={cardEntering(1)}
+            entering={cardEntering(2)}
+            today={today}
+          />
+          <TrainingCard entering={cardEntering(3)} today={today} />
+          <RecordsButton entering={cardEntering(4)} today={today} />
+          <StreakButton entering={cardEntering(5)} today={today} />
         </>
       ) : (
         <LoadState queries={queries} />

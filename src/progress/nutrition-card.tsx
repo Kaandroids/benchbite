@@ -17,19 +17,21 @@ import { useTheme } from '@/theme';
 
 import { CardLoadState } from './card-load-state';
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
-import { SummaryBox } from './summary-box';
 
 type NutritionCardProps = {
+  /** How the card of the chart comes in. */
   entering?: CardProps['entering'];
+  /** How the card of the summary above it comes in. */
+  summaryEntering?: CardProps['entering'];
   today: Date;
 };
 
 /**
- * What was eaten over a range (ADR 0047): the range summed up against the targets of its days
- * logged, then a bar of macros for each day of a month, or each week or month of longer ranges,
- * against the average target, with the range to choose under it (#335).
+ * What was eaten over a range (ADR 0047), in two cards: the range summed up against the targets of
+ * its days logged, then a bar of macros for each day of a month, or each week or month of longer
+ * ranges, against the average target, with the range to choose under it (#335).
  */
-export function NutritionCard({ entering, today }: NutritionCardProps) {
+export function NutritionCard({ entering, summaryEntering, today }: NutritionCardProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -81,30 +83,6 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
         </Text>
       ) : (
         <>
-          {summary.targets ? (
-            <SummaryBox>
-              {/* A title, unlike the training card's caption, as the approved design has it. */}
-              <View style={[styles.summaryTitle, { gap: spacing.sm }]}>
-                <Text variant="label" accessibilityRole="header" style={styles.flex}>
-                  {t('progress.summary.title')}
-                </Text>
-                <Text variant="caption" color="textMuted">
-                  {t(`progress.summary.${shownRange}`)}
-                </Text>
-              </View>
-              <Text variant="caption" color="textMuted">
-                {t('progress.eating.logged', {
-                  count: summary.days,
-                  within: summary.withinTarget,
-                })}
-              </Text>
-              <DailyProgress
-                targets={summary.targets}
-                eaten={summary.eaten}
-                average={summary.average}
-              />
-            </SummaryBox>
-          ) : null}
           <MacroBars
             bars={spans.map((item) => ({
               key: item.start,
@@ -121,24 +99,48 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
   }
 
   return (
-    <Card entering={entering}>
-      <View style={styles.header}>
-        <Text variant="headline" accessibilityRole="header" style={styles.flex}>
-          {t('progress.eating.title')}
-        </Text>
-        {summary ? (
-          <Average
-            value={t('nutrition.kcal', { calories: format(Math.round(summary.average.calories)) })}
+    <>
+      {summary?.targets ? (
+        <Card entering={summaryEntering}>
+          <View style={[styles.header, { gap: spacing.sm }]}>
+            <Text variant="headline" accessibilityRole="header" style={styles.flex}>
+              {t('progress.summary.title')}
+            </Text>
+            <Text variant="caption" color="textMuted">
+              {t(`progress.summary.${shownRange}`)}
+            </Text>
+          </View>
+          <Text variant="caption" color="textMuted">
+            {t('progress.eating.logged', { count: summary.days, within: summary.withinTarget })}
+          </Text>
+          <DailyProgress
+            targets={summary.targets}
+            eaten={summary.eaten}
+            average={summary.average}
           />
-        ) : null}
-      </View>
-      {content}
-      <RangeControl
-        value={range}
-        onChange={setRange}
-        accessibilityLabel={t('progress.eating.rangeLabel')}
-      />
-    </Card>
+        </Card>
+      ) : null}
+      <Card entering={entering}>
+        <View style={styles.header}>
+          <Text variant="headline" accessibilityRole="header" style={styles.flex}>
+            {t('progress.eating.title')}
+          </Text>
+          {summary ? (
+            <Average
+              value={t('nutrition.kcal', {
+                calories: format(Math.round(summary.average.calories)),
+              })}
+            />
+          ) : null}
+        </View>
+        {content}
+        <RangeControl
+          value={range}
+          onChange={setRange}
+          accessibilityLabel={t('progress.eating.rangeLabel')}
+        />
+      </Card>
+    </>
   );
 }
 
@@ -149,9 +151,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  summaryTitle: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
   },
 });

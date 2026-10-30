@@ -49,7 +49,11 @@ it('charts each day of the month and sums them up against their targets', async 
       'Oct 29: 2,200 kcal, 150 g protein, 200 g carbs, 60 g fat a day, over the target',
     ),
   ).toBeTruthy();
-  expect(screen.getByRole('header', { name: 'Summary' })).toBeTruthy();
+  // The summary is a card of its own, above the chart's.
+  expect(screen.getAllByRole('header').map((node) => node.props.children)).toEqual([
+    'Summary',
+    'Calories and macros',
+  ]);
   expect(screen.getByText('Last month')).toBeTruthy();
   expect(screen.getByText('2 days logged, 1 within the target')).toBeTruthy();
   expect(screen.getByText('4,000 / 4,000 kcal')).toBeTruthy();
@@ -83,6 +87,7 @@ it('says when nothing was logged in the range', async () => {
   mockDays([day('2026-10-29', 0)]);
   await render(<NutritionCard today={TODAY} />);
   expect(screen.getByText('No meals logged in this range.')).toBeTruthy();
+  expect(screen.queryByText('Summary')).toBeNull();
 });
 
 it('says when the meals could not load, and loads them again', async () => {
