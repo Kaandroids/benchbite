@@ -13,12 +13,12 @@ import {
   MAX_ESTIMATE_ITEMS,
   MAX_MEAL_PHOTOS,
   MAX_NOTE_LENGTH,
-  MAX_PHOTO_BYTES,
-  MAX_PHOTOS_BYTES,
   MEAL_PHOTO_TYPES,
 } from '../_shared/meal/estimate.ts';
 import { matchItems } from '../_shared/meal/match.ts';
+import { BASE64, decodedBytes, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
+import { parseJson, readBody } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { ModelOutput, RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
 
@@ -30,9 +30,6 @@ export type EstimateContext = {
   /** For tests; the language model by default. */
   model?: LanguageModel;
 };
-
-/** Base64 without line breaks, as the app sends it. */
-const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
 
 const Photo = z.object({
   mimeType: z.enum(MEAL_PHOTO_TYPES),
@@ -63,7 +60,7 @@ type EstimateRequest = z.infer<typeof EstimateRequest>;
  * The largest body read, in bytes: the photos at their largest as base64, and room for the rest.
  * A larger one is refused before it is parsed.
  */
-const MAX_BODY_BYTES = Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + 20_000;
+const MAX_BODY_BYTES = photosBodyBytes(20_000);
 
 /** The HTTP status each reason is answered with. */
 const STATUS: Record<EstimateReason, number> = {
@@ -101,8 +98,7 @@ export async function handleEstimateRequest(
   }
   const request = parsed.data;
   // Too large photos are refused before anything is sent to the model.
-  const sizes = request.photos.map((photo) => decodedBytes(photo.data));
-  if (sizes.some((size) => size > MAX_PHOTO_BYTES) || sum(sizes) > MAX_PHOTOS_BYTES) {
+  if (!photosFit(request.photos.map((photo) => decodedBytes(photo.data)))) {
     return refused('photos_too_large');
   }
 
@@ -153,56 +149,6 @@ export async function handleEstimateRequest(
 /** The text of the answer, which holds its JSON. */
 function answerText(parts: Part[]): string {
   return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
-}
-
-/**
- * The body as text, read until it ends or passes `max` bytes, when reading stops and nothing is
- * given; an empty text for a body that cannot be read.
- */
-export async function readBody(req: Request, max: number): Promise<string | undefined> {
-  if (!req.body) return '';
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > max) {
-        await reader.cancel().catch(() => {});
-        return undefined;
-      }
-      chunks.push(value);
-    }
-  } catch {
-    return '';
-  }
-  const body = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(body);
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-/** How many bytes base64 data holds. */
-function decodedBytes(data: string): number {
-  const padding = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
-  return (data.length / 4) * 3 - padding;
-}
-
-function sum(values: number[]): number {
-  return values.reduce((total, value) => total + value, 0);
 }
 
 function refused(reason: EstimateReason): Response {

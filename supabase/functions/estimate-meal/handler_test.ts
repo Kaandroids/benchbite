@@ -2,9 +2,9 @@ import { assertEquals } from '@std/assert';
 
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import type { ModelResponse } from '../_shared/llm/mod.ts';
-import { MAX_PHOTO_BYTES } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
-import { type EstimateContext, handleEstimateRequest, readBody } from './handler.ts';
+import { MAX_PHOTO_BYTES } from '../_shared/photos.ts';
+import { type EstimateContext, handleEstimateRequest } from './handler.ts';
 import { RESPONSE_SCHEMA, SYSTEM } from './prompt.ts';
 
 const RICE = food({ food_id: 'C352032', name: 'White rice, boiled' }, 117);
@@ -400,7 +400,6 @@ Deno.test('stops reading a body without a length once it passes the limit', asyn
   assertEquals(await response.json(), { error: 'photos_too_large' });
   // About as many megabytes as the limit, not the whole stream.
   assertEquals(pulled <= 6, true);
-  assertEquals(await readBody(ask({ a: 'ö' }), 100), '{"a":"ö"}');
 });
 
 Deno.test('answers unavailable when the answer was cut at the token limit', async () => {
