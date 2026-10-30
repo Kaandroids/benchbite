@@ -5,7 +5,7 @@ export type BiteExpressionName = Database['public']['Enums']['bite_expression'];
 
 /** What coach-chat tells the app as Bite answers, one server-sent event each (ADR 0052). */
 export type ChatEvent =
-  /** A new thread, as soon as Bite starts to answer, which the next message goes on in. */
+  /** A new thread, first, so that the app keeps it however the answer ends. */
   | { event: 'thread'; threadId: number }
   | { event: 'expression'; expression: BiteExpressionName }
   | { event: 'tool_start'; name: string }
@@ -13,7 +13,10 @@ export type ChatEvent =
   | { event: 'text'; text: string }
   /** The turn is saved; `interrupted` when the answer stopped before its end. */
   | { event: 'done'; threadId: number; messageId: number; interrupted?: boolean }
-  /** Nothing was saved, and why: `plan_required`, `limit_reached`, `unavailable`… */
+  /**
+   * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
+   * is kept unless the user may not ask now.
+   */
   | { event: 'error'; reason: string };
 
 export type ChatRequest = {

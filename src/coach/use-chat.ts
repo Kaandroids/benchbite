@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deviceToday } from '@/i18n/dates';
-import type { Database } from '@/lib/database.types';
+import { Constants, type Database } from '@/lib/database.types';
 import { oneOf } from '@/lib/one-of';
 import { supabase } from '@/lib/supabase';
 
@@ -12,6 +12,9 @@ import { type BiteExpressionName, type ChatEvent, streamChat } from './chat-stre
 const ACCESS_KEY = ['ai', 'access'];
 
 type AccessReason = Database['public']['Enums']['ai_access_reason'];
+
+/** Every reason a message is refused, after which the function drops a thread it started for it. */
+const ACCESS_REASONS = Constants.public.Enums.ai_access_reason;
 
 /** Why the user may not chat with Bite at all now, as ai_access() says (ADR 0051). */
 const REFUSALS = [
@@ -118,6 +121,9 @@ export function useChat() {
         { id: biteId, role: 'bite', text: '' },
       ]);
       let cut: ChatMessage['cut'];
+      // Whether the answer ended as the function ends it, with `done` or `error`.
+      let ended = false;
+      const threadBefore = threadId.current;
       setStatus('thinking');
       setFailure(undefined);
       const controller = new AbortController();
@@ -138,14 +144,19 @@ export function useChat() {
             threadId.current = event.threadId;
             return;
           case 'done':
+            ended = true;
             threadId.current = event.threadId;
             if (event.interrupted) cut = 'cut_off';
             return;
           case 'error': {
+            ended = true;
+            // A refused message's new thread is gone again: the next one starts its own.
+            if (oneOf(ACCESS_REASONS, event.reason)) threadId.current = threadBefore;
             const refusal = oneOf(REFUSALS, event.reason);
             if (refusal) setRefusal(refusal);
             else setFailure(oneOf(FAILURES, event.reason) ?? 'unavailable');
-            cut = 'cut_off';
+            // An answer that came whole but was not saved did not stop short.
+            if (event.reason !== 'not_saved') cut = 'cut_off';
             return;
           }
         }
@@ -162,6 +173,11 @@ export function useChat() {
           onEvent,
           controller.signal,
         );
+        // An answer that ends without its end, as when the connection closed, stopped short.
+        if (!ended) {
+          setFailure('unavailable');
+          cut = 'cut_off';
+        }
       } catch {
         // Stopped by the user, or no answer came: what came stays.
         if (controller.signal.aborted) cut = 'stopped';
@@ -197,11 +213,24 @@ export function useChat() {
     [send],
   );
 
-  /** Asks the last question again, as after a failure. */
+  // After a failure, the last question is asked again: by Ask again under it when it got no
+  // answer, or else by Try again, which keeps what came of the answer above.
+  const last = messages.findLast((message) => message.role === 'user');
+  const canRetry = status === 'idle' && !refusal && failure && last && !last.unanswered;
   const retry = useCallback(() => {
-    const last = messages.findLast((message) => message.role === 'user');
     if (last) send(last.text);
-  }, [messages, send]);
+  }, [last, send]);
 
-  return { messages, status, tool, failure, refusal, send, stop, retry, askAgain };
+  return {
+    messages,
+    status,
+    tool,
+    failure,
+    refusal,
+    send,
+    stop,
+    askAgain,
+    /** Tries the last question again, when that is what the failure offers. */
+    retry: canRetry ? retry : undefined,
+  };
 }
