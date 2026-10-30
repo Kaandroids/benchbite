@@ -93,7 +93,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
           icon="history"
           label={t('bite.chats.title')}
           // The chats are under a chat opened from them.
-          onPress={() => (fromChats ? router.back() : openChats(chat.threadId))}
+          onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
         />
       }
       scrolls={false}
