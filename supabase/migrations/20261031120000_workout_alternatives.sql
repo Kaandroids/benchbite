@@ -13,13 +13,12 @@ create table public.workout_alternatives (
   position smallint not null check (position >= 1),
   -- Optional; the app shows an unnamed one as "Alternative N".
   name text check (char_length(name) between 1 and 12 and name = btrim(name)),
-  in_use boolean not null,
   -- The exercises as saved_workout() reads them; null for the one in use, whose exercises are the
   -- workout's own.
   exercises jsonb check (
     jsonb_typeof(exercises) = 'array' and octet_length(exercises::text) <= 16384
   ),
-  check (in_use = (exercises is null)),
+  in_use boolean not null generated always as (exercises is null) stored,
   unique (workout_id, position) deferrable initially immediate
 );
 
@@ -187,11 +186,11 @@ begin
     select 1 from public.workout_alternatives a
     where a.workout_id = add_workout_alternative.workout_id
   ) then
-    insert into public.workout_alternatives (workout_id, user_id, position, in_use)
-    values (add_workout_alternative.workout_id, caller_id, 1, true);
+    insert into public.workout_alternatives (workout_id, user_id, position)
+    values (add_workout_alternative.workout_id, caller_id, 1);
   end if;
 
-  insert into public.workout_alternatives (workout_id, user_id, position, name, in_use, exercises)
+  insert into public.workout_alternatives (workout_id, user_id, position, name, exercises)
   values (
     add_workout_alternative.workout_id,
     caller_id,
@@ -200,7 +199,6 @@ begin
       where a.workout_id = add_workout_alternative.workout_id
     ),
     nullif(btrim(add_workout_alternative.name), ''),
-    false,
     kept
   )
   returning id into added_id;
@@ -230,10 +228,10 @@ begin
 
   workout := public.saved_workout(chosen.workout_id);
   update public.workout_alternatives a
-  set in_use = false, exercises = workout -> 'exercises'
+  set exercises = workout -> 'exercises'
   where a.workout_id = chosen.workout_id and a.in_use;
   update public.workout_alternatives a
-  set in_use = true, exercises = null
+  set exercises = null
   where a.id = chosen.id;
   perform public.save_workout(
     workout || jsonb_build_object('exercises', chosen.exercises),

@@ -188,8 +188,8 @@ select results_eq(
 );
 
 select throws_ok(
-  $$ insert into public.workout_alternatives (workout_id, user_id, position, in_use)
-     values (911, '00000000-0000-0000-0000-00000000000a', 1, true) $$,
+  $$ insert into public.workout_alternatives (workout_id, user_id, position)
+     values (911, '00000000-0000-0000-0000-00000000000a', 1) $$,
   '42501', null,
   'Users write alternatives only through the functions'
 );
