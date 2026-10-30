@@ -10,7 +10,6 @@ const PROFILE = {
   sex: 'female',
   height_cm: 165,
   weight_unit: 'kg',
-  pregnant_or_breastfeeding: true,
   experience: 'beginner',
   training_setup: 'gym',
   training_days: [1, 4],
@@ -52,7 +51,7 @@ Deno.test(
     );
 
     const text = snapshotText(snapshot, 'en');
-    assertEquals(text.includes('Pregnant or breastfeeding: yes'), true);
+    assertEquals(text.includes('User: Sam'), true);
     assertEquals(text.includes('Calorie floor: 1500 kcal a day'), true);
   },
 );

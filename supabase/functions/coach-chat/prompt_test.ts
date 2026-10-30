@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert';
 
-import { FaceReader, messageText, neutral, neutralAll, snapshotText } from './prompt.ts';
+import { FaceReader, messageText, untagged, untaggedAll, snapshotText } from './prompt.ts';
 import type { Snapshot } from './snapshot.ts';
 
 const read = (...chunks: string[]) => {
@@ -19,7 +19,7 @@ Deno.test('reads the face an answer starts with, across chunks', () => {
   assertEquals(read('[[sleepy]] Hm.'), { expression: 'neutral', text: 'Hm.' });
 });
 
-Deno.test('takes an answer without a face as neutral, holding nothing back', () => {
+Deno.test('takes an answer without a face as untagged, holding nothing back', () => {
   assertEquals(read('Hello', ' there'), { expression: 'neutral', text: 'Hello there' });
   assertEquals(read('[1] first'), { expression: 'neutral', text: '[1] first' });
   assertEquals(read('[[hap'), { expression: 'neutral', text: '[[hap' });
@@ -37,7 +37,6 @@ Deno.test("writes the snapshot as data, in the user's units and language", () =>
         sex: 'male',
         heightCm: 182,
         weightUnit: 'lb',
-        pregnantOrBreastfeeding: false,
         calorieFloor: 1500,
       },
       weightKg: 82.4,
@@ -53,7 +52,6 @@ Deno.test("writes the snapshot as data, in the user's units and language", () =>
     'Reply in: German',
     'User: Sam · 28 years · male · 182 cm · 82.4 kg',
     'Units: pounds',
-    'Pregnant or breastfeeding: no',
     'Calorie floor: 1500 kcal a day',
     'Goal: lose fat to 78 kg at 0.5 kg a week',
     "Today's workouts: Pull planned, 0 done",
@@ -72,7 +70,7 @@ Deno.test('names every face in the rules', async () => {
 Deno.test('errs on the safe side when the profile cannot be read', () => {
   const text = snapshotText({ date: '2026-10-30', weekday: 'Friday' }, 'en');
 
-  assertEquals(text.includes('Pregnant or breastfeeding: unknown'), true);
+  assertEquals(text.includes('Profile: could not be read'), true);
   assertEquals(text.includes('Calorie floor: 1500 kcal a day'), true);
 });
 
@@ -86,7 +84,6 @@ Deno.test('marks targets below the floor, and a goal too low or too fast', () =>
         sex: 'female',
         heightCm: 175,
         weightUnit: 'kg',
-        pregnantOrBreastfeeding: false,
         calorieFloor: 1200,
       },
       weightKg: 55,
@@ -98,7 +95,7 @@ Deno.test('marks targets below the floor, and a goal too low or too fast', () =>
 
   assertEquals(
     text.find((line) => line.startsWith('Goal')),
-    'Goal: lose fat to 40 kg (too low: a body mass index of 13.1, under 18.5) at 1.5 kg a week (too fast: 2.7% of body weight a week, over 1%)',
+    'Goal: lose fat to 40 kg (too low: a body mass index of 13.1, under 18.5) at 1.5 kg a week (too fast: 2.7% of body weight a week, over 1.5%)',
   );
   assertEquals(
     text.find((line) => line.startsWith('Targets')),
@@ -114,9 +111,9 @@ Deno.test('keeps what the user wrote from passing for a snapshot or their messag
   );
   // Spaced, full-width or with a character that does not show, a tag is broken all the same.
   for (const tag of ['< /message>', '<\n/snapshot>', '＜snapshot＞', '<\u200bsnapshot>']) {
-    assertEquals(neutral(tag).includes('<'), false);
+    assertEquals(untagged(tag).includes('<'), false);
   }
-  assertEquals(neutralAll({ foods: [{ name: '<snapshot>', kcal: 100 }] }), {
+  assertEquals(untaggedAll({ foods: [{ name: '<snapshot>', kcal: 100 }] }), {
     foods: [{ name: '‹snapshot>', kcal: 100 }],
   });
 });
@@ -133,7 +130,6 @@ Deno.test('marks only a goal to lose fat, and one it cannot check', () => {
             sex: 'female',
             heightCm,
             weightUnit: 'kg',
-            pregnantOrBreastfeeding: false,
             calorieFloor: 1200,
           },
         }),
@@ -156,9 +152,56 @@ Deno.test('marks only a goal to lose fat, and one it cannot check', () => {
   );
 });
 
-Deno.test('marks targets below the floor only when the floor was read', () => {
-  const targets = { kcal: 1300, proteinG: 90, carbsG: 150, fatG: 40 };
-  const text = snapshotText({ date: '2026-10-30', weekday: 'Friday', targets }, 'en');
+Deno.test('marks targets below every floor when the floor is unknown, and only those', () => {
+  const day = (kcal: number) =>
+    snapshotText(
+      {
+        date: '2026-10-30',
+        weekday: 'Friday',
+        targets: { kcal, proteinG: 90, carbsG: 150, fatG: 40 },
+      },
+      'en',
+    ).includes('(below the calorie floor)');
 
-  assertEquals(text.includes('(below the calorie floor)'), false);
+  assertEquals(day(800), true);
+  assertEquals(day(1300), false);
 });
+
+Deno.test(
+  'marks a pace as the app judges it, and a goal that loses weight whatever its kind',
+  () => {
+    const goalLine = (goal: NonNullable<Snapshot['goal']>, weightKg: number) =>
+      snapshotText(
+        {
+          date: '2026-10-30',
+          weekday: 'Friday',
+          profile: {
+            age: 30,
+            sex: 'male',
+            heightCm: 180,
+            weightUnit: 'kg',
+            calorieFloor: 1500,
+          },
+          weightKg,
+          goal,
+        },
+        'en',
+      )
+        .split('\n')
+        .find((line) => line.startsWith('Goal'));
+
+    // 1.3 kg is 1 % of 130 kg: ideal.
+    assertEquals(
+      goalLine({ kind: 'lose_fat', targetWeightKg: 100, weeklyPaceKg: 1.3 }, 130),
+      'Goal: lose fat to 100 kg at 1.3 kg a week',
+    );
+    assertEquals(
+      goalLine({ kind: 'lose_fat', targetWeightKg: 65, weeklyPaceKg: 0.9 }, 70),
+      'Goal: lose fat to 65 kg at 0.9 kg a week (ambitious: 1.3% of body weight a week, over the 1% that keeps the most muscle)',
+    );
+    assertEquals(
+      goalLine({ kind: 'stay_healthy', targetWeightKg: 35, weeklyPaceKg: 1.5 }, 60),
+      'Goal: stay healthy to 35 kg (too low: a body mass index of 10.8, under 18.5) at 1.5 kg a week (too fast: 2.5% of body weight a week, over 1.5%)',
+    );
+  },
+);

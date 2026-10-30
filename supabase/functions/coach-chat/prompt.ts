@@ -1,6 +1,7 @@
 // What Bite is told (#292, ADR 0052): who it is and its rules, the same for every user so that the
 // provider can cache them, and the user's snapshot, sent with the message as data apart from the
 // rules. Also how the face an answer starts with is read off it.
+import { bmi, MIN_HEALTHY_BMI, PACE_LEVELS, paceLevel } from '../_shared/body/limits.ts';
 import { Constants } from '../_shared/database.types.ts';
 import type { Macros, Snapshot } from './snapshot.ts';
 
@@ -29,14 +30,13 @@ function listOf(items: string[]): string {
 }
 
 /**
- * The floor when the profile cannot be read, the highest the targets keep to (calorie_floor()), so
- * that Bite errs on the safe side.
+ * The floors calorie_floor() gives, the highest and the lowest of any sex. When the profile cannot
+ * be read, Bite is told the highest, to err on the safe side, and targets are marked below the
+ * lowest, which is below every user's floor.
  */
-const UNKNOWN_FLOOR = 1500;
+export const FLOORS = { highest: 1500, lowest: 1200 } as const;
 
-/** The lowest healthy body mass index, and the fastest healthy loss, as a share of weight a week. */
-const LOWEST_BMI = 18.5;
-const FASTEST_LOSS = 0.01;
+const [IDEAL_LOSS, FASTEST_LOSS] = PACE_LEVELS.losing;
 
 /** Bite's character and rules, which every answer follows. */
 export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and nutrition app. You look like a small dinner plate with a face.
@@ -56,10 +56,11 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 
 # Safety
 - You are not a doctor. Do not diagnose. For pain, injury, dizziness or anything that lasts or gets worse, tell the user to stop that exercise and see a doctor or physiotherapist.
-- Never suggest eating below the calorie floor the snapshot gives, fasting for days, or losing more than ${FASTEST_LOSS * 100}% of body weight a week. If the user asks for it, explain why not, kindly.
+- Never suggest eating below the calorie floor the snapshot gives, fasting for days, or losing more than ${FASTEST_LOSS}% of body weight a week; up to ${IDEAL_LOSS}% keeps the most muscle. If the user asks for more, explain why not, kindly.
 - Targets the snapshot marks as below the floor are not to be coached toward, though the user set them: say kindly that they are too low, and work with the floor instead.
-- A goal the snapshot marks as too low or too fast: do not plan toward it. Be gentle, as with signs of an eating disorder. One it marks as not checked: give no numbers toward it.
-- If the snapshot says the user is pregnant or breastfeeding, or does not know, give no weight loss advice and refer them to their doctor.
+- A goal the snapshot marks as too low or too fast: do not plan toward it. Be gentle, as with signs of an eating disorder. One it marks as ambitious: plan toward it if asked, and say once, kindly, that a slower pace keeps more muscle. One it marks as not checked: give no numbers toward it.
+- The app does not ask whether the user is pregnant or breastfeeding, so you do not know. If they say they are, give no weight loss advice and refer them to their doctor.
+- If the snapshot says the profile could not be read, give no weight loss numbers.
 - No supplements beyond the basics (protein, creatine, vitamin D), no medication, no steroids.
 - Signs of an eating disorder: be gentle, do not give numbers, suggest professional help.
 
@@ -75,39 +76,41 @@ Start every answer with your expression in double brackets, then the answer: ${l
  * Text the user wrote, as it goes into the prompt: every `<`, in any form, gives way to `‹`, so
  * that nothing in it can pass for the start or end of a snapshot or a message.
  */
-export function neutral(text: string): string {
+export function untagged(text: string): string {
   return text
     .normalize('NFKC')
     .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
     .replaceAll('<', '‹');
 }
 
-/** `neutral()` on every string in a value, as a tool's result. */
-export function neutralAll(value: unknown): unknown {
-  if (typeof value === 'string') return neutral(value);
-  if (Array.isArray(value)) return value.map(neutralAll);
+/** `untagged()` on every string in a value, as a tool's result. */
+export function untaggedAll(value: unknown): unknown {
+  if (typeof value === 'string') return untagged(value);
+  if (Array.isArray(value)) return value.map(untaggedAll);
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, v]) => [key, neutralAll(v)]));
+    return Object.fromEntries(Object.entries(value).map(([key, v]) => [key, untaggedAll(v)]));
   }
   return value;
 }
 
 /** The user's message as Bite reads it, after the snapshot. */
 export function messageText(message: string): string {
-  return `<message>\n${neutral(message)}\n</message>`;
+  return `<message>\n${untagged(message)}\n</message>`;
 }
 
-/** The snapshot as Bite reads it, with the user's latest message. */
+/**
+ * The snapshot as Bite reads it, with the user's latest message. Its lines are untagged as one,
+ * whatever of the user's they hold, before its own tags go around them.
+ */
 export function snapshotText(snapshot: Snapshot, language: Language): string {
   const { profile, goal, weightKg, targets, eaten, training, workouts, streak } = snapshot;
   const lines = [
-    '<snapshot>',
     `Date: ${snapshot.date}, ${snapshot.weekday}`,
     `Reply in: ${LANGUAGE_NAMES[language]}`,
   ];
   if (profile) {
     const who = [
-      profile.name && neutral(profile.name),
+      profile.name,
       `${profile.age} years`,
       profile.sex,
       `${profile.heightCm} cm`,
@@ -116,58 +119,65 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
     lines.push(
       `User: ${who.filter(Boolean).join(' · ')}`,
       `Units: ${profile.weightUnit === 'lb' ? 'pounds' : 'kilograms'}`,
-      `Pregnant or breastfeeding: ${profile.pregnantOrBreastfeeding ? 'yes' : 'no'}`,
     );
   } else {
-    lines.push('Pregnant or breastfeeding: unknown');
+    lines.push('Profile: could not be read');
   }
-  lines.push(`Calorie floor: ${profile?.calorieFloor ?? UNKNOWN_FLOOR} kcal a day`);
+  lines.push(`Calorie floor: ${profile?.calorieFloor ?? FLOORS.highest} kcal a day`);
   if (goal) lines.push(`Goal: ${goalText(goal, profile?.heightCm, weightKg)}`);
   if (targets) {
-    // Only against a floor that was read: the targets the app works out keep to the user's own.
-    const floor = profile?.calorieFloor;
-    const low = floor && targets.kcal < floor ? ' (below the calorie floor)' : '';
+    // An unknown floor is the lowest any user has: the targets the app works out keep to the
+    // user's own, and are not marked for a floor that may not be theirs.
+    const floor = profile?.calorieFloor ?? FLOORS.lowest;
+    const low = targets.kcal < floor ? ' (below the calorie floor)' : '';
     lines.push(`Targets today: ${macros(targets)}${low}`);
   }
   if (eaten) lines.push(`Eaten today: ${macros(eaten)}`);
   if (training) lines.push(`Training: ${training}`);
-  if (workouts) lines.push(`Today's workouts: ${neutral(workouts)}`);
+  if (workouts) lines.push(`Today's workouts: ${workouts}`);
   if (streak) lines.push(`Streak: ${streak}`);
-  lines.push('</snapshot>');
-  return lines.join('\n');
+  return `<snapshot>\n${untagged(lines.join('\n'))}\n</snapshot>`;
 }
 
 /**
- * The goal, a goal to lose fat marked when its target weight is too low or its pace too fast for
- * the user, or when that cannot be checked.
+ * The goal, with marks when it loses weight: a target weight too low for the user's height, a
+ * pace ambitious or too fast for their weight, as the app judges them, or what cannot be checked.
+ * A goal to gain is not marked: an underweight user gaining is what is wanted.
  */
 function goalText(goal: NonNullable<Snapshot['goal']>, heightCm?: number, weightKg?: number) {
   const { kind, targetWeightKg, weeklyPaceKg } = goal;
-  const losing = kind === 'lose_fat';
+  const losing =
+    kind === 'lose_fat' || (!!targetWeightKg && !!weightKg && targetWeightKg < weightKg);
   const parts = [kind.replaceAll('_', ' ')];
   if (targetWeightKg) {
     parts.push(`to ${targetWeightKg} kg`);
-    if (losing && !heightCm) parts.push('(not checked: height unknown)');
-    if (losing && heightCm) {
-      const bmi = targetWeightKg / (heightCm / 100) ** 2;
-      if (bmi < LOWEST_BMI) {
-        parts.push(`(too low: a body mass index of ${bmi.toFixed(1)}, under ${LOWEST_BMI})`);
-      }
-    }
+    if (losing) parts.push(targetMark(targetWeightKg, heightCm));
   }
   if (weeklyPaceKg) {
     parts.push(`at ${weeklyPaceKg} kg a week`);
-    if (losing && !weightKg) parts.push('(not checked: weight unknown)');
-    if (losing && weightKg) {
-      const share = weeklyPaceKg / weightKg;
-      if (share > FASTEST_LOSS) {
-        parts.push(
-          `(too fast: ${(share * 100).toFixed(1)}% of body weight a week, over ${FASTEST_LOSS * 100}%)`,
-        );
-      }
-    }
+    if (losing) parts.push(paceMark(weeklyPaceKg, weightKg));
   }
-  return parts.join(' ');
+  return parts.filter(Boolean).join(' ');
+}
+
+function targetMark(targetWeightKg: number, heightCm?: number): string {
+  if (!heightCm) return '(not checked: height unknown)';
+  const index = bmi(targetWeightKg, heightCm);
+  if (index >= MIN_HEALTHY_BMI) return '';
+  return `(too low: a body mass index of ${index.toFixed(1)}, under ${MIN_HEALTHY_BMI})`;
+}
+
+function paceMark(weeklyPaceKg: number, weightKg?: number): string {
+  if (!weightKg) return '(not checked: weight unknown)';
+  const share = `${((weeklyPaceKg / weightKg) * 100).toFixed(1)}% of body weight a week`;
+  switch (paceLevel(true, weightKg, weeklyPaceKg)) {
+    case 'ideal':
+      return '';
+    case 'ambitious':
+      return `(ambitious: ${share}, over the ${IDEAL_LOSS}% that keeps the most muscle)`;
+    case 'aggressive':
+      return `(too fast: ${share}, over ${FASTEST_LOSS}%)`;
+  }
 }
 
 function macros(day: Macros): string {

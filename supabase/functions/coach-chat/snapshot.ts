@@ -18,7 +18,6 @@ export type Snapshot = {
     sex: string;
     heightCm: number;
     weightUnit: string;
-    pregnantOrBreastfeeding: boolean;
     /** The least the targets ever ask for, which Bite never goes below. */
     calorieFloor?: number;
   };
@@ -42,7 +41,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     supabase
       .from('profiles')
       .select(
-        'display_name, birth_year, sex, height_cm, weight_unit, pregnant_or_breastfeeding, experience, training_setup, training_days, session_minutes, calorie_floor',
+        'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor',
       )
       .maybeSingle(),
     supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
@@ -74,7 +73,6 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       sex: p.sex,
       heightCm: p.height_cm,
       weightUnit: p.weight_unit,
-      pregnantOrBreastfeeding: p.pregnant_or_breastfeeding,
       // The floor the targets keep to (calorie_floor()), which Bite never goes below.
       calorieFloor: p.calorie_floor ?? undefined,
     };

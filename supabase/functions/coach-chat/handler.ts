@@ -13,10 +13,10 @@ import {
   LANGUAGES,
   marker,
   messageText,
-  neutral,
-  neutralAll,
   snapshotText,
   SYSTEM,
+  untagged,
+  untaggedAll,
 } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY } from './day.ts';
@@ -274,7 +274,7 @@ async function lookUp(
 ): Promise<unknown> {
   send({ event: 'tool_start', name: call.name });
   // What the user named things comes back with it, and may not pass for a snapshot either.
-  const result = neutralAll(await runTool(call.name, call.args, context));
+  const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
   return result;
 }
@@ -355,10 +355,10 @@ function toMessage(
     .join('\n');
   if (!text) return [];
   if (row.role === 'user')
-    return [{ role: 'user', parts: [{ type: 'text', text: neutral(text) }] }];
+    return [{ role: 'user', parts: [{ type: 'text', text: untagged(text) }] }];
   const face = marker(row.expression ?? 'neutral');
   // Bite may have repeated what the user wrote.
-  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${neutral(text)}` }] }];
+  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${untagged(text)}` }] }];
 }
 
 function failed(message: string, error: unknown): Response {
