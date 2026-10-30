@@ -724,3 +724,92 @@ Deno.test('keeps a proposed change though the model said nothing after it', asyn
   assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
   assertEquals(inserted[1].rows.length, 2);
 });
+
+const TARGETS = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+
+Deno.test('keeps a proposal made before a stop among its lookups, with its card', async () => {
+  const stops: Row[] = [];
+  const model = new FakeModel([
+    { type: 'toolCall', id: 'c1', name: 'propose_targets_change', args: TARGETS },
+    { type: 'toolCall', id: 'c2', name: 'search_foods', args: { query: 'oats' } },
+  ]);
+  // The app stops while the proposal is made, before the next lookup.
+  const propose = () => {
+    stops.push({ request_id: REQUEST });
+    return 42;
+  };
+  const { ctx, inserted } = context(
+    model,
+    { propose_coach_change: propose },
+    { coach_stops: stops },
+  );
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, requestId: REQUEST }), ctx),
+  );
+
+  assertEquals(answer.at(-1)?.event, 'done');
+  const content = inserted[1].rows[1].content as { type: string; result?: unknown }[];
+  // The proposal's call and result, without the lookup that never ran.
+  assertEquals(
+    content.map((part) => part.type),
+    ['toolCall', 'toolResult', 'text'],
+  );
+  assertEquals((content[1].result as { proposal: { id: number } }).proposal.id, 42);
+  assertEquals(inserted[1].rows[1].interrupted, 'stopped');
+});
+
+Deno.test("keeps a proposal's card when a message is cut to what it may hold", () => {
+  const big = { type: 'toolResult' as const, name: 'get_meal_log', result: 'x'.repeat(70_000) };
+  const proposal = { kind: 'targets', id: 42, from: null, to: TARGETS };
+  const card = {
+    type: 'toolResult' as const,
+    name: 'propose_targets_change',
+    result: { proposal },
+  };
+
+  const kept = content([big, card], 'Here it is.');
+  assertEquals(kept, [
+    { ...big, result: { omitted: true } },
+    card,
+    { type: 'text', text: 'Here it is.' },
+  ]);
+  const many = content([...Array(60).fill(big), card], 'Here it is.');
+  assertEquals(many.length, 50);
+  assertEquals(many.includes(card), true);
+});
+
+Deno.test('tells Bite what it proposed earlier, though it said nothing with it', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const proposal = { kind: 'targets', id: 42, from: null, to: TARGETS };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            { type: 'toolCall', name: 'propose_targets_change', args: TARGETS },
+            { type: 'toolResult', name: 'propose_targets_change', result: { proposal } },
+            { type: 'text', text: '' },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0], {
+    role: 'model',
+    parts: [
+      {
+        type: 'text',
+        text: '[[neutral]] (Proposed targets: 2100 kcal, 150 g protein, 210 g carbs, 70 g fat.)',
+      },
+    ],
+  });
+});
