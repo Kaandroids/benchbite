@@ -86,14 +86,15 @@ async function preparePhoto(uri: string): Promise<MealPhoto> {
  * makes and the scaled ones. A photo anywhere else, or one already gone, is left alone.
  */
 export function discardPhotos(uris: string[]) {
-  for (const uri of uris) {
-    if (!uri.startsWith(Paths.cache.uri)) continue;
-    try {
+  // Deleting is tidying up: it never fails what it follows.
+  try {
+    const cache = Paths.cache.uri;
+    for (const uri of uris.filter((photo) => photo.startsWith(cache))) {
       const file = new File(uri);
       if (file.exists) file.delete();
-    } catch (error) {
-      console.warn('Could not delete a meal photo', error);
     }
+  } catch (error) {
+    console.warn('Could not delete the meal photos', error);
   }
 }
 
