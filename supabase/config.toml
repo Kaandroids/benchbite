@@ -427,3 +427,10 @@ verify_jwt = true
 # All functions share one import map.
 import_map = "./functions/deno.json"
 entrypoint = "./functions/generate-plan/index.ts"
+
+# Bite's chat (ADR 0052). The platform verifies the user's JWT before the function runs.
+[functions.coach-chat]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/coach-chat/index.ts"

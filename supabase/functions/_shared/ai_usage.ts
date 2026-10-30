@@ -2,9 +2,8 @@
 // through aiModel(), whose every request counts what it sends, starts a call that sets the most
 // it may cost aside, and records what it used, however the request ends. The database knows the
 // prices and the limit; a function only reports tokens.
-import type { SupabaseContext } from '@supabase/server';
-
 import type { Database } from './database.types.ts';
+import type { Client as SupabaseClient } from './supabase.ts';
 import {
   type LanguageModel,
   languageModel,
@@ -19,7 +18,7 @@ import {
 export type AiAccessReason = Database['public']['Enums']['ai_access_reason'];
 type AiCall = Database['public']['CompositeTypes']['ai_call'];
 
-type Client = Pick<SupabaseContext<Database>['supabase'], 'rpc'>;
+type Client = Pick<SupabaseClient, 'rpc'>;
 
 export type AiContext = {
   /** A client with the user's token, which starts each call as theirs. */
@@ -145,7 +144,7 @@ function usedBy(error: unknown): Used {
  * Keeps the Edge Function's worker alive until `work` is done, also after its response ended, as
  * when the app closed a stream.
  */
-function keepAlive<T>(work: Promise<T>): Promise<T> {
+export function keepAlive<T>(work: Promise<T>): Promise<T> {
   const runtime = (globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } })
     .EdgeRuntime;
   runtime?.waitUntil(work);
