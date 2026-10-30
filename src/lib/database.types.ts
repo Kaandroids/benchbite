@@ -1494,6 +1494,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      calorie_floor: { Args: { sex: Database['public']['Enums']['sex'] }; Returns: number };
       calories_count: { Args: { kcal: number; target: number }; Returns: boolean };
       can_be_logged: {
         Args: { custom_food_id: number; food_id: string; recipe_id: number };
