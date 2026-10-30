@@ -99,13 +99,18 @@ it('puts an alternative in use from today and loads the plan again', async () =>
   expect(alternativesKey(7).slice(0, WORKOUTS_KEY.length)).toEqual(WORKOUTS_KEY);
 });
 
-it('adds an unnamed copy of the one in use and gives its id', async () => {
+it.each([
+  [{ empty: true } as const, { exercises: [] }],
+  [{ copyOf: 5 }, { source_alternative_id: 5 }],
+  [{ copyOf: null }, {}],
+])('adds an alternative from %j and gives its id', async (from, args) => {
   jest.mocked(supabase.rpc).mockResolvedValue({ data: 9, error: null } as never);
   const { result } = await renderHook(() => useAddAlternative(7));
-  await expect(act(() => result.current.mutateAsync())).resolves.toBe(9);
+  await expect(act(() => result.current.mutateAsync(from))).resolves.toBe(9);
   expect(supabase.rpc).toHaveBeenCalledWith('add_workout_alternative', {
     workout_id: 7,
     today: '2026-10-30',
+    ...args,
   });
 });
 

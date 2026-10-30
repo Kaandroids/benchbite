@@ -7,6 +7,7 @@ import {
   useDeleteAlternative,
   useRenameAlternative,
   useReorderAlternatives,
+  useSwitchAlternative,
   useWorkoutAlternatives,
   type WorkoutAlternative,
 } from './alternatives';
@@ -22,6 +23,7 @@ jest.mock('./alternatives', () => ({
   useDeleteAlternative: jest.fn(),
   useRenameAlternative: jest.fn(),
   useReorderAlternatives: jest.fn(),
+  useSwitchAlternative: jest.fn(),
 }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
@@ -32,14 +34,16 @@ const add = jest.fn();
 const remove = jest.fn();
 const rename = jest.fn();
 const reorder = jest.fn();
+const use = jest.fn();
 const onClose = jest.fn();
+const onRunning = jest.fn();
 
 const workout = testWorkout(7, { exercises: [testExercise('squat'), testExercise('row')] });
 
 const GYM_HOME_HOTEL: WorkoutAlternative[] = [
   { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
   { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
-  { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 1 },
+  { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 0 },
 ];
 
 function mockAlternatives(data: WorkoutAlternative[]) {
@@ -52,6 +56,31 @@ function mockRename(state: object = {}) {
     .mockReturnValue({ mutate: rename, isPending: false, isError: false, ...state } as never);
 }
 
+function renderSheets(running = false) {
+  return render(
+    <AlternativesSheets
+      workout={workout}
+      running={running}
+      onRunning={onRunning}
+      onClose={onClose}
+    />,
+  );
+}
+
+/** Opens the ⋯ menu of an alternative. */
+async function openMenu(name: string) {
+  await fireEvent.press(screen.getByRole('button', { name: `More for ${name}` }));
+}
+
+const menuItem = (name: string) => screen.queryByRole('menuitem', { name });
+
+/** Answers the name sheet with `name`, once the list has closed before it. */
+async function nameIt(name: string) {
+  await waitFor(() => expect(screen.getByLabelText('Name the alternative')).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText('Name the alternative'), name);
+  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useWorkoutLimits).mockReturnValue({
@@ -61,46 +90,61 @@ beforeEach(() => {
   jest.mocked(useAddAlternative).mockReturnValue({ mutate: add, isPending: false } as never);
   jest.mocked(useDeleteAlternative).mockReturnValue({ mutate: remove } as never);
   jest.mocked(useReorderAlternatives).mockReturnValue({ mutate: reorder } as never);
+  jest.mocked(useSwitchAlternative).mockReturnValue({ mutate: use, isPending: false } as never);
   mockRename();
 });
 
-it('lists the alternatives in order, the one in use with the workout’s exercises', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  expect(screen.getByText('Gym')).toBeTruthy();
+it('lists the alternatives in order, the one in use chosen, with their exercises', async () => {
+  await renderSheets();
+  expect(screen.getByText('Tap one to use it. Drag to change the order.')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Gym' }).props.accessibilityState).toEqual({
+    checked: false,
+  });
   expect(screen.getByText('4 exercises')).toBeTruthy();
-  expect(screen.getByText('Alternative 2')).toBeTruthy();
-  expect(screen.getByText('In use · 2 exercises')).toBeTruthy();
-  expect(screen.getByText('Hotel')).toBeTruthy();
-  expect(screen.getByText('1 exercise')).toBeTruthy();
+  // The one in use has the workout's exercises.
+  expect(screen.getByRole('radio', { name: 'Alternative 2' }).props.accessibilityState).toEqual({
+    checked: true,
+  });
+  expect(screen.getByText('2 exercises')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Hotel' })).toBeTruthy();
+  expect(screen.getByText('No exercises yet')).toBeTruthy();
   // Each row's handle is named after it, in order.
-  expect(screen.getByLabelText('Gym').props.accessibilityValue).toEqual({ text: '1 of 3' });
-  expect(screen.getByLabelText('Hotel').props.accessibilityValue).toEqual({ text: '3 of 3' });
-  // The one in use cannot be deleted.
+  const handles = screen.getAllByLabelText('Hotel');
+  expect(handles.some((handle) => handle.props.accessibilityValue?.text === '3 of 3')).toBe(true);
+  // The example is for a workout without alternatives only.
   expect(
-    screen.getByRole('button', { name: 'Delete Alternative 2' }).props.accessibilityState,
-  ).toEqual({ disabled: true });
-  expect(
-    screen.getByText('A new one starts as a copy of the one in use, to change in Edit.'),
-  ).toBeTruthy();
+    screen.queryByText('Barbell squat, leg press…', { includeHiddenElements: true }),
+  ).toBeNull();
+  expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy();
+  expect(screen.getByText('Starts empty')).toBeTruthy();
 });
 
-it('shows the workout as the only one before any is added', async () => {
+it('shows the workout as the only one, and an example, before any is added', async () => {
   mockAlternatives([]);
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  expect(screen.getByText('Alternative 1')).toBeTruthy();
-  expect(screen.getByText('In use · 2 exercises')).toBeTruthy();
-  expect(screen.queryByRole('button', { name: /^Rename/ })).toBeNull();
-  expect(screen.queryByRole('button', { name: /^Delete/ })).toBeNull();
+  await renderSheets();
+  expect(screen.getByText('Versions of this workout to switch between.')).toBeTruthy();
+  // Hidden from screen readers, which the line above tells.
+  const hidden = { includeHiddenElements: true };
+  expect(screen.getByText('Barbell squat, leg press…', hidden)).toBeTruthy();
+  expect(screen.getByText('Goblet squat, lunges…', hidden)).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Alternative 1' }).props.accessibilityState).toEqual({
+    checked: true,
+  });
+
+  // It can only be duplicated, as a copy of the one in use.
+  await openMenu('Alternative 1');
+  expect(menuItem('Rename')).toBeNull();
+  expect(menuItem('Delete')).toBeNull();
+  await fireEvent.press(menuItem('Duplicate')!);
+  expect(add).toHaveBeenCalledWith({ copyOf: null }, expect.anything());
 });
 
 it('shows neither the workout alone nor Add while the alternatives load', async () => {
   jest.mocked(useWorkoutAlternatives).mockReturnValue({ data: undefined, isError: false } as never);
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  await renderSheets();
   expect(screen.getByLabelText('Loading')).toBeTruthy();
-  expect(screen.queryByText('Alternative 1')).toBeNull();
-  expect(
-    screen.getByRole('button', { name: 'Add alternative' }).props.accessibilityState,
-  ).toMatchObject({ disabled: true });
+  expect(screen.queryByRole('radio')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
 });
 
 it('says the alternatives did not load, and loads them again', async () => {
@@ -108,17 +152,17 @@ it('says the alternatives did not load, and loads them again', async () => {
   jest
     .mocked(useWorkoutAlternatives)
     .mockReturnValue({ data: undefined, isError: true, refetch } as never);
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  await renderSheets();
   expect(screen.getByText("We couldn't load the alternatives.")).toBeTruthy();
-  expect(screen.queryByText('Alternative 1')).toBeNull();
+  expect(screen.queryByRole('radio')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   expect(refetch).toHaveBeenCalled();
 });
 
-it('adds a copy of the one in use, then asks for its name', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+it('adds an empty alternative, asks for its name, then puts it in use and closes', async () => {
+  await renderSheets();
   await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
-  expect(add).toHaveBeenCalled();
+  expect(add).toHaveBeenCalledWith({ empty: true }, expect.anything());
   await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
 
   // The list closes before the name opens, as iOS shows one sheet at a time.
@@ -135,42 +179,155 @@ it('adds a copy of the one in use, then asks for its name', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
   expect(rename).toHaveBeenCalledWith({ id: 9, name: 'Home' }, expect.anything());
 
-  // Once saved, the list shows again.
   await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
-  await waitFor(() => expect(screen.getByText('Add alternative')).toBeTruthy());
+  expect(use).toHaveBeenCalledWith(9, expect.anything());
+  expect(onClose).not.toHaveBeenCalled();
+  await act(async () => use.mock.calls[0]?.[1]?.onSuccess());
+  expect(onClose).toHaveBeenCalled();
+});
+
+it('puts a new alternative in use when its name is left as it is', async () => {
+  await renderSheets();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
+  await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
+  await waitFor(() => expect(screen.getByText('Name the alternative')).toBeTruthy());
+  await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+  expect(rename).not.toHaveBeenCalled();
+  expect(use).toHaveBeenCalledWith(9, expect.anything());
+});
+
+it('says why a new alternative was not put in use, back on the list', async () => {
+  await renderSheets();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
+  await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
+  await nameIt('');
+  await act(async () => use.mock.calls[0]?.[1]?.onError(new Error('offline')));
+  await waitFor(() =>
+    expect(screen.getByText("We couldn't switch to it. Try again.")).toBeTruthy(),
+  );
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+it('keeps a new alternative out of use while the workout runs', async () => {
+  await renderSheets(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
+  await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
+  await nameIt('Home');
+  await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
+  expect(use).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy());
+});
+
+it('puts the alternative tapped in use, and not the one in use again', async () => {
+  await renderSheets();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Alternative 2' }));
+  expect(use).not.toHaveBeenCalled();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Hotel' }));
+  expect(use).toHaveBeenCalledWith(6, expect.anything());
+  expect(onClose).not.toHaveBeenCalled();
+
+  await act(async () => use.mock.calls[0]?.[1]?.onError({ code: 'P0002' }));
+  expect(screen.getByText('This alternative no longer exists.')).toBeTruthy();
+});
+
+it('marks the one being put in use as chosen while that runs', async () => {
+  jest
+    .mocked(useSwitchAlternative)
+    .mockReturnValue({ mutate: use, isPending: true, variables: 3 } as never);
+  await renderSheets();
+  expect(screen.getByRole('radio', { name: 'Gym' }).props.accessibilityState).toEqual({
+    checked: true,
+  });
+  expect(screen.getByRole('radio', { name: 'Alternative 2' }).props.accessibilityState).toEqual({
+    checked: false,
+  });
+});
+
+it('asks to finish the running workout before putting another in use', async () => {
+  await renderSheets(true);
+  await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
+  expect(use).not.toHaveBeenCalled();
+  expect(onClose).toHaveBeenCalled();
+  // Once the sheet has closed, as iOS shows no alert over a closing sheet.
+  await waitFor(() => expect(onRunning).toHaveBeenCalled());
+});
+
+it('offers rename, duplicate and delete in an alternative’s menu, but no delete for the one in use', async () => {
+  await renderSheets();
+  await openMenu('Hotel');
+  expect(menuItem('Rename')).toBeTruthy();
+  expect(menuItem('Duplicate')).toBeTruthy();
+  expect(menuItem('Delete')).toBeTruthy();
+  // A tap outside closes it.
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+  expect(menuItem('Rename')).toBeNull();
+
+  await openMenu('Alternative 2');
+  expect(menuItem('Rename')).toBeTruthy();
+  expect(menuItem('Duplicate')).toBeTruthy();
+  expect(menuItem('Delete')).toBeNull();
+});
+
+it('duplicates an alternative, asks for its name and goes back to the list', async () => {
+  await renderSheets();
+  await openMenu('Gym');
+  await fireEvent.press(menuItem('Duplicate')!);
+  expect(add).toHaveBeenCalledWith({ copyOf: 3 }, expect.anything());
+  await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
+  await nameIt('Gym short');
+  expect(rename).toHaveBeenCalledWith({ id: 9, name: 'Gym short' }, expect.anything());
+  await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
+  // A copy is not put in use.
+  expect(use).not.toHaveBeenCalled();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy());
+});
+
+it('says when a duplicate failed', async () => {
+  await renderSheets();
+  await openMenu('Alternative 2');
+  await fireEvent.press(menuItem('Duplicate')!);
+  expect(add).toHaveBeenCalledWith({ copyOf: 5 }, expect.anything());
+  await act(async () => add.mock.calls[0]?.[1]?.onError(new Error('offline')));
+  expect(screen.getByText("We couldn't duplicate it. Try again.")).toBeTruthy();
 });
 
 it('renames an alternative, or leaves it unnamed', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Rename Gym' }));
+  await renderSheets();
+  await openMenu('Gym');
+  await fireEvent.press(menuItem('Rename')!);
   await waitFor(() => expect(screen.getByLabelText('Name the alternative')).toBeTruthy());
   expect(screen.getByLabelText('Name the alternative').props.value).toBe('Gym');
   expect(screen.getByText('Left empty, it shows as “Alternative 1”.')).toBeTruthy();
   await fireEvent.changeText(screen.getByLabelText('Name the alternative'), '');
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
   expect(rename).toHaveBeenCalledWith({ id: 3, name: '' }, expect.anything());
+  await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
+  expect(use).not.toHaveBeenCalled();
 });
 
 it('closes the name without saving when it did not change', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Rename Hotel' }));
+  await renderSheets();
+  await openMenu('Hotel');
+  await fireEvent.press(menuItem('Rename')!);
   await waitFor(() => expect(screen.getByLabelText('Name the alternative')).toBeTruthy());
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
   expect(rename).not.toHaveBeenCalled();
-  await waitFor(() => expect(screen.getByText('Add alternative')).toBeTruthy());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy());
 });
 
 it('says why a name was not saved', async () => {
   mockRename({ isError: true, error: { code: 'P0002' } });
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Rename Gym' }));
+  await renderSheets();
+  await openMenu('Gym');
+  await fireEvent.press(menuItem('Rename')!);
   await waitFor(() => expect(screen.getByText('This alternative no longer exists.')).toBeTruthy());
 });
 
 it('asks before deleting an alternative', async () => {
   const alert = jest.spyOn(Alert, 'alert');
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Delete Hotel' }));
+  await renderSheets();
+  await openMenu('Hotel');
+  await fireEvent.press(menuItem('Delete')!);
   expect(alert.mock.calls[0]?.slice(0, 2)).toEqual([
     'Delete Hotel?',
     'It is removed with its exercises. This cannot be undone.',
@@ -183,8 +340,9 @@ it('asks before deleting an alternative', async () => {
 
 it('says why a delete failed', async () => {
   const alert = jest.spyOn(Alert, 'alert');
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Delete Gym' }));
+  await renderSheets();
+  await openMenu('Gym');
+  await fireEvent.press(menuItem('Delete')!);
   const buttons = alert.mock.calls[0]?.[2] as AlertButton[];
   await act(async () => buttons.find((button) => button.style === 'destructive')?.onPress?.());
   await act(async () => remove.mock.calls[0]?.[1]?.onError({ code: 'BB042' }));
@@ -194,8 +352,11 @@ it('says why a delete failed', async () => {
 });
 
 it('saves a new order', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  await fireEvent(screen.getByLabelText('Gym'), 'accessibilityAction', {
+  await renderSheets();
+  const [handle] = screen
+    .getAllByLabelText('Gym')
+    .filter((element) => element.props.accessibilityValue !== undefined);
+  await fireEvent(handle!, 'accessibilityAction', {
     nativeEvent: { actionName: 'moveDown' },
   });
   expect(reorder).toHaveBeenCalledWith([5, 3, 6], expect.anything());
@@ -203,7 +364,7 @@ it('saves a new order', async () => {
   expect(screen.getByText("We couldn't save the order. Try again.")).toBeTruthy();
 });
 
-it('adds no more than the cap', async () => {
+it('adds and duplicates no more than the cap', async () => {
   mockAlternatives(
     [1, 2, 3, 4, 5].map((position) => ({
       id: position,
@@ -213,23 +374,24 @@ it('adds no more than the cap', async () => {
       exerciseCount: position === 1 ? null : 1,
     })),
   );
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
-  const button = screen.getByRole('button', { name: 'Add alternative' });
-  expect(button.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }));
-  await fireEvent.press(button);
+  await renderSheets();
+  expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
+  expect(screen.getByText('5 of 5. Delete one to add or duplicate another.')).toBeTruthy();
+  await openMenu('Alternative 2');
+  expect(menuItem('Duplicate')!.props.accessibilityState).toEqual({ disabled: true });
+  await fireEvent.press(menuItem('Duplicate')!);
   expect(add).not.toHaveBeenCalled();
-  expect(screen.getByText('Up to 5 alternatives. Delete one to add another.')).toBeTruthy();
 });
 
 it('says when the cap refused an add', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  await renderSheets();
   await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
   await act(async () => add.mock.calls[0]?.[1]?.onError({ code: 'BB041' }));
   expect(screen.getByText('A workout can have up to 5 alternatives.')).toBeTruthy();
 });
 
 it('closes on the scrim', async () => {
-  await render(<AlternativesSheets workout={workout} onClose={onClose} />);
+  await renderSheets();
   await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
   expect(onClose).toHaveBeenCalled();
 });
