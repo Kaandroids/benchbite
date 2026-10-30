@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -86,6 +86,13 @@ select results_eq(
      where url like 'http://functions.test/%' $$,
   $$ values ('http://functions.test/functions/v1/purge-coach-media', 'sb_secret_test') $$,
   'The call takes the URL and the secret key from Vault'
+);
+
+-- A folder queued for over an hour warns that the purge keeps failing, and is still sent.
+update public.coach_media_deletions set queued_at = now() - interval '2 hours' where thread_id = 1;
+select isnt(
+  public.request_coach_media_purge(), null,
+  'A folder that keeps failing is still sent to purge-coach-media'
 );
 
 select is(

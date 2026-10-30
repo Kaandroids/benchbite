@@ -50,19 +50,25 @@ create trigger coach_threads_queue_media_deletion
 
 -- Calls purge-coach-media when folders are queued, as Supabase schedules Edge Functions: the
 -- project URL and a secret API key are read from Vault when the job runs, so that no key is kept
--- in the migrations. Without them the call is skipped with a warning. Returns the pg_net request
--- id, or null when nothing was sent.
+-- in the migrations. Without them the call is skipped with a warning. A folder queued for over an
+-- hour means the purge keeps failing, as with a key in Vault that is no longer valid, so it warns
+-- as well. Returns the pg_net request id, or null when nothing was sent.
 create function public.request_coach_media_purge()
 returns bigint
 language plpgsql
 set search_path = ''
 as $$
 declare
+  oldest timestamptz;
   project_url text;
   secret_key text;
 begin
-  if not exists (select 1 from public.coach_media_deletions) then
+  select min(queued_at) into oldest from public.coach_media_deletions;
+  if oldest is null then
     return null;
+  end if;
+  if oldest < now() - interval '1 hour' then
+    raise warning 'purge-coach-media is failing: a folder has been queued since %', oldest;
   end if;
 
   select decrypted_secret into project_url from vault.decrypted_secrets where name = 'project_url';

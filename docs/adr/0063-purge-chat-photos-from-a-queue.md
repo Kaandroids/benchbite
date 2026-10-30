@@ -29,7 +29,9 @@ removed too (#361), whichever way the chat was deleted.
   job runs `request_coach_media_purge()`, which sends a request through `pg_net` only while
   folders are queued. It reads the project URL and a secret API key from Vault (`project_url` and
   `secret_key`) when it runs, so no key is kept in the migrations or the repository, and it skips
-  the call with a warning while they are not set. Clients cannot call it.
+  the call with a warning while they are not set. It also warns while a folder has been queued
+  for over an hour, as the purge then keeps failing, for example with a key in Vault that is no
+  longer valid. Clients cannot call it.
 - **Only the secret key opens the function.** The platform's JWT check is off, as the key is no
   JWT, and the function accepts only the project's secret key in the `apikey` header, compared in
   constant time; users' tokens and the publishable key are refused. CORS is off, as no browser
