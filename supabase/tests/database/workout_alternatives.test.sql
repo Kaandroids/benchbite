@@ -76,14 +76,14 @@ insert into ids select 'arms', public.save_workout(
   ]}',
   current_date
 );
-insert into ids select 'arms copy', public.add_workout_alternative(pg_temp.id('arms'), null, null, current_date);
+insert into ids select 'arms copy', public.add_workout_alternative(pg_temp.id('arms'), current_date);
 
 -- ----------------------------------------------------------------------------------------------
 -- Adding
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok(
-  $$ select public.add_workout_alternative(911, null, null, current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date) $$,
   '42501', null,
   'Anon cannot add an alternative'
 );
@@ -95,7 +95,7 @@ select throws_ok(
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
-  $$ select public.add_workout_alternative(911, null, null, current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date) $$,
   'BB006', null,
   'A user cannot add an alternative to another user''s workout'
 );
@@ -114,7 +114,7 @@ select is_empty(
   'A workout has no alternatives at first'
 );
 
-insert into ids select 'copy', public.add_workout_alternative(911, 'Copy', null, current_date);
+insert into ids select 'copy', public.add_workout_alternative(911, current_date, 'Copy');
 select results_eq(
   $$ select * from pg_temp.alternatives(911) $$,
   $$ values (1::smallint, null::text, true, null::jsonb), (2::smallint, 'Copy', false, pg_temp.gym()) $$,
@@ -123,13 +123,13 @@ select results_eq(
 
 insert into ids select 'home', public.add_workout_alternative(
   911,
+  current_date,
   '  Home  ',
   -- As the editor sends it: a reps target with nulls, and a slot, which a workout made by hand drops.
   '[
     {"exerciseId": "Bodyweight_Walking_Lunge", "sets": 3, "restSeconds": 60, "slot": "squat", "target": {"reps": {"min": 10, "max": 12}, "seconds": null}},
     {"exerciseId": "Plank", "sets": 2, "restSeconds": 45, "target": {"seconds": 60, "meters": null}}
-  ]',
-  current_date
+  ]'
 );
 select results_eq(
   $$ select position, name, exercises from public.workout_alternatives where id = pg_temp.id('home') $$,
@@ -145,40 +145,40 @@ select is((select count(*)::integer from public.planned_days), 0,
   'Trying the exercises keeps no days');
 
 select throws_ok(
-  $$ select public.add_workout_alternative(911, null, '[]', current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date, null, '[]') $$,
   'BB008', null,
   'An alternative needs exercises'
 );
 select throws_ok(
   $$ select public.add_workout_alternative(
-    911, null, '[{"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 8}}}]',
-    current_date
+    911, current_date, null,
+    '[{"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 8}}}]'
   ) $$,
   'BB007', null,
   'whose targets suit them'
 );
 select throws_ok(
-  $$ select public.add_workout_alternative(911, null, '{}', current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date, null, '{}') $$,
   '22023', null,
   'as a list'
 );
 select throws_ok(
-  $$ select public.add_workout_alternative(911, 'Thirteen char', null, current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date, 'Thirteen char') $$,
   '23514', null,
   'A name is up to 12 characters'
 );
 select is((select count(*)::integer from pg_temp.alternatives(911)), 3,
   'A refused alternative adds nothing');
 
-insert into ids select 'fourth', public.add_workout_alternative(911, null, null, current_date);
-insert into ids select 'fifth', public.add_workout_alternative(911, '', null, current_date);
+insert into ids select 'fourth', public.add_workout_alternative(911, current_date);
+insert into ids select 'fifth', public.add_workout_alternative(911, current_date, '');
 select results_eq(
   $$ select position, name from public.workout_alternatives where id in (pg_temp.id('fourth'), pg_temp.id('fifth')) order by position $$,
   $$ values (4::smallint, null::text), (5::smallint, null::text) $$,
   'An alternative may have no name'
 );
 select throws_ok(
-  $$ select public.add_workout_alternative(911, null, null, current_date) $$,
+  $$ select public.add_workout_alternative(911, current_date) $$,
   'BB041', null,
   'A workout has at most 5 alternatives'
 );
@@ -361,12 +361,12 @@ create temporary table thrust on commit drop as
 grant select on thrust to authenticated;
 insert into ids select 'thrust', public.add_workout_alternative(
   911,
+  current_date,
   'Thrust',
   jsonb_build_array(jsonb_build_object(
     'exerciseId', (select id from thrust), 'sets', 3, 'restSeconds', 60,
     'target', '{"reps": {"min": 8, "max": 12}}'::jsonb
-  )),
-  current_date
+  ))
 );
 select throws_ok(
   $$ select public.edit_exercise((select id from thrust), pg_temp.thrust('["duration"]')) $$,
@@ -403,9 +403,8 @@ select ok(
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select throws_ok(
   $$ select public.add_workout_alternative(
-    911, null,
-    '[{"exerciseId": "custom-step-up", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 12}}}]',
-    current_date
+    911, current_date, null,
+    '[{"exerciseId": "custom-step-up", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 12}}}]'
   ) $$,
   'BB015', null,
   'An alternative cannot have another user''s exercise'

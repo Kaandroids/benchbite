@@ -6,6 +6,7 @@ import { Alert } from 'react-native';
 import { allLoaded } from '@/components/load-state';
 import { useExerciseLibrary } from '@/exercises/library';
 import { isDbError } from '@/lib/errors';
+import { move } from '@/lib/move';
 
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { useWorkoutName } from './format';
@@ -122,14 +123,7 @@ export function useWorkoutEditor(id: number | undefined) {
   const setName = (name: string) => updateDraft((current) => ({ ...current, name }));
   const setWeekdays = (weekdays: number[]) => updateDraft((current) => ({ ...current, weekdays }));
   const moveExercise = (from: number, to: number) =>
-    setExercises((exercises) => {
-      const next = [...exercises];
-      const [moved] = next.splice(from, 1);
-      if (moved) {
-        next.splice(to, 0, moved);
-      }
-      return next;
-    });
+    setExercises((exercises) => move(exercises, from, to));
   const replaceExercise = (changed: DraftExercise) =>
     setExercises((exercises) =>
       exercises.map((exercise) => (exercise.key === changed.key ? changed : exercise)),
