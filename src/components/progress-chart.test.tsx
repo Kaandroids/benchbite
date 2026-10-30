@@ -1,6 +1,6 @@
-import { isNear, niceStep, ticksOf } from './progress-chart';
+import { fireEvent, render, screen } from '@/test/render';
 
-jest.mock('react-native-svg', () => ({}));
+import { niceStep, ProgressChart, ticksOf } from './progress-chart';
 
 describe('niceStep', () => {
   it('rounds a step up to 1, 2, 2.5 or 5 times a power of ten', () => {
@@ -45,16 +45,28 @@ describe('ticksOf', () => {
   });
 });
 
-describe('isNear', () => {
-  it('takes a target within twice the spread of the values, or two units', () => {
-    expect(isNear([84, 85, 86], 81)).toBe(true);
-    expect(isNear([85, 85.4], 83.5)).toBe(true);
-  });
-
-  it('leaves out a far target, which would flatten the line', () => {
-    expect(isNear([84, 85, 86], 60)).toBe(false);
-    expect(isNear([84, 85, 86], 95)).toBe(false);
-    // Scaled to the values alone, the axis keeps their kilograms apart.
-    expect(ticksOf([84, 85, 86], 'whole')).toEqual([84, 85, 86]);
+describe('ProgressChart', () => {
+  it('scales to a far target and draws it with its label, instead of pinning it to the edge', async () => {
+    await render(
+      <ProgressChart
+        points={[84, 85, 86].map((value, day) => ({ date: new Date(2026, 9, day + 1), value }))}
+        formatValue={(value) => `${value} kg`}
+        formatTick={String}
+        scale="whole"
+        description="Weight"
+        target={{ value: 60, label: 'Target 60 kg' }}
+      />,
+    );
+    await fireEvent(screen.getByLabelText('Weight'), 'layout', {
+      nativeEvent: { layout: { width: 320, height: 150 } },
+    });
+    // The chart's texts are drawn by the SVG, as the content of its spans.
+    const texts = screen.container
+      .queryAll((node) => node.type === 'RNSVGTSpan')
+      .map((node) => node.props.content as string);
+    // The axis reaches down to the target, which no longer gets an arrow.
+    expect(texts).toContain('Target 60 kg');
+    expect(texts).toContain('60');
+    expect(texts.some((text) => text.includes('↓'))).toBe(false);
   });
 });

@@ -78,17 +78,6 @@ export function ticksOf(values: readonly number[], scale: Scale): number[] {
   return ticks;
 }
 
-/**
- * Whether a target is near enough the values to scale the chart to it: within twice their spread,
- * or two units. A farther one would flatten the line, so it is pinned to the chart's edge instead.
- */
-export function isNear(values: readonly number[], target: number): boolean {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const margin = Math.max(2 * (max - min), 2);
-  return target >= min - margin && target <= max + margin;
-}
-
 /** Up to how close to either end, in points, the middle date is left out. */
 const LABEL_ROOM = 60;
 
@@ -112,8 +101,8 @@ export function ProgressChart({
   const day = useShortDateFormat(new Date());
 
   const values = points.map((point) => point.value);
-  const targetNear = target !== undefined && values.length > 0 && isNear(values, target.value);
-  const ticks = ticksOf([...values, ...(target && targetNear ? [target.value] : [])], scale);
+  // The chart scales to include the target, however far, so that the goal stays in sight (#307).
+  const ticks = ticksOf([...values, ...(target ? [target.value] : [])], scale);
   const low = ticks[0] ?? 0;
   const high = ticks[ticks.length - 1] ?? low + 1;
   const y = (value: number) => {
@@ -145,15 +134,7 @@ export function ProgressChart({
   const labelled = [0, ...(points.length >= 5 && roomy ? [middle] : []), points.length - 1].filter(
     (index, position, all) => all.indexOf(index) === position,
   );
-  // A far target sits on the edge on its side of the line, with an arrow its way.
-  const targetBelow =
-    target !== undefined && values.length > 0 && target.value < Math.min(...values);
-  const targetY = !target ? 0 : targetNear ? y(target.value) : y(targetBelow ? low : high);
-  const targetLabel = !target
-    ? ''
-    : targetNear
-      ? target.label
-      : `${target.label} ${targetBelow ? '↓' : '↑'}`;
+  const targetY = target ? y(target.value) : 0;
   const last = points[points.length - 1];
   const before = points[points.length - 2];
   // The last value goes above its point, or left of it when the line comes down from above; a
@@ -199,8 +180,8 @@ export function ProgressChart({
                 y1={targetY}
                 y2={targetY}
                 stroke={colors.success}
-                strokeWidth={1.5}
-                strokeDasharray="5 5"
+                strokeWidth={2}
+                strokeDasharray="6 4"
               />
               <SvgText
                 x={width}
@@ -210,7 +191,7 @@ export function ProgressChart({
                 fontFamily={fonts.extraBold}
                 fill={colors.success}
               >
-                {targetLabel}
+                {target.label}
               </SvgText>
             </>
           ) : null}
