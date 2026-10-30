@@ -9,6 +9,7 @@ import { toTenth } from '@/i18n/units';
 import { Constants } from '@/lib/database.types';
 
 import type { NutritionTargets, TargetAnswers, TargetBasis } from '../targets';
+import { oneOf } from '@/lib/one-of';
 
 /** The steps of working the targets out again, each a screen. */
 export type RecalculateStep = 'goal' | 'target' | 'activity' | 'review';
@@ -34,9 +35,6 @@ export type RecalculateParams = {
   /** On the save: the key the review opened it with. */
   save?: string;
 };
-
-const oneOf = <T extends string>(options: readonly T[], value: string | undefined) =>
-  options.find((option) => option === value);
 
 const positive = (value: string | undefined) => {
   const number = Number(value);
