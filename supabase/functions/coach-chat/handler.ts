@@ -6,7 +6,9 @@ import { z } from 'zod';
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
 import {
   type ChatEvent as Event,
+  type ChatPhotoPart,
   type ChatReason,
+  type ChatRefusal,
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
@@ -20,7 +22,9 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
+import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
+import { parseJson, readBody } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   type Expression,
@@ -31,8 +35,9 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
+import { type CheckedPhoto, decodeBase64, readJpeg, removePhotos, storePhotos } from './photos.ts';
 import { loadSnapshot } from './snapshot.ts';
-import { DAY } from './day.ts';
+import { DAY, TIME } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -47,18 +52,51 @@ export type ChatContext = {
   stopCheckMs?: number;
 };
 
-const ChatRequest = z.object({
-  /** The thread to go on with; a new one without. */
-  threadId: z.number().int().positive().optional(),
-  message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
-  /** The app's language, which Bite answers in. */
-  language: z.enum(LANGUAGES),
-  /** The user's day, as their device has it. */
-  today: DAY,
-  /** The name the app stops this request by. */
-  requestId: z.uuid().optional(),
-}) satisfies z.ZodType<Body>;
+const Photo = z.object({
+  mimeType: z.literal('image/jpeg'),
+  data: z
+    .string()
+    .regex(BASE64)
+    .refine((data) => data.length % 4 === 0, 'Not base64'),
+});
+
+const ChatRequest = z
+  .object({
+    /** The thread to go on with; a new one without. */
+    threadId: z.number().int().positive().optional(),
+    /** What the user wrote, which may be nothing with photos. */
+    message: z.string().trim().max(MAX_MESSAGE_LENGTH).default(''),
+    photos: z.array(Photo).max(MAX_PHOTOS).default([]),
+    /** The device's local time, HH:MM. */
+    localTime: TIME.optional(),
+    /** The app's language, which Bite answers in. */
+    language: z.enum(LANGUAGES),
+    /** The user's day, as their device has it. */
+    today: DAY,
+    /** The name the app stops this request by. */
+    requestId: z.uuid().optional(),
+  })
+  .refine((request) => request.message || request.photos.length, {
+    path: ['message'],
+    message: 'A message needs text or a photo',
+  }) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
+
+/**
+ * The largest body read, in bytes: the photos at their largest as base64, and room for the rest,
+ * the longest message included. A larger one is refused before it is parsed.
+ */
+const MAX_BODY_BYTES = photosBodyBytes(40_000);
+
+/** The HTTP status each refusal is answered with. */
+const STATUS: Record<ChatRefusal, number> = {
+  invalid_request: 400,
+  thread_not_found: 404,
+  photos_too_large: 413,
+  photo_not_jpeg: 415,
+  photo_has_exif: 422,
+  unavailable: 500,
+};
 
 /** How many earlier messages Bite reads of a thread. */
 const HISTORY = 20;
@@ -84,7 +122,12 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
-  const parsed = ChatRequest.safeParse(await req.json().catch(() => null));
+  const length = Number(req.headers.get('content-length'));
+  if (length > MAX_BODY_BYTES) return refused('photos_too_large');
+  const text = await readBody(req, MAX_BODY_BYTES);
+  if (text === undefined) return refused('photos_too_large');
+
+  const parsed = ChatRequest.safeParse(parseJson(text));
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },
@@ -92,6 +135,17 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     );
   }
   const request = parsed.data;
+  // Photos are checked before anything is sent or kept (ADR 0062).
+  if (!photosFit(request.photos.map((photo) => decodedBytes(photo.data)))) {
+    return refused('photos_too_large');
+  }
+  const photos: CheckedPhoto[] = [];
+  for (const [index, { data }] of request.photos.entries()) {
+    const bytes = decodeBase64(data);
+    const read = readJpeg(bytes);
+    if (typeof read === 'string') return refused(read, { photo: index });
+    photos.push({ bytes, data, ...read });
+  }
 
   // The user reads only their own threads, so a thread they may not go on with is not found.
   let history: Message[] = [];
@@ -102,7 +156,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
       .eq('id', request.threadId)
       .maybeSingle();
     if (thread.error) return failed('Could not read the thread', thread.error);
-    if (!thread.data) return Response.json({ error: 'thread_not_found' }, { status: 404 });
+    if (!thread.data) return refused('thread_not_found');
     const messages = await context.supabase
       .from('coach_messages')
       .select('role, content, expression')
@@ -122,7 +176,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
-      return answer(request, history, context, send, stop).finally(() => {
+      return answer(request, photos, history, context, send, stop).finally(() => {
         if (!stop.cancelled) controller.close();
         return keepAlive(stop.forget());
       });
@@ -243,6 +297,7 @@ class Turn {
 
 async function answer(
   request: ChatRequest,
+  photos: CheckedPhoto[],
   history: Message[],
   context: ChatContext,
   send: (event: ChatEvent) => void,
@@ -280,14 +335,16 @@ async function answer(
       threadId = created.data.id;
       send({ event: 'thread', threadId });
     }
-    const snapshot = await loadSnapshot(context.supabase, request.today);
+    const snapshot = await loadSnapshot(context.supabase, request.today, request.localTime);
     const messages: Message[] = [
       ...history,
-      // The snapshot goes with the message, as data apart from the rules.
+      // The snapshot goes with the message, as data apart from the rules, and the photos before
+      // the message, in this turn only: later turns read them as text (toMessage()).
       {
         role: 'user',
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
+          ...photos.map(({ data }): Part => ({ type: 'image', mimeType: 'image/jpeg', data })),
           { type: 'text', text: messageText(request.message) },
         ],
       },
@@ -371,10 +428,14 @@ async function answer(
   });
   if (end.keep !== 'turn') {
     const dropped = end.dropThread && (await keepAlive(dropThread(context, threadId)));
-    if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
+    if (end.keep === 'question') {
+      await keepAlive(saveQuestion(context, threadId, request, photos));
+    }
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
-  const messageId = await keepAlive(saveTurn(context, threadId, request, turn, end.interrupted));
+  const messageId = await keepAlive(
+    saveTurn(context, threadId, request, photos, turn, end.interrupted),
+  );
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
   send({
     event: 'done',
@@ -448,19 +509,48 @@ function proposalOf(result: unknown): ProposalCard | undefined {
   return (result as { proposal?: ProposalCard } | null)?.proposal;
 }
 
-/** The user's message as the thread keeps it. */
-function question(threadId: number, request: ChatRequest) {
+/** The user's message as the thread keeps it: a part per photo, by its path, then its text. */
+function question(threadId: number, request: ChatRequest, images: ChatPhotoPart[]) {
+  const text = request.message ? [{ type: 'text', text: request.message }] : [];
   return {
     thread_id: threadId,
     role: 'user' as const,
-    content: [{ type: 'text', text: request.message }],
+    content: [...images, ...text] as unknown as NonNullable<Json>,
   };
 }
 
+/**
+ * Keeps the message's photos, if it has any, and saves its messages with them, giving what the
+ * insert gives. Photos of a message that could not be saved are removed again, as when its
+ * thread was deleted meanwhile: its folder was queued for removal then (ADR 0063), and would not
+ * be again.
+ */
+async function saveWithPhotos<Result extends { error: unknown }>(
+  context: ChatContext,
+  threadId: number,
+  photos: CheckedPhoto[],
+  insert: (images: ChatPhotoPart[]) => PromiseLike<Result>,
+): Promise<Result | undefined> {
+  const images = photos.length
+    ? await storePhotos(context.admin, context.userId, threadId, photos)
+    : [];
+  if (!images) return undefined;
+  const saved = await insert(images);
+  if (saved.error) await removePhotos(context.admin, images);
+  return saved;
+}
+
 /** Saves a question Bite gave no answer to. */
-async function saveQuestion(context: ChatContext, threadId: number, request: ChatRequest) {
-  const saved = await context.admin.from('coach_messages').insert(question(threadId, request));
-  if (saved.error) logError('Could not save the question', saved.error);
+async function saveQuestion(
+  context: ChatContext,
+  threadId: number,
+  request: ChatRequest,
+  photos: CheckedPhoto[],
+) {
+  const saved = await saveWithPhotos(context, threadId, photos, (images) =>
+    context.admin.from('coach_messages').insert(question(threadId, request, images)),
+  );
+  if (!saved || saved.error) logError('Could not save the question', saved?.error);
 }
 
 /**
@@ -471,28 +561,32 @@ async function saveTurn(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
+  photos: CheckedPhoto[],
   turn: Turn,
   interrupted: Interruption | undefined,
 ): Promise<number | undefined> {
-  const messages = await context.admin
-    .from('coach_messages')
-    .insert([
-      question(threadId, request),
-      {
-        thread_id: threadId,
-        role: 'bite',
-        content: content(turn.trace, turn.text.trim()) as unknown as NonNullable<Json>,
-        expression: turn.expression ?? 'neutral',
-        model: turn.usage.model,
-        input_tokens: turn.usage.input,
-        cached_input_tokens: turn.usage.cached,
-        output_tokens: turn.usage.output,
-        thinking_tokens: turn.usage.thinking,
-        interrupted: interrupted ?? null,
-      },
-    ])
-    .select('id')
-    .order('id');
+  const messages = await saveWithPhotos(context, threadId, photos, (images) =>
+    context.admin
+      .from('coach_messages')
+      .insert([
+        question(threadId, request, images),
+        {
+          thread_id: threadId,
+          role: 'bite',
+          content: content(turn.trace, turn.text.trim()) as unknown as NonNullable<Json>,
+          expression: turn.expression ?? 'neutral',
+          model: turn.usage.model,
+          input_tokens: turn.usage.input,
+          cached_input_tokens: turn.usage.cached,
+          output_tokens: turn.usage.output,
+          thinking_tokens: turn.usage.thinking,
+          interrupted: interrupted ?? null,
+        },
+      ])
+      .select('id')
+      .order('id'),
+  );
+  if (!messages) return undefined;
   if (messages.error) return void logError('Could not save the messages', messages.error);
   return messages.data[messages.data.length - 1].id;
 }
@@ -579,16 +673,32 @@ function toMessage(
         : undefined;
     return proposal ? [proposalText(proposal)] : [];
   });
+  // A message's photos reach the model in its own turn only (ADR 0062).
+  const photos = parts.filter(
+    (part) => part && typeof part === 'object' && !Array.isArray(part) && part.type === 'image',
+  ).length;
   const text = [...said.filter(Boolean), ...proposed].join('\n');
+  if (row.role === 'user') {
+    const sent = photos ? [photosText(photos)] : [];
+    const all = [...sent, untagged(text)].filter(Boolean).join('\n');
+    return all ? [{ role: 'user', parts: [{ type: 'text', text: all }] }] : [];
+  }
   if (!text) return [];
-  if (row.role === 'user')
-    return [{ role: 'user', parts: [{ type: 'text', text: untagged(text) }] }];
   const face = marker(row.expression ?? 'neutral');
   // Bite may have repeated what the user wrote.
   return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${untagged(text)}` }] }];
 }
 
+/** Where an earlier message's photos were, as Bite reads it in later turns. */
+export function photosText(count: number): string {
+  return count === 1 ? '(Sent a photo.)' : `(Sent ${count} photos.)`;
+}
+
 function failed(message: string, error: unknown): Response {
   logError(message, error);
-  return Response.json({ error: 'unavailable' }, { status: 500 });
+  return refused('unavailable');
+}
+
+function refused(reason: ChatRefusal, details: { photo?: number } = {}): Response {
+  return Response.json({ error: reason, ...details }, { status: STATUS[reason] });
 }
