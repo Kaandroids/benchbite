@@ -6,7 +6,6 @@ import type { SupabaseContext } from '@supabase/server';
 
 import type { Database } from './database.types.ts';
 import {
-  type Env,
   type LanguageModel,
   languageModel,
   ModelError,
@@ -27,10 +26,8 @@ export type AiContext = {
   supabase: Client;
   /** A client with the service role (`supabaseAdmin`), which alone may record usage. */
   admin: Client;
-  /** The model to call; `languageModel(env)` by default, a `FakeModel` in tests. */
+  /** The model to call; `languageModel()` by default, a `FakeModel` in tests. */
   model?: LanguageModel;
-  /** Where `languageModel()` reads its settings; `Deno.env` by default. */
-  env?: Env;
 };
 
 /** A request of the model's own task, which `aiModel()` fills in. */
@@ -62,10 +59,16 @@ type Used = Usage | 'nothing' | 'unknown';
  * `AiRefusedError`.
  */
 export function aiModel(context: AiContext, task: Task): AiModel {
-  const inner = context.model ?? languageModel(context.env);
+  const inner = context.model ?? languageModel();
 
   async function start(request: AiRequest) {
-    const full: ModelRequest = { ...request, task };
+    // Who may not call a model at all is told so before anything is sent to the provider.
+    const access = await context.supabase.rpc('ai_access');
+    if (access.error) throw new Error(`ai_access: ${access.error.message}`);
+    if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
+
+    // A copy of its own, so that what is counted is what is sent, whatever the caller changes.
+    const full: ModelRequest = { ...structuredClone(request), task };
     const inputTokens = await inner.countTokens(full);
     const started = await context.supabase.rpc('start_ai_call', {
       feature: task,
@@ -111,14 +114,23 @@ export function aiModel(context: AiContext, task: Task): AiModel {
         if (error instanceof ModelError && !error.billed) used = 'nothing';
         throw error;
       } finally {
-        // Also when the stream is left before its end, which stops the request.
-        await record(context.admin, callId, used);
+        // Also when the stream is left before its end, which stops the request, as when the app
+        // closes it: the worker is then kept alive until the call is recorded.
+        await keepAlive(record(context.admin, callId, used));
       }
     },
   };
 }
 
-/** Records a call, trying once more if the first try fails, and logs it if both do. */
+/** Keeps the Edge Function's worker alive until `work` is done, also after its response ended. */
+function keepAlive<T>(work: Promise<T>): Promise<T> {
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } })
+    .EdgeRuntime;
+  runtime?.waitUntil(work);
+  return work;
+}
+
+/** Records a call, trying once more a moment later if the first try fails, and logs it if both do. */
 async function record(admin: Client, callId: string, used: Used) {
   const usage = typeof used === 'object' ? used : undefined;
   const args = {
@@ -132,8 +144,12 @@ async function record(admin: Client, callId: string, used: Used) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     const { error } = await admin.rpc('record_ai_usage', args);
     if (!error) return;
-    // Logged, not thrown: the request's own result or error matters more to the caller. A call
-    // never recorded is counted at its most once it is left behind.
-    if (attempt === 2) console.error(`record_ai_usage: ${error.message}`);
+    if (attempt === 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    } else {
+      // Logged, not thrown: the request's own result or error matters more to the caller. A call
+      // never recorded is counted at its most once it is left behind.
+      console.error(`record_ai_usage: ${error.message}`);
+    }
   }
 }

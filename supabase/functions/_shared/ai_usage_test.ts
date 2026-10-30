@@ -12,18 +12,21 @@ const STARTED: AiCall = { allowed: true, reason: null, call_id: 'call-1', max_ou
 const HI = { role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hi' }] };
 
 /**
- * The context of a model: the database starting calls with `starts` in turn and recording with
- * the errors given in turn, and `model`; with the calls each client was asked.
+ * The context of a model: the database allowing the user or not, starting calls with `starts` in
+ * turn and recording with the errors given in turn, and `model`; with the calls each client was
+ * asked, apart from asking for access.
  */
 function context(
   model: LanguageModel,
   starts: AiCall[] = [STARTED],
   recordErrors: ({ message: string } | null)[] = [],
+  access: Partial<AiCall> = { allowed: true, reason: null },
 ) {
   const calls: { client: string; name: string; args: unknown }[] = [];
   const client = (name: string) =>
     ({
       rpc: (fn: string, args: unknown) => {
+        if (fn === 'ai_access') return Promise.resolve({ data: access, error: null });
         calls.push({ client: name, name: fn, args });
         if (fn === 'start_ai_call') return Promise.resolve({ data: starts.shift(), error: null });
         return Promise.resolve({ data: 0.0004, error: recordErrors.shift() ?? null });
@@ -120,6 +123,38 @@ Deno.test('refuses a request the user may not make, and calls no model', async (
   assertEquals(calls, [START]);
 });
 
+Deno.test('asks for access before it counts anything with the provider', async () => {
+  const model = new FakeModel([]);
+  let counted = false;
+  model.countTokens = () => {
+    counted = true;
+    return Promise.resolve(10);
+  };
+  const { ctx, calls } = context(model, [], [], { allowed: false, reason: 'plan_required' });
+
+  const error = await assertRejects(
+    () => aiModel(ctx, 'coach_chat').generate({ messages: [HI] }),
+    AiRefusedError,
+  );
+
+  assertEquals([error.reason, counted, calls], ['plan_required', false, []]);
+});
+
+Deno.test('sends what it counted, whatever the caller changes meanwhile', async () => {
+  const model = new FakeModel([]);
+  const messages = [HI];
+  const count = model.countTokens.bind(model);
+  model.countTokens = (request) => {
+    messages.push(HI);
+    return count(request);
+  };
+  const { ctx } = context(model);
+
+  await aiModel(ctx, 'coach_chat').generate({ messages });
+
+  assertEquals(model.requests[0].messages.length, 1);
+});
+
 Deno.test('records a stream read to its end at what it used', async () => {
   const { ctx, calls } = context(new FakeModel([{ type: 'text', text: 'Hello!' }]));
 
@@ -145,7 +180,8 @@ Deno.test('counts a request that broke off at its most, and one refused at nothi
   const failing = (billed: boolean): LanguageModel => ({
     model: () => 'fake',
     countTokens: () => Promise.resolve(FAKE_USAGE.inputTokens),
-    generate: () => Promise.reject(new ModelError('Gemini: failed', 503, true, billed)),
+    generate: () =>
+      Promise.reject(new ModelError('Gemini: failed', { status: 503, retryable: true, billed })),
     stream: () => {
       throw new Error('unused');
     },
