@@ -67,3 +67,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0049](0049-gemini-behind-our-own-model-interface.md)        | Gemini behind our own language model interface                                          | Accepted, amended by ADR-0051 |
 | [0050](0050-bites-conversations-in-threads.md)               | Bite's conversations in threads, written only by the chat function                      | Accepted                      |
 | [0051](0051-ai-usage-and-a-monthly-limit.md)                 | What AI costs, and a limit per user and month                                           | Accepted                      |
+| [0052](0052-the-coach-chat-function.md)                      | Bite answers in a stream of events, from a prompt, a snapshot and read tools            | Accepted                      |
