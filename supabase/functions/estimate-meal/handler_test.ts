@@ -271,6 +271,12 @@ Deno.test('takes a library food only by its name and calories', () => {
     bestMatch('Boiled rice', 144, [food({ food_id: 'E1', name: 'Egg, boiled' })]),
     undefined,
   );
+  // An exact name decides: an apple far from the photo's calories is no match, and apple sauce,
+  // which agrees, is another food.
+  const apple = food({ food_id: 'F1', name: 'Apple' }, 58);
+  const appleSauce = food({ food_id: 'F2', name: 'Apple sauce' }, 86);
+  assertEquals(bestMatch('Apple', 90, [apple, appleSauce]), undefined);
+  assertEquals(bestMatch('Apple', 60, [appleSauce, apple]), apple);
   // Small values agree within a few kcal, whatever the ratio.
   const coffee = food({ food_id: 'P1', name: 'Coffee, black' }, 2);
   assertEquals(bestMatch('Coffee, black', 5, [coffee]), coffee);

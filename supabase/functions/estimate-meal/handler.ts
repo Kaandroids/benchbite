@@ -232,8 +232,10 @@ const OWN_SEPARATORS = [',', ' (', ' -'];
 /**
  * The food an item is, of those search_foods() found, or none, when the model's own values are
  * used: one whose name is the name searched for, or starts with it, and whose calories agree
- * with the model's estimate. The user's own food or recipe comes first, when it is the same
- * food; otherwise the library's, best first as search_foods() orders them.
+ * with the model's estimate. A food of exactly that name decides: it, or none, as a longer name
+ * that agrees where it does not is another food, as apple sauce is to an apple. The user's own
+ * food or recipe comes first, when it is the same food; otherwise the library's, best first as
+ * search_foods() orders them.
  */
 export function bestMatch(
   searchName: string,
@@ -242,19 +244,30 @@ export function bestMatch(
 ): FoundFood | undefined {
   const key = nameKey(searchName);
   if (key.length < FOOD_QUERY_LENGTH.min) return undefined;
-  const named = (row: FoundFood, separators: string[]) => {
-    const name = nameKey(row.name);
-    return name === key || separators.some((separator) => name.startsWith(key + separator));
-  };
   const agrees = (row: FoundFood) => {
     const difference = Math.abs(row.kcal - estimatedKcal);
     return (
       difference <= KCAL_SLACK || difference <= KCAL_TOLERANCE * Math.max(row.kcal, estimatedKcal)
     );
   };
+  const pick = (rows: FoundFood[], separators: string[]) => {
+    const exact = rows.filter((row) => nameKey(row.name) === key);
+    if (exact.length) return exact.find(agrees);
+    return rows.find(
+      (row) =>
+        separators.some((separator) => nameKey(row.name).startsWith(key + separator)) &&
+        agrees(row),
+    );
+  };
   return (
-    found.find((row) => row.food_id === null && named(row, OWN_SEPARATORS) && agrees(row)) ??
-    found.find((row) => row.food_id !== null && named(row, LIBRARY_SEPARATORS) && agrees(row))
+    pick(
+      found.filter((row) => row.food_id === null),
+      OWN_SEPARATORS,
+    ) ??
+    pick(
+      found.filter((row) => row.food_id !== null),
+      LIBRARY_SEPARATORS,
+    )
   );
 }
 
