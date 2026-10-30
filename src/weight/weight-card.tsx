@@ -95,9 +95,13 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
 
   // No change says nothing, so it is left out with the arrow it would need.
   const trend = weightChange(history.data ?? []) || null;
-  // Toward the target is good news; without one, a change is only a change.
-  const towardTarget =
-    trend !== null && goal !== null && (goal.goal === 'lose_fat' ? trend < 0 : trend > 0);
+  // Toward the target is good news and away from it bad; without one, a change is only a change.
+  const trendColor =
+    trend === null || goal === null
+      ? 'textMuted'
+      : (goal.goal === 'lose_fat' ? trend < 0 : trend > 0)
+        ? 'success'
+        : 'danger';
   const reached =
     goal !== null && shownKg !== undefined && isTargetReached(goal.goal, shownKg, goal.targetKg);
   // Dated by the pace the targets give; none when they keep the weight.
@@ -137,12 +141,8 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
             </Text>
             {trend !== null ? (
               <View style={[styles.row, { gap: spacing.xs }]}>
-                <Icon
-                  name={trend < 0 ? 'arrowDown' : 'arrowUp'}
-                  size={14}
-                  color={towardTarget ? 'success' : 'textMuted'}
-                />
-                <Text variant="captionStrong" color={towardTarget ? 'success' : 'textMuted'}>
+                <Icon name={trend < 0 ? 'arrowDown' : 'arrowUp'} size={14} color={trendColor} />
+                <Text variant="captionStrong" color={trendColor}>
                   {t(`weight.change.${range}`, {
                     weight: formatWeight(Math.abs(trend), unit),
                     unit,

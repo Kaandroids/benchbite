@@ -139,6 +139,37 @@ it('says how much the weight changed in the range, toward the target', async () 
   expect(screen.getByLabelText('Your weight over 2 entries')).toBeTruthy();
 });
 
+it('marks a change away from the target in red', async () => {
+  mockHistory([
+    { weightKg: 85, measuredOn: '2026-08-01' },
+    { weightKg: 86.4, measuredOn: '2026-10-21' },
+  ]);
+  await render(
+    <WeightCard
+      latest={{ weightKg: 86.4, measuredOn: '2026-10-21' }}
+      unit="kg"
+      today={WEDNESDAY}
+      goal={{ goal: 'lose_fat', targetKg: 80, paceKg: 0.5 }}
+    />,
+  );
+  expect(screen.getByText('1.4 kg in 3 months')).toHaveStyle({ color: '#DC2626' });
+});
+
+it('leaves a change grey without a target weight', async () => {
+  mockHistory([
+    { weightKg: 85, measuredOn: '2026-08-01' },
+    { weightKg: 86.4, measuredOn: '2026-10-21' },
+  ]);
+  await render(
+    <WeightCard
+      latest={{ weightKg: 86.4, measuredOn: '2026-10-21' }}
+      unit="kg"
+      today={WEDNESDAY}
+    />,
+  );
+  expect(screen.getByText('1.4 kg in 3 months')).toHaveStyle({ color: '#676A72' });
+});
+
 it('changes the range of the chart', async () => {
   await render(<WeightCard latest={TODAYS} unit="kg" today={WEDNESDAY} />);
   await fireEvent.press(screen.getByText('Year'));
