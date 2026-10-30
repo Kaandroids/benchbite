@@ -19,14 +19,20 @@ summary, Daily goals and the weight card, still came from the chosen pace, so th
 ## Decision
 
 - **The slider stops at 1.5% of body weight a week**, on its steps, where that comes before
-  0.9 kg (`paceRange`), so that a pace the app calls aggressive cannot be picked. At the stop, the
+  0.9 kg (`paceRange`), so that a pace the app calls aggressive cannot be picked, in either
+  unit once saved in kilograms. At the stop, the
   note says it is the fastest pace for the user's weight. Goals to gain keep their range.
-- **The database works out the pace the targets really give**, from the same calculation:
-  `achievable_weekly_pace_kg()` for answers not yet saved (the onboarding) and
-  `my_achievable_weekly_pace_kg()` for the saved goal. It is the chosen pace, unless the floor
-  holds the calories up; then it is the difference to maintenance, at 7,700 kcal a kilogram.
-- **Every date of the goal uses that pace.** Where it is slower than the chosen one, the plan and
-  Daily goals say why: the calories stay at the floor, and moving more makes it faster.
+- **The database works out the pace of loss the targets really give**, from the targets
+  themselves: the calories that keep the weight less those of the goal, at 7,700 kcal a
+  kilogram (`weekly_loss_kg()`). `achievable_weekly_pace_kg()` does it for answers not yet saved
+  (the onboarding), `my_achievable_weekly_pace_kg()` for the saved goal. It is 0 when the floor
+  holds the calories at what keeps the weight, and null for a goal that does not lose weight,
+  which the floor never holds back.
+- **Every date of the goal uses that pace** (`goalDate`), where the floor holds it below the
+  chosen one; within rounding, the chosen one. Where it is slower, the plan and Daily goals say
+  why: the calories stay at the floor, and moving more makes it faster. Where it is 0, there is
+  no date, and they say the calories keep the weight. With one's own targets in use, the weight
+  card dates by the chosen pace, as the calculated targets' pace says nothing of them.
 - **The healthy body mass index and the pace levels are one file**, `_shared/body/limits.ts`,
   which the app and Bite (ADR 0053) both use.
 

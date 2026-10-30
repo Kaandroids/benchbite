@@ -121,6 +121,13 @@ describe('PlanStep', () => {
     jest.useRealTimers();
   });
 
+  it('gives no date when the targets keep the weight, and says why', async () => {
+    mockStep = createStep({ ...ANSWERS, achievablePaceKg: 0 });
+    await render(<PlanStep />);
+    expect(screen.getByText('Not at these calories')).toBeTruthy();
+    expect(screen.getByText(/about what you burn, so they keep your weight/)).toBeTruthy();
+  });
+
   it('says nothing more when the targets give the chosen pace', async () => {
     mockStep = createStep({ ...ANSWERS, achievablePaceKg: 0.5 });
     await render(<PlanStep />);

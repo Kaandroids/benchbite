@@ -89,6 +89,26 @@ describe('GoalsScreen', () => {
     ).toBeTruthy();
   });
 
+  it('gives no date when the targets keep the weight', async () => {
+    jest.mocked(useTargetBasis).mockReturnValue(
+      loaded({
+        goal: 'lose_fat',
+        targetWeightKg: 75,
+        weeklyPaceKg: 0.5,
+        activity: 'light',
+        heightCm: 180,
+        calorieFloor: 1500,
+        achievablePaceKg: 0,
+      }),
+    );
+    await render(<GoalsScreen />);
+    expect(
+      screen.getByLabelText(
+        'Pace: No loss at these calories, You chose 0.5 kg, but your calories stay at 1,940 kcal, the least we recommend, about what you burn.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('opens the steps to work the calculated goals out again', async () => {
     await render(<GoalsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Calculate again' }));

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { datingPace, weightGoal } from '@/body/body';
+import { weightGoal } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
@@ -9,7 +9,7 @@ import { cardEntering } from '@/components/ui/card';
 import { DevButton } from '@/dev/dev-button';
 import { RECORDS_KEY, TRAINING_DAYS_KEY } from '@/history/history';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
-import { useTargetBasis } from '@/nutrition/targets';
+import { useOwnTargets, useTargetBasis } from '@/nutrition/targets';
 import { SettingsButton } from '@/settings/settings-button';
 import { WeightCard } from '@/weight/weight-card';
 import { useLatestWeight, useWeightUnit, WEIGHTS_KEY } from '@/weight/weights';
@@ -29,6 +29,7 @@ export function ProgressScreen() {
   const latestWeight = useLatestWeight();
   const weightUnit = useWeightUnit();
   const basis = useTargetBasis();
+  const own = useOwnTargets();
   const today = new Date();
   const queryClient = useQueryClient();
   const queries = [latestWeight, weightUnit];
@@ -44,15 +45,14 @@ export function ProgressScreen() {
         ),
     },
   ];
-  // The chart shows the target without waiting for it, dated by the pace the targets give.
+  // The chart shows the target without waiting for it, dated by the pace the calculated targets
+  // give; with one's own targets in use, that pace says nothing, so the chosen one dates it.
   const goal = basis.data
     ? weightGoal({
         goal: basis.data.goal,
         targetWeightKg: basis.data.targetWeightKg ?? undefined,
-        weeklyPaceKg:
-          basis.data.weeklyPaceKg === null
-            ? undefined
-            : datingPace(basis.data.weeklyPaceKg, basis.data.achievablePaceKg),
+        weeklyPaceKg: basis.data.weeklyPaceKg ?? undefined,
+        achievablePaceKg: own.data?.inUse ? null : basis.data.achievablePaceKg,
       })
     : null;
 

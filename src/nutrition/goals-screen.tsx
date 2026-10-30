@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { datingPace, isPaceHeldUp, isTargetReached, projectedDate } from '@/body/body';
+import { datingPace, goalDate, isPaceHeldUp, isTargetReached } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -312,32 +312,42 @@ function BasisList({ basis, calories }: { basis: TargetBasis; calories: number }
     );
     const chosen = basis.weeklyPaceKg;
     if (target !== null && !reached && chosen !== null) {
-      // Dated by the pace the targets give, which the floor may hold below the chosen one.
-      const pace = datingPace(chosen, basis.achievablePaceKg);
-      const date = monthDay(projectedDate(current, target, pace, new Date()));
-      rows.push(
-        isPaceHeldUp(chosen, basis.achievablePaceKg)
+      // Dated by the pace the targets give, which the floor may hold below the chosen one, or to
+      // none, when they keep the weight.
+      const achievable = basis.achievablePaceKg;
+      const pace = datingPace(chosen, achievable);
+      const date = goalDate(current, target, chosen, achievable, new Date());
+      const chosenText = format(weightIn(unit, chosen));
+      rows.push({
+        key: 'pace',
+        label: t('nutrition.goals.pace'),
+        ...(!isPaceHeldUp(chosen, achievable)
           ? {
-              key: 'pace',
-              label: t('nutrition.goals.pace'),
-              value: t('nutrition.goals.aboutPerWeek', {
-                value: format(weightIn(unit, pace)),
-                unit,
-              }),
-              detail: t('nutrition.goals.heldUp', {
-                chosen: format(weightIn(unit, chosen)),
-                unit,
-                calories: format(calories),
-                date,
-              }),
+              value: t('nutrition.goals.perWeek', { value: chosenText, unit }),
+              detail: t('nutrition.goals.by', { date: date && monthDay(date) }),
             }
-          : {
-              key: 'pace',
-              label: t('nutrition.goals.pace'),
-              value: t('nutrition.goals.perWeek', { value: format(weightIn(unit, chosen)), unit }),
-              detail: t('nutrition.goals.by', { date }),
-            },
-      );
+          : date
+            ? {
+                value: t('nutrition.goals.aboutPerWeek', {
+                  value: format(weightIn(unit, pace)),
+                  unit,
+                }),
+                detail: t('nutrition.goals.heldUp', {
+                  chosen: chosenText,
+                  unit,
+                  calories: format(calories),
+                  date: monthDay(date),
+                }),
+              }
+            : {
+                value: t('nutrition.goals.noLoss'),
+                detail: t('nutrition.goals.keeps', {
+                  chosen: chosenText,
+                  unit,
+                  calories: format(calories),
+                }),
+              }),
+      });
     }
   }
   rows.push({

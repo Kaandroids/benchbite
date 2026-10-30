@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { isTargetReached, projectedDate, type weightGoal } from '@/body/body';
+import { goalDate, isTargetReached, type weightGoal } from '@/body/body';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { StepButtons } from '@/components/ui/step-buttons';
@@ -100,19 +100,23 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
     trend !== null && goal !== null && (goal.goal === 'lose_fat' ? trend < 0 : trend > 0);
   const reached =
     goal !== null && shownKg !== undefined && isTargetReached(goal.goal, shownKg, goal.targetKg);
+  // Dated by the pace the targets give; none when they keep the weight.
+  const date =
+    goal !== null && !reached && shownKg !== undefined
+      ? goalDate(shownKg, goal.targetKg, goal.paceKg, goal.achievablePaceKg, today)
+      : null;
   const target =
     goal === null
       ? undefined
       : {
           value: weightIn(unit, goal.targetKg),
-          label:
-            !reached && shownKg !== undefined
-              ? t('weight.targetBy', {
-                  weight: formatWeight(goal.targetKg, unit),
-                  unit,
-                  date: monthDay(projectedDate(shownKg, goal.targetKg, goal.paceKg, today)),
-                })
-              : t('weight.target', { weight: formatWeight(goal.targetKg, unit), unit }),
+          label: date
+            ? t('weight.targetBy', {
+                weight: formatWeight(goal.targetKg, unit),
+                unit,
+                date: monthDay(date),
+              })
+            : t('weight.target', { weight: formatWeight(goal.targetKg, unit), unit }),
         };
 
   return (

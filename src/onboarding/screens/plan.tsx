@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
-import { datingPace, isPaceHeldUp, projectedDate, weightGoal } from '@/body/body';
+import { datingPace, goalDate, isPaceHeldUp, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
@@ -50,8 +50,10 @@ export function PlanStep() {
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 0;
   const aim = weightGoal(answers);
-  // Dated by the pace the targets give, which the floor may hold below the chosen one.
+  // Dated by the pace the targets give, which the floor may hold below the chosen one, or to none.
   const pace = aim ? datingPace(aim.paceKg, answers.achievablePaceKg) : 0;
+  const date =
+    aim && goalDate(weightKg, aim.targetKg, aim.paceKg, answers.achievablePaceKg, new Date());
   const showWeight = (kg: number) => weightLabel(kg, unit);
 
   const save = async () => {
@@ -103,17 +105,19 @@ export function PlanStep() {
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
               value: showWeight(aim.targetKg),
-              label: formatDate(projectedDate(weightKg, aim.targetKg, pace, new Date())),
+              label: date ? formatDate(date) : t('onboarding.plan.noDate'),
             }}
           />
           {isPaceHeldUp(aim.paceKg, answers.achievablePaceKg) ? (
             <Text variant="caption" color="textMuted">
-              {t('onboarding.plan.heldUp', {
-                pace: format(paceIn(unit, pace)),
-                chosen: format(paceIn(unit, aim.paceKg)),
-                unit,
-                calories: format(targets.calories),
-              })}
+              {pace > 0
+                ? t('onboarding.plan.heldUp', {
+                    pace: format(paceIn(unit, pace)),
+                    chosen: format(paceIn(unit, aim.paceKg)),
+                    unit,
+                    calories: format(targets.calories),
+                  })
+                : t('onboarding.plan.keeps', { calories: format(targets.calories) })}
             </Text>
           ) : null}
         </Card>
