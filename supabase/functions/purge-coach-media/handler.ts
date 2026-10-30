@@ -2,9 +2,9 @@
 // with a stand-in for the database and storage. It takes a batch of the folders that deleted
 // chats left in coach-media, removes their photos and then their place in the queue. A folder that
 // fails stays queued for the next run.
+import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
-export const MEDIA_BUCKET = 'coach-media';
 /** Folders per run: a run has to end well within the scheduled call's timeout. */
 export const BATCH_SIZE = 20;
 /** Photos listed and removed per request. */
@@ -41,7 +41,7 @@ export async function handlePurgeRequest(req: Request, context: PurgeContext): P
   const failed: Queued[] = [];
   for (const folder of queued as Queued[]) {
     try {
-      await emptyFolder(admin, `${folder.user_id}/${folder.thread_id}`);
+      await emptyFolder(admin, threadMediaFolder(folder.user_id, folder.thread_id));
       purged.push(folder.thread_id);
     } catch (cause) {
       // The thread id alone: the path also names the user.
