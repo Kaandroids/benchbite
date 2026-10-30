@@ -3,6 +3,7 @@
 import { z } from 'zod';
 
 import { FOOD_QUERY_LENGTH } from '../foods.ts';
+import { type Language, LANGUAGE_NAMES } from '../prompt.ts';
 
 /** The longest name of an item, which a longer one is cut to. */
 const MAX_NAME_LENGTH = 100;
@@ -32,3 +33,32 @@ export const ModelItem = z.object({
 });
 
 export type ModelItem = z.infer<typeof ModelItem>;
+
+/**
+ * How the food library names foods, per language: names it has, and the words it uses for how a
+ * food is prepared, which the model is asked to keep to, so that its search names find the foods
+ * and an item saved as the user's own food is named in their language (ADR 0060).
+ */
+export const SEARCH_NAMES: Record<Language, { examples: string[]; preparations: string }> = {
+  en: {
+    examples: ['Pasta, boiled', 'Chicken breast, grilled'],
+    preparations: 'boiled for anything cooked in water, then fried, grilled, roasted or raw',
+  },
+  de: {
+    examples: ['Nudeln, gekocht', 'Hähnchenbrustfilet, gegrillt'],
+    preparations: 'gekocht for anything cooked in water, then gebraten, gegrillt or roh',
+  },
+  tr: {
+    examples: ['Makarna, haşlanmış', 'Tavuk göğsü, ızgara'],
+    preparations:
+      'haşlanmış for anything cooked in water, then tavada or kızarmış, ızgara, fırında or çiğ',
+  },
+};
+
+/** The lines of a prompt that teach the model those names, one per language. */
+export const searchNameLines = Object.entries(SEARCH_NAMES)
+  .map(
+    ([language, { examples, preparations }]) =>
+      `  - ${LANGUAGE_NAMES[language as Language]}: such as ${examples.map((name) => `"${name}"`).join(' or ')}; ${preparations}.`,
+  )
+  .join('\n');

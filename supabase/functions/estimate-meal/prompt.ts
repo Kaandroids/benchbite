@@ -8,37 +8,9 @@ import {
   MAX_ESTIMATE_ITEMS,
   type PreviousItem,
 } from '../_shared/meal/estimate.ts';
-import { ModelItem } from '../_shared/meal/item.ts';
+import { ModelItem, searchNameLines } from '../_shared/meal/item.ts';
 import type { JsonSchema, Part } from '../_shared/llm/mod.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
-
-/**
- * How the food library names foods, per language: names it has, and the words it uses for how a
- * food is prepared, which the model is asked to keep to, so that its search names find the foods
- * and an item saved as the user's own food is named in their language (ADR 0060).
- */
-export const SEARCH_NAMES: Record<Language, { examples: string[]; preparations: string }> = {
-  en: {
-    examples: ['Pasta, boiled', 'Chicken breast, grilled'],
-    preparations: 'boiled for anything cooked in water, then fried, grilled, roasted or raw',
-  },
-  de: {
-    examples: ['Nudeln, gekocht', 'Hähnchenbrustfilet, gegrillt'],
-    preparations: 'gekocht for anything cooked in water, then gebraten, gegrillt or roh',
-  },
-  tr: {
-    examples: ['Makarna, haşlanmış', 'Tavuk göğsü, ızgara'],
-    preparations:
-      'haşlanmış for anything cooked in water, then tavada or kızarmış, ızgara, fırında or çiğ',
-  },
-};
-
-const searchNameLines = Object.entries(SEARCH_NAMES)
-  .map(
-    ([language, { examples, preparations }]) =>
-      `  - ${LANGUAGE_NAMES[language as Language]}: such as ${examples.map((name) => `"${name}"`).join(' or ')}; ${preparations}.`,
-  )
-  .join('\n');
 
 export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and nutrition app. You estimate a meal from one to three photos of it.
 
