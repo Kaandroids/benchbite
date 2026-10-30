@@ -18,24 +18,24 @@ sheet know about them.
   reads a workout changes, and editing the workout (`save_workout()`, unchanged) edits it. The
   workout's name and weekdays belong to the workout, not to an alternative.
 - **`workout_alternatives` keeps one row per alternative,** the one in use too: its `position`
-  (1 to 5, the order of the chips), an optional `name` of up to 12 characters (the app shows an
-  unnamed one as "Alternative N"), `in_use`, and the `exercises` of the others as
-  `saved_workout()` reads them, null for the one in use. One row per workout is in use. A workout
-  without rows has no alternatives and behaves as before; a single row would mean the same, so it
-  is never kept.
+  (the order of the chips), an optional `name` of up to 12 characters (the app shows an unnamed
+  one as "Alternative N"), and the `exercises` of the others as `saved_workout()` reads them,
+  null for the one in use, which `in_use` is generated from. One row per workout is in use. A
+  workout without rows has no alternatives and behaves as before; a single row would mean the
+  same, so it is never kept.
 - **Users read their rows; only functions write them,** with the caller's lock
   (`lock_user_limits()`), then the workout's row, as `save_workout()` takes them:
   - `add_workout_alternative(workout_id, name, exercises, today)` copies the one in use when
     `exercises` is null, or takes the list, which is tried through `save_workout()` and rolled
     back, as Bite's proposals are (ADR 0058), so that its own checks refuse it at once. The list is
     kept as `saved_workout()` reads it back. The first one added also makes the workout's own
-    exercises the first alternative, in use. At most 5 per workout (`BB041`), which
-    `workout_limits()` now gives with the other limits. "Start empty" is the app's: the editor
-    opens without exercises and adds the alternative once they are filled in, as a workout cannot
-    be saved without one.
-  - `use_workout_alternative(alternative_id, today)` keeps the exercises in use in
-    their row and saves the chosen one's through `save_workout()`, with its checks and the days
-    kept before the device's today (ADR 0041). A day already past keeps the workout it had.
+    exercises the first alternative, in use. At most 5 per workout (`BB041`), the cap
+    `workout_limits()` now gives with the other limits, and the name's length too, for the app.
+    "Start empty" is the app's: the editor opens without exercises and adds the alternative once
+    they are filled in, as a workout cannot be saved without one.
+  - `use_workout_alternative(alternative_id, today)` keeps the exercises in use in their row and
+    saves the chosen one's through `save_workout()`, with its checks and the days kept before the
+    device's today (ADR 0041). A day already past keeps the workout it had.
   - `rename_workout_alternative(alternative_id, name)`: a blank name leaves it unnamed.
   - `reorder_workout_alternatives(workout_id, alternative_ids)` sets the order, naming each
     alternative of the workout once (`22023` otherwise), for the sheet's drag handles.
@@ -58,8 +58,9 @@ sheet know about them.
 ## Consequences
 
 - Nothing outside the workout screen changes, and Bite's proposals change the one in use.
-- Exercises of an alternative not in use are kept as JSON, not checked by the foreign keys: if
-  one could no longer be saved, putting that alternative in use fails with `save_workout()`'s own
-  error and changes nothing.
+- Exercises of an alternative not in use are kept as JSON, not checked by the foreign keys.
+  `edit_exercise()` refuses to change what a custom exercise records while an alternative has it,
+  as it does for a workout (`BB018`). If one could still no longer be saved, putting that
+  alternative in use fails with `save_workout()`'s own error and changes nothing.
 - A plan slot of the builder's exercises is dropped once they leave use, as `save_workout()` drops
   it on every edit.
