@@ -7,7 +7,7 @@ import { BiteScreen } from './bite-screen';
 import { useThreadMessages } from './threads';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
-let mockParams: { thread?: string } = {};
+let mockParams: { thread?: string; fresh?: string } = {};
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -375,16 +375,16 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
   const stream = liveStream();
   mockParams = { thread: '7' };
   jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
     data: {
       title: 'Knee pain on squats',
       messages: [
-        { id: 'stored-1', role: 'user', text: 'My knee hurts.', createdAt: new Date() },
+        { id: 'stored-1', role: 'user', text: 'My knee hurts.' },
         {
           id: 'stored-2',
           role: 'bite',
           text: 'Try leg press today.',
           expression: 'neutral',
-          createdAt: new Date(),
         },
       ],
     },
@@ -399,5 +399,30 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
 
   await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
   expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  mockParams = {};
+});
+
+it('starts a new chat when the saved one is gone', async () => {
+  liveStream();
+  mockParams = { thread: '7' };
+  jest
+    .mocked(useThreadMessages)
+    .mockReturnValue({ isFetchedAfterMount: true, data: null } as never);
+  await render(<BiteScreen />);
+  expect(screen.getByRole('button', { name: 'How was my week?' })).toBeTruthy();
+  mockParams = {};
+});
+
+it('waits for a saved chat as it is now, not as it was kept', async () => {
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: false,
+    isPending: false,
+    isError: false,
+    isFetching: true,
+    data: { title: 'Old', messages: [{ id: 'stored-1', role: 'user', text: 'Kept from before' }] },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.queryByText('Kept from before')).toBeNull();
   mockParams = {};
 });

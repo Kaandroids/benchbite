@@ -16,6 +16,7 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useThreadMessages } from './threads';
+import { type BiteParams, chatOf } from './bite-route';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
@@ -24,27 +25,26 @@ import { useFollowEnd } from './use-follow-end';
  * one `thread` names, opened from the chats (#295).
  */
 export function BiteScreen() {
-  const { thread } = useLocalSearchParams<{ thread?: string }>();
-  const threadId = thread && /^\d+$/.test(thread) ? Number(thread) : undefined;
+  const { threadId, key } = chatOf(useLocalSearchParams<BiteParams>());
   const saved = useThreadMessages(threadId);
-  if (threadId !== undefined && saved.data === undefined) {
+  // A saved chat opens on its messages as they are now, never on ones kept from before.
+  if (threadId !== undefined && !saved.isFetchedAfterMount) {
     return (
       <Screen onBack={() => router.back()} closes>
         <LoadState queries={[saved]} />
       </Screen>
     );
   }
-  // A thread of its own for each chat opened, so that one's messages never go on in another.
-  return (
+  // A thread of its own for each chat opened, so that one's messages never go on in another; a
+  // thread that is gone, as one deleted from the chats, gives way to a new chat.
+  return saved.data ? (
     <Chat
-      key={thread ?? 'new'}
-      title={saved.data?.title ?? undefined}
-      start={
-        saved.data && threadId !== undefined
-          ? { threadId, messages: saved.data.messages }
-          : undefined
-      }
+      key={key}
+      title={saved.data.title ?? undefined}
+      start={{ threadId: threadId!, messages: saved.data.messages }}
     />
+  ) : (
+    <Chat key={threadId === undefined ? key : `gone-${threadId}`} />
   );
 }
 
