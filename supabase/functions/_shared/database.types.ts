@@ -1528,6 +1528,8 @@ export type Database = {
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_sets: { Args: { log: Json }; Returns: undefined };
+      coach_message_text: { Args: { content: Json }; Returns: string };
+      coach_thread_title: { Args: { message: string }; Returns: string };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       copy_meal_entries: {
         Args: { entry_ids: number[]; to_day: string; to_meal: Database['public']['Enums']['meal'] };
@@ -1785,6 +1787,16 @@ export type Database = {
         Returns: undefined;
       };
       my_achievable_weekly_pace_kg: { Args: Record<PropertyKey, never>; Returns: number };
+      my_coach_threads: {
+        Args: { search?: string };
+        Returns: {
+          expression: Database['public']['Enums']['bite_expression'];
+          id: number;
+          last_message: string;
+          last_message_at: string;
+          title: string;
+        }[];
+      };
       my_latest_weight_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
