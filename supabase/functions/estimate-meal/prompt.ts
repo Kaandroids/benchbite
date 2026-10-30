@@ -2,6 +2,7 @@
 // so that the provider can cache them, then the request's own data and the photos.
 import { z } from 'zod';
 
+import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS, type PreviousItem } from '../_shared/meal/estimate.ts';
 import type { JsonSchema, Part } from '../_shared/llm/mod.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
@@ -11,7 +12,7 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 # What to give
 - items: each food you see, at most ${MAX_ESTIMATE_ITEMS}. A dish eaten as one, such as a pizza or a soup, is one item; separate foods on a plate are one item each, a sauce or dressing too when it is visible.
 - name: the item, short, in the reply language.
-- searchName: the item as a food database names it, in the reply language, the plain food first and then how it is prepared, such as "Rice, boiled" or "Chicken breast, grilled". No brand, no amount.
+- searchName: the item as a food database names it, in the reply language, the plain food first and then how it is prepared, such as "Rice, boiled" or "Chicken breast, grilled". No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
 - grams: the amount in the photos as served, by eye; cooked weight for cooked food. Judge the size by the plate, the cutlery and the hands.
 - confidence: from 0 to 1, how sure you are of the item and its amount together.
 - per100: kcal, protein, carbohydrate and fat in grams per 100 g of the item as served, your best estimate. It is used only when the database has no match.
@@ -33,7 +34,7 @@ export const ModelOutput = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1).max(100),
-        searchName: z.string().trim().max(100),
+        searchName: z.string().trim().max(FOOD_QUERY_LENGTH.max),
         grams: z.number().positive().max(5000),
         confidence: z.number().min(0).max(1),
         per100: z.object({
