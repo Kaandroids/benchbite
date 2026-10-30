@@ -62,6 +62,104 @@ begin
 end;
 $$;
 
+-- Removes the caller's own targets, as before they set any, from `today`.
+create function public.clear_own_nutrition_targets(today date)
+returns void
+language plpgsql
+-- As save_own_nutrition_targets().
+security definer
+set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  perform public.lock_user_limits((select auth.uid()));
+  delete from public.own_nutrition_targets o where o.user_id = (select auth.uid());
+  perform public.refresh_day_nutrition_targets(clear_own_nutrition_targets.today);
+end;
+$$;
+
+-- As before (20261028180000_own_nutrition_targets.sql), and keeps the targets in use from the
+-- device's `today` in the same call. Without `today`, as older apps send it, they refresh today
+-- themselves.
+drop function public.recalculate_nutrition_targets(
+  public.goal_kind, numeric, numeric, public.activity_level
+);
+create function public.recalculate_nutrition_targets(
+  goal public.goal_kind,
+  target_weight_kg numeric,
+  weekly_pace_kg numeric,
+  activity_level public.activity_level,
+  today date default null
+)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare
+  caller_id uuid := (select auth.uid());
+  changes_weight boolean := recalculate_nutrition_targets.goal in ('lose_fat', 'build_muscle');
+  -- Rounded as goals stores them, so that the check below sees what is saved.
+  target_kg numeric := round(recalculate_nutrition_targets.target_weight_kg, 1);
+  pace_kg numeric := round(recalculate_nutrition_targets.weekly_pace_kg, 2);
+  current_kg numeric := public.my_latest_weight_kg();
+begin
+  if changes_weight and (target_kg is null or pace_kg is null) then
+    raise exception 'A goal that changes the weight needs a target and a pace'
+      using errcode = '22023';
+  end if;
+  -- The same direction calculate_nutrition_targets() needs to apply a deficit or a surplus; it
+  -- ignores a target on the wrong side, so it is refused here rather than saved to no effect.
+  if (recalculate_nutrition_targets.goal = 'lose_fat' and target_kg >= current_kg)
+    or (recalculate_nutrition_targets.goal = 'build_muscle' and target_kg <= current_kg) then
+    raise exception 'The target weight does not suit the goal' using errcode = 'BB031';
+  end if;
+
+  update public.goals g
+  set kind = recalculate_nutrition_targets.goal,
+    target_weight_kg = case when changes_weight then target_kg end,
+    weekly_pace_kg = case when changes_weight then pace_kg end
+  where g.user_id = caller_id;
+  if not found then
+    raise exception 'No goal to change before the onboarding is saved' using errcode = 'P0002';
+  end if;
+  update public.profiles p
+  set activity_level = recalculate_nutrition_targets.activity_level
+  where p.user_id = caller_id;
+  update public.own_nutrition_targets o set in_use = false where o.user_id = caller_id;
+  if recalculate_nutrition_targets.today is not null then
+    perform public.refresh_day_nutrition_targets(recalculate_nutrition_targets.today);
+  end if;
+end;
+$$;
+
+-- Logs the caller's weight on the device's `today`, or corrects it if it was logged then
+-- already, and keeps the targets in use from then on, as the calculated ones follow the weight.
+-- Runs as the caller, so the policies of weight_entries apply.
+create function public.log_weight(weight_kg numeric, today date)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  insert into public.weight_entries (user_id, weight_kg, measured_on)
+  values ((select auth.uid()), log_weight.weight_kg, log_weight.today)
+  on conflict (user_id, measured_on) do update set weight_kg = excluded.weight_kg;
+  perform public.refresh_day_nutrition_targets(log_weight.today);
+end;
+$$;
+
+-- Only an undone proposal clears the targets; the app keeps them and puts them out of use.
+revoke all on function public.clear_own_nutrition_targets(date) from public, anon, authenticated;
+revoke all on function public.recalculate_nutrition_targets(
+  public.goal_kind, numeric, numeric, public.activity_level, date
+) from public, anon;
+grant execute on function public.recalculate_nutrition_targets(
+  public.goal_kind, numeric, numeric, public.activity_level, date
+) to authenticated;
+revoke all on function public.log_weight(numeric, date) from public, anon;
+grant execute on function public.log_weight(numeric, date) to authenticated;
 revoke all on function public.save_own_nutrition_targets(jsonb, date) from public, anon;
 grant execute on function public.save_own_nutrition_targets(jsonb, date) to authenticated;
 revoke all on function public.use_calculated_nutrition_targets(date) from public, anon;
@@ -69,6 +167,9 @@ grant execute on function public.use_calculated_nutrition_targets(date) to authe
 
 -- A workout changed as a whole, or the user's own targets.
 create type public.coach_proposal_kind as enum ('workout', 'targets');
+
+-- What the user decides on a proposal.
+create type public.coach_proposal_decision as enum ('apply', 'keep', 'undo');
 
 -- Pending until the user decides: applied (and maybe undone again) or kept as it is.
 create type public.coach_proposal_status as enum ('pending', 'applied', 'kept', 'undone');
@@ -196,8 +297,7 @@ begin
     when 'workout' then perform public.save_workout(change, today);
     when 'targets' then
       if change is null then
-        delete from public.own_nutrition_targets o where o.user_id = (select auth.uid());
-        perform public.refresh_day_nutrition_targets(today);
+        perform public.clear_own_nutrition_targets(today);
       else
         perform public.save_own_nutrition_targets(change, today);
       end if;
@@ -272,7 +372,9 @@ begin
     raise exception 'Workout not found' using errcode = 'BB006';
   end if;
 
-  -- Tried, and rolled back with the error only this block catches.
+  -- Tried, so that the real functions' checks refuse it with their own errors rather than copies
+  -- of them here, and rolled back on purpose by the error only this block catches. Nothing but
+  -- BBTRY may be caught here, or a tried change would be kept.
   begin
     perform public.apply_coach_change(kind, change, propose_coach_change.today);
     raise exception 'Tried' using errcode = 'BBTRY';
@@ -291,7 +393,11 @@ $$;
 -- it once applied, with the device's `today` for the plan (ADR 0041) and the day's targets (ADR
 -- 0040). Applying needs what the proposal replaces to be as Bite saw it, and undoing what it set to
 -- be as it left it, so that a change made meanwhile is never overwritten.
-create function public.decide_coach_proposal(proposal_id bigint, decision text, today date)
+create function public.decide_coach_proposal(
+  proposal_id bigint,
+  decision public.coach_proposal_decision,
+  today date
+)
 returns public.coach_proposal_status
 language plpgsql
 -- Writes proposals, which callers may only read. The changes run as the owner, through
@@ -312,11 +418,16 @@ begin
   if not found then
     raise exception 'Proposal not found' using errcode = 'P0002';
   end if;
-  if proposal.kind = 'workout' then
-    perform 1 from public.workouts w
-    where w.id = (proposal.change ->> 'id')::bigint and w.user_id = proposal.user_id
-    for update;
-  end if;
+  -- recalculate_nutrition_targets() changes the targets without the user's lock, so their row is
+  -- locked too.
+  case proposal.kind
+    when 'workout' then
+      perform 1 from public.workouts w
+      where w.id = (proposal.change ->> 'id')::bigint and w.user_id = proposal.user_id
+      for update;
+    when 'targets' then
+      perform 1 from public.own_nutrition_targets o where o.user_id = proposal.user_id for update;
+  end case;
 
   case decision
     when 'keep' then
@@ -349,8 +460,6 @@ begin
       end if;
       perform public.apply_coach_change(proposal.kind, proposal.before, decide_coach_proposal.today);
       proposal.status := 'undone';
-    else
-      raise exception 'Unknown decision %', decision using errcode = '22023';
   end case;
 
   update public.coach_proposals p
@@ -371,5 +480,7 @@ revoke all on function public.propose_coach_change(bigint, public.coach_proposal
   from public, anon;
 grant execute on function public.propose_coach_change(bigint, public.coach_proposal_kind, jsonb, date)
   to authenticated;
-revoke all on function public.decide_coach_proposal(bigint, text, date) from public, anon;
-grant execute on function public.decide_coach_proposal(bigint, text, date) to authenticated;
+revoke all on function public.decide_coach_proposal(bigint, public.coach_proposal_decision, date)
+  from public, anon;
+grant execute on function public.decide_coach_proposal(bigint, public.coach_proposal_decision, date)
+  to authenticated;

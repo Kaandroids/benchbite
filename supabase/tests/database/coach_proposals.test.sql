@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(31);
+select plan(36);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -42,7 +42,9 @@ create function pg_temp.propose(kind text, change jsonb) returns bigint language
 $$;
 
 create function pg_temp.decide(name text, decision text) returns text language sql as $$
-  select public.decide_coach_proposal((select id from ids where ids.name = decide.name), decision, current_date)::text;
+  select public.decide_coach_proposal(
+    (select id from ids where ids.name = decide.name), decision::public.coach_proposal_decision, current_date
+  )::text;
 $$;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
@@ -137,6 +139,19 @@ select is(
   'and the trials leave nothing behind'
 );
 
+-- Targets for a user without their own: undone, they have none again.
+insert into ids select 'first targets', pg_temp.propose(
+  'targets', '{"calories": 2100, "proteinG": 150, "carbsG": 210, "fatG": 70}'
+);
+select is(
+  (select before from public.coach_proposals where id = (select id from ids where name = 'first targets')),
+  null,
+  'A user without own targets had none before'
+);
+select pg_temp.decide('first targets', 'apply');
+select pg_temp.decide('first targets', 'undo');
+select is_empty($$ select 1 from public.own_nutrition_targets $$, 'and undone they have none again');
+
 -- Targets, over the user's own of 2,000 kcal.
 select public.save_own_nutrition_targets(
   '{"calories": 2000, "proteinG": 140, "carbsG": 200, "fatG": 70, "inUse": true}', current_date
@@ -176,6 +191,31 @@ select results_eq(
   $$ select calories from public.own_nutrition_targets where user_id = '00000000-0000-0000-0000-00000000000b' $$,
   $$ values (2500) $$,
   'Another user''s targets are never touched'
+);
+
+-- Going back to the calculated targets keeps one's own, and touches no one else's.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select public.use_calculated_nutrition_targets(current_date);
+select results_eq(
+  $$ select calories, in_use from public.own_nutrition_targets $$,
+  $$ values (2000, false) $$,
+  'Going back to the calculated targets keeps the user''s own'
+);
+reset role;
+select results_eq(
+  $$ select in_use from public.own_nutrition_targets where user_id = '00000000-0000-0000-0000-00000000000b' $$,
+  $$ values (true) $$,
+  'and leaves another user''s as they were'
+);
+
+-- A weight is logged and today follows it in one call.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select public.log_weight(80.4, current_date);
+select public.log_weight(80.2, current_date);
+select results_eq(
+  $$ select weight_kg from public.weight_entries where measured_on = current_date $$,
+  $$ values (80.2::numeric) $$,
+  'A weight logged twice on a day is corrected'
 );
 
 -- The floor at Apply, which may have risen since the proposal.
@@ -224,8 +264,10 @@ select throws_ok(
 reset role;
 select ok(
   not has_function_privilege('anon', 'public.propose_coach_change(bigint, public.coach_proposal_kind, jsonb, date)', 'execute')
-    and not has_function_privilege('anon', 'public.decide_coach_proposal(bigint, text, date)', 'execute')
+    and not has_function_privilege('anon', 'public.decide_coach_proposal(bigint, public.coach_proposal_decision, date)', 'execute')
     and not has_function_privilege('anon', 'public.save_own_nutrition_targets(jsonb, date)', 'execute')
+    and not has_function_privilege('anon', 'public.use_calculated_nutrition_targets(date)', 'execute')
+    and not has_function_privilege('anon', 'public.log_weight(numeric, date)', 'execute')
     and not has_table_privilege('anon', 'public.coach_proposals', 'select'),
   'Signed-out callers propose, decide and read nothing'
 );
@@ -234,6 +276,7 @@ select ok(
     and not has_function_privilege('authenticated', 'public.coach_proposal_state(public.coach_proposal_kind, jsonb)', 'execute')
     and not has_function_privilege('authenticated', 'public.apply_coach_change(public.coach_proposal_kind, jsonb, date)', 'execute')
     and not has_function_privilege('authenticated', 'public.check_coach_targets(jsonb)', 'execute')
+    and not has_function_privilege('authenticated', 'public.clear_own_nutrition_targets(date)', 'execute')
     and not has_table_privilege('authenticated', 'public.coach_proposals', 'insert, update, delete'),
   'and users change proposals and plans only through propose and decide'
 );
