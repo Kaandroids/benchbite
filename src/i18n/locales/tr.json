@@ -1734,12 +1734,6 @@
     "proposal": {
       "fromToday": "Bugünden itibaren",
       "targetsTitle": "Günlük hedefler",
-      "calories": "Kalori",
-      "protein": "Protein",
-      "carbs": "Karbonhidrat",
-      "fat": "Yağ",
-      "kcal": "{{value}} kcal",
-      "grams": "{{value}} g",
       "swapLabel": "{{from}} yerine {{to}}, {{detail}}",
       "targetLabel": "{{name}}: {{from}} yerine {{to}}",
       "newTargetLabel": "{{name}}: {{to}}",

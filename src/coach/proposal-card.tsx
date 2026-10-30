@@ -181,18 +181,16 @@ function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> 
 }
 
 const MACROS = [
-  { key: 'calories', color: 'text', unit: 'kcal' },
-  { key: 'proteinG', color: 'protein', unit: 'grams' },
-  { key: 'carbsG', color: 'carbs', unit: 'grams' },
-  { key: 'fatG', color: 'fat', unit: 'grams' },
-] as const satisfies { key: keyof DayTargets; color: keyof ColorTokens; unit: string }[];
-
-const MACRO_NAMES = {
-  calories: 'bite.proposal.calories',
-  proteinG: 'bite.proposal.protein',
-  carbsG: 'bite.proposal.carbs',
-  fatG: 'bite.proposal.fat',
-} as const;
+  { key: 'calories', name: 'nutrition.calorieLabel', color: 'text', unit: 'kcal' },
+  { key: 'proteinG', name: 'nutrition.macros.protein', color: 'protein', unit: 'grams' },
+  { key: 'carbsG', name: 'nutrition.macros.carbs', color: 'carbs', unit: 'grams' },
+  { key: 'fatG', name: 'nutrition.macros.fat', color: 'fat', unit: 'grams' },
+] as const satisfies {
+  key: keyof DayTargets;
+  name: string;
+  color: keyof ColorTokens;
+  unit: 'kcal' | 'grams';
+}[];
 
 /** The targets that change: each one in use struck through, and the new one. */
 function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> }) {
@@ -201,14 +199,16 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
   const { format } = useNumberFormat();
   const changed = MACROS.filter(({ key }) => card.from?.[key] !== card.to[key]);
   const value = (unit: 'kcal' | 'grams', amount: number) =>
-    t(`bite.proposal.${unit}`, { value: format(amount) });
+    unit === 'kcal'
+      ? t('nutrition.kcal', { calories: format(amount) })
+      : t('nutrition.grams', { count: amount });
   return (
     <>
       <Header title={t('bite.proposal.targetsTitle')} />
       <View>
-        {changed.map(({ key, color, unit }, index) => {
+        {changed.map(({ key, name: nameKey, color, unit }, index) => {
           const from = card.from?.[key];
-          const name = t(MACRO_NAMES[key]);
+          const name = t(nameKey);
           const to = value(unit, card.to[key]);
           const was = from === null || from === undefined ? undefined : value(unit, from);
           return (

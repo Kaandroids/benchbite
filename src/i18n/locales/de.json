@@ -1734,12 +1734,6 @@
     "proposal": {
       "fromToday": "Ab heute",
       "targetsTitle": "Tagesziele",
-      "calories": "Kalorien",
-      "protein": "Protein",
-      "carbs": "Kohlenhydrate",
-      "fat": "Fett",
-      "kcal": "{{value}} kcal",
-      "grams": "{{value}} g",
       "swapLabel": "{{to}} statt {{from}}, {{detail}}",
       "targetLabel": "{{name}}: {{to}} statt {{from}}",
       "newTargetLabel": "{{name}}: {{to}}",
