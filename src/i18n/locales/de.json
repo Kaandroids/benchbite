@@ -1730,6 +1730,31 @@
       "day": "{{day}} {{time}}"
     },
     "continue": "Weitermachen",
-    "allChats": "Alle Chats"
+    "allChats": "Alle Chats",
+    "proposal": {
+      "fromToday": "Ab heute",
+      "targetsTitle": "Tagesziele",
+      "swapLabel": "{{to}} statt {{from}}, {{detail}}",
+      "targetLabel": "{{name}}: {{to}} statt {{from}}",
+      "newTargetLabel": "{{name}}: {{to}}",
+      "apply": "Übernehmen",
+      "keep": "So lassen",
+      "undo": "Rückgängig",
+      "applied": "Übernommen: {{summary}}",
+      "undone": "Rückgängig gemacht",
+      "kept": "So gelassen",
+      "summary": {
+        "swap": "{{to}} statt {{from}}",
+        "twoSwaps": "{{first}} und {{second}}",
+        "swaps": "{{number}} neue Übungen in {{workout}}",
+        "targets": "{{calories}} kcal und {{protein}} g Protein am Tag"
+      },
+      "refusals": {
+        "changed": "Das hat sich inzwischen geändert – frag Bite noch einmal",
+        "outOfDate": "Das ist nicht mehr aktuell",
+        "underFloor": "Das liegt jetzt unter dem Minimum, das wir empfehlen – frag Bite noch einmal",
+        "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+      }
+    }
   }
 }

@@ -54,4 +54,25 @@ describe('storedMessages', () => {
 
     expect(messages.map((message) => message.unanswered)).toEqual([undefined, undefined, true]);
   });
+
+  it('reads the changes Bite proposed back into its answer', () => {
+    const proposal = {
+      kind: 'targets',
+      id: 8,
+      to: { calories: 2100, proteinG: 150, carbsG: 220, fatG: 70 },
+    };
+    const messages = storedMessages([
+      row(1, 'user'),
+      {
+        ...row(2, 'bite'),
+        content: [
+          { type: 'toolCall', name: 'propose_targets_change', args: {} },
+          { type: 'toolResult', name: 'propose_targets_change', result: { proposal } },
+        ],
+      },
+    ]);
+
+    expect(messages[0]?.proposals).toBeUndefined();
+    expect(messages[1]).toMatchObject({ text: '', proposals: [proposal] });
+  });
 });

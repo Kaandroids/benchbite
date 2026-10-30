@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
 import { toIsoDate } from '@/i18n/dates';
@@ -111,16 +111,22 @@ export function useOwnTargets() {
   });
 }
 
-/** Everything that reads targets: the ones in use, the calculated ones and the user's own. */
+/**
+ * Loads again everything that reads targets: the ones in use, the calculated ones and the user's
+ * own.
+ */
+export function reloadTargets(queryClient: QueryClient) {
+  // Today's calories are counted for the streak and charted against the targets in use.
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
+    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+    queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
+  ]);
+}
+
 function useReloadTargets() {
   const queryClient = useQueryClient();
-  // Today's calories are counted for the streak and charted against the targets in use.
-  return () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
-      queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
-      queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
-    ]);
+  return () => reloadTargets(queryClient);
 }
 
 /**

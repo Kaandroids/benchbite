@@ -18,7 +18,7 @@ import { useNutritionTargets } from '../targets';
 import { answerChanges, wasParam, type AnswerChange } from './answers';
 import { openSave } from './building-step';
 import { leave, type StepProps } from './step';
-import { Was } from './was';
+import { Was } from '@/components/ui/was';
 
 export function ReviewStep({ answers, basis, unit, progress }: StepProps) {
   const { t } = useTranslation();

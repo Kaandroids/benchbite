@@ -1730,6 +1730,31 @@
       "day": "{{day}} {{time}}"
     },
     "continue": "Devam et",
-    "allChats": "Tüm sohbetler"
+    "allChats": "Tüm sohbetler",
+    "proposal": {
+      "fromToday": "Bugünden itibaren",
+      "targetsTitle": "Günlük hedefler",
+      "swapLabel": "{{from}} yerine {{to}}, {{detail}}",
+      "targetLabel": "{{name}}: {{from}} yerine {{to}}",
+      "newTargetLabel": "{{name}}: {{to}}",
+      "apply": "Uygula",
+      "keep": "Böyle kalsın",
+      "undo": "Geri al",
+      "applied": "Uygulandı: {{summary}}",
+      "undone": "Geri alındı",
+      "kept": "Olduğu gibi kaldı",
+      "summary": {
+        "swap": "{{from}} yerine {{to}}",
+        "twoSwaps": "{{first}} ve {{second}}",
+        "swaps": "{{workout}} için {{number}} yeni egzersiz",
+        "targets": "Günde {{calories}} kcal ve {{protein}} g protein"
+      },
+      "refusals": {
+        "changed": "Bu o zamandan beri değişti — Bite'a yeniden sor",
+        "outOfDate": "Bunun süresi geçti",
+        "underFloor": "Bu artık önerdiğimiz en düşük kalorinin altında — Bite'a yeniden sor",
+        "failed": "Olmadı. Tekrar dene."
+      }
+    }
   }
 }

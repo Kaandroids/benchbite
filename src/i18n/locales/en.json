@@ -1730,6 +1730,31 @@
       "day": "{{day}} {{time}}"
     },
     "continue": "Continue",
-    "allChats": "All chats"
+    "allChats": "All chats",
+    "proposal": {
+      "fromToday": "From today",
+      "targetsTitle": "Daily targets",
+      "swapLabel": "{{to}} instead of {{from}}, {{detail}}",
+      "targetLabel": "{{name}}: {{to}} instead of {{from}}",
+      "newTargetLabel": "{{name}}: {{to}}",
+      "apply": "Apply",
+      "keep": "Keep as is",
+      "undo": "Undo",
+      "applied": "Applied: {{summary}}",
+      "undone": "Undone",
+      "kept": "Kept as it is",
+      "summary": {
+        "swap": "{{to}} instead of {{from}}",
+        "twoSwaps": "{{first}} and {{second}}",
+        "swaps": "{{number}} new exercises in {{workout}}",
+        "targets": "{{calories}} kcal and {{protein}} g protein a day"
+      },
+      "refusals": {
+        "changed": "This changed since — ask Bite again",
+        "outOfDate": "This is out of date",
+        "underFloor": "This is now below the least we recommend — ask Bite again",
+        "failed": "That didn't work. Try again."
+      }
+    }
   }
 }

@@ -14,7 +14,7 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: () => ({ data: 'Sam' }) }));
 jest.mock('./threads', () => ({
   ...jest.requireActual('./threads'),
@@ -31,6 +31,19 @@ function access(reason: string | null = null) {
   jest.mocked(supabase.rpc).mockResolvedValue({
     data: { allowed: reason === null, reason, resets_at: '2026-11-01T00:00:00Z' },
     error: null,
+  } as never);
+}
+
+/** Lets coach_proposals say where the proposals stand: `status`, for each one asked for. */
+function proposalsStand(status: string) {
+  jest.mocked(supabase.from).mockReturnValue({
+    select: () => ({
+      in: (_: string, ids: number[]) =>
+        Promise.resolve({
+          data: ids.map((id) => ({ id, status, expires_at: '2099-01-01T00:00:00Z' })),
+          error: null,
+        }),
+    }),
   } as never);
 }
 
@@ -339,6 +352,7 @@ it('says why an answer was refused after it began', async () => {
 });
 
 it('keeps an answer that is only a proposal, rather than offering to ask again', async () => {
+  proposalsStand('pending');
   const stream = liveStream();
   await render(<BiteScreen />);
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
@@ -358,6 +372,50 @@ it('keeps an answer that is only a proposal, rather than offering to ask again',
 
   expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
   expect(screen.queryByText(/couldn't answer/)).toBeNull();
+  // Its card, to apply or keep.
+  expect(screen.getByText('Daily targets')).toBeOnTheScreen();
+  expect(await screen.findByRole('button', { name: 'Apply' })).toBeEnabled();
+});
+
+it('opens a saved chat on its proposals as they stand now', async () => {
+  liveStream();
+  proposalsStand('applied');
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
+    data: {
+      title: 'Knee pain on squats',
+      messages: [
+        { id: 'stored-1', role: 'user', text: 'My knee hurts.' },
+        {
+          id: 'stored-2',
+          role: 'bite',
+          text: 'Try this:',
+          proposals: [
+            {
+              kind: 'workout',
+              id: 42,
+              workout: { name: 'Lower body', type: null },
+              swaps: [
+                {
+                  from: 'Back squat',
+                  to: 'Leg press',
+                  sets: 3,
+                  target: { reps: { min: 10, max: 12 } },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  } as never);
+  await render(<BiteScreen />);
+
+  expect(await screen.findByText('Applied: Leg press instead of Back squat')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  mockParams = NEW_CHAT;
 });
 
 it('says when Bite answers on another device', async () => {
