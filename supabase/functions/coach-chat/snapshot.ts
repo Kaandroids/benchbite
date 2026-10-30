@@ -33,6 +33,11 @@ export type Snapshot = {
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 /** Reads the user's snapshot on `today`, a date of their device. */
+/** A workout's name, or its type for one the plan named none, as the app shows it then. */
+export function workoutName(workout: { name: string | null; type: string | null }): string {
+  return workout.name || (workout.type ?? 'workout').replaceAll('_', ' ');
+}
+
 export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
   const [profile, goal, weight, nutrition, planned, trained, streak] = await Promise.all([
@@ -106,7 +111,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   if (planned.data) {
     const done = trained.data?.[0]?.done ?? 0;
     snapshot.workouts = planned.data.length
-      ? `${planned.data.map((w) => w.name).join(', ')} planned, ${done} done`
+      ? `${planned.data.map(workoutName).join(', ')} planned, ${done} done`
       : done
         ? `none planned, ${done} done`
         : 'rest day';

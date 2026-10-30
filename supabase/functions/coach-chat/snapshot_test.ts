@@ -50,3 +50,9 @@ Deno.test('keeps the rest of the profile when the floor cannot be read', async (
   assertEquals(text.includes('Pregnant or breastfeeding: yes'), true);
   assertEquals(text.includes('Calorie floor'), false);
 });
+
+Deno.test('names a workout without a name by its type', async () => {
+  const { workoutName } = await import('./snapshot.ts');
+  assertEquals(workoutName({ name: '', type: 'full_body' }), 'full body');
+  assertEquals(workoutName({ name: 'Push', type: 'push' }), 'Push');
+});

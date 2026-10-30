@@ -7,6 +7,7 @@ import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import type { Language } from './prompt.ts';
+import { workoutName } from './snapshot.ts';
 
 export type ToolContext = { supabase: Client; language: Language; today: string };
 
@@ -47,7 +48,7 @@ const TOOLS = [
       const plans = Map.groupBy(read(planned), (workout) => workout.day);
       return read(training).map((day) => ({
         day: day.day,
-        planned: plans.get(day.day)?.map((workout) => workout.name) ?? [],
+        planned: plans.get(day.day)?.map(workoutName) ?? [],
         done: day.done,
         missed: day.missed,
         minutes: day.minutes,
