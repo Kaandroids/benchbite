@@ -6,7 +6,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(48);
+select plan(54);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -23,6 +23,10 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
+
+-- A model whose price never changes, so that what these calls cost holds on any day.
+insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)
+values ('test-flash', '2000-01-01', 0.75, 0.075, 3.75);
 
 create temporary table calls (name text primary key, call_id uuid) on commit drop;
 grant select, insert, update on calls to authenticated, service_role;
@@ -64,10 +68,10 @@ select results_eq(
   'A second call of the same feature does not start while the first runs'
 );
 insert into calls select 'meal', call_id
-  from public.start_ai_call('meal_photo', 'gemini-3.8-flash', 8000);
+  from public.start_ai_call('meal_photo', 'test-flash', 8000);
 select ok((select call_id from calls where name = 'meal') is not null, 'A call of another feature does');
 select results_eq(
-  $$ select max_output_tokens from public.start_ai_call('review', 'gemini-3.8-flash', 100000) $$,
+  $$ select max_output_tokens from public.start_ai_call('review', 'test-flash', 100000) $$,
   $$ values (4096) $$,
   'and says where its answer is cut'
 );
@@ -131,7 +135,7 @@ select is_empty(
 select is(
   public.record_ai_usage((select call_id from calls where name = 'meal'), 1, 0, 0, 0),
   0.000001::numeric,
-  'A cost is returned as it is stored, to a millionth of a dollar'
+  'A cost is rounded up to a millionth of a dollar, and returned as it is stored'
 );
 select throws_ok(
   format($$ select public.record_ai_usage(%L, 1, 0, 1, 0) $$, (select call_id from calls where name = 'chat')),
@@ -177,7 +181,7 @@ select is(
   'A call that used it does not know what is counted at the most it could have cost'
 );
 select results_eq(
-  $$ select estimated from public.ai_usage where feature = 'review' and model = 'gemini-3.8-flash'
+  $$ select estimated from public.ai_usage where feature = 'review' and model = 'test-flash'
        and user_id = '00000000-0000-0000-0000-00000000000a' $$,
   $$ values (true) $$,
   'as an estimate'
@@ -287,6 +291,24 @@ select throws_ok(
 select throws_ok(
   $$ update public.ai_model_prices set output_usd = 0 $$, '42501', null, 'nor change a price'
 );
+select throws_ok(
+  $$ select 1 from public.ai_budgets $$, '42501', null, 'nor read anyone''s budget'
+);
+select throws_ok(
+  $$ select 1 from public.ai_calls_in_flight $$, '42501', null, 'nor the calls running'
+);
+select throws_ok(
+  $$ select 1 from public.ai_model_prices $$, '42501', null, 'nor the prices'
+);
+select throws_ok(
+  $$ select public.ai_model_price('gemini-3.8-flash', now()) $$, '42501', null,
+  'nor look one up'
+);
+select throws_ok(
+  $$ select public.ai_cost(public.ai_model_price('gemini-3.8-flash', now()), 1, 0, 1) $$,
+  '42501', null,
+  'nor price tokens'
+);
 
 -- An earlier month, the limit, guests, users without a budget, and lost settings.
 set local role service_role;
@@ -337,6 +359,9 @@ select throws_ok(
 );
 select throws_ok(
   $$ select 1 from public.ai_usage $$, '42501', null, 'and there is no usage to read'
+);
+select throws_ok(
+  $$ select public.ai_access() $$, '42501', null, 'nor any access'
 );
 
 select * from finish();
