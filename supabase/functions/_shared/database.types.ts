@@ -45,6 +45,7 @@ export type Database = {
       ai_calls_in_flight: {
         Row: {
           call_id: string;
+          counted: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
           reserved_usd: number;
@@ -54,6 +55,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           call_id?: string;
+          counted?: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
           reserved_usd: number;
@@ -62,6 +64,7 @@ export type Database = {
         };
         Update: {
           call_id?: string;
+          counted?: boolean;
           feature?: Database['public']['Enums']['ai_feature'];
           model?: string;
           reserved_usd?: number;
@@ -1446,6 +1449,22 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      ai_call_refusal: {
+        Args: {
+          budget_usd: number;
+          input_tokens: number;
+          limits: Omit<
+            Database['public']['Tables']['ai_feature_limits']['Row'],
+            Database['public']['Tables']['ai_feature_limits']['ComputedFields']
+          >;
+          other_used_usd: number;
+          price: Omit<
+            Database['public']['Tables']['ai_model_prices']['Row'],
+            Database['public']['Tables']['ai_model_prices']['ComputedFields']
+          >;
+        };
+        Returns: Database['public']['Enums']['ai_access_reason'];
       };
       ai_cost: {
         Args: {
