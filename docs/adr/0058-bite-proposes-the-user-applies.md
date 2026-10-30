@@ -19,9 +19,17 @@ card in the chat that the user applies or keeps as it is, with Undo (boards 4, 5
   as `saved_workout()` gives it, or the own targets. `decide_coach_proposal(id, decision, today)`
   applies it only while that is still so, keeps it, or undoes it only while what applying left
   (`after`) is still so. A change the user made meanwhile is never overwritten (`BB035`).
-- **Changes go through the app's own paths:** `save_workout()` for the plan, the own targets for
-  the targets, so their checks and the days kept before today (ADR 0041) hold.
-- **Targets never go below the calorie floor** (ADR 0053): such a proposal is refused (`BB037`).
+- **Changes go through the app's own functions:** `save_workout()` for the plan, and
+  `save_own_nutrition_targets()` for the targets, which this decision adds and the app now uses
+  too: it saves them and keeps today's targets (ADR 0040) in one call. Their checks, and the days
+  kept before today (ADR 0041), hold the same for Bite.
+- **A proposal must apply when it is made:** it is tried through those functions and rolled
+  back, so that one that never could is refused at once with their own errors, and Bite can
+  correct it.
+- **A user has at most 20 proposals pending and makes at most 100 a day** (`BB038`), as the
+  function is open to every signed-in user, not only through Bite.
+- **Targets never go below the calorie floor** (ADR 0053), checked when proposed and again when
+  applied, as the floor can rise meanwhile (`BB037`).
 - **A proposal expires after a week,** as what it was made for has passed.
 - **Changes are permanent and apply at once.** A workout change edits the workout itself, and new
   targets count from today, as the day's targets follow the targets in use until it ends.
