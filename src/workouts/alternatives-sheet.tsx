@@ -12,6 +12,7 @@ import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
+import { move } from '@/lib/move';
 import { useTheme } from '@/theme';
 
 import {
@@ -146,15 +147,17 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
   };
 
   const onMove = (from: number, to: number) => {
-    const ids = rows.map((alternative) => alternative.id);
-    const [moved] = ids.splice(from, 1);
-    if (moved === undefined) return;
-    ids.splice(to, 0, moved);
     setError(null);
-    reorder.mutate(ids, { onError: failed('reorder') });
+    reorder.mutate(
+      move(rows, from, to).map((alternative) => alternative.id),
+      { onError: failed('reorder') },
+    );
   };
 
-  /** An alternative's row; without `actions`, the workout's own, which cannot be renamed or deleted. */
+  /**
+   * An alternative's row; without `actions` for the workout's own, which cannot be renamed or
+   * deleted.
+   */
   const row = (alternative: WorkoutAlternative, actions = true) => {
     const name = nameOf(alternative);
     return (
