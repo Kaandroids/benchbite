@@ -220,19 +220,19 @@ select throws_ok(
 -- Using
 
 select throws_ok(
-  $$ select public.use_workout_alternative(911, pg_temp.id('home'), current_date) $$,
-  'BB006', null,
+  $$ select public.use_workout_alternative(pg_temp.id('home'), current_date) $$,
+  'P0002', null,
   'A user cannot put another user''s alternative in use'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select throws_ok(
-  $$ select public.use_workout_alternative(911, pg_temp.id('arms copy'), current_date) $$,
+  $$ select public.use_workout_alternative(-1, current_date) $$,
   'P0002', null,
-  'nor one of another workout'
+  'nor one that does not exist'
 );
 
-select public.use_workout_alternative(911, pg_temp.id('home'), current_date);
+select public.use_workout_alternative(pg_temp.id('home'), current_date);
 select is(
   pg_temp.saved(911),
   jsonb_build_object('id', 911, 'name', 'Legs', 'weekdays', '[1,2,3,4,5,6,7]'::jsonb, 'exercises', pg_temp.home()),
@@ -249,13 +249,13 @@ select results_eq(
   'The days before today keep the plan they had'
 );
 select lives_ok(
-  $$ select public.use_workout_alternative(911, pg_temp.id('home'), current_date) $$,
+  $$ select public.use_workout_alternative(pg_temp.id('home'), current_date) $$,
   'Putting the one in use in use again changes nothing'
 );
 select is(pg_temp.saved(911) -> 'exercises', pg_temp.home(), 'its exercises stay');
 
 select public.use_workout_alternative(
-  911, (select id from public.workout_alternatives where workout_id = 911 and position = 1), current_date
+  (select id from public.workout_alternatives where workout_id = 911 and position = 1), current_date
 );
 select is(pg_temp.saved(911) -> 'exercises', pg_temp.gym(),
   'Switching back gives the workout''s exercises exactly as they were');
@@ -263,7 +263,7 @@ select is((select exercises from public.workout_alternatives where id = pg_temp.
   'and keeps the other''s exactly as they were');
 
 select throws_ok(
-  $$ select public.use_workout_alternative(911, pg_temp.id('home'), current_date + 5) $$,
+  $$ select public.use_workout_alternative(pg_temp.id('home'), current_date + 5) $$,
   '22023', null,
   'An alternative is put in use on the device''s today only'
 );
@@ -373,7 +373,7 @@ select throws_ok(
   'What an exercise records cannot change while an alternative not in use has it'
 );
 select lives_ok(
-  $$ select public.use_workout_alternative(911, pg_temp.id('thrust'), current_date) $$,
+  $$ select public.use_workout_alternative(pg_temp.id('thrust'), current_date) $$,
   'so that the alternative can still be put in use'
 );
 

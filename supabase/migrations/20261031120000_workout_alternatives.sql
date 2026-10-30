@@ -208,11 +208,11 @@ begin
 end;
 $$;
 
--- Puts the caller's `alternative_id` of `workout_id` in use from the device's `today`: the
--- exercises of the one in use are kept in its row, as saved_workout() reads them, and the chosen
--- one's become the workout's through save_workout(), with its checks and the days kept before
--- today (ADR 0041). The workout's name and weekdays stay. Choosing the one in use changes nothing.
-create function public.use_workout_alternative(workout_id bigint, alternative_id bigint, today date)
+-- Puts the caller's `alternative_id` in use from the device's `today`: the exercises of the one in
+-- use are kept in its row, as saved_workout() reads them, and the chosen one's become the
+-- workout's through save_workout(), with its checks and the days kept before today (ADR 0041).
+-- The workout's name and weekdays stay. Choosing the one in use changes nothing.
+create function public.use_workout_alternative(alternative_id bigint, today date)
 returns void
 language plpgsql
 -- As add_workout_alternative().
@@ -220,24 +220,18 @@ security definer
 set search_path = ''
 as $$
 declare
-  chosen public.workout_alternatives;
+  chosen public.workout_alternatives :=
+    public.lock_own_alternative(use_workout_alternative.alternative_id);
   workout jsonb;
 begin
-  perform public.lock_own_workout(use_workout_alternative.workout_id);
-  select * into chosen from public.workout_alternatives a
-  where a.id = use_workout_alternative.alternative_id
-    and a.workout_id = use_workout_alternative.workout_id;
-  if not found then
-    raise exception 'Alternative not found' using errcode = 'P0002';
-  end if;
   if chosen.in_use then
     return;
   end if;
 
-  workout := public.saved_workout(use_workout_alternative.workout_id);
+  workout := public.saved_workout(chosen.workout_id);
   update public.workout_alternatives a
   set in_use = false, exercises = workout -> 'exercises'
-  where a.workout_id = use_workout_alternative.workout_id and a.in_use;
+  where a.workout_id = chosen.workout_id and a.in_use;
   update public.workout_alternatives a
   set in_use = true, exercises = null
   where a.id = chosen.id;
@@ -325,8 +319,8 @@ revoke all on function public.renumber_workout_alternatives(bigint)
 
 revoke all on function public.add_workout_alternative(bigint, text, jsonb, date) from public, anon;
 grant execute on function public.add_workout_alternative(bigint, text, jsonb, date) to authenticated;
-revoke all on function public.use_workout_alternative(bigint, bigint, date) from public, anon;
-grant execute on function public.use_workout_alternative(bigint, bigint, date) to authenticated;
+revoke all on function public.use_workout_alternative(bigint, date) from public, anon;
+grant execute on function public.use_workout_alternative(bigint, date) to authenticated;
 revoke all on function public.rename_workout_alternative(bigint, text) from public, anon;
 grant execute on function public.rename_workout_alternative(bigint, text) to authenticated;
 revoke all on function public.delete_workout_alternative(bigint) from public, anon;

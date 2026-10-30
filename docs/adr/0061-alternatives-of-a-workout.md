@@ -33,7 +33,7 @@ sheet know about them.
     `workout_limits()` now gives with the other limits. "Start empty" is the app's: the editor
     opens without exercises and adds the alternative once they are filled in, as a workout cannot
     be saved without one.
-  - `use_workout_alternative(workout_id, alternative_id, today)` keeps the exercises in use in
+  - `use_workout_alternative(alternative_id, today)` keeps the exercises in use in
     their row and saves the chosen one's through `save_workout()`, with its checks and the days
     kept before the device's today (ADR 0041). A day already past keeps the workout it had.
   - `rename_workout_alternative(alternative_id, name)`: a blank name leaves it unnamed.
