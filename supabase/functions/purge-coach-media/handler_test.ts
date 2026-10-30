@@ -16,16 +16,25 @@ const COLUMNS = ['thread_id', 'user_id', 'queued_at', 'attempts'];
  * A stand-in for the service role client: the queue table, with the calls the handler makes, and
  * the coach-media bucket. Like the real ones, it refuses other tables, buckets and columns, lists
  * only the direct children of a folder (sub-folders as entries without an id), at most `limit` of
- * them, and refuses to remove more than 1000 paths at once. `failing` folders fail to list, and
- * with `stuck` storage removes nothing.
+ * them, and refuses to remove more than 1000 paths at once, answering with the photos it removed.
+ * `failing` folders fail to list, storage removes at most `removable` photos per request (none
+ * when `stuck`), and with `deleteError` folders cannot be removed from the queue.
  */
 function fakeAdmin(
   queue: Row[],
   objects: Set<string>,
-  { failing = [], stuck = false, queueError = false } = {} as {
+  {
+    failing = [],
+    stuck = false,
+    removable = Infinity,
+    queueError = false,
+    deleteError = false,
+  } = {} as {
     failing?: string[];
     stuck?: boolean;
+    removable?: number;
     queueError?: boolean;
+    deleteError?: boolean;
   },
 ) {
   const refused = (message: string) => ({ data: null, error: { code: 'PGRST', message } });
@@ -62,6 +71,7 @@ function fakeAdmin(
       delete: () => ({
         in: (column: string, values: number[]) => {
           if (column !== 'thread_id') return Promise.resolve(refused('Unknown column'));
+          if (deleteError) return Promise.resolve(refused('Queue unavailable'));
           for (let i = queue.length - 1; i >= 0; i--) {
             if (values.includes(queue[i].thread_id)) queue.splice(i, 1);
           }
@@ -97,7 +107,9 @@ function fakeAdmin(
         if (paths.length > MAX_REMOVE) {
           return Promise.resolve({ data: null, error: new Error('Too many paths') });
         }
-        const removed = stuck ? [] : paths.filter((path) => objects.delete(path));
+        const removed = stuck
+          ? []
+          : paths.slice(0, removable).filter((path) => objects.delete(path));
         return Promise.resolve({ data: removed.map((name) => ({ name })), error: null });
       },
     };
@@ -162,6 +174,32 @@ Deno.test('fails a folder when storage removes nothing, instead of listing it ag
 
   assertEquals(await (await purge(admin)).json(), { purged: 0, failed: 1 });
   assertEquals(queue, [queued(1, A, 0, 1)]);
+});
+
+Deno.test('lists a folder again when storage removed only some of a page', async () => {
+  const queue = [queued(1, A, 0)];
+  const objects = new Set(photos(A, 1, PAGE_SIZE + 10));
+  const { admin } = fakeAdmin(queue, objects, { removable: 30 });
+
+  assertEquals(await (await purge(admin)).json(), { purged: 1, failed: 0 });
+  assertEquals(queue, []);
+  assertEquals(objects.size, 0);
+});
+
+Deno.test('keeps an emptied folder queued when it cannot be dequeued', async () => {
+  const queue = [queued(1, A, 0)];
+  const objects = new Set(photos(A, 1, 2));
+  const failing = fakeAdmin(queue, objects, { deleteError: true });
+
+  assertEquals(await (await purge(failing.admin)).json(), { purged: 1, failed: 0 });
+  // Not counted as a failed attempt: the photos are gone.
+  assertEquals(queue, [queued(1, A, 0)]);
+  assertEquals(objects.size, 0);
+
+  // The next run finds the folder empty and dequeues it.
+  const { admin } = fakeAdmin(queue, objects);
+  assertEquals(await (await purge(admin)).json(), { purged: 1, failed: 0 });
+  assertEquals(queue, []);
 });
 
 Deno.test('takes one batch, folders that failed before last', async () => {
