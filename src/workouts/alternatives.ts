@@ -65,7 +65,7 @@ export function useAlternativeName() {
 }
 
 /** What failed when changing the alternatives. */
-export type AlternativeAction = 'switch' | 'add' | 'rename' | 'delete' | 'reorder';
+export type AlternativeAction = 'switch' | 'add' | 'duplicate' | 'rename' | 'delete' | 'reorder';
 
 /**
  * A short message for a refused change: the cap of alternatives (BB041), the one in use, which
@@ -107,15 +107,26 @@ export function useSwitchAlternative() {
   });
 }
 
-/** Adds a copy of the one in use to a workout, unnamed, and returns its id. */
+/**
+ * What a new alternative starts with: no exercises, as Add makes it, or a copy of an alternative's
+ * exercises, sets and rests, as Duplicate makes it; of the one in use when `copyOf` is null, as
+ * for a workout without alternatives, whose own exercises have no row yet.
+ */
+export type NewAlternative = { empty: true } | { copyOf: number | null };
+
+/** Adds an unnamed alternative to a workout, last, and returns its id. */
 export function useAddAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      // No name or exercises: an unnamed copy of the one in use.
+    mutationFn: async (from: NewAlternative) => {
       const { data, error } = await supabase.rpc('add_workout_alternative', {
         workout_id: workoutId,
         today: deviceToday(),
+        ...('empty' in from
+          ? { exercises: [] }
+          : from.copyOf !== null
+            ? { source_alternative_id: from.copyOf }
+            : {}),
       });
       if (error) {
         throw error;
