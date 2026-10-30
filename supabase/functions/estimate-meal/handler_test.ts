@@ -222,30 +222,61 @@ Deno.test('sends a correction with the earlier items and the note, as data', asy
   });
 });
 
-Deno.test("prefers the user's own food or recipe to the library's", async () => {
-  const own = food({ custom_food_id: 7, name: "Rice, mum's" }, 150);
-  const recipe = food({ recipe_id: 3, name: 'Rice bowl' }, 180);
-  const library = food({ food_id: 'C352032', name: 'Rice, boiled' });
+Deno.test("prefers the user's own food or recipe when it is the same food", async () => {
+  const library = food({ food_id: 'F1', name: 'Banana' }, 93);
+  const mine = food({ custom_food_id: 7, name: 'Banana, mine' }, 95);
+  const bread = food({ recipe_id: 3, name: 'Banana bread' }, 330);
+  const bowl = food({ recipe_id: 4, name: 'Rice bowl' }, 130);
+  const rice = food({ food_id: 'C352032', name: 'Rice, boiled' }, 117);
 
-  assertEquals(bestMatch('Rice, boiled', [library, own]), own);
-  assertEquals(bestMatch('Rice', [library, recipe]), recipe);
-  // An own food that only holds the name somewhere does not come first.
-  const pudding = food({ custom_food_id: 8, name: 'Sweet rice pudding' });
-  assertEquals(bestMatch('Rice, boiled', [library, pudding]), library);
-  // A name only alike is no match.
-  assertEquals(bestMatch('Boiled rice', [food({ food_id: 'E1', name: 'Egg, boiled' })]), undefined);
-  // Turkish dotted and dotless i compare as search_foods() does.
-  const pilav = food({ food_id: 'X1', name: 'Pirinç pilavı' });
-  assertEquals(bestMatch('PİLAVI', [pilav]), pilav);
+  assertEquals(bestMatch('Banana', 90, [library, mine]), mine);
+  assertEquals(bestMatch('Banana', 90, [mine, library]), mine);
+  const big = food({ recipe_id: 5, name: 'Rice, boiled (big)' }, 120);
+  assertEquals(bestMatch('Rice, boiled', 130, [rice, big]), big);
+  // Another food that starts with the name is not the user's banana, whatever its calories.
+  assertEquals(bestMatch('Banana', 90, [bread, library]), library);
+  assertEquals(bestMatch('Banana', 320, [bread]), undefined);
+  assertEquals(bestMatch('Rice', 130, [bowl, rice]), rice);
+  // Nor is the user's food when its calories are far from the photo's.
+  const heavy = food({ custom_food_id: 8, name: 'Banana, fried' }, 250);
+  assertEquals(bestMatch('Banana', 90, [heavy, library]), library);
 
-  const model = new FakeModel(answer({ isFood: true, items: [ITEMS[0]], note: '' }));
-  const { ctx } = context(model, { foods: { 'White rice, boiled': [RICE, own] } });
+  const model = new FakeModel(
+    answer({ isFood: true, items: [{ ...ITEMS[0], searchName: 'Banana' }], note: '' }),
+  );
+  const { ctx } = context(model, { foods: { Banana: [bread, library] } });
   const body = await (await handleEstimateRequest(ask(REQUEST), ctx)).json();
-  // "Rice, mum's" does not hold "white rice": the library's food.
-  assertEquals(body.items[0].food, {
-    ref: { kind: 'library', id: 'C352032' },
-    name: 'White rice, boiled',
-  });
+  assertEquals(body.items[0].food, { ref: { kind: 'library', id: 'F1' }, name: 'Banana' });
+});
+
+Deno.test('takes a library food only by its name and calories', () => {
+  const raw = food({ food_id: 'E4000', name: 'Pasta, raw' }, 346);
+  const boiled = food({ food_id: 'E4010', name: 'Pasta, boiled' }, 146);
+  // "Pasta, cooked" is neither by name; "Pasta" is the raw one by name, but not by calories.
+  assertEquals(bestMatch('Pasta, cooked', 150, [raw, boiled]), undefined);
+  assertEquals(bestMatch('Pasta', 150, [raw, boiled]), boiled);
+  assertEquals(bestMatch('Pasta', 150, [raw]), undefined);
+
+  // Holding the letters is not the name: "Ei" in "Schweinekotelett".
+  const chop = food({ food_id: 'V1', name: 'Schweinekotelett, gebraten' }, 230);
+  assertEquals(bestMatch('Ei, gebraten', 200, [chop]), undefined);
+
+  // Rice cakes are not rice, by name or by calories.
+  const cakes = food({ food_id: 'C5', name: 'Rice cakes' }, 371);
+  assertEquals(bestMatch('Rice, cooked', 130, [cakes]), undefined);
+  assertEquals(bestMatch('Rice', 130, [cakes]), undefined);
+
+  // A name only alike is no match.
+  assertEquals(
+    bestMatch('Boiled rice', 144, [food({ food_id: 'E1', name: 'Egg, boiled' })]),
+    undefined,
+  );
+  // Small values agree within a few kcal, whatever the ratio.
+  const coffee = food({ food_id: 'P1', name: 'Coffee, black' }, 2);
+  assertEquals(bestMatch('Coffee, black', 5, [coffee]), coffee);
+  // Turkish dotted and dotless i compare as search_foods() does.
+  const pilav = food({ food_id: 'X1', name: 'Pirinç pilavı' }, 167);
+  assertEquals(bestMatch('PİRİNÇ PİLAVI', 160, [pilav]), pilav);
 });
 
 Deno.test('names the own food or recipe matched as a meal entry does', async () => {

@@ -181,7 +181,7 @@ async function matchItems(
   };
   return await Promise.all(
     items.map(async (item) => {
-      const food = bestMatch(item.searchName, await search(item.searchName));
+      const food = bestMatch(item.searchName, item.per100.kcal, await search(item.searchName));
       return {
         name: item.name,
         grams: Math.max(1, Math.round(item.grams)),
@@ -211,17 +211,51 @@ async function searchFoods(
 }
 
 /**
- * The food an item is, of those search_foods() found, best first: one whose name holds the food
- * searched for, which is the part before a comma, such as "chicken breast" of "Chicken breast,
- * grilled", so that a name that is only alike, as "Egg, boiled" for "boiled rice", is no match.
- * The user's own food or recipe that starts with it comes before the library's.
+ * How far a found food's calories per 100 g may be from the model's estimate, relative to the
+ * larger, for the food to be taken: a name alone does not tell cooked pasta (about 150 kcal) from
+ * dry (about 350), or a dish from its plain food, and taking the wrong one would be far off.
  */
-export function bestMatch(searchName: string, found: FoundFood[]): FoundFood | undefined {
-  const food = nameKey(searchName).split(',')[0].trim();
-  if (food.length < FOOD_QUERY_LENGTH.min) return undefined;
-  const matches = found.filter((row) => nameKey(row.name).includes(food));
-  const own = matches.find((row) => row.food_id === null && nameKey(row.name).startsWith(food));
-  return own ?? matches[0];
+const KCAL_TOLERANCE = 0.35;
+
+/** Within so many kcal per 100 g, values agree whatever the ratio, as for greens or a coffee. */
+const KCAL_SLACK = 15;
+
+/** What may follow the food searched for in a library food's name: "Rice, boiled", "Rice (white)". */
+const LIBRARY_SEPARATORS = [' ', ','];
+
+/**
+ * What may follow it in the user's own food or recipe: "Banana, mine", but not "Banana bread",
+ * which is another food.
+ */
+const OWN_SEPARATORS = [',', ' (', ' -'];
+
+/**
+ * The food an item is, of those search_foods() found, or none, when the model's own values are
+ * used: one whose name is the name searched for, or starts with it, and whose calories agree
+ * with the model's estimate. The user's own food or recipe comes first, when it is the same
+ * food; otherwise the library's, best first as search_foods() orders them.
+ */
+export function bestMatch(
+  searchName: string,
+  estimatedKcal: number,
+  found: FoundFood[],
+): FoundFood | undefined {
+  const key = nameKey(searchName);
+  if (key.length < FOOD_QUERY_LENGTH.min) return undefined;
+  const named = (row: FoundFood, separators: string[]) => {
+    const name = nameKey(row.name);
+    return name === key || separators.some((separator) => name.startsWith(key + separator));
+  };
+  const agrees = (row: FoundFood) => {
+    const difference = Math.abs(row.kcal - estimatedKcal);
+    return (
+      difference <= KCAL_SLACK || difference <= KCAL_TOLERANCE * Math.max(row.kcal, estimatedKcal)
+    );
+  };
+  return (
+    found.find((row) => row.food_id === null && named(row, OWN_SEPARATORS) && agrees(row)) ??
+    found.find((row) => row.food_id !== null && named(row, LIBRARY_SEPARATORS) && agrees(row))
+  );
 }
 
 /** A name as search_foods() compares it, trimmed. */
