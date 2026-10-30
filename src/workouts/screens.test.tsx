@@ -6,6 +6,11 @@ import { useStartWorkout } from '@/sessions/start';
 import { RecentLogs } from '@/history/recent-logs';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
+import {
+  useSwitchAlternative,
+  useWorkoutAlternatives,
+  type WorkoutAlternative,
+} from './alternatives';
 import { ArchiveScreen } from './archive-screen';
 import { testExercise, testWorkout } from './test-data';
 import { WorkoutScreen } from './workout-screen';
@@ -25,6 +30,11 @@ jest.mock('./workouts', () => ({
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
   useKcalPerMinute: () => ({ data: 7.5 }),
+}));
+jest.mock('./alternatives', () => ({
+  ...jest.requireActual<typeof import('./alternatives')>('./alternatives'),
+  useWorkoutAlternatives: jest.fn(),
+  useSwitchAlternative: jest.fn(),
 }));
 jest.mock('@/history/history', () => ({
   ...jest.requireActual<typeof import('@/history/history')>('@/history/history'),
@@ -56,6 +66,11 @@ jest.mock('@/exercises/library', () => ({
 
 const mutate = jest.fn();
 const refetch = jest.fn();
+const switchTo = jest.fn();
+
+function mockAlternatives(data: WorkoutAlternative[]) {
+  jest.mocked(useWorkoutAlternatives).mockReturnValue({ data } as never);
+}
 
 function mockWorkouts(data: Workout[] | undefined, state: { isError?: boolean } = {}) {
   jest.mocked(useWorkouts).mockReturnValue({
@@ -103,7 +118,13 @@ beforeEach(() => {
   jest.mocked(useSetWorkoutActive).mockReturnValue({ mutate } as never);
   jest.mocked(useStartWorkout).mockReturnValue(startWorkout);
   jest.mocked(useActiveSession).mockReturnValue(null);
-  jest.mocked(useWorkoutLimits).mockReturnValue({ data: { exercises: 20, workouts: 2 } } as never);
+  jest
+    .mocked(useWorkoutLimits)
+    .mockReturnValue({ data: { exercises: 20, workouts: 2, alternatives: 5 } } as never);
+  mockAlternatives([]);
+  jest
+    .mocked(useSwitchAlternative)
+    .mockReturnValue({ mutate: switchTo, isPending: false, isError: false } as never);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -401,6 +422,89 @@ describe('WorkoutScreen', () => {
     await render(<WorkoutScreen id={7} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Bring back from the archive' }));
     expect(mutate).toHaveBeenCalledWith({ id: 7, active: true });
+  });
+
+  describe('with alternatives', () => {
+    const gymHomeHotel: WorkoutAlternative[] = [
+      { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
+      { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
+      { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 2 },
+    ];
+
+    it('opens them from the top bar, with one set of exercises too', async () => {
+      mockWorkouts([pull]);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Alternatives' }));
+      expect(screen.getByText('Add alternative')).toBeTruthy();
+      expect(screen.getByText('In use · 4 exercises')).toBeTruthy();
+    });
+
+    it('shows no chips for a workout without alternatives', async () => {
+      mockWorkouts([pull]);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    });
+
+    it('shows them in order by name, the one in use chosen', async () => {
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((tab) => tab.props.accessibilityState?.selected)).toEqual([
+        false,
+        true,
+        false,
+      ]);
+      expect(screen.getByRole('tab', { name: 'Gym' })).toBeTruthy();
+      expect(screen.getByRole('tab', { name: 'Alternative 2', selected: true })).toBeTruthy();
+      expect(screen.getByRole('tab', { name: 'Hotel' })).toBeTruthy();
+    });
+
+    it('puts another in use, and not the one already in use', async () => {
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('tab', { name: 'Alternative 2' }));
+      expect(switchTo).not.toHaveBeenCalled();
+      await fireEvent.press(screen.getByRole('tab', { name: 'Hotel' }));
+      expect(switchTo).toHaveBeenCalledWith(6);
+    });
+
+    it('shows the one being switched to as chosen meanwhile', async () => {
+      jest
+        .mocked(useSwitchAlternative)
+        .mockReturnValue({ mutate: switchTo, isPending: true, variables: 6 } as never);
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByRole('tab', { name: 'Hotel', selected: true })).toBeTruthy();
+      await fireEvent.press(screen.getByRole('tab', { name: 'Gym' }));
+      expect(switchTo).not.toHaveBeenCalled();
+    });
+
+    it('says why a switch failed', async () => {
+      jest.mocked(useSwitchAlternative).mockReturnValue({
+        mutate: switchTo,
+        isPending: false,
+        isError: true,
+        error: { code: 'P0002' },
+      } as never);
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByText('This alternative no longer exists.')).toBeTruthy();
+    });
+
+    it('does not switch while the workout runs', async () => {
+      const alert = jest.spyOn(Alert, 'alert');
+      jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('tab', { name: 'Gym' }));
+      expect(switchTo).not.toHaveBeenCalled();
+      expect(alert.mock.calls[0]?.[0]).toBe('Pull is running');
+    });
   });
 
   it('says when the workout does not exist', async () => {

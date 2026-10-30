@@ -778,7 +778,42 @@
     "startWorkout": "Antrenmanı başlat",
     "toArchive": "Arşive taşı",
     "fromArchive": "Arşivden geri al",
-    "days": "Günler"
+    "days": "Günler",
+    "alternatives": {
+      "unnamed": "Alternatif {{position}}",
+      "errors": {
+        "limit": "Bir antrenmanın en fazla {{max}} alternatifi olabilir.",
+        "inUse": "Kullanımdaki alternatif silinemez. Önce başka birine geç.",
+        "gone": "Bu alternatif artık yok.",
+        "switch": "Geçiş yapılamadı. Tekrar dene.",
+        "add": "Alternatif eklenemedi. Tekrar dene.",
+        "rename": "Yeniden adlandırılamadı. Tekrar dene.",
+        "delete": "Silinemedi. Tekrar dene.",
+        "reorder": "Sıralama kaydedilemedi. Tekrar dene."
+      },
+      "loadError": "Alternatifler yüklenemedi.",
+      "title": "Alternatifler",
+      "body": "Bu antrenman için başka egzersiz setleri, örneğin ev için. Kullanımdaki her yerde antrenmanın kendisidir. Sırayı değiştirmek için sürükle.",
+      "inUse_one": "Kullanımda · {{count}} egzersiz",
+      "inUse_other": "Kullanımda · {{count}} egzersiz",
+      "exercises_one": "{{count}} egzersiz",
+      "exercises_other": "{{count}} egzersiz",
+      "rename": "Yeniden adlandır: {{name}}",
+      "delete": "Sil: {{name}}",
+      "add": "Alternatif ekle",
+      "addNote": "Yenisi kullanımdakinin bir kopyası olarak başlar, Düzenle'den değiştirebilirsin.",
+      "full": "En fazla {{max}} alternatif. Yenisini eklemek için birini sil.",
+      "deleteTitle": "{{name}} silinsin mi?",
+      "deleteMessage": "Egzersizleriyle birlikte silinir. Bu geri alınamaz.",
+      "deleteConfirm": "Sil",
+      "cancel": "Vazgeç",
+      "save": "Kaydet",
+      "nameTitle": "Alternatife ad ver",
+      "nameLabel": "Kısa olsun, antrenmanın üstünde görünür",
+      "counter": "{{length}}/{{max}}",
+      "counterLabel": "{{max}} karakterden {{length}}",
+      "emptyName": "Boş bırakılırsa “{{fallback}}” olarak görünür."
+    }
   },
   "exercise": {
     "start": "Başlangıç",
