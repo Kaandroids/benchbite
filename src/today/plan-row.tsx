@@ -17,7 +17,7 @@ type PlanRowProps = {
   title: string;
   /** Under the title, such as the workout's size. */
   children: ReactNode;
-  /** The round button at the end of the row, filled in `color`. */
+  /** The icon of the round button at the end of the row. */
   actionIcon: IconName;
   /** What screen readers call the button. */
   actionLabel: string;
