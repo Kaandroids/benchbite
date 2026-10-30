@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { PreviousItem } from '@shared/meal/estimate';
-
-import { estimateMeal, type EstimateItem } from './meal-estimate';
+import {
+  discardPhotos,
+  EstimateFailure,
+  estimateMeal,
+  type Correction,
+  type EstimateItem,
+} from './meal-estimate';
 import type { Meal } from './meals';
 
 /** Where an estimate of a meal's photos stands. */
@@ -13,9 +17,6 @@ export type EstimateState =
   /** The photos show no food, with what Bite says it sees, if anything. */
   | { kind: 'notFood'; note?: string }
   | { kind: 'failed'; error: unknown };
-
-/** What the user says is off with an estimate, and its items as they stand. */
-export type Correction = { note: string; previous: PreviousItem[] };
 
 /**
  * Estimates the photos of a meal, and again with a correction, or with other photos; each
@@ -44,6 +45,11 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
         })
         .catch((error: unknown) => {
           if (controller.signal.aborted) return;
+          // A refusal is the user's state, not a failure; anything else would go unseen, as
+          // preparing the photos on the device or a request the function turns down.
+          if (!(error instanceof EstimateFailure && error.refusal)) {
+            console.warn('Could not estimate the meal', error);
+          }
           setState({ kind: 'failed', error });
         });
     },
@@ -55,6 +61,8 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
     request();
     return () => running.current?.abort();
   }, [request]);
+  // And deleted once other photos replace them or the screen closes.
+  useEffect(() => () => discardPhotos(photos), [photos]);
 
   return {
     photos,
