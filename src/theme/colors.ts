@@ -23,9 +23,8 @@ export type ColorTokens = {
   /** The ledge below a filled button that the face presses down onto. */
   primaryButtonLedge: string;
   onPrimary: string;
-  /** The user's messages to Bite: a quiet grey beside Bite's cards, with `onUserBubble` text. */
+  /** The user's messages to Bite: a quiet grey beside Bite's cards, with `text` on it. */
   userBubble: string;
-  onUserBubble: string;
   /** Background of a selected card. */
   selected: string;
   /** Background of the icon tile on an unselected card. */
@@ -109,8 +108,7 @@ export const lightColors: ColorTokens = {
   primaryButton: '#F25A00', // 3.4:1 with white
   primaryButtonLedge: '#C24800',
   onPrimary: '#FFFFFF',
-  userBubble: '#ECEDF0',
-  onUserBubble: '#16171A', // 14.9:1 on userBubble
+  userBubble: '#ECEDF0', // 15.3:1 with text
   selected: '#FFF2E9',
   iconBackground: '#FFEDE2',
   primaryWash: 'rgba(255, 106, 16, 0.1)',
@@ -167,8 +165,7 @@ export const darkColors: ColorTokens = {
   primaryButton: '#FF7F26', // 7.6:1 with onPrimary
   primaryButtonLedge: '#D45A00',
   onPrimary: '#1C0C00',
-  userBubble: '#2A2C31',
-  onUserBubble: '#F2F3F5', // 12.6:1 on userBubble
+  userBubble: '#2A2C31', // 12.6:1 with text
   selected: '#24262B',
   iconBackground: '#2A2C31',
   primaryWash: 'rgba(255, 127, 38, 0.1)',

@@ -86,7 +86,7 @@ const UserMessage = memo(function UserMessage({
           },
         ]}
       >
-        <Text color="onUserBubble">{message.text}</Text>
+        <Text>{message.text}</Text>
       </View>
       {message.unanswered ? (
         <View style={[styles.row, { gap: spacing.xs }]}>

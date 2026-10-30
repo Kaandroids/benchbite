@@ -32,7 +32,13 @@ export function BiteScreen() {
   const toEnd = () => scroll.current?.scrollToEnd({ animated: chat.status === 'idle' });
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
-  const lastQuestion = chat.messages.findLast((message) => message.role === 'user');
+  /** Whatever the user asks, the chat follows it down. */
+  const following =
+    <A extends unknown[]>(ask: (...args: A) => void) =>
+    (...args: A) => {
+      atEnd.current = true;
+      ask(...args);
+    };
 
   return (
     <Screen onBack={() => router.back()} closes title={t('bite.title')} scrolls={false}>
@@ -59,13 +65,13 @@ export function BiteScreen() {
           }}
         >
           {chat.messages.length === 0 ? (
-            <ChatWelcome onAsk={refusal ? undefined : chat.send} />
+            <ChatWelcome onAsk={refusal ? undefined : following(chat.send)} />
           ) : (
             <ChatMessages
               messages={chat.messages}
               status={chat.status}
               tool={chat.tool}
-              onAskAgain={refusal || chat.status !== 'idle' ? undefined : chat.askAgain}
+              onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
             />
           )}
           {chat.failure ? (
@@ -78,9 +84,8 @@ export function BiteScreen() {
               >
                 {t(`bite.failures.${chat.failure}`)}
               </Text>
-              {/* An unanswered question offers to ask again itself. */}
-              {chat.status === 'idle' && !lastQuestion?.unanswered ? (
-                <TextLink label={t('common.tryAgain')} onPress={chat.retry} />
+              {chat.retry ? (
+                <TextLink label={t('common.tryAgain')} onPress={following(chat.retry)} />
               ) : null}
             </View>
           ) : null}
@@ -89,7 +94,7 @@ export function BiteScreen() {
           {refusal ? (
             <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
           ) : (
-            <ChatComposer onSend={chat.send} onStop={busy ? chat.stop : undefined} />
+            <ChatComposer onSend={following(chat.send)} onStop={busy ? chat.stop : undefined} />
           )}
         </View>
       </KeyboardAvoiding>
