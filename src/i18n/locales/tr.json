@@ -1668,9 +1668,9 @@
       "get_records": "Rekorlarına bakıyorum…",
       "search_foods": "Yiyeceklere bakıyorum…",
       "search_exercises": "Egzersizlere bakıyorum…",
-      "get_workouts": "Planına bakıyor…",
-      "propose_workout_change": "Antrenman değişikliği hazırlıyor…",
-      "propose_targets_change": "Yeni hedefler hazırlıyor…"
+      "get_workouts": "Planına bakıyorum…",
+      "propose_workout_change": "Antrenman değişikliği hazırlıyorum…",
+      "propose_targets_change": "Yeni hedefler hazırlıyorum…"
     },
     "failures": {
       "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",

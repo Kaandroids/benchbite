@@ -1668,9 +1668,9 @@
       "get_records": "Schaue mir deine Rekorde an…",
       "search_foods": "Suche Lebensmittel…",
       "search_exercises": "Suche Übungen…",
-      "get_workouts": "Schaut sich deinen Plan an…",
-      "propose_workout_change": "Bereitet eine Trainingsänderung vor…",
-      "propose_targets_change": "Bereitet neue Ziele vor…"
+      "get_workouts": "Schaue mir deinen Plan an…",
+      "propose_workout_change": "Bereite eine Trainingsänderung vor…",
+      "propose_targets_change": "Bereite neue Ziele vor…"
     },
     "failures": {
       "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",
