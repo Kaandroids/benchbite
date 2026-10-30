@@ -205,15 +205,10 @@ Deno.test('says why when the user may not use Bite, and keeps nothing of it', as
   });
 
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
-    { event: 'thread', threadId: 100 },
     { event: 'error', reason: 'limit_reached' },
   ]);
-  // The thread started for it goes again, and the question is not asked.
-  assertEquals(
-    inserted.map(({ table }) => table),
-    ['coach_threads'],
-  );
-  assertEquals(deleted, ['coach_threads 100']);
+  // Nothing is written before the access is checked.
+  assertEquals([inserted, deleted], [[], []]);
 });
 
 Deno.test('goes on with a thread, reading its earlier messages as text', async () => {
@@ -263,6 +258,27 @@ Deno.test('refuses a thread the user cannot read, and a request that is not vali
   assertEquals(notJson.status, 400);
   const get = await handleChatRequest(new Request('http://localhost/coach-chat'), ctx);
   assertEquals(get.status, 405);
+});
+
+Deno.test('drops a new thread when the request is refused after it began', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel(), {
+    start_ai_call: {
+      allowed: false,
+      reason: 'call_in_progress',
+      call_id: null,
+      max_output_tokens: null,
+    },
+  });
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'call_in_progress' },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
 });
 
 Deno.test("takes a later request's face off, and goes on after a space", async () => {
@@ -317,12 +333,12 @@ Deno.test('keeps what was said when the budget runs out after a lookup', async (
     { type: 'toolCall', name: 'get_records', args: {} },
   ]);
   const { ctx, inserted } = context(model);
-  // The budget is enough for the first request, not the second.
+  // The budget is enough for the check before the thread and the first request, not the second.
   const client = ctx.supabase as unknown as { rpc: (name: string, args?: unknown) => unknown };
   const rpc = client.rpc;
   let asked = 0;
   client.rpc = (name, args) =>
-    name === 'ai_access' && asked++ > 0
+    name === 'ai_access' && asked++ > 1
       ? Promise.resolve({ data: { allowed: false, reason: 'limit_reached' }, error: null })
       : rpc(name, args);
 
