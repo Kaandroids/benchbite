@@ -1628,6 +1628,48 @@
   },
   "bite": {
     "title": "Bite",
-    "soon": "Bite ile sohbet yakında geliyor."
+    "hello": "Merhaba, ben Bite",
+    "helloName": "Merhaba {{name}}, ben Bite",
+    "intro": "Antrenman ve beslenme koçun. Planını ve öğünlerini biliyorum.",
+    "tryAsking": "Şunu sorabilirsin",
+    "suggestions": {
+      "week": "Haftam nasıl geçti?",
+      "dinner": "Bu akşam ne yesem?",
+      "workout": "Bugün nasıl antrenman yapayım?"
+    },
+    "message": "Mesaj",
+    "ask": "Bite'a sor",
+    "send": "Gönder",
+    "stop": "Durdur",
+    "mistakes": "Bite hata yapabilir. Önemli bilgileri kontrol et.",
+    "thinking": "Bite düşünüyor",
+    "tools": {
+      "get_workout_history": "Antrenmanlarına bakıyorum…",
+      "get_meal_log": "Öğünlerine bakıyorum…",
+      "get_week_summary": "Haftana bakıyorum…",
+      "get_records": "Rekorlarına bakıyorum…",
+      "search_foods": "Yiyeceklere bakıyorum…",
+      "search_exercises": "Egzersizlere bakıyorum…"
+    },
+    "failures": {
+      "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",
+      "blocked": "Bite buna cevap veremiyor. Başka türlü sormayı dene.",
+      "not_saved": "Bu cevap kaydedilemedi.",
+      "request_too_large": "Bu sohbet Bite için çok uzun. Yeni bir sohbet başlat."
+    },
+    "refusals": {
+      "limit_reached": {
+        "title": "Bu ayki Bite kullanımın doldu",
+        "message": "{{date}} tarihinde geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
+      },
+      "plan_required": {
+        "title": "Bite bir planla gelir",
+        "message": "Bite'lı planlar yakında. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
+      },
+      "account_required": {
+        "title": "Bite için hesap gerekiyor",
+        "message": "Bite ile konuşmak için ücretsiz bir hesap aç. Verilerin seninle gelir."
+      }
+    }
   }
 }

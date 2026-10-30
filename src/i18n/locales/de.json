@@ -1628,6 +1628,48 @@
   },
   "bite": {
     "title": "Bite",
-    "soon": "Der Chat mit Bite kommt bald."
+    "hello": "Hi, ich bin Bite",
+    "helloName": "Hi {{name}}, ich bin Bite",
+    "intro": "Dein Coach für Training und Ernährung. Ich kenne deinen Plan und deine Mahlzeiten.",
+    "tryAsking": "Frag zum Beispiel",
+    "suggestions": {
+      "week": "Wie war meine Woche?",
+      "dinner": "Was soll ich heute Abend essen?",
+      "workout": "Wie trainiere ich heute?"
+    },
+    "message": "Nachricht",
+    "ask": "Frag Bite",
+    "send": "Senden",
+    "stop": "Stopp",
+    "mistakes": "Bite kann Fehler machen. Prüfe wichtige Infos.",
+    "thinking": "Bite denkt nach",
+    "tools": {
+      "get_workout_history": "Schaue mir deine Workouts an…",
+      "get_meal_log": "Schaue mir deine Mahlzeiten an…",
+      "get_week_summary": "Schaue mir deine Woche an…",
+      "get_records": "Schaue mir deine Rekorde an…",
+      "search_foods": "Suche Lebensmittel…",
+      "search_exercises": "Suche Übungen…"
+    },
+    "failures": {
+      "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",
+      "blocked": "Darauf kann Bite nicht antworten. Frag es anders.",
+      "not_saved": "Diese Antwort konnte nicht gespeichert werden.",
+      "request_too_large": "Dieses Gespräch ist zu lang für Bite. Fang ein neues an."
+    },
+    "refusals": {
+      "limit_reached": {
+        "title": "Du hast Bite diesen Monat aufgebraucht",
+        "message": "Ich bin am {{date}} zurück. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
+      },
+      "plan_required": {
+        "title": "Bite gibt es mit einem Plan",
+        "message": "Pläne mit Bite kommen bald. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
+      },
+      "account_required": {
+        "title": "Für Bite brauchst du ein Konto",
+        "message": "Erstelle ein kostenloses Konto, um mit Bite zu chatten. Deine Daten kommen mit."
+      }
+    }
   }
 }

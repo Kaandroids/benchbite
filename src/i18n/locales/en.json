@@ -1628,6 +1628,48 @@
   },
   "bite": {
     "title": "Bite",
-    "soon": "Chatting with Bite comes soon."
+    "hello": "Hi, I'm Bite",
+    "helloName": "Hi {{name}}, I'm Bite",
+    "intro": "Your coach for training and food. I know your plan and your meals.",
+    "tryAsking": "Try asking",
+    "suggestions": {
+      "week": "How was my week?",
+      "dinner": "What should I eat tonight?",
+      "workout": "How do I train today?"
+    },
+    "message": "Message",
+    "ask": "Ask Bite",
+    "send": "Send",
+    "stop": "Stop",
+    "mistakes": "Bite can make mistakes. Check important info.",
+    "thinking": "Bite is thinking",
+    "tools": {
+      "get_workout_history": "Checking your workouts…",
+      "get_meal_log": "Looking at your meals…",
+      "get_week_summary": "Looking at your week…",
+      "get_records": "Checking your records…",
+      "search_foods": "Looking up foods…",
+      "search_exercises": "Looking up exercises…"
+    },
+    "failures": {
+      "unavailable": "Bite couldn't answer just now. Try again.",
+      "blocked": "Bite can't answer that. Try asking another way.",
+      "not_saved": "This answer couldn't be saved.",
+      "request_too_large": "This conversation is too long for Bite. Start a new one."
+    },
+    "refusals": {
+      "limit_reached": {
+        "title": "You've used Bite for this month",
+        "message": "I'm back on {{date}}. Your plan, meals and workouts keep working as usual."
+      },
+      "plan_required": {
+        "title": "Bite comes with a plan",
+        "message": "Plans with Bite are coming soon. Your plan, meals and workouts keep working as usual."
+      },
+      "account_required": {
+        "title": "Bite needs an account",
+        "message": "Create a free account to chat with Bite. Your data comes with you."
+      }
+    }
   }
 }
