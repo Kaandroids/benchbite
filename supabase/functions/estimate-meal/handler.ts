@@ -126,6 +126,12 @@ export async function handleEstimateRequest(
       responseSchema: RESPONSE_SCHEMA,
     });
     if (response.finish === 'blocked') return refused('blocked');
+    if (response.finish === 'length') {
+      // A cut answer is not whole JSON; it is said apart from a wrong shape, as the limit may need
+      // raising (ai_feature_limits).
+      console.error('The estimate was cut at the token limit', { usage: response.usage });
+      return refused('unavailable');
+    }
     parts = response.parts;
   } catch (error) {
     if (error instanceof AiRefusedError) return refused(error.reason);

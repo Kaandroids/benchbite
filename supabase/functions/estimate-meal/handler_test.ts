@@ -438,3 +438,15 @@ Deno.test('stops reading a body without a length once it passes the limit', asyn
   assertEquals(pulled <= 6, true);
   assertEquals(await readBody(ask({ a: 'ö' }), 100), '{"a":"ö"}');
 });
+
+Deno.test('answers unavailable when the answer was cut at the token limit', async () => {
+  // Whole JSON all the same, it is not used: the items after the cut are missing.
+  const cut = { ...answer({ isFood: true, items: ITEMS, note: '' }), finish: 'length' as const };
+  const { ctx, searched } = context(new FakeModel(cut));
+
+  const response = await handleEstimateRequest(ask(REQUEST), ctx);
+
+  assertEquals(response.status, 503);
+  assertEquals(await response.json(), { error: 'unavailable' });
+  assertEquals(searched, []);
+});
