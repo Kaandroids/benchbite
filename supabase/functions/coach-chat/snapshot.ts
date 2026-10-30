@@ -17,7 +17,7 @@ export type Snapshot = {
     weightUnit: string;
     pregnantOrBreastfeeding: boolean;
     /** The least the targets ever ask for, which Bite never goes below. */
-    calorieFloor: number;
+    calorieFloor?: number;
   };
   goal?: string;
   /** The latest weight, in kg. */
@@ -39,7 +39,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     supabase
       .from('profiles')
       .select(
-        'display_name, birth_year, sex, height_cm, weight_unit, pregnant_or_breastfeeding, experience, training_setup, training_days, session_minutes',
+        'display_name, birth_year, sex, height_cm, weight_unit, pregnant_or_breastfeeding, experience, training_setup, training_days, session_minutes, calorie_floor',
       )
       .maybeSingle(),
     supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
@@ -64,10 +64,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     weekday: WEEKDAYS[(new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7],
   };
   const p = profile.data;
-  // The floor the targets keep to, which Bite never goes below.
-  const floor = p && (await supabase.rpc('calorie_floor', { sex: p.sex }));
-  if (floor?.error) logError('Could not read the calorie floor for the snapshot', floor.error);
-  if (p && floor?.data) {
+  if (p) {
     snapshot.profile = {
       name: p.display_name ?? undefined,
       age: Number(today.slice(0, 4)) - p.birth_year,
@@ -75,7 +72,8 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       heightCm: p.height_cm,
       weightUnit: p.weight_unit,
       pregnantOrBreastfeeding: p.pregnant_or_breastfeeding,
-      calorieFloor: floor.data,
+      // The floor the targets keep to (calorie_floor()), which Bite never goes below.
+      calorieFloor: p.calorie_floor ?? undefined,
     };
     snapshot.training = [
       p.experience,
