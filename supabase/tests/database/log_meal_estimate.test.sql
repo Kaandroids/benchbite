@@ -1,9 +1,10 @@
 -- A meal estimated from photos is logged in one step: found foods by their id, and items the
--- library did not have as the user's own foods, which are used again by name.
+-- library did not have as the user's own foods, which are used again by name. Undo takes it back
+-- in one step.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -66,6 +67,11 @@ select is(
   null,
   'A library food names no food of one''s own'
 );
+select results_eq(
+  $$ select kcal from logged order by entry_id $$,
+  $$ values (174.0), (44.0), (350.0), (70.0) $$,
+  'Each entry gives the calories it was logged with, an existing own food''s included'
+);
 
 -- Values that break a food's checks are made to fit: macros over 100 g are shared down, and
 -- calories below what they make are raised.
@@ -101,7 +107,56 @@ select throws_ok(
   '22023'
 );
 
--- B cannot log A's food.
+-- Undo: the entries go, with no copy kept to restore; a food the meal made goes when nothing
+-- else names it, and is archived when something does.
+insert into public.meal_entries (day, meal, custom_food_id, grams)
+  select current_date, 'snack', id, 10 from public.custom_foods where name = 'Nut butter';
+create temporary table nut on commit drop as
+  select l.entry_id, l.custom_food_id from public.log_meal_estimate(current_date, 'snack',
+    jsonb_build_array(jsonb_build_object('name', 'Kimchi', 'grams', 50, 'kcal', 20,
+      'protein_g', 1.5, 'carbs_g', 2.5, 'fat_g', 0.5))) l
+  union all
+  select e.id, e.custom_food_id from public.meal_entries e
+  join public.custom_foods c on c.id = e.custom_food_id
+  where c.name = 'Nut butter' and e.grams = 30;
+grant select on nut to authenticated;
+
+select lives_ok(
+  $$ select public.undo_meal_estimate(
+       (select array_agg(entry_id) from nut), (select array_agg(custom_food_id) from nut)) $$,
+  'An estimate is undone'
+);
+select is(
+  (select count(*)::integer from public.meal_entries where id in (select entry_id from nut)),
+  0,
+  'Its entries are removed'
+);
+-- Which users cannot read.
+reset role;
+select is(
+  (select count(*)::integer from public.removed_meal_entries
+   where id in (select entry_id from nut)),
+  0,
+  'and not kept to be restored'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select is(
+  (select count(*)::integer from public.custom_foods where name = 'Kimchi'),
+  0,
+  'A food it made that nothing else names is deleted'
+);
+select isnt(
+  (select archived_at from public.custom_foods where name = 'Nut butter'),
+  null,
+  'one that another entry names is archived'
+);
+
+-- B cannot log A's food or recipe, nor undo A's meal.
+create temporary table porridge on commit drop as
+  select public.save_recipe(null, 'Porridge', 1::smallint, 'bowl',
+    jsonb_build_array(jsonb_build_object('food_id', 'C133000', 'grams', 50))) as id;
+grant select on porridge to authenticated;
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
   format(
@@ -110,6 +165,44 @@ select throws_ok(
     (select custom_food_id from logged where custom_food_id is not null limit 1)
   ),
   '23503'
+);
+select throws_ok(
+  format(
+    $$ select public.log_meal_estimate(current_date, 'lunch', jsonb_build_array(
+         jsonb_build_object('recipe_id', %s, 'grams', 20))) $$,
+    (select id from porridge)
+  ),
+  '23503'
+);
+select public.undo_meal_estimate(
+  (select array_agg(entry_id) from logged), (select array_agg(custom_food_id) from logged)
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select is(
+  (select count(*)::integer from public.meal_entries where id in (select entry_id from logged)),
+  4,
+  'Another user''s undo leaves the meal'
+);
+select is(
+  (select count(*)::integer from public.custom_foods where name = 'Dal makhani'),
+  1,
+  'and its foods'
+);
+
+-- Signed-in users only.
+select ok(
+  not has_function_privilege('anon', 'public.log_meal_estimate(date, public.meal, jsonb)',
+    'execute')
+    and not has_function_privilege('anon', 'public.undo_meal_estimate(bigint[], bigint[])',
+      'execute')
+    and not has_function_privilege('anon',
+      'public.fitted_food_values(numeric, numeric, numeric, numeric)', 'execute'),
+  'Anon may not log or undo an estimate'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.undo_meal_estimate(bigint[], bigint[])',
+    'execute'),
+  'Signed-in users may undo one'
 );
 
 select * from finish();
