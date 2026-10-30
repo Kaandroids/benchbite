@@ -1,6 +1,6 @@
 # 0050. Bite's conversations in threads, written only by the chat function
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0062
 - **Date:** 2026-10-29
 
 ## Context
@@ -33,7 +33,8 @@ The model behind Bite can change (ADR 0049), and a stored conversation has to ou
 - **The user reads their own threads and messages,** renames and archives a thread, and deletes
   one with its messages. Row level security limits all of it to the owner.
 - **Deleting the account deletes the threads and messages** through their foreign keys. The
-  media in storage are deleted with the thread or the account when they arrive (#295, #134).
+  media in storage are deleted with the thread or the account when they arrive (#295, #134;
+  see ADR 0062 and #361).
 
 ## Alternatives considered
 
