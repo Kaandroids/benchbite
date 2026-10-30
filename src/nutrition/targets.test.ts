@@ -120,7 +120,7 @@ describe('useUseCalculatedTargets', () => {
 });
 
 describe('useTargetBasis', () => {
-  it('loads the goal and the activity the targets are worked out from', async () => {
+  it('loads the goal, the activity and the floor the targets are worked out from', async () => {
     jest.mocked(supabase.from).mockImplementation(
       (table) =>
         ({
@@ -130,7 +130,7 @@ describe('useTargetBasis', () => {
                 data:
                   String(table) === 'goals'
                     ? { kind: 'lose_fat', target_weight_kg: 75, weekly_pace_kg: 0.5 }
-                    : { activity_level: 'light', height_cm: 180 },
+                    : { activity_level: 'light', height_cm: 180, calorie_floor: 1500 },
                 error: null,
               }),
           }),
@@ -144,6 +144,7 @@ describe('useTargetBasis', () => {
       weeklyPaceKg: 0.5,
       activity: 'light',
       heightCm: 180,
+      calorieFloor: 1500,
     });
   });
 });

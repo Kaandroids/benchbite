@@ -193,6 +193,8 @@ export type TargetBasis = {
   activity: Database['public']['Enums']['activity_level'];
   /** For the lowest healthy target weight. */
   heightCm: number;
+  /** The least calories a day we recommend for the user (calorie_floor()). */
+  calorieFloor: number | null;
 };
 
 /** The saved goal and activity the calculated targets come from; null before the onboarding. */
@@ -202,7 +204,7 @@ export function useTargetBasis() {
     queryFn: async (): Promise<TargetBasis | null> => {
       const [goal, profile] = await Promise.all([
         supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
-        supabase.from('profiles').select('activity_level, height_cm').maybeSingle(),
+        supabase.from('profiles').select('activity_level, height_cm, calorie_floor').maybeSingle(),
       ]);
       if (goal.error) {
         throw goal.error;
@@ -219,6 +221,7 @@ export function useTargetBasis() {
         weeklyPaceKg: goal.data.weekly_pace_kg,
         activity: profile.data.activity_level,
         heightCm: profile.data.height_cm,
+        calorieFloor: profile.data.calorie_floor,
       };
     },
   });
