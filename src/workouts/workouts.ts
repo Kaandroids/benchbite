@@ -226,7 +226,7 @@ export function useKcalPerMinute() {
   });
 }
 
-/** How many workouts the user may have, and how many exercises each, which premium will raise (ADR 0018). */
+/** The user's workout limits (ADR 0018, ADR 0061): how many workouts, exercises in each and alternatives of each, which premium will raise, and how long an alternative's name may be. */
 export function useWorkoutLimits() {
   return useQuery({
     queryKey: ['workout-limits'],

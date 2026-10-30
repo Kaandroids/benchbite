@@ -51,7 +51,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 -- same numbers for the plan builder; change them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3) $$,
+  $$ values (20, 3, 5, 12) $$,
   'Users may have 3 workouts with 20 exercises each'
 );
 
