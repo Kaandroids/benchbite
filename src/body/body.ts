@@ -1,5 +1,7 @@
 // Rules for body data, goals and paces. They only decide what the onboarding and changing the
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
+import { MIN_HEALTHY_BMI, paceLevel as levelOf, type PaceLevel } from '@shared/body/limits';
+
 import { paceIn, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
@@ -18,8 +20,9 @@ export function changesWeight(goal: Goal | undefined): goal is WeightGoal {
 
 /** Benchbite is for adults (#48). */
 export const MIN_AGE = 18;
-/** The lower end of a healthy body mass index. Targets below it are not allowed. */
-export const MIN_HEALTHY_BMI = 18.5;
+// The lower end of a healthy body mass index, below which targets are not allowed, and how a
+// pace is judged: shared with Bite (ADR 0053).
+export { bmi, MIN_HEALTHY_BMI, type PaceLevel } from '@shared/body/limits';
 
 /** Heights the database accepts. */
 export const HEIGHT_RANGE_CM = { min: 100, max: 250 };
@@ -27,10 +30,6 @@ export const HEIGHT_RANGE_CM = { min: 100, max: 250 };
 /** The age reached this year, as the database calculates it. */
 export function ageIn(year: number, birthYear: number): number {
   return year - birthYear;
-}
-
-export function bmi(weightKg: number, heightCm: number): number {
-  return weightKg / (heightCm / 100) ** 2;
 }
 
 /** The lowest weight with a healthy BMI for the height, rounded up to a tenth of a kilogram. */
@@ -145,16 +144,9 @@ export function isPaceInRange(unit: WeightUnit, goal: WeightGoal, paceKg: number
   return pace >= range.min - 0.01 && pace <= range.max + 0.01;
 }
 
-export type PaceLevel = 'ideal' | 'ambitious' | 'aggressive';
-
-/**
- * How demanding a weekly pace is, as a share of body weight (Helms et al., 2014): losing up to
- * 1 % a week keeps muscle, up to 1.5 % is doable; gaining more than 0.5 % a week adds mostly fat.
- */
+/** How demanding a weekly pace is for the goal, as a share of body weight. */
 export function paceLevel(goal: Goal, weightKg: number, weeklyPaceKg: number): PaceLevel {
-  const percent = (weeklyPaceKg / weightKg) * 100;
-  const [ideal, ambitious] = goal === 'lose_fat' ? [1, 1.5] : [0.5, 1];
-  return percent <= ideal ? 'ideal' : percent <= ambitious ? 'ambitious' : 'aggressive';
+  return levelOf(goal === 'lose_fat', weightKg, weeklyPaceKg);
 }
 
 /** The day the target weight is reached at a steady weekly pace. */
