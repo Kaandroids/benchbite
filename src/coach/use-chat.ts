@@ -1,11 +1,10 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ACCESS_KEY, REFUSALS, type Refusal } from '@/ai/access';
 import { deviceToday } from '@/i18n/dates';
-import type { Database } from '@/lib/database.types';
 import { oneOf } from '@/lib/one-of';
-import { supabase } from '@/lib/supabase';
 
 import {
   type BiteExpressionName,
@@ -13,18 +12,6 @@ import {
   ChatRequestError,
   streamChat,
 } from './chat-stream';
-
-const ACCESS_KEY = ['ai', 'access'];
-
-type AccessReason = Database['public']['Enums']['ai_access_reason'];
-
-/** Why the user may not chat with Bite at all now, as ai_access() says (ADR 0051). */
-const REFUSALS = [
-  'account_required',
-  'plan_required',
-  'limit_reached',
-] as const satisfies readonly AccessReason[];
-export type Refusal = (typeof REFUSALS)[number];
 
 /** Why Bite gave no answer to one message; any other reason is said as unavailable. */
 const FAILURES = [
@@ -35,23 +22,6 @@ const FAILURES = [
   'call_in_progress',
 ] as const;
 export type Failure = (typeof FAILURES)[number];
-
-/** Whether the user may chat with Bite this month, and when the month's budget resets. */
-export function useAiAccess() {
-  return useQuery({
-    queryKey: ACCESS_KEY,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('ai_access');
-      if (error) {
-        throw error;
-      }
-      return {
-        refusal: oneOf(REFUSALS, data.reason ?? undefined),
-        resetsAt: data.resets_at ? new Date(data.resets_at) : undefined,
-      };
-    },
-  });
-}
 
 export type ChatMessage = {
   id: string;

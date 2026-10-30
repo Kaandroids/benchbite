@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
+import { useAiAccess } from '@/ai/access';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
@@ -13,7 +14,7 @@ import { ChatComposer } from './chat-composer';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
-import { useAiAccess, useChat } from './use-chat';
+import { useChat } from './use-chat';
 
 /** How close to the end of the chat counts as reading its end. */
 const END_SLACK = 40;

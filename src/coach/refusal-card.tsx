@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import type { Refusal } from '@/ai/access';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
@@ -9,7 +10,6 @@ import { useMonthDayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
-import type { Refusal } from './use-chat';
 
 type RefusalCardProps = {
   refusal: Refusal;
