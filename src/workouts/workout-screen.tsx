@@ -22,11 +22,10 @@ import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
-import { AlternativeChips } from './alternative-chips';
 import { AlternativesSheets } from './alternatives-sheet';
-import { useAlternativeError, useSwitchAlternative, useWorkoutAlternatives } from './alternatives';
 import { DayChips } from './day-chips';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useDeleteWorkout,
   useKcalPerMinute,
@@ -55,9 +54,6 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
-  const alternatives = useWorkoutAlternatives(id);
-  const switchAlternative = useSwitchAlternative();
-  const alternativeError = useAlternativeError();
   const [managing, setManaging] = useState(false);
 
   if (!allLoaded([workouts])) {
@@ -161,9 +157,6 @@ export function WorkoutScreen({ id }: { id: number }) {
     ]);
   };
 
-  // A workout without alternatives has no rows, and never a single one (ADR 0061).
-  const shownAlternatives = (alternatives.data?.length ?? 0) > 1 ? alternatives.data : undefined;
-
   return (
     <Screen
       onBack={() => router.back()}
@@ -203,33 +196,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         </View>
       }
     >
-      {shownAlternatives ? (
-        <View style={{ gap: spacing.sm }}>
-          <AlternativeChips
-            alternatives={shownAlternatives}
-            // The one being switched to shows as chosen until the workout has loaded with it.
-            selectedId={
-              switchAlternative.isPending
-                ? switchAlternative.variables
-                : shownAlternatives.find((alternative) => alternative.inUse)?.id
-            }
-            disabled={switchAlternative.isPending}
-            onSelect={(alternative) => {
-              // Like an edit, a switch would change the exercises of the workout running.
-              if (running) {
-                askToFinish();
-                return;
-              }
-              switchAlternative.mutate(alternative.id);
-            }}
-          />
-          {switchAlternative.isError ? (
-            <Text variant="caption" color="danger" accessibilityRole="alert">
-              {alternativeError(switchAlternative.error, 'switch')}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
+      <WorkoutAlternatives workoutId={workout.id} running={running} onRunning={askToFinish} />
 
       {/* One card of even columns over the workout's days, like a finished workout's figures over
           when it started and ended. */}
