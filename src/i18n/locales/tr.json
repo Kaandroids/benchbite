@@ -124,7 +124,7 @@
       "afternoon": "İyi günler, {{name}}",
       "evening": "İyi akşamlar, {{name}}"
     },
-    "targets": "Günlük hedeflerin",
+    "targets": "Günlük hedefin",
     "week": {
       "done": "yapıldı",
       "missed": "kaçırıldı",

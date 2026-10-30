@@ -124,7 +124,7 @@
       "afternoon": "Guten Tag, {{name}}",
       "evening": "Guten Abend, {{name}}"
     },
-    "targets": "Deine Tagesziele",
+    "targets": "Dein Tagesziel",
     "week": {
       "done": "erledigt",
       "missed": "verpasst",

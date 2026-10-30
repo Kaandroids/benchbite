@@ -127,8 +127,11 @@ export function TodayScreen() {
         />
         {targets.data ? (
           <Card entering={cardEntering(1)}>
-            <Text variant="headline">{t('today.targets')}</Text>
-            <DailyProgress targets={targets.data} eaten={totalOf(eaten.data ?? [])} />
+            <DailyProgress
+              title={t('today.targets')}
+              targets={targets.data}
+              eaten={totalOf(eaten.data ?? [])}
+            />
           </Card>
         ) : null}
         {missed.length > 0 ? (

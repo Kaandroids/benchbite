@@ -124,7 +124,7 @@
       "afternoon": "Good afternoon, {{name}}",
       "evening": "Good evening, {{name}}"
     },
-    "targets": "Your daily targets",
+    "targets": "Your daily target",
     "week": {
       "done": "done",
       "missed": "missed",
