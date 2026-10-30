@@ -1655,7 +1655,8 @@
       "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",
       "blocked": "Darauf kann Bite nicht antworten. Frag es anders.",
       "not_saved": "Diese Antwort konnte nicht gespeichert werden.",
-      "request_too_large": "Dieses Gespräch ist zu lang für Bite. Fang ein neues an."
+      "request_too_large": "Dieses Gespräch ist zu lang für Bite. Fang ein neues an.",
+      "call_in_progress": "Bite antwortet gerade auf einem anderen Gerät. Versuch es gleich noch mal."
     },
     "refusals": {
       "limit_reached": {
@@ -1670,6 +1671,10 @@
         "title": "Für Bite brauchst du ein Konto",
         "message": "Erstelle ein kostenloses Konto, um mit Bite zu chatten. Deine Daten kommen mit."
       }
-    }
+    },
+    "stopped": "Gestoppt",
+    "cutOff": "Abgebrochen",
+    "unanswered": "Nicht beantwortet",
+    "askAgain": "Noch mal fragen"
   }
 }

@@ -1655,7 +1655,8 @@
       "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",
       "blocked": "Bite buna cevap veremiyor. Başka türlü sormayı dene.",
       "not_saved": "Bu cevap kaydedilemedi.",
-      "request_too_large": "Bu sohbet Bite için çok uzun. Yeni bir sohbet başlat."
+      "request_too_large": "Bu sohbet Bite için çok uzun. Yeni bir sohbet başlat.",
+      "call_in_progress": "Bite şu an başka bir cihazda cevap veriyor. Birazdan tekrar dene."
     },
     "refusals": {
       "limit_reached": {
@@ -1670,6 +1671,10 @@
         "title": "Bite için hesap gerekiyor",
         "message": "Bite ile konuşmak için ücretsiz bir hesap aç. Verilerin seninle gelir."
       }
-    }
+    },
+    "stopped": "Durduruldu",
+    "cutOff": "Yarıda kesildi",
+    "unanswered": "Cevaplanmadı",
+    "askAgain": "Tekrar sor"
   }
 }
