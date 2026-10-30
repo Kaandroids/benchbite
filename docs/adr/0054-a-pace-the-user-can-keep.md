@@ -27,12 +27,12 @@ summary, Daily goals and the weight card, still came from the chosen pace, so th
   kilogram (`weekly_loss_kg()`). `achievable_weekly_pace_kg()` does it for answers not yet saved
   (the onboarding), `my_achievable_weekly_pace_kg()` for the saved goal. It is 0 when the floor
   holds the calories at what keeps the weight, and null for a goal that does not lose weight,
-  which the floor never holds back.
-- **Every date of the goal uses that pace** (`goalDate`), where the floor holds it below the
+  which the floor never holds back, or while the user's own targets are in use, of which the
+  calculated ones say nothing; the chosen pace dates the goal then.
+- **Every date of the goal uses that pace** (`goalPace`), where the floor holds it below the
   chosen one; within rounding, the chosen one. Where it is slower, the plan and Daily goals say
   why: the calories stay at the floor, and moving more makes it faster. Where it is 0, there is
-  no date, and they say the calories keep the weight. With one's own targets in use, the weight
-  card dates by the chosen pace, as the calculated targets' pace says nothing of them.
+  no date, and they say the calories keep the weight.
 - **The healthy body mass index and the pace levels are one file**, `_shared/body/limits.ts`,
   which the app and Bite (ADR 0053) both use.
 
@@ -51,4 +51,5 @@ summary, Daily goals and the weight card, still came from the chosen pace, so th
 
 A light or inactive user sees a later date than before, but one the targets can keep. The
 weight card's date follows the latest weight only when the goal's data is read again. The
-1.5% stop and the levels live in one file; the floor and the 7,700 kcal stay in the database.
+1.5% stop and the levels live in one file; the floor and the 7,700 kcal stay in the database,
+where `weekly_loss_kg()` names the `kcal_per_kg` of `calculate_nutrition_targets()` it repeats.
