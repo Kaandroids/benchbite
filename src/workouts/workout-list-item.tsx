@@ -15,8 +15,8 @@ import { useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts'
 
 type WorkoutListItemProps = {
   workout: Workout;
-  /** Whether the workout is planned for today, which is highlighted. */
-  today?: boolean;
+  /** Today's ISO weekday: when the workout is planned on it, its day and start button stand out. */
+  today?: number;
   /** Whether this workout is in progress, which replaces its start button. */
   running?: boolean;
   onStart?: () => void;
@@ -28,7 +28,7 @@ type WorkoutListItemProps = {
  */
 export function WorkoutListItem({
   workout,
-  today = false,
+  today,
   running = false,
   onStart,
 }: WorkoutListItemProps) {
@@ -39,65 +39,41 @@ export function WorkoutListItem({
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { exercises } = workout;
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
+  const isToday = today !== undefined && workout.weekdays.includes(today);
 
   return (
-    <Card
-      style={[
-        styles.card,
-        {
-          padding: spacing.lg,
-          borderColor: today ? colors.primary : colors.border,
-          borderWidth: today ? 2 : 1,
-        },
-      ]}
-    >
+    <Card style={[styles.card, { padding: spacing.lg }]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={name}
+        // The day chips sit inside this button, so it says itself when it is today's.
+        accessibilityLabel={isToday ? t('workout.todayLabel', { name }) : name}
         onPress={() =>
           router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
         }
         style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
       >
-        <View style={[styles.row, { gap: spacing.sm }]}>
-          <Text
-            variant="headline"
-            color={workout.active ? 'text' : 'textMuted'}
-            style={styles.name}
-          >
-            {name}
-          </Text>
-          {today ? (
-            <View
-              style={[
-                styles.pill,
-                { borderRadius: radii.full, backgroundColor: colors.primaryButton },
-              ]}
-            >
-              <Text variant="captionStrong" color="onPrimary">
-                {t('workout.today')}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-        {/* One line: the counts go without their words, which the icons and labels give. */}
+        <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
+          {name}
+        </Text>
+        <DayChips weekdays={workout.weekdays} muted={!workout.active} today={today} />
+        {/* One line: the counts go without their words, which the icons and labels give. Only the
+            calories keep a colour, so that the stats stay quiet beside the days (#334). */}
         <View style={[styles.stats, { gap: spacing.md }]}>
           <IconStat
             icon="dumbbell"
-            color="info"
+            color="textMuted"
             text={String(exercises.length)}
             label={t('workout.size.exercises', { count: exercises.length })}
           />
           <IconStat
             icon="target"
-            color="fat"
+            color="textMuted"
             text={String(sets)}
             label={t('common.sets', { count: sets })}
           />
           <IconStat
             icon="timer"
-            color="primaryText"
+            color="textMuted"
             text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
           />
           {kcalPerMinute ? (
@@ -112,13 +88,7 @@ export function WorkoutListItem({
         </View>
       </Pressable>
       {running ? (
-        <View
-          style={[
-            styles.pill,
-            styles.running,
-            { borderRadius: radii.full, backgroundColor: colors.track },
-          ]}
-        >
+        <View style={[styles.running, { borderRadius: radii.full, backgroundColor: colors.track }]}>
           <Text variant="captionStrong" color="textMuted">
             {t('session.running')}
           </Text>
@@ -132,12 +102,13 @@ export function WorkoutListItem({
             styles.start,
             {
               borderRadius: radii.full,
-              backgroundColor: colors.iconBackground,
+              // Only today's is orange, so that it stands out from the others.
+              backgroundColor: isToday ? colors.iconBackground : colors.track,
               opacity: pressed ? 0.6 : 1,
             },
           ]}
         >
-          <Icon name="play" size={22} color="primaryText" />
+          <Icon name="play" size={22} color={isToday ? 'primary' : 'text'} />
         </Pressable>
       ) : (
         <Switch
@@ -158,26 +129,14 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   stats: {
     flexDirection: 'row',
-  },
-  // Long names wrap and leave room for the Today pill instead of pushing it out.
-  name: {
-    flexShrink: 1,
   },
   start: {
     width: 52,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  pill: {
-    paddingHorizontal: 8,
-    paddingVertical: 1,
   },
   running: {
     paddingHorizontal: 12,

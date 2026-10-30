@@ -51,6 +51,7 @@ export const ICONS = {
   personOff: { ios: 'person.crop.circle.badge.xmark', android: 'person_off', web: 'person_off' },
   play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
   plus: { ios: 'plus', android: 'add', web: 'add' },
+  redo: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
   run: { ios: 'figure.run', android: 'directions_run', web: 'directions_run' },
   scale: { ios: 'scalemass', android: 'monitor_weight', web: 'monitor_weight' },
   search: { ios: 'magnifyingglass', android: 'search', web: 'search' },

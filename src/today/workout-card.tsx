@@ -13,6 +13,7 @@ import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts
 import type { WeekSession } from '@/workouts/workouts';
 
 import { MovedFrom } from './moved-from';
+import { PlanRow } from './plan-row';
 
 type WorkoutCardProps = {
   /** How the card comes in, from the screen that places it. */
@@ -52,7 +53,11 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
     return (
       <Card entering={entering}>
         <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile name={done ? 'check' : 'moon'} />
+          <IconTile
+            name={done ? 'check' : 'moon'}
+            color="breakfast"
+            background="breakfastBackground"
+          />
           <View style={styles.text}>
             <Text variant="headline">
               {done ? t('today.workout.done') : t('today.workout.restDay')}
@@ -72,27 +77,28 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
   if (todays.length === 1) {
     const [{ session, movedFrom }] = ahead as [PlannedWorkout];
     return (
+      // The whole card opens the workout too; screen readers find that on its button alone.
       <Pressable
-        accessibilityRole="button"
-        accessibilityHint={t('today.workout.open')}
+        accessible={false}
         onPress={() => openWorkout(session)}
         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
         <Card entering={entering}>
-          <View style={[styles.row, { gap: spacing.md }]}>
-            <IconTile name="dumbbell" />
-            <View style={styles.text}>
-              <Text variant="caption" color="primaryText">
-                {t('today.workout.title')}
-              </Text>
-              <Text variant="headline">{workoutName(session)}</Text>
-            </View>
-            <Icon name="forward" color="textMuted" />
-          </View>
-          <View style={[styles.wrap, { gap: spacing.sm }]}>
+          <PlanRow
+            icon="dumbbell"
+            color="breakfast"
+            background="breakfastBackground"
+            caption={t('today.workout.title')}
+            title={workoutName(session)}
+            actionIcon="forward"
+            actionLabel={t('today.workout.openLabel')}
+            onAction={() => openWorkout(session)}
+          >
+            <Text variant="caption" color="textMuted">
+              {sessionSize(session)}
+            </Text>
             {movedFrom ? <MovedFrom date={movedFrom} /> : null}
-            <Text color="textMuted">{sessionSize(session)}</Text>
-          </View>
+          </PlanRow>
         </Card>
       </Pressable>
     );
@@ -102,7 +108,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
   return (
     <Card entering={entering}>
       <View style={styles.text}>
-        <Text variant="caption" color="primaryText">
+        <Text variant="caption" color="breakfast">
           {t('today.workout.titleMany')}
         </Text>
         <Text variant="headline">{t('today.workout.doneOf', { done, count: todays.length })}</Text>
@@ -121,7 +127,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
                 <Icon name="check" size={18} color="onPrimary" />
               </View>
             ) : (
-              <IconTile name="dumbbell" />
+              <IconTile name="dumbbell" color="breakfast" background="breakfastBackground" />
             )}
             <View style={styles.text}>
               <Text variant="bodyStrong">{workoutName(session)}</Text>
@@ -154,11 +160,6 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
   },
   text: {

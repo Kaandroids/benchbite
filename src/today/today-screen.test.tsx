@@ -221,7 +221,7 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Good morning')).toBeTruthy();
     expect(screen.getByLabelText('Loading')).toBeTruthy();
     expect(screen.queryByText('Wednesday, October 21')).toBeNull();
-    expect(screen.queryByText('Your daily targets')).toBeNull();
+    expect(screen.queryByText('Your daily target')).toBeNull();
     mockData();
     await screen.rerender(<TodayScreen />);
     expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
@@ -274,10 +274,10 @@ describe('TodayScreen', () => {
     expect(screen.queryByText('Name of exercise-0')).toBeNull();
   });
 
-  it("opens today's workout", async () => {
+  it("opens today's workout with its round button", async () => {
     mockData();
     await render(<TodayScreen />);
-    await fireEvent.press(screen.getByHintText('Opens the workout'));
+    await fireEvent.press(screen.getByRole('button', { name: "Open today's workout" }));
     // The sessions of the test week use their weekday as the workout's id.
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
   });
@@ -369,7 +369,7 @@ describe('TodayScreen', () => {
     await render(<TodayScreen />);
     expect(screen.queryByText("Today's workout")).toBeNull();
     expect(screen.queryByText('Rest day')).toBeNull();
-    expect(screen.queryByText('Your daily targets')).toBeNull();
+    expect(screen.queryByText('Your daily target')).toBeNull();
     expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
   });
 
@@ -377,11 +377,11 @@ describe('TodayScreen', () => {
     mockData();
     await render(<TodayScreen />);
     const headings = screen.getAllByText(
-      /^(Wednesday, October 21|Your daily targets|Missed on Monday|Today's workout)$/,
+      /^(Wednesday, October 21|Your daily target|Missed on Monday|Today's workout)$/,
     );
     expect(headings.map((node) => node.props.children)).toEqual([
       'Wednesday, October 21',
-      'Your daily targets',
+      'Your daily target',
       'Missed on Monday',
       "Today's workout",
     ]);
@@ -423,13 +423,13 @@ describe('paging the week', () => {
     expect(screen.getByLabelText('Next week')).toBeDisabled();
     await act(() => fireEvent.press(screen.getByLabelText('Previous week')));
     expect(screen.getByText(`Week of ${new Date(2026, 9, 14, 9, 0).toDateString()}`)).toBeTruthy();
-    expect(screen.queryByText('Your daily targets')).toBeNull();
+    expect(screen.queryByText('Your daily target')).toBeNull();
     // The past week pages on with its own card, given a way back.
     await act(() =>
       fireEvent.press(screen.getByText(`Week of ${new Date(2026, 9, 14, 9, 0).toDateString()}`)),
     );
     expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
-    expect(screen.getByText('Your daily targets')).toBeTruthy();
+    expect(screen.getByText('Your daily target')).toBeTruthy();
   });
 });
 

@@ -19,18 +19,21 @@ import { CardLoadState } from './card-load-state';
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
 
 type NutritionCardProps = {
+  /** How the card of the chart comes in. */
   entering?: CardProps['entering'];
+  /** How the card of the summary above it comes in. */
+  summaryEntering?: CardProps['entering'];
   today: Date;
 };
 
 /**
- * What was eaten over a range (ADR 0047): a bar of macros for each day of a month, or each week
- * or month of longer ranges, against the average target, then the range summed up against the
- * targets of its days logged.
+ * What was eaten over a range (ADR 0047), in two cards: the range summed up against the targets of
+ * its days logged, then a bar of macros for each day of a month, or each week or month of longer
+ * ranges, against the average target, with the range to choose under it (#335).
  */
-export function NutritionCard({ entering, today }: NutritionCardProps) {
+export function NutritionCard({ entering, summaryEntering, today }: NutritionCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { format } = useNumberFormat();
   const shortDate = useShortDateFormat(today);
   const monthName = useMonthFormat();
@@ -91,45 +94,53 @@ export function NutritionCard({ entering, today }: NutritionCardProps) {
             target={summary.averageTargets?.calories}
             axis={ends.map((item) => (item ? axisNameOf(item.start) : ''))}
           />
-          {summary.targets ? (
-            <View style={[styles.summary, { gap: spacing.md, borderTopColor: colors.border }]}>
-              <Text variant="caption" color="textMuted">
-                {t('progress.eating.logged', {
-                  count: summary.days,
-                  within: summary.withinTarget,
-                })}
-              </Text>
-              <DailyProgress
-                targets={summary.targets}
-                eaten={summary.eaten}
-                average={summary.average}
-              />
-            </View>
-          ) : null}
         </>
       );
   }
 
   return (
-    <Card entering={entering}>
-      <View style={styles.header}>
-        <Text variant="headline" accessibilityRole="header" style={styles.flex}>
-          {t('progress.eating.title')}
-        </Text>
-        {summary ? (
-          <Average
-            strong
-            value={t('nutrition.kcal', { calories: format(Math.round(summary.average.calories)) })}
+    <>
+      {summary?.targets ? (
+        <Card entering={summaryEntering}>
+          <View style={[styles.header, { gap: spacing.sm }]}>
+            <Text variant="headline" accessibilityRole="header" style={styles.flex}>
+              {t('progress.summary.title')}
+            </Text>
+            <Text variant="caption" color="textMuted">
+              {t(`progress.summary.${shownRange}`)}
+            </Text>
+          </View>
+          <Text variant="caption" color="textMuted">
+            {t('progress.eating.logged', { count: summary.days, within: summary.withinTarget })}
+          </Text>
+          <DailyProgress
+            targets={summary.targets}
+            eaten={summary.eaten}
+            average={summary.average}
           />
-        ) : null}
-      </View>
-      <RangeControl
-        value={range}
-        onChange={setRange}
-        accessibilityLabel={t('progress.eating.rangeLabel')}
-      />
-      {content}
-    </Card>
+        </Card>
+      ) : null}
+      <Card entering={entering}>
+        <View style={styles.header}>
+          <Text variant="headline" accessibilityRole="header" style={styles.flex}>
+            {t('progress.eating.title')}
+          </Text>
+          {summary ? (
+            <Average
+              value={t('nutrition.kcal', {
+                calories: format(Math.round(summary.average.calories)),
+              })}
+            />
+          ) : null}
+        </View>
+        {content}
+        <RangeControl
+          value={range}
+          onChange={setRange}
+          accessibilityLabel={t('progress.eating.rangeLabel')}
+        />
+      </Card>
+    </>
   );
 }
 
@@ -140,9 +151,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  summary: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
   },
 });

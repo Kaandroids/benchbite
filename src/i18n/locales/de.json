@@ -124,7 +124,7 @@
       "afternoon": "Guten Tag, {{name}}",
       "evening": "Guten Abend, {{name}}"
     },
-    "targets": "Deine Tagesziele",
+    "targets": "Dein Tagesziel",
     "week": {
       "done": "erledigt",
       "missed": "verpasst",
@@ -173,6 +173,7 @@
       "next": "Nächstes: {{day}} · {{session}}",
       "tomorrow": "morgen",
       "open": "Öffnet das Workout",
+      "openLabel": "Heutiges Training öffnen",
       "titleMany": "Heutige Trainings",
       "doneOf": "{{done}} von {{count}} erledigt",
       "movedFrom": "Verschoben von {{day}}",
@@ -276,7 +277,7 @@
     "gramTarget": "/ {{target}} g",
     "spanTarget": "/ {{target}}",
     "average": "im Schnitt {{value}}",
-    "target": "Ziel",
+    "targetLine": "Ziel {{calories}} kcal",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Heute",
@@ -658,7 +659,8 @@
     },
     "more": "+{{count}} weitere",
     "title": "Workouts",
-    "today": "Heute",
+    "dayToday": "{{day}}, heute",
+    "todayLabel": "{{name}}, heute",
     "anyDay": "Jeder Tag",
     "activeCount_one": "Aktiv · {{count}}",
     "activeCount_other": "Aktiv · {{count}}",
@@ -1564,6 +1566,13 @@
       "threeMonths": "3M",
       "sixMonths": "6M",
       "year": "Jahr"
+    },
+    "summary": {
+      "title": "Zusammenfassung",
+      "month": "Letzter Monat",
+      "threeMonths": "Letzte 3 Monate",
+      "sixMonths": "Letzte 6 Monate",
+      "year": "Letztes Jahr"
     },
     "eating": {
       "title": "Kalorien und Makros",

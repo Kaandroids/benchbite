@@ -1,14 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
 import { Card, type CardProps } from '@/components/ui/card';
-import { IconTile } from '@/components/ui/icon-tile';
-import { PillButton } from '@/components/ui/pill-button';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
-import { useTheme } from '@/theme';
 import { useSessionSize, useWorkoutName } from '@/workouts/format';
 import type { MissedWorkout } from '@/workouts/week-schedule';
+
+import { PlanRow } from './plan-row';
 
 type MissedCardProps = {
   /** This week's missed workouts with the day each was missed on, earliest first; at least one. */
@@ -24,7 +22,6 @@ type MissedCardProps = {
  */
 export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
   const sessionSize = useSessionSize();
@@ -49,32 +46,20 @@ export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
 
   return (
     <Card entering={entering}>
-      <View style={[styles.row, { gap: spacing.md }]}>
-        <IconTile name="missed" />
-        <View style={styles.text}>
-          <Text variant="caption" color="primaryText">
-            {caption}
-          </Text>
-          <Text variant="headline" numberOfLines={1}>
-            {title}
-          </Text>
-          <Text variant="caption" color="textMuted">
-            {detail}
-          </Text>
-        </View>
-        <PillButton variant="primary" label={t('today.missed.catchUp')} onPress={onCatchUp} />
-      </View>
+      <PlanRow
+        icon="missed"
+        color="snack"
+        background="snackBackground"
+        caption={caption}
+        title={title}
+        actionIcon="redo"
+        actionLabel={t('today.missed.catchUp')}
+        onAction={onCatchUp}
+      >
+        <Text variant="caption" color="textMuted">
+          {detail}
+        </Text>
+      </PlanRow>
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  text: {
-    flex: 1,
-    gap: 2,
-  },
-});

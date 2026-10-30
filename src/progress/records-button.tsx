@@ -49,7 +49,7 @@ export function RecordsButton({ entering, today }: RecordsButtonProps) {
     >
       <Card entering={entering}>
         <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile name="trophy" />
+          <IconTile name="trophy" color="breakfast" background="breakfastBackground" />
           <View style={styles.text}>
             <Text variant="label">{t('progress.records.title')}</Text>
             {summary ? (

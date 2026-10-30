@@ -23,13 +23,13 @@ type TrainingCardProps = {
 };
 
 /**
- * How training went over a range (ADR 0047): a heat map of the days by the minutes trained, with
- * the planned workouts missed, then how much of the plan was done, the time trained and the weight
- * lifted against the range before.
+ * How training went over a range (ADR 0047): how much of the plan was done, the time trained and
+ * the weight lifted against the range before, then a heat map of the days by the minutes trained,
+ * with the planned workouts missed, and the range to choose under it (#335).
  */
 export function TrainingCard({ entering, today }: TrainingCardProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { format } = useNumberFormat();
   const [range, setRange] = useState<ProgressRange>('threeMonths');
   const start = rangeStart(range, today);
@@ -71,16 +71,7 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
         : null;
     content = (
       <>
-        <HeatMap
-          days={days.data}
-          today={today}
-          accessibilityLabel={t('progress.training.map', {
-            count: summary.days,
-            missed: summary.planned - summary.done,
-          })}
-        />
-        <HeatMapLegend />
-        <View style={[styles.stats, { gap: spacing.md, borderTopColor: colors.border }]}>
+        <View style={[styles.stats, { gap: spacing.md }]}>
           <Stat
             value={
               summary.planned > 0
@@ -101,6 +92,15 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
             better={change !== null && change >= 0}
           />
         </View>
+        <HeatMap
+          days={days.data}
+          today={today}
+          accessibilityLabel={t('progress.training.map', {
+            count: summary.days,
+            missed: summary.planned - summary.done,
+          })}
+        />
+        <HeatMapLegend />
       </>
     );
   }
@@ -120,13 +120,13 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
           </Text>
         ) : null}
       </View>
+      {content}
       <RangeControl
         value={range}
         onChange={setRange}
         accessibilityLabel={t('progress.training.rangeLabel')}
         ranges={TRAINING_RANGES}
       />
-      {content}
     </Card>
   );
 }
@@ -142,7 +142,7 @@ type StatProps = {
 function Stat({ value, label, change, better }: StatProps) {
   return (
     <View style={styles.flex}>
-      <Text variant="title">{value}</Text>
+      <Text variant="headline">{value}</Text>
       <Text variant="caption" color="textMuted">
         {label}
         {change ? (
@@ -168,7 +168,5 @@ const styles = StyleSheet.create({
   },
   stats: {
     flexDirection: 'row',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
   },
 });

@@ -124,7 +124,7 @@
       "afternoon": "İyi günler, {{name}}",
       "evening": "İyi akşamlar, {{name}}"
     },
-    "targets": "Günlük hedeflerin",
+    "targets": "Günlük hedefin",
     "week": {
       "done": "yapıldı",
       "missed": "kaçırıldı",
@@ -173,6 +173,7 @@
       "next": "Sıradaki: {{day}} · {{session}}",
       "tomorrow": "yarın",
       "open": "Antrenmanı açar",
+      "openLabel": "Bugünün antrenmanını aç",
       "titleMany": "Bugünün antrenmanları",
       "doneOf": "{{count}} antrenmandan {{done}} tamamlandı",
       "movedFrom": "{{day}} gününden taşındı",
@@ -276,7 +277,7 @@
     "gramTarget": "/ {{target}} g",
     "spanTarget": "/ {{target}}",
     "average": "ortalama {{value}}",
-    "target": "Hedef",
+    "targetLine": "Hedef {{calories}} kcal",
     "macroGrams": "{{grams}} g {{macro}}",
     "day": {
       "today": "Bugün",
@@ -658,7 +659,8 @@
     },
     "more": "+{{count}} tane daha",
     "title": "Antrenmanlar",
-    "today": "Bugün",
+    "dayToday": "{{day}}, bugün",
+    "todayLabel": "{{name}}, bugün",
     "anyDay": "Her gün",
     "activeCount_one": "Aktif · {{count}}",
     "activeCount_other": "Aktif · {{count}}",
@@ -1564,6 +1566,13 @@
       "threeMonths": "3A",
       "sixMonths": "6A",
       "year": "Yıl"
+    },
+    "summary": {
+      "title": "Özet",
+      "month": "Son 1 ay",
+      "threeMonths": "Son 3 ay",
+      "sixMonths": "Son 6 ay",
+      "year": "Son 1 yıl"
     },
     "eating": {
       "title": "Kalori ve makrolar",

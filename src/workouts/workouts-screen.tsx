@@ -100,7 +100,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
                 <WorkoutListItem
                   key={workout.id}
                   workout={workout}
-                  today={workout.weekdays.includes(today)}
+                  today={today}
                   running={session?.workoutId === workout.id}
                   onStart={() => start(workout)}
                 />

@@ -126,8 +126,10 @@ describe('WorkoutsScreen', () => {
     expect(screen.getAllByLabelText('3 sets')).toHaveLength(3);
     expect(screen.getAllByText('~45 min')).toHaveLength(3);
     expect(screen.getAllByText('~338 kcal')).toHaveLength(3);
-    // Only the workout on Wednesday is today's.
-    expect(screen.getAllByText('Today')).toHaveLength(1);
+    // Only the workout on Wednesday is today's, whose day stands out.
+    expect(screen.getAllByLabelText('Wed, today')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Pull, today' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Push' })).toBeTruthy();
     // Inactive workouts are in the archive.
     expect(screen.queryByText('Upper body')).toBeNull();
     expect(screen.getAllByRole('button', { name: /^Start / })).toHaveLength(3);
