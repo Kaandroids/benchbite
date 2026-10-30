@@ -229,7 +229,7 @@ const TOOLS = [
       "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises, with their ids, sets and targets.",
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
-      const workouts = read(await activeWorkouts(supabase));
+      const workouts = read(await planWorkouts(supabase));
       const names = await exerciseNames(
         supabase,
         language,
@@ -277,7 +277,7 @@ const TOOLS = [
         .max(5),
     }),
     run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
-      const found = await activeWorkout(supabase, workoutId);
+      const found = await workoutForCard(supabase, workoutId);
       if (found.error) throw found.error;
       const workout = found.data;
       if (!workout) return { error: REFUSALS.BB006 };
@@ -427,7 +427,7 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
 }
 
 /** The user's active workouts with their exercises in order, as row level security lets them. */
-function activeWorkouts(supabase: Client) {
+function planWorkouts(supabase: Client) {
   return supabase
     .from('workouts')
     .select(
@@ -439,7 +439,7 @@ function activeWorkouts(supabase: Client) {
 }
 
 /** One of the user's active workouts, by its id, with what its card names it by. */
-function activeWorkout(supabase: Client, id: number) {
+function workoutForCard(supabase: Client, id: number) {
   return supabase
     .from('workouts')
     .select('id, name, type')
