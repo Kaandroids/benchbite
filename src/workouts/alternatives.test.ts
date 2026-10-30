@@ -164,4 +164,30 @@ describe('useReorderAlternatives', () => {
     });
     expect(queryClient.getQueryData(alternativesKey(7))).toEqual(list);
   });
+
+  it('keeps a later order while it waits, and loads the list again once it is saved', async () => {
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(alternativesKey(7), list);
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const resolves: ((value: unknown) => void)[] = [];
+    jest
+      .mocked(supabase.rpc)
+      .mockImplementation(() => new Promise((r) => resolves.push(r)) as never);
+    const { result } = await renderHook(() => useReorderAlternatives(7), { queryClient });
+    const ids = () =>
+      queryClient.getQueryData<WorkoutAlternative[]>(alternativesKey(7))?.map((a) => a.id);
+    await act(async () => {
+      result.current.mutate([5, 3, 6]);
+      result.current.mutate([5, 6, 3]);
+    });
+    await waitFor(() => expect(ids()).toEqual([5, 6, 3]));
+    // The first fails while the second waits: the list keeps the second's order.
+    await act(async () => resolves[0]?.({ data: null, error: { code: '22023' } }));
+    await waitFor(() => expect(resolves).toHaveLength(2));
+    expect(ids()).toEqual([5, 6, 3]);
+    expect(invalidate).not.toHaveBeenCalled();
+    await act(async () => resolves[1]?.({ data: null, error: null }));
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: alternativesKey(7) }));
+    expect(invalidate).toHaveBeenCalledTimes(1);
+  });
 });

@@ -154,12 +154,17 @@ export function useDeleteAlternative(workoutId: number) {
 
 /**
  * Puts a workout's alternatives in the order of `ids`. The list takes the order at once, as the
- * dragged row already shows it, and goes back if saving fails.
+ * dragged row already shows it, and goes back if saving fails. While a later order waits, it
+ * neither goes back nor loads again, so that the rows keep the later order rather than jump.
  */
 export function useReorderAlternatives(workoutId: number) {
   const queryClient = useQueryClient();
   const key = alternativesKey(workoutId);
+  const mutationKey = ['reorder-alternatives', workoutId];
+  // This one is still pending while it settles, so it is the last when it is the only one.
+  const last = () => queryClient.isMutating({ mutationKey }) === 1;
   return useMutation({
+    mutationKey,
     // One order at a time, so that on a slow connection an earlier one cannot land last.
     scope: { id: `workout-alternatives-${workoutId}` },
     mutationFn: (ids: number[]) =>
@@ -183,8 +188,10 @@ export function useReorderAlternatives(workoutId: number) {
       return { previous };
     },
     onError: (_error, _ids, context) => {
-      queryClient.setQueryData(key, context?.previous);
+      if (last()) {
+        queryClient.setQueryData(key, context?.previous);
+      }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+    onSettled: () => (last() ? queryClient.invalidateQueries({ queryKey: key }) : undefined),
   });
 }
