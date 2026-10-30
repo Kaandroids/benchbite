@@ -85,12 +85,15 @@ export function useAlternativeError() {
     );
 }
 
-async function call<Result>(request: PromiseLike<{ data: Result; error: unknown }>) {
-  const { data, error } = await request;
-  if (error) {
-    throw error;
+/** What a request to the database gives, or what it refused it with, thrown. */
+async function call<Result>(
+  request: PromiseLike<{ data: Result; error: null } | { data: null; error: unknown }>,
+): Promise<Result> {
+  const response = await request;
+  if (response.error) {
+    throw response.error;
   }
-  return data;
+  return response.data as Result;
 }
 
 /**
