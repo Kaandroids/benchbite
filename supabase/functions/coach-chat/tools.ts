@@ -7,9 +7,9 @@ import { z } from 'zod';
 
 import type { CoachToolName, DayTargets, ProposalCard } from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
+import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
-import type { Language } from './prompt.ts';
 import { workoutName } from './workout.ts';
 
 export type ToolContext = {

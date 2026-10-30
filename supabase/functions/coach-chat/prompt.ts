@@ -13,8 +13,6 @@ import { Constants } from '../_shared/database.types.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 import type { Macros, Snapshot } from './snapshot.ts';
 
-export { LANGUAGES, type Language, untagged } from '../_shared/prompt.ts';
-
 /** The faces Bite answers with (`bite_expression`). */
 export const EXPRESSIONS = Constants.public.Enums.bite_expression;
 export type Expression = (typeof EXPRESSIONS)[number];
