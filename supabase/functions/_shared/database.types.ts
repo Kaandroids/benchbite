@@ -171,6 +171,7 @@ export type Database = {
           expression: Database['public']['Enums']['bite_expression'] | null;
           id: number;
           input_tokens: number | null;
+          interrupted: Database['public']['Enums']['coach_interruption'] | null;
           model: string | null;
           output_tokens: number | null;
           role: Database['public']['Enums']['coach_role'];
@@ -185,6 +186,7 @@ export type Database = {
           expression?: Database['public']['Enums']['bite_expression'] | null;
           id?: never;
           input_tokens?: number | null;
+          interrupted?: Database['public']['Enums']['coach_interruption'] | null;
           model?: string | null;
           output_tokens?: number | null;
           role: Database['public']['Enums']['coach_role'];
@@ -198,6 +200,7 @@ export type Database = {
           expression?: Database['public']['Enums']['bite_expression'] | null;
           id?: never;
           input_tokens?: number | null;
+          interrupted?: Database['public']['Enums']['coach_interruption'] | null;
           model?: string | null;
           output_tokens?: number | null;
           role?: Database['public']['Enums']['coach_role'];
@@ -2116,6 +2119,7 @@ export type Database = {
         | 'call_in_progress';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
+      coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
       coach_role: 'user' | 'bite';
       equipment:
         | 'barbell'
@@ -2367,6 +2371,7 @@ export const Constants = {
       ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
+      coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
       coach_role: ['user', 'bite'],
       equipment: [
         'barbell',
