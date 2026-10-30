@@ -12,7 +12,9 @@
 create type public.ai_feature as enum ('coach_chat', 'coach_voice', 'meal_photo', 'review');
 
 -- The price of each model per million tokens, from a time on. A change of price is a new row, so
--- that past calls keep what they cost.
+-- that past calls keep what they cost. A call's input is priced at one rate, so only a model
+-- whose input costs the same for text, images and audio may be priced here; one that prices audio
+-- apart needs a column of its own first.
 create table public.ai_model_prices (
   model text not null check (length(model) between 1 and 100),
   valid_from timestamptz not null,
@@ -80,8 +82,8 @@ create index ai_usage_user_month_idx on public.ai_usage (user_id, created_at);
 
 -- The calls running now, one per user and feature, each with the most it may cost, which counts
 -- toward the user's budget until the call is recorded. A call that never recorded, as when its
--- function was stopped, is counted at that most after ten minutes, longer than an Edge Function
--- may run.
+-- function was stopped, is counted at that most after seven minutes, longer than an Edge
+-- Function may run (400 seconds).
 create table public.ai_calls_in_flight (
   call_id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -271,7 +273,7 @@ begin
   -- Calls left behind are counted at their most now, which frees their places.
   perform public.record_ai_usage(c.call_id, 0, 0, 0, 0, known => false)
   from public.ai_calls_in_flight c
-  where c.user_id = (select auth.uid()) and c.started_at < now() - interval '10 minutes';
+  where c.user_id = (select auth.uid()) and c.started_at < now() - interval '7 minutes';
 
   access := public.ai_access();
   result.reason := access.reason;
