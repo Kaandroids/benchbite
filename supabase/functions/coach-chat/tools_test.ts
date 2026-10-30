@@ -1,6 +1,7 @@
 import { assertEquals } from '@std/assert';
 
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
+import { type Food, food } from '../_shared/meal/test-foods.ts';
 import type { ToolContext } from './tools.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
@@ -24,6 +25,7 @@ Deno.test('tells the model of each tool with its arguments', () => {
       'get_workouts',
       'propose_workout_change',
       'propose_targets_change',
+      'log_meal_card',
     ],
   );
 });
@@ -297,3 +299,171 @@ Deno.test(
     assertEquals(calls, []);
   },
 );
+
+const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+/**
+ * The user's foods as search_foods() finds them, and add_coach_meal_card() as the database takes
+ * it: refused, as PostgREST and Postgres refuse them, for arguments the function does not have, a
+ * meal that is not one, an item that names no food or two, grams out of range, or a day that cannot
+ * be logged (BB020); or as `refusal` says.
+ */
+function mealContext(
+  foods: Record<string, Food[]>,
+  { refusal, localTime }: { refusal?: { code: string }; localTime?: string } = {},
+) {
+  const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const fail = (code: string) => Promise.resolve({ data: null, error: { code, message: code } });
+  const rpc = (name: string, args: Record<string, unknown>) => {
+    calls.push({ name, args });
+    const names = Object.keys(args).sort().join(',');
+    if (name === 'search_foods') {
+      if (names !== 'language,query') return fail('PGRST202');
+      return Promise.resolve({ data: foods[args.query as string] ?? [], error: null });
+    }
+    if (name !== 'add_coach_meal_card' || names !== 'day,items,meal,thread_id') {
+      return fail('PGRST202');
+    }
+    if (!MEALS.includes(args.meal as string)) return fail('22P02');
+    const items = args.items as Record<string, unknown>[];
+    if (!Array.isArray(items) || items.length < 1 || items.length > 12) return fail('22023');
+    for (const item of items) {
+      const named = ['food_id', 'custom_food_id', 'recipe_id'].filter((key) => key in item);
+      const values = ['name', 'kcal', 'protein_g', 'carbs_g', 'fat_g'].every(
+        (key) => item[key] !== undefined && item[key] !== null,
+      );
+      if (named.length > 1 || (named.length === 0 && !values)) return fail('23502');
+      const grams = item.grams as number;
+      if (typeof grams !== 'number' || !(grams > 0 && grams <= 5000)) return fail('23514');
+    }
+    const day = Date.parse(`${args.day}T00:00:00Z`);
+    const today = Date.parse(`${context.today}T00:00:00Z`);
+    if (!(day >= today - 8 * 86_400_000 && day <= today + 86_400_000)) return fail('BB020');
+    if (refusal) return fail(refusal.code);
+    return Promise.resolve({ data: 51, error: null });
+  };
+  return {
+    context: {
+      ...context,
+      supabase: { rpc },
+      ...(localTime && { localTime }),
+    } as unknown as ToolContext,
+    calls,
+  };
+}
+
+const CHICKEN = {
+  name: 'Chicken breast',
+  searchName: 'Chicken breast, grilled',
+  grams: 150,
+  confidence: 0.8,
+  per100: { kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 },
+};
+const RICE = {
+  name: 'Rice',
+  searchName: 'Rice, boiled',
+  grams: 180,
+  confidence: 0.7,
+  per100: { kcal: 130, proteinG: 2.7, carbsG: 28, fatG: 0.3 },
+};
+const LIBRARY_RICE = food({ food_id: 'C352032', name: 'Rice, boiled' }, 117);
+
+Deno.test('keeps a meal card of the matched foods, and gives the card as data', async () => {
+  const { context, calls } = mealContext({ 'Rice, boiled': [LIBRARY_RICE] });
+
+  const result = await runTool(
+    'log_meal_card',
+    { meal: 'dinner', items: [CHICKEN, RICE], note: 'A solid plate.' },
+    context,
+  );
+
+  // Searched as the user, then kept as log_meal_estimate() takes it: the found food by its id, and
+  // the one the library did not have by its search name with the model's values.
+  assertEquals(
+    calls.map((call) => call.name),
+    ['search_foods', 'search_foods', 'add_coach_meal_card'],
+  );
+  assertEquals(calls[2].args, {
+    thread_id: 7,
+    day: '2026-10-30',
+    meal: 'dinner',
+    items: [
+      {
+        name: 'Chicken breast, grilled',
+        grams: 150,
+        kcal: 165,
+        protein_g: 31,
+        carbs_g: 0,
+        fat_g: 3.6,
+      },
+      { food_id: 'C352032', grams: 180 },
+    ],
+  });
+  assertEquals(result, {
+    mealCard: {
+      id: 51,
+      day: '2026-10-30',
+      meal: 'dinner',
+      items: [
+        { ...CHICKEN, estimated: true },
+        {
+          ...RICE,
+          food: { ref: { kind: 'library', id: 'C352032' }, name: 'Rice, boiled' },
+          per100: { kcal: 117, proteinG: 10, carbsG: 20, fatG: 5 },
+          estimated: false,
+        },
+      ],
+      note: 'A solid plate.',
+    },
+  });
+});
+
+Deno.test(
+  "takes the meal from the time of day when the user named none, and today's day",
+  async () => {
+    const { context, calls } = mealContext({}, { localTime: '08:15' });
+    const result = await runTool('log_meal_card', { items: [RICE] }, context);
+    assertEquals((result as { mealCard: { meal: string } }).mealCard.meal, 'breakfast');
+    assertEquals(calls.at(-1)?.args.day, '2026-10-30');
+
+    // Without the time, as the app does not send it yet, a snack.
+    const { context: timeless } = mealContext({});
+    const snack = await runTool('log_meal_card', { items: [RICE], day: '2026-10-29' }, timeless);
+    const { meal, day } = (snack as { mealCard: { meal: string; day: string } }).mealCard;
+    assertEquals({ meal, day }, { meal: 'snack', day: '2026-10-29' });
+  },
+);
+
+Deno.test('refuses a day that cannot be logged before searching anything', async () => {
+  const { context, calls } = mealContext({});
+  for (const day of ['2026-10-31', '2026-10-22']) {
+    assertEquals(await runTool('log_meal_card', { items: [RICE], day }, context), {
+      error: 'Meals are logged for today and up to 7 days back.',
+    });
+  }
+  assertEquals(calls, []);
+});
+
+Deno.test('answers a wrong meal card with what is wrong, for the model to correct', async () => {
+  const { context, calls } = mealContext({});
+  for (const args of [
+    { items: [] },
+    { items: Array(13).fill(RICE) },
+    { items: [RICE], meal: 'brunch' },
+    { items: [{ ...RICE, grams: -1 }] },
+  ]) {
+    const wrong = await runTool('log_meal_card', args, context);
+    assertEquals(typeof (wrong as { error: string }).error, 'string');
+  }
+  assertEquals(calls, []);
+});
+
+Deno.test('says why the database refused a meal card', async () => {
+  const { context } = mealContext({}, { refusal: { code: 'BB038' } });
+  assertEquals(await runTool('log_meal_card', { items: [RICE] }, context), {
+    error: 'The user has had too many meal cards today; ask them to log it in Nutrition.',
+  });
+  const { context: full } = mealContext({}, { refusal: { code: 'BB024' } });
+  const error = (await runTool('log_meal_card', { items: [RICE] }, full)) as { error: string };
+  assertEquals(error.error.startsWith('The user has as many foods of their own'), true);
+});
