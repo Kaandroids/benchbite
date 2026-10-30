@@ -481,3 +481,23 @@ Deno.test('answers unavailable when the answer was cut at the token limit', asyn
   assertEquals(await response.json(), { error: 'unavailable' });
   assertEquals(searched, []);
 });
+
+Deno.test('keeps the estimate when a field only says too much or too little', async () => {
+  const items = [
+    { ...ITEMS[1], note: 'n'.repeat(250) },
+    { ...ITEMS[2], grams: 0, name: `Chutney ${'x'.repeat(150)}` },
+  ];
+  const model = new FakeModel(answer({ isFood: true, items, note: 'b'.repeat(600) }));
+  const { ctx } = context(model);
+
+  const response = await handleEstimateRequest(ask(REQUEST), ctx);
+
+  assertEquals(response.status, 200);
+  const body = await response.json();
+  assertEquals(body.items.length, 2);
+  // The long note is dropped, the empty amount taken as 1 g, the long name cut.
+  assertEquals('note' in body.items[0], false);
+  assertEquals(body.items[1].grams, 1);
+  assertEquals(body.items[1].name.length, 100);
+  assertEquals('note' in body, false);
+});

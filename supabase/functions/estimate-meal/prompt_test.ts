@@ -16,6 +16,7 @@ Deno.test('asks for the answer the check takes, its limits and optional notes in
   assertEquals(schema.properties.items.maxItems, 12);
   assertEquals(item.required, ['name', 'searchName', 'grams', 'confidence', 'per100']);
   assertEquals(item.properties.name.maxLength, 100);
+  assertEquals(item.properties.grams.minimum, 0);
   assertEquals(item.properties.note.maxLength, 200);
   // No longer than search_foods() searches.
   assertEquals(item.properties.searchName.maxLength, 50);
