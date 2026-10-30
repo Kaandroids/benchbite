@@ -16,19 +16,22 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useThreadMessages } from './threads';
-import { type BiteParams, chatOf } from './bite-route';
+import { type BiteParams, continueChat, useOpenedChat } from './bite-route';
+import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
 /**
- * The chat with Bite (#294, ADR 0052), opened from the middle of the tab bar: a new thread, or the
- * one `thread` names, opened from the chats (#295).
+ * The chat with Bite (#294, ADR 0052): the one `thread` names, opened from the chats (#295), or a
+ * new one. Opened from the tab bar, it goes on in the last chat while that is recent, and offers
+ * it to continue otherwise (ADR 0055).
  */
 export function BiteScreen() {
-  const { threadId, key } = chatOf(useLocalSearchParams<BiteParams>());
+  const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
+  const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   // A saved chat opens on its messages as they are now, never on ones kept from before.
-  if (threadId !== undefined && !saved.isFetchedAfterMount) {
+  if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
       <Screen onBack={() => router.back()} closes>
         <LoadState queries={[saved]} />
@@ -44,7 +47,16 @@ export function BiteScreen() {
       start={{ threadId: threadId!, messages: saved.data.messages }}
     />
   ) : (
-    <Chat key={threadId === undefined ? key : `gone-${threadId}`} />
+    <Chat
+      key={threadId === undefined ? key : `gone-${threadId}`}
+      continueWith={
+        opened.offer && {
+          thread: opened.offer,
+          onContinue: continueChat,
+          onAllChats: () => router.push('/bite/chats'),
+        }
+      }
+    />
   );
 }
 
@@ -52,9 +64,11 @@ type ChatProps = {
   /** The name of a saved thread the chat goes on in. */
   title?: string;
   start?: Parameters<typeof useChat>[0];
+  /** The last chat, no longer recent, which a new chat offers to continue. */
+  continueWith?: ContinueWith;
 };
 
-function Chat({ title, start }: ChatProps) {
+function Chat({ title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const chat = useChat(start);
@@ -90,7 +104,10 @@ function Chat({ title, start }: ChatProps) {
           keyboardShouldPersistTaps="handled"
         >
           {chat.messages.length === 0 ? (
-            <ChatWelcome onAsk={refusal ? undefined : following(chat.send)} />
+            <ChatWelcome
+              onAsk={refusal ? undefined : following(chat.send)}
+              continueWith={continueWith}
+            />
           ) : (
             <ChatMessages
               messages={chat.messages}

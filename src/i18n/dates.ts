@@ -40,6 +40,11 @@ export function daysBetween(day: Date, today: Date): number {
   return Math.round((utc(today) - utc(day)) / 86_400_000);
 }
 
+/** Whether two moments fall on the same calendar day. */
+export function sameDay(a: Date, b: Date): boolean {
+  return daysBetween(a, b) === 0;
+}
+
 /** The Monday a week starts on, at midnight. */
 export function weekStart(date: Date): Date {
   return addDays(date, 1 - isoWeekday(date));

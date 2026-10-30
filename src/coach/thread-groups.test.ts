@@ -1,4 +1,4 @@
-import { groupThreads, timeKind } from './thread-groups';
+import { dayKind, groupThreads, timeKind } from './thread-groups';
 import type { ThreadSummary } from './threads';
 
 const today = new Date(2026, 9, 30, 15);
@@ -44,5 +44,14 @@ describe('timeKind', () => {
     expect(timeKind(thread(1, new Date(2026, 9, 29, 9)), today)).toBe('clock');
     expect(timeKind(thread(1, new Date(2026, 9, 26)), today)).toBe('weekday');
     expect(timeKind(thread(1, new Date(2026, 9, 2)), today)).toBe('date');
+  });
+});
+
+describe('dayKind', () => {
+  it('tells today, yesterday, the last week and before apart, by the calendar', () => {
+    expect(dayKind(new Date(2026, 9, 30, 0, 5), today)).toBe('today');
+    expect(dayKind(new Date(2026, 9, 29, 23, 55), today)).toBe('yesterday');
+    expect(dayKind(new Date(2026, 9, 24), today)).toBe('week');
+    expect(dayKind(new Date(2026, 9, 23), today)).toBe('older');
   });
 });

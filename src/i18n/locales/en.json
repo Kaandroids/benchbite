@@ -1711,6 +1711,13 @@
       "save": "Save",
       "cancel": "Cancel",
       "notRenamed": "The chat couldn't be renamed. Try again."
-    }
+    },
+    "moment": {
+      "today": "Today {{time}}",
+      "yesterday": "Yesterday {{time}}",
+      "day": "{{day}} {{time}}"
+    },
+    "continue": "Continue",
+    "allChats": "All chats"
   }
 }

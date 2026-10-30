@@ -7,9 +7,15 @@ export type ThreadGroup =
   | { kind: 'today' | 'yesterday' | 'week'; threads: ThreadSummary[] }
   | { kind: 'month'; month: Date; threads: ThreadSummary[] };
 
+/** How long ago a moment was, by the calendar: today, yesterday, within a week, or before. */
+export function dayKind(moment: Date, today: Date): 'today' | 'yesterday' | 'week' | 'older' {
+  const days = daysBetween(moment, today);
+  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : days < 7 ? 'week' : 'older';
+}
+
 function kindOf(thread: ThreadSummary, today: Date): ThreadGroup['kind'] {
-  const days = daysBetween(thread.lastMessageAt, today);
-  return days <= 0 ? 'today' : days === 1 ? 'yesterday' : days < 7 ? 'week' : 'month';
+  const kind = dayKind(thread.lastMessageAt, today);
+  return kind === 'older' ? 'month' : kind;
 }
 
 /**

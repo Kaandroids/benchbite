@@ -1788,7 +1788,7 @@ export type Database = {
       };
       my_achievable_weekly_pace_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_coach_threads: {
-        Args: { before_at?: string; before_id?: number; search?: string };
+        Args: { before_at?: string; before_id?: number; page_size?: number; search?: string };
         Returns: {
           expression: Database['public']['Enums']['bite_expression'];
           id: number;

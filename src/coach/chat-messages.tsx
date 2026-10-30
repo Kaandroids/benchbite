@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { Fragment, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -14,11 +14,13 @@ import Animated, {
 import { COACH_TOOLS } from '@shared/coach/chat';
 
 import { Text } from '@/components/ui/text';
+import { sameDay } from '@/i18n/dates';
 import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import type { ChatMessage, ChatStatus } from './use-chat';
+import { useMomentFormat } from './use-moment-format';
 
 /** Bite's face beside its messages. */
 const AVATAR = 32;
@@ -44,24 +46,56 @@ type ChatMessagesProps = {
  */
 export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessagesProps) {
   const { spacing } = useTheme();
+  const moment = useMomentFormat();
+  // A conversation over more than one day shows when each day of it began (board 18).
+  const first = messages[0]?.createdAt;
+  const days =
+    first !== undefined && messages.some((m) => m.createdAt && !sameDay(m.createdAt, first));
   return (
     <View style={{ gap: spacing.lg }}>
       {messages.map((message, index) => {
-        const last = index === messages.length - 1;
-        if (message.role === 'user') {
-          return <UserMessage key={message.id} message={message} onAskAgain={onAskAgain} />;
-        }
-        if (last && status === 'thinking' && !message.text) {
-          return <Thinking key={message.id} tool={tool} />;
-        }
+        const before = messages[index - 1]?.createdAt;
+        const startsDay =
+          days &&
+          message.createdAt !== undefined &&
+          (!before || !sameDay(before, message.createdAt));
         return (
-          <BiteMessage key={message.id} message={message} talking={last && status !== 'idle'} />
+          <Fragment key={message.id}>
+            {startsDay ? (
+              <Text variant="caption" color="textMuted" align="center" accessibilityRole="header">
+                {moment(message.createdAt!)}
+              </Text>
+            ) : null}
+            <MessageRow
+              message={message}
+              last={index === messages.length - 1}
+              status={status}
+              tool={tool}
+              onAskAgain={onAskAgain}
+            />
+          </Fragment>
         );
       })}
       {/* A lookup after Bite started writing shows under what it wrote. */}
       {status === 'answering' && tool ? <ToolLine tool={tool} indent /> : null}
     </View>
   );
+}
+
+type MessageRowProps = Pick<ChatMessagesProps, 'status' | 'tool' | 'onAskAgain'> & {
+  message: ChatMessage;
+  last: boolean;
+};
+
+/** A message: the user's, Bite's, or Bite's last one thinking while it waits. */
+function MessageRow({ message, last, status, tool, onAskAgain }: MessageRowProps) {
+  if (message.role === 'user') {
+    return <UserMessage message={message} onAskAgain={onAskAgain} />;
+  }
+  if (last && status === 'thinking' && !message.text) {
+    return <Thinking tool={tool} />;
+  }
+  return <BiteMessage message={message} talking={last && status !== 'idle'} />;
 }
 
 // Each message renders again only when it changes, as only the last one does while Bite writes.

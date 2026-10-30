@@ -8,6 +8,7 @@ import { useDisplayName } from '@/profile/display-name';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { ContinueCard, type ContinueWith } from './continue-card';
 
 /** What a user may ask Bite first, each with its icon. */
 const SUGGESTIONS: { key: 'week' | 'dinner' | 'workout'; icon: IconName }[] = [
@@ -19,10 +20,12 @@ const SUGGESTIONS: { key: 'week' | 'dinner' | 'workout'; icon: IconName }[] = [
 type ChatWelcomeProps = {
   /** Asks Bite one of the suggestions. */
   onAsk?: (question: string) => void;
+  /** The last chat, no longer recent, to go on with (board 13). */
+  continueWith?: ContinueWith;
 };
 
-/** Bite before the first message: who it is, and what to ask it (board 1). */
-export function ChatWelcome({ onAsk }: ChatWelcomeProps) {
+/** Bite before the first message: who it is, the last chat to go on with, and what to ask. */
+export function ChatWelcome({ onAsk, continueWith }: ChatWelcomeProps) {
   const { t } = useTranslation();
   const { colors, spacing, radii } = useTheme();
   const upper = useUpperCase();
@@ -38,6 +41,7 @@ export function ChatWelcome({ onAsk }: ChatWelcomeProps) {
           {t('bite.intro')}
         </Text>
       </View>
+      {continueWith ? <ContinueCard {...continueWith} /> : null}
       {onAsk ? (
         <View style={{ gap: spacing.sm }}>
           <Text variant="captionStrong" color="textMuted" style={{ paddingLeft: spacing.xs }}>

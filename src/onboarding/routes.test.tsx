@@ -416,7 +416,10 @@ describe('app tabs', () => {
     const app = await renderRouter(APP_ROUTES, { initialUrl: '/' });
     await act(() => fireEvent.press(screen.getByRole('button', { name: 'Talk to Bite' })));
     expect(app.getPathname()).toBe('/bite');
-    expect(screen.getByText('Bite can make mistakes. Check important info.')).toBeOnTheScreen();
+    // Once Bite has looked for the last chat.
+    expect(
+      await screen.findByText('Bite can make mistakes. Check important info.'),
+    ).toBeOnTheScreen();
     expect(tabs()).toEqual([]);
   });
 
