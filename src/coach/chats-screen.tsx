@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
 
 import { LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { listDivider } from '@/components/ui/card';
 import { useFieldStyle } from '@/components/ui/field';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -22,20 +23,23 @@ import {
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { openChat } from './bite-route';
 import { groupThreads, timeKind, type ThreadGroup } from './thread-groups';
 import {
   MAX_THREAD_TITLE_LENGTH,
+  threadTitle,
   useDeleteThread,
   useRenameThread,
   useThreads,
   type ThreadSummary,
 } from './threads';
+import { useDeferredDelete } from './use-deferred-delete';
 
-/** Opens the chat: a thread of the history, or, without one, a new chat. */
-function openChat(thread?: number) {
-  // A new chat's key is new each time, so that it starts empty even over one that was open.
-  router.dismissTo({ pathname: '/bite', params: { thread: thread ?? `new-${Date.now()}` } });
-}
+/** How long typing rests before the search runs. */
+const SEARCH_DELAY_MS = 250;
+
+/** A section of the history as the list draws it: its heading and its chats. */
+type Section = { group: ThreadGroup; data: ThreadSummary[] };
 
 /**
  * Bite's chat history (#295, ADR 0055): the user's chats, latest first, by day and month, found by
@@ -45,34 +49,22 @@ export function ChatsScreen() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const [search, setSearch] = useState('');
-  const threads = useThreads(search);
+  const [term, setTerm] = useState('');
+  const threads = useThreads(term);
   const deleteThread = useDeleteThread();
+  const { deleting, remove, undo, settle } = useDeferredDelete<ThreadSummary>(deleteThread.mutate);
   const [options, setOptions] = useState<ThreadSummary | null>(null);
   const [renaming, setRenaming] = useState<ThreadSummary | null>(null);
-  // Gone from the list at once, and deleted once its Undo has gone.
-  const [deleting, setDeleting] = useState<ThreadSummary | null>(null);
   const [today] = useState(() => new Date());
+  const month = useMonthYearFormat(today);
 
-  // Whether the delete showing was undone; the toast hides after its Undo too.
-  const undone = useRef(false);
+  // The search runs once typing rests, not on every letter.
+  useEffect(() => {
+    const timer = setTimeout(() => setTerm(search), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const remove = (thread: ThreadSummary) => {
-    // One Undo at a time: a delete still waiting goes through first.
-    if (deleting && !undone.current) deleteThread.mutate(deleting.id);
-    undone.current = false;
-    setDeleting(thread);
-  };
-  const { mutate: deleteNow } = deleteThread;
-  const hideToast = useCallback(() => {
-    if (deleting && !undone.current) deleteNow(deleting.id);
-    undone.current = false;
-    setDeleting(null);
-  }, [deleting, deleteNow]);
-
-  const shown = (threads.data ?? []).filter((thread) => thread.id !== deleting?.id);
-  const groups = groupThreads(shown, today);
-  const searching = search.trim() !== '';
-
+  // Only before anything loaded does the screen wait; a new search keeps the last list meanwhile.
   if (threads.data === undefined) {
     return (
       <Screen onBack={() => router.back()} title={t('bite.chats.title')}>
@@ -81,20 +73,25 @@ export function ChatsScreen() {
     );
   }
 
+  const shown = threads.data.filter((thread) => thread.id !== deleting?.id);
+  const sections: Section[] = groupThreads(shown, today).map((group) => ({
+    group,
+    data: group.threads,
+  }));
+
   return (
     <Screen onBack={() => router.back()} title={t('bite.chats.title')} scrolls={false}>
-      {shown.length === 0 && !searching ? (
+      {shown.length === 0 && search.trim() === '' && term === '' ? (
         <EmptyChats />
       ) : (
-        <FlatList
-          data={groups}
-          keyExtractor={(group) =>
-            group.kind === 'month' ? `month-${group.month.getTime()}` : group.kind
-          }
-          contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.lg }}
+        <SectionList
+          sections={sections}
+          keyExtractor={(thread) => String(thread.id)}
+          contentContainerStyle={{ padding: spacing.xl, paddingTop: spacing.sm }}
           keyboardShouldPersistTaps="handled"
+          stickySectionHeadersEnabled={false}
           ListHeaderComponent={
-            <View style={{ gap: spacing.md }}>
+            <View style={{ gap: spacing.md, paddingBottom: spacing.sm }}>
               <SearchField
                 label={t('bite.chats.search')}
                 value={search}
@@ -109,8 +106,27 @@ export function ChatsScreen() {
               {t('bite.chats.noneFound')}
             </Text>
           }
-          renderItem={({ item }) => (
-            <Group group={item} today={today} onOpen={openChat} onOptions={setOptions} />
+          renderSectionHeader={({ section }) => (
+            <Text
+              variant="label"
+              color="textMuted"
+              accessibilityRole="header"
+              style={{ paddingTop: spacing.lg, paddingBottom: spacing.xs }}
+            >
+              {section.group.kind === 'month'
+                ? month(section.group.month)
+                : t(`bite.chats.groups.${section.group.kind}`)}
+            </Text>
+          )}
+          renderItem={({ item, index, section }) => (
+            <ThreadRow
+              thread={item}
+              today={today}
+              first={index === 0}
+              last={index === section.data.length - 1}
+              onOpen={() => openChat(item.id)}
+              onOptions={() => setOptions(item)}
+            />
           )}
           onEndReached={() => {
             if (threads.hasNextPage && !threads.isFetchingNextPage) void threads.fetchNextPage();
@@ -126,8 +142,8 @@ export function ChatsScreen() {
         <Toast
           key={deleting.id}
           message={t('bite.chats.deleted')}
-          action={{ label: t('bite.chats.undo'), onPress: () => (undone.current = true) }}
-          onHide={hideToast}
+          action={{ label: t('bite.chats.undo'), onPress: undo }}
+          onHide={settle}
         />
       ) : null}
       {options ? (
@@ -149,59 +165,20 @@ export function ChatsScreen() {
   );
 }
 
-type GroupProps = {
-  group: ThreadGroup;
-  today: Date;
-  onOpen: (thread: number) => void;
-  onOptions: (thread: ThreadSummary) => void;
-};
-
-/** A section of the history, with its heading and its chats on a card. */
-function Group({ group, today, onOpen, onOptions }: GroupProps) {
-  const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const month = useMonthYearFormat(today);
-  return (
-    <View style={{ gap: spacing.xs }}>
-      <Text variant="label" color="textMuted" accessibilityRole="header">
-        {group.kind === 'month' ? month(group.month) : t(`bite.chats.groups.${group.kind}`)}
-      </Text>
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderRadius: radii.lg,
-          overflow: 'hidden',
-        }}
-      >
-        {group.threads.map((thread, index) => (
-          <ThreadRow
-            key={thread.id}
-            thread={thread}
-            today={today}
-            divided={index > 0}
-            onOpen={() => onOpen(thread.id)}
-            onOptions={() => onOptions(thread)}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
 type ThreadRowProps = {
   thread: ThreadSummary;
   today: Date;
-  divided: boolean;
+  /** The first and last chat of its section, which round the section's card. */
+  first: boolean;
+  last: boolean;
   onOpen: () => void;
   onOptions: () => void;
 };
 
 /** A chat: Bite's last face, its name, when its last message came, and the start of it. */
-function ThreadRow({ thread, today, divided, onOpen, onOptions }: ThreadRowProps) {
+function ThreadRow({ thread, today, first, last, onOpen, onOptions }: ThreadRowProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
   const clock = useClockFormat();
   const weekday = useWeekdayFormat('short');
   const date = useShortDateFormat(today);
@@ -222,12 +199,20 @@ function ThreadRow({ thread, today, divided, onOpen, onOptions }: ThreadRowProps
       onLongPress={onOptions}
       style={({ pressed }) => [
         styles.row,
+        // A section's chats as one card, as Card list draws one, each but the first divided.
         {
           gap: spacing.md,
           padding: spacing.md,
-          borderTopColor: colors.border,
-          borderTopWidth: divided ? StyleSheet.hairlineWidth : 0,
-          backgroundColor: pressed ? colors.selected : undefined,
+          backgroundColor: pressed ? colors.selected : colors.surface,
+          borderColor: colors.border,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderBottomWidth: last ? 1 : 0,
+          ...(first ? { borderTopWidth: 1 } : listDivider(false, colors.border)),
+          borderTopLeftRadius: first ? radii.lg : 0,
+          borderTopRightRadius: first ? radii.lg : 0,
+          borderBottomLeftRadius: last ? radii.lg : 0,
+          borderBottomRightRadius: last ? radii.lg : 0,
         },
       ]}
     >
@@ -328,7 +313,7 @@ function RenameSheet({ thread, onClose }: { thread: ThreadSummary; onClose: () =
   const [text, setText] = useState(thread.title ?? '');
   const save = () => {
     if (rename.isPending) return;
-    if (text.trim() === (thread.title ?? '')) {
+    if (threadTitle(text) === thread.title) {
       onClose();
       return;
     }

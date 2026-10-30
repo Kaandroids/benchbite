@@ -65,11 +65,14 @@ it('lists the chats by day, with their last message', async () => {
 it('opens a chat, or a new one', async () => {
   await render(<ChatsScreen />);
   await fireEvent.press(screen.getByText('Lunch ideas'));
-  expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/bite', params: { thread: 2 } });
+  expect(router.dismissTo).toHaveBeenCalledWith({
+    pathname: '/bite',
+    params: { thread: '2', fresh: '' },
+  });
   await fireEvent.press(screen.getByRole('button', { name: 'New chat' }));
   expect(router.dismissTo).toHaveBeenLastCalledWith({
     pathname: '/bite',
-    params: { thread: expect.stringMatching(/^new-/) },
+    params: { thread: '', fresh: expect.stringMatching(/^\d+$/) },
   });
 });
 
@@ -87,6 +90,24 @@ it('deletes a chat once its Undo has gone, and not when it is undone', async () 
   await fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
   await act(() => jest.advanceTimersByTime(5000));
   expect(deleteThread).toHaveBeenCalledWith(1);
+});
+
+it('deletes a chat whose Undo still shows when the screen closes', async () => {
+  const { unmount } = await render(<ChatsScreen />);
+  await fireEvent(screen.getByText('Lunch ideas'), 'longPress');
+  await fireEvent.press(screen.getByRole('button', { name: 'Delete' }));
+  expect(deleteThread).not.toHaveBeenCalled();
+  await act(() => unmount());
+  expect(deleteThread).toHaveBeenCalledWith(2);
+});
+
+it('searches once typing rests, keeping the field and the list meanwhile', async () => {
+  await render(<ChatsScreen />);
+  await fireEvent.changeText(screen.getByLabelText('Search chats'), 'kne');
+  expect(useThreads).toHaveBeenLastCalledWith('');
+  await act(() => jest.advanceTimersByTime(250));
+  expect(useThreads).toHaveBeenLastCalledWith('kne');
+  expect(screen.getByLabelText('Search chats')).toBeTruthy();
 });
 
 it('renames a chat', async () => {
