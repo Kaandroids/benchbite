@@ -16,8 +16,12 @@ const PROFILE = {
   session_minutes: 45,
 };
 
-/** A database whose profile is `profile`, and which has nothing else. */
-function database(profile: Record<string, unknown>) {
+/** A database whose profile is `profile`, with `goal` and what `rpc` names, and nothing else. */
+function database(
+  profile: Record<string, unknown>,
+  goal: Record<string, unknown> | null = null,
+  rpc: Record<string, unknown> = {},
+) {
   const empty = { data: null, error: null };
   const query = (data: unknown) => {
     const builder: Record<string, unknown> = {
@@ -27,8 +31,9 @@ function database(profile: Record<string, unknown>) {
     return builder;
   };
   return {
-    from: (table: string) => query(table === 'profiles' ? profile : null),
-    rpc: () => Promise.resolve(empty),
+    from: (table: string) =>
+      query(table === 'profiles' ? profile : table === 'goals' ? goal : null),
+    rpc: (name: string) => Promise.resolve(name in rpc ? { data: rpc[name], error: null } : empty),
   } as unknown as Client;
 }
 
@@ -55,3 +60,23 @@ Deno.test(
     assertEquals(text.includes('Calorie floor: 1500 kcal a day'), true);
   },
 );
+
+Deno.test('tells Bite the pace the targets really give, as the app dates the goal by', async () => {
+  const goal = { kind: 'lose_fat', target_weight_kg: 60, weekly_pace_kg: 0.5 };
+  const held = await loadSnapshot(
+    database(PROFILE, goal, { my_achievable_weekly_pace_kg: 0.32 }),
+    '2026-10-30',
+  );
+  assertEquals(held.goal?.achievablePaceKg, 0.32);
+  assertEquals(
+    snapshotText(held, 'en').includes(
+      '(held up: the calorie floor lets the targets give only 0.32 kg a week)',
+    ),
+    true,
+  );
+
+  // Not known, as while the user's own targets are in use.
+  const unknown = await loadSnapshot(database(PROFILE, goal), '2026-10-30');
+  assertEquals(unknown.goal?.achievablePaceKg, undefined);
+  assertEquals(snapshotText(unknown, 'en').includes('held up'), false);
+});
