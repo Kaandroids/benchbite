@@ -79,7 +79,7 @@ function UserMessage({ text }: { text: string }) {
 }
 
 function BiteMessage({ message, talking }: { message: ChatMessage; talking: boolean }) {
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const expression = message.expression ?? 'neutral';
   return (
     <View style={[styles.bite, { gap: spacing.md - 2 }]}>
@@ -88,7 +88,19 @@ function BiteMessage({ message, talking }: { message: ChatMessage; talking: bool
       ) : (
         <BiteAvatar size={32} expression={expression} />
       )}
-      <Text style={[styles.flex, styles.biteText]}>{message.text}</Text>
+      <View
+        style={[
+          styles.biteBubble,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            paddingHorizontal: spacing.md + 2,
+            paddingVertical: spacing.sm + 2,
+          },
+        ]}
+      >
+        <Text>{message.text}</Text>
+      </View>
     </View>
   );
 }
@@ -157,8 +169,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  biteText: {
-    paddingTop: 5,
+  /** Bite's answer on a card, its corner by Bite's face sharper, as the user's is by its edge. */
+  biteBubble: {
+    flexShrink: 1,
+    borderWidth: 1,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   thinking: {
     flexDirection: 'row',
