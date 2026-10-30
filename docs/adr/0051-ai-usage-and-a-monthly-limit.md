@@ -28,20 +28,21 @@ the AI features will be for premium users, with a limit from their plan.
   when it resets. Guests may not call a model, as AI needs an account; a user without a budget may
   not, as it needs a plan; a user who has reached the limit may not until the month resets.
 - **A call is one request to a model, and the most it may cost is set aside before it runs.** A
-  function calls a model only through `aiModel()` (`_shared/ai_usage.ts`), the model for one
-  task; a test keeps functions from reaching `languageModel()` themselves. Before each request it counts what the request sends with the provider
-  (`countTokens()`, which costs nothing), and `start_ai_call()`, with the user's token, refuses
-  it if that is more than the feature allows (`ai_feature_limits`), if the model has no price, if
-  a call of the feature is still running, or if the budget left cannot pay for it at its most:
-  what it sends, and the most it may answer. That most is kept in `ai_calls_in_flight` as spent
-  until the call is recorded, so requests sent at once cannot go over the budget, and the answer
-  is cut at the feature's `max_output_tokens`. A chat that calls tools makes one call per request.
+  function calls a model only through `aiModel()` (`_shared/ai_usage.ts`), the model for one task; a
+  test keeps functions from reaching `languageModel()` themselves. Before each request it counts
+  what the request sends with the provider (`countTokens()`, which costs nothing), and
+  `start_ai_call()`, with the user's token, refuses it if that is more than the feature allows
+  (`ai_feature_limits`), if the model has no price, if a call of the feature is still running, or if
+  the budget left cannot pay for it at its most: what it sends, and the most it may answer. That
+  most is kept in `ai_calls_in_flight` as spent until the call is recorded, so requests sent at once
+  cannot go over the budget, and the answer is cut at the feature's `max_output_tokens`. A chat that
+  calls tools makes one call per request.
 - **Every call is recorded, however it ends:** at what it used when the answer came whole, at
-  nothing when the provider refused the request, and at its most when what it used is not known:
-  a stream left or broken off before its end, which also stops the request, or a call that never
-  recorded, as when its function was stopped, once seven minutes have passed, longer than an
-  Edge Function may run; the record is kept alive after the function's response ended. A call that records
-  after all replaces its most with what it did cost.
+  nothing when the provider refused the request, and at its most when what it used is not known: a
+  stream left or broken off before its end, which also stops the request, or a call that never
+  recorded, as when its function was stopped, once seven minutes have passed, longer than an Edge
+  Function may run; the record is kept alive after the function's response ended. A call that
+  records after all replaces its most with what it did cost.
 - **The features are the model interface's tasks:** a function names one `ai_feature`, which
   picks the model (ADR 0049) and is what its usage is recorded under.
 - **This log is what counts.** The tokens kept on Bite's messages (ADR 0050) only record what an
