@@ -53,5 +53,6 @@ A light or inactive user sees a later date than before, but one the targets can 
 weight card's date follows the latest weight only when the goal's data is read again. The
 1.5% stop and the levels live in one file; the floor and the 7,700 kcal stay in the database,
 where `weekly_loss_kg()` names the `kcal_per_kg` of `calculate_nutrition_targets()` it repeats.
-Bite's snapshot gives the achievable pace too, marked when the floor holds it below the chosen
-one, and Bite dates and plans by it, so that it never gives a date unlike the app's (#338).
+Bite's snapshot gives the achievable pace too, marked when it is below the chosen one, as
+`isPaceHeldUp()` in `limits.ts` decides for both, and Bite dates and plans by it, so that it never
+gives a date unlike the app's; a goal reached is marked as reached instead (#338).
