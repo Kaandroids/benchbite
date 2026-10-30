@@ -2,13 +2,21 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(7);
 
 select results_eq(
   $$ select public.calorie_floor(s) from unnest(enum_range(null::public.sex)) s order by s $$,
   $$ select case s when 'male' then 1500 when 'female' then 1200 else 1350 end
      from unnest(enum_range(null::public.sex)) s order by s $$,
   'The floor is 1500 kcal for men, 1200 for women and the midpoint otherwise'
+);
+-- coach-chat tells Bite the highest floor when the profile cannot be read, and marks targets
+-- below the lowest (FLOORS in supabase/functions/coach-chat/prompt.ts).
+select results_eq(
+  $$ select max(public.calorie_floor(s)), min(public.calorie_floor(s))
+     from unnest(enum_range(null::public.sex)) s $$,
+  $$ values (1500, 1200) $$,
+  'The highest and the lowest floor are those the coach falls back on'
 );
 select is(
   (public.calculate_nutrition_targets(
