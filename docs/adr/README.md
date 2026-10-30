@@ -70,3 +70,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0052](0052-the-coach-chat-function.md)                      | Bite answers in a stream of events, from a prompt, a snapshot and read tools            | Accepted                      |
 | [0053](0053-bite-errs-on-the-safe-side.md)                   | Bite errs on the safe side when the snapshot is missing or unsafe                       | Accepted                      |
 | [0054](0054-a-pace-the-user-can-keep.md)                     | A pace the user can keep, and the date it really gives                                  | Accepted                      |
+| [0055](0055-bite-s-chat-history.md)                          | Bite's chat history: named by the first message, opened by recency                      | Accepted                      |
