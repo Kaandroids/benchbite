@@ -31,7 +31,6 @@ import {
   useDeleteWorkout,
   useKcalPerMinute,
   useSetWorkoutActive,
-  useWorkoutLimits,
   useWorkouts,
   type WorkoutExercise,
   findWorkout,
@@ -59,7 +58,6 @@ export function WorkoutScreen({ id }: { id: number }) {
   const alternatives = useWorkoutAlternatives(id);
   const switchAlternative = useSwitchAlternative();
   const alternativeError = useAlternativeError();
-  const limits = useWorkoutLimits();
   const [managing, setManaging] = useState(false);
 
   if (!allLoaded([workouts])) {
@@ -227,7 +225,7 @@ export function WorkoutScreen({ id }: { id: number }) {
           />
           {switchAlternative.isError ? (
             <Text variant="caption" color="danger" accessibilityRole="alert">
-              {alternativeError(switchAlternative.error, 'switch', limits.data?.alternatives ?? 0)}
+              {alternativeError(switchAlternative.error, 'switch')}
             </Text>
           ) : null}
         </View>

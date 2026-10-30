@@ -71,16 +71,16 @@ it('names an unnamed alternative by its place', async () => {
   expect(result.current({ name: 'Home', position: 2 })).toBe('Home');
 });
 
-it('tells the refusals apart', async () => {
-  const { result } = await renderHook(() => useAlternativeError());
-  expect(result.current({ code: 'BB041' }, 'add', 5)).toBe(
-    'A workout can have up to 5 alternatives.',
-  );
-  expect(result.current({ code: 'BB042' }, 'delete', 5)).toBe(
+it('tells the refusals apart, with the cap from the limits', async () => {
+  const queryClient = createTestQueryClient();
+  queryClient.setQueryData(['workout-limits'], { alternatives: 5 });
+  const { result } = await renderHook(() => useAlternativeError(), { queryClient });
+  expect(result.current({ code: 'BB041' }, 'add')).toBe('A workout can have up to 5 alternatives.');
+  expect(result.current({ code: 'BB042' }, 'delete')).toBe(
     "The one in use can't be deleted. Switch to another first.",
   );
-  expect(result.current({ code: 'P0002' }, 'rename', 5)).toBe('This alternative no longer exists.');
-  expect(result.current(new Error('offline'), 'switch', 5)).toBe(
+  expect(result.current({ code: 'P0002' }, 'rename')).toBe('This alternative no longer exists.');
+  expect(result.current(new Error('offline'), 'switch')).toBe(
     "We couldn't switch to it. Try again.",
   );
 });

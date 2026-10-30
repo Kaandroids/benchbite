@@ -100,7 +100,7 @@ function ManageAlternativesSheet({ workout, onClose, onName }: ManageProps) {
   const failed =
     (action: Parameters<typeof errorOf>[1]) =>
     (failure: unknown): void =>
-      setError(errorOf(failure, action, max ?? 0));
+      setError(errorOf(failure, action));
 
   const exercisesOf = (alternative: Pick<WorkoutAlternative, 'inUse' | 'exerciseCount'>) =>
     alternative.inUse
@@ -307,7 +307,7 @@ function NameAlternativeSheet({ workoutId, alternative, onClose }: NameProps) {
       </View>
       {rename.isError ? (
         <Text variant="caption" color="danger" accessibilityRole="alert">
-          {errorOf(rename.error, 'rename', limits.data?.alternatives ?? 0)}
+          {errorOf(rename.error, 'rename')}
         </Text>
       ) : null}
       <View style={[styles.row, { gap: spacing.md }]}>

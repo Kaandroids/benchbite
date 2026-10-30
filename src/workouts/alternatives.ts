@@ -5,7 +5,7 @@ import { deviceToday } from '@/i18n/dates';
 import { dbErrorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
-import { reloadPlan, WORKOUTS_KEY } from './workouts';
+import { reloadPlan, useWorkoutLimits, WORKOUTS_KEY } from './workouts';
 
 /** One version of a workout's exercises, such as one for the gym and one for home (ADR 0061). */
 export type WorkoutAlternative = {
@@ -68,12 +68,13 @@ export function useAlternativeName() {
 export type AlternativeAction = 'switch' | 'add' | 'rename' | 'delete' | 'reorder';
 
 /**
- * A short message for a refused change: the cap of `max` alternatives (BB041), the one in use,
- * which cannot be deleted (BB042), one deleted elsewhere (P0002), or else that `action` failed.
+ * A short message for a refused change: the cap of alternatives (BB041), the one in use, which
+ * cannot be deleted (BB042), one deleted elsewhere (P0002), or else that `action` failed.
  */
 export function useAlternativeError() {
   const { t } = useTranslation();
-  return (error: unknown, action: AlternativeAction, max: number) =>
+  const max = useWorkoutLimits().data?.alternatives ?? 0;
+  return (error: unknown, action: AlternativeAction) =>
     dbErrorMessage(
       error,
       [
