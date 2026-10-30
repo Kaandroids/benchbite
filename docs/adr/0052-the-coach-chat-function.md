@@ -46,11 +46,12 @@ the model is limited and counted (ADR 0051).
   and what its requests used. The lookups are trimmed to what a message may hold. When Bite
   said nothing, a question the model was asked stays in the thread without an answer, as the app
   shows it, so that Bite sees it next time. A message that never reached the model, as when it
-  was refused, stopped first or the call could not start, or one the model blocked, which
-  would be blocked again with every later message, is not kept, though the app still
-  shows it unanswered, to ask again; a thread started for it goes again, which the error says
-  with `dropped`, unless another request answered in it meanwhile. As nothing is sent after a stop, the app gives up a new thread it stopped
-  before any text by itself, and one too long to go on with (`request_too_large`).
+  was refused, stopped first or the call could not start, or one the model blocked, which would
+  be blocked again with every later message, is not kept, though the app still shows it
+  unanswered, to ask again; a thread started for it goes again, which the error says with
+  `dropped`, unless another request answered in it meanwhile. As nothing is sent after a stop,
+  the app gives up a new thread it stopped before any text by itself, and one too long to go on
+  with (`request_too_large`).
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered
