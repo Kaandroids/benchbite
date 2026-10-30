@@ -1684,6 +1684,33 @@
     "stopped": "Durduruldu",
     "cutOff": "Yarıda kesildi",
     "unanswered": "Cevaplanmadı",
-    "askAgain": "Tekrar sor"
+    "askAgain": "Tekrar sor",
+    "chats": {
+      "title": "Sohbetler",
+      "search": "Sohbetlerde ara",
+      "new": "Yeni sohbet",
+      "noneFound": "Sohbet bulunamadı.",
+      "untitled": "Adsız sohbet",
+      "optionsHint": "Yeniden adlandırmak ya da silmek için basılı tut",
+      "groups": {
+        "today": "Bugün",
+        "yesterday": "Dün",
+        "week": "Bu hafta"
+      },
+      "emptyTitle": "Henüz sohbet yok",
+      "emptyBody": "Bite ile sohbetlerin burada görünür, böylece birine sonra devam edebilirsin.",
+      "start": "Sohbet başlat",
+      "rename": "Yeniden adlandır",
+      "delete": "Sil",
+      "deleteNote": "Silmek mesajları, fotoğrafları ve sesli notları kaldırır. Kaydettiğin öğünler ve Bite'ın not defterine yazdıkları kalır.",
+      "deleted": "Sohbet silindi",
+      "undo": "Geri al",
+      "notDeleted": "Sohbet silinemedi. Tekrar dene.",
+      "renameTitle": "Sohbeti yeniden adlandır",
+      "name": "Ad",
+      "save": "Kaydet",
+      "cancel": "Vazgeç",
+      "notRenamed": "Sohbet yeniden adlandırılamadı. Tekrar dene."
+    }
   }
 }

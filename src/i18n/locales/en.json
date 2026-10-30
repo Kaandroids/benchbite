@@ -1684,6 +1684,33 @@
     "stopped": "Stopped",
     "cutOff": "Cut off",
     "unanswered": "Not answered",
-    "askAgain": "Ask again"
+    "askAgain": "Ask again",
+    "chats": {
+      "title": "Chats",
+      "search": "Search chats",
+      "new": "New chat",
+      "noneFound": "No chats found.",
+      "untitled": "Untitled chat",
+      "optionsHint": "Hold to rename or delete",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "week": "This week"
+      },
+      "emptyTitle": "No chats yet",
+      "emptyBody": "Your chats with Bite show up here, so you can pick one up later.",
+      "start": "Start a chat",
+      "rename": "Rename",
+      "delete": "Delete",
+      "deleteNote": "Deleting removes the messages, photos and voice notes. Meals you logged and what Bite saved in the notebook stay.",
+      "deleted": "Chat deleted",
+      "undo": "Undo",
+      "notDeleted": "The chat couldn't be deleted. Try again.",
+      "renameTitle": "Rename chat",
+      "name": "Name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "notRenamed": "The chat couldn't be renamed. Try again."
+    }
   }
 }

@@ -1684,6 +1684,33 @@
     "stopped": "Gestoppt",
     "cutOff": "Abgebrochen",
     "unanswered": "Nicht beantwortet",
-    "askAgain": "Noch mal fragen"
+    "askAgain": "Noch mal fragen",
+    "chats": {
+      "title": "Chats",
+      "search": "Chats durchsuchen",
+      "new": "Neuer Chat",
+      "noneFound": "Keine Chats gefunden.",
+      "untitled": "Chat ohne Namen",
+      "optionsHint": "Halten zum Umbenennen oder Löschen",
+      "groups": {
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "week": "Diese Woche"
+      },
+      "emptyTitle": "Noch keine Chats",
+      "emptyBody": "Deine Chats mit Bite erscheinen hier, damit du später weitermachen kannst.",
+      "start": "Chat starten",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "deleteNote": "Beim Löschen verschwinden die Nachrichten, Fotos und Sprachnachrichten. Eingetragene Mahlzeiten und was Bite im Notizbuch gespeichert hat, bleiben.",
+      "deleted": "Chat gelöscht",
+      "undo": "Rückgängig",
+      "notDeleted": "Der Chat konnte nicht gelöscht werden. Versuch es noch einmal.",
+      "renameTitle": "Chat umbenennen",
+      "name": "Name",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "notRenamed": "Der Chat konnte nicht umbenannt werden. Versuch es noch einmal."
+    }
   }
 }
