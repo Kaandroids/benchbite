@@ -25,17 +25,25 @@ type DailyProgressProps = {
   /** What was eaten on an average day, shown small under each macro, for a span of days. */
   average?: NutritionTargets;
   /**
-   * A title on the row of the calories, which then sit at its end, smaller, and the macros in the
-   * regular weight, for a card where the title is what stands out.
+   * A title on the row of the calories, which then sit at its end, smaller, for a card where the
+   * title is what stands out.
    */
   title?: string;
+  /** The macros in the regular weight instead of bold, for a card with less bold (#340). */
+  quiet?: boolean;
 };
 
 /** How much of a target was eaten, none for a target of none. */
 const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
 
 /** How much of the day's calories and macros was eaten, large, against the targets, small. */
-export function DailyProgress({ targets, eaten, average, title }: DailyProgressProps) {
+export function DailyProgress({
+  targets,
+  eaten,
+  average,
+  title,
+  quiet = false,
+}: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -63,7 +71,7 @@ export function DailyProgress({ targets, eaten, average, title }: DailyProgressP
           accessibilityLabel={t('nutrition.calorieLabel')}
         />
       </View>
-      <MacroColumns targets={targets} eaten={eaten} average={average} quiet={!!title} />
+      <MacroColumns targets={targets} eaten={eaten} average={average} quiet={quiet} />
     </>
   );
 }
@@ -74,7 +82,7 @@ function MacroColumns({
   eaten,
   average,
   quiet,
-}: Omit<DailyProgressProps, 'title'> & { quiet: boolean }) {
+}: Omit<DailyProgressProps, 'title' | 'quiet'> & { quiet: boolean }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();

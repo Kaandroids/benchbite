@@ -129,6 +129,7 @@ export function TodayScreen() {
           <Card entering={cardEntering(1)}>
             <DailyProgress
               title={t('today.targets')}
+              quiet
               targets={targets.data}
               eaten={totalOf(eaten.data ?? [])}
             />
