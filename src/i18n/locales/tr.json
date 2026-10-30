@@ -570,6 +570,7 @@
       "perWeek": "Haftada {{value}} {{unit}}",
       "by": "{{date}} tarihine kadar",
       "macrosMake": "Protein, karbonhidrat ve yağ {{calories}} kcal'nin {{macros}} kcal'sini oluşturuyor.",
+      "belowFloor": "{{calories}} kcal, önerdiğimiz en düşük değer olan {{floor}} kcal'nin altında. Bu kadar az yemeyi yalnızca doktor gözetiminde yap.",
       "tooMuch": "Protein, karbonhidrat ve yağ {{macros}} kcal ediyor, hedefteki {{calories}} kcal'den fazla. Bir makroyu azalt ya da kaloriyi artır.",
       "limits": "Kalori 800 ile 6.000 kcal arasında; protein en fazla 500 g, karbonhidrat 1.000 g ve yağ 400 g, tam sayı olarak.",
       "save": "Hedefleri kaydet",

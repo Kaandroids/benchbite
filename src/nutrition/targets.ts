@@ -185,7 +185,10 @@ export function useUseCalculatedTargets() {
   });
 }
 
-/** What the calculated targets are worked out from: the goal, its target and pace, and activity. */
+/**
+ * What the targets are worked out from and kept to: the goal, its target and pace, activity, the
+ * height and the calorie floor.
+ */
 export type TargetBasis = {
   goal: Database['public']['Enums']['goal_kind'];
   targetWeightKg: number | null;
@@ -193,16 +196,18 @@ export type TargetBasis = {
   activity: Database['public']['Enums']['activity_level'];
   /** For the lowest healthy target weight. */
   heightCm: number;
+  /** The least calories a day we recommend for the user (calorie_floor()). */
+  calorieFloor: number | null;
 };
 
-/** The saved goal and activity the calculated targets come from; null before the onboarding. */
+/** The saved goal, activity, height and floor the targets come from; null before the onboarding. */
 export function useTargetBasis() {
   return useQuery({
     queryKey: ['nutrition-targets', 'basis'],
     queryFn: async (): Promise<TargetBasis | null> => {
       const [goal, profile] = await Promise.all([
         supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
-        supabase.from('profiles').select('activity_level, height_cm').maybeSingle(),
+        supabase.from('profiles').select('activity_level, height_cm, calorie_floor').maybeSingle(),
       ]);
       if (goal.error) {
         throw goal.error;
@@ -219,6 +224,7 @@ export function useTargetBasis() {
         weeklyPaceKg: goal.data.weekly_pace_kg,
         activity: profile.data.activity_level,
         heightCm: profile.data.height_cm,
+        calorieFloor: profile.data.calorie_floor,
       };
     },
   });

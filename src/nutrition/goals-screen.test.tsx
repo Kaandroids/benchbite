@@ -46,6 +46,7 @@ beforeEach(() => {
       weeklyPaceKg: 0.5,
       activity: 'light',
       heightCm: 180,
+      calorieFloor: 1500,
     }),
   );
   jest.mocked(useLatestWeight).mockReturnValue(loaded({ weightKg: 80, measuredOn: '2026-10-28' }));
@@ -86,6 +87,23 @@ describe('GoalsScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Save goals' }));
     expect(setOwn).toHaveBeenCalledWith(
       { calories: 2200, proteinG: 160, carbsG: 229, fatG: 54 },
+      expect.anything(),
+    );
+  });
+
+  it('warns of own calories below the floor, and saves them all the same', async () => {
+    await render(<GoalsScreen />);
+    await fireEvent.press(screen.getByRole('radio', { name: 'My own' }));
+    const warning =
+      "1,500 kcal, the least we recommend. Eat this little only with a doctor's care.";
+    expect(screen.queryByText(new RegExp(warning))).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Calories'), '1400');
+    await fireEvent.changeText(screen.getByLabelText('Carbs'), '100');
+
+    expect(screen.getByText(`1,400 kcal is below ${warning}`)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Save goals' }));
+    expect(setOwn).toHaveBeenCalledWith(
+      { calories: 1400, proteinG: 135, carbsG: 100, fatG: 54 },
       expect.anything(),
     );
   });

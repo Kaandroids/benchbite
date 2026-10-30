@@ -15,6 +15,7 @@ const basis: TargetBasis = {
   weeklyPaceKg: 0.5,
   activity: 'light',
   heightCm: 180,
+  calorieFloor: 1500,
 };
 
 describe('stepsFor', () => {

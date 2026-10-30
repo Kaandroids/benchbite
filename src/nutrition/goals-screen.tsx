@@ -10,6 +10,7 @@ import { Card, listDivider } from '@/components/ui/card';
 import { FormError } from '@/components/ui/form-error';
 import { IconTile } from '@/components/ui/icon-tile';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
+import { Note } from '@/components/ui/note';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
@@ -148,12 +149,23 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
             ) : result.kind === 'incomplete' ? (
               <FormError>{t('nutrition.goals.limits')}</FormError>
             ) : (
-              <Text variant="caption" color="textMuted">
-                {t('nutrition.goals.macrosMake', {
-                  macros: format(result.macroCalories),
-                  calories: format(result.targets.calories),
-                })}
-              </Text>
+              <>
+                {/* Allowed, as some eat less under a doctor's care, but not without a word. */}
+                {basis?.calorieFloor != null && result.targets.calories < basis.calorieFloor ? (
+                  <Note tone="warning">
+                    {t('nutrition.goals.belowFloor', {
+                      calories: format(result.targets.calories),
+                      floor: format(basis.calorieFloor),
+                    })}
+                  </Note>
+                ) : null}
+                <Text variant="caption" color="textMuted">
+                  {t('nutrition.goals.macrosMake', {
+                    macros: format(result.macroCalories),
+                    calories: format(result.targets.calories),
+                  })}
+                </Text>
+              </>
             )}
           </>
         )}
