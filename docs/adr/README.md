@@ -78,3 +78,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0060](0060-logging-an-estimated-meal.md)                    | Log an estimated meal in one step, saving foods the library lacks as the user's own     | Accepted                      |
 | [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
 | [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted                      |
+| [0063](0063-purge-chat-photos-from-a-queue.md)               | Remove a deleted chat's photos from a queue, on a schedule                              | Accepted                      |
