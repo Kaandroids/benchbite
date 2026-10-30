@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(21);
 
 select is(public.coach_thread_title('  How was   my week? '), 'How was my week?', 'A short message is the name');
 select is(
@@ -96,6 +96,12 @@ select results_eq(
   'The next page starts after the last thread of this one'
 );
 
+select results_eq(
+  $$ select id from public.my_coach_threads(page_size => 1) $$,
+  $$ values (2::bigint) $$,
+  'A page of one gives the latest thread'
+);
+
 update public.coach_threads set title = 'Knee' where id = 1;
 select is(
   (select title from public.my_coach_threads() where id = 1),
@@ -119,8 +125,8 @@ select is(
 
 reset role;
 select ok(
-  not has_function_privilege('anon', 'public.my_coach_threads(text, timestamptz, bigint)', 'execute')
-    and has_function_privilege('authenticated', 'public.my_coach_threads(text, timestamptz, bigint)', 'execute'),
+  not has_function_privilege('anon', 'public.my_coach_threads(text, timestamptz, bigint, integer)', 'execute')
+    and has_function_privilege('authenticated', 'public.my_coach_threads(text, timestamptz, bigint, integer)', 'execute'),
   'Signed-in users list their threads; signed-out callers may not'
 );
 select ok(
