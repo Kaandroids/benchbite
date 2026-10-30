@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(7);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -81,11 +81,39 @@ select throws_ok(
   'A swap is tried as a proposal is, with save_workout()''s checks'
 );
 
+select throws_ok(
+  $$ select pg_temp.swap(null) $$, '22023', null,
+  'Swaps that are not a list propose nothing'
+);
+-- A workout with planks twice, which one swap would change both of.
+insert into ids select 'twice', public.save_workout(
+  '{"name": "Core", "weekdays": [2], "exercises": [
+    {"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"seconds": 45}},
+    {"exerciseId": "Barbell_Squat", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 8}}},
+    {"exerciseId": "Plank", "sets": 2, "restSeconds": 60, "target": {"seconds": 30}}
+  ]}',
+  current_date
+);
+select throws_ok(
+  format(
+    $$ select public.propose_coach_swaps(%s, %s, '[{"replace": "Plank", "with": "Leg_Press", "sets": 3, "target": {"reps": {"min": 8, "max": 8}}}]', current_date) $$,
+    (select id from ids where name = 'thread'), (select id from ids where name = 'twice')
+  ),
+  'BB040', null,
+  'An exercise twice in the workout is not swapped by one swap'
+);
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
   $$ select pg_temp.swap('[{"replace": "Barbell_Squat", "with": "Leg_Press", "sets": 3, "target": {"reps": {"min": 8, "max": 8}}}]') $$,
   'BB006', null,
   'Users swap only in their own workouts'
+);
+
+reset role;
+select ok(
+  not has_function_privilege('anon', 'public.propose_coach_swaps(bigint, bigint, jsonb, date)', 'execute'),
+  'Signed-out callers may not propose swaps'
 );
 
 select * from finish();

@@ -5,8 +5,8 @@
 -- Proposes swapping exercises of the caller's `workout_id`, each of `swaps` naming the exercise to
 -- `replace` with the one to put in its place (`with`), its `sets` and `target`; the rest of the
 -- workout stays as it is, its rest too. Swaps match the workout as it is: an exercise not in it
--- (BB039), or one swapped twice or into another swap (BB040), is refused, so that the card shows
--- what applying does. Gives the proposal's id, as propose_coach_change() does.
+-- (BB039), or one swapped twice, into another swap or in the workout twice (BB040), is refused, so
+-- that the card shows what applying does. Gives the proposal's id, as propose_coach_change() does.
 create function public.propose_coach_swaps(
   thread_id bigint,
   workout_id bigint,
@@ -28,7 +28,7 @@ begin
   if workout is null then
     raise exception 'Workout not found' using errcode = 'BB006';
   end if;
-  if jsonb_typeof(swaps) <> 'array' or jsonb_array_length(swaps) = 0 then
+  if swaps is null or jsonb_typeof(swaps) <> 'array' or jsonb_array_length(swaps) = 0 then
     raise exception 'Swaps are a list of at least one' using errcode = '22023';
   end if;
 
@@ -37,7 +37,11 @@ begin
   if not replaced <@ present then
     raise exception 'An exercise to replace is not in the workout' using errcode = 'BB039';
   end if;
+  -- An exercise twice in the workout, or swapped twice, would change more than the card shows.
   if cardinality(replaced) <> (select count(distinct r) from unnest(replaced) r)
+    or exists (
+      select 1 from unnest(present) p where p = any (replaced) group by p having count(*) > 1
+    )
     or exists (
       select 1 from jsonb_array_elements(swaps) s where s ->> 'with' = any (replaced)
     ) then
