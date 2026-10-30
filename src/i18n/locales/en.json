@@ -791,7 +791,27 @@
         "delete": "We couldn't delete it. Try again.",
         "reorder": "We couldn't save the order. Try again."
       },
-      "title": "Alternatives"
+      "title": "Alternatives",
+      "body": "Other sets of exercises for this workout, such as for home. The one in use is the workout everywhere. Drag to change their order.",
+      "inUse_one": "In use · {{count}} exercise",
+      "inUse_other": "In use · {{count}} exercises",
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "rename": "Rename {{name}}",
+      "delete": "Delete {{name}}",
+      "add": "Add alternative",
+      "addNote": "A new one starts as a copy of the one in use, to change in Edit.",
+      "full": "Up to {{max}} alternatives. Delete one to add another.",
+      "deleteTitle": "Delete {{name}}?",
+      "deleteMessage": "It is removed with its exercises. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "nameTitle": "Name the alternative",
+      "nameLabel": "Short, as it shows above the workout",
+      "counter": "{{length}}/{{max}}",
+      "counterLabel": "{{length}} of {{max}} characters",
+      "emptyName": "Left empty, it shows as “{{fallback}}”."
     }
   },
   "exercise": {

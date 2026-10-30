@@ -791,7 +791,27 @@
         "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
         "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
       },
-      "title": "Alternativen"
+      "title": "Alternativen",
+      "body": "Andere Übungen für dieses Workout, etwa für zu Hause. Die aktive Alternative ist überall das Workout. Ziehe sie, um die Reihenfolge zu ändern.",
+      "inUse_one": "Aktiv · {{count}} Übung",
+      "inUse_other": "Aktiv · {{count}} Übungen",
+      "exercises_one": "{{count}} Übung",
+      "exercises_other": "{{count}} Übungen",
+      "rename": "{{name}} umbenennen",
+      "delete": "{{name}} löschen",
+      "add": "Alternative hinzufügen",
+      "addNote": "Eine neue beginnt als Kopie der aktiven und lässt sich unter Bearbeiten ändern.",
+      "full": "Bis zu {{max}} Alternativen. Lösche eine, um eine weitere hinzuzufügen.",
+      "deleteTitle": "{{name}} löschen?",
+      "deleteMessage": "Sie wird mit ihren Übungen gelöscht. Das kann nicht rückgängig gemacht werden.",
+      "deleteConfirm": "Löschen",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "nameTitle": "Alternative benennen",
+      "nameLabel": "Kurz, denn er steht über dem Workout",
+      "counter": "{{length}}/{{max}}",
+      "counterLabel": "{{length}} von {{max}} Zeichen",
+      "emptyName": "Leer gelassen, heißt sie „{{fallback}}“."
     }
   },
   "exercise": {
