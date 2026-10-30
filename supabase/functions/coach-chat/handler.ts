@@ -368,7 +368,7 @@ async function answer(
     if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
-  const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
+  const messageId = await keepAlive(saveTurn(context, threadId, request, turn, end.interrupted));
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
   send({
     event: 'done',
@@ -438,12 +438,16 @@ async function saveQuestion(context: ChatContext, threadId: number, request: Cha
   if (saved.error) logError('Could not save the question', saved.error);
 }
 
-/** Saves the user's message and Bite's answer to the thread, and gives Bite's message's id. */
+/**
+ * Saves the user's message and Bite's answer to the thread, with why the answer stopped short if
+ * it did, and gives Bite's message's id.
+ */
 async function saveTurn(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
   turn: Turn,
+  interrupted: Interruption | undefined,
 ): Promise<number | undefined> {
   const messages = await context.admin
     .from('coach_messages')
@@ -459,6 +463,7 @@ async function saveTurn(
         cached_input_tokens: turn.usage.cached,
         output_tokens: turn.usage.output,
         thinking_tokens: turn.usage.thinking,
+        interrupted: interrupted ?? null,
       },
     ])
     .select('id')

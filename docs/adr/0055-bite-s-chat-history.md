@@ -27,6 +27,9 @@ fresh one.
   empty one otherwise, with the last thread offered as "Continue" and a link to all chats. A
   conversation that goes on the same day stays one; a new day starts fresh unless the user goes
   back.
+- **A saved chat opens over the chats,** which it goes back to, and they back to the chat under
+  them; the chat under them is gone back to rather than opened twice, and a new chat takes its
+  place. So the chats and a chat are never more than two screens over Bite (#343).
 - **Deleting a thread asks nothing:** it goes from the list at once with an Undo, and is deleted
   when the Undo is gone, as Apply and Undo work in the chat. Its messages go with it (ADR 0050);
   meals the user logged and the notebook stay.

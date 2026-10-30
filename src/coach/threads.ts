@@ -14,6 +14,7 @@ import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
+import { cutOf } from './chat-ending';
 import type { ChatMessage } from './use-chat';
 
 export const THREADS_KEY = ['coach-threads'];
@@ -100,8 +101,7 @@ export function messageText(content: Json): string {
 
 /**
  * A thread's name and its messages as the chat shows them, oldest first; null for a thread that is
- * gone. A question no answer of Bite's
- * followed, as one that failed, is shown as not answered, to ask again.
+ * gone.
  */
 export function useThreadMessages(threadId: number | undefined) {
   return useQuery({
@@ -114,7 +114,7 @@ export function useThreadMessages(threadId: number | undefined) {
         supabase.from('coach_threads').select('title').eq('id', threadId!).maybeSingle(),
         supabase
           .from('coach_messages')
-          .select('id, role, content, expression, created_at')
+          .select('id, role, content, expression, interrupted, created_at')
           .eq('thread_id', threadId!)
           .order('id'),
       ]);
@@ -128,20 +128,31 @@ export function useThreadMessages(threadId: number | undefined) {
       if (!thread.data) {
         return null;
       }
-      const data = messages.data;
-      return {
-        title: thread.data.title,
-        messages: data.map((row, index): ChatMessage => ({
-          id: `stored-${row.id}`,
-          role: row.role,
-          text: messageText(row.content),
-          expression: row.expression ?? undefined,
-          createdAt: new Date(row.created_at),
-          ...(row.role === 'user' && data[index + 1]?.role !== 'bite' && { unanswered: true }),
-        })),
-      };
+      return { title: thread.data.title, messages: storedMessages(messages.data) };
     },
   });
+}
+
+type StoredMessage = Pick<
+  Database['public']['Tables']['coach_messages']['Row'],
+  'id' | 'role' | 'content' | 'expression' | 'interrupted' | 'created_at'
+>;
+
+/**
+ * A thread's messages, oldest first, as the chat shows them. An answer that stopped short says so,
+ * as it did when it came. A question no answer of Bite's followed, as one that failed, is shown as
+ * not answered, to ask again.
+ */
+export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
+  return rows.map((row, index) => ({
+    id: `stored-${row.id}`,
+    role: row.role,
+    text: messageText(row.content),
+    expression: row.expression ?? undefined,
+    cut: cutOf(row.interrupted),
+    createdAt: new Date(row.created_at),
+    ...(row.role === 'user' && rows[index + 1]?.role !== 'bite' && { unanswered: true }),
+  }));
 }
 
 /** A name as it is kept: without spaces around it, within its length; null when empty. */

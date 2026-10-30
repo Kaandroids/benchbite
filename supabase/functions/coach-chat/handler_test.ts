@@ -412,11 +412,12 @@ Deno.test('says an answer cut at the token limit stopped short', async () => {
     usage: FAKE_USAGE,
     finish: 'length' as const,
   };
-  const { ctx } = context(new FakeModel(cut));
+  const { ctx, inserted } = context(new FakeModel(cut));
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
   assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102, interrupted: 'cut' });
+  assertEquals(inserted[1].rows[1].interrupted, 'cut');
 });
 
 Deno.test('says an answer the model broke off failed, and keeps what was said', async () => {
@@ -552,6 +553,8 @@ Deno.test('keeps what was said when the app stops the answer as it comes', async
     interrupted: 'stopped',
   });
   assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, 'Rest');
+  // and that it was stopped, for when the chat is read back.
+  assertEquals(inserted[1].rows[1].interrupted, 'stopped');
 });
 
 Deno.test('keeps an answer whole when its stop comes with its end', async () => {
@@ -567,6 +570,7 @@ Deno.test('keeps an answer whole when its stop comes with its end', async () => 
   assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
   // What the round used is kept with it.
   assertEquals(inserted[1].rows[1].output_tokens, FAKE_USAGE.outputTokens);
+  assertEquals(inserted[1].rows[1].interrupted, null);
 });
 
 Deno.test('makes no more lookups once the app stops the answer', async () => {
