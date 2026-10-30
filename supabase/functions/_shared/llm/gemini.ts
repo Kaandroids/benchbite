@@ -101,7 +101,6 @@ export class GeminiModel implements LanguageModel {
     const { model, response } = await this.#call(request, 'streamGenerateContent?alt=sse');
     let last: GeminiResponse = {};
     let usage: GeminiResponse['usageMetadata'];
-    const used = () => usageOf({ ...last, usageMetadata: usage }, model);
     const chunks = serverSentEvents(response.body!)[Symbol.asyncIterator]();
     try {
       while (true) {
@@ -141,7 +140,7 @@ export class GeminiModel implements LanguageModel {
     }
     yield {
       type: 'done',
-      usage: used(),
+      usage: usageOf({ ...last, usageMetadata: usage }, model),
       finish: finishOf(last),
     };
   }

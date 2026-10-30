@@ -23,8 +23,6 @@ export const FAKE_USAGE: Usage = {
 
 export class FakeModel implements LanguageModel {
   readonly requests: ModelRequest[] = [];
-  /** What `countTokens()` says every request sends. */
-  inputTokens = FAKE_USAGE.inputTokens;
   readonly #turns: FakeTurn[];
 
   /** Each call takes the next turn of the script; a call after the last one throws. */
@@ -37,7 +35,7 @@ export class FakeModel implements LanguageModel {
   }
 
   countTokens(_request: ModelRequest): Promise<number> {
-    return Promise.resolve(this.inputTokens);
+    return Promise.resolve(FAKE_USAGE.inputTokens);
   }
 
   generate(request: ModelRequest): Promise<ModelResponse> {
