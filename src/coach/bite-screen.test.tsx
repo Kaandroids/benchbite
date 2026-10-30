@@ -4,12 +4,12 @@ import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
-import { useThreadMessages } from './threads';
+import { useLastThread, useThreadMessages } from './threads';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
 let mockParams: { thread?: string; fresh?: string } = {};
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
@@ -17,6 +17,7 @@ jest.mock('@/profile/display-name', () => ({ useDisplayName: () => ({ data: 'Sam
 jest.mock('./threads', () => ({
   ...jest.requireActual('./threads'),
   useThreadMessages: jest.fn(() => ({ data: undefined })),
+  useLastThread: jest.fn(() => ({ isPending: false, data: null })),
 }));
 jest.mock('./chat-stream', () => ({
   ...jest.requireActual('./chat-stream'),
@@ -425,4 +426,74 @@ it('waits for a saved chat as it is now, not as it was kept', async () => {
   await render(<BiteScreen />);
   expect(screen.queryByText('Kept from before')).toBeNull();
   mockParams = {};
+});
+
+describe('opened from the tab bar', () => {
+  const lastChat = (hoursAgo: number) => ({
+    id: 9,
+    title: 'Knee pain on squats',
+    lastMessageAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000),
+    lastMessage: 'Try leg press.',
+    expression: 'neutral' as const,
+  });
+  afterEach(() => {
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: null } as never);
+    jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
+  });
+
+  it('goes on in the last chat while it is recent', async () => {
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(2) } as never);
+    jest.mocked(useThreadMessages).mockImplementation(
+      (threadId) =>
+        (threadId === 9
+          ? {
+              isFetchedAfterMount: true,
+              data: {
+                title: 'Knee pain on squats',
+                messages: [{ id: 'stored-1', role: 'bite', text: 'Try leg press.' }],
+              },
+            }
+          : { data: undefined }) as never,
+    );
+    await render(<BiteScreen />);
+    expect(screen.getByText('Try leg press.')).toBeTruthy();
+  });
+
+  it('starts a new chat after six hours, offering the last to continue and all chats', async () => {
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
+    await render(<BiteScreen />);
+    expect(screen.getByText('CONTINUE')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /Knee pain on squats/ }));
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '' });
+    await fireEvent.press(screen.getByRole('button', { name: 'All chats' }));
+    expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  });
+
+  it('offers nothing to continue on a new chat asked for from the chats', async () => {
+    mockParams = { thread: '', fresh: '1' };
+    jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
+    await render(<BiteScreen />);
+    expect(screen.queryByText('CONTINUE')).toBeNull();
+    mockParams = {};
+  });
+});
+
+it('shows when each day of a chat over several days began', async () => {
+  mockParams = { thread: '7' };
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
+    data: {
+      title: 'Knee',
+      messages: [
+        { id: 'stored-1', role: 'user', text: 'My knee hurts.', createdAt: yesterday },
+        { id: 'stored-2', role: 'bite', text: 'Rest it.', createdAt: new Date() },
+      ],
+    },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.getByText(/^Yesterday /)).toBeTruthy();
+  expect(screen.getByText(/^Today /)).toBeTruthy();
+  mockParams = {};
+  jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
 });
