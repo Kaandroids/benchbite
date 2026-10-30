@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/ui/text';
+import { oneOf } from '@/lib/one-of';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
@@ -26,9 +27,6 @@ const TOOLS = [
   'search_foods',
   'search_exercises',
 ] as const;
-type Tool = (typeof TOOLS)[number];
-
-const isTool = (name?: string): name is Tool => TOOLS.some((tool) => tool === name);
 
 type ChatMessagesProps = {
   messages: ChatMessage[];
@@ -56,11 +54,14 @@ export function ChatMessages({ messages, status, tool }: ChatMessagesProps) {
           <BiteMessage key={message.id} message={message} talking={last && status !== 'idle'} />
         );
       })}
+      {/* A lookup after Bite started writing shows under what it wrote. */}
+      {status === 'answering' && tool ? <ToolLine tool={tool} indent /> : null}
     </View>
   );
 }
 
-function UserMessage({ text }: { text: string }) {
+// Each message renders again only when it changes, as only the last one does while Bite writes.
+const UserMessage = memo(function UserMessage({ text }: { text: string }) {
   const { colors, spacing } = useTheme();
   return (
     <View
@@ -76,9 +77,15 @@ function UserMessage({ text }: { text: string }) {
       <Text color="onUserBubble">{text}</Text>
     </View>
   );
-}
+});
 
-function BiteMessage({ message, talking }: { message: ChatMessage; talking: boolean }) {
+const BiteMessage = memo(function BiteMessage({
+  message,
+  talking,
+}: {
+  message: ChatMessage;
+  talking: boolean;
+}) {
   const { colors, spacing } = useTheme();
   const expression = message.expression ?? 'neutral';
   return (
@@ -103,20 +110,31 @@ function BiteMessage({ message, talking }: { message: ChatMessage; talking: bool
       </View>
     </View>
   );
-}
+});
 
 function Thinking({ tool }: { tool?: string }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.row, { gap: spacing.md - 2 }]}>
+      <BiteAvatar size={32} state="thinking" />
+      <ToolLine tool={tool} />
+    </View>
+  );
+}
+
+/** Bite's dots, and what it looks up, if it says; `indent` lines it up with Bite's messages. */
+function ToolLine({ tool, indent = false }: { tool?: string; indent?: boolean }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const line = isTool(tool) ? t(`bite.tools.${tool}`) : undefined;
+  const known = oneOf(TOOLS, tool);
+  const line = known ? t(`bite.tools.${known}`) : undefined;
   return (
     <View
-      style={[styles.thinking, { gap: spacing.md - 2 }]}
+      style={[styles.row, styles.flex, { gap: spacing.md - 2, marginLeft: indent ? 42 : 0 }]}
       accessible
       accessibilityLabel={line ?? t('bite.thinking')}
       accessibilityLiveRegion="polite"
     >
-      <BiteAvatar size={32} state="thinking" />
       <Dots />
       {line ? (
         <Text variant="captionStrong" color="textMuted" style={styles.flex}>
@@ -178,7 +196,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  thinking: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
   },
