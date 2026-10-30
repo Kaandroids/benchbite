@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(3);
+select plan(6);
 
 select results_eq(
   $$ select public.calorie_floor(s) from unnest(enum_range(null::public.sex)) s order by s $$,
@@ -22,6 +22,33 @@ select is(
 select ok(
   has_function_privilege('authenticated', 'public.calorie_floor(public.sex)', 'execute'),
   'Signed-in users may read it, as the coach does'
+);
+
+select ok(
+  not has_function_privilege('anon', 'public.calorie_floor(public.sex)', 'execute')
+    and not has_function_privilege('anon', 'public.calorie_floor(public.profiles)', 'execute'),
+  'Guests without an account may not'
+);
+
+-- A profile reads its floor as a column.
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
+set local session_replication_role = replica;
+insert into public.profiles (user_id, sex, birth_year, height_cm, activity_level, experience,
+  training_days, training_setup, session_minutes, height_unit, weight_unit)
+values ('00000000-0000-0000-0000-00000000000a', 'female', 1990, 165, 'sedentary', 'beginner',
+  '{1}', 'gym', 45, 'cm', 'kg');
+set local session_replication_role = origin;
+select set_config('role', 'authenticated', true),
+  set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);
+select is(
+  (select public.calorie_floor(p) from public.profiles p),
+  1200,
+  'A profile reads the floor of its sex'
+);
+select is(
+  (select count(*)::integer from public.profiles p where public.calorie_floor(p) = 1200),
+  1,
+  'as its own row'
 );
 
 select * from finish();

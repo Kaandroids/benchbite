@@ -14,6 +14,19 @@ $$;
 revoke all on function public.calorie_floor(public.sex) from public, anon;
 grant execute on function public.calorie_floor(public.sex) to authenticated;
 
+-- A profile's floor, which the API reads as one of its columns, `calorie_floor`.
+create function public.calorie_floor(profile public.profiles)
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select public.calorie_floor(profile.sex);
+$$;
+
+revoke all on function public.calorie_floor(public.profiles) from public, anon;
+grant execute on function public.calorie_floor(public.profiles) to authenticated;
+
 -- As before (20261020223041), with the floor from calorie_floor().
 create or replace function public.calculate_nutrition_targets(
   sex public.sex,
@@ -44,7 +57,6 @@ declare
   bmr numeric;
   maintenance numeric;
   daily_change numeric := 0;
-  calorie_floor integer;
   result public.nutrition_targets;
   protein_basis_kg numeric := weight_kg;
 begin
@@ -80,8 +92,7 @@ begin
     daily_change := 0;
   end if;
 
-  calorie_floor := public.calorie_floor(sex);
-  result.calories := greatest(calorie_floor, round((maintenance + daily_change) / 10) * 10);
+  result.calories := greatest(public.calorie_floor(sex), round((maintenance + daily_change) / 10) * 10);
 
   -- Protein of 1.8 g per kilogram, from the lower of the current and target weight when losing
   -- fat, and at most 40 % of the calories. With fat at 25 %, the carbohydrates that fill the rest

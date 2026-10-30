@@ -887,8 +887,9 @@ export type Database = {
           user_id: string;
           water_goal_ml: number;
           weight_unit: Database['public']['Enums']['weight_unit'];
+          calorie_floor: number | null;
         };
-        ComputedFields: never;
+        ComputedFields: 'calorie_floor';
         Insert: {
           activity_level: Database['public']['Enums']['activity_level'];
           birth_year: number;
@@ -1494,7 +1495,17 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      calorie_floor: { Args: { sex: Database['public']['Enums']['sex'] }; Returns: number };
+      calorie_floor:
+        | {
+            Args: {
+              profile: Omit<
+                Database['public']['Tables']['profiles']['Row'],
+                Database['public']['Tables']['profiles']['ComputedFields']
+              >;
+            };
+            Returns: number;
+          }
+        | { Args: { sex: Database['public']['Enums']['sex'] }; Returns: number };
       calories_count: { Args: { kcal: number; target: number }; Returns: boolean };
       can_be_logged: {
         Args: { custom_food_id: number; food_id: string; recipe_id: number };
