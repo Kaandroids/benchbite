@@ -14,11 +14,12 @@ the model is limited and counted (ADR 0051).
 ## Decision
 
 - **An Edge Function, `coach-chat`,** takes the message, the thread to go on with (none for a new
-  one), the app's language and the user's day, and answers as server-sent events: `expression`,
-  then `text` as it comes, `tool_start` and `tool_end` around each lookup, and at the end either
-  `done` with the thread and message, and `interrupted: true` in it when the answer stopped
-  short, or `error` with a reason when nothing was saved (`plan_required`, `limit_reached`, `blocked`,
-  `unavailable`…).
+  one), the app's language and the user's day, and answers as server-sent events: for a new
+  thread, `thread` with its id as soon as Bite starts to answer, so that the app keeps it however
+  the answer ends; `expression`, then `text` as it comes, `tool_start` and `tool_end` around each
+  lookup, and at the end either `done` with the thread and message, and `interrupted: true` in it
+  when the answer stopped short, or `error` with a reason when nothing was saved
+  (`plan_required`, `limit_reached`, `blocked`, `unavailable`…).
 - **What Bite is told, in order:** fixed instructions (its character, safety rules and its face),
   the same for every user so that the provider can cache them; the thread's last 20 messages, as
   text, Bite's with their faces; and the new message, with a snapshot of the user before it,
@@ -38,9 +39,9 @@ the model is limited and counted (ADR 0051).
   answer without one is neutral.
 - **The turn is saved when the answer is done,** or when it stops short with text already given
   (the app stopped it, the budget ran out after a lookup, it was cut at the token limit): the
-  thread, if new, the user's message, and Bite's, with its lookups and their results, its face,
+  user's message and Bite's, with its lookups and their results, its face,
   and what its requests used. The lookups are trimmed to what a message may hold. An answer with
-  no text saves nothing.
+  no text saves nothing, and a thread started for it goes again.
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered
