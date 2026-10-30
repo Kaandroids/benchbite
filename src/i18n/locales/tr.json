@@ -659,7 +659,6 @@
     },
     "more": "+{{count}} tane daha",
     "title": "Antrenmanlar",
-    "today": "Bugün",
     "dayToday": "{{day}}, bugün",
     "anyDay": "Her gün",
     "activeCount_one": "Aktif · {{count}}",
