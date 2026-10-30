@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
@@ -9,8 +9,6 @@ import { Note } from '@/components/ui/note';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchField } from '@/components/ui/search-field';
-import { Toast } from '@/components/ui/toast';
-import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
@@ -22,15 +20,13 @@ import {
   type Amount,
   type FoodResult,
 } from './foods';
-import { useAddEntry, useUndoEstimate } from './entries';
+import { useAddEntry } from './entries';
 import { FoodRow, useRowLabels } from './food-row';
-import { takeLoggedEstimate, type HandedEstimate } from './logged-estimate';
-import { photosParam } from './meal-estimate';
-import { MealPhotoSheet } from './meal-photo-sheet';
 import type { Meal } from './meals';
 import { useFavouriteKeys } from './quick-foods';
 import { QuickFoods, type QuickFoodRow } from './quick-foods-view';
 import { SearchResults } from './search-results';
+import { useLoggedEstimate } from './use-logged-estimate';
 
 type FoodSearchScreenProps = {
   meal: Meal;
@@ -59,39 +55,24 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   // whose + waits so that a double tap does not add them twice.
   const [added, setAdded] = useState<string[]>([]);
   const [saving, setSaving] = useState<string[]>([]);
-  const { format } = useNumberFormat();
-  const undoEstimate = useUndoEstimate();
-  const [photoSheet, setPhotoSheet] = useState(false);
-  // The meal logged last from photos, which the toast offers to undo.
-  const [logged, setLogged] = useState<HandedEstimate | null>(null);
-
-  // A meal logged on the photo screen comes back here, its foods shown as added.
-  useFocusEffect(
-    useCallback(() => {
-      const estimate = takeLoggedEstimate(meal, day);
-      if (estimate) {
-        setLogged(estimate);
-        setAdded((current) => [...current, ...estimate.foods.map(refKey)]);
-      }
-    }, [meal, day]),
-  );
-  const hideToast = useCallback(() => setLogged(null), []);
-
-  const undo = (estimate: HandedEstimate) =>
-    undoEstimate.mutate(estimate, {
-      onSuccess: () => {
-        // Each food once: one also added by hand keeps its check.
-        const keys = estimate.foods.map(refKey);
-        setAdded((current) =>
-          current.filter((key) => {
-            const index = keys.indexOf(key);
-            if (index === -1) return true;
-            keys.splice(index, 1);
-            return false;
-          }),
-        );
-      },
-    });
+  const photoMeal = useLoggedEstimate({
+    meal,
+    day,
+    onAdded: useCallback((keys: string[]) => setAdded((current) => [...current, ...keys]), []),
+    // Each food once: one also added by hand keeps its check.
+    onUndone: useCallback(
+      (keys: string[]) =>
+        setAdded((current) => {
+          const left = [...keys];
+          return current.filter((key) => {
+            const index = left.indexOf(key);
+            if (index !== -1) left.splice(index, 1);
+            return index === -1;
+          });
+        }),
+      [],
+    ),
+  });
 
   // Handled per call: callbacks passed to mutate() run only for the latest one.
   const quickAdd = (food: FoodResult, amount: Amount) => {
@@ -172,18 +153,7 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       // so that nothing else there is taken for it.
       footer={
         <View style={{ gap: spacing.md }}>
-          {logged ? (
-            <Toast
-              // A new toast for each meal, so that its time and announcement start again.
-              key={logged.entryIds.join()}
-              message={t('nutrition.photo.added', {
-                count: logged.count,
-                calories: format(logged.calories),
-              })}
-              action={{ label: t('nutrition.meal.undo'), onPress: () => undo(logged) }}
-              onHide={hideToast}
-            />
-          ) : null}
+          {photoMeal.toast}
           <Button label={t('common.done')} onPress={() => router.back()} />
         </View>
       }
@@ -206,24 +176,14 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
             background="iconBackground"
             size={48}
             label={t('nutrition.photo.camera')}
-            onPress={() => setPhotoSheet(true)}
+            onPress={photoMeal.openSheet}
           />
         </View>
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
-        {undoEstimate.isError ? <Note tone="danger">{t('nutrition.photo.undoError')}</Note> : null}
+        {photoMeal.undoFailed ? <Note tone="danger">{t('nutrition.photo.undoError')}</Note> : null}
       </View>
       {body}
-      {photoSheet ? (
-        <MealPhotoSheet
-          onPick={(photos) =>
-            router.push({
-              pathname: '/nutrition/photo',
-              params: { meal, day, photos: photosParam.format(photos) },
-            })
-          }
-          onClose={() => setPhotoSheet(false)}
-        />
-      ) : null}
+      {photoMeal.sheet}
     </Screen>
   );
 }

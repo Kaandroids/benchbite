@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
 import { useAddEntry, useCopyEntries, useUndoEstimate } from './entries';
-import { handOverLoggedEstimate } from './logged-estimate';
+import { handOverLoggedEstimate, mealPhotos } from './meal-photo-handover';
 import { useFoodSearch, type FoodResult } from './foods';
 import { usePastMeal, type LoggedEntry } from './meals';
 import { useRecipes } from './recipes';
@@ -407,13 +407,19 @@ describe('FoodSearchScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Take a photo' }));
 
     expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
-    // Once the sheet has closed, as iOS opens the camera only then.
-    await waitFor(() =>
-      expect(router.push).toHaveBeenCalledWith({
-        pathname: '/nutrition/photo',
-        params: { meal: 'dinner', day: '2026-10-27', photos: '["file://plate.jpg"]' },
-      }),
-    );
+    // Once the sheet has closed, as iOS opens the camera only then. The photos are handed over
+    // in the app, and only their key goes in the route.
+    await waitFor(() => expect(router.push).toHaveBeenCalled());
+    const { pathname, params } = jest.mocked(router.push).mock.calls[0]![0] as {
+      pathname: string;
+      params: { meal: string; day: string; photos: string };
+    };
+    expect([pathname, params.meal, params.day]).toEqual([
+      '/nutrition/photo',
+      'dinner',
+      '2026-10-27',
+    ]);
+    expect(mealPhotos(params.photos)).toEqual(['file://plate.jpg']);
   });
 
   it('shows a meal logged from photos as added, and undoes it', async () => {
@@ -425,8 +431,7 @@ describe('FoodSearchScreen', () => {
       entryIds: [11, 12],
       foods: [OATS.ref, { kind: 'custom' as const, id: 5 }],
       createdFoodIds: [5],
-      count: 2,
-      calories: 1234,
+      calories: 1234.4,
     };
     handOverLoggedEstimate(estimate);
     await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
@@ -448,7 +453,6 @@ describe('FoodSearchScreen', () => {
       entryIds: [11],
       foods: [OATS.ref],
       createdFoodIds: [],
-      count: 1,
       calories: 174,
     });
     await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
