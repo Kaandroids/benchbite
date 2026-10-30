@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 
@@ -16,13 +17,16 @@ type PlanRowProps = {
   title: string;
   /** Under the title, such as the workout's size. */
   children: ReactNode;
-  /** At the end of the row, such as a round button in `color`. */
-  action: ReactNode;
+  /** The round button at the end of the row, filled in `color`. */
+  actionIcon: IconName;
+  /** What screen readers call the button. */
+  actionLabel: string;
+  onAction: () => void;
 };
 
 /**
  * The layout that the cards of the plan on Today share, such as a missed workout and today's: an
- * icon, the caption, the title and what goes under it, and an action at the end (#333).
+ * icon, the caption, the title and what goes under it, and a round button at the end (#333).
  */
 export function PlanRow({
   icon,
@@ -31,7 +35,9 @@ export function PlanRow({
   caption,
   title,
   children,
-  action,
+  actionIcon,
+  actionLabel,
+  onAction,
 }: PlanRowProps) {
   const { spacing } = useTheme();
   return (
@@ -46,7 +52,14 @@ export function PlanRow({
         </Text>
         {children}
       </View>
-      {action}
+      <RoundIconButton
+        icon={actionIcon}
+        color="onPrimary"
+        background={color}
+        size={44}
+        label={actionLabel}
+        onPress={onAction}
+      />
     </View>
   );
 }

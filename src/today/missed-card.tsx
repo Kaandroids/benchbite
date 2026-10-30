@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
 import { Card, type CardProps } from '@/components/ui/card';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { useSessionSize, useWorkoutName } from '@/workouts/format';
@@ -53,16 +52,9 @@ export function MissedCard({ missed, onCatchUp, entering }: MissedCardProps) {
         background="snackBackground"
         caption={caption}
         title={title}
-        action={
-          <RoundIconButton
-            icon="redo"
-            color="onPrimary"
-            background="snack"
-            size={44}
-            label={t('today.missed.catchUp')}
-            onPress={onCatchUp}
-          />
-        }
+        actionIcon="redo"
+        actionLabel={t('today.missed.catchUp')}
+        onAction={onCatchUp}
       >
         <Text variant="caption" color="textMuted">
           {detail}

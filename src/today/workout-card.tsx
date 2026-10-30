@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
@@ -91,16 +90,9 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
             background="breakfastBackground"
             caption={t('today.workout.title')}
             title={workoutName(session)}
-            action={
-              <RoundIconButton
-                icon="forward"
-                color="onPrimary"
-                background="breakfast"
-                size={44}
-                label={t('today.workout.openLabel')}
-                onPress={() => openWorkout(session)}
-              />
-            }
+            actionIcon="forward"
+            actionLabel={t('today.workout.openLabel')}
+            onAction={() => openWorkout(session)}
           >
             <Text variant="caption" color="textMuted">
               {sessionSize(session)}
