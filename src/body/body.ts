@@ -2,7 +2,7 @@
 // goal show and allow; the calorie targets themselves are calculated in the database (ADR 0009).
 import { MIN_HEALTHY_BMI, paceLevel as levelOf, type PaceLevel } from '@shared/body/limits';
 
-import { paceIn, toTenth, type WeightUnit } from '@/i18n/units';
+import { paceIn, paceToKg, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
 
@@ -124,24 +124,97 @@ export const PACE_RANGES: Record<'kg' | 'lb', Record<WeightGoal, PaceRange>> = {
 };
 
 /**
+ * The paces the slider offers the user, in the unit: losing stops a step before the app would
+ * call the pace aggressive for their weight (#332, ADR 0054), once saved in kilograms, where that
+ * comes before the fastest the targets allow; `byWeight` when it does.
+ */
+export function paceRange(
+  unit: WeightUnit,
+  goal: WeightGoal,
+  weightKg: number,
+): PaceRange & { byWeight: boolean } {
+  const range = PACE_RANGES[unit][goal];
+  let max = range.max;
+  // A weight not known yet stops nothing.
+  while (
+    goal === 'lose_fat' &&
+    weightKg > 0 &&
+    max > range.min &&
+    levelOf(true, weightKg, paceToKg(unit, max)) === 'aggressive'
+  ) {
+    max = Math.round((max - range.step) * 100) / 100;
+  }
+  return { ...range, max, default: Math.min(range.default, max), byWeight: max < range.max };
+}
+
+/**
  * The pace the slider starts at, in the unit: the saved one on the slider's steps, as one saved
  * before the limits changed may lie outside them, or the default.
  */
 export function startingPace(
   unit: WeightUnit,
   goal: WeightGoal,
+  weightKg: number,
   savedKg: number | null | undefined,
 ): number {
-  const range = PACE_RANGES[unit][goal];
+  const range = paceRange(unit, goal, weightKg);
   return savedKg == null ? range.default : snapPace(paceIn(unit, savedKg), range);
 }
 
-/** Whether a pace in kilograms lies within what the slider offers in the unit. */
-export function isPaceInRange(unit: WeightUnit, goal: WeightGoal, paceKg: number): boolean {
-  const range = PACE_RANGES[unit][goal];
+/** Whether a pace in kilograms lies within what the slider offers the user in the unit. */
+export function isPaceInRange(
+  unit: WeightUnit,
+  goal: WeightGoal,
+  weightKg: number,
+  paceKg: number,
+): boolean {
+  const range = paceRange(unit, goal, weightKg);
   const pace = paceIn(unit, paceKg);
   // A hundredth either way, as a pace comes back from the other unit rounded.
   return pace >= range.min - 0.01 && pace <= range.max + 0.01;
+}
+
+/**
+ * Whether the floor holds the targets below the chosen pace (ADR 0054), by more than rounding;
+ * `achievableKg` is what they give, 0 when they keep the weight, null when it is not known.
+ */
+export function isPaceHeldUp(
+  chosenKg: number,
+  achievableKg?: number | null,
+): achievableKg is number {
+  return achievableKg != null && achievableKg < chosenKg - 0.01;
+}
+
+/**
+ * How a goal is reached: at the chosen pace, at the slower one the floor holds the targets to
+ * (ADR 0054), or not at all, when they keep the weight; with when it is reached.
+ */
+export type GoalPace =
+  | { kind: 'chosen' | 'heldUp'; paceKg: number; date: Date }
+  | { kind: 'none'; paceKg: 0; date: null };
+
+export function goalPace(
+  weightKg: number,
+  targetKg: number,
+  chosenKg: number,
+  achievableKg: number | null | undefined,
+  from: Date,
+): GoalPace {
+  if (!isPaceHeldUp(chosenKg, achievableKg)) {
+    return {
+      kind: 'chosen',
+      paceKg: chosenKg,
+      date: projectedDate(weightKg, targetKg, chosenKg, from),
+    };
+  }
+  if (achievableKg <= 0) {
+    return { kind: 'none', paceKg: 0, date: null };
+  }
+  return {
+    kind: 'heldUp',
+    paceKg: achievableKg,
+    date: projectedDate(weightKg, targetKg, achievableKg, from),
+  };
 }
 
 /** How demanding a weekly pace is for the goal, as a share of body weight. */
@@ -170,12 +243,19 @@ export function weightGoal(answers: {
   goal?: Goal;
   targetWeightKg?: number;
   weeklyPaceKg?: number;
-}): { goal: WeightGoal; targetKg: number; paceKg: number } | null {
-  const { goal, targetWeightKg, weeklyPaceKg } = answers;
+  /** The pace the targets really give (ADR 0054), when it is known. */
+  achievablePaceKg?: number | null;
+}): {
+  goal: WeightGoal;
+  targetKg: number;
+  paceKg: number;
+  achievablePaceKg?: number | null;
+} | null {
+  const { goal, targetWeightKg, weeklyPaceKg, achievablePaceKg } = answers;
   if (!changesWeight(goal) || !targetWeightKg || !weeklyPaceKg) {
     return null;
   }
-  return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg };
+  return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg, achievablePaceKg };
 }
 
 /**

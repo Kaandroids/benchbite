@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { projectedDate, weightGoal } from '@/body/body';
+import { goalPace, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
@@ -49,9 +49,9 @@ export function SummaryStep() {
   const weekdays = days.map((day) => day.weekday).sort((a, b) => a - b);
   const unit = answers.weightUnit ?? 'kg';
   const aim = weightGoal(answers);
-  const goalDate =
+  const date =
     aim && answers.weightKg
-      ? projectedDate(answers.weightKg, aim.targetKg, aim.paceKg, today)
+      ? goalPace(answers.weightKg, aim.targetKg, aim.paceKg, answers.achievablePaceKg, today).date
       : null;
 
   useEffect(() => {
@@ -106,12 +106,12 @@ export function SummaryStep() {
             value={t('onboarding.summary.perWeek', { count: days.length })}
             detail={weekdays.map((day) => shortWeekday(day)).join(' · ')}
           />
-          {aim && goalDate ? (
+          {aim && date ? (
             <Tile
               delay={STEP_MS * 5}
               caption={t('onboarding.summary.goalTile')}
               value={weightLabel(aim.targetKg, unit)}
-              detail={t('onboarding.summary.by', { date: shortDate(goalDate) })}
+              detail={t('onboarding.summary.by', { date: shortDate(date) })}
             />
           ) : answers.sessionMinutes ? (
             <Tile

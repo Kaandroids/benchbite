@@ -44,12 +44,14 @@ export function ProgressScreen() {
         ),
     },
   ];
-  // The chart shows the target without waiting for it.
+  // The chart shows the target without waiting for it, dated by the pace the targets give; with
+  // one's own targets in use, there is none, and the chosen one dates it.
   const goal = basis.data
     ? weightGoal({
         goal: basis.data.goal,
         targetWeightKg: basis.data.targetWeightKg ?? undefined,
         weeklyPaceKg: basis.data.weeklyPaceKg ?? undefined,
+        achievablePaceKg: basis.data.achievablePaceKg,
       })
     : null;
 

@@ -20,7 +20,8 @@ export const PACE_LEVELS = { losing: [1, 1.5], gaining: [0.5, 1] } as const;
 
 /** How demanding a weekly pace is for the user's weight, losing or gaining. */
 export function paceLevel(losing: boolean, weightKg: number, weeklyPaceKg: number): PaceLevel {
-  const percent = (weeklyPaceKg / weightKg) * 100;
+  // To a hundredth of a percent, so that a pace of exactly 1.5 % is not judged over it.
+  const percent = Math.round((weeklyPaceKg / weightKg) * 10000) / 100;
   const [ideal, ambitious] = PACE_LEVELS[losing ? 'losing' : 'gaining'];
   return percent <= ideal ? 'ideal' : percent <= ambitious ? 'ambitious' : 'aggressive';
 }

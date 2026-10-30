@@ -1,3 +1,4 @@
+import { paceToKg } from '@/i18n/units';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
 
 import {
@@ -11,10 +12,13 @@ import {
   defaultTargetKg,
   isTargetInGoalDirection,
   isTargetReached,
+  goalPace,
+  isPaceHeldUp,
   isPaceInRange,
   isTooLightToLose,
   minHealthyWeightKg,
   paceLevel,
+  paceRange,
   projectedDate,
   snapPace,
   startingPace,
@@ -197,11 +201,71 @@ describe('isTargetReached', () => {
 
 describe('isPaceInRange', () => {
   it('takes a pace the slider offers in the unit, from either unit', () => {
-    expect(isPaceInRange('kg', 'lose_fat', 0.68)).toBe(true);
+    expect(isPaceInRange('kg', 'lose_fat', 80, 0.68)).toBe(true);
     // 2 lb a week, saved as 0.91 kg.
-    expect(isPaceInRange('kg', 'lose_fat', 0.91)).toBe(true);
-    expect(isPaceInRange('kg', 'lose_fat', 1.2)).toBe(false);
-    expect(isPaceInRange('lb', 'build_muscle', 0.1)).toBe(false);
+    expect(isPaceInRange('kg', 'lose_fat', 80, 0.91)).toBe(true);
+    expect(isPaceInRange('kg', 'lose_fat', 80, 1.2)).toBe(false);
+    expect(isPaceInRange('lb', 'build_muscle', 80, 0.1)).toBe(false);
+  });
+
+  it('takes no loss faster than the slider offers for the weight', () => {
+    expect(isPaceInRange('kg', 'lose_fat', 55, 0.8)).toBe(true);
+    expect(isPaceInRange('kg', 'lose_fat', 55, 0.9)).toBe(false);
+  });
+});
+
+describe('paceRange', () => {
+  it('stops losing at 1.5 % of body weight a week, on the steps, below the fastest pace', () => {
+    expect(paceRange('kg', 'lose_fat', 100).max).toBe(0.9);
+    // 1.5 % of 55 kg is 0.825 kg; of 121 lb, 1.82 lb.
+    expect(paceRange('kg', 'lose_fat', 55).max).toBe(0.8);
+    expect(paceRange('lb', 'lose_fat', 55).max).toBe(1.8);
+    expect(paceRange('kg', 'lose_fat', 30).max).toBe(0.45);
+  });
+
+  it('never stops at a pace the app calls aggressive, in either unit', () => {
+    // 1.8 lb is 0.82 kg once saved, 1.51 % of 54.45 kg.
+    expect(paceRange('lb', 'lose_fat', 54.45).max).toBe(1.7);
+    for (let weightKg = 30; weightKg <= 61; weightKg += 0.1) {
+      for (const unit of ['kg', 'lb'] as const) {
+        const max = paceToKg(unit, paceRange(unit, 'lose_fat', weightKg).max);
+        expect(paceLevel('lose_fat', weightKg, max)).not.toBe('aggressive');
+      }
+    }
+  });
+});
+
+describe('dating the goal', () => {
+  const from = new Date(2026, 0, 1);
+
+  it('dates by the chosen pace, unless the floor holds the targets below it', () => {
+    // 5 kg at 0.5 kg a week takes 10 weeks.
+    expect(goalPace(80, 75, 0.5, null, from)).toEqual({
+      kind: 'chosen',
+      paceKg: 0.5,
+      date: new Date(2026, 2, 12),
+    });
+    // Within rounding, the chosen pace still.
+    expect(goalPace(80, 75, 0.5, 0.49, from).kind).toBe('chosen');
+    expect(goalPace(80, 75, 0.9, 0.5, from)).toEqual({
+      kind: 'heldUp',
+      paceKg: 0.5,
+      date: new Date(2026, 2, 12),
+    });
+  });
+
+  it('gives no date when the targets keep the weight', () => {
+    expect(goalPace(50, 47, 0.5, 0, from)).toEqual({ kind: 'none', paceKg: 0, date: null });
+    expect(isPaceHeldUp(0.5, 0)).toBe(true);
+  });
+
+  it('keeps the paces of a goal to gain', () => {
+    expect(paceRange('kg', 'build_muscle', 45)).toEqual({
+      ...PACE_RANGES.kg.build_muscle,
+      byWeight: false,
+    });
+    expect(paceRange('kg', 'lose_fat', 55).byWeight).toBe(true);
+    expect(paceRange('kg', 'lose_fat', 60).byWeight).toBe(false);
   });
 });
 
@@ -212,13 +276,14 @@ describe('starting points', () => {
   });
 
   it("starts the pace at the saved one, on the slider's steps, or at the default", () => {
-    expect(startingPace('kg', 'lose_fat', 0.75)).toBe(0.75);
-    expect(startingPace('kg', 'lose_fat', null)).toBe(0.5);
-    expect(startingPace('kg', 'build_muscle', undefined)).toBe(0.25);
+    expect(startingPace('kg', 'lose_fat', 80, 0.75)).toBe(0.75);
+    expect(startingPace('kg', 'lose_fat', 80, null)).toBe(0.5);
+    expect(startingPace('kg', 'build_muscle', 80, undefined)).toBe(0.25);
     // 1 lb a week comes back from kilograms as 0.99 lb.
-    expect(startingPace('lb', 'lose_fat', 0.45)).toBe(1);
-    // Saved before the fastest pace came down.
-    expect(startingPace('kg', 'lose_fat', 1.2)).toBe(0.9);
+    expect(startingPace('lb', 'lose_fat', 80, 0.45)).toBe(1);
+    // Saved before the fastest pace came down, or for a weight that has since gone down.
+    expect(startingPace('kg', 'lose_fat', 80, 1.2)).toBe(0.9);
+    expect(startingPace('kg', 'lose_fat', 55, 0.9)).toBe(0.8);
   });
 });
 

@@ -198,6 +198,11 @@ export type TargetBasis = {
   heightCm: number;
   /** The least calories a day we recommend for the user (calorie_floor()). */
   calorieFloor: number | null;
+  /**
+   * The pace the targets really give, which the floor may hold below the chosen one (ADR 0054);
+   * null for a goal that keeps the weight.
+   */
+  achievablePaceKg: number | null;
 };
 
 /** The saved goal, activity, height and floor the targets come from; null before the onboarding. */
@@ -205,15 +210,19 @@ export function useTargetBasis() {
   return useQuery({
     queryKey: ['nutrition-targets', 'basis'],
     queryFn: async (): Promise<TargetBasis | null> => {
-      const [goal, profile] = await Promise.all([
+      const [goal, profile, pace] = await Promise.all([
         supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
         supabase.from('profiles').select('activity_level, height_cm, calorie_floor').maybeSingle(),
+        supabase.rpc('my_achievable_weekly_pace_kg'),
       ]);
       if (goal.error) {
         throw goal.error;
       }
       if (profile.error) {
         throw profile.error;
+      }
+      if (pace.error) {
+        throw pace.error;
       }
       if (!goal.data || !profile.data) {
         return null;
@@ -225,6 +234,7 @@ export function useTargetBasis() {
         activity: profile.data.activity_level,
         heightCm: profile.data.height_cm,
         calorieFloor: profile.data.calorie_floor,
+        achievablePaceKg: pace.data,
       };
     },
   });

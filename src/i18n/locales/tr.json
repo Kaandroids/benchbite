@@ -569,6 +569,10 @@
       "keeping": "Olduğu gibi kalıyor",
       "perWeek": "Haftada {{value}} {{unit}}",
       "by": "{{date}} tarihine kadar",
+      "aboutPerWeek": "Haftada yaklaşık {{value}} {{unit}}",
+      "noLoss": "Bu kalorilerle kilo kaybı yok",
+      "keeps": "{{chosen}} {{unit}} seçtin, ama kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor; bu yaklaşık harcadığın kadar.",
+      "heldUp": "{{chosen}} {{unit}} seçtin, ama kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor. {{date}} tarihine kadar",
       "macrosMake": "Protein, karbonhidrat ve yağ {{calories}} kcal'nin {{macros}} kcal'sini oluşturuyor.",
       "belowFloor": "{{calories}} kcal, önerdiğimiz en düşük değer olan {{floor}} kcal'nin altında. Bu kadar az yemeyi yalnızca doktor gözetiminde yap.",
       "tooMuch": "Protein, karbonhidrat ve yağ {{macros}} kcal ediyor, hedefteki {{calories}} kcal'den fazla. Bir makroyu azalt ya da kaloriyi artır.",
@@ -1166,6 +1170,9 @@
     "plan": {
       "nutrition": "Günlük hedeflerin",
       "weight": "Kilon",
+      "heldUp": "{{chosen}} değil, haftada yaklaşık {{pace}} {{unit}}: kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor. Daha fazla hareket hızlandırır.",
+      "noDate": "Bu kalorilerle değil",
+      "keeps": "Kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor; bu yaklaşık harcadığın kadar, yani kilonu koruyor. Daha fazla hareket kilo vermeni sağlar.",
       "week": "Haftan",
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",
@@ -1255,6 +1262,7 @@
       },
       "projected": "{{date}} tarihine kadar {{weight}} {{unit}} olabilirsin.",
       "disclaimer": "Bunlar tahmindir, tıbbi tavsiye değildir.",
+      "fastestForWeight": "Bu, kilona göre önerdiğimiz en hızlı tempo: haftada kilonun %{{percent}}'i. Daha hızlı vermek çoğunlukla kas kaybettirir ve sürdürmesi zordur.",
       "fastest": {
         "lose_fat": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo vermek çoğunlukla kas kaybına yol açar ve sürdürmesi zordur.",
         "build_muscle": "Önerdiğimiz en yüksek hız bu. Daha hızlı kilo almak kas değil, çoğunlukla yağ ekler."

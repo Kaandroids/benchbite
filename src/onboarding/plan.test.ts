@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 import {
+  calculateAchievablePace,
   calculateTargets,
   generatePlan,
   refusedAnswer,
@@ -91,6 +92,15 @@ describe('calculateTargets', () => {
       target_weight_kg: 65,
       weekly_pace_kg: 0.5,
     });
+  });
+
+  it('asks for the pace the targets give for the same answers', async () => {
+    rpc.mockResolvedValue({ data: 0.45, error: null });
+    await expect(calculateAchievablePace(ANSWERS)).resolves.toBe(0.45);
+    expect(rpc).toHaveBeenCalledWith(
+      'achievable_weekly_pace_kg',
+      expect.objectContaining({ weight_kg: 72.5, goal: 'lose_fat', weekly_pace_kg: 0.5 }),
+    );
   });
 
   it('leaves out the target weight and pace when the goal has none', async () => {
@@ -199,6 +209,7 @@ describe('saveOnboarding', () => {
       ...ANSWERS,
       plan: PLAN,
       targets: { calories: 1850, proteinG: 130, carbsG: 190, fatG: 62 },
+      achievablePaceKg: 0.45,
       reminderMinutes: 18 * 60,
     };
     await saveOnboarding(answers, PLAN);

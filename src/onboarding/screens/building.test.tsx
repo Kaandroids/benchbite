@@ -6,7 +6,11 @@ import { BuildingStep } from './building';
 
 let mockStep = createStep();
 jest.mock('@/onboarding/use-step', () => ({ useStep: () => mockStep }));
-jest.mock('@/onboarding/plan', () => ({ calculateTargets: jest.fn(), generatePlan: jest.fn() }));
+jest.mock('@/onboarding/plan', () => ({
+  calculateAchievablePace: jest.fn().mockResolvedValue(0.5),
+  calculateTargets: jest.fn(),
+  generatePlan: jest.fn(),
+}));
 
 const TARGETS = { calories: 2200, proteinG: 150, carbsG: 250, fatG: 70 };
 const PLAN: WorkoutPlan = { sessions: [] };
@@ -64,7 +68,11 @@ describe('BuildingStep', () => {
     // It waits for the user rather than moving on by itself.
     expect(mockStep.next).not.toHaveBeenCalled();
     await fireEvent.press(seeMyPlan()!);
-    expect(mockStep.next).toHaveBeenCalledWith({ targets: TARGETS, plan: PLAN });
+    expect(mockStep.next).toHaveBeenCalledWith({
+      targets: TARGETS,
+      achievablePaceKg: 0.5,
+      plan: PLAN,
+    });
   });
 
   it('waits on the last line until the work is done', async () => {

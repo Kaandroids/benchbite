@@ -111,6 +111,29 @@ describe('PlanStep', () => {
     expect(screen.getByText('Squat · Deadlift')).toBeTruthy();
   });
 
+  it('dates the goal by the pace the targets give, and says why when it is slower', async () => {
+    jest.useFakeTimers({ now: new Date(2026, 0, 1) });
+    mockStep = createStep({ ...ANSWERS, weeklyPaceKg: 0.9, achievablePaceKg: 0.5 });
+    await render(<PlanStep />);
+    // 5 kg at 0.5 kg a week takes 10 weeks.
+    expect(screen.getByText('Mar 12, 2026')).toBeTruthy();
+    expect(screen.getByText(/^About 0\.5 kg a week, not 0\.9: your calories stay at/)).toBeTruthy();
+    jest.useRealTimers();
+  });
+
+  it('gives no date when the targets keep the weight, and says why', async () => {
+    mockStep = createStep({ ...ANSWERS, achievablePaceKg: 0 });
+    await render(<PlanStep />);
+    expect(screen.getByText('Not at these calories')).toBeTruthy();
+    expect(screen.getByText(/about what you burn, so they keep your weight/)).toBeTruthy();
+  });
+
+  it('says nothing more when the targets give the chosen pace', async () => {
+    mockStep = createStep({ ...ANSWERS, achievablePaceKg: 0.5 });
+    await render(<PlanStep />);
+    expect(screen.queryByText(/your calories stay at/)).toBeNull();
+  });
+
   it('shows the weight card for losing fat and building muscle only', async () => {
     await render(<PlanStep />);
     expect(screen.getByText('Your weight')).toBeTruthy();

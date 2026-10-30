@@ -1,16 +1,22 @@
 import { useTranslation } from 'react-i18next';
 
-import { PACE_RANGES, snapPace, weightGoal } from '@/body/body';
+import { paceRange, snapPace, weightGoal } from '@/body/body';
 import { Building, BuildingFooter, useBuildingAttempt } from '@/components/building';
 import { Screen } from '@/components/ui/screen';
 import { useWeekdayFormat } from '@/i18n/dates';
 import { paceIn, useNumberFormat } from '@/i18n/units';
 
-import { calculateTargets, generatePlan, type NutritionTargets, type WorkoutPlan } from '../plan';
+import {
+  calculateAchievablePace,
+  calculateTargets,
+  generatePlan,
+  type NutritionTargets,
+  type WorkoutPlan,
+} from '../plan';
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
 
-type Result = { targets: NutritionTargets; plan: WorkoutPlan };
+type Result = { targets: NutritionTargets; achievablePaceKg: number | null; plan: WorkoutPlan };
 
 /**
  * Calculates the nutrition targets and builds the workout plan while the plate fills up and lines
@@ -52,8 +58,12 @@ export function BuildingStep() {
 
 /** The targets and the plan from the answers, worked out together. */
 async function build(answers: OnboardingAnswers): Promise<Result> {
-  const [targets, plan] = await Promise.all([calculateTargets(answers), generatePlan(answers)]);
-  return { targets, plan };
+  const [targets, achievablePaceKg, plan] = await Promise.all([
+    calculateTargets(answers),
+    calculateAchievablePace(answers),
+    generatePlan(answers),
+  ]);
+  return { targets, achievablePaceKg, plan };
 }
 
 /** The lines about the plan, from the user's answers: the calories, the exercises, the week. */
@@ -66,9 +76,12 @@ function usePlanLines(answers: OnboardingAnswers): string[] {
   // Read back as the pace step shows it, on the slider's steps, so the line repeats the choice.
   const pace =
     aim &&
-    `${format(snapPace(paceIn(unit, aim.paceKg), PACE_RANGES[unit][aim.goal]), {
-      maximumFractionDigits: 2,
-    })} ${unit}`;
+    `${format(
+      snapPace(paceIn(unit, aim.paceKg), paceRange(unit, aim.goal, answers.weightKg ?? 0)),
+      {
+        maximumFractionDigits: 2,
+      },
+    )} ${unit}`;
   const days = answers.trainingDays ?? [];
   return [
     aim

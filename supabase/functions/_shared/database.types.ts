@@ -1420,6 +1420,21 @@ export type Database = {
       };
     };
     Functions: {
+      achievable_weekly_pace_kg: {
+        Args: {
+          activity_level: Database['public']['Enums']['activity_level'];
+          age: number;
+          goal: Database['public']['Enums']['goal_kind'];
+          height_cm: number;
+          pregnant_or_breastfeeding?: boolean;
+          sex: Database['public']['Enums']['sex'];
+          target_weight_kg?: number;
+          training_days_per_week: number;
+          weekly_pace_kg?: number;
+          weight_kg: number;
+        };
+        Returns: number;
+      };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
@@ -1769,6 +1784,7 @@ export type Database = {
         Args: { from_on: string; to_on: string; workout_id: number };
         Returns: undefined;
       };
+      my_achievable_weekly_pace_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_latest_weight_kg: { Args: Record<PropertyKey, never>; Returns: number };
       my_nutrition_targets: {
         Args: Record<PropertyKey, never>;
@@ -2019,6 +2035,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {

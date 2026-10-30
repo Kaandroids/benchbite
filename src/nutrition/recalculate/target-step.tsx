@@ -40,7 +40,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
   const [targetKg, setTargetKg] = useState(
     answers.targetWeightKg ?? defaultTargetKg(goal, weightKg, basis.heightCm),
   );
-  const [pace, setPace] = useState(() => startingPace(unit, goal, answers.weeklyPaceKg));
+  const [pace, setPace] = useState(() => startingPace(unit, goal, weightKg, answers.weeklyPaceKg));
   const [paceMoved, setPaceMoved] = useState(false);
 
   // Someone already at the lower end of a healthy weight should not lose more.
@@ -62,7 +62,9 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
   // in the other unit does, and would then count as a change nobody made.
   const saved = answers.weeklyPaceKg;
   const paceKg =
-    !paceMoved && saved !== null && isPaceInRange(unit, goal, saved) ? saved : paceToKg(unit, pace);
+    !paceMoved && saved !== null && isPaceInRange(unit, goal, weightKg, saved)
+      ? saved
+      : paceToKg(unit, pace);
   const change = (steps: number) => {
     const shown = weightIn(unit, targetKg) + steps * TARGET_STEP[unit];
     setTargetKg(clamp(weightToKg(unit, shown), WEIGHT_RANGE_KG.min, WEIGHT_RANGE_KG.max));
@@ -135,6 +137,7 @@ export function TargetStep({ answers, basis, weightKg, unit, progress, next }: S
           <PaceSlider
             goal={goal}
             unit={unit}
+            weightKg={weightKg}
             value={pace}
             onChange={(value) => {
               setPace(value);

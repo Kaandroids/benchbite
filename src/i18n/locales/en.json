@@ -569,6 +569,10 @@
       "keeping": "Kept as it is",
       "perWeek": "{{value}} {{unit}} a week",
       "by": "By {{date}}",
+      "aboutPerWeek": "About {{value}} {{unit}} a week",
+      "noLoss": "No loss at these calories",
+      "keeps": "You chose {{chosen}} {{unit}}, but your calories stay at {{calories}} kcal, the least we recommend, about what you burn.",
+      "heldUp": "You chose {{chosen}} {{unit}}, but your calories stay at {{calories}} kcal, the least we recommend. By {{date}}",
       "macrosMake": "Protein, carbs and fat make {{macros}} of the {{calories}} kcal.",
       "belowFloor": "{{calories}} kcal is below {{floor}} kcal, the least we recommend. Eat this little only with a doctor's care.",
       "tooMuch": "Protein, carbs and fat make {{macros}} kcal, more than the {{calories}} kcal of the goal. Lower a macro or raise the calories.",
@@ -1166,6 +1170,9 @@
     "plan": {
       "nutrition": "Your daily targets",
       "weight": "Your weight",
+      "heldUp": "About {{pace}} {{unit}} a week, not {{chosen}}: your calories stay at {{calories}} kcal, the least we recommend. Moving more makes it faster.",
+      "noDate": "Not at these calories",
+      "keeps": "Your calories stay at {{calories}} kcal, the least we recommend, about what you burn, so they keep your weight. Moving more lets you lose.",
       "week": "Your week",
       "start": "Start my plan",
       "saveError": "We couldn't save your plan. Check your connection and try again.",
@@ -1255,6 +1262,7 @@
       },
       "projected": "You could reach {{weight}} {{unit}} by {{date}}.",
       "disclaimer": "These are estimates, not medical advice.",
+      "fastestForWeight": "This is the fastest pace for your weight: {{percent}}% of it a week. Losing faster mostly costs muscle and is hard to keep up.",
       "fastest": {
         "lose_fat": "This is the fastest pace we recommend. Losing weight faster mostly costs muscle and is hard to keep up.",
         "build_muscle": "This is the fastest pace we recommend. Gaining weight faster mostly adds fat, not muscle."
