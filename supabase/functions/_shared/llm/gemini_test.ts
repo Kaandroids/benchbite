@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from '@std/assert';
-import { GeminiModel } from './gemini.ts';
+import { geminiSchema, GeminiModel } from './gemini.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from './types.ts';
 
 const CHAT = { model: 'gemini-chat', thinking: 'low' } as const;
@@ -362,4 +362,43 @@ Deno.test('throws a model error, retryable for limits and outages only', async (
     ModelError,
   );
   assertEquals([bad.status, bad.retryable], [400, false]);
+});
+
+Deno.test('sends a response schema as Gemini takes it, its string limits told in words', () => {
+  assertEquals(
+    geminiSchema({
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      type: 'object',
+      properties: {
+        grams: { type: 'number', exclusiveMinimum: 0, maximum: 5000 },
+        items: {
+          type: 'array',
+          maxItems: 3,
+          items: { type: 'object', properties: { name: { type: 'string', maxLength: 50 } } },
+        },
+        note: { type: 'string', description: 'A note.', maxLength: 200 },
+      },
+      required: ['grams'],
+      additionalProperties: false,
+    }),
+    {
+      type: 'object',
+      properties: {
+        grams: { type: 'number', minimum: 0, maximum: 5000 },
+        items: {
+          type: 'array',
+          maxItems: 3,
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', maxLength: 50, description: 'At most 50 characters.' },
+            },
+          },
+        },
+        note: { type: 'string', description: 'A note. At most 200 characters.', maxLength: 200 },
+      },
+      required: ['grams'],
+      additionalProperties: false,
+    },
+  );
 });

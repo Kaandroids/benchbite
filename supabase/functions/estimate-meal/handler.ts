@@ -23,7 +23,7 @@ import {
 } from '../_shared/meal/estimate.ts';
 import { type Language, LANGUAGES } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
-import { RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
+import { ModelOutput, RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
 
 export type EstimateContext = {
   /** A client with the user's token, which starts the call and searches the foods as theirs. */
@@ -68,28 +68,6 @@ type EstimateRequest = z.infer<typeof EstimateRequest>;
  */
 const MAX_BODY_CHARS = Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + 20_000;
 
-/** What the model answers, which `RESPONSE_SCHEMA` asks for; anything else is not used. */
-const ModelOutput = z.object({
-  isFood: z.boolean(),
-  items: z
-    .array(
-      z.object({
-        name: z.string().trim().min(1).max(100),
-        searchName: z.string().trim().max(100),
-        grams: z.number().positive().max(5000),
-        confidence: z.number().min(0).max(1),
-        per100: z.object({
-          kcal: z.number().min(0).max(900),
-          proteinG: z.number().min(0).max(100),
-          carbsG: z.number().min(0).max(100),
-          fatG: z.number().min(0).max(100),
-        }),
-        note: z.string().trim().max(200).optional(),
-      }),
-    )
-    .max(MAX_ESTIMATE_ITEMS),
-  note: z.string().trim().max(500).optional(),
-});
 type ModelItem = z.infer<typeof ModelOutput>['items'][number];
 
 /** The HTTP status each reason is answered with. */
