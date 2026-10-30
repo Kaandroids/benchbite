@@ -3,18 +3,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deviceToday } from '@/i18n/dates';
-import { Constants, type Database } from '@/lib/database.types';
+import type { Database } from '@/lib/database.types';
 import { oneOf } from '@/lib/one-of';
 import { supabase } from '@/lib/supabase';
 
-import { type BiteExpressionName, type ChatEvent, streamChat } from './chat-stream';
+import {
+  type BiteExpressionName,
+  type ChatEvent,
+  ChatRequestError,
+  streamChat,
+} from './chat-stream';
 
 const ACCESS_KEY = ['ai', 'access'];
 
 type AccessReason = Database['public']['Enums']['ai_access_reason'];
-
-/** Every reason a message is refused, after which the function drops a thread it started for it. */
-const ACCESS_REASONS = Constants.public.Enums.ai_access_reason;
 
 /** Why the user may not chat with Bite at all now, as ai_access() says (ADR 0051). */
 const REFUSALS = [
@@ -152,8 +154,8 @@ export function useChat() {
             return;
           case 'error': {
             ended = true;
-            // A refused message's new thread is gone again: the next one starts its own.
-            if (oneOf(ACCESS_REASONS, event.reason)) threadId.current = threadBefore;
+            // A new thread the function dropped again: the next message starts its own.
+            if (event.dropped) threadId.current = threadBefore;
             const refusal = oneOf(REFUSALS, event.reason);
             if (refusal) setRefusal(refusal);
             else setFailure(oneOf(FAILURES, event.reason) ?? 'unavailable');
@@ -180,7 +182,9 @@ export function useChat() {
           setFailure('unavailable');
           cut = 'cut_off';
         }
-      } catch {
+      } catch (error) {
+        // A thread that is gone is left: the next message starts a new one.
+        if (error instanceof ChatRequestError && error.status === 404) threadId.current = undefined;
         // Stopped by the user, or no answer came: what came stays.
         if (controller.signal.aborted) cut = 'stopped';
         else {

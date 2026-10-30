@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
-import { type ChatEvent, type ChatRequest, streamChat } from './chat-stream';
+import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
 jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
@@ -279,9 +279,35 @@ it('forgets the new thread of a message that was refused', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
-    { event: 'error', reason: 'call_in_progress' },
+    { event: 'error', reason: 'call_in_progress', dropped: true },
   );
   await stream.end();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
+
+  expect(stream.request()?.threadId).toBeUndefined();
+});
+
+it('keeps the new thread of a question that stays in it unanswered', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'thread', threadId: 7 }, { event: 'error', reason: 'unavailable' });
+  await stream.end();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
+
+  expect(stream.request()?.threadId).toBe(7);
+});
+
+it('starts a new thread when its thread is gone', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'thread', threadId: 7 }, { event: 'error', reason: 'unavailable' });
+  await stream.end();
+  jest.mocked(streamChat).mockRejectedValueOnce(new ChatRequestError(404));
+  await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
 
   await fireEvent.press(screen.getByRole('button', { name: 'Ask again' }));
 

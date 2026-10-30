@@ -273,7 +273,7 @@ Deno.test('drops a new thread when the request is refused after it began', async
 
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
     { event: 'thread', threadId: 100 },
-    { event: 'error', reason: 'call_in_progress' },
+    { event: 'error', reason: 'call_in_progress', dropped: true },
   ]);
   assertEquals(
     inserted.map(({ table }) => table),
@@ -412,6 +412,26 @@ Deno.test('keeps the question when the model fails before a word', async () => {
     ['coach_threads', 'coach_messages'],
   );
   assertEquals(deleted, []);
+});
+
+Deno.test('drops a new thread, and says so, when the model could not be asked', async () => {
+  const { ctx, inserted, deleted } = context(new FakeModel());
+  const client = ctx.supabase as unknown as { rpc: (name: string, args?: unknown) => unknown };
+  const rpc = client.rpc;
+  client.rpc = (name, args) =>
+    name === 'start_ai_call'
+      ? Promise.resolve({ data: null, error: { message: 'down' } })
+      : rpc(name, args);
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable', dropped: true },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
 });
 
 Deno.test('keeps nothing when the answer is stopped before the model is asked', async () => {

@@ -43,7 +43,8 @@ the model is limited and counted (ADR 0051).
   and what its requests used. The lookups are trimmed to what a message may hold. When Bite
   said nothing, a question the model was asked stays in the thread without an answer, as the app
   shows it, so that Bite sees it next time; a message that never reached the model, as when it
-  was refused or stopped first, is not kept, and a thread started for it goes again.
+  was refused or stopped first, is not kept, and a thread started for it goes again, which the
+  error says with `dropped`, so that the app starts the next message in a new one.
 - **The answer is in the app's language,** which the app sends, whatever language the data is in.
 
 ## Alternatives considered

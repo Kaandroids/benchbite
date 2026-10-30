@@ -67,10 +67,10 @@ export type ChatEvent =
   /** The turn is saved; `interrupted` says why when the answer stopped before its end. */
   | { event: 'done'; threadId: number; messageId: number; interrupted?: Interruption }
   /**
-   * Bite saved no answer, and why. The question is kept unless the user may not ask now, as
-   * when the budget is used up.
+   * Bite saved no answer, and why. The question is kept once the model was asked; `dropped` when
+   * the new thread begun for it is gone again.
    */
-  | { event: 'error'; reason: string };
+  | { event: 'error'; reason: string; dropped?: true };
 
 export async function handleChatRequest(req: Request, context: ChatContext): Promise<Response> {
   if (req.method !== 'POST') {
@@ -297,12 +297,10 @@ async function answer(
     const reason = failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable');
     // A question that reached the model stays in the thread without an answer, as the app shows
     // it, so that Bite sees it next time too; one that did not, as when refused, is not kept.
-    if (refused || !asked) {
-      if (!request.threadId) await keepAlive(dropThread(context, threadId));
-    } else {
-      await keepAlive(saveQuestion(context, threadId, request));
-    }
-    return send({ event: 'error', reason });
+    const dropped = (refused || !asked) && !request.threadId;
+    if (dropped) await keepAlive(dropThread(context, threadId));
+    else if (asked && !refused) await keepAlive(saveQuestion(context, threadId, request));
+    return send({ event: 'error', reason, ...(dropped && { dropped: true }) });
   }
   // What came is kept, as when the app stops the answer, and said to have stopped short.
   const interrupted: Interruption | undefined = refused

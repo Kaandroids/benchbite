@@ -23,9 +23,9 @@ export type ChatEvent =
     }
   /**
    * Bite saved no answer, and why: `plan_required`, `limit_reached`, `unavailable`… The question
-   * is kept unless the user may not ask now.
+   * is kept once the model was asked; `dropped` when the new thread begun for it is gone again.
    */
-  | { event: 'error'; reason: string };
+  | { event: 'error'; reason: string; dropped?: true };
 
 export type ChatRequest = {
   message: string;
