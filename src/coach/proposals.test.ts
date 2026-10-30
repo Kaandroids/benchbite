@@ -67,19 +67,19 @@ describe('proposalFailure', () => {
 
 describe('useProposalStates', () => {
   it('loads where the proposals stand, by id', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-30T12:00:00Z'), advanceTimers: true });
     const inIds = proposalRows([
       { id: 7, status: 'applied', expires_at: '2026-11-06T12:00:00Z' },
       { id: 8, status: 'pending', expires_at: '2026-11-06T12:00:00Z' },
+      { id: 9, status: 'pending', expires_at: '2026-10-29T12:00:00Z' },
     ]);
-    const { result } = await renderHook(() => useProposalStates([8, 7]));
+    const { result } = await renderHook(() => useProposalStates([8, 7, 9]));
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(supabase.from).toHaveBeenCalledWith('coach_proposals');
-    expect(inIds).toHaveBeenCalledWith('id', [8, 7]);
-    expect(result.current.data?.get(7)).toEqual({
-      status: 'applied',
-      expiresAt: new Date('2026-11-06T12:00:00Z'),
-    });
+    expect(inIds).toHaveBeenCalledWith('id', [8, 7, 9]);
+    expect(result.current.data?.get(7)).toEqual({ status: 'applied', expired: false });
+    expect(result.current.data?.get(9)).toEqual({ status: 'pending', expired: true });
     expect(result.current.data?.get(8)?.status).toBe('pending');
   });
 

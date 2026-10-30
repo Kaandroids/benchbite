@@ -16,13 +16,18 @@ import { supabase } from '@/lib/supabase';
 import { reloadTargets } from '@/nutrition/targets';
 import { reloadPlan } from '@/workouts/workouts';
 
+import type { ChatMessage } from './use-chat';
+
 export const PROPOSALS_KEY = ['coach-proposals'];
 
 export type ProposalStatus = Database['public']['Enums']['coach_proposal_status'];
 export type ProposalDecision = Database['public']['Enums']['coach_proposal_decision'];
 
-/** Where a proposal stands: pending until the user decides, and how long it may wait. */
-export type ProposalState = { status: ProposalStatus; expiresAt: Date };
+/**
+ * Where a proposal stands: pending until the user decides, and whether it waited too long, as of
+ * when it loaded.
+ */
+export type ProposalState = { status: ProposalStatus; expired: boolean };
 
 /**
  * Why a decision was refused: what it changes changed since (BB035), it is out of date or decided
@@ -42,6 +47,11 @@ const FAILURES: Record<string, ProposalFailure> = {
 export function proposalFailure(error: unknown): ProposalFailure {
   const code = (error as { code?: unknown } | null)?.code;
   return (typeof code === 'string' && FAILURES[code]) || 'failed';
+}
+
+/** The ids of the proposals among `messages`, as `useProposalStates` loads them. */
+export function proposalIds(messages: ChatMessage[]): number[] {
+  return messages.flatMap((message) => message.proposals?.map((card) => card.id) ?? []);
 }
 
 /** The card a stored part of Bite's message keeps, when it is a proposal's tool result. */
@@ -74,8 +84,12 @@ type StateRow = Pick<
 >;
 
 function statesOf(rows: StateRow[]): Map<number, ProposalState> {
+  const now = Date.now();
   return new Map(
-    rows.map((row) => [row.id, { status: row.status, expiresAt: new Date(row.expires_at) }]),
+    rows.map((row) => [
+      row.id,
+      { status: row.status, expired: new Date(row.expires_at).getTime() <= now },
+    ]),
   );
 }
 
