@@ -57,7 +57,10 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
 
 function context(model: FakeModel, rpc: Record<string, unknown> = {}, tables = {}) {
-  const db = database({ start_ai_call: STARTED, record_ai_usage: 0.001, ...rpc }, tables);
+  const db = database(
+    { start_ai_call: STARTED, count_ai_call: STARTED, record_ai_usage: 0.001, ...rpc },
+    tables,
+  );
   const ctx: ChatContext = { supabase: db.client, admin: db.client, userId: 'user-1', model };
   return { ctx, inserted: db.inserted, deleted: db.deleted };
 }

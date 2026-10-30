@@ -45,6 +45,7 @@ export type Database = {
       ai_calls_in_flight: {
         Row: {
           call_id: string;
+          counted: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
           reserved_usd: number;
@@ -54,6 +55,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           call_id?: string;
+          counted?: boolean;
           feature: Database['public']['Enums']['ai_feature'];
           model: string;
           reserved_usd: number;
@@ -62,6 +64,7 @@ export type Database = {
         };
         Update: {
           call_id?: string;
+          counted?: boolean;
           feature?: Database['public']['Enums']['ai_feature'];
           model?: string;
           reserved_usd?: number;
@@ -1447,6 +1450,22 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      ai_call_refusal: {
+        Args: {
+          budget_usd: number;
+          input_tokens: number;
+          limits: Omit<
+            Database['public']['Tables']['ai_feature_limits']['Row'],
+            Database['public']['Tables']['ai_feature_limits']['ComputedFields']
+          >;
+          other_used_usd: number;
+          price: Omit<
+            Database['public']['Tables']['ai_model_prices']['Row'],
+            Database['public']['Tables']['ai_model_prices']['ComputedFields']
+          >;
+        };
+        Returns: Database['public']['Enums']['ai_access_reason'];
+      };
       ai_cost: {
         Args: {
           cached_input_tokens: number;
@@ -1534,6 +1553,16 @@ export type Database = {
       copy_meal_entries: {
         Args: { entry_ids: number[]; to_day: string; to_meal: Database['public']['Enums']['meal'] };
         Returns: number;
+      };
+      count_ai_call: {
+        Args: { call_id: string; input_tokens: number };
+        Returns: Database['public']['CompositeTypes']['ai_call'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_call';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       create_exercise: { Args: { exercise: Json }; Returns: string };
       custom_exercise_fields: {
