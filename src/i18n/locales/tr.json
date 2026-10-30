@@ -790,7 +790,8 @@
         "rename": "Yeniden adlandırılamadı. Tekrar dene.",
         "delete": "Silinemedi. Tekrar dene.",
         "reorder": "Sıralama kaydedilemedi. Tekrar dene."
-      }
+      },
+      "title": "Alternatifler"
     }
   },
   "exercise": {

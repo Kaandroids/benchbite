@@ -790,7 +790,8 @@
         "rename": "Sie konnte nicht umbenannt werden. Versuch es noch einmal.",
         "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
         "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
-      }
+      },
+      "title": "Alternativen"
     }
   },
   "exercise": {

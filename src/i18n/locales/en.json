@@ -790,7 +790,8 @@
         "rename": "We couldn't rename it. Try again.",
         "delete": "We couldn't delete it. Try again.",
         "reorder": "We couldn't save the order. Try again."
-      }
+      },
+      "title": "Alternatives"
     }
   },
   "exercise": {
