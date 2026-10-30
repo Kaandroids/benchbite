@@ -1,6 +1,6 @@
 # 0049. Gemini behind our own language model interface
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0051
 - **Date:** 2026-10-29
 
 ## Context

@@ -23,6 +23,143 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_budgets: {
+        Row: {
+          monthly_limit_usd: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          monthly_limit_usd: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          monthly_limit_usd?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_calls_in_flight: {
+        Row: {
+          call_id: string;
+          feature: Database['public']['Enums']['ai_feature'];
+          model: string;
+          reserved_usd: number;
+          started_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          call_id?: string;
+          feature: Database['public']['Enums']['ai_feature'];
+          model: string;
+          reserved_usd: number;
+          started_at?: string;
+          user_id: string;
+        };
+        Update: {
+          call_id?: string;
+          feature?: Database['public']['Enums']['ai_feature'];
+          model?: string;
+          reserved_usd?: number;
+          started_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      ai_feature_limits: {
+        Row: {
+          feature: Database['public']['Enums']['ai_feature'];
+          max_input_tokens: number;
+          max_output_tokens: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          feature: Database['public']['Enums']['ai_feature'];
+          max_input_tokens: number;
+          max_output_tokens: number;
+        };
+        Update: {
+          feature?: Database['public']['Enums']['ai_feature'];
+          max_input_tokens?: number;
+          max_output_tokens?: number;
+        };
+        Relationships: [];
+      };
+      ai_model_prices: {
+        Row: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        Update: {
+          cached_input_usd?: number;
+          input_usd?: number;
+          model?: string;
+          output_usd?: number;
+          valid_from?: string;
+        };
+        Relationships: [];
+      };
+      ai_usage: {
+        Row: {
+          cached_input_tokens: number;
+          call_id: string;
+          cost_usd: number;
+          created_at: string;
+          estimated: boolean;
+          feature: Database['public']['Enums']['ai_feature'];
+          id: number;
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          thinking_tokens: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_input_tokens: number;
+          call_id: string;
+          cost_usd: number;
+          created_at?: string;
+          estimated?: boolean;
+          feature: Database['public']['Enums']['ai_feature'];
+          id?: never;
+          input_tokens: number;
+          model: string;
+          output_tokens: number;
+          thinking_tokens: number;
+          user_id: string;
+        };
+        Update: {
+          cached_input_tokens?: number;
+          call_id?: string;
+          cost_usd?: number;
+          created_at?: string;
+          estimated?: boolean;
+          feature?: Database['public']['Enums']['ai_feature'];
+          id?: never;
+          input_tokens?: number;
+          model?: string;
+          output_tokens?: number;
+          thinking_tokens?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_messages: {
         Row: {
           cached_input_tokens: number | null;
@@ -1284,6 +1421,44 @@ export type Database = {
     Functions: {
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
+      ai_access: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['ai_access'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_access';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      ai_cost: {
+        Args: {
+          cached_input_tokens: number;
+          input_tokens: number;
+          output_tokens: number;
+          price: Omit<
+            Database['public']['Tables']['ai_model_prices']['Row'],
+            Database['public']['Tables']['ai_model_prices']['ComputedFields']
+          >;
+        };
+        Returns: number;
+      };
+      ai_model_price: {
+        Args: { at: string; model: string };
+        Returns: {
+          cached_input_usd: number;
+          input_usd: number;
+          model: string;
+          output_usd: number;
+          valid_from: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'ai_model_prices';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
@@ -1655,6 +1830,17 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_ai_usage: {
+        Args: {
+          cached_input_tokens: number;
+          call_id: string;
+          input_tokens: number;
+          known?: boolean;
+          output_tokens: number;
+          thinking_tokens: number;
+        };
+        Returns: number;
+      };
       record_candidates: {
         Args: { exercise_id: string };
         Returns: {
@@ -1763,6 +1949,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      start_ai_call: {
+        Args: {
+          feature: Database['public']['Enums']['ai_feature'];
+          input_tokens: number;
+          model: string;
+        };
+        Returns: Database['public']['CompositeTypes']['ai_call'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_call';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       start_user_plan: { Args: { owner: string; today: string }; Returns: undefined };
       streak: {
         Args: { today: string };
@@ -1817,6 +2017,14 @@ export type Database = {
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
+      ai_access_reason:
+        | 'account_required'
+        | 'plan_required'
+        | 'limit_reached'
+        | 'request_too_large'
+        | 'unpriced_model'
+        | 'call_in_progress';
+      ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_role: 'user' | 'bite';
       equipment:
@@ -1922,6 +2130,19 @@ export type Database = {
       workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
     };
     CompositeTypes: {
+      ai_access: {
+        allowed: boolean | null;
+        reason: Database['public']['Enums']['ai_access_reason'] | null;
+        budget_usd: number | null;
+        used_usd: number | null;
+        resets_at: string | null;
+      };
+      ai_call: {
+        allowed: boolean | null;
+        reason: Database['public']['Enums']['ai_access_reason'] | null;
+        call_id: string | null;
+        max_output_tokens: number | null;
+      };
       break_workout: {
         id: number | null;
         name: string | null;
@@ -2046,6 +2267,15 @@ export const Constants = {
   public: {
     Enums: {
       activity_level: ['sedentary', 'light', 'moderate', 'active'],
+      ai_access_reason: [
+        'account_required',
+        'plan_required',
+        'limit_reached',
+        'request_too_large',
+        'unpriced_model',
+        'call_in_progress',
+      ],
+      ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_role: ['user', 'bite'],
       equipment: [

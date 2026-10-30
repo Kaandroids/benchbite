@@ -1,6 +1,8 @@
 // The language model as the Edge Functions see it (ADR 0049): our own messages, tools and events,
 // which each provider translates, so that the provider can change in one place.
 
+import type { Database } from '../database.types.ts';
+
 /** A JSON Schema, as tools and structured output describe their data. */
 export type JsonSchema = Record<string, unknown>;
 
@@ -36,8 +38,11 @@ export type Tool = {
   parameters: JsonSchema;
 };
 
-/** What a call is for; each task has its own model and settings (`config.ts`). */
-export type Task = 'chat' | 'mealPhoto' | 'review';
+/**
+ * What a call is for: the feature its usage is recorded under (ADR 0051), each with its own model
+ * and settings (`config.ts`).
+ */
+export type Task = Database['public']['Enums']['ai_feature'];
 
 export type ModelRequest = {
   task: Task;
@@ -47,11 +52,13 @@ export type ModelRequest = {
   tools?: Tool[];
   /** Asks for JSON in this shape instead of free text. */
   responseSchema?: JsonSchema;
+  /** Where the answer is cut, reasoning included. */
   maxOutputTokens?: number;
 };
 
 /** What a call used, which the costs are worked out from (#288). */
 export type Usage = {
+  /** The model asked for, not the version that answered, as a message keeps it (ADR 0050). */
   model: string;
   inputTokens: number;
   outputTokens: number;
@@ -82,20 +89,37 @@ export function streamedPart(part: Part): StreamedPart | undefined {
 }
 
 export interface LanguageModel {
+  /** The model a task runs on, by which its calls are priced (ADR 0051). */
+  model(task: Task): string;
+  /** How many tokens the request sends, counted by the provider without answering it. */
+  countTokens(request: ModelRequest): Promise<number>;
   /** The whole answer at once. */
   generate(request: ModelRequest): Promise<ModelResponse>;
-  /** The answer as it comes, ending with one `done` event. */
+  /**
+   * The answer as it comes, ending with one `done` event, which says what the call used. A
+   * stream left before then stops the request.
+   */
   stream(request: ModelRequest): AsyncIterable<StreamEvent>;
 }
 
-/** A call the provider refused or failed; `retryable` for limits and passing outages. */
+/**
+ * A call the provider refused or failed; `retryable` for limits and passing outages. `billed` is
+ * false when the provider refused the request outright, which uses nothing; otherwise the call
+ * failed part-way, having used what is not known.
+ */
 export class ModelError extends Error {
+  readonly status: number;
+  readonly retryable: boolean;
+  readonly billed: boolean;
+
   constructor(
     message: string,
-    readonly status: number,
-    readonly retryable: boolean,
+    { status, retryable, billed }: { status: number; retryable: boolean; billed: boolean },
   ) {
     super(message);
+    this.status = status;
+    this.retryable = retryable;
+    this.billed = billed;
     this.name = 'ModelError';
   }
 }

@@ -16,6 +16,9 @@ import {
 
 const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
+/** An answer whose connection ended before it did: worth another try, and billed for what came. */
+const BROKE_OFF = { status: 503, retryable: true, billed: true };
+
 export type GeminiOptions = {
   apiKey: string;
   /** The model and settings of each task. */
@@ -44,7 +47,6 @@ type GeminiResponse = {
     thoughtsTokenCount?: number;
     cachedContentTokenCount?: number;
   };
-  modelVersion?: string;
   /** An error the stream reports after it began, in place of an answer. */
   error?: { code?: number; message?: string };
 };
@@ -56,9 +58,38 @@ export class GeminiModel implements LanguageModel {
     this.#options = options;
   }
 
+  model(task: Task): string {
+    return this.#options.models(task).model;
+  }
+
+  async countTokens(request: ModelRequest): Promise<number> {
+    const config = this.#options.models(request.task);
+    const response = await this.#post(config.model, 'countTokens', {
+      generateContentRequest: {
+        model: `models/${config.model}`,
+        ...toGeminiRequest(request, config),
+      },
+    });
+    const body = (await response.json()) as { totalTokens?: number };
+    if (typeof body.totalTokens !== 'number') {
+      throw new ModelError('Gemini: countTokens gave no count', {
+        status: 502,
+        retryable: true,
+        billed: false,
+      });
+    }
+    return body.totalTokens;
+  }
+
   async generate(request: ModelRequest): Promise<ModelResponse> {
     const { model, response } = await this.#call(request, 'generateContent');
-    const body = (await response.json()) as GeminiResponse;
+    let body: GeminiResponse;
+    try {
+      body = await response.json();
+    } catch (error) {
+      // As when the connection drops before the whole answer came; what it used is unknown.
+      throw new ModelError(`Gemini: the answer broke off: ${messageOf(error)}`, BROKE_OFF);
+    }
     return {
       parts: answerParts(body).map(fromGeminiPart),
       usage: usageOf(body, model),
@@ -70,43 +101,64 @@ export class GeminiModel implements LanguageModel {
     const { model, response } = await this.#call(request, 'streamGenerateContent?alt=sse');
     let last: GeminiResponse = {};
     let usage: GeminiResponse['usageMetadata'];
-    for await (const chunk of serverSentEvents(response.body!)) {
-      if (chunk.error) {
-        const status = chunk.error.code ?? 500;
-        throw new ModelError(
-          `Gemini: ${status} ${chunk.error.message}`,
-          status,
-          isRetryable(status),
-        );
+    const chunks = serverSentEvents(response.body!)[Symbol.asyncIterator]();
+    try {
+      while (true) {
+        let next: IteratorResult<GeminiResponse>;
+        try {
+          next = await chunks.next();
+        } catch (error) {
+          throw new ModelError(`Gemini: the stream broke off: ${messageOf(error)}`, BROKE_OFF);
+        }
+        if (next.done) {
+          // A stream that ends cleanly but without its last chunk was cut off all the same.
+          if (!last.candidates?.[0]?.finishReason && !last.promptFeedback?.blockReason) {
+            throw new ModelError('Gemini: the stream ended before its answer did', BROKE_OFF);
+          }
+          break;
+        }
+        const chunk = next.value;
+        if (chunk.error) {
+          const status = chunk.error.code ?? 500;
+          throw new ModelError(`Gemini: ${status} ${chunk.error.message}`, {
+            status,
+            retryable: isRetryable(status),
+            billed: true,
+          });
+        }
+        last = chunk;
+        // Each chunk counts the whole call so far; the last one that counts is the total.
+        usage = chunk.usageMetadata ?? usage;
+        for (const part of answerParts(chunk)) {
+          const event = streamedPart(fromGeminiPart(part));
+          if (event) yield event;
+        }
       }
-      last = chunk;
-      // Each chunk counts the whole call so far; the last one that counts is the total.
-      usage = chunk.usageMetadata ?? usage;
-      for (const part of answerParts(chunk)) {
-        const event = streamedPart(fromGeminiPart(part));
-        if (event) yield event;
-      }
+    } finally {
+      // Left before its end, the stream closes its connection, so that the request stops.
+      await chunks.return?.();
     }
     yield {
       type: 'done',
       usage: usageOf({ ...last, usageMetadata: usage }, model),
-      // Only the last chunk of a stream says why it ended: without it, the stream broke off.
-      finish: finishOf(last, 'other'),
+      finish: finishOf(last),
     };
   }
 
   async #call(request: ModelRequest, method: string) {
     const config = this.#options.models(request.task);
-    const response = await (this.#options.fetch ?? fetch)(
-      `${BASE_URL}/models/${config.model}:${method}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': this.#options.apiKey },
-        body: JSON.stringify(toGeminiRequest(request, config)),
-      },
-    );
-    if (!response.ok) throw await modelError(response);
+    const response = await this.#post(config.model, method, toGeminiRequest(request, config));
     return { model: config.model, response };
+  }
+
+  async #post(model: string, method: string, body: unknown): Promise<Response> {
+    const response = await (this.#options.fetch ?? fetch)(`${BASE_URL}/models/${model}:${method}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': this.#options.apiKey },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw await modelError(response);
+    return response;
   }
 }
 
@@ -186,7 +238,8 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   const usage = response.usageMetadata ?? {};
   const thinkingTokens = usage.thoughtsTokenCount ?? 0;
   return {
-    model: response.modelVersion ?? model,
+    // The model asked for, not the version Gemini says answered.
+    model,
     inputTokens: usage.promptTokenCount ?? 0,
     // Gemini counts the reasoning apart from the answer, but bills both as output.
     outputTokens: (usage.candidatesTokenCount ?? 0) + thinkingTokens,
@@ -195,12 +248,10 @@ function usageOf(response: GeminiResponse, model: string): Usage {
   };
 }
 
-/** Why the answer ended; `unsaid` when Gemini gives no reason. */
-function finishOf(response: GeminiResponse, unsaid: Finish = 'stop'): Finish {
+function finishOf(response: GeminiResponse): Finish {
   if (response.promptFeedback?.blockReason) return 'blocked';
   switch (response.candidates?.[0]?.finishReason) {
     case undefined:
-      return unsaid;
     case 'STOP':
       return 'stop';
     case 'MAX_TOKENS':
@@ -247,11 +298,16 @@ function eventData(event: string): string {
 async function modelError(response: Response): Promise<ModelError> {
   const body = await response.json().catch(() => undefined);
   const message = body?.error?.message ?? response.statusText;
-  return new ModelError(
-    `Gemini: ${response.status} ${message}`,
-    response.status,
-    isRetryable(response.status),
-  );
+  // Refused before answering, which Gemini does not bill.
+  return new ModelError(`Gemini: ${response.status} ${message}`, {
+    status: response.status,
+    retryable: isRetryable(response.status),
+    billed: false,
+  });
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /** Too many requests and passing outages are worth another try; a wrong request is not. */

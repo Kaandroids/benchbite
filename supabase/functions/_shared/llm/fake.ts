@@ -6,6 +6,7 @@ import {
   type ModelResponse,
   type StreamEvent,
   streamedPart,
+  type Task,
   type Usage,
 } from './types.ts';
 
@@ -27,6 +28,14 @@ export class FakeModel implements LanguageModel {
   /** Each call takes the next turn of the script; a call after the last one throws. */
   constructor(...turns: FakeTurn[]) {
     this.#turns = turns;
+  }
+
+  model(_task: Task): string {
+    return 'fake';
+  }
+
+  countTokens(_request: ModelRequest): Promise<number> {
+    return Promise.resolve(FAKE_USAGE.inputTokens);
   }
 
   generate(request: ModelRequest): Promise<ModelResponse> {
