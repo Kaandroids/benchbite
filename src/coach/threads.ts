@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
+import { messageProposals } from './proposals';
 import type { ChatMessage } from './use-chat';
 
 export const THREADS_KEY = ['coach-threads'];
@@ -139,20 +140,24 @@ type StoredMessage = Pick<
 >;
 
 /**
- * A thread's messages, oldest first, as the chat shows them. An answer that stopped short says so,
- * as it did when it came. A question no answer of Bite's followed, as one that failed, is shown as
- * not answered, to ask again.
+ * A thread's messages, oldest first, as the chat shows them, Bite's with the changes it proposed.
+ * An answer that stopped short says so, as it did when it came. A question no answer of Bite's
+ * followed, as one that failed, is shown as not answered, to ask again.
  */
 export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
-  return rows.map((row, index) => ({
-    id: `stored-${row.id}`,
-    role: row.role,
-    text: messageText(row.content),
-    expression: row.expression ?? undefined,
-    cut: cutOf(row.interrupted),
-    createdAt: new Date(row.created_at),
-    ...(row.role === 'user' && rows[index + 1]?.role !== 'bite' && { unanswered: true }),
-  }));
+  return rows.map((row, index) => {
+    const proposals = row.role === 'bite' ? messageProposals(row.content) : [];
+    return {
+      id: `stored-${row.id}`,
+      role: row.role,
+      text: messageText(row.content),
+      expression: row.expression ?? undefined,
+      cut: cutOf(row.interrupted),
+      createdAt: new Date(row.created_at),
+      ...(proposals.length > 0 && { proposals }),
+      ...(row.role === 'user' && rows[index + 1]?.role !== 'bite' && { unanswered: true }),
+    };
+  });
 }
 
 /** A name as it is kept: without spaces around it, within its length; null when empty. */
