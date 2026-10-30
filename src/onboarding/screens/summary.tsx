@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { projectedDate, weightGoal } from '@/body/body';
+import { datingPace, projectedDate, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
@@ -51,7 +51,12 @@ export function SummaryStep() {
   const aim = weightGoal(answers);
   const goalDate =
     aim && answers.weightKg
-      ? projectedDate(answers.weightKg, aim.targetKg, aim.paceKg, today)
+      ? projectedDate(
+          answers.weightKg,
+          aim.targetKg,
+          datingPace(aim.paceKg, answers.achievablePaceKg),
+          today,
+        )
       : null;
 
   useEffect(() => {

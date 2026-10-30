@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
-import { projectedDate, weightGoal } from '@/body/body';
+import { datingPace, isPaceHeldUp, projectedDate, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useDateFormat, useWeekdayFormat } from '@/i18n/dates';
-import { useWeightLabel } from '@/i18n/units';
+import { paceIn, useNumberFormat, useWeightLabel } from '@/i18n/units';
 import { MacroTargets } from '@/nutrition/macro-targets';
 import { useTheme } from '@/theme';
 
@@ -32,6 +32,7 @@ export function PlanStep() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const weightLabel = useWeightLabel();
+  const { format } = useNumberFormat();
   const formatDate = useDateFormat('medium');
   const weekday = useWeekdayFormat();
   const { answers, next, back, bar } = useStep('plan');
@@ -49,6 +50,8 @@ export function PlanStep() {
   const unit = answers.weightUnit ?? 'kg';
   const weightKg = answers.weightKg ?? 0;
   const aim = weightGoal(answers);
+  // Dated by the pace the targets give, which the floor may hold below the chosen one.
+  const pace = aim ? datingPace(aim.paceKg, answers.achievablePaceKg) : 0;
   const showWeight = (kg: number) => weightLabel(kg, unit);
 
   const save = async () => {
@@ -100,9 +103,19 @@ export function PlanStep() {
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
               value: showWeight(aim.targetKg),
-              label: formatDate(projectedDate(weightKg, aim.targetKg, aim.paceKg, new Date())),
+              label: formatDate(projectedDate(weightKg, aim.targetKg, pace, new Date())),
             }}
           />
+          {isPaceHeldUp(aim.paceKg, answers.achievablePaceKg) ? (
+            <Text variant="caption" color="textMuted">
+              {t('onboarding.plan.heldUp', {
+                pace: format(paceIn(unit, pace)),
+                chosen: format(paceIn(unit, aim.paceKg)),
+                unit,
+                calories: format(targets.calories),
+              })}
+            </Text>
+          ) : null}
         </Card>
       ) : null}
 

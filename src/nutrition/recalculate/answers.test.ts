@@ -16,6 +16,7 @@ const basis: TargetBasis = {
   activity: 'light',
   heightCm: 180,
   calorieFloor: 1500,
+  achievablePaceKg: 0.5,
 };
 
 describe('stepsFor', () => {

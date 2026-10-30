@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { weightGoal } from '@/body/body';
+import { datingPace, weightGoal } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
@@ -44,12 +44,15 @@ export function ProgressScreen() {
         ),
     },
   ];
-  // The chart shows the target without waiting for it.
+  // The chart shows the target without waiting for it, dated by the pace the targets give.
   const goal = basis.data
     ? weightGoal({
         goal: basis.data.goal,
         targetWeightKg: basis.data.targetWeightKg ?? undefined,
-        weeklyPaceKg: basis.data.weeklyPaceKg ?? undefined,
+        weeklyPaceKg:
+          basis.data.weeklyPaceKg === null
+            ? undefined
+            : datingPace(basis.data.weeklyPaceKg, basis.data.achievablePaceKg),
       })
     : null;
 

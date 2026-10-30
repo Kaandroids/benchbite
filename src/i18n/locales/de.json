@@ -569,6 +569,8 @@
       "keeping": "Bleibt wie es ist",
       "perWeek": "{{value}} {{unit}} pro Woche",
       "by": "Bis {{date}}",
+      "aboutPerWeek": "Etwa {{value}} {{unit}} pro Woche",
+      "heldUp": "Du hast {{chosen}} {{unit}} gewählt, aber deine Kalorien bleiben bei {{calories}} kcal, dem Minimum, das wir empfehlen. Bis {{date}}",
       "macrosMake": "Eiweiß, Kohlenhydrate und Fett ergeben {{macros}} von {{calories}} kcal.",
       "belowFloor": "{{calories}} kcal liegen unter {{floor}} kcal, dem Minimum, das wir empfehlen. Iss so wenig nur unter ärztlicher Begleitung.",
       "tooMuch": "Eiweiß, Kohlenhydrate und Fett ergeben {{macros}} kcal, mehr als die {{calories}} kcal des Ziels. Senke ein Makro oder erhöhe die Kalorien.",
@@ -1166,6 +1168,7 @@
     "plan": {
       "nutrition": "Deine täglichen Ziele",
       "weight": "Dein Gewicht",
+      "heldUp": "Etwa {{pace}} {{unit}} pro Woche, nicht {{chosen}}: Deine Kalorien bleiben bei {{calories}} kcal, dem Minimum, das wir empfehlen. Mehr Bewegung macht es schneller.",
       "week": "Deine Woche",
       "start": "Plan starten",
       "saveError": "Wir konnten deinen Plan nicht speichern. Prüfe deine Verbindung und versuche es erneut.",

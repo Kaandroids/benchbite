@@ -14,8 +14,9 @@ export type WorkoutPlan = Plan;
 
 export type { NutritionTargets };
 
-export async function calculateTargets(answers: OnboardingAnswers): Promise<NutritionTargets> {
-  const { data, error } = await supabase.rpc('calculate_nutrition_targets', {
+/** The answers as the target functions take them. */
+function targetArgs(answers: OnboardingAnswers) {
+  return {
     sex: required(answers, 'sex'),
     age: new Date().getFullYear() - required(answers, 'birthYear'),
     height_cm: required(answers, 'heightCm'),
@@ -25,7 +26,23 @@ export async function calculateTargets(answers: OnboardingAnswers): Promise<Nutr
     goal: required(answers, 'goal'),
     target_weight_kg: answers.targetWeightKg,
     weekly_pace_kg: answers.weeklyPaceKg,
-  });
+  };
+}
+
+/**
+ * The pace the targets really give for the answers, which the floor may hold below the chosen
+ * one (ADR 0054); null for a goal that keeps the weight.
+ */
+export async function calculateAchievablePace(answers: OnboardingAnswers): Promise<number | null> {
+  const { data, error } = await supabase.rpc('achievable_weekly_pace_kg', targetArgs(answers));
+  if (error) {
+    throw error;
+  }
+  return data;
+}
+
+export async function calculateTargets(answers: OnboardingAnswers): Promise<NutritionTargets> {
+  const { data, error } = await supabase.rpc('calculate_nutrition_targets', targetArgs(answers));
   if (error) {
     throw error;
   }

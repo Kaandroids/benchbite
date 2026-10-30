@@ -177,6 +177,19 @@ export function isPaceInRange(
   return pace >= range.min - 0.01 && pace <= range.max + 0.01;
 }
 
+/**
+ * The pace a goal is dated by: what the targets really give, as the floor may hold them below the
+ * chosen one (ADR 0054), or the chosen one while that is not known, or when they give nothing.
+ */
+export function datingPace(chosenKg: number, achievableKg?: number | null): number {
+  return achievableKg ? Math.min(chosenKg, achievableKg) : chosenKg;
+}
+
+/** Whether the floor holds the targets below the chosen pace, by more than rounding. */
+export function isPaceHeldUp(chosenKg: number, achievableKg?: number | null): boolean {
+  return !!achievableKg && achievableKg < chosenKg - 0.01;
+}
+
 /** How demanding a weekly pace is for the goal, as a share of body weight. */
 export function paceLevel(goal: Goal, weightKg: number, weeklyPaceKg: number): PaceLevel {
   return levelOf(goal === 'lose_fat', weightKg, weeklyPaceKg);

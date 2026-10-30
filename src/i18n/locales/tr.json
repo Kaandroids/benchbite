@@ -569,6 +569,8 @@
       "keeping": "Olduğu gibi kalıyor",
       "perWeek": "Haftada {{value}} {{unit}}",
       "by": "{{date}} tarihine kadar",
+      "aboutPerWeek": "Haftada yaklaşık {{value}} {{unit}}",
+      "heldUp": "{{chosen}} {{unit}} seçtin, ama kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor. {{date}} tarihine kadar",
       "macrosMake": "Protein, karbonhidrat ve yağ {{calories}} kcal'nin {{macros}} kcal'sini oluşturuyor.",
       "belowFloor": "{{calories}} kcal, önerdiğimiz en düşük değer olan {{floor}} kcal'nin altında. Bu kadar az yemeyi yalnızca doktor gözetiminde yap.",
       "tooMuch": "Protein, karbonhidrat ve yağ {{macros}} kcal ediyor, hedefteki {{calories}} kcal'den fazla. Bir makroyu azalt ya da kaloriyi artır.",
@@ -1166,6 +1168,7 @@
     "plan": {
       "nutrition": "Günlük hedeflerin",
       "weight": "Kilon",
+      "heldUp": "{{chosen}} değil, haftada yaklaşık {{pace}} {{unit}}: kalorin önerdiğimiz en düşük değer olan {{calories}} kcal'de kalıyor. Daha fazla hareket hızlandırır.",
       "week": "Haftan",
       "start": "Planımı başlat",
       "saveError": "Planını kaydedemedik. Bağlantını kontrol edip tekrar dene.",

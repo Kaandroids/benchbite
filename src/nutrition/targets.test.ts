@@ -120,7 +120,8 @@ describe('useUseCalculatedTargets', () => {
 });
 
 describe('useTargetBasis', () => {
-  it('loads the goal, the activity and the floor the targets are worked out from', async () => {
+  it('loads the goal, the activity, the floor and the pace the targets give', async () => {
+    rpc.mockResolvedValue({ data: 0.45, error: null } as never);
     jest.mocked(supabase.from).mockImplementation(
       (table) =>
         ({
@@ -145,7 +146,9 @@ describe('useTargetBasis', () => {
       activity: 'light',
       heightCm: 180,
       calorieFloor: 1500,
+      achievablePaceKg: 0.45,
     });
+    expect(rpc).toHaveBeenCalledWith('my_achievable_weekly_pace_kg');
   });
 });
 

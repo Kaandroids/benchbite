@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { isTargetReached, projectedDate } from '@/body/body';
+import { datingPace, isPaceHeldUp, isTargetReached, projectedDate } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -130,7 +130,7 @@ function GoalsBody({ calculated, own, basis }: GoalsBodyProps) {
         {mode === 'calculated' ? (
           <>
             <ReadTargets targets={calculated} />
-            {basis ? <BasisList basis={basis} /> : null}
+            {basis ? <BasisList basis={basis} calories={calculated.calories} /> : null}
             <Text variant="caption" color="textMuted">
               {t('nutrition.goals.note')}
             </Text>
@@ -266,7 +266,7 @@ function EditTargets({
 }
 
 /** What the calculated goals are worked out from, as a list. */
-function BasisList({ basis }: { basis: TargetBasis }) {
+function BasisList({ basis, calories }: { basis: TargetBasis; calories: number }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -310,18 +310,34 @@ function BasisList({ basis }: { basis: TargetBasis }) {
             detail: reached ? t('nutrition.goals.reached') : t('nutrition.goals.keeping'),
           },
     );
-    if (target !== null && !reached && basis.weeklyPaceKg !== null) {
-      rows.push({
-        key: 'pace',
-        label: t('nutrition.goals.pace'),
-        value: t('nutrition.goals.perWeek', {
-          value: format(weightIn(unit, basis.weeklyPaceKg)),
-          unit,
-        }),
-        detail: t('nutrition.goals.by', {
-          date: monthDay(projectedDate(current, target, basis.weeklyPaceKg, new Date())),
-        }),
-      });
+    const chosen = basis.weeklyPaceKg;
+    if (target !== null && !reached && chosen !== null) {
+      // Dated by the pace the targets give, which the floor may hold below the chosen one.
+      const pace = datingPace(chosen, basis.achievablePaceKg);
+      const date = monthDay(projectedDate(current, target, pace, new Date()));
+      rows.push(
+        isPaceHeldUp(chosen, basis.achievablePaceKg)
+          ? {
+              key: 'pace',
+              label: t('nutrition.goals.pace'),
+              value: t('nutrition.goals.aboutPerWeek', {
+                value: format(weightIn(unit, pace)),
+                unit,
+              }),
+              detail: t('nutrition.goals.heldUp', {
+                chosen: format(weightIn(unit, chosen)),
+                unit,
+                calories: format(calories),
+                date,
+              }),
+            }
+          : {
+              key: 'pace',
+              label: t('nutrition.goals.pace'),
+              value: t('nutrition.goals.perWeek', { value: format(weightIn(unit, chosen)), unit }),
+              detail: t('nutrition.goals.by', { date }),
+            },
+      );
     }
   }
   rows.push({

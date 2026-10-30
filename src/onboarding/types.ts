@@ -36,6 +36,8 @@ export type OnboardingAnswers = {
   heightUnit?: Enums['height_unit'];
   /** The result calculated on the building step, shown on the plan step and then saved. */
   targets?: NutritionTargets;
+  /** The pace the targets really give, which the floor may hold below the chosen one. */
+  achievablePaceKg?: number | null;
   plan?: WorkoutPlan;
   /** The time of the workout reminders in minutes after midnight, if the user turned them on. */
   reminderMinutes?: number;
