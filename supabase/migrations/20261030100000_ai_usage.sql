@@ -127,7 +127,7 @@ $$;
 revoke all on function public.ai_model_price(text, timestamptz) from public, anon, authenticated;
 grant execute on function public.ai_model_price(text, timestamptz) to service_role;
 
--- What tokens cost at a price, in dollars, to a millionth.
+-- What tokens cost at a price, in dollars, rounded up to a millionth, so that no call is free.
 create function public.ai_cost(
   price public.ai_model_prices,
   input_tokens integer,
@@ -139,14 +139,13 @@ language sql
 immutable
 set search_path = ''
 as $$
-  select round(
+  select ceil(
     (
       (input_tokens - cached_input_tokens) * price.input_usd
       + cached_input_tokens * price.cached_input_usd
       + output_tokens * price.output_usd
-    ) / 1000000,
-    6
-  );
+    )
+  ) / 1000000;
 $$;
 
 revoke all on function public.ai_cost(public.ai_model_prices, integer, integer, integer)
@@ -268,7 +267,7 @@ begin
   end if;
 
   -- One start at a time per user, so that each one sees what the one before set aside.
-  perform pg_advisory_xact_lock(hashtextextended((select auth.uid())::text, 0));
+  perform pg_advisory_xact_lock(hashtextextended('ai_calls ' || (select auth.uid())::text, 0));
 
   -- Calls left behind are counted at their most now, which frees their places.
   perform public.record_ai_usage(c.call_id, 0, 0, 0, 0, known => false)
