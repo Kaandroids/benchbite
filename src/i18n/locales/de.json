@@ -687,6 +687,7 @@
   "workout": {
     "session_one": "{{count}} Übung · etwa {{minutes}} Min.",
     "session_other": "{{count}} Übungen · etwa {{minutes}} Min.",
+    "noExercises": "Noch keine Übungen",
     "sessionTypes": {
       "full_body": "Ganzkörper",
       "upper": "Oberkörper",
@@ -776,6 +777,14 @@
       "resume": "Zurück zum Training"
     },
     "startWorkout": "Training starten",
+    "empty": {
+      "title": "{{name}} hat noch keine Übungen",
+      "bodyOne": "Füge die Übungen für {{name}} hinzu. {{other}} bleibt, wie es ist.",
+      "bodyOthers": "Füge die Übungen für {{name}} hinzu. Die anderen Alternativen bleiben, wie sie sind.",
+      "body": "Füge Übungen hinzu, um dieses Workout zu starten.",
+      "add": "Übungen hinzufügen",
+      "startHint": "Füge eine Übung hinzu, um zu starten."
+    },
     "toArchive": "Ins Archiv verschieben",
     "fromArchive": "Aus dem Archiv holen",
     "days": "Tage",
@@ -787,25 +796,32 @@
         "gone": "Diese Alternative gibt es nicht mehr.",
         "switch": "Der Wechsel hat nicht geklappt. Versuch es noch einmal.",
         "add": "Die Alternative konnte nicht hinzugefügt werden. Versuch es noch einmal.",
+        "duplicate": "Sie konnte nicht dupliziert werden. Versuch es noch einmal.",
         "rename": "Sie konnte nicht umbenannt werden. Versuch es noch einmal.",
         "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
         "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
       },
       "loadError": "Die Alternativen konnten nicht geladen werden.",
       "title": "Alternativen",
-      "body": "Andere Übungen für dieses Workout, etwa für zu Hause. Die aktive Alternative ist überall das Workout. Ziehe sie, um die Reihenfolge zu ändern.",
-      "inUse_one": "Aktiv · {{count}} Übung",
-      "inUse_other": "Aktiv · {{count}} Übungen",
+      "bodyEmpty": "Versionen dieses Workouts, zwischen denen du wechseln kannst.",
+      "body": "Tippe auf eine, um sie zu nutzen. Ziehe, um die Reihenfolge zu ändern.",
+      "example": {
+        "gym": "Studio",
+        "gymExercises": "Kniebeuge mit Langhantel, Beinpresse…",
+        "home": "Zu Hause",
+        "homeExercises": "Goblet Squat, Ausfallschritte…"
+      },
       "exercises_one": "{{count}} Übung",
       "exercises_other": "{{count}} Übungen",
-      "rename": "{{name}} umbenennen",
-      "delete": "{{name}} löschen",
+      "more": "Optionen für {{name}}",
+      "rename": "Umbenennen",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
       "add": "Alternative hinzufügen",
-      "addNote": "Eine neue beginnt als Kopie der aktiven und lässt sich unter Bearbeiten ändern.",
-      "full": "Bis zu {{max}} Alternativen. Lösche eine, um eine weitere hinzuzufügen.",
+      "addNote": "Beginnt leer",
+      "full": "{{max}} von {{max}}. Lösche eine, um eine weitere hinzuzufügen oder zu duplizieren.",
       "deleteTitle": "{{name}} löschen?",
       "deleteMessage": "Sie wird mit ihren Übungen gelöscht. Das kann nicht rückgängig gemacht werden.",
-      "deleteConfirm": "Löschen",
       "cancel": "Abbrechen",
       "save": "Speichern",
       "nameTitle": "Alternative benennen",
@@ -1622,7 +1638,8 @@
       "title": "Heute: {{session}}",
       "body_one": "{{count}} Übung, etwa {{minutes}} Min. Du schaffst das!",
       "body_other": "{{count}} Übungen, etwa {{minutes}} Min. Du schaffst das!",
-      "bodyMany": "{{count}} Workouts, insgesamt etwa {{minutes}} Min. Du schaffst das!"
+      "bodyMany": "{{count}} Workouts, insgesamt etwa {{minutes}} Min. Du schaffst das!",
+      "bodyEmpty": "Noch keine Übungen. Füge welche hinzu, bevor du startest."
     }
   },
   "profile": {
