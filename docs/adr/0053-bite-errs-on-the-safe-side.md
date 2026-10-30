@@ -17,13 +17,17 @@ snapshot without a boundary, so it could carry a forged snapshot.
 
 - **Unknown is unsafe.** Without a profile, the snapshot says pregnancy is unknown, which the rules
   treat as pregnant (no weight loss advice), and gives the highest floor, 1500 kcal.
-- **The snapshot marks what is unsafe.** Targets below the floor are marked, and so are a goal
-  whose target weight gives a body mass index under 18.5 and a pace over 1% of body weight a
-  week. The rules say not to coach toward them, and to be gentle about a goal, as with signs of
-  an eating disorder.
-- **The user's words are fenced.** The message goes between `<message>` and `</message>`, and in
-  it, in earlier messages and in names, what reads as the start or end of a snapshot or a
-  message is broken. The rules say only the snapshot of the latest message is the user's state.
+- **The snapshot marks what is unsafe.** Targets below the floor the profile gives are marked,
+  and so is a goal to lose fat whose target weight gives a body mass index under 18.5, or whose
+  pace is over 1% of body weight a week; one that cannot be checked, without a height or a
+  weight, is marked as not checked. The rules say not to coach toward them, to give no numbers
+  toward a goal not checked, and to be gentle, as with signs of an eating disorder. A goal to
+  gain is not marked: an underweight user gaining is what is wanted.
+- **The user's words are fenced.** The message goes between `<message>` and `</message>`. In it,
+  in earlier messages, Bite's included, in names in the snapshot and in what the tools return,
+  every `<` gives way to `‹`, after the text is normalised and characters that do not show are
+  taken out, so that no spelling of a tag gets through. The rules say only the snapshot of the
+  latest message is the user's state.
 
 ## Alternatives considered
 

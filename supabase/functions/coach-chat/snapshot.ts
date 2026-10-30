@@ -1,7 +1,10 @@
 // The user's state as Bite sees it before each answer (#292): who they are, their goal, today's
 // targets and food, their plan and streak. Read with the user's token, so row level security
 // decides what Bite may see; what cannot be read is left out rather than failing the answer.
+import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+
+type GoalKind = Database['public']['Enums']['goal_kind'];
 
 export type Macros = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 
@@ -19,7 +22,7 @@ export type Snapshot = {
     /** The least the targets ever ask for, which Bite never goes below. */
     calorieFloor?: number;
   };
-  goal?: { kind: string; targetWeightKg?: number; weeklyPaceKg?: number };
+  goal?: { kind: GoalKind; targetWeightKg?: number; weeklyPaceKg?: number };
   /** The latest weight, in kg. */
   weightKg?: number;
   targets?: Macros;
@@ -85,7 +88,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   const g = goal.data;
   if (g) {
     snapshot.goal = {
-      kind: g.kind.replaceAll('_', ' '),
+      kind: g.kind,
       targetWeightKg: g.target_weight_kg ?? undefined,
       weeklyPaceKg: g.weekly_pace_kg ?? undefined,
     };

@@ -14,6 +14,7 @@ import {
   marker,
   messageText,
   neutral,
+  neutralAll,
   snapshotText,
   SYSTEM,
 } from './prompt.ts';
@@ -272,7 +273,8 @@ async function lookUp(
   send: (event: ChatEvent) => void,
 ): Promise<unknown> {
   send({ event: 'tool_start', name: call.name });
-  const result = await runTool(call.name, call.args, context);
+  // What the user named things comes back with it, and may not pass for a snapshot either.
+  const result = neutralAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
   return result;
 }
@@ -355,7 +357,8 @@ function toMessage(
   if (row.role === 'user')
     return [{ role: 'user', parts: [{ type: 'text', text: neutral(text) }] }];
   const face = marker(row.expression ?? 'neutral');
-  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${text}` }] }];
+  // Bite may have repeated what the user wrote.
+  return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${neutral(text)}` }] }];
 }
 
 function failed(message: string, error: unknown): Response {
