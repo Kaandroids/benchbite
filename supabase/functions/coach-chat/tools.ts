@@ -5,7 +5,12 @@
 // cheap.
 import { z } from 'zod';
 
-import type { CoachToolName, ProposalCard, ProposedTargets } from '../_shared/coach/chat.ts';
+import type {
+  CoachToolName,
+  DayTargets,
+  ProposalCard,
+  ProposalTarget,
+} from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
@@ -36,6 +41,8 @@ const REFUSALS: Record<string, string> = {
   BB008: 'Too many exercises for a workout.',
   BB037: "The calories are under the user's calorie floor.",
   BB038: 'The user has too many changes waiting; ask them to decide those first.',
+  BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
+  BB040: 'Swaps may not replace an exercise twice, or one another.',
   '23503': 'An exercise id does not exist; find it with search_exercises.',
   '23514': 'The values are out of range, or the macros add up to more than the calories.',
 };
@@ -276,45 +283,39 @@ const TOOLS = [
         .max(5),
     }),
     run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
-      const workout = read(await activeWorkouts(supabase)).find((w) => w.id === workoutId);
+      const workout = read(await activeWorkouts(supabase, workoutId))[0];
       if (!workout) return { error: REFUSALS.BB006 };
-      const exercises = workout.workout_exercises.map((e) => ({
-        exerciseId: e.exercise_id,
-        sets: e.sets,
-        restSeconds: e.rest_seconds,
-        target: targetOf(e),
-      }));
-      for (const swap of swaps) {
-        const at = exercises.findIndex((e) => e.exerciseId === swap.replace);
-        if (at < 0) return { error: `The workout has no exercise ${swap.replace}.` };
-        exercises[at] = {
-          ...exercises[at],
-          exerciseId: swap.with,
-          sets: swap.sets,
-          target: swap.target,
-        };
-      }
-      const change = { id: workout.id, name: workout.name, weekdays: workout.weekdays, exercises };
-      const proposed = await supabase.rpc('propose_coach_change', {
-        thread_id: threadId,
-        kind: 'workout',
-        change,
-        today,
-      });
-      if (proposed.error) return refused(proposed.error);
+      // Named before proposing, which also finds an id that does not exist, so that a proposal is
+      // never left without its card.
       const names = await exerciseNames(
         supabase,
         language,
-        swaps.flatMap((s) => [s.replace, s.with]),
+        swaps.flatMap((swap) => [swap.replace, swap.with]),
       );
+      const unknown = swaps.find((swap) => !names.has(swap.with));
+      if (unknown)
+        return { error: `There is no exercise ${unknown.with}; find it with search_exercises.` };
+      const proposed = await supabase.rpc('propose_coach_swaps', {
+        thread_id: threadId,
+        workout_id: workoutId,
+        swaps: swaps.map(({ replace, with: put, sets, target }) => ({
+          replace,
+          with: put,
+          sets,
+          target,
+        })),
+        today,
+      });
+      if (proposed.error) return refused(proposed.error);
       const proposal: ProposalCard = {
         kind: 'workout',
         id: proposed.data,
-        workout: workoutName(workout),
+        workout: { name: workout.name, type: workout.type },
         swaps: swaps.map((swap) => ({
           from: names.get(swap.replace) ?? swap.replace,
-          to: names.get(swap.with) ?? swap.with,
-          detail: `${swap.sets} × ${targetText(swap.target)}`,
+          to: names.get(swap.with)!,
+          sets: swap.sets,
+          target: swap.target,
           why: swap.why,
         })),
       };
@@ -342,15 +343,15 @@ const TOOLS = [
         }),
       ]);
       if (proposed.error) return refused(proposed.error);
-      // None before the onboarding is saved, when the calculation has nothing to go on.
+      // The targets in use, as the user sees them now; none before the onboarding is saved.
       const now = current.data;
-      const from: ProposedTargets | null =
+      const from: DayTargets<number | null> | null =
         now?.calories != null
           ? {
               calories: now.calories,
-              proteinG: now.protein_g ?? 0,
-              carbsG: now.carbs_g ?? 0,
-              fatG: now.fat_g ?? 0,
+              proteinG: now.protein_g,
+              carbsG: now.carbs_g,
+              fatG: now.fat_g,
             }
           : null;
       const proposal: ProposalCard = { kind: 'targets', id: proposed.data, from, to: targets };
@@ -421,46 +422,42 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
   );
 }
 
-/** The user's active workouts with their exercises in order, as row level security lets them. */
-function activeWorkouts(supabase: Client) {
-  return supabase
+/**
+ * The user's active workouts with their exercises in order, as row level security lets them, or
+ * the one `id` names.
+ */
+function activeWorkouts(supabase: Client, id?: number) {
+  const query = supabase
     .from('workouts')
     .select(
-      'id, name, type, weekdays, workout_exercises (exercise_id, sets, rest_seconds, target_reps_min, target_reps_max, target_seconds, target_meters, position)',
+      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)',
     )
-    .eq('active', true)
+    .eq('active', true);
+  return (id === undefined ? query : query.eq('id', id))
     .order('id')
     .order('position', { referencedTable: 'workout_exercises' });
 }
 
-type Target = { reps?: { min: number; max: number }; seconds?: number; meters?: number };
-
-/** An exercise's target as save_workout() takes it. */
+/**
+ * An exercise's target as save_workout() takes it. As saved_workout() reads it in the database
+ * (20261030230000_coach_proposals.sql): change both together.
+ */
 function targetOf(e: {
   target_reps_min: number | null;
   target_reps_max: number | null;
   target_seconds: number | null;
   target_meters: number | null;
-}): Target {
+}): ProposalTarget {
   return {
     ...(e.target_reps_min !== null && {
-      reps: { min: e.target_reps_min, max: e.target_reps_max ?? e.target_reps_min },
+      reps: {
+        min: e.target_reps_min,
+        ...(e.target_reps_max !== null && { max: e.target_reps_max }),
+      },
     }),
     ...(e.target_seconds !== null && { seconds: e.target_seconds }),
     ...(e.target_meters !== null && { meters: e.target_meters }),
   };
-}
-
-/** A target as a card shows it, in numbers and units every language reads. */
-function targetText(target: Target): string {
-  const parts = [];
-  if (target.reps) {
-    const { min, max } = target.reps;
-    parts.push(min === max ? `${min}` : `${min}–${max}`);
-  }
-  if (target.seconds) parts.push(`${target.seconds} s`);
-  if (target.meters) parts.push(`${target.meters} m`);
-  return parts.join(' · ');
 }
 
 /** A proposal the database refused, said so that the model can correct it. */
