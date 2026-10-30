@@ -3,7 +3,11 @@
 import { z } from 'zod';
 
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
-import { MAX_ESTIMATE_ITEMS, type PreviousItem } from '../_shared/meal/estimate.ts';
+import {
+  type EstimateMeal,
+  MAX_ESTIMATE_ITEMS,
+  type PreviousItem,
+} from '../_shared/meal/estimate.ts';
 import type { JsonSchema, Part } from '../_shared/llm/mod.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 
@@ -70,7 +74,7 @@ export const RESPONSE_SCHEMA: JsonSchema = (() => {
 /** The request's data, as text before the photos. */
 export function requestText(request: {
   language: Language;
-  meal?: string;
+  meal?: EstimateMeal;
   note?: string;
   previous?: PreviousItem[];
 }): string {
