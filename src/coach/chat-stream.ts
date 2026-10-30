@@ -1,4 +1,5 @@
 import type { ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
+import { randomUUID } from 'expo-crypto';
 
 import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
 
@@ -45,36 +46,50 @@ export class ChatRequestError extends Error {
 /**
  * Sends a message to Bite and calls `onEvent` with each event as it comes, until the answer ends
  * or `signal` stops it. The global fetch is Expo's, which streams the response's body.
+ *
+ * Closing the request does not always reach Bite's function, so a stop also tells the server,
+ * by the name the request was sent with, and the function stops the answer there too (ADR 0057).
  */
 export async function streamChat(
-  request: ChatRequest,
+  request: Omit<ChatRequest, 'requestId'>,
   onEvent: (event: ChatEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  const response = await fetch(functionUrl('coach-chat'), {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      apikey: publishableKey,
-      ...(token && { authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(request),
-    signal,
-  });
-  if (!response.ok || !response.body) throw new ChatRequestError(response.status);
+  const requestId = randomUUID();
+  const stop = () => {
+    // A query runs once it is awaited or followed; what comes of it is not waited for.
+    void supabase.rpc('stop_coach_request', { request_id: requestId }).then(() => undefined);
+  };
+  signal?.addEventListener('abort', stop, { once: true });
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    const response = await fetch(functionUrl('coach-chat'), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        apikey: publishableKey,
+        ...(token && { authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ ...request, requestId }),
+      signal,
+    });
+    if (!response.ok || !response.body) throw new ChatRequestError(response.status);
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const { events, rest } = readEvents(buffer);
-    buffer = rest;
-    events.forEach(onEvent);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const { events, rest } = readEvents(buffer);
+      buffer = rest;
+      events.forEach(onEvent);
+    }
+    readEvents(`${buffer}\n\n`).events.forEach(onEvent);
+  } finally {
+    // An answer that ended is not stopped any more.
+    signal?.removeEventListener('abort', stop);
   }
-  readEvents(`${buffer}\n\n`).events.forEach(onEvent);
 }

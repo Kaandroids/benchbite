@@ -10,7 +10,6 @@ import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from '
 // A new chat by default; the tab bar's opening, without params, is tested on its own.
 const NEW_CHAT = { thread: '', fresh: '1' };
 let mockParams: { thread?: string; fresh?: string; offer?: string } = NEW_CHAT;
-jest.mock('expo-crypto', () => ({ randomUUID: () => '7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11' }));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -127,39 +126,45 @@ it('stops an answer, keeping what came of it', async () => {
   expect(screen.queryByText(/couldn't answer/)).toBeNull();
 });
 
-it('tells the server too which answer was stopped', async () => {
-  const stream = liveStream();
-  await render(<BiteScreen />);
-  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
-  const { requestId } = stream.request()!;
+describe('a message sent right after a stop', () => {
+  beforeEach(() => jest.useFakeTimers({ doNotFake: ['nextTick'] }));
+  afterEach(() => jest.useRealTimers());
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+  /** Stops an answer, then sends 'And today?', which the server refuses as one at a time. */
+  async function refusedAfterStop() {
+    const stream = liveStream();
+    await render(<BiteScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+    await stream.send({ event: 'text', text: 'Your week was' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+    await fireEvent.changeText(screen.getByLabelText('Message'), 'And today?');
+    await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+    await stream.send({ event: 'error', reason: 'call_in_progress' });
+    await stream.end();
+    return stream;
+  }
 
-  expect(requestId).toBe('7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11');
-  expect(supabase.rpc).toHaveBeenCalledWith('stop_coach_request', { request_id: requestId });
-});
+  it('is sent again once the stopped answer let its place go', async () => {
+    const stream = await refusedAfterStop();
 
-it('stops the answer on the server when the screen closes', async () => {
-  liveStream();
-  const { unmount } = await render(<BiteScreen />);
-  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+    await act(() => jest.advanceTimersByTime(1500));
+    await stream.send({ event: 'text', text: 'Today you rest.' });
+    await stream.end();
 
-  await act(async () => unmount());
-
-  expect(supabase.rpc).toHaveBeenCalledWith('stop_coach_request', {
-    request_id: '7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11',
+    expect(streamChat).toHaveBeenCalledTimes(3);
+    expect(stream.request()).toMatchObject({ message: 'And today?' });
+    expect(screen.getByText('Today you rest.')).toBeOnTheScreen();
+    expect(screen.queryByText(/another device/)).toBeNull();
   });
-});
 
-it('tells the server nothing when no answer is on its way', async () => {
-  const stream = liveStream();
-  const { unmount } = await render(<BiteScreen />);
-  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
-  await stream.end();
+  it('is not sent again when it is stopped meanwhile', async () => {
+    await refusedAfterStop();
 
-  await act(async () => unmount());
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+    await act(() => jest.advanceTimersByTime(1500));
 
-  expect(supabase.rpc).not.toHaveBeenCalledWith('stop_coach_request', expect.anything());
+    expect(streamChat).toHaveBeenCalledTimes(2);
+  });
 });
 
 it('says so when Bite could not answer', async () => {
