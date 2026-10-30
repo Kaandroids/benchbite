@@ -9,7 +9,8 @@ import type { Finish, LanguageModel, Message, Part } from '../_shared/llm/mod.ts
 import { type Client, logError } from '../_shared/supabase.ts';
 import { type Expression, FaceReader, LANGUAGES, marker, snapshotText, SYSTEM } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
-import { DAY, runTool, TOOL_DEFINITIONS } from './tools.ts';
+import { DAY } from './day.ts';
+import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
   /** A client with the user's token. */
@@ -43,7 +44,11 @@ const MAX_CALLS_PER_ROUND = 5;
 
 /** What a saved message may hold (`coach_messages.content`), the answer's text part included. */
 const MAX_PARTS = 50;
-const MAX_CONTENT_BYTES = 60_000;
+/**
+ * Measured as JSON without spaces; Postgres prints jsonb with a space after each `,` and `:`,
+ * which the check counts (65,536 bytes), so this leaves room for them.
+ */
+const MAX_CONTENT_BYTES = 50_000;
 
 /** What the app is told as the answer comes, each a server-sent event. */
 export type ChatEvent =
@@ -122,14 +127,14 @@ class Turn {
   /** Why the last request's answer ended. */
   finish?: Finish;
   #face = new FaceReader();
-  #roundText = '';
+  #roundStarted = false;
 
   constructor(private readonly send: (event: ChatEvent) => void) {}
 
   /** A new request's answer starts, with its own face to read off. */
   round() {
     this.#face = new FaceReader();
-    this.#roundText = '';
+    this.#roundStarted = false;
   }
 
   said(text: string) {
@@ -149,10 +154,10 @@ class Turn {
     }
     if (!text) return;
     // A request's answer after another's goes on after a space.
-    if (!this.#roundText && this.text && !/\s$/.test(this.text) && !/^\s/.test(text)) {
+    if (!this.#roundStarted && this.text && !/\s$/.test(this.text) && !/^\s/.test(text)) {
       text = ` ${text}`;
     }
-    this.#roundText += text;
+    this.#roundStarted = true;
     this.text += text;
     this.send({ event: 'text', text });
   }

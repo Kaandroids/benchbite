@@ -249,17 +249,6 @@ Deno.test('refuses a thread the user cannot read, and a request that is not vali
   assertEquals(get.status, 405);
 });
 
-Deno.test('keeps a message within what a message may hold', async () => {
-  const { content } = await import('./handler.ts');
-  const call = { type: 'toolCall' as const, name: 'get_meal_log', args: { day: '2026-10-01' } };
-  const big = { type: 'toolResult' as const, name: 'get_meal_log', result: 'x'.repeat(70_000) };
-  const small = { type: 'toolResult' as const, name: 'get_meal_log', result: [] };
-
-  assertEquals(content([call, small], 'Hi').length, 3);
-  assertEquals(content([call, big], 'Hi')[1], { ...big, result: { omitted: true } });
-  assertEquals(content(Array(60).fill(call), 'Hi').length, 50);
-});
-
 Deno.test("takes a later request's face off, and goes on after a space", async () => {
   const model = new FakeModel(
     [

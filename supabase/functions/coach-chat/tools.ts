@@ -5,18 +5,10 @@ import { z } from 'zod';
 
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+import { addDays, DAY, daysBetween } from './day.ts';
 import type { Language } from './prompt.ts';
 
 export type ToolContext = { supabase: Client; language: Language; today: string };
-
-/** A day, YYYY-MM-DD, that exists. */
-export const DAY = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((day) => {
-    const date = new Date(`${day}T00:00:00Z`);
-    return !isNaN(date.getTime()) && date.toISOString().startsWith(day);
-  }, 'Not a day');
 
 /** The most days one look at the history may cover. */
 const MAX_DAYS = 31;
@@ -266,14 +258,4 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
       return [row.id, translated.get(row.id) ?? row.name];
     }),
   );
-}
-
-function addDays(day: string, days: number): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
-function daysBetween(from: string, to: string): number {
-  return (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000;
 }
