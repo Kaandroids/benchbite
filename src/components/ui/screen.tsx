@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
 
-import { Icon } from './icon';
 import { ScreenTitle } from './screen-title';
 import { SectionProgress, type SectionProgressProps } from './section-progress';
+import { TopBarButton } from './top-bar-button';
 
 type ScreenProps = {
   children: ReactNode;
@@ -53,15 +53,7 @@ export function Screen({
   const { colors, spacing } = useTheme();
   const { t } = useTranslation();
   const end = onClose ? (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={t('common.close')}
-      onPress={onClose}
-      hitSlop={8}
-      style={styles.back}
-    >
-      <Icon name="close" color="textMuted" />
-    </Pressable>
+    <TopBarButton icon="close" label={t('common.close')} onPress={onClose} />
   ) : (
     action
   );
@@ -75,15 +67,11 @@ export function Screen({
       {hasTopBar ? (
         <View style={[styles.topBar, { paddingHorizontal: spacing.lg, gap: spacing.sm }]}>
           {onBack ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={closes ? t('common.close') : t('common.back')}
+            <TopBarButton
+              icon={closes ? 'close' : 'back'}
+              label={closes ? t('common.close') : t('common.back')}
               onPress={onBack}
-              hitSlop={8}
-              style={styles.back}
-            >
-              <Icon name={closes ? 'close' : 'back'} color="textMuted" />
-            </Pressable>
+            />
           ) : null}
           {progress !== undefined ? (
             <View style={styles.progress}>
@@ -99,7 +87,7 @@ export function Screen({
             </View>
           )}
           {/* Keeps a title in the middle when there is a back button but no action. */}
-          {end ?? (title !== undefined && onBack ? <View style={styles.back} /> : null)}
+          {end ?? (title !== undefined && onBack ? <View style={styles.spacer} /> : null)}
         </View>
       ) : null}
       {scrolls ? (
@@ -132,11 +120,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 52,
   },
-  back: {
+  // As wide as a top bar button, so that a title stays in the middle.
+  spacer: {
     width: 44,
     height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   progress: {
     flex: 1,
