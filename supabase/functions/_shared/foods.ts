@@ -15,3 +15,10 @@ export const FOOD_QUERY_LENGTH = { min: 2, max: 50 } as const;
 export function foodNameKey(name: string): string {
   return name.replace(/[İı]/g, 'i').toLowerCase();
 }
+
+/**
+ * A food of the library, by its BLS code, or one of the user's own foods or recipes, by its id
+ * (ADR 0036, ADR 0038), as a meal entry names it by its food_id, custom_food_id or recipe_id.
+ */
+export type FoodRef =
+  { kind: 'library'; id: string } | { kind: 'custom'; id: number } | { kind: 'recipe'; id: number };

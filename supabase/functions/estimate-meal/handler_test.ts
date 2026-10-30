@@ -137,7 +137,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
         name: 'Rice',
         grams: 182,
         confidence: 0.83,
-        food: { kind: 'library', id: 'C352032', name: 'White rice, boiled' },
+        food: { ref: { kind: 'library', id: 'C352032' }, name: 'White rice, boiled' },
         per100: { kcal: 117, proteinG: 10, carbsG: 20, fatG: 5 },
         estimated: false,
       },
@@ -145,7 +145,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
         name: 'Grilled chicken',
         grams: 120,
         confidence: 0.7,
-        food: { kind: 'library', id: 'V416172', name: 'Chicken breast, grilled' },
+        food: { ref: { kind: 'library', id: 'V416172' }, name: 'Chicken breast, grilled' },
         per100: { kcal: 140, proteinG: 10, carbsG: 20, fatG: 5 },
         estimated: false,
         note: 'Oil amount uncertain',
@@ -242,7 +242,10 @@ Deno.test("prefers the user's own food or recipe to the library's", async () => 
   const { ctx } = context(model, { foods: { 'White rice, boiled': [RICE, own] } });
   const body = await (await handleEstimateRequest(ask(REQUEST), ctx)).json();
   // "Rice, mum's" does not hold "white rice": the library's food.
-  assertEquals(body.items[0].food, { kind: 'library', id: 'C352032', name: 'White rice, boiled' });
+  assertEquals(body.items[0].food, {
+    ref: { kind: 'library', id: 'C352032' },
+    name: 'White rice, boiled',
+  });
 });
 
 Deno.test('names the own food or recipe matched as a meal entry does', async () => {
@@ -268,8 +271,8 @@ Deno.test('names the own food or recipe matched as a meal entry does', async () 
   assertEquals(
     body.items.map((item: { food: unknown }) => item.food),
     [
-      { kind: 'recipe', id: 3, name: 'Overnight oats' },
-      { kind: 'custom', id: 7, name: 'Protein shake, vanilla' },
+      { ref: { kind: 'recipe', id: 3 }, name: 'Overnight oats' },
+      { ref: { kind: 'custom', id: 7 }, name: 'Protein shake, vanilla' },
     ],
   );
   // No note from the model leaves none in the answer.

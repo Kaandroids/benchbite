@@ -1,5 +1,6 @@
 // What the app and estimate-meal tell each other (#299, ADR 0059), shared by both, so that they
-// agree. This file imports nothing, so that the app can bundle it.
+// agree. This file imports only what the app can bundle too.
+import type { FoodRef } from '../foods.ts';
 
 /** The kinds of photo the function takes; the app scales them down before it sends them. */
 export const MEAL_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
@@ -44,13 +45,10 @@ export type EstimateRequest = {
 };
 
 /**
- * The food an item was matched to, as a meal entry names it (`food_id`, `custom_food_id` or
- * `recipe_id`), with its name in the library or as the user named it.
+ * The food an item was matched to, by the reference a meal entry is logged with, and its name in
+ * the library or as the user named it.
  */
-export type EstimateFood =
-  | { kind: 'library'; id: string; name: string }
-  | { kind: 'custom'; id: number; name: string }
-  | { kind: 'recipe'; id: number; name: string };
+export type EstimateFood = { ref: FoodRef; name: string };
 
 /** Calories and macros per 100 g. */
 export type Per100 = { kcal: number; proteinG: number; carbsG: number; fatG: number };

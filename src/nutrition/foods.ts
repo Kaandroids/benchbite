@@ -2,6 +2,8 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { FoodRef } from '@shared/foods';
+
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
@@ -41,8 +43,7 @@ export function nameOf(
 }
 
 /** A food of the library, by its BLS code, or one of the user's own, by its id (ADR 0036). */
-export type FoodRef =
-  { kind: 'library'; id: string } | { kind: 'custom'; id: number } | { kind: 'recipe'; id: number };
+export type { FoodRef };
 
 /** A food as a route parameter: a library code, or "custom-" or "recipe-" and an id. */
 export function refKey(ref: FoodRef): string {
