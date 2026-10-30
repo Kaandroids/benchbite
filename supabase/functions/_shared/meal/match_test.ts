@@ -1,6 +1,8 @@
 import { assertEquals } from '@std/assert';
 
-import { bestMatch } from './match.ts';
+import type { Client } from '../supabase.ts';
+import type { ModelItem } from './item.ts';
+import { bestMatch, matchItems } from './match.ts';
 import { type Food, food } from './test-foods.ts';
 
 Deno.test("prefers the user's own food or recipe when it is the same food", () => {
@@ -63,4 +65,96 @@ Deno.test('takes a library food only by its name and calories', () => {
   // Turkish dotted and dotless i compare as search_foods() does.
   const pilav = food({ food_id: 'X1', name: 'Pirinç pilavı' }, 167);
   assertEquals(bestMatch('PİRİNÇ PİLAVI', 160, [pilav]), pilav);
+});
+
+/** A client whose search_foods() finds the foods `foods` give for a query, or fails for `failing`. */
+function searching(foods: Record<string, Food[]>, failing: string[] = []) {
+  const searched: { query: string; language: string }[] = [];
+  const supabase = {
+    rpc: (name: string, args: Record<string, string>) => {
+      assertEquals(name, 'search_foods');
+      searched.push({ query: args.query, language: args.language });
+      return Promise.resolve(
+        failing.includes(args.query)
+          ? { data: null, error: { message: 'down' } }
+          : { data: foods[args.query] ?? [], error: null },
+      );
+    },
+  } as unknown as Client;
+  return { supabase, searched };
+}
+
+const item = (searchName: string, extra: Partial<ModelItem> = {}): ModelItem => ({
+  name: searchName || 'Something',
+  searchName,
+  grams: 100,
+  confidence: 0.5,
+  per100: { kcal: 120, proteinG: 2.04, carbsG: 25.06, fatG: 0.35 },
+  ...extra,
+});
+
+Deno.test('matches each item, searching each name once, as the user', async () => {
+  const rice = food({ food_id: 'C1', name: 'Rice, boiled' }, 117);
+  const { supabase, searched } = searching({ 'Rice, boiled': [rice] });
+
+  const items = await matchItems(supabase, 'de', [
+    item('Rice, boiled', { grams: 182.6, confidence: 0.834, note: 'Half a plate' }),
+    item('Rice, boiled', { name: 'More rice', grams: 0.2 }),
+    item('Mango chutney'),
+  ]);
+
+  assertEquals(items, [
+    {
+      name: 'Rice, boiled',
+      searchName: 'Rice, boiled',
+      grams: 183,
+      confidence: 0.83,
+      food: { ref: { kind: 'library', id: 'C1' }, name: 'Rice, boiled' },
+      per100: { kcal: 117, proteinG: 10, carbsG: 20, fatG: 5 },
+      estimated: false,
+      note: 'Half a plate',
+    },
+    {
+      name: 'More rice',
+      searchName: 'Rice, boiled',
+      grams: 1,
+      confidence: 0.5,
+      food: { ref: { kind: 'library', id: 'C1' }, name: 'Rice, boiled' },
+      per100: { kcal: 117, proteinG: 10, carbsG: 20, fatG: 5 },
+      estimated: false,
+    },
+    {
+      name: 'Mango chutney',
+      searchName: 'Mango chutney',
+      grams: 100,
+      confidence: 0.5,
+      per100: { kcal: 120, proteinG: 2, carbsG: 25.1, fatG: 0.4 },
+      estimated: true,
+    },
+  ]);
+  assertEquals(searched, [
+    { query: 'Rice, boiled', language: 'de' },
+    { query: 'Mango chutney', language: 'de' },
+  ]);
+});
+
+Deno.test('estimates an item it cannot search, or whose search fails', async () => {
+  const { supabase, searched } = searching({}, ['Pasta, boiled']);
+
+  const items = await matchItems(supabase, 'en', [
+    item('', { name: 'Pizza' }),
+    item('R'),
+    item('Pasta, boiled'),
+  ]);
+
+  assertEquals(
+    items.map(({ name, searchName, estimated }) => ({ name, searchName, estimated })),
+    [
+      // An item without a search name is named by what it is.
+      { name: 'Pizza', searchName: 'Pizza', estimated: true },
+      { name: 'R', searchName: 'R', estimated: true },
+      { name: 'Pasta, boiled', searchName: 'Pasta, boiled', estimated: true },
+    ],
+  );
+  assertEquals(searched, [{ query: 'Pasta, boiled', language: 'en' }]);
 });
