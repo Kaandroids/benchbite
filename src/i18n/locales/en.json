@@ -343,6 +343,44 @@
       "resultGrams": "{{grams}} g · {{calories}} kcal",
       "mine": "Mine"
     },
+    "photo": {
+      "camera": "Log a meal from a photo",
+      "sheetTitle": "Log from a photo",
+      "sheetHint": "Up to 3 photos of the same meal",
+      "take": "Take a photo",
+      "choose": "Choose from library",
+      "cancel": "Cancel",
+      "title": {
+        "breakfast": "Breakfast from a photo",
+        "lunch": "Lunch from a photo",
+        "dinner": "Dinner from a photo",
+        "snack": "Snack from a photo"
+      },
+      "photo": "Photo {{number}}",
+      "looking": "Bite is looking at your meal…",
+      "lookingHint": "It finds each food in the library and weighs it by eye. This takes a few seconds.",
+      "confidence": {
+        "high": "Estimate · high confidence",
+        "medium": "Estimate · medium confidence",
+        "low": "Estimate · low confidence"
+      },
+      "estimated": "Estimated",
+      "row": "{{name}}, {{grams}} grams, {{calories}} kcal, change the amount",
+      "rowEstimated": "{{name}}, {{grams}} grams, {{calories}} kcal, estimated, not found in the library, change the amount",
+      "noteLabel": "Something off?",
+      "notePlaceholder": "Tell Bite, e.g. half the toast",
+      "again": "Estimate again",
+      "saveAmount": "Save",
+      "added_one": "Added {{count}} food · {{calories}} kcal",
+      "added_other": "Added {{count}} foods · {{calories}} kcal",
+      "undoError": "Couldn’t undo. Remove the foods from the meal instead.",
+      "notFood": "This doesn’t look like a meal",
+      "notFoodHint": "Take a photo of the plate from above, with all of it in view.",
+      "tryAnother": "Try another photo",
+      "failed": "Bite couldn’t look at your meal",
+      "failedHint": "Check your connection and try again.",
+      "blockedHint": "Bite can’t estimate these photos. Try other photos."
+    },
     "amount": {
       "per100g": "{{calories}} kcal per 100 g",
       "portion": "Portion",

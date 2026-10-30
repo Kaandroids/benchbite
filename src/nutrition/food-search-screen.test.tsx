@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 
-import { act, fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { FoodSearchScreen } from './food-search-screen';
-import { useAddEntry, useCopyEntries } from './entries';
+import { useAddEntry, useCopyEntries, useUndoEstimate } from './entries';
+import { handOverLoggedEstimate, mealPhotos } from './meal-photo-handover';
 import { useFoodSearch, type FoodResult } from './foods';
 import { usePastMeal, type LoggedEntry } from './meals';
 import { useRecipes } from './recipes';
@@ -16,11 +17,23 @@ import {
 } from './quick-foods';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual<typeof import('react')>('react');
+  return {
+    router: { push: jest.fn(), back: jest.fn() },
+    // Runs once on mount, as the screen comes into focus.
+    useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+  };
+});
+jest.mock('./meal-estimate', () => ({
+  ...jest.requireActual('./meal-estimate'),
+  pickMealPhotos: jest.fn(() => Promise.resolve(['file://plate.jpg'])),
+}));
 jest.mock('./entries', () => ({
   ...jest.requireActual('./entries'),
   useAddEntry: jest.fn(),
   useCopyEntries: jest.fn(),
+  useUndoEstimate: jest.fn(),
 }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), usePastMeal: jest.fn() }));
 jest.mock('./recipes', () => ({ useRecipes: jest.fn() }));
@@ -53,6 +66,7 @@ const OATS: FoodResult = {
 
 const mutateAsync = jest.fn();
 const copy = jest.fn();
+const undo = jest.fn();
 
 const loaded = <T,>(data: T) => ({ data, isError: false }) as never;
 
@@ -77,6 +91,7 @@ beforeEach(() => {
   mockSearch({});
   jest.mocked(useAddEntry).mockReturnValue({ mutateAsync, isError: false, error: null } as never);
   jest.mocked(useCopyEntries).mockReturnValue({ mutate: copy, isError: false } as never);
+  jest.mocked(useUndoEstimate).mockReturnValue({ mutate: undo, isError: false } as never);
   jest.mocked(usePastMeal).mockReturnValue(loaded(null));
   jest.mocked(useFrequentFoods).mockReturnValue(loaded([]));
   jest.mocked(useFavouriteFoods).mockReturnValue(loaded([]));
@@ -382,5 +397,65 @@ describe('FoodSearchScreen', () => {
       screen.getByLabelText('Oat flakes, Favourite, 1 serving · 50 g · 174 kcal'),
     ).toBeTruthy();
     expect(screen.getByLabelText('Egg, raw, 1 piece · 60 g · 82 kcal')).toBeTruthy();
+  });
+
+  it('takes photos of a meal from the camera beside the search', async () => {
+    await render(<FoodSearchScreen meal="dinner" day="2026-10-27" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
+    expect(screen.getByText('Up to 3 photos of the same meal')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Take a photo' }));
+
+    expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
+    // Once the sheet has closed, as iOS opens the camera only then. The photos are handed over
+    // in the app, and only their key goes in the route.
+    await waitFor(() => expect(router.push).toHaveBeenCalled());
+    const { pathname, params } = jest.mocked(router.push).mock.calls[0]![0] as {
+      pathname: string;
+      params: { meal: string; day: string; photos: string };
+    };
+    expect([pathname, params.meal, params.day]).toEqual([
+      '/nutrition/photo',
+      'dinner',
+      '2026-10-27',
+    ]);
+    expect(mealPhotos(params.photos)).toEqual(['file://plate.jpg']);
+  });
+
+  it('shows a meal logged from photos as added, and undoes it', async () => {
+    undo.mockImplementation((_estimate, { onSuccess }) => onSuccess());
+    mockSearch({ data: [OATS] });
+    const estimate = {
+      meal: 'breakfast' as const,
+      day: '2026-10-27',
+      entryIds: [11, 12],
+      foods: [OATS.ref, { kind: 'custom' as const, id: 5 }],
+      createdFoodIds: [5],
+      calories: 1234.4,
+    };
+    handOverLoggedEstimate(estimate);
+    await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
+    await fireEvent.changeText(screen.getByLabelText('Search foods'), 'oat');
+
+    expect(screen.getByText('Added 2 foods · 1,234 kcal')).toBeTruthy();
+    expect(screen.queryByLabelText('Add 1 serving of Oat flakes')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+    expect(undo).toHaveBeenCalledWith(estimate, expect.anything());
+    expect(screen.getByLabelText('Add 1 serving of Oat flakes')).toBeTruthy();
+    expect(screen.queryByText('Added 2 foods · 1,234 kcal')).toBeNull();
+  });
+
+  it('leaves a meal logged from photos for another meal alone', async () => {
+    handOverLoggedEstimate({
+      meal: 'lunch',
+      day: '2026-10-27',
+      entryIds: [11],
+      foods: [OATS.ref],
+      createdFoodIds: [],
+      calories: 174,
+    });
+    await render(<FoodSearchScreen meal="breakfast" day="2026-10-27" />);
+    expect(screen.queryByText(/^Added/)).toBeNull();
   });
 });

@@ -135,6 +135,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
     items: [
       {
         name: 'Rice',
+        searchName: 'White rice, boiled',
         grams: 182,
         confidence: 0.83,
         food: { ref: { kind: 'library', id: 'C352032' }, name: 'White rice, boiled' },
@@ -143,6 +144,7 @@ Deno.test('estimates the items, with the values of the foods they match', async 
       },
       {
         name: 'Grilled chicken',
+        searchName: 'Chicken breast, grilled',
         grams: 120,
         confidence: 0.7,
         food: { ref: { kind: 'library', id: 'V416172' }, name: 'Chicken breast, grilled' },
@@ -153,6 +155,8 @@ Deno.test('estimates the items, with the values of the foods they match', async 
       // Mango alone is not mango chutney: the model's values, marked as estimated.
       {
         name: 'Mango chutney',
+        // What an estimated item is saved as, when it is logged (#357).
+        searchName: 'Mango chutney',
         grams: 20,
         confidence: 0.4,
         per100: { kcal: 233.3, proteinG: 0.5, carbsG: 57, fatG: 0.3 },
@@ -240,6 +244,12 @@ Deno.test("prefers the user's own food or recipe when it is the same food", asyn
   // Nor is the user's food when its calories are far from the photo's.
   const heavy = food({ custom_food_id: 8, name: 'Banana, fried' }, 250);
   assertEquals(bestMatch('Banana', 90, [heavy, library]), library);
+  // But an own food of exactly the name is the one an estimated item would be logged as.
+  const exactOwn = food({ custom_food_id: 9, name: 'banana' }, 250);
+  assertEquals(bestMatch('Banana', 90, [library, exactOwn]), exactOwn);
+  // A recipe of the name is not, unless its calories agree.
+  const recipe = food({ recipe_id: 6, name: 'Banana' }, 250);
+  assertEquals(bestMatch('Banana', 90, [recipe, library]), library);
 
   const model = new FakeModel(
     answer({ isFood: true, items: [{ ...ITEMS[0], searchName: 'Banana' }], note: '' }),
@@ -451,6 +461,8 @@ Deno.test(
     assertEquals(response.status, 200);
     const [item] = (await response.json()).items;
     assertEquals([item.estimated, item.per100.kcal], [true, 130]);
+    // It is named by what it is, as the search name the model gave was dropped.
+    assertEquals(item.searchName, 'Rice');
     assertEquals(searched, []);
   },
 );

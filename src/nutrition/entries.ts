@@ -5,7 +5,8 @@ import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
 import { foodColumns, type Amount, type FoodRef } from './foods';
-import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
+import { dayEntriesKey, type LoggedEntry, type Meal, type Totals } from './meals';
+import { useReloadFoods } from './quick-foods';
 import { dayTargetsKey } from './targets';
 
 export type NewEntry = Amount & {
@@ -138,5 +139,108 @@ export function useCopyEntries() {
       return data;
     },
     onSuccess: (_data, { day }) => reload(day),
+  });
+}
+
+/** An item of an estimated meal to log: a found food by its reference, or the model's values. */
+export type EstimatedEntry = { grams: number } & (
+  | { food: FoodRef }
+  | {
+      /** The name the food is saved by as the user's own, its search name. */
+      name: string;
+      per100g: Totals;
+    }
+);
+
+/** What logging an estimated meal added, which its undo takes away again. */
+export type LoggedEstimate = {
+  day: string;
+  /** The entries, in the order of the items. */
+  entryIds: number[];
+  /** The foods logged, by their reference, including the ones saved as the user's own. */
+  foods: FoodRef[];
+  /** The user's own foods made for items the library did not have. */
+  createdFoodIds: number[];
+  /** What the entries add, at the values they were logged with. */
+  calories: number;
+};
+
+/**
+ * Logs a meal estimated from photos in one step (ADR 0060): found foods at their grams, and each
+ * item the library did not have as a food of the user's own, by its name, or the one of that
+ * name they have.
+ */
+export function useLogEstimate() {
+  const reload = useReloadDay();
+  const reloadFoods = useReloadFoods();
+  return useMutation({
+    mutationFn: async ({
+      day,
+      meal,
+      entries,
+    }: {
+      day: string;
+      meal: Meal;
+      entries: EstimatedEntry[];
+    }): Promise<LoggedEstimate> => {
+      const { data, error } = await supabase.rpc('log_meal_estimate', {
+        day,
+        meal,
+        items: entries.map((entry) =>
+          'food' in entry
+            ? { ...foodColumns(entry.food), grams: entry.grams }
+            : {
+                name: entry.name,
+                grams: entry.grams,
+                kcal: entry.per100g.calories,
+                protein_g: entry.per100g.proteinG,
+                carbs_g: entry.per100g.carbsG,
+                fat_g: entry.per100g.fatG,
+              },
+        ),
+      });
+      if (error) {
+        throw error;
+      }
+      return {
+        day,
+        entryIds: data.map((row) => row.entry_id),
+        foods: data.map((row, index) => {
+          const entry = entries[index]!;
+          return 'food' in entry ? entry.food : { kind: 'custom', id: row.custom_food_id };
+        }),
+        createdFoodIds: data.flatMap((row) => (row.created_food ? [row.custom_food_id] : [])),
+        calories: data.reduce((sum, row) => sum + row.kcal, 0),
+      };
+    },
+    onSuccess: async (logged) => {
+      await Promise.all([
+        reload(logged.day),
+        logged.createdFoodIds.length > 0 ? reloadFoods() : undefined,
+      ]);
+    },
+  });
+}
+
+/**
+ * Takes back an estimated meal in one step: its entries are removed, and the foods of one's own
+ * it made are deleted, or archived when something else names them (ADR 0060).
+ */
+export function useUndoEstimate() {
+  const reload = useReloadDay();
+  const reloadFoods = useReloadFoods();
+  return useMutation({
+    mutationFn: async ({ entryIds, createdFoodIds }: LoggedEstimate) => {
+      const { error } = await supabase.rpc('undo_meal_estimate', {
+        entry_ids: entryIds,
+        food_ids: createdFoodIds,
+      });
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: async (_data, { day, createdFoodIds }) => {
+      await Promise.all([reload(day), createdFoodIds.length > 0 ? reloadFoods() : undefined]);
+    },
   });
 }

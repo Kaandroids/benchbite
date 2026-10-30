@@ -10,7 +10,7 @@ jest.mock('@/lib/supabase', () => {
   return {
     supabase: { auth: { getSession: () => Promise.resolve({ data: {} }) }, rpc },
     functionUrl: (name: string) => `https://example.test/functions/v1/${name}`,
-    publishableKey: 'key',
+    functionHeaders: () => Promise.resolve({ 'content-type': 'application/json', apikey: 'key' }),
   };
 });
 

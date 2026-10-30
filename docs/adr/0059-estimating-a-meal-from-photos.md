@@ -28,7 +28,7 @@ match what the user logs by hand.
   body is counted as it is read. The answer may take 3,000 tokens, reasoning included, so that an
   estimate of twelve items is not cut off; one that is cut is not used.
 - **The model answers in a structured shape** (`responseSchema`): for each item a name in the
-  user's language, a `searchName` as the food library names foods ("Pasta, boiled"), the grams by
+  user's language, a `searchName` as the food library names foods in that language ("Nudeln, gekocht"), the grams by
   eye, a confidence from 0 to 1, its own values per 100 g, and what is uncertain; `isFood` false
   for a photo of no food. The schema is derived from the zod check of the answer, which answers
   `unavailable` for any other shape; a `searchName` too long to search only leaves its item
@@ -43,7 +43,8 @@ match what the user logs by hand.
   food of exactly that name decides: it, or none, never a longer name ("Apple sauce" for an
   apple whose calories disagree). The user's own food or recipe comes first only when it is the
   same food, its name followed by nothing, a comma, ` (` or ` -` ("Banana, mine", never "Banana
-  bread" for a banana). The item then names the food by the app's `FoodRef`, as a meal entry is
+  bread" for a banana). An own food of exactly the `searchName` is taken whatever its calories,
+  as an item with no match would be saved and logged as that food (ADR 0060). The item then names the food by the app's `FoodRef`, as a meal entry is
   logged (`refOfRow()`, shared with the app), and takes its values; an item with no match keeps
   the model's values and is marked `estimated`. Grams and values per 100 g are returned; the app
   works out the totals.

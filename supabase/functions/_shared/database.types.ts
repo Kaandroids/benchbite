@@ -1812,6 +1812,15 @@ export type Database = {
       };
       exercise_seconds: { Args: { exercise: Json }; Returns: number };
       first_day_of_break: { Args: { today: string }; Returns: string };
+      fitted_food_values: {
+        Args: {
+          given_carbs_g: number;
+          given_fat_g: number;
+          given_kcal: number;
+          given_protein_g: number;
+        };
+        Returns: Record<string, unknown>;
+      };
       food_name_key: { Args: { name: string }; Returns: string };
       frequent_foods: {
         Args: { for_meal: Database['public']['Enums']['meal']; language: string };
@@ -1936,6 +1945,15 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      log_meal_estimate: {
+        Args: { day: string; items: Json; meal: Database['public']['Enums']['meal'] };
+        Returns: {
+          created_food: boolean;
+          custom_food_id: number;
+          entry_id: number;
+          kcal: number;
+        }[];
       };
       log_weight: { Args: { today: string; weight_kg: number }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
@@ -2260,6 +2278,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_meal_estimate: { Args: { entry_ids: number[]; food_ids: number[] }; Returns: undefined };
       use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       use_workout_alternative: {
         Args: { alternative_id: number; today: string };

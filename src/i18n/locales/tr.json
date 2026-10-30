@@ -343,6 +343,44 @@
       "resultGrams": "{{grams}} g · {{calories}} kcal",
       "mine": "Benim"
     },
+    "photo": {
+      "camera": "Fotoğraftan öğün ekle",
+      "sheetTitle": "Fotoğraftan ekle",
+      "sheetHint": "Aynı öğünün en fazla 3 fotoğrafı",
+      "take": "Fotoğraf çek",
+      "choose": "Galeriden seç",
+      "cancel": "Vazgeç",
+      "title": {
+        "breakfast": "Fotoğraftan kahvaltı",
+        "lunch": "Fotoğraftan öğle yemeği",
+        "dinner": "Fotoğraftan akşam yemeği",
+        "snack": "Fotoğraftan ara öğün"
+      },
+      "photo": "Fotoğraf {{number}}",
+      "looking": "Bite öğününe bakıyor…",
+      "lookingHint": "Her yiyeceği kütüphanede bulup miktarını gözle tahmin ediyor. Bu birkaç saniye sürer.",
+      "confidence": {
+        "high": "Tahmin · yüksek güven",
+        "medium": "Tahmin · orta güven",
+        "low": "Tahmin · düşük güven"
+      },
+      "estimated": "Tahmini",
+      "row": "{{name}}, {{grams}} gram, {{calories}} kcal, miktarı değiştir",
+      "rowEstimated": "{{name}}, {{grams}} gram, {{calories}} kcal, tahmini, kütüphanede bulunamadı, miktarı değiştir",
+      "noteLabel": "Bir şey mi yanlış?",
+      "notePlaceholder": "Bite'a söyle, ör. ekmeğin yarısı",
+      "again": "Yeniden tahmin et",
+      "saveAmount": "Kaydet",
+      "added_one": "{{count}} yiyecek eklendi · {{calories}} kcal",
+      "added_other": "{{count}} yiyecek eklendi · {{calories}} kcal",
+      "undoError": "Geri alınamadı. Yiyecekleri öğünden kaldırabilirsin.",
+      "notFood": "Bu bir öğüne benzemiyor",
+      "notFoodHint": "Tabağın tamamı görünecek şekilde yukarıdan fotoğraf çek.",
+      "tryAnother": "Başka fotoğraf dene",
+      "failed": "Bite öğününe bakamadı",
+      "failedHint": "Bağlantını kontrol edip tekrar dene.",
+      "blockedHint": "Bite bu fotoğrafları tahmin edemiyor. Başka fotoğraflar dene."
+    },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",
       "portion": "Porsiyon",
