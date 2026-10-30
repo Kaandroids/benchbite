@@ -57,11 +57,24 @@ export type ChatReason =
  */
 export type Interruption = 'failed' | 'refused' | 'stopped' | 'cut';
 
-/** A day's calories and macros. */
-export type ProposedTargets = { calories: number; proteinG: number; carbsG: number; fatG: number };
+/** A day's calories and macros, null where a value is not known. */
+export type DayTargets<Value = number> = {
+  calories: Value;
+  proteinG: Value;
+  carbsG: Value;
+  fatG: Value;
+};
+
+/** An exercise's target as save_workout() takes it: reps, seconds or meters. */
+export type ProposalTarget = {
+  reps?: { min: number; max?: number };
+  seconds?: number;
+  meters?: number;
+};
 
 /**
- * A change Bite proposed (ADR 0058), as its card shows it: exercises swapped in a workout, in the
+ * A change Bite proposed (ADR 0058), as its card shows it, in data the app words and formats
+ * itself, as the card is kept with the message: exercises swapped in a workout, named in the
  * user's language, or the targets in use and the new ones. The user applies it, keeps things as
  * they are, or undoes it, by its `id` (decide_coach_proposal()).
  */
@@ -69,10 +82,17 @@ export type ProposalCard =
   | {
       kind: 'workout';
       id: number;
-      workout: string;
-      swaps: { from: string; to: string; detail: string; why?: string }[];
+      /** The workout's name, or its type for one without a name, which the app names. */
+      workout: { name: string | null; type: string | null };
+      swaps: { from: string; to: string; sets: number; target: ProposalTarget; why?: string }[];
     }
-  | { kind: 'targets'; id: number; from: ProposedTargets | null; to: ProposedTargets };
+  | {
+      kind: 'targets';
+      id: number;
+      /** The targets in use when it was proposed, as the user sees them; null before any. */
+      from: DayTargets<number | null> | null;
+      to: DayTargets;
+    };
 
 /** What the app is told as Bite answers, one server-sent event each, with Bite's faces. */
 export type ChatEvent<Expression extends string = string> =
