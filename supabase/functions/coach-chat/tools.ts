@@ -8,7 +8,7 @@ import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import type { Language } from './prompt.ts';
-import { workoutName } from './snapshot.ts';
+import { workoutName } from './workout.ts';
 
 export type ToolContext = { supabase: Client; language: Language; today: string };
 

@@ -2,6 +2,7 @@
 // targets and food, their plan and streak. Read with the user's token, so row level security
 // decides what Bite may see; what cannot be read is left out rather than failing the answer.
 import { type Client, logError } from '../_shared/supabase.ts';
+import { workoutName } from './workout.ts';
 
 export type Macros = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 
@@ -31,11 +32,6 @@ export type Snapshot = {
 };
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-/** A workout's name, or for one without a name its type in words, as `full body`. */
-export function workoutName(workout: { name: string | null; type: string | null }): string {
-  return workout.name || (workout.type ?? 'workout').replaceAll('_', ' ');
-}
 
 /** Reads the user's snapshot on `today`, a date of their device. */
 export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
