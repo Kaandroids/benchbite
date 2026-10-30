@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { RangeControl } from '@/components/range-control';
-import { Caption } from '@/components/ui/caption';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { trainingSummary, useDayTraining } from '@/history/day-training';
@@ -14,7 +13,6 @@ import { useTheme } from '@/theme';
 
 import { CardLoadState } from './card-load-state';
 import { HeatMap, HeatMapLegend } from './heat-map';
-import { SummaryBox } from './summary-box';
 
 /** A month is too short to show how training went; the map fills its width from three. */
 const TRAINING_RANGES: readonly ProgressRange[] = ['threeMonths', 'sixMonths', 'year'];
@@ -39,11 +37,6 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
   const before = addDays(start, -1);
   const last = useDayTraining(today, rangeStart(range, before), before);
   const summary = days.data ? trainingSummary(days.data) : null;
-  // While a new range loads, the last days keep the name of the range they were loaded for.
-  const [shownRange, setShownRange] = useState(range);
-  if (days.data && !days.isPlaceholderData && shownRange !== range) {
-    setShownRange(range);
-  }
   const lastLifted =
     last.data && !last.isPlaceholderData && !days.isPlaceholderData
       ? trainingSummary(last.data).liftedKg
@@ -78,33 +71,27 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
         : null;
     content = (
       <>
-        <SummaryBox>
-          {/* A caption, unlike the eating card's titled summary, as the approved design has it. */}
-          <Caption>
-            {t('progress.summary.caption', { range: t(`progress.summary.${shownRange}`) })}
-          </Caption>
-          <View style={[styles.stats, { gap: spacing.md }]}>
-            <Stat
-              value={
-                summary.planned > 0
-                  ? format(summary.done / summary.planned, { style: 'percent' })
-                  : '–'
-              }
-              label={t('progress.training.planDone')}
-            />
-            <Stat value={duration(summary.minutes)} label={t('progress.training.trained')} />
-            <Stat
-              value={weight(summary.liftedKg)}
-              label={t('progress.training.lifted')}
-              change={
-                change === null
-                  ? undefined
-                  : `${change > 0 ? '+' : ''}${format(change / 100, { style: 'percent' })}`
-              }
-              better={change !== null && change >= 0}
-            />
-          </View>
-        </SummaryBox>
+        <View style={[styles.stats, { gap: spacing.md }]}>
+          <Stat
+            value={
+              summary.planned > 0
+                ? format(summary.done / summary.planned, { style: 'percent' })
+                : '–'
+            }
+            label={t('progress.training.planDone')}
+          />
+          <Stat value={duration(summary.minutes)} label={t('progress.training.trained')} />
+          <Stat
+            value={weight(summary.liftedKg)}
+            label={t('progress.training.lifted')}
+            change={
+              change === null
+                ? undefined
+                : `${change > 0 ? '+' : ''}${format(change / 100, { style: 'percent' })}`
+            }
+            better={change !== null && change >= 0}
+          />
+        </View>
         <HeatMap
           days={days.data}
           today={today}

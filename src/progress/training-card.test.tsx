@@ -50,7 +50,8 @@ it('sums up three months of training against the plan and the range before', asy
   expect(useDayTraining).toHaveBeenCalledWith(TODAY, TODAY_START, TODAY);
   expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2026, 3, 28), new Date(2026, 6, 28));
   expect(screen.getByText('2 of 3 workouts')).toBeTruthy();
-  expect(screen.getByText('SUMMARY · LAST 3 MONTHS')).toBeTruthy();
+  // The numbers sit under the title, without a caption of their own.
+  expect(screen.queryByText(/^SUMMARY/)).toBeNull();
   expect(screen.getByLabelText('2 days trained, 1 with a planned workout missed')).toBeTruthy();
   expect(screen.getByText('67%')).toBeTruthy();
   expect(screen.getByText('2.3 h')).toBeTruthy();
@@ -75,16 +76,6 @@ it('loads the range chosen, from three months', async () => {
   expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2025, 9, 29), TODAY);
   // A month is too short for the map.
   expect(screen.queryByText('1M')).toBeNull();
-});
-
-it('names the last range while a new one loads', async () => {
-  mockDays([day('2026-10-28', 45)]);
-  await render(<TrainingCard today={TODAY} />);
-  jest
-    .mocked(useDayTraining)
-    .mockReturnValue({ data: [day('2026-10-28', 45)], isPlaceholderData: true, refetch } as never);
-  await fireEvent.press(screen.getByText('6M'));
-  expect(screen.getByText('SUMMARY · LAST 3 MONTHS')).toBeTruthy();
 });
 
 it('says when there was no training in the range', async () => {

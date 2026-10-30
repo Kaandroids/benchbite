@@ -1569,7 +1569,6 @@
     },
     "summary": {
       "title": "Özet",
-      "caption": "Özet · {{range}}",
       "month": "Son 1 ay",
       "threeMonths": "Son 3 ay",
       "sixMonths": "Son 6 ay",

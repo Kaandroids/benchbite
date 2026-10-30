@@ -1569,7 +1569,6 @@
     },
     "summary": {
       "title": "Summary",
-      "caption": "Summary · {{range}}",
       "month": "Last month",
       "threeMonths": "Last 3 months",
       "sixMonths": "Last 6 months",
