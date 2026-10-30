@@ -74,3 +74,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0056](0056-count-a-call-after-its-place-is-taken.md)        | A model call's input is counted after its place is taken                                | Accepted                      |
 | [0057](0057-stop-bite-on-the-server-too.md)                  | Stop Bite's answer on the server too                                                    | Accepted                      |
 | [0058](0058-bite-proposes-the-user-applies.md)               | Bite proposes, the user applies                                                         | Accepted                      |
+| [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted                      |
