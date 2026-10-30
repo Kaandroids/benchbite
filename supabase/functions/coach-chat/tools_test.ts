@@ -23,6 +23,16 @@ Deno.test('tells the model of each tool with its arguments', () => {
   );
 });
 
+Deno.test("tells the model each tool's arguments as JSON Schema, from their checks", () => {
+  const history = TOOL_DEFINITIONS.find((tool) => tool.name === 'get_workout_history')!;
+  assertEquals(history.parameters.type, 'object');
+  assertEquals(history.parameters.required, ['from', 'to']);
+  assertEquals('$schema' in history.parameters, false);
+  const search = TOOL_DEFINITIONS.find((tool) => tool.name === 'search_foods')!;
+  const query = (search.parameters.properties as Record<string, { maxLength?: number }>).query;
+  assertEquals(query.maxLength, 80);
+});
+
 Deno.test('answers a wrong call with what is wrong, for the model to correct', async () => {
   assertEquals(await runTool('get_plan', {}, context), { error: 'There is no tool get_plan.' });
 
@@ -32,8 +42,10 @@ Deno.test('answers a wrong call with what is wrong, for the model to correct', a
     context,
   );
   assertEquals(typeof (tooLong as { error: string }).error, 'string');
-  const notADay = await runTool('get_meal_log', { day: 'yesterday' }, context);
-  assertEquals(typeof (notADay as { error: string }).error, 'string');
+  for (const day of ['yesterday', '2026-13-45', '2026-02-30']) {
+    const notADay = await runTool('get_meal_log', { day }, context);
+    assertEquals(typeof (notADay as { error: string }).error, 'string');
+  }
 });
 
 Deno.test('reads a month of workouts at most', async () => {
