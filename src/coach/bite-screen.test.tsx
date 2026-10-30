@@ -164,3 +164,30 @@ it('closes', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
   expect(router.back).toHaveBeenCalled();
 });
+
+it('goes on in the thread of an answer that was stopped', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send({ event: 'thread', threadId: 7 }, { event: 'text', text: 'Your week' });
+  await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And today?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+
+  expect(stream.request()).toMatchObject({ message: 'And today?', threadId: 7 });
+});
+
+it('shows a lookup Bite makes after it started writing', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+
+  await stream.send(
+    { event: 'text', text: 'Let me check.' },
+    { event: 'tool_start', name: 'get_records' },
+  );
+
+  expect(screen.getByText('Let me check.')).toBeOnTheScreen();
+  expect(screen.getByText('Checking your records…')).toBeOnTheScreen();
+});
