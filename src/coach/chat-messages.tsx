@@ -67,13 +67,13 @@ function UserMessage({ text }: { text: string }) {
       style={[
         styles.bubble,
         {
-          backgroundColor: colors.iconBackground,
+          backgroundColor: colors.userBubble,
           paddingHorizontal: spacing.md + 2,
           paddingVertical: spacing.sm + 2,
         },
       ]}
     >
-      <Text>{text}</Text>
+      <Text color="onUserBubble">{text}</Text>
     </View>
   );
 }
