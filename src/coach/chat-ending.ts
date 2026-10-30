@@ -1,6 +1,6 @@
 // How a message to Bite ends, read from coach-chat's events and from how its stream ended
 // (ADR 0052), apart from the screen, so that every way it can end is tested on its own.
-import type { ChatReason } from '@shared/coach/chat';
+import type { ChatReason, Interruption } from '@shared/coach/chat';
 
 import { REFUSALS, type Refusal } from '@/ai/access';
 import { oneOf } from '@/lib/one-of';
@@ -32,6 +32,15 @@ export type Ending = {
   refusal?: Refusal;
 };
 
+/**
+ * How an answer that stopped short is shown, from why it did: as stopped by the user, or as cut
+ * off for any other reason; nothing for a whole answer.
+ */
+export function cutOf(interrupted: Interruption | null | undefined): Ending['cut'] {
+  if (!interrupted) return undefined;
+  return interrupted === 'stopped' ? 'stopped' : 'cut_off';
+}
+
 /** A message sent in `threadId`, before anything of its answer came. */
 export function beginning(threadId: number | undefined): Ending {
   return { threadId, before: threadId, said: false, ended: false };
@@ -46,7 +55,7 @@ export function afterEvent(ending: Ending, event: ChatEvent): Ending {
       return { ...ending, said: true };
     case 'done':
       return explained(
-        { ...ending, ended: true, threadId: event.threadId, cut: event.interrupted && 'cut_off' },
+        { ...ending, ended: true, threadId: event.threadId, cut: cutOf(event.interrupted) },
         event.reason,
       );
     case 'error':
