@@ -46,7 +46,10 @@ jest.mock('@/history/history', () => ({
     refetch: () => {},
   }),
 }));
-jest.mock('@/sessions/start', () => ({ useStartWorkout: jest.fn() }));
+jest.mock('@/sessions/start', () => ({
+  ...jest.requireActual<typeof import('@/sessions/start')>('@/sessions/start'),
+  useStartWorkout: jest.fn(),
+}));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('@/sessions/session', () => ({
   ...jest.requireActual<typeof import('@/sessions/session')>('@/sessions/session'),
@@ -202,6 +205,16 @@ describe('WorkoutsScreen', () => {
     expect(screen.queryByLabelText('Pull is active')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
     expect(startWorkout).toHaveBeenCalledWith(expect.objectContaining({ id: 5 }));
+  });
+
+  it('shows a workout without exercises as such, and opens it instead of starting it', async () => {
+    mockWorkouts([testWorkout(5, { type: 'pull', exercises: [] })]);
+    await render(<WorkoutsScreen />);
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
+    expect(screen.queryByText('~45 min')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Start Pull' }));
+    expect(startWorkout).not.toHaveBeenCalled();
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
   });
 
   describe('with a workout in progress', () => {
@@ -436,7 +449,8 @@ describe('WorkoutScreen', () => {
       await render(<WorkoutScreen id={7} />);
       await fireEvent.press(screen.getByRole('button', { name: 'Alternatives' }));
       expect(screen.getByText('Add alternative')).toBeTruthy();
-      expect(screen.getByText('In use · 4 exercises')).toBeTruthy();
+      expect(screen.getByRole('radio', { name: 'Alternative 1', checked: true })).toBeTruthy();
+      expect(screen.getByText('4 exercises')).toBeTruthy();
     });
 
     it('shows no chips for a workout without alternatives', async () => {
@@ -504,6 +518,54 @@ describe('WorkoutScreen', () => {
       await fireEvent.press(screen.getByRole('tab', { name: 'Gym' }));
       expect(switchTo).not.toHaveBeenCalled();
       expect(alert.mock.calls[0]?.[0]).toBe('Pull is running');
+    });
+  });
+
+  describe('without exercises', () => {
+    const empty = { ...pull, exercises: [] };
+
+    it('says so in place of its exercises, and leads to Edit', async () => {
+      mockWorkouts([empty]);
+      mockAlternatives([
+        { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
+        { id: 5, position: 2, name: 'Home', inUse: true, exerciseCount: null },
+      ]);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByText('No exercises yet')).toBeTruthy();
+      expect(screen.getByText('Home has no exercises yet')).toBeTruthy();
+      expect(screen.getByText('Add the exercises for Home. Gym stays as it is.')).toBeTruthy();
+      expect(screen.queryByText('~50')).toBeNull();
+      await fireEvent.press(screen.getByRole('button', { name: 'Add exercises' }));
+      expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/edit', params: { id: '7' } });
+    });
+
+    it('cannot be started until it has an exercise', async () => {
+      mockWorkouts([empty]);
+      await render(<WorkoutScreen id={7} />);
+      const start = screen.getByRole('button', { name: 'Start workout' });
+      expect(start.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }));
+      await fireEvent.press(start);
+      expect(startWorkout).not.toHaveBeenCalled();
+      expect(screen.getByText('Add an exercise to start.')).toBeTruthy();
+    });
+
+    it('names the workout itself without alternatives, and the others with several', async () => {
+      mockWorkouts([empty]);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByText('Pull has no exercises yet')).toBeTruthy();
+      expect(screen.getByText('Add the exercises for this workout to start it.')).toBeTruthy();
+
+      mockAlternatives([
+        { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
+        { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
+        { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 2 },
+      ]);
+      await render(<WorkoutScreen id={7} />);
+      expect(
+        screen.getByText(
+          'Add the exercises for Alternative 2. The other alternatives stay as they are.',
+        ),
+      ).toBeTruthy();
     });
   });
 
