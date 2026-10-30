@@ -20,8 +20,8 @@ summary, Daily goals and the weight card, still came from the chosen pace, so th
 
 - **The slider stops at 1.5% of body weight a week**, on its steps, where that comes before
   0.9 kg (`paceRange`), so that a pace the app calls aggressive cannot be picked, in either
-  unit once saved in kilograms. At the stop, the
-  note says it is the fastest pace for the user's weight. Goals to gain keep their range.
+  unit once saved in kilograms. At the stop, the note says it is the fastest pace for the
+  user's weight. Goals to gain keep their range.
 - **The database works out the pace of loss the targets really give**, from the targets
   themselves: the calories that keep the weight less those of the goal, at 7,700 kcal a
   kilogram (`weekly_loss_kg()`). `achievable_weekly_pace_kg()` does it for answers not yet saved
