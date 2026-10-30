@@ -19,6 +19,6 @@ export const LANGUAGE_NAMES: Record<Language, string> = {
 export function untagged(text: string): string {
   return text
     .normalize('NFKC')
-    .replace(/[​-‍⁠﻿]/g, '')
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
     .replaceAll('<', '‹');
 }
