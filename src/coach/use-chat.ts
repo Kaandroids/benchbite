@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { randomUUID } from 'expo-crypto';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ACCESS_KEY, type Refusal } from '@/ai/access';
 import { deviceToday } from '@/i18n/dates';
+import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
@@ -42,10 +44,23 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const [refusal, setRefusal] = useState<Refusal>();
   const threadId = useRef<number | undefined>(start?.threadId);
   const abort = useRef<AbortController | undefined>(undefined);
+  const requestId = useRef<string | undefined>(undefined);
   const count = useRef(0);
 
+  /**
+   * Stops the answer on its way. Closing its request does not always reach Bite's function, so
+   * the app also tells the server, which stops the answer there too (ADR 0057).
+   */
+  const halt = () => {
+    if (!abort.current) return;
+    abort.current.abort();
+    if (requestId.current) {
+      void supabase.rpc('stop_coach_request', { request_id: requestId.current });
+    }
+  };
+
   // A message still on its way when the screen closes is stopped.
-  useEffect(() => () => abort.current?.abort(), []);
+  useEffect(() => halt, []);
 
   const updateBite = (id: string, update: (message: ChatMessage) => ChatMessage) =>
     setMessages((all) => all.map((message) => (message.id === id ? update(message) : message)));
@@ -90,6 +105,7 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
     setFailure(undefined);
     const controller = new AbortController();
     abort.current = controller;
+    requestId.current = randomUUID();
 
     const onEvent = (event: ChatEvent) => {
       ending = afterEvent(ending, event);
@@ -108,7 +124,13 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
 
     try {
       await streamChat(
-        { message, threadId: threadId.current, language: i18n.language, today: deviceToday() },
+        {
+          message,
+          threadId: threadId.current,
+          language: i18n.language,
+          today: deviceToday(),
+          requestId: requestId.current,
+        },
         onEvent,
         controller.signal,
       );
@@ -124,6 +146,7 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
           );
     } finally {
       abort.current = undefined;
+      requestId.current = undefined;
       finish(ending, questionId, biteId);
       // What the message cost counts toward the month's budget, and the thread moves up the history.
       void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
@@ -135,7 +158,7 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const send = (text: string) => void run(text);
 
   /** Stops Bite's answer; what came of it stays. */
-  const stop = () => abort.current?.abort();
+  const stop = halt;
 
   /** Asks an unanswered question again: it moves down, to be answered there. */
   const askAgain = (question: ChatMessage) => {

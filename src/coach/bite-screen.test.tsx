@@ -10,6 +10,7 @@ import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from '
 // A new chat by default; the tab bar's opening, without params, is tested on its own.
 const NEW_CHAT = { thread: '', fresh: '1' };
 let mockParams: { thread?: string; fresh?: string; offer?: string } = NEW_CHAT;
+jest.mock('expo-crypto', () => ({ randomUUID: () => '7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11' }));
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), push: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -124,6 +125,41 @@ it('stops an answer, keeping what came of it', async () => {
   expect(stream.aborted()).toBe(true);
   expect(screen.getByText('Your week was')).toBeOnTheScreen();
   expect(screen.queryByText(/couldn't answer/)).toBeNull();
+});
+
+it('tells the server too which answer was stopped', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  const { requestId } = stream.request()!;
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+
+  expect(requestId).toBe('7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11');
+  expect(supabase.rpc).toHaveBeenCalledWith('stop_coach_request', { request_id: requestId });
+});
+
+it('stops the answer on the server when the screen closes', async () => {
+  liveStream();
+  const { unmount } = await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+
+  await act(async () => unmount());
+
+  expect(supabase.rpc).toHaveBeenCalledWith('stop_coach_request', {
+    request_id: '7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11',
+  });
+});
+
+it('tells the server nothing when no answer is on its way', async () => {
+  const stream = liveStream();
+  const { unmount } = await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.end();
+
+  await act(async () => unmount());
+
+  expect(supabase.rpc).not.toHaveBeenCalledWith('stop_coach_request', expect.anything());
 });
 
 it('says so when Bite could not answer', async () => {
