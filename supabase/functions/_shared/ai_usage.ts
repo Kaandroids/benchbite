@@ -145,7 +145,7 @@ function usedBy(error: unknown): Used {
  * Keeps the Edge Function's worker alive until `work` is done, also after its response ended, as
  * when the app closed a stream.
  */
-function keepAlive<T>(work: Promise<T>): Promise<T> {
+export function keepAlive<T>(work: Promise<T>): Promise<T> {
   const runtime = (globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } })
     .EdgeRuntime;
   runtime?.waitUntil(work);
