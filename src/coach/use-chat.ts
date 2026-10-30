@@ -8,6 +8,7 @@ import { deviceToday } from '@/i18n/dates';
 import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
+import { THREADS_KEY } from './threads';
 
 export type ChatMessage = {
   id: string;
@@ -26,18 +27,18 @@ export type ChatStatus = 'idle' | 'thinking' | 'answering';
 
 /**
  * A conversation with Bite, as it is on the screen: the messages, what Bite is doing, the tool it
- * is looking something up with, and why a message failed. The thread goes on until the screen
- * closes.
+ * is looking something up with, and why a message failed. It goes on in `start`'s thread, with
+ * its messages, when one is given, or else in a new thread, until the screen closes.
  */
-export function useChat() {
+export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(start?.messages ?? []);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [tool, setTool] = useState<string>();
   const [failure, setFailure] = useState<Failure>();
   const [refusal, setRefusal] = useState<Refusal>();
-  const threadId = useRef<number | undefined>(undefined);
+  const threadId = useRef<number | undefined>(start?.threadId);
   const abort = useRef<AbortController | undefined>(undefined);
   const count = useRef(0);
 
@@ -121,8 +122,9 @@ export function useChat() {
     } finally {
       abort.current = undefined;
       finish(ending, questionId, biteId);
-      // What the message cost counts toward the month's budget.
+      // What the message cost counts toward the month's budget, and the thread moves up the history.
       void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
+      void queryClient.invalidateQueries({ queryKey: THREADS_KEY });
     }
   };
 

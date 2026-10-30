@@ -4,11 +4,20 @@ import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
+import { useThreadMessages } from './threads';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
+let mockParams: { thread?: string } = {};
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => mockParams,
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: () => ({ data: 'Sam' }) }));
+jest.mock('./threads', () => ({
+  ...jest.requireActual('./threads'),
+  useThreadMessages: jest.fn(() => ({ data: undefined })),
+}));
 jest.mock('./chat-stream', () => ({
   ...jest.requireActual('./chat-stream'),
   streamChat: jest.fn(),
@@ -360,4 +369,35 @@ it('does not call an answer cut off that came whole but was not saved', async ()
 
   expect(screen.getByText("This answer couldn't be saved.")).toBeOnTheScreen();
   expect(screen.queryByText('Cut off')).toBeNull();
+});
+
+it('goes on in a saved chat, with its name and messages, and opens the chats', async () => {
+  const stream = liveStream();
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: {
+      title: 'Knee pain on squats',
+      messages: [
+        { id: 'stored-1', role: 'user', text: 'My knee hurts.', createdAt: new Date() },
+        {
+          id: 'stored-2',
+          role: 'bite',
+          text: 'Try leg press today.',
+          expression: 'neutral',
+          createdAt: new Date(),
+        },
+      ],
+    },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.getByText('Knee pain on squats')).toBeTruthy();
+  expect(screen.getByText('Try leg press today.')).toBeTruthy();
+
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And tomorrow?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  expect(stream.request()?.threadId).toBe(7);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
+  expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  mockParams = {};
 });

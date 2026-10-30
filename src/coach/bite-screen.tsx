@@ -1,33 +1,83 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAiAccess } from '@/ai/access';
+import { LoadState } from '@/components/load-state';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useTheme } from '@/theme';
 
 import { ChatComposer } from './chat-composer';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
+import { useThreadMessages } from './threads';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
-/** The chat with Bite (#294, ADR 0052), opened from the middle of the tab bar. */
+/**
+ * The chat with Bite (#294, ADR 0052), opened from the middle of the tab bar: a new thread, or the
+ * one `thread` names, opened from the chats (#295).
+ */
 export function BiteScreen() {
+  const { thread } = useLocalSearchParams<{ thread?: string }>();
+  const threadId = thread && /^\d+$/.test(thread) ? Number(thread) : undefined;
+  const saved = useThreadMessages(threadId);
+  if (threadId !== undefined && saved.data === undefined) {
+    return (
+      <Screen onBack={() => router.back()} closes>
+        <LoadState queries={[saved]} />
+      </Screen>
+    );
+  }
+  // A thread of its own for each chat opened, so that one's messages never go on in another.
+  return (
+    <Chat
+      key={thread ?? 'new'}
+      title={saved.data?.title ?? undefined}
+      start={
+        saved.data && threadId !== undefined
+          ? { threadId, messages: saved.data.messages }
+          : undefined
+      }
+    />
+  );
+}
+
+type ChatProps = {
+  /** The name of a saved thread the chat goes on in. */
+  title?: string;
+  start?: Parameters<typeof useChat>[0];
+};
+
+function Chat({ title, start }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const chat = useChat();
+  const chat = useChat(start);
   const access = useAiAccess();
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
 
   return (
-    <Screen onBack={() => router.back()} closes title={t('bite.title')} scrolls={false}>
+    <Screen
+      onBack={() => router.back()}
+      closes
+      title={t('bite.title')}
+      subtitle={title}
+      action={
+        <TopBarButton
+          icon="history"
+          label={t('bite.chats.title')}
+          onPress={() => router.push('/bite/chats')}
+        />
+      }
+      scrolls={false}
+    >
       <KeyboardAvoiding>
         <ScrollView
           {...scrollProps}
