@@ -687,6 +687,8 @@
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",
     "session_other": "{{count}} exercises · about {{minutes}} min",
+    "sessions_one": "{{count}} workout · about {{minutes}} min",
+    "sessions_other": "{{count}} workouts · about {{minutes}} min",
     "sessionTypes": {
       "full_body": "Full body",
       "upper": "Upper body",

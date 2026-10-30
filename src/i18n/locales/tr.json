@@ -687,6 +687,8 @@
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
     "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "sessions_one": "{{count}} antrenman · yaklaşık {{minutes}} dk",
+    "sessions_other": "{{count}} antrenman · yaklaşık {{minutes}} dk",
     "sessionTypes": {
       "full_body": "Tüm vücut",
       "upper": "Üst vücut",
