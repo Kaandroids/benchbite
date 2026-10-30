@@ -1711,6 +1711,13 @@
       "save": "Speichern",
       "cancel": "Abbrechen",
       "notRenamed": "Der Chat konnte nicht umbenannt werden. Versuch es noch einmal."
-    }
+    },
+    "moment": {
+      "today": "Heute {{time}}",
+      "yesterday": "Gestern {{time}}",
+      "day": "{{day}} {{time}}"
+    },
+    "continue": "Weitermachen",
+    "allChats": "Alle Chats"
   }
 }

@@ -1711,6 +1711,13 @@
       "save": "Kaydet",
       "cancel": "Vazgeç",
       "notRenamed": "Sohbet yeniden adlandırılamadı. Tekrar dene."
-    }
+    },
+    "moment": {
+      "today": "Bugün {{time}}",
+      "yesterday": "Dün {{time}}",
+      "day": "{{day}} {{time}}"
+    },
+    "continue": "Devam et",
+    "allChats": "Tüm sohbetler"
   }
 }

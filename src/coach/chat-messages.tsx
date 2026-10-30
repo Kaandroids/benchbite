@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -19,6 +19,7 @@ import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import type { ChatMessage, ChatStatus } from './use-chat';
+import { sameDay, useMomentFormat } from './use-moment-format';
 
 /** Bite's face beside its messages. */
 const AVATAR = 32;
@@ -44,19 +45,40 @@ type ChatMessagesProps = {
  */
 export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessagesProps) {
   const { spacing } = useTheme();
+  const [today] = useState(() => new Date());
+  const moment = useMomentFormat(today);
+  // A conversation over more than one day shows when each day of it began (board 18).
+  const first = messages[0]?.createdAt;
+  const days =
+    first !== undefined && messages.some((m) => m.createdAt && !sameDay(m.createdAt, first));
   return (
     <View style={{ gap: spacing.lg }}>
       {messages.map((message, index) => {
         const last = index === messages.length - 1;
+        const before = messages[index - 1]?.createdAt;
+        const separator =
+          days && message.createdAt && (!before || !sameDay(before, message.createdAt)) ? (
+            <Text
+              key={`day-${message.id}`}
+              variant="caption"
+              color="textMuted"
+              align="center"
+              accessibilityRole="header"
+            >
+              {moment(message.createdAt)}
+            </Text>
+          ) : null;
+        let shown;
         if (message.role === 'user') {
-          return <UserMessage key={message.id} message={message} onAskAgain={onAskAgain} />;
+          shown = <UserMessage key={message.id} message={message} onAskAgain={onAskAgain} />;
+        } else if (last && status === 'thinking' && !message.text) {
+          shown = <Thinking key={message.id} tool={tool} />;
+        } else {
+          shown = (
+            <BiteMessage key={message.id} message={message} talking={last && status !== 'idle'} />
+          );
         }
-        if (last && status === 'thinking' && !message.text) {
-          return <Thinking key={message.id} tool={tool} />;
-        }
-        return (
-          <BiteMessage key={message.id} message={message} talking={last && status !== 'idle'} />
-        );
+        return separator ? [separator, shown] : shown;
       })}
       {/* A lookup after Bite started writing shows under what it wrote. */}
       {status === 'answering' && tool ? <ToolLine tool={tool} indent /> : null}
