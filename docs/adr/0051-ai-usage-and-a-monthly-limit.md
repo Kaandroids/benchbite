@@ -29,7 +29,7 @@ the AI features will be for premium users, with a limit from their plan.
   not, as it needs a plan; a user who has reached the limit may not until the month resets.
 - **A call is one request to a model, and the most it may cost is set aside before it runs.** A
   function calls a model only through `aiModel()` (`_shared/ai_usage.ts`), the model for one
-  task. Before each request it counts what the request sends with the provider
+  task; a test keeps functions from reaching `languageModel()` themselves. Before each request it counts what the request sends with the provider
   (`countTokens()`, which costs nothing), and `start_ai_call()`, with the user's token, refuses
   it if that is more than the feature allows (`ai_feature_limits`), if the model has no price, if
   a call of the feature is still running, or if the budget left cannot pay for it at its most:
@@ -39,7 +39,8 @@ the AI features will be for premium users, with a limit from their plan.
 - **Every call is recorded, however it ends:** at what it used when the answer came whole, at
   nothing when the provider refused the request, and at its most when what it used is not known:
   a stream left or broken off before its end, which also stops the request, or a call that never
-  recorded, as when its function was stopped, once ten minutes have passed. A call that records
+  recorded, as when its function was stopped, once seven minutes have passed, longer than an
+  Edge Function may run; the record is kept alive after the function's response ended. A call that records
   after all replaces its most with what it did cost.
 - **The features are the model interface's tasks:** a function names one `ai_feature`, which
   picks the model (ADR 0049) and is what its usage is recorded under.
@@ -58,7 +59,8 @@ the AI features will be for premium users, with a limit from their plan.
 
 ## Consequences
 
-- A new model needs a price in a migration before a function may use it.
+- A new model needs a price in a migration before a function may use it, and only one whose
+  input costs the same for text, images and audio, as one rate prices a call's input.
 - A new feature needs its limits in a migration, and a new task starts with the `ai_feature`
   enum, which the model interface's tasks are.
 - Each request to a model waits for a count of its tokens first, a call to the provider of about
