@@ -2035,6 +2035,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
