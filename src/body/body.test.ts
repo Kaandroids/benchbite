@@ -1,3 +1,4 @@
+import { paceToKg } from '@/i18n/units';
 import { WEIGHT_RANGE_KG } from '@/weight/range';
 
 import {
@@ -11,7 +12,9 @@ import {
   defaultTargetKg,
   isTargetInGoalDirection,
   isTargetReached,
-  isPaceCappedByWeight,
+  datingPace,
+  goalDate,
+  isPaceHeldUp,
   isPaceInRange,
   isTooLightToLose,
   minHealthyWeightKg,
@@ -219,8 +222,35 @@ describe('paceRange', () => {
     expect(paceRange('kg', 'lose_fat', 55).max).toBe(0.8);
     expect(paceRange('lb', 'lose_fat', 55).max).toBe(1.8);
     expect(paceRange('kg', 'lose_fat', 30).max).toBe(0.45);
-    expect(isPaceCappedByWeight('kg', 'lose_fat', 55)).toBe(true);
-    expect(isPaceCappedByWeight('kg', 'lose_fat', 60)).toBe(false);
+  });
+
+  it('never stops at a pace the app calls aggressive, in either unit', () => {
+    // 1.8 lb is 0.82 kg once saved, 1.51 % of 54.45 kg.
+    expect(paceRange('lb', 'lose_fat', 54.45).max).toBe(1.7);
+    for (let weightKg = 30; weightKg <= 61; weightKg += 0.1) {
+      for (const unit of ['kg', 'lb'] as const) {
+        const max = paceToKg(unit, paceRange(unit, 'lose_fat', weightKg).max);
+        expect(paceLevel('lose_fat', weightKg, max)).not.toBe('aggressive');
+      }
+    }
+  });
+});
+
+describe('dating the goal', () => {
+  const from = new Date(2026, 0, 1);
+
+  it('dates by the chosen pace, unless the floor holds the targets below it', () => {
+    expect(datingPace(0.9, 0.56)).toBe(0.56);
+    expect(datingPace(0.5, 0.49)).toBe(0.5);
+    expect(datingPace(0.5, null)).toBe(0.5);
+    expect(isPaceHeldUp(0.9, 0.56)).toBe(true);
+    expect(isPaceHeldUp(0.5, 0.5)).toBe(false);
+  });
+
+  it('gives no date when the targets keep the weight', () => {
+    expect(isPaceHeldUp(0.5, 0)).toBe(true);
+    expect(goalDate(50, 47, 0.5, 0, from)).toBeNull();
+    expect(goalDate(80, 75, 0.5, null, from)).toEqual(new Date(2026, 2, 12));
   });
 
   it('keeps the paces of a goal to gain', () => {

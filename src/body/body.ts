@@ -7,7 +7,7 @@ import {
   type PaceLevel,
 } from '@shared/body/limits';
 
-import { paceIn, toTenth, type WeightUnit } from '@/i18n/units';
+import { paceIn, paceToKg, toTenth, type WeightUnit } from '@/i18n/units';
 import type { Database } from '@/lib/database.types';
 import { clamp } from '@/lib/math';
 
@@ -141,13 +141,12 @@ export function paceRange(unit: WeightUnit, goal: WeightGoal, weightKg: number):
   const forWeight = paceIn(unit, (weightKg * PACE_LEVELS.losing[1]) / 100);
   // Down to a step, and a hair over, as 1.5 % may land a rounding below one.
   const steps = Math.floor((forWeight - range.min) / range.step + 1e-9);
-  const max = clamp(Math.round((range.min + steps * range.step) * 100) / 100, range.min, range.max);
+  let max = clamp(Math.round((range.min + steps * range.step) * 100) / 100, range.min, range.max);
+  // Saved in kilograms to a hundredth, a pace in pounds can come back over the share: a step less.
+  while (max > range.min && levelOf(true, weightKg, paceToKg(unit, max)) === 'aggressive') {
+    max = Math.round((max - range.step) * 100) / 100;
+  }
   return { ...range, max, default: Math.min(range.default, max) };
-}
-
-/** Whether the slider stops short of its fastest pace for the user's weight. */
-export function isPaceCappedByWeight(unit: WeightUnit, goal: WeightGoal, weightKg: number) {
-  return paceRange(unit, goal, weightKg).max < PACE_RANGES[unit][goal].max;
 }
 
 /**
@@ -178,16 +177,31 @@ export function isPaceInRange(
 }
 
 /**
- * The pace a goal is dated by: what the targets really give, as the floor may hold them below the
- * chosen one (ADR 0054), or the chosen one while that is not known, or when they give nothing.
+ * Whether the floor holds the targets below the chosen pace (ADR 0054), by more than rounding;
+ * `achievableKg` is what they give, 0 when they keep the weight, null when it is not known.
  */
-export function datingPace(chosenKg: number, achievableKg?: number | null): number {
-  return achievableKg ? Math.min(chosenKg, achievableKg) : chosenKg;
+export function isPaceHeldUp(
+  chosenKg: number,
+  achievableKg?: number | null,
+): achievableKg is number {
+  return achievableKg != null && achievableKg < chosenKg - 0.01;
 }
 
-/** Whether the floor holds the targets below the chosen pace, by more than rounding. */
-export function isPaceHeldUp(chosenKg: number, achievableKg?: number | null): boolean {
-  return !!achievableKg && achievableKg < chosenKg - 0.01;
+/** The pace a goal is dated by: what the targets give where the floor holds them up, else the chosen one. */
+export function datingPace(chosenKg: number, achievableKg?: number | null): number {
+  return isPaceHeldUp(chosenKg, achievableKg) ? achievableKg : chosenKg;
+}
+
+/** When the target is reached at the pace the targets give; null when they keep the weight. */
+export function goalDate(
+  weightKg: number,
+  targetKg: number,
+  chosenKg: number,
+  achievableKg: number | null | undefined,
+  from: Date,
+): Date | null {
+  const pace = datingPace(chosenKg, achievableKg);
+  return pace > 0 ? projectedDate(weightKg, targetKg, pace, from) : null;
 }
 
 /** How demanding a weekly pace is for the goal, as a share of body weight. */
@@ -216,12 +230,19 @@ export function weightGoal(answers: {
   goal?: Goal;
   targetWeightKg?: number;
   weeklyPaceKg?: number;
-}): { goal: WeightGoal; targetKg: number; paceKg: number } | null {
-  const { goal, targetWeightKg, weeklyPaceKg } = answers;
+  /** The pace the targets really give (ADR 0054), when it is known. */
+  achievablePaceKg?: number | null;
+}): {
+  goal: WeightGoal;
+  targetKg: number;
+  paceKg: number;
+  achievablePaceKg?: number | null;
+} | null {
+  const { goal, targetWeightKg, weeklyPaceKg, achievablePaceKg } = answers;
   if (!changesWeight(goal) || !targetWeightKg || !weeklyPaceKg) {
     return null;
   }
-  return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg };
+  return { goal, targetKg: targetWeightKg, paceKg: weeklyPaceKg, achievablePaceKg };
 }
 
 /**
