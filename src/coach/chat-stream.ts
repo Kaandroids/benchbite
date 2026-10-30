@@ -1,10 +1,12 @@
 import type { Database } from '@/lib/database.types';
-import { supabase } from '@/lib/supabase';
+import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
 
 export type BiteExpressionName = Database['public']['Enums']['bite_expression'];
 
 /** What coach-chat tells the app as Bite answers, one server-sent event each (ADR 0052). */
 export type ChatEvent =
+  /** A new thread, as soon as Bite starts to answer, which the next message goes on in. */
+  | { event: 'thread'; threadId: number }
   | { event: 'expression'; expression: BiteExpressionName }
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
@@ -67,11 +69,11 @@ export async function streamChat(
 ): Promise<void> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/coach-chat`, {
+  const response = await fetch(functionUrl('coach-chat'), {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      apikey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '',
+      apikey: publishableKey,
       ...(token && { authorization: `Bearer ${token}` }),
     },
     body: JSON.stringify(request),
