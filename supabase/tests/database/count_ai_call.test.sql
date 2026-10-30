@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -39,6 +39,14 @@ select results_eq(
   'A count within the limit and the budget goes on'
 );
 select is((select used_usd from public.ai_access()), 0.031680::numeric, 'and sets aside what the call may cost with it');
+
+-- A call is counted once.
+select throws_ok(
+  $$ select public.count_ai_call((select call_id from calls where name = 'chat'), 0) $$,
+  'P0002',
+  null,
+  'A call counted already cannot be counted again'
+);
 
 -- A count over the limit gives the place up.
 insert into calls select 'long', call_id from public.start_ai_call('coach_voice', 'test-flash', 0);
