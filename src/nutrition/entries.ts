@@ -161,6 +161,8 @@ export type LoggedEstimate = {
   foods: FoodRef[];
   /** The user's own foods made for items the library did not have. */
   createdFoodIds: number[];
+  /** What the entries add, at the values they were logged with. */
+  calories: number;
 };
 
 /**
@@ -208,6 +210,7 @@ export function useLogEstimate() {
           return 'food' in entry ? entry.food : { kind: 'custom', id: row.custom_food_id };
         }),
         createdFoodIds: data.flatMap((row) => (row.created_food ? [row.custom_food_id] : [])),
+        calories: data.reduce((sum, row) => sum + row.kcal, 0),
       };
     },
     onSuccess: async (logged) => {
@@ -220,26 +223,20 @@ export function useLogEstimate() {
 }
 
 /**
- * Takes back an estimated meal: removes its entries, as removing one does, and deletes the foods
- * of one's own it made, which nothing else has logged yet.
+ * Takes back an estimated meal in one step: its entries are removed, and the foods of one's own
+ * it made are deleted, or archived when something else names them (ADR 0060).
  */
 export function useUndoEstimate() {
   const reload = useReloadDay();
   const reloadFoods = useReloadFoods();
   return useMutation({
     mutationFn: async ({ entryIds, createdFoodIds }: LoggedEstimate) => {
-      const removed = await supabase.from('meal_entries').delete().in('id', entryIds);
-      if (removed.error) {
-        throw removed.error;
-      }
-      if (createdFoodIds.length > 0) {
-        const deleted = await supabase
-          .from('custom_foods')
-          .update({ archived_at: new Date().toISOString() })
-          .in('id', createdFoodIds);
-        if (deleted.error) {
-          throw deleted.error;
-        }
+      const { error } = await supabase.rpc('undo_meal_estimate', {
+        entry_ids: entryIds,
+        food_ids: createdFoodIds,
+      });
+      if (error) {
+        throw error;
       }
     },
     onSuccess: async (_data, { day, createdFoodIds }) => {

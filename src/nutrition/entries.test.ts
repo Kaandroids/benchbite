@@ -208,9 +208,10 @@ describe('useLogEstimate', () => {
   it('logs found foods by their id and the rest by their values, in one call', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({
       data: [
-        { entry_id: 11, custom_food_id: null, created_food: false },
-        { entry_id: 12, custom_food_id: 5, created_food: true },
-        { entry_id: 13, custom_food_id: 3, created_food: false },
+        { entry_id: 11, custom_food_id: null, created_food: false, kcal: 234 },
+        { entry_id: 12, custom_food_id: 5, created_food: true, kcal: 46.6 },
+        // The user's own Dal, at its own values.
+        { entry_id: 13, custom_food_id: 3, created_food: false, kcal: 180 },
       ],
       error: null,
     } as never);
@@ -256,6 +257,7 @@ describe('useLogEstimate', () => {
         { kind: 'custom', id: 3 },
       ],
       createdFoodIds: [5],
+      calories: 460.6,
     });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-30'] });
     // A new food of one's own shows in the lists of one's foods.
@@ -264,16 +266,8 @@ describe('useLogEstimate', () => {
 });
 
 describe('useUndoEstimate', () => {
-  it('removes the entries and deletes the foods it made', async () => {
-    const entriesIn = jest.fn().mockResolvedValue({ error: null });
-    const foodsIn = jest.fn().mockResolvedValue({ error: null });
-    const update = jest.fn(() => ({ in: foodsIn }));
-    jest
-      .mocked(supabase.from)
-      .mockImplementation(
-        (table: string) =>
-          (table === 'meal_entries' ? { delete: () => ({ in: entriesIn }) } : { update }) as never,
-      );
+  it('takes the entries and the foods it made back in one call', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
     const { result } = await renderHook(() => useUndoEstimate());
 
     await act(() =>
@@ -282,11 +276,13 @@ describe('useUndoEstimate', () => {
         entryIds: [11, 12],
         foods: [],
         createdFoodIds: [5],
+        calories: 280,
       }),
     );
 
-    expect(entriesIn).toHaveBeenCalledWith('id', [11, 12]);
-    expect(update).toHaveBeenCalledWith({ archived_at: expect.any(String) });
-    expect(foodsIn).toHaveBeenCalledWith('id', [5]);
+    expect(supabase.rpc).toHaveBeenCalledWith('undo_meal_estimate', {
+      entry_ids: [11, 12],
+      food_ids: [5],
+    });
   });
 });
