@@ -169,7 +169,14 @@ export async function handleEstimateRequest(
   return Response.json(estimate);
 }
 
-type FoundFood = Database['public']['Functions']['search_foods']['Returns'][number];
+/**
+ * A food search_foods() found, by exactly one of its ids, which the generated types do not mark as
+ * nullable.
+ */
+type FoundFood = Pick<
+  Database['public']['Functions']['search_foods']['Returns'][number],
+  'name' | 'kcal' | 'protein_g' | 'carbs_g' | 'fat_g'
+> & { food_id: string | null; custom_food_id: number | null; recipe_id: number | null };
 
 /**
  * The items with the values of the food each matched in the library or the user's own foods and
