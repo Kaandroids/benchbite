@@ -2,7 +2,8 @@ import { assertEquals, assertStringIncludes } from '@std/assert';
 
 import foods from '../../data/foods.json' with { type: 'json' };
 import { type Language, LANGUAGES } from '../_shared/prompt.ts';
-import { RESPONSE_SCHEMA, SEARCH_NAMES, SYSTEM } from './prompt.ts';
+import { SEARCH_NAMES } from '../_shared/meal/item.ts';
+import { RESPONSE_SCHEMA, SYSTEM } from './prompt.ts';
 
 type Schema = { properties: Record<string, Schema>; items: Schema; required?: string[] } & Record<
   string,
