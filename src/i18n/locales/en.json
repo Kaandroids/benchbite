@@ -778,7 +778,42 @@
     "startWorkout": "Start workout",
     "toArchive": "Move to archive",
     "fromArchive": "Bring back from the archive",
-    "days": "Days"
+    "days": "Days",
+    "alternatives": {
+      "unnamed": "Alternative {{position}}",
+      "errors": {
+        "limit": "A workout can have up to {{max}} alternatives.",
+        "inUse": "The one in use can't be deleted. Switch to another first.",
+        "gone": "This alternative no longer exists.",
+        "switch": "We couldn't switch to it. Try again.",
+        "add": "We couldn't add an alternative. Try again.",
+        "rename": "We couldn't rename it. Try again.",
+        "delete": "We couldn't delete it. Try again.",
+        "reorder": "We couldn't save the order. Try again."
+      },
+      "loadError": "We couldn't load the alternatives.",
+      "title": "Alternatives",
+      "body": "Other sets of exercises for this workout, such as for home. The one in use is the workout everywhere. Drag to change their order.",
+      "inUse_one": "In use · {{count}} exercise",
+      "inUse_other": "In use · {{count}} exercises",
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "rename": "Rename {{name}}",
+      "delete": "Delete {{name}}",
+      "add": "Add alternative",
+      "addNote": "A new one starts as a copy of the one in use, to change in Edit.",
+      "full": "Up to {{max}} alternatives. Delete one to add another.",
+      "deleteTitle": "Delete {{name}}?",
+      "deleteMessage": "It is removed with its exercises. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "nameTitle": "Name the alternative",
+      "nameLabel": "Short, as it shows above the workout",
+      "counter": "{{length}}/{{max}}",
+      "counterLabel": "{{length}} of {{max}} characters",
+      "emptyName": "Left empty, it shows as “{{fallback}}”."
+    }
   },
   "exercise": {
     "start": "Start",
