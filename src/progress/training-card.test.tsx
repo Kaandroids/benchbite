@@ -50,6 +50,7 @@ it('sums up three months of training against the plan and the range before', asy
   expect(useDayTraining).toHaveBeenCalledWith(TODAY, TODAY_START, TODAY);
   expect(useDayTraining).toHaveBeenCalledWith(TODAY, new Date(2026, 3, 28), new Date(2026, 6, 28));
   expect(screen.getByText('2 of 3 workouts')).toBeTruthy();
+  expect(screen.getByText('SUMMARY · LAST 3 MONTHS')).toBeTruthy();
   expect(screen.getByLabelText('2 days trained, 1 with a planned workout missed')).toBeTruthy();
   expect(screen.getByText('67%')).toBeTruthy();
   expect(screen.getByText('2.3 h')).toBeTruthy();
