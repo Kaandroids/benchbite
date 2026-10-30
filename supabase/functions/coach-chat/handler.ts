@@ -10,6 +10,7 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  type MealCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
@@ -33,6 +34,7 @@ import {
 } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY } from './day.ts';
+import { type MealCardState, mealCardText } from './meal_card.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -110,7 +112,8 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
       .order('id', { ascending: false })
       .limit(HISTORY);
     if (messages.error) return failed('Could not read the thread', messages.error);
-    history = messages.data.reverse().flatMap(toMessage);
+    const cards = await mealCardStates(context.supabase, messages.data);
+    history = messages.data.reverse().flatMap((row) => toMessage(row, cards));
   }
 
   const stop = new Stop(context, request.requestId);
@@ -363,8 +366,8 @@ async function answer(
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
-    // A proposal made is kept with its card, even if the model ended without a word.
-    said: turn.text.trim() !== '' || turn.trace.some(isProposal),
+    // A proposal or a meal made is kept with its card, even if the model ended without a word.
+    said: turn.text.trim() !== '' || turn.trace.some(isCard),
     stopped: stop.stopped,
     finish: turn.finish,
     newThread: !request.threadId,
@@ -426,9 +429,12 @@ async function lookUp(
   // What the user named things comes back with it, and may not pass for a snapshot either.
   const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
-  // A proposed change is shown as a card under the answer; the message keeps it with the result.
+  // A proposed change or a meal is shown as a card under the answer; the message keeps it with the
+  // result.
   const proposal = proposalOf(result);
   if (proposal) send({ event: 'proposal', proposal });
+  const card = mealCardOf(result);
+  if (card) send({ event: 'meal_card', card });
   return result;
 }
 
@@ -446,6 +452,44 @@ function proposalText(proposal: ProposalCard): string {
 /** The card of a change a tool proposed, as its result holds it. */
 function proposalOf(result: unknown): ProposalCard | undefined {
   return (result as { proposal?: ProposalCard } | null)?.proposal;
+}
+
+/** The card of a meal Bite estimated, as its tool's result holds it. */
+function mealCardOf(result: unknown): MealCard | undefined {
+  return (result as { mealCard?: MealCard } | null)?.mealCard;
+}
+
+/** The result of a stored part of a message, when it is a tool's result. */
+function resultOf(part: Json): unknown {
+  return part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
+    ? part.result
+    : undefined;
+}
+
+/**
+ * Where the meal cards of the messages `rows` stand, by id, as the user reads them; none when
+ * they cannot be read, and Bite then reads the cards without.
+ */
+async function mealCardStates(
+  supabase: Client,
+  rows: { content: Json }[],
+): Promise<Map<number, MealCardState>> {
+  const ids = rows.flatMap((row) =>
+    (Array.isArray(row.content) ? row.content : []).flatMap((part) => {
+      const card = mealCardOf(resultOf(part));
+      return card ? [card.id] : [];
+    }),
+  );
+  if (!ids.length) return new Map();
+  const { data, error } = await supabase
+    .from('coach_meal_cards')
+    .select('id, status, kcal')
+    .in('id', ids);
+  if (error) {
+    logError('Could not read the meal cards of a thread', error);
+    return new Map();
+  }
+  return new Map(data.map((state) => [state.id, state]));
 }
 
 /** The user's message as the thread keeps it. */
@@ -525,13 +569,13 @@ export function content(trace: Part[], text: string): Part[] {
   const fits = (parts: Part[]) =>
     parts.length <= MAX_PARTS &&
     new TextEncoder().encode(JSON.stringify(parts)).length <= MAX_CONTENT_BYTES;
-  // A proposal's card is kept whatever else goes, as the chat shows it when read back.
-  const proposals = trace.filter(isProposal);
-  const room = MAX_PARTS - 1 - proposals.length;
+  // A proposal's or a meal's card is kept whatever else goes, as the chat shows it when read back.
+  const cards = trace.filter(isCard);
+  const room = MAX_PARTS - 1 - cards.length;
   const kept: Part[] = [];
   let others = 0;
   for (const part of trace) {
-    if (isProposal(part)) {
+    if (isCard(part)) {
       kept.push(part);
     } else if (others < room) {
       kept.push(part);
@@ -541,13 +585,17 @@ export function content(trace: Part[], text: string): Part[] {
   const whole = [...kept, answer];
   if (fits(whole)) return whole;
   const without = whole.map((part) =>
-    part.type === 'toolResult' && !isProposal(part) ? { ...part, result: { omitted: true } } : part,
+    part.type === 'toolResult' && !isCard(part) ? { ...part, result: { omitted: true } } : part,
   );
-  return fits(without) ? without : [...proposals, answer];
+  return fits(without) ? without : [...cards, answer];
 }
 
-function isProposal(part: Part): boolean {
-  return part.type === 'toolResult' && proposalOf(part.result) !== undefined;
+/** Whether a part is the result of a proposal or a meal card, which the chat shows. */
+function isCard(part: Part): boolean {
+  return (
+    part.type === 'toolResult' &&
+    (proposalOf(part.result) !== undefined || mealCardOf(part.result) !== undefined)
+  );
 }
 
 /**
@@ -560,6 +608,7 @@ function toMessage(
     Database['public']['Tables']['coach_messages']['Row'],
     'role' | 'content' | 'expression'
   >,
+  cards: Map<number, MealCardState>,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
   const said = parts.flatMap((part) =>
@@ -571,13 +620,14 @@ function toMessage(
       ? [part.text]
       : [],
   );
-  // What Bite proposed, so that it knows on later messages, whether or not it said a word.
+  // What Bite proposed and the meals it estimated, with where they stand, so that it knows on
+  // later messages, whether or not it said a word.
   const proposed = parts.flatMap((part) => {
-    const proposal =
-      part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
-        ? proposalOf(part.result)
-        : undefined;
-    return proposal ? [proposalText(proposal)] : [];
+    const result = resultOf(part);
+    const proposal = proposalOf(result);
+    if (proposal) return [proposalText(proposal)];
+    const card = mealCardOf(result);
+    return card ? [mealCardText(card, cards.get(card.id))] : [];
   });
   const text = [...said.filter(Boolean), ...proposed].join('\n');
   if (!text) return [];

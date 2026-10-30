@@ -813,3 +813,85 @@ Deno.test('tells Bite what it proposed earlier, though it said nothing with it',
     ],
   });
 });
+
+const MEAL_CARD = {
+  id: 51,
+  day: '2026-10-30',
+  meal: 'dinner',
+  items: [
+    {
+      name: 'Chicken breast',
+      searchName: 'Chicken breast, grilled',
+      grams: 150,
+      confidence: 0.8,
+      per100: { kcal: 165, proteinG: 31, carbsG: 0, fatG: 3.6 },
+      estimated: true,
+    },
+  ],
+};
+
+Deno.test(
+  'shows a meal as a card, and keeps it though the model said nothing after it',
+  async () => {
+    // As the model gives an item, which the tool matches.
+    const { estimated: _, ...item } = MEAL_CARD.items[0];
+    const model = new FakeModel(
+      [
+        {
+          type: 'toolCall',
+          id: 'c1',
+          name: 'log_meal_card',
+          args: { meal: 'dinner', items: [item] },
+        },
+      ],
+      [],
+    );
+    const { ctx, inserted } = context(model, { add_coach_meal_card: 51, search_foods: [] });
+
+    const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+    assertEquals(
+      answer.filter((e) => e.event === 'meal_card'),
+      [{ event: 'meal_card', card: MEAL_CARD }],
+    );
+    assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
+    // The message keeps the card in its tool's result, to show it when the chat is read back.
+    const content = inserted[1].rows[1].content as { type: string; result?: unknown }[];
+    assertEquals(content.find((part) => part.type === 'toolResult')?.result, {
+      mealCard: MEAL_CARD,
+    });
+  },
+);
+
+Deno.test('tells Bite of its meal cards earlier, with where they stand', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const stored = (card: typeof MEAL_CARD) => ({
+    role: 'bite',
+    expression: 'happy',
+    content: [
+      { type: 'toolResult', name: 'log_meal_card', result: { mealCard: card } },
+      { type: 'text', text: 'Looks good.' },
+    ],
+  });
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [stored({ ...MEAL_CARD, id: 52 }), stored(MEAL_CARD)],
+      coach_meal_cards: [{ id: 51, status: 'logged', kcal: 247.5 }],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  const card = '(Meal card for dinner on 2026-10-30: Chicken breast 150 g; 248 kcal.';
+  assertEquals(
+    model.requests[0].messages.slice(0, 2).map((message) => message.parts),
+    [
+      [{ type: 'text', text: `[[happy]] Looks good.\n${card} Added by the user, 248 kcal.)` }],
+      // A card whose state could not be read is told without it.
+      [{ type: 'text', text: `[[happy]] Looks good.\n${card})` }],
+    ],
+  );
+});
