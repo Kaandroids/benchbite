@@ -137,24 +137,32 @@ function Header({ title }: { title: string }) {
   );
 }
 
+type WorkoutProposal = Extract<Proposal, { kind: 'workout' }>;
+
+/**
+ * The workout a proposal changes, as the app names it. The shared card keeps its type a plain
+ * string, as the chat function's types import nothing; it is one of the database's.
+ */
+function proposedWorkout(card: WorkoutProposal): Pick<Workout, 'name' | 'type'> {
+  return { name: card.workout.name, type: card.workout.type as Workout['type'] };
+}
+
 /** A target as the workouts format it. */
-function workoutTarget(target: Extract<Proposal, { kind: 'workout' }>['swaps'][number]['target']) {
+function workoutTarget(target: WorkoutProposal['swaps'][number]['target']) {
   return target.reps
     ? ({ reps: target.reps } satisfies WorkoutTarget)
     : ({ seconds: target.seconds ?? null, meters: target.meters ?? null } satisfies WorkoutTarget);
 }
 
 /** The exercises swapped: the old one struck through, the new one, its sets and why. */
-function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> }) {
+function WorkoutChange({ card }: { card: WorkoutProposal }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const workoutName = useWorkoutName();
   const targetFormat = useTargetFormat();
   return (
     <>
-      <Header
-        title={workoutName({ name: card.workout.name, type: card.workout.type as Workout['type'] })}
-      />
+      <Header title={workoutName(proposedWorkout(card))} />
       <View>
         {card.swaps.map((swap, index) => {
           const detail = [targetFormat(swap.sets, workoutTarget(swap.target)), swap.why]
@@ -321,7 +329,7 @@ function useSummary() {
     }
     return t('bite.proposal.summary.swaps', {
       number: card.swaps.length,
-      workout: workoutName({ name: card.workout.name, type: card.workout.type as Workout['type'] }),
+      workout: workoutName(proposedWorkout(card)),
     });
   };
 }
