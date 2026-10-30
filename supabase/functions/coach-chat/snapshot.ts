@@ -38,7 +38,7 @@ export type Snapshot = {
   targets?: Macros;
   eaten?: Macros;
   training?: string;
-  /** Today's workouts, and whether they are done. */
+  /** Today's workouts, and whether they are done; one without exercises yet says so (ADR 0064). */
   workouts?: string;
   streak?: string;
 };
@@ -48,27 +48,30 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 /** Reads the user's snapshot on `today`, a date of their device. */
 export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, pace, weight, nutrition, planned, trained, streak] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select(
-        'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor',
-      )
-      .maybeSingle(),
-    supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
-    supabase.rpc('my_achievable_weekly_pace_kg'),
-    supabase
-      .from('weight_entries')
-      .select('weight_kg')
-      .order('measured_on', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase.rpc('day_nutrition', day),
-    supabase.rpc('planned_workouts', day),
-    supabase.rpc('day_training', day),
-    supabase.rpc('streak', { today }),
-  ]);
-  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak };
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak, workouts] =
+    await Promise.all([
+      supabase
+        .from('profiles')
+        .select(
+          'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor',
+        )
+        .maybeSingle(),
+      supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
+      supabase.rpc('my_achievable_weekly_pace_kg'),
+      supabase
+        .from('weight_entries')
+        .select('weight_kg')
+        .order('measured_on', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.rpc('day_nutrition', day),
+      supabase.rpc('planned_workouts', day),
+      supabase.rpc('day_training', day),
+      supabase.rpc('streak', { today }),
+      // How many exercises each workout has, to tell one whose empty alternative is in use.
+      supabase.from('workouts').select('id, workout_exercises(count)'),
+    ]);
+  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, workouts };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -117,8 +120,18 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   }
   if (planned.data) {
     const done = trained.data?.[0]?.done ?? 0;
+    const empty = new Set(
+      (workouts.data ?? [])
+        .filter((workout) => (workout.workout_exercises[0]?.count ?? 0) === 0)
+        .map((workout) => workout.id),
+    );
+    const named = planned.data.map((workout) =>
+      empty.has(workout.workout_id)
+        ? `${workoutName(workout)} (no exercises yet)`
+        : workoutName(workout),
+    );
     snapshot.workouts = planned.data.length
-      ? `${planned.data.map(workoutName).join(', ')} planned, ${done} done`
+      ? `${named.join(', ')} planned, ${done} done`
       : done
         ? `none planned, ${done} done`
         : 'rest day';
