@@ -1,7 +1,8 @@
-import { assertEquals } from '@std/assert';
+import { assertEquals, assertStringIncludes } from '@std/assert';
 
 import foods from '../../data/foods.json' with { type: 'json' };
-import { RESPONSE_SCHEMA, SYSTEM } from './prompt.ts';
+import { type Language, LANGUAGES } from '../_shared/prompt.ts';
+import { RESPONSE_SCHEMA, SEARCH_NAMES, SYSTEM } from './prompt.ts';
 
 type Schema = { properties: Record<string, Schema>; items: Schema; required?: string[] } & Record<
   string,
@@ -24,10 +25,20 @@ Deno.test('asks for the answer the check takes, its limits and optional notes in
   assertEquals(item.properties.per100.properties.kcal.maximum, 900);
 });
 
-Deno.test('gives as examples only names the food library has in English', () => {
+Deno.test('gives as examples only names the food library has, in each language', () => {
+  const names = (language: Language) => new Set(Object.values(foods).map((food) => food[language]));
+  for (const language of LANGUAGES) {
+    const { examples, preparations } = SEARCH_NAMES[language];
+    assertEquals(examples.length > 0, true, language);
+    for (const example of examples) {
+      assertEquals(names(language).has(example), true, `${language}: ${example}`);
+      assertStringIncludes(SYSTEM, `"${example}"`);
+    }
+    assertStringIncludes(SYSTEM, preparations);
+  }
+});
+
+Deno.test('asks for the search name in the reply language', () => {
   const searchName = SYSTEM.split('\n').find((line) => line.startsWith('- searchName:'))!;
-  const examples = [...searchName.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
-  const english = new Set(Object.values(foods).map((food) => food.en));
-  assertEquals(examples.length > 0, true);
-  for (const example of examples) assertEquals(english.has(example), true, example);
+  assertStringIncludes(searchName, 'always in the reply language, never in English');
 });
