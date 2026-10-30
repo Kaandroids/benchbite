@@ -237,3 +237,16 @@ Deno.test('proposes targets, with the ones in use for the card', async () => {
     error: "The calories are under the user's calorie floor.",
   });
 });
+
+Deno.test('leaves the targets in use off the card when they cannot be read', async () => {
+  const { context } = planContext({
+    propose_coach_change: { data: 43 },
+    my_nutrition_targets: { error: { code: '57014', message: 'timeout' } },
+  });
+  const to = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+
+  // Not "none": the card cannot say what they were.
+  assertEquals(await runTool('propose_targets_change', to, context), {
+    proposal: { kind: 'targets', id: 43, to },
+  });
+});

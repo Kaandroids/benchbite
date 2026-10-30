@@ -202,8 +202,6 @@ class Turn {
   text = '';
   /** The tool calls and their results, in order, as the message keeps them. */
   trace: Part[] = [];
-  /** Whether a change was proposed, whose card is an answer even without words. */
-  proposed = false;
   usage = { model: undefined as string | undefined, input: 0, cached: 0, output: 0, thinking: 0 };
   /** Why the last request's answer ended. */
   finish?: Finish;
@@ -333,14 +331,11 @@ async function answer(
       const results: Part[] = [];
       for (const [index, call] of calls.entries()) {
         if (await stop.look({ now: true })) break;
-        const looked =
+        const result =
           index < MAX_CALLS_PER_ROUND
             ? await lookUp(call, toolContext, send)
-            : {
-                result: { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` },
-              };
-        if (looked.proposal) turn.proposed = true;
-        results.push({ type: 'toolResult', id: call.id, name: call.name, result: looked.result });
+            : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
+        results.push({ type: 'toolResult', id: call.id, name: call.name, result });
       }
       if (stop.stopped) {
         // Stopped among its lookups, the round keeps those that ended, each call with its result,
@@ -370,7 +365,7 @@ async function answer(
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
     // A proposal made is kept with its card, even if the model ended without a word.
-    said: turn.text.trim() !== '' || turn.proposed,
+    said: turn.text.trim() !== '' || turn.trace.some(isProposal),
     stopped: stop.stopped,
     finish: turn.finish,
     newThread: !request.threadId,
@@ -427,7 +422,7 @@ async function lookUp(
   call: Extract<Part, { type: 'toolCall' }>,
   context: Parameters<typeof runTool>[2],
   send: (event: ChatEvent) => void,
-): Promise<{ result: unknown; proposal?: ProposalCard }> {
+): Promise<unknown> {
   send({ event: 'tool_start', name: call.name });
   // What the user named things comes back with it, and may not pass for a snapshot either.
   const result = untaggedAll(await runTool(call.name, call.args, context));
@@ -435,7 +430,7 @@ async function lookUp(
   // A proposed change is shown as a card under the answer; the message keeps it with the result.
   const proposal = proposalOf(result);
   if (proposal) send({ event: 'proposal', proposal });
-  return { result, proposal };
+  return result;
 }
 
 /** A proposal as Bite reads it back in the history. */
@@ -534,8 +529,16 @@ export function content(trace: Part[], text: string): Part[] {
   // A proposal's card is kept whatever else goes, as the chat shows it when read back.
   const proposals = trace.filter(isProposal);
   const room = MAX_PARTS - 1 - proposals.length;
+  const kept: Part[] = [];
   let others = 0;
-  const kept = trace.filter((part) => isProposal(part) || others++ < room);
+  for (const part of trace) {
+    if (isProposal(part)) {
+      kept.push(part);
+    } else if (others < room) {
+      kept.push(part);
+      others++;
+    }
+  }
   const whole = [...kept, answer];
   if (fits(whole)) return whole;
   const without = whole.map((part) =>

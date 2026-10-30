@@ -5,12 +5,7 @@
 // cheap.
 import { z } from 'zod';
 
-import type {
-  CoachToolName,
-  DayTargets,
-  ProposalCard,
-  ProposalTarget,
-} from '../_shared/coach/chat.ts';
+import type { CoachToolName, DayTargets, ProposalCard } from '../_shared/coach/chat.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
@@ -43,7 +38,6 @@ const REFUSALS: Record<string, string> = {
   BB038: 'The user has too many changes waiting; ask them to decide those first.',
   BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
   BB040: 'Swaps may not replace an exercise twice, or one another.',
-  '23503': 'An exercise id does not exist; find it with search_exercises.',
   '23514': 'The values are out of range, or the macros add up to more than the calories.',
 };
 
@@ -235,7 +229,7 @@ const TOOLS = [
       "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises, with their ids, sets and targets.",
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
-      const workouts = read(await activeWorkouts(supabase));
+      const workouts = read(await activeWorkouts(supabase, WORKOUT_WITH_EXERCISES));
       const names = await exerciseNames(
         supabase,
         language,
@@ -283,7 +277,7 @@ const TOOLS = [
         .max(5),
     }),
     run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
-      const workout = read(await activeWorkouts(supabase, workoutId))[0];
+      const workout = read(await activeWorkouts(supabase, 'id, name, type', workoutId))[0];
       if (!workout) return { error: REFUSALS.BB006 };
       // Named before proposing, which also finds an id that does not exist, so that a proposal is
       // never left without its card.
@@ -343,10 +337,13 @@ const TOOLS = [
         }),
       ]);
       if (proposed.error) return refused(proposed.error);
-      // The targets in use, as the user sees them now; none before the onboarding is saved.
+      // The targets in use, as the user sees them now; none before the onboarding is saved, and
+      // left out when they cannot be read, so that the card does not say there were none.
+      if (current.error) logError('Could not read the targets in use for a card', current.error);
       const now = current.data;
-      const from: DayTargets<number | null> | null =
-        now?.calories != null
+      const from: DayTargets<number | null> | null | undefined = current.error
+        ? undefined
+        : now?.calories != null
           ? {
               calories: now.calories,
               proteinG: now.protein_g,
@@ -354,7 +351,12 @@ const TOOLS = [
               fatG: now.fat_g,
             }
           : null;
-      const proposal: ProposalCard = { kind: 'targets', id: proposed.data, from, to: targets };
+      const proposal: ProposalCard = {
+        kind: 'targets',
+        id: proposed.data,
+        ...(from !== undefined && { from }),
+        to: targets,
+      };
       return { proposal };
     },
   }),
@@ -422,17 +424,16 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
   );
 }
 
+/** A workout with its exercises, as get_workouts reads them. */
+const WORKOUT_WITH_EXERCISES =
+  'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)';
+
 /**
- * The user's active workouts with their exercises in order, as row level security lets them, or
- * the one `id` names.
+ * The user's active workouts, as row level security lets them, or the one `id` names, with
+ * `columns`, their exercises in order.
  */
-function activeWorkouts(supabase: Client, id?: number) {
-  const query = supabase
-    .from('workouts')
-    .select(
-      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)',
-    )
-    .eq('active', true);
+function activeWorkouts<Columns extends string>(supabase: Client, columns: Columns, id?: number) {
+  const query = supabase.from('workouts').select(columns).eq('active', true);
   return (id === undefined ? query : query.eq('id', id))
     .order('id')
     .order('position', { referencedTable: 'workout_exercises' });
@@ -447,7 +448,7 @@ function targetOf(e: {
   target_reps_max: number | null;
   target_seconds: number | null;
   target_meters: number | null;
-}): ProposalTarget {
+}): { reps?: { min: number; max?: number }; seconds?: number; meters?: number } {
   return {
     ...(e.target_reps_min !== null && {
       reps: {

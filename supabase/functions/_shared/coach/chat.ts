@@ -65,9 +65,9 @@ export type DayTargets<Value = number> = {
   fatG: Value;
 };
 
-/** An exercise's target as save_workout() takes it: reps, seconds or meters. */
+/** A swapped exercise's target as Bite gives it and save_workout() takes it. */
 export type ProposalTarget = {
-  reps?: { min: number; max?: number };
+  reps?: { min: number; max: number };
   seconds?: number;
   meters?: number;
 };
@@ -89,8 +89,11 @@ export type ProposalCard =
   | {
       kind: 'targets';
       id: number;
-      /** The targets in use when it was proposed, as the user sees them; null before any. */
-      from: DayTargets<number | null> | null;
+      /**
+       * The targets in use when it was proposed, as the user sees them; null before any, and
+       * left out when they could not be read.
+       */
+      from?: DayTargets<number | null> | null;
       to: DayTargets;
     };
 
