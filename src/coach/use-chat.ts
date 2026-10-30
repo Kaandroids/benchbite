@@ -3,16 +3,27 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deviceToday } from '@/i18n/dates';
+import type { Database } from '@/lib/database.types';
+import { oneOf } from '@/lib/one-of';
 import { supabase } from '@/lib/supabase';
 
 import { type BiteExpressionName, type ChatEvent, streamChat } from './chat-stream';
 
 const ACCESS_KEY = ['ai', 'access'];
 
-/** Why the user may not chat with Bite now, as ai_access() says (ADR 0051). */
-export type Refusal = 'account_required' | 'plan_required' | 'limit_reached';
+type AccessReason = Database['public']['Enums']['ai_access_reason'];
 
-const REFUSALS: string[] = ['account_required', 'plan_required', 'limit_reached'];
+/** Why the user may not chat with Bite at all now, as ai_access() says (ADR 0051). */
+const REFUSALS = [
+  'account_required',
+  'plan_required',
+  'limit_reached',
+] as const satisfies readonly AccessReason[];
+export type Refusal = (typeof REFUSALS)[number];
+
+/** Why Bite gave no answer to one message; any other reason is said as unavailable. */
+const FAILURES = ['unavailable', 'blocked', 'not_saved', 'request_too_large'] as const;
+export type Failure = (typeof FAILURES)[number];
 
 /** Whether the user may chat with Bite this month, and when the month's budget resets. */
 export function useAiAccess() {
@@ -24,8 +35,7 @@ export function useAiAccess() {
         throw error;
       }
       return {
-        refusal: (data.reason && REFUSALS.includes(data.reason) ? data.reason : undefined) as
-          Refusal | undefined,
+        refusal: oneOf(REFUSALS, data.reason ?? undefined),
         resetsAt: data.resets_at ? new Date(data.resets_at) : undefined,
       };
     },
@@ -54,7 +64,7 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [tool, setTool] = useState<string>();
-  const [failure, setFailure] = useState<string>();
+  const [failure, setFailure] = useState<Failure>();
   const [refusal, setRefusal] = useState<Refusal>();
   const threadId = useRef<number | undefined>(undefined);
   const abort = useRef<AbortController | undefined>(undefined);
@@ -101,13 +111,16 @@ export function useChat() {
           case 'text':
             setStatus('answering');
             return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
+          case 'thread':
           case 'done':
             threadId.current = event.threadId;
             return;
-          case 'error':
-            if (REFUSALS.includes(event.reason)) setRefusal(event.reason as Refusal);
-            else setFailure(event.reason);
+          case 'error': {
+            const refusal = oneOf(REFUSALS, event.reason);
+            if (refusal) setRefusal(refusal);
+            else setFailure(oneOf(FAILURES, event.reason) ?? 'unavailable');
             return;
+          }
         }
       };
 
