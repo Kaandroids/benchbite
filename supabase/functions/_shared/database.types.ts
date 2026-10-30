@@ -163,6 +163,28 @@ export type Database = {
         };
         Relationships: [];
       };
+      coach_media_deletions: {
+        Row: {
+          attempts: number;
+          queued_at: string;
+          thread_id: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          queued_at?: string;
+          thread_id: number;
+          user_id: string;
+        };
+        Update: {
+          attempts?: number;
+          queued_at?: string;
+          thread_id?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_messages: {
         Row: {
           cached_input_tokens: number | null;
@@ -2141,6 +2163,7 @@ export type Database = {
         Args: { alternative_ids: number[]; workout_id: number };
         Returns: undefined;
       };
+      request_coach_media_purge: { Args: Record<PropertyKey, never>; Returns: number };
       restore_meal_entry: { Args: { entry_id: number }; Returns: undefined };
       save_move: {
         Args: {
