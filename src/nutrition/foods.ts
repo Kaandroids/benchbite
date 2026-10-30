@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FoodRef } from '@shared/foods';
+import { refOfRow, type FoodRef } from '@shared/foods';
 
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
@@ -61,18 +61,7 @@ export function refOf(key: string): FoodRef {
 }
 
 /** The food a row names by its food_id, custom_food_id or recipe_id (ADR 0038). */
-export function refOfRow(row: {
-  food_id: string | null;
-  custom_food_id: number | null;
-  recipe_id: number | null;
-}): FoodRef {
-  if (row.recipe_id !== null) {
-    return { kind: 'recipe', id: row.recipe_id };
-  }
-  return row.custom_food_id !== null
-    ? { kind: 'custom', id: row.custom_food_id }
-    : { kind: 'library', id: row.food_id ?? '' };
-}
+export { refOfRow };
 
 /** The column of entries and favourites that names a food of its kind. */
 export function columnOf(food: FoodRef): 'food_id' | 'custom_food_id' | 'recipe_id' {

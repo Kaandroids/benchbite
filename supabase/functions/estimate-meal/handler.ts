@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
 import { Constants, type Database } from '../_shared/database.types.ts';
-import { FOOD_QUERY_LENGTH, foodNameKey, type FoodRef } from '../_shared/foods.ts';
+import { FOOD_QUERY_LENGTH, foodNameKey, refOfRow } from '../_shared/foods.ts';
 import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
 import {
   type EstimateFood,
@@ -265,13 +265,7 @@ function nameKey(name: string): string {
 
 /** A found food as a meal entry names it. */
 function foodOf(row: FoundFood): EstimateFood {
-  const ref: FoodRef =
-    row.recipe_id !== null
-      ? { kind: 'recipe', id: row.recipe_id }
-      : row.custom_food_id !== null
-        ? { kind: 'custom', id: row.custom_food_id }
-        : { kind: 'library', id: row.food_id! };
-  return { ref, name: row.name };
+  return { ref: refOfRow(row), name: row.name };
 }
 
 function per100Of(row: FoundFood): Per100 {

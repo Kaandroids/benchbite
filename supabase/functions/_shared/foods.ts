@@ -1,5 +1,6 @@
-// What the food search takes, mirrored from the database so that the functions keep to it. This
-// file imports nothing, so that the app can bundle it.
+// Foods as the app and the functions both name them, and what the food search takes, mirrored
+// from the database so that the functions keep to it. This file imports nothing, so that the app
+// can bundle it.
 
 /**
  * The shortest and longest query search_foods() searches, after trimming; it finds nothing for
@@ -22,3 +23,21 @@ export function foodNameKey(name: string): string {
  */
 export type FoodRef =
   { kind: 'library'; id: string } | { kind: 'custom'; id: number } | { kind: 'recipe'; id: number };
+
+/**
+ * The food a row names by its food_id, custom_food_id or recipe_id (ADR 0038). The database sets
+ * exactly one of them (meal_entries_one_food, search_foods()); a row with none, which cannot
+ * come, is taken as a library food without a code rather than failing.
+ */
+export function refOfRow(row: {
+  food_id: string | null;
+  custom_food_id: number | null;
+  recipe_id: number | null;
+}): FoodRef {
+  if (row.recipe_id !== null) {
+    return { kind: 'recipe', id: row.recipe_id };
+  }
+  return row.custom_food_id !== null
+    ? { kind: 'custom', id: row.custom_food_id }
+    : { kind: 'library', id: row.food_id ?? '' };
+}
