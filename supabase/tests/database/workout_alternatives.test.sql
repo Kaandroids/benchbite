@@ -183,7 +183,7 @@ select throws_ok(
 );
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 5) $$,
+  $$ values (20, 3, 5, 12) $$,
   'which the limits say'
 );
 

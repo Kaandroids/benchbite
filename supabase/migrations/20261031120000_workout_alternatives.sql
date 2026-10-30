@@ -9,9 +9,10 @@ create table public.workout_alternatives (
   workout_id bigint not null references public.workouts (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   -- The order of the chips. Checked at the end of each statement, so that one update can reorder.
-  -- How many a workout may have is workout_limits()', which add_workout_alternative() keeps to.
+  -- How many a workout may have is workout_limits()'s, which add_workout_alternative() keeps to.
   position smallint not null check (position >= 1),
-  -- Optional; the app shows an unnamed one as "Alternative N".
+  -- Optional; the app shows an unnamed one as "Alternative N". workout_limits() gives the app the
+  -- same length; change the two together.
   name text check (char_length(name) between 1 and 12 and name = btrim(name)),
   -- The exercises as saved_workout() reads them; null for the one in use, whose exercises are the
   -- workout's own.
@@ -36,16 +37,19 @@ create policy "Users read their own workout alternatives"
 revoke all on public.workout_alternatives from anon;
 revoke insert, update, delete, truncate on public.workout_alternatives from authenticated;
 
--- The app reads the number of alternatives with the other limits. Adding a column changes the
--- result's type, so the function is made again; save_workout() reads its columns by name.
+-- The app reads how many alternatives a workout may have, and how long their names may be, with
+-- the other limits. Adding columns changes the result's type, so the function is made again;
+-- save_workout() reads its columns by name.
 drop function public.workout_limits();
 create function public.workout_limits()
-returns table (exercises integer, workouts integer, alternatives integer)
+returns table (
+  exercises integer, workouts integer, alternatives integer, alternative_name_length integer
+)
 language sql
 stable
 set search_path = ''
 as $$
-  select 20, 3, 5;
+  select 20, 3, 5, 12;
 $$;
 
 revoke execute on function public.workout_limits from public, anon;
@@ -81,9 +85,6 @@ as $$
 declare
   alternative public.workout_alternatives;
 begin
-  if (select auth.uid()) is null then
-    raise exception 'Not signed in' using errcode = '42501';
-  end if;
   select * into alternative from public.workout_alternatives a
   where a.id = lock_own_alternative.alternative_id and a.user_id = (select auth.uid());
   if not found then
@@ -123,6 +124,7 @@ declare
   workout jsonb;
   kept jsonb;
   added_id bigint;
+  max_alternatives integer := (select l.alternatives from public.workout_limits() l);
 begin
   perform public.lock_own_workout(add_workout_alternative.workout_id);
   workout := public.saved_workout(add_workout_alternative.workout_id);
@@ -130,9 +132,8 @@ begin
   if (
     select count(*) from public.workout_alternatives a
     where a.workout_id = add_workout_alternative.workout_id
-  ) >= (select l.alternatives from public.workout_limits() l) then
-    raise exception 'A workout can have up to % alternatives',
-      (select l.alternatives from public.workout_limits() l)
+  ) >= max_alternatives then
+    raise exception 'A workout can have up to % alternatives', max_alternatives
       using errcode = 'BB041';
   end if;
 
@@ -277,17 +278,12 @@ set search_path = ''
 as $$
 begin
   perform public.lock_own_workout(reorder_workout_alternatives.workout_id);
-  if coalesce(cardinality(alternative_ids), 0) <> (
-    select count(*) from public.workout_alternatives a
+  -- A missing, unknown, repeated or null id makes the sorted lists differ.
+  if array(select i from unnest(alternative_ids) i order by i) <> array(
+    select a.id from public.workout_alternatives a
     where a.workout_id = reorder_workout_alternatives.workout_id
-  ) or exists (
-    select 1 from unnest(alternative_ids) i
-    where i is null or not exists (
-      select 1 from public.workout_alternatives a
-      where a.id = i and a.workout_id = reorder_workout_alternatives.workout_id
-    )
-  ) or cardinality(alternative_ids) <> (select count(distinct i) from unnest(alternative_ids) i)
-  then
+    order by a.id
+  ) then
     raise exception 'The order names each alternative of the workout once'
       using errcode = '22023';
   end if;
