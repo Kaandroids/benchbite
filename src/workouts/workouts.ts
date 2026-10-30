@@ -140,7 +140,7 @@ export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
  * Loads the plan again after it changed: the workouts, with the planned days under them, and the
  * moves, which the database settles when a workout changes (ADR 0041), and the streak.
  */
-function reloadPlan(queryClient: QueryClient) {
+export function reloadPlan(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: WORKOUTS_KEY }),
     reloadMoves(queryClient),
