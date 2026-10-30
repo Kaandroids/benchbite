@@ -19,7 +19,7 @@ export type Snapshot = {
     /** The least the targets ever ask for, which Bite never goes below. */
     calorieFloor?: number;
   };
-  goal?: string;
+  goal?: { kind: string; targetWeightKg?: number; weeklyPaceKg?: number };
   /** The latest weight, in kg. */
   weightKg?: number;
   targets?: Macros;
@@ -84,13 +84,11 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   }
   const g = goal.data;
   if (g) {
-    snapshot.goal = [
-      g.kind.replaceAll('_', ' '),
-      g.target_weight_kg && `to ${g.target_weight_kg} kg`,
-      g.weekly_pace_kg && `at ${g.weekly_pace_kg} kg a week`,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    snapshot.goal = {
+      kind: g.kind.replaceAll('_', ' '),
+      targetWeightKg: g.target_weight_kg ?? undefined,
+      weeklyPaceKg: g.weekly_pace_kg ?? undefined,
+    };
   }
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;
   const n = nutrition.data?.[0];

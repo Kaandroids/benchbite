@@ -7,7 +7,16 @@ import { aiModel, AiRefusedError, keepAlive } from '../_shared/ai_usage.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
 import type { Finish, LanguageModel, Message, Part } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
-import { type Expression, FaceReader, LANGUAGES, marker, snapshotText, SYSTEM } from './prompt.ts';
+import {
+  type Expression,
+  FaceReader,
+  LANGUAGES,
+  marker,
+  messageText,
+  neutral,
+  snapshotText,
+  SYSTEM,
+} from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
@@ -186,7 +195,7 @@ async function answer(
         role: 'user',
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
-          { type: 'text', text: request.message },
+          { type: 'text', text: messageText(request.message) },
         ],
       },
     ];
@@ -343,7 +352,8 @@ function toMessage(
     )
     .join('\n');
   if (!text) return [];
-  if (row.role === 'user') return [{ role: 'user', parts: [{ type: 'text', text }] }];
+  if (row.role === 'user')
+    return [{ role: 'user', parts: [{ type: 'text', text: neutral(text) }] }];
   const face = marker(row.expression ?? 'neutral');
   return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${text}` }] }];
 }

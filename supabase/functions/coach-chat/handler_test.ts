@@ -135,7 +135,10 @@ Deno.test('tells the model who it is and what the user is up to', async () => {
   assertEquals(snapshot.text.startsWith('<snapshot>'), true);
   assertEquals(snapshot.text.includes('Reply in: Turkish'), true);
   assertEquals(snapshot.text.includes('Eaten today: 1450 kcal · 95 g protein'), true);
-  assertEquals(message, { type: 'text', text: 'Did I eat enough protein?' });
+  assertEquals(message, {
+    type: 'text',
+    text: '<message>\nDid I eat enough protein?\n</message>',
+  });
 });
 
 Deno.test('looks things up with a tool, then answers', async () => {

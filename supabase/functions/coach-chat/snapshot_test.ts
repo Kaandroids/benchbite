@@ -43,10 +43,16 @@ Deno.test("tells Bite the user's calorie floor, as the profile gives it", async 
   assertEquals(text.includes('Training: beginner · gym · Mon, Thu · 45 min sessions'), true);
 });
 
-Deno.test('keeps the rest of the profile when the floor cannot be read', async () => {
-  const snapshot = await loadSnapshot(database({ ...PROFILE, calorie_floor: null }), '2026-10-30');
+Deno.test(
+  'keeps the rest of the profile when the floor cannot be read, at the highest floor',
+  async () => {
+    const snapshot = await loadSnapshot(
+      database({ ...PROFILE, calorie_floor: null }),
+      '2026-10-30',
+    );
 
-  const text = snapshotText(snapshot, 'en');
-  assertEquals(text.includes('Pregnant or breastfeeding: yes'), true);
-  assertEquals(text.includes('Calorie floor'), false);
-});
+    const text = snapshotText(snapshot, 'en');
+    assertEquals(text.includes('Pregnant or breastfeeding: yes'), true);
+    assertEquals(text.includes('Calorie floor: 1500 kcal a day'), true);
+  },
+);
