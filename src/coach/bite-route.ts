@@ -17,10 +17,23 @@ export function openChat(thread?: number) {
   });
 }
 
-/** The saved thread the params name, if any, and a key for the chat they open. */
-export function chatOf({ thread, fresh }: BiteParams): { threadId?: number; key: string } {
+/** Goes on in a saved thread from Bite's own screen, as from its Continue card. */
+export function continueChat(thread: number) {
+  router.setParams({ thread: String(thread), fresh: '' });
+}
+
+/**
+ * The saved thread the params name, if any, and a key for the chat they open; `latest` when they
+ * name neither a thread nor a new chat, as from the tab bar, where Bite opens on its last chat
+ * while it is recent (ADR 0055).
+ */
+export function chatOf({ thread, fresh }: BiteParams): {
+  threadId?: number;
+  key: string;
+  latest: boolean;
+} {
   const threadId = thread && /^\d+$/.test(thread) ? Number(thread) : undefined;
   return threadId === undefined
-    ? { key: `new-${fresh ?? ''}` }
-    : { threadId, key: `thread-${threadId}` };
+    ? { key: `new-${fresh ?? ''}`, latest: !fresh }
+    : { threadId, key: `thread-${threadId}`, latest: false };
 }

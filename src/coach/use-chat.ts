@@ -20,6 +20,8 @@ export type ChatMessage = {
   unanswered?: boolean;
   /** An answer that stopped short: stopped by the user, or cut off. */
   cut?: Ending['cut'];
+  /** When it was written, which separates the days of a conversation. */
+  createdAt?: Date;
 };
 
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
@@ -77,10 +79,11 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
     if (!message || abort.current) return;
     const biteId = `bite-${++count.current}`;
     const questionId = `user-${count.current}`;
+    const now = new Date();
     setMessages((all) => [
       ...all,
-      { id: questionId, role: 'user', text: message },
-      { id: biteId, role: 'bite', text: '' },
+      { id: questionId, role: 'user', text: message, createdAt: now },
+      { id: biteId, role: 'bite', text: '', createdAt: now },
     ]);
     let ending = beginning(threadId.current);
     setStatus('thinking');

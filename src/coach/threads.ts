@@ -108,7 +108,7 @@ export function useThreadMessages(threadId: number | undefined) {
         supabase.from('coach_threads').select('title').eq('id', threadId!).maybeSingle(),
         supabase
           .from('coach_messages')
-          .select('id, role, content, expression')
+          .select('id, role, content, expression, created_at')
           .eq('thread_id', threadId!)
           .order('id'),
       ]);
@@ -130,6 +130,7 @@ export function useThreadMessages(threadId: number | undefined) {
           role: row.role,
           text: messageText(row.content),
           expression: row.expression ?? undefined,
+          createdAt: new Date(row.created_at),
           ...(row.role === 'user' && data[index + 1]?.role !== 'bite' && { unanswered: true }),
         })),
       };
@@ -140,6 +141,44 @@ export function useThreadMessages(threadId: number | undefined) {
 /** A name as it is kept: without spaces around it, within its length; null when empty. */
 export function threadTitle(text: string): string | null {
   return text.trim().slice(0, MAX_THREAD_TITLE_LENGTH) || null;
+}
+
+/** How long after its last message Bite opens on a thread again, rather than a new one. */
+export const RECENT_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * The user's latest chat, which Bite opens on while it is recent (ADR 0055), and otherwise offers
+ * to continue; null without one. Read only when `wanted`.
+ */
+export function useLastThread(wanted: boolean) {
+  return useQuery({
+    queryKey: [...THREADS_KEY, 'last'],
+    enabled: wanted,
+    staleTime: 0,
+    // Bite waits for it before it shows; one that fails opens a new chat at once, not after tries.
+    retry: false,
+    queryFn: async (): Promise<ThreadSummary | null> => {
+      const { data, error } = await supabase.rpc('my_coach_threads');
+      if (error) {
+        throw error;
+      }
+      const row = data[0];
+      return row
+        ? {
+            id: row.id,
+            title: row.title,
+            lastMessageAt: new Date(row.last_message_at),
+            lastMessage: row.last_message,
+            expression: row.expression,
+          }
+        : null;
+    },
+  });
+}
+
+/** Whether a chat is recent enough for Bite to open on it again. */
+export function isRecent(thread: ThreadSummary, now: Date): boolean {
+  return now.getTime() - thread.lastMessageAt.getTime() < RECENT_MS;
 }
 
 /** Renames a thread; an empty name clears it. */
