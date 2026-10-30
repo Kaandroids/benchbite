@@ -16,7 +16,7 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { RefusalCard } from './refusal-card';
 import { useThreadMessages } from './threads';
-import { type BiteParams, continueChat, useOpenedChat } from './bite-route';
+import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
@@ -28,12 +28,13 @@ import { useFollowEnd } from './use-follow-end';
  */
 export function BiteScreen() {
   const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
+  const { fromChats } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   // A saved chat opens on its messages as they are now, never on ones kept from before.
   if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
-      <Screen onBack={() => router.back()} closes>
+      <Screen onBack={() => router.back()} closes={!fromChats}>
         <LoadState queries={[saved]} />
       </Screen>
     );
@@ -43,17 +44,19 @@ export function BiteScreen() {
   return saved.data ? (
     <Chat
       key={key}
+      fromChats={fromChats}
       title={saved.data.title ?? undefined}
       start={{ threadId: threadId!, messages: saved.data.messages }}
     />
   ) : (
     <Chat
       key={threadId === undefined ? key : `gone-${threadId}`}
+      fromChats={fromChats}
       continueWith={
         opened.offer && {
           thread: opened.offer,
           onContinue: continueChat,
-          onAllChats: () => router.push('/bite/chats'),
+          onAllChats: () => openChats(),
         }
       }
     />
@@ -61,6 +64,8 @@ export function BiteScreen() {
 }
 
 type ChatProps = {
+  /** Whether the chat was opened over the chats, which it goes back to. */
+  fromChats: boolean;
   /** The name of a saved thread the chat goes on in. */
   title?: string;
   start?: Parameters<typeof useChat>[0];
@@ -68,7 +73,7 @@ type ChatProps = {
   continueWith?: ContinueWith;
 };
 
-function Chat({ title, start, continueWith }: ChatProps) {
+function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const chat = useChat(start);
@@ -80,14 +85,15 @@ function Chat({ title, start, continueWith }: ChatProps) {
   return (
     <Screen
       onBack={() => router.back()}
-      closes
+      closes={!fromChats}
       title={t('bite.title')}
       subtitle={title}
       action={
         <TopBarButton
           icon="history"
           label={t('bite.chats.title')}
-          onPress={() => router.push('/bite/chats')}
+          // The chats are under a chat opened from them.
+          onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
         />
       }
       scrolls={false}

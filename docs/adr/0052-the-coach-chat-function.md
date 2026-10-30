@@ -43,7 +43,8 @@ the model is limited and counted (ADR 0051).
 - **The turn is saved when the answer is done,** or when it stops short with text already given
   (the app stopped it, the budget ran out after a lookup, it was cut at the token limit): the
   user's message and Bite's, with its lookups and their results, its face,
-  and what its requests used. The lookups are trimmed to what a message may hold. When Bite
+  and what its requests used, and why it stopped short if it did (`interrupted`, #343), in a
+  column of its own rather than in the content the model sees, so that a chat read back shows it. The lookups are trimmed to what a message may hold. When Bite
   said nothing, a question the model was asked stays in the thread without an answer, as the app
   shows it, so that Bite sees it next time. A message that never reached the model, as when it
   was refused, stopped first or the call could not start, or one the model blocked, which would
