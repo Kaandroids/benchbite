@@ -15,7 +15,7 @@ import { COACH_TOOLS } from '@shared/coach/chat';
 
 import { Text } from '@/components/ui/text';
 import { oneOf } from '@/lib/one-of';
-import { useTheme } from '@/theme';
+import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import type { ChatMessage, ChatStatus } from './use-chat';
@@ -223,16 +223,19 @@ function Dot({ delay, color }: { delay: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, style]} />;
 }
 
+/** The sharper corner of a message, toward who said it. */
+const TAIL = 6;
+
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
   },
   bubble: {
     maxWidth: '80%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 6,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    borderBottomLeftRadius: radii.xl,
+    borderBottomRightRadius: TAIL,
   },
   bite: {
     flexDirection: 'row',
@@ -242,10 +245,10 @@ const styles = StyleSheet.create({
   biteBubble: {
     flexShrink: 1,
     borderWidth: 1,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderTopLeftRadius: TAIL,
+    borderTopRightRadius: radii.xl,
+    borderBottomLeftRadius: radii.xl,
+    borderBottomRightRadius: radii.xl,
   },
   row: {
     flexDirection: 'row',

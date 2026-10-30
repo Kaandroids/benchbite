@@ -74,12 +74,15 @@ export function ChatComposer({ onSend, onStop }: ChatComposerProps) {
   );
 }
 
+/** Half a one-line field's height, so that its ends are round. */
+const FIELD_RADIUS = 26;
+
 const styles = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     borderWidth: 1,
-    borderRadius: 26,
+    borderRadius: FIELD_RADIUS,
     padding: 4,
   },
   input: {
