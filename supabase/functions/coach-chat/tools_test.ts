@@ -103,11 +103,31 @@ const NAMES = [
 /** The user's plan and the library, and what `rpc` answers, with the calls made to it. */
 function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = {}) {
   const calls: { name: string; args: unknown }[] = [];
-  const query = (data: unknown) => {
+  // As PostgREST: ordering by a table the query does not embed fails the request.
+  const query = (rows: Record<string, unknown>[]) => {
+    let columns = '';
+    let error: unknown = null;
+    const filters: [string, unknown][] = [];
+    const result = () => ({
+      data: rows.filter((row) => filters.every(([column, value]) => row[column] === value)),
+      error,
+    });
     const builder: Record<string, unknown> = {
-      then: (resolve: (value: unknown) => void) => resolve({ data, error: null }),
+      select: (selected: string) => ((columns = selected), builder),
+      eq: (column: string, value: unknown) => (
+        column === 'id' && filters.push([column, value]),
+        builder
+      ),
+      in: () => builder,
+      order: (_column: string, options?: { referencedTable?: string }) => {
+        if (options?.referencedTable && !columns.includes(options.referencedTable)) {
+          error = { code: 'PGRST108', message: `'${options.referencedTable}' is not embedded` };
+        }
+        return builder;
+      },
+      maybeSingle: () => Promise.resolve({ data: result().data[0] ?? null, error }),
+      then: (resolve: (value: unknown) => void) => resolve(result()),
     };
-    for (const method of ['select', 'eq', 'in', 'order']) builder[method] = () => builder;
     return builder;
   };
   const supabase = {
