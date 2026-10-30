@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Modal, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,8 +22,8 @@ import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
 import { useLogEstimate, type EstimatedEntry } from './entries';
 import { EstimateCard } from './estimate-card';
-import { handOverLoggedEstimate } from './logged-estimate';
-import { EstimateFailure, estimateTotals, type EstimateItem } from './meal-estimate';
+import { EstimateFailure, per100Totals, type EstimateItem } from './meal-estimate';
+import { handOverLoggedEstimate } from './meal-photo-handover';
 import { MealPhotoSheet } from './meal-photo-sheet';
 import { totalOf, useDayEntries, type Meal } from './meals';
 import { useDayTargets } from './targets';
@@ -43,21 +43,16 @@ const PROGRESS_TICK_MS = 250;
 
 /** The item an estimate logs: a found food by its reference, or the model's values by its name. */
 function entryOf(item: EstimateItem): EstimatedEntry {
-  if (item.food && !item.estimated) {
-    return { food: item.food.ref, grams: item.grams };
-  }
-  const { kcal, proteinG, carbsG, fatG } = item.per100;
-  return {
-    name: item.searchName,
-    grams: item.grams,
-    per100g: { calories: kcal, proteinG, carbsG, fatG },
-  };
+  return item.food && !item.estimated
+    ? { food: item.food.ref, grams: item.grams }
+    : { name: item.searchName, grams: item.grams, per100g: per100Totals(item.per100) };
 }
 
 /**
  * Logs a meal from photos (#299, ADR 0059): Bite looks at them, then shows what it sees, each food
  * with its grams, which the user can change, or correct in a note for another estimate, before
- * the foods are added to the meal. Cancel leaves at any point without adding anything.
+ * the foods are added to the meal. Cancel leaves at any point without adding anything; while the
+ * foods are being added, it waits.
  */
 export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoScreenProps) {
   const { t } = useTranslation();
@@ -68,24 +63,32 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
   const [note, setNote] = useState('');
   const [editing, setEditing] = useState<number | null>(null);
   const [picking, setPicking] = useState(false);
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
 
+  const adding = logEstimate.isPending;
   const leave = () => {
+    if (adding) return;
     cancel();
     router.back();
   };
 
   const items = state.kind === 'estimate' ? state.items : [];
   const add = () => {
-    const calories = Math.round(estimateTotals(items).calories);
-    logEstimate.mutate(
-      { day, meal, entries: items.map(entryOf) },
-      {
-        onSuccess: (logged) => {
-          handOverLoggedEstimate({ ...logged, meal, count: items.length, calories });
-          router.back();
-        },
-      },
-    );
+    logEstimate
+      .mutateAsync({ day, meal, entries: items.map(entryOf) })
+      .then((logged) => {
+        // Handed over even if the screen was left meanwhile, so that Undo is offered.
+        handOverLoggedEstimate({ ...logged, meal });
+        if (mounted.current) router.back();
+      })
+      // The mutation's error is shown above the buttons.
+      .catch(() => {});
   };
   const estimateAgain = () => {
     again({
@@ -95,41 +98,46 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
     setNote('');
   };
 
-  const cancelButton = (
+  const cancelButton = (style?: object) => (
     <Button
       label={t('nutrition.photo.cancel')}
       variant="secondary"
+      disabled={adding}
       onPress={leave}
-      style={state.kind === 'estimating' ? undefined : styles.cancel}
+      style={style}
     />
   );
   const refusal = state.kind === 'failed' ? failureOf(state.error).refusal : undefined;
   const blocked = state.kind === 'failed' && failureOf(state.error).reason === 'blocked';
 
-  let footer = cancelButton;
+  let footer: ReactNode = cancelButton();
   if (state.kind === 'estimate') {
     footer = (
-      <View style={[styles.buttons, { gap: spacing.md }]}>
-        {cancelButton}
-        <Button
-          label={t(`nutrition.addTo.${meal}`)}
-          loading={logEstimate.isPending}
-          onPress={add}
-          style={styles.flex}
-        />
-      </View>
+      <Buttons
+        cancel={cancelButton(styles.cancel)}
+        main={
+          <Button
+            label={t(`nutrition.addTo.${meal}`)}
+            loading={adding}
+            onPress={add}
+            style={styles.main}
+          />
+        }
+      />
     );
   } else if (state.kind === 'notFood' || (state.kind === 'failed' && !refusal)) {
     const retry = state.kind === 'failed' && !blocked;
     footer = (
-      <View style={[styles.buttons, { gap: spacing.md }]}>
-        {cancelButton}
-        <Button
-          label={t(retry ? 'common.tryAgain' : 'nutrition.photo.tryAnother')}
-          onPress={retry ? () => again() : () => setPicking(true)}
-          style={styles.flex}
-        />
-      </View>
+      <Buttons
+        cancel={cancelButton(styles.cancel)}
+        main={
+          <Button
+            label={t(retry ? 'common.tryAgain' : 'nutrition.photo.tryAnother')}
+            onPress={retry ? () => again() : () => setPicking(true)}
+            style={styles.main}
+          />
+        }
+      />
     );
   }
 
@@ -205,6 +213,20 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
       ) : null}
       {picking ? <MealPhotoSheet onPick={retake} onClose={() => setPicking(false)} /> : null}
     </KeyboardAvoiding>
+  );
+}
+
+/**
+ * Cancel and the main button side by side, each as wide as its label needs and the main one
+ * taking the rest; when both do not fit, as in German, the main one goes above Cancel.
+ */
+function Buttons({ cancel, main }: { cancel: ReactNode; main: ReactNode }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.buttons, { gap: spacing.md }]}>
+      {cancel}
+      {main}
+    </View>
   );
 }
 
@@ -314,16 +336,16 @@ function ItemAmount({
   const { format } = useNumberFormat();
   const entries = useDayEntries(day);
   const targets = useDayTargets(day);
-  const { kcal, proteinG, carbsG, fatG } = item.per100;
+  const per100g = per100Totals(item.per100);
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       {/* On iOS, a screen in a full-screen modal gets no safe area without a provider of its own. */}
       <SafeAreaProvider>
         <AmountForm
           title={item.name}
-          subtitle={t('nutrition.amount.per100g', { calories: format(kcal) })}
+          subtitle={t('nutrition.amount.per100g', { calories: format(per100g.calories) })}
           onBack={onClose}
-          per100g={{ calories: kcal, proteinG, carbsG, fatG }}
+          per100g={per100g}
           // An estimate is in grams.
           portions={[]}
           initial={{ grams: item.grams, portion: null }}
@@ -339,14 +361,17 @@ function ItemAmount({
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
   buttons: {
     flexDirection: 'row',
+    // The first line at the bottom: Cancel stays below when the main button wraps above it.
+    flexWrap: 'wrap-reverse',
   },
   cancel: {
-    width: 120,
+    flexGrow: 1,
+    minWidth: 120,
+  },
+  main: {
+    flexGrow: 3,
   },
   end: {
     alignSelf: 'flex-end',

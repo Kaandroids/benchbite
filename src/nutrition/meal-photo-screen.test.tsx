@@ -4,8 +4,8 @@ import { useAiAccess } from '@/ai/access';
 import { act, fireEvent, render, screen, within } from '@/test/render';
 
 import { useLogEstimate } from './entries';
-import { takeLoggedEstimate } from './logged-estimate';
-import { EstimateFailure, estimateMeal, type EstimateItem } from './meal-estimate';
+import { takeLoggedEstimate } from './meal-photo-handover';
+import { discardPhotos, EstimateFailure, estimateMeal, type EstimateItem } from './meal-estimate';
 import { MealPhotoScreen } from './meal-photo-screen';
 import { useDayEntries } from './meals';
 import { useDayTargets } from './targets';
@@ -19,6 +19,7 @@ jest.mock('@/ai/access', () => ({
 jest.mock('./meal-estimate', () => ({
   ...jest.requireActual('./meal-estimate'),
   estimateMeal: jest.fn(),
+  discardPhotos: jest.fn(),
 }));
 jest.mock('./entries', () => ({ useLogEstimate: jest.fn() }));
 jest.mock('./meals', () => ({ ...jest.requireActual('./meals'), useDayEntries: jest.fn() }));
@@ -43,7 +44,7 @@ const JUICE: EstimateItem = {
   estimated: true,
 };
 
-const mutate = jest.fn();
+const mutateAsync = jest.fn();
 
 /** An estimate that waits until `answer` is called with what it gives. */
 function pendingEstimate() {
@@ -67,11 +68,13 @@ async function showEstimate(items = [EGGS, JUICE]) {
   await render(<MealPhotoScreen meal="breakfast" day="2026-10-30" photos={['file://a.jpg']} />);
 }
 
+function mockLogging(state: { isPending: boolean }) {
+  jest.mocked(useLogEstimate).mockReturnValue({ mutateAsync, isError: false, ...state } as never);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
-  jest
-    .mocked(useLogEstimate)
-    .mockReturnValue({ mutate, isPending: false, isError: false } as never);
+  mockLogging({ isPending: false });
   jest.mocked(useDayEntries).mockReturnValue({ data: [] } as never);
   jest.mocked(useDayTargets).mockReturnValue({ data: { calories: 2000 } } as never);
   jest.mocked(useAiAccess).mockReturnValue({ data: undefined } as never);
@@ -101,7 +104,17 @@ describe('MealPhotoScreen', () => {
 
     expect(signal.aborted).toBe(true);
     expect(router.back).toHaveBeenCalled();
-    expect(mutate).not.toHaveBeenCalled();
+    expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('deletes the photos when it closes', async () => {
+    pendingEstimate();
+    const { unmount } = await render(
+      <MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file:///cache/a.jpg']} />,
+    );
+    expect(discardPhotos).not.toHaveBeenCalled();
+    await act(async () => unmount());
+    expect(discardPhotos).toHaveBeenCalledWith(['file:///cache/a.jpg']);
   });
 
   it('shows each food with its grams and calories, and the totals', async () => {
@@ -165,39 +178,43 @@ describe('MealPhotoScreen', () => {
   });
 
   it('logs found foods by their reference and the rest by their search name', async () => {
-    await showEstimate();
-    await fireEvent.press(screen.getByRole('button', { name: 'Add to breakfast' }));
-
-    expect(mutate).toHaveBeenCalledWith(
-      {
-        day: '2026-10-30',
-        meal: 'breakfast',
-        entries: [
-          { food: { kind: 'library', id: 'E111200' }, grams: 120 },
-          {
-            name: 'Orange juice',
-            grams: 200,
-            per100g: { calories: 45, proteinG: 0.7, carbsG: 10, fatG: 0.2 },
-          },
-        ],
-      },
-      expect.anything(),
-    );
-
     const logged = {
       day: '2026-10-30',
       entryIds: [1, 2],
       foods: [EGGS.food!.ref, { kind: 'custom', id: 9 }],
       createdFoodIds: [9],
-    };
-    await act(async () => mutate.mock.calls[0][1].onSuccess(logged));
-    expect(router.back).toHaveBeenCalled();
-    expect(takeLoggedEstimate('breakfast', '2026-10-30')).toEqual({
-      ...logged,
-      meal: 'breakfast',
-      count: 2,
       calories: 270,
+    };
+    mutateAsync.mockResolvedValue(logged);
+    await showEstimate();
+    await fireEvent.press(screen.getByRole('button', { name: 'Add to breakfast' }));
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      day: '2026-10-30',
+      meal: 'breakfast',
+      entries: [
+        { food: { kind: 'library', id: 'E111200' }, grams: 120 },
+        {
+          name: 'Orange juice',
+          grams: 200,
+          per100g: { calories: 45, proteinG: 0.7, carbsG: 10, fatG: 0.2 },
+        },
+      ],
     });
+    expect(router.back).toHaveBeenCalled();
+    expect(takeLoggedEstimate('breakfast', '2026-10-30')).toEqual({ ...logged, meal: 'breakfast' });
+  });
+
+  it('waits to be left while the foods are added', async () => {
+    await showEstimate();
+    mockLogging({ isPending: true });
+    await screen.rerender(
+      <MealPhotoScreen meal="breakfast" day="2026-10-30" photos={['file://a.jpg']} />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(router.back).not.toHaveBeenCalled();
   });
 
   it('says when the photos show no meal, and takes another one', async () => {
@@ -216,6 +233,18 @@ describe('MealPhotoScreen', () => {
     ).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Try another photo' }));
     expect(screen.getByText('Up to 3 photos of the same meal')).toBeTruthy();
+  });
+
+  it('logs why an estimate failed, as preparing a photo on the device', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const failure = new Error('The scaled photo came without its data');
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(failure);
+
+    expect(screen.getByText('Bite couldn’t look at your meal')).toBeTruthy();
+    expect(warn).toHaveBeenCalledWith('Could not estimate the meal', failure);
+    warn.mockRestore();
   });
 
   it('offers to try again after a failure', async () => {
