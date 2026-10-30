@@ -39,6 +39,11 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
   const before = addDays(start, -1);
   const last = useDayTraining(today, rangeStart(range, before), before);
   const summary = days.data ? trainingSummary(days.data) : null;
+  // While a new range loads, the last days keep the name of the range they were loaded for.
+  const [shownRange, setShownRange] = useState(range);
+  if (days.data && !days.isPlaceholderData && shownRange !== range) {
+    setShownRange(range);
+  }
   const lastLifted =
     last.data && !last.isPlaceholderData && !days.isPlaceholderData
       ? trainingSummary(last.data).liftedKg
@@ -75,7 +80,7 @@ export function TrainingCard({ entering, today }: TrainingCardProps) {
       <>
         <SummaryBox>
           <Caption>
-            {t('progress.summary.caption', { range: t(`progress.summary.${range}`) })}
+            {t('progress.summary.caption', { range: t(`progress.summary.${shownRange}`) })}
           </Caption>
           <View style={[styles.stats, { gap: spacing.md }]}>
             <Stat

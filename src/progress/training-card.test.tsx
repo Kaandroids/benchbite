@@ -77,6 +77,16 @@ it('loads the range chosen, from three months', async () => {
   expect(screen.queryByText('1M')).toBeNull();
 });
 
+it('names the last range while a new one loads', async () => {
+  mockDays([day('2026-10-28', 45)]);
+  await render(<TrainingCard today={TODAY} />);
+  jest
+    .mocked(useDayTraining)
+    .mockReturnValue({ data: [day('2026-10-28', 45)], isPlaceholderData: true, refetch } as never);
+  await fireEvent.press(screen.getByText('6M'));
+  expect(screen.getByText('SUMMARY · LAST 3 MONTHS')).toBeTruthy();
+});
+
 it('says when there was no training in the range', async () => {
   mockDays([day('2026-10-29', 0)]);
   await render(<TrainingCard today={TODAY} />);
