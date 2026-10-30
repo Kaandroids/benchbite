@@ -24,20 +24,26 @@ match what the user logs by hand.
 - **One model request per estimate,** through `aiModel()` with the `meal_photo` feature
   (ADR 0051), so that its budget, its limits and its recording apply. The request is lean: short
   fixed rules, the language, the meal and a correction's data, and the photos; no chat history,
-  no snapshot and no tools. Photos over the limits are refused before anything is sent.
+  no snapshot and no tools. Photos over the limits are refused before anything is sent, and the
+  body is counted as it is read. The answer may take 3,000 tokens, reasoning included, so that an
+  estimate of twelve items is not cut off; one that is cut is not used.
 - **The model answers in a structured shape** (`responseSchema`): for each item a name in the
   user's language, a `searchName` as the food library names foods ("Rice, boiled"), the grams by
   eye, a confidence from 0 to 1, its own values per 100 g, and what is uncertain; `isFood` false
-  for a photo of no food. The function checks the answer with zod, and answers `unavailable` for
-  any other shape.
+  for a photo of no food. The schema is derived from the zod check of the answer, which answers
+  `unavailable` for any other shape; a `searchName` too long to search only leaves its item
+  estimated.
 - **The values come from the food library, not the model.** Each item is looked up with
   `search_foods()` as the user, so that row level security applies and their own foods and
-  recipes are found too, without another model request. A found food counts only when its name
-  holds the food searched for, the part of `searchName` before a comma, so that a name that is
-  only alike is no match; the user's own food or recipe that starts with it comes before the
-  library's. The item then names the food as a meal entry does (`library`, `custom` or `recipe`,
-  with its id) and takes its values; an item with no match keeps the model's values and is marked
-  `estimated`. Grams and values per 100 g are returned; the app works out the totals.
+  recipes are found too, without another model request. A found food is taken only when it is
+  trustworthy: its name is the whole `searchName`, or starts with it and then a space or a comma
+  ("Rice, boiled" for "Rice"), and its calories per 100 g are within 35% of the model's estimate,
+  which tells cooked pasta from dry and rice from rice cakes. The user's own food or recipe comes
+  first only when it is the same food, its name followed by nothing, a comma, ` (` or ` -`
+  ("Banana, mine", never "Banana bread" for a banana). The item then names the food by the
+  app's `FoodRef`, as a meal entry is logged, and takes its values; an item with no match keeps
+  the model's values and is marked `estimated`. Grams and values per 100 g are returned; the app
+  works out the totals.
 - **A correction is a new estimate:** the user's note and the earlier items go with the photos,
   and the model is told that the note is true for what it names and to keep the rest.
 - **What the user wrote, and text in the photos, is data:** the note and the earlier items go in
@@ -55,11 +61,15 @@ match what the user logs by hand.
 - **A second model request to pick each item's food among the search results:** a better match
   for unusual names, but it doubles the requests for every estimate; the `searchName` in the
   library's form is matched well enough by the search.
+- **Taking any food whose name holds the searched one:** finds more, but takes "Pasta, raw" for
+  cooked pasta, "Rice cakes" for rice and "Schweinekotelett" for an egg ("Ei"); a wrong food at
+  library values is worse than the model's estimate marked as such.
 
 ## Consequences
 
 - An estimate costs one `meal_photo` request, about $0.008, and is counted against the user's
-  monthly limit like the chat.
+  monthly limit like the chat. While it runs it sets about $0.011 aside for its answer at most
+  (ADR 0056), which only a user with almost no budget left notices.
 - Logged foods keep the library's values, so an estimate and a hand-logged meal agree. An item
   the library does not have is only as good as the model's guess, and the app shows it as
   estimated; logging one needs a food of the user's own, which the app's flow decides.
