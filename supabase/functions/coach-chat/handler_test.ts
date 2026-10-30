@@ -303,29 +303,63 @@ Deno.test("takes a later request's face off, and goes on after a space", async (
   assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, said);
 });
 
-Deno.test('says why when an answer comes without text, and keeps the question', async () => {
+Deno.test('keeps nothing of a question the model blocked', async () => {
   const blocked = context(new FakeModel({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }));
   assertEquals(await events(await handleChatRequest(ask(MESSAGE), blocked.ctx)), [
     { event: 'thread', threadId: 100 },
-    { event: 'error', reason: 'blocked' },
+    { event: 'error', reason: 'blocked', dropped: true },
   ]);
+  assertEquals(blocked.deleted, ['coach_threads 100']);
+});
+
+Deno.test('says why when an answer comes without text, and keeps the question', async () => {
   const faceOnly = context(new FakeModel([{ type: 'text', text: '[[sad]]' }]));
   assertEquals((await events(await handleChatRequest(ask(MESSAGE), faceOnly.ctx))).at(-1), {
     event: 'error',
     reason: 'unavailable',
   });
   // The question stays in its thread without an answer, as the app shows it.
-  for (const { inserted, deleted } of [blocked, faceOnly]) {
-    assertEquals(
-      inserted.map(({ table }) => table),
-      ['coach_threads', 'coach_messages'],
+  assertEquals(
+    faceOnly.inserted.map(({ table }) => table),
+    ['coach_threads', 'coach_messages'],
+  );
+  assertEquals(
+    faceOnly.inserted[1].rows.map(({ role }) => role),
+    ['user'],
+  );
+  assertEquals(faceOnly.deleted, []);
+});
+
+/** A model the provider refuses outright, as a token count over its rate: nothing is billed. */
+class RateLimitedModel extends FakeModel {
+  override countTokens(_request: ModelRequest): Promise<number> {
+    return Promise.reject(
+      new ModelError('rate limited', { status: 429, retryable: true, billed: false }),
     );
-    assertEquals(
-      inserted[1].rows.map(({ role }) => role),
-      ['user'],
-    );
-    assertEquals(deleted, []);
   }
+}
+
+Deno.test('keeps nothing when the provider refuses the request outright', async () => {
+  const { ctx, inserted, deleted } = context(new RateLimitedModel());
+
+  assertEquals(await events(await handleChatRequest(ask(MESSAGE), ctx)), [
+    { event: 'thread', threadId: 100 },
+    { event: 'error', reason: 'unavailable', dropped: true },
+  ]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(deleted, ['coach_threads 100']);
+});
+
+Deno.test('leaves a thread to drop that another request answered in meanwhile', async () => {
+  const { ctx, deleted } = context(new RateLimitedModel(), {}, { coach_messages: [{ id: 5 }] });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'error', reason: 'unavailable' });
+  assertEquals(deleted, []);
 });
 
 Deno.test('keeps what was said when the budget runs out after a lookup', async () => {
@@ -505,10 +539,15 @@ Deno.test('keeps what came of a message, and says why it ended', () => {
     reason: undefined,
   });
   // Without text: the question once the model was asked, else nothing, and a new thread goes.
-  assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
+  assertEquals(ending(asked, { ...answer, finish: 'stop' }), {
     keep: 'question',
-    reason: 'blocked',
+    reason: 'unavailable',
     dropThread: false,
+  });
+  assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
+    keep: 'nothing',
+    reason: 'blocked',
+    dropThread: true,
   });
   assertEquals(ending(notAsked, answer), {
     keep: 'nothing',

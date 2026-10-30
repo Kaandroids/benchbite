@@ -271,8 +271,9 @@ async function answer(
     } else {
       logError('Bite could not answer', error);
       outcome.failure = 'unavailable';
-      // A provider's error comes from a request that was made.
-      if (error instanceof ModelError) outcome.asked = true;
+      // A provider's error that was billed comes from a request that was made; one refused
+      // outright, as a token count over the provider's rate, cost nothing and keeps nothing.
+      if (error instanceof ModelError && error.billed) outcome.asked = true;
     }
   }
 
@@ -284,9 +285,9 @@ async function answer(
     newThread: !request.threadId,
   });
   if (end.keep !== 'turn') {
-    if (end.dropThread) await keepAlive(dropThread(context, threadId));
-    else if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
-    return send({ event: 'error', reason: end.reason, ...(end.dropThread && { dropped: true }) });
+    const dropped = end.dropThread && (await keepAlive(dropThread(context, threadId)));
+    if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
+    return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
   const messageId = await keepAlive(saveTurn(context, threadId, request, turn));
   if (!messageId) return send({ event: 'error', reason: 'not_saved' });
@@ -318,7 +319,9 @@ export function ending(
     return { keep: 'turn', interrupted: interruption(), reason: failure };
   }
   const reason = failure ?? (answer.finish === 'blocked' ? 'blocked' : 'unavailable');
-  const keep = asked && !refused ? 'question' : 'nothing';
+  // A question the model blocked is not kept either: sent again with every later message, it
+  // would be blocked again, at a cost each time.
+  const keep = asked && !refused && reason !== 'blocked' ? 'question' : 'nothing';
   return { keep, reason, dropThread: keep === 'nothing' && answer.newThread };
 
   function interruption(): Interruption | undefined {
@@ -384,9 +387,23 @@ async function saveTurn(
   return messages.data[messages.data.length - 1].id;
 }
 
-async function dropThread(context: ChatContext, threadId: number) {
+/**
+ * Drops a thread begun for a message that is not kept, and says whether it did: another request
+ * may have answered in it meanwhile, and then it stays.
+ */
+async function dropThread(context: ChatContext, threadId: number): Promise<boolean> {
+  const kept = await context.admin
+    .from('coach_messages')
+    .select('id')
+    .eq('thread_id', threadId)
+    .limit(1);
+  if (kept.error || kept.data.length) {
+    if (kept.error) logError('Could not read the thread to drop', kept.error);
+    return false;
+  }
   const dropped = await context.admin.from('coach_threads').delete().eq('id', threadId);
   if (dropped.error) logError('Could not drop an empty thread', dropped.error);
+  return !dropped.error;
 }
 
 /**
