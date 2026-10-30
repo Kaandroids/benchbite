@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(13);
 
 select is(
   public.achievable_weekly_pace_kg('female', 30, 165, 70, 'moderate', 3, 'lose_fat', 65, 0.9),
@@ -74,6 +74,12 @@ $$;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(public.my_achievable_weekly_pace_kg(), 0.56, 'A reads the pace of her own goal');
+-- With her own targets in use, the calculated ones say nothing of her pace.
+reset role;
+insert into public.own_nutrition_targets (user_id, calories, protein_g, carbs_g, fat_g)
+  values ('00000000-0000-0000-0000-00000000000a', 1600, 100, 180, 50);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select is(public.my_achievable_weekly_pace_kg(), null, 'None while her own targets are in use');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is(public.my_achievable_weekly_pace_kg(), null, 'B, keeping his weight, has none, not A''s');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
