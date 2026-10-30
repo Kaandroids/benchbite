@@ -196,8 +196,18 @@ Deno.test('counts a request that broke off at its most, and one refused at nothi
   assertEquals(refused.calls[1], recorded([0, 0, 0, 0]));
 });
 
-Deno.test('tries recording once more, and logs it when that fails too', async () => {
-  const once = context(new FakeModel([]), [STARTED], [{ message: 'Connection reset' }]);
+Deno.test('counts an answer that says it used nothing at its most', async () => {
+  const silent = { ...FAKE_USAGE, inputTokens: 0, outputTokens: 0 };
+  const { ctx, calls } = context(new FakeModel({ parts: [], usage: silent, finish: 'stop' }));
+
+  await aiModel(ctx, 'coach_chat').generate({ messages: [HI] });
+
+  assertEquals(calls[1], recorded('unknown'));
+});
+
+Deno.test('tries recording again, and logs it when every try fails', async () => {
+  const reset = { message: 'Connection reset' };
+  const once = context(new FakeModel([]), [STARTED], [reset]);
   await aiModel(once.ctx, 'coach_chat').generate({ messages: [HI] });
   assertEquals(once.calls.length, 3);
 
@@ -205,14 +215,10 @@ Deno.test('tries recording once more, and logs it when that fails too', async ()
   const error = console.error;
   console.error = (...args: unknown[]) => logged.push(...args);
   try {
-    const twice = context(
-      new FakeModel([]),
-      [STARTED],
-      [{ message: 'Connection reset' }, { message: 'Connection reset' }],
-    );
-    const answer = await aiModel(twice.ctx, 'coach_chat').generate({ messages: [HI] });
+    const always = context(new FakeModel([]), [STARTED], [reset, reset, reset]);
+    const answer = await aiModel(always.ctx, 'coach_chat').generate({ messages: [HI] });
 
-    assertEquals(answer.parts, []);
+    assertEquals([answer.parts, always.calls.length], [[], 4]);
     assertEquals(logged, ['record_ai_usage: Connection reset']);
   } finally {
     console.error = error;

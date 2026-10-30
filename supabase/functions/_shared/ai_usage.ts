@@ -39,13 +39,20 @@ export type AiModel = {
   stream(request: AiRequest): AsyncIterable<StreamEvent>;
 };
 
-/** A request the user may not make now, with the reason. */
+/**
+ * A request the user may not make now, with the reason. It can come although `ai_access()` said
+ * the user may call a model: as `limit_reached` when too little budget is left for this request
+ * at its most, or `request_too_large`, so the app takes the reason from the request.
+ */
 export class AiRefusedError extends Error {
   constructor(readonly reason: AiAccessReason) {
     super(`AI call refused: ${reason}`);
     this.name = 'AiRefusedError';
   }
 }
+
+/** How long to wait after each failed try to record a call, before the next; the last has none. */
+const RECORD_RETRIES_MS = [250, 1000, undefined];
 
 /** What a request used, or `unknown` when it ended before the provider said. */
 type Used = Usage | 'nothing' | 'unknown';
@@ -92,13 +99,13 @@ export function aiModel(context: AiContext, task: Task): AiModel {
       let used: Used = 'unknown';
       try {
         const response = await inner.generate(full);
-        used = response.usage;
+        used = told(response.usage);
         return response;
       } catch (error) {
-        if (error instanceof ModelError && !error.billed) used = 'nothing';
+        used = usedBy(error);
         throw error;
       } finally {
-        await record(context.admin, callId, used);
+        await keepAlive(record(context.admin, callId, used));
       }
     },
 
@@ -107,22 +114,37 @@ export function aiModel(context: AiContext, task: Task): AiModel {
       let used: Used = 'unknown';
       try {
         for await (const event of inner.stream(full)) {
-          if (event.type === 'done') used = event.usage;
+          if (event.type === 'done') used = told(event.usage);
           yield event;
         }
       } catch (error) {
-        if (error instanceof ModelError && !error.billed) used = 'nothing';
+        used = usedBy(error);
         throw error;
       } finally {
-        // Also when the stream is left before its end, which stops the request, as when the app
-        // closes it: the worker is then kept alive until the call is recorded.
+        // Also when the stream is left before its end, which stops the request.
         await keepAlive(record(context.admin, callId, used));
       }
     },
   };
 }
 
-/** Keeps the Edge Function's worker alive until `work` is done, also after its response ended. */
+/**
+ * What an answer used, as the provider told it. A request always sends something, so an answer
+ * that says it used no input said nothing, and is counted at its most.
+ */
+function told(usage: Usage): Used {
+  return usage.inputTokens > 0 ? usage : 'unknown';
+}
+
+/** What a request that failed used: nothing when the provider refused it, else not known. */
+function usedBy(error: unknown): Used {
+  return error instanceof ModelError && !error.billed ? 'nothing' : 'unknown';
+}
+
+/**
+ * Keeps the Edge Function's worker alive until `work` is done, also after its response ended, as
+ * when the app closed a stream.
+ */
 function keepAlive<T>(work: Promise<T>): Promise<T> {
   const runtime = (globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } })
     .EdgeRuntime;
@@ -130,7 +152,7 @@ function keepAlive<T>(work: Promise<T>): Promise<T> {
   return work;
 }
 
-/** Records a call, trying once more a moment later if the first try fails, and logs it if both do. */
+/** Records a call, trying again a little later twice if it fails, and logs it if every try does. */
 async function record(admin: Client, callId: string, used: Used) {
   const usage = typeof used === 'object' ? used : undefined;
   const args = {
@@ -141,15 +163,15 @@ async function record(admin: Client, callId: string, used: Used) {
     thinking_tokens: usage?.thinkingTokens ?? 0,
     known: used !== 'unknown',
   };
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (const wait of RECORD_RETRIES_MS) {
     const { error } = await admin.rpc('record_ai_usage', args);
     if (!error) return;
-    if (attempt === 1) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    } else {
+    if (wait === undefined) {
       // Logged, not thrown: the request's own result or error matters more to the caller. A call
       // never recorded is counted at its most once it is left behind.
       console.error(`record_ai_usage: ${error.message}`);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, wait));
     }
   }
 }
