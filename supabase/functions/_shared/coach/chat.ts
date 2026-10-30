@@ -25,6 +25,8 @@ export type ChatRequest = {
   language: string;
   /** The user's day, YYYY-MM-DD. */
   today: string;
+  /** A name for this request, by which the app stops it (stop_coach_request(), ADR 0057). */
+  requestId?: string;
 };
 
 /**

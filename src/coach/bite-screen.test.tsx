@@ -126,6 +126,47 @@ it('stops an answer, keeping what came of it', async () => {
   expect(screen.queryByText(/couldn't answer/)).toBeNull();
 });
 
+describe('a message sent right after a stop', () => {
+  beforeEach(() => jest.useFakeTimers({ doNotFake: ['nextTick'] }));
+  afterEach(() => jest.useRealTimers());
+
+  /** Stops an answer, then sends 'And today?', which the server refuses as one at a time. */
+  async function refusedAfterStop() {
+    const stream = liveStream();
+    await render(<BiteScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+    await stream.send({ event: 'text', text: 'Your week was' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+    await fireEvent.changeText(screen.getByLabelText('Message'), 'And today?');
+    await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+    await stream.send({ event: 'error', reason: 'call_in_progress' });
+    await stream.end();
+    return stream;
+  }
+
+  it('is sent again once the stopped answer let its place go', async () => {
+    const stream = await refusedAfterStop();
+
+    await act(() => jest.advanceTimersByTime(1500));
+    await stream.send({ event: 'text', text: 'Today you rest.' });
+    await stream.end();
+
+    expect(streamChat).toHaveBeenCalledTimes(3);
+    expect(stream.request()).toMatchObject({ message: 'And today?' });
+    expect(screen.getByText('Today you rest.')).toBeOnTheScreen();
+    expect(screen.queryByText(/another device/)).toBeNull();
+  });
+
+  it('is not sent again when it is stopped meanwhile', async () => {
+    await refusedAfterStop();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+    await act(() => jest.advanceTimersByTime(1500));
+
+    expect(streamChat).toHaveBeenCalledTimes(2);
+  });
+});
+
 it('says so when Bite could not answer', async () => {
   jest.mocked(streamChat).mockRejectedValue(new Error('offline'));
   await render(<BiteScreen />);

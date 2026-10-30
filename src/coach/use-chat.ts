@@ -10,6 +10,25 @@ import { afterEvent, afterStream, beginning, type Ending, type Failure } from '.
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
 import { THREADS_KEY } from './threads';
 
+/** How soon after a stop a message refused as one at a time is sent again, and when. */
+const RETRY_WITHIN_MS = 5_000;
+const RETRY_AFTER_MS = 1_500;
+
+/** Waits `ms`, or rejects when `signal` stops the wait. */
+function pause(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(new Error('aborted'));
+      },
+      { once: true },
+    );
+  });
+}
+
 export type ChatMessage = {
   id: string;
   role: 'user' | 'bite';
@@ -42,6 +61,8 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const [refusal, setRefusal] = useState<Refusal>();
   const threadId = useRef<number | undefined>(start?.threadId);
   const abort = useRef<AbortController | undefined>(undefined);
+  /** When the user last stopped an answer. */
+  const stoppedAt = useRef(0);
   const count = useRef(0);
 
   // A message still on its way when the screen closes is stopped.
@@ -107,11 +128,24 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
     };
 
     try {
-      await streamChat(
-        { message, threadId: threadId.current, language: i18n.language, today: deviceToday() },
-        onEvent,
-        controller.signal,
-      );
+      const request = {
+        message,
+        threadId: threadId.current,
+        language: i18n.language,
+        today: deviceToday(),
+      };
+      await streamChat(request, onEvent, controller.signal);
+      // The answer just stopped may hold the user's place a moment longer, until the server sees
+      // its stop (ADR 0057): the message is sent once more, after it.
+      if (
+        ending.failure === 'call_in_progress' &&
+        !ending.said &&
+        Date.now() - stoppedAt.current < RETRY_WITHIN_MS
+      ) {
+        ending = beginning(threadId.current);
+        await pause(RETRY_AFTER_MS, controller.signal);
+        await streamChat(request, onEvent, controller.signal);
+      }
       ending = afterStream(ending, 'closed');
     } catch (error) {
       // Stopped by the user, or no answer came: what came stays.
@@ -135,7 +169,11 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
   const send = (text: string) => void run(text);
 
   /** Stops Bite's answer; what came of it stays. */
-  const stop = () => abort.current?.abort();
+  const stop = () => {
+    if (!abort.current) return;
+    stoppedAt.current = Date.now();
+    abort.current.abort();
+  };
 
   /** Asks an unanswered question again: it moves down, to be answered there. */
   const askAgain = (question: ChatMessage) => {

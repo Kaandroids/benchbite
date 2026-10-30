@@ -8,8 +8,9 @@ import { content, ending, handleChatRequest } from './handler.ts';
 type Row = Record<string, unknown>;
 
 /**
- * A database for the chat: tables with their rows, functions with what they return, and what is
- * inserted, which the service role writes. Every query resolves with all of a table's rows.
+ * A database for the chat: tables with their rows, functions with what they return, or a
+ * function giving it, and what is inserted and deleted, which the service role writes. Every
+ * query resolves with all of a table's rows.
  */
 function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[]> = {}) {
   const inserted: { table: string; rows: Row[] }[] = [];
@@ -38,18 +39,28 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         inserted.push({ table, rows: list });
         return query(table, list);
       },
-      delete: () => ({
-        eq: (_column: string, id: unknown) => {
-          deleted.push(`${table} ${id}`);
-          return Promise.resolve({ error: null });
-        },
-      }),
+      delete: () => {
+        const values: unknown[] = [];
+        const filter = {
+          eq: (_column: string, value: unknown) => {
+            values.push(value);
+            return filter;
+          },
+          then: (resolve: (value: unknown) => void) => {
+            deleted.push([table, ...values].join(' '));
+            resolve({ error: null });
+          },
+        };
+        return filter;
+      },
     }),
-    rpc: (name: string) =>
-      Promise.resolve({
-        data: name in rpc ? rpc[name] : name === 'ai_access' ? { allowed: true } : [],
+    rpc: (name: string) => {
+      const value = name in rpc ? rpc[name] : name === 'ai_access' ? { allowed: true } : [];
+      return Promise.resolve({
+        data: typeof value === 'function' ? value() : value,
         error: null,
-      }),
+      });
+    },
   } as unknown as ChatContext['supabase'];
   return { client, inserted, deleted };
 }
@@ -476,23 +487,124 @@ Deno.test('drops a new thread, and says so, when the model could not be asked', 
   assertEquals(deleted, ['coach_threads 100']);
 });
 
-Deno.test('keeps nothing when the answer is stopped before the model is asked', async () => {
+Deno.test('keeps nothing when the answer is stopped before anything began', async () => {
   const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
   const { ctx, inserted, deleted } = context(model);
 
   const response = await handleChatRequest(ask(MESSAGE), ctx);
   await response.body!.cancel();
-  // The function goes on after the stop until it has dropped the new thread.
-  for (let tick = 0; tick < 100 && !deleted.length; tick++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
+  for (let tick = 0; tick < 20; tick++) await new Promise((resolve) => setTimeout(resolve, 0));
 
-  assertEquals(model.requests, []);
-  assertEquals(
-    inserted.map(({ table }) => table),
-    ['coach_threads'],
+  // Not even a thread: the stop is seen before one would be made.
+  assertEquals([model.requests, inserted, deleted], [[], [], []]);
+});
+
+const REQUEST = '7b0f4d0e-2f6c-4c1a-9d43-5d0a8f1c2e11';
+
+Deno.test('stops when the app says so, though its request was not closed', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const { ctx, inserted, deleted } = context(
+    model,
+    {},
+    {
+      coach_stops: [{ request_id: REQUEST }],
+    },
   );
-  assertEquals(deleted, ['coach_threads 100']);
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, requestId: REQUEST }), ctx),
+  );
+
+  assertEquals([answer, model.requests, inserted], [[], [], []]);
+  // Its stop goes once the answer ended, and only the user's own.
+  assertEquals(deleted, [`coach_stops ${REQUEST} user-1`]);
+});
+
+/** A model whose answer the app stops once `when` holds for one of its events. */
+function stoppedWhen(model: FakeModel, stops: Row[], when: (event: StreamEvent) => boolean) {
+  const stream = model.stream.bind(model);
+  model.stream = async function* (request) {
+    for await (const event of stream(request)) {
+      yield event;
+      if (when(event)) stops.push({ request_id: REQUEST });
+    }
+  };
+}
+
+Deno.test('keeps what was said when the app stops the answer as it comes', async () => {
+  const stops: Row[] = [];
+  const model = new FakeModel([
+    { type: 'text', text: '[[happy]] Rest ' },
+    { type: 'text', text: 'is key.' },
+  ]);
+  const { ctx, inserted } = context(model, {}, { coach_stops: stops });
+  // The app stops once the first words came, and the next look sees it.
+  stoppedWhen(model, stops, (event) => event.type === 'text');
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, requestId: REQUEST }), { ...ctx, stopCheckMs: 0 }),
+  );
+
+  assertEquals(answer.at(-1), {
+    event: 'done',
+    threadId: 100,
+    messageId: 102,
+    interrupted: 'stopped',
+  });
+  assertEquals((inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text, 'Rest');
+});
+
+Deno.test('keeps an answer whole when its stop comes with its end', async () => {
+  const stops: Row[] = [];
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Rest is key.' }]);
+  const { ctx, inserted } = context(model, {}, { coach_stops: stops });
+  stoppedWhen(model, stops, (event) => event.type === 'text');
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, requestId: REQUEST }), { ...ctx, stopCheckMs: 0 }),
+  );
+
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
+  // What the round used is kept with it.
+  assertEquals(inserted[1].rows[1].output_tokens, FAKE_USAGE.outputTokens);
+});
+
+Deno.test('makes no more lookups once the app stops the answer', async () => {
+  const stops: Row[] = [];
+  const calls = ['oats', 'rice', 'eggs'].map((query, i) => ({
+    type: 'toolCall' as const,
+    id: `c${i}`,
+    name: 'search_foods',
+    args: { query },
+  }));
+  const model = new FakeModel(calls);
+  let searched = 0;
+  // The app stops while the first lookup runs.
+  const search = () => {
+    searched++;
+    stops.push({ request_id: REQUEST });
+    return [];
+  };
+  const { ctx, inserted } = context(model, { search_foods: search }, { coach_stops: stops });
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, requestId: REQUEST }), ctx),
+  );
+
+  assertEquals([searched, model.requests.length], [1, 1]);
+  assertEquals(answer.filter((e) => e.event === 'tool_start').length, 1);
+  // Nothing was said, so only the question is kept, without lookups left half done.
+  assertEquals(
+    inserted.map((i) => i.table),
+    ['coach_threads', 'coach_messages'],
+  );
+  assertEquals(inserted[1].rows.length, 1);
+});
+
+Deno.test('takes only a request id that is one', async () => {
+  const { ctx } = context(new FakeModel());
+  const response = await handleChatRequest(ask({ ...MESSAGE, requestId: 'not-an-id' }), ctx);
+  assertEquals(response.status, 400);
 });
 
 Deno.test('answers more lookups than a round may make with an error', async () => {
