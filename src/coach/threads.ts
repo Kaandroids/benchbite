@@ -1,7 +1,14 @@
 // Bite's chat history (#295, ADR 0055): the user's threads, a page at a time, the messages of one,
 // and renaming and deleting a thread. Threads and messages are written only by the chat function
 // (ADR 0050); the user reads, renames and deletes them under row level security.
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import type { Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
@@ -46,6 +53,8 @@ export function useThreads(search: string) {
       return data;
     },
     initialPageParam: undefined as Cursor | undefined,
+    // The last list stays while a new search loads, so the screen does not empty as one types.
+    placeholderData: keepPreviousData,
     getNextPageParam: (page): Cursor | undefined => {
       const last = page.at(-1);
       return page.length === PAGE_SIZE && last
@@ -63,7 +72,11 @@ export function useThreads(search: string) {
   });
 }
 
-/** The text of a stored message: its text parts, in order, one after the other. */
+/**
+ * The text of a stored message: its text parts, in order, one after the other. The chat function
+ * (toMessage() in supabase/functions/coach-chat/handler.ts) and the history (coach_message_text()
+ * in the chat_history migration) read the same parts.
+ */
 export function messageText(content: Json): string {
   const parts = Array.isArray(content) ? content : [];
   return parts
@@ -88,12 +101,14 @@ export function useThreadMessages(threadId: number | undefined) {
   return useQuery({
     queryKey: [...THREADS_KEY, 'messages', threadId],
     enabled: threadId !== undefined,
+    // Always read again when a chat opens: an answer may have been saved after it closed.
+    staleTime: 0,
     queryFn: async () => {
       const [thread, messages] = await Promise.all([
         supabase.from('coach_threads').select('title').eq('id', threadId!).maybeSingle(),
         supabase
           .from('coach_messages')
-          .select('id, role, content, expression, created_at')
+          .select('id, role, content, expression')
           .eq('thread_id', threadId!)
           .order('id'),
       ]);
@@ -110,12 +125,11 @@ export function useThreadMessages(threadId: number | undefined) {
       const data = messages.data;
       return {
         title: thread.data.title,
-        messages: data.map((row, index): ChatMessage & { createdAt: Date } => ({
+        messages: data.map((row, index): ChatMessage => ({
           id: `stored-${row.id}`,
           role: row.role,
           text: messageText(row.content),
           expression: row.expression ?? undefined,
-          createdAt: new Date(row.created_at),
           ...(row.role === 'user' && data[index + 1]?.role !== 'bite' && { unanswered: true }),
         })),
       };
@@ -123,15 +137,19 @@ export function useThreadMessages(threadId: number | undefined) {
   });
 }
 
+/** A name as it is kept: without spaces around it, within its length; null when empty. */
+export function threadTitle(text: string): string | null {
+  return text.trim().slice(0, MAX_THREAD_TITLE_LENGTH) || null;
+}
+
 /** Renames a thread; an empty name clears it. */
 export function useRenameThread() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, title }: { id: number; title: string }) => {
-      const name = title.trim().slice(0, MAX_THREAD_TITLE_LENGTH);
       const { error } = await supabase
         .from('coach_threads')
-        .update({ title: name || null })
+        .update({ title: threadTitle(title) })
         .eq('id', id);
       if (error) {
         throw error;
@@ -141,10 +159,18 @@ export function useRenameThread() {
   });
 }
 
-/** Deletes a thread with its messages (ADR 0050). */
+/** Deletes a thread with its messages (ADR 0050); it leaves the lists at once. */
 export function useDeleteThread() {
   const queryClient = useQueryClient();
   return useMutation({
+    onMutate: async (id: number) => {
+      await queryClient.cancelQueries({ queryKey: [...THREADS_KEY, 'list'] });
+      queryClient.setQueriesData<InfiniteData<{ id: number }[]>>(
+        { queryKey: [...THREADS_KEY, 'list'] },
+        (data) =>
+          data && { ...data, pages: data.pages.map((page) => page.filter((row) => row.id !== id)) },
+      );
+    },
     mutationFn: async (id: number) => {
       const { error } = await supabase.from('coach_threads').delete().eq('id', id);
       if (error) {
