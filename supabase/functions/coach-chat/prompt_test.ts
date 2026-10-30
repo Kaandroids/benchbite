@@ -1,17 +1,31 @@
 import { assertEquals } from '@std/assert';
 
-import { readExpression, snapshotText } from './prompt.ts';
+import { FaceReader, snapshotText } from './prompt.ts';
 
-Deno.test('reads the expression an answer starts with, once it can tell', () => {
-  assertEquals(readExpression(''), undefined);
-  assertEquals(readExpression('[[sur'), undefined);
-  assertEquals(readExpression('[[sad]] Oh no.'), { expression: 'sad', rest: 'Oh no.' });
-  assertEquals(readExpression(' [[angry]]Leg day!'), { expression: 'angry', rest: 'Leg day!' });
-  assertEquals(readExpression('[[sleepy]] Hm.'), { expression: 'neutral', rest: 'Hm.' });
-  assertEquals(readExpression('Hello'), { expression: 'neutral', rest: 'Hello' });
+const read = (...chunks: string[]) => {
+  const face = new FaceReader();
+  const out = chunks.map((chunk) => face.push(chunk));
+  out.push(face.end());
+  return {
+    expression: out.find((o) => o.expression)?.expression,
+    text: out.map((o) => o.text).join(''),
+  };
+};
+
+Deno.test('reads the face an answer starts with, across chunks', () => {
+  assertEquals(read('[[sur', 'prised]] Wow', '!'), { expression: 'surprised', text: 'Wow!' });
+  assertEquals(read(' [[angry]]Leg day!'), { expression: 'angry', text: 'Leg day!' });
+  assertEquals(read('[[sleepy]] Hm.'), { expression: 'neutral', text: 'Hm.' });
 });
 
-Deno.test("writes the snapshot in the user's units and language", () => {
+Deno.test('takes an answer without a face as neutral, holding nothing back', () => {
+  assertEquals(read('Hello', ' there'), { expression: 'neutral', text: 'Hello there' });
+  assertEquals(read('[1] first'), { expression: 'neutral', text: '[1] first' });
+  assertEquals(read('[[hap'), { expression: 'neutral', text: '[[hap' });
+  assertEquals(read(''), { expression: undefined, text: '' });
+});
+
+Deno.test("writes the snapshot as data, in the user's units and language", () => {
   const text = snapshotText(
     {
       date: '2026-10-30',
@@ -27,19 +41,21 @@ Deno.test("writes the snapshot in the user's units and language", () => {
       },
       weightKg: 82.4,
       goal: 'lose fat to 78 kg',
-      workouts: 'Pull (not done yet)',
+      workouts: 'Pull planned, 0 done',
     },
     'de',
   );
 
   assertEquals(text.split('\n'), [
-    '# Snapshot (2026-10-30, Friday)',
+    '<snapshot>',
+    'Date: 2026-10-30, Friday',
     'Reply in: German',
     'User: Sam · 28 years · male · 182 cm · 82.4 kg',
     'Units: pounds',
     'Calorie floor: 1500 kcal a day',
     'Pregnant or breastfeeding: no',
     'Goal: lose fat to 78 kg',
-    "Today's workouts: Pull (not done yet)",
+    "Today's workouts: Pull planned, 0 done",
+    '</snapshot>',
   ]);
 });

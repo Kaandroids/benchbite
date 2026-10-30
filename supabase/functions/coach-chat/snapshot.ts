@@ -1,11 +1,7 @@
 // The user's state as Bite sees it before each answer (#292): who they are, their goal, today's
 // targets and food, their plan and streak. Read with the user's token, so row level security
 // decides what Bite may see; what cannot be read is left out rather than failing the answer.
-import type { SupabaseContext } from '@supabase/server';
-
-import type { Database } from '../_shared/database.types.ts';
-
-export type Client = SupabaseContext<Database>['supabase'];
+import { type Client, logError } from '../_shared/supabase.ts';
 
 export type Macros = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 
@@ -36,9 +32,6 @@ export type Snapshot = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/** The least the nutrition targets give, by sex (calculate_nutrition_targets()). */
-const CALORIE_FLOORS: Record<string, number> = { male: 1500, female: 1200 };
-
 /** Reads the user's snapshot on `today`, a date of their device. */
 export async function loadSnapshot(supabase: Client, today: string): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
@@ -63,7 +56,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
   ]);
   const results = { profile, goal, weight, nutrition, planned, trained, streak };
   for (const [name, result] of Object.entries(results)) {
-    if (result.error) console.error(`Could not read the ${name} for the snapshot`, result.error);
+    if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
 
   const snapshot: Snapshot = {
@@ -71,7 +64,10 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
     weekday: WEEKDAYS[(new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7],
   };
   const p = profile.data;
-  if (p) {
+  // The floor the targets keep to, which Bite never goes below.
+  const floor = p && (await supabase.rpc('calorie_floor', { sex: p.sex }));
+  if (floor?.error) logError('Could not read the calorie floor for the snapshot', floor.error);
+  if (p && floor?.data) {
     snapshot.profile = {
       name: p.display_name ?? undefined,
       age: Number(today.slice(0, 4)) - p.birth_year,
@@ -79,7 +75,7 @@ export async function loadSnapshot(supabase: Client, today: string): Promise<Sna
       heightCm: p.height_cm,
       weightUnit: p.weight_unit,
       pregnantOrBreastfeeding: p.pregnant_or_breastfeeding,
-      calorieFloor: CALORIE_FLOORS[p.sex] ?? 1350,
+      calorieFloor: floor.data,
     };
     snapshot.training = [
       p.experience,
