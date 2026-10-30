@@ -7,8 +7,10 @@ import {
   type EstimateReason,
   type EstimateResponse,
   type MealPhoto,
+  type Per100,
   type PreviousItem,
 } from '@shared/meal/estimate';
+import { File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import {
   launchCameraAsync,
@@ -18,10 +20,10 @@ import {
 
 import { REFUSALS, type Refusal } from '@/ai/access';
 import { oneOf } from '@/lib/one-of';
-import { functionUrl, publishableKey, supabase } from '@/lib/supabase';
+import { functionHeaders, functionUrl } from '@/lib/supabase';
 
 import { amountOf } from './foods';
-import type { Totals } from './meals';
+import { totalOf, type Totals } from './meals';
 
 export type { EstimateItem, EstimateResponse };
 
@@ -57,7 +59,10 @@ export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
   return result.canceled ? [] : result.assets.slice(0, MAX_MEAL_PHOTOS).map(({ uri }) => uri);
 }
 
-/** A local photo as a JPEG at most `PHOTO_SIDE` on its longest side, as base64. */
+/**
+ * A local photo as a JPEG at most `PHOTO_SIDE` on its longest side, as base64. The scaled copy is
+ * deleted once it is read.
+ */
 async function preparePhoto(uri: string): Promise<MealPhoto> {
   // Decoded at the smaller size already, which keeps a large camera photo out of memory.
   const image = await ImageManipulator.manipulate(uri, {
@@ -69,13 +74,40 @@ async function preparePhoto(uri: string): Promise<MealPhoto> {
     compress: PHOTO_QUALITY,
     base64: true,
   });
-  return { mimeType: 'image/jpeg', data: saved.base64 ?? '' };
+  discardPhotos([saved.uri]);
+  if (!saved.base64) {
+    throw new Error('The scaled photo came without its data');
+  }
+  return { mimeType: 'image/jpeg', data: saved.base64 };
 }
 
-/** Why there is no estimate, as estimate-meal answered, or `unavailable` when it did not. */
+/**
+ * Deletes photos of a meal the app keeps in its cache folder: the camera's, the copies the picker
+ * makes and the scaled ones. A photo anywhere else, or one already gone, is left alone.
+ */
+export function discardPhotos(uris: string[]) {
+  for (const uri of uris) {
+    if (!uri.startsWith(Paths.cache.uri)) continue;
+    try {
+      const file = new File(uri);
+      if (file.exists) file.delete();
+    } catch (error) {
+      console.warn('Could not delete a meal photo', error);
+    }
+  }
+}
+
+/**
+ * Why there is no estimate, as estimate-meal answered, or `unavailable` when it did not; with the
+ * HTTP status and what else the function said, for the log.
+ */
 export class EstimateFailure extends Error {
-  constructor(readonly reason: EstimateReason) {
-    super(`estimate-meal refused: ${reason}`);
+  constructor(
+    readonly reason: EstimateReason,
+    readonly status?: number,
+    readonly detail?: unknown,
+  ) {
+    super(`estimate-meal failed: ${reason}${status ? ` (${status})` : ''}`);
     this.name = 'EstimateFailure';
   }
 
@@ -85,19 +117,22 @@ export class EstimateFailure extends Error {
   }
 }
 
+/** What the user says is off with an estimate, and its items as they stand. */
+export type Correction = { note: string; previous: PreviousItem[] };
+
 export type EstimateInput = {
   /** The local URIs of the photos. */
   photos: string[];
   language: string;
   meal: EstimateMeal;
-  /** For an estimate again: what the user says is off, and the items as they stand. */
-  correction?: { note: string; previous: PreviousItem[] };
+  /** For an estimate again. */
+  correction?: Correction;
 };
 
 /**
  * Estimates a meal from its photos, with the user's token, as Bite's chat is called. Fails with
- * an `EstimateFailure` for a refusal or any other failure, and with an `AbortError` when `signal`
- * stops it.
+ * an `EstimateFailure` for an answer that is no estimate, with the error of preparing the photos
+ * or of the request otherwise, and with an `AbortError` when `signal` stops it.
  */
 export async function estimateMeal(
   { photos, language, meal, correction }: EstimateInput,
@@ -105,15 +140,9 @@ export async function estimateMeal(
 ): Promise<EstimateResponse> {
   const prepared = await Promise.all(photos.map(preparePhoto));
   signal?.throwIfAborted();
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
   const response = await fetch(functionUrl('estimate-meal'), {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      apikey: publishableKey,
-      ...(token && { authorization: `Bearer ${token}` }),
-    },
+    headers: await functionHeaders(),
     body: JSON.stringify({ photos: prepared, language, meal, ...correction }),
     signal,
   });
@@ -122,28 +151,26 @@ export async function estimateMeal(
     const reason = (body as { error?: unknown } | null)?.error;
     throw new EstimateFailure(
       typeof reason === 'string' ? (reason as EstimateReason) : 'unavailable',
+      response.status,
+      body,
     );
   }
   return body as EstimateResponse;
 }
 
+/** Values per 100 g as an estimate gives them, as the app names them. */
+export function per100Totals({ kcal, proteinG, carbsG, fatG }: Per100): Totals {
+  return { calories: kcal, proteinG, carbsG, fatG };
+}
+
 /** What an item adds at its grams. */
 export function itemTotals(item: Pick<EstimateItem, 'per100' | 'grams'>): Totals {
-  const { kcal, proteinG, carbsG, fatG } = item.per100;
-  return amountOf({ calories: kcal, proteinG, carbsG, fatG }, item.grams);
+  return amountOf(per100Totals(item.per100), item.grams);
 }
 
 /** What the items add together. */
 export function estimateTotals(items: Pick<EstimateItem, 'per100' | 'grams'>[]): Totals {
-  return items.map(itemTotals).reduce(
-    (sum, item) => ({
-      calories: sum.calories + item.calories,
-      proteinG: sum.proteinG + item.proteinG,
-      carbsG: sum.carbsG + item.carbsG,
-      fatG: sum.fatG + item.fatG,
-    }),
-    { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
-  );
+  return totalOf(items.map(itemTotals));
 }
 
 export type Confidence = 'high' | 'medium' | 'low';
@@ -163,18 +190,3 @@ export function confidenceOf(
       : items.reduce((sum, item, index) => sum + item.confidence * weights[index]!, 0) / total;
   return value >= 0.75 ? 'high' : value >= 0.5 ? 'medium' : 'low';
 }
-
-/** The photos' local URIs as a route parameter, and back; a parameter that is not one gives none. */
-export const photosParam = {
-  format: (photos: string[]) => JSON.stringify(photos),
-  parse: (param: string | undefined): string[] => {
-    try {
-      const photos: unknown = JSON.parse(param ?? '[]');
-      return Array.isArray(photos)
-        ? photos.filter((uri): uri is string => typeof uri === 'string').slice(0, MAX_MEAL_PHOTOS)
-        : [];
-    } catch {
-      return [];
-    }
-  },
-};

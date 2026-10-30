@@ -1,8 +1,10 @@
+import { File } from 'expo-file-system';
 import { ImageManipulator } from 'expo-image-manipulator';
 import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 
 import {
   confidenceOf,
+  discardPhotos,
   EstimateFailure,
   estimateMeal,
   estimateTotals,
@@ -11,14 +13,16 @@ import {
 } from './meal-estimate';
 
 jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: { access_token: 'token' } } }),
-    },
-  },
   functionUrl: (name: string) => `https://example.test/functions/v1/${name}`,
-  publishableKey: 'key',
+  functionHeaders: () => Promise.resolve({ apikey: 'key', authorization: 'Bearer token' }),
 }));
+jest.mock('expo-file-system', () => {
+  const deleteFile = jest.fn();
+  return {
+    Paths: { cache: { uri: 'file:///cache/' } },
+    File: jest.fn(() => ({ exists: true, delete: deleteFile })),
+  };
+});
 jest.mock('expo-image-picker', () => ({
   launchCameraAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
@@ -60,7 +64,7 @@ function respond(status: number, body: unknown) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  saveAsync.mockResolvedValue({ base64: 'AAAA' });
+  saveAsync.mockResolvedValue({ uri: 'file:///cache/scaled.jpg', base64: 'AAAA' });
   jest
     .mocked(ImageManipulator.manipulate)
     .mockReturnValue({ renderAsync: () => Promise.resolve({ saveAsync }) } as never);
@@ -115,6 +119,21 @@ describe('estimateMeal', () => {
     });
   });
 
+  it('deletes the scaled copy once it is read', async () => {
+    respond(200, { isFood: true, items: [RICE] });
+    await estimateMeal({ photos: ['file:///cache/a.jpg'], language: 'en', meal: 'lunch' });
+    expect(File).toHaveBeenCalledWith('file:///cache/scaled.jpg');
+  });
+
+  it('fails before the request when a photo cannot be prepared', async () => {
+    respond(200, { isFood: true, items: [RICE] });
+    saveAsync.mockResolvedValue({ uri: 'file:///cache/scaled.jpg' });
+    await expect(
+      estimateMeal({ photos: ['file:///cache/a.jpg'], language: 'en', meal: 'lunch' }),
+    ).rejects.toThrow('The scaled photo came without its data');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   it('fails with the reason the function gives', async () => {
     respond(429, { error: 'limit_reached' });
     const failure = await estimateMeal({ photos: ['a'], language: 'en', meal: 'lunch' }).catch(
@@ -131,6 +150,8 @@ describe('estimateMeal', () => {
     )) as EstimateFailure;
     expect(failure.reason).toBe('unavailable');
     expect(failure.refusal).toBeUndefined();
+    // What the log needs to tell why.
+    expect([failure.status, failure.detail]).toEqual([502, 'Bad gateway']);
   });
 });
 
@@ -148,5 +169,13 @@ describe('confidenceOf', () => {
     expect(confidenceOf([RICE, CHUTNEY])).toBe('high');
     expect(confidenceOf([{ ...RICE, confidence: 0.6 }])).toBe('medium');
     expect(confidenceOf([CHUTNEY])).toBe('low');
+  });
+});
+
+describe('discardPhotos', () => {
+  it("deletes photos in the app's cache folder only", () => {
+    discardPhotos(['file:///cache/ImagePicker/a.jpg', 'file:///photos/b.jpg']);
+    expect(File).toHaveBeenCalledTimes(1);
+    expect(File).toHaveBeenCalledWith('file:///cache/ImagePicker/a.jpg');
   });
 });
