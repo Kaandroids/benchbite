@@ -84,36 +84,38 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
     );
   }
 
-  // What can no longer be applied says why in place of the buttons; a request that failed may be
-  // tried again.
-  const closed = state?.expired ? 'outOfDate' : refused === 'failed' ? undefined : refused;
+  // A refusal says why on the card. What can no longer be applied may still be put away, as kept,
+  // unless it is out of date; a request that failed may be tried again.
+  const line = state?.expired ? 'outOfDate' : refused;
+  const canApply = line === undefined || line === 'failed';
+  const canKeep = line !== 'outOfDate';
   return (
     <Card>
       {card.kind === 'workout' ? <WorkoutChange card={card} /> : <TargetsChange card={card} />}
-      {closed ? (
-        <Refusal failure={closed} />
-      ) : (
-        <>
-          {refused ? <Refusal failure={refused} /> : null}
-          <View style={styles.buttons}>
+      {line ? <Refusal failure={line} /> : null}
+      {canKeep ? (
+        <View style={styles.buttons}>
+          {canApply ? (
             <Button
               label={t('bite.proposal.apply')}
               size="small"
               style={styles.flex}
-              disabled={waiting}
+              // One decision at a time: Keep as is, sent, leaves nothing to apply.
+              disabled={waiting || (decide.isPending && decide.variables !== 'apply')}
               loading={decide.isPending && decide.variables === 'apply'}
               onPress={() => choose('apply')}
             />
-            <TextLink
-              label={t('bite.proposal.keep')}
-              tone="muted"
-              size="regular"
-              disabled={waiting || decide.isPending}
-              onPress={() => choose('keep')}
-            />
-          </View>
-        </>
-      )}
+          ) : null}
+          <TextLink
+            label={t('bite.proposal.keep')}
+            tone="muted"
+            size="regular"
+            align={canApply ? 'center' : 'start'}
+            disabled={waiting || decide.isPending}
+            onPress={() => choose('keep')}
+          />
+        </View>
+      ) : null}
     </Card>
   );
 }

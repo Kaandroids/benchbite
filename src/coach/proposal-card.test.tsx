@@ -1,7 +1,7 @@
 import type { ProposalCard as Card } from '@shared/coach/chat';
 
 import { supabase } from '@/lib/supabase';
-import { act, fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ProposalCard } from './proposal-card';
 import { type ProposalState, useProposalStates } from './proposals';
@@ -138,6 +138,40 @@ it.each([
 
   expect(await screen.findByText(line)).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
+});
+
+it('still lets a change that changed since be kept as it is', async () => {
+  decides(null, 'BB035');
+  await render(<ProposalCard card={TARGETS} state={pending} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Apply' }));
+  await screen.findByText('This changed since — ask Bite again');
+
+  decides('kept');
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep as is' }));
+
+  expect(supabase.rpc).toHaveBeenLastCalledWith(
+    'decide_coach_proposal',
+    expect.objectContaining({ proposal_id: 8, decision: 'keep' }),
+  );
+  expect(await screen.findByText('Kept as it is')).toBeOnTheScreen();
+});
+
+it('offers nothing for a change that is out of date', async () => {
+  decides(null, 'BB036');
+  await render(<ProposalCard card={TARGETS} state={pending} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Apply' }));
+  await screen.findByText('This is out of date');
+
+  expect(screen.queryByRole('button')).not.toBeOnTheScreen();
+});
+
+it('does not apply while Keep as is is sent', async () => {
+  jest.mocked(supabase.rpc).mockReturnValue(new Promise(() => {}) as never);
+  await render(<ProposalCard card={TARGETS} state={pending} />);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep as is' }));
+
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled());
 });
 
 it('offers Apply again after a request that failed', async () => {
