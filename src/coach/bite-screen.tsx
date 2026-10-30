@@ -14,6 +14,7 @@ import { useTheme } from '@/theme';
 import { ChatComposer } from './chat-composer';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
+import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { useThreadMessages } from './threads';
 import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
@@ -31,11 +32,18 @@ export function BiteScreen() {
   const { fromChats } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
+  const savedProposals = proposalIds(saved.data?.messages ?? []);
+  // Its proposals show where they stand from the start, as one decided folds into a line.
+  const states = useProposalStates(savedProposals);
   // A saved chat opens on its messages as they are now, never on ones kept from before.
-  if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
+  if (
+    opened.waiting ||
+    (threadId !== undefined && !saved.isFetchedAfterMount) ||
+    (savedProposals.length > 0 && states.isPending)
+  ) {
     return (
       <Screen onBack={() => router.back()} closes={!fromChats}>
-        <LoadState queries={[saved]} />
+        <LoadState queries={savedProposals.length > 0 ? [saved, states] : [saved]} />
       </Screen>
     );
   }

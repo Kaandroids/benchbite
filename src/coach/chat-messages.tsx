@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect } from 'react';
+import { Fragment, memo, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -19,6 +19,8 @@ import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { ProposalCard } from './proposal-card';
+import { type ProposalState, proposalIds, useProposalStates } from './proposals';
 import type { ChatMessage, ChatStatus } from './use-chat';
 import { useMomentFormat } from './use-moment-format';
 
@@ -40,13 +42,17 @@ type ChatMessagesProps = {
 };
 
 /**
- * The conversation: the user's messages in bubbles, Bite's as text after its face. Bite's last
- * message thinks while it waits, with what it is looking up, and talks while its text comes
- * (boards 2 and 3).
+ * The conversation: the user's messages in bubbles, Bite's as text after its face, with the
+ * changes it proposed under it. Bite's last message thinks while it waits, with what it is looking
+ * up, and talks while its text comes (boards 2 and 3).
  */
 export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessagesProps) {
   const { spacing } = useTheme();
   const moment = useMomentFormat();
+  const ids = useMemo(() => proposalIds(messages), [messages]);
+  const proposals = useProposalStates(ids);
+  // Bite thinks on under a change it proposed before a word.
+  const proposing = !!messages.at(-1)?.proposals?.length;
   // A conversation over more than one day shows when each day of it began (board 18).
   const first = messages[0]?.createdAt;
   const days =
@@ -72,30 +78,48 @@ export function ChatMessages({ messages, status, tool, onAskAgain }: ChatMessage
               status={status}
               tool={tool}
               onAskAgain={onAskAgain}
+              states={proposals.data}
+              loadingStates={proposals.isFetching}
             />
           </Fragment>
         );
       })}
-      {/* A lookup after Bite started writing shows under what it wrote. */}
-      {status === 'answering' && tool ? <ToolLine tool={tool} indent /> : null}
+      {/* A lookup after Bite started writing, or proposed, shows under what it wrote. */}
+      {(status === 'answering' && tool) || (status === 'thinking' && proposing) ? (
+        <ToolLine tool={tool} indent />
+      ) : null}
     </View>
   );
 }
 
-type MessageRowProps = Pick<ChatMessagesProps, 'status' | 'tool' | 'onAskAgain'> & {
-  message: ChatMessage;
-  last: boolean;
+type ProposalStates = {
+  /** Where the proposals stand, by id, once loaded. */
+  states?: Map<number, ProposalState>;
+  /** Whether where they stand is loading. */
+  loadingStates: boolean;
 };
 
+type MessageRowProps = Pick<ChatMessagesProps, 'status' | 'tool' | 'onAskAgain'> &
+  ProposalStates & {
+    message: ChatMessage;
+    last: boolean;
+  };
+
 /** A message: the user's, Bite's, or Bite's last one thinking while it waits. */
-function MessageRow({ message, last, status, tool, onAskAgain }: MessageRowProps) {
+function MessageRow({ message, last, status, tool, onAskAgain, ...states }: MessageRowProps) {
   if (message.role === 'user') {
     return <UserMessage message={message} onAskAgain={onAskAgain} />;
   }
-  if (last && status === 'thinking' && !message.text) {
+  if (last && status === 'thinking' && !message.text && !message.proposals?.length) {
     return <Thinking tool={tool} />;
   }
-  return <BiteMessage message={message} talking={last && status !== 'idle'} />;
+  return (
+    <BiteMessage
+      message={message}
+      talking={last && status !== 'idle'}
+      {...(message.proposals?.length ? states : { loadingStates: false })}
+    />
+  );
 }
 
 // Each message renders again only when it changes, as only the last one does while Bite writes.
@@ -152,7 +176,9 @@ const UserMessage = memo(function UserMessage({
 const BiteMessage = memo(function BiteMessage({
   message,
   talking,
-}: {
+  states,
+  loadingStates,
+}: ProposalStates & {
   message: ChatMessage;
   talking: boolean;
 }) {
@@ -167,18 +193,35 @@ const BiteMessage = memo(function BiteMessage({
         ) : (
           <BiteAvatar size={AVATAR} expression={expression} />
         )}
-        <View
-          style={[
-            styles.biteBubble,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              paddingHorizontal: spacing.md + 2,
-              paddingVertical: spacing.sm + 2,
-            },
-          ]}
-        >
-          <Text>{message.text}</Text>
+        <View style={[styles.biteColumn, { gap: spacing.sm + 2 }]}>
+          {/* A proposal may come without a word. */}
+          {message.text ? (
+            <View
+              style={[
+                styles.biteBubble,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  paddingHorizontal: spacing.md + 2,
+                  paddingVertical: spacing.sm + 2,
+                },
+              ]}
+            >
+              <Text>{message.text}</Text>
+            </View>
+          ) : null}
+          {message.proposals?.map((card) => {
+            const state = states?.get(card.id);
+            return (
+              <View key={card.id} style={styles.proposal}>
+                <ProposalCard
+                  card={card}
+                  state={state}
+                  waiting={state === undefined && loadingStates}
+                />
+              </View>
+            );
+          })}
         </View>
       </View>
       {/* An answer that stopped short says so, under it. */}
@@ -275,6 +318,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
+  /** Bite's answer and the changes it proposed, beside its face. */
+  biteColumn: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
   /** Bite's answer on a card, its corner by Bite's face sharper, as the user's is by its edge. */
   biteBubble: {
     flexShrink: 1,
@@ -283,6 +331,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii.xl,
     borderBottomLeftRadius: radii.xl,
     borderBottomRightRadius: radii.xl,
+  },
+  proposal: {
+    alignSelf: 'stretch',
   },
   row: {
     flexDirection: 'row',
