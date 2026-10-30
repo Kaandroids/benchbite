@@ -105,8 +105,6 @@ it('adds an unnamed copy of the one in use and gives its id', async () => {
   await expect(act(() => result.current.mutateAsync())).resolves.toBe(9);
   expect(supabase.rpc).toHaveBeenCalledWith('add_workout_alternative', {
     workout_id: 7,
-    name: null,
-    exercises: null,
     today: '2026-10-30',
   });
 });

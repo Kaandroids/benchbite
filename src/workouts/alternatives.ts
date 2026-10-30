@@ -122,10 +122,8 @@ export function useAddAlternative(workoutId: number) {
     mutationFn: () =>
       call(
         supabase.rpc('add_workout_alternative', {
+          // No name or exercises: an unnamed copy of the one in use.
           workout_id: workoutId,
-          // No name, and a copy of the one in use. The generated types do not know the name may be null.
-          name: null as unknown as string,
-          exercises: null,
           today: deviceToday(),
         }),
       ),
