@@ -12,6 +12,7 @@ type Row = Record<string, unknown>;
  */
 function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[]> = {}) {
   const inserted: { table: string; rows: Row[] }[] = [];
+  const deleted: string[] = [];
   let nextId = 100;
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
@@ -36,6 +37,12 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         inserted.push({ table, rows: list });
         return query(table, list);
       },
+      delete: () => ({
+        eq: (_column: string, id: unknown) => {
+          deleted.push(`${table} ${id}`);
+          return Promise.resolve({ error: null });
+        },
+      }),
     }),
     rpc: (name: string) =>
       Promise.resolve({
@@ -43,7 +50,7 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         error: null,
       }),
   } as unknown as ChatContext['supabase'];
-  return { client, inserted };
+  return { client, inserted, deleted };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
@@ -51,7 +58,7 @@ const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tok
 function context(model: FakeModel, rpc: Record<string, unknown> = {}, tables = {}) {
   const db = database({ start_ai_call: STARTED, record_ai_usage: 0.001, ...rpc }, tables);
   const ctx: ChatContext = { supabase: db.client, admin: db.client, userId: 'user-1', model };
-  return { ctx, inserted: db.inserted };
+  return { ctx, inserted: db.inserted, deleted: db.deleted };
 }
 
 const ask = (body: unknown) =>
@@ -86,6 +93,8 @@ Deno.test('answers a new message in a new thread, with its expression first', as
 
   assertEquals(response.headers.get('content-type'), 'text/event-stream');
   assertEquals(await events(response), [
+    // The thread first, so that the app keeps it however the answer ends.
+    { event: 'thread', threadId: 100 },
     { event: 'expression', expression: 'happy' },
     { event: 'text', text: 'Yes, ' },
     { event: 'text', text: '140 g!' },
@@ -152,7 +161,8 @@ Deno.test('looks things up with a tool, then answers', async () => {
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(answer.slice(0, 3), [
+  assertEquals(answer.slice(0, 4), [
+    { event: 'thread', threadId: 100 },
     { event: 'tool_start', name: 'get_records' },
     { event: 'tool_end', name: 'get_records' },
     { event: 'expression', expression: 'surprised' },
@@ -280,7 +290,13 @@ Deno.test('says why when an answer comes without text, and saves nothing', async
     event: 'error',
     reason: 'unavailable',
   });
-  assertEquals([blocked.inserted, faceOnly.inserted], [[], []]);
+  // A thread started for an answer that said nothing goes again.
+  assertEquals(blocked.inserted, []);
+  assertEquals(
+    faceOnly.inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(faceOnly.deleted, ['coach_threads 100']);
 });
 
 Deno.test('keeps what was said when the budget runs out after a lookup', async () => {

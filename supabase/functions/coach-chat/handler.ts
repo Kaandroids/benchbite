@@ -52,6 +52,8 @@ const MAX_CONTENT_BYTES = 50_000;
 
 /** What the app is told as the answer comes, each a server-sent event. */
 export type ChatEvent =
+  /** A new thread, first, as soon as Bite starts to answer, so the app keeps it however it ends. */
+  | { event: 'thread'; threadId: number }
   | { event: 'expression'; expression: Expression }
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
@@ -176,6 +178,21 @@ async function answer(
   );
   const turn = new Turn(send);
   let failure: string | undefined;
+  // A new thread is started once Bite answers, which a refused message never gets to.
+  let threadId = request.threadId;
+  let started = false;
+  const thread = async () => {
+    if (threadId) return;
+    const created = await context.admin
+      .from('coach_threads')
+      .insert({ user_id: context.userId })
+      .select('id')
+      .single();
+    if (created.error) throw created.error;
+    threadId = created.data.id;
+    started = true;
+    send({ event: 'thread', threadId });
+  };
 
   try {
     const snapshot = await loadSnapshot(context.supabase, request.today);
@@ -204,6 +221,7 @@ async function answer(
       turn.round();
       for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
         if (isStopped()) break;
+        if (event.type !== 'done') await thread();
         if (event.type === 'text') {
           turn.said(event.text);
           spoken.push(event);
@@ -244,7 +262,9 @@ async function answer(
     }
   }
 
-  if (!turn.text.trim()) {
+  if (!turn.text.trim() || !threadId) {
+    // A thread started for an answer that said nothing goes again.
+    if (started && threadId) await keepAlive(dropThread(context, threadId));
     return send({
       event: 'error',
       reason: failure ?? (turn.finish === 'blocked' ? 'blocked' : 'unavailable'),
@@ -252,9 +272,9 @@ async function answer(
   }
   // What came is kept, as when the app stops the answer, and said to have stopped short.
   const interrupted = failure !== undefined || isStopped() || turn.finish !== 'stop';
-  const saved = await keepAlive(save(context, request, turn));
-  if (!saved) return send({ event: 'error', reason: 'not_saved' });
-  send({ event: 'done', ...saved, ...(interrupted && { interrupted: true }) });
+  const messageId = await keepAlive(save(context, threadId, request, turn));
+  if (!messageId) return send({ event: 'error', reason: 'not_saved' });
+  send({ event: 'done', threadId, messageId, ...(interrupted && { interrupted: true }) });
 }
 
 async function lookUp(
@@ -268,22 +288,13 @@ async function lookUp(
   return result;
 }
 
-/** Saves the user's message and Bite's answer, in a new thread when there is none yet. */
+/** Saves the user's message and Bite's answer to the thread, and gives Bite's message's id. */
 async function save(
   context: ChatContext,
+  threadId: number,
   request: ChatRequest,
   turn: Turn,
-): Promise<{ threadId: number; messageId: number } | undefined> {
-  let threadId = request.threadId;
-  if (!threadId) {
-    const thread = await context.admin
-      .from('coach_threads')
-      .insert({ user_id: context.userId })
-      .select('id')
-      .single();
-    if (thread.error) return void logError('Could not start a thread', thread.error);
-    threadId = thread.data.id;
-  }
+): Promise<number | undefined> {
   const messages = await context.admin
     .from('coach_messages')
     .insert([
@@ -303,7 +314,12 @@ async function save(
     .select('id')
     .order('id');
   if (messages.error) return void logError('Could not save the messages', messages.error);
-  return { threadId, messageId: messages.data[messages.data.length - 1].id };
+  return messages.data[messages.data.length - 1].id;
+}
+
+async function dropThread(context: ChatContext, threadId: number) {
+  const dropped = await context.admin.from('coach_threads').delete().eq('id', threadId);
+  if (dropped.error) logError('Could not drop an empty thread', dropped.error);
 }
 
 /**
