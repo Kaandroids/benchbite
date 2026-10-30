@@ -660,6 +660,7 @@
     "more": "+{{count}} tane daha",
     "title": "Antrenmanlar",
     "dayToday": "{{day}}, bugün",
+    "todayLabel": "{{name}}, bugün",
     "anyDay": "Her gün",
     "activeCount_one": "Aktif · {{count}}",
     "activeCount_other": "Aktif · {{count}}",

@@ -45,7 +45,8 @@ export function WorkoutListItem({
     <Card style={[styles.card, { padding: spacing.lg }]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={name}
+        // The day chips sit inside this button, so it says itself when it is today's.
+        accessibilityLabel={isToday ? t('workout.todayLabel', { name }) : name}
         onPress={() =>
           router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
         }

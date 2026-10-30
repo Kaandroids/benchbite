@@ -660,6 +660,7 @@
     "more": "+{{count}} more",
     "title": "Workouts",
     "dayToday": "{{day}}, today",
+    "todayLabel": "{{name}}, today",
     "anyDay": "Any day",
     "activeCount_one": "Active · {{count}}",
     "activeCount_other": "Active · {{count}}",
