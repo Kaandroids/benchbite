@@ -117,7 +117,8 @@ function RootNavigator() {
             <Stack.Screen name="session/exercise/history" />
             <Stack.Screen name="settings" />
             {/* Bite's chat, opened from the middle of the tab bar. */}
-            <Stack.Screen name="bite" />
+            <Stack.Screen name="bite/index" />
+            <Stack.Screen name="bite/chats" />
             {/* Opened from beside the settings, in development only. */}
             <Stack.Screen name="dev/tools" />
           </Stack.Protected>

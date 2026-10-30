@@ -4,11 +4,20 @@ import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
+import { useThreadMessages } from './threads';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
+let mockParams: { thread?: string; fresh?: string } = {};
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => mockParams,
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: () => ({ data: 'Sam' }) }));
+jest.mock('./threads', () => ({
+  ...jest.requireActual('./threads'),
+  useThreadMessages: jest.fn(() => ({ data: undefined })),
+}));
 jest.mock('./chat-stream', () => ({
   ...jest.requireActual('./chat-stream'),
   streamChat: jest.fn(),
@@ -360,4 +369,60 @@ it('does not call an answer cut off that came whole but was not saved', async ()
 
   expect(screen.getByText("This answer couldn't be saved.")).toBeOnTheScreen();
   expect(screen.queryByText('Cut off')).toBeNull();
+});
+
+it('goes on in a saved chat, with its name and messages, and opens the chats', async () => {
+  const stream = liveStream();
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
+    data: {
+      title: 'Knee pain on squats',
+      messages: [
+        { id: 'stored-1', role: 'user', text: 'My knee hurts.' },
+        {
+          id: 'stored-2',
+          role: 'bite',
+          text: 'Try leg press today.',
+          expression: 'neutral',
+        },
+      ],
+    },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.getByText('Knee pain on squats')).toBeTruthy();
+  expect(screen.getByText('Try leg press today.')).toBeTruthy();
+
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And tomorrow?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  expect(stream.request()?.threadId).toBe(7);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Chats' }));
+  expect(router.push).toHaveBeenCalledWith('/bite/chats');
+  mockParams = {};
+});
+
+it('starts a new chat when the saved one is gone', async () => {
+  liveStream();
+  mockParams = { thread: '7' };
+  jest
+    .mocked(useThreadMessages)
+    .mockReturnValue({ isFetchedAfterMount: true, data: null } as never);
+  await render(<BiteScreen />);
+  expect(screen.getByRole('button', { name: 'How was my week?' })).toBeTruthy();
+  mockParams = {};
+});
+
+it('waits for a saved chat as it is now, not as it was kept', async () => {
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: false,
+    isPending: false,
+    isError: false,
+    isFetching: true,
+    data: { title: 'Old', messages: [{ id: 'stored-1', role: 'user', text: 'Kept from before' }] },
+  } as never);
+  await render(<BiteScreen />);
+  expect(screen.queryByText('Kept from before')).toBeNull();
+  mockParams = {};
 });

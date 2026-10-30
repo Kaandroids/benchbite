@@ -20,6 +20,7 @@ import SessionExerciseDetails from '@/app/session/exercise/[id]';
 import SessionExerciseHistory from '@/app/session/exercise/history';
 import DevTools from '@/app/dev/tools';
 import BiteRoute from '@/app/bite';
+import ChatsRoute from '@/app/bite/chats';
 import SettingsRoute from '@/app/settings';
 import LogInRoute from '@/app/account/login';
 import RootLayout from '@/app/_layout';
@@ -192,7 +193,8 @@ const APP_ROUTES = {
   '(app)/nutrition/index': NutritionTab,
   '(app)/progress': ProgressTab,
   settings: SettingsRoute,
-  bite: BiteRoute,
+  'bite/index': BiteRoute,
+  'bite/chats': ChatsRoute,
   'session/index': () => <Text>Workout in progress</Text>,
   'session/exercise/[id]': SessionExerciseDetails,
   'session/exercise/history': SessionExerciseHistory,
