@@ -224,6 +224,15 @@ and set `GEMINI_API_KEY` to a key
 from [Google AI Studio](https://aistudio.google.com/apikey). The tests never call the model, so
 they need no key.
 
+Scheduled jobs call Edge Functions with the project URL and secret key they read from Vault, as
+`purge-coach-media` removes the photos of deleted chats
+([ADR 0063](docs/adr/0063-purge-chat-photos-from-a-queue.md)). Store the local stack's in its
+Vault once, and again after `pnpm supabase db reset`:
+
+```bash
+pnpm vault:local
+```
+
 AI comes with a plan, so a user has no budget for it until they get one
 ([ADR 0051](docs/adr/0051-ai-usage-and-a-monthly-limit.md)). To give your local account one, run
 in Studio's SQL editor:
@@ -275,6 +284,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |
 | `pnpm icons`            | Draw the app icons and the splash image from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
+| `pnpm vault:local`      | Store the local URL and secret key for scheduled jobs |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](CONTRIBUTING.md) lists what it
@@ -297,6 +307,19 @@ the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJ
 `SUPABASE_DB_PASSWORD` from the repository's `production` environment. The Edge Functions' own
 secrets, such as `GEMINI_API_KEY`, are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
+
+Scheduled jobs read the project URL and a secret API key from the project's Vault
+([ADR 0063](docs/adr/0063-purge-chat-photos-from-a-queue.md)). Set them once, in the dashboard's
+SQL editor, with the project's reference and its `default` secret key from Project Settings →
+API Keys, which `purge-coach-media` accepts:
+
+```sql
+select vault.create_secret('https://<project-ref>.supabase.co', 'project_url');
+select vault.create_secret('<default secret key>', 'secret_key');
+```
+
+After rotating the key, update it with
+`select vault.update_secret(id, '<new key>') from vault.secrets where name = 'secret_key';`.
 
 ### Install on an iPhone
 
