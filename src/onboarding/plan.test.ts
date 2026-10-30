@@ -209,6 +209,7 @@ describe('saveOnboarding', () => {
       ...ANSWERS,
       plan: PLAN,
       targets: { calories: 1850, proteinG: 130, carbsG: 190, fatG: 62 },
+      achievablePaceKg: 0.45,
       reminderMinutes: 18 * 60,
     };
     await saveOnboarding(answers, PLAN);

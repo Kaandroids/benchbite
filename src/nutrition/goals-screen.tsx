@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { datingPace, goalDate, isPaceHeldUp, isTargetReached } from '@/body/body';
+import { goalPace, isTargetReached } from '@/body/body';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
@@ -314,40 +314,28 @@ function BasisList({ basis, calories }: { basis: TargetBasis; calories: number }
     if (target !== null && !reached && chosen !== null) {
       // Dated by the pace the targets give, which the floor may hold below the chosen one, or to
       // none, when they keep the weight.
-      const achievable = basis.achievablePaceKg;
-      const pace = datingPace(chosen, achievable);
-      const date = goalDate(current, target, chosen, achievable, new Date());
+      const way = goalPace(current, target, chosen, basis.achievablePaceKg, new Date());
       const chosenText = format(weightIn(unit, chosen));
-      rows.push({
-        key: 'pace',
-        label: t('nutrition.goals.pace'),
-        ...(!isPaceHeldUp(chosen, achievable)
-          ? {
-              value: t('nutrition.goals.perWeek', { value: chosenText, unit }),
-              detail: t('nutrition.goals.by', { date: date && monthDay(date) }),
-            }
-          : date
-            ? {
-                value: t('nutrition.goals.aboutPerWeek', {
-                  value: format(weightIn(unit, pace)),
-                  unit,
-                }),
-                detail: t('nutrition.goals.heldUp', {
-                  chosen: chosenText,
-                  unit,
-                  calories: format(calories),
-                  date: monthDay(date),
-                }),
-              }
-            : {
-                value: t('nutrition.goals.noLoss'),
-                detail: t('nutrition.goals.keeps', {
-                  chosen: chosenText,
-                  unit,
-                  calories: format(calories),
-                }),
-              }),
-      });
+      const kept = { chosen: chosenText, unit, calories: format(calories) };
+      let value: string;
+      let detail: string;
+      switch (way.kind) {
+        case 'chosen':
+          value = t('nutrition.goals.perWeek', { value: chosenText, unit });
+          detail = t('nutrition.goals.by', { date: monthDay(way.date) });
+          break;
+        case 'heldUp':
+          value = t('nutrition.goals.aboutPerWeek', {
+            value: format(weightIn(unit, way.paceKg)),
+            unit,
+          });
+          detail = t('nutrition.goals.heldUp', { ...kept, date: monthDay(way.date) });
+          break;
+        case 'none':
+          value = t('nutrition.goals.noLoss');
+          detail = t('nutrition.goals.keeps', kept);
+      }
+      rows.push({ key: 'pace', label: t('nutrition.goals.pace'), value, detail });
     }
   }
   rows.push({

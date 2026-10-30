@@ -79,8 +79,14 @@ export function refusedAnswer(error: unknown): RefusedAnswer | null {
  * saved. The answers cannot have changed since, as the steps after the save have no way back.
  */
 export async function saveOnboarding(answers: OnboardingAnswers, plan: WorkoutPlan) {
-  // The calculated result is sent as the plan, not again as an answer.
-  const { plan: _plan, targets: _targets, reminderMinutes: _reminder, ...onlyAnswers } = answers;
+  // The calculated results are sent as the plan, or not at all, never as answers.
+  const {
+    plan: _plan,
+    targets: _targets,
+    achievablePaceKg: _achievable,
+    reminderMinutes: _reminder,
+    ...onlyAnswers
+  } = answers;
   // The device's today starts the plan (ADR 0041), as days follow the device.
   const { error } = await supabase.rpc('complete_onboarding', {
     answers: { ...onlyAnswers, today: toIsoDate(new Date()) },

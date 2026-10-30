@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { goalDate, isTargetReached, type weightGoal } from '@/body/body';
+import { goalPace, isTargetReached, type weightGoal } from '@/body/body';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { StepButtons } from '@/components/ui/step-buttons';
@@ -103,7 +103,7 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
   // Dated by the pace the targets give; none when they keep the weight.
   const date =
     goal !== null && !reached && shownKg !== undefined
-      ? goalDate(shownKg, goal.targetKg, goal.paceKg, goal.achievablePaceKg, today)
+      ? goalPace(shownKg, goal.targetKg, goal.paceKg, goal.achievablePaceKg, today).date
       : null;
   const target =
     goal === null

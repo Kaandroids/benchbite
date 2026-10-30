@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { FadeInDown } from 'react-native-reanimated';
 
-import { datingPace, goalDate, isPaceHeldUp, weightGoal } from '@/body/body';
+import { goalPace, weightGoal } from '@/body/body';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
@@ -51,9 +51,8 @@ export function PlanStep() {
   const weightKg = answers.weightKg ?? 0;
   const aim = weightGoal(answers);
   // Dated by the pace the targets give, which the floor may hold below the chosen one, or to none.
-  const pace = aim ? datingPace(aim.paceKg, answers.achievablePaceKg) : 0;
-  const date =
-    aim && goalDate(weightKg, aim.targetKg, aim.paceKg, answers.achievablePaceKg, new Date());
+  const way =
+    aim && goalPace(weightKg, aim.targetKg, aim.paceKg, answers.achievablePaceKg, new Date());
   const showWeight = (kg: number) => weightLabel(kg, unit);
 
   const save = async () => {
@@ -105,14 +104,14 @@ export function PlanStep() {
             start={{ value: showWeight(weightKg), label: t('onboarding.plan.today') }}
             end={{
               value: showWeight(aim.targetKg),
-              label: date ? formatDate(date) : t('onboarding.plan.noDate'),
+              label: way?.date ? formatDate(way.date) : t('onboarding.plan.noDate'),
             }}
           />
-          {isPaceHeldUp(aim.paceKg, answers.achievablePaceKg) ? (
+          {way && way.kind !== 'chosen' ? (
             <Text variant="caption" color="textMuted">
-              {pace > 0
+              {way.kind === 'heldUp'
                 ? t('onboarding.plan.heldUp', {
-                    pace: format(paceIn(unit, pace)),
+                    pace: format(paceIn(unit, way.paceKg)),
                     chosen: format(paceIn(unit, aim.paceKg)),
                     unit,
                     calories: format(targets.calories),

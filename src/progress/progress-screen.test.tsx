@@ -10,10 +10,7 @@ jest.mock('@/weight/weights', () => ({
   useWeightHistory: () => ({ data: [], isPending: false }),
   weightChange: () => null,
 }));
-jest.mock('@/nutrition/targets', () => ({
-  useOwnTargets: () => ({ data: null }),
-  useTargetBasis: () => ({ data: null }),
-}));
+jest.mock('@/nutrition/targets', () => ({ useTargetBasis: () => ({ data: null }) }));
 // What was eaten is tested with its card.
 jest.mock('./nutrition-card', () => ({ NutritionCard: () => null }));
 jest.mock('./training-card', () => ({ TrainingCard: () => null }));
