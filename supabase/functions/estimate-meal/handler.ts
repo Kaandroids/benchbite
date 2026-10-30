@@ -63,10 +63,10 @@ const EstimateRequest = z.object({
 type EstimateRequest = z.infer<typeof EstimateRequest>;
 
 /**
- * The largest body read: the photos at their largest as base64, and room for the rest. A larger
- * one is refused before it is parsed.
+ * The largest body read, in bytes: the photos at their largest as base64, and room for the rest.
+ * A larger one is refused before it is parsed.
  */
-const MAX_BODY_CHARS = Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + 20_000;
+const MAX_BODY_BYTES = Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + 20_000;
 
 type ModelItem = z.infer<typeof ModelOutput>['items'][number];
 
@@ -92,9 +92,10 @@ export async function handleEstimateRequest(
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
   const length = Number(req.headers.get('content-length'));
-  if (length > MAX_BODY_CHARS) return refused('photos_too_large');
-  const text = await req.text().catch(() => '');
-  if (text.length > MAX_BODY_CHARS) return refused('photos_too_large');
+  if (length > MAX_BODY_BYTES) return refused('photos_too_large');
+  // Counted as it comes, as a request may not say its length, or say less than it sends.
+  const text = await readBody(req, MAX_BODY_BYTES);
+  if (text === undefined) return refused('photos_too_large');
 
   const parsed = EstimateRequest.safeParse(parseJson(text));
   if (!parsed.success) {
@@ -251,6 +252,38 @@ function rounded(values: Per100): Per100 {
 /** The text of the answer, which holds its JSON. */
 function answerText(parts: Part[]): string {
   return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
+}
+
+/**
+ * The body as text, read until it ends or passes `max` bytes, when reading stops and nothing is
+ * given; an empty text for a body that cannot be read.
+ */
+export async function readBody(req: Request, max: number): Promise<string | undefined> {
+  if (!req.body) return '';
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > max) {
+        await reader.cancel().catch(() => {});
+        return undefined;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return '';
+  }
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(body);
 }
 
 function parseJson(text: string): unknown {

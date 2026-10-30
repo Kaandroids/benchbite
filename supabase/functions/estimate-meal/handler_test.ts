@@ -3,7 +3,7 @@ import { assertEquals } from '@std/assert';
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import type { ModelResponse } from '../_shared/llm/mod.ts';
 import { MAX_PHOTO_BYTES } from '../_shared/meal/estimate.ts';
-import { bestMatch, type EstimateContext, handleEstimateRequest } from './handler.ts';
+import { bestMatch, type EstimateContext, handleEstimateRequest, readBody } from './handler.ts';
 import { RESPONSE_SCHEMA, SYSTEM } from './prompt.ts';
 
 type Food = {
@@ -417,3 +417,24 @@ Deno.test(
     assertEquals(searched, []);
   },
 );
+
+Deno.test('stops reading a body without a length once it passes the limit', async () => {
+  let pulled = 0;
+  const chunk = new Uint8Array(1_000_000).fill(120);
+  const endless = new ReadableStream<Uint8Array>({
+    pull: (controller) => {
+      pulled++;
+      controller.enqueue(chunk);
+    },
+  });
+  const request = new Request('http://localhost/estimate-meal', { method: 'POST', body: endless });
+  assertEquals(request.headers.get('content-length'), null);
+
+  const response = await handleEstimateRequest(request, context(new FakeModel()).ctx);
+
+  assertEquals(response.status, 413);
+  assertEquals(await response.json(), { error: 'photos_too_large' });
+  // About as many megabytes as the limit, not the whole stream.
+  assertEquals(pulled <= 6, true);
+  assertEquals(await readBody(ask({ a: 'ö' }), 100), '{"a":"ö"}');
+});
