@@ -183,22 +183,22 @@ select results_eq(
   'as an estimate'
 );
 
--- A call that never recorded keeps its place for ten minutes, then is counted at its most.
+-- A call that never recorded keeps its place for seven minutes, then is counted at its most.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 insert into calls select 'chat 2', call_id
   from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000);
 set local role service_role;
-update public.ai_calls_in_flight set started_at = now() - interval '9 minutes'
+update public.ai_calls_in_flight set started_at = now() - interval '6 minutes'
 where call_id = (select call_id from calls where name = 'chat 2');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select reason from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
   $$ values ('call_in_progress'::public.ai_access_reason) $$,
-  'A call keeps its place for ten minutes'
+  'A call keeps its place for seven minutes'
 );
 
 set local role service_role;
-update public.ai_calls_in_flight set started_at = now() - interval '11 minutes'
+update public.ai_calls_in_flight set started_at = now() - interval '8 minutes'
 where call_id = (select call_id from calls where name = 'chat 2')
   or (user_id = '00000000-0000-0000-0000-00000000000a' and feature = 'coach_voice');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
