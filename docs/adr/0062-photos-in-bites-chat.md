@@ -16,8 +16,8 @@ and time it was taken in its Exif data.
 ## Decision
 
 - **A photo is part of a normal turn.** A message holds up to 3 photos, with or without text,
-  sent to `coach-chat` with the device's local time, at the limits of Nutrition's photos (JPEG,
-  scaled down on the device, 1.5 MB each and 3 MB together). The turn is the chat's full turn,
+  sent to `coach-chat` with the device's local time, as JPEG, scaled down on the device to the
+  size limits of Nutrition's photos (1.5 MB each and 3 MB together). The turn is the chat's full turn,
   with the history, the snapshot and the tools (ADR 0052), and Bite decides what the photo asks
   for: logging a meal, comparing dishes or reading a menu or a label. There is no separate path
   for meals.
@@ -29,22 +29,18 @@ and time it was taken in its Exif data.
   with the service role; users read only their own folder, through short-lived signed URLs. The
   bucket takes JPEG only, at most 1.5 MB per file.
 - **Exif data is removed before a photo is kept.** The app re-encodes each photo on the device,
-  which drops it, and the function refuses or strips a photo that still has Exif data.
+  which drops it, and the function refuses a photo that still has Exif data.
 - **A meal is logged through a card.** Bite's tool `log_meal_card` takes the meal, the day and the
   items, as `estimate-meal` gives them (a name, a `searchName`, the grams, a confidence, the values
   per 100 g and a note), and matches each item to the food library with the same code as
   `estimate-meal` (`_shared/meal/`), so a photo in the chat and in Nutrition give the same foods
   at the same values. The meal is the one the user named, or else the one the time of day gives;
   the grams are what was eaten ("only half of it"). The card's Add logs it with
-  `log_meal_estimate()` and its Undo removes it with `undo_meal_estimate()` (ADR 0060).
+  `log_meal_estimate()` and its Undo removes it with `undo_meal_estimate()` (ADR 0060). The card
+  keeps its state (pending, logged or undone), so that it shows the same when the chat is opened
+  again.
 - **The card's Edit changes only the grams.** Any other correction, as a wrong food or a missing
   one, is typed in the chat, and Bite answers with a new card.
-- **Changes to the food log are proposals.** Bite can read the entries of any day, with their ids,
-  and propose moving one to another meal or day, changing its grams or removing it. Nothing
-  changes until the user applies, and an applied change can be undone while the entries are still
-  as it left them, as ADR 0058 decides for the plan and the targets, which still holds. A meal
-  card and a food log proposal keep their state (pending, applied or undone, with what was before
-  and after), so that they show the same when the chat is opened again.
 - **A message with photos costs about $0.03 to $0.05,** as photos add to a turn that already
   sends the history and the snapshot. It is counted under the `coach_chat` feature and its budget
   (ADR 0051), as any other turn of the chat.
@@ -62,9 +58,6 @@ the chat estimates a meal through its full turn; Nutrition's meal photo keeps th
   Bite's answer to a photo that is gone.
 - **Sending a thread's photos with every later turn:** Bite could look at them again, but every
   turn would cost as much as the first.
-- **Bite writing the food log itself, with Undo:** fewer taps, but a wrong change, or one Bite was
-  talked into, is live until the user notices it. ADR 0058 decides against it for the plan and the
-  targets, and the food log is no different.
 - **A "What's off?" button that estimates the meal again with a note,** as Nutrition does: the
   chat already is that place, and a correction typed there reaches Bite with the photo's context.
 
