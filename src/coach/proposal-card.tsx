@@ -1,9 +1,10 @@
-import type { DayTargets, ProposalCard as Card } from '@shared/coach/chat';
+import type { DayTargets, ProposalCard as Proposal } from '@shared/coach/chat';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
@@ -22,7 +23,7 @@ import {
 } from './proposals';
 
 type ProposalCardProps = {
-  card: Card;
+  card: Proposal;
   /** Where it stands; unknown while it loads, or for one Bite just proposed. */
   state?: ProposalState;
   /** Waits for where it stands before it may be decided. */
@@ -87,7 +88,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
   // tried again.
   const closed = state?.expired ? 'outOfDate' : refused === 'failed' ? undefined : refused;
   return (
-    <Frame>
+    <Card>
       {card.kind === 'workout' ? <WorkoutChange card={card} /> : <TargetsChange card={card} />}
       {closed ? (
         <Refusal failure={closed} />
@@ -113,27 +114,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
           </View>
         </>
       )}
-    </Frame>
-  );
-}
-
-/** The card's surface: white, on a small ledge, as the cards one acts on are. */
-function Frame({ children }: { children: ReactNode }) {
-  const { colors, spacing } = useTheme();
-  return (
-    <View
-      style={[
-        styles.frame,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          padding: spacing.md + 2,
-          gap: spacing.md,
-        },
-      ]}
-    >
-      {children}
-    </View>
+    </Card>
   );
 }
 
@@ -154,14 +135,14 @@ function Header({ title }: { title: string }) {
 }
 
 /** A target as the workouts format it. */
-function workoutTarget(target: Extract<Card, { kind: 'workout' }>['swaps'][number]['target']) {
+function workoutTarget(target: Extract<Proposal, { kind: 'workout' }>['swaps'][number]['target']) {
   return target.reps
     ? ({ reps: target.reps } satisfies WorkoutTarget)
     : ({ seconds: target.seconds ?? null, meters: target.meters ?? null } satisfies WorkoutTarget);
 }
 
 /** The exercises swapped: the old one struck through, the new one, its sets and why. */
-function WorkoutChange({ card }: { card: Extract<Card, { kind: 'workout' }> }) {
+function WorkoutChange({ card }: { card: Extract<Proposal, { kind: 'workout' }> }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const workoutName = useWorkoutName();
@@ -214,7 +195,7 @@ const MACRO_NAMES = {
 } as const;
 
 /** The targets that change: each one in use struck through, and the new one. */
-function TargetsChange({ card }: { card: Extract<Card, { kind: 'targets' }> }) {
+function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -338,7 +319,7 @@ function useSummary() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   const workoutName = useWorkoutName();
-  return (card: Card) => {
+  return (card: Proposal) => {
     if (card.kind === 'targets') {
       return t('bite.proposal.summary.targets', {
         calories: format(card.to.calories),
@@ -362,12 +343,6 @@ function useSummary() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-  },
-  frame: {
-    borderWidth: 1,
-    // A small ledge, as under the cards one acts on.
-    borderBottomWidth: 3,
-    borderRadius: radii.lg,
   },
   header: {
     flexDirection: 'row',
