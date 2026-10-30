@@ -343,6 +343,44 @@
       "resultGrams": "{{grams}} g · {{calories}} kcal",
       "mine": "Eigenes"
     },
+    "photo": {
+      "camera": "Mahlzeit per Foto eintragen",
+      "sheetTitle": "Per Foto eintragen",
+      "sheetHint": "Bis zu 3 Fotos derselben Mahlzeit",
+      "take": "Foto aufnehmen",
+      "choose": "Aus der Mediathek wählen",
+      "cancel": "Abbrechen",
+      "title": {
+        "breakfast": "Frühstück per Foto",
+        "lunch": "Mittagessen per Foto",
+        "dinner": "Abendessen per Foto",
+        "snack": "Snack per Foto"
+      },
+      "photo": "Foto {{number}}",
+      "looking": "Bite sieht sich deine Mahlzeit an …",
+      "lookingHint": "Bite sucht jedes Lebensmittel in der Datenbank und schätzt die Menge. Das dauert ein paar Sekunden.",
+      "confidence": {
+        "high": "Schätzung · ziemlich sicher",
+        "medium": "Schätzung · einigermaßen sicher",
+        "low": "Schätzung · unsicher"
+      },
+      "estimated": "Geschätzt",
+      "row": "{{name}}, {{grams}} Gramm, {{calories}} kcal, Menge ändern",
+      "rowEstimated": "{{name}}, {{grams}} Gramm, {{calories}} kcal, geschätzt, nicht in der Datenbank, Menge ändern",
+      "noteLabel": "Stimmt etwas nicht?",
+      "notePlaceholder": "Sag es Bite, z. B. nur halb so viel Toast",
+      "again": "Neu schätzen",
+      "saveAmount": "Speichern",
+      "added_one": "{{count}} Lebensmittel eingetragen · {{calories}} kcal",
+      "added_other": "{{count}} Lebensmittel eingetragen · {{calories}} kcal",
+      "undoError": "Rückgängig machen hat nicht geklappt. Entferne die Lebensmittel stattdessen aus der Mahlzeit.",
+      "notFood": "Das sieht nicht nach einer Mahlzeit aus",
+      "notFoodHint": "Fotografiere den Teller von oben, sodass alles zu sehen ist.",
+      "tryAnother": "Anderes Foto versuchen",
+      "failed": "Bite konnte sich deine Mahlzeit nicht ansehen",
+      "failedHint": "Prüfe deine Verbindung und versuche es erneut.",
+      "blockedHint": "Bite kann diese Fotos nicht schätzen. Versuche andere Fotos."
+    },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",
       "portion": "Portion",
