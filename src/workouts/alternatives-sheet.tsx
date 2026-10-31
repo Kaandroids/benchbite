@@ -32,6 +32,8 @@ import { useWorkoutLimits, type Workout } from './workouts';
 const ROW_HEIGHT = 64;
 const MENU_ITEM_HEIGHT = 44;
 const MENU_WIDTH = 180;
+/** Above the menu's first action and below its last. */
+const MENU_PADDING = 6;
 
 /** Before any is added, the workout's own exercises as the first alternative, in use. */
 const OWN: WorkoutAlternative = {
@@ -480,7 +482,7 @@ type MenuAction = {
 };
 
 function menuHeight(actions: MenuAction[]) {
-  return actions.length * MENU_ITEM_HEIGHT + 2 * 6;
+  return actions.length * MENU_ITEM_HEIGHT + 2 * MENU_PADDING;
 }
 
 /**
@@ -516,7 +518,7 @@ function AlternativeMenu({
             top,
             right,
             width: MENU_WIDTH,
-            paddingVertical: 6,
+            paddingVertical: MENU_PADDING,
             borderRadius: radii.md,
             borderColor: colors.border,
             backgroundColor: colors.elevated,
