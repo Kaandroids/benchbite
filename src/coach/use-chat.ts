@@ -1,4 +1,4 @@
-import type { ProposalCard } from '@shared/coach/chat';
+import { PHOTO_REFUSALS, type ProposalCard } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,9 +52,6 @@ export type ChatMessage = {
 
 /** What the user writes to Bite: text, photos as base64 JPEG ready to send, or both. */
 export type Draft = { text: string; photos: string[] };
-
-/** The reasons coach-chat refuses a message's photos for, before Bite is asked. */
-const PHOTO_REFUSALS = ['photos_too_large', 'photo_not_jpeg', 'photo_has_exif'] as const;
 
 /**
  * Whether a message can be sent again as it was: its photos are sent with their data, which only

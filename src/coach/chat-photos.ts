@@ -1,6 +1,6 @@
 // The photos of messages to Bite (#299, ADR 0062): prepared on the device to be sent, and read back
 // from `coach-media` when a chat is opened again.
-import type { ChatPhoto, ChatPhotoPart, PhotoRefusal } from '@shared/coach/chat';
+import type { ChatPhoto, ChatPhotoPart, PHOTO_REFUSALS } from '@shared/coach/chat';
 import { MEDIA_BUCKET } from '@shared/coach/media';
 import { withoutMetadata } from '@shared/jpeg_metadata';
 import { photosFit } from '@shared/photos';
@@ -18,7 +18,7 @@ export type MessagePhoto = { data: string; path?: never } | { path: string; data
 
 /** Why the photos of a message were refused, and which one, counted from 0, when it is one. */
 export type PhotosProblem = {
-  reason: 'photos_too_large' | PhotoRefusal | 'photo_not_prepared';
+  reason: (typeof PHOTO_REFUSALS)[number] | 'photo_not_prepared';
   photo?: number;
 };
 
