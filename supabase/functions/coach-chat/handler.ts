@@ -16,6 +16,7 @@ import {
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
+import { isObject } from '../_shared/json.ts';
 import {
   type Finish,
   type LanguageModel,
@@ -653,26 +654,15 @@ function toMessage(
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
   const said = parts.flatMap((part) =>
-    part &&
-    typeof part === 'object' &&
-    !Array.isArray(part) &&
-    part.type === 'text' &&
-    typeof part.text === 'string'
-      ? [part.text]
-      : [],
+    partOfType(part, 'text') && typeof part.text === 'string' ? [part.text] : [],
   );
   // What Bite proposed, so that it knows on later messages, whether or not it said a word.
   const proposed = parts.flatMap((part) => {
-    const proposal =
-      part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
-        ? proposalOf(part.result)
-        : undefined;
+    const proposal = partOfType(part, 'toolResult') ? proposalOf(part.result) : undefined;
     return proposal ? [proposalText(proposal)] : [];
   });
   // A message's photos reach the model in its own turn only (ADR 0062).
-  const photos = parts.filter(
-    (part) => part && typeof part === 'object' && !Array.isArray(part) && part.type === 'image',
-  ).length;
+  const photos = parts.filter((part) => partOfType(part, 'image')).length;
   const text = [...said.filter(Boolean), ...proposed].join('\n');
   if (row.role === 'user') {
     const sent = photos ? [photosText(photos)] : [];
@@ -683,6 +673,11 @@ function toMessage(
   const face = marker(row.expression ?? 'neutral');
   // Bite may have repeated what the user wrote.
   return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${untagged(text)}` }] }];
+}
+
+/** Whether a saved part is an object of this type. */
+function partOfType(part: unknown, type: string): part is Record<string, unknown> {
+  return isObject(part) && part.type === type;
 }
 
 /** Where an earlier message's photos were, as Bite reads it in later turns. */
