@@ -55,17 +55,6 @@ export type ChatMessage = {
 export type Draft = { text: string; photos: string[] };
 
 /**
- * A message handed back, refused, put back before what the user wrote since it was sent: its text
- * first, then its photos, all of them, though together they may be more than a message takes.
- */
-export function withRefused(current: Draft, refused: Draft): Draft {
-  return {
-    text: [refused.text, current.text].filter((text) => text.trim()).join('\n'),
-    photos: [...refused.photos, ...current.photos],
-  };
-}
-
-/**
  * Whether a message can be sent again as it was: its photos are sent with their data, which only
  * the photos sent since the chat opened have on the device.
  */

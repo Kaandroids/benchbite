@@ -12,7 +12,7 @@ import { useTheme } from '@/theme';
 
 import { type PhotosProblem, prepareChatPhoto } from './chat-photos';
 import { PhotoTray } from './photo-tray';
-import { type Draft, withRefused } from './use-chat';
+import type { Draft } from './use-chat';
 
 /** A message whose photos were refused, handed back with why, once for each refusal. */
 export type RefusedDraft = { draft: Draft; problem: PhotosProblem };
@@ -30,6 +30,17 @@ type ChatComposerProps = {
 };
 
 const EMPTY_DRAFT: Draft = { text: '', photos: [] };
+
+/**
+ * A message handed back, refused, put back before what the user wrote since it was sent: its text
+ * first, then its photos, all of them, though together they may be more than a message takes.
+ */
+function withRefused(current: Draft, refused: Draft): Draft {
+  return {
+    text: [refused.text, current.text].filter((text) => text.trim()).join('\n'),
+    photos: [...refused.photos, ...current.photos],
+  };
+}
 
 /**
  * Where the user writes to Bite and adds photos (boards 7 and 7b), and the note under it that
