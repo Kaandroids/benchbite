@@ -13,6 +13,7 @@ import Animated, {
 
 import { COACH_TOOLS } from '@shared/coach/chat';
 
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { sameDay } from '@/i18n/dates';
 import { oneOf } from '@/lib/one-of';
@@ -22,6 +23,7 @@ import { BiteAvatar } from './bite-avatar';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
+import { type NoteCard, shownNotes } from './notes';
 import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
@@ -117,9 +119,9 @@ export function ChatMessages({
   );
 }
 
-/** Whether Bite gave cards with a message: changes it proposed, or meals it estimated. */
+/** Whether Bite gave cards with a message: changes it proposed, meals it estimated, or notes. */
 function hasCards(message: ChatMessage | undefined): boolean {
-  return !!message?.proposals?.length || !!message?.mealCards?.length;
+  return !!message?.proposals?.length || !!message?.mealCards?.length || !!message?.notes?.length;
 }
 
 type MessageRowProps = Pick<
@@ -291,6 +293,9 @@ const BiteMessage = memo(function BiteMessage({
               </View>
             );
           })}
+          {shownNotes(message.notes).map((note) => (
+            <NoteLine key={`note-${note.id}-${note.action}`} note={note} />
+          ))}
         </View>
       </View>
       {/* An answer that stopped short says so, under it. */}
@@ -469,6 +474,11 @@ const styles = StyleSheet.create({
   proposal: {
     alignSelf: 'stretch',
   },
+  noteLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
   photos: {
     flexDirection: 'row',
     gap: 4,
@@ -493,3 +503,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 });
+
+/** A note Bite kept, as a line under its answer (board 4). */
+function NoteLine({ note }: { note: NoteCard }) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.noteLine, { gap: spacing.xs + 2 }]}>
+      <Icon name="notebook" size={14} color="textMuted" />
+      <Text variant="caption" color="textMuted" style={styles.flex}>
+        {t(`bite.notes.${note.action as Exclude<NoteCard['action'], 'asked'>}`, {
+          text: note.text,
+        })}
+      </Text>
+    </View>
+  );
+}

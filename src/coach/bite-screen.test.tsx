@@ -413,6 +413,30 @@ it('keeps an answer that is only a proposal, rather than offering to ask again',
   expect(await screen.findByRole('button', { name: 'Apply' })).toBeEnabled();
 });
 
+it('shows a note Bite kept as a line, though Bite said nothing with it', async () => {
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    {
+      event: 'note',
+      note: { id: 3, action: 'saved', category: 'allergy', text: 'Allergic to kiwi' },
+    },
+    // A note asked about gets its card with the notebook, not a line.
+    {
+      event: 'note',
+      note: { id: 4, action: 'asked', category: 'food', text: 'Vegetarian' },
+    },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
+  expect(screen.getByText('Saved to notebook: Allergic to kiwi')).toBeOnTheScreen();
+  expect(screen.queryByText(/Vegetarian/)).toBeNull();
+});
+
 it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {
   mealCardsStand('pending');
   const stream = liveStream();

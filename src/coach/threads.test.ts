@@ -128,6 +128,24 @@ describe('storedMessages', () => {
     expect(messages[0]?.mealCards).toBeUndefined();
     expect(messages[1]).toMatchObject({ text: 'A Margherita!', mealCards: [mealCard] });
   });
+
+  it('reads the notes Bite kept back into its answer, leaving out what is no note', () => {
+    const note = { id: 3, action: 'archived', category: 'injury', text: 'Knee hurts' };
+    const messages = storedMessages([
+      row(1, 'user'),
+      {
+        ...row(2, 'bite'),
+        content: [
+          { type: 'toolResult', name: 'archive_note', result: { note } },
+          { type: 'toolResult', name: 'save_note', result: { note: { id: 4, action: 'x' } } },
+          { type: 'text', text: 'Glad it healed.' },
+        ],
+      },
+    ]);
+
+    expect(messages[0]?.notes).toBeUndefined();
+    expect(messages[1]).toMatchObject({ text: 'Glad it healed.', notes: [note] });
+  });
 });
 
 it('counts the photos of a chat begun with photos alone, as the history does', () => {

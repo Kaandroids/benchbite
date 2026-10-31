@@ -1761,6 +1761,11 @@
     "stop": "Stop",
     "mistakes": "Bite can make mistakes. Check important info.",
     "thinking": "Bite is thinking",
+    "notes": {
+      "saved": "Saved to notebook: {{text}}",
+      "updated": "Changed in notebook: {{text}}",
+      "archived": "Moved to past notes: {{text}}"
+    },
     "tools": {
       "get_workout_history": "Checking your workouts…",
       "get_meal_log": "Looking at your meals…",

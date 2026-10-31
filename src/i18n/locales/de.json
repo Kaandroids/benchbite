@@ -1761,6 +1761,11 @@
     "stop": "Stopp",
     "mistakes": "Bite kann Fehler machen. Prüfe wichtige Infos.",
     "thinking": "Bite denkt nach",
+    "notes": {
+      "saved": "Im Notizbuch gespeichert: {{text}}",
+      "updated": "Im Notizbuch geändert: {{text}}",
+      "archived": "Zu früheren Notizen verschoben: {{text}}"
+    },
     "tools": {
       "get_workout_history": "Schaue mir deine Workouts an…",
       "get_meal_log": "Schaue mir deine Mahlzeiten an…",

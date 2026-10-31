@@ -1761,6 +1761,11 @@
     "stop": "Durdur",
     "mistakes": "Bite hata yapabilir. Önemli bilgileri kontrol et.",
     "thinking": "Bite düşünüyor",
+    "notes": {
+      "saved": "Deftere kaydedildi: {{text}}",
+      "updated": "Defterde güncellendi: {{text}}",
+      "archived": "Geçmiş notlara taşındı: {{text}}"
+    },
     "tools": {
       "get_workout_history": "Antrenmanlarına bakıyorum…",
       "get_meal_log": "Öğünlerine bakıyorum…",

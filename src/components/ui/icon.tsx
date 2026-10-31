@@ -48,6 +48,7 @@ export const ICONS = {
   moon: { ios: 'moon', android: 'bedtime', web: 'bedtime' },
   notSaid: { ios: 'minus.circle', android: 'do_not_disturb_on', web: 'do_not_disturb_on' },
   more: { ios: 'ellipsis', android: 'more_horiz', web: 'more_horiz' },
+  notebook: { ios: 'book.closed', android: 'menu_book', web: 'menu_book' },
   offline: { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' },
   person: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
   personOff: { ios: 'person.crop.circle.badge.xmark', android: 'person_off', web: 'person_off' },
