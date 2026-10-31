@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { endSession, useActiveSession, type Session } from '@/sessions/session';
 import { useStartWorkout } from '@/sessions/start';
 import { RecentLogs } from '@/history/recent-logs';
+import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { useWorkoutAlternatives, type WorkoutAlternative } from './alternatives';
@@ -122,7 +123,7 @@ beforeEach(() => {
     .mocked(useWorkoutLimits)
     .mockReturnValue({ data: { exercises: 20, workouts: 2, alternatives: 5 } } as never);
   mockAlternatives([]);
-  switches = holdSwitches();
+  switches = holdSwitches(jest.mocked(supabase.rpc));
 });
 afterEach(() => jest.useRealTimers());
 

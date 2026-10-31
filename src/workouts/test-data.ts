@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase';
-
 import type { Workout, WorkoutExercise } from './workouts';
 
 /** An exercise of a workout, for tests. */
@@ -40,12 +38,13 @@ export type HeldSwitch = {
 };
 
 /**
- * Holds every switch of the alternative in use, sent through a mocked `supabase.rpc`, until the
- * test settles it; the list fills as switches start.
+ * Holds every switch of the alternative in use, sent through `rpc`, the test's mock of
+ * `supabase.rpc`, until the test settles it; the list fills as switches start. The mock is passed
+ * in so that this file loads no Supabase client for the tests that do not mock one.
  */
-export function holdSwitches(): HeldSwitch[] {
+export function holdSwitches(rpc: jest.Mock): HeldSwitch[] {
   const held: HeldSwitch[] = [];
-  jest.mocked(supabase.rpc).mockImplementation(
+  rpc.mockImplementation(
     ((_name: string, args: { alternative_id: number }) =>
       new Promise((resolve) => {
         held.push({

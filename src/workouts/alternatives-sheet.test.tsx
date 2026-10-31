@@ -1,5 +1,6 @@
 import { Alert, type AlertButton } from 'react-native';
 
+import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import {
@@ -97,7 +98,7 @@ beforeEach(() => {
   jest.mocked(useAddAlternative).mockReturnValue({ mutate: add, isPending: false } as never);
   jest.mocked(useDeleteAlternative).mockReturnValue({ mutate: remove } as never);
   jest.mocked(useReorderAlternatives).mockReturnValue({ mutate: reorder } as never);
-  switches = holdSwitches();
+  switches = holdSwitches(jest.mocked(supabase.rpc));
   mockRename();
 });
 
