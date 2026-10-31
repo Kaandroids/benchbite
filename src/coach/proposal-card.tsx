@@ -1,4 +1,4 @@
-import type { DayTargets, ProposalCard as Proposal } from '@shared/coach/chat';
+import type { DayTargets } from '@shared/coach/chat';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -20,6 +20,7 @@ import {
   type ProposalState,
   type ProposalStatus,
   proposalFailure,
+  type ShownProposal as Proposal,
   useDecideProposal,
 } from './proposals';
 

@@ -1,10 +1,8 @@
-import type { ProposalCard as Card } from '@shared/coach/chat';
-
 import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { ProposalCard } from './proposal-card';
-import { type ProposalState, useProposalStates } from './proposals';
+import { type ProposalState, type ShownProposal as Card, useProposalStates } from './proposals';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }));
 

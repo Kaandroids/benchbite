@@ -24,6 +24,17 @@ export type ProposalStatus = Database['public']['Enums']['coach_proposal_status'
 export type ProposalDecision = Database['public']['Enums']['coach_proposal_decision'];
 
 /**
+ * A proposal of a kind the chat shows a card for. Bite can propose changes to the food log too
+ * (ADR 0068), whose card comes later; until then they are left out of the chat.
+ */
+export type ShownProposal = Exclude<ProposalCard, { kind: 'food_log' }>;
+
+/** Whether the chat shows a card for `card`, of a kind it knows. */
+export function isShownProposal(card: { kind?: unknown; id?: unknown }): card is ShownProposal {
+  return typeof card.id === 'number' && (card.kind === 'workout' || card.kind === 'targets');
+}
+
+/**
  * Where a proposal stands: pending until the user decides, and whether it waited too long, as of
  * when it loaded.
  */
@@ -55,7 +66,7 @@ export function proposalIds(messages: ChatMessage[]): number[] {
 }
 
 /** The card a stored part of Bite's message keeps, when it is a proposal's tool result. */
-function cardOf(part: Json): ProposalCard | undefined {
+function cardOf(part: Json): ShownProposal | undefined {
   if (!part || typeof part !== 'object' || Array.isArray(part) || part.type !== 'toolResult') {
     return undefined;
   }
@@ -65,13 +76,11 @@ function cardOf(part: Json): ProposalCard | undefined {
   if (!proposal || typeof proposal !== 'object' || Array.isArray(proposal)) {
     return undefined;
   }
-  const known =
-    typeof proposal.id === 'number' && (proposal.kind === 'workout' || proposal.kind === 'targets');
-  return known ? (proposal as unknown as ProposalCard) : undefined;
+  return isShownProposal(proposal) ? (proposal as unknown as ShownProposal) : undefined;
 }
 
 /** The cards of the proposals a stored message made, in order. */
-export function messageProposals(content: Json): ProposalCard[] {
+export function messageProposals(content: Json): ShownProposal[] {
   return (Array.isArray(content) ? content : []).flatMap((part) => {
     const card = cardOf(part);
     return card ? [card] : [];
@@ -123,7 +132,7 @@ export function useProposalStates(ids: number[]) {
  * Applies a proposal, keeps things as they are, or undoes it, as of the device's today. The new
  * status goes into every list of states that has it, and what it changed loads again.
  */
-export function useDecideProposal(card: ProposalCard) {
+export function useDecideProposal(card: ShownProposal) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (decision: ProposalDecision) => {
@@ -157,6 +166,6 @@ export function useDecideProposal(card: ProposalCard) {
 }
 
 /** Loads again what a proposal applied or undone changed: the plan, or the targets. */
-function reloadChanged(queryClient: QueryClient, card: ProposalCard) {
+function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
   return card.kind === 'workout' ? reloadPlan(queryClient) : reloadTargets(queryClient);
 }
