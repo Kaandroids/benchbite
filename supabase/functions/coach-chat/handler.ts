@@ -33,6 +33,7 @@ import { type Client, logError } from '../_shared/supabase.ts';
 import {
   CARD_MISSING,
   NO_LOOKUPS_LEFT,
+  SAID_ALREADY,
   type Expression,
   FaceReader,
   marker,
@@ -443,13 +444,18 @@ async function answer(
         break;
       }
       turn.trace.push(...calls, ...results);
-      // The model heeds a word beside the last results better than the request's settings.
+      // The model heeds a word beside the results better than the rules or the request's
+      // settings: that what it said is shown already, and that no lookups are left.
       const lastLookup = !answerOnly && lookups === MAX_TOOL_ROUNDS;
+      const words = [
+        ...(said.trim() ? [SAID_ALREADY] : []),
+        ...(lastLookup ? [NO_LOOKUPS_LEFT] : []),
+      ];
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },
         {
           role: 'user',
-          parts: lastLookup ? [...results, { type: 'text', text: NO_LOOKUPS_LEFT }] : results,
+          parts: [...results, ...words.map((text): Part => ({ type: 'text', text }))],
         },
       );
     }
