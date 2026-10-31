@@ -1870,7 +1870,9 @@
         "swap": "{{to}} statt {{from}}",
         "twoSwaps": "{{first}} und {{second}}",
         "swaps": "{{number}} neue Übungen in {{workout}}",
-        "targets": "{{calories}} kcal und {{protein}} g Protein am Tag"
+        "targets": "{{calories}} kcal und {{protein}} g Protein am Tag",
+        "foodLog_one": "{{count}} Änderung an deinem Ernährungstagebuch",
+        "foodLog_other": "{{count}} Änderungen an deinem Ernährungstagebuch"
       },
       "refusals": {
         "changed": "Das hat sich inzwischen geändert – frag Bite noch einmal",
@@ -1891,6 +1893,29 @@
       "amount": "{{grams}} g · {{calories}} kcal",
       "row": "{{name}}, {{grams}} Gramm, {{calories}} kcal",
       "rowEstimated": "{{name}}, {{grams}} Gramm, {{calories}} kcal, geschätzt, nicht in der Datenbank"
+    },
+    "foodLog": {
+      "title": "Ernährungstagebuch",
+      "place": "{{meal}}, {{day}}",
+      "remove": {
+        "breakfast": "Aus dem Frühstück entfernen",
+        "lunch": "Aus dem Mittagessen entfernen",
+        "dinner": "Aus dem Abendessen entfernen",
+        "snack": "Aus den Snacks entfernen"
+      },
+      "removeLabel": "{{food}}: {{detail}}",
+      "moveLabel": "{{to}} statt {{from}}",
+      "summary": {
+        "removed": "{{food}} entfernt",
+        "moved": {
+          "breakfast": "{{food}} zum Frühstück",
+          "lunch": "{{food}} zum Mittagessen",
+          "dinner": "{{food}} zum Abendessen",
+          "snack": "{{food}} zu den Snacks"
+        },
+        "movedDay": "{{food}} auf {{day}}",
+        "resized": "{{food}} jetzt {{grams}}"
+      }
     }
   }
 }

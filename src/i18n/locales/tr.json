@@ -1870,7 +1870,9 @@
         "swap": "{{from}} yerine {{to}}",
         "twoSwaps": "{{first}} ve {{second}}",
         "swaps": "{{workout}} için {{number}} yeni egzersiz",
-        "targets": "Günde {{calories}} kcal ve {{protein}} g protein"
+        "targets": "Günde {{calories}} kcal ve {{protein}} g protein",
+        "foodLog_one": "beslenme günlüğünde {{count}} değişiklik",
+        "foodLog_other": "beslenme günlüğünde {{count}} değişiklik"
       },
       "refusals": {
         "changed": "Bu o zamandan beri değişti — Bite'a yeniden sor",
@@ -1891,6 +1893,29 @@
       "amount": "{{grams}} g · {{calories}} kcal",
       "row": "{{name}}, {{grams}} gram, {{calories}} kcal",
       "rowEstimated": "{{name}}, {{grams}} gram, {{calories}} kcal, tahmini, kütüphanede bulunamadı"
+    },
+    "foodLog": {
+      "title": "Beslenme günlüğü",
+      "place": "{{meal}}, {{day}}",
+      "remove": {
+        "breakfast": "Kahvaltıdan çıkar",
+        "lunch": "Öğle yemeğinden çıkar",
+        "dinner": "Akşam yemeğinden çıkar",
+        "snack": "Atıştırmalıklardan çıkar"
+      },
+      "removeLabel": "{{food}}: {{detail}}",
+      "moveLabel": "{{from}} yerine {{to}}",
+      "summary": {
+        "removed": "{{food}} çıkarıldı",
+        "moved": {
+          "breakfast": "{{food}} kahvaltıya",
+          "lunch": "{{food}} öğle yemeğine",
+          "dinner": "{{food}} akşam yemeğine",
+          "snack": "{{food}} atıştırmalıklara"
+        },
+        "movedDay": "{{food}} {{day}} gününe",
+        "resized": "{{food}} artık {{grams}}"
+      }
     }
   }
 }

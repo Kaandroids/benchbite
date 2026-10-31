@@ -7,8 +7,7 @@ export const MAX_MESSAGE_LENGTH = 4000;
 
 /**
  * The tools Bite looks things up and proposes changes with; the app says what Bite is doing by
- * their names. It names propose_food_log_change, which Bite is not offered yet (ADR 0068), so that
- * the app knows it when it is.
+ * their names.
  */
 export const COACH_TOOLS = [
   'get_workout_history',
@@ -156,13 +155,13 @@ export type ProposalCard =
   | { kind: 'food_log'; id: number; changes: FoodLogChange[] };
 
 /**
- * The kinds of proposal the chat shows a card for. A food log proposal's card comes later (ADR
- * 0068); until then coach-chat offers Bite no tool that makes one, and the app leaves out any it
- * gets.
+ * The kinds of proposal the chat shows a card for. coach-chat offers Bite a tool only for these,
+ * and the app leaves out any other it gets.
  */
 export const SHOWN_PROPOSAL_KINDS = [
   'workout',
   'targets',
+  'food_log',
 ] as const satisfies readonly ProposalCard['kind'][];
 
 /**

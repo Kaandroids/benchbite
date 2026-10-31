@@ -55,7 +55,7 @@ describe('messageProposals', () => {
     ).toEqual([]);
   });
 
-  it('leaves out food log proposals, which have no card yet', () => {
+  it('reads food log proposals, and leaves out kinds it has no card for', () => {
     const foodLog: ProposalCard = {
       kind: 'food_log',
       id: 9,
@@ -63,14 +63,19 @@ describe('messageProposals', () => {
         { food: 'Pizza', from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 } },
       ],
     };
-    expect(isShownProposal(foodLog)).toBe(false);
-    expect(isShownProposal(TARGETS)).toBe(true);
+    expect(isShownProposal(foodLog)).toBe(true);
+    expect(isShownProposal({ kind: 'meal_plan', id: 10 })).toBe(false);
     expect(
       messageProposals([
         { type: 'toolResult', name: 'propose_food_log_change', result: { proposal: foodLog } },
+        {
+          type: 'toolResult',
+          name: 'propose_meal_plan',
+          result: { proposal: { kind: 'meal_plan', id: 10 } },
+        },
         { type: 'toolResult', name: 'propose_targets_change', result: { proposal: TARGETS } },
       ]),
-    ).toEqual([TARGETS]);
+    ).toEqual([foodLog, TARGETS]);
   });
 });
 
@@ -146,6 +151,33 @@ describe('useDecideProposal', () => {
 
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['nutrition-targets'] });
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['workouts'] });
+  });
+
+  it('loads each day a food log change moved entries from or to again', async () => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 'applied', error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const foodLog: ProposalCard = {
+      kind: 'food_log',
+      id: 9,
+      changes: [
+        {
+          food: 'Pizza',
+          from: { day: '2026-10-30', meal: 'lunch', grams: 300, kcal: 798 },
+          to: { day: '2026-10-29', meal: 'lunch', grams: 300, kcal: 798 },
+        },
+        { food: 'Chocolate bar', from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 } },
+      ],
+    };
+    const { result } = await renderHook(() => useDecideProposal(foodLog), {
+      queryClient,
+    });
+
+    await act(() => result.current.mutateAsync('apply'));
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-30'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-29'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', 'days'] });
   });
 
   it('changes nothing else when things are kept as they are', async () => {

@@ -13,6 +13,7 @@ import {
 import { toIsoDate } from '@/i18n/dates';
 import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import { reloadDay } from '@/nutrition/entries';
 import { reloadTargets } from '@/nutrition/targets';
 import { reloadPlan } from '@/workouts/workouts';
 
@@ -23,10 +24,7 @@ export const PROPOSALS_KEY = ['coach-proposals'];
 export type ProposalStatus = Database['public']['Enums']['coach_proposal_status'];
 export type ProposalDecision = Database['public']['Enums']['coach_proposal_decision'];
 
-/**
- * A proposal of a kind the chat shows a card for (`SHOWN_PROPOSAL_KINDS`). Food log proposals
- * (ADR 0068) get their card later; until then they are left out of the chat.
- */
+/** A proposal of a kind the chat shows a card for (`SHOWN_PROPOSAL_KINDS`). */
 export type ShownProposal = Extract<ProposalCard, { kind: (typeof SHOWN_PROPOSAL_KINDS)[number] }>;
 
 /** Whether the chat shows a card for `card`, of a kind it knows. */
@@ -169,7 +167,19 @@ export function useDecideProposal(card: ShownProposal) {
   });
 }
 
-/** Loads again what a proposal applied or undone changed: the plan, or the targets. */
+/**
+ * Loads again what a proposal applied or undone changed: the plan, the targets, or each day of the
+ * food log it moved entries from or to.
+ */
 function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
-  return card.kind === 'workout' ? reloadPlan(queryClient) : reloadTargets(queryClient);
+  switch (card.kind) {
+    case 'workout':
+      return reloadPlan(queryClient);
+    case 'targets':
+      return reloadTargets(queryClient);
+    case 'food_log': {
+      const days = new Set(card.changes.flatMap(({ from, to }) => [from.day, to?.day ?? from.day]));
+      return Promise.all([...days].map((day) => reloadDay(queryClient, day)));
+    }
+  }
 }
