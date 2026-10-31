@@ -4,6 +4,7 @@ import { SHOWN_PROPOSAL_KINDS } from '../_shared/coach/chat.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
+import { NOTE_ASKED } from './prompt.ts';
 import type { ToolContext } from './tools.ts';
 import { MAX_FOOD_LOG_CHANGES, PROPOSAL_KINDS, runTool, TOOL_DEFINITIONS } from './tools.ts';
 
@@ -1142,6 +1143,7 @@ Deno.test('saves a note from the chat, or asks first when saving is off', async 
   const off = noteContext(false);
   assertEquals(await runTool('save_note', args, off.context), {
     note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'asked' },
+    tell: NOTE_ASKED,
   });
   assertEquals((off.writes[0].values as { asked: boolean }).asked, true);
   // A setting that could not be read asks first too.

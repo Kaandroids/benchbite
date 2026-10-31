@@ -47,7 +47,10 @@ export type Snapshot = {
   streak?: string;
   /** Whether Bite saves notes from chats by itself, or asks first. */
   savesNotes?: boolean;
-  /** The notes in use, which every answer reads; past notes and ones asked about are left out. */
+  /**
+   * The notes in use, which every answer reads, and those waiting for the user's yes, so that
+   * Bite does not ask again; past notes are left out.
+   */
   notes?: Note[];
 };
 
@@ -57,6 +60,8 @@ export type Note = {
   text: string;
   /** The day Bite asks again whether it still holds. */
   reviewOn?: string;
+  /** Bite asked to save it, and the user has not said yes on its card. */
+  asked?: true;
 };
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -90,9 +95,8 @@ export async function loadSnapshot(
       supabase.rpc('streak', { today }),
       supabase
         .from('coach_notes')
-        .select('id, category, text, review_on')
+        .select('id, category, text, review_on, asked')
         .is('archived_at', null)
-        .eq('asked', false)
         .order('category')
         .order('id'),
     ]);
@@ -167,6 +171,7 @@ export async function loadSnapshot(
       category: note.category,
       text: note.text,
       ...(note.review_on && { reviewOn: note.review_on }),
+      ...(note.asked && { asked: true as const }),
     }));
   }
   return snapshot;

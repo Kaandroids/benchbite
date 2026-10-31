@@ -106,31 +106,36 @@ Deno.test('tells Bite that a workout planned today has no exercises yet', async 
   assertEquals(snapshot.workouts, 'Legs (no exercises yet), full body planned, 0 done');
 });
 
-Deno.test('tells Bite its notes by id, with when to ask again, and whether it saves', async () => {
-  const notes = [
-    { id: 4, category: 'allergy', text: 'Allergic to walnuts', review_on: null },
-    { id: 7, category: 'injury', text: 'Left knee hurts', review_on: '2026-10-30' },
-    { id: 8, category: 'injury', text: 'Sore wrist', review_on: '2026-11-03' },
-  ];
-  const snapshot = await loadSnapshot(
-    database({ ...PROFILE, coach_saves_notes: true }, null, {}, notes),
-    '2026-10-30',
-  );
+Deno.test(
+  'tells Bite its notes by id, when to ask again, those asked, and whether it saves',
+  async () => {
+    const notes = [
+      { id: 4, category: 'allergy', text: 'Allergic to walnuts', review_on: null },
+      { id: 7, category: 'injury', text: 'Left knee hurts', review_on: '2026-10-30' },
+      { id: 8, category: 'injury', text: 'Sore wrist', review_on: '2026-11-03' },
+      { id: 9, category: 'food', text: 'Vegetarian', review_on: null, asked: true },
+    ];
+    const snapshot = await loadSnapshot(
+      database({ ...PROFILE, coach_saves_notes: true }, null, {}, notes),
+      '2026-10-30',
+    );
 
-  assertEquals(snapshot.savesNotes, true);
-  assertEquals(snapshotText(snapshot, 'en').split('\n').slice(-5, -1), [
-    'Notebook (saves from chats):',
-    '- #4 allergy: Allergic to walnuts',
-    '- #7 injury: Left knee hurts (ask now whether it still holds)',
-    '- #8 injury: Sore wrist (ask again on 2026-11-03)',
-  ]);
+    assertEquals(snapshot.savesNotes, true);
+    assertEquals(snapshotText(snapshot, 'en').split('\n').slice(-6, -1), [
+      'Notebook (saves from chats):',
+      '- #4 allergy: Allergic to walnuts',
+      '- #7 injury: Left knee hurts (ask now whether it still holds)',
+      '- #8 injury: Sore wrist (ask again on 2026-11-03)',
+      "- #9 food: Vegetarian (asked: its card waits for the user's yes)",
+    ]);
 
-  const empty = await loadSnapshot(
-    database({ ...PROFILE, coach_saves_notes: false }),
-    '2026-10-30',
-  );
-  assertEquals(snapshotText(empty, 'en').includes('Notebook (asks before saving): empty'), true);
-});
+    const empty = await loadSnapshot(
+      database({ ...PROFILE, coach_saves_notes: false }),
+      '2026-10-30',
+    );
+    assertEquals(snapshotText(empty, 'en').includes('Notebook (asks before saving): empty'), true);
+  },
+);
 
 Deno.test("keeps a note's text from passing for the snapshot's end", async () => {
   const notes = [

@@ -26,6 +26,7 @@ import { matchItems } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
+import { NOTE_ASKED } from './prompt.ts';
 import { mealAt } from './meal_card.ts';
 import { workoutName } from './workout.ts';
 
@@ -655,7 +656,8 @@ const TOOLS = [
         .single();
       if (saved.error) return refused(saved.error, NOTE_REFUSALS);
       const note: NoteCard = { ...saved.data, action: asked ? 'asked' : 'saved' };
-      return { note };
+      // The model heeds a word in the result better than the rules.
+      return asked ? { note, tell: NOTE_ASKED } : { note };
     },
   }),
   tool({
