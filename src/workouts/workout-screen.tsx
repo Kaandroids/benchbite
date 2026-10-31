@@ -201,20 +201,20 @@ export function WorkoutScreen({ id }: { id: number }) {
               .join(' · ')
       }
       footer={
-        workout.active && empty && !running ? (
+        workout.active ? (
           <View style={{ gap: spacing.sm }}>
-            <Button label={t('workout.startWorkout')} disabled />
-            <Text variant="caption" color="textMuted" align="center">
-              {t('workout.empty.startHint')}
-            </Text>
+            <Button
+              label={running ? t('session.resume') : t('workout.startWorkout')}
+              // Not with the exercises an alternative is about to replace, nor without any.
+              disabled={choice.isPending || (empty && !running)}
+              onPress={() => start(workout)}
+            />
+            {empty && !running ? (
+              <Text variant="caption" color="textMuted" align="center">
+                {t('workout.empty.startHint')}
+              </Text>
+            ) : null}
           </View>
-        ) : workout.active ? (
-          <Button
-            label={running ? t('session.resume') : t('workout.startWorkout')}
-            // Not with the exercises an alternative is about to replace.
-            disabled={choice.isPending}
-            onPress={() => start(workout)}
-          />
         ) : undefined
       }
       action={
@@ -234,32 +234,31 @@ export function WorkoutScreen({ id }: { id: number }) {
     >
       <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />
 
-      {empty ? <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} /> : null}
-
-      {/* One card of even columns over the workout's days, like a finished workout's figures over
-          when it started and ended. */}
-      {empty ? null : (
-        <StatColumns
-          stats={stats}
-          footer={
-            <View style={[styles.days, { gap: spacing.sm }]}>
-              <Text variant="caption" color="textMuted">
-                {t('workout.days')}
-              </Text>
-              <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+      {empty ? (
+        <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} />
+      ) : (
+        <>
+          {/* One card of even columns over the workout's days, like a finished workout's figures
+              over when it started and ended. */}
+          <StatColumns
+            stats={stats}
+            footer={
+              <View style={[styles.days, { gap: spacing.sm }]}>
+                <Text variant="caption" color="textMuted">
+                  {t('workout.days')}
+                </Text>
+                <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+              </View>
+            }
+          />
+          <Card>
+            <View>
+              {workout.exercises.map((exercise, index) =>
+                row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
+              )}
             </View>
-          }
-        />
-      )}
-
-      {empty ? null : (
-        <Card>
-          <View>
-            {workout.exercises.map((exercise, index) =>
-              row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
-            )}
-          </View>
-        </Card>
+          </Card>
+        </>
       )}
 
       {/* Switching a workout off moves it to the archive, and back. */}
