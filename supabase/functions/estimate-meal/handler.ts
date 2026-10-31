@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
 import { Base64Data } from '../_shared/base64.ts';
 import { Constants } from '../_shared/database.types.ts';
+import { parseJson } from '../_shared/json.ts';
 import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
 import {
   type EstimateReason,
@@ -18,7 +19,7 @@ import {
 import { matchItems } from '../_shared/meal/match.ts';
 import { decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
-import { parseJson, readJson, TOO_LARGE } from '../_shared/request.ts';
+import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { ModelOutput, RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
 

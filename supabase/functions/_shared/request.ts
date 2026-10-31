@@ -1,4 +1,5 @@
 // Reading a request's body within a limit, for functions that take large bodies, as photos.
+import { parseJson } from './json.ts';
 
 /**
  * The body as text, read until it ends or passes `max` bytes, when reading stops and nothing is
@@ -44,13 +45,4 @@ export async function readJson(req: Request, max: number): Promise<unknown> {
   if (Number(req.headers.get('content-length')) > max) return TOO_LARGE;
   const text = await readBody(req, max);
   return text === undefined ? TOO_LARGE : parseJson(text);
-}
-
-/** The JSON of a text, or null for text that is not JSON. */
-export function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
