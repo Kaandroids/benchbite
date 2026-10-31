@@ -1207,3 +1207,70 @@ Deno.test("takes a card's meal from the device's local time when the user named 
     [{ event: 'meal_card', mealCard: { ...MEAL_CARD, meal: 'lunch' } }],
   );
 });
+
+Deno.test('logs a meal from photos as a card, and reads both back later', async () => {
+  const { estimated: _, ...item } = MEAL_CARD.items[0];
+  const model = new FakeModel(
+    [
+      {
+        type: 'toolCall',
+        id: 'c1',
+        name: 'log_meal_card',
+        args: { meal: 'dinner', items: [item] },
+      },
+    ],
+    [{ type: 'text', text: '[[happy]] Looks good.' }],
+  );
+  const first = context(model, { add_coach_meal_card: 51, search_foods: [] });
+
+  const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), first.ctx));
+
+  // The photos go to the model in the turn whose card it gives.
+  const parts = model.requests[0].messages[0].parts;
+  assertEquals(parts.filter((part) => part.type === 'image').length, 2);
+  assertEquals(
+    answer.filter((e) => e.event === 'meal_card'),
+    [{ event: 'meal_card', mealCard: MEAL_CARD }],
+  );
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
+  const [question, reply] = first.inserted[1].rows;
+  assertEquals(
+    (question.content as { type: string }[]).map((part) => part.type),
+    ['image', 'image', 'text'],
+  );
+  assertEquals(first.objects.size, 2);
+
+  const later = new FakeModel(SURE);
+  const { ctx } = context(
+    later,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      // Newest first, as read.
+      coach_messages: [
+        { role: 'bite', expression: 'happy', content: reply.content },
+        { role: 'user', content: question.content },
+      ],
+      coach_meal_cards: [{ id: 51, status: 'logged', kcal: 247.5 }],
+    },
+  );
+  await (await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx)).text();
+
+  assertEquals(later.requests[0].messages.slice(0, 2), [
+    {
+      role: 'user',
+      parts: [{ type: 'text', text: '(Sent 2 photos.)\nIs this enough protein?' }],
+    },
+    {
+      role: 'model',
+      parts: [
+        {
+          type: 'text',
+          text:
+            '[[happy]] Looks good.\n(Meal card for dinner on 2026-10-30: Chicken breast 150 g; ' +
+            '248 kcal. Added by the user, 248 kcal.)',
+        },
+      ],
+    },
+  ]);
+});
