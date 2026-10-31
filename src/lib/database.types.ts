@@ -1772,6 +1772,7 @@ export type Database = {
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
+      coach_message_photos: { Args: { content: Json }; Returns: number };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
@@ -2121,9 +2122,11 @@ export type Database = {
         Args: { before_at?: string; before_id?: number; page_size?: number; search?: string };
         Returns: {
           expression: Database['public']['Enums']['bite_expression'];
+          first_photos: number;
           id: number;
           last_message: string;
           last_message_at: string;
+          last_photos: number;
           title: string;
         }[];
       };
