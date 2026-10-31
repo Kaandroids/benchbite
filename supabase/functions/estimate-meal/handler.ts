@@ -7,7 +7,7 @@ import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
 import { Base64Data } from '../_shared/base64.ts';
 import { Constants } from '../_shared/database.types.ts';
 import { parseJson } from '../_shared/json.ts';
-import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
+import { type LanguageModel, type Part, textOf } from '../_shared/llm/mod.ts';
 import {
   type EstimateReason,
   type EstimateRequest as Body,
@@ -125,7 +125,7 @@ export async function handleEstimateRequest(
     return refused('unavailable');
   }
 
-  const output = ModelOutput.safeParse(parseJson(answerText(parts)));
+  const output = ModelOutput.safeParse(parseJson(textOf(parts)));
   if (!output.success) {
     console.error('The estimate was not in the shape asked for', {
       issues: output.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
@@ -139,11 +139,6 @@ export async function handleEstimateRequest(
     ...(note && { note }),
   };
   return Response.json(estimate);
-}
-
-/** The text of the answer, which holds its JSON. */
-function answerText(parts: Part[]): string {
-  return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
 }
 
 function refused(reason: EstimateReason): Response {

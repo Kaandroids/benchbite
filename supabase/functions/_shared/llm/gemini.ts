@@ -183,6 +183,9 @@ function toGeminiRequest(request: ModelRequest, config: ModelConfig) {
         },
       ],
     }),
+    ...(request.toolChoice === 'none' && {
+      toolConfig: { functionCallingConfig: { mode: 'NONE' } },
+    }),
     generationConfig: {
       thinkingConfig: { thinkingLevel: config.thinking },
       ...(request.maxOutputTokens && { maxOutputTokens: request.maxOutputTokens }),

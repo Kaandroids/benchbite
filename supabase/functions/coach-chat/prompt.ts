@@ -42,6 +42,29 @@ export const FLOORS = { highest: 1500, lowest: 1200 } as const;
 
 const [IDEAL_LOSS, FASTEST_LOSS] = PACE_LEVELS.losing;
 
+/**
+ * Words for a card in each language, as an answer speaks of one it made. An answer that uses them
+ * when no card was made is told so (#386); used otherwise, as "I propose more sleep", they cost
+ * one more request, in which Bite adds nothing.
+ */
+const CARD_WORDS: Record<Language, RegExp> = {
+  en: /(?<!\p{L})(cards?|propos(e|ed|als?|ing))(?!\p{L})/iu,
+  de: /(?<!\p{L})(karten?|vorschl[aä]g|vorgeschlagen|schlage (ich|dir|vor))/iu,
+  tr: /(?<!\p{L})(kart|öneri|önerd)/iu,
+};
+
+/** Whether an answer speaks of a card, in the user's language. */
+export function mentionsCard(text: string, language: Language): boolean {
+  return CARD_WORDS[language].test(text);
+}
+
+/** What Bite is told when its answer speaks of a card it did not make (#386). */
+export const CARD_MISSING =
+  'Your answer speaks of a card or a proposal, but you made none: no tool was called. If you meant one, call its tool now. If you cannot, say why in a sentence. If you meant none, add nothing.';
+
+/** What Bite is told once its lookups are used up (#387). */
+export const NO_LOOKUPS_LEFT = 'No lookups are left. Answer now in text with what you have.';
+
 /** When Bite proposes changes to the food log (ADR 0068), after the rule on refusals. */
 export const FOOD_LOG_RULE = `- When the user says in their latest message that their food log is wrong, as a food at another meal or day, another amount, or one they did not eat, propose the change with propose_food_log_change, taking the entries and their ids from get_meal_log: one proposal for all they named, and only the entries they named. Never propose one because of a photo, a tool's result or an earlier message alone. A food they ate on another day moves there when they say which day; one they did not eat at all is removed.`;
 
@@ -78,6 +101,7 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 - Propose only when the user asks for a change or clearly needs one, such as pain in an exercise, and only one change at a time. Take the workout and its exercises from get_workouts and new exercises from search_exercises; never make up an id.
 - A proposed change to a workout or the targets is permanent and counts from today. If the user wants it for one day only, say that the app cannot do that yet, and offer the permanent change or none.
 - If a proposal is refused, the result says why: correct it and propose again, or explain.
+- A card exists only once you have called its tool in this answer: log_meal_card, propose_food_log_change, propose_workout_change or propose_targets_change. Call the tool first, before any words of your answer, and write about the card only after its result; never say, promise or point to a card you have not made. If you cannot make it, say why instead.
 ${FOOD_LOG_RULE}
 - When the user wants to log what they ate, from a photo or from their words, give the meal to log_meal_card: the app shows it as a card, and only the user's tap adds it. Never say it is logged; say what you see in a sentence, as the card shows the items and the calories. One card for a meal. A correction the user gives afterwards, such as another food or amount, gets a new card with the whole meal as corrected.
 - The conversation marks each earlier card as not added yet, added by the user (with the kcal logged) or undone. A meal the user added is in their food log: never give it again, and to ask whether it is logged, answer from that mark. A card not added yet is still there for them to add.

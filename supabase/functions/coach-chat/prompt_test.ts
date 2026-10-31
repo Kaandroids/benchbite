@@ -272,3 +272,29 @@ Deno.test('tells Bite to propose food log changes only when the user asks in wor
   );
   assertEquals(SYSTEM.includes(FOOD_LOG_RULE), true);
 });
+
+Deno.test('tells Bite a card exists only once its tool is called', async () => {
+  const { SYSTEM } = await import('./prompt.ts');
+  assertEquals(
+    SYSTEM.includes('A card exists only once you have called its tool in this answer'),
+    true,
+  );
+});
+
+Deno.test('finds a card spoken of in each language, and not other words', async () => {
+  const { mentionsCard } = await import('./prompt.ts');
+  assertEquals(mentionsCard('Here is the card to log it.', 'en'), true);
+  assertEquals(mentionsCard("I've proposed a new target.", 'en'), true);
+  assertEquals(mentionsCard('Tippe auf die Karte.', 'de'), true);
+  assertEquals(mentionsCard('Ich habe es dir vorgeschlagen.', 'de'), true);
+  assertEquals(mentionsCard('Öğün kartını hazırladım.', 'tr'), true);
+  assertEquals(mentionsCard('Yeni bir hedef önerdim.', 'tr'), true);
+  assertEquals(mentionsCard('Here are two proposals.', 'en'), true);
+  assertEquals(mentionsCard('Hier sind meine Vorschläge.', 'de'), true);
+  assertEquals(mentionsCard('Bir öneri hazırladım.', 'tr'), true);
+  assertEquals(mentionsCard('Önerim şu.', 'tr'), true);
+  assertEquals(mentionsCard('Sahne steif schlagen.', 'de'), false);
+  assertEquals(mentionsCard('Eat a banana before you train.', 'en'), false);
+  assertEquals(mentionsCard('Discard the yolks.', 'en'), false);
+  assertEquals(mentionsCard('Antrenmandan önce muz ye.', 'tr'), false);
+});
