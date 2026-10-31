@@ -1,21 +1,43 @@
 import { assertEquals } from '@std/assert';
 
+import { MEDIA_BUCKET } from '../_shared/coach/media.ts';
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
+import { base64, EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 
 type Row = Record<string, unknown>;
+
+/** How the database and storage fail, beyond what they refuse anyway. */
+type Failures = {
+  /** A thread deleted while Bite answered, whose messages the foreign key then refuses. */
+  deletedThread?: number;
+  /** The uploads, counted from 0, that storage fails. */
+  failingUploads?: number[];
+};
 
 /**
  * A database for the chat: tables with their rows, functions with what they return, or a
  * function giving it, and what is inserted and deleted, which the service role writes. Every
- * query resolves with all of a table's rows.
+ * query resolves with all of a table's rows. Like the real ones, it keeps the threads there are,
+ * refuses messages of a thread that is not or is gone and more parts than a message may hold, and
+ * its storage has the `coach-media` bucket alone, which takes new JPEG files of at most 1.5 MB, and
+ * keeps what is in it.
  */
-function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[]> = {}) {
+function database(
+  rpc: Record<string, unknown> = {},
+  tables: Record<string, Row[]> = {},
+  { deletedThread, failingUploads = [] }: Failures = {},
+) {
   const inserted: { table: string; rows: Row[] }[] = [];
   const deleted: string[] = [];
+  const objects = new Map<string, Uint8Array>();
+  const removed: string[] = [];
+  let uploads = 0;
   let nextId = 100;
+  const threads = new Set((tables.coach_threads ?? []).map((row) => row.id as number));
+  const refused = (code: string, message: string) => ({ data: null, error: { code, message } });
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
       const data = rows ?? tables[table] ?? [];
@@ -35,7 +57,23 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
     from: (table: string) => ({
       ...query(table),
       insert: (rows: Row | Row[]) => {
-        const list = (Array.isArray(rows) ? rows : [rows]).map((row) => ({ ...row, id: nextId++ }));
+        const given = Array.isArray(rows) ? rows : [rows];
+        if (table === 'coach_messages') {
+          const gone = (row: Row) =>
+            row.thread_id === deletedThread || !threads.has(row.thread_id as number);
+          const error = given.some(gone)
+            ? refused('23503', 'violates foreign key constraint')
+            : given.some((row) => !Array.isArray(row.content) || row.content.length > 50)
+              ? refused('23514', 'violates check constraint')
+              : undefined;
+          if (error) {
+            const failed = { then: (resolve: (value: unknown) => void) => resolve(error) };
+            const builder = { ...failed, select: () => builder, order: () => builder };
+            return builder;
+          }
+        }
+        const list = given.map((row) => ({ ...row, id: nextId++ }));
+        if (table === 'coach_threads') list.forEach((row) => threads.add(row.id));
         inserted.push({ table, rows: list });
         return query(table, list);
       },
@@ -47,6 +85,7 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
             return filter;
           },
           then: (resolve: (value: unknown) => void) => {
+            if (table === 'coach_threads') threads.delete(values[0] as number);
             deleted.push([table, ...values].join(' '));
             resolve({ error: null });
           },
@@ -61,19 +100,53 @@ function database(rpc: Record<string, unknown> = {}, tables: Record<string, Row[
         error: null,
       });
     },
+    storage: {
+      from: (bucket: string) => ({
+        upload: (
+          path: string,
+          body: Uint8Array,
+          options: { contentType?: string; upsert?: boolean },
+        ) => {
+          const upload = uploads++;
+          if (bucket !== MEDIA_BUCKET) return Promise.resolve(refused('404', 'Bucket not found'));
+          if (options.contentType !== 'image/jpeg') {
+            return Promise.resolve(refused('415', 'mime type not supported'));
+          }
+          if (body.byteLength > 1_500_000) return Promise.resolve(refused('413', 'Too large'));
+          if (objects.has(path) && !options.upsert) {
+            return Promise.resolve(refused('409', 'The resource already exists'));
+          }
+          if (failingUploads.includes(upload)) return Promise.resolve(refused('500', 'down'));
+          objects.set(path, body);
+          return Promise.resolve({ data: { path }, error: null });
+        },
+        remove: (paths: string[]) => {
+          if (bucket !== MEDIA_BUCKET) return Promise.resolve(refused('404', 'Bucket not found'));
+          const gone = paths.filter((path) => objects.delete(path));
+          removed.push(...gone);
+          return Promise.resolve({ data: gone.map((name) => ({ name })), error: null });
+        },
+      }),
+    },
   } as unknown as ChatContext['supabase'];
-  return { client, inserted, deleted };
+  return { client, inserted, deleted, objects, removed, threads };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
 
-function context(model: FakeModel, rpc: Record<string, unknown> = {}, tables = {}) {
+function context(
+  model: FakeModel,
+  rpc: Record<string, unknown> = {},
+  tables = {},
+  failures: Failures = {},
+) {
   const db = database(
     { start_ai_call: STARTED, count_ai_call: STARTED, record_ai_usage: 0.001, ...rpc },
     tables,
+    failures,
   );
   const ctx: ChatContext = { supabase: db.client, admin: db.client, userId: 'user-1', model };
-  return { ctx, inserted: db.inserted, deleted: db.deleted };
+  return { ...db, ctx };
 }
 
 const ask = (body: unknown) =>
@@ -639,7 +712,7 @@ Deno.test('keeps a message within what a message may hold', () => {
 });
 
 Deno.test('keeps what came of a message, and says why it ended', () => {
-  const answer = { said: false, stopped: false, finish: 'stop' as const, newThread: true };
+  const answer = { said: false, stopped: false, finish: 'stop' as const };
   const asked = { refused: false, asked: true };
   const notAsked = { failure: 'unavailable' as const, refused: false, asked: false };
   const refused = { failure: 'limit_reached' as const, refused: true, asked: false };
@@ -660,26 +733,22 @@ Deno.test('keeps what came of a message, and says why it ended', () => {
     interrupted: 'stopped',
     reason: undefined,
   });
-  // Without text: the question once the model was asked, else nothing, and a new thread goes.
+  // Without text: the question once the model was asked, else nothing.
   assertEquals(ending(asked, { ...answer, finish: 'stop' }), {
     keep: 'question',
     reason: 'unavailable',
-    dropThread: false,
   });
   assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
     keep: 'nothing',
     reason: 'blocked',
-    dropThread: true,
   });
   assertEquals(ending(notAsked, answer), {
     keep: 'nothing',
     reason: 'unavailable',
-    dropThread: true,
   });
-  assertEquals(ending(refused, { ...answer, newThread: false }), {
+  assertEquals(ending(refused, answer), {
     keep: 'nothing',
     reason: 'limit_reached',
-    dropThread: false,
   });
 });
 
@@ -894,4 +963,229 @@ Deno.test('tells Bite of its meal cards earlier, with where they stand', async (
       [{ type: 'text', text: `[[happy]] Looks good.\n${card})` }],
     ],
   );
+});
+
+const PHOTO = { mimeType: 'image/jpeg', data: base64(PLAIN_JPEG) };
+const PHOTO_MESSAGE = { ...MESSAGE, message: 'Is this enough protein?', photos: [PHOTO, PHOTO] };
+const SURE = [{ type: 'text' as const, text: '[[happy]] Sure.' }];
+
+Deno.test('sends photos to the model in their turn, before the message', async () => {
+  const model = new FakeModel(
+    [{ type: 'toolCall', id: 'c1', name: 'get_records', args: {} }],
+    [{ type: 'text', text: '[[happy]] About 40 g.' }],
+  );
+  const { ctx } = context(model);
+
+  await (await handleChatRequest(ask(PHOTO_MESSAGE), ctx)).text();
+
+  // In every request of the turn, with the snapshot and the tools.
+  for (const request of model.requests) {
+    const [snapshot, first, second, message] = request.messages[0].parts;
+    assertEquals(snapshot.type === 'text' && snapshot.text.startsWith('<snapshot>'), true);
+    assertEquals(
+      [first, second],
+      [
+        { type: 'image', mimeType: 'image/jpeg', data: PHOTO.data },
+        { type: 'image', mimeType: 'image/jpeg', data: PHOTO.data },
+      ],
+    );
+    assertEquals(message, { type: 'text', text: '<message>\nIs this enough protein?\n</message>' });
+  }
+  assertEquals(model.requests[0].tools !== undefined, true);
+});
+
+Deno.test("keeps the photos in the thread's folder, and names them in the message", async () => {
+  const { ctx, inserted, objects } = context(new FakeModel(SURE));
+
+  const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
+  const [question] = inserted[1].rows;
+  const parts = question.content as Record<string, unknown>[];
+  assertEquals(parts.length, 3);
+  for (const part of parts.slice(0, 2)) {
+    const { path, ...rest } = part as { path: string };
+    assertEquals(rest, { type: 'image', mimeType: 'image/jpeg', width: 640, height: 480 });
+    assertEquals(/^user-1\/100\/[0-9a-f-]{36}\.jpg$/.test(path), true, path);
+    assertEquals(objects.get(path), PLAIN_JPEG);
+  }
+  assertEquals(parts[0].path !== parts[1].path, true);
+  assertEquals(parts[2], { type: 'text', text: 'Is this enough protein?' });
+});
+
+Deno.test('takes photos without text, and reads them later as text', async () => {
+  const first = context(new FakeModel(SURE));
+  const photosOnly = { ...MESSAGE, message: '', photos: [PHOTO] };
+
+  await (await handleChatRequest(ask(photosOnly), first.ctx)).text();
+
+  const [question] = first.inserted[1].rows;
+  assertEquals(
+    (question.content as { type: string }[]).map((part) => part.type),
+    ['image'],
+  );
+  // The message tags are there, empty, after the photo.
+  const sent = first.ctx.model as FakeModel;
+  assertEquals(sent.requests[0].messages[0].parts.at(-1), {
+    type: 'text',
+    text: '<message>\n\n</message>',
+  });
+
+  const model = new FakeModel(SURE);
+  const later = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        { role: 'bite', expression: 'happy', content: [{ type: 'text', text: 'Looks good.' }] },
+        {
+          role: 'user',
+          content: [
+            { type: 'image', path: 'p/2.jpg' },
+            { type: 'text', text: 'And now?' },
+          ],
+        },
+        { role: 'user', content: question.content },
+      ],
+    },
+  );
+  await (await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), later.ctx)).text();
+
+  // Oldest first; no photo goes to the model again.
+  assertEquals(model.requests[0].messages.slice(0, 3), [
+    { role: 'user', parts: [{ type: 'text', text: '(Sent a photo.)' }] },
+    { role: 'user', parts: [{ type: 'text', text: '(Sent a photo.)\nAnd now?' }] },
+    { role: 'model', parts: [{ type: 'text', text: '[[happy]] Looks good.' }] },
+  ]);
+  assertEquals(
+    model.requests[0].messages
+      .flatMap((message) => message.parts)
+      .some((part) => part.type === 'image'),
+    false,
+  );
+});
+
+Deno.test('refuses photos it does not take, before anything is asked or kept', async () => {
+  const model = new FakeModel();
+  const { ctx, inserted, objects } = context(model);
+  const photo = (bytes: Uint8Array) => ({ mimeType: 'image/jpeg', data: base64(bytes) });
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const withExif = jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI);
+  const large = { mimeType: 'image/jpeg', data: btoa('x'.repeat(1_100_000)) };
+
+  const cases: [unknown, number, Record<string, unknown>][] = [
+    [{ photos: [PHOTO, photo(png)] }, 415, { error: 'photo_not_jpeg', photo: 1 }],
+    [{ photos: [photo(withExif)] }, 422, { error: 'photo_has_exif', photo: 0 }],
+    [{ photos: [large, large, large] }, 413, { error: 'photos_too_large' }],
+  ];
+  for (const [body, status, error] of cases) {
+    const response = await handleChatRequest(ask({ ...MESSAGE, ...(body as object) }), ctx);
+    assertEquals([response.status, await response.json()], [status, error]);
+  }
+  for (const body of [
+    { photos: [PHOTO, PHOTO, PHOTO, PHOTO] },
+    { photos: [{ ...PHOTO, mimeType: 'image/png' }] },
+    { photos: [{ ...PHOTO, data: 'not base64!' }] },
+    { message: '  ', photos: [] },
+    { message: undefined },
+    { localTime: '25:00' },
+  ]) {
+    const response = await handleChatRequest(ask({ ...MESSAGE, ...body }), ctx);
+    assertEquals(response.status, 400, JSON.stringify(body));
+  }
+  // A body larger than any the app sends is not read as JSON at all.
+  const huge = ask(`{"photos": "${'x'.repeat(5_000_000)}"}`);
+  assertEquals((await handleChatRequest(huge, ctx)).status, 413);
+  assertEquals([model.requests, inserted, objects.size], [[], [], 0]);
+});
+
+Deno.test('keeps no photo of a message that is dropped', async () => {
+  // Refused before the model was asked.
+  const refused = context(new FakeModel(), {
+    start_ai_call: {
+      allowed: false,
+      reason: 'limit_reached',
+      call_id: null,
+      max_output_tokens: null,
+    },
+  });
+  const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), refused.ctx));
+  assertEquals(answer.at(-1), { event: 'error', reason: 'limit_reached', dropped: true });
+  assertEquals(refused.objects.size, 0);
+
+  // Blocked by the model.
+  const blocked = context(new FakeModel({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }));
+  await (await handleChatRequest(ask(PHOTO_MESSAGE), blocked.ctx)).text();
+  assertEquals([blocked.objects.size, blocked.inserted.length], [0, 1]);
+});
+
+Deno.test('keeps the photos of a question Bite gave no answer to', async () => {
+  const { ctx, inserted, objects } = context(new FakeModel([]));
+
+  const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'error', reason: 'unavailable' });
+  assertEquals(objects.size, 2);
+  const parts = inserted[1].rows[0].content as { type: string; path?: string }[];
+  assertEquals(
+    parts.map((part) => part.type),
+    ['image', 'image', 'text'],
+  );
+  assertEquals(
+    parts.slice(0, 2).every((part) => objects.has(part.path!)),
+    true,
+  );
+});
+
+Deno.test('removes the photos again when the message cannot be saved', async () => {
+  // The thread was deleted while Bite answered: its folder was queued for removal then.
+  const { ctx, objects, removed } = context(
+    new FakeModel(SURE),
+    {},
+    { coach_threads: [{ id: 7 }] },
+    { deletedThread: 7 },
+  );
+
+  const answer = await events(await handleChatRequest(ask({ ...PHOTO_MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(answer.at(-1), { event: 'error', reason: 'not_saved' });
+  assertEquals([objects.size, removed.length], [0, 2]);
+});
+
+Deno.test('saves no message when a photo cannot be kept, and drops the new thread', async () => {
+  const { ctx, inserted, objects, removed, threads } = context(
+    new FakeModel(SURE),
+    {},
+    {},
+    {
+      failingUploads: [1],
+    },
+  );
+
+  const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), ctx));
+
+  assertEquals(answer.at(-1), { event: 'error', reason: 'not_saved', dropped: true });
+  assertEquals([objects.size, removed.length], [0, 1]);
+  assertEquals(
+    inserted.map(({ table }) => table),
+    ['coach_threads'],
+  );
+  assertEquals(threads.size, 0);
+
+  // A question Bite gave no answer to, whose photo cannot be kept either.
+  const unanswered = context(new FakeModel([]), {}, {}, { failingUploads: [0] });
+  const ended = await events(await handleChatRequest(ask(PHOTO_MESSAGE), unanswered.ctx));
+  assertEquals(ended.at(-1), { event: 'error', reason: 'unavailable', dropped: true });
+  assertEquals(unanswered.threads.size, 0);
+});
+
+Deno.test("tells Bite the device's local time", async () => {
+  const model = new FakeModel(SURE);
+  const { ctx } = context(model);
+
+  await (await handleChatRequest(ask({ ...MESSAGE, localTime: '07:45' }), ctx)).text();
+
+  const [snapshot] = model.requests[0].messages[0].parts as { text: string }[];
+  assertEquals(snapshot.text.includes('Local time: 07:45'), true);
 });

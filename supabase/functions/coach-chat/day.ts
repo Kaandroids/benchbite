@@ -10,6 +10,9 @@ export const DAY = z
     return !isNaN(date.getTime()) && date.toISOString().startsWith(day);
   }, 'Not a day');
 
+/** A time of day, HH:MM, as the user's device has it. */
+export const TIME = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+
 export function addDays(day: string, days: number): string {
   const date = new Date(`${day}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);

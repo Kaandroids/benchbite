@@ -8,12 +8,12 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
-import { useSessionSize, useWorkoutName } from '@/workouts/format';
+import { useSessionSize, useSessionsSize, useWorkoutName } from '@/workouts/format';
 import { nextWorkouts, type PlannedWorkout, type WeekSchedule } from '@/workouts/week-schedule';
 import type { WeekSession } from '@/workouts/workouts';
 
 import { MovedFrom } from './moved-from';
-import { PlanRow } from './plan-row';
+import { PlanRow, type PlanRowProps } from './plan-row';
 
 type WorkoutCardProps = {
   /** How the card comes in, from the screen that places it. */
@@ -29,10 +29,41 @@ function openWorkout(session: WeekSession) {
   router.push({ pathname: '/workout/[id]', params: { id: String(session.workoutId) } });
 }
 
+type OpenableWorkoutProps = Pick<
+  PlanRowProps,
+  'icon' | 'caption' | 'title' | 'actionLabel' | 'children'
+> & {
+  /** The workout the card and its button open. */
+  session: WeekSession;
+  entering?: CardProps['entering'];
+};
+
+/** A card of the plan that opens a workout, from its round button or anywhere on it. */
+function OpenableWorkout({ session, entering, ...row }: OpenableWorkoutProps) {
+  return (
+    // The whole card opens the workout too; screen readers find that on its button alone.
+    <Pressable
+      accessible={false}
+      onPress={() => openWorkout(session)}
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+    >
+      <Card entering={entering}>
+        <PlanRow
+          {...row}
+          color="breakfast"
+          background="breakfastBackground"
+          actionIcon="forward"
+          onAction={() => openWorkout(session)}
+        />
+      </Card>
+    </Pressable>
+  );
+}
+
 /**
  * Today's workouts. One still to do shows with its size and opens the workout; several show as a
- * list, each done or to open. On a rest day, or once today's are done, it says when the next ones
- * are.
+ * list, each done or to open. On a rest day, or once today's are done, it shows the next ones and
+ * opens the first.
  */
 export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCardProps) {
   const { t } = useTranslation();
@@ -40,6 +71,7 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
   const weekdayName = useWeekdayFormat();
   const workoutName = useWorkoutName();
   const sessionSize = useSessionSize();
+  const sessionsSize = useSessionsSize();
   const day = schedule.days[isoWeekday(today) - 1];
   const todays = day?.workouts.filter((workout) => workout.status !== 'skipped') ?? [];
   const ahead = todays.filter((workout) => workout.status === 'planned');
@@ -50,57 +82,43 @@ export function WorkoutCard({ schedule, sessions, today, entering }: WorkoutCard
       return null;
     }
     const done = todays.length > 0;
+    const [first] = next.sessions;
+    const when =
+      next.inDays === 1
+        ? t('today.workout.nextTomorrow')
+        : t('today.workout.nextOn', { day: weekdayName(next.weekday) });
     return (
-      <Card entering={entering}>
-        <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile
-            name={done ? 'check' : 'moon'}
-            color="breakfast"
-            background="breakfastBackground"
-          />
-          <View style={styles.text}>
-            <Text variant="headline">
-              {done ? t('today.workout.done') : t('today.workout.restDay')}
-            </Text>
-            <Text color="textMuted">
-              {t('today.workout.next', {
-                day: next.inDays === 1 ? t('today.workout.tomorrow') : weekdayName(next.weekday),
-                session: next.sessions.map(workoutName).join(', '),
-              })}
-            </Text>
-          </View>
-        </View>
-      </Card>
+      <OpenableWorkout
+        session={first}
+        entering={entering}
+        icon={done ? 'check' : 'moon'}
+        caption={t(done ? 'today.workout.doneNext' : 'today.workout.restDayNext', { when })}
+        title={next.sessions.map(workoutName).join(', ')}
+        actionLabel={t('today.workout.openNextLabel')}
+      >
+        <Text variant="caption" color="textMuted">
+          {next.sessions.length === 1 ? sessionSize(first) : sessionsSize(next.sessions)}
+        </Text>
+      </OpenableWorkout>
     );
   }
 
   if (todays.length === 1) {
     const [{ session, movedFrom }] = ahead as [PlannedWorkout];
     return (
-      // The whole card opens the workout too; screen readers find that on its button alone.
-      <Pressable
-        accessible={false}
-        onPress={() => openWorkout(session)}
-        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+      <OpenableWorkout
+        session={session}
+        entering={entering}
+        icon="dumbbell"
+        caption={t('today.workout.title')}
+        title={workoutName(session)}
+        actionLabel={t('today.workout.openLabel')}
       >
-        <Card entering={entering}>
-          <PlanRow
-            icon="dumbbell"
-            color="breakfast"
-            background="breakfastBackground"
-            caption={t('today.workout.title')}
-            title={workoutName(session)}
-            actionIcon="forward"
-            actionLabel={t('today.workout.openLabel')}
-            onAction={() => openWorkout(session)}
-          >
-            <Text variant="caption" color="textMuted">
-              {sessionSize(session)}
-            </Text>
-            {movedFrom ? <MovedFrom date={movedFrom} /> : null}
-          </PlanRow>
-        </Card>
-      </Pressable>
+        <Text variant="caption" color="textMuted">
+          {sessionSize(session)}
+        </Text>
+        {movedFrom ? <MovedFrom date={movedFrom} /> : null}
+      </OpenableWorkout>
     );
   }
 
