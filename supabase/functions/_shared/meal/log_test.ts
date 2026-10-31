@@ -1,10 +1,6 @@
 import { assertEquals } from '@std/assert';
 
-import { logItemOf, nameKey } from './log.ts';
-
-Deno.test('compares names as food_name_key() does, trimmed', () => {
-  assertEquals(nameKey(' Kırmızı İnce '), 'kirmizi ince');
-});
+import { logItemOf } from './log.ts';
 
 const PER100 = { kcal: 130, proteinG: 2.7, carbsG: 28, fatG: 0.3 };
 

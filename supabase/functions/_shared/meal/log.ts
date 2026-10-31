@@ -1,6 +1,7 @@
 // How an estimated item is logged (ADR 0060), shared by Nutrition's meal photo and Bite's meal
-// cards, so that both log the same foods at the same values. This file imports only types, so that
-// the app can bundle it.
+// cards, so that both log the same foods at the same values. This file imports only what the app
+// can bundle too.
+import { nameKey } from '../foods.ts';
 import type { EstimateItem } from './estimate.ts';
 
 /** An item as log_meal_estimate() takes it. */
@@ -10,15 +11,6 @@ export type LogItem = { grams: number } & (
   | { recipe_id: number }
   | { name: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number }
 );
-
-/**
- * A food's name as search_foods() and log_meal_estimate() compare it, trimmed: a mirror of
- * food_name_key() in the database, which lowercases after making the Turkish dotted and dotless i a
- * plain i.
- */
-export function nameKey(name: string): string {
-  return name.replace(/[İı]/g, 'i').toLowerCase().trim();
-}
 
 /**
  * An item as log_meal_estimate() takes it: a matched food by its id, and an item the library did
