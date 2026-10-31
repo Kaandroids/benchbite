@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert';
 
-import { decodeBase64, readJpeg } from './photos.ts';
+import { readJpeg } from './photos.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, SCAN, segment, SOI, TABLES, XMP } from './test-photos.ts';
 
 Deno.test('reads the size of a JPEG', () => {
@@ -37,8 +37,4 @@ Deno.test('refuses what is not a whole JPEG', () => {
   ]) {
     assertEquals(readJpeg(new Uint8Array(bytes)), 'photo_not_jpeg', `${bytes}`);
   }
-});
-
-Deno.test('decodes base64 to its bytes', () => {
-  assertEquals(decodeBase64(btoa('\xff\xd8\x00')), new Uint8Array([0xff, 0xd8, 0]));
 });

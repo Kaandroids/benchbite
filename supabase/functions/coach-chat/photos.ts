@@ -7,14 +7,6 @@ import { type Client, logError } from '../_shared/supabase.ts';
 /** A photo that passed the checks: its bytes to keep, its base64 data for the model, its size. */
 export type CheckedPhoto = { bytes: Uint8Array; data: string; width: number; height: number };
 
-/** The bytes of base64 data, which the request was checked to hold. */
-export function decodeBase64(data: string): Uint8Array {
-  const text = atob(data);
-  const bytes = new Uint8Array(text.length);
-  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
-  return bytes;
-}
-
 /** Markers that stand alone, without a length: TEM and the restart markers. */
 const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7);
 

@@ -4,7 +4,7 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
-import { Base64Data } from '../_shared/base64.ts';
+import { Base64Data, decodeBase64 } from '../_shared/base64.ts';
 import {
   type ChatEvent as Event,
   type ChatPhotoPart,
@@ -37,7 +37,7 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
-import { type CheckedPhoto, decodeBase64, readJpeg, removePhotos, storePhotos } from './photos.ts';
+import { type CheckedPhoto, readJpeg, removePhotos, storePhotos } from './photos.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
