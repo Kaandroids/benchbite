@@ -56,7 +56,7 @@ removed too (#361), whichever way the chat was deleted.
   removed until a later run succeeds. Account deletion (#134) gets this without further work.
 - The project needs `pg_cron` and `pg_net`, which the migration enables, and the two Vault secrets,
   which are set once per project: `pnpm vault:local` sets them for the local stack, and the hosted
-  project's are set in its SQL editor (see Deployment in the README).
+  project's are set in its SQL editor (see `docs/deployment.md`).
 - `pg_net` keeps the decrypted key in `net.http_request_queue` until it sends the request. The
   `net` schema is not exposed through the API, so clients cannot read it; any role that can log in
   to the database can.
