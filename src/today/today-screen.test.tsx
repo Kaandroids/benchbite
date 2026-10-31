@@ -419,7 +419,7 @@ describe('TodayScreen', () => {
     mockData();
     await render(<TodayScreen />);
     await fireEvent.press(
-      screen.getByRole('button', { name: 'Your daily target: 0 of 2,200 kcal eaten' }),
+      screen.getByRole('button', { name: /^Your daily target: 0 of 2,200 kcal eaten, / }),
     );
     expect(router.navigate).toHaveBeenCalledWith({
       pathname: '/nutrition',
