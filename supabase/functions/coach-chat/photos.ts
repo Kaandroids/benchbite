@@ -30,7 +30,8 @@ const EOI = 0xd9;
 /**
  * Reads a JPEG's segments to its end, and gives its size, or why it is refused: not a JPEG, with
  * anything after its end, or with an APP1 segment anywhere, as Exif data is refused, not removed
- * (ADR 0062). The app re-encodes each photo on the device, which leaves none.
+ * (ADR 0062). The app removes the APP1 segments before it sends a photo, as re-encoding alone can
+ * leave a small Exif segment on iOS (ADR 0065).
  */
 export function readJpeg(bytes: Uint8Array): { width: number; height: number } | PhotoRefusal {
   if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return 'photo_not_jpeg';
