@@ -178,7 +178,7 @@ export function useChat(
           return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
         case 'proposal': {
           const { proposal } = event;
-          // One of a kind the chat has no card for yet waits in the message (ADR 0068).
+          // One of a kind the chat has no card for stays out of it.
           if (!isShownProposal(proposal)) return;
           return updateBite(biteId, (m) => ({
             ...m,
