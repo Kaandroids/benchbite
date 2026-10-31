@@ -185,14 +185,15 @@ export function nextWorkouts(
   schedule: WeekSchedule,
   sessions: readonly WeekSession[],
   today: Date,
-): { inDays: number; weekday: number; sessions: WeekSession[] } | null {
+): { inDays: number; weekday: number; sessions: [WeekSession, ...WeekSession[]] } | null {
   // Two weeks, so that a workout skipped this week is found on its day next week.
   const [next] = upcomingWorkouts(schedule, sessions, addDays(today, 1), 14);
-  return next
+  const [first, ...rest] = next?.sessions ?? [];
+  return next && first
     ? {
         inDays: next.inDays + 1,
         weekday: isoWeekday(addDays(today, next.inDays + 1)),
-        sessions: next.sessions,
+        sessions: [first, ...rest],
       }
     : null;
 }
