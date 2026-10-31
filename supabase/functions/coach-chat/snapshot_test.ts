@@ -126,7 +126,7 @@ Deno.test(
       '- #4 allergy: Allergic to walnuts',
       '- #7 injury: Left knee hurts (ask now whether it still holds)',
       '- #8 injury: Sore wrist (ask again on 2026-11-03)',
-      "- #9 food: Vegetarian (asked: its card waits for the user's yes)",
+      "- #9 food: Vegetarian (asked, not kept: its card waits for the user's yes; never save it again, nor say you keep it in mind)",
     ]);
 
     const empty = await loadSnapshot(

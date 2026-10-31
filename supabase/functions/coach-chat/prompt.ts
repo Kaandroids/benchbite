@@ -212,7 +212,7 @@ function notebookLines(notes: Note[], today: string, savesNotes?: boolean): stri
     `Notebook (${saving}):`,
     ...notes.map(({ id, category, text, reviewOn, asked }) => {
       const mark = asked
-        ? " (asked: its card waits for the user's yes)"
+        ? " (asked, not kept: its card waits for the user's yes; never save it again, nor say you keep it in mind)"
         : !reviewOn
           ? ''
           : reviewOn <= today
