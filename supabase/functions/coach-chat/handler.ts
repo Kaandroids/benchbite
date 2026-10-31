@@ -126,10 +126,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
 
   const parsed = ChatRequest.safeParse(json);
   if (!parsed.success) {
-    return Response.json(
-      { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },
-      { status: 400 },
-    );
+    return refused('invalid_request', { issues: z.flattenError(parsed.error).fieldErrors });
   }
   const request = parsed.data;
   // Photos are checked before anything is sent or kept (ADR 0062).
@@ -694,6 +691,10 @@ function failed(message: string, error: unknown): Response {
   return refused('unavailable');
 }
 
-function refused(reason: ChatRefusal, details: { photo?: number } = {}): Response {
+/** A refusal, with the photo it is about or what is wrong with the request, when it is told. */
+function refused(
+  reason: ChatRefusal,
+  details: { photo?: number; issues?: Record<string, string[] | undefined> } = {},
+): Response {
   return Response.json({ error: reason, ...details }, { status: STATUS[reason] });
 }
