@@ -75,8 +75,10 @@ export function MealCardView({ card, state, waiting = false }: MealCardViewProps
           iconColor="success"
           text={t(`bite.mealCard.added.${card.meal}`, { calories: format(Math.round(kcal)) })}
           action={
-            // Undo stands as long as the entries are as they were added.
-            refused === 'changed' || refused === 'outOfDate' ? undefined : (
+            // Undo stands as long as the entries are as they were added, on a day still open.
+            refused === 'changed' ||
+            refused === 'outOfDate' ||
+            refused === 'closedDay' ? undefined : (
               <TextLink
                 label={t('bite.proposal.undo')}
                 size="regular"
