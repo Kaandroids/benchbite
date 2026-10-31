@@ -36,6 +36,9 @@ next() { sleep "${1:-1.4}"; tap_label "Continue"; }
 
 xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT" &
 RECORDER=$!
+stop_recording() { kill -INT "$RECORDER" 2>/dev/null && wait "$RECORDER" 2>/dev/null || true; }
+# A failed step stops the recording too, so that no recorder is left running.
+trap stop_recording EXIT
 sleep 2.5
 
 tap_label "Get started for free"; sleep 1.6
@@ -61,6 +64,5 @@ sleep 2.5; swipe 201 700 201 200 0.8; sleep 1.5; tap_label "Start my plan"
 sleep 2; tap_label "Not now"                        # reminders
 sleep 3.5
 
-kill -INT "$RECORDER"
-wait "$RECORDER" 2>/dev/null || true
+stop_recording
 echo "Recorded $OUT"
