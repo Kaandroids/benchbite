@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { DayTotals } from '@/nutrition/day-totals';
 import { MACROS } from '@/nutrition/macro-targets';
 import type { Totals } from '@/nutrition/meals';
+import { openNutritionDay } from '@/nutrition/open-nutrition-day';
 import type { NutritionTargets } from '@/nutrition/targets';
 import { useTheme } from '@/theme';
 
@@ -49,10 +49,7 @@ export function TargetsCard({ entering, targets, eaten, day }: TargetsCardProps)
         ...macroLabels,
       })}
       accessibilityHint={t('today.targetsOpen')}
-      // A new navigation each time, so that Nutrition opens on this day even if it shows another.
-      onPress={() =>
-        router.navigate({ pathname: '/nutrition', params: { day, at: String(Date.now()) } })
-      }
+      onPress={() => openNutritionDay(day)}
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Card entering={entering}>

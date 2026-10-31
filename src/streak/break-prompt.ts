@@ -1,5 +1,7 @@
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
+
+import { openNutritionDay } from '@/nutrition/open-nutrition-day';
 
 import type { StreakBreak } from './streak';
 
@@ -22,8 +24,7 @@ export function useBreakPrompt(streakBreak: StreakBreak | null) {
     /** Opens a missed day on the Nutrition tab to log it. */
     log: (day: string) => {
       setAway(true);
-      // A new navigation each time, so that the same day opens again.
-      router.navigate({ pathname: '/nutrition', params: { day, at: String(Date.now()) } });
+      openNutritionDay(day);
     },
     message,
     setMessage,
