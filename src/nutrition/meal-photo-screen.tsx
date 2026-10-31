@@ -1,8 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Image, StyleSheet, TextInput, View } from 'react-native';
 
 import { MAX_NOTE_LENGTH } from '@shared/meal/estimate';
 
@@ -15,18 +14,16 @@ import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
-import { AmountForm } from './amount-form';
 import { useLogEstimate } from './entries';
 import { EstimateCard } from './estimate-card';
-import { EstimateFailure, per100Totals, type EstimateItem } from './meal-estimate';
+import { ItemAmount } from './item-amount';
+import { EstimateFailure } from './meal-estimate';
 import { handOverLoggedEstimate } from './meal-photo-handover';
 import { MealPhotoSheet } from './meal-photo-sheet';
-import { totalOf, useDayEntries, type Meal } from './meals';
-import { useDayTargets } from './targets';
+import type { Meal } from './meals';
 import { useMealEstimate } from './use-meal-estimate';
 
 type MealPhotoScreenProps = {
@@ -311,46 +308,6 @@ function Message({
 function Refused({ refusal }: { refusal: Refusal }) {
   const access = useAiAccess();
   return <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />;
-}
-
-/** Changes an item's grams, in the form that adds a food, over the estimate. */
-function ItemAmount({
-  item,
-  day,
-  onClose,
-  onSave,
-}: {
-  item: EstimateItem;
-  day: string;
-  onClose: () => void;
-  onSave: (grams: number) => void;
-}) {
-  const { t } = useTranslation();
-  const { format } = useNumberFormat();
-  const entries = useDayEntries(day);
-  const targets = useDayTargets(day);
-  const per100g = per100Totals(item.per100);
-  return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
-      {/* On iOS, a screen in a full-screen modal gets no safe area without a provider of its own. */}
-      <SafeAreaProvider>
-        <AmountForm
-          title={item.name}
-          subtitle={t('nutrition.amount.per100g', { calories: format(per100g.calories) })}
-          onBack={onClose}
-          per100g={per100g}
-          // An estimate is in grams.
-          portions={[]}
-          initial={{ grams: item.grams, portion: null }}
-          eatenCalories={totalOf(entries.data ?? []).calories}
-          targetCalories={targets.data?.calories ?? null}
-          submitLabel={t('nutrition.photo.saveAmount')}
-          submitting={false}
-          onSubmit={({ grams }) => onSave(grams)}
-        />
-      </SafeAreaProvider>
-    </Modal>
-  );
 }
 
 const styles = StyleSheet.create({
