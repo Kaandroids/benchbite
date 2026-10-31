@@ -52,7 +52,7 @@ export function ChatComposer({
     const wanted = uris.slice(0, room);
     onProblem(undefined);
     setPreparing((count) => count + wanted.length);
-    const prepared = await Promise.allSettled(wanted.map(prepareChatPhoto));
+    const prepared = await Promise.allSettled(wanted.map((uri) => prepareChatPhoto(uri)));
     setPreparing((count) => count - wanted.length);
     const photos = prepared.flatMap((result) =>
       result.status === 'fulfilled' ? [result.value] : [],
