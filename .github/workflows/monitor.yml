@@ -36,7 +36,7 @@ jobs:
             --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             --header 'Content-Type: application/json' \
             --data '{"query": "select * from public.coach_media_purge_status()"}')
-          # The query endpoint answers a successful query with 201.
+          # Any 2xx is a success; the query endpoint currently answers with 201.
           if [[ "$http_status" != 2?? ]]; then
             echo "::error::The status query failed with HTTP $http_status"
             exit 1
@@ -54,7 +54,7 @@ jobs:
             "Latest status code: \(.latest_status // "none")"
           ' <<< "$status"
 
-          if [ "$(jq --raw-output '.healthy' <<< "$status")" != true ]; then
+          if [[ "$(jq --raw-output '.healthy' <<< "$status")" != true ]]; then
             echo "::error::The photo purge of deleted chats is failing: it has stopped with folders over an hour old, or its latest call failed"
             exit 1
           fi
