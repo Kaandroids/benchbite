@@ -235,22 +235,24 @@ begin
 end;
 $$;
 
--- Takes back the caller's logged card `card_id` with undo_meal_estimate(), only while its entries
--- are as it logged them: one the user moved, resized or removed meanwhile is theirs now (BB035).
--- Of the foods it saved, it removes only those the user has not come to use since: one they
--- changed, logged elsewhere (a removed entry still restorable included), put in a recipe, starred
--- or that another pending card holds by its id stays as it is. Gives the card as it is then.
+-- Takes back the caller's logged card `card_id`, only while its entries are as it logged them: one
+-- the user moved, resized or removed meanwhile is theirs now (BB035). undo_meal_estimate() removes
+-- the entries. Of the foods the card saved, it then deletes those the user has not come to use
+-- since: one they changed or that another pending card holds by its id is left, and so is one the
+-- delete may not remove, as something still names it (an entry, a restorable removed one, a
+-- recipe or a star). A food left stays as it is, not archived. Gives the card as it is then.
 create function public.undo_coach_meal_card(card_id bigint)
 returns public.coach_meal_cards
 language plpgsql
--- Writes cards, which callers may only read; undo_meal_estimate() keeps to the caller's own rows.
+-- Writes cards, which callers may only read, and deletes foods, which users may not; each is the
+-- caller's own, checked here, and undo_meal_estimate() keeps to the caller's own rows.
 security definer
 set search_path = ''
 as $$
 declare
   caller_id uuid := (select auth.uid());
   card public.coach_meal_cards;
-  unused_food_ids bigint[];
+  food_id bigint;
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
@@ -273,30 +275,28 @@ begin
     raise exception 'Changed since the meal was logged' using errcode = 'BB035';
   end if;
 
-  select coalesce(array_agg(food.value['id']::bigint), '{}') into unused_food_ids
-  from jsonb_array_elements(public.coach_meal_card_foods(card.food_ids)) food
-  where food.value in (select jsonb_array_elements(card.logged -> 'foods'))
-    and not exists (
-      select 1 from public.meal_entries e
-      where e.custom_food_id = food.value['id']::bigint and e.id <> all (card.entry_ids)
-    )
-    and not exists (
-      select 1 from public.removed_meal_entries r
-      where r.custom_food_id = food.value['id']::bigint and r.id <> all (card.entry_ids)
-    )
-    and not exists (
-      select 1 from public.recipe_ingredients i where i.custom_food_id = food.value['id']::bigint
-    )
-    and not exists (
-      select 1 from public.favourite_foods f where f.custom_food_id = food.value['id']::bigint
-    )
-    and not exists (
-      select 1 from public.coach_meal_cards c
-      where c.user_id = caller_id and c.status = 'pending'
-        and c.items @> jsonb_build_array(jsonb_build_object('custom_food_id', food.value['id']))
-    );
+  -- No foods, so that none falls into its archiving: which go is decided below.
+  perform public.undo_meal_estimate(card.entry_ids, '{}');
 
-  perform public.undo_meal_estimate(card.entry_ids, unused_food_ids);
+  -- What no foreign key tells: a food changed since logging, or held by a pending card.
+  for food_id in
+    select food.value['id']::bigint
+    from jsonb_array_elements(public.coach_meal_card_foods(card.food_ids)) food
+    where food.value in (select jsonb_array_elements(card.logged -> 'foods'))
+      and not exists (
+        select 1 from public.coach_meal_cards c
+        where c.user_id = caller_id and c.status = 'pending'
+          and c.items @> jsonb_build_array(jsonb_build_object('custom_food_id', food.value['id']))
+      )
+  loop
+    -- The rest the keys tell: a food something still names is left.
+    begin
+      delete from public.custom_foods c where c.id = food_id and c.user_id = caller_id;
+    exception when foreign_key_violation then
+      null;
+    end;
+  end loop;
+
   card.status := 'undone';
   card.undone_at := now();
   update public.coach_meal_cards c

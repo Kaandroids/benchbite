@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(42);
+select plan(43);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -254,6 +254,18 @@ select public.undo_coach_meal_card((select id from ids where name = 'lassi card'
 select is(
   (select count(*)::integer from public.custom_foods where name = 'Lassi'),
   0, 'A food only its card used goes with it'
+);
+
+-- A card saves Chaas, which the user stars: the star names it, so undoing the card leaves it.
+insert into ids select 'chaas card', pg_temp.add(pg_temp.own('Chaas'));
+select public.log_coach_meal_card((select id from ids where name = 'chaas card'));
+insert into public.favourite_foods (custom_food_id)
+select id from public.custom_foods where name = 'Chaas';
+select public.undo_coach_meal_card((select id from ids where name = 'chaas card'));
+select results_eq(
+  $$ select archived_at is null from public.custom_foods where name = 'Chaas' $$,
+  $$ values (true) $$,
+  'A food the user starred stays, not archived'
 );
 
 -- 50 cards today already.
