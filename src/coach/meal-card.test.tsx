@@ -165,3 +165,17 @@ it('waits for where the card stands before it may be added', async () => {
   expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
 });
+
+it('shows a meal undone elsewhere once its Undo here is refused as out of date', async () => {
+  answers('logged');
+  const { rerender } = await render(<MealCardView card={CARD} state={pending} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
+
+  // Undone on another device: the states, loaded again, say so.
+  answers(null, 'BB036');
+  await rerender(<MealCardView card={CARD} state={{ status: 'undone', kcal: null }} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+
+  expect(await screen.findByText('Undone')).toBeOnTheScreen();
+});
