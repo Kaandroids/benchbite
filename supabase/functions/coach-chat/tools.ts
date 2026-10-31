@@ -1,8 +1,8 @@
 // What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
 // records and plan, and the food and exercise libraries; the changes it may propose, which the
-// user applies (ADR 0058); and the meals it estimates, as cards the user adds (ADR 0062). Each tool runs with the user's token, so row level security and the
-// database's functions decide what it sees and may do, and returns little, to keep the answer
-// cheap.
+// user applies (ADR 0058); and the meals it estimates, as cards the user adds (ADR 0062). Each
+// tool runs with the user's token, so row level security and the database's functions decide what
+// it sees and may do, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
 import type { CoachToolName, DayTargets, MealCard, ProposalCard } from '../_shared/coach/chat.ts';
@@ -31,7 +31,10 @@ export type ToolContext = {
   localTime?: string;
 };
 
-/** How many days back a meal may be logged, as check_meal_day() allows. */
+/**
+ * How many days back a meal may be logged, as check_meal_day() allows. The database decides
+ * (BB020); the tool's check only saves the searches for a day it would refuse.
+ */
 const MEAL_DAYS_BACK = 7;
 
 /** The most days one look at the history may cover. */
