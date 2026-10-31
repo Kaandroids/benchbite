@@ -77,5 +77,6 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted, amended by ADR-0062 |
 | [0060](0060-logging-an-estimated-meal.md)                    | Log an estimated meal in one step, saving foods the library lacks as the user's own     | Accepted                      |
 | [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
-| [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted                      |
+| [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted, amended by ADR-0066 |
 | [0063](0063-purge-chat-photos-from-a-queue.md)               | Remove a deleted chat's photos from a queue, on a schedule                              | Accepted                      |
+| [0066](0066-meal-cards-and-their-undo.md)                    | Meal cards in their own table, and an Undo that leaves foods in use                     | Accepted                      |
