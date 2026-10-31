@@ -68,6 +68,7 @@
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts && cp src/lib/database.types.ts supabase/functions/_shared/database.types.ts && prettier --write src/lib/database.types.ts supabase/functions/_shared/database.types.ts",
     "functions:check": "cd supabase/functions && deno check . && deno lint && deno test --allow-read=.",
     "vault:local": "node scripts/set-local-vault.ts",
+    "seed:demo": "node scripts/seed-demo.ts",
     "check:plans": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-plans.ts",
     "test": "jest"
   },
