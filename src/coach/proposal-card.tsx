@@ -1,22 +1,21 @@
 import type { DayTargets } from '@shared/coach/chat';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
-import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { Was } from '@/components/ui/was';
 import { useNumberFormat } from '@/i18n/units';
-import { radii, spacing, useTheme, type ColorTokens } from '@/theme';
+import { spacing, useTheme, type ColorTokens } from '@/theme';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
+import { CardRefusal as Refusal, DecidedLine } from './decided-line';
 import {
   type ProposalDecision,
-  type ProposalFailure,
   type ProposalState,
   type ProposalStatus,
   proposalFailure,
@@ -259,56 +258,6 @@ function TargetsChange({ card }: { card: Extract<Proposal, { kind: 'targets' }> 
   );
 }
 
-/** A decided proposal, folded into a line: what became of it, and Undo after Apply. */
-function DecidedLine({
-  icon,
-  iconColor,
-  text,
-  action,
-}: {
-  icon: IconName;
-  iconColor: keyof ColorTokens;
-  text: string;
-  action?: ReactNode;
-}) {
-  const { colors, spacing } = useTheme();
-  return (
-    <View
-      style={[
-        styles.line,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          gap: spacing.sm,
-          paddingHorizontal: spacing.md,
-        },
-      ]}
-    >
-      <Icon name={icon} size={18} color={iconColor} />
-      <Text variant="bodyStrong" accessibilityLiveRegion="polite" style={styles.flex}>
-        {text}
-      </Text>
-      {action}
-    </View>
-  );
-}
-
-/** Why the proposal could not be decided. */
-function Refusal({ failure }: { failure: ProposalFailure }) {
-  const { t } = useTranslation();
-  const { spacing } = useTheme();
-  return (
-    <Text
-      variant="caption"
-      color={failure === 'failed' ? 'danger' : 'textMuted'}
-      accessibilityLiveRegion="polite"
-      style={{ paddingTop: spacing.xs }}
-    >
-      {t(`bite.proposal.refusals.${failure}`)}
-    </Text>
-  );
-}
-
 /** A short summary of what a proposal changes, for the line it folds into once applied. */
 function useSummary() {
   const { t } = useTranslation();
@@ -355,12 +304,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-  },
-  line: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: radii.md + 2,
   },
 });
