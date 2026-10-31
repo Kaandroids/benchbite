@@ -36,7 +36,8 @@ jobs:
             --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             --header 'Content-Type: application/json' \
             --data '{"query": "select * from public.coach_media_purge_status()"}')
-          if [ "$http_status" != 200 ]; then
+          # The query endpoint answers a successful query with 201.
+          if [[ "$http_status" != 2?? ]]; then
             echo "::error::The status query failed with HTTP $http_status"
             exit 1
           fi
