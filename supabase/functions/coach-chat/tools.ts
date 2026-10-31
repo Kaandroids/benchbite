@@ -51,6 +51,13 @@ const MAX_DAYS = 31;
 
 const QUERY = z.string().trim().min(2).max(80);
 
+/**
+ * How many exercises a search gives, and how many of the library's it ranks them from: enough
+ * for a common word, as "press" matches about a hundred.
+ */
+const SEARCH_LIMIT = 10;
+const SEARCH_ROWS = 100;
+
 /** A food name, as long as search_foods() searches. */
 const FOOD_QUERY = z.string().trim().min(FOOD_QUERY_LENGTH.min).max(FOOD_QUERY_LENGTH.max);
 
@@ -259,31 +266,39 @@ const TOOLS = [
     args: z.object({ query: QUERY.describe('An exercise name, such as "squat".') }),
     run: async ({ query }, { supabase, language }) => {
       const pattern = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-      const [translated, own] = await Promise.all([
-        supabase
-          .from('exercise_translations')
-          .select('exercise_id, language, name')
-          .in('language', [language, 'en'])
-          .ilike('name', pattern)
-          .limit(20),
+      // An exercise's own name is its English one; some of the library have a name in German or
+      // Turkish too, which the app shows instead. The user's own are searched apart, so that the
+      // library's many matches leave room for them. Translations are of the library only, whose
+      // exercises are never archived.
+      const exercises = () =>
         supabase
           .from('exercises')
           .select('id, name')
-          .not('owner_id', 'is', null)
           .is('archived_at', null)
+          .ilike('name', pattern);
+      const [own, translated, library] = await Promise.all([
+        exercises().not('owner_id', 'is', null).limit(SEARCH_LIMIT),
+        supabase
+          .from('exercise_translations')
+          .select('exercise_id, name')
+          .eq('language', language)
           .ilike('name', pattern)
-          .limit(10),
+          .limit(SEARCH_ROWS),
+        exercises().is('owner_id', null).limit(SEARCH_ROWS),
       ]);
-      const found = inLanguage(
-        read(translated).map((row) => ({
-          id: row.exercise_id,
-          language: row.language,
-          name: row.name,
-        })),
-        language,
-      );
-      for (const exercise of read(own)) found.set(exercise.id, exercise.name);
-      return [...found].slice(0, 10).map(([id, name]) => ({ id, name }));
+      // The user's own first, then the library's by how close the name they matched by is.
+      const ranked = [
+        ...read(translated).map((row) => ({ id: row.exercise_id, name: row.name })),
+        ...read(library),
+      ].sort((a, b) => closeness(a.name, query) - closeness(b.name, query));
+      const ids = [
+        ...new Set([...read(own).map((row) => row.id), ...ranked.map((row) => row.id)]),
+      ].slice(0, SEARCH_LIMIT);
+      const names = await exerciseNames(supabase, language, ids);
+      return ids.flatMap((id) => {
+        const name = names.get(id);
+        return name ? [{ id, name }] : [];
+      });
     },
   }),
   tool({
@@ -673,25 +688,26 @@ function foodLogEntry(
   };
 }
 
-/** Exercises' names in `language`, else in English, else their own, as the app names them. */
+/**
+ * Exercises' names in `language`, else their own, which is English, as the app names them
+ * (`src/exercises/library.ts`).
+ */
 async function exerciseNames(supabase: Client, language: Language, ids: string[]) {
   if (!ids.length) return new Map<string, string>();
   const rows = read(
     await supabase
       .from('exercises')
-      .select('id, name, exercise_translations (language, name)')
+      .select('id, name, exercise_translations (name)')
       .in('id', ids)
-      .in('exercise_translations.language', [language, 'en']),
+      .eq('exercise_translations.language', language),
   );
-  return new Map(
-    rows.map((row) => {
-      const translated = inLanguage(
-        row.exercise_translations.map((t) => ({ id: row.id, language: t.language, name: t.name })),
-        language,
-      );
-      return [row.id, translated.get(row.id) ?? row.name];
-    }),
-  );
+  return new Map(rows.map((row) => [row.id, row.exercise_translations[0]?.name ?? row.name]));
+}
+
+/** How close a name is to what was searched: the name itself, one starting with it, the rest. */
+function closeness(name: string, query: string): number {
+  const [a, b] = [name.toLowerCase(), query.trim().toLowerCase()];
+  return a === b ? 0 : a.startsWith(b) ? 1 : 2;
 }
 
 /** The user's active workouts with their exercises in order, as row level security lets them. */
