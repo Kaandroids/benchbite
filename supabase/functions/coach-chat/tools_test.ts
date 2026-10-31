@@ -522,8 +522,24 @@ Deno.test('offers Bite no tool that proposes a change the app has no card for', 
 const proposeFoodLog = (args: unknown, context: ToolContext) =>
   runTool('propose_food_log_change', args, context, WAITING_TOOLS);
 
+type Entry = {
+  id: number;
+  user: string;
+  day: string;
+  meal: string;
+  grams: number;
+  kcal: number;
+  kcal_per_100g: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  food_id: string | null;
+  custom_foods: { name: string } | null;
+  recipes: { name: string } | null;
+};
+
 /** The user's entries, as row level security lets them read them, and another user's. */
-const ENTRIES = [
+const ENTRIES: Entry[] = [
   {
     id: 21,
     user: 'me',
@@ -531,6 +547,7 @@ const ENTRIES = [
     meal: 'lunch',
     grams: 300,
     kcal: 798,
+    kcal_per_100g: 266,
     protein_g: 33,
     carbs_g: 99,
     fat_g: 30,
@@ -545,6 +562,7 @@ const ENTRIES = [
     meal: 'snack',
     grams: 50,
     kcal: 268,
+    kcal_per_100g: 536,
     protein_g: 3,
     carbs_g: 30,
     fat_g: 15,
@@ -559,6 +577,7 @@ const ENTRIES = [
     meal: 'dinner',
     grams: 80,
     kcal: 100,
+    kcal_per_100g: 125,
     protein_g: 1,
     carbs_g: 1,
     fat_g: 1,
@@ -574,6 +593,7 @@ const ENTRY_COLUMNS = [
   'meal',
   'grams',
   'kcal',
+  'kcal_per_100g',
   'protein_g',
   'carbs_g',
   'fat_g',
@@ -590,14 +610,30 @@ const ENTRY_COLUMNS = [
  * logged (BB020) and grams out of range (23514). Its arguments are sent as JSON, which drops what
  * is undefined.
  */
-function foodLogContext(overrides: Partial<ToolContext> = {}) {
+function foodLogContext(
+  overrides: Partial<ToolContext> = {},
+  {
+    entries = ENTRIES,
+    storedEntries,
+  }: {
+    /** All entries, the user's and another's. */
+    entries?: Entry[];
+    /** The user's entries as propose_coach_change() finds them, if they changed meanwhile. */
+    storedEntries?: Entry[];
+  } = {},
+) {
   const calls: { name: string; args: Record<string, unknown> }[] = [];
   const fail = (code: string) => Promise.resolve({ data: null, error: { code, message: code } });
-  const mine = ENTRIES.filter((entry) => entry.user === 'me');
+  const mine = entries.filter((entry) => entry.user === 'me');
+  const proposals: Record<string, unknown>[] = [];
   const from = (table: string) => {
     let error: unknown = null;
     let rows: Record<string, unknown>[] =
-      table === 'meal_entries' ? mine : [{ food_id: 'C100', language: 'en', name: 'Pizza' }];
+      table === 'meal_entries'
+        ? mine
+        : table === 'coach_proposals'
+          ? proposals
+          : [{ food_id: 'C100', language: 'en', name: 'Pizza' }];
     const builder: Record<string, unknown> = {
       select: (columns: string) => {
         const unknown = columns
@@ -617,6 +653,12 @@ function foodLogContext(overrides: Partial<ToolContext> = {}) {
         return builder;
       },
       order: () => builder,
+      single: () =>
+        Promise.resolve(
+          rows.length === 1
+            ? { data: rows[0], error: null }
+            : { data: null, error: { code: 'PGRST116', message: 'not one row' } },
+        ),
       then: (resolve: (value: unknown) => void) => resolve({ data: error ? null : rows, error }),
     };
     return builder;
@@ -651,10 +693,12 @@ function foodLogContext(overrides: Partial<ToolContext> = {}) {
     }
     const ids = changes.map((change: { entryId: number }) => change.entryId);
     if (new Set(ids).size !== ids.length) return fail('BB045');
-    const entries = ids.map((id: number) => mine.find((entry) => entry.id === id));
-    if (entries.some((entry: unknown) => !entry)) return fail('BB044');
+    const found = ids.map((id: number) =>
+      (storedEntries ?? entries).find((entry) => entry.id === id && entry.user === 'me'),
+    );
+    if (found.some((entry: unknown) => !entry)) return fail('BB044');
     for (const [i, change] of changes.entries()) {
-      const entry = entries[i]!;
+      const entry = found[i]!;
       if (
         !change.remove &&
         (change.day ?? entry.day) === entry.day &&
@@ -672,6 +716,30 @@ function foodLogContext(overrides: Partial<ToolContext> = {}) {
         return fail('23514');
       }
     }
+    // Kept filled in, as food_log_change() does, with the entries as they were.
+    proposals.push({
+      id: 61,
+      change: {
+        changes: changes.map((change: Record<string, unknown>, i: number) => {
+          const entry = found[i]!;
+          return change.remove
+            ? { entryId: entry.id, remove: true }
+            : {
+                entryId: entry.id,
+                day: change.day ?? entry.day,
+                meal: change.meal ?? entry.meal,
+                grams:
+                  change.grams === undefined
+                    ? entry.grams
+                    : Math.round((change.grams as number) * 10) / 10,
+              };
+        }),
+      },
+      before: found.map((entry) => {
+        const { id, day, meal, grams, kcal_per_100g } = entry!;
+        return { id, day, meal, grams, kcal_per_100g };
+      }),
+    });
     return Promise.resolve({ data: 61, error: null });
   };
   return {
@@ -765,6 +833,47 @@ Deno.test('shows new grams on the card with what they add', async () => {
     kcal: 134,
   });
 });
+
+Deno.test('works out the calories on the card as the food log does', async () => {
+  const sauce = {
+    ...ENTRIES[1],
+    id: 24,
+    grams: 3,
+    kcal: 10,
+    kcal_per_100g: 333,
+    custom_foods: { name: 'Sauce' },
+  };
+  const { context } = foodLogContext({}, { entries: [sauce] });
+  const result = await proposeFoodLog({ changes: [{ entryId: 24, grams: 300 }] }, context);
+  const [change] = (result as { proposal: { changes: { from: unknown; to: unknown }[] } }).proposal
+    .changes;
+  // From the values per 100 g, not by scaling the rounded 10 kcal, which would show 1000.
+  assertEquals(change.from, { day: '2026-10-30', meal: 'snack', grams: 3, kcal: 10 });
+  assertEquals(change.to, { day: '2026-10-30', meal: 'snack', grams: 300, kcal: 999 });
+});
+
+Deno.test(
+  'shows the change as the database kept it, though the entry changed meanwhile',
+  async () => {
+    // The user moved the pizza to dinner in Nutrition while Bite answered.
+    const moved = ENTRIES.map((entry) => (entry.id === 21 ? { ...entry, meal: 'dinner' } : entry));
+    const { context } = foodLogContext({}, { storedEntries: moved });
+    const result = await proposeFoodLog({ changes: [{ entryId: 21, grams: 150 }] }, context);
+    assertEquals(result, {
+      proposal: {
+        kind: 'food_log',
+        id: 61,
+        changes: [
+          {
+            food: 'Pizza',
+            from: { day: '2026-10-30', meal: 'dinner', grams: 300, kcal: 798 },
+            to: { day: '2026-10-30', meal: 'dinner', grams: 150, kcal: 399 },
+          },
+        ],
+      },
+    });
+  },
+);
 
 Deno.test('proposes no food log change for a message without words', async () => {
   const { context, calls } = foodLogContext({ hasText: false });

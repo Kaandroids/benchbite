@@ -525,17 +525,6 @@ const PROPOSE_FOOD_LOG_CHANGE = tool({
           'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
       };
     }
-    // As the user, so that only their own entries are found, which the card shows as they are.
-    const entries = read(
-      await supabase
-        .from('meal_entries')
-        .select(`id, day, meal, grams, kcal, ${ENTRY_FOOD}`)
-        .in(
-          'id',
-          changes.map((c) => c.entryId),
-        ),
-    );
-    const byId = new Map(entries.map((entry) => [entry.id, entry]));
     const proposed = await supabase.rpc('propose_coach_change', {
       thread_id: threadId,
       kind: 'food_log',
@@ -547,27 +536,37 @@ const PROPOSE_FOOD_LOG_CHANGE = tool({
       today,
     });
     if (proposed.error) return refused(proposed.error, FOOD_LOG_REFUSALS);
+    // The card shows what the database kept, which applying sets, rather than what Bite asked for
+    // or an entry read before: the entries may have changed meanwhile. The user reads their own
+    // proposals and entries.
+    const [stored, named] = await Promise.all([
+      supabase.from('coach_proposals').select('change, before').eq('id', proposed.data).single(),
+      supabase
+        .from('meal_entries')
+        .select(`id, ${ENTRY_FOOD}`)
+        .in(
+          'id',
+          changes.map((c) => c.entryId),
+        ),
+    ]);
+    if (stored.error) throw stored.error;
+    const entries = read(named);
     const name = await entryNames(supabase, language, entries);
+    const names = new Map(entries.map((entry) => [entry.id, name(entry)]));
+    const { change, before } = stored.data as unknown as {
+      change: { changes: StoredFoodLogChange[] };
+      before: StoredFoodLogEntry[];
+    };
     const proposal: ProposalCard = {
       kind: 'food_log',
       id: proposed.data,
-      changes: changes.map(({ entryId, day, meal, grams, remove }): FoodLogChange => {
-        const entry = byId.get(entryId)!;
-        const from: FoodLogEntry = {
-          day: entry.day,
-          meal: entry.meal,
-          grams: entry.grams,
-          kcal: entry.kcal ?? 0,
+      changes: change.changes.map((c): FoodLogChange => {
+        const was = before.find((entry) => entry.id === c.entryId)!;
+        return {
+          food: names.get(c.entryId) ?? '',
+          from: foodLogEntry(was, was),
+          ...(!c.remove && { to: foodLogEntry(c, was) }),
         };
-        // As the entry keeps them, and what it adds at its values per gram.
-        const eaten = grams === undefined ? from.grams : Math.round(grams * 10) / 10;
-        const to: FoodLogEntry = {
-          day: day ?? from.day,
-          meal: meal ?? from.meal,
-          grams: eaten,
-          kcal: from.grams ? Math.round((from.kcal * eaten * 10) / from.grams) / 10 : 0,
-        };
-        return { food: name(entry) ?? '', from, ...(!remove && { to }) };
       }),
     };
     return { proposal };
@@ -658,6 +657,36 @@ async function entryNames(supabase: Client, language: Language, entries: EntryFo
     : new Map<string, string>();
   return (entry: EntryFood) =>
     (entry.food_id && names.get(entry.food_id)) ?? entry.custom_foods?.name ?? entry.recipes?.name;
+}
+
+/** A change as food_log_change() keeps it, everything filled in. */
+type StoredFoodLogChange =
+  | { entryId: number; remove: true }
+  | { entryId: number; remove?: undefined; day: string; meal: FoodLogEntry['meal']; grams: number };
+
+/** An entry as a proposal's `before` keeps it. */
+type StoredFoodLogEntry = {
+  id: number;
+  day: string;
+  meal: FoodLogEntry['meal'];
+  grams: number;
+  kcal_per_100g: number;
+};
+
+/**
+ * An entry on `at`'s day and meal and at its grams, with what it adds at `entry`'s values per
+ * 100 g, rounded as the entry's own `kcal` is.
+ */
+function foodLogEntry(
+  at: { day: string; meal: FoodLogEntry['meal']; grams: number },
+  entry: StoredFoodLogEntry,
+): FoodLogEntry {
+  return {
+    day: at.day,
+    meal: at.meal,
+    grams: at.grams,
+    kcal: Math.round((at.grams * entry.kcal_per_100g) / 10) / 10,
+  };
 }
 
 /** Exercises' names in `language`, else in English, else their own, as the app names them. */
