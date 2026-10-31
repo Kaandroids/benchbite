@@ -11,6 +11,7 @@ import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import { localTime, type MessagePhoto, type PhotosProblem, photosToSend } from './chat-photos';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
+import type { MealCard } from './meal-cards';
 import { isShownProposal, type ShownProposal } from './proposals';
 import { THREADS_KEY } from './threads';
 
@@ -49,6 +50,8 @@ export type ChatMessage = {
   createdAt?: Date;
   /** The changes Bite proposed with it (ADR 0058). */
   proposals?: ShownProposal[];
+  /** The meals Bite estimated with it, for the user to add (ADR 0066). */
+  mealCards?: MealCard[];
 };
 
 /** What the user writes to Bite: text, photos as base64 JPEG ready to send, or both. */
@@ -114,8 +117,8 @@ export function useChat(
   const settle = (questionId: string, biteId: string, cut?: ChatMessage['cut']) =>
     setMessages((all) => {
       const bite = all.find((message) => message.id === biteId);
-      // A proposal's card is an answer, though Bite said nothing with it.
-      if (bite?.text || bite?.proposals?.length) {
+      // A proposal's or a meal's card is an answer, though Bite said nothing with it.
+      if (bite?.text || bite?.proposals?.length || bite?.mealCards?.length) {
         return cut ? all.map((m) => (m.id === biteId ? { ...m, cut } : m)) : all;
       }
       return all
@@ -180,6 +183,13 @@ export function useChat(
           return updateBite(biteId, (m) => ({
             ...m,
             proposals: [...(m.proposals ?? []), proposal],
+          }));
+        }
+        case 'meal_card': {
+          const { mealCard } = event;
+          return updateBite(biteId, (m) => ({
+            ...m,
+            mealCards: [...(m.mealCards ?? []), mealCard],
           }));
         }
       }

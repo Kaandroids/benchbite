@@ -136,3 +136,12 @@ it('keeps the new thread of an answer stopped after its proposal', () => {
   );
   expect(ending.threadId).toBe(7);
 });
+
+it('takes a meal card for an answer, and keeps its new thread when stopped', () => {
+  const card: ChatEvent = {
+    event: 'meal_card',
+    mealCard: { id: 51, day: '2026-10-30', meal: 'lunch', items: [] },
+  };
+  const ending = afterStream(read(undefined, { event: 'thread', threadId: 7 }, card), 'stopped');
+  expect(ending).toMatchObject({ said: true, threadId: 7 });
+});
