@@ -125,6 +125,8 @@
       "evening": "İyi akşamlar, {{name}}"
     },
     "targets": "Günlük hedefin",
+    "targetsLabel": "$t(today.targets): $t(nutrition.ringLabel), {{protein}}, {{carbs}}, {{fat}}",
+    "targetsOpen": "Beslenme sekmesini açar",
     "week": {
       "done": "yapıldı",
       "missed": "kaçırıldı",
@@ -289,6 +291,7 @@
     "left": "kcal kaldı",
     "over": "kcal fazla",
     "ringLabel": "{{target}} kcal'nin {{eaten}} kcal'si yendi",
+    "macroLabel": "{{macro}} {{target}} g'ın {{eaten}} g'ı",
     "meals": {
       "breakfast": "Kahvaltı",
       "lunch": "Öğle yemeği",
