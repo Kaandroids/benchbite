@@ -408,10 +408,23 @@ describe('TodayScreen', () => {
     });
     await render(<TodayScreen />);
     expect(jest.mocked(useDayEntries)).toHaveBeenCalledWith('2026-10-21');
-    expect(screen.getByText('1,280 / 2,200 kcal')).toBeTruthy();
+    expect(screen.getByText('920')).toBeTruthy();
+    expect(screen.getByText('kcal left')).toBeTruthy();
     expect(screen.getByText('84 / 150 g')).toBeTruthy();
     expect(screen.getByText('140 / 250 g')).toBeTruthy();
     expect(screen.getByText('36 / 70 g')).toBeTruthy();
+  });
+
+  it('opens Nutrition on today from the daily targets', async () => {
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Your daily target: 0 of 2,200 kcal eaten' }),
+    );
+    expect(router.navigate).toHaveBeenCalledWith({
+      pathname: '/nutrition',
+      params: { day: '2026-10-21', at: expect.any(String) },
+    });
   });
 
   it('leaves out what the user has no data for', async () => {
