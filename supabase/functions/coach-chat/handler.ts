@@ -4,7 +4,7 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
-import { Base64Data, decodeBase64 } from '../_shared/base64.ts';
+import { Base64Data } from '../_shared/base64.ts';
 import {
   type ChatEvent as Event,
   type ChatPhotoPart,
@@ -24,7 +24,7 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
-import { MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { MAX_PHOTOS, photosBodyBytes } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -37,7 +37,7 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
-import { type CheckedPhoto, readJpeg, removePhotos, storePhotos } from './photos.ts';
+import { type CheckedPhoto, checkPhotos, removePhotos, storePhotos } from './photos.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
@@ -133,15 +133,10 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   }
   const request = parsed.data;
   // Photos are checked before anything is sent or kept (ADR 0062).
-  if (!photosFit(request.photos)) {
-    return refused('photos_too_large');
-  }
-  const photos: CheckedPhoto[] = [];
-  for (const [index, { data }] of request.photos.entries()) {
-    const bytes = decodeBase64(data);
-    const read = readJpeg(bytes);
-    if (typeof read === 'string') return refused(read, { photo: index });
-    photos.push({ bytes, data, ...read });
+  const photos = checkPhotos(request.photos);
+  if (!Array.isArray(photos)) {
+    const { reason, ...details } = photos;
+    return refused(reason, details);
   }
 
   // The user reads only their own threads, so a thread they may not go on with is not found.

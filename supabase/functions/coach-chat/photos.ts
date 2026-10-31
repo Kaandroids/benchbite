@@ -1,11 +1,34 @@
 // The photos of a message to Bite (#299, ADR 0062): checked before anything is sent or kept, and
 // kept in `coach-media` with the service role once their turn is saved.
+import { decodeBase64 } from '../_shared/base64.ts';
 import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import type { ChatPhotoPart, PhotoRefusal } from '../_shared/coach/chat.ts';
+import { photosFit } from '../_shared/photos.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** A photo that passed the checks: its bytes to keep, its base64 data for the model, its size. */
 export type CheckedPhoto = { bytes: Uint8Array; data: string; width: number; height: number };
+
+/** Why a message's photos are refused, and which one, when one of them is. */
+export type PhotosRefusal =
+  { reason: 'photos_too_large' } | { reason: PhotoRefusal; photo: number };
+
+/**
+ * Checks a message's photos, as base64 data, before anything is sent or kept (ADR 0062): within
+ * the limits together, then each a whole JPEG without Exif data. Gives them with their bytes and
+ * size, or why they are refused.
+ */
+export function checkPhotos(photos: { data: string }[]): CheckedPhoto[] | PhotosRefusal {
+  if (!photosFit(photos)) return { reason: 'photos_too_large' };
+  const checked: CheckedPhoto[] = [];
+  for (const [index, { data }] of photos.entries()) {
+    const bytes = decodeBase64(data);
+    const read = readJpeg(bytes);
+    if (typeof read === 'string') return { reason: read, photo: index };
+    checked.push({ bytes, data, ...read });
+  }
+  return checked;
+}
 
 /** Markers that stand alone, without a length: TEM and the restart markers. */
 const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7);
