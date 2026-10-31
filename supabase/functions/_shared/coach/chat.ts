@@ -19,6 +19,7 @@ export const COACH_TOOLS = [
   'get_workouts',
   'propose_workout_change',
   'propose_targets_change',
+  'propose_food_log_change',
   'log_meal_card',
 ] as const;
 
@@ -106,11 +107,29 @@ export type ProposalTarget = {
   meters?: number;
 };
 
+/** An entry of the food log as a food log proposal's card shows it. */
+export type FoodLogEntry = {
+  /** YYYY-MM-DD. */
+  day: string;
+  meal: EstimateMeal;
+  grams: number;
+  /** What the entry adds at these grams, at the values it was logged with. */
+  kcal: number;
+};
+
+/** An entry a food log proposal changes, named in the user's language; removed without `to`. */
+export type FoodLogChange = {
+  food: string;
+  from: FoodLogEntry;
+  to?: FoodLogEntry;
+};
+
 /**
  * A change Bite proposed (ADR 0058), as its card shows it, in data the app words and formats
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
- * user's language, or the targets in use and the new ones. The user applies it, keeps things as
- * they are, or undoes it, by its `id` (decide_coach_proposal()).
+ * user's language, the targets in use and the new ones, or entries of the food log moved,
+ * resized or removed (ADR 0068). The user applies it, keeps things as they are, or undoes it, by
+ * its `id` (decide_coach_proposal()).
  */
 export type ProposalCard =
   | {
@@ -129,7 +148,8 @@ export type ProposalCard =
        */
       from?: DayTargets<number | null> | null;
       to: DayTargets;
-    };
+    }
+  | { kind: 'food_log'; id: number; changes: FoodLogChange[] };
 
 /**
  * A meal Bite estimated (ADR 0062), as its card shows it: the items as `estimate-meal` gives them,

@@ -883,6 +883,86 @@ Deno.test('tells Bite what it proposed earlier, though it said nothing with it',
   });
 });
 
+Deno.test('tells Bite which food log changes it proposed earlier', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const proposal = {
+    kind: 'food_log',
+    id: 43,
+    changes: [
+      {
+        food: 'Pizza',
+        from: { day: '2026-10-30', meal: 'lunch', grams: 300, kcal: 798 },
+        to: { day: '2026-10-30', meal: 'dinner', grams: 300, kcal: 798 },
+      },
+      {
+        food: 'Chocolate bar',
+        from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 },
+      },
+    ],
+  };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            {
+              type: 'toolResult',
+              name: 'propose_food_log_change',
+              result: { proposal },
+            },
+            { type: 'text', text: '' },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0].parts[0], {
+    type: 'text',
+    text: '[[neutral]] (Proposed food log changes: Pizza 300 g, lunch on 2026-10-30 → 300 g, dinner on 2026-10-30; Chocolate bar 50 g, snack on 2026-10-30 → removed.)',
+  });
+});
+
+Deno.test('proposes no food log change for a message of photos alone', async () => {
+  const model = new FakeModel(
+    [
+      {
+        type: 'toolCall',
+        id: 'c1',
+        name: 'propose_food_log_change',
+        args: { changes: [{ entryId: 5, remove: true }] },
+      },
+    ],
+    SURE,
+  );
+  const { ctx, inserted } = context(model);
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, message: '', photos: [PHOTO] }), ctx),
+  );
+
+  // Whatever the photo says, the tool refuses before anything is read or proposed.
+  assertEquals(
+    answer.filter((e) => e.event === 'proposal'),
+    [],
+  );
+  const content = inserted[1].rows[1].content as {
+    type: string;
+    result?: unknown;
+  }[];
+  const result = content.find((part) => part.type === 'toolResult')?.result as {
+    error: string;
+  };
+  assertEquals(result.error.startsWith('The user asked for no change in words.'), true);
+});
+
 const MEAL_CARD = {
   id: 51,
   day: '2026-10-30',
