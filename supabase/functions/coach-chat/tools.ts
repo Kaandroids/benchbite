@@ -49,32 +49,46 @@ const FOOD_QUERY = z.string().trim().min(FOOD_QUERY_LENGTH.min).max(FOOD_QUERY_L
 /** Why Bite proposes a change, in the user's language, as the card shows it. */
 const WHY = z.string().trim().min(1).max(120);
 
-/** What the database's refusals of a proposal mean, for the model to correct it. */
-const REFUSALS: Record<string, string> = {
-  BB006: "That workout is not the user's.",
-  BB007:
-    'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
-  BB008: 'Too many exercises for a workout.',
-  BB037: "The calories are under the user's calorie floor.",
-  BB038: 'The user has too many changes waiting; ask them to decide those first.',
-  BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
-  BB040: 'Swaps may not replace an exercise twice, or one another.',
-  '23514': 'The values are out of range, or the macros add up to more than the calories.',
-};
+/**
+ * What the database's refusals mean, by their code, for the model to correct what it sent; what
+ * it is told of any other refusal; and what is logged then.
+ */
+type Refusals = { meanings: Record<string, string>; otherwise: string; log: string };
+
+/** The database's refusals of a proposal. */
+const REFUSALS = {
+  meanings: {
+    BB006: "That workout is not the user's.",
+    BB007:
+      'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
+    BB008: 'Too many exercises for a workout.',
+    BB037: "The calories are under the user's calorie floor.",
+    BB038: 'The user has too many changes waiting; ask them to decide those first.',
+    BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
+    BB040: 'Swaps may not replace an exercise twice, or one another.',
+    '23514': 'The values are out of range, or the macros add up to more than the calories.',
+  },
+  otherwise: 'The change could not be proposed just now.',
+  log: 'A proposal could not be made',
+} satisfies Refusals;
 
 /** The user may save no more foods of their own, which an item the library lacks needs. */
 const NO_MORE_OWN_FOODS =
   'The user has as many foods of their own as they may have, so an item the library does not have cannot be saved; tell them.';
 
-/** What the database's refusals of a meal card mean, for the model to correct it. */
-const MEAL_REFUSALS: Record<string, string> = {
-  BB020: `Meals are logged for today and up to ${MEAL_DAYS_BACK} days back.`,
-  BB021: 'That day has as many entries as it may have.',
-  BB024: NO_MORE_OWN_FOODS,
-  BB026: NO_MORE_OWN_FOODS,
-  BB038: 'The user has had too many meal cards today; ask them to log it in Nutrition.',
-  '23514': 'A value is out of range.',
-};
+/** The database's refusals of a meal card. */
+const MEAL_REFUSALS = {
+  meanings: {
+    BB020: `Meals are logged for today and up to ${MEAL_DAYS_BACK} days back.`,
+    BB021: 'That day has as many entries as it may have.',
+    BB024: NO_MORE_OWN_FOODS,
+    BB026: NO_MORE_OWN_FOODS,
+    BB038: 'The user has had too many meal cards today; ask them to log it in Nutrition.',
+    '23514': 'A value is out of range.',
+  },
+  otherwise: 'The meal card could not be made just now.',
+  log: 'A meal card could not be made',
+} satisfies Refusals;
 
 type CoachTool<A extends z.ZodType> = {
   /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
@@ -315,7 +329,7 @@ const TOOLS = [
       const found = await workoutForCard(supabase, workoutId);
       if (found.error) throw found.error;
       const workout = found.data;
-      if (!workout) return { error: REFUSALS.BB006 };
+      if (!workout) return { error: REFUSALS.meanings.BB006 };
       // Named before proposing, which also finds an id that does not exist, so that a proposal is
       // never left without its card.
       const names = await exerciseNames(
@@ -337,7 +351,7 @@ const TOOLS = [
         })),
         today,
       });
-      if (proposed.error) return refused(proposed.error);
+      if (proposed.error) return refused(proposed.error, REFUSALS);
       const proposal: ProposalCard = {
         kind: 'workout',
         id: proposed.data,
@@ -373,7 +387,7 @@ const TOOLS = [
           today,
         }),
       ]);
-      if (proposed.error) return refused(proposed.error);
+      if (proposed.error) return refused(proposed.error, REFUSALS);
       // The targets in use, as the user sees them now; none before the onboarding is saved, and
       // left out when they cannot be read, so that the card does not say there were none.
       if (current.error) logError('Could not read the targets in use for a card', current.error);
@@ -421,7 +435,7 @@ const TOOLS = [
     run: async ({ meal, day, items, note }, { supabase, language, today, threadId, localTime }) => {
       const eatenOn = day ?? today;
       if (eatenOn > today || eatenOn < addDays(today, -MEAL_DAYS_BACK)) {
-        return { error: MEAL_REFUSALS.BB020 };
+        return { error: MEAL_REFUSALS.meanings.BB020 };
       }
       // As the user, so that only their own foods are found.
       const matched = await matchItems(supabase, language, items);
@@ -551,9 +565,9 @@ function targetOf(e: {
   };
 }
 
-/** A proposal or a meal card the database refused, said so that the model can correct it. */
-function refused(error: { code?: string; message?: string }, meanings = REFUSALS) {
-  const meaning = error.code ? meanings[error.code] : undefined;
-  if (!meaning) logError('A proposal or a meal card could not be made', error);
-  return { error: meaning ?? 'That could not be done just now.' };
+/** What the database refused, said with `refusals` so that the model can correct it. */
+function refused(error: { code?: string; message?: string }, refusals: Refusals) {
+  const meaning = error.code ? refusals.meanings[error.code] : undefined;
+  if (!meaning) logError(refusals.log, error);
+  return { error: meaning ?? refusals.otherwise };
 }
