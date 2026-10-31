@@ -92,9 +92,13 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
   const proposalsOnScreen = proposalIds(chat.messages);
   const proposals = useProposalStates(proposalsOnScreen);
-  // The photos the chat kept, read back once for all of them when it opens.
-  const keptPhotos = (start?.messages ?? []).flatMap((message) =>
-    (message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
+  // The photos the chat kept, read back once for all of them when it opens. Only those it opened
+  // with: its messages are read again after each one sent, whose photos show from their data, and
+  // a new list would ask for every address again.
+  const [keptPhotos] = useState(() =>
+    (start?.messages ?? []).flatMap((message) =>
+      (message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
+    ),
   );
   const photoUrls = usePhotoUrls(start?.threadId, keptPhotos);
   const access = useAiAccess();

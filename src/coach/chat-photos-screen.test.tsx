@@ -267,6 +267,17 @@ it('says when a photo could not be prepared', async () => {
 
 describe('a saved chat', () => {
   const createSignedUrls = jest.fn();
+  const stored = [
+    {
+      id: 'stored-1',
+      role: 'user',
+      text: '',
+      photos: [{ path: 'u/7/a.jpg' }, { path: 'u/7/b.jpg' }],
+    },
+    { id: 'stored-2', role: 'bite', text: 'Two pizzas.' },
+    { id: 'stored-3', role: 'user', text: 'And this?', photos: [{ path: 'u/7/c.jpg' }] },
+    { id: 'stored-4', role: 'bite', text: 'A salad.' },
+  ];
 
   beforeEach(() => {
     mockParams = { thread: '7' };
@@ -281,17 +292,7 @@ describe('a saved chat', () => {
       isFetchedAfterMount: true,
       data: {
         title: null,
-        messages: [
-          {
-            id: 'stored-1',
-            role: 'user',
-            text: '',
-            photos: [{ path: 'u/7/a.jpg' }, { path: 'u/7/b.jpg' }],
-          },
-          { id: 'stored-2', role: 'bite', text: 'Two pizzas.' },
-          { id: 'stored-3', role: 'user', text: 'And this?', photos: [{ path: 'u/7/c.jpg' }] },
-          { id: 'stored-4', role: 'bite', text: 'A salad.' },
-        ],
+        messages: stored,
       },
     } as never);
   });
@@ -313,6 +314,57 @@ describe('a saved chat', () => {
     });
     await fireEvent.press(screen.getByRole('button', { name: 'Close photo' }));
     expect(screen.queryByLabelText('Photo, large')).toBeNull();
+  });
+
+  it('keeps the addresses of its photos while a photo is sent in it', async () => {
+    const stream = liveStream();
+    const queryClient = createTestQueryClient();
+    // Each batch of addresses with a token of its own, as coach-media gives.
+    let batch = 0;
+    createSignedUrls.mockImplementation((paths: string[]) => {
+      batch++;
+      return Promise.resolve({
+        data: paths.map((path) => ({
+          path,
+          signedUrl: `https://media.test/${path}?token=${batch}`,
+        })),
+        error: null,
+      });
+    });
+    const view = await render(<BiteScreen />, { queryClient });
+    await waitFor(() =>
+      expect(screen.getAllByRole('imagebutton', { name: 'Photo 1' })[1]).toBeEnabled(),
+    );
+    const shown = jest.mocked(ChatMessages).mock.calls.length;
+
+    picks('file://plate.jpg');
+    await addPhotos();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled());
+    await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+    // The chat's messages, read again once Bite has answered, with the photo just kept.
+    jest.mocked(useThreadMessages).mockReturnValue({
+      isFetchedAfterMount: true,
+      data: {
+        title: null,
+        messages: [
+          ...stored,
+          { id: 'stored-5', role: 'user', text: '', photos: [{ path: 'u/7/d.jpg' }] },
+          { id: 'stored-6', role: 'bite', text: 'A Margherita!' },
+        ],
+      },
+    } as never);
+    await stream.send({ event: 'text', text: 'A Margherita!' });
+    await stream.send({ event: 'done', threadId: 7, messageId: 9 });
+    await stream.end();
+    // The screen renders with the messages read again.
+    await view.rerender(<BiteScreen />);
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+    expect(createSignedUrls).toHaveBeenCalledTimes(1);
+    for (const [{ photoUrls }] of jest.mocked(ChatMessages).mock.calls.slice(shown)) {
+      expect(photoUrls?.get('u/7/a.jpg')).toBe('https://media.test/u/7/a.jpg?token=1');
+      expect(photoUrls?.get('u/7/c.jpg')).toBe('https://media.test/u/7/c.jpg?token=1');
+    }
   });
 
   it('keeps the addresses, so that the chat opened again soon asks for none', async () => {
