@@ -104,6 +104,9 @@ const HISTORY = 20;
 /** How many times Bite may look things up before it has to answer. */
 const MAX_TOOL_ROUNDS = 4;
 
+/** What Bite is told once its lookups are used up (#387). */
+const LAST_ROUND = 'No lookups are left. Answer now in text with what you have.';
+
 /** How many lookups one round may make; more are answered with an error. */
 const MAX_CALLS_PER_ROUND = 5;
 
@@ -352,13 +355,24 @@ async function answer(
       hasText: !!request.message?.trim(),
     };
 
-    for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
-      // The last round is told to answer with what it has.
-      const tools = round < MAX_TOOL_ROUNDS ? TOOL_DEFINITIONS : undefined;
+    for (
+      let round = 0;
+      round <= MAX_TOOL_ROUNDS + 1 && !(await stop.look({ now: true }));
+      round++
+    ) {
+      // After the lookups, Bite is told to answer with what it has, and may not call a tool. A
+      // model may call one all the same (#387): the call is answered that no lookups are left,
+      // and the model is asked once more.
+      const last = round >= MAX_TOOL_ROUNDS;
       const spoken: Part[] = [];
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
       turn.round();
-      for await (const event of bite.stream({ system: SYSTEM, messages, tools })) {
+      for await (const event of bite.stream({
+        system: SYSTEM,
+        messages,
+        tools: TOOL_DEFINITIONS,
+        toolChoice: last ? 'none' : 'auto',
+      })) {
         outcome.asked = true;
         // The end of a round is kept whatever comes, so that what the answer used is too.
         if (event.type !== 'done' && (await stop.look())) break;
@@ -378,13 +392,14 @@ async function answer(
         }
       }
       turn.ended();
-      if (!calls.length || stop.stopped) break;
+      if (!calls.length || stop.stopped || (last && (round > MAX_TOOL_ROUNDS || turn.text))) break;
 
       const results: Part[] = [];
       for (const [index, call] of calls.entries()) {
         if (await stop.look({ now: true })) break;
-        const result =
-          index < MAX_CALLS_PER_ROUND
+        const result = last
+          ? { error: LAST_ROUND }
+          : index < MAX_CALLS_PER_ROUND
             ? await lookUp(call, toolContext, send)
             : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
         results.push({ type: 'toolResult', id: call.id, name: call.name, result });
@@ -398,7 +413,14 @@ async function answer(
       turn.trace.push(...calls, ...results);
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },
-        { role: 'user', parts: results },
+        {
+          role: 'user',
+          // The model heeds a word beside the last results better than the request's settings.
+          parts:
+            round + 1 === MAX_TOOL_ROUNDS
+              ? [...results, { type: 'text', text: LAST_ROUND }]
+              : results,
+        },
       );
     }
   } catch (error) {

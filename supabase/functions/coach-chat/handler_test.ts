@@ -702,6 +702,53 @@ Deno.test('answers more lookups than a round may make with an error', async () =
   assertEquals(results.at(-1)?.result, { error: 'At most 5 lookups at once; ask for fewer.' });
 });
 
+Deno.test('tells Bite when its lookups are used up, and asks once more for an answer', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+  ];
+  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5'].map(search), [
+    { type: 'text', text: '[[sad]] I found nothing to swap it for.' },
+  ]);
+  const { ctx, inserted } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(
+    model.requests.map((request) => request.toolChoice),
+    ['auto', 'auto', 'auto', 'auto', 'none', 'none'],
+  );
+  assertEquals(model.requests[4].messages.at(-1)?.parts.at(-1), {
+    type: 'text',
+    text: 'No lookups are left. Answer now in text with what you have.',
+  });
+  // The call the last round made anyway is not run, but answered.
+  assertEquals(answer.filter((e) => e.event === 'tool_start').length, 4);
+  assertEquals(model.requests[5].messages.at(-1)?.parts, [
+    {
+      type: 'toolResult',
+      id: 'c5',
+      name: 'search_exercises',
+      result: { error: 'No lookups are left. Answer now in text with what you have.' },
+    },
+  ]);
+  assertEquals(
+    (inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text,
+    'I found nothing to swap it for.',
+  );
+});
+
+Deno.test('asks only once more when Bite still calls a tool', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+  ];
+  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'].map(search));
+  const { ctx } = context(model);
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests.length, 6);
+});
+
 Deno.test('keeps a message within what a message may hold', () => {
   const call = { type: 'toolCall' as const, name: 'get_meal_log', args: { day: '2026-10-01' } };
   const big = { type: 'toolResult' as const, name: 'get_meal_log', result: 'x'.repeat(70_000) };
