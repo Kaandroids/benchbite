@@ -315,6 +315,67 @@ export type Database = {
           },
         ];
       };
+      coach_notes: {
+        Row: {
+          archive_reason: string | null;
+          archived_at: string | null;
+          asked: boolean;
+          category: Database['public']['Enums']['coach_note_category'];
+          created_at: string;
+          id: number;
+          message_id: number | null;
+          review_on: string | null;
+          source: Database['public']['Enums']['coach_note_source'];
+          text: string;
+          thread_id: number | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          archive_reason?: string | null;
+          archived_at?: string | null;
+          asked?: boolean;
+          category: Database['public']['Enums']['coach_note_category'];
+          created_at?: string;
+          id?: never;
+          message_id?: number | null;
+          review_on?: string | null;
+          source?: Database['public']['Enums']['coach_note_source'];
+          text: string;
+          thread_id?: number | null;
+          user_id?: string;
+        };
+        Update: {
+          archive_reason?: string | null;
+          archived_at?: string | null;
+          asked?: boolean;
+          category?: Database['public']['Enums']['coach_note_category'];
+          created_at?: string;
+          id?: never;
+          message_id?: number | null;
+          review_on?: string | null;
+          source?: Database['public']['Enums']['coach_note_source'];
+          text?: string;
+          thread_id?: number | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'coach_notes_message_id_fkey';
+            columns: ['message_id'];
+            isOneToOne: false;
+            referencedRelation: 'coach_messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'coach_notes_thread_id_fkey';
+            columns: ['thread_id'];
+            isOneToOne: false;
+            referencedRelation: 'coach_threads';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       coach_proposals: {
         Row: {
           after: Json | null;
@@ -1046,6 +1107,7 @@ export type Database = {
         Row: {
           activity_level: Database['public']['Enums']['activity_level'];
           birth_year: number;
+          coach_saves_notes: boolean;
           created_at: string;
           display_name: string | null;
           experience: Database['public']['Enums']['experience'];
@@ -1067,6 +1129,7 @@ export type Database = {
         Insert: {
           activity_level: Database['public']['Enums']['activity_level'];
           birth_year: number;
+          coach_saves_notes?: boolean;
           created_at?: string;
           display_name?: string | null;
           experience: Database['public']['Enums']['experience'];
@@ -1086,6 +1149,7 @@ export type Database = {
         Update: {
           activity_level?: Database['public']['Enums']['activity_level'];
           birth_year?: number;
+          coach_saves_notes?: boolean;
           created_at?: string;
           display_name?: string | null;
           experience?: Database['public']['Enums']['experience'];
@@ -1987,6 +2051,7 @@ export type Database = {
         Returns: undefined;
       };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
+      is_own_coach_message: { Args: { message_id: number; thread_id: number }; Returns: boolean };
       is_planned_by_weekdays: {
         Args: {
           day: string;
@@ -2517,6 +2582,9 @@ export type Database = {
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
       coach_meal_card_status: 'pending' | 'logged' | 'undone';
+      coach_note_category:
+        'allergy' | 'health' | 'injury' | 'training' | 'food' | 'goal' | 'lifestyle';
+      coach_note_source: 'chat' | 'user' | 'onboarding';
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
       coach_proposal_kind: 'workout' | 'targets' | 'food_log';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
@@ -2773,6 +2841,8 @@ export const Constants = {
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
       coach_meal_card_status: ['pending', 'logged', 'undone'],
+      coach_note_category: ['allergy', 'health', 'injury', 'training', 'food', 'goal', 'lifestyle'],
+      coach_note_source: ['chat', 'user', 'onboarding'],
       coach_proposal_decision: ['apply', 'keep', 'undo'],
       coach_proposal_kind: ['workout', 'targets', 'food_log'],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
