@@ -1,8 +1,9 @@
 -- A new alternative starts empty, any alternative can be duplicated, and an empty one can be put
 -- in use (#367, ADR 0064). Changes add_workout_alternative(), use_workout_alternative() and
 -- delete_workout_alternative() of 20261031120000_workout_alternatives.sql and
--- 20261031130000_alternative_defaults.sql, and takes the time of a workout out of save_workout()
--- of 20261028220000_plan_changes_through_functions.sql.
+-- 20261031130000_alternative_defaults.sql, takes the time of a workout out of save_workout() of
+-- 20261028220000_plan_changes_through_functions.sql, and has planned_workouts() of
+-- 20261028210000_move_from_kept_days.sql say how many exercises each workout has.
 
 -- The minutes a workout with the exercises `items` takes, as the plan builder counts them: five
 -- to warm up and each exercise's time, three hours at most. Without exercises, the warm-up alone.
@@ -302,3 +303,58 @@ begin
   where a.id = n.id and a.position <> n.position;
 end;
 $$;
+
+-- As before (20261028210000), and how many exercises each workout has now, so that one without
+-- any yet (ADR 0064) can be told; 0 for a deleted workout, whose kept days outlive it. A new
+-- column in the result needs the function dropped.
+drop function public.planned_workouts(date, date, date);
+create function public.planned_workouts(from_day date, to_day date, today date)
+returns table (
+  day date,
+  workout_id bigint,
+  name text,
+  type public.workout_type,
+  exercise_count integer
+)
+language sql
+stable
+-- Calls plan_by_weekdays(), which users may not; it reads the caller's rows only.
+security definer
+set search_path = ''
+as $$
+  with bounds as (
+    select
+      -- Never today or later, even when the server kept a day ahead of the device's.
+      public.kept_through((select auth.uid()), planned_workouts.today - 1) as kept,
+      greatest(planned_workouts.from_day, k.started_on) as first_day,
+      least(planned_workouts.to_day, planned_workouts.from_day + 366) as last_day
+    from (select 1) one
+    left join public.planned_days_kept k on k.user_id = (select auth.uid())
+  ),
+  planned as (
+    select p.day, p.workout_id, p.name, p.type
+    from public.planned_days p, bounds b
+    where p.user_id = (select auth.uid())
+      and p.day between b.first_day and least(b.last_day, b.kept)
+    union all
+    select p.day, p.workout_id, p.name, p.type
+    from bounds b
+    cross join lateral public.plan_by_weekdays(
+      (select auth.uid()), greatest(b.first_day, coalesce(b.kept + 1, b.first_day)), b.last_day
+    ) p
+  )
+  select
+    p.day,
+    p.workout_id,
+    p.name,
+    p.type,
+    (
+      select count(*)::integer from public.workout_exercises e
+      where e.workout_id = p.workout_id and e.user_id = (select auth.uid())
+    ) as exercise_count
+  from planned p
+  order by 1, 2;
+$$;
+
+revoke execute on function public.planned_workouts(date, date, date) from public, anon;
+grant execute on function public.planned_workouts(date, date, date) to authenticated;

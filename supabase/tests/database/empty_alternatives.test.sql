@@ -1,11 +1,11 @@
 -- Empty alternatives and copies (#367, ADR 0064): an alternative is added empty or as a copy of
 -- any alternative of the workout, within the cap, and an empty one can be put in use, which leaves
 -- the workout without exercises until it is edited. Such a workout keeps its last other
--- alternative.
+-- alternative, and the plan says it has no exercises.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -198,6 +198,24 @@ select throws_ok(
   ) $$,
   'BB008', null,
   'A workout is still saved with at least one exercise'
+);
+
+
+-- ----------------------------------------------------------------------------------------------
+-- Planned workouts say how many exercises they have
+
+select is(
+  (select exercise_count from public.planned_workouts(current_date, current_date, current_date)),
+  0,
+  'A planned workout whose empty alternative is in use has no exercises'
+);
+select public.use_workout_alternative(
+  (select id from public.workout_alternatives where workout_id = 911 and position = 1), current_date
+);
+select is(
+  (select exercise_count from public.planned_workouts(current_date, current_date, current_date)),
+  2,
+  'and as many as the one in use has'
 );
 
 -- ----------------------------------------------------------------------------------------------

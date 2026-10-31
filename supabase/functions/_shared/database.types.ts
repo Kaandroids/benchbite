@@ -2064,6 +2064,7 @@ export type Database = {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
           day: string;
+          exercise_count: number;
           name: string;
           type: Database['public']['Enums']['workout_type'];
           workout_id: number;
@@ -2323,6 +2324,7 @@ export type Database = {
           workouts: number;
         }[];
       };
+      workout_minutes: { Args: { items: Json }; Returns: number };
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
