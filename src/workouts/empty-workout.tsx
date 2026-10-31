@@ -7,10 +7,11 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { useAlternativeName, useWorkoutAlternatives } from './alternatives';
+import { useAlternativeName, type WorkoutAlternative } from './alternatives';
 
 type EmptyWorkoutProps = {
-  workoutId: number;
+  /** The workout's alternatives, as the screen loaded them. */
+  alternatives: WorkoutAlternative[] | undefined;
   /** The workout's name, for one without alternatives. */
   name: string;
   /** Opens the editor to add the exercises. */
@@ -21,10 +22,9 @@ type EmptyWorkoutProps = {
  * In place of a workout's exercises while it has none, as when an empty alternative was just put
  * in use: what is missing, that the other alternatives stay as they are, and a button to Edit.
  */
-export function EmptyWorkout({ workoutId, name, onAdd }: EmptyWorkoutProps) {
+export function EmptyWorkout({ alternatives = [], name, onAdd }: EmptyWorkoutProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const alternatives = useWorkoutAlternatives(workoutId).data ?? [];
   const nameOf = useAlternativeName();
   const inUse = alternatives.find((alternative) => alternative.inUse);
   const others = alternatives.filter((alternative) => !alternative.inUse);

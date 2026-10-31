@@ -234,7 +234,7 @@ export function WorkoutScreen({ id }: { id: number }) {
     >
       <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />
 
-      {empty ? <EmptyWorkout workoutId={workout.id} name={name} onAdd={onEdit} /> : null}
+      {empty ? <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} /> : null}
 
       {/* One card of even columns over the workout's days, like a finished workout's figures over
           when it started and ended. */}
