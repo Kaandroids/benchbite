@@ -4,6 +4,7 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
+import { Base64Data } from '../_shared/base64.ts';
 import { Constants } from '../_shared/database.types.ts';
 import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
 import {
@@ -15,7 +16,7 @@ import {
   MEAL_PHOTO_TYPES,
 } from '../_shared/meal/estimate.ts';
 import { matchItems } from '../_shared/meal/match.ts';
-import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
 import { parseJson, readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -32,10 +33,7 @@ export type EstimateContext = {
 
 const Photo = z.object({
   mimeType: z.enum(MEAL_PHOTO_TYPES),
-  data: z
-    .string()
-    .regex(BASE64)
-    .refine((data) => data.length % 4 === 0, 'Not base64'),
+  data: Base64Data,
 });
 
 const EstimateRequest = z.object({

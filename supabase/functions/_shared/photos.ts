@@ -11,9 +11,6 @@ export const MAX_PHOTO_BYTES = 1_500_000;
 /** All photos of a request together, decoded, in bytes. */
 export const MAX_PHOTOS_BYTES = 3_000_000;
 
-/** Base64 without line breaks, as the app sends it. */
-export const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
-
 /**
  * The largest body a function reads with photos in it, in bytes: the photos at their largest as
  * base64, and `rest` for everything else. A larger one is refused before it is parsed.

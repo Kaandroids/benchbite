@@ -4,6 +4,7 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
+import { Base64Data } from '../_shared/base64.ts';
 import {
   type ChatEvent as Event,
   type ChatPhotoPart,
@@ -22,7 +23,7 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
-import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -54,10 +55,7 @@ export type ChatContext = {
 
 const Photo = z.object({
   mimeType: z.literal('image/jpeg'),
-  data: z
-    .string()
-    .regex(BASE64)
-    .refine((data) => data.length % 4 === 0, 'Not base64'),
+  data: Base64Data,
 });
 
 const ChatRequest = z
