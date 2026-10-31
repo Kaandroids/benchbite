@@ -259,31 +259,34 @@ const TOOLS = [
     args: z.object({ query: QUERY.describe('An exercise name, such as "squat".') }),
     run: async ({ query }, { supabase, language }) => {
       const pattern = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-      const [translated, own] = await Promise.all([
+      // An exercise's own name is its English one; some have a name in German or Turkish too,
+      // which the app shows instead. The library and the user's own, as row level security lets
+      // them, but none archived.
+      const [translated, named] = await Promise.all([
         supabase
           .from('exercise_translations')
-          .select('exercise_id, language, name')
-          .in('language', [language, 'en'])
+          .select('exercise_id')
+          .eq('language', language)
           .ilike('name', pattern)
-          .limit(20),
+          .limit(10),
         supabase
           .from('exercises')
-          .select('id, name')
-          .not('owner_id', 'is', null)
+          .select('id')
           .is('archived_at', null)
           .ilike('name', pattern)
           .limit(10),
       ]);
-      const found = inLanguage(
-        read(translated).map((row) => ({
-          id: row.exercise_id,
-          language: row.language,
-          name: row.name,
-        })),
-        language,
-      );
-      for (const exercise of read(own)) found.set(exercise.id, exercise.name);
-      return [...found].slice(0, 10).map(([id, name]) => ({ id, name }));
+      const ids = [
+        ...new Set([
+          ...read(translated).map((row) => row.exercise_id),
+          ...read(named).map((row) => row.id),
+        ]),
+      ].slice(0, 10);
+      const names = await exerciseNames(supabase, language, ids);
+      return ids.flatMap((id) => {
+        const name = names.get(id);
+        return name ? [{ id, name }] : [];
+      });
     },
   }),
   tool({
