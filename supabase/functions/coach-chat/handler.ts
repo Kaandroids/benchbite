@@ -650,9 +650,10 @@ function isProposal(part: Part): boolean {
 }
 
 /**
- * An earlier message as Bite reads it: its text alone, a face before Bite's, as it wrote it. The
- * history reads the same parts for a line, joined by spaces (coach_message_text() in the
- * chat_history migration).
+ * An earlier message as Bite reads it: its text, a face before Bite's, as it wrote it, and a line
+ * for the user's photos. Only this function reads the photos for now: the app (messageText() in
+ * src/coach/threads.ts) and the history (coach_message_text() in the chat_history migration) read
+ * the text parts alone, so a message of photos alone has no text there.
  */
 function toMessage(
   row: Pick<

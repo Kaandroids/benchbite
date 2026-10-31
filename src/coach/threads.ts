@@ -81,9 +81,11 @@ export function useThreads(search: string) {
 }
 
 /**
- * The text of a stored message: its text parts, in order, one after the other. The chat function
- * (toMessage() in supabase/functions/coach-chat/handler.ts) and the history (coach_message_text()
- * in the chat_history migration) read the same parts.
+ * The text of a stored message: its text parts, in order, one after the other, as the history
+ * reads them too (coach_message_text() in the chat_history migration). A message's photos are not
+ * read here: for now only the chat function reads them (toMessage() in
+ * supabase/functions/coach-chat/handler.ts), so a message of photos alone has no text here. How
+ * such a message shows in the chat and the history is decided with the app's photo screens.
  */
 export function messageText(content: Json): string {
   const parts = Array.isArray(content) ? content : [];
