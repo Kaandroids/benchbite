@@ -3,46 +3,18 @@
 # for the README's GIF (docs/media/README.md). Start it with the app on the welcome screen:
 #
 #   scripts/record-onboarding.sh [output.mov]
-#
-# It taps with idb (https://fbidb.io). The coordinates are points on an iPhone 17 Pro; on another
-# simulator, check them with `idb ui describe-all`.
 set -euo pipefail
 
 OUT=${1:-onboarding.mov}
-UDID=$(xcrun simctl list devices booted -j | python3 -c '
-import json, sys
-booted = [d for ds in json.load(sys.stdin)["devices"].values() for d in ds]
-if not booted: sys.exit("No booted simulator.")
-print(booted[0]["udid"])')
+# shellcheck source=lib/simulator.sh
+source "$(dirname "$0")/lib/simulator.sh"
 
-tap() { idb ui tap --udid "$UDID" "$1" "$2"; }
-swipe() { idb ui swipe --udid "$UDID" "$1" "$2" "$3" "$4" --duration "${5:-1.2}"; sleep 1; }
-# Taps the element with this accessibility label.
-tap_label() {
-  local point
-  point=$(idb ui describe-all --udid "$UDID" | python3 -c '
-import json, sys
-for e in json.load(sys.stdin):
-    if e.get("AXLabel") == sys.argv[1]:
-        f = e["frame"]
-        print(round(f["x"] + f["width"] / 2), round(f["y"] + f["height"] / 2))
-        break
-else:
-    sys.exit("Not on screen: " + sys.argv[1])' "$1")
-  # shellcheck disable=SC2086 # the point is two words
-  tap $point
-}
 next() { sleep "${1:-1.4}"; tap_label "Continue"; }
 
-xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT" &
-RECORDER=$!
-stop_recording() { kill -INT "$RECORDER" 2>/dev/null && wait "$RECORDER" 2>/dev/null || true; }
-# A failed step stops the recording too, so that no recorder is left running.
-trap stop_recording EXIT
-sleep 2.5
+start_recording "$OUT"
 
 tap_label "Get started for free"; sleep 1.6
-idb ui text --udid "$UDID" "Kaan"; next 1.2         # name
+type_text "Kaan"; next 1.2                          # name
 sleep 1.2; tap 201 222; next 1.6                    # lose fat
 next 2.2                                            # how it works
 sleep 1.4; tap 201 582; next 1.0                    # consent
