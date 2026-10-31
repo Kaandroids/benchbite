@@ -15,7 +15,7 @@ import type {
   NoteCard,
   ProposalCard,
 } from '../_shared/coach/chat.ts';
-import { Constants } from '../_shared/database.types.ts';
+import { Constants, type Database } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
@@ -26,7 +26,6 @@ import { matchItems } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
-import { NOTE_ASKED } from './prompt.ts';
 import { mealAt } from './meal_card.ts';
 import { workoutName } from './workout.ts';
 
@@ -138,6 +137,8 @@ const NOTE_REFUSALS = {
       'The notebook has as many notes in use as it may: change or archive one that no longer holds instead, or tell the user.',
     BB047:
       'The notebook keeps as many notes as it may; tell the user they can remove past ones in it.',
+    BB048:
+      'As many notes as may be wait for the user to say yes on their cards; ask for no more until they decide.',
     '23514': `A note has text, of up to ${MAX_NOTE_LENGTH} characters, and an archived one says why.`,
   },
   otherwise: 'The note could not be kept just now.',
@@ -656,8 +657,7 @@ const TOOLS = [
         .single();
       if (saved.error) return refused(saved.error, NOTE_REFUSALS);
       const note: NoteCard = { ...saved.data, action: asked ? 'asked' : 'saved' };
-      // The model heeds a word in the result better than the rules.
-      return asked ? { note, tell: NOTE_ASKED } : { note };
+      return { note };
     },
   }),
   tool({
@@ -679,22 +679,12 @@ const TOOLS = [
     run: async ({ id, category, text, reviewOn }, { supabase, today }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
-      const updated = await supabase
-        .from('coach_notes')
-        .update({
-          ...(category && { category }),
-          ...(text && { text }),
-          ...(reviewOn !== undefined && { review_on: reviewOn }),
-        })
-        .eq('id', id)
-        .is('archived_at', null)
-        .eq('asked', false)
-        .select(NOTE_COLUMNS)
-        .maybeSingle();
-      if (updated.error) return refused(updated.error, NOTE_REFUSALS);
-      if (!updated.data) return { error: NO_NOTE };
-      const note: NoteCard = { ...updated.data, action: 'updated' };
-      return { note };
+      const patch = {
+        ...(category && { category }),
+        ...(text && { text }),
+        ...(reviewOn !== undefined && { review_on: reviewOn }),
+      };
+      return await changeNote(supabase, id, patch, 'updated');
     },
   }),
   tool({
@@ -711,21 +701,35 @@ const TOOLS = [
         .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
     }),
     run: async ({ id, reason }, { supabase }) => {
-      const archived = await supabase
-        .from('coach_notes')
-        .update({ archived_at: new Date().toISOString(), archive_reason: reason })
-        .eq('id', id)
-        .is('archived_at', null)
-        .eq('asked', false)
-        .select(NOTE_COLUMNS)
-        .maybeSingle();
-      if (archived.error) return refused(archived.error, NOTE_REFUSALS);
-      if (!archived.data) return { error: NO_NOTE };
-      const note: NoteCard = { ...archived.data, action: 'archived' };
-      return { note };
+      const patch = { archived_at: new Date().toISOString(), archive_reason: reason };
+      return await changeNote(supabase, id, patch, 'archived');
     },
   }),
 ];
+
+/**
+ * Changes the note `id` by `patch`, only while it is in use: not archived, nor waiting for the
+ * user's yes. Gives its card, saying it was `action`, or why it was not changed.
+ */
+async function changeNote(
+  supabase: Client,
+  id: number,
+  patch: Database['public']['Tables']['coach_notes']['Update'],
+  action: 'updated' | 'archived',
+) {
+  const changed = await supabase
+    .from('coach_notes')
+    .update(patch)
+    .eq('id', id)
+    .is('archived_at', null)
+    .eq('asked', false)
+    .select(NOTE_COLUMNS)
+    .maybeSingle();
+  if (changed.error) return refused(changed.error, NOTE_REFUSALS);
+  if (!changed.data) return { error: NO_NOTE };
+  const note: NoteCard = { ...changed.data, action };
+  return { note };
+}
 
 /** The kinds of proposal the tools offered to Bite make. */
 export const PROPOSAL_KINDS = TOOLS.flatMap((t) => (t.proposes ? [t.proposes] : []));
