@@ -1,10 +1,17 @@
 import { assertEquals } from '@std/assert';
 
+import { SHOWN_PROPOSAL_KINDS } from '../_shared/coach/chat.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
 import type { ToolContext } from './tools.ts';
-import { MAX_FOOD_LOG_CHANGES, runTool, TOOL_DEFINITIONS } from './tools.ts';
+import {
+  MAX_FOOD_LOG_CHANGES,
+  PROPOSAL_KINDS,
+  runTool,
+  TOOL_DEFINITIONS,
+  WAITING_TOOLS,
+} from './tools.ts';
 
 const context = {
   supabase: { rpc: () => Promise.resolve({ data: [], error: null }) },
@@ -27,7 +34,6 @@ Deno.test('tells the model of each tool with its arguments', () => {
       'get_workouts',
       'propose_workout_change',
       'propose_targets_change',
-      'propose_food_log_change',
       'log_meal_card',
     ],
   );
@@ -505,6 +511,17 @@ Deno.test('says why the database refused a meal card', async () => {
   assertEquals(error.error.startsWith('The user has as many foods of their own'), true);
 });
 
+Deno.test('offers Bite no tool that proposes a change the app has no card for', () => {
+  assertEquals(PROPOSAL_KINDS, ['workout', 'targets']);
+  for (const kind of PROPOSAL_KINDS) {
+    assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
+  }
+});
+
+/** Runs propose_food_log_change, which Bite is not offered yet. */
+const proposeFoodLog = (args: unknown, context: ToolContext) =>
+  runTool('propose_food_log_change', args, context, WAITING_TOOLS);
+
 /** The user's entries, as row level security lets them read them, and another user's. */
 const ENTRIES = [
   {
@@ -685,8 +702,7 @@ Deno.test('gives each entry of the meal log its id, for Bite to name it by', asy
 Deno.test('proposes moving and removing entries, and gives the card as data', async () => {
   const { context, calls } = foodLogContext();
 
-  const result = await runTool(
-    'propose_food_log_change',
+  const result = await proposeFoodLog(
     {
       changes: [
         { entryId: 21, meal: 'dinner' },
@@ -736,8 +752,7 @@ Deno.test('proposes moving and removing entries, and gives the card as data', as
 
 Deno.test('shows new grams on the card with what they add', async () => {
   const { context } = foodLogContext();
-  const result = await runTool(
-    'propose_food_log_change',
+  const result = await proposeFoodLog(
     { changes: [{ entryId: 22, grams: 25.04, day: '2026-10-29' }] },
     context,
   );
@@ -753,11 +768,7 @@ Deno.test('shows new grams on the card with what they add', async () => {
 
 Deno.test('proposes no food log change for a message without words', async () => {
   const { context, calls } = foodLogContext({ hasText: false });
-  const result = await runTool(
-    'propose_food_log_change',
-    { changes: [{ entryId: 21, remove: true }] },
-    context,
-  );
+  const result = await proposeFoodLog({ changes: [{ entryId: 21, remove: true }] }, context);
   assertEquals(
     (result as { error: string }).error.startsWith('The user asked for no change'),
     true,
@@ -768,8 +779,7 @@ Deno.test('proposes no food log change for a message without words', async () =>
 Deno.test("refuses an entry that is not the user's, proposing nothing", async () => {
   const { context, calls } = foodLogContext();
   assertEquals(
-    await runTool(
-      'propose_food_log_change',
+    await proposeFoodLog(
       {
         changes: [{ entryId: 23, remove: true }],
       },
@@ -801,13 +811,12 @@ Deno.test(
         remove: true,
       })),
     ]) {
-      const wrong = await runTool('propose_food_log_change', { changes }, context);
+      const wrong = await proposeFoodLog({ changes }, context);
       assertEquals(typeof (wrong as { error: string }).error, 'string');
     }
     for (const day of ['2026-10-31', '2026-10-22']) {
       assertEquals(
-        await runTool(
-          'propose_food_log_change',
+        await proposeFoodLog(
           {
             changes: [{ entryId: 21, day }],
           },
@@ -826,8 +835,7 @@ Deno.test(
 Deno.test('says why the database refused a food log change', async () => {
   const { context } = foodLogContext();
   assertEquals(
-    await runTool(
-      'propose_food_log_change',
+    await proposeFoodLog(
       {
         changes: [{ entryId: 21, meal: 'lunch' }],
       },

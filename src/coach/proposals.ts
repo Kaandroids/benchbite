@@ -1,7 +1,7 @@
 // Bite's proposals (#297, ADR 0058): where each one stands, and the user applying it, keeping
 // things as they are, or undoing it. Bite only proposes; decide_coach_proposal() makes the change,
 // as the user, while what it replaces is still so.
-import type { ProposalCard } from '@shared/coach/chat';
+import { type ProposalCard, SHOWN_PROPOSAL_KINDS } from '@shared/coach/chat';
 import {
   keepPreviousData,
   type QueryClient,
@@ -24,14 +24,16 @@ export type ProposalStatus = Database['public']['Enums']['coach_proposal_status'
 export type ProposalDecision = Database['public']['Enums']['coach_proposal_decision'];
 
 /**
- * A proposal of a kind the chat shows a card for. Bite can propose changes to the food log too
- * (ADR 0068), whose card comes later; until then they are left out of the chat.
+ * A proposal of a kind the chat shows a card for (`SHOWN_PROPOSAL_KINDS`). Food log proposals
+ * (ADR 0068) get their card later; until then they are left out of the chat.
  */
-export type ShownProposal = Exclude<ProposalCard, { kind: 'food_log' }>;
+export type ShownProposal = Extract<ProposalCard, { kind: (typeof SHOWN_PROPOSAL_KINDS)[number] }>;
 
 /** Whether the chat shows a card for `card`, of a kind it knows. */
 export function isShownProposal(card: { kind?: unknown; id?: unknown }): card is ShownProposal {
-  return typeof card.id === 'number' && (card.kind === 'workout' || card.kind === 'targets');
+  return (
+    typeof card.id === 'number' && (SHOWN_PROPOSAL_KINDS as readonly unknown[]).includes(card.kind)
+  );
 }
 
 /**

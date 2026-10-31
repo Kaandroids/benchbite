@@ -930,39 +930,6 @@ Deno.test('tells Bite which food log changes it proposed earlier', async () => {
   });
 });
 
-Deno.test('proposes no food log change for a message of photos alone', async () => {
-  const model = new FakeModel(
-    [
-      {
-        type: 'toolCall',
-        id: 'c1',
-        name: 'propose_food_log_change',
-        args: { changes: [{ entryId: 5, remove: true }] },
-      },
-    ],
-    SURE,
-  );
-  const { ctx, inserted } = context(model);
-
-  const answer = await events(
-    await handleChatRequest(ask({ ...MESSAGE, message: '', photos: [PHOTO] }), ctx),
-  );
-
-  // Whatever the photo says, the tool refuses before anything is read or proposed.
-  assertEquals(
-    answer.filter((e) => e.event === 'proposal'),
-    [],
-  );
-  const content = inserted[1].rows[1].content as {
-    type: string;
-    result?: unknown;
-  }[];
-  const result = content.find((part) => part.type === 'toolResult')?.result as {
-    error: string;
-  };
-  assertEquals(result.error.startsWith('The user asked for no change in words.'), true);
-});
-
 const MEAL_CARD = {
   id: 51,
   day: '2026-10-30',

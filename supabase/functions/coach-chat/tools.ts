@@ -120,6 +120,8 @@ const MEAL_REFUSALS = {
 type CoachTool<A extends z.ZodType> = {
   /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
   name: CoachToolName;
+  /** The kind of proposal it makes, if it proposes a change, whose card the app must show. */
+  proposes?: ProposalCard['kind'];
   description: string;
   /** The arguments, which the model is told of and its calls are checked against. */
   args: A;
@@ -311,6 +313,7 @@ const TOOLS = [
   }),
   tool({
     name: 'propose_workout_change',
+    proposes: 'workout',
     description:
       "Proposes swapping exercises of one of the user's workouts, which the user applies or keeps as it is; it changes nothing itself. The change is permanent and counts from today. Take the workout and its exercise ids from get_workouts, and the new exercises' ids from search_exercises.",
     args: z.object({
@@ -381,6 +384,7 @@ const TOOLS = [
   }),
   tool({
     name: 'propose_targets_change',
+    proposes: 'targets',
     description:
       "Proposes new daily calories and macros as the user's own targets, which the user applies or keeps as they are; it changes nothing itself. They count from today. Never under the calorie floor, and protein × 4 + carbs × 4 + fat × 9 must not exceed the calories.",
     args: z.object({
@@ -419,103 +423,6 @@ const TOOLS = [
         id: proposed.data,
         ...(from !== undefined && { from }),
         to: targets,
-      };
-      return { proposal };
-    },
-  }),
-  tool({
-    name: 'propose_food_log_change',
-    description:
-      "Proposes changes to entries of the user's food log, which the user applies or keeps as it is; it changes nothing itself. Each change moves an entry to another meal or day, changes its grams, or removes it. Take the entries' ids from get_meal_log.",
-    args: z.object({
-      changes: z
-        .array(
-          z
-            .object({
-              entryId: z.number().int().positive().describe("The entry's id from get_meal_log."),
-              day: DAY.optional().describe(
-                `The day to move it to, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back.`,
-              ),
-              meal: MEAL.optional().describe('The meal to move it to.'),
-              grams: z.number().positive().max(5000).optional().describe('What the user ate.'),
-              remove: z
-                .boolean()
-                .optional()
-                .describe('True when the user did not eat it; then nothing else.'),
-            })
-            .refine(
-              ({ day, meal, grams, remove }) =>
-                remove
-                  ? day === undefined && meal === undefined && grams === undefined
-                  : day !== undefined || meal !== undefined || grams !== undefined,
-              {
-                message: 'Each change gives a day, a meal or grams, or only remove: true',
-              },
-            ),
-        )
-        .min(1)
-        .max(MAX_FOOD_LOG_CHANGES)
-        .refine((changes) => new Set(changes.map((c) => c.entryId)).size === changes.length, {
-          message: 'Each entry once; give all its changes together',
-        }),
-    }),
-    run: async ({ changes }, { supabase, language, today, threadId, hasText }) => {
-      if (!hasText) {
-        return {
-          error:
-            'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
-        };
-      }
-      if (changes.some(({ day }) => day && (day > today || day < addDays(today, -LOGGABLE_DAYS)))) {
-        return { error: FOOD_LOG_REFUSALS.meanings.BB020 };
-      }
-      // As the user, so that only their own entries are found, which the card shows as they are.
-      const entries = read(
-        await supabase
-          .from('meal_entries')
-          .select(`id, day, meal, grams, kcal, ${ENTRY_FOOD}`)
-          .in(
-            'id',
-            changes.map((c) => c.entryId),
-          ),
-      );
-      const byId = new Map(entries.map((entry) => [entry.id, entry]));
-      if (changes.some((c) => !byId.has(c.entryId))) {
-        return { error: FOOD_LOG_REFUSALS.meanings.BB044 };
-      }
-      const proposed = await supabase.rpc('propose_coach_change', {
-        thread_id: threadId,
-        kind: 'food_log',
-        change: {
-          changes: changes.map(({ entryId, day, meal, grams, remove }) =>
-            remove ? { entryId, remove: true } : { entryId, day, meal, grams },
-          ),
-        },
-        today,
-      });
-      if (proposed.error) return refused(proposed.error, FOOD_LOG_REFUSALS);
-      const name = await entryNames(supabase, language, entries);
-      const proposal: ProposalCard = {
-        kind: 'food_log',
-        id: proposed.data,
-        changes: changes.map(({ entryId, day, meal, grams, remove }): FoodLogChange => {
-          const entry = byId.get(entryId)!;
-          const from: FoodLogEntry = {
-            day: entry.day,
-            meal: entry.meal,
-            grams: entry.grams,
-            kcal: entry.kcal ?? 0,
-          };
-          // As the entry keeps them, and what it adds at its values per gram.
-          const eaten = grams === undefined ? from.grams : Math.round(grams * 10) / 10;
-          const to: FoodLogEntry = {
-            day: day ?? from.day,
-            meal: meal ?? from.meal,
-            grams: eaten,
-            kcal: from.grams ? Math.round((from.kcal * eaten * 10) / from.grams) / 10 : 0,
-          };
-          return { food: name(entry) ?? '', from, ...(!remove && { to }) };
-        }),
       };
       return { proposal };
     },
@@ -568,6 +475,119 @@ const TOOLS = [
   }),
 ];
 
+/**
+ * Bite proposes changes to the food log (ADR 0068) once the app shows their card; until then it is
+ * not offered, as a proposal the app hides could never be applied, though it would count among
+ * the user's pending ones. To switch it on, move it into TOOLS and add FOOD_LOG_RULE to SYSTEM in
+ * prompt.ts.
+ */
+const PROPOSE_FOOD_LOG_CHANGE = tool({
+  name: 'propose_food_log_change',
+  proposes: 'food_log',
+  description:
+    "Proposes changes to entries of the user's food log, which the user applies or keeps as it is; it changes nothing itself. Each change moves an entry to another meal or day, changes its grams, or removes it. Take the entries' ids from get_meal_log.",
+  args: z.object({
+    changes: z
+      .array(
+        z
+          .object({
+            entryId: z.number().int().positive().describe("The entry's id from get_meal_log."),
+            day: DAY.optional().describe(
+              `The day to move it to, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back.`,
+            ),
+            meal: MEAL.optional().describe('The meal to move it to.'),
+            grams: z.number().positive().max(5000).optional().describe('What the user ate.'),
+            remove: z
+              .boolean()
+              .optional()
+              .describe('True when the user did not eat it; then nothing else.'),
+          })
+          .refine(
+            ({ day, meal, grams, remove }) =>
+              remove
+                ? day === undefined && meal === undefined && grams === undefined
+                : day !== undefined || meal !== undefined || grams !== undefined,
+            {
+              message: 'Each change gives a day, a meal or grams, or only remove: true',
+            },
+          ),
+      )
+      .min(1)
+      .max(MAX_FOOD_LOG_CHANGES)
+      .refine((changes) => new Set(changes.map((c) => c.entryId)).size === changes.length, {
+        message: 'Each entry once; give all its changes together',
+      }),
+  }),
+  run: async ({ changes }, { supabase, language, today, threadId, hasText }) => {
+    if (!hasText) {
+      return {
+        error:
+          'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
+      };
+    }
+    if (changes.some(({ day }) => day && (day > today || day < addDays(today, -LOGGABLE_DAYS)))) {
+      return { error: FOOD_LOG_REFUSALS.meanings.BB020 };
+    }
+    // As the user, so that only their own entries are found, which the card shows as they are.
+    const entries = read(
+      await supabase
+        .from('meal_entries')
+        .select(`id, day, meal, grams, kcal, ${ENTRY_FOOD}`)
+        .in(
+          'id',
+          changes.map((c) => c.entryId),
+        ),
+    );
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    if (changes.some((c) => !byId.has(c.entryId))) {
+      return { error: FOOD_LOG_REFUSALS.meanings.BB044 };
+    }
+    const proposed = await supabase.rpc('propose_coach_change', {
+      thread_id: threadId,
+      kind: 'food_log',
+      change: {
+        changes: changes.map(({ entryId, day, meal, grams, remove }) =>
+          remove ? { entryId, remove: true } : { entryId, day, meal, grams },
+        ),
+      },
+      today,
+    });
+    if (proposed.error) return refused(proposed.error, FOOD_LOG_REFUSALS);
+    const name = await entryNames(supabase, language, entries);
+    const proposal: ProposalCard = {
+      kind: 'food_log',
+      id: proposed.data,
+      changes: changes.map(({ entryId, day, meal, grams, remove }): FoodLogChange => {
+        const entry = byId.get(entryId)!;
+        const from: FoodLogEntry = {
+          day: entry.day,
+          meal: entry.meal,
+          grams: entry.grams,
+          kcal: entry.kcal ?? 0,
+        };
+        // As the entry keeps them, and what it adds at its values per gram.
+        const eaten = grams === undefined ? from.grams : Math.round(grams * 10) / 10;
+        const to: FoodLogEntry = {
+          day: day ?? from.day,
+          meal: meal ?? from.meal,
+          grams: eaten,
+          kcal: from.grams ? Math.round((from.kcal * eaten * 10) / from.grams) / 10 : 0,
+        };
+        return { food: name(entry) ?? '', from, ...(!remove && { to }) };
+      }),
+    };
+    return { proposal };
+  },
+});
+
+/** Tools that are ready but not offered to Bite yet, run only by their tests. */
+export const WAITING_TOOLS = [PROPOSE_FOOD_LOG_CHANGE];
+
+/** The kinds of proposal the tools offered to Bite make. */
+export const PROPOSAL_KINDS = TOOLS.flatMap((t) => (t.proposes ? [t.proposes] : []));
+
+type AnyTool = (typeof TOOLS)[number] | (typeof WAITING_TOOLS)[number];
+
 /** The tools as the model is told of them, their arguments as JSON Schema. */
 export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) => {
   const { $schema: _, ...parameters } = z.toJSONSchema(args, { io: 'input' });
@@ -578,8 +598,13 @@ export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) 
  * Runs a tool the model called. A tool that does not exist or whose arguments are wrong says so
  * in its result, for the model to correct, rather than failing the answer.
  */
-export async function runTool(name: string, args: unknown, context: ToolContext): Promise<unknown> {
-  const tool = TOOLS.find((t) => t.name === name);
+export async function runTool(
+  name: string,
+  args: unknown,
+  context: ToolContext,
+  tools: readonly AnyTool[] = TOOLS,
+): Promise<unknown> {
+  const tool = tools.find((t) => t.name === name);
   if (!tool) return { error: `There is no tool ${name}.` };
   const parsed = tool.args.safeParse(args);
   if (!parsed.success) return { error: z.prettifyError(parsed.error) };
