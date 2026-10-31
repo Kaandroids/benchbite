@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -184,6 +184,9 @@ select is(pg_temp.exercises_of(pg_temp.id('empty again')), '[]'::jsonb,
 select public.use_workout_alternative(pg_temp.id('home'), current_date);
 select is(pg_temp.saved(911) -> 'exercises', pg_temp.home(),
   'Another put in use after it gives the workout its exercises');
+-- 3 sets of 12 reps at 3 seconds, 2 rests of 60 and a minute to move on, after 5 to warm up.
+select is((select estimated_minutes from public.workouts where id = 911), 10::smallint,
+  'and its time, counted as save_workout() counts it');
 select is(pg_temp.exercises_of(pg_temp.id('empty')), '[]'::jsonb,
   'and the empty one stays empty');
 

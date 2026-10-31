@@ -1,6 +1,104 @@
 -- A new alternative starts empty, any alternative can be duplicated, and an empty one can be put
 -- in use (#367, ADR 0064). Changes add_workout_alternative() and use_workout_alternative() of
--- 20261031120000_workout_alternatives.sql and 20261031130000_alternative_defaults.sql.
+-- 20261031120000_workout_alternatives.sql and 20261031130000_alternative_defaults.sql, and takes
+-- the time of a workout out of save_workout() of 20261028220000_plan_changes_through_functions.sql.
+
+-- The minutes a workout with the exercises `items` takes, as the plan builder counts them: five
+-- to warm up and each exercise's time, three hours at most. Without exercises, the warm-up alone.
+-- save_workout() and use_workout_alternative() count it alike.
+create function public.workout_minutes(items jsonb)
+returns smallint
+language sql
+immutable
+set search_path = ''
+as $$
+  select least(180, ceil((
+    300 + coalesce((select sum(public.exercise_seconds(e)) from jsonb_array_elements(items) e), 0)
+  ) / 60.0))::smallint;
+$$;
+
+-- Called only from functions that run as their owner (20261024130000_tighten_grants.sql).
+revoke execute on function public.workout_minutes(jsonb) from public, anon, authenticated;
+
+-- As before (20261028220000), with the time from workout_minutes().
+create or replace function public.save_workout(workout jsonb, today date)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller_id uuid := (select auth.uid());
+  saved_id bigint := (workout ->> 'id')::bigint;
+  items jsonb := coalesce(workout -> 'exercises', '[]');
+  days smallint[] := array(
+    select value::smallint from jsonb_array_elements_text(coalesce(workout -> 'weekdays', '[]'))
+  );
+  max_exercises integer;
+  max_workouts integer;
+  minutes smallint;
+begin
+  if caller_id is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+
+  perform public.lock_user_limits(caller_id);
+  -- The days before the device's today keep the plan they had (ADR 0041), after the workout's row
+  -- is locked, as in set_workout_active().
+  if saved_id is not null then
+    perform 1 from public.workouts w where w.id = saved_id and w.user_id = caller_id for update;
+  end if;
+  perform public.keep_planned_days(save_workout.today);
+
+  select l.exercises, l.workouts into max_exercises, max_workouts from public.workout_limits() l;
+
+  if jsonb_array_length(items) not between 1 and max_exercises then
+    raise exception 'A workout needs 1 to % exercises', max_exercises using errcode = 'BB008';
+  end if;
+  -- Workouts from the plan builder count too, archived ones as well.
+  if saved_id is null
+    and (select count(*) from public.workouts w where w.user_id = caller_id) >= max_workouts then
+    raise exception 'A user can have up to % workouts', max_workouts using errcode = 'BB009';
+  end if;
+  -- Unknown exercises are left to the foreign key.
+  if exists (
+    select 1
+    from jsonb_array_elements(items) e
+    join public.exercises x on x.id = e ->> 'exerciseId'
+    where not public.target_suits(x.metrics, e -> 'target')
+  ) then
+    raise exception 'A target does not suit its exercise' using errcode = 'BB007';
+  end if;
+
+  minutes := public.workout_minutes(items);
+
+  if saved_id is null then
+    insert into public.workouts (user_id, name, weekdays, estimated_minutes)
+    values (caller_id, workout ->> 'name', days, minutes)
+    returning id into saved_id;
+  else
+    update public.workouts w
+    set name = workout ->> 'name', weekdays = days, estimated_minutes = minutes
+    where w.id = saved_id and w.user_id = caller_id;
+    if not found then
+      raise exception 'Workout not found' using errcode = 'BB006';
+    end if;
+    delete from public.workout_exercises where workout_id = saved_id;
+  end if;
+
+  -- A slot belongs to a plan's exercises only, so one sent with a hand-made workout is dropped.
+  perform public.insert_workout_exercises(
+    saved_id,
+    caller_id,
+    (
+      select coalesce(jsonb_agg(e.value - 'slot' order by e.ordinality), '[]'::jsonb)
+      from jsonb_array_elements(items) with ordinality e
+    )
+  );
+
+  return saved_id;
+end;
+$$;
 
 -- add_workout_alternative() takes the alternative to copy, `source_alternative_id`, as a last
 -- optional parameter, which needs the function dropped. An empty list of `exercises` adds an empty
@@ -117,7 +215,7 @@ grant execute on function public.add_workout_alternative(bigint, date, text, jso
 
 -- As before, and an empty alternative put in use leaves the workout without exercises, which
 -- save_workout() would refuse: the days before today are kept as save_workout() keeps them, the
--- workout's exercises go, and its time is the warm-up alone, as save_workout() counts it. The app
+-- workout's exercises go, and its time is workout_minutes() of none, the warm-up alone. The app
 -- shows such a workout as having no exercises yet and starts it only once it has one.
 create or replace function public.use_workout_alternative(alternative_id bigint, today date)
 returns void
@@ -146,7 +244,9 @@ begin
   if jsonb_array_length(chosen.exercises) = 0 then
     perform public.keep_planned_days(use_workout_alternative.today);
     delete from public.workout_exercises e where e.workout_id = chosen.workout_id;
-    update public.workouts w set estimated_minutes = 5 where w.id = chosen.workout_id;
+    update public.workouts w
+    set estimated_minutes = public.workout_minutes('[]')
+    where w.id = chosen.workout_id;
   else
     perform public.save_workout(
       workout || jsonb_build_object('exercises', chosen.exercises),
