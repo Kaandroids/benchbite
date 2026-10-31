@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import type { QueryData } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 
+import { LOGGABLE_DAYS } from '@shared/meal/limits';
+
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
 import { addDays, daysBetween, fromIsoDate, toIsoDate } from '@/i18n/dates';
@@ -16,8 +18,8 @@ export type Meal = Database['public']['Enums']['meal'];
 /** What a meal or a day adds up to, in the units of the targets. */
 export type Totals = NutritionTargets;
 
-/** How many days before today meals can be logged; the database allows the same (ADR 0034). */
-export const LOGGABLE_DAYS = 7;
+/** How many days before today meals can be logged, as the database allows. */
+export { LOGGABLE_DAYS };
 
 /** Whether a day, as YYYY-MM-DD, can still be logged on the device's `today`. */
 export function canLog(day: string, today: Date): boolean {

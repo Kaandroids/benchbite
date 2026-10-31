@@ -11,6 +11,7 @@ import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { ModelItem } from '../_shared/meal/item.ts';
+import { LOGGABLE_DAYS } from '../_shared/meal/limits.ts';
 import { logItemOf } from '../_shared/meal/log.ts';
 import { matchItems } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
@@ -31,12 +32,6 @@ export type ToolContext = {
    */
   localTime?: string;
 };
-
-/**
- * How many days back a meal may be logged, as check_meal_day() allows. The database decides
- * (BB020); the tool's check only saves the searches for a day it would refuse.
- */
-const MEAL_DAYS_BACK = 7;
 
 /** The most days one look at the history may cover. */
 const MAX_DAYS = 31;
@@ -79,7 +74,7 @@ const NO_MORE_OWN_FOODS =
 /** The database's refusals of a meal card. */
 const MEAL_REFUSALS = {
   meanings: {
-    BB020: `Meals are logged for today and up to ${MEAL_DAYS_BACK} days back.`,
+    BB020: `Meals are logged for today and up to ${LOGGABLE_DAYS} days back.`,
     BB021: 'That day has as many entries as it may have.',
     BB024: NO_MORE_OWN_FOODS,
     BB026: NO_MORE_OWN_FOODS,
@@ -421,7 +416,7 @@ const TOOLS = [
         .optional()
         .describe('The meal the user named; leave it out otherwise, and the time of day decides.'),
       day: DAY.optional().describe(
-        `The day it was eaten, YYYY-MM-DD, today or up to ${MEAL_DAYS_BACK} days back; today when left out.`,
+        `The day it was eaten, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back; today when left out.`,
       ),
       items: z.array(ModelItem).min(1).max(MAX_ESTIMATE_ITEMS),
       note: z
@@ -434,7 +429,7 @@ const TOOLS = [
     }),
     run: async ({ meal, day, items, note }, { supabase, language, today, threadId, localTime }) => {
       const eatenOn = day ?? today;
-      if (eatenOn > today || eatenOn < addDays(today, -MEAL_DAYS_BACK)) {
+      if (eatenOn > today || eatenOn < addDays(today, -LOGGABLE_DAYS)) {
         return { error: MEAL_REFUSALS.meanings.BB020 };
       }
       // As the user, so that only their own foods are found.
