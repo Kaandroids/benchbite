@@ -3,14 +3,15 @@ import { MAX_PHOTO_BYTES } from '@shared/photos';
 
 import { discardPhotos, preparePhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
+import { act, createTestQueryClient, renderHook } from '@/test/render';
 
 import {
-  forgetPhotoUrls,
   localTime,
   messagePhotos,
   photosToSend,
   photoUrls,
   prepareChatPhoto,
+  usePhotoUrls,
 } from './chat-photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { storage: { from: jest.fn() } } }));
@@ -42,7 +43,6 @@ const jpeg = (...parts: number[][]) => new Uint8Array(parts.flat());
 
 beforeEach(() => {
   jest.clearAllMocks();
-  forgetPhotoUrls();
 });
 
 describe('prepareChatPhoto', () => {
@@ -88,39 +88,81 @@ it("reads a stored message's photos by their paths, in order", () => {
   expect(messagePhotos(null)).toEqual([]);
 });
 
-describe('photoUrls', () => {
+describe("the addresses of a chat's photos", () => {
   const createSignedUrls = jest.fn();
+  const MINUTE = 60 * 1000;
+  let signedAt = 0;
 
   beforeEach(() => {
+    signedAt = 0;
     jest.mocked(supabase.storage.from).mockReturnValue({ createSignedUrls } as never);
-    createSignedUrls.mockImplementation((paths: string[]) =>
-      Promise.resolve({
-        data: paths.map((path) => ({ path, signedUrl: `https://media.test/${path}` })),
+    createSignedUrls.mockImplementation((paths: string[]) => {
+      signedAt += 1;
+      return Promise.resolve({
+        data: paths.map((path) => ({
+          path,
+          signedUrl: `https://media.test/${path}?v=${signedAt}`,
+        })),
         error: null,
-      }),
-    );
+      });
+    });
   });
 
-  it('asks for the addresses of all photos at once, and only for those not known', async () => {
-    const first = await photoUrls(['u/1/a.jpg', 'u/1/b.jpg', 'u/1/a.jpg']);
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('asks for the addresses of all photos at once', async () => {
+    const urls = await photoUrls(['u/1/a.jpg', 'u/1/b.jpg', 'u/1/a.jpg']);
     expect(createSignedUrls).toHaveBeenCalledWith(['u/1/a.jpg', 'u/1/b.jpg'], 3600);
-    expect(first.get('u/1/b.jpg')).toBe('https://media.test/u/1/b.jpg');
-
-    await photoUrls(['u/1/a.jpg', 'u/1/c.jpg']);
-    expect(createSignedUrls).toHaveBeenLastCalledWith(['u/1/c.jpg'], 3600);
-  });
-
-  it('asks again for an address about to end', async () => {
-    const now = jest.spyOn(Date, 'now').mockReturnValue(0);
-    await photoUrls(['u/1/a.jpg']);
-    now.mockReturnValue(56 * 60 * 1000);
-    await photoUrls(['u/1/a.jpg']);
-    expect(createSignedUrls).toHaveBeenCalledTimes(2);
-    now.mockRestore();
+    expect(urls.get('u/1/b.jpg')).toMatch(/^https:\/\/media.test\/u\/1\/b.jpg/);
   });
 
   it('fails when the addresses cannot be read', async () => {
     createSignedUrls.mockResolvedValue({ data: null, error: new Error('denied') });
     await expect(photoUrls(['u/1/a.jpg'])).rejects.toThrow('denied');
+  });
+
+  it('asks again before they end, open or opened again, and keeps them for a chat reopened soon', async () => {
+    jest.useFakeTimers();
+    const queryClient = createTestQueryClient();
+    // The address shown, read as the chat reads it, while it renders.
+    const open = () =>
+      renderHook(() => usePhotoUrls(7, ['u/7/a.jpg']).data?.get('u/7/a.jpg'), { queryClient });
+    const url = (hook: Awaited<ReturnType<typeof open>>) => hook.result.current;
+
+    // Lets the requests asked for answer, without moving the clock.
+    const settle = async () => {
+      for (let round = 0; round < 3; round++) await act(() => jest.advanceTimersByTimeAsync(0));
+    };
+
+    const first = await open();
+    await settle();
+    expect(url(first)).toBeDefined();
+    expect(createSignedUrls).toHaveBeenCalledTimes(1);
+    const before = url(first);
+
+    // Open for half an hour, it gets new ones, with the other half of the old ones left.
+    await act(() => jest.advanceTimersByTimeAsync(30 * MINUTE));
+    await settle();
+    expect(createSignedUrls).toHaveBeenCalledTimes(2);
+    const kept = queryClient.getQueryData<Map<string, string>>(['coach-media', 7, ['u/7/a.jpg']]);
+    expect(kept?.get('u/7/a.jpg')).not.toBe(before);
+    await first.unmount();
+
+    // Opened again ten minutes later, it shows the same ones, without asking.
+    await act(() => jest.advanceTimersByTimeAsync(10 * MINUTE));
+    const again = await open();
+    expect(url(again)).toBe(kept?.get('u/7/a.jpg'));
+    expect(createSignedUrls).toHaveBeenCalledTimes(2);
+    await again.unmount();
+
+    // Opened again 50 minutes after they were read, it never shows them: they were forgotten.
+    await act(() => jest.advanceTimersByTimeAsync(40 * MINUTE));
+    const late = await open();
+    expect(url(late)).toBeUndefined();
+    await settle();
+    expect(createSignedUrls).toHaveBeenCalledTimes(3);
+    expect(url(late)).toBeDefined();
   });
 });

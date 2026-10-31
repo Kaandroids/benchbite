@@ -1,9 +1,9 @@
 import { pickPhotos } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { act, fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, createTestQueryClient, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
-import { forgetPhotoUrls, prepareChatPhoto } from './chat-photos';
+import { prepareChatPhoto } from './chat-photos';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 import { useThreadMessages } from './threads';
 
@@ -69,7 +69,6 @@ async function addPhotos(button = 'Add a photo') {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  forgetPhotoUrls();
   mockParams = { thread: '', fresh: '1' };
   jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
   jest.mocked(supabase.rpc).mockResolvedValue({
@@ -226,12 +225,13 @@ describe('a saved chat', () => {
     expect(screen.queryByLabelText('Photo, large')).toBeNull();
   });
 
-  it('keeps the addresses by path, so that the chat opened again asks for none', async () => {
-    const first = await render(<BiteScreen />);
+  it('keeps the addresses, so that the chat opened again soon asks for none', async () => {
+    const queryClient = createTestQueryClient();
+    const first = await render(<BiteScreen />, { queryClient });
     await waitFor(() => expect(createSignedUrls).toHaveBeenCalledTimes(1));
     await first.unmount();
 
-    await render(<BiteScreen />);
+    await render(<BiteScreen />, { queryClient });
     await waitFor(() =>
       expect(screen.getAllByRole('imagebutton', { name: 'Photo 1' })[1]).toBeEnabled(),
     );

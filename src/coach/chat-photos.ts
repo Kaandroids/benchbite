@@ -67,48 +67,29 @@ export function messagePhotos(content: Json): MessagePhoto[] {
   });
 }
 
-/** How long a photo's address lasts, and how long before its end a new one is asked for. */
-const SIGNED_SECONDS = 60 * 60;
-const RENEW_BEFORE_MS = 5 * 60 * 1000;
-
 /**
- * The addresses of photos read back, by path, each with when it ends. Kept for as long as the app
- * runs, so that a chat opened again shows its photos at the same address, which the image cache
- * keeps them by, rather than loading them again.
+ * How long a photo's address lasts. The addresses are kept in the query cache alone, by chat,
+ * with one policy that never shows one that has ended: while the chat is open they are asked for
+ * again every half of that, as when it opens once half of it has passed, and they are kept for
+ * less than the other half after it closes. A chat opened again soon shows its photos at the same
+ * addresses, which the image cache keeps them by, without asking for them again.
  */
-const signed = new Map<string, { url: string; endsAt: number }>();
-
-/** Forgets the addresses kept, for tests. */
-export function forgetPhotoUrls() {
-  signed.clear();
-}
+const SIGNED_MS = 60 * 60 * 1000;
+const RENEW_MS = SIGNED_MS / 2;
+const KEPT_AFTER_CLOSE_MS = RENEW_MS - 5 * 60 * 1000;
 
 /**
- * Short-lived addresses of a chat's photos in `coach-media`, by path, which the user may read
- * under the bucket's policies (ADR 0062). Those not known yet, or about to end, are asked for in
- * one request for the whole chat.
+ * Short-lived addresses of photos in `coach-media`, by path, which the user may read under the
+ * bucket's policies (ADR 0062), asked for in one request.
  */
 export async function photoUrls(paths: string[]): Promise<Map<string, string>> {
-  const now = Date.now();
-  const wanted = [...new Set(paths)].filter(
-    (path) => (signed.get(path)?.endsAt ?? 0) - RENEW_BEFORE_MS <= now,
+  const { data, error } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .createSignedUrls([...new Set(paths)], SIGNED_MS / 1000);
+  if (error) throw error;
+  return new Map(
+    data.flatMap(({ path, signedUrl }) => (path && signedUrl ? [[path, signedUrl]] : [])),
   );
-  if (wanted.length > 0) {
-    const { data, error } = await supabase.storage
-      .from(MEDIA_BUCKET)
-      .createSignedUrls(wanted, SIGNED_SECONDS);
-    if (error) throw error;
-    for (const { path, signedUrl } of data) {
-      if (path && signedUrl)
-        signed.set(path, { url: signedUrl, endsAt: now + SIGNED_SECONDS * 1000 });
-    }
-  }
-  const urls = new Map<string, string>();
-  for (const path of paths) {
-    const url = signed.get(path)?.url;
-    if (url) urls.set(path, url);
-  }
-  return urls;
 }
 
 /** The addresses of the photos a chat keeps, read once for the chat when it opens. */
@@ -117,8 +98,8 @@ export function usePhotoUrls(threadId: number | undefined, paths: string[]) {
     queryKey: ['coach-media', threadId, paths],
     enabled: paths.length > 0,
     queryFn: () => photoUrls(paths),
-    // Asked for again before they end, as a chat may stay open.
-    staleTime: (SIGNED_SECONDS * 1000) / 2,
-    refetchInterval: (SIGNED_SECONDS * 1000) / 2,
+    staleTime: RENEW_MS,
+    refetchInterval: RENEW_MS,
+    gcTime: KEPT_AFTER_CLOSE_MS,
   });
 }
