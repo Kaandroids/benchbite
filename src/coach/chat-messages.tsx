@@ -20,6 +20,8 @@ import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
+import { MealCardView } from './meal-card';
+import type { MealCardState } from './meal-cards';
 import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
@@ -41,17 +43,22 @@ type ChatMessagesProps = {
   tool?: string;
   /** Asks an unanswered question again; without it, as when the user may not ask, it is not offered. */
   onAskAgain?: (question: ChatMessage) => void;
-  /** Where the proposals stand, by id, once loaded. */
-  proposals?: Map<number, ProposalState>;
-  /** Whether where they stand is loading. */
-  loadingProposals: boolean;
+  /** Where Bite's cards stand. */
+  cards: CardStates;
   /** The addresses of the chat's kept photos, by path, once read. */
   photoUrls?: Map<string, string>;
 };
 
+/** Where the cards of each kind stand, by id, once loaded, and whether that is loading. */
+export type CardStates = {
+  proposals?: Map<number, ProposalState>;
+  mealCards?: Map<number, MealCardState>;
+  loading: { proposals: boolean; mealCards: boolean };
+};
+
 /**
  * The conversation: the user's messages in bubbles, their photos above them, Bite's as text after
- * its face, with the changes it proposed under it. Bite's last message thinks while it waits, with
+ * its face, with the meals it estimated and the changes it proposed under it. Bite's last message thinks while it waits, with
  * what it is looking up or at, and talks while its text comes (boards 2, 3 and 8). A photo opens
  * large when tapped.
  */
@@ -60,15 +67,14 @@ export function ChatMessages({
   status,
   tool,
   onAskAgain,
-  proposals,
-  loadingProposals,
+  cards,
   photoUrls,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
   const [viewing, setViewing] = useState<string>();
   const moment = useMomentFormat();
-  // Bite thinks on under a change it proposed before a word.
-  const proposing = !!messages.at(-1)?.proposals?.length;
+  // Bite thinks on under a card it gave before a word.
+  const proposing = hasCards(messages.at(-1));
   // A conversation over more than one day shows when each day of it began (board 18).
   const first = messages[0]?.createdAt;
   const days =
@@ -95,8 +101,7 @@ export function ChatMessages({
               status={status}
               tool={tool}
               onAskAgain={onAskAgain}
-              proposals={proposals}
-              loadingProposals={loadingProposals}
+              cards={cards}
               photoUrls={photoUrls}
               onOpenPhoto={setViewing}
             />
@@ -112,9 +117,14 @@ export function ChatMessages({
   );
 }
 
+/** Whether Bite gave cards with a message: changes it proposed, or meals it estimated. */
+function hasCards(message: ChatMessage | undefined): boolean {
+  return !!message?.proposals?.length || !!message?.mealCards?.length;
+}
+
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'proposals' | 'loadingProposals' | 'photoUrls'
+  'status' | 'tool' | 'onAskAgain' | 'cards' | 'photoUrls'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -131,8 +141,7 @@ function MessageRow({
   status,
   tool,
   onAskAgain,
-  proposals,
-  loadingProposals,
+  cards,
   photoUrls,
   onOpenPhoto,
 }: MessageRowProps) {
@@ -147,18 +156,16 @@ function MessageRow({
       />
     );
   }
-  const proposed = !!message.proposals?.length;
-  if (last && status === 'thinking' && !message.text && !proposed) {
+  if (last && status === 'thinking' && !message.text && !hasCards(message)) {
     return <Thinking tool={tool} photos={before?.photos?.length ?? 0} />;
   }
-  // Only a message with proposals gets where they stand, so that the others render again only
-  // when they change, not when a proposal is decided.
+  // Only a message with cards gets where they stand, so that the others render again only when
+  // they change, not when a card is decided.
   return (
     <BiteMessage
       message={message}
       talking={last && status !== 'idle'}
-      proposals={proposed ? proposals : undefined}
-      loadingProposals={proposed && loadingProposals}
+      cards={hasCards(message) ? cards : undefined}
     />
   );
 }
@@ -225,11 +232,12 @@ const UserMessage = memo(function UserMessage({
 const BiteMessage = memo(function BiteMessage({
   message,
   talking,
-  proposals,
-  loadingProposals,
-}: Pick<ChatMessagesProps, 'proposals' | 'loadingProposals'> & {
+  cards,
+}: {
   message: ChatMessage;
   talking: boolean;
+  /** Where its cards stand, for a message with cards. */
+  cards?: CardStates;
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -243,7 +251,7 @@ const BiteMessage = memo(function BiteMessage({
           <BiteAvatar size={AVATAR} expression={expression} />
         )}
         <View style={[styles.biteColumn, { gap: spacing.sm + 2 }]}>
-          {/* A proposal may come without a word. */}
+          {/* A card may come without a word. */}
           {message.text ? (
             <View
               style={[
@@ -259,14 +267,26 @@ const BiteMessage = memo(function BiteMessage({
               <Text>{message.text}</Text>
             </View>
           ) : null}
+          {message.mealCards?.map((card) => {
+            const state = cards?.mealCards?.get(card.id);
+            return (
+              <View key={`meal-${card.id}`} style={styles.proposal}>
+                <MealCardView
+                  card={card}
+                  state={state}
+                  waiting={state === undefined && !!cards?.loading.mealCards}
+                />
+              </View>
+            );
+          })}
           {message.proposals?.map((card) => {
-            const state = proposals?.get(card.id);
+            const state = cards?.proposals?.get(card.id);
             return (
               <View key={card.id} style={styles.proposal}>
                 <ProposalCard
                   card={card}
                   state={state}
-                  waiting={state === undefined && loadingProposals}
+                  waiting={state === undefined && !!cards?.loading.proposals}
                 />
               </View>
             );

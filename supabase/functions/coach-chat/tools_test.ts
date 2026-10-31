@@ -5,13 +5,7 @@ import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
 import type { ToolContext } from './tools.ts';
-import {
-  MAX_FOOD_LOG_CHANGES,
-  PROPOSAL_KINDS,
-  runTool,
-  TOOL_DEFINITIONS,
-  WAITING_TOOLS,
-} from './tools.ts';
+import { MAX_FOOD_LOG_CHANGES, PROPOSAL_KINDS, runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 const context = {
   supabase: { rpc: () => Promise.resolve({ data: [], error: null }) },
@@ -34,6 +28,7 @@ Deno.test('tells the model of each tool with its arguments', () => {
       'get_workouts',
       'propose_workout_change',
       'propose_targets_change',
+      'propose_food_log_change',
       'log_meal_card',
     ],
   );
@@ -512,15 +507,15 @@ Deno.test('says why the database refused a meal card', async () => {
 });
 
 Deno.test('offers Bite no tool that proposes a change the app has no card for', () => {
-  assertEquals(PROPOSAL_KINDS, ['workout', 'targets']);
+  assertEquals(PROPOSAL_KINDS, ['workout', 'targets', 'food_log']);
   for (const kind of PROPOSAL_KINDS) {
     assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
   }
 });
 
-/** Runs propose_food_log_change, which Bite is not offered yet. */
+/** Runs propose_food_log_change. */
 const proposeFoodLog = (args: unknown, context: ToolContext) =>
-  runTool('propose_food_log_change', args, context, WAITING_TOOLS);
+  runTool('propose_food_log_change', args, context);
 
 type Entry = {
   id: number;

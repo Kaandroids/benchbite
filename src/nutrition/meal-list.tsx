@@ -6,11 +6,11 @@ import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
-import { useTheme, type ColorTokens } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { MacroDot } from './macro-dot';
 import { MACROS } from './macro-targets';
-import type { Meal, MealSummary } from './meals';
+import { MEAL_COLORS, type Meal, type MealSummary } from './meals';
 
 type MealListProps = {
   meals: MealSummary[];
@@ -20,14 +20,6 @@ type MealListProps = {
   onOpen: (meal: Meal) => void;
   /** Opens the search to add a food to the meal. */
   onAdd: (meal: Meal) => void;
-};
-
-/** Each meal's colour and its background, for its icon and its +. */
-const MEAL_COLORS: Record<Meal, { color: keyof ColorTokens; background: keyof ColorTokens }> = {
-  breakfast: { color: 'breakfast', background: 'breakfastBackground' },
-  lunch: { color: 'lunch', background: 'lunchBackground' },
-  dinner: { color: 'dinner', background: 'dinnerBackground' },
-  snack: { color: 'snack', background: 'snackBackground' },
 };
 
 /**

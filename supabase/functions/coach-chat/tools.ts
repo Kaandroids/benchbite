@@ -427,6 +427,98 @@ const TOOLS = [
       return { proposal };
     },
   }),
+  // Changes to the food log (ADR 0068), which only the user's words ask for.
+  tool({
+    name: 'propose_food_log_change',
+    proposes: 'food_log',
+    description:
+      "Proposes changes to entries of the user's food log, which the user applies or keeps as it is; it changes nothing itself. Each change moves an entry to another meal or day, changes its grams, or removes it. Take the entries' ids from get_meal_log.",
+    args: z.object({
+      changes: z
+        .array(
+          z
+            .object({
+              entryId: z.number().int().positive().describe("The entry's id from get_meal_log."),
+              day: DAY.optional().describe(
+                `The day to move it to, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back.`,
+              ),
+              meal: MEAL.optional().describe('The meal to move it to.'),
+              grams: z.number().positive().max(5000).optional().describe('What the user ate.'),
+              remove: z
+                .boolean()
+                .optional()
+                .describe('True when the user did not eat it; then nothing else.'),
+            })
+            .refine(
+              ({ day, meal, grams, remove }) =>
+                remove
+                  ? day === undefined && meal === undefined && grams === undefined
+                  : day !== undefined || meal !== undefined || grams !== undefined,
+              {
+                message: 'Each change gives a day, a meal or grams, or only remove: true',
+              },
+            ),
+        )
+        .min(1)
+        .max(MAX_FOOD_LOG_CHANGES)
+        .refine((changes) => new Set(changes.map((c) => c.entryId)).size === changes.length, {
+          message: 'Each entry once; give all its changes together',
+        }),
+    }),
+    run: async ({ changes }, { supabase, language, today, threadId, hasText }) => {
+      if (!hasText) {
+        return {
+          error:
+            'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
+        };
+      }
+      const proposed = await supabase.rpc('propose_coach_change', {
+        thread_id: threadId,
+        kind: 'food_log',
+        change: {
+          changes: changes.map(({ entryId, day, meal, grams, remove }) =>
+            remove ? { entryId, remove: true } : { entryId, day, meal, grams },
+          ),
+        },
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, FOOD_LOG_REFUSALS);
+      // The card shows what the database kept, which applying sets, rather than what Bite asked for
+      // or an entry read before: the entries may have changed meanwhile. The user reads their own
+      // proposals and entries.
+      const [stored, named] = await Promise.all([
+        supabase.from('coach_proposals').select('change, before').eq('id', proposed.data).single(),
+        supabase
+          .from('meal_entries')
+          .select(`id, ${ENTRY_FOOD}`)
+          .in(
+            'id',
+            changes.map((c) => c.entryId),
+          ),
+      ]);
+      if (stored.error) throw stored.error;
+      const entries = read(named);
+      const name = await entryNames(supabase, language, entries);
+      const names = new Map(entries.map((entry) => [entry.id, name(entry)]));
+      const { change, before } = stored.data as unknown as {
+        change: { changes: StoredFoodLogChange[] };
+        before: StoredFoodLogEntry[];
+      };
+      const proposal: ProposalCard = {
+        kind: 'food_log',
+        id: proposed.data,
+        changes: change.changes.map((c): FoodLogChange => {
+          const was = before.find((entry) => entry.id === c.entryId)!;
+          return {
+            food: names.get(c.entryId) ?? '',
+            from: foodLogEntry(was, was),
+            ...(!c.remove && { to: foodLogEntry(c, was) }),
+          };
+        }),
+      };
+      return { proposal };
+    },
+  }),
   tool({
     name: 'log_meal_card',
     description:
@@ -475,111 +567,8 @@ const TOOLS = [
   }),
 ];
 
-/**
- * Bite proposes changes to the food log (ADR 0068) once the app shows their card; until then it is
- * not offered, as a proposal the app hides could never be applied, though it would count among
- * the user's pending ones. To switch it on, move it into TOOLS and add FOOD_LOG_RULE to SYSTEM in
- * prompt.ts.
- */
-const PROPOSE_FOOD_LOG_CHANGE = tool({
-  name: 'propose_food_log_change',
-  proposes: 'food_log',
-  description:
-    "Proposes changes to entries of the user's food log, which the user applies or keeps as it is; it changes nothing itself. Each change moves an entry to another meal or day, changes its grams, or removes it. Take the entries' ids from get_meal_log.",
-  args: z.object({
-    changes: z
-      .array(
-        z
-          .object({
-            entryId: z.number().int().positive().describe("The entry's id from get_meal_log."),
-            day: DAY.optional().describe(
-              `The day to move it to, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back.`,
-            ),
-            meal: MEAL.optional().describe('The meal to move it to.'),
-            grams: z.number().positive().max(5000).optional().describe('What the user ate.'),
-            remove: z
-              .boolean()
-              .optional()
-              .describe('True when the user did not eat it; then nothing else.'),
-          })
-          .refine(
-            ({ day, meal, grams, remove }) =>
-              remove
-                ? day === undefined && meal === undefined && grams === undefined
-                : day !== undefined || meal !== undefined || grams !== undefined,
-            {
-              message: 'Each change gives a day, a meal or grams, or only remove: true',
-            },
-          ),
-      )
-      .min(1)
-      .max(MAX_FOOD_LOG_CHANGES)
-      .refine((changes) => new Set(changes.map((c) => c.entryId)).size === changes.length, {
-        message: 'Each entry once; give all its changes together',
-      }),
-  }),
-  run: async ({ changes }, { supabase, language, today, threadId, hasText }) => {
-    if (!hasText) {
-      return {
-        error:
-          'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
-      };
-    }
-    const proposed = await supabase.rpc('propose_coach_change', {
-      thread_id: threadId,
-      kind: 'food_log',
-      change: {
-        changes: changes.map(({ entryId, day, meal, grams, remove }) =>
-          remove ? { entryId, remove: true } : { entryId, day, meal, grams },
-        ),
-      },
-      today,
-    });
-    if (proposed.error) return refused(proposed.error, FOOD_LOG_REFUSALS);
-    // The card shows what the database kept, which applying sets, rather than what Bite asked for
-    // or an entry read before: the entries may have changed meanwhile. The user reads their own
-    // proposals and entries.
-    const [stored, named] = await Promise.all([
-      supabase.from('coach_proposals').select('change, before').eq('id', proposed.data).single(),
-      supabase
-        .from('meal_entries')
-        .select(`id, ${ENTRY_FOOD}`)
-        .in(
-          'id',
-          changes.map((c) => c.entryId),
-        ),
-    ]);
-    if (stored.error) throw stored.error;
-    const entries = read(named);
-    const name = await entryNames(supabase, language, entries);
-    const names = new Map(entries.map((entry) => [entry.id, name(entry)]));
-    const { change, before } = stored.data as unknown as {
-      change: { changes: StoredFoodLogChange[] };
-      before: StoredFoodLogEntry[];
-    };
-    const proposal: ProposalCard = {
-      kind: 'food_log',
-      id: proposed.data,
-      changes: change.changes.map((c): FoodLogChange => {
-        const was = before.find((entry) => entry.id === c.entryId)!;
-        return {
-          food: names.get(c.entryId) ?? '',
-          from: foodLogEntry(was, was),
-          ...(!c.remove && { to: foodLogEntry(c, was) }),
-        };
-      }),
-    };
-    return { proposal };
-  },
-});
-
-/** Tools that are ready but not offered to Bite yet, run only by their tests. */
-export const WAITING_TOOLS = [PROPOSE_FOOD_LOG_CHANGE];
-
 /** The kinds of proposal the tools offered to Bite make. */
 export const PROPOSAL_KINDS = TOOLS.flatMap((t) => (t.proposes ? [t.proposes] : []));
-
-type AnyTool = (typeof TOOLS)[number] | (typeof WAITING_TOOLS)[number];
 
 /** The tools as the model is told of them, their arguments as JSON Schema. */
 export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) => {
@@ -591,13 +580,8 @@ export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) 
  * Runs a tool the model called. A tool that does not exist or whose arguments are wrong says so
  * in its result, for the model to correct, rather than failing the answer.
  */
-export async function runTool(
-  name: string,
-  args: unknown,
-  context: ToolContext,
-  tools: readonly AnyTool[] = TOOLS,
-): Promise<unknown> {
-  const tool = tools.find((t) => t.name === name);
+export async function runTool(name: string, args: unknown, context: ToolContext): Promise<unknown> {
+  const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return { error: `There is no tool ${name}.` };
   const parsed = tool.args.safeParse(args);
   if (!parsed.success) return { error: z.prettifyError(parsed.error) };

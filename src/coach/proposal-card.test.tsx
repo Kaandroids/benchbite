@@ -1,3 +1,4 @@
+import { addDays, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
@@ -25,6 +26,20 @@ const TARGETS: Card = {
   id: 8,
   from: { calories: 2250, proteinG: 140, carbsG: 220, fatG: 70 },
   to: { calories: 2100, proteinG: 150, carbsG: 220, fatG: 70 },
+};
+const TODAY = toIsoDate(new Date());
+const YESTERDAY = toIsoDate(addDays(new Date(), -1));
+const FOOD_LOG: Card = {
+  kind: 'food_log',
+  id: 9,
+  changes: [
+    {
+      food: 'Pizza Margherita',
+      from: { day: TODAY, meal: 'lunch', grams: 150, kcal: 399 },
+      to: { day: TODAY, meal: 'dinner', grams: 150, kcal: 399 },
+    },
+    { food: 'Chocolate bar', from: { day: TODAY, meal: 'snack', grams: 50, kcal: 268 } },
+  ],
 };
 const pending: ProposalState = { status: 'pending', expired: false };
 
@@ -239,4 +254,139 @@ it('stays applied when Bite proposes again while Apply is sent', async () => {
 
   expect(screen.getByText('Applied: 2,100 kcal and 150 g protein a day')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
+});
+
+describe('a food log change', () => {
+  it('shows each entry it moves and removes, on its day', async () => {
+    await render(<ProposalCard card={FOOD_LOG} state={pending} />);
+
+    expect(screen.getByRole('header')).toHaveTextContent('Food log');
+    expect(screen.getByText('Today')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Pizza Margherita, Dinner instead of Lunch, 150 g, 399 kcal'),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Chocolate bar: Remove from snacks · 50 g · 268 kcal'),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Keep as is' })).toBeOnTheScreen();
+  });
+
+  it('names the days of entries on more than one, and new grams', async () => {
+    const card: Card = {
+      kind: 'food_log',
+      id: 10,
+      changes: [
+        {
+          food: 'Rice',
+          from: { day: TODAY, meal: 'lunch', grams: 200, kcal: 260 },
+          to: { day: YESTERDAY, meal: 'lunch', grams: 100, kcal: 130 },
+        },
+      ],
+    };
+    await render(<ProposalCard card={card} state={pending} />);
+
+    expect(screen.queryByText('Today')).not.toBeOnTheScreen();
+    expect(
+      screen.getByLabelText(
+        'Rice, Lunch, Yesterday instead of Lunch, Today, 100 g instead of 200 g, 130 kcal',
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it('applies, folds into a line that sums it up, and undoes it', async () => {
+    decides('applied');
+    await render(<ProposalCard card={FOOD_LOG} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'decide_coach_proposal',
+      expect.objectContaining({ proposal_id: 9, decision: 'apply' }),
+    );
+    expect(await screen.findByText('Applied: 2 changes to your food log')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Pizza Margherita to dinner · Chocolate bar removed'),
+    ).toBeOnTheScreen();
+
+    decides('undone');
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+    expect(supabase.rpc).toHaveBeenLastCalledWith(
+      'decide_coach_proposal',
+      expect.objectContaining({ proposal_id: 9, decision: 'undo' }),
+    );
+    expect(await screen.findByText('Undone')).toBeOnTheScreen();
+  });
+
+  it('keeps the food log as it is', async () => {
+    decides('kept');
+    await render(<ProposalCard card={FOOD_LOG} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep as is' }));
+
+    expect(await screen.findByText('Kept as it is')).toBeOnTheScreen();
+  });
+
+  it('sums up a change of grams and a move to another day', async () => {
+    const card: Card = {
+      kind: 'food_log',
+      id: 11,
+      changes: [
+        {
+          food: 'Rice',
+          from: { day: TODAY, meal: 'lunch', grams: 200, kcal: 260 },
+          to: { day: TODAY, meal: 'lunch', grams: 100, kcal: 130 },
+        },
+        {
+          food: 'Soup',
+          from: { day: TODAY, meal: 'dinner', grams: 300, kcal: 150 },
+          to: { day: YESTERDAY, meal: 'dinner', grams: 300, kcal: 150 },
+        },
+      ],
+    };
+    await render(<ProposalCard card={card} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Rice now 100 g · Soup to Yesterday')).toBeOnTheScreen();
+  });
+
+  it('names the day and the grams of an entry moved to another meal on another day', async () => {
+    const card: Card = {
+      kind: 'food_log',
+      id: 12,
+      changes: [
+        {
+          food: 'Pizza',
+          from: { day: TODAY, meal: 'lunch', grams: 300, kcal: 798 },
+          to: { day: YESTERDAY, meal: 'dinner', grams: 150, kcal: 399 },
+        },
+      ],
+    };
+    await render(<ProposalCard card={card} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Pizza to dinner, Yesterday, 150 g')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['BB035', 'This changed since — ask Bite again'],
+    ['BB020', 'That day can no longer be changed'],
+  ])('says why a change refused with %s cannot be applied, and may be kept', async (code, line) => {
+    decides(null, code);
+    await render(<ProposalCard card={FOOD_LOG} state={pending} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText(line)).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Keep as is' })).toBeOnTheScreen();
+  });
+
+  it('no longer offers Undo once an entry changed since it was applied', async () => {
+    decides(null, 'BB035');
+    await render(<ProposalCard card={FOOD_LOG} state={{ ...pending, status: 'applied' }} />);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+
+    expect(await screen.findByText('This changed since — ask Bite again')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeOnTheScreen();
+  });
 });

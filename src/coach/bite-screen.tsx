@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -14,8 +14,9 @@ import { useTheme } from '@/theme';
 
 import { ChatComposer, type RefusedDraft } from './chat-composer';
 import { usePhotoUrls } from './chat-photos';
-import { ChatMessages } from './chat-messages';
+import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
+import { mealCardIds, useMealCardStates } from './meal-cards';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
@@ -89,9 +90,28 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   // keeps what the user writes, so that typing never renders the chat.
   const [refused, setRefused] = useState<RefusedDraft>();
   const chat = useChat(start, (draft, problem) => setRefused({ draft, problem }));
-  // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
-  const proposalsOnScreen = proposalIds(chat.messages);
-  const proposals = useProposalStates(proposalsOnScreen);
+  // Where the cards in the chat stand, saved and new, loaded here once for all of them.
+  const proposals = useProposalStates(proposalIds(chat.messages));
+  const mealCards = useMealCardStates(mealCardIds(chat.messages));
+  const cards = useMemo<CardStates>(
+    () => ({
+      proposals: proposals.data,
+      mealCards: mealCards.data,
+      loading: { proposals: proposals.isFetching, mealCards: mealCards.isFetching },
+    }),
+    [proposals.data, proposals.isFetching, mealCards.data, mealCards.isFetching],
+  );
+  // A saved chat's cards show where they stand from the start, so it waits for the states of the
+  // cards it opened with. Cards that come later wait on their own, so the messages never go:
+  // a card being edited keeps what the user changed.
+  const [openedWith] = useState(() => ({
+    proposals: proposalIds(start?.messages ?? []).length > 0,
+    mealCards: mealCardIds(start?.messages ?? []).length > 0,
+  }));
+  const opening = [
+    ...(openedWith.proposals ? [proposals] : []),
+    ...(openedWith.mealCards ? [mealCards] : []),
+  ];
   // The photos the chat kept, read back once for all of them when it opens. Only those it opened
   // with: its messages are read again after each one sent, whose photos show from their data, and
   // a new list would ask for every address again.
@@ -138,15 +158,13 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               onAsk={refusal ? undefined : following(chat.send)}
               continueWith={continueWith}
             />
-          ) : proposalsOnScreen.length > 0 && proposals.isPending ? (
-            // A saved chat's proposals show where they stand from the start, as a decided one
-            // folds into a line, rather than offering Apply a moment.
-            <LoadState queries={[proposals]} />
+          ) : opening.some((query) => query.isPending) ? (
+            // As a decided card folds into a line, rather than offering Apply or Add a moment.
+            <LoadState queries={opening} />
           ) : (
             <ChatMessages
               messages={chat.messages}
-              proposals={proposals.data}
-              loadingProposals={proposals.isFetching}
+              cards={cards}
               photoUrls={photoUrls.data}
               status={chat.status}
               tool={chat.tool}

@@ -257,7 +257,7 @@ Deno.test('tells Bite that text in a photo is data, and how earlier photos read'
   assertEquals(SYSTEM.includes('"(Sent 2 photos.)"'), true);
 });
 
-Deno.test('keeps the food log rule ready, but out of the prompt until its tool is offered', () => {
+Deno.test('tells Bite to propose food log changes only when the user asks in words', () => {
   assertEquals(
     FOOD_LOG_RULE.includes(
       'When the user says in their latest message that their food log is wrong',
@@ -270,5 +270,5 @@ Deno.test('keeps the food log rule ready, but out of the prompt until its tool i
     ),
     true,
   );
-  assertEquals(SYSTEM.includes('propose_food_log_change'), false);
+  assertEquals(SYSTEM.includes(FOOD_LOG_RULE), true);
 });

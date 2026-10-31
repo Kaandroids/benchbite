@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
@@ -27,19 +27,23 @@ export const QUICK_FOOD_KEYS = [['frequent-foods'], ['favourite-foods'], ['my-fo
  * screens, the days, the past meals and the add screen's lists. Changing or deleting one reloads
  * them all.
  */
+export function reloadFoods(queryClient: QueryClient) {
+  return Promise.all(
+    [
+      ['food-search'],
+      ['food'],
+      ['recipe'],
+      ['meal-entries'],
+      ['past-meal'],
+      ...QUICK_FOOD_KEYS,
+    ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+  );
+}
+
+/** `reloadFoods`, for a mutation. */
 export function useReloadFoods() {
   const queryClient = useQueryClient();
-  return () =>
-    Promise.all(
-      [
-        ['food-search'],
-        ['food'],
-        ['recipe'],
-        ['meal-entries'],
-        ['past-meal'],
-        ...QUICK_FOOD_KEYS,
-      ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-    );
+  return () => reloadFoods(queryClient);
 }
 
 /** The foods the user logged most at a meal in the last 90 days (ADR 0037). */

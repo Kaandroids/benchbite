@@ -1870,13 +1870,58 @@
         "swap": "{{to}} instead of {{from}}",
         "twoSwaps": "{{first}} and {{second}}",
         "swaps": "{{number}} new exercises in {{workout}}",
-        "targets": "{{calories}} kcal and {{protein}} g protein a day"
+        "targets": "{{calories}} kcal and {{protein}} g protein a day",
+        "foodLog_one": "{{count}} change to your food log",
+        "foodLog_other": "{{count}} changes to your food log"
       },
       "refusals": {
         "changed": "This changed since — ask Bite again",
         "outOfDate": "This is out of date",
         "underFloor": "This is now below the least we recommend — ask Bite again",
-        "failed": "That didn't work. Try again."
+        "failed": "That didn't work. Try again.",
+        "closedDay": "That day can no longer be changed"
+      }
+    },
+    "mealCard": {
+      "added": {
+        "breakfast": "Added to breakfast · {{calories}} kcal",
+        "lunch": "Added to lunch · {{calories}} kcal",
+        "dinner": "Added to dinner · {{calories}} kcal",
+        "snack": "Added as a snack · {{calories}} kcal"
+      },
+      "edit": "Edit",
+      "amount": "{{grams}} g · {{calories}} kcal",
+      "row": "{{name}}, {{grams}} grams, {{calories}} kcal",
+      "rowEstimated": "{{name}}, {{grams}} grams, {{calories}} kcal, estimated, not found in the library"
+    },
+    "foodLog": {
+      "title": "Food log",
+      "place": "{{meal}}, {{day}}",
+      "remove": {
+        "breakfast": "Remove from breakfast",
+        "lunch": "Remove from lunch",
+        "dinner": "Remove from dinner",
+        "snack": "Remove from snacks"
+      },
+      "removeLabel": "{{food}}: {{detail}}",
+      "moveLabel": "{{to}} instead of {{from}}",
+      "summary": {
+        "removed": "{{food}} removed",
+        "moved": {
+          "breakfast": "{{food}} to breakfast",
+          "lunch": "{{food}} to lunch",
+          "dinner": "{{food}} to dinner",
+          "snack": "{{food}} to snacks"
+        },
+        "movedOn": {
+          "breakfast": "{{food}} to breakfast, {{day}}",
+          "lunch": "{{food}} to lunch, {{day}}",
+          "dinner": "{{food}} to dinner, {{day}}",
+          "snack": "{{food}} to snacks, {{day}}"
+        },
+        "movedDay": "{{food}} to {{day}}",
+        "resized": "{{food}} now {{grams}}",
+        "withGrams": "{{change}}, {{grams}}"
       }
     }
   }
