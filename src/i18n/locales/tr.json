@@ -1765,6 +1765,7 @@
       "get_workouts": "Planına bakıyorum…",
       "propose_workout_change": "Antrenman değişikliği hazırlıyorum…",
       "propose_targets_change": "Yeni hedefler hazırlıyorum…",
+      "propose_food_log_change": "Öğünlerindeki değişikliği hazırlıyorum…",
       "log_meal_card": "Öğününü hazırlıyorum…"
     },
     "failures": {

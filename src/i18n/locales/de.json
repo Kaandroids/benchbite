@@ -1765,6 +1765,7 @@
       "get_workouts": "Schaue mir deinen Plan an…",
       "propose_workout_change": "Bereite eine Trainingsänderung vor…",
       "propose_targets_change": "Bereite neue Ziele vor…",
+      "propose_food_log_change": "Bereite eine Änderung deiner Mahlzeiten vor…",
       "log_meal_card": "Bereite deine Mahlzeit vor…"
     },
     "failures": {
