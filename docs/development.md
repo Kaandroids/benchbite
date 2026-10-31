@@ -163,6 +163,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
 | `pnpm vault:local`      | Store the local URL and secret key for the purge      |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
+| `pnpm seed:demo`        | Recreate the demo account of the README screenshots   |
 
 CI runs most of these on every pull request; [CONTRIBUTING.md](../CONTRIBUTING.md) lists what it
 checks.
