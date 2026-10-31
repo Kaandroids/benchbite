@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -74,6 +74,29 @@ select throws_ok(
   'A note has text'
 );
 select throws_ok(
+  $$ insert into public.coach_notes (category, text) values ('food', repeat(' ', 300) || 'x') $$,
+  '23514', null,
+  'A note is short as it is stored, spaces too'
+);
+select throws_ok(
+  format(
+    $$ update public.coach_notes set message_id = %s where category = 'allergy' $$,
+    pg_temp.id('b message')
+  ),
+  '42501', null,
+  'A note is not moved to another user''s message'
+);
+select throws_ok(
+  $$ update public.coach_notes set user_id = '00000000-0000-0000-0000-00000000000b' $$,
+  '42501', null,
+  'Nor given to another user'
+);
+select throws_ok(
+  $$ update public.coach_notes set source = 'onboarding' $$,
+  '42501', null,
+  'Nor said to come from elsewhere afterwards'
+);
+select throws_ok(
   $$ update public.coach_notes set archived_at = now() where category = 'injury' $$,
   '23514', null,
   'An archived note says why'
@@ -132,6 +155,18 @@ select lives_ok(
   'A note in use is still changed at the limit'
 );
 
+reset role;
+set local role anon;
+select throws_ok(
+  $$ select 1 from public.coach_notes $$,
+  '42501', null,
+  'Nobody signed out reads notes'
+);
+select throws_ok(
+  $$ insert into public.coach_notes (category, text) values ('food', 'x') $$,
+  '42501', null,
+  'Nor adds one'
+);
 reset role;
 select col_default_is(
   'public', 'profiles', 'coach_saves_notes', 'true',

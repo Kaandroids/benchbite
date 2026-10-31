@@ -19,8 +19,9 @@ create table public.coach_notes (
   id bigint generated always as identity primary key,
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
   category public.coach_note_category not null,
-  -- In the language the app showed when it was written, which the user reads it in.
-  text text not null check (length(trim(text)) between 1 and 200),
+  -- In the language the app showed when it was written, which the user reads it in. Bound as it
+  -- is stored, spaces too, as every answer reads it (MAX_NOTE_LENGTH in coach-chat/tools.ts).
+  text text not null check (length(text) <= 200 and length(trim(text)) >= 1),
   source public.coach_note_source not null default 'user',
   -- The chat a note of Bite's came from, and Bite's answer there, set once the answer is saved.
   thread_id bigint references public.coach_threads (id) on delete set null,
@@ -32,7 +33,7 @@ create table public.coach_notes (
   review_on date,
   archived_at timestamptz,
   -- Why Bite archived it, as the past notes show it.
-  archive_reason text check (length(trim(archive_reason)) between 1 and 200),
+  archive_reason text check (length(archive_reason) <= 200 and length(trim(archive_reason)) >= 1),
   check ((archived_at is null) = (archive_reason is null)),
   created_at timestamptz not null default now()
 );
