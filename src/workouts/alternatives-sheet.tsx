@@ -22,8 +22,8 @@ import {
   useDeleteAlternative,
   useRenameAlternative,
   useReorderAlternatives,
-  useSwitchAlternative,
   useWorkoutAlternatives,
+  type AlternativeChoice,
   type NewAlternative,
   type WorkoutAlternative,
 } from './alternatives';
@@ -48,14 +48,14 @@ const OWN: WorkoutAlternative = {
  */
 type Naming = Pick<WorkoutAlternative, 'id' | 'name' | 'position'> & { use?: boolean };
 
-type Shown = { kind: 'manage'; error?: string } | { kind: 'name'; alternative: Naming } | null;
+type Shown = { kind: 'manage' } | { kind: 'name'; alternative: Naming } | null;
 
 type AlternativesSheetsProps = {
   workout: Workout;
-  /** Whether the workout is running, which putting another in use would change under it. */
+  /** Whether the workout is running, which keeps a new alternative out of use. */
   running: boolean;
-  /** Called, once the sheets have closed, instead of putting one in use while it runs. */
-  onRunning: () => void;
+  /** The screen's choice of the one in use, which the chips share. */
+  choice: AlternativeChoice;
   onClose: () => void;
 };
 
@@ -65,15 +65,8 @@ type AlternativesSheetsProps = {
  * is put in use and closes the sheets, so that the workout shows it to fill in. Rendered while
  * open; `onClose` closes them.
  */
-export function AlternativesSheets({
-  workout,
-  running,
-  onRunning,
-  onClose,
-}: AlternativesSheetsProps) {
+export function AlternativesSheets({ workout, running, choice, onClose }: AlternativesSheetsProps) {
   const [shown, setShown] = useState<Shown>({ kind: 'manage' });
-  const use = useSwitchAlternative();
-  const errorOf = useAlternativeError();
   // One sheet closes before the next opens, as iOS shows one at a time.
   const show = (next: Shown) => {
     setShown(null);
@@ -86,10 +79,10 @@ export function AlternativesSheets({
       return;
     }
     setShown(null);
-    use.mutate(alternative.id, {
+    choice.choose(alternative.id, {
       onSuccess: onClose,
-      onError: (error) =>
-        afterSheetCloses(() => setShown({ kind: 'manage', error: errorOf(error, 'switch') })),
+      // Back on the list, which says why.
+      onError: () => afterSheetCloses(() => setShown({ kind: 'manage' })),
     });
   };
 
@@ -106,13 +99,8 @@ export function AlternativesSheets({
     return (
       <ManageAlternativesSheet
         workout={workout}
-        initialError={shown.error}
+        choice={choice}
         onClose={onClose}
-        onRunning={() => {
-          onClose();
-          afterSheetCloses(onRunning);
-        }}
-        running={running}
         onName={(alternative) => show({ kind: 'name', alternative })}
       />
     );
@@ -122,10 +110,8 @@ export function AlternativesSheets({
 
 type ManageProps = {
   workout: Workout;
-  running: boolean;
-  initialError: string | undefined;
+  choice: AlternativeChoice;
   onClose: () => void;
-  onRunning: () => void;
   onName: (alternative: Naming) => void;
 };
 
@@ -137,25 +123,17 @@ type Menu = { alternative: WorkoutAlternative; index: number };
  * duplicate or delete it unless in use, and they can be dragged into another order. While there is
  * room, a row at the end adds an empty one.
  */
-function ManageAlternativesSheet({
-  workout,
-  running,
-  initialError,
-  onClose,
-  onRunning,
-  onName,
-}: ManageProps) {
+function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManageProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const alternatives = useWorkoutAlternatives(workout.id);
   const limits = useWorkoutLimits();
   const add = useAddAlternative(workout.id);
-  const use = useSwitchAlternative();
   const remove = useDeleteAlternative(workout.id);
   const reorder = useReorderAlternatives(workout.id);
   const nameOf = useAlternativeName();
   const errorOf = useAlternativeError();
-  const [error, setError] = useState<string | null>(initialError ?? null);
+  const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   // Where the list starts in the sheet, to place a menu by its row.
   const [listTop, setListTop] = useState(0);
@@ -170,11 +148,14 @@ function ManageAlternativesSheet({
     (action: Parameters<typeof errorOf>[1]) =>
     (failure: unknown): void =>
       setError(errorOf(failure, action));
+  /** As another change starts, the message of the last one goes, a failed switch's too. */
+  const clearErrors = () => {
+    setError(null);
+    choice.clearError();
+  };
 
-  // The one being put in use shows as chosen until the alternatives have loaded with it.
-  const chosenId = use.isPending ? use.variables : rows.find((row) => row.inUse)?.id;
   const isChosen = (alternative: WorkoutAlternative) =>
-    rows.length === 0 || alternative.id === chosenId;
+    rows.length === 0 || alternative.id === choice.chosenId;
 
   const sizeOf = (alternative: WorkoutAlternative) => {
     const exercises = alternative.inUse
@@ -186,19 +167,14 @@ function ManageAlternativesSheet({
   };
 
   const onUse = (alternative: WorkoutAlternative) => {
-    if (isChosen(alternative) || use.isPending) return;
-    // As the chips: it would change the exercises of the workout running.
-    if (running) {
-      onRunning();
-      return;
-    }
+    if (isChosen(alternative)) return;
     setError(null);
-    use.mutate(alternative.id, { onError: failed('switch') });
+    choice.choose(alternative.id);
   };
 
   /** Adds an alternative, then asks for its name; one that starts empty is then put in use. */
   const onAdd = (from: NewAlternative) => {
-    setError(null);
+    clearErrors();
     add.mutate(from, {
       // The new one is last, after the workout's own when it is the first added.
       onSuccess: (id) => onName({ id, name: null, position: count + 1, use: 'empty' in from }),
@@ -217,7 +193,7 @@ function ManageAlternativesSheet({
           text: t('workout.alternatives.delete'),
           style: 'destructive',
           onPress: () => {
-            setError(null);
+            clearErrors();
             remove.mutate(alternative.id, { onError: failed('delete') });
           },
         },
@@ -226,7 +202,7 @@ function ManageAlternativesSheet({
   };
 
   const onMove = (from: number, to: number) => {
-    setError(null);
+    clearErrors();
     reorder.mutate(
       move(rows, from, to).map((alternative) => alternative.id),
       { onError: failed('reorder') },
@@ -419,9 +395,9 @@ function ManageAlternativesSheet({
           {t('workout.alternatives.full', { max })}
         </Text>
       ) : null}
-      {error ? (
+      {error || choice.error ? (
         <Text variant="caption" color="danger" accessibilityRole="alert">
-          {error}
+          {error ?? choice.error}
         </Text>
       ) : null}
       {menu ? (

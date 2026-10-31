@@ -11,6 +11,7 @@ import { MessageView } from '@/components/ui/message-view';
 import { PillButton } from '@/components/ui/pill-button';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
+import { afterSheetCloses } from '@/components/ui/sheet';
 import { StatColumns } from '@/components/ui/stat-columns';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -22,6 +23,7 @@ import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
+import { useChooseAlternative, useWorkoutAlternatives } from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
@@ -56,6 +58,34 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
   const [managing, setManaging] = useState(false);
+  const alternatives = useWorkoutAlternatives(id);
+
+  // A workout that is running cannot change under it, nor be deleted before it is saved; it is
+  // finished first.
+  const running = session?.workoutId === id;
+  const askToFinish = () =>
+    Alert.alert(
+      t('workout.running.title', { name: workout ? workoutName(workout) : '' }),
+      t('workout.running.message'),
+      [
+        { text: t('editor.cancel'), style: 'cancel' },
+        { text: t('workout.running.resume'), onPress: () => router.push('/session') },
+      ],
+    );
+  // One choice of the alternative in use for the chips and the sheet.
+  const choice = useChooseAlternative({
+    alternatives: alternatives.data,
+    running,
+    onRunning: () => {
+      if (!managing) {
+        askToFinish();
+        return;
+      }
+      // Once the sheet has closed, as iOS shows no alert over a closing sheet.
+      setManaging(false);
+      afterSheetCloses(askToFinish);
+    },
+  });
 
   if (!allLoaded([workouts])) {
     return (
@@ -129,15 +159,6 @@ export function WorkoutScreen({ id }: { id: number }) {
     </View>
   );
 
-  // A workout that is running cannot change under it, nor be deleted before it is saved; it is
-  // finished first.
-  const running = session?.workoutId === workout.id;
-  const askToFinish = () =>
-    Alert.alert(t('workout.running.title', { name }), t('workout.running.message'), [
-      { text: t('editor.cancel'), style: 'cancel' },
-      { text: t('workout.running.resume'), onPress: () => router.push('/session') },
-    ]);
-
   const onEdit = () => {
     if (running) {
       askToFinish();
@@ -209,7 +230,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         </View>
       }
     >
-      <WorkoutAlternatives workoutId={workout.id} running={running} onRunning={askToFinish} />
+      <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />
 
       {empty ? <EmptyWorkout workoutId={workout.id} name={name} onAdd={onEdit} /> : null}
 
@@ -270,7 +291,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         <AlternativesSheets
           workout={workout}
           running={running}
-          onRunning={askToFinish}
+          choice={choice}
           onClose={() => setManaging(false)}
         />
       ) : null}

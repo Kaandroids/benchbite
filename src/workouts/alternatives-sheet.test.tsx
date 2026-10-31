@@ -4,18 +4,18 @@ import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import {
   useAddAlternative,
+  useChooseAlternative,
   useDeleteAlternative,
   useRenameAlternative,
   useReorderAlternatives,
-  useSwitchAlternative,
   useWorkoutAlternatives,
   type WorkoutAlternative,
 } from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
-import { testExercise, testWorkout } from './test-data';
+import { holdSwitches, testExercise, testWorkout, type HeldSwitch } from './test-data';
 import { useWorkoutLimits } from './workouts';
 
-jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('./alternatives', () => ({
   ...jest.requireActual<typeof import('./alternatives')>('./alternatives'),
   useWorkoutAlternatives: jest.fn(),
@@ -23,7 +23,6 @@ jest.mock('./alternatives', () => ({
   useDeleteAlternative: jest.fn(),
   useRenameAlternative: jest.fn(),
   useReorderAlternatives: jest.fn(),
-  useSwitchAlternative: jest.fn(),
 }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),
@@ -34,9 +33,9 @@ const add = jest.fn();
 const remove = jest.fn();
 const rename = jest.fn();
 const reorder = jest.fn();
-const use = jest.fn();
 const onClose = jest.fn();
 const onRunning = jest.fn();
+let switches: HeldSwitch[] = [];
 
 const workout = testWorkout(7, { exercises: [testExercise('squat'), testExercise('row')] });
 
@@ -56,21 +55,29 @@ function mockRename(state: object = {}) {
     .mockReturnValue({ mutate: rename, isPending: false, isError: false, ...state } as never);
 }
 
-function renderSheets(running = false) {
-  return render(
-    <AlternativesSheets
-      workout={workout}
-      running={running}
-      onRunning={onRunning}
-      onClose={onClose}
-    />,
+/** The sheets with the choice of the one in use that the workout's screen gives them. */
+function Sheets({ running }: { running: boolean }) {
+  const choice = useChooseAlternative({
+    alternatives: useWorkoutAlternatives(workout.id).data,
+    running,
+    onRunning,
+  });
+  return (
+    <AlternativesSheets workout={workout} running={running} choice={choice} onClose={onClose} />
   );
+}
+
+function renderSheets(running = false) {
+  return render(<Sheets running={running} />);
 }
 
 /** Opens the ⋯ menu of an alternative. */
 async function openMenu(name: string) {
   await fireEvent.press(screen.getByRole('button', { name: `More for ${name}` }));
 }
+
+/** The alternatives switched to so far. */
+const switched = () => switches.map((held) => held.alternativeId);
 
 const menuItem = (name: string) => screen.queryByRole('menuitem', { name });
 
@@ -90,7 +97,7 @@ beforeEach(() => {
   jest.mocked(useAddAlternative).mockReturnValue({ mutate: add, isPending: false } as never);
   jest.mocked(useDeleteAlternative).mockReturnValue({ mutate: remove } as never);
   jest.mocked(useReorderAlternatives).mockReturnValue({ mutate: reorder } as never);
-  jest.mocked(useSwitchAlternative).mockReturnValue({ mutate: use, isPending: false } as never);
+  switches = holdSwitches();
   mockRename();
 });
 
@@ -180,9 +187,9 @@ it('adds an empty alternative, asks for its name, then puts it in use and closes
   expect(rename).toHaveBeenCalledWith({ id: 9, name: 'Home' }, expect.anything());
 
   await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
-  expect(use).toHaveBeenCalledWith(9, expect.anything());
+  expect(switched()).toEqual([9]);
   expect(onClose).not.toHaveBeenCalled();
-  await act(async () => use.mock.calls[0]?.[1]?.onSuccess());
+  await act(async () => switches[0]?.succeed());
   expect(onClose).toHaveBeenCalled();
 });
 
@@ -193,7 +200,7 @@ it('puts a new alternative in use when its name is left as it is', async () => {
   await waitFor(() => expect(screen.getByText('Name the alternative')).toBeTruthy());
   await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
   expect(rename).not.toHaveBeenCalled();
-  expect(use).toHaveBeenCalledWith(9, expect.anything());
+  expect(switched()).toEqual([9]);
 });
 
 it('says why a new alternative was not put in use, back on the list', async () => {
@@ -201,7 +208,7 @@ it('says why a new alternative was not put in use, back on the list', async () =
   await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
   await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
   await nameIt('');
-  await act(async () => use.mock.calls[0]?.[1]?.onError(new Error('offline')));
+  await act(async () => switches[0]?.fail(new Error('offline')));
   await waitFor(() =>
     expect(screen.getByText("We couldn't switch to it. Try again.")).toBeTruthy(),
   );
@@ -214,42 +221,43 @@ it('keeps a new alternative out of use while the workout runs', async () => {
   await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
   await nameIt('Home');
   await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
-  expect(use).not.toHaveBeenCalled();
+  expect(switched()).toEqual([]);
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy());
 });
 
 it('puts the alternative tapped in use, and not the one in use again', async () => {
   await renderSheets();
   await fireEvent.press(screen.getByRole('radio', { name: 'Alternative 2' }));
-  expect(use).not.toHaveBeenCalled();
+  expect(switched()).toEqual([]);
   await fireEvent.press(screen.getByRole('radio', { name: 'Hotel' }));
-  expect(use).toHaveBeenCalledWith(6, expect.anything());
+  expect(switched()).toEqual([6]);
   expect(onClose).not.toHaveBeenCalled();
 
-  await act(async () => use.mock.calls[0]?.[1]?.onError({ code: 'P0002' }));
+  await act(async () => switches[0]?.fail({ code: 'P0002' }));
   expect(screen.getByText('This alternative no longer exists.')).toBeTruthy();
 });
 
-it('marks the one being put in use as chosen while that runs', async () => {
-  jest
-    .mocked(useSwitchAlternative)
-    .mockReturnValue({ mutate: use, isPending: true, variables: 3 } as never);
+it('marks the one being put in use as chosen while that runs, and waits for it', async () => {
   await renderSheets();
-  expect(screen.getByRole('radio', { name: 'Gym' }).props.accessibilityState).toEqual({
-    checked: true,
-  });
+  await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
+  await waitFor(() =>
+    expect(screen.getByRole('radio', { name: 'Gym' }).props.accessibilityState).toEqual({
+      checked: true,
+    }),
+  );
   expect(screen.getByRole('radio', { name: 'Alternative 2' }).props.accessibilityState).toEqual({
     checked: false,
   });
+  // No other until it is done.
+  await fireEvent.press(screen.getByRole('radio', { name: 'Hotel' }));
+  expect(switched()).toEqual([3]);
 });
 
 it('asks to finish the running workout before putting another in use', async () => {
   await renderSheets(true);
   await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
-  expect(use).not.toHaveBeenCalled();
-  expect(onClose).toHaveBeenCalled();
-  // Once the sheet has closed, as iOS shows no alert over a closing sheet.
-  await waitFor(() => expect(onRunning).toHaveBeenCalled());
+  expect(switched()).toEqual([]);
+  expect(onRunning).toHaveBeenCalled();
 });
 
 it('offers rename, duplicate and delete in an alternative’s menu, but no delete for the one in use', async () => {
@@ -278,7 +286,7 @@ it('duplicates an alternative, asks for its name and goes back to the list', asy
   expect(rename).toHaveBeenCalledWith({ id: 9, name: 'Gym short' }, expect.anything());
   await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
   // A copy is not put in use.
-  expect(use).not.toHaveBeenCalled();
+  expect(switched()).toEqual([]);
   await waitFor(() => expect(screen.getByRole('button', { name: 'Add alternative' })).toBeTruthy());
 });
 
@@ -302,7 +310,7 @@ it('renames an alternative, or leaves it unnamed', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
   expect(rename).toHaveBeenCalledWith({ id: 3, name: '' }, expect.anything());
   await act(async () => rename.mock.calls[0]?.[1]?.onSuccess());
-  expect(use).not.toHaveBeenCalled();
+  expect(switched()).toEqual([]);
 });
 
 it('closes the name without saving when it did not change', async () => {

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deviceToday } from '@/i18n/dates';
@@ -106,6 +107,63 @@ export function useSwitchAlternative() {
     onSettled: () => reloadPlan(queryClient),
   });
 }
+
+type ChooseAlternativeOptions = {
+  /** The workout's alternatives, while they are loaded. */
+  alternatives: WorkoutAlternative[] | undefined;
+  /** Whether the workout is running, which a switch would change under it. */
+  running: boolean;
+  /** Called instead of a switch while the workout is running, to have it finished first. */
+  onRunning: () => void;
+};
+
+/**
+ * Choosing the alternative in use, for the chips, the sheet's rows and a new alternative once
+ * named alike. Mounted once on the workout's screen, so that all of them see the same switch:
+ * `chosenId` is the one being switched to until the workout has loaded with it, `isPending` holds
+ * every other choice and Start meanwhile, and `error` says why the last switch failed.
+ */
+export function useChooseAlternative({
+  alternatives,
+  running,
+  onRunning,
+}: ChooseAlternativeOptions) {
+  const switchAlternative = useSwitchAlternative();
+  const errorOf = useAlternativeError();
+  const [error, setError] = useState<string | null>(null);
+  const chosenId = switchAlternative.isPending
+    ? switchAlternative.variables
+    : alternatives?.find((alternative) => alternative.inUse)?.id;
+
+  /** Puts `id` in use, unless it already is or another switch runs; `onSuccess` once it is. */
+  const choose = (id: number, callbacks: { onSuccess?: () => void; onError?: () => void } = {}) => {
+    // Like an edit, a switch would change the exercises of the workout running.
+    if (running) {
+      onRunning();
+      return;
+    }
+    if (switchAlternative.isPending || id === chosenId) return;
+    setError(null);
+    switchAlternative.mutate(id, {
+      onSuccess: callbacks.onSuccess,
+      onError: (failure) => {
+        setError(errorOf(failure, 'switch'));
+        callbacks.onError?.();
+      },
+    });
+  };
+
+  return {
+    chosenId,
+    choose,
+    error,
+    /** Forgets why the last switch failed, as another change of the alternatives starts. */
+    clearError: () => setError(null),
+    isPending: switchAlternative.isPending,
+  };
+}
+
+export type AlternativeChoice = ReturnType<typeof useChooseAlternative>;
 
 /**
  * What a new alternative starts with: no exercises, as Add makes it, or a copy of an alternative's
