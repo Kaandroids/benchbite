@@ -435,8 +435,8 @@ async function lookUp(
   // result.
   const proposal = proposalOf(result);
   if (proposal) send({ event: 'proposal', proposal });
-  const card = mealCardOf(result);
-  if (card) send({ event: 'meal_card', card });
+  const mealCard = mealCardOf(result);
+  if (mealCard) send({ event: 'meal_card', mealCard });
   return result;
 }
 

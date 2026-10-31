@@ -127,7 +127,7 @@ export type ChatEvent<Expression extends string = string> =
   /** A change Bite proposed, shown as a card under its answer. */
   | { event: 'proposal'; proposal: ProposalCard }
   /** A meal Bite estimated, shown as a card under its answer for the user to add. */
-  | { event: 'meal_card'; card: MealCard }
+  | { event: 'meal_card'; mealCard: MealCard }
   /**
    * The turn is saved; `interrupted` says why when the answer stopped before its end, and
    * `reason` what failed or was refused, as an error's does.

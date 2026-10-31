@@ -852,7 +852,7 @@ Deno.test(
 
     assertEquals(
       answer.filter((e) => e.event === 'meal_card'),
-      [{ event: 'meal_card', card: MEAL_CARD }],
+      [{ event: 'meal_card', mealCard: MEAL_CARD }],
     );
     assertEquals(answer.at(-1), { event: 'done', threadId: 100, messageId: 102 });
     // The message keeps the card in its tool's result, to show it when the chat is read back.
