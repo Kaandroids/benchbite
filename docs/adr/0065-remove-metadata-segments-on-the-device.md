@@ -49,3 +49,10 @@ This amends ADR 0062, whose Exif decision said re-encoding on the device drops t
   both keep the same three application segments.
 - A photo from an encoder that writes another application segment the app does not remove is
   refused until the app removes it as well.
+
+## Cost of a photo turn
+
+A turn's photos are sent with each of its tool rounds, to count its tokens and to answer, as Bite
+needs them in every round. A photo turn therefore costs more with each round it takes: three
+photos and three rounds send their bytes, and bill their image tokens, three times. A later change
+could upload a turn's photos once to the model provider's file store and name them in each round.
