@@ -2,9 +2,10 @@
 -- after the workout, as "Upper body · Home" (#346, ADR 0069): its name, or its position for an
 -- unnamed one, which the app shows as "Alternative N". Both are copied when the log is saved, so a
 -- later rename, reorder or delete leaves the log as it was. Null for a workout without
--- alternatives and for logs saved before.
+-- alternatives and for logs saved before. The name has no length check of its own: only the trigger
+-- writes it, from workout_alternatives, which checks it.
 alter table public.workout_logs
-  add column alternative_name text check (char_length(alternative_name) between 1 and 12),
+  add column alternative_name text,
   add column alternative_position smallint check (alternative_position >= 1),
   add check (alternative_name is null or alternative_position is not null);
 
