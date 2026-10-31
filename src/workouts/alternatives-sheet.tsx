@@ -8,6 +8,7 @@ import { Card, listDivider } from '@/components/ui/card';
 import { useFieldStyle } from '@/components/ui/field';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { PillButton } from '@/components/ui/pill-button';
+import { Radio } from '@/components/ui/radio';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
@@ -422,16 +423,6 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   );
 }
 
-/** The mark of the one in use: a ring, filled when checked. */
-function Radio({ checked }: { checked: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.radio, { borderColor: checked ? colors.primary : colors.border }]}>
-      {checked ? <View style={[styles.radioDot, { backgroundColor: colors.primary }]} /> : null}
-    </View>
-  );
-}
-
 /** What alternatives are for, before a workout has any: a gym and a home version side by side. */
 function Example() {
   const { t } = useTranslation();
@@ -669,19 +660,6 @@ const styles = StyleSheet.create({
   },
   single: {
     justifyContent: 'center',
-  },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
   addIcon: {
     width: 28,
