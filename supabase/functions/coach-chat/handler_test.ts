@@ -6,7 +6,7 @@ import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
-import { CARD_MISSING, NO_LOOKUPS_LEFT, SAID_ALREADY } from './prompt.ts';
+import { CARD_MISSING, NO_LOOKUPS_LEFT, NOTE_ASKED, SAID_ALREADY } from './prompt.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 
 type Row = Record<string, unknown>;
@@ -1003,6 +1003,18 @@ Deno.test('tells Bite that what it said with its lookups is shown already', asyn
   assertEquals(model.requests[1].messages.at(-1)?.parts.at(-1), {
     type: 'text',
     text: SAID_ALREADY,
+  });
+});
+
+Deno.test('tells Bite beside the results that a note asked about is not kept yet', async () => {
+  const model = new FakeModel([SAVE_NOTE], [{ type: 'text', text: '[[happy]] Got it.' }]);
+  const { ctx } = context(model, {}, { profiles: [{ ...PROFILE, coach_saves_notes: false }] });
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests[1].messages.at(-1)?.parts.at(-1), {
+    type: 'text',
+    text: NOTE_ASKED,
   });
 });
 

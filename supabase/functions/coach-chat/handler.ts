@@ -33,6 +33,7 @@ import { type Client, logError } from '../_shared/supabase.ts';
 import {
   CARD_MISSING,
   NO_LOOKUPS_LEFT,
+  NOTE_ASKED,
   SAID_ALREADY,
   type Expression,
   FaceReader,
@@ -445,10 +446,15 @@ async function answer(
       }
       turn.trace.push(...calls, ...results);
       // The model heeds a word beside the results better than the rules or the request's
-      // settings: that what it said is shown already, and that no lookups are left.
+      // settings: that what it said is shown already, that a note waits for the user's yes, and
+      // that no lookups are left.
       const lastLookup = !answerOnly && lookups === MAX_TOOL_ROUNDS;
+      const asked = results.some(
+        (part) => part.type === 'toolResult' && noteOf(part.result)?.action === 'asked',
+      );
       const words = [
         ...(said.trim() ? [SAID_ALREADY] : []),
+        ...(asked ? [NOTE_ASKED] : []),
         ...(lastLookup ? [NO_LOOKUPS_LEFT] : []),
       ];
       messages.push(
@@ -499,7 +505,6 @@ async function answer(
     const dropped = await dropIfNew(threadId);
     return send({ event: 'error', reason: 'not_saved', ...(dropped && { dropped: true }) });
   }
-  await keepAlive(linkNotes(context, turn.trace, messageId));
   send({
     event: 'done',
     threadId,
@@ -507,6 +512,8 @@ async function answer(
     ...(end.interrupted && { interrupted: end.interrupted }),
     ...(end.reason && { reason: end.reason }),
   });
+  // After the answer is done, which it need not wait for: the notebook links to it once it opens.
+  await keepAlive(linkNotes(context, turn.trace, messageId));
 }
 
 /** How the requests of an answer went: why they failed, if refused, and if the model was asked. */
