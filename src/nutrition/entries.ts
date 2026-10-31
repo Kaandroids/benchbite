@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { EstimateItem } from '@shared/meal/estimate';
 import { logItemOf } from '@shared/meal/log';
@@ -28,19 +28,23 @@ function amountColumns({ grams, portion }: Amount) {
  * Loads a day's entries again, with the targets the day kept from its first entry (ADR 0040), the
  * add screen's frequent foods and past meals, which are counted from the entries of any day, the
  * weeks' nutrition, which sums the day up (ADR 0046), and the streak, which counts the day's
- * calories (ADR 0042).
+ * calories (ADR 0042). Today and Nutrition show the day from these.
  */
+export function reloadDay(queryClient: QueryClient, day: string) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
+    queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
+    queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
+    queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
+    queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
+    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+  ]);
+}
+
+/** `reloadDay`, for a mutation. */
 function useReloadDay() {
   const queryClient = useQueryClient();
-  return (day: string) =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: dayEntriesKey(day) }),
-      queryClient.invalidateQueries({ queryKey: dayTargetsKey(day) }),
-      queryClient.invalidateQueries({ queryKey: ['frequent-foods'] }),
-      queryClient.invalidateQueries({ queryKey: ['past-meal'] }),
-      queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
-      queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
-    ]);
+  return (day: string) => reloadDay(queryClient, day);
 }
 
 /**
