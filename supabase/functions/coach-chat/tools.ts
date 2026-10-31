@@ -11,11 +11,12 @@ import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { ModelItem } from '../_shared/meal/item.ts';
+import { logItemOf } from '../_shared/meal/log.ts';
 import { matchItems } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
-import { logItem, mealAt } from './meal_card.ts';
+import { mealAt } from './meal_card.ts';
 import { workoutName } from './workout.ts';
 
 export type ToolContext = {
@@ -429,7 +430,7 @@ const TOOLS = [
         thread_id: threadId,
         day: eatenOn,
         meal: eaten,
-        items: matched.map(logItem),
+        items: matched.map(logItemOf),
       });
       if (added.error) return refused(added.error, MEAL_REFUSALS);
       const mealCard: MealCard = {

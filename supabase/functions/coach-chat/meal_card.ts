@@ -1,10 +1,8 @@
 // Bite's meal cards (#299, ADR 0062): a card in a tool's result and where it stands, the meal a card
-// goes to when the user named none, what a card logs, and how Bite reads a card back in the
-// history.
+// goes to when the user named none, and how Bite reads a card back in the history.
 import type { MealCard } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
-import { nameKey } from '../_shared/foods.ts';
-import type { EstimateItem, EstimateMeal } from '../_shared/meal/estimate.ts';
+import type { EstimateMeal } from '../_shared/meal/estimate.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** Where a card stands, as `coach_meal_cards` has it. */
@@ -53,31 +51,6 @@ export function mealAt(time: string | undefined): EstimateMeal {
   if (hour >= 11 && hour < 15) return 'lunch';
   if (hour >= 17 && hour < 22) return 'dinner';
   return 'snack';
-}
-
-/**
- * An item as log_meal_estimate() takes it (ADR 0060): a matched food by its id, and an item the
- * library did not have by its search name, which it is saved as, with the values per 100 g. An own
- * food of exactly the search name is kept by its name and values too, as logging makes such a food:
- * the card still logs when that food is gone, as when the user undid the card that made it, or
- * deleted or archived it, and log_meal_estimate() makes it again.
- */
-export function logItem(item: EstimateItem): Record<string, string | number> {
-  const { grams, food } = item;
-  const ref = food?.ref;
-  if (ref?.kind === 'library') return { food_id: ref.id, grams };
-  if (ref?.kind === 'recipe') return { recipe_id: ref.id, grams };
-  const ofName = food && nameKey(food.name) === nameKey(item.searchName);
-  if (ref?.kind === 'custom' && !ofName) return { custom_food_id: ref.id, grams };
-  const { kcal, proteinG, carbsG, fatG } = item.per100;
-  return {
-    name: food?.name ?? item.searchName,
-    grams,
-    kcal,
-    protein_g: proteinG,
-    carbs_g: carbsG,
-    fat_g: fatG,
-  };
 }
 
 /** What a card's items add, in whole kcal, at the grams Bite gave. */

@@ -2,11 +2,12 @@
 // own foods (#299, ADR 0059, ADR 0060), shared by estimate-meal and the coach chat, so that the
 // same food comes out at the same values wherever a meal is estimated.
 import type { Database } from '../database.types.ts';
-import { FOOD_QUERY_LENGTH, nameKey, refOfRow } from '../foods.ts';
+import { FOOD_QUERY_LENGTH, refOfRow } from '../foods.ts';
 import type { Language } from '../prompt.ts';
 import { type Client, logError } from '../supabase.ts';
 import type { EstimateFood, EstimateItem, Per100 } from './estimate.ts';
 import type { ModelItem } from './item.ts';
+import { nameKey } from './log.ts';
 
 /**
  * A food search_foods() found, by exactly one of its ids, which the generated types do not mark as
