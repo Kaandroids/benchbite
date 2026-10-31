@@ -1768,6 +1768,7 @@
       "get_workouts": "Looking at your plan…",
       "propose_workout_change": "Preparing a workout change…",
       "propose_targets_change": "Preparing new targets…",
+      "propose_food_log_change": "Preparing a change to your meals…",
       "log_meal_card": "Preparing your meal…"
     },
     "failures": {

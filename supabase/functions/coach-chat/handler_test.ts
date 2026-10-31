@@ -884,6 +884,53 @@ Deno.test('tells Bite what it proposed earlier, though it said nothing with it',
   });
 });
 
+Deno.test('tells Bite which food log changes it proposed earlier', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const proposal = {
+    kind: 'food_log',
+    id: 43,
+    changes: [
+      {
+        food: 'Pizza',
+        from: { day: '2026-10-30', meal: 'lunch', grams: 300, kcal: 798 },
+        to: { day: '2026-10-30', meal: 'dinner', grams: 300, kcal: 798 },
+      },
+      {
+        food: 'Chocolate bar',
+        from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 },
+      },
+    ],
+  };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            {
+              type: 'toolResult',
+              name: 'propose_food_log_change',
+              result: { proposal },
+            },
+            { type: 'text', text: '' },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0].parts[0], {
+    type: 'text',
+    text: '[[neutral]] (Proposed food log changes: Pizza 300 g, lunch on 2026-10-30 → 300 g, dinner on 2026-10-30; Chocolate bar 50 g, snack on 2026-10-30 → removed.)',
+  });
+});
+
 const MEAL_CARD = {
   id: 51,
   day: '2026-10-30',

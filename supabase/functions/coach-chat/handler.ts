@@ -349,6 +349,7 @@ async function answer(
       today: request.today,
       threadId,
       localTime: request.localTime,
+      hasText: !!request.message?.trim(),
     };
 
     for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
@@ -502,6 +503,13 @@ function proposalText(proposal: ProposalCard): string {
   if (proposal.kind === 'targets') {
     const { calories, proteinG, carbsG, fatG } = proposal.to;
     return `(Proposed targets: ${calories} kcal, ${proteinG} g protein, ${carbsG} g carbs, ${fatG} g fat.)`;
+  }
+  if (proposal.kind === 'food_log') {
+    const changes = proposal.changes.map(({ food, from, to }) => {
+      const was = `${food} ${from.grams} g, ${from.meal} on ${from.day}`;
+      return to ? `${was} → ${to.grams} g, ${to.meal} on ${to.day}` : `${was} → removed`;
+    });
+    return `(Proposed food log changes: ${changes.join('; ')}.)`;
   }
   const workout = proposal.workout.name ?? proposal.workout.type ?? 'a workout';
   const swaps = proposal.swaps.map((swap) => `${swap.from} → ${swap.to}`).join(', ');

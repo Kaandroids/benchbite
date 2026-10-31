@@ -1,16 +1,24 @@
 import { assertEquals } from '@std/assert';
 
+import { SHOWN_PROPOSAL_KINDS } from '../_shared/coach/chat.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
 import type { ToolContext } from './tools.ts';
-import { runTool, TOOL_DEFINITIONS } from './tools.ts';
+import {
+  MAX_FOOD_LOG_CHANGES,
+  PROPOSAL_KINDS,
+  runTool,
+  TOOL_DEFINITIONS,
+  WAITING_TOOLS,
+} from './tools.ts';
 
 const context = {
   supabase: { rpc: () => Promise.resolve({ data: [], error: null }) },
   language: 'en',
   today: '2026-10-30',
   threadId: 7,
+  hasText: true,
 } as unknown as ToolContext;
 
 Deno.test('tells the model of each tool with its arguments', () => {
@@ -501,4 +509,449 @@ Deno.test('says why the database refused a meal card', async () => {
   const { context: full } = mealContext({}, { refusal: { code: 'BB024' } });
   const error = (await runTool('log_meal_card', { items: [RICE] }, full)) as { error: string };
   assertEquals(error.error.startsWith('The user has as many foods of their own'), true);
+});
+
+Deno.test('offers Bite no tool that proposes a change the app has no card for', () => {
+  assertEquals(PROPOSAL_KINDS, ['workout', 'targets']);
+  for (const kind of PROPOSAL_KINDS) {
+    assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
+  }
+});
+
+/** Runs propose_food_log_change, which Bite is not offered yet. */
+const proposeFoodLog = (args: unknown, context: ToolContext) =>
+  runTool('propose_food_log_change', args, context, WAITING_TOOLS);
+
+type Entry = {
+  id: number;
+  user: string;
+  day: string;
+  meal: string;
+  grams: number;
+  kcal: number;
+  kcal_per_100g: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  food_id: string | null;
+  custom_foods: { name: string } | null;
+  recipes: { name: string } | null;
+};
+
+/** The user's entries, as row level security lets them read them, and another user's. */
+const ENTRIES: Entry[] = [
+  {
+    id: 21,
+    user: 'me',
+    day: '2026-10-30',
+    meal: 'lunch',
+    grams: 300,
+    kcal: 798,
+    kcal_per_100g: 266,
+    protein_g: 33,
+    carbs_g: 99,
+    fat_g: 30,
+    food_id: 'C100',
+    custom_foods: null,
+    recipes: null,
+  },
+  {
+    id: 22,
+    user: 'me',
+    day: '2026-10-30',
+    meal: 'snack',
+    grams: 50,
+    kcal: 268,
+    kcal_per_100g: 536,
+    protein_g: 3,
+    carbs_g: 30,
+    fat_g: 15,
+    food_id: null,
+    custom_foods: { name: 'Chocolate bar' },
+    recipes: null,
+  },
+  {
+    id: 23,
+    user: 'someone else',
+    day: '2026-10-30',
+    meal: 'dinner',
+    grams: 80,
+    kcal: 100,
+    kcal_per_100g: 125,
+    protein_g: 1,
+    carbs_g: 1,
+    fat_g: 1,
+    food_id: 'C100',
+    custom_foods: null,
+    recipes: null,
+  },
+];
+
+const ENTRY_COLUMNS = [
+  'id',
+  'day',
+  'meal',
+  'grams',
+  'kcal',
+  'kcal_per_100g',
+  'protein_g',
+  'carbs_g',
+  'fat_g',
+  'food_id',
+  'custom_foods (name)',
+  'recipes (name)',
+];
+
+/**
+ * The food log as the user reads it, and propose_coach_change() as the database takes a food log
+ * change, refusing as PostgREST and Postgres do: arguments the function does not have (PGRST202),
+ * a kind or meal that is not one (22P02), a list of the wrong length or shape, or a change that
+ * changes nothing (22023), an entry twice (BB045) or not the user's (BB044), a day that cannot be
+ * logged (BB020) and grams out of range (23514). Its arguments are sent as JSON, which drops what
+ * is undefined.
+ */
+function foodLogContext(
+  overrides: Partial<ToolContext> = {},
+  {
+    entries = ENTRIES,
+    storedEntries,
+  }: {
+    /** All entries, the user's and another's. */
+    entries?: Entry[];
+    /** The user's entries as propose_coach_change() finds them, if they changed meanwhile. */
+    storedEntries?: Entry[];
+  } = {},
+) {
+  const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const fail = (code: string) => Promise.resolve({ data: null, error: { code, message: code } });
+  const mine = entries.filter((entry) => entry.user === 'me');
+  const proposals: Record<string, unknown>[] = [];
+  const from = (table: string) => {
+    let error: unknown = null;
+    let rows: Record<string, unknown>[] =
+      table === 'meal_entries'
+        ? mine
+        : table === 'coach_proposals'
+          ? proposals
+          : [{ food_id: 'C100', language: 'en', name: 'Pizza' }];
+    const builder: Record<string, unknown> = {
+      select: (columns: string) => {
+        const unknown = columns
+          .split(', ')
+          .filter((c) => table === 'meal_entries' && !ENTRY_COLUMNS.includes(c));
+        if (unknown.length) {
+          error = { code: '42703', message: `${unknown[0]} does not exist` };
+        }
+        return builder;
+      },
+      eq: (column: string, value: unknown) => {
+        rows = rows.filter((row) => row[column] === value);
+        return builder;
+      },
+      in: (column: string, values: unknown[]) => {
+        rows = rows.filter((row) => values.includes(row[column]));
+        return builder;
+      },
+      order: () => builder,
+      single: () =>
+        Promise.resolve(
+          rows.length === 1
+            ? { data: rows[0], error: null }
+            : { data: null, error: { code: 'PGRST116', message: 'not one row' } },
+        ),
+      then: (resolve: (value: unknown) => void) => resolve({ data: error ? null : rows, error }),
+    };
+    return builder;
+  };
+  const rpc = (name: string, sent: Record<string, unknown>) => {
+    const args = JSON.parse(JSON.stringify(sent));
+    calls.push({ name, args });
+    if (name !== 'propose_coach_change') return fail('PGRST202');
+    if (Object.keys(args).sort().join(',') !== 'change,kind,thread_id,today') {
+      return fail('PGRST202');
+    }
+    if (!['workout', 'targets', 'food_log'].includes(args.kind)) {
+      return fail('22P02');
+    }
+    const changes = args.change?.changes;
+    if (!Array.isArray(changes) || changes.length < 1 || changes.length > 10) {
+      return fail('22023');
+    }
+    for (const change of changes) {
+      const keys = Object.keys(change);
+      const changed = keys.filter((key) => ['day', 'meal', 'grams'].includes(key));
+      if (
+        typeof change.entryId !== 'number' ||
+        keys.some((key) => !['entryId', 'day', 'meal', 'grams', 'remove'].includes(key)) ||
+        ('remove' in change ? change.remove !== true || changed.length : !changed.length)
+      ) {
+        return fail('22023');
+      }
+      if (change.meal !== undefined && !MEALS.includes(change.meal)) {
+        return fail('22P02');
+      }
+    }
+    const ids = changes.map((change: { entryId: number }) => change.entryId);
+    if (new Set(ids).size !== ids.length) return fail('BB045');
+    const found = ids.map((id: number) =>
+      (storedEntries ?? entries).find((entry) => entry.id === id && entry.user === 'me'),
+    );
+    if (found.some((entry: unknown) => !entry)) return fail('BB044');
+    for (const [i, change] of changes.entries()) {
+      const entry = found[i]!;
+      if (
+        !change.remove &&
+        (change.day ?? entry.day) === entry.day &&
+        (change.meal ?? entry.meal) === entry.meal &&
+        (change.grams ?? entry.grams) === entry.grams
+      ) {
+        return fail('22023');
+      }
+      const day = Date.parse(`${change.day ?? entry.day}T00:00:00Z`);
+      const today = Date.parse(`${args.today}T00:00:00Z`);
+      if (!(day >= today - 8 * 86_400_000 && day <= today + 86_400_000)) {
+        return fail('BB020');
+      }
+      if (change.grams !== undefined && !(change.grams > 0 && change.grams <= 5000)) {
+        return fail('23514');
+      }
+    }
+    // Kept filled in, as food_log_change() does, with the entries as they were.
+    proposals.push({
+      id: 61,
+      change: {
+        changes: changes.map((change: Record<string, unknown>, i: number) => {
+          const entry = found[i]!;
+          return change.remove
+            ? { entryId: entry.id, remove: true }
+            : {
+                entryId: entry.id,
+                day: change.day ?? entry.day,
+                meal: change.meal ?? entry.meal,
+                grams:
+                  change.grams === undefined
+                    ? entry.grams
+                    : Math.round((change.grams as number) * 10) / 10,
+              };
+        }),
+      },
+      before: found.map((entry) => {
+        const { id, day, meal, grams, kcal_per_100g } = entry!;
+        return { id, day, meal, grams, kcal_per_100g };
+      }),
+    });
+    return Promise.resolve({ data: 61, error: null });
+  };
+  return {
+    context: {
+      ...context,
+      supabase: { from, rpc },
+      ...overrides,
+    } as unknown as ToolContext,
+    calls,
+  };
+}
+
+Deno.test('gives each entry of the meal log its id, for Bite to name it by', async () => {
+  const { context } = foodLogContext();
+  const log = (await runTool('get_meal_log', { day: '2026-10-30' }, context)) as {
+    id: number;
+    food: string;
+  }[];
+  assertEquals(
+    log.map(({ id, food }) => ({ id, food })),
+    [
+      { id: 21, food: 'Pizza' },
+      { id: 22, food: 'Chocolate bar' },
+    ],
+  );
+});
+
+Deno.test('proposes moving and removing entries, and gives the card as data', async () => {
+  const { context, calls } = foodLogContext();
+
+  const result = await proposeFoodLog(
+    {
+      changes: [
+        { entryId: 21, meal: 'dinner' },
+        { entryId: 22, remove: true },
+      ],
+    },
+    context,
+  );
+
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_change',
+      args: {
+        thread_id: 7,
+        kind: 'food_log',
+        change: {
+          changes: [
+            { entryId: 21, meal: 'dinner' },
+            {
+              entryId: 22,
+              remove: true,
+            },
+          ],
+        },
+        today: '2026-10-30',
+      },
+    },
+  ]);
+  assertEquals(result, {
+    proposal: {
+      kind: 'food_log',
+      id: 61,
+      changes: [
+        {
+          food: 'Pizza',
+          from: { day: '2026-10-30', meal: 'lunch', grams: 300, kcal: 798 },
+          to: { day: '2026-10-30', meal: 'dinner', grams: 300, kcal: 798 },
+        },
+        {
+          food: 'Chocolate bar',
+          from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 },
+        },
+      ],
+    },
+  });
+});
+
+Deno.test('shows new grams on the card with what they add', async () => {
+  const { context } = foodLogContext();
+  const result = await proposeFoodLog(
+    { changes: [{ entryId: 22, grams: 25.04, day: '2026-10-29' }] },
+    context,
+  );
+  const { changes } = (result as { proposal: { changes: { to: unknown }[] } }).proposal;
+  // As the entry keeps the grams, to a tenth.
+  assertEquals(changes[0].to, {
+    day: '2026-10-29',
+    meal: 'snack',
+    grams: 25,
+    kcal: 134,
+  });
+});
+
+Deno.test('works out the calories on the card as the food log does', async () => {
+  const sauce = {
+    ...ENTRIES[1],
+    id: 24,
+    grams: 3,
+    kcal: 10,
+    kcal_per_100g: 333,
+    custom_foods: { name: 'Sauce' },
+  };
+  const { context } = foodLogContext({}, { entries: [sauce] });
+  const result = await proposeFoodLog({ changes: [{ entryId: 24, grams: 300 }] }, context);
+  const [change] = (result as { proposal: { changes: { from: unknown; to: unknown }[] } }).proposal
+    .changes;
+  // From the values per 100 g, not by scaling the rounded 10 kcal, which would show 1000.
+  assertEquals(change.from, { day: '2026-10-30', meal: 'snack', grams: 3, kcal: 10 });
+  assertEquals(change.to, { day: '2026-10-30', meal: 'snack', grams: 300, kcal: 999 });
+});
+
+Deno.test(
+  'shows the change as the database kept it, though the entry changed meanwhile',
+  async () => {
+    // The user moved the pizza to dinner in Nutrition while Bite answered.
+    const moved = ENTRIES.map((entry) => (entry.id === 21 ? { ...entry, meal: 'dinner' } : entry));
+    const { context } = foodLogContext({}, { storedEntries: moved });
+    const result = await proposeFoodLog({ changes: [{ entryId: 21, grams: 150 }] }, context);
+    assertEquals(result, {
+      proposal: {
+        kind: 'food_log',
+        id: 61,
+        changes: [
+          {
+            food: 'Pizza',
+            from: { day: '2026-10-30', meal: 'dinner', grams: 300, kcal: 798 },
+            to: { day: '2026-10-30', meal: 'dinner', grams: 150, kcal: 399 },
+          },
+        ],
+      },
+    });
+  },
+);
+
+Deno.test('proposes no food log change for a message without words', async () => {
+  const { context, calls } = foodLogContext({ hasText: false });
+  const result = await proposeFoodLog({ changes: [{ entryId: 21, remove: true }] }, context);
+  assertEquals(
+    (result as { error: string }).error.startsWith('The user asked for no change'),
+    true,
+  );
+  assertEquals(calls, []);
+});
+
+Deno.test("passes on the database's refusal of an entry that is not the user's", async () => {
+  const { context } = foodLogContext();
+  assertEquals(
+    await proposeFoodLog(
+      {
+        changes: [{ entryId: 23, remove: true }],
+      },
+      context,
+    ),
+    {
+      error: "An entry is not in the user's food log; take the ids from get_meal_log.",
+    },
+  );
+});
+
+Deno.test(
+  'answers a wrong food log change with what is wrong, for the model to correct',
+  async () => {
+    const { context, calls } = foodLogContext();
+    for (const changes of [
+      [],
+      [{ entryId: 21 }],
+      [{ entryId: 21, remove: true, grams: 100 }],
+      [{ entryId: 21, meal: 'brunch' }],
+      [{ entryId: 21, grams: 0 }],
+      [
+        { entryId: 21, meal: 'dinner' },
+        { entryId: 21, grams: 100 },
+      ],
+      Array.from({ length: MAX_FOOD_LOG_CHANGES + 1 }, (_, i) => ({
+        entryId: i + 1,
+        remove: true,
+      })),
+    ]) {
+      const wrong = await proposeFoodLog({ changes }, context);
+      assertEquals(typeof (wrong as { error: string }).error, 'string');
+    }
+    assertEquals(calls, []);
+    // The database refuses a day that cannot be logged, by its own today.
+    for (const day of ['2026-11-01', '2026-10-21']) {
+      assertEquals(
+        await proposeFoodLog(
+          {
+            changes: [{ entryId: 21, day }],
+          },
+          context,
+        ),
+        {
+          error:
+            'Meals are logged for today and up to 7 days back; an entry on another day, or moved to one, cannot be changed.',
+        },
+      );
+    }
+  },
+);
+
+Deno.test('says why the database refused a food log change', async () => {
+  const { context } = foodLogContext();
+  assertEquals(
+    await proposeFoodLog(
+      {
+        changes: [{ entryId: 21, meal: 'lunch' }],
+      },
+      context,
+    ),
+    {
+      error: 'Each change must change its entry: another day, meal or grams, or its removal.',
+    },
+  );
 });
