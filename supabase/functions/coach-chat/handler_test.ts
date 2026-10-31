@@ -21,7 +21,7 @@ type Failures = {
 
 /**
  * A database for the chat: tables with their rows, functions with what they return, or a
- * function giving it, and what is inserted and deleted, which the service role writes. Every
+ * function giving it, and what is inserted, updated and deleted, which the service role writes. Every
  * query resolves with all of a table's rows. Like the real ones, it keeps the threads there are,
  * refuses messages of a thread that is not or is gone and more parts than a message may hold, and
  * its storage has the `coach-media` bucket alone, which takes new JPEG files of at most 1.5 MB, and
@@ -33,6 +33,7 @@ function database(
   { deletedThread, failingUploads = [] }: Failures = {},
 ) {
   const inserted: { table: string; rows: Row[] }[] = [];
+  const updated: { table: string; values: Row }[] = [];
   const deleted: string[] = [];
   const objects = new Map<string, Uint8Array>();
   const removed: string[] = [];
@@ -50,7 +51,7 @@ function database(
       maybeSingle: () => Promise.resolve({ data: result().data[0] ?? null, error: null }),
       single: () => Promise.resolve({ data: result().data[0], error: null }),
     };
-    for (const method of ['select', 'eq', 'in', 'ilike', 'order', 'limit']) {
+    for (const method of ['select', 'eq', 'is', 'in', 'ilike', 'order', 'limit']) {
       builder[method] = () => builder;
     }
     return builder;
@@ -78,6 +79,10 @@ function database(
         if (table === 'coach_threads') list.forEach((row) => threads.add(row.id));
         inserted.push({ table, rows: list });
         return query(table, list);
+      },
+      update: (values: Row) => {
+        updated.push({ table, values });
+        return query(table);
       },
       delete: () => {
         const values: unknown[] = [];
@@ -131,7 +136,7 @@ function database(
       }),
     },
   } as unknown as ChatContext['supabase'];
-  return { client, inserted, deleted, objects, removed, threads };
+  return { client, inserted, updated, deleted, objects, removed, threads };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
@@ -925,6 +930,74 @@ Deno.test('tells Bite of a missing card only once, and not when it made one', as
     await handleChatRequest(ask(MESSAGE), context(made, { propose_coach_change: 42 }).ctx),
   );
   assertEquals(made.requests.length, 2);
+});
+
+Deno.test('shows a note Bite kept, and names the answer it came from', async () => {
+  const model = new FakeModel(
+    [
+      {
+        type: 'toolCall',
+        id: 'c1',
+        name: 'save_note',
+        args: { category: 'allergy', text: 'Allergic to kiwi' },
+      },
+    ],
+    [{ type: 'text', text: "[[happy]] Got it, I'll keep that in mind." }],
+  );
+  const profile = {
+    birth_year: 1996,
+    sex: 'female',
+    height_cm: 165,
+    weight_unit: 'kg',
+    training_days: [1, 4],
+    session_minutes: 45,
+    coach_saves_notes: true,
+  };
+  const { ctx, updated } = context(model, {}, { profiles: [profile] });
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  const shown = answer.find((e) => e.event === 'note') as Extract<ChatEvent, { event: 'note' }>;
+  assertEquals(
+    [shown.note.id, shown.note.action, shown.note.text],
+    [101, 'saved', 'Allergic to kiwi'],
+  );
+  const done = answer.at(-1) as Extract<ChatEvent, { event: 'done' }>;
+  assertEquals(updated, [{ table: 'coach_notes', values: { message_id: done.messageId } }]);
+});
+
+Deno.test('tells Bite of the notes it kept earlier, though it said nothing with them', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const note = { id: 9, action: 'asked', category: 'allergy', text: 'Allergic to kiwi' };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            { type: 'toolCall', name: 'save_note', args: {} },
+            { type: 'toolResult', name: 'save_note', result: { note } },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0], {
+    role: 'model',
+    parts: [
+      {
+        type: 'text',
+        text: '[[neutral]] (Asked the user to save a note, #9, allergy: Allergic to kiwi)',
+      },
+    ],
+  });
 });
 
 const TARGETS = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };

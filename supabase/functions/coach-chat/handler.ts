@@ -45,6 +45,7 @@ import { type CheckedPhoto, checkPhotos, removePhotos, storePhotos } from './pho
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
+import { noteOf, noteText } from './notes.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -488,6 +489,7 @@ async function answer(
     const dropped = await dropIfNew(threadId);
     return send({ event: 'error', reason: 'not_saved', ...(dropped && { dropped: true }) });
   }
+  await keepAlive(linkNotes(context, turn.trace, messageId));
   send({
     event: 'done',
     threadId,
@@ -544,6 +546,9 @@ async function lookUp(
   if (proposal) send({ event: 'proposal', proposal });
   const mealCard = mealCardOf(result);
   if (mealCard) send({ event: 'meal_card', mealCard });
+  // So is a note Bite kept, as a line.
+  const note = noteOf(result);
+  if (note) send({ event: 'note', note });
   return result;
 }
 
@@ -660,6 +665,23 @@ async function saveTurn(
 }
 
 /**
+ * Names the answer `messageId` as where the notes Bite saved in it came from, for the notebook to
+ * open the chat there. A note left without stays in the notebook, from its chat.
+ */
+async function linkNotes(context: ChatContext, trace: Part[], messageId: number): Promise<void> {
+  const ids = trace.flatMap((part) => {
+    const note = part.type === 'toolResult' ? noteOf(part.result) : undefined;
+    return note && (note.action === 'saved' || note.action === 'asked') ? [note.id] : [];
+  });
+  if (!ids.length) return;
+  const { error } = await context.supabase
+    .from('coach_notes')
+    .update({ message_id: messageId })
+    .in('id', ids);
+  if (error) logError('Could not link the notes to their message', error);
+}
+
+/**
  * Drops a thread begun for a message that is not kept, and says whether it did: another request
  * may have answered in it meanwhile, and then it stays.
  */
@@ -708,11 +730,13 @@ export function content(trace: Part[], text: string): Part[] {
   return fits(without) ? without : [...cards, answer];
 }
 
-/** Whether a part is the result of a proposal or a meal card, which the chat shows. */
+/** Whether a part is the result of a proposal, a meal card or a note, which the chat shows. */
 function isCard(part: Part): boolean {
   return (
     part.type === 'toolResult' &&
-    (proposalOf(part.result) !== undefined || mealCardOf(part.result) !== undefined)
+    (proposalOf(part.result) !== undefined ||
+      mealCardOf(part.result) !== undefined ||
+      noteOf(part.result) !== undefined)
   );
 }
 
@@ -740,7 +764,9 @@ function toMessage(
     const proposal = proposalOf(result);
     if (proposal) return [proposalText(proposal)];
     const card = mealCardOf(result);
-    return card ? [mealCardText(card, cards.get(card.id))] : [];
+    if (card) return [mealCardText(card, cards.get(card.id))];
+    const note = noteOf(result);
+    return note ? [noteText(note)] : [];
   });
   // A message's photos reach the model in its own turn only (ADR 0062).
   const photos = parts.filter((part) => partOfType(part, 'image')).length;
