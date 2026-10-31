@@ -1,9 +1,9 @@
 -- Bite's notebook: each user's notes are their own, in their own chats only, up to 50 in use and
--- 200 kept, and saving from chats can be switched off (ADR 0071).
+-- 200 kept, 20 waiting for the user's yes, and saving from chats can be switched off (ADR 0071).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -153,6 +153,19 @@ select lives_ok(
   $$ update public.coach_notes set text = 'Allergic to walnuts and pecans'
      where category = 'allergy' $$,
   'A note in use is still changed at the limit'
+);
+
+-- Up to 20 waiting for the user's yes.
+insert into public.coach_notes (category, text, asked)
+select 'food', 'Waiting ' || n, true from generate_series(2, 20) n;
+select throws_ok(
+  $$ insert into public.coach_notes (category, text, asked) values ('food', 'One more', true) $$,
+  'BB048', null,
+  'A user has up to 20 notes waiting for their yes'
+);
+select lives_ok(
+  $$ update public.coach_notes set text = 'Still waiting' where text = 'Asked' $$,
+  'One waiting is still changed at the limit'
 );
 
 reset role;

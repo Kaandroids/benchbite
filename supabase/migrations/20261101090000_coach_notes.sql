@@ -7,6 +7,7 @@
 -- New error codes:
 --   BB046  the user already has as many notes in use as they may have
 --   BB047  the user has as many notes as they may keep, past ones included
+--   BB048  the user has as many notes waiting for their yes as they may have
 
 create type public.coach_note_category as enum (
   'allergy', 'health', 'injury', 'training', 'food', 'goal', 'lifestyle'
@@ -27,7 +28,7 @@ create table public.coach_notes (
   thread_id bigint references public.coach_threads (id) on delete set null,
   message_id bigint references public.coach_messages (id) on delete set null,
   -- Bite saved it while the user has saving from chats off: it waits for their yes, outside the
-  -- notebook and Bite's answers.
+  -- notebook. Bite's answers list it as waiting, so that Bite does not ask again.
   asked boolean not null default false,
   -- When Bite asks whether it still holds, as for an injury.
   review_on date,
@@ -44,30 +45,30 @@ create index coach_notes_message_id on public.coach_notes (message_id);
 
 -- Whether the user's own thread `thread_id` holds the message `message_id`, each when given: a
 -- note names no one else's chat.
-create function public.is_own_coach_message(thread_id bigint, message_id bigint)
+create function public.is_own_coach_thread_message(thread_id bigint, message_id bigint)
 returns boolean
 language sql
 stable
 set search_path = ''
 as $$
   select (
-    is_own_coach_message.thread_id is null
+    is_own_coach_thread_message.thread_id is null
       or exists (
         select 1 from public.coach_threads t
-        where t.id = is_own_coach_message.thread_id and t.user_id = (select auth.uid())
+        where t.id = is_own_coach_thread_message.thread_id and t.user_id = (select auth.uid())
       )
   ) and (
-    is_own_coach_message.message_id is null
+    is_own_coach_thread_message.message_id is null
       or exists (
         select 1 from public.coach_messages m
-        where m.id = is_own_coach_message.message_id
-          and m.thread_id = is_own_coach_message.thread_id
+        where m.id = is_own_coach_thread_message.message_id
+          and m.thread_id = is_own_coach_thread_message.thread_id
       )
   );
 $$;
 
-revoke all on function public.is_own_coach_message(bigint, bigint) from public, anon;
-grant execute on function public.is_own_coach_message(bigint, bigint) to authenticated;
+revoke all on function public.is_own_coach_thread_message(bigint, bigint) from public, anon;
+grant execute on function public.is_own_coach_thread_message(bigint, bigint) to authenticated;
 
 alter table public.coach_notes enable row level security;
 
@@ -77,13 +78,13 @@ create policy "Users read their own notes"
 create policy "Users add their own notes"
   on public.coach_notes for insert to authenticated
   with check (
-    (select auth.uid()) = user_id and public.is_own_coach_message(thread_id, message_id)
+    (select auth.uid()) = user_id and public.is_own_coach_thread_message(thread_id, message_id)
   );
 create policy "Users change their own notes"
   on public.coach_notes for update to authenticated
   using ((select auth.uid()) = user_id)
   with check (
-    (select auth.uid()) = user_id and public.is_own_coach_message(thread_id, message_id)
+    (select auth.uid()) = user_id and public.is_own_coach_thread_message(thread_id, message_id)
   );
 create policy "Users remove their own notes"
   on public.coach_notes for delete to authenticated
@@ -97,8 +98,9 @@ grant insert (category, text, source, thread_id, message_id, asked, review_on, c
 grant update (category, text, message_id, asked, review_on, archived_at, archive_reason)
   on public.coach_notes to authenticated;
 
--- Up to 50 notes in use, which every answer reads, and up to 200 kept, past and asked ones
--- included. A note comes into use when it is added, restored or said yes to.
+-- Up to 50 notes in use, which every answer reads, up to 20 waiting for the user's yes, which
+-- every answer lists too, and up to 200 kept, past and asked ones included. A note comes into use
+-- when it is added, restored or said yes to.
 create function public.check_coach_note_limit()
 returns trigger
 language plpgsql
@@ -108,19 +110,25 @@ set search_path = ''
 as $$
 declare
   in_use integer;
+  waiting integer;
   kept integer;
 begin
   perform public.lock_user_limits(new.user_id);
   select
     count(*) filter (where n.archived_at is null and not n.asked and n.id <> coalesce(new.id, 0)),
+    count(*) filter (where n.archived_at is null and n.asked and n.id <> coalesce(new.id, 0)),
     count(*)
-  into in_use, kept
+  into in_use, waiting, kept
   from public.coach_notes n
   where n.user_id = new.user_id;
   if new.archived_at is null and not new.asked
     and (tg_op = 'INSERT' or old.archived_at is not null or old.asked)
     and in_use >= 50 then
     raise exception 'A user can have up to 50 notes in use' using errcode = 'BB046';
+  end if;
+  if new.archived_at is null and new.asked and (tg_op = 'INSERT' or not old.asked)
+    and waiting >= 20 then
+    raise exception 'A user can have up to 20 notes waiting for their yes' using errcode = 'BB048';
   end if;
   if tg_op = 'INSERT' and kept >= 200 then
     raise exception 'A user can keep up to 200 notes' using errcode = 'BB047';
