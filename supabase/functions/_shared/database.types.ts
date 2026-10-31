@@ -245,6 +245,22 @@ export type Database = {
         };
         Relationships: [];
       };
+      coach_media_purge_requests: {
+        Row: {
+          request_id: number;
+          requested_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          request_id: number;
+          requested_at?: string;
+        };
+        Update: {
+          request_id?: number;
+          requested_at?: string;
+        };
+        Relationships: [];
+      };
       coach_messages: {
         Row: {
           cached_input_tokens: number | null;
@@ -1772,6 +1788,19 @@ export type Database = {
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
+      coach_media_purge_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
+      coach_media_purge_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          failed_responses: number;
+          failed_statuses: number[];
+          healthy: boolean;
+          latest_status: number;
+          oldest_queued_minutes: number;
+          queued: number;
+          responses: number;
+        }[];
+      };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };

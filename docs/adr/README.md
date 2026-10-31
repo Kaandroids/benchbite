@@ -82,3 +82,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0064](0064-empty-alternatives-and-copies.md)                | A new alternative starts empty; any alternative can be duplicated                       | Accepted                                   |
 | [0065](0065-remove-metadata-segments-on-the-device.md)       | Remove a photo's metadata segments on the device                                        | Accepted                                   |
 | [0066](0066-meal-cards-and-their-undo.md)                    | Meal cards in their own table, and an Undo that leaves foods in use                     | Accepted                                   |
+| [0067](0067-check-scheduled-jobs-from-github-actions.md)     | Check the scheduled jobs from a daily GitHub Actions workflow                           | Accepted                                   |
