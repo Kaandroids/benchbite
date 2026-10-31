@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { DayTotals } from '@/nutrition/day-totals';
+import { MACROS } from '@/nutrition/macro-targets';
 import type { Totals } from '@/nutrition/meals';
 import type { NutritionTargets } from '@/nutrition/targets';
 import { useTheme } from '@/theme';
@@ -28,6 +29,16 @@ export function TargetsCard({ entering, targets, eaten, day }: TargetsCardProps)
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
+  const macroLabels = Object.fromEntries(
+    MACROS.map(({ key, grams }) => [
+      key,
+      t('nutrition.macroLabel', {
+        macro: t(`nutrition.macros.${key}`),
+        eaten: format(Math.round(eaten[grams])),
+        target: format(targets[grams]),
+      }),
+    ]),
+  );
 
   return (
     <Pressable
@@ -35,6 +46,7 @@ export function TargetsCard({ entering, targets, eaten, day }: TargetsCardProps)
       accessibilityLabel={t('today.targetsLabel', {
         eaten: format(Math.round(eaten.calories)),
         target: format(targets.calories),
+        ...macroLabels,
       })}
       accessibilityHint={t('today.targetsOpen')}
       // A new navigation each time, so that Nutrition opens on this day even if it shows another.

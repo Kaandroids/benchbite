@@ -37,7 +37,7 @@ describe('TargetsCard', () => {
   it('opens Nutrition on its day', async () => {
     await render(<TargetsCard targets={TARGETS} eaten={eaten(1280)} day="2026-10-21" />);
     const card = screen.getByRole('button', {
-      name: 'Your daily target: 1,280 of 2,200 kcal eaten',
+      name: 'Your daily target: 1,280 of 2,200 kcal eaten, Protein 84 of 150 g, Carbs 140 of 250 g, Fat 36 of 70 g',
     });
     expect(card.props.accessibilityHint).toBe('Opens Nutrition');
     await fireEvent.press(card);
