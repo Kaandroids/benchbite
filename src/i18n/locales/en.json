@@ -1772,7 +1772,10 @@
       "propose_workout_change": "Preparing a workout change…",
       "propose_targets_change": "Preparing new targets…",
       "propose_food_log_change": "Preparing a change to your meals…",
-      "log_meal_card": "Preparing your meal…"
+      "log_meal_card": "Preparing your meal…",
+      "save_note": "Noting that down…",
+      "update_note": "Updating my notes…",
+      "archive_note": "Updating my notes…"
     },
     "failures": {
       "unavailable": "Bite couldn't answer just now. Try again.",

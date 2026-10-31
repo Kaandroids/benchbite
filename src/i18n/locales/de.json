@@ -1772,7 +1772,10 @@
       "propose_workout_change": "Bereite eine Trainingsänderung vor…",
       "propose_targets_change": "Bereite neue Ziele vor…",
       "propose_food_log_change": "Bereite eine Änderung deiner Mahlzeiten vor…",
-      "log_meal_card": "Bereite deine Mahlzeit vor…"
+      "log_meal_card": "Bereite deine Mahlzeit vor…",
+      "save_note": "Ich notiere mir das…",
+      "update_note": "Ich aktualisiere meine Notizen…",
+      "archive_note": "Ich aktualisiere meine Notizen…"
     },
     "failures": {
       "unavailable": "Bite konnte gerade nicht antworten. Versuch es noch mal.",
