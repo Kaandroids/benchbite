@@ -150,6 +150,78 @@ function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = 
   return { context: { ...context, supabase } as unknown as ToolContext, calls };
 }
 
+/** The library as search_exercises reads it: names in English, a few translated, one archived. */
+function searchContext(language: 'en' | 'de') {
+  const exercises = [
+    { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise', archived_at: null },
+    { id: 'Barbell_Squat', name: 'Barbell Squat', archived_at: null },
+    { id: 'Old_Raise', name: 'Old Raise', archived_at: '2026-10-01' },
+  ];
+  const translations = [
+    { exercise_id: 'Barbell_Squat', language: 'de', name: 'Kniebeuge' },
+    { exercise_id: 'Side_Lateral_Raise', language: 'de', name: 'Seitheben' },
+  ];
+  const query = (table: string) => {
+    let rows: Record<string, unknown>[] = table === 'exercises' ? exercises : translations;
+    let ids: string[] | undefined;
+    const builder: Record<string, unknown> = {
+      select: () => builder,
+      limit: () => builder,
+      eq: (column: string, value: unknown) => {
+        rows = rows.filter((row) => row[column] === value);
+        return builder;
+      },
+      is: (column: string, value: unknown) => {
+        rows = rows.filter((row) => row[column] === value);
+        return builder;
+      },
+      ilike: (column: string, pattern: string) => {
+        const text = pattern.replaceAll('%', '').toLowerCase();
+        rows = rows.filter((row) => String(row[column]).toLowerCase().includes(text));
+        return builder;
+      },
+      in: (column: string, values: string[]) => {
+        if (column === 'id') ids = values;
+        return builder;
+      },
+      then: (resolve: (value: unknown) => void) =>
+        resolve({
+          data: ids
+            ? exercises
+                .filter((row) => ids!.includes(row.id))
+                .map((row) => ({
+                  ...row,
+                  exercise_translations: translations
+                    .filter((t) => t.exercise_id === row.id && t.language === language)
+                    .map(({ language, name }) => ({ language, name })),
+                }))
+            : rows,
+          error: null,
+        }),
+    };
+    return builder;
+  };
+  return { ...context, language, supabase: { from: query } } as unknown as ToolContext;
+}
+
+Deno.test("finds exercises by their English name, named in the user's language", async () => {
+  assertEquals(await runTool('search_exercises', { query: 'lateral raise' }, searchContext('en')), [
+    { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise' },
+  ]);
+  assertEquals(await runTool('search_exercises', { query: 'lateral raise' }, searchContext('de')), [
+    { id: 'Side_Lateral_Raise', name: 'Seitheben' },
+  ]);
+});
+
+Deno.test("finds exercises by their name in the user's language, and none archived", async () => {
+  assertEquals(await runTool('search_exercises', { query: 'kniebeuge' }, searchContext('de')), [
+    { id: 'Barbell_Squat', name: 'Kniebeuge' },
+  ]);
+  assertEquals(await runTool('search_exercises', { query: 'raise' }, searchContext('en')), [
+    { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise' },
+  ]);
+});
+
 Deno.test('reads the plan with its exercises and their targets', async () => {
   const { context } = planContext();
   assertEquals(await runTool('get_workouts', {}, context), [
