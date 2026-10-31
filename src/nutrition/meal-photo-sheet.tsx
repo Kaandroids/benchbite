@@ -12,10 +12,18 @@ type MealPhotoSheetProps = {
   /** Called with the photos taken or chosen; not when none were. */
   onPick: (photos: string[]) => void;
   onClose: () => void;
+  /** The sheet's title and the line under it, a meal's unless given, as Bite's chat gives them. */
+  title?: string;
+  hint?: string;
+  /** How many photos may be chosen, `MAX_PHOTOS` unless fewer. */
+  limit?: number;
 };
 
-/** Takes a photo of a meal or chooses up to three from the library, to estimate it (#299). */
-export function MealPhotoSheet({ onPick, onClose }: MealPhotoSheetProps) {
+/**
+ * Takes a photo or chooses up to three from the library: of a meal, to estimate it, or to send to
+ * Bite in the chat (#299).
+ */
+export function MealPhotoSheet({ onPick, onClose, title, hint, limit }: MealPhotoSheetProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
 
@@ -24,7 +32,7 @@ export function MealPhotoSheet({ onPick, onClose }: MealPhotoSheetProps) {
     // The camera and the library are screens of their own, which iOS shows only once the sheet
     // has closed.
     afterSheetCloses(() => {
-      pickMealPhotos(source)
+      pickMealPhotos(source, limit)
         .then((photos) => {
           if (photos.length > 0) {
             onPick(photos);
@@ -39,10 +47,10 @@ export function MealPhotoSheet({ onPick, onClose }: MealPhotoSheetProps) {
     <Sheet onClose={onClose}>
       <View style={{ gap: spacing.xs }}>
         <Text variant="headline" accessibilityRole="header">
-          {t('nutrition.photo.sheetTitle')}
+          {title ?? t('nutrition.photo.sheetTitle')}
         </Text>
         <Text variant="body" color="textMuted">
-          {t('nutrition.photo.sheetHint')}
+          {hint ?? t('nutrition.photo.sheetHint')}
         </Text>
       </View>
       <View style={{ gap: spacing.md }}>
