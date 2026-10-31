@@ -30,6 +30,9 @@ Deno.test('tells the model of each tool with its arguments', () => {
       'propose_targets_change',
       'propose_food_log_change',
       'log_meal_card',
+      'save_note',
+      'update_note',
+      'archive_note',
     ],
   );
 });
@@ -1082,5 +1085,129 @@ Deno.test('says why the database refused a food log change', async () => {
     {
       error: 'Each change must change its entry: another day, meal or grams, or its removal.',
     },
+  );
+});
+
+/**
+ * The notebook as the note tools write it: the profile's setting `saves`, and what writing a note
+ * gives, with what each write sent.
+ */
+function noteContext(
+  saves: boolean | null,
+  written: { data?: unknown; error?: unknown } = {
+    data: { id: 9, category: 'allergy', text: 'Allergic to kiwi' },
+  },
+) {
+  const writes: { op: string; values?: unknown; filters: [string, unknown][] }[] = [];
+  const supabase = {
+    from: (table: string) => {
+      const write = { op: '', values: undefined as unknown, filters: [] as [string, unknown][] };
+      const builder: Record<string, unknown> = {
+        select: () => builder,
+        insert: (values: unknown) => ((write.op = 'insert'), (write.values = values), builder),
+        update: (values: unknown) => ((write.op = 'update'), (write.values = values), builder),
+        eq: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
+        is: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
+        maybeSingle: () => {
+          if (table === 'profiles') {
+            return Promise.resolve({
+              data: saves === null ? null : { coach_saves_notes: saves },
+              error: null,
+            });
+          }
+          writes.push(write);
+          return Promise.resolve({ data: null, error: null, ...written });
+        },
+        single: () => {
+          writes.push(write);
+          return Promise.resolve({ data: null, error: null, ...written });
+        },
+      };
+      return builder;
+    },
+  };
+  return { context: { ...context, supabase } as unknown as ToolContext, writes };
+}
+
+Deno.test('saves a note from the chat, or asks first when saving is off', async () => {
+  const args = { category: 'allergy', text: 'Allergic to kiwi' };
+  const on = noteContext(true);
+  assertEquals(await runTool('save_note', args, on.context), {
+    note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'saved' },
+  });
+  assertEquals(on.writes[0].values, {
+    category: 'allergy',
+    text: 'Allergic to kiwi',
+    source: 'chat',
+    thread_id: 7,
+    asked: false,
+    review_on: null,
+  });
+
+  const off = noteContext(false);
+  assertEquals(await runTool('save_note', args, off.context), {
+    note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'asked' },
+  });
+  assertEquals((off.writes[0].values as { asked: boolean }).asked, true);
+  // A setting that cannot be read asks first too.
+  const unread = noteContext(null);
+  await runTool('save_note', args, unread.context);
+  assertEquals((unread.writes[0].values as { asked: boolean }).asked, true);
+});
+
+Deno.test('asks again about a note only on a day ahead, within half a year', async () => {
+  const injury = { category: 'injury', text: 'Knee hurts on deep squats' };
+  for (const reviewOn of ['2026-10-30', '2027-06-01']) {
+    const { context, writes } = noteContext(true);
+    assertEquals(await runTool('save_note', { ...injury, reviewOn }, context), {
+      error: 'A day to ask again is after today and within 180 days.',
+    });
+    assertEquals(writes, []);
+  }
+  const { context, writes } = noteContext(true);
+  await runTool('save_note', { ...injury, reviewOn: '2026-11-06' }, context);
+  assertEquals((writes[0].values as { review_on: string }).review_on, '2026-11-06');
+});
+
+Deno.test('changes and archives only a note in use, and says when there is none', async () => {
+  const changed = noteContext(true);
+  assertEquals(
+    await runTool('update_note', { id: 9, text: 'Allergic to kiwi and mango' }, changed.context),
+    { note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'updated' } },
+  );
+  assertEquals(changed.writes[0], {
+    op: 'update',
+    values: { text: 'Allergic to kiwi and mango' },
+    filters: [
+      ['id', 9],
+      ['archived_at', null],
+    ],
+  });
+  const cleared = noteContext(true);
+  await runTool('update_note', { id: 9, reviewOn: null }, cleared.context);
+  assertEquals(cleared.writes[0].values, { review_on: null });
+  assertEquals(
+    typeof ((await runTool('update_note', { id: 9 }, cleared.context)) as { error: string }).error,
+    'string',
+  );
+
+  const archived = noteContext(true);
+  assertEquals(await runTool('archive_note', { id: 9, reason: 'Healed' }, archived.context), {
+    note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'archived' },
+  });
+  assertEquals((archived.writes[0].values as { archive_reason: string }).archive_reason, 'Healed');
+
+  const gone = noteContext(true, { data: null });
+  assertEquals(await runTool('archive_note', { id: 4, reason: 'Healed' }, gone.context), {
+    error: 'There is no such note in use; take its id from the snapshot.',
+  });
+});
+
+Deno.test('says when the notebook is full', async () => {
+  const { context } = noteContext(true, { error: { code: 'BB046' } });
+  const result = await runTool('save_note', { category: 'food', text: 'Vegan' }, context);
+  assertEquals(
+    (result as { error: string }).error.startsWith('The notebook has as many notes in use'),
+    true,
   );
 });
