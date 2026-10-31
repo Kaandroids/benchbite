@@ -29,12 +29,16 @@ through Edit.
     another user's, is not found (`P0002`). The cap of 5 (`BB041`) and the locks are as before.
 - **An empty alternative can be in use.** `use_workout_alternative()` puts it in use without
   `save_workout()`: it keeps the days before today, as `save_workout()` does, removes the
-  workout's exercises and sets its time to the warm-up alone (5 minutes, as `save_workout()`
-  counts it). Saving a workout still needs an exercise, so the only workout without exercises is
-  one whose empty alternative is in use, until the user adds one in Edit.
+  workout's exercises and sets its time to the warm-up alone (5 minutes, from `workout_minutes()`,
+  which `save_workout()` counts with too). Saving a workout still needs an exercise, so the only
+  workout without exercises is one whose empty alternative is in use, until the user adds one in
+  Edit. While it is, the last other alternative cannot be deleted (`BB043`): the workout would be
+  left without exercises and without the alternative that kept them. The app asks to add
+  exercises or to switch to that one first.
 - **The app never starts a workout without exercises.** Wherever a workout shows its size, an
   empty one reads "No exercises yet"; starting it opens the workout screen instead, which explains
-  it and leads to Edit. Bite's snapshot marks an empty workout planned today the same way.
+  it and leads to Edit. Bite's snapshot marks an empty workout planned today the same way, from
+  the exercise count `planned_workouts()` gives with each planned workout.
 
 ## Alternatives considered
 
