@@ -29,9 +29,11 @@ import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
+  CARD_MISSING,
   type Expression,
   FaceReader,
   marker,
+  mentionsCard,
   messageText,
   snapshotText,
   SYSTEM,
@@ -355,6 +357,8 @@ async function answer(
       hasText: !!request.message?.trim(),
     };
 
+    // Whether Bite was told its answer spoke of a card it did not make, which it is only once.
+    let toldNoCard = false;
     for (
       let round = 0;
       round <= MAX_TOOL_ROUNDS + 1 && !(await stop.look({ now: true }));
@@ -392,6 +396,22 @@ async function answer(
         }
       }
       turn.ended();
+      if (
+        !calls.length &&
+        !last &&
+        !toldNoCard &&
+        !stop.stopped &&
+        !turn.trace.some(isCard) &&
+        mentionsCard(textOf(spoken), request.language)
+      ) {
+        // The model may write of the card it means to make and end without making it (#386).
+        toldNoCard = true;
+        messages.push(
+          { role: 'model', parts: spoken },
+          { role: 'user', parts: [{ type: 'text', text: CARD_MISSING }] },
+        );
+        continue;
+      }
       if (!calls.length || stop.stopped || (last && (round > MAX_TOOL_ROUNDS || turn.text))) break;
 
       const results: Part[] = [];
@@ -679,6 +699,11 @@ export function content(trace: Part[], text: string): Part[] {
     part.type === 'toolResult' && !isCard(part) ? { ...part, result: { omitted: true } } : part,
   );
   return fits(without) ? without : [...cards, answer];
+}
+
+/** The text of a model's parts. */
+function textOf(parts: Part[]): string {
+  return parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
 }
 
 /** Whether a part is the result of a proposal or a meal card, which the chat shows. */

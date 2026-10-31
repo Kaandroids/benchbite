@@ -280,3 +280,16 @@ Deno.test('tells Bite a card exists only once its tool is called', async () => {
     true,
   );
 });
+
+Deno.test('finds a card spoken of in each language, and not other words', async () => {
+  const { mentionsCard } = await import('./prompt.ts');
+  assertEquals(mentionsCard('Here is the card to log it.', 'en'), true);
+  assertEquals(mentionsCard("I've proposed a new target.", 'en'), true);
+  assertEquals(mentionsCard('Tippe auf die Karte.', 'de'), true);
+  assertEquals(mentionsCard('Ich habe es dir vorgeschlagen.', 'de'), true);
+  assertEquals(mentionsCard('Öğün kartını hazırladım.', 'tr'), true);
+  assertEquals(mentionsCard('Yeni bir hedef önerdim.', 'tr'), true);
+  assertEquals(mentionsCard('Eat a banana before you train.', 'en'), false);
+  assertEquals(mentionsCard('Discard the yolks.', 'en'), false);
+  assertEquals(mentionsCard('Antrenmandan önce muz ye.', 'tr'), false);
+});

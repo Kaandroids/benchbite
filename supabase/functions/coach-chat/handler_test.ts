@@ -842,6 +842,55 @@ Deno.test('keeps a proposed change though the model said nothing after it', asyn
   assertEquals(inserted[1].rows.length, 2);
 });
 
+Deno.test(
+  'tells Bite once when it speaks of a card it did not make, which it then makes',
+  async () => {
+    const to = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+    const model = new FakeModel(
+      [{ type: 'text', text: "[[happy]] I've proposed new targets." }],
+      [{ type: 'toolCall', id: 'c1', name: 'propose_targets_change', args: to }],
+      [{ type: 'text', text: '[[happy]] Here it is.' }],
+    );
+    const { ctx } = context(model, { propose_coach_change: 42 });
+
+    const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+    assertEquals(model.requests[1].messages.slice(-2), [
+      { role: 'model', parts: [{ type: 'text', text: "[[happy]] I've proposed new targets." }] },
+      {
+        role: 'user',
+        parts: [
+          {
+            type: 'text',
+            text: 'Your answer speaks of a card or a proposal, but you made none: no tool was called. If you meant one, call its tool now. If you cannot, say why in a sentence. If you meant none, add nothing.',
+          },
+        ],
+      },
+    ]);
+    assertEquals(answer.filter((e) => e.event === 'proposal').length, 1);
+    assertEquals(model.requests.length, 3);
+  },
+);
+
+Deno.test('tells Bite of a missing card only once, and not when it made one', async () => {
+  const twice = new FakeModel(
+    [{ type: 'text', text: '[[happy]] Here is the card.' }],
+    [{ type: 'text', text: '[[happy]] Tap the card.' }],
+  );
+  await events(await handleChatRequest(ask(MESSAGE), context(twice).ctx));
+  assertEquals(twice.requests.length, 2);
+
+  const to = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
+  const made = new FakeModel(
+    [{ type: 'toolCall', id: 'c1', name: 'propose_targets_change', args: to }],
+    [{ type: 'text', text: '[[happy]] Here is the card.' }],
+  );
+  await events(
+    await handleChatRequest(ask(MESSAGE), context(made, { propose_coach_change: 42 }).ctx),
+  );
+  assertEquals(made.requests.length, 2);
+});
+
 const TARGETS = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };
 
 Deno.test('keeps a proposal made before a stop among its lookups, with its card', async () => {

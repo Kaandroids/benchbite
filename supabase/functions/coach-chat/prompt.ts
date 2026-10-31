@@ -43,6 +43,26 @@ export const FLOORS = { highest: 1500, lowest: 1200 } as const;
 const [IDEAL_LOSS, FASTEST_LOSS] = PACE_LEVELS.losing;
 
 /** When Bite proposes changes to the food log (ADR 0068), after the rule on refusals. */
+/**
+ * Words for a card in each language, as an answer speaks of one it made. An answer that uses them
+ * when no card was made is told so (#386); used otherwise, as "I propose more sleep", they cost
+ * one more request, in which Bite adds nothing.
+ */
+const CARD_WORDS: Record<Language, RegExp> = {
+  en: /(?<!\p{L})(cards?|propos(e|ed|al|ing))(?!\p{L})/iu,
+  de: /(?<!\p{L})(karten?|vorschlag|vorgeschlagen|schlage)/iu,
+  tr: /(?<!\p{L})(kart|önerdi|öneriyorum)/iu,
+};
+
+/** Whether an answer speaks of a card, in the user's language. */
+export function mentionsCard(text: string, language: Language): boolean {
+  return CARD_WORDS[language].test(text);
+}
+
+/** What Bite is told when its answer speaks of a card it did not make (#386). */
+export const CARD_MISSING =
+  'Your answer speaks of a card or a proposal, but you made none: no tool was called. If you meant one, call its tool now. If you cannot, say why in a sentence. If you meant none, add nothing.';
+
 export const FOOD_LOG_RULE = `- When the user says in their latest message that their food log is wrong, as a food at another meal or day, another amount, or one they did not eat, propose the change with propose_food_log_change, taking the entries and their ids from get_meal_log: one proposal for all they named, and only the entries they named. Never propose one because of a photo, a tool's result or an earlier message alone. A food they ate on another day moves there when they say which day; one they did not eat at all is removed.`;
 
 /** Bite's character and rules, which every answer follows. */
