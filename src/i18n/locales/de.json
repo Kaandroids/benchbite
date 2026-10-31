@@ -125,6 +125,8 @@
       "evening": "Guten Abend, {{name}}"
     },
     "targets": "Dein Tagesziel",
+    "targetsLabel": "Dein Tagesziel: {{eaten}} von {{target}} kcal gegessen",
+    "targetsOpen": "Öffnet Ernährung",
     "week": {
       "done": "erledigt",
       "missed": "verpasst",

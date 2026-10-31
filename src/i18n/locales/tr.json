@@ -125,6 +125,8 @@
       "evening": "İyi akşamlar, {{name}}"
     },
     "targets": "Günlük hedefin",
+    "targetsLabel": "Günlük hedefin: {{target}} kcal'nin {{eaten}} kcal'si yendi",
+    "targetsOpen": "Beslenme sekmesini açar",
     "week": {
       "done": "yapıldı",
       "missed": "kaçırıldı",
