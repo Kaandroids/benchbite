@@ -1,7 +1,6 @@
 // A meal estimated from photos (#299, ADR 0059): the photos are taken or chosen, scaled down on
 // the device and sent to estimate-meal, which answers with the foods it sees and their values.
 import {
-  MAX_MEAL_PHOTOS,
   type EstimateItem,
   type EstimateMeal,
   type EstimateReason,
@@ -10,6 +9,7 @@ import {
   type Per100,
   type PreviousItem,
 } from '@shared/meal/estimate';
+import { MAX_PHOTOS } from '@shared/photos';
 import { File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import {
@@ -38,7 +38,7 @@ const PHOTO_QUALITY = 0.7;
 export type PhotoSource = 'camera' | 'library';
 
 /**
- * Takes a photo with the camera, or chooses up to `MAX_MEAL_PHOTOS` from the library. Resolves to
+ * Takes a photo with the camera, or chooses up to `MAX_PHOTOS` from the library. Resolves to
  * their local URIs, or none when cancelled or the camera is not allowed.
  */
 export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
@@ -54,9 +54,9 @@ export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
       : await launchImageLibraryAsync({
           mediaTypes: ['images'],
           allowsMultipleSelection: true,
-          selectionLimit: MAX_MEAL_PHOTOS,
+          selectionLimit: MAX_PHOTOS,
         });
-  return result.canceled ? [] : result.assets.slice(0, MAX_MEAL_PHOTOS).map(({ uri }) => uri);
+  return result.canceled ? [] : result.assets.slice(0, MAX_PHOTOS).map(({ uri }) => uri);
 }
 
 /**

@@ -22,9 +22,28 @@ export const COACH_TOOLS = [
 
 export type CoachToolName = (typeof COACH_TOOLS)[number];
 
-/** A message to Bite. */
+/**
+ * A photo sent to Bite, as base64 JPEG data in the request itself, re-encoded on the device so
+ * that it has no Exif data, within the limits of `photos.ts` (ADR 0062).
+ */
+export type ChatPhoto = { mimeType: 'image/jpeg'; data: string };
+
+/** A photo of a user's message as the message keeps it: its path in `coach-media`, and its size. */
+export type ChatPhotoPart = {
+  type: 'image';
+  path: string;
+  mimeType: 'image/jpeg';
+  width?: number;
+  height?: number;
+};
+
+/** A message to Bite: text, photos, or both. */
 export type ChatRequest = {
-  message: string;
+  message?: string;
+  /** Up to `MAX_PHOTOS` photos, which only this turn sends to the model. */
+  photos?: ChatPhoto[];
+  /** The device's local time, HH:MM, so that Bite knows the time of day. */
+  localTime?: string;
   /** The thread to go on with; a new one without. */
   threadId?: number;
   /** The app's language, which Bite answers in. */
@@ -34,6 +53,19 @@ export type ChatRequest = {
   /** A name for this request, by which the app stops it (stop_coach_request(), ADR 0057). */
   requestId?: string;
 };
+
+/**
+ * Why a photo is refused: it is not a JPEG, or it has Exif data, or any other metadata segment
+ * (ADR 0065).
+ */
+export type PhotoRefusal = 'photo_not_jpeg' | 'photo_has_exif';
+
+/**
+ * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather
+ * than as events: `{ error, photo? }`, `photo` being the index of the photo refused.
+ */
+export type ChatRefusal =
+  'invalid_request' | 'thread_not_found' | 'photos_too_large' | PhotoRefusal | 'unavailable';
 
 /**
  * Why Bite gave no answer, or stopped short: the reasons of `ai_access()` and `start_ai_call()`,

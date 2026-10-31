@@ -4,15 +4,19 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
+import { Base64Data } from '../_shared/base64.ts';
 import {
   type ChatEvent as Event,
+  type ChatPhotoPart,
   type ChatReason,
+  type ChatRefusal,
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
+import { isObject } from '../_shared/json.ts';
 import {
   type Finish,
   type LanguageModel,
@@ -20,7 +24,9 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
+import { MAX_PHOTOS, photosBodyBytes } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
+import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   type Expression,
@@ -31,8 +37,9 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
+import { type CheckedPhoto, checkPhotos, removePhotos, storePhotos } from './photos.ts';
 import { loadSnapshot } from './snapshot.ts';
-import { DAY } from './day.ts';
+import { DAY, TIME } from './day.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -47,18 +54,48 @@ export type ChatContext = {
   stopCheckMs?: number;
 };
 
-const ChatRequest = z.object({
-  /** The thread to go on with; a new one without. */
-  threadId: z.number().int().positive().optional(),
-  message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
-  /** The app's language, which Bite answers in. */
-  language: z.enum(LANGUAGES),
-  /** The user's day, as their device has it. */
-  today: DAY,
-  /** The name the app stops this request by. */
-  requestId: z.uuid().optional(),
-}) satisfies z.ZodType<Body>;
+const Photo = z.object({
+  mimeType: z.literal('image/jpeg'),
+  data: Base64Data,
+});
+
+const ChatRequest = z
+  .object({
+    /** The thread to go on with; a new one without. */
+    threadId: z.number().int().positive().optional(),
+    /** What the user wrote, which may be nothing with photos. */
+    message: z.string().trim().max(MAX_MESSAGE_LENGTH).default(''),
+    photos: z.array(Photo).max(MAX_PHOTOS).default([]),
+    /** The device's local time, HH:MM. */
+    localTime: TIME.optional(),
+    /** The app's language, which Bite answers in. */
+    language: z.enum(LANGUAGES),
+    /** The user's day, as their device has it. */
+    today: DAY,
+    /** The name the app stops this request by. */
+    requestId: z.uuid().optional(),
+  })
+  .refine((request) => request.message || request.photos.length, {
+    path: ['message'],
+    message: 'A message needs text or a photo',
+  }) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
+
+/**
+ * The largest body read, in bytes: the photos at their largest as base64, and room for the rest,
+ * the longest message included. A larger one is refused before it is parsed.
+ */
+const MAX_BODY_BYTES = photosBodyBytes(40_000);
+
+/** The HTTP status each refusal is answered with. */
+const STATUS: Record<ChatRefusal, number> = {
+  invalid_request: 400,
+  thread_not_found: 404,
+  photos_too_large: 413,
+  photo_not_jpeg: 415,
+  photo_has_exif: 422,
+  unavailable: 500,
+};
 
 /** How many earlier messages Bite reads of a thread. */
 const HISTORY = 20;
@@ -84,14 +121,20 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
-  const parsed = ChatRequest.safeParse(await req.json().catch(() => null));
+  const json = await readJson(req, MAX_BODY_BYTES);
+  if (json === TOO_LARGE) return refused('photos_too_large');
+
+  const parsed = ChatRequest.safeParse(json);
   if (!parsed.success) {
-    return Response.json(
-      { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },
-      { status: 400 },
-    );
+    return refused('invalid_request', { issues: z.flattenError(parsed.error).fieldErrors });
   }
   const request = parsed.data;
+  // Photos are checked before anything is sent or kept (ADR 0062).
+  const photos = checkPhotos(request.photos);
+  if (!Array.isArray(photos)) {
+    const { reason, ...details } = photos;
+    return refused(reason, details);
+  }
 
   // The user reads only their own threads, so a thread they may not go on with is not found.
   let history: Message[] = [];
@@ -102,7 +145,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
       .eq('id', request.threadId)
       .maybeSingle();
     if (thread.error) return failed('Could not read the thread', thread.error);
-    if (!thread.data) return Response.json({ error: 'thread_not_found' }, { status: 404 });
+    if (!thread.data) return refused('thread_not_found');
     const messages = await context.supabase
       .from('coach_messages')
       .select('role, content, expression')
@@ -122,7 +165,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
-      return answer(request, history, context, send, stop).finally(() => {
+      return answer(request, photos, history, context, send, stop).finally(() => {
         if (!stop.cancelled) controller.close();
         return keepAlive(stop.forget());
       });
@@ -243,6 +286,7 @@ class Turn {
 
 async function answer(
   request: ChatRequest,
+  photos: CheckedPhoto[],
   history: Message[],
   context: ChatContext,
   send: (event: ChatEvent) => void,
@@ -280,14 +324,16 @@ async function answer(
       threadId = created.data.id;
       send({ event: 'thread', threadId });
     }
-    const snapshot = await loadSnapshot(context.supabase, request.today);
+    const snapshot = await loadSnapshot(context.supabase, request.today, request.localTime);
     const messages: Message[] = [
       ...history,
-      // The snapshot goes with the message, as data apart from the rules.
+      // The snapshot goes with the message, as data apart from the rules, and the photos before
+      // the message, in this turn only: later turns read them as text (toMessage()).
       {
         role: 'user',
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
+          ...photos.map(({ data }): Part => ({ type: 'image', mimeType: 'image/jpeg', data })),
           { type: 'text', text: messageText(request.message) },
         ],
       },
@@ -367,15 +413,25 @@ async function answer(
     said: turn.text.trim() !== '' || turn.trace.some(isProposal),
     stopped: stop.stopped,
     finish: turn.finish,
-    newThread: !request.threadId,
   });
+  // A new thread goes again when nothing of its message is kept, as when a photo could not be
+  // kept either: it would stay empty in the history.
+  const dropIfNew = async (id: number) =>
+    !request.threadId && (await keepAlive(dropThread(context, id)));
   if (end.keep !== 'turn') {
-    const dropped = end.dropThread && (await keepAlive(dropThread(context, threadId)));
-    if (end.keep === 'question') await keepAlive(saveQuestion(context, threadId, request));
+    const saved =
+      end.keep === 'question' &&
+      (await keepAlive(saveQuestion(context, threadId, request, photos)));
+    const dropped = !saved && (await dropIfNew(threadId));
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
-  const messageId = await keepAlive(saveTurn(context, threadId, request, turn, end.interrupted));
-  if (!messageId) return send({ event: 'error', reason: 'not_saved' });
+  const messageId = await keepAlive(
+    saveTurn(context, threadId, request, photos, turn, end.interrupted),
+  );
+  if (!messageId) {
+    const dropped = await dropIfNew(threadId);
+    return send({ event: 'error', reason: 'not_saved', ...(dropped && { dropped: true }) });
+  }
   send({
     event: 'done',
     threadId,
@@ -392,14 +448,14 @@ export type Outcome = { failure?: ChatReason; refused: boolean; asked: boolean }
  * What is kept of a message, and what the app is told. An answer with text is kept as a turn,
  * saying why it stopped short if it did. Without text, a question the model was asked stays in
  * the thread unanswered, as the app shows it, so that Bite sees it next time; one that never
- * reached the model, or was refused, is not kept, and a thread begun for it goes again.
+ * reached the model, or was refused, is not kept.
  */
 export function ending(
   { failure, refused, asked }: Outcome,
-  answer: { said: boolean; stopped: boolean; finish?: Finish; newThread: boolean },
+  answer: { said: boolean; stopped: boolean; finish?: Finish },
 ):
   | { keep: 'turn'; interrupted?: Interruption; reason?: ChatReason }
-  | { keep: 'question' | 'nothing'; reason: ChatReason; dropThread: boolean } {
+  | { keep: 'question' | 'nothing'; reason: ChatReason } {
   if (answer.said) {
     return { keep: 'turn', interrupted: interruption(), reason: failure };
   }
@@ -407,7 +463,7 @@ export function ending(
   // A question the model blocked is not kept either: sent again with every later message, it
   // would be blocked again, at a cost each time.
   const keep = asked && !refused && reason !== 'blocked' ? 'question' : 'nothing';
-  return { keep, reason, dropThread: keep === 'nothing' && answer.newThread };
+  return { keep, reason };
 
   function interruption(): Interruption | undefined {
     if (refused) return 'refused';
@@ -448,19 +504,50 @@ function proposalOf(result: unknown): ProposalCard | undefined {
   return (result as { proposal?: ProposalCard } | null)?.proposal;
 }
 
-/** The user's message as the thread keeps it. */
-function question(threadId: number, request: ChatRequest) {
+/** The user's message as the thread keeps it: a part per photo, by its path, then its text. */
+function question(threadId: number, request: ChatRequest, images: ChatPhotoPart[]) {
+  const text = request.message ? [{ type: 'text', text: request.message }] : [];
   return {
     thread_id: threadId,
     role: 'user' as const,
-    content: [{ type: 'text', text: request.message }],
+    content: [...images, ...text] as unknown as NonNullable<Json>,
   };
 }
 
-/** Saves a question Bite gave no answer to. */
-async function saveQuestion(context: ChatContext, threadId: number, request: ChatRequest) {
-  const saved = await context.admin.from('coach_messages').insert(question(threadId, request));
-  if (saved.error) logError('Could not save the question', saved.error);
+/**
+ * Keeps the message's photos, if it has any, and saves its messages with them, giving what the
+ * insert gives. Photos of a message that could not be saved are removed again, as when its
+ * thread was deleted meanwhile: its folder was queued for removal then (ADR 0063), and would not
+ * be again.
+ */
+async function saveWithPhotos<Result extends { error: unknown }>(
+  context: ChatContext,
+  threadId: number,
+  photos: CheckedPhoto[],
+  insert: (images: ChatPhotoPart[]) => PromiseLike<Result>,
+): Promise<Result | undefined> {
+  const images = photos.length
+    ? await storePhotos(context.admin, context.userId, threadId, photos)
+    : [];
+  if (!images) return undefined;
+  const saved = await insert(images);
+  if (saved.error) await removePhotos(context.admin, images);
+  return saved;
+}
+
+/** Saves a question Bite gave no answer to, and says whether it did. */
+async function saveQuestion(
+  context: ChatContext,
+  threadId: number,
+  request: ChatRequest,
+  photos: CheckedPhoto[],
+): Promise<boolean> {
+  const saved = await saveWithPhotos(context, threadId, photos, (images) =>
+    context.admin.from('coach_messages').insert(question(threadId, request, images)),
+  );
+  if (saved && !saved.error) return true;
+  logError('Could not save the question', saved?.error);
+  return false;
 }
 
 /**
@@ -471,28 +558,32 @@ async function saveTurn(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
+  photos: CheckedPhoto[],
   turn: Turn,
   interrupted: Interruption | undefined,
 ): Promise<number | undefined> {
-  const messages = await context.admin
-    .from('coach_messages')
-    .insert([
-      question(threadId, request),
-      {
-        thread_id: threadId,
-        role: 'bite',
-        content: content(turn.trace, turn.text.trim()) as unknown as NonNullable<Json>,
-        expression: turn.expression ?? 'neutral',
-        model: turn.usage.model,
-        input_tokens: turn.usage.input,
-        cached_input_tokens: turn.usage.cached,
-        output_tokens: turn.usage.output,
-        thinking_tokens: turn.usage.thinking,
-        interrupted: interrupted ?? null,
-      },
-    ])
-    .select('id')
-    .order('id');
+  const messages = await saveWithPhotos(context, threadId, photos, (images) =>
+    context.admin
+      .from('coach_messages')
+      .insert([
+        question(threadId, request, images),
+        {
+          thread_id: threadId,
+          role: 'bite',
+          content: content(turn.trace, turn.text.trim()) as unknown as NonNullable<Json>,
+          expression: turn.expression ?? 'neutral',
+          model: turn.usage.model,
+          input_tokens: turn.usage.input,
+          cached_input_tokens: turn.usage.cached,
+          output_tokens: turn.usage.output,
+          thinking_tokens: turn.usage.thinking,
+          interrupted: interrupted ?? null,
+        },
+      ])
+      .select('id')
+      .order('id'),
+  );
+  if (!messages) return undefined;
   if (messages.error) return void logError('Could not save the messages', messages.error);
   return messages.data[messages.data.length - 1].id;
 }
@@ -551,9 +642,10 @@ function isProposal(part: Part): boolean {
 }
 
 /**
- * An earlier message as Bite reads it: its text alone, a face before Bite's, as it wrote it. The
- * history reads the same parts for a line, joined by spaces (coach_message_text() in the
- * chat_history migration).
+ * An earlier message as Bite reads it: its text, a face before Bite's, as it wrote it, and a line
+ * for the user's photos. Only this function reads the photos for now: the app (messageText() in
+ * src/coach/threads.ts) and the history (coach_message_text() in the chat_history migration) read
+ * the text parts alone, so a message of photos alone has no text there.
  */
 function toMessage(
   row: Pick<
@@ -563,32 +655,46 @@ function toMessage(
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
   const said = parts.flatMap((part) =>
-    part &&
-    typeof part === 'object' &&
-    !Array.isArray(part) &&
-    part.type === 'text' &&
-    typeof part.text === 'string'
-      ? [part.text]
-      : [],
+    partOfType(part, 'text') && typeof part.text === 'string' ? [part.text] : [],
   );
   // What Bite proposed, so that it knows on later messages, whether or not it said a word.
   const proposed = parts.flatMap((part) => {
-    const proposal =
-      part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
-        ? proposalOf(part.result)
-        : undefined;
+    const proposal = partOfType(part, 'toolResult') ? proposalOf(part.result) : undefined;
     return proposal ? [proposalText(proposal)] : [];
   });
+  // A message's photos reach the model in its own turn only (ADR 0062).
+  const photos = parts.filter((part) => partOfType(part, 'image')).length;
   const text = [...said.filter(Boolean), ...proposed].join('\n');
+  if (row.role === 'user') {
+    const sent = photos ? [photosText(photos)] : [];
+    const all = [...sent, untagged(text)].filter(Boolean).join('\n');
+    return all ? [{ role: 'user', parts: [{ type: 'text', text: all }] }] : [];
+  }
   if (!text) return [];
-  if (row.role === 'user')
-    return [{ role: 'user', parts: [{ type: 'text', text: untagged(text) }] }];
   const face = marker(row.expression ?? 'neutral');
   // Bite may have repeated what the user wrote.
   return [{ role: 'model', parts: [{ type: 'text', text: `${face} ${untagged(text)}` }] }];
 }
 
+/** Whether a saved part is an object of this type. */
+function partOfType(part: unknown, type: string): part is Record<string, unknown> {
+  return isObject(part) && part.type === type;
+}
+
+/** Where an earlier message's photos were, as Bite reads it in later turns. */
+function photosText(count: number): string {
+  return count === 1 ? '(Sent a photo.)' : `(Sent ${count} photos.)`;
+}
+
 function failed(message: string, error: unknown): Response {
   logError(message, error);
-  return Response.json({ error: 'unavailable' }, { status: 500 });
+  return refused('unavailable');
+}
+
+/** A refusal, with the photo it is about or what is wrong with the request, when it is told. */
+function refused(
+  reason: ChatRefusal,
+  details: { photo?: number; issues?: Record<string, string[] | undefined> } = {},
+): Response {
+  return Response.json({ error: reason, ...details }, { status: STATUS[reason] });
 }
