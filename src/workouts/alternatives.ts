@@ -137,14 +137,20 @@ export function useChooseAlternative({
     ? switchAlternative.variables
     : alternatives?.find((alternative) => alternative.inUse)?.id;
 
-  /** Puts `id` in use, unless it already is or another switch runs; `onSuccess` once it is. */
-  const choose = (id: number, callbacks: { onSuccess?: () => void; onError?: () => void } = {}) => {
+  /**
+   * Puts `id` in use, unless it already is or another switch runs; `onSuccess` once it is. Returns
+   * whether the switch started, and so whether either callback will run.
+   */
+  const choose = (
+    id: number,
+    callbacks: { onSuccess?: () => void; onError?: () => void } = {},
+  ): boolean => {
     // Like an edit, a switch would change the exercises of the workout running.
     if (running) {
       onRunning();
-      return;
+      return false;
     }
-    if (switchAlternative.isPending || id === chosenId) return;
+    if (switchAlternative.isPending || id === chosenId) return false;
     setError(null);
     switchAlternative.mutate(id, {
       onSuccess: callbacks.onSuccess,
@@ -153,6 +159,7 @@ export function useChooseAlternative({
         callbacks.onError?.();
       },
     });
+    return true;
   };
 
   return {

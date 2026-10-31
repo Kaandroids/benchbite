@@ -254,6 +254,31 @@ it('marks the one being put in use as chosen while that runs, and waits for it',
   expect(switched()).toEqual([3]);
 });
 
+it('adds and duplicates nothing while another is put in use', async () => {
+  await renderSheets();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
+  const addState = () =>
+    screen.getByRole('button', { name: 'Add alternative' }).props.accessibilityState;
+  await waitFor(() => expect(addState()).toEqual({ disabled: true }));
+  await openMenu('Hotel');
+  expect(menuItem('Duplicate')!.props.accessibilityState).toEqual({ disabled: true });
+
+  await act(async () => switches[0]?.succeed());
+  await waitFor(() => expect(addState()).toEqual({ disabled: false }));
+});
+
+it('goes back to the list when a switch started meanwhile holds a new alternative back', async () => {
+  await renderSheets();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
+  // Another is put in use while the new one is still being added.
+  await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
+  await act(async () => add.mock.calls[0]?.[1]?.onSuccess(9));
+  await nameIt('');
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Gym' })).toBeTruthy());
+  expect(switched()).toEqual([3]);
+  expect(onClose).not.toHaveBeenCalled();
+});
+
 it('asks to finish the running workout before putting another in use', async () => {
   await renderSheets(true);
   await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));

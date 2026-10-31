@@ -81,12 +81,13 @@ export function AlternativesSheets({ workout, running, choice, onClose }: Altern
       show({ kind: 'manage' });
       return;
     }
+    // Back on the list, which says why it failed, or where the switch that held it back shows.
+    const backToList = () => show({ kind: 'manage' });
     setShown(null);
-    choice.choose(alternative.id, {
-      onSuccess: onClose,
-      // Back on the list, which says why.
-      onError: () => afterSheetCloses(() => setShown({ kind: 'manage' })),
-    });
+    const started = choice.choose(alternative.id, { onSuccess: onClose, onError: backToList });
+    if (!started) {
+      backToList();
+    }
   };
 
   if (shown?.kind === 'name') {
@@ -147,6 +148,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   // A workout without alternatives is one set of exercises: the first, in use.
   const count = Math.max(rows.length, 1);
   const full = max !== undefined && count >= max;
+  // No other added while one is, nor while a switch runs, which would hold back putting it in use.
+  const busy = add.isPending || choice.isPending;
   const failed =
     (action: Parameters<typeof errorOf>[1]) =>
     (failure: unknown): void =>
@@ -277,7 +280,7 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
         key: 'duplicate',
         icon: 'copy',
         label: t('workout.alternatives.duplicate'),
-        disabled: full,
+        disabled: full || busy,
         onPress: () => onAdd({ copyOf: own ? null : alternative.id }),
       },
       // The one in use is the workout, which another must replace before it can go.
@@ -362,8 +365,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
               accessibilityRole="button"
               accessibilityLabel={t('workout.alternatives.add')}
               accessibilityHint={t('workout.alternatives.addNote')}
-              accessibilityState={{ disabled: add.isPending }}
-              disabled={add.isPending}
+              accessibilityState={{ disabled: busy }}
+              disabled={busy}
               onPress={() => onAdd({ empty: true })}
               style={({ pressed }) => [
                 styles.row,
