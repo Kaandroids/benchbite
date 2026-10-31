@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
-import { discardPhotos, preparePhoto } from '@/nutrition/meal-estimate';
+import { discardPhotos, preparePhoto } from '@/lib/photos';
 
 /**
  * A photo of a message: one the user sends now, shown from the device, with its data to send it
@@ -29,8 +29,8 @@ export function photoDataUri(data: string): string {
 }
 
 /**
- * A photo taken or chosen, ready to send to Bite: scaled down and re-encoded as Nutrition's meal
- * photos are, then without any metadata segment (ADR 0065), so that neither the place nor the
+ * A photo taken or chosen, ready to send to Bite: scaled down and re-encoded as every photo sent
+ * is, by preparePhoto(), then without any metadata segment (ADR 0065), so that neither the place nor the
  * time it was taken leaves the device. The photo on the device is deleted once it is read. Fails
  * for a photo that cannot be read.
  */

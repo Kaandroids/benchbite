@@ -5,9 +5,9 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { MAX_MESSAGE_LENGTH } from '@shared/coach/chat';
 import { MAX_PHOTOS } from '@shared/photos';
 
+import { PhotoSheet } from '@/components/photo-sheet';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
-import { MealPhotoSheet } from '@/nutrition/meal-photo-sheet';
 import { useTheme } from '@/theme';
 
 import { type PhotosProblem, prepareChatPhoto } from './chat-photos';
@@ -155,7 +155,7 @@ export function ChatComposer({
         {t('bite.mistakes')}
       </Text>
       {picking ? (
-        <MealPhotoSheet
+        <PhotoSheet
           title={t('bite.photos.add')}
           hint={t('bite.photos.sheetHint')}
           limit={room}

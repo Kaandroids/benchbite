@@ -12,6 +12,11 @@
     "discard": "Discard",
     "done": "Done"
   },
+  "photoSheet": {
+    "take": "Take a photo",
+    "choose": "Choose from library",
+    "cancel": "Cancel"
+  },
   "sessionError": {
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
@@ -348,8 +353,6 @@
       "camera": "Log a meal from a photo",
       "sheetTitle": "Log from a photo",
       "sheetHint": "Up to 3 photos of the same meal",
-      "take": "Take a photo",
-      "choose": "Choose from library",
       "cancel": "Cancel",
       "title": {
         "breakfast": "Breakfast from a photo",

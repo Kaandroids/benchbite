@@ -1,5 +1,5 @@
+import { pickPhotos } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { pickMealPhotos } from '@/nutrition/meal-estimate';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
@@ -18,9 +18,9 @@ jest.mock('@/lib/supabase', () => ({
   supabase: { from: jest.fn(), rpc: jest.fn(), storage: { from: jest.fn() } },
 }));
 jest.mock('@/profile/display-name', () => ({ useDisplayName: () => ({ data: 'Sam' }) }));
-jest.mock('@/nutrition/meal-estimate', () => ({
-  ...jest.requireActual('@/nutrition/meal-estimate'),
-  pickMealPhotos: jest.fn(),
+jest.mock('@/lib/photos', () => ({
+  ...jest.requireActual('@/lib/photos'),
+  pickPhotos: jest.fn(),
 }));
 jest.mock('./chat-photos', () => ({
   ...jest.requireActual('./chat-photos'),
@@ -57,7 +57,7 @@ function liveStream() {
 
 /** Lets the user pick photos from the library, each prepared as base64 `data-<uri>`. */
 function picks(...uris: string[]) {
-  jest.mocked(pickMealPhotos).mockResolvedValueOnce(uris);
+  jest.mocked(pickPhotos).mockResolvedValueOnce(uris);
   jest.mocked(prepareChatPhoto).mockImplementation((uri) => Promise.resolve(`data-${uri}`));
 }
 
@@ -88,14 +88,14 @@ it('adds photos from the sheet, up to 3, each with an ×', async () => {
   picks('file://a.jpg', 'file://b.jpg');
   await fireEvent.press(screen.getByRole('button', { name: 'Choose from library' }));
   await waitFor(() => expect(screen.getByLabelText('Photo 2')).toBeOnTheScreen());
-  expect(pickMealPhotos).toHaveBeenCalledWith('library', 3);
+  expect(pickPhotos).toHaveBeenCalledWith('library', 3);
   expect(prepareChatPhoto).toHaveBeenCalledWith('file://a.jpg');
 
   // One more fits: the dashed tile asks for one at most.
   picks('file://c.jpg');
   await addPhotos('Add another photo');
   await waitFor(() => expect(screen.getByLabelText('Photo 3')).toBeOnTheScreen());
-  expect(pickMealPhotos).toHaveBeenLastCalledWith('library', 1);
+  expect(pickPhotos).toHaveBeenLastCalledWith('library', 1);
   expect(screen.queryByRole('button', { name: 'Add another photo' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Add a photo' })).toBeDisabled();
 
@@ -165,7 +165,7 @@ it('hands a message whose photo was refused back to the composer, saying which',
 });
 
 it('says when a photo could not be prepared', async () => {
-  jest.mocked(pickMealPhotos).mockResolvedValueOnce(['file://broken.heic']);
+  jest.mocked(pickPhotos).mockResolvedValueOnce(['file://broken.heic']);
   jest.mocked(prepareChatPhoto).mockRejectedValueOnce(new Error('unreadable'));
   await render(<BiteScreen />);
   await addPhotos();

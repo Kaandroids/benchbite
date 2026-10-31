@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  discardPhotos,
-  EstimateFailure,
-  estimateMeal,
-  type Correction,
-  type EstimateItem,
-} from './meal-estimate';
+import { discardPhotos } from '@/lib/photos';
+
+import { EstimateFailure, estimateMeal, type Correction, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
 
 /** Where an estimate of a meal's photos stands. */

@@ -12,6 +12,11 @@
     "discard": "Sil",
     "done": "Bitti"
   },
+  "photoSheet": {
+    "take": "Fotoğraf çek",
+    "choose": "Galeriden seç",
+    "cancel": "Vazgeç"
+  },
   "sessionError": {
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
@@ -348,8 +353,6 @@
       "camera": "Fotoğraftan öğün ekle",
       "sheetTitle": "Fotoğraftan ekle",
       "sheetHint": "Aynı öğünün en fazla 3 fotoğrafı",
-      "take": "Fotoğraf çek",
-      "choose": "Galeriden seç",
       "cancel": "Vazgeç",
       "title": {
         "breakfast": "Fotoğraftan kahvaltı",

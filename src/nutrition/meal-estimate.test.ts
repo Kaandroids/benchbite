@@ -1,14 +1,11 @@
 import { File } from 'expo-file-system';
 import { ImageManipulator } from 'expo-image-manipulator';
-import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 
 import {
   confidenceOf,
-  discardPhotos,
   EstimateFailure,
   estimateMeal,
   estimateTotals,
-  pickMealPhotos,
   type EstimateItem,
 } from './meal-estimate';
 
@@ -68,26 +65,6 @@ beforeEach(() => {
   jest
     .mocked(ImageManipulator.manipulate)
     .mockReturnValue({ renderAsync: () => Promise.resolve({ saveAsync }) } as never);
-});
-
-describe('pickMealPhotos', () => {
-  it('chooses up to three photos from the library', async () => {
-    jest.mocked(launchImageLibraryAsync).mockResolvedValue({
-      canceled: false,
-      assets: [{ uri: 'a' }, { uri: 'b' }, { uri: 'c' }, { uri: 'd' }],
-    } as never);
-    await expect(pickMealPhotos('library')).resolves.toEqual(['a', 'b', 'c']);
-    expect(launchImageLibraryAsync).toHaveBeenCalledWith({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      selectionLimit: 3,
-    });
-  });
-
-  it('gives none when the camera is not allowed', async () => {
-    jest.mocked(requestCameraPermissionsAsync).mockResolvedValue({ granted: false } as never);
-    await expect(pickMealPhotos('camera')).resolves.toEqual([]);
-  });
 });
 
 describe('estimateMeal', () => {
@@ -169,13 +146,5 @@ describe('confidenceOf', () => {
     expect(confidenceOf([RICE, CHUTNEY])).toBe('high');
     expect(confidenceOf([{ ...RICE, confidence: 0.6 }])).toBe('medium');
     expect(confidenceOf([CHUTNEY])).toBe('low');
-  });
-});
-
-describe('discardPhotos', () => {
-  it("deletes photos in the app's cache folder only", () => {
-    discardPhotos(['file:///cache/ImagePicker/a.jpg', 'file:///photos/b.jpg']);
-    expect(File).toHaveBeenCalledTimes(1);
-    expect(File).toHaveBeenCalledWith('file:///cache/ImagePicker/a.jpg');
   });
 });

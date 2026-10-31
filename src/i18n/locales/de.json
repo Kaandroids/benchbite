@@ -12,6 +12,11 @@
     "discard": "Verwerfen",
     "done": "Fertig"
   },
+  "photoSheet": {
+    "take": "Foto aufnehmen",
+    "choose": "Aus der Mediathek wählen",
+    "cancel": "Abbrechen"
+  },
   "sessionError": {
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
@@ -348,8 +353,6 @@
       "camera": "Mahlzeit per Foto eintragen",
       "sheetTitle": "Per Foto eintragen",
       "sheetHint": "Bis zu 3 Fotos derselben Mahlzeit",
-      "take": "Foto aufnehmen",
-      "choose": "Aus der Mediathek wählen",
       "cancel": "Abbrechen",
       "title": {
         "breakfast": "Frühstück per Foto",

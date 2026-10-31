@@ -1,8 +1,8 @@
 import { fromBase64, toBase64 } from '@shared/base64_bytes';
 import { MAX_PHOTO_BYTES } from '@shared/photos';
 
+import { discardPhotos, preparePhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { discardPhotos, preparePhoto } from '@/nutrition/meal-estimate';
 
 import {
   forgetPhotoUrls,
@@ -14,7 +14,7 @@ import {
 } from './chat-photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { storage: { from: jest.fn() } } }));
-jest.mock('@/nutrition/meal-estimate', () => ({
+jest.mock('@/lib/photos', () => ({
   preparePhoto: jest.fn(),
   discardPhotos: jest.fn(),
 }));

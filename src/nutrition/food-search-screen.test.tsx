@@ -25,9 +25,9 @@ jest.mock('expo-router', () => {
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
   };
 });
-jest.mock('./meal-estimate', () => ({
-  ...jest.requireActual('./meal-estimate'),
-  pickMealPhotos: jest.fn(() => Promise.resolve(['file://plate.jpg'])),
+jest.mock('@/lib/photos', () => ({
+  ...jest.requireActual('@/lib/photos'),
+  pickPhotos: jest.fn(() => Promise.resolve(['file://plate.jpg'])),
 }));
 jest.mock('./entries', () => ({
   ...jest.requireActual('./entries'),
