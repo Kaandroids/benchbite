@@ -10,7 +10,6 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
-  type MealCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
@@ -34,7 +33,7 @@ import {
 } from './prompt.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY } from './day.ts';
-import { type MealCardState, mealCardText } from './meal_card.ts';
+import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -112,7 +111,10 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
       .order('id', { ascending: false })
       .limit(HISTORY);
     if (messages.error) return failed('Could not read the thread', messages.error);
-    const cards = await mealCardStates(context.supabase, messages.data);
+    const results = messages.data.flatMap((row) =>
+      (Array.isArray(row.content) ? row.content : []).map(resultOf),
+    );
+    const cards = await mealCardStates(context.supabase, results);
     history = messages.data.reverse().flatMap((row) => toMessage(row, cards));
   }
 
@@ -454,42 +456,11 @@ function proposalOf(result: unknown): ProposalCard | undefined {
   return (result as { proposal?: ProposalCard } | null)?.proposal;
 }
 
-/** The card of a meal Bite estimated, as its tool's result holds it. */
-function mealCardOf(result: unknown): MealCard | undefined {
-  return (result as { mealCard?: MealCard } | null)?.mealCard;
-}
-
 /** The result of a stored part of a message, when it is a tool's result. */
 function resultOf(part: Json): unknown {
   return part && typeof part === 'object' && !Array.isArray(part) && part.type === 'toolResult'
     ? part.result
     : undefined;
-}
-
-/**
- * Where the meal cards of the messages `rows` stand, by id, as the user reads them; none when
- * they cannot be read, and Bite then reads the cards without.
- */
-async function mealCardStates(
-  supabase: Client,
-  rows: { content: Json }[],
-): Promise<Map<number, MealCardState>> {
-  const ids = rows.flatMap((row) =>
-    (Array.isArray(row.content) ? row.content : []).flatMap((part) => {
-      const card = mealCardOf(resultOf(part));
-      return card ? [card.id] : [];
-    }),
-  );
-  if (!ids.length) return new Map();
-  const { data, error } = await supabase
-    .from('coach_meal_cards')
-    .select('id, status, kcal')
-    .in('id', ids);
-  if (error) {
-    logError('Could not read the meal cards of a thread', error);
-    return new Map();
-  }
-  return new Map(data.map((state) => [state.id, state]));
 }
 
 /** The user's message as the thread keeps it. */
