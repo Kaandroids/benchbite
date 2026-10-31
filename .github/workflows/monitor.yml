@@ -1,0 +1,59 @@
+name: Monitor
+
+# Checks once a day that the scheduled jobs of the hosted Supabase project still work, as a failing
+# job only warns in the Postgres logs (ADR 0067). A failed run sends GitHub's usual email. Each
+# job gets its own check below.
+on:
+  schedule:
+    - cron: '23 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coach-media-purge:
+    name: Photo purge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The monitoring environment holds copies of the deploy's access token and project id, and
+    # allows only main. Unlike production it needs no approval, so the scheduled run can start.
+    if: github.ref == 'refs/heads/main'
+    environment: monitoring
+    steps:
+      # Runs coach_media_purge_status() through the Management API, which needs no database
+      # password. The function returns only counts, ages and status codes, and only those are
+      # printed; the token and the project id are masked as secrets.
+      - name: Check the photo purge of deleted chats
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          result="$RUNNER_TEMP/purge-status.json"
+          http_status=$(curl --silent --show-error --max-time 60 \
+            --output "$result" --write-out '%{http_code}' \
+            --request POST "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_ID/database/query" \
+            --header "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --header 'Content-Type: application/json' \
+            --data '{"query": "select * from public.coach_media_purge_status()"}')
+          if [ "$http_status" != 200 ]; then
+            echo "::error::The status query failed with HTTP $http_status"
+            exit 1
+          fi
+
+          if ! status=$(jq --exit-status '.[0] | select(has("healthy"))' "$result"); then
+            echo "::error::The status query returned no status"
+            exit 1
+          fi
+          jq --raw-output '
+            "Queued folders: \(.queued)",
+            "Oldest queued folder: \(if .oldest_queued_minutes == null then "none" else "\(.oldest_queued_minutes) minutes" end)",
+            "Purge responses in the last 6 hours: \(.responses), failed: \(.failed_responses)",
+            "Failed status codes (0 = timeout or network error): \(.failed_statuses | map(tostring) | join(", ") | if . == "" then "none" else . end)",
+            "Latest status code: \(.latest_status // "none")"
+          ' <<< "$status"
+
+          if [ "$(jq --raw-output '.healthy' <<< "$status")" != true ]; then
+            echo "::error::The photo purge of deleted chats is failing: a folder has waited over an hour, or its latest call failed"
+            exit 1
+          fi
