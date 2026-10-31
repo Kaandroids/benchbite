@@ -3,6 +3,16 @@
 import { decodeBase64 } from '../_shared/base64.ts';
 import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import type { ChatPhotoPart, PhotoRefusal } from '../_shared/coach/chat.ts';
+import {
+  EOI,
+  isCoding,
+  isFrame,
+  isMetadata,
+  KEPT,
+  SOS,
+  standalone,
+  startsWith,
+} from '../_shared/jpeg_metadata.ts';
 import { photosFit } from '../_shared/photos.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
@@ -28,42 +38,6 @@ export function checkPhotos(photos: { data: string }[]): CheckedPhoto[] | Photos
     checked.push({ bytes, data, ...read });
   }
   return checked;
-}
-
-/** Markers that stand alone, without a length: TEM and the restart markers. */
-const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7);
-
-/** A start of frame, which holds the photo's size: SOF0 to SOF15, but DHT, JPG and DAC. */
-const isFrame = (marker: number) =>
-  marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
-
-/**
- * The segments of the JPEG standard that only say how the image is coded: the tables (DHT, DAC,
- * DQT), the restart interval (DRI), the scans' lines (DNL), the hierarchical ones (DHP, EXP), and
- * the frames and scans.
- */
-const isCoding = (marker: number) =>
-  isFrame(marker) || marker === 0xc4 || marker === 0xcc || (marker >= 0xda && marker <= 0xdf);
-
-/**
- * The application segments a photo may keep, by the name each starts with: JFIF (APP0), the
- * colour profile (APP2) and Adobe's colour transform (APP14). Every other application segment
- * (APPn) or comment (COM) is refused, as Exif and XMP (APP1), Photoshop's IPTC data (APP13) or a
- * comment can hold where and when a photo was taken.
- */
-const KEPT: Record<number, string> = { 0xe0: 'JFIF\0', 0xe2: 'ICC_PROFILE\0', 0xee: 'Adobe' };
-const isMetadata = (marker: number) => (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
-
-const SOS = 0xda;
-const EOI = 0xd9;
-
-/** Whether a segment's data, from `start`, begins with a name. */
-function startsWith(bytes: Uint8Array, start: number, end: number, name: string): boolean {
-  if (start + name.length > end) return false;
-  for (let i = 0; i < name.length; i++) {
-    if (bytes[start + i] !== name.charCodeAt(i)) return false;
-  }
-  return true;
 }
 
 /**

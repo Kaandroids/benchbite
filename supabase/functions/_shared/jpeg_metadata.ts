@@ -1,29 +1,44 @@
 // Removes a photo's metadata on the device before it is sent to Bite (ADR 0065): the app's half of
-// coach-chat's readJpeg() (coach-chat/photos.ts), which refuses a photo with any of it left. Kept
-// here, beside the function, so that both keep the same segments. This file imports nothing, so
-// that the app can bundle it.
+// coach-chat's readJpeg() (coach-chat/photos.ts), which refuses a photo with any of it left. The
+// segments both keep are defined here once, and readJpeg() reads them from here. This file imports
+// nothing, so that the app can bundle it.
 
 /** Markers that stand alone, without a length: TEM and the restart markers. */
-const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7);
+export const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7);
+
+/** A start of frame, which holds the photo's size: SOF0 to SOF15, but DHT, JPG and DAC. */
+export const isFrame = (marker: number) =>
+  marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
 
 /**
- * The segments of the JPEG standard that only say how the image is coded: the frames (SOF0 to
- * SOF15, but the reserved JPG), the tables (DHT, DAC, DQT), the restart interval (DRI), the scans
- * (SOS) and their lines (DNL), and the hierarchical ones (DHP, EXP).
+ * The segments of the JPEG standard that only say how the image is coded: the tables (DHT, DAC,
+ * DQT), the restart interval (DRI), the scans' lines (DNL), the hierarchical ones (DHP, EXP), and
+ * the frames and scans.
  */
-const isCoding = (marker: number) =>
-  (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc8) || (marker >= 0xda && marker <= 0xdf);
+export const isCoding = (marker: number) =>
+  isFrame(marker) || marker === 0xc4 || marker === 0xcc || (marker >= 0xda && marker <= 0xdf);
 
-/** The application segments a photo keeps, by the name each starts with, as readJpeg() does. */
-const KEPT: Record<number, string> = { 0xe0: 'JFIF\0', 0xe2: 'ICC_PROFILE\0', 0xee: 'Adobe' };
+/**
+ * The application segments a photo may keep, by the name each starts with: JFIF (APP0), the
+ * colour profile (APP2) and Adobe's colour transform (APP14). Every other application segment
+ * (APPn) or comment (COM) is metadata, as Exif and XMP (APP1), Photoshop's IPTC data (APP13) or a
+ * comment can hold where and when a photo was taken.
+ */
+export const KEPT: Record<number, string> = {
+  0xe0: 'JFIF\0',
+  0xe2: 'ICC_PROFILE\0',
+  0xee: 'Adobe',
+};
 
 /** Application segments (APPn) and comments (COM): metadata, unless one of the kept ones. */
-const isMetadata = (marker: number) => (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
+export const isMetadata = (marker: number) => (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
 
-const SOS = 0xda;
-const EOI = 0xd9;
+/** The start of a scan, whose data follows its segment, and the end of the image. */
+export const SOS = 0xda;
+export const EOI = 0xd9;
 
-function startsWith(bytes: Uint8Array, start: number, end: number, name: string): boolean {
+/** Whether a segment's data, from `start`, begins with a name. */
+export function startsWith(bytes: Uint8Array, start: number, end: number, name: string): boolean {
   if (start + name.length > end) return false;
   for (let i = 0; i < name.length; i++) {
     if (bytes[start + i] !== name.charCodeAt(i)) return false;
