@@ -20,9 +20,10 @@ type Failures = {
 /**
  * A database for the chat: tables with their rows, functions with what they return, or a
  * function giving it, and what is inserted and deleted, which the service role writes. Every
- * query resolves with all of a table's rows. Like the real ones, it refuses messages of a thread
- * that is gone and more parts than a message may hold, and its storage has the `coach-media`
- * bucket alone, which takes new JPEG files of at most 1.5 MB, and keeps what is in it.
+ * query resolves with all of a table's rows. Like the real ones, it keeps the threads there are,
+ * refuses messages of a thread that is not or is gone and more parts than a message may hold, and
+ * its storage has the `coach-media` bucket alone, which takes new JPEG files of at most 1.5 MB, and
+ * keeps what is in it.
  */
 function database(
   rpc: Record<string, unknown> = {},
@@ -35,6 +36,7 @@ function database(
   const removed: string[] = [];
   let uploads = 0;
   let nextId = 100;
+  const threads = new Set((tables.coach_threads ?? []).map((row) => row.id as number));
   const refused = (code: string, message: string) => ({ data: null, error: { code, message } });
   const query = (table: string, rows?: Row[]) => {
     const result = () => {
@@ -57,7 +59,9 @@ function database(
       insert: (rows: Row | Row[]) => {
         const given = Array.isArray(rows) ? rows : [rows];
         if (table === 'coach_messages') {
-          const error = given.some((row) => row.thread_id === deletedThread)
+          const gone = (row: Row) =>
+            row.thread_id === deletedThread || !threads.has(row.thread_id as number);
+          const error = given.some(gone)
             ? refused('23503', 'violates foreign key constraint')
             : given.some((row) => !Array.isArray(row.content) || row.content.length > 50)
               ? refused('23514', 'violates check constraint')
@@ -69,6 +73,7 @@ function database(
           }
         }
         const list = given.map((row) => ({ ...row, id: nextId++ }));
+        if (table === 'coach_threads') list.forEach((row) => threads.add(row.id));
         inserted.push({ table, rows: list });
         return query(table, list);
       },
@@ -80,6 +85,7 @@ function database(
             return filter;
           },
           then: (resolve: (value: unknown) => void) => {
+            if (table === 'coach_threads') threads.delete(values[0] as number);
             deleted.push([table, ...values].join(' '));
             resolve({ error: null });
           },
@@ -123,7 +129,7 @@ function database(
       }),
     },
   } as unknown as ChatContext['supabase'];
-  return { client, inserted, deleted, objects, removed };
+  return { client, inserted, deleted, objects, removed, threads };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
@@ -706,7 +712,7 @@ Deno.test('keeps a message within what a message may hold', () => {
 });
 
 Deno.test('keeps what came of a message, and says why it ended', () => {
-  const answer = { said: false, stopped: false, finish: 'stop' as const, newThread: true };
+  const answer = { said: false, stopped: false, finish: 'stop' as const };
   const asked = { refused: false, asked: true };
   const notAsked = { failure: 'unavailable' as const, refused: false, asked: false };
   const refused = { failure: 'limit_reached' as const, refused: true, asked: false };
@@ -727,26 +733,22 @@ Deno.test('keeps what came of a message, and says why it ended', () => {
     interrupted: 'stopped',
     reason: undefined,
   });
-  // Without text: the question once the model was asked, else nothing, and a new thread goes.
+  // Without text: the question once the model was asked, else nothing.
   assertEquals(ending(asked, { ...answer, finish: 'stop' }), {
     keep: 'question',
     reason: 'unavailable',
-    dropThread: false,
   });
   assertEquals(ending(asked, { ...answer, finish: 'blocked' }), {
     keep: 'nothing',
     reason: 'blocked',
-    dropThread: true,
   });
   assertEquals(ending(notAsked, answer), {
     keep: 'nothing',
     reason: 'unavailable',
-    dropThread: true,
   });
-  assertEquals(ending(refused, { ...answer, newThread: false }), {
+  assertEquals(ending(refused, answer), {
     keep: 'nothing',
     reason: 'limit_reached',
-    dropThread: false,
   });
 });
 
@@ -1069,8 +1071,8 @@ Deno.test('removes the photos again when the message cannot be saved', async () 
   assertEquals([objects.size, removed.length], [0, 2]);
 });
 
-Deno.test('saves no message when a photo cannot be kept, and removes the others', async () => {
-  const { ctx, inserted, objects, removed } = context(
+Deno.test('saves no message when a photo cannot be kept, and drops the new thread', async () => {
+  const { ctx, inserted, objects, removed, threads } = context(
     new FakeModel(SURE),
     {},
     {},
@@ -1081,12 +1083,19 @@ Deno.test('saves no message when a photo cannot be kept, and removes the others'
 
   const answer = await events(await handleChatRequest(ask(PHOTO_MESSAGE), ctx));
 
-  assertEquals(answer.at(-1), { event: 'error', reason: 'not_saved' });
+  assertEquals(answer.at(-1), { event: 'error', reason: 'not_saved', dropped: true });
   assertEquals([objects.size, removed.length], [0, 1]);
   assertEquals(
     inserted.map(({ table }) => table),
     ['coach_threads'],
   );
+  assertEquals(threads.size, 0);
+
+  // A question Bite gave no answer to, whose photo cannot be kept either.
+  const unanswered = context(new FakeModel([]), {}, {}, { failingUploads: [0] });
+  const ended = await events(await handleChatRequest(ask(PHOTO_MESSAGE), unanswered.ctx));
+  assertEquals(ended.at(-1), { event: 'error', reason: 'unavailable', dropped: true });
+  assertEquals(unanswered.threads.size, 0);
 });
 
 Deno.test("tells Bite the device's local time", async () => {

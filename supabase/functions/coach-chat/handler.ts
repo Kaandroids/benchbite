@@ -421,19 +421,25 @@ async function answer(
     said: turn.text.trim() !== '' || turn.trace.some(isProposal),
     stopped: stop.stopped,
     finish: turn.finish,
-    newThread: !request.threadId,
   });
+  // A new thread goes again when nothing of its message is kept, as when a photo could not be
+  // kept either: it would stay empty in the history.
+  const dropIfNew = async (id: number) =>
+    !request.threadId && (await keepAlive(dropThread(context, id)));
   if (end.keep !== 'turn') {
-    const dropped = end.dropThread && (await keepAlive(dropThread(context, threadId)));
-    if (end.keep === 'question') {
-      await keepAlive(saveQuestion(context, threadId, request, photos));
-    }
+    const saved =
+      end.keep === 'question' &&
+      (await keepAlive(saveQuestion(context, threadId, request, photos)));
+    const dropped = !saved && (await dropIfNew(threadId));
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
   const messageId = await keepAlive(
     saveTurn(context, threadId, request, photos, turn, end.interrupted),
   );
-  if (!messageId) return send({ event: 'error', reason: 'not_saved' });
+  if (!messageId) {
+    const dropped = await dropIfNew(threadId);
+    return send({ event: 'error', reason: 'not_saved', ...(dropped && { dropped: true }) });
+  }
   send({
     event: 'done',
     threadId,
@@ -450,14 +456,14 @@ export type Outcome = { failure?: ChatReason; refused: boolean; asked: boolean }
  * What is kept of a message, and what the app is told. An answer with text is kept as a turn,
  * saying why it stopped short if it did. Without text, a question the model was asked stays in
  * the thread unanswered, as the app shows it, so that Bite sees it next time; one that never
- * reached the model, or was refused, is not kept, and a thread begun for it goes again.
+ * reached the model, or was refused, is not kept.
  */
 export function ending(
   { failure, refused, asked }: Outcome,
-  answer: { said: boolean; stopped: boolean; finish?: Finish; newThread: boolean },
+  answer: { said: boolean; stopped: boolean; finish?: Finish },
 ):
   | { keep: 'turn'; interrupted?: Interruption; reason?: ChatReason }
-  | { keep: 'question' | 'nothing'; reason: ChatReason; dropThread: boolean } {
+  | { keep: 'question' | 'nothing'; reason: ChatReason } {
   if (answer.said) {
     return { keep: 'turn', interrupted: interruption(), reason: failure };
   }
@@ -465,7 +471,7 @@ export function ending(
   // A question the model blocked is not kept either: sent again with every later message, it
   // would be blocked again, at a cost each time.
   const keep = asked && !refused && reason !== 'blocked' ? 'question' : 'nothing';
-  return { keep, reason, dropThread: keep === 'nothing' && answer.newThread };
+  return { keep, reason };
 
   function interruption(): Interruption | undefined {
     if (refused) return 'refused';
@@ -537,17 +543,19 @@ async function saveWithPhotos<Result extends { error: unknown }>(
   return saved;
 }
 
-/** Saves a question Bite gave no answer to. */
+/** Saves a question Bite gave no answer to, and says whether it did. */
 async function saveQuestion(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
   photos: CheckedPhoto[],
-) {
+): Promise<boolean> {
   const saved = await saveWithPhotos(context, threadId, photos, (images) =>
     context.admin.from('coach_messages').insert(question(threadId, request, images)),
   );
-  if (!saved || saved.error) logError('Could not save the question', saved?.error);
+  if (saved && !saved.error) return true;
+  logError('Could not save the question', saved?.error);
+  return false;
 }
 
 /**
