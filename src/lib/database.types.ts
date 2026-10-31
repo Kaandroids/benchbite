@@ -1788,6 +1788,7 @@ export type Database = {
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
+      coach_media_purge_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
       coach_media_purge_status: {
         Args: Record<PropertyKey, never>;
         Returns: {
