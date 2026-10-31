@@ -298,7 +298,7 @@ describe('TodayScreen', () => {
     await render(<TodayScreen />);
     expect(screen.getByText('Rest day · next tomorrow')).toBeTruthy();
     expect(screen.getByText('Legs')).toBeTruthy();
-    expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
   });
 
   it('opens the next workout from the rest day card, with its button or the whole card', async () => {
