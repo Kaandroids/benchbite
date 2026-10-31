@@ -349,6 +349,23 @@ describe('a food log change', () => {
     expect(screen.getByText('Rice now 100 g · Soup to Yesterday')).toBeOnTheScreen();
   });
 
+  it('names the day and the grams of an entry moved to another meal on another day', async () => {
+    const card: Card = {
+      kind: 'food_log',
+      id: 12,
+      changes: [
+        {
+          food: 'Pizza',
+          from: { day: TODAY, meal: 'lunch', grams: 300, kcal: 798 },
+          to: { day: YESTERDAY, meal: 'dinner', grams: 150, kcal: 399 },
+        },
+      ],
+    };
+    await render(<ProposalCard card={card} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Pizza to dinner, Yesterday, 150 g')).toBeOnTheScreen();
+  });
+
   it.each([
     ['BB035', 'This changed since — ask Bite again'],
     ['BB020', 'That day can no longer be changed'],

@@ -18,6 +18,7 @@ import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 import { canUndo, cardFailure, refusalOf } from './cards';
 import { CardRefusal as Refusal, DecidedLine } from './decided-line';
 import {
+  foodLogDays,
   type ProposalDecision,
   type ProposalState,
   type ProposalStatus,
@@ -319,8 +320,8 @@ function useLogDayName() {
 
 /** The one day all of a proposal's changes are on, from and to; null when they span more. */
 function dayOf(card: FoodLogProposal): string | null {
-  const days = new Set(card.changes.flatMap(({ from, to }) => [from.day, to?.day ?? from.day]));
-  return days.size === 1 ? [...days][0]! : null;
+  const days = foodLogDays(card);
+  return days.length === 1 ? days[0]! : null;
 }
 
 /**
@@ -420,14 +421,21 @@ function useFoodLogDetail() {
     card.changes
       .map(({ food, from, to }) => {
         if (!to) return t('bite.foodLog.summary.removed', { food });
-        if (to.meal !== from.meal) return t(`bite.foodLog.summary.moved.${to.meal}`, { food });
-        if (to.day !== from.day) {
-          return t('bite.foodLog.summary.movedDay', { food, day: dayName(to.day) });
-        }
-        return t('bite.foodLog.summary.resized', {
-          food,
-          grams: t('nutrition.grams', { count: format(to.grams) }),
-        });
+        const day = dayName(to.day);
+        // Where it went, naming the day too when that changed.
+        const moved =
+          to.meal !== from.meal
+            ? to.day !== from.day
+              ? t(`bite.foodLog.summary.movedOn.${to.meal}`, { food, day })
+              : t(`bite.foodLog.summary.moved.${to.meal}`, { food })
+            : to.day !== from.day
+              ? t('bite.foodLog.summary.movedDay', { food, day })
+              : undefined;
+        const grams = t('nutrition.grams', { count: format(to.grams) });
+        if (!moved) return t('bite.foodLog.summary.resized', { food, grams });
+        return to.grams !== from.grams
+          ? t('bite.foodLog.summary.withGrams', { change: moved, grams })
+          : moved;
       })
       .join(' · ');
 }

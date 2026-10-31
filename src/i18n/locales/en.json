@@ -1913,8 +1913,15 @@
           "dinner": "{{food}} to dinner",
           "snack": "{{food}} to snacks"
         },
+        "movedOn": {
+          "breakfast": "{{food}} to breakfast, {{day}}",
+          "lunch": "{{food}} to lunch, {{day}}",
+          "dinner": "{{food}} to dinner, {{day}}",
+          "snack": "{{food}} to snacks, {{day}}"
+        },
         "movedDay": "{{food}} to {{day}}",
-        "resized": "{{food}} now {{grams}}"
+        "resized": "{{food}} now {{grams}}",
+        "withGrams": "{{change}}, {{grams}}"
       }
     }
   }

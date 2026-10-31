@@ -1913,8 +1913,15 @@
           "dinner": "{{food}} akşam yemeğine",
           "snack": "{{food}} atıştırmalıklara"
         },
+        "movedOn": {
+          "breakfast": "{{food}} kahvaltıya, {{day}}",
+          "lunch": "{{food}} öğle yemeğine, {{day}}",
+          "dinner": "{{food}} akşam yemeğine, {{day}}",
+          "snack": "{{food}} atıştırmalıklara, {{day}}"
+        },
         "movedDay": "{{food}} {{day}} gününe",
-        "resized": "{{food}} artık {{grams}}"
+        "resized": "{{food}} artık {{grams}}",
+        "withGrams": "{{change}}, {{grams}}"
       }
     }
   }
