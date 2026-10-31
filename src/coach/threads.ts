@@ -120,14 +120,25 @@ export function messageText(content: Json): string {
 export function useThreadText() {
   const { t } = useTranslation();
   const photos = (count: number) => t('bite.photos.count', { count });
+  /** A thread's own name, or its photos' for one begun with photos alone; null for neither. */
+  const title = (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
+    thread.title ?? (thread.firstPhotos > 0 ? photos(thread.firstPhotos) : null);
   return {
+    title,
     name: (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
-      thread.title ??
-      (thread.firstPhotos > 0 ? photos(thread.firstPhotos) : t('bite.chats.untitled')),
+      title(thread) ?? t('bite.chats.untitled'),
     line: (thread: Pick<ThreadSummary, 'lastMessage' | 'lastPhotos'>) =>
       thread.lastMessage || (thread.lastPhotos > 0 ? photos(thread.lastPhotos) : null),
-    photos,
   };
+}
+
+/**
+ * How many photos the user's first message holds when it has no text, as `my_coach_threads()`
+ * counts them (`first_photos`), for a chat read with its messages: such a chat is called by them.
+ */
+export function firstPhotos(messages: ChatMessage[]): number {
+  const first = messages.find((message) => message.role === 'user');
+  return first && !first.text ? (first.photos?.length ?? 0) : 0;
 }
 
 /**

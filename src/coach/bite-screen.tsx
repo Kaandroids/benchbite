@@ -18,10 +18,10 @@ import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
-import { useThreadMessages, useThreadText } from './threads';
+import { firstPhotos, useThreadMessages, useThreadText } from './threads';
 import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
 import type { ContinueWith } from './continue-card';
-import { type ChatMessage, type Draft, useChat } from './use-chat';
+import { type Draft, useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
 /**
@@ -49,7 +49,12 @@ export function BiteScreen() {
     <Chat
       key={key}
       fromChats={fromChats}
-      title={saved.data.title ?? photosName(saved.data.messages, threadText.photos)}
+      title={
+        threadText.title({
+          title: saved.data.title,
+          firstPhotos: firstPhotos(saved.data.messages),
+        }) ?? undefined
+      }
       start={{ threadId: threadId!, messages: saved.data.messages }}
     />
   ) : (
@@ -78,15 +83,6 @@ type ChatProps = {
 };
 
 const EMPTY_DRAFT: Draft = { text: '', photos: [] };
-
-/**
- * The name of a chat begun with photos alone, which named nothing, by its photos, as the history
- * calls it; nothing for any other chat without a name.
- */
-function photosName(messages: ChatMessage[], photos: (count: number) => string) {
-  const first = messages.find((message) => message.role === 'user');
-  return first && !first.text && first.photos?.length ? photos(first.photos.length) : undefined;
-}
 
 function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
