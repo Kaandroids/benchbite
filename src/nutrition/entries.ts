@@ -178,11 +178,10 @@ export function useLogEstimate() {
       /** The estimate's items, at the grams the user gave. */
       items: EstimateItem[];
     }): Promise<LoggedEstimate> => {
-      const logItems = items.map(logItemOf);
       const { data, error } = await supabase.rpc('log_meal_estimate', {
         day,
         meal,
-        items: logItems,
+        items: items.map(logItemOf),
       });
       if (error) {
         throw error;
@@ -190,8 +189,9 @@ export function useLogEstimate() {
       return {
         day,
         entryIds: data.map((row) => row.entry_id),
+        // An item logged by its name gives the own food it was logged as; any other, none.
         foods: data.map((row, index) =>
-          'name' in logItems[index]!
+          row.custom_food_id !== null
             ? { kind: 'custom', id: row.custom_food_id }
             : items[index]!.food!.ref,
         ),
