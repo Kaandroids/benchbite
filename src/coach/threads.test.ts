@@ -95,6 +95,39 @@ describe('storedMessages', () => {
     expect(messages[0]?.proposals).toBeUndefined();
     expect(messages[1]).toMatchObject({ text: '', proposals: [proposal] });
   });
+
+  it('reads the meals Bite estimated back into its answer, leaving out what is no card', () => {
+    const mealCard = {
+      id: 51,
+      day: '2026-10-30',
+      meal: 'lunch',
+      items: [
+        {
+          name: 'Pizza',
+          searchName: 'Pizza',
+          grams: 150,
+          confidence: 0.9,
+          per100: { kcal: 266, proteinG: 11, carbsG: 33, fatG: 10 },
+          estimated: false,
+        },
+      ],
+    };
+    const messages = storedMessages([
+      row(1, 'user'),
+      {
+        ...row(2, 'bite'),
+        content: [
+          { type: 'toolResult', name: 'log_meal_card', result: { mealCard } },
+          { type: 'toolResult', name: 'log_meal_card', result: { error: 'Too many' } },
+          { type: 'toolResult', name: 'log_meal_card', result: { mealCard: { id: 'x' } } },
+          { type: 'text', text: 'A Margherita!' },
+        ],
+      },
+    ]);
+
+    expect(messages[0]?.mealCards).toBeUndefined();
+    expect(messages[1]).toMatchObject({ text: 'A Margherita!', mealCards: [mealCard] });
+  });
 });
 
 it('counts the photos of a chat begun with photos alone, as the history does', () => {

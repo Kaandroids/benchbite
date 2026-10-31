@@ -16,6 +16,7 @@ import { ChatComposer, type RefusedDraft } from './chat-composer';
 import { usePhotoUrls } from './chat-photos';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
+import { mealCardIds, useMealCardStates } from './meal-cards';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
@@ -92,6 +93,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
   const proposalsOnScreen = proposalIds(chat.messages);
   const proposals = useProposalStates(proposalsOnScreen);
+  // And where its meal cards stand.
+  const mealCardsOnScreen = mealCardIds(chat.messages);
+  const mealCards = useMealCardStates(mealCardsOnScreen);
   // The photos the chat kept, read back once for all of them when it opens. Only those it opened
   // with: its messages are read again after each one sent, whose photos show from their data, and
   // a new list would ask for every address again.
@@ -138,15 +142,23 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               onAsk={refusal ? undefined : following(chat.send)}
               continueWith={continueWith}
             />
-          ) : proposalsOnScreen.length > 0 && proposals.isPending ? (
-            // A saved chat's proposals show where they stand from the start, as a decided one
-            // folds into a line, rather than offering Apply a moment.
-            <LoadState queries={[proposals]} />
+          ) : (proposalsOnScreen.length > 0 && proposals.isPending) ||
+            (mealCardsOnScreen.length > 0 && mealCards.isPending) ? (
+            // A saved chat's cards show where they stand from the start, as a decided one folds
+            // into a line, rather than offering Apply or Add a moment.
+            <LoadState
+              queries={[
+                ...(proposalsOnScreen.length > 0 ? [proposals] : []),
+                ...(mealCardsOnScreen.length > 0 ? [mealCards] : []),
+              ]}
+            />
           ) : (
             <ChatMessages
               messages={chat.messages}
               proposals={proposals.data}
               loadingProposals={proposals.isFetching}
+              mealCards={mealCards.data}
+              loadingMealCards={mealCards.isFetching}
               photoUrls={photoUrls.data}
               status={chat.status}
               tool={chat.tool}

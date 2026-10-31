@@ -20,6 +20,8 @@ import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
+import { MealCardView } from './meal-card';
+import type { MealCardState } from './meal-cards';
 import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
@@ -45,13 +47,17 @@ type ChatMessagesProps = {
   proposals?: Map<number, ProposalState>;
   /** Whether where they stand is loading. */
   loadingProposals: boolean;
+  /** Where the meal cards stand, by id, once loaded. */
+  mealCards?: Map<number, MealCardState>;
+  /** Whether where they stand is loading. */
+  loadingMealCards: boolean;
   /** The addresses of the chat's kept photos, by path, once read. */
   photoUrls?: Map<string, string>;
 };
 
 /**
  * The conversation: the user's messages in bubbles, their photos above them, Bite's as text after
- * its face, with the changes it proposed under it. Bite's last message thinks while it waits, with
+ * its face, with the meals it estimated and the changes it proposed under it. Bite's last message thinks while it waits, with
  * what it is looking up or at, and talks while its text comes (boards 2, 3 and 8). A photo opens
  * large when tapped.
  */
@@ -62,13 +68,15 @@ export function ChatMessages({
   onAskAgain,
   proposals,
   loadingProposals,
+  mealCards,
+  loadingMealCards,
   photoUrls,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
   const [viewing, setViewing] = useState<string>();
   const moment = useMomentFormat();
-  // Bite thinks on under a change it proposed before a word.
-  const proposing = !!messages.at(-1)?.proposals?.length;
+  // Bite thinks on under a card it gave before a word.
+  const proposing = hasCards(messages.at(-1));
   // A conversation over more than one day shows when each day of it began (board 18).
   const first = messages[0]?.createdAt;
   const days =
@@ -97,6 +105,8 @@ export function ChatMessages({
               onAskAgain={onAskAgain}
               proposals={proposals}
               loadingProposals={loadingProposals}
+              mealCards={mealCards}
+              loadingMealCards={loadingMealCards}
               photoUrls={photoUrls}
               onOpenPhoto={setViewing}
             />
@@ -112,9 +122,21 @@ export function ChatMessages({
   );
 }
 
+/** Whether Bite gave cards with a message: changes it proposed, or meals it estimated. */
+function hasCards(message: ChatMessage | undefined): boolean {
+  return !!message?.proposals?.length || !!message?.mealCards?.length;
+}
+
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'proposals' | 'loadingProposals' | 'photoUrls'
+  | 'status'
+  | 'tool'
+  | 'onAskAgain'
+  | 'proposals'
+  | 'loadingProposals'
+  | 'mealCards'
+  | 'loadingMealCards'
+  | 'photoUrls'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -133,6 +155,8 @@ function MessageRow({
   onAskAgain,
   proposals,
   loadingProposals,
+  mealCards,
+  loadingMealCards,
   photoUrls,
   onOpenPhoto,
 }: MessageRowProps) {
@@ -147,18 +171,21 @@ function MessageRow({
       />
     );
   }
-  const proposed = !!message.proposals?.length;
-  if (last && status === 'thinking' && !message.text && !proposed) {
+  if (last && status === 'thinking' && !message.text && !hasCards(message)) {
     return <Thinking tool={tool} photos={before?.photos?.length ?? 0} />;
   }
-  // Only a message with proposals gets where they stand, so that the others render again only
-  // when they change, not when a proposal is decided.
+  // Only a message with cards gets where they stand, so that the others render again only when
+  // they change, not when a card is decided.
+  const proposed = !!message.proposals?.length;
+  const estimated = !!message.mealCards?.length;
   return (
     <BiteMessage
       message={message}
       talking={last && status !== 'idle'}
       proposals={proposed ? proposals : undefined}
       loadingProposals={proposed && loadingProposals}
+      mealCards={estimated ? mealCards : undefined}
+      loadingMealCards={estimated && loadingMealCards}
     />
   );
 }
@@ -227,7 +254,9 @@ const BiteMessage = memo(function BiteMessage({
   talking,
   proposals,
   loadingProposals,
-}: Pick<ChatMessagesProps, 'proposals' | 'loadingProposals'> & {
+  mealCards,
+  loadingMealCards,
+}: Pick<ChatMessagesProps, 'proposals' | 'loadingProposals' | 'mealCards' | 'loadingMealCards'> & {
   message: ChatMessage;
   talking: boolean;
 }) {
@@ -243,7 +272,7 @@ const BiteMessage = memo(function BiteMessage({
           <BiteAvatar size={AVATAR} expression={expression} />
         )}
         <View style={[styles.biteColumn, { gap: spacing.sm + 2 }]}>
-          {/* A proposal may come without a word. */}
+          {/* A card may come without a word. */}
           {message.text ? (
             <View
               style={[
@@ -259,6 +288,18 @@ const BiteMessage = memo(function BiteMessage({
               <Text>{message.text}</Text>
             </View>
           ) : null}
+          {message.mealCards?.map((card) => {
+            const state = mealCards?.get(card.id);
+            return (
+              <View key={`meal-${card.id}`} style={styles.proposal}>
+                <MealCardView
+                  card={card}
+                  state={state}
+                  waiting={state === undefined && loadingMealCards}
+                />
+              </View>
+            );
+          })}
           {message.proposals?.map((card) => {
             const state = proposals?.get(card.id);
             return (

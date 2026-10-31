@@ -47,6 +47,42 @@ function proposalsStand(status: string) {
   } as never);
 }
 
+/** Lets coach_meal_cards say where the meal cards stand: `status`, for each one asked for. */
+function mealCardsStand(status: string, kcal: number | null = null) {
+  jest.mocked(supabase.from).mockImplementation(
+    (table: string) =>
+      ({
+        select: () => ({
+          in: (_: string, ids: number[]) =>
+            Promise.resolve({
+              data: ids.map((id) =>
+                table === 'coach_meal_cards'
+                  ? { id, status, kcal }
+                  : { id, status: 'pending', expires_at: '2099-01-01T00:00:00Z' },
+              ),
+              error: null,
+            }),
+        }),
+      }) as never,
+  );
+}
+
+const MEAL_CARD = {
+  id: 51,
+  day: '2026-10-30',
+  meal: 'lunch' as const,
+  items: [
+    {
+      name: 'Pizza Margherita',
+      searchName: 'Pizza Margherita',
+      grams: 150,
+      confidence: 0.9,
+      per100: { kcal: 266, proteinG: 11, carbsG: 33, fatG: 10 },
+      estimated: false,
+    },
+  ],
+};
+
 /** A stream the test plays: events sent with `send`, ended with `end`. */
 function liveStream() {
   let onEvent: (event: ChatEvent) => void = () => {};
@@ -375,6 +411,46 @@ it('keeps an answer that is only a proposal, rather than offering to ask again',
   // Its card, to apply or keep.
   expect(screen.getByText('Daily targets')).toBeOnTheScreen();
   expect(await screen.findByRole('button', { name: 'Apply' })).toBeEnabled();
+});
+
+it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {
+  mealCardsStand('pending');
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'meal_card', mealCard: MEAL_CARD },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
+  expect(screen.getByText('Estimate · high confidence')).toBeOnTheScreen();
+  expect(await screen.findByRole('button', { name: 'Add to lunch' })).toBeEnabled();
+});
+
+it('opens a saved chat on its meal cards as they stand now', async () => {
+  liveStream();
+  mealCardsStand('logged', 399);
+  mockParams = { thread: '7' };
+  jest.mocked(useThreadMessages).mockReturnValue({
+    isFetchedAfterMount: true,
+    data: {
+      title: null,
+      messages: [
+        { id: 'stored-1', role: 'user', text: 'Had this for lunch' },
+        { id: 'stored-2', role: 'bite', text: 'A Margherita!', mealCards: [MEAL_CARD] },
+      ],
+    },
+  } as never);
+  await render(<BiteScreen />);
+
+  expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  expect(supabase.from).toHaveBeenCalledWith('coach_meal_cards');
+  mockParams = NEW_CHAT;
 });
 
 it('opens a saved chat on its proposals as they stand now', async () => {
