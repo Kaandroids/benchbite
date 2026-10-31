@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNumberFormat } from '@/i18n/units';
 import { minutesAndSeconds } from '@/lib/time';
 
-import type { Muscle, Workout, WorkoutTarget } from './workouts';
+import type { Muscle, WeekSession, Workout, WorkoutTarget } from './workouts';
 
 /**
  * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and
@@ -24,20 +24,35 @@ export function useWorkoutName() {
     name ?? (type ? t(`workout.sessionTypes.${type}`) : '');
 }
 
-/** A workout's size, such as "6 exercises · about 45 min". */
+/**
+ * A workout's size, such as "6 exercises · about 45 min", or "No exercises yet" for one whose empty
+ * alternative is in use (ADR 0064). One that left the plan keeps its size.
+ */
 export function useSessionSize() {
   const { t } = useTranslation();
-  return ({ exercises, estimatedMinutes }: Pick<Workout, 'exercises' | 'estimatedMinutes'>) =>
-    t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
+  return ({
+    exercises,
+    estimatedMinutes,
+    left,
+  }: Pick<Workout, 'exercises' | 'estimatedMinutes'> & Pick<WeekSession, 'left'>) =>
+    exercises.length === 0 && left === undefined
+      ? t('workout.noExercises')
+      : t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
 }
 
-/** The size of several workouts together, such as "2 workouts · about 70 min". */
+/**
+ * The size of several workouts together, such as "2 workouts · about 70 min". Every workout counts,
+ * but the time only of those with exercises: one without them (ADR 0064) holds only a warm-up no
+ * one trains, as in the reminders.
+ */
 export function useSessionsSize() {
   const { t } = useTranslation();
-  return (sessions: readonly Pick<Workout, 'estimatedMinutes'>[]) =>
+  return (sessions: readonly Pick<Workout, 'exercises' | 'estimatedMinutes'>[]) =>
     t('workout.sessions', {
       count: sessions.length,
-      minutes: sessions.reduce((sum, { estimatedMinutes }) => sum + estimatedMinutes, 0),
+      minutes: sessions
+        .filter(({ exercises }) => exercises.length > 0)
+        .reduce((sum, { estimatedMinutes }) => sum + estimatedMinutes, 0),
     });
 }
 

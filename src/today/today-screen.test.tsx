@@ -282,13 +282,23 @@ describe('TodayScreen', () => {
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
   });
 
+  it("says today's workout has no exercises yet, and opens it", async () => {
+    mockData({ plan: loaded<Plan | null>({ sessions: [session(3, 'pull')] }) });
+    await render(<TodayScreen />);
+    expect(screen.getByText('Pull')).toBeTruthy();
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
+    expect(screen.queryByText(/about 45 min/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: "Open today's workout" }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '3' } });
+  });
+
   it('shows the next workout on a rest day', async () => {
     jest.setSystemTime(THURSDAY);
     mockData();
     await render(<TodayScreen />);
     expect(screen.getByText('Rest day · next tomorrow')).toBeTruthy();
     expect(screen.getByText('Legs')).toBeTruthy();
-    expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
   });
 
   it('opens the next workout from the rest day card, with its button or the whole card', async () => {
@@ -315,6 +325,18 @@ describe('TodayScreen', () => {
     expect(screen.getByText('2 workouts · about 90 min')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Open the next workout' }));
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '6' } });
+  });
+
+  it('leaves the time of a next workout without exercises out of their size', async () => {
+    jest.setSystemTime(THURSDAY);
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(6, 'push', 4), { ...session(6, 'pull'), workoutId: 60 }],
+      }),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('Push, Pull')).toBeTruthy();
+    expect(screen.getByText('2 workouts · about 45 min')).toBeTruthy();
   });
 
   it("shows the next workout once today's is done", async () => {
@@ -469,12 +491,13 @@ describe('moving workouts', () => {
   });
   afterEach(() => jest.useRealTimers());
 
-  it('shows one missed workout with its day and size', async () => {
+  it('shows one missed workout with its day and size, none yet for Push', async () => {
     mockData();
     await render(<TodayScreen />);
     expect(screen.getByText('Missed on Monday')).toBeTruthy();
     expect(screen.getByText('Push')).toBeTruthy();
-    expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
+    // Push has no exercises, as when an empty alternative of it is in use.
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
   });
 
   it('groups several missed workouts in one card', async () => {
@@ -523,7 +546,7 @@ describe('moving workouts', () => {
     mockData();
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
-    expect(screen.getByText('Missed Monday · 0 exercises · about 45 min')).toBeTruthy();
+    expect(screen.getByText('Missed Monday · No exercises yet')).toBeTruthy();
     // Today and the days after it, but not Friday: Push is not on it, Legs is.
     expect(
       screen
@@ -552,7 +575,7 @@ describe('moving workouts', () => {
     mockData();
     await render(<TodayScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Catch up' }));
-    expect(screen.getByText('Missed Monday · 0 exercises · about 45 min')).toBeTruthy();
+    expect(screen.getByText('Missed Monday · No exercises yet')).toBeTruthy();
     mockData({ moves: loaded([{ workoutId: 1, fromOn: '2026-10-19', toOn: '2026-10-24' }]) });
     await screen.rerender(<TodayScreen />);
     expect(

@@ -12,6 +12,14 @@ import { startSession, type ExerciseBests, type LastSets } from './session';
 import { useStartMove } from './start-move';
 
 /**
+ * Whether a workout has exercises to start. One without them opens its screen instead, which says
+ * so and leads to Edit (ADR 0064).
+ */
+export function hasExercises(workout: Pick<Workout, 'exercises'>): boolean {
+  return workout.exercises.length > 0;
+}
+
+/**
  * Starts a workout, filled in from last time and with each exercise's records, and opens it.
  * Without a connection it starts from the targets instead, and notices no records. A workout not
  * planned today that has a missed or later day this week first asks whether it counts for that
@@ -25,6 +33,10 @@ export function useStartWorkout() {
   const askMove = useStartMove();
   return async (workout: Workout, { beforeStart }: { beforeStart?: () => void } = {}) => {
     if (!userId) {
+      return;
+    }
+    if (!hasExercises(workout)) {
+      router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
       return;
     }
     const choice = await askMove(workout, new Date());

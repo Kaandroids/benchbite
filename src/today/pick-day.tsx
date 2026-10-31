@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Radio } from '@/components/ui/radio';
 import { Text } from '@/components/ui/text';
 import {
   fromIsoDate,
@@ -98,13 +99,7 @@ export function PickDay({ schedule, session, fromOn, today, onDone }: PickDayPro
                   ? planned.map((workout) => workoutName(workout.session)).join(' · ')
                   : t('today.pickDay.rest')}
               </Text>
-              <View
-                style={[styles.radio, { borderColor: checked ? colors.primary : colors.border }]}
-              >
-                {checked ? (
-                  <View style={[styles.dot, { backgroundColor: colors.primaryButton }]} />
-                ) : null}
-              </View>
+              <Radio checked={checked} />
             </Pressable>
           );
         })}
@@ -133,18 +128,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
 });

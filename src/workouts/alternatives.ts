@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deviceToday } from '@/i18n/dates';
@@ -65,11 +66,12 @@ export function useAlternativeName() {
 }
 
 /** What failed when changing the alternatives. */
-export type AlternativeAction = 'switch' | 'add' | 'rename' | 'delete' | 'reorder';
+export type AlternativeAction = 'switch' | 'add' | 'duplicate' | 'rename' | 'delete' | 'reorder';
 
 /**
  * A short message for a refused change: the cap of alternatives (BB041), the one in use, which
- * cannot be deleted (BB042), one deleted elsewhere (P0002), or else that `action` failed.
+ * cannot be deleted (BB042), the last other one while the one in use is empty (BB043), one deleted
+ * elsewhere (P0002), or else that `action` failed.
  */
 export function useAlternativeError() {
   const { t } = useTranslation();
@@ -80,6 +82,7 @@ export function useAlternativeError() {
       [
         ['alternativeLimit', t('workout.alternatives.errors.limit', { max })],
         ['alternativeInUse', t('workout.alternatives.errors.inUse')],
+        ['alternativeLastOfEmpty', t('workout.alternatives.errors.lastOfEmpty')],
         ['notFound', t('workout.alternatives.errors.gone')],
       ],
       t(`workout.alternatives.errors.${action}`),
@@ -107,15 +110,90 @@ export function useSwitchAlternative() {
   });
 }
 
-/** Adds a copy of the one in use to a workout, unnamed, and returns its id. */
+type ChooseAlternativeOptions = {
+  /** The workout's alternatives, while they are loaded. */
+  alternatives: WorkoutAlternative[] | undefined;
+  /** Whether the workout is running, which a switch would change under it. */
+  running: boolean;
+  /** Called instead of a switch while the workout is running, to have it finished first. */
+  onRunning: () => void;
+};
+
+/**
+ * Choosing the alternative in use, for the chips, the sheet's rows and a new alternative once
+ * named alike. Mounted once on the workout's screen, so that all of them see the same switch:
+ * `chosenId` is the one being switched to until the workout has loaded with it, `isPending` holds
+ * every other choice and Start meanwhile, and `error` says why the last switch failed.
+ */
+export function useChooseAlternative({
+  alternatives,
+  running,
+  onRunning,
+}: ChooseAlternativeOptions) {
+  const switchAlternative = useSwitchAlternative();
+  const errorOf = useAlternativeError();
+  const [error, setError] = useState<string | null>(null);
+  const chosenId = switchAlternative.isPending
+    ? switchAlternative.variables
+    : alternatives?.find((alternative) => alternative.inUse)?.id;
+
+  /**
+   * Puts `id` in use, unless it already is or another switch runs; `onSuccess` once it is. Returns
+   * whether the switch started, and so whether either callback will run.
+   */
+  const choose = (
+    id: number,
+    callbacks: { onSuccess?: () => void; onError?: () => void } = {},
+  ): boolean => {
+    // Like an edit, a switch would change the exercises of the workout running.
+    if (running) {
+      onRunning();
+      return false;
+    }
+    if (switchAlternative.isPending || id === chosenId) return false;
+    setError(null);
+    switchAlternative.mutate(id, {
+      onSuccess: callbacks.onSuccess,
+      onError: (failure) => {
+        setError(errorOf(failure, 'switch'));
+        callbacks.onError?.();
+      },
+    });
+    return true;
+  };
+
+  return {
+    chosenId,
+    choose,
+    error,
+    /** Forgets why the last switch failed, as another change of the alternatives starts. */
+    clearError: () => setError(null),
+    isPending: switchAlternative.isPending,
+  };
+}
+
+export type AlternativeChoice = ReturnType<typeof useChooseAlternative>;
+
+/**
+ * What a new alternative starts with: no exercises, as Add makes it, or a copy of an alternative's
+ * exercises, sets and rests, as Duplicate makes it; of the one in use when `copyOf` is null, as
+ * for a workout without alternatives, whose own exercises have no row yet.
+ */
+export type NewAlternative = { empty: true } | { copyOf: number | null };
+
+/** Adds an unnamed alternative to a workout, last, and returns its id. */
 export function useAddAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      // No name or exercises: an unnamed copy of the one in use.
+    mutationFn: async (from: NewAlternative) => {
       const { data, error } = await supabase.rpc('add_workout_alternative', {
         workout_id: workoutId,
         today: deviceToday(),
+        ...('empty' in from
+          ? { exercises: [] }
+          : from.copyOf !== null
+            ? { source_alternative_id: from.copyOf }
+            : {}),
       });
       if (error) {
         throw error;
@@ -143,7 +221,10 @@ export function useRenameAlternative(workoutId: number) {
   });
 }
 
-/** Deletes an alternative not in use; the database refuses the one in use with BB042. */
+/**
+ * Deletes an alternative not in use; the database refuses the one in use with BB042, and the last
+ * other one while the one in use has no exercises with BB043.
+ */
 export function useDeleteAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({

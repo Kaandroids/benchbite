@@ -78,3 +78,17 @@ Deno.test('tells Bite the pace the targets really give, as the app dates the goa
   assertEquals(unknown.goal?.achievablePaceKg, undefined);
   assertEquals(snapshotText(unknown, 'en').includes('held up'), false);
 });
+
+Deno.test('tells Bite that a workout planned today has no exercises yet', async () => {
+  const snapshot = await loadSnapshot(
+    database(PROFILE, null, {
+      planned_workouts: [
+        { day: '2026-10-30', name: 'Legs', type: 'legs', workout_id: 1, exercise_count: 0 },
+        { day: '2026-10-30', name: null, type: 'full_body', workout_id: 2, exercise_count: 5 },
+      ],
+    }),
+    '2026-10-30',
+  );
+
+  assertEquals(snapshot.workouts, 'Legs (no exercises yet), full body planned, 0 done');
+});

@@ -3,6 +3,7 @@ import { renderHook } from '@/test/render';
 import {
   mainMuscles,
   useRestFormat,
+  useSessionSize,
   useTargetFormat,
   useWorkoutName,
   workoutLength,
@@ -40,6 +41,21 @@ describe('useTargetFormat', () => {
   ] as const)('writes %j as %s', async (target, text) => {
     const { result } = await renderHook(() => useTargetFormat());
     expect(result.current(3, target)).toBe(text);
+  });
+});
+
+describe('useSessionSize', () => {
+  it('gives the exercises and time, or says a workout has none yet', async () => {
+    const { result } = await renderHook(() => useSessionSize());
+    const one = [exercise(['chest'])];
+    expect(result.current({ exercises: one, estimatedMinutes: 20 })).toBe(
+      '1 exercise · about 20 min',
+    );
+    expect(result.current({ exercises: [], estimatedMinutes: 5 })).toBe('No exercises yet');
+    // One that left the plan keeps what its day kept.
+    expect(result.current({ exercises: [], estimatedMinutes: 0, left: 'deleted' })).toBe(
+      '0 exercises · about 0 min',
+    );
   });
 });
 

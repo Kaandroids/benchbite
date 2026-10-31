@@ -76,7 +76,8 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0058](0058-bite-proposes-the-user-applies.md)               | Bite proposes, the user applies                                                         | Accepted                      |
 | [0059](0059-estimating-a-meal-from-photos.md)                | Estimate a meal from photos in one request, with the values from the food library       | Accepted, amended by ADR-0062 |
 | [0060](0060-logging-an-estimated-meal.md)                    | Log an estimated meal in one step, saving foods the library lacks as the user's own     | Accepted                      |
-| [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
+| [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted, amended by ADR-0064 |
 | [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted, amended by ADR-0065 |
 | [0063](0063-purge-chat-photos-from-a-queue.md)               | Remove a deleted chat's photos from a queue, on a schedule                              | Accepted                      |
+| [0064](0064-empty-alternatives-and-copies.md)                | A new alternative starts empty; any alternative can be duplicated                       | Accepted                      |
 | [0065](0065-remove-metadata-segments-on-the-device.md)       | Remove a photo's metadata segments on the device                                        | Accepted                      |

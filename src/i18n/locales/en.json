@@ -688,6 +688,7 @@
   "workout": {
     "session_one": "{{count}} exercise · about {{minutes}} min",
     "session_other": "{{count}} exercises · about {{minutes}} min",
+    "noExercises": "No exercises yet",
     "sessions_one": "{{count}} workout · about {{minutes}} min",
     "sessions_other": "{{count}} workouts · about {{minutes}} min",
     "sessionTypes": {
@@ -779,6 +780,14 @@
       "resume": "Back to the workout"
     },
     "startWorkout": "Start workout",
+    "empty": {
+      "title": "{{name}} has no exercises yet",
+      "bodyOne": "Add the exercises for {{name}}. {{other}} stays as it is.",
+      "bodyOthers": "Add the exercises for {{name}}. The other alternatives stay as they are.",
+      "body": "Add the exercises for this workout to start it.",
+      "add": "Add exercises",
+      "startHint": "Add an exercise to start."
+    },
     "toArchive": "Move to archive",
     "fromArchive": "Bring back from the archive",
     "days": "Days",
@@ -787,28 +796,36 @@
       "errors": {
         "limit": "A workout can have up to {{max}} alternatives.",
         "inUse": "The one in use can't be deleted. Switch to another first.",
+        "lastOfEmpty": "The one in use has no exercises yet. Add some, or switch to this one first.",
         "gone": "This alternative no longer exists.",
         "switch": "We couldn't switch to it. Try again.",
         "add": "We couldn't add an alternative. Try again.",
+        "duplicate": "We couldn't duplicate it. Try again.",
         "rename": "We couldn't rename it. Try again.",
         "delete": "We couldn't delete it. Try again.",
         "reorder": "We couldn't save the order. Try again."
       },
       "loadError": "We couldn't load the alternatives.",
       "title": "Alternatives",
-      "body": "Other sets of exercises for this workout, such as for home. The one in use is the workout everywhere. Drag to change their order.",
-      "inUse_one": "In use · {{count}} exercise",
-      "inUse_other": "In use · {{count}} exercises",
+      "bodyEmpty": "Versions of this workout to switch between.",
+      "body": "Tap one to use it. Drag to change the order.",
+      "example": {
+        "gym": "Gym",
+        "gymExercises": "Barbell squat, leg press…",
+        "home": "Home",
+        "homeExercises": "Goblet squat, lunges…"
+      },
       "exercises_one": "{{count}} exercise",
       "exercises_other": "{{count}} exercises",
-      "rename": "Rename {{name}}",
-      "delete": "Delete {{name}}",
+      "more": "More for {{name}}",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
       "add": "Add alternative",
-      "addNote": "A new one starts as a copy of the one in use, to change in Edit.",
-      "full": "Up to {{max}} alternatives. Delete one to add another.",
+      "addNote": "Starts empty",
+      "full": "{{max}} of {{max}}. Delete one to add or duplicate another.",
       "deleteTitle": "Delete {{name}}?",
       "deleteMessage": "It is removed with its exercises. This cannot be undone.",
-      "deleteConfirm": "Delete",
       "cancel": "Cancel",
       "save": "Save",
       "nameTitle": "Name the alternative",
@@ -1625,7 +1642,8 @@
       "title": "Today: {{session}}",
       "body_one": "{{count}} exercise, about {{minutes}} min. You've got this!",
       "body_other": "{{count}} exercises, about {{minutes}} min. You've got this!",
-      "bodyMany": "{{count}} workouts, about {{minutes}} min in all. You've got this!"
+      "bodyMany": "{{count}} workouts, about {{minutes}} min in all. You've got this!",
+      "bodyEmpty": "No exercises yet. Add some before you start."
     }
   },
   "profile": {
