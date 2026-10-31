@@ -86,3 +86,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0068](0068-food-log-changes-are-proposals.md)                        | Changes to the food log are proposals, applied and undone only to entries as they were  | Accepted                                   |
 | [0069](0069-a-log-keeps-its-alternative.md)                           | A log keeps the alternative it was done with, as a copy made on insert                  | Accepted                                   |
 | [0070](0070-the-server-holds-bite-to-its-cards-and-its-last-round.md) | The server holds Bite to its cards and to its last round                                | Accepted                                   |
+| [0071](0071-bites-notebook.md)                                        | Bite keeps a notebook of the user, in its own table, read in every answer               | Accepted                                   |
