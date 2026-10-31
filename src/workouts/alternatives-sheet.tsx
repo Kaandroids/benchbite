@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+  type ViewInstance,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Button } from '@/components/ui/button';
@@ -119,8 +127,11 @@ type ManageProps = {
   onName: (alternative: Naming) => void;
 };
 
-/** The ⋯ menu open on an alternative, at its place in the list. */
-type Menu = { alternative: WorkoutAlternative; index: number };
+/** Where the ⋯ menu stands in the sheet: under its button or over it, at its right edge. */
+type MenuPlace = { top: number; right: number } | { bottom: number; right: number };
+
+/** The ⋯ menu open on an alternative, placed once its button is measured. */
+type Menu = { alternative: WorkoutAlternative; place: MenuPlace | null };
 
 /**
  * The workout's alternatives in order. Tapping one puts it in use; each has a menu to rename,
@@ -139,8 +150,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   const errorOf = useAlternativeError();
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
-  // Where the list starts in the sheet, to place a menu by its row.
-  const [listTop, setListTop] = useState(0);
+  // Fills the sheet as the menu does, to place the menu by its button in the window.
+  const origin = useRef<ViewInstance>(null);
 
   const loaded = alternatives.data !== undefined;
   const rows = alternatives.data ?? [];
@@ -215,6 +226,25 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
     );
   };
 
+  /**
+   * Opens the menu of an alternative by its ⋯ button: under the first row's, and over the others',
+   * so that it stays on the sheet.
+   */
+  const openMenu = (alternative: WorkoutAlternative, below: boolean, button: ViewInstance) => {
+    setMenu({ alternative, place: null });
+    origin.current?.measureInWindow((originX, originY, originWidth, originHeight) =>
+      button.measureInWindow((x, y, width, height) => {
+        const right = originX + originWidth - (x + width);
+        const place = below
+          ? { top: y + height - originY + spacing.xs, right }
+          : { bottom: originY + originHeight - y + spacing.xs, right };
+        setMenu((open) =>
+          open?.alternative.id === alternative.id ? { alternative, place } : open,
+        );
+      }),
+    );
+  };
+
   const row = (alternative: WorkoutAlternative, index: number) => {
     const name = nameOf(alternative);
     const chosen = isChosen(alternative);
@@ -242,15 +272,12 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             </Text>
           </View>
         </Pressable>
-        <RoundIconButton
-          icon="more"
-          color="textMuted"
+        <MoreButton
           background={
             menu?.alternative.id === alternative.id ? 'track' : chosen ? 'selected' : 'surface'
           }
-          size={40}
           label={t('workout.alternatives.more', { name })}
-          onPress={() => setMenu({ alternative, index })}
+          onPress={(button) => openMenu(alternative, index === 0, button)}
         />
       </View>
     );
@@ -306,93 +333,91 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
         </Text>
       </View>
       {loaded && rows.length === 0 ? <Example /> : null}
-      <View onLayout={(event) => setListTop(event.nativeEvent.layout.y)}>
-        <Card list style={[styles.list, { paddingHorizontal: 0 }]}>
-          {!loaded ? (
-            // Not the single row, which would read as a workout without alternatives.
-            <View
-              style={[
-                styles.row,
-                styles.single,
-                { height: ROW_HEIGHT, gap: spacing.sm, paddingHorizontal: spacing.md },
-              ]}
-            >
-              {alternatives.isError ? (
-                <>
-                  <Text
-                    variant="caption"
-                    color="danger"
-                    accessibilityRole="alert"
-                    style={styles.text}
-                  >
-                    {t('workout.alternatives.loadError')}
-                  </Text>
-                  <PillButton
-                    label={t('common.tryAgain')}
-                    onPress={() => void alternatives.refetch()}
-                  />
-                </>
-              ) : (
-                <ActivityIndicator
-                  color={colors.primary}
-                  accessibilityLabel={t('common.loading')}
+      <Card list style={[styles.list, { paddingHorizontal: 0 }]}>
+        {!loaded ? (
+          // Not the single row, which would read as a workout without alternatives.
+          <View
+            style={[
+              styles.row,
+              styles.single,
+              { height: ROW_HEIGHT, gap: spacing.sm, paddingHorizontal: spacing.md },
+            ]}
+          >
+            {alternatives.isError ? (
+              <>
+                <Text
+                  variant="caption"
+                  color="danger"
+                  accessibilityRole="alert"
                   style={styles.text}
+                >
+                  {t('workout.alternatives.loadError')}
+                </Text>
+                <PillButton
+                  label={t('common.tryAgain')}
+                  onPress={() => void alternatives.refetch()}
                 />
+              </>
+            ) : (
+              <ActivityIndicator
+                color={colors.primary}
+                accessibilityLabel={t('common.loading')}
+                style={styles.text}
+              />
+            )}
+          </View>
+        ) : rows.length > 0 ? (
+          // Gestures in a modal need a root of their own on Android; sized by the list, not flex.
+          <GestureHandlerRootView style={styles.gestureRoot}>
+            <ReorderList
+              items={rows}
+              keyOf={(alternative) => String(alternative.id)}
+              rowHeight={ROW_HEIGHT}
+              labelOf={nameOf}
+              onMove={onMove}
+              onDragChange={() => setMenu(null)}
+              rowStyle={tint}
+              renderItem={row}
+            />
+          </GestureHandlerRootView>
+        ) : (
+          <View style={tint(OWN)}>{row(OWN, 0)}</View>
+        )}
+        {loaded && !full ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('workout.alternatives.add')}
+            accessibilityHint={t('workout.alternatives.addNote')}
+            accessibilityState={{ disabled: busy }}
+            disabled={busy}
+            onPress={() => onAdd({ empty: true })}
+            style={({ pressed }) => [
+              styles.row,
+              listDivider(false, colors.border),
+              {
+                height: ROW_HEIGHT,
+                gap: spacing.md,
+                paddingHorizontal: spacing.md,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
+          >
+            <View style={[styles.addIcon, { borderRadius: radii.full }]}>
+              {add.isPending ? (
+                <ActivityIndicator color={colors.textMuted} />
+              ) : (
+                <Icon name="plus" size={20} color="textMuted" />
               )}
             </View>
-          ) : rows.length > 0 ? (
-            // Gestures in a modal need a root of their own on Android; sized by the list, not flex.
-            <GestureHandlerRootView style={styles.gestureRoot}>
-              <ReorderList
-                items={rows}
-                keyOf={(alternative) => String(alternative.id)}
-                rowHeight={ROW_HEIGHT}
-                labelOf={nameOf}
-                onMove={onMove}
-                onDragChange={() => setMenu(null)}
-                rowStyle={tint}
-                renderItem={row}
-              />
-            </GestureHandlerRootView>
-          ) : (
-            <View style={tint(OWN)}>{row(OWN, 0)}</View>
-          )}
-          {loaded && !full ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('workout.alternatives.add')}
-              accessibilityHint={t('workout.alternatives.addNote')}
-              accessibilityState={{ disabled: busy }}
-              disabled={busy}
-              onPress={() => onAdd({ empty: true })}
-              style={({ pressed }) => [
-                styles.row,
-                listDivider(false, colors.border),
-                {
-                  height: ROW_HEIGHT,
-                  gap: spacing.md,
-                  paddingHorizontal: spacing.md,
-                  opacity: pressed ? 0.6 : 1,
-                },
-              ]}
-            >
-              <View style={[styles.addIcon, { borderRadius: radii.full }]}>
-                {add.isPending ? (
-                  <ActivityIndicator color={colors.textMuted} />
-                ) : (
-                  <Icon name="plus" size={20} color="textMuted" />
-                )}
-              </View>
-              <View style={styles.text}>
-                <Text variant="bodyStrong">{t('workout.alternatives.add')}</Text>
-                <Text variant="caption" color="textMuted">
-                  {t('workout.alternatives.addNote')}
-                </Text>
-              </View>
-            </Pressable>
-          ) : null}
-        </Card>
-      </View>
+            <View style={styles.text}>
+              <Text variant="bodyStrong">{t('workout.alternatives.add')}</Text>
+              <Text variant="caption" color="textMuted">
+                {t('workout.alternatives.addNote')}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </Card>
       {loaded && full ? (
         <Text variant="caption" color="textMuted" align="center">
           {t('workout.alternatives.full', { max })}
@@ -403,18 +428,9 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
           {error ?? choice.error}
         </Text>
       ) : null}
+      <View ref={origin} collapsable={false} pointerEvents="none" style={StyleSheet.absoluteFill} />
       {menu ? (
-        <AlternativeMenu
-          actions={menuActions}
-          // Under the first row, and over the others, so that it stays on the sheet.
-          top={
-            menu.index === 0
-              ? listTop + ROW_HEIGHT - spacing.sm
-              : listTop + menu.index * ROW_HEIGHT + spacing.sm - menuHeight(menuActions)
-          }
-          right={spacing.xl + spacing.sm}
-          onClose={() => setMenu(null)}
-        />
+        <AlternativeMenu actions={menuActions} place={menu.place} onClose={() => setMenu(null)} />
       ) : null}
     </Sheet>
   );
@@ -469,23 +485,44 @@ type MenuAction = {
   danger?: boolean;
 };
 
-function menuHeight(actions: MenuAction[]) {
-  return actions.length * MENU_ITEM_HEIGHT + 2 * MENU_PADDING;
+/** A row's ⋯ button, which hands itself to `onPress` for the menu to be placed by it. */
+function MoreButton({
+  background,
+  label,
+  onPress,
+}: {
+  background: 'track' | 'selected' | 'surface';
+  label: string;
+  onPress: (button: ViewInstance) => void;
+}) {
+  const button = useRef<ViewInstance>(null);
+  return (
+    <View ref={button} collapsable={false}>
+      <RoundIconButton
+        icon="more"
+        color="textMuted"
+        background={background}
+        size={40}
+        label={label}
+        onPress={() => {
+          if (button.current) onPress(button.current);
+        }}
+      />
+    </View>
+  );
 }
 
 /**
- * A small menu over the sheet at `top` and `right`, which closes on a tap anywhere else in the
- * sheet or on an action, before the action runs.
+ * A small menu over the sheet at `place`, which closes on a tap anywhere else in the sheet or on an
+ * action, before the action runs. Unseen for the moment until it is placed.
  */
 function AlternativeMenu({
   actions,
-  top,
-  right,
+  place,
   onClose,
 }: {
   actions: MenuAction[];
-  top: number;
-  right: number;
+  place: MenuPlace | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -502,9 +539,8 @@ function AlternativeMenu({
         accessibilityRole="menu"
         style={[
           styles.menu,
+          place ?? styles.unplaced,
           {
-            top,
-            right,
             width: MENU_WIDTH,
             paddingVertical: MENU_PADDING,
             borderRadius: radii.md,
@@ -663,6 +699,9 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  unplaced: {
+    opacity: 0,
   },
   menu: {
     position: 'absolute',
