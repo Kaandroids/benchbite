@@ -23,7 +23,10 @@ type MealListProps = {
 };
 
 /** Each meal's colour and its background, for its icon and its +. */
-const MEAL_COLORS: Record<Meal, { color: keyof ColorTokens; background: keyof ColorTokens }> = {
+export const MEAL_COLORS: Record<
+  Meal,
+  { color: keyof ColorTokens; background: keyof ColorTokens }
+> = {
   breakfast: { color: 'breakfast', background: 'breakfastBackground' },
   lunch: { color: 'lunch', background: 'lunchBackground' },
   dinner: { color: 'dinner', background: 'dinnerBackground' },

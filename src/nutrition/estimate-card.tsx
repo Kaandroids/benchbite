@@ -25,9 +25,7 @@ type EstimateCardProps = {
  */
 export function EstimateCard({ meal, items, onOpen }: EstimateCardProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const { format } = useNumberFormat();
-  const totals = estimateTotals(items);
+  const { spacing } = useTheme();
 
   return (
     <Card style={{ gap: spacing.md }}>
@@ -40,65 +38,101 @@ export function EstimateCard({ meal, items, onOpen }: EstimateCardProps) {
         </Text>
       </View>
       <View>
-        {items.map((item, index) => {
-          const calories = format(Math.round(itemTotals(item).calories));
-          const grams = format(item.grams);
-          return (
-            <Pressable
-              // An item has no id; its place in the estimate stays while it shows.
-              key={index}
-              accessibilityRole="button"
-              accessibilityLabel={t(
-                item.estimated ? 'nutrition.photo.rowEstimated' : 'nutrition.photo.row',
-                { name: item.name, grams, calories },
-              )}
-              onPress={() => onOpen(index)}
-              style={({ pressed }) => [
-                styles.row,
-                {
-                  gap: spacing.sm,
-                  borderTopColor: colors.track,
-                  borderTopWidth: index === 0 ? 0 : 1,
-                  opacity: pressed ? 0.6 : 1,
-                },
-              ]}
-            >
-              <View style={[styles.name, { gap: 2 }]}>
-                <Text variant="bodyStrong">{item.name}</Text>
-                {item.estimated ? (
-                  <Tag label={t('nutrition.photo.estimated')} tone="warning" />
-                ) : null}
-              </View>
-              <View
-                style={{
-                  backgroundColor: colors.track,
-                  borderRadius: radii.sm,
-                  paddingHorizontal: spacing.sm,
-                  paddingVertical: spacing.xs,
-                }}
-              >
-                <Text variant="captionStrong">{t('nutrition.amount.inGrams', { grams })}</Text>
-              </View>
-              <Text variant="caption" color="textMuted" align="right" style={styles.calories}>
-                {calories} kcal
-              </Text>
-              <Icon name="forward" size={16} color="textMuted" />
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={[styles.totals, { gap: spacing.xs }]}>
-        <Total value={format(Math.round(totals.calories))} label="kcal" />
-        {MACROS.map(({ key, grams, color }) => (
-          <Total
-            key={key}
-            value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
-            label={t(`nutrition.macros.${key}`)}
-            color={color}
+        {items.map((item, index) => (
+          <EstimateItemRow
+            // An item has no id; its place in the estimate stays while it shows.
+            key={index}
+            item={item}
+            first={index === 0}
+            onPress={() => onOpen(index)}
           />
         ))}
       </View>
+      <EstimateTotals items={items} />
     </Card>
+  );
+}
+
+/**
+ * An item of an estimate, to tap to change its grams: its name, marked when the library did not
+ * have it, its grams and its calories.
+ */
+export function EstimateItemRow({
+  item,
+  first,
+  onPress,
+}: {
+  item: EstimateItem;
+  first: boolean;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const { format } = useNumberFormat();
+  const calories = format(Math.round(itemTotals(item).calories));
+  const grams = format(item.grams);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t(
+        item.estimated ? 'nutrition.photo.rowEstimated' : 'nutrition.photo.row',
+        {
+          name: item.name,
+          grams,
+          calories,
+        },
+      )}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          gap: spacing.sm,
+          borderTopColor: colors.track,
+          borderTopWidth: first ? 0 : 1,
+          opacity: pressed ? 0.6 : 1,
+        },
+      ]}
+    >
+      <View style={[styles.name, { gap: 2 }]}>
+        <Text variant="bodyStrong">{item.name}</Text>
+        {item.estimated ? <Tag label={t('nutrition.photo.estimated')} tone="warning" /> : null}
+      </View>
+      <View
+        style={{
+          backgroundColor: colors.track,
+          borderRadius: radii.sm,
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.xs,
+        }}
+      >
+        <Text variant="captionStrong">{t('nutrition.amount.inGrams', { grams })}</Text>
+      </View>
+      <Text variant="caption" color="textMuted" align="right" style={styles.calories}>
+        {calories} kcal
+      </Text>
+      <Icon name="forward" size={16} color="textMuted" />
+    </Pressable>
+  );
+}
+
+/** What the items add up to: the calories and each macro in its colour, a quarter each. */
+export function EstimateTotals({ items }: { items: EstimateItem[] }) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const { format } = useNumberFormat();
+  const totals = estimateTotals(items);
+  return (
+    <View style={[styles.totals, { gap: spacing.xs }]}>
+      <Total value={format(Math.round(totals.calories))} label="kcal" />
+      {MACROS.map(({ key, grams, color }) => (
+        <Total
+          key={key}
+          value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
+          label={t(`nutrition.macros.${key}`)}
+          color={color}
+        />
+      ))}
+    </View>
   );
 }
 
