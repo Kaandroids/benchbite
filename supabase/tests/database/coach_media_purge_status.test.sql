@@ -76,7 +76,7 @@ select results_eq(
 select pg_temp.answer(-3, null, 10);
 select results_eq(
   $$ select failed_statuses, latest_status, healthy from public.coach_media_purge_status() $$,
-  $$ values ('{0,401}'::integer[], null::integer, false) $$,
+  $$ values ('{0,401}'::integer[], 0, false) $$,
   'A timed out call fails, with 0 as its status'
 );
 

@@ -85,7 +85,8 @@ as $$
     join net._http_response r on r.id = p.request_id
   ),
   latest as (
-    select status_code, succeeded from answers order by created desc limit 1
+    select coalesce(status_code, 0) as status_code, succeeded
+    from answers order by created desc limit 1
   )
   select
     q.queued,
