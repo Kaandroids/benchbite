@@ -19,7 +19,6 @@ create table public.coach_meal_cards (
   -- The items as log_meal_estimate() takes them, in the card's order, at the grams Bite gave.
   items jsonb not null check (
     jsonb_typeof(items) = 'array'
-      and jsonb_array_length(items) between 1 and 12
       and octet_length(items::text) <= 16384
   ),
   status public.coach_meal_card_status not null default 'pending',

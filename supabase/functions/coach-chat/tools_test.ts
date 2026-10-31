@@ -1,6 +1,7 @@
 import { assertEquals } from '@std/assert';
 
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
+import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { type Food, food } from '../_shared/meal/test-foods.ts';
 import type { ToolContext } from './tools.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
@@ -326,7 +327,8 @@ function mealContext(
     }
     if (!MEALS.includes(args.meal as string)) return fail('22P02');
     const items = args.items as Record<string, unknown>[];
-    if (!Array.isArray(items) || items.length < 1 || items.length > 12) return fail('22023');
+    if (!Array.isArray(items) || items.length < 1 || items.length > MAX_ESTIMATE_ITEMS)
+      return fail('22023');
     for (const item of items) {
       const named = ['food_id', 'custom_food_id', 'recipe_id'].filter((key) => key in item);
       const values = ['name', 'kcal', 'protein_g', 'carbs_g', 'fat_g'].every(
