@@ -78,6 +78,30 @@ describe('streamChat', () => {
     expect(then).toHaveBeenCalled();
   });
 
+  it('says why coach-chat refused a message, and which photo', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: () => Promise.resolve({ error: 'photo_has_exif', photo: 1 }),
+    });
+
+    const sent = streamChat({ message: 'Hi', language: 'en', today: '2026-10-30' }, () => {});
+
+    await expect(sent).rejects.toMatchObject({ status: 422, refusal: 'photo_has_exif', photo: 1 });
+  });
+
+  it('fails with the status alone for an answer that is not JSON', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 413,
+      json: () => Promise.reject(new Error('not JSON')),
+    });
+
+    const sent = streamChat({ message: 'Hi', language: 'en', today: '2026-10-30' }, () => {});
+
+    await expect(sent).rejects.toMatchObject({ status: 413, refusal: undefined });
+  });
+
   it('tells the server nothing once the answer ended', async () => {
     const { end } = respond();
     const controller = new AbortController();
