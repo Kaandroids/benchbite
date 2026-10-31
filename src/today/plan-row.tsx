@@ -7,7 +7,7 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { fonts, useTheme, type ColorTokens } from '@/theme';
 
-type PlanRowProps = {
+export type PlanRowProps = {
   icon: IconName;
   /** The colour of the icons and the caption; the icon and the round button sit on `background`. */
   color: keyof ColorTokens;

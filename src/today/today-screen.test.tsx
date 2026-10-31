@@ -296,16 +296,43 @@ describe('TodayScreen', () => {
     jest.setSystemTime(THURSDAY);
     mockData();
     await render(<TodayScreen />);
-    expect(screen.getByText('Rest day')).toBeTruthy();
-    expect(screen.getByText('Next: tomorrow · Legs')).toBeTruthy();
+    expect(screen.getByText('Rest day · next tomorrow')).toBeTruthy();
+    expect(screen.getByText('Legs')).toBeTruthy();
+    expect(screen.getByText('0 exercises · about 45 min')).toBeTruthy();
+  });
+
+  it('opens the next workout from the rest day card, with its button or the whole card', async () => {
+    jest.setSystemTime(THURSDAY);
+    mockData();
+    await render(<TodayScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Open the next workout' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
+    jest.mocked(router.push).mockClear();
+    await fireEvent.press(screen.getByText('Rest day · next tomorrow'));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
+  });
+
+  it('names several next workouts with their size together, opening the first', async () => {
+    jest.setSystemTime(THURSDAY);
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(6, 'push', 4), { ...session(6, 'pull', 2), workoutId: 60 }],
+      }),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('Rest day · next on Saturday')).toBeTruthy();
+    expect(screen.getByText('Push, Pull')).toBeTruthy();
+    expect(screen.getByText('2 workouts · about 90 min')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Open the next workout' }));
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '6' } });
   });
 
   it("shows the next workout once today's is done", async () => {
     mockData({ finished: loaded(finishedOn('2026-10-19', '2026-10-21')) });
     await render(<TodayScreen />);
     expect(screen.queryByText("Today's workout")).toBeNull();
-    expect(screen.getByText('Done for today')).toBeTruthy();
-    expect(screen.getByText('Next: Friday · Legs')).toBeTruthy();
+    expect(screen.getByText('Done for today · next on Friday')).toBeTruthy();
+    expect(screen.getByText('Legs')).toBeTruthy();
   });
 
   it('names the same weekday when the only workout of the week is done', async () => {
@@ -314,7 +341,8 @@ describe('TodayScreen', () => {
       finished: loaded(finishedOn('2026-10-21')),
     });
     await render(<TodayScreen />);
-    expect(screen.getByText('Next: Wednesday · Pull')).toBeTruthy();
+    expect(screen.getByText('Done for today · next on Wednesday')).toBeTruthy();
+    expect(screen.getByText('Pull')).toBeTruthy();
   });
 
   it('shows a workout moved to today, and the moves on the week', async () => {
@@ -355,7 +383,7 @@ describe('TodayScreen', () => {
     jest.setSystemTime(THURSDAY);
     mockData({ plan: loaded<Plan | null>({ sessions: [session(1, 'push')] }) });
     await render(<TodayScreen />);
-    expect(screen.getByText('Next: Monday · Push')).toBeTruthy();
+    expect(screen.getByText('Rest day · next on Monday')).toBeTruthy();
   });
 
   it("shows today's meals against the daily targets", async () => {
@@ -378,7 +406,7 @@ describe('TodayScreen', () => {
     mockData({ plan: loaded<Plan | null>(null), targets: loaded<NutritionTargets | null>(null) });
     await render(<TodayScreen />);
     expect(screen.queryByText("Today's workout")).toBeNull();
-    expect(screen.queryByText('Rest day')).toBeNull();
+    expect(screen.queryByText(/^Rest day/)).toBeNull();
     expect(screen.queryByText('Your daily target')).toBeNull();
     expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
   });
@@ -477,7 +505,9 @@ describe('moving workouts', () => {
     mockData({ plan: loaded<Plan | null>({ sessions: [push, { ...push, weekday: 3 }] }) });
     await render(<TodayScreen />);
     expect(screen.getByText('2 missed workouts')).toBeTruthy();
-    expect(screen.getByText('Push')).toBeTruthy();
+    // The rest day card names Push too, as the next workout.
+    expect(screen.getAllByText('Push')).toHaveLength(2);
+    expect(screen.queryByText('Push, Push')).toBeNull();
   });
 
   it('names a day with several missed workouts once', async () => {
@@ -488,7 +518,8 @@ describe('moving workouts', () => {
     });
     await render(<TodayScreen />);
     expect(screen.getByText('2 missed workouts')).toBeTruthy();
-    expect(screen.getByText('Push, Legs')).toBeTruthy();
+    // The rest day card names them too, as the next workouts.
+    expect(screen.getAllByText('Push, Legs')).toHaveLength(2);
     expect(screen.getByText('Monday')).toBeTruthy();
   });
 

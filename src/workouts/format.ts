@@ -40,6 +40,16 @@ export function useSessionSize() {
       : t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
 }
 
+/** The size of several workouts together, such as "2 workouts · about 70 min". */
+export function useSessionsSize() {
+  const { t } = useTranslation();
+  return (sessions: readonly Pick<Workout, 'estimatedMinutes'>[]) =>
+    t('workout.sessions', {
+      count: sessions.length,
+      minutes: sessions.reduce((sum, { estimatedMinutes }) => sum + estimatedMinutes, 0),
+    });
+}
+
 /**
  * The sets and target of an exercise, such as "3 × 8–12 reps", "3 × 45 s" or "1 × 400 m · 2 min".
  */
