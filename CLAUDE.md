@@ -105,5 +105,5 @@ This repository is public.
 
 - Significant decisions are recorded as Architecture Decision Records in `docs/adr/`.
   Add a new ADR in the same pull request that introduces the decision.
-- Keep `README.md` and `docs/development.md` accurate: setup instructions must work on a fresh
-  machine.
+- Keep `docs/development.md` accurate: setup instructions must work on a fresh machine.
+- Keep `README.md` accurate.
