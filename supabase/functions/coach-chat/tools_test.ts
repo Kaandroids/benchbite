@@ -95,25 +95,18 @@ const LEGS = {
   ],
 };
 
+// Exercises by their own names, which are English, as the library has them.
 const NAMES = [
-  {
-    id: 'Barbell_Squat',
-    name: 'Barbell_Squat',
-    exercise_translations: [{ language: 'en', name: 'Back squat' }],
-  },
-  {
-    id: 'Leg_Press',
-    name: 'Leg_Press',
-    exercise_translations: [{ language: 'en', name: 'Leg press' }],
-  },
-  { id: 'Plank', name: 'Plank', exercise_translations: [{ language: 'en', name: 'Plank' }] },
+  { id: 'Barbell_Squat', name: 'Back squat', exercise_translations: [] },
+  { id: 'Leg_Press', name: 'Leg press', exercise_translations: [] },
+  { id: 'Plank', name: 'Plank', exercise_translations: [] },
 ];
 
 /** The user's plan and the library, and what `rpc` answers, with the calls made to it. */
 function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = {}) {
   const calls: { name: string; args: unknown }[] = [];
-  // Filters by equality, and, as PostgREST, fails the request ordered by a table it does not
-  // embed.
+  // Filters by equality, but not an embedded table's, whose rows here are in the language asked
+  // for, and, as PostgREST, fails the request ordered by a table it does not embed.
   const query = (rows: Record<string, unknown>[]) => {
     let columns = '';
     let error: unknown = null;
@@ -125,7 +118,7 @@ function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = 
     const builder: Record<string, unknown> = {
       select: (selected: string) => ((columns = selected), builder),
       eq: (column: string, value: unknown) => {
-        filters.push([column, value]);
+        if (!column.includes('.')) filters.push([column, value]);
         return builder;
       },
       in: () => builder,
@@ -150,76 +143,145 @@ function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = 
   return { context: { ...context, supabase } as unknown as ToolContext, calls };
 }
 
-/** The library as search_exercises reads it: names in English, a few translated, one archived. */
-function searchContext(language: 'en' | 'de') {
-  const exercises = [
-    { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise', archived_at: null },
-    { id: 'Barbell_Squat', name: 'Barbell Squat', archived_at: null },
-    { id: 'Old_Raise', name: 'Old Raise', archived_at: '2026-10-01' },
+type Row = Record<string, unknown>;
+
+/**
+ * Exercises as search_exercises reads them, with their translations: the library by English
+ * names, a few translated, and the user's own, one archived. Every query is filtered and cut to
+ * its limit when it is read, as PostgREST does.
+ */
+function searchContext(language: 'en' | 'de', more: Row[] = []) {
+  const library = (id: string, name: string, de?: string) => ({
+    id,
+    name,
+    owner_id: null,
+    archived_at: null,
+    exercise_translations: de ? [{ language: 'de', name: de }] : [],
+  });
+  const own = (id: string, name: string, archived_at: string | null = null) => ({
+    id,
+    name,
+    owner_id: 'user',
+    archived_at,
+    exercise_translations: [],
+  });
+  const exercises: Row[] = [
+    library('Side_Lateral_Raise', 'Side Lateral Raise', 'Seitheben'),
+    library('Barbell_Squat', 'Barbell Squat', 'Kniebeuge'),
+    ...more,
+    own('Landmine_Press', 'Landmine Press'),
+    own('Old_Raise', 'Old Raise', '2026-10-01'),
   ];
-  const translations = [
-    { exercise_id: 'Barbell_Squat', language: 'de', name: 'Kniebeuge' },
-    { exercise_id: 'Side_Lateral_Raise', language: 'de', name: 'Seitheben' },
-  ];
+  const tables: Record<string, Row[]> = {
+    exercises,
+    exercise_translations: exercises.flatMap((row) =>
+      (row.exercise_translations as Row[]).map((t) => ({ exercise_id: row.id, ...t })),
+    ),
+  };
   const query = (table: string) => {
-    let rows: Record<string, unknown>[] = table === 'exercises' ? exercises : translations;
-    let ids: string[] | undefined;
+    const filters: ((row: Row) => boolean)[] = [];
+    let embedded: string | undefined;
+    let limit = Infinity;
     const builder: Record<string, unknown> = {
       select: () => builder,
-      limit: () => builder,
       eq: (column: string, value: unknown) => {
-        rows = rows.filter((row) => row[column] === value);
+        if (column === 'exercise_translations.language') embedded = value as string;
+        else filters.push((row) => row[column] === value);
         return builder;
       },
       is: (column: string, value: unknown) => {
-        rows = rows.filter((row) => row[column] === value);
+        filters.push((row) => row[column] === value);
+        return builder;
+      },
+      not: (column: string) => {
+        filters.push((row) => row[column] !== null);
         return builder;
       },
       ilike: (column: string, pattern: string) => {
         const text = pattern.replaceAll('%', '').toLowerCase();
-        rows = rows.filter((row) => String(row[column]).toLowerCase().includes(text));
+        filters.push((row) => String(row[column]).toLowerCase().includes(text));
         return builder;
       },
-      in: (column: string, values: string[]) => {
-        if (column === 'id') ids = values;
+      in: (column: string, values: unknown[]) => {
+        filters.push((row) => values.includes(row[column]));
         return builder;
       },
-      then: (resolve: (value: unknown) => void) =>
-        resolve({
-          data: ids
-            ? exercises
-                .filter((row) => ids!.includes(row.id))
-                .map((row) => ({
+      limit: (count: number) => ((limit = count), builder),
+      then: (resolve: (value: unknown) => void) => {
+        const rows = tables[table]
+          .filter((row) => filters.every((keep) => keep(row)))
+          .slice(0, limit)
+          .map((row) =>
+            embedded === undefined
+              ? row
+              : {
                   ...row,
-                  exercise_translations: translations
-                    .filter((t) => t.exercise_id === row.id && t.language === language)
-                    .map(({ language, name }) => ({ language, name })),
-                }))
-            : rows,
-          error: null,
-        }),
+                  exercise_translations: (row.exercise_translations as Row[]).filter(
+                    (t) => t.language === embedded,
+                  ),
+                },
+          );
+        resolve({ data: rows, error: null });
+      },
     };
     return builder;
   };
   return { ...context, language, supabase: { from: query } } as unknown as ToolContext;
 }
 
+const search = (query: string, context: ToolContext) =>
+  runTool('search_exercises', { query }, context);
+
 Deno.test("finds exercises by their English name, named in the user's language", async () => {
-  assertEquals(await runTool('search_exercises', { query: 'lateral raise' }, searchContext('en')), [
+  assertEquals(await search('lateral raise', searchContext('en')), [
     { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise' },
   ]);
-  assertEquals(await runTool('search_exercises', { query: 'lateral raise' }, searchContext('de')), [
+  assertEquals(await search('lateral raise', searchContext('de')), [
     { id: 'Side_Lateral_Raise', name: 'Seitheben' },
+  ]);
+  assertEquals(await search('kniebeuge', searchContext('de')), [
+    { id: 'Barbell_Squat', name: 'Kniebeuge' },
   ]);
 });
 
-Deno.test("finds exercises by their name in the user's language, and none archived", async () => {
-  assertEquals(await runTool('search_exercises', { query: 'kniebeuge' }, searchContext('de')), [
-    { id: 'Barbell_Squat', name: 'Kniebeuge' },
-  ]);
-  assertEquals(await runTool('search_exercises', { query: 'raise' }, searchContext('en')), [
-    { id: 'Side_Lateral_Raise', name: 'Side Lateral Raise' },
-  ]);
+Deno.test(
+  "finds the user's own exercises first, among many of the library, none archived",
+  async () => {
+    const presses = Array.from({ length: 40 }, (_, i) => ({
+      id: `Press_${i}`,
+      name: `Machine Press ${i}`,
+      owner_id: null,
+      archived_at: null,
+      exercise_translations: [],
+    }));
+    const found = (await search('press', searchContext('en', presses))) as {
+      id: string;
+      name: string;
+    }[];
+
+    assertEquals(found.length, 10);
+    assertEquals(found[0], { id: 'Landmine_Press', name: 'Landmine Press' });
+    assertEquals(
+      ((await search('raise', searchContext('en'))) as { id: string }[]).map((e) => e.id),
+      ['Side_Lateral_Raise'],
+    );
+  },
+);
+
+Deno.test('ranks the exercise named as searched first, then names starting so', async () => {
+  const squats = ['Front Squat', 'Squat Jump', 'Squat'].map((name) => ({
+    id: name.replaceAll(' ', '_'),
+    name,
+    owner_id: null,
+    archived_at: null,
+    exercise_translations: [],
+  }));
+  const found = (await search('squat', searchContext('en', squats))) as { name: string }[];
+
+  assertEquals(
+    found.map((e) => e.name),
+    ['Squat', 'Squat Jump', 'Barbell Squat', 'Front Squat'],
+  );
 });
 
 Deno.test('reads the plan with its exercises and their targets', async () => {
