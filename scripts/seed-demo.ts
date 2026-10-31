@@ -9,14 +9,23 @@
 // onboarding is backdated as postgres.
 import { execFileSync } from 'node:child_process';
 
-const URL = 'http://127.0.0.1:54321';
-// The local stack's fixed development key, as in .env.example.
-const KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+import type { Database } from '../src/lib/database.types.ts';
+import type {
+  PlannedExercise,
+  Session,
+  SessionType,
+} from '../supabase/functions/_shared/plan/types.ts';
+import { KEY, URL, isLocal } from './lib/local-stack.ts';
+import { sqlString } from './lib/migration.ts';
+
+if (!isLocal) throw new Error(`The demo account is only made on a local stack, not ${URL}.`);
 const DB_CONTAINER = 'supabase_db_benchbite';
 
 const EMAIL = 'kaan.demo@benchbite.local';
 const PASSWORD = 'benchbite-demo';
 const HISTORY_DAYS = 44; // days before today; the plan starts then
+const START_WEIGHT = 100;
+const END_WEIGHT = 96.1; // today's, 3.9 kg down
 
 // A seeded generator, so that every run tells the same story.
 let state = 20261031;
@@ -63,11 +72,8 @@ function sql(query: string): string[][] {
     .map((line) => line.split('|'));
 }
 
-function literal(value: string | number | null): string {
-  if (value === null) return 'null';
-  if (typeof value === 'number') return String(value);
-  return `'${value.replaceAll("'", "''")}'`;
-}
+const literal = (value: string | number | null) =>
+  typeof value === 'number' ? String(value) : sqlString(value);
 
 let token = '';
 async function request<T = unknown>(method: string, path: string, body?: unknown, prefer?: string) {
@@ -92,7 +98,8 @@ const rpc = <T = unknown>(name: string, args: unknown) =>
 
 const TODAY = sql('select current_date')[0]![0]!;
 const START = addDays(TODAY, -HISTORY_DAYS);
-const LOGGABLE_FROM = addDays(TODAY, -8); // check_log_day: today and the week before
+// is_loggable_day() (20261031200100_food_log_proposals.sql): today and the week before.
+const LOGGABLE_FROM = addDays(TODAY, -8);
 const OVER_DAY = addDays(TODAY, -40); // ate over the target: the streak starts after it
 
 // ---------------------------------------------------------------------------------------------
@@ -109,7 +116,11 @@ const uid = signUp.user.id;
 sql(`insert into public.ai_budgets (user_id, monthly_limit_usd) values ('${uid}', 4)`);
 console.log(`Signed up ${EMAIL}; today ${TODAY}, the plan starts ${START}.`);
 
-/** SQL as the demo user in one transaction, as PostgREST runs a request. */
+/**
+ * SQL as the demo user in one transaction, as PostgREST runs a request. `disableDayChecks` turns
+ * off, inside it only, the check_log_day() triggers of meal_entries
+ * (20261027160000_create_meal_entries.sql) and water_days (20261027210000_water.sql).
+ */
 function asUser(body: string, disableDayChecks = false): string[][] {
   const triggers = (action: string) =>
     disableDayChecks
@@ -129,19 +140,6 @@ ${triggers('enable')}commit;
 // ---------------------------------------------------------------------------------------------
 // 2. The onboarding as the app does it, then backdated to START.
 
-type PlanExercise = {
-  exerciseId: string;
-  slot: string;
-  sets: number;
-  target: { reps?: { min: number; max: number }; seconds?: number };
-};
-type Session = {
-  type: 'upper' | 'lower';
-  weekdays: number[];
-  estimatedMinutes: number;
-  exercises: PlanExercise[];
-};
-
 const answers = {
   displayName: 'Kaan',
   goal: 'lose_fat',
@@ -149,7 +147,7 @@ const answers = {
   sex: 'male',
   birthYear: 1996,
   heightCm: 192,
-  weightKg: 100,
+  weightKg: START_WEIGHT,
   targetWeightKg: 90,
   weeklyPaceKg: 0.5,
   activityLevel: 'sedentary',
@@ -193,23 +191,22 @@ commit;`);
 // The app keeps the planned days on opening; this keeps every day from START to yesterday.
 await rpc('keep_planned_days', { today: TODAY });
 
-const workouts = new Map(
-  sql(`select id, type, weekdays from public.workouts where user_id = '${uid}'`).map(
-    ([id, type, weekdays]) => [
-      type as Session['type'],
-      { id: Number(id), weekdays: weekdays!.slice(1, -1).split(',').map(Number) },
-    ],
-  ),
+const workoutIds = new Map(
+  sql(`select type, id from public.workouts where user_id = '${uid}'`).map(([type, id]) => [
+    type as SessionType,
+    Number(id),
+  ]),
 );
 const sessions = new Map(plan.sessions.map((session) => [session.type, session]));
 
 // ---------------------------------------------------------------------------------------------
 // 3. The schedule: one Friday skipped and later frozen, two workouts moved within their week.
 
-const planned = new Map<string, Session['type']>();
-for (let day = START; day < TODAY; day = addDays(day, 1)) {
-  for (const [type, workout] of workouts) {
-    if (workout.weekdays.includes(isoWeekday(day))) planned.set(day, type);
+// Today included: on a training day, today's workout is done in the morning.
+const planned = new Map<string, SessionType>();
+for (let day = START; day <= TODAY; day = addDays(day, 1)) {
+  for (const session of plan.sessions) {
+    if (session.weekdays.includes(isoWeekday(day))) planned.set(day, session.type);
   }
 }
 const plannedDays = [...planned.keys()].sort();
@@ -247,10 +244,11 @@ const progress = new Map<string, { weight: number; reps: number }>();
 
 type LoggedSet = { weightKg?: number; reps?: number; seconds?: number; meters?: number };
 
-function setsFor(exercise: PlanExercise, session: number): LoggedSet[] {
+function setsFor(exercise: PlannedExercise, session: number): LoggedSet[] {
   const id = exercise.exerciseId;
-  const { reps, seconds } = exercise.target;
-  if (reps) {
+  const { target } = exercise;
+  if ('reps' in target) {
+    const { reps } = target;
     const [startWeight, step] = START_WEIGHTS[id] ?? [20, 2.5];
     const now = progress.get(id) ?? { weight: startWeight, reps: reps.min + 1 };
     progress.set(id, now);
@@ -277,27 +275,32 @@ function setsFor(exercise: PlanExercise, session: number): LoggedSet[] {
     id === 'Rowing_Stationary'
       ? 2050 + 15 * session + randint(-40, 40)
       : 4300 + 40 * session + randint(-100, 100);
-  return [{ seconds: seconds ?? 600, meters }];
+  return [{ seconds: 'seconds' in target ? target.seconds : 600, meters }];
 }
 
-const sessionCount = { upper: 0, lower: 0 };
+const sessionCount: Partial<Record<SessionType, number>> = {};
 
-async function logWorkout(type: Session['type'], plannedOn: string, doneOn: string) {
-  const session = sessions.get(type)!;
-  const n = sessionCount[type]++;
+async function logWorkout(type: SessionType, plannedOn: string, doneOn: string) {
+  const session: Session = sessions.get(type)!;
+  const n = sessionCount[type] ?? 0;
+  sessionCount[type] = n + 1;
   const exercises = session.exercises.map((exercise) => ({
     exerciseId: exercise.exerciseId,
     // Now and then the conditioning at the end is left out when time runs short.
     sets: exercise.slot === 'conditioning' && random() < 0.15 ? [] : setsFor(exercise, n),
   }));
-  const hour = isoWeekday(doneOn) >= 6 ? 9 : 16;
+  // After work on weekdays, in the morning at weekends and today, as it has to be over by now.
+  const hour = doneOn === TODAY ? 6 : isoWeekday(doneOn) >= 6 ? 9 : 16;
   const startedAt = new Date(`${doneOn}T${String(hour).padStart(2, '0')}:00:00Z`);
   startedAt.setUTCMinutes(randint(5, 50));
   const minutes = session.estimatedMinutes + randint(-6, 7);
+  if (startedAt.getTime() + minutes * 60_000 > Date.now()) {
+    throw new Error("Today's workout would end in the future; run the seed later in the day.");
+  }
   await rpc('log_workout', {
     log: {
       clientId: crypto.randomUUID(),
-      workoutId: workouts.get(type)!.id,
+      workoutId: workoutIds.get(type)!,
       plannedExercises: session.exercises.length,
       plannedSets: session.exercises.reduce((sum, exercise) => sum + exercise.sets, 0),
       startedAt: startedAt.toISOString(),
@@ -312,16 +315,112 @@ async function logWorkout(type: Session['type'], plannedOn: string, doneOn: stri
 // ---------------------------------------------------------------------------------------------
 // 5. Meals from the food library, found with search_foods as the app does.
 
-type Food = {
-  food_id: string;
-  name: string;
-  kcal: number;
-  protein_g: number;
-  portion_unit: string;
+type Food = Database['public']['Functions']['search_foods']['Returns'][number] & {
   portions: Record<string, number>;
 };
+/** A food of a meal: a number of its portions (one by default), or grams. */
+type Portion = { name: string; count?: number; unit?: string; grams?: number };
 type Item = { name: string; grams: number; unit: string | null; count: number | null };
 type Meals = Partial<Record<'breakfast' | 'lunch' | 'dinner' | 'snack', Item[]>>;
+
+const BREAKFASTS: Portion[][] = [
+  [
+    { name: 'Oat flakes', grams: 70 },
+    { name: 'Milk, 1.5% fat', unit: 'cup' },
+    { name: 'Banana' },
+    { name: 'Skyr' },
+  ],
+  [
+    { name: 'Scrambled eggs' },
+    { name: 'Wholemeal bread', count: 2 },
+    { name: 'Cooked ham', count: 3 },
+    { name: 'Coffee with milk' },
+  ],
+  [{ name: 'Low-fat quark' }, { name: 'Granola' }, { name: 'Blueberries' }],
+  [
+    { name: 'Porridge with milk' },
+    { name: 'Skyr' },
+    { name: 'Raspberries' },
+    { name: 'Coffee, black' },
+  ],
+  [
+    { name: 'Wholemeal roll', count: 2 },
+    { name: 'Cream cheese' },
+    { name: 'Turkey breast cold cuts', count: 4 },
+    { name: 'Egg, boiled', count: 2 },
+    { name: 'Cappuccino' },
+  ],
+];
+const LUNCHES: Portion[][] = [
+  [
+    { name: 'Chicken breast, grilled' },
+    { name: 'Brown rice, boiled' },
+    { name: 'Broccoli, boiled' },
+  ],
+  [{ name: 'Chicken wrap' }, { name: 'Mixed salad, no dressing' }],
+  [{ name: 'Tuna in water, canned' }, { name: 'Pasta, boiled' }, { name: 'Tomato sauce' }],
+  [{ name: 'Turkey breast, fried' }, { name: 'Potatoes, boiled' }, { name: 'Green beans, boiled' }],
+  [{ name: 'Chili con carne' }, { name: 'Bread roll' }],
+  [{ name: 'Chicken döner kebab' }, { name: 'Ayran' }],
+  [{ name: 'Red lentil soup' }, { name: 'Chicken breast, grilled' }, { name: 'Bulgur pilaf' }],
+];
+const DINNERS: Portion[][] = [
+  [
+    { name: 'Salmon, fried' },
+    { name: 'Sweet potato, boiled' },
+    { name: 'Mixed salad with vinaigrette' },
+  ],
+  [
+    { name: 'Lean beef mince, fried', grams: 150 },
+    { name: 'Wholemeal pasta, boiled' },
+    { name: 'Tomato sauce' },
+  ],
+  [
+    { name: 'Chicken breast, fried' },
+    { name: 'White rice, boiled' },
+    { name: 'Mixed vegetables, boiled' },
+  ],
+  [{ name: 'Beef steak, fried' }, { name: 'Jacket potato, baked' }, { name: 'Greek salad' }],
+  [
+    { name: 'Omelette' },
+    { name: 'Wholemeal bread', count: 2 },
+    { name: 'Tomato' },
+    { name: 'Cottage cheese', grams: 100 },
+  ],
+  [{ name: 'Gyros' }, { name: 'Rice pilaf' }, { name: 'Cucumber salad with yoghurt' }],
+  [{ name: 'Turkey schnitzel, breaded' }, { name: 'Mashed potatoes' }, { name: 'Peas, boiled' }],
+];
+const WEEKEND_DINNERS: Portion[][] = [
+  [{ name: 'Pizza margherita' }],
+  [{ name: 'Cheeseburger' }, { name: 'French fries' }, { name: 'Cola light' }],
+  [{ name: 'Salmon sushi', count: 10 }, { name: 'Soy sauce' }],
+];
+const SNACKS: Portion[][] = [
+  [{ name: 'Skyr' }],
+  [{ name: 'Apple' }],
+  [{ name: 'Banana' }],
+  [{ name: 'Almonds' }],
+  [{ name: 'Cottage cheese' }],
+  [{ name: 'Rice cakes', count: 3 }, { name: 'Peanut butter' }],
+  [{ name: 'Latte macchiato' }],
+  [{ name: 'Kefir, 3.5% fat' }],
+  [{ name: 'Muesli bar' }],
+  [{ name: 'Dark chocolate', grams: 20 }],
+  [{ name: 'Low-fat quark', grams: 200 }, { name: 'Strawberries' }],
+];
+const PROTEIN_SNACKS = [0, 4, 7, 10];
+const OVER_DINNER: Portion[] = [
+  { name: 'Pizza salami' },
+  { name: 'Beer, pilsner', count: 2 },
+  { name: 'Chocolate ice cream' },
+];
+const OVER_SNACK: Portion = { name: 'Crisps' };
+// Breakfast, lunch and a coffee: today's ring is a bit over half full.
+const TODAY_MEALS = {
+  breakfast: BREAKFASTS[0]!,
+  lunch: LUNCHES[0]!,
+  snack: [{ name: 'Latte macchiato' }],
+};
 
 const foods = new Map<string, Food>();
 async function loadFood(name: string): Promise<void> {
@@ -338,26 +437,27 @@ async function loadFood(name: string): Promise<void> {
 }
 const food = (name: string) => foods.get(name)!;
 
-// Names of the foods the meals use, collected by building every meal once before they are loaded.
-let wanted: Set<string> | null = null;
-
-function item(name: string, count?: number, unit?: string): Item {
-  if (wanted) {
-    wanted.add(name);
-    return { name, grams: 0, unit: null, count: null };
-  }
-  const f = food(name);
-  const portionUnit = unit ?? f.portion_unit;
-  return {
-    name,
-    grams: f.portions[portionUnit]! * (count ?? 1),
-    unit: portionUnit,
-    count: count ?? 1,
-  };
+// Every food the meals use is looked up once, before any meal is built.
+for (const portion of [
+  ...[BREAKFASTS, LUNCHES, DINNERS, WEEKEND_DINNERS, SNACKS].flat(2),
+  ...OVER_DINNER,
+  OVER_SNACK,
+]) {
+  await loadFood(portion.name);
 }
-function grams(name: string, amount: number): Item {
-  wanted?.add(name);
-  return { name, grams: amount, unit: null, count: null };
+
+/** The items of a meal, new each time, as planDay() changes their grams. */
+function items(portions: Portion[]): Item[] {
+  return portions.map(({ name, count, unit, grams }) => {
+    if (grams !== undefined) return { name, grams, unit: null, count: null };
+    const portionUnit = unit ?? food(name).portion_unit;
+    return {
+      name,
+      grams: food(name).portions[portionUnit]! * (count ?? 1),
+      unit: portionUnit,
+      count: count ?? 1,
+    };
+  });
 }
 const kcal = (it: Item) => (it.grams * Number(food(it.name).kcal)) / 100;
 const protein = (it: Item) => (it.grams * Number(food(it.name).protein_g)) / 100;
@@ -366,97 +466,22 @@ const total = (meals: Meals, value: (it: Item) => number) =>
     .flat()
     .reduce((sum, it) => sum + value(it), 0);
 
-const BREAKFASTS = [
-  () => [grams('Oat flakes', 70), item('Milk, 1.5% fat', 1, 'cup'), item('Banana'), item('Skyr')],
-  () => [
-    item('Scrambled eggs'),
-    item('Wholemeal bread', 2),
-    item('Cooked ham', 3),
-    item('Coffee with milk'),
-  ],
-  () => [item('Low-fat quark'), item('Granola'), item('Blueberries')],
-  () => [item('Porridge with milk'), item('Skyr'), item('Raspberries'), item('Coffee, black')],
-  () => [
-    item('Wholemeal roll', 2),
-    item('Cream cheese'),
-    item('Turkey breast cold cuts', 4),
-    item('Egg, boiled', 2),
-    item('Cappuccino'),
-  ],
-];
-const LUNCHES = [
-  () => [item('Chicken breast, grilled'), item('Brown rice, boiled'), item('Broccoli, boiled')],
-  () => [item('Chicken wrap'), item('Mixed salad, no dressing')],
-  () => [item('Tuna in water, canned'), item('Pasta, boiled'), item('Tomato sauce')],
-  () => [item('Turkey breast, fried'), item('Potatoes, boiled'), item('Green beans, boiled')],
-  () => [item('Chili con carne'), item('Bread roll')],
-  () => [item('Chicken döner kebab'), item('Ayran')],
-  () => [item('Red lentil soup'), item('Chicken breast, grilled'), item('Bulgur pilaf')],
-];
-const DINNERS = [
-  () => [item('Salmon, fried'), item('Sweet potato, boiled'), item('Mixed salad with vinaigrette')],
-  () => [
-    grams('Lean beef mince, fried', 150),
-    item('Wholemeal pasta, boiled'),
-    item('Tomato sauce'),
-  ],
-  () => [
-    item('Chicken breast, fried'),
-    item('White rice, boiled'),
-    item('Mixed vegetables, boiled'),
-  ],
-  () => [item('Beef steak, fried'), item('Jacket potato, baked'), item('Greek salad')],
-  () => [
-    item('Omelette'),
-    item('Wholemeal bread', 2),
-    item('Tomato'),
-    grams('Cottage cheese', 100),
-  ],
-  () => [item('Gyros'), item('Rice pilaf'), item('Cucumber salad with yoghurt')],
-  () => [item('Turkey schnitzel, breaded'), item('Mashed potatoes'), item('Peas, boiled')],
-];
-const WEEKEND_DINNERS = [
-  () => [item('Pizza margherita')],
-  () => [item('Cheeseburger'), item('French fries'), item('Cola light')],
-  () => [item('Salmon sushi', 10), item('Soy sauce')],
-];
-const SNACKS = [
-  () => [item('Skyr')],
-  () => [item('Apple')],
-  () => [item('Banana')],
-  () => [item('Almonds')],
-  () => [item('Cottage cheese')],
-  () => [item('Rice cakes', 3), item('Peanut butter')],
-  () => [item('Latte macchiato')],
-  () => [item('Kefir, 3.5% fat')],
-  () => [item('Muesli bar')],
-  () => [grams('Dark chocolate', 20)],
-  () => [grams('Low-fat quark', 200), item('Strawberries')],
-];
-const PROTEIN_SNACKS = [0, 4, 7, 10];
-const OVER_DINNER = () => [
-  item('Pizza salami'),
-  item('Beer, pilsner', 2),
-  item('Chocolate ice cream'),
-];
-const TODAY_MEALS = (): Meals => ({
-  breakfast: BREAKFASTS[0]!(),
-  lunch: LUNCHES[0]!(),
-  snack: [item('Latte macchiato')],
-});
-
 /** Meals for a day, a little under the calorie target unless it is the day over it. */
 function planDay(targetKcal: number, targetProtein: number, day: string, over: boolean): Meals {
   const weekend = isoWeekday(day) >= 6;
   for (let attempt = 0; attempt < 200; attempt++) {
     const meals: Meals = {
-      breakfast: choice(BREAKFASTS)(),
-      lunch: choice(LUNCHES)(),
-      dinner: choice(weekend && random() < 0.6 ? WEEKEND_DINNERS : DINNERS)(),
+      breakfast: items(choice(BREAKFASTS)),
+      lunch: items(choice(LUNCHES)),
+      dinner: items(choice(weekend && random() < 0.6 ? WEEKEND_DINNERS : DINNERS)),
       snack: [],
     };
     if (over)
-      return { ...meals, dinner: OVER_DINNER(), snack: [...choice(SNACKS)(), item('Crisps')] };
+      return {
+        ...meals,
+        dinner: items(OVER_DINNER),
+        snack: items([...choice(SNACKS), OVER_SNACK]),
+      };
     // Snacks until the day is near its goal, protein first when it lags.
     const goal = targetKcal * uniform(0.86, 0.97);
     let order = shuffle(SNACKS.map((_, i) => i));
@@ -464,7 +489,7 @@ function planDay(targetKcal: number, targetProtein: number, day: string, over: b
       order = [...PROTEIN_SNACKS, ...order.filter((i) => !PROTEIN_SNACKS.includes(i))];
     }
     for (const i of order) {
-      const extra = SNACKS[i]!();
+      const extra = items(SNACKS[i]!);
       if (total(meals, kcal) + extra.reduce((sum, it) => sum + kcal(it), 0) <= goal) {
         meals.snack!.push(...extra);
       }
@@ -497,28 +522,20 @@ function waterAmounts(): number[] {
   return amounts;
 }
 
-// The foods are looked up once, before the meals are built from them.
-wanted = new Set(['Crisps']);
-for (const meals of [BREAKFASTS, LUNCHES, DINNERS, WEEKEND_DINNERS, SNACKS, [OVER_DINNER]]) {
-  for (const meal of meals) meal();
-}
-const names = wanted;
-wanted = null;
-for (const name of names) await loadFood(name);
-
 // ---------------------------------------------------------------------------------------------
-// 6. Weights every 2 to 4 days, from 100 kg down to 96.1 kg today.
+// 6. Weights every 2 to 4 days, from START_WEIGHT down to END_WEIGHT today.
 
-const weights = new Map<string, number>([[START, 100]]);
+const weights = new Map<string, number>([[START, START_WEIGHT]]);
 for (
   let day = addDays(START, choice([2, 3, 3, 4]));
   day <= TODAY;
   day = addDays(day, choice([2, 3, 3, 4]))
 ) {
-  const trend = 100 - 3.9 * (daysBetween(START, day) / HISTORY_DAYS) ** 0.8;
+  const trend =
+    START_WEIGHT - (START_WEIGHT - END_WEIGHT) * (daysBetween(START, day) / HISTORY_DAYS) ** 0.8;
   weights.set(day, Math.round((trend + gauss(0.25)) * 10) / 10);
 }
-weights.set(TODAY, 96.1);
+weights.set(TODAY, END_WEIGHT);
 
 // ---------------------------------------------------------------------------------------------
 // 7. Day by day, in order, so that each day keeps the targets and the weight it had then.
@@ -541,8 +558,11 @@ for (let day = START; day <= TODAY; day = addDays(day, 1)) {
 
   let meals = planDay(targetKcal!, targetProtein!, day, day === OVER_DAY);
   if (isToday) {
-    // Breakfast, lunch and a coffee: the ring is a bit over half full.
-    meals = TODAY_MEALS();
+    meals = {
+      breakfast: items(TODAY_MEALS.breakfast),
+      lunch: items(TODAY_MEALS.lunch),
+      snack: items(TODAY_MEALS.snack),
+    };
   } else if (day !== OVER_DAY && random() < 0.12) {
     // Some days only part was logged.
     meals = { ...meals, snack: [] };
@@ -608,7 +628,9 @@ update public.workout_moves m set created_at = (m.to_on + time '08:00') at time 
 
 // ---------------------------------------------------------------------------------------------
 // 8. The streak as the app reads it (ADR 0045). The skipped Friday was answered with a freeze in
-// the app's popup back then, so its kept day is frozen and one freeze is spent.
+// the app's popup back then, so its kept day is frozen and one freeze is spent, as
+// answer_streak_break() (20261029130000_streak_break_days.sql) does. That function checks that its
+// today is the device's (assert_device_today), so it cannot be called as of a day weeks back.
 
 await rpc('streak', { today: TODAY });
 sql(`begin;
