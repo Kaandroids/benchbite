@@ -129,19 +129,10 @@ flowchart LR
 
 ## Getting started
 
-```bash
-git clone https://github.com/Kaandroids/benchbite.git
-cd benchbite
-corepack enable
-pnpm install
-cp .env.example .env.local
-pnpm supabase start   # needs Docker
-pnpm start
-```
-
-[Development](docs/development.md) covers the prerequisites, the local Supabase stack, the
-Edge Functions and the scripts; [Deployment](docs/deployment.md) covers the hosted project,
-its monitoring and installing a release build on an iPhone.
+To run the app with a local backend, follow [Development](docs/development.md): it covers the
+prerequisites, the local Supabase stack, the Edge Functions and the scripts.
+[Deployment](docs/deployment.md) covers the hosted project, its monitoring and installing a
+release build on an iPhone.
 
 ## Roadmap
 
