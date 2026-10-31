@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(33);
+select plan(36);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -24,6 +24,9 @@ insert into ids select 'b thread', max(id) from public.coach_threads;
 insert into public.custom_foods (user_id, name, kcal, protein_g, carbs_g, fat_g)
 values ('00000000-0000-0000-0000-00000000000b', 'B''s granola', 450, 10, 60, 18);
 insert into ids select 'b food', max(id) from public.custom_foods;
+insert into public.recipes (user_id, name, servings, serving_unit)
+values ('00000000-0000-0000-0000-00000000000b', 'B''s porridge', 1, 'bowl');
+insert into ids select 'b recipe', max(id) from public.recipes;
 
 -- A library food and one the library did not have, as Bite's tool sends them.
 create function pg_temp.items() returns jsonb language sql as $$
@@ -72,6 +75,13 @@ select throws_ok(
     (select id from ids where name = 'b food')
   ),
   '23503', null, 'as is another user''s food'
+);
+select throws_ok(
+  format(
+    $$ select pg_temp.add(jsonb_build_array(jsonb_build_object('recipe_id', %s, 'grams', 50))) $$,
+    (select id from ids where name = 'b recipe')
+  ),
+  '23503', null, 'or recipe'
 );
 select throws_ok(
   $$ select pg_temp.add('[]') $$,
@@ -215,6 +225,14 @@ select set_config('role', 'anon', true);
 select throws_ok(
   $$ select public.add_coach_meal_card(1, current_date, 'dinner', '[]') $$,
   '42501', null, 'Only signed-in users keep cards'
+);
+select throws_ok(
+  $$ select public.log_coach_meal_card(1) $$,
+  '42501', null, 'log them'
+);
+select throws_ok(
+  $$ select public.undo_coach_meal_card(1) $$,
+  '42501', null, 'or undo them'
 );
 
 select * from finish();
