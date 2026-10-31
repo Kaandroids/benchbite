@@ -2,7 +2,10 @@ import { pickPhotos } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, fireEvent, render, screen, waitFor } from '@/test/render';
 
+import { MAX_PHOTO_BYTES } from '@shared/photos';
+
 import { BiteScreen } from './bite-screen';
+import { ChatMessages } from './chat-messages';
 import { prepareChatPhoto } from './chat-photos';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 import { useThreadMessages } from './threads';
@@ -26,6 +29,10 @@ jest.mock('./chat-photos', () => ({
   ...jest.requireActual('./chat-photos'),
   prepareChatPhoto: jest.fn(),
 }));
+jest.mock('./chat-messages', () => {
+  const actual = jest.requireActual('./chat-messages');
+  return { ...actual, ChatMessages: jest.fn(actual.ChatMessages) };
+});
 jest.mock('./threads', () => ({
   ...jest.requireActual('./threads'),
   useThreadMessages: jest.fn(() => ({ data: undefined })),
@@ -161,6 +168,89 @@ it('hands a message whose photo was refused back to the composer, saying which',
 
   await fireEvent.press(screen.getByRole('button', { name: 'Remove photo 2' }));
   expect(screen.queryByText(/still has data/)).toBeNull();
+});
+
+it('renders none of the messages again while the user types', async () => {
+  const stream = liveStream();
+  const queryClient = createTestQueryClient();
+  await render(<BiteScreen />, { queryClient });
+  picks('file://plate.jpg');
+  await addPhotos();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled());
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  await stream.send({ event: 'text', text: 'A Margherita!' });
+  await stream.send({ event: 'done', threadId: 7, messageId: 9 });
+  await stream.end();
+
+  // What the answer's end set off, as the budget read again, settles first.
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+  await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+  const renders = jest.mocked(ChatMessages).mock.calls.length;
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'H');
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'How much cheese?');
+  expect(screen.getByLabelText('Message')).toHaveDisplayValue('How much cheese?');
+  expect(jest.mocked(ChatMessages).mock.calls.length).toBe(renders);
+});
+
+it('keeps a message refused on the device, as photos too large together', async () => {
+  await render(<BiteScreen />);
+  // Each within the limit, together over it.
+  const large = 'A'.repeat(Math.floor((MAX_PHOTO_BYTES * 0.9) / 3) * 4);
+  jest.mocked(pickPhotos).mockResolvedValueOnce(['file://a.jpg', 'file://b.jpg', 'file://c.jpg']);
+  jest.mocked(prepareChatPhoto).mockResolvedValue(large);
+  await addPhotos();
+  await waitFor(() => expect(screen.getByLabelText('Photo 3')).toBeOnTheScreen());
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'All three?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+
+  expect(streamChat).not.toHaveBeenCalled();
+  expect(
+    screen.getByText('These photos are too large to send together. Remove one and try again.'),
+  ).toBeOnTheScreen();
+  expect(screen.getByLabelText('Message')).toHaveDisplayValue('All three?');
+  expect(screen.getByLabelText('Photo 3')).toBeOnTheScreen();
+});
+
+it('puts a message refused by coach-chat before what was written since, dropping no photo', async () => {
+  let refuse: (error: Error) => void = () => {};
+  jest.mocked(streamChat).mockImplementationOnce(
+    () =>
+      new Promise<void>((_, reject) => {
+        refuse = reject;
+      }),
+  );
+  await render(<BiteScreen />);
+  picks('file://a.jpg', 'file://b.jpg');
+  await addPhotos();
+  await waitFor(() => expect(screen.getByLabelText('Photo 2')).toBeOnTheScreen());
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'Which one?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+
+  // Written while coach-chat reads the photos.
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And these?');
+  picks('file://c.jpg', 'file://d.jpg', 'file://e.jpg');
+  await addPhotos();
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Remove photo 3' })).toBeOnTheScreen(),
+  );
+  await act(async () => refuse(new ChatRequestError(422, 'photo_has_exif', 1)));
+
+  expect(screen.getByLabelText('Message')).toHaveDisplayValue('Which one?\nAnd these?');
+  expect(screen.getByLabelText('Photo 5')).toBeOnTheScreen();
+  expect(screen.getByText(/Photo 2 still has data/)).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+
+  // Five are more than a message takes, which is said until three are left.
+  await fireEvent.press(screen.getByRole('button', { name: 'Remove photo 2' }));
+  expect(
+    screen.getByText('Up to 3 photos fit in a message. Remove one to send it.'),
+  ).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add a photo' })).toBeDisabled();
+  await fireEvent.press(screen.getByRole('button', { name: 'Remove photo 1' }));
+  expect(screen.queryByText(/Up to 3 photos fit/)).toBeNull();
+  expect(screen.queryByLabelText('Photo 4')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
 });
 
 it('says when a photo could not be prepared', async () => {

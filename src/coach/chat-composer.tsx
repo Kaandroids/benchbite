@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -12,61 +12,71 @@ import { useTheme } from '@/theme';
 
 import { type PhotosProblem, prepareChatPhoto } from './chat-photos';
 import { PhotoTray } from './photo-tray';
-import type { Draft } from './use-chat';
+import { type Draft, withRefused } from './use-chat';
+
+/** A message whose photos were refused, handed back with why, once for each refusal. */
+export type RefusedDraft = { draft: Draft; problem: PhotosProblem };
 
 type ChatComposerProps = {
-  /** What the user is writing, kept by the chat, which hands back a message refused. */
-  draft: Draft;
-  onChange: Dispatch<SetStateAction<Draft>>;
-  /** Sends the draft. */
-  onSend: () => void;
+  /** Sends what the user wrote; the composer empties as it does. */
+  onSend: (draft: Draft) => void;
   /** Stops Bite's answer; set while Bite answers, which the send button becomes. */
   onStop?: () => void;
-  /** Why the draft's photos cannot be sent, said above it until they change. */
-  problem?: PhotosProblem;
-  onProblem: (problem: PhotosProblem | undefined) => void;
+  /**
+   * The last message refused, which comes back to the composer, to change: put before what the
+   * user wrote since, and why said above it until its photos change.
+   */
+  refused?: RefusedDraft;
 };
+
+const EMPTY_DRAFT: Draft = { text: '', photos: [] };
 
 /**
  * Where the user writes to Bite and adds photos (boards 7 and 7b), and the note under it that
  * Bite can be wrong. The + at the start of the field takes or chooses photos, up to 3, which wait
  * above the text, each with an ×; text is optional with them.
  */
-export function ChatComposer({
-  draft,
-  onChange,
-  onSend,
-  onStop,
-  problem,
-  onProblem,
-}: ChatComposerProps) {
+export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
   const { t } = useTranslation();
   const { colors, spacing, typography } = useTheme();
+  // What the user writes stays here, so that typing renders the composer alone, not the chat.
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [problem, setProblem] = useState<PhotosProblem>();
   const [picking, setPicking] = useState(false);
   /** How many photos are being prepared, which wait in the tray as they are. */
   const [preparing, setPreparing] = useState(0);
-  const room = MAX_PHOTOS - draft.photos.length - preparing;
-  const canSend = (!!draft.text.trim() || draft.photos.length > 0) && preparing === 0;
+  // A message refused comes back once, before what was written since.
+  const [handedBack, setHandedBack] = useState(refused);
+  if (refused !== handedBack) {
+    setHandedBack(refused);
+    if (refused) {
+      setDraft((current) => withRefused(current, refused.draft));
+      setProblem(refused.problem);
+    }
+  }
+  const room = Math.max(0, MAX_PHOTOS - draft.photos.length - preparing);
+  const tooMany = draft.photos.length > MAX_PHOTOS;
+  const canSend = (!!draft.text.trim() || draft.photos.length > 0) && preparing === 0 && !tooMany;
+  // More photos than a message takes, as a message handed back may bring, are said until fewer.
+  const shown = problem ?? (tooMany ? { reason: 'too_many_photos' as const } : undefined);
 
   const add = async (uris: string[]) => {
     const wanted = uris.slice(0, room);
-    onProblem(undefined);
+    setProblem(undefined);
     setPreparing((count) => count + wanted.length);
     const prepared = await Promise.allSettled(wanted.map((uri) => prepareChatPhoto(uri)));
     setPreparing((count) => count - wanted.length);
     const photos = prepared.flatMap((result) =>
       result.status === 'fulfilled' ? [result.value] : [],
     );
-    onChange((current) => ({
-      ...current,
-      photos: [...current.photos, ...photos].slice(0, MAX_PHOTOS),
-    }));
-    if (photos.length < wanted.length) onProblem({ reason: 'photo_not_prepared' });
+    // None is left out: a message handed back meanwhile may bring more than fit, which is said.
+    setDraft((current) => ({ ...current, photos: [...current.photos, ...photos] }));
+    if (photos.length < wanted.length) setProblem({ reason: 'photo_not_prepared' });
   };
 
   const remove = (index: number) => {
-    onProblem(undefined);
-    onChange((current) => ({
+    setProblem(undefined);
+    setDraft((current) => ({
       ...current,
       photos: current.photos.filter((_, at) => at !== index),
     }));
@@ -74,20 +84,22 @@ export function ChatComposer({
 
   const send = () => {
     if (!canSend) return;
-    onProblem(undefined);
-    onSend();
+    // Emptied first, so that a message refused at once, on the device, comes back to it.
+    setDraft(EMPTY_DRAFT);
+    setProblem(undefined);
+    onSend(draft);
   };
 
   return (
     <View style={{ gap: spacing.sm }}>
-      {problem ? (
+      {shown ? (
         <Text
           variant="caption"
           color="danger"
           accessibilityLiveRegion="polite"
           style={{ paddingHorizontal: spacing.md }}
         >
-          {t(`bite.photos.problems.${problem.reason}`, { number: (problem.photo ?? 0) + 1 })}
+          {t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })}
         </Text>
       ) : null}
       <View
@@ -120,7 +132,7 @@ export function ChatComposer({
             placeholder={t('bite.ask')}
             placeholderTextColor={colors.placeholder}
             value={draft.text}
-            onChangeText={(text) => onChange((current) => ({ ...current, text }))}
+            onChangeText={(text) => setDraft((current) => ({ ...current, text }))}
             multiline
             maxLength={MAX_MESSAGE_LENGTH}
             style={[

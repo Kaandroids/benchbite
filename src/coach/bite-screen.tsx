@@ -12,8 +12,8 @@ import { TextLink } from '@/components/ui/text-link';
 import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useTheme } from '@/theme';
 
-import { ChatComposer } from './chat-composer';
-import { type PhotosProblem, usePhotoUrls } from './chat-photos';
+import { ChatComposer, type RefusedDraft } from './chat-composer';
+import { usePhotoUrls } from './chat-photos';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { proposalIds, useProposalStates } from './proposals';
@@ -21,7 +21,7 @@ import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
 import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
 import type { ContinueWith } from './continue-card';
-import { type Draft, useChat } from './use-chat';
+import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
 
 /**
@@ -82,18 +82,13 @@ type ChatProps = {
   continueWith?: ContinueWith;
 };
 
-const EMPTY_DRAFT: Draft = { text: '', photos: [] };
-
 function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [problem, setProblem] = useState<PhotosProblem>();
-  // A message whose photos were refused comes back to the composer, to change.
-  const chat = useChat(start, (refused, why) => {
-    setDraft(refused);
-    setProblem(why);
-  });
+  // A message whose photos were refused comes back to the composer, to change. The composer
+  // keeps what the user writes, so that typing never renders the chat.
+  const [refused, setRefused] = useState<RefusedDraft>();
+  const chat = useChat(start, (draft, problem) => setRefused({ draft, problem }));
   // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
   const proposalsOnScreen = proposalIds(chat.messages);
   const proposals = useProposalStates(proposalsOnScreen);
@@ -175,15 +170,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
             <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
           ) : (
             <ChatComposer
-              draft={draft}
-              onChange={setDraft}
-              onSend={following(() => {
-                chat.send(draft.text, draft.photos);
-                setDraft(EMPTY_DRAFT);
-              })}
+              onSend={following((draft) => chat.send(draft.text, draft.photos))}
               onStop={busy ? chat.stop : undefined}
-              problem={problem}
-              onProblem={setProblem}
+              refused={refused}
             />
           )}
         </View>
