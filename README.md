@@ -326,8 +326,9 @@ After rotating the key, update it with
 The **Monitor** workflow checks the hosted project's scheduled jobs once a day and fails, which
 sends GitHub's usual email, when one stops working
 ([ADR 0067](docs/adr/0067-check-scheduled-jobs-from-github-actions.md)). For now it checks the
-photo purge: it fails when a deleted chat's folder has waited over an hour, or the latest call to
-`purge-coach-media` was not answered with a 2xx. Its log shows only counts, ages and status codes; a
+photo purge: it fails when a deleted chat's folder has waited over an hour and a run failed to purge
+it or no call succeeded in the last 15 minutes, or when the latest call to `purge-coach-media` was
+not answered with a 2xx while folders are queued. Its log shows only counts, ages and status codes; a
 401 usually means the secret key in Vault is outdated. It reads `SUPABASE_ACCESS_TOKEN` and
 `SUPABASE_PROJECT_ID` from the repository's `monitoring` environment, which holds the same values as
 `production`, allows only main and needs no approval. Start it from the Actions tab with **Run
