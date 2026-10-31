@@ -6,6 +6,7 @@ import { LOGGABLE_DAYS } from '@shared/meal/limits';
 
 import type { IconName } from '@/components/ui/icon';
 import type { Database } from '@/lib/database.types';
+import type { ColorTokens } from '@/theme';
 import { addDays, daysBetween, fromIsoDate, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
@@ -37,6 +38,17 @@ export const MEALS: { meal: Meal; icon: IconName; share: number }[] = [
   { meal: 'dinner', icon: 'moon', share: 0.3 },
   { meal: 'snack', icon: 'snack', share: 0.1 },
 ];
+
+/** Each meal's colour and its background, for its icon and its +. */
+export const MEAL_COLORS: Record<
+  Meal,
+  { color: keyof ColorTokens; background: keyof ColorTokens }
+> = {
+  breakfast: { color: 'breakfast', background: 'breakfastBackground' },
+  lunch: { color: 'lunch', background: 'lunchBackground' },
+  dinner: { color: 'dinner', background: 'dinnerBackground' },
+  snack: { color: 'snack', background: 'snackBackground' },
+};
 
 export type MealEntry = { meal: Meal } & Totals;
 

@@ -12,8 +12,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { EstimateItemRow, EstimateTotals } from '@/nutrition/estimate-card';
 import { ItemAmount } from '@/nutrition/item-amount';
 import { confidenceOf, estimateTotals, itemTotals } from '@/nutrition/meal-estimate';
-import { MEAL_COLORS } from '@/nutrition/meal-list';
-import { MEALS } from '@/nutrition/meals';
+import { MEAL_COLORS, MEALS } from '@/nutrition/meals';
 import { spacing, useTheme } from '@/theme';
 
 import { canUndo, cardFailure, refusalOf } from './cards';
