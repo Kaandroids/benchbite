@@ -6,6 +6,7 @@ import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
+import { CARD_MISSING, NO_LOOKUPS_LEFT } from './prompt.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 
 type Row = Record<string, unknown>;
@@ -719,7 +720,7 @@ Deno.test('tells Bite when its lookups are used up, and asks once more for an an
   );
   assertEquals(model.requests[4].messages.at(-1)?.parts.at(-1), {
     type: 'text',
-    text: 'No lookups are left. Answer now in text with what you have.',
+    text: NO_LOOKUPS_LEFT,
   });
   // The call the last round made anyway is not run, but answered.
   assertEquals(answer.filter((e) => e.event === 'tool_start').length, 4);
@@ -728,13 +729,53 @@ Deno.test('tells Bite when its lookups are used up, and asks once more for an an
       type: 'toolResult',
       id: 'c5',
       name: 'search_exercises',
-      result: { error: 'No lookups are left. Answer now in text with what you have.' },
+      result: { error: NO_LOOKUPS_LEFT },
     },
   ]);
   assertEquals(
     (inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text,
     'I found nothing to swap it for.',
   );
+});
+
+Deno.test('asks once more though Bite said something before its lookups', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+  ];
+  const model = new FakeModel(
+    [{ type: 'text', text: '[[neutral]] Let me check your workouts.' }, ...search('c1')],
+    ...['c2', 'c3', 'c4', 'c5'].map(search),
+    [{ type: 'text', text: 'I found nothing to swap it for.' }],
+  );
+  const { ctx, inserted } = context(model);
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests.length, 6);
+  assertEquals(
+    (inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text,
+    'Let me check your workouts. I found nothing to swap it for.',
+  );
+});
+
+Deno.test('tells Bite of a missing card only while it may still make one', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+  ];
+  const late = new FakeModel(...['c1', 'c2', 'c3', 'c4'].map(search), [
+    { type: 'text', text: '[[happy]] Here is the card.' },
+  ]);
+  await events(await handleChatRequest(ask(MESSAGE), context(late).ctx));
+  assertEquals(late.requests.length, 5);
+
+  // After three lookups one is left, which the card is made with.
+  const lastLookup = new FakeModel(
+    ...['c1', 'c2', 'c3'].map(search),
+    [{ type: 'text', text: '[[happy]] Here is the card.' }],
+    [{ type: 'text', text: 'Sorry, I could not make it.' }],
+  );
+  await events(await handleChatRequest(ask(MESSAGE), context(lastLookup).ctx));
+  assertEquals(lastLookup.requests[4].toolChoice, 'auto');
 });
 
 Deno.test('asks only once more when Bite still calls a tool', async () => {
@@ -859,12 +900,7 @@ Deno.test(
       { role: 'model', parts: [{ type: 'text', text: "[[happy]] I've proposed new targets." }] },
       {
         role: 'user',
-        parts: [
-          {
-            type: 'text',
-            text: 'Your answer speaks of a card or a proposal, but you made none: no tool was called. If you meant one, call its tool now. If you cannot, say why in a sentence. If you meant none, add nothing.',
-          },
-        ],
+        parts: [{ type: 'text', text: CARD_MISSING }],
       },
     ]);
     assertEquals(answer.filter((e) => e.event === 'proposal').length, 1);
@@ -943,6 +979,34 @@ Deno.test("keeps a proposal's card when a message is cut to what it may hold", (
   const many = content([...Array(60).fill(big), card], 'Here it is.');
   assertEquals(many.length, 50);
   assertEquals(many.includes(card), true);
+});
+
+Deno.test('leaves a card Bite speaks of alone when the thread has an earlier one', async () => {
+  const model = new FakeModel([
+    { type: 'text', text: '[[happy]] The card above is still waiting.' },
+  ]);
+  const proposal = { kind: 'targets', id: 42, from: null, to: TARGETS };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            { type: 'toolCall', name: 'propose_targets_change', args: TARGETS },
+            { type: 'toolResult', name: 'propose_targets_change', result: { proposal } },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests.length, 1);
 });
 
 Deno.test('tells Bite what it proposed earlier, though it said nothing with it', async () => {

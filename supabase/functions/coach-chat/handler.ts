@@ -23,6 +23,7 @@ import {
   type Message,
   ModelError,
   type Part,
+  textOf,
 } from '../_shared/llm/mod.ts';
 import { MAX_PHOTOS, photosBodyBytes } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
@@ -30,6 +31,7 @@ import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   CARD_MISSING,
+  NO_LOOKUPS_LEFT,
   type Expression,
   FaceReader,
   marker,
@@ -106,9 +108,6 @@ const HISTORY = 20;
 /** How many times Bite may look things up before it has to answer. */
 const MAX_TOOL_ROUNDS = 4;
 
-/** What Bite is told once its lookups are used up (#387). */
-const LAST_ROUND = 'No lookups are left. Answer now in text with what you have.';
-
 /** How many lookups one round may make; more are answered with an error. */
 const MAX_CALLS_PER_ROUND = 5;
 
@@ -144,6 +143,8 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
 
   // The user reads only their own threads, so a thread they may not go on with is not found.
   let history: Message[] = [];
+  // Whether Bite made a card earlier in the thread, which its answer may speak of (#386).
+  let earlierCard = false;
   if (request.threadId) {
     const thread = await context.supabase
       .from('coach_threads')
@@ -162,6 +163,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     const results = messages.data.flatMap((row) =>
       (Array.isArray(row.content) ? row.content : []).map(resultOf),
     );
+    earlierCard = results.some((result) => proposalOf(result) || mealCardOf(result));
     const cards = await mealCardStates(context.supabase, results);
     history = messages.data.reverse().flatMap((row) => toMessage(row, cards));
   }
@@ -175,7 +177,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
-      return answer(request, photos, history, context, send, stop).finally(() => {
+      return answer(request, photos, { history, earlierCard }, context, send, stop).finally(() => {
         if (!stop.cancelled) controller.close();
         return keepAlive(stop.forget());
       });
@@ -297,7 +299,7 @@ class Turn {
 async function answer(
   request: ChatRequest,
   photos: CheckedPhoto[],
-  history: Message[],
+  { history, earlierCard }: { history: Message[]; earlierCard: boolean },
   context: ChatContext,
   send: (event: ChatEvent) => void,
   stop: Stop,
@@ -357,17 +359,14 @@ async function answer(
       hasText: !!request.message?.trim(),
     };
 
-    // Whether Bite was told its answer spoke of a card it did not make, which it is only once.
+    // The rounds whose lookups ran, and the two things Bite is told at most once a turn: that its
+    // answer spoke of a card it did not make (#386), and that no lookups are left (#387).
+    let lookups = 0;
     let toldNoCard = false;
-    for (
-      let round = 0;
-      round <= MAX_TOOL_ROUNDS + 1 && !(await stop.look({ now: true }));
-      round++
-    ) {
-      // After the lookups, Bite is told to answer with what it has, and may not call a tool. A
-      // model may call one all the same (#387): the call is answered that no lookups are left,
-      // and the model is asked once more.
-      const last = round >= MAX_TOOL_ROUNDS;
+    let toldNoLookups = false;
+    while (!(await stop.look({ now: true }))) {
+      // Once the lookups are used up, Bite answers with what it has, and may not call a tool.
+      const answerOnly = lookups >= MAX_TOOL_ROUNDS;
       const spoken: Part[] = [];
       const calls: Extract<Part, { type: 'toolCall' }>[] = [];
       turn.round();
@@ -375,7 +374,7 @@ async function answer(
         system: SYSTEM,
         messages,
         tools: TOOL_DEFINITIONS,
-        toolChoice: last ? 'none' : 'auto',
+        toolChoice: answerOnly ? 'none' : 'auto',
       })) {
         outcome.asked = true;
         // The end of a round is kept whatever comes, so that what the answer used is too.
@@ -396,15 +395,21 @@ async function answer(
         }
       }
       turn.ended();
-      if (
-        !calls.length &&
-        !last &&
-        !toldNoCard &&
-        !stop.stopped &&
-        !turn.trace.some(isCard) &&
-        mentionsCard(textOf(spoken), request.language)
-      ) {
-        // The model may write of the card it means to make and end without making it (#386).
+      if (stop.stopped) break;
+      const said = textOf(spoken);
+
+      if (!calls.length) {
+        // The model may write of the card it means to make and end without making it. Told so
+        // while it may still make one, it makes it, says why it cannot, or adds nothing. Not
+        // after a card earlier in the thread, which the answer may speak of: told then, the
+        // model made it again or said its answer twice.
+        const noCard =
+          !answerOnly &&
+          !toldNoCard &&
+          !earlierCard &&
+          !turn.trace.some(isCard) &&
+          mentionsCard(said, request.language);
+        if (!noCard) break;
         toldNoCard = true;
         messages.push(
           { role: 'model', parts: spoken },
@@ -412,13 +417,17 @@ async function answer(
         );
         continue;
       }
-      if (!calls.length || stop.stopped || (last && (round > MAX_TOOL_ROUNDS || turn.text))) break;
+      // A model may call a tool all the same once none is left: the call is not run but answered
+      // so, and the model asked once more, unless this round already answered.
+      if (answerOnly && (toldNoLookups || said.trim())) break;
+      if (answerOnly) toldNoLookups = true;
+      else lookups++;
 
       const results: Part[] = [];
       for (const [index, call] of calls.entries()) {
         if (await stop.look({ now: true })) break;
-        const result = last
-          ? { error: LAST_ROUND }
+        const result = answerOnly
+          ? { error: NO_LOOKUPS_LEFT }
           : index < MAX_CALLS_PER_ROUND
             ? await lookUp(call, toolContext, send)
             : { error: `At most ${MAX_CALLS_PER_ROUND} lookups at once; ask for fewer.` };
@@ -431,15 +440,13 @@ async function answer(
         break;
       }
       turn.trace.push(...calls, ...results);
+      // The model heeds a word beside the last results better than the request's settings.
+      const lastLookup = !answerOnly && lookups === MAX_TOOL_ROUNDS;
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },
         {
           role: 'user',
-          // The model heeds a word beside the last results better than the request's settings.
-          parts:
-            round + 1 === MAX_TOOL_ROUNDS
-              ? [...results, { type: 'text', text: LAST_ROUND }]
-              : results,
+          parts: lastLookup ? [...results, { type: 'text', text: NO_LOOKUPS_LEFT }] : results,
         },
       );
     }
@@ -699,11 +706,6 @@ export function content(trace: Part[], text: string): Part[] {
     part.type === 'toolResult' && !isCard(part) ? { ...part, result: { omitted: true } } : part,
   );
   return fits(without) ? without : [...cards, answer];
-}
-
-/** The text of a model's parts. */
-function textOf(parts: Part[]): string {
-  return parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
 }
 
 /** Whether a part is the result of a proposal or a meal card, which the chat shows. */
