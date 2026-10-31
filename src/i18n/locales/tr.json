@@ -1838,7 +1838,7 @@
       "looking_one": "Fotoğrafına bakıyorum",
       "looking_other": "Fotoğraflarına bakıyorum",
       "viewer": "Fotoğraf, büyük",
-      "close": "Kapat",
+      "close": "Fotoğrafı kapat",
       "problems": {
         "photo_not_prepared": "Bu fotoğraf okunamadı. Başka bir tane dene.",
         "photos_too_large": "Bu fotoğraflar birlikte gönderilemeyecek kadar büyük. Birini kaldırıp tekrar dene.",

@@ -1838,7 +1838,7 @@
       "looking_one": "Looking at your photo",
       "looking_other": "Looking at your photos",
       "viewer": "Photo, large",
-      "close": "Close",
+      "close": "Close photo",
       "problems": {
         "photo_not_prepared": "This photo couldn't be read. Try another one.",
         "photos_too_large": "These photos are too large to send together. Remove one and try again.",
