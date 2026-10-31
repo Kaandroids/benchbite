@@ -479,7 +479,7 @@ describe('WorkoutScreen', () => {
       expect(switched()).toEqual([6]);
     });
 
-    it('shows the one being switched to as chosen meanwhile', async () => {
+    it('shows the one being switched to as chosen meanwhile, and Start off', async () => {
       mockWorkouts([pull]);
       mockAlternatives(gymHomeHotel);
       await render(<WorkoutScreen id={7} />);
@@ -489,6 +489,32 @@ describe('WorkoutScreen', () => {
       );
       await fireEvent.press(screen.getByRole('tab', { name: 'Gym' }));
       expect(switched()).toEqual([6]);
+      // Not with the exercises Hotel is about to replace.
+      const start = screen.getByRole('button', { name: 'Start workout' });
+      expect(start.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }));
+      await fireEvent.press(start);
+      expect(startWorkout).not.toHaveBeenCalled();
+
+      await act(async () => switches[0]?.succeed());
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: 'Start workout' }).props.accessibilityState,
+        ).toEqual(expect.objectContaining({ disabled: false })),
+      );
+    });
+
+    it('keeps Start off while the sheet puts another in use', async () => {
+      mockWorkouts([pull]);
+      mockAlternatives(gymHomeHotel);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Alternatives' }));
+      await fireEvent.press(screen.getByRole('radio', { name: 'Gym' }));
+      expect(switched()).toEqual([3]);
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: 'Start workout' }).props.accessibilityState,
+        ).toEqual(expect.objectContaining({ disabled: true })),
+      );
     });
 
     it('says why a switch failed', async () => {

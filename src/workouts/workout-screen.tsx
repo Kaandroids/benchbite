@@ -72,7 +72,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         { text: t('workout.running.resume'), onPress: () => router.push('/session') },
       ],
     );
-  // One choice of the alternative in use for the chips and the sheet.
+  // One choice of the alternative in use for the chips and the sheet, which Start waits for.
   const choice = useChooseAlternative({
     alternatives: alternatives.data,
     running,
@@ -211,6 +211,8 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : workout.active ? (
           <Button
             label={running ? t('session.resume') : t('workout.startWorkout')}
+            // Not with the exercises an alternative is about to replace.
+            disabled={choice.isPending}
             onPress={() => start(workout)}
           />
         ) : undefined
