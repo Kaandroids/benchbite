@@ -4,7 +4,7 @@ import { fromBase64, toBase64 } from '@shared/base64_bytes';
 import type { ChatPhoto, ChatPhotoPart, PHOTO_REFUSALS } from '@shared/coach/chat';
 import { MEDIA_BUCKET } from '@shared/coach/media';
 import { withoutMetadata } from '@shared/jpeg_metadata';
-import { photosFit } from '@shared/photos';
+import { MAX_PHOTOS, photosFit } from '@shared/photos';
 import { useQuery } from '@tanstack/react-query';
 
 import type { Json } from '@/lib/database.types';
@@ -17,9 +17,12 @@ import { discardPhotos, preparePhoto } from '@/lib/photos';
  */
 export type MessagePhoto = { data: string; path?: never } | { path: string; data?: never };
 
-/** Why the photos of a message were refused, and which one, counted from 0, when it is one. */
+/**
+ * Why the photos of a message were refused, and which one, counted from 0, when it is one: by
+ * coach-chat, or on the device, as one that could not be prepared, or more than a message takes.
+ */
 export type PhotosProblem = {
-  reason: (typeof PHOTO_REFUSALS)[number] | 'photo_not_prepared';
+  reason: (typeof PHOTO_REFUSALS)[number] | 'photo_not_prepared' | 'too_many_photos';
   photo?: number;
 };
 
@@ -47,6 +50,7 @@ export async function prepareChatPhoto(uri: string): Promise<string> {
 
 /** What a message's photos are sent as, or why they cannot be, before they are. */
 export function photosToSend(photos: string[]): ChatPhoto[] | PhotosProblem {
+  if (photos.length > MAX_PHOTOS) return { reason: 'too_many_photos' };
   const sent = photos.map((data): ChatPhoto => ({ mimeType: 'image/jpeg', data }));
   return photosFit(sent) ? sent : { reason: 'photos_too_large' };
 }

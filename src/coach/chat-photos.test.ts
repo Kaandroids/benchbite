@@ -70,10 +70,11 @@ it('gives the local time as HH:MM', () => {
   expect(localTime(new Date(2026, 9, 31, 23, 59))).toBe('23:59');
 });
 
-it('sends photos as JPEG, unless they are too large', () => {
+it('sends photos as JPEG, unless they are too large or too many', () => {
   expect(photosToSend(['AAAA'])).toEqual([{ mimeType: 'image/jpeg', data: 'AAAA' }]);
   const large = 'A'.repeat(Math.ceil((MAX_PHOTO_BYTES + 3) / 3) * 4);
   expect(photosToSend([large])).toEqual({ reason: 'photos_too_large' });
+  expect(photosToSend(['AAAA', 'AAAA', 'AAAA', 'AAAA'])).toEqual({ reason: 'too_many_photos' });
 });
 
 it("reads a stored message's photos by their paths, in order", () => {

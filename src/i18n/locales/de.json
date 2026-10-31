@@ -1846,7 +1846,8 @@
         "photo_not_prepared": "Dieses Foto ließ sich nicht lesen. Versuch ein anderes.",
         "photos_too_large": "Diese Fotos sind zusammen zu groß zum Senden. Entferne eines und versuch es noch mal.",
         "photo_not_jpeg": "Foto {{number}} ließ sich nicht lesen. Entferne es und versuch ein anderes.",
-        "photo_has_exif": "Foto {{number}} enthält noch Daten dazu, wo oder wann es aufgenommen wurde. Entferne es und versuch ein anderes."
+        "photo_has_exif": "Foto {{number}} enthält noch Daten dazu, wo oder wann es aufgenommen wurde. Entferne es und versuch ein anderes.",
+        "too_many_photos": "In eine Nachricht passen bis zu 3 Fotos. Entferne eines, um sie zu senden."
       }
     },
     "proposal": {

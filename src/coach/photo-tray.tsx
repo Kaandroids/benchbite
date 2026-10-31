@@ -17,7 +17,7 @@ type PhotoTrayProps = {
   /** The photo coach-chat refused, by its index, marked until the photos change. */
   refused?: number;
   onRemove: (index: number) => void;
-  /** Adds photos; left out once there are 3. */
+  /** Adds photos; left out once there are 3 or more. */
   onAdd?: () => void;
 };
 
@@ -85,6 +85,8 @@ export function PhotoTray({ photos, preparing, refused, onRemove, onAdd }: Photo
 const styles = StyleSheet.create({
   tray: {
     flexDirection: 'row',
+    // A message handed back may bring more photos than fit in a row, until some are removed.
+    flexWrap: 'wrap',
   },
   tile: {
     width: TILE,

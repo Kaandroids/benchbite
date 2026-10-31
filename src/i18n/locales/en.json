@@ -1846,7 +1846,8 @@
         "photo_not_prepared": "This photo couldn't be read. Try another one.",
         "photos_too_large": "These photos are too large to send together. Remove one and try again.",
         "photo_not_jpeg": "Photo {{number}} couldn't be read. Remove it and try another one.",
-        "photo_has_exif": "Photo {{number}} still has data on where or when it was taken. Remove it and try another one."
+        "photo_has_exif": "Photo {{number}} still has data on where or when it was taken. Remove it and try another one.",
+        "too_many_photos": "Up to 3 photos fit in a message. Remove one to send it."
       }
     },
     "proposal": {

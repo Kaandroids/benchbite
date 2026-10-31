@@ -1846,7 +1846,8 @@
         "photo_not_prepared": "Bu fotoğraf okunamadı. Başka bir tane dene.",
         "photos_too_large": "Bu fotoğraflar birlikte gönderilemeyecek kadar büyük. Birini kaldırıp tekrar dene.",
         "photo_not_jpeg": "Fotoğraf {{number}} okunamadı. Kaldırıp başka bir tane dene.",
-        "photo_has_exif": "Fotoğraf {{number}} hâlâ nerede veya ne zaman çekildiğine dair veri içeriyor. Kaldırıp başka bir tane dene."
+        "photo_has_exif": "Fotoğraf {{number}} hâlâ nerede veya ne zaman çekildiğine dair veri içeriyor. Kaldırıp başka bir tane dene.",
+        "too_many_photos": "Bir mesaja en fazla 3 fotoğraf sığar. Göndermek için birini kaldır."
       }
     },
     "proposal": {
