@@ -461,7 +461,7 @@ Deno.test(
     assertEquals((result as { mealCard: { meal: string } }).mealCard.meal, 'breakfast');
     assertEquals(calls.at(-1)?.args.day, '2026-10-30');
 
-    // Without the time, as the app does not send it yet, a snack.
+    // Without the time, as an app from before it sends none, a snack.
     const { context: timeless } = mealContext({});
     const snack = await runTool('log_meal_card', { items: [RICE], day: '2026-10-29' }, timeless);
     const { meal, day } = (snack as { mealCard: { meal: string; day: string } }).mealCard;

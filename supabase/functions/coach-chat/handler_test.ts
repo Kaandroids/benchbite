@@ -1189,3 +1189,21 @@ Deno.test("tells Bite the device's local time", async () => {
   const [snapshot] = model.requests[0].messages[0].parts as { text: string }[];
   assertEquals(snapshot.text.includes('Local time: 07:45'), true);
 });
+
+Deno.test("takes a card's meal from the device's local time when the user named none", async () => {
+  const { estimated: _, ...item } = MEAL_CARD.items[0];
+  const model = new FakeModel(
+    [{ type: 'toolCall', id: 'c1', name: 'log_meal_card', args: { items: [item] } }],
+    [],
+  );
+  const { ctx } = context(model, { add_coach_meal_card: 51, search_foods: [] });
+
+  const answer = await events(
+    await handleChatRequest(ask({ ...MESSAGE, localTime: '12:40' }), ctx),
+  );
+
+  assertEquals(
+    answer.filter((e) => e.event === 'meal_card'),
+    [{ event: 'meal_card', mealCard: { ...MEAL_CARD, meal: 'lunch' } }],
+  );
+});

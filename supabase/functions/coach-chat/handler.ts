@@ -348,6 +348,7 @@ async function answer(
       language: request.language,
       today: request.today,
       threadId,
+      localTime: request.localTime,
     };
 
     for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
