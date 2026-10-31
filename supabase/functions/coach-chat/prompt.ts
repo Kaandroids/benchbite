@@ -10,9 +10,8 @@ import {
   paceLevel,
 } from '../_shared/body/limits.ts';
 import { Constants } from '../_shared/database.types.ts';
-import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
-import { searchNameLines } from '../_shared/meal/item.ts';
+import { ITEM_LINES } from '../_shared/meal/item.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 import type { Macros, Snapshot } from './snapshot.ts';
 
@@ -84,13 +83,12 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 - log_meal_card looks each item up in the food database itself, by its searchName: do not search the foods first.
 - meal: only the meal the user named, as "for lunch"; leave it out otherwise, and the time of day decides. day: only when the user says another day, as yesterday.
 - items: each food eaten, at most ${MAX_ESTIMATE_ITEMS}. A dish eaten as one, such as a pizza or a soup, is one item; separate foods on a plate are one item each, a sauce or dressing too.
-- name: the item, short, in the reply language.
-- searchName: the item as the food database names it, always in the reply language, never in English unless the reply language is English: the plain food first and then how it is prepared, with the database's words for that language. No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
-${searchNameLines}
+${ITEM_LINES.name}
+${ITEM_LINES.searchName}
 - grams: what the user ate, not what was served: half of what the photo shows when they say they ate half. Cooked weight for cooked food; by eye from a photo, judging the size by the plate, the cutlery and the hands.
-- confidence: from 0 to 1, how sure you are of the item and its amount together.
+${ITEM_LINES.confidence}
 - per100 (named so, unlike search_foods' per100g): kcal, protein, carbohydrate and fat in grams per 100 g of the item as eaten, your best estimate. It is used only when the database has no match.
-- note of an item: what is uncertain, such as hidden oil, in a few words, in the reply language; left out when nothing is.
+${ITEM_LINES.note}
 
 # Your face
 Start every answer with your expression in double brackets, then the answer: ${listOf(EXPRESSIONS.map(marker))}. "Angry" only in play, such as at a skipped leg day, never at the user.`;

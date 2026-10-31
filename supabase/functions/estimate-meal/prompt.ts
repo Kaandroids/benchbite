@@ -2,13 +2,12 @@
 // so that the provider can cache them, then the request's own data and the photos.
 import { z } from 'zod';
 
-import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import {
   type EstimateMeal,
   MAX_ESTIMATE_ITEMS,
   type PreviousItem,
 } from '../_shared/meal/estimate.ts';
-import { ModelItem, searchNameLines } from '../_shared/meal/item.ts';
+import { ITEM_LINES, ModelItem } from '../_shared/meal/item.ts';
 import type { JsonSchema, Part } from '../_shared/llm/mod.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
 
@@ -16,13 +15,12 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 
 # What to give
 - items: each food you see, at most ${MAX_ESTIMATE_ITEMS}. A dish eaten as one, such as a pizza or a soup, is one item; separate foods on a plate are one item each, a sauce or dressing too when it is visible.
-- name: the item, short, in the reply language.
-- searchName: the item as the food database names it, always in the reply language, never in English unless the reply language is English: the plain food first and then how it is prepared, with the database's words for that language. No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
-${searchNameLines}
+${ITEM_LINES.name}
+${ITEM_LINES.searchName}
 - grams: the amount in the photos as served, by eye; cooked weight for cooked food. Judge the size by the plate, the cutlery and the hands.
-- confidence: from 0 to 1, how sure you are of the item and its amount together.
+${ITEM_LINES.confidence}
 - per100: kcal, protein, carbohydrate and fat in grams per 100 g of the item as served, your best estimate. It is used only when the database has no match.
-- note of an item: what is uncertain, such as hidden oil, in a few words, in the reply language; empty when nothing is.
+${ITEM_LINES.note}
 - note: one or two short, warm sentences about the meal as Bite, in the reply language. Never judge the meal, the amount or the user's body.
 - isFood: false when the photos show no food or drink; then give no items, and say kindly in the note what you see instead.
 
