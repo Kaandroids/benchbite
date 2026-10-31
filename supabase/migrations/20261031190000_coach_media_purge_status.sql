@@ -1,5 +1,5 @@
 -- Reports whether the photo purge of deleted chats is working (#368, ADR 0067), for the scheduled
--- Purge check workflow. A failing purge only warns in the Postgres logs, and cron still reports
+-- Monitor workflow. A failing purge only warns in the Postgres logs, and cron still reports
 -- its runs as succeeded, so the workflow asks this function and fails when it is unhealthy.
 
 -- The pg_net requests sent to purge-coach-media. pg_net's responses carry no URL, so without these
@@ -59,7 +59,8 @@ $$;
 -- Only counts, ages and status codes, never user ids or folders, as the workflow's log is public.
 -- The purge is unhealthy when a folder has waited over an hour, as it is tried every five
 -- minutes, or when the latest answered call was not a 2xx; a timeout or a network error has no
--- status code and counts as failed. It runs as its caller, the workflow's database user.
+-- status code and counts as failed. It runs as its caller, the database owner, as which the
+-- workflow queries through the Management API.
 create function public.coach_media_purge_status()
 returns table (
   queued bigint,
