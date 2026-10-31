@@ -50,6 +50,8 @@ export type ModelRequest = {
   system?: string;
   messages: Message[];
   tools?: Tool[];
+  /** Whether the model may call the tools; 'none' asks for text, with the tools still declared. */
+  toolChoice?: 'auto' | 'none';
   /** Asks for JSON in this shape instead of free text. */
   responseSchema?: JsonSchema;
   /** Where the answer is cut, reasoning included. */

@@ -132,6 +132,16 @@ Deno.test('leaves out what the request does not use', async () => {
   });
 });
 
+Deno.test('forbids tool calls when the request does', async () => {
+  const { model, calls } = gemini(() => Response.json({ candidates: [] }));
+
+  await model.generate({ ...request, toolChoice: 'none' });
+
+  assertEquals((calls[0].body as { toolConfig?: unknown }).toolConfig, {
+    functionCallingConfig: { mode: 'NONE' },
+  });
+});
+
 Deno.test('reads the answer without the reasoning, and the usage with it', async () => {
   const { model } = gemini(() =>
     Response.json({
