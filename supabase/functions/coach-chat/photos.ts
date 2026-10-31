@@ -37,16 +37,41 @@ const standalone = (marker: number) => marker === 0x01 || (marker >= 0xd0 && mar
 const isFrame = (marker: number) =>
   marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
 
-/** APP1, which holds Exif data, or XMP, either of which can hold where and when it was taken. */
-const APP1 = 0xe1;
+/**
+ * The segments of the JPEG standard that only say how the image is coded: the tables (DHT, DAC,
+ * DQT), the restart interval (DRI), the scans' lines (DNL), the hierarchical ones (DHP, EXP), and
+ * the frames and scans.
+ */
+const isCoding = (marker: number) =>
+  isFrame(marker) || marker === 0xc4 || marker === 0xcc || (marker >= 0xda && marker <= 0xdf);
+
+/**
+ * The application segments a photo may keep, by the name each starts with: JFIF (APP0), the
+ * colour profile (APP2) and Adobe's colour transform (APP14). Every other application segment
+ * (APPn) or comment (COM) is refused, as Exif and XMP (APP1), Photoshop's IPTC data (APP13) or a
+ * comment can hold where and when a photo was taken.
+ */
+const KEPT: Record<number, string> = { 0xe0: 'JFIF\0', 0xe2: 'ICC_PROFILE\0', 0xee: 'Adobe' };
+const isMetadata = (marker: number) => (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
+
 const SOS = 0xda;
 const EOI = 0xd9;
 
+/** Whether a segment's data, from `start`, begins with a name. */
+function startsWith(bytes: Uint8Array, start: number, end: number, name: string): boolean {
+  if (start + name.length > end) return false;
+  for (let i = 0; i < name.length; i++) {
+    if (bytes[start + i] !== name.charCodeAt(i)) return false;
+  }
+  return true;
+}
+
 /**
  * Reads a JPEG's segments to its end, and gives its size, or why it is refused: not a JPEG, with
- * anything after its end, or with an APP1 segment anywhere, as Exif data is refused, not removed
- * (ADR 0062). The app removes the APP1 segments before it sends a photo, as re-encoding alone can
- * leave a small Exif segment on iOS (ADR 0065).
+ * anything after its end or a segment the standard does not define, or with any metadata segment
+ * but the three kept, wherever it is, as Exif data is refused, not removed (ADR 0062). The app
+ * keeps only those segments before it sends a photo, as re-encoding alone can leave a small Exif
+ * segment on iOS (ADR 0065).
  */
 export function readJpeg(bytes: Uint8Array): { width: number; height: number } | PhotoRefusal {
   if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return 'photo_not_jpeg';
@@ -66,7 +91,12 @@ export function readJpeg(bytes: Uint8Array): { width: number; height: number } |
     if (i + 2 > bytes.length) return 'photo_not_jpeg';
     const length = (bytes[i] << 8) | bytes[i + 1];
     if (length < 2 || i + length > bytes.length) return 'photo_not_jpeg';
-    if (marker === APP1) return 'photo_has_exif';
+    if (isMetadata(marker)) {
+      const name = KEPT[marker];
+      if (!name || !startsWith(bytes, i + 2, i + length, name)) return 'photo_has_exif';
+    } else if (!isCoding(marker)) {
+      return 'photo_not_jpeg';
+    }
     if (isFrame(marker)) {
       if (length < 7) return 'photo_not_jpeg';
       const height = (bytes[i + 3] << 8) | bytes[i + 4];

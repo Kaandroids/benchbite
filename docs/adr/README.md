@@ -79,4 +79,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0061](0061-alternatives-of-a-workout.md)                    | Alternatives of a workout: the one in use is the workout                                | Accepted                      |
 | [0062](0062-photos-in-bites-chat.md)                         | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted, amended by ADR-0065 |
 | [0063](0063-purge-chat-photos-from-a-queue.md)               | Remove a deleted chat's photos from a queue, on a schedule                              | Accepted                      |
-| [0065](0065-remove-app1-segments-on-the-device.md)           | Remove a photo's APP1 segments on the device                                            | Accepted                      |
+| [0065](0065-remove-metadata-segments-on-the-device.md)       | Remove a photo's metadata segments on the device                                        | Accepted                      |

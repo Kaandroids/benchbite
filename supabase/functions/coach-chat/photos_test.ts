@@ -3,13 +3,18 @@ import { assertEquals } from '@std/assert';
 import { MAX_PHOTO_BYTES } from '../_shared/photos.ts';
 import { checkPhotos, readJpeg } from './photos.ts';
 import {
+  ADOBE,
   base64,
   EOI,
   EXIF,
   FRAME,
+  ICC,
   JFIF,
   jpeg,
   PLAIN_JPEG,
+  PROGRESSIVE,
+  QUANTISATION,
+  RESTARTS,
   SCAN,
   segment,
   SOI,
@@ -23,11 +28,41 @@ Deno.test('reads the size of a JPEG', () => {
   assertEquals(readJpeg(jpeg(SOI, [0xff], JFIF, FRAME, SCAN, EOI)), { width: 640, height: 480 });
 });
 
+Deno.test('reads a JPEG with the segments a photo may keep', () => {
+  const baseline = jpeg(SOI, JFIF, ICC, ADOBE, QUANTISATION, FRAME, TABLES, RESTARTS, SCAN, EOI);
+  assertEquals(readJpeg(baseline), { width: 640, height: 480 });
+  // A progressive JPEG, with tables between its scans.
+  const progressive = jpeg(SOI, JFIF, QUANTISATION, PROGRESSIVE, TABLES, SCAN, TABLES, SCAN, EOI);
+  assertEquals(readJpeg(progressive), { width: 640, height: 480 });
+});
+
 Deno.test('refuses a JPEG with Exif or XMP data, wherever it is', () => {
   assertEquals(readJpeg(jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI)), 'photo_has_exif');
   assertEquals(readJpeg(jpeg(SOI, JFIF, XMP, FRAME, SCAN, EOI)), 'photo_has_exif');
   // Between the scans of a progressive JPEG.
   assertEquals(readJpeg(jpeg(SOI, JFIF, FRAME, SCAN, EXIF, SCAN, EOI)), 'photo_has_exif');
+});
+
+Deno.test('refuses a JPEG with any other metadata segment', () => {
+  const text = (value: string) => [...new TextEncoder().encode(value)];
+  for (const metadata of [
+    // Photoshop's IPTC data (APP13), which can hold Exif data too.
+    segment(0xed, text('Photoshop 3.0\0')),
+    // A comment (COM).
+    segment(0xfe, text('Taken at home')),
+    // A kept segment's marker under another name, as multi-picture data (MPF) in APP2.
+    segment(0xe2, text('MPF\0')),
+    segment(0xe0, text('JFXX\0')),
+    // A kept segment too short for its name.
+    segment(0xee, text('Ado')),
+    segment(0xe3),
+  ]) {
+    assertEquals(
+      readJpeg(jpeg(SOI, JFIF, metadata, FRAME, SCAN, EOI)),
+      'photo_has_exif',
+      `${metadata}`,
+    );
+  }
 });
 
 Deno.test('refuses what is not a whole JPEG', () => {
@@ -46,6 +81,9 @@ Deno.test('refuses what is not a whole JPEG', () => {
     [...SOI, ...JFIF, ...FRAME, ...SCAN, ...EOI, ...SOI, ...EXIF, ...EOI],
     // A segment shorter than its length.
     [...SOI, 0xff, 0xe0, 0x00, 0x01, ...FRAME, ...SCAN, ...EOI],
+    // A segment the standard does not define (JPG0), or a second start.
+    [...SOI, ...JFIF, ...segment(0xf0), ...FRAME, ...SCAN, ...EOI],
+    [...SOI, ...JFIF, ...segment(0xd8), ...FRAME, ...SCAN, ...EOI],
     // A frame of no size.
     [...SOI, ...segment(0xc0, [8, 0, 0, 0x02, 0x80, 1, 1, 0x11, 0]), ...SCAN, ...EOI],
   ]) {

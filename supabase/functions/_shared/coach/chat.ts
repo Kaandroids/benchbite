@@ -54,7 +54,10 @@ export type ChatRequest = {
   requestId?: string;
 };
 
-/** Why a photo is refused: it is not a JPEG, or it has Exif data (an APP1 segment). */
+/**
+ * Why a photo is refused: it is not a JPEG, or it has Exif data, or any other metadata segment
+ * (ADR 0065).
+ */
 export type PhotoRefusal = 'photo_not_jpeg' | 'photo_has_exif';
 
 /**
