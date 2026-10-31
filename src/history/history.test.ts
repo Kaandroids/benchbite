@@ -36,6 +36,7 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
     kilograms: 1000,
     estimatedKcal: 300,
     plannedExerciseIds: null,
+    alternative: null,
   };
 };
 
@@ -59,6 +60,8 @@ describe('fetchLogSummaries', () => {
           kilograms: 6240.5,
           estimated_kcal: null,
           planned_exercise_ids: ['curl', 'dips'],
+          alternative_name: null,
+          alternative_position: 2,
         },
       ],
       error: null,
@@ -99,6 +102,8 @@ describe('fetchLogSummaries', () => {
       kilograms: 6240.5,
       estimatedKcal: null,
       plannedExerciseIds: ['curl', 'dips'],
+      // An unnamed alternative keeps its position, for "Alternative 2".
+      alternative: { name: null, position: 2 },
     });
     expect(durationMinutes(summary!)).toBe(52);
   });

@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
@@ -27,6 +28,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
   const duration = useDurationFormat();
   const exercisesLabel = isPartial(log.exercises, log.plannedExercises)
     ? t('history.exercisesOf', { done: log.exercises, count: log.plannedExercises })
@@ -52,9 +54,17 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     >
       <DateTile date={log.startedAt} tinted={icons} />
       <View style={[styles.flex, { gap: 2 }]}>
-        <Text variant="label" numberOfLines={1}>
-          {workoutName(log)}
-        </Text>
+        {/* A long name is cut before the alternative, which is what tells the logs apart. */}
+        <View style={styles.name}>
+          <Text variant="label" numberOfLines={1} style={styles.shrink}>
+            {workoutName(log)}
+          </Text>
+          {log.alternative ? (
+            <Text variant="label" color="textMuted" numberOfLines={1}>
+              {` · ${alternativeName(log.alternative)}`}
+            </Text>
+          ) : null}
+        </View>
         {icons ? (
           <View style={[styles.stats, { gap: spacing.md }]}>
             <IconStat
@@ -96,6 +106,12 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
 }
 
 const styles = StyleSheet.create({
+  name: {
+    flexDirection: 'row',
+  },
+  shrink: {
+    flexShrink: 1,
+  },
   stats: {
     flexDirection: 'row',
   },

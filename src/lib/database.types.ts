@@ -1466,6 +1466,8 @@ export type Database = {
       };
       workout_logs: {
         Row: {
+          alternative_name: string | null;
+          alternative_position: number | null;
           client_id: string | null;
           estimated_kcal: number | null;
           finished_at: string;
@@ -1483,6 +1485,8 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          alternative_name?: string | null;
+          alternative_position?: number | null;
           client_id?: string | null;
           estimated_kcal?: number | null;
           finished_at: string;
@@ -1499,6 +1503,8 @@ export type Database = {
           workout_id?: number | null;
         };
         Update: {
+          alternative_name?: string | null;
+          alternative_position?: number | null;
           client_id?: string | null;
           estimated_kcal?: number | null;
           finished_at?: string;
@@ -1606,6 +1612,8 @@ export type Database = {
       };
       workout_log_summaries: {
         Row: {
+          alternative_name: string | null;
+          alternative_position: number | null;
           estimated_kcal: number | null;
           exercises: number | null;
           finished_at: string | null;
