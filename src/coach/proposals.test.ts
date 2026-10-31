@@ -6,7 +6,6 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import {
   isShownProposal,
   messageProposals,
-  proposalFailure,
   useDecideProposal,
   useProposalStates,
 } from './proposals';
@@ -76,16 +75,6 @@ describe('messageProposals', () => {
         { type: 'toolResult', name: 'propose_targets_change', result: { proposal: TARGETS } },
       ]),
     ).toEqual([foodLog, TARGETS]);
-  });
-});
-
-describe('proposalFailure', () => {
-  it("tells the database's refusals apart", () => {
-    expect(proposalFailure({ code: 'BB035' })).toBe('changed');
-    expect(proposalFailure({ code: 'BB036' })).toBe('outOfDate');
-    expect(proposalFailure({ code: 'P0002' })).toBe('outOfDate');
-    expect(proposalFailure({ code: 'BB037' })).toBe('underFloor');
-    expect(proposalFailure(new Error('Network request failed'))).toBe('failed');
   });
 });
 

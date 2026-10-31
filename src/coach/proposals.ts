@@ -17,6 +17,7 @@ import { reloadDay } from '@/nutrition/entries';
 import { reloadTargets } from '@/nutrition/targets';
 import { reloadPlan } from '@/workouts/workouts';
 
+import { cardFailure, cardStatesKey, toolResultField } from './cards';
 import type { ChatMessage } from './use-chat';
 
 export const PROPOSALS_KEY = ['coach-proposals'];
@@ -40,28 +41,6 @@ export function isShownProposal(card: { kind?: unknown; id?: unknown }): card is
  */
 export type ProposalState = { status: ProposalStatus; expired: boolean };
 
-/**
- * Why a decision, or adding or undoing a meal card, was refused: what it changes changed since
- * (BB035), it is out of date or decided already (BB036), or gone (P0002), the targets are now
- * under the calorie floor (BB037), a day it changes can no longer be logged (BB020), or the
- * request failed.
- */
-export type ProposalFailure = 'changed' | 'outOfDate' | 'underFloor' | 'closedDay' | 'failed';
-
-const FAILURES: Record<string, ProposalFailure> = {
-  BB020: 'closedDay',
-  BB035: 'changed',
-  BB036: 'outOfDate',
-  BB037: 'underFloor',
-  P0002: 'outOfDate',
-};
-
-/** What a refused decision means for the card. */
-export function proposalFailure(error: unknown): ProposalFailure {
-  const code = (error as { code?: unknown } | null)?.code;
-  return (typeof code === 'string' && FAILURES[code]) || 'failed';
-}
-
 /** The ids of the proposals among `messages`, as `useProposalStates` loads them. */
 export function proposalIds(messages: ChatMessage[]): number[] {
   return messages.flatMap((message) => message.proposals?.map((card) => card.id) ?? []);
@@ -69,12 +48,7 @@ export function proposalIds(messages: ChatMessage[]): number[] {
 
 /** The card a stored part of Bite's message keeps, when it is a proposal's tool result. */
 function cardOf(part: Json): ShownProposal | undefined {
-  if (!part || typeof part !== 'object' || Array.isArray(part) || part.type !== 'toolResult') {
-    return undefined;
-  }
-  const result = part.result;
-  const proposal =
-    result && typeof result === 'object' && !Array.isArray(result) ? result.proposal : undefined;
+  const proposal = toolResultField(part, 'proposal');
   if (!proposal || typeof proposal !== 'object' || Array.isArray(proposal)) {
     return undefined;
   }
@@ -104,16 +78,13 @@ function statesOf(rows: StateRow[]): Map<number, ProposalState> {
   );
 }
 
-/** The query key of the states of the proposals `ids`. */
-const statesKey = (ids: number[]) => [...PROPOSALS_KEY, [...ids].sort((a, b) => a - b)];
-
 /**
  * Where the proposals `ids` stand, by id. The last states stay while new ones load, as when
  * Bite proposes again, so that the cards on the screen keep theirs.
  */
 export function useProposalStates(ids: number[]) {
   return useQuery({
-    queryKey: statesKey(ids),
+    queryKey: cardStatesKey(PROPOSALS_KEY, ids),
     enabled: ids.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async () => {
@@ -160,7 +131,7 @@ export function useDecideProposal(card: ShownProposal) {
     },
     onError: (error) => {
       // Decided elsewhere, or gone: the card shows where it stands now.
-      if (proposalFailure(error) === 'outOfDate') {
+      if (cardFailure(error) === 'outOfDate') {
         void queryClient.invalidateQueries({ queryKey: PROPOSALS_KEY });
       }
     },
@@ -178,8 +149,12 @@ function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
     case 'targets':
       return reloadTargets(queryClient);
     case 'food_log': {
-      const days = new Set(card.changes.flatMap(({ from, to }) => [from.day, to?.day ?? from.day]));
-      return Promise.all([...days].map((day) => reloadDay(queryClient, day)));
+      return Promise.all(foodLogDays(card).map((day) => reloadDay(queryClient, day)));
     }
   }
+}
+
+/** The days a food log proposal moves entries from or to, each once, in order. */
+export function foodLogDays(card: Extract<ShownProposal, { kind: 'food_log' }>): string[] {
+  return [...new Set(card.changes.flatMap(({ from, to }) => [from.day, to?.day ?? from.day]))];
 }

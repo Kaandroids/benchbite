@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { reloadDay } from '@/nutrition/entries';
 import { reloadFoods } from '@/nutrition/quick-foods';
 
-import { proposalFailure } from './proposals';
+import { cardFailure, cardStatesKey, toolResultField } from './cards';
 import type { ChatMessage } from './use-chat';
 
 export type { MealCard };
@@ -39,12 +39,7 @@ function isMealCard(card: unknown): card is MealCard {
 
 /** The card a stored part of Bite's message keeps, when it is a meal card's tool result. */
 function cardOf(part: Json): MealCard | undefined {
-  if (!part || typeof part !== 'object' || Array.isArray(part) || part.type !== 'toolResult') {
-    return undefined;
-  }
-  const result = part.result;
-  const card =
-    result && typeof result === 'object' && !Array.isArray(result) ? result.mealCard : undefined;
+  const card = toolResultField(part, 'mealCard');
   return isMealCard(card) ? card : undefined;
 }
 
@@ -65,16 +60,13 @@ function statesOf(rows: StateRow[]): Map<number, MealCardState> {
   return new Map(rows.map((row) => [row.id, { status: row.status, kcal: row.kcal }]));
 }
 
-/** The query key of the states of the cards `ids`. */
-const statesKey = (ids: number[]) => [...MEAL_CARDS_KEY, [...ids].sort((a, b) => a - b)];
-
 /**
  * Where the meal cards `ids` stand, by id, read in one request. The last states stay while new
  * ones load, as when Bite makes another card, so that the cards on the screen keep theirs.
  */
 export function useMealCardStates(ids: number[]) {
   return useQuery({
-    queryKey: statesKey(ids),
+    queryKey: cardStatesKey(MEAL_CARDS_KEY, ids),
     enabled: ids.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async () => {
@@ -133,7 +125,7 @@ export function useMealCardAction(card: MealCard) {
     },
     onError: (error) => {
       // Added or undone elsewhere, or gone: the card shows where it stands now.
-      if (proposalFailure(error) === 'outOfDate') {
+      if (cardFailure(error) === 'outOfDate') {
         void queryClient.invalidateQueries({ queryKey: MEAL_CARDS_KEY });
       }
     },

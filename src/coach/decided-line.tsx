@@ -8,7 +8,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { radii, spacing, useTheme, type ColorTokens } from '@/theme';
 
-import type { ProposalFailure } from './proposals';
+import type { CardFailure } from './cards';
 
 /**
  * A decided card, folded into a line (boards 5, 10 and 11b): what became of it, a short summary
@@ -55,7 +55,7 @@ export function DecidedLine({
 }
 
 /** Why a card could not be decided, added or undone. */
-export function CardRefusal({ failure }: { failure: ProposalFailure }) {
+export function CardRefusal({ failure }: { failure: CardFailure }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   return (
