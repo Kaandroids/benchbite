@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 
 import {
+  isShownProposal,
   messageProposals,
   proposalFailure,
   useDecideProposal,
@@ -52,6 +53,24 @@ describe('messageProposals', () => {
     expect(
       messageProposals([{ type: 'toolResult', name: 'x', result: { proposal: { id: 'x' } } }]),
     ).toEqual([]);
+  });
+
+  it('leaves out food log proposals, which have no card yet', () => {
+    const foodLog: ProposalCard = {
+      kind: 'food_log',
+      id: 9,
+      changes: [
+        { food: 'Pizza', from: { day: '2026-10-30', meal: 'snack', grams: 50, kcal: 268 } },
+      ],
+    };
+    expect(isShownProposal(foodLog)).toBe(false);
+    expect(isShownProposal(TARGETS)).toBe(true);
+    expect(
+      messageProposals([
+        { type: 'toolResult', name: 'propose_food_log_change', result: { proposal: foodLog } },
+        { type: 'toolResult', name: 'propose_targets_change', result: { proposal: TARGETS } },
+      ]),
+    ).toEqual([TARGETS]);
   });
 });
 

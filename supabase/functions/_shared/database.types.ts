@@ -1733,6 +1733,7 @@ export type Database = {
         };
         Returns: undefined;
       };
+      apply_food_log_change: { Args: { change: Json }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       calculate_nutrition_targets: {
@@ -1784,6 +1785,7 @@ export type Database = {
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
+      check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
@@ -1949,6 +1951,9 @@ export type Database = {
         };
         Returns: Record<string, unknown>;
       };
+      food_log_change: { Args: { change: Json }; Returns: Json };
+      food_log_entries: { Args: { entry_ids: number[] }; Returns: Json };
+      food_log_entry_ids: { Args: { change: Json }; Returns: number[] };
       food_name_key: { Args: { name: string }; Returns: string };
       frequent_foods: {
         Args: { for_meal: Database['public']['Enums']['meal']; language: string };
@@ -1972,6 +1977,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_planned_by_weekdays: {
         Args: {
           day: string;
@@ -2234,6 +2240,7 @@ export type Database = {
         Args: { swaps: Json; thread_id: number; today: string; workout_id: number };
         Returns: number;
       };
+      put_back_meal_entry: { Args: { removed: Json }; Returns: undefined };
       recalculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -2433,6 +2440,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_coach_change: {
+        Args: {
+          before: Json;
+          change: Json;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          today: string;
+        };
+        Returns: undefined;
+      };
       undo_coach_meal_card: {
         Args: { card_id: number };
         Returns: {
@@ -2458,6 +2474,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_food_log_change: { Args: { before: Json; change: Json }; Returns: undefined };
       undo_meal_estimate: { Args: { entry_ids: number[]; food_ids: number[] }; Returns: undefined };
       use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       use_workout_alternative: {
@@ -2490,7 +2507,7 @@ export type Database = {
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
       coach_meal_card_status: 'pending' | 'logged' | 'undone';
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
-      coach_proposal_kind: 'workout' | 'targets';
+      coach_proposal_kind: 'workout' | 'targets' | 'food_log';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
       coach_role: 'user' | 'bite';
       equipment:
@@ -2746,7 +2763,7 @@ export const Constants = {
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
       coach_meal_card_status: ['pending', 'logged', 'undone'],
       coach_proposal_decision: ['apply', 'keep', 'undo'],
-      coach_proposal_kind: ['workout', 'targets'],
+      coach_proposal_kind: ['workout', 'targets', 'food_log'],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
       coach_role: ['user', 'bite'],
       equipment: [

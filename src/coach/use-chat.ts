@@ -1,4 +1,3 @@
-import type { ProposalCard } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +8,7 @@ import { deviceToday } from '@/i18n/dates';
 import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
+import { isShownProposal, type ShownProposal } from './proposals';
 import { THREADS_KEY } from './threads';
 
 /** How soon after a stop a message refused as one at a time is sent again, and when. */
@@ -43,7 +43,7 @@ export type ChatMessage = {
   /** When it was written, which separates the days of a conversation. */
   createdAt?: Date;
   /** The changes Bite proposed with it (ADR 0058). */
-  proposals?: ProposalCard[];
+  proposals?: ShownProposal[];
 };
 
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
@@ -128,11 +128,15 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
         case 'text':
           setStatus('answering');
           return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
-        case 'proposal':
+        case 'proposal': {
+          const { proposal } = event;
+          // One of a kind the chat has no card for yet waits in the message (ADR 0068).
+          if (!isShownProposal(proposal)) return;
           return updateBite(biteId, (m) => ({
             ...m,
-            proposals: [...(m.proposals ?? []), event.proposal],
+            proposals: [...(m.proposals ?? []), proposal],
           }));
+        }
       }
     };
 
