@@ -1803,6 +1803,7 @@ export type Database = {
           responses: number;
         }[];
       };
+      coach_message_photos: { Args: { content: Json }; Returns: number };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
@@ -2156,9 +2157,11 @@ export type Database = {
         Args: { before_at?: string; before_id?: number; page_size?: number; search?: string };
         Returns: {
           expression: Database['public']['Enums']['bite_expression'];
+          first_photos: number;
           id: number;
           last_message: string;
           last_message_at: string;
+          last_photos: number;
           title: string;
         }[];
       };

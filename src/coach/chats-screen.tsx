@@ -31,6 +31,7 @@ import {
   useDeleteThread,
   useRenameThread,
   useThreads,
+  useThreadText,
   type ThreadSummary,
 } from './threads';
 import { useDeferredDelete } from './use-deferred-delete';
@@ -190,11 +191,13 @@ function ThreadRow({ thread, today, first, last, onOpen, onOptions }: ThreadRowP
       : kind === 'weekday'
         ? weekday(isoWeekday(thread.lastMessageAt))
         : date(thread.lastMessageAt);
-  const title = thread.title ?? t('bite.chats.untitled');
+  const text = useThreadText();
+  const title = text.name(thread);
+  const line = text.line(thread);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${time}${thread.lastMessage ? `, ${thread.lastMessage}` : ''}`}
+      accessibilityLabel={`${title}, ${time}${line ? `, ${line}` : ''}`}
       accessibilityHint={t('bite.chats.optionsHint')}
       onPress={onOpen}
       onLongPress={onOptions}
@@ -227,9 +230,9 @@ function ThreadRow({ thread, today, first, last, onOpen, onOptions }: ThreadRowP
             {time}
           </Text>
         </View>
-        {thread.lastMessage ? (
+        {line ? (
           <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {thread.lastMessage}
+            {line}
           </Text>
         ) : null}
       </View>
@@ -265,6 +268,7 @@ type OptionsSheetProps = {
 /** What can be done with a chat: rename it, or delete it, and what deleting keeps. */
 function OptionsSheet({ thread, onClose, onRename, onDelete }: OptionsSheetProps) {
   const { t } = useTranslation();
+  const threadText = useThreadText();
   const { colors, radii, spacing } = useTheme();
   const option = (icon: 'edit' | 'trash', label: string, onPress: () => void) => (
     <Pressable
@@ -291,7 +295,7 @@ function OptionsSheet({ thread, onClose, onRename, onDelete }: OptionsSheetProps
       <View style={[styles.row, { gap: spacing.md }]}>
         <BiteAvatar size={40} expression={thread.expression ?? 'neutral'} />
         <Text variant="headline" numberOfLines={1} style={styles.flex}>
-          {thread.title ?? t('bite.chats.untitled')}
+          {threadText.name(thread)}
         </Text>
       </View>
       <View style={{ gap: spacing.sm }}>

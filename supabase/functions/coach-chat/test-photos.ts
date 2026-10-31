@@ -35,8 +35,3 @@ export const jpeg = (...parts: number[][]) => new Uint8Array(parts.flat());
 
 /** A JPEG of 640 by 480 without Exif data. */
 export const PLAIN_JPEG = jpeg(SOI, JFIF, TABLES, FRAME, SCAN, EOI);
-
-/** Bytes as base64, as the app sends them. */
-export function base64(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes));
-}

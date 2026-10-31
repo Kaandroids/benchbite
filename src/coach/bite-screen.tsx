@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -11,12 +12,13 @@ import { TextLink } from '@/components/ui/text-link';
 import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useTheme } from '@/theme';
 
-import { ChatComposer } from './chat-composer';
+import { ChatComposer, type RefusedDraft } from './chat-composer';
+import { usePhotoUrls } from './chat-photos';
 import { ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
-import { useThreadMessages } from './threads';
+import { firstPhotos, useThreadMessages, useThreadText } from './threads';
 import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
@@ -32,6 +34,7 @@ export function BiteScreen() {
   const { fromChats } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
+  const threadText = useThreadText();
   // A saved chat opens on its messages as they are now, never on ones kept from before.
   if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
@@ -46,7 +49,12 @@ export function BiteScreen() {
     <Chat
       key={key}
       fromChats={fromChats}
-      title={saved.data.title ?? undefined}
+      title={
+        threadText.title({
+          title: saved.data.title,
+          firstPhotos: firstPhotos(saved.data.messages),
+        }) ?? undefined
+      }
       start={{ threadId: threadId!, messages: saved.data.messages }}
     />
   ) : (
@@ -77,10 +85,22 @@ type ChatProps = {
 function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const chat = useChat(start);
+  // A message whose photos were refused comes back to the composer, to change. The composer
+  // keeps what the user writes, so that typing never renders the chat.
+  const [refused, setRefused] = useState<RefusedDraft>();
+  const chat = useChat(start, (draft, problem) => setRefused({ draft, problem }));
   // Where the proposals in the chat stand, saved and new, loaded here once for all their cards.
   const proposalsOnScreen = proposalIds(chat.messages);
   const proposals = useProposalStates(proposalsOnScreen);
+  // The photos the chat kept, read back once for all of them when it opens. Only those it opened
+  // with: its messages are read again after each one sent, whose photos show from their data, and
+  // a new list would ask for every address again.
+  const [keptPhotos] = useState(() =>
+    (start?.messages ?? []).flatMap((message) =>
+      (message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
+    ),
+  );
+  const photoUrls = usePhotoUrls(start?.threadId, keptPhotos);
   const access = useAiAccess();
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
@@ -127,6 +147,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               messages={chat.messages}
               proposals={proposals.data}
               loadingProposals={proposals.isFetching}
+              photoUrls={photoUrls.data}
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
@@ -152,7 +173,11 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
           {refusal ? (
             <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
           ) : (
-            <ChatComposer onSend={following(chat.send)} onStop={busy ? chat.stop : undefined} />
+            <ChatComposer
+              onSend={following((draft) => chat.send(draft.text, draft.photos))}
+              onStop={busy ? chat.stop : undefined}
+              refused={refused}
+            />
           )}
         </View>
       </KeyboardAvoiding>

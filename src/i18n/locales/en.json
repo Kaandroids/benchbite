@@ -12,6 +12,11 @@
     "discard": "Discard",
     "done": "Done"
   },
+  "photoSheet": {
+    "take": "Take a photo",
+    "choose": "Choose from library",
+    "cancel": "Cancel"
+  },
   "sessionError": {
     "title": "Couldn’t connect",
     "message": "Benchbite needs an internet connection the first time it starts. Check your connection and try again."
@@ -351,8 +356,6 @@
       "camera": "Log a meal from a photo",
       "sheetTitle": "Log from a photo",
       "sheetHint": "Up to 3 photos of the same meal",
-      "take": "Take a photo",
-      "choose": "Choose from library",
       "cancel": "Cancel",
       "title": {
         "breakfast": "Breakfast from a photo",
@@ -1830,6 +1833,27 @@
     },
     "continue": "Continue",
     "allChats": "All chats",
+    "photos": {
+      "add": "Add a photo",
+      "addMore": "Add another photo",
+      "sheetHint": "Up to 3 photos. A meal, a menu, a label: Bite looks at what you send.",
+      "photo": "Photo {{number}}",
+      "remove": "Remove photo {{number}}",
+      "preparing": "Preparing the photo",
+      "count_one": "Photo",
+      "count_other": "{{count}} photos",
+      "looking_one": "Looking at your photo",
+      "looking_other": "Looking at your photos",
+      "viewer": "Photo, large",
+      "close": "Close photo",
+      "problems": {
+        "photo_not_prepared": "This photo couldn't be read. Try another one.",
+        "photos_too_large": "These photos are too large to send together. Remove one and try again.",
+        "photo_not_jpeg": "Photo {{number}} couldn't be read. Remove it and try another one.",
+        "photo_has_exif": "Photo {{number}} still has data on where or when it was taken. Remove it and try another one.",
+        "too_many_photos": "Up to 3 photos fit in a message. Remove one to send it."
+      }
+    },
     "proposal": {
       "fromToday": "From today",
       "targetsTitle": "Daily targets",

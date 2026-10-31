@@ -9,12 +9,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
+import { messagePhotos } from './chat-photos';
 import { messageProposals } from './proposals';
 import type { ChatMessage } from './use-chat';
 
@@ -33,6 +35,13 @@ export type ThreadSummary = {
   lastMessageAt: Date;
   /** The last message's text, cut for a line; null for one without text. */
   lastMessage: string | null;
+  /** How many photos the last message holds, which stand for it without text. */
+  lastPhotos: number;
+  /**
+   * How many photos the user's first message holds, when it has no text: such a thread has no
+   * name of its own, and is called by its photos.
+   */
+  firstPhotos: number;
   /** The face of Bite's last answer, if it answered. */
   expression: AnswerExpression | null;
 };
@@ -48,6 +57,8 @@ function toSummary(
     title: row.title,
     lastMessageAt: new Date(row.last_message_at),
     lastMessage: row.last_message,
+    lastPhotos: row.last_photos,
+    firstPhotos: row.first_photos,
     expression: row.expression,
   };
 }
@@ -82,10 +93,10 @@ export function useThreads(search: string) {
 
 /**
  * The text of a stored message: its text parts, in order, one after the other, as the history
- * reads them too (coach_message_text() in the chat_history migration). A message's photos are not
- * read here: for now only the chat function reads them (toMessage() in
- * supabase/functions/coach-chat/handler.ts), so a message of photos alone has no text here. How
- * such a message shows in the chat and the history is decided with the app's photo screens.
+ * reads them too (coach_message_text() in the chat_history migration). A message's photos are read
+ * apart, by messagePhotos(): a message of photos alone has no text here, and shows its photos in
+ * the chat, and "Photo" or "2 photos" where a line of text stands for it (useThreadText()), as
+ * the history counts them (coach_message_photos()).
  */
 export function messageText(content: Json): string {
   const parts = Array.isArray(content) ? content : [];
@@ -100,6 +111,34 @@ export function messageText(content: Json): string {
         : [],
     )
     .join('\n');
+}
+
+/**
+ * How a thread is named and its last message said in a line, in the history and wherever a chat
+ * is offered: a message of photos alone, which has no text, by its photos, "Photo" or "2 photos".
+ */
+export function useThreadText() {
+  const { t } = useTranslation();
+  const photos = (count: number) => t('bite.photos.count', { count });
+  /** A thread's own name, or its photos' for one begun with photos alone; null for neither. */
+  const title = (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
+    thread.title ?? (thread.firstPhotos > 0 ? photos(thread.firstPhotos) : null);
+  return {
+    title,
+    name: (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
+      title(thread) ?? t('bite.chats.untitled'),
+    line: (thread: Pick<ThreadSummary, 'lastMessage' | 'lastPhotos'>) =>
+      thread.lastMessage || (thread.lastPhotos > 0 ? photos(thread.lastPhotos) : null),
+  };
+}
+
+/**
+ * How many photos the user's first message holds when it has no text, as `my_coach_threads()`
+ * counts them (`first_photos`), for a chat read with its messages: such a chat is called by them.
+ */
+export function firstPhotos(messages: ChatMessage[]): number {
+  const first = messages.find((message) => message.role === 'user');
+  return first && !first.text ? (first.photos?.length ?? 0) : 0;
 }
 
 /**
@@ -149,10 +188,12 @@ type StoredMessage = Pick<
 export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
   return rows.map((row, index) => {
     const proposals = row.role === 'bite' ? messageProposals(row.content) : [];
+    const photos = row.role === 'user' ? messagePhotos(row.content) : [];
     return {
       id: `stored-${row.id}`,
       role: row.role,
       text: messageText(row.content),
+      ...(photos.length > 0 && { photos }),
       expression: row.expression ?? undefined,
       cut: cutOf(row.interrupted),
       createdAt: new Date(row.created_at),

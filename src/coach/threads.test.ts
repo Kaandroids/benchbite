@@ -1,4 +1,4 @@
-import { messageText, storedMessages } from './threads';
+import { firstPhotos, messageText, storedMessages } from './threads';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -55,6 +55,26 @@ describe('storedMessages', () => {
     expect(messages.map((message) => message.unanswered)).toEqual([undefined, undefined, true]);
   });
 
+  it("reads the user's photos back, with or without text", () => {
+    const messages = storedMessages([
+      {
+        ...row(1, 'user'),
+        content: [
+          { type: 'image', path: 'u/1/a.jpg', mimeType: 'image/jpeg' },
+          { type: 'image', path: 'u/1/b.jpg', mimeType: 'image/jpeg' },
+        ],
+      },
+      row(2, 'bite'),
+      row(3, 'user'),
+    ]);
+
+    expect(messages[0]).toMatchObject({
+      text: '',
+      photos: [{ path: 'u/1/a.jpg' }, { path: 'u/1/b.jpg' }],
+    });
+    expect(messages[2]?.photos).toBeUndefined();
+  });
+
   it('reads the changes Bite proposed back into its answer', () => {
     const proposal = {
       kind: 'targets',
@@ -75,4 +95,13 @@ describe('storedMessages', () => {
     expect(messages[0]?.proposals).toBeUndefined();
     expect(messages[1]).toMatchObject({ text: '', proposals: [proposal] });
   });
+});
+
+it('counts the photos of a chat begun with photos alone, as the history does', () => {
+  const photos = [{ path: 'u/1/a.jpg' }, { path: 'u/1/b.jpg' }];
+  const bite = { id: 'b', role: 'bite' as const, text: 'Two pizzas.' };
+  expect(firstPhotos([{ id: 'u', role: 'user', text: '', photos }, bite])).toBe(2);
+  expect(firstPhotos([{ id: 'u', role: 'user', text: 'These?', photos }, bite])).toBe(0);
+  expect(firstPhotos([{ id: 'u', role: 'user', text: '' }])).toBe(0);
+  expect(firstPhotos([])).toBe(0);
 });

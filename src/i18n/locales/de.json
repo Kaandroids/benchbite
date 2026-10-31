@@ -12,6 +12,11 @@
     "discard": "Verwerfen",
     "done": "Fertig"
   },
+  "photoSheet": {
+    "take": "Foto aufnehmen",
+    "choose": "Aus der Mediathek wählen",
+    "cancel": "Abbrechen"
+  },
   "sessionError": {
     "title": "Keine Verbindung",
     "message": "Benchbite braucht beim ersten Start eine Internetverbindung. Prüfe deine Verbindung und versuche es erneut."
@@ -351,8 +356,6 @@
       "camera": "Mahlzeit per Foto eintragen",
       "sheetTitle": "Per Foto eintragen",
       "sheetHint": "Bis zu 3 Fotos derselben Mahlzeit",
-      "take": "Foto aufnehmen",
-      "choose": "Aus der Mediathek wählen",
       "cancel": "Abbrechen",
       "title": {
         "breakfast": "Frühstück per Foto",
@@ -1830,6 +1833,27 @@
     },
     "continue": "Weitermachen",
     "allChats": "Alle Chats",
+    "photos": {
+      "add": "Foto hinzufügen",
+      "addMore": "Weiteres Foto hinzufügen",
+      "sheetHint": "Bis zu 3 Fotos. Ein Gericht, eine Speisekarte, ein Etikett: Bite schaut sich an, was du schickst.",
+      "photo": "Foto {{number}}",
+      "remove": "Foto {{number}} entfernen",
+      "preparing": "Foto wird vorbereitet",
+      "count_one": "Foto",
+      "count_other": "{{count}} Fotos",
+      "looking_one": "Schaue mir dein Foto an",
+      "looking_other": "Schaue mir deine Fotos an",
+      "viewer": "Foto, groß",
+      "close": "Foto schließen",
+      "problems": {
+        "photo_not_prepared": "Dieses Foto ließ sich nicht lesen. Versuch ein anderes.",
+        "photos_too_large": "Diese Fotos sind zusammen zu groß zum Senden. Entferne eines und versuch es noch mal.",
+        "photo_not_jpeg": "Foto {{number}} ließ sich nicht lesen. Entferne es und versuch ein anderes.",
+        "photo_has_exif": "Foto {{number}} enthält noch Daten dazu, wo oder wann es aufgenommen wurde. Entferne es und versuch ein anderes.",
+        "too_many_photos": "In eine Nachricht passen bis zu 3 Fotos. Entferne eines, um sie zu senden."
+      }
+    },
     "proposal": {
       "fromToday": "Ab heute",
       "targetsTitle": "Tagesziele",

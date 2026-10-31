@@ -581,6 +581,8 @@ describe('opened from the tab bar', () => {
     title: 'Knee pain on squats',
     lastMessageAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000),
     lastMessage: 'Try leg press.',
+    lastPhotos: 0,
+    firstPhotos: 0,
     expression: 'neutral' as const,
   });
   afterEach(() => {

@@ -6,97 +6,18 @@ import {
   type EstimateMeal,
   type EstimateReason,
   type EstimateResponse,
-  type MealPhoto,
   type Per100,
   type PreviousItem,
 } from '@shared/meal/estimate';
-import { MAX_PHOTOS } from '@shared/photos';
-import { File, Paths } from 'expo-file-system';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import {
-  launchCameraAsync,
-  launchImageLibraryAsync,
-  requestCameraPermissionsAsync,
-} from 'expo-image-picker';
 
 import { REFUSALS, type Refusal } from '@/ai/access';
 import { oneOf } from '@/lib/one-of';
+import { preparePhoto } from '@/lib/photos';
 import { functionHeaders, functionUrl } from '@/lib/supabase';
 
 import type { Totals } from './meals';
 
 export type { EstimateItem, EstimateResponse };
-
-/**
- * The longest side of a photo as it is sent, and its JPEG quality: about 100 to 200 KB, far
- * below estimate-meal's 1.5 MB per photo, and enough to tell foods and portions apart.
- */
-const PHOTO_SIDE = 1024;
-const PHOTO_QUALITY = 0.7;
-
-/** Where the photos of a meal come from. */
-export type PhotoSource = 'camera' | 'library';
-
-/**
- * Takes a photo with the camera, or chooses up to `MAX_PHOTOS` from the library. Resolves to
- * their local URIs, or none when cancelled or the camera is not allowed.
- */
-export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
-  if (source === 'camera') {
-    const permission = await requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      return [];
-    }
-  }
-  const result =
-    source === 'camera'
-      ? await launchCameraAsync({ mediaTypes: ['images'] })
-      : await launchImageLibraryAsync({
-          mediaTypes: ['images'],
-          allowsMultipleSelection: true,
-          selectionLimit: MAX_PHOTOS,
-        });
-  return result.canceled ? [] : result.assets.slice(0, MAX_PHOTOS).map(({ uri }) => uri);
-}
-
-/**
- * A local photo as a JPEG at most `PHOTO_SIDE` on its longest side, as base64. The scaled copy is
- * deleted once it is read.
- */
-async function preparePhoto(uri: string): Promise<MealPhoto> {
-  // Decoded at the smaller size already, which keeps a large camera photo out of memory.
-  const image = await ImageManipulator.manipulate(uri, {
-    maxWidth: PHOTO_SIDE,
-    maxHeight: PHOTO_SIDE,
-  }).renderAsync();
-  const saved = await image.saveAsync({
-    format: SaveFormat.JPEG,
-    compress: PHOTO_QUALITY,
-    base64: true,
-  });
-  discardPhotos([saved.uri]);
-  if (!saved.base64) {
-    throw new Error('The scaled photo came without its data');
-  }
-  return { mimeType: 'image/jpeg', data: saved.base64 };
-}
-
-/**
- * Deletes photos of a meal the app keeps in its cache folder: the camera's, the copies the picker
- * makes and the scaled ones. A photo anywhere else, or one already gone, is left alone.
- */
-export function discardPhotos(uris: string[]) {
-  // Deleting is tidying up: it never fails what it follows.
-  try {
-    const cache = Paths.cache.uri;
-    for (const uri of uris.filter((photo) => photo.startsWith(cache))) {
-      const file = new File(uri);
-      if (file.exists) file.delete();
-    }
-  } catch (error) {
-    console.warn('Could not delete the meal photos', error);
-  }
-}
 
 /**
  * Why there is no estimate, as estimate-meal answered, or `unavailable` when it did not; with the

@@ -1,6 +1,6 @@
-import { Fragment, memo, useEffect } from 'react';
+import { Fragment, memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -19,9 +19,11 @@ import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { type MessagePhoto, photoDataUri } from './chat-photos';
+import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
-import type { ChatMessage, ChatStatus } from './use-chat';
+import { canSendAgain, type ChatMessage, type ChatStatus } from './use-chat';
 import { useMomentFormat } from './use-moment-format';
 
 /** Bite's face beside its messages. */
@@ -43,12 +45,15 @@ type ChatMessagesProps = {
   proposals?: Map<number, ProposalState>;
   /** Whether where they stand is loading. */
   loadingProposals: boolean;
+  /** The addresses of the chat's kept photos, by path, once read. */
+  photoUrls?: Map<string, string>;
 };
 
 /**
- * The conversation: the user's messages in bubbles, Bite's as text after its face, with the
- * changes it proposed under it. Bite's last message thinks while it waits, with what it is looking
- * up, and talks while its text comes (boards 2 and 3).
+ * The conversation: the user's messages in bubbles, their photos above them, Bite's as text after
+ * its face, with the changes it proposed under it. Bite's last message thinks while it waits, with
+ * what it is looking up or at, and talks while its text comes (boards 2, 3 and 8). A photo opens
+ * large when tapped.
  */
 export function ChatMessages({
   messages,
@@ -57,8 +62,10 @@ export function ChatMessages({
   onAskAgain,
   proposals,
   loadingProposals,
+  photoUrls,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
+  const [viewing, setViewing] = useState<string>();
   const moment = useMomentFormat();
   // Bite thinks on under a change it proposed before a word.
   const proposing = !!messages.at(-1)?.proposals?.length;
@@ -83,12 +90,15 @@ export function ChatMessages({
             ) : null}
             <MessageRow
               message={message}
+              before={messages[index - 1]}
               last={index === messages.length - 1}
               status={status}
               tool={tool}
               onAskAgain={onAskAgain}
               proposals={proposals}
               loadingProposals={loadingProposals}
+              photoUrls={photoUrls}
+              onOpenPhoto={setViewing}
             />
           </Fragment>
         );
@@ -97,34 +107,49 @@ export function ChatMessages({
       {(status === 'answering' && tool) || (status === 'thinking' && proposing) ? (
         <ToolLine tool={tool} indent />
       ) : null}
+      {viewing ? <PhotoViewer uri={viewing} onClose={() => setViewing(undefined)} /> : null}
     </View>
   );
 }
 
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'proposals' | 'loadingProposals'
+  'status' | 'tool' | 'onAskAgain' | 'proposals' | 'loadingProposals' | 'photoUrls'
 > & {
   message: ChatMessage;
+  /** The message before, the question Bite's last one answers. */
+  before?: ChatMessage;
   last: boolean;
+  onOpenPhoto: (uri: string) => void;
 };
 
 /** A message: the user's, Bite's, or Bite's last one thinking while it waits. */
 function MessageRow({
   message,
+  before,
   last,
   status,
   tool,
   onAskAgain,
   proposals,
   loadingProposals,
+  photoUrls,
+  onOpenPhoto,
 }: MessageRowProps) {
   if (message.role === 'user') {
-    return <UserMessage message={message} onAskAgain={onAskAgain} />;
+    return (
+      <UserMessage
+        message={message}
+        onAskAgain={onAskAgain}
+        // Only a message with photos kept gets their addresses, so the others do not render again.
+        photoUrls={message.photos?.some((photo) => photo.path) ? photoUrls : undefined}
+        onOpenPhoto={onOpenPhoto}
+      />
+    );
   }
   const proposed = !!message.proposals?.length;
   if (last && status === 'thinking' && !message.text && !proposed) {
-    return <Thinking tool={tool} />;
+    return <Thinking tool={tool} photos={before?.photos?.length ?? 0} />;
   }
   // Only a message with proposals gets where they stand, so that the others render again only
   // when they change, not when a proposal is decided.
@@ -142,41 +167,49 @@ function MessageRow({
 const UserMessage = memo(function UserMessage({
   message,
   onAskAgain,
+  photoUrls,
+  onOpenPhoto,
 }: {
   message: ChatMessage;
   onAskAgain?: (question: ChatMessage) => void;
+  photoUrls?: Map<string, string>;
+  onOpenPhoto: (uri: string) => void;
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
+  // A question with photos kept is asked again only with them, which only the chat has.
+  const askAgain = onAskAgain && canSendAgain(message) ? onAskAgain : undefined;
   return (
     <View style={[styles.user, { gap: spacing.xs }]}>
-      <View
-        style={[
-          styles.bubble,
-          {
-            backgroundColor: colors.userBubble,
-            paddingHorizontal: spacing.md + 2,
-            paddingVertical: spacing.sm + 2,
-          },
-        ]}
-      >
-        <Text>{message.text}</Text>
-      </View>
+      {message.photos?.length ? (
+        <MessagePhotos photos={message.photos} urls={photoUrls} onOpen={onOpenPhoto} />
+      ) : null}
+      {/* A message may be photos alone. */}
+      {message.text ? (
+        <View
+          style={[
+            styles.bubble,
+            {
+              backgroundColor: colors.userBubble,
+              paddingHorizontal: spacing.md + 2,
+              paddingVertical: spacing.sm + 2,
+            },
+          ]}
+        >
+          <Text>{message.text}</Text>
+        </View>
+      ) : null}
       {message.unanswered ? (
         <View style={[styles.row, { gap: spacing.xs }]}>
           <Text variant="caption" color="textMuted">
             {t('bite.unanswered')}
           </Text>
-          {onAskAgain ? (
+          {askAgain ? (
             <>
               <Text variant="caption" color="textMuted" aria-hidden>
                 ·
               </Text>
-              <Pressable
-                accessibilityRole="button"
-                hitSlop={12}
-                onPress={() => onAskAgain(message)}
-              >
+              <Pressable accessibilityRole="button" hitSlop={12} onPress={() => askAgain(message)}>
                 <Text variant="captionStrong" color="primaryText">
                   {t('bite.askAgain')}
                 </Text>
@@ -250,22 +283,87 @@ const BiteMessage = memo(function BiteMessage({
   );
 });
 
-function Thinking({ tool }: { tool?: string }) {
-  const { spacing } = useTheme();
+/** A photo of a message alone, and each of more than one. */
+const PHOTO = 92;
+const PHOTO_SMALL = 64;
+
+/**
+ * The photos of the user's message, above its text: from the device as it is sent, and from the
+ * chat's kept photos once it is opened again, a quiet tile until each address is read.
+ */
+function MessagePhotos({
+  photos,
+  urls,
+  onOpen,
+}: {
+  photos: MessagePhoto[];
+  urls?: Map<string, string>;
+  onOpen: (uri: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const size = photos.length === 1 ? PHOTO : PHOTO_SMALL;
   return (
-    <View style={[styles.row, { gap: avatarGap(spacing) }]}>
-      <BiteAvatar size={AVATAR} state="thinking" />
-      <ToolLine tool={tool} />
+    <View style={styles.photos}>
+      {photos.map((photo, index) => {
+        const uri = photo.data !== undefined ? photoDataUri(photo.data) : urls?.get(photo.path);
+        const label = t('bite.photos.photo', { number: index + 1 });
+        return (
+          <Pressable
+            key={photo.path ?? index}
+            accessibilityRole="imagebutton"
+            accessibilityLabel={label}
+            disabled={!uri}
+            onPress={() => uri && onOpen(uri)}
+            style={[
+              styles.photo,
+              {
+                width: size,
+                height: size,
+                borderRadius: size === PHOTO ? radii.lg - 2 : radii.md,
+                backgroundColor: colors.track,
+              },
+            ]}
+          >
+            {uri ? <Image source={{ uri }} style={StyleSheet.absoluteFill} /> : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
-/** Bite's dots, and what it looks up, if it says; `indent` lines it up with Bite's messages. */
-function ToolLine({ tool, indent = false }: { tool?: string; indent?: boolean }) {
+function Thinking({ tool, photos }: { tool?: string; photos: number }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.row, { gap: avatarGap(spacing) }]}>
+      <BiteAvatar size={AVATAR} state="thinking" />
+      <ToolLine tool={tool} photos={photos} />
+    </View>
+  );
+}
+
+/**
+ * Bite's dots, and what it looks up, if it says, or else at the `photos` sent with the question;
+ * `indent` lines it up with Bite's messages.
+ */
+function ToolLine({
+  tool,
+  photos = 0,
+  indent = false,
+}: {
+  tool?: string;
+  photos?: number;
+  indent?: boolean;
+}) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const known = oneOf(COACH_TOOLS, tool);
-  const line = known ? t(`bite.tools.${known}`) : undefined;
+  const line = known
+    ? t(`bite.tools.${known}`)
+    : photos > 0
+      ? t('bite.photos.looking', { count: photos })
+      : undefined;
   return (
     <View
       style={[
@@ -350,6 +448,13 @@ const styles = StyleSheet.create({
   },
   proposal: {
     alignSelf: 'stretch',
+  },
+  photos: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  photo: {
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',

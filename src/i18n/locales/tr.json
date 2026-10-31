@@ -12,6 +12,11 @@
     "discard": "Sil",
     "done": "Bitti"
   },
+  "photoSheet": {
+    "take": "Fotoğraf çek",
+    "choose": "Galeriden seç",
+    "cancel": "Vazgeç"
+  },
   "sessionError": {
     "title": "Bağlanılamadı",
     "message": "Benchbite ilk açılışta internet bağlantısına ihtiyaç duyar. Bağlantını kontrol edip tekrar dene."
@@ -351,8 +356,6 @@
       "camera": "Fotoğraftan öğün ekle",
       "sheetTitle": "Fotoğraftan ekle",
       "sheetHint": "Aynı öğünün en fazla 3 fotoğrafı",
-      "take": "Fotoğraf çek",
-      "choose": "Galeriden seç",
       "cancel": "Vazgeç",
       "title": {
         "breakfast": "Fotoğraftan kahvaltı",
@@ -1830,6 +1833,27 @@
     },
     "continue": "Devam et",
     "allChats": "Tüm sohbetler",
+    "photos": {
+      "add": "Fotoğraf ekle",
+      "addMore": "Başka fotoğraf ekle",
+      "sheetHint": "En fazla 3 fotoğraf. Bir yemek, bir menü, bir etiket: Bite ne gönderirsen ona bakar.",
+      "photo": "Fotoğraf {{number}}",
+      "remove": "Fotoğraf {{number}} kaldır",
+      "preparing": "Fotoğraf hazırlanıyor",
+      "count_one": "Fotoğraf",
+      "count_other": "{{count}} fotoğraf",
+      "looking_one": "Fotoğrafına bakıyorum",
+      "looking_other": "Fotoğraflarına bakıyorum",
+      "viewer": "Fotoğraf, büyük",
+      "close": "Fotoğrafı kapat",
+      "problems": {
+        "photo_not_prepared": "Bu fotoğraf okunamadı. Başka bir tane dene.",
+        "photos_too_large": "Bu fotoğraflar birlikte gönderilemeyecek kadar büyük. Birini kaldırıp tekrar dene.",
+        "photo_not_jpeg": "Fotoğraf {{number}} okunamadı. Kaldırıp başka bir tane dene.",
+        "photo_has_exif": "Fotoğraf {{number}} hâlâ nerede veya ne zaman çekildiğine dair veri içeriyor. Kaldırıp başka bir tane dene.",
+        "too_many_photos": "Bir mesaja en fazla 3 fotoğraf sığar. Göndermek için birini kaldır."
+      }
+    },
     "proposal": {
       "fromToday": "Bugünden itibaren",
       "targetsTitle": "Günlük hedefler",

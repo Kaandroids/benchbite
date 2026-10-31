@@ -59,17 +59,20 @@ export type ChatRequest = {
 };
 
 /**
- * Why a photo is refused: it is not a JPEG, or it has Exif data, or any other metadata segment
- * (ADR 0065).
+ * Why a message's photos are refused before Bite is asked: too large together, or one of them is
+ * not a JPEG, or has Exif data or any other metadata segment (ADR 0065). The app tells each apart.
  */
-export type PhotoRefusal = 'photo_not_jpeg' | 'photo_has_exif';
+export const PHOTO_REFUSALS = ['photos_too_large', 'photo_not_jpeg', 'photo_has_exif'] as const;
+
+/** Why one photo is refused, which the refusal names by its index. */
+export type PhotoRefusal = Exclude<(typeof PHOTO_REFUSALS)[number], 'photos_too_large'>;
 
 /**
  * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather
  * than as events: `{ error, photo? }`, `photo` being the index of the photo refused.
  */
 export type ChatRefusal =
-  'invalid_request' | 'thread_not_found' | 'photos_too_large' | PhotoRefusal | 'unavailable';
+  'invalid_request' | 'thread_not_found' | (typeof PHOTO_REFUSALS)[number] | 'unavailable';
 
 /**
  * Why Bite gave no answer, or stopped short: the reasons of `ai_access()` and `start_ai_call()`,

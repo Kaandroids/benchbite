@@ -669,9 +669,9 @@ function isCard(part: Part): boolean {
 
 /**
  * An earlier message as Bite reads it: its text, a face before Bite's, as it wrote it, and a line
- * for the user's photos. Only this function reads the photos for now: the app (messageText() in
- * src/coach/threads.ts) and the history (coach_message_text() in the chat_history migration) read
- * the text parts alone, so a message of photos alone has no text there.
+ * for the user's photos. The app reads the photos apart from the text too, to show them
+ * (messagePhotos() in src/coach/chat-photos.ts), and the history counts them
+ * (coach_message_photos()), for a message of photos alone, which has no text.
  */
 function toMessage(
   row: Pick<

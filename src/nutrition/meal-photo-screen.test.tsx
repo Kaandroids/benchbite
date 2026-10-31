@@ -5,7 +5,9 @@ import { act, fireEvent, render, screen, within } from '@/test/render';
 
 import { useLogEstimate } from './entries';
 import { takeLoggedEstimate } from './meal-photo-handover';
-import { discardPhotos, EstimateFailure, estimateMeal, type EstimateItem } from './meal-estimate';
+import { discardPhotos } from '@/lib/photos';
+
+import { EstimateFailure, estimateMeal, type EstimateItem } from './meal-estimate';
 import { MealPhotoScreen } from './meal-photo-screen';
 import { useDayEntries } from './meals';
 import { useDayTargets } from './targets';
@@ -19,6 +21,9 @@ jest.mock('@/ai/access', () => ({
 jest.mock('./meal-estimate', () => ({
   ...jest.requireActual('./meal-estimate'),
   estimateMeal: jest.fn(),
+}));
+jest.mock('@/lib/photos', () => ({
+  ...jest.requireActual('@/lib/photos'),
   discardPhotos: jest.fn(),
 }));
 jest.mock('./entries', () => ({ useLogEstimate: jest.fn() }));

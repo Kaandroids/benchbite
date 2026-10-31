@@ -1,11 +1,12 @@
 import { assertEquals } from '@std/assert';
 
+import { toBase64 } from '../_shared/base64_bytes.ts';
 import { MEDIA_BUCKET } from '../_shared/coach/media.ts';
 import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
-import { base64, EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
+import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 
 type Row = Record<string, unknown>;
 
@@ -1012,7 +1013,7 @@ Deno.test('tells Bite of its meal cards earlier, with where they stand', async (
   );
 });
 
-const PHOTO = { mimeType: 'image/jpeg', data: base64(PLAIN_JPEG) };
+const PHOTO = { mimeType: 'image/jpeg', data: toBase64(PLAIN_JPEG) };
 const PHOTO_MESSAGE = { ...MESSAGE, message: 'Is this enough protein?', photos: [PHOTO, PHOTO] };
 const SURE = [{ type: 'text' as const, text: '[[happy]] Sure.' }];
 
@@ -1116,7 +1117,7 @@ Deno.test('takes photos without text, and reads them later as text', async () =>
 Deno.test('refuses photos it does not take, before anything is asked or kept', async () => {
   const model = new FakeModel();
   const { ctx, inserted, objects } = context(model);
-  const photo = (bytes: Uint8Array) => ({ mimeType: 'image/jpeg', data: base64(bytes) });
+  const photo = (bytes: Uint8Array) => ({ mimeType: 'image/jpeg', data: toBase64(bytes) });
   const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const withExif = jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI);
   const large = { mimeType: 'image/jpeg', data: btoa('x'.repeat(1_100_000)) };

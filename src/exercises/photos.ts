@@ -1,6 +1,7 @@
 // Photos of the user's own exercises, the start and the end of a rep (ADR 0027). They are taken
 // or chosen on the device, shrunk, uploaded to the user's folder of the private exercise-photos
 // bucket, and shown through signed URLs.
+import { fromBase64 } from '@shared/base64_bytes';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
@@ -57,8 +58,7 @@ async function shrink(uri: string): Promise<Uint8Array> {
       ? await ImageManipulator.manipulate(uri).resize({ width: MAX_WIDTH }).renderAsync()
       : image;
   const saved = await resized.saveAsync({ format: SaveFormat.JPEG, compress: 0.7, base64: true });
-  const binary = atob(saved.base64 ?? '');
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return fromBase64(saved.base64 ?? '');
 }
 
 /** Shrinks a local photo and uploads it to the user's folder. Resolves to its path. */

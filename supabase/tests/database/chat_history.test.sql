@@ -1,9 +1,10 @@
 -- Bite's chat history: threads named after their first message, listed latest first with the last
--- message and Bite's last face, found by a word, a page at a time, each user's own.
+-- message and Bite's last face, found by a word, a page at a time, each user's own, with the photos
+-- of a message without text.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(25);
 
 select is(public.coach_thread_title('  How was   my week? '), 'How was my week?', 'A short message is the name');
 select is(
@@ -121,6 +122,38 @@ select is(
   (select count(*) from public.my_coach_threads()),
   1::bigint,
   'An archived thread is left out'
+);
+
+-- Thread 105 begins with photos alone; thread 106 with a photo and text, which Bite has not answered.
+reset role;
+set local role service_role;
+insert into public.coach_threads (id, user_id, last_message_at) overriding system value values
+  (105, '00000000-0000-0000-0000-00000000000a', now() - interval '3 days'),
+  (106, '00000000-0000-0000-0000-00000000000a', now() - interval '3 days');
+insert into public.coach_messages (thread_id, role, content, expression) values
+  (105, 'user', '[{"type": "image", "path": "a/105/1.jpg"}, {"type": "image", "path": "a/105/2.jpg"}]', null),
+  (105, 'bite', '[{"type": "text", "text": "Two pizzas."}]', 'happy'),
+  (106, 'user', '[{"type": "image", "path": "a/106/1.jpg"}, {"type": "text", "text": "Lunch"}]', null);
+select is(
+  public.coach_message_photos('[{"type": "image"}, {"type": "text", "text": "x"}, {"type": "image"}]'),
+  2,
+  'A message''s photos are its image parts'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select title, last_message, last_photos, first_photos from public.my_coach_threads() where id = 105 $$,
+  $$ values (null::text, 'Two pizzas.', 0, 2) $$,
+  'A thread begun with photos alone has no name, and says how many photos began it'
+);
+select results_eq(
+  $$ select title, last_message, last_photos, first_photos from public.my_coach_threads() where id = 106 $$,
+  $$ values ('Lunch'::text, 'Lunch', 1, 0) $$,
+  'The last message''s photos are counted; a first message with text names the thread'
+);
+select results_eq(
+  $$ select last_photos, first_photos from public.my_coach_threads() where id = 2 $$,
+  $$ values (0, 0) $$,
+  'A thread without photos has none'
 );
 
 reset role;

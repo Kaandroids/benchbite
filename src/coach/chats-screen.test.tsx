@@ -24,6 +24,8 @@ const THREADS: ThreadSummary[] = [
     title: 'Lunch ideas',
     lastMessageAt: new Date(2026, 9, 30, 12, 40),
     lastMessage: 'A chicken rice bowl.',
+    lastPhotos: 0,
+    firstPhotos: 0,
     expression: 'happy',
   },
   {
@@ -31,6 +33,8 @@ const THREADS: ThreadSummary[] = [
     title: 'Knee pain on squats',
     lastMessageAt: new Date(2026, 9, 29, 18, 20),
     lastMessage: 'Try leg press today.',
+    lastPhotos: 0,
+    firstPhotos: 0,
     expression: 'neutral',
   },
 ];
@@ -64,6 +68,18 @@ it('lists the chats by day, with their last message', async () => {
   expect(screen.getByText('Yesterday')).toBeTruthy();
   expect(screen.getByText('Lunch ideas')).toBeTruthy();
   expect(screen.getByText('Try leg press today.')).toBeTruthy();
+});
+
+it('calls a message of photos alone by its photos', async () => {
+  threads([
+    { ...THREADS[0]!, title: null, firstPhotos: 1, lastMessage: null, lastPhotos: 2 },
+    { ...THREADS[1]!, title: null },
+  ]);
+  await render(<ChatsScreen />);
+  // Begun with a photo alone, the thread has no name of its own.
+  expect(screen.getByText('Photo')).toBeTruthy();
+  expect(screen.getByText('2 photos')).toBeTruthy();
+  expect(screen.getByText('Untitled chat')).toBeTruthy();
 });
 
 it('opens a chat over the chats, or a new one in place of the chat under them', async () => {

@@ -8,7 +8,7 @@ import { useUpperCase } from '@/i18n/case';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
-import type { ThreadSummary } from './threads';
+import { type ThreadSummary, useThreadText } from './threads';
 import { useMomentFormat } from './use-moment-format';
 
 export type ContinueWith = {
@@ -24,7 +24,7 @@ export function ContinueCard({ thread, onContinue, onAllChats }: ContinueWith) {
   const { colors, radii, spacing } = useTheme();
   const upper = useUpperCase();
   const moment = useMomentFormat();
-  const title = thread.title ?? t('bite.chats.untitled');
+  const title = useThreadText().name(thread);
   const time = moment(thread.lastMessageAt);
   return (
     <View style={{ gap: spacing.sm }}>
