@@ -1,5 +1,6 @@
 // Gemini behind our language model (ADR 0049), through the Gemini Developer API with an API key.
 // The requests are plain REST, so that no SDK has to follow Deno.
+import { isObject } from '../json.ts';
 import type { ModelConfig } from './config.ts';
 import {
   type Finish,
@@ -344,8 +345,4 @@ export function geminiSchema(schema: JsonSchema): JsonSchema {
     translated.description = schema.description ? `${schema.description} ${limit}` : limit;
   }
   return translated;
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

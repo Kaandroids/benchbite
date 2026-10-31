@@ -4,21 +4,22 @@
 import { z } from 'zod';
 
 import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
+import { Base64Data } from '../_shared/base64.ts';
 import { Constants } from '../_shared/database.types.ts';
+import { parseJson } from '../_shared/json.ts';
 import type { LanguageModel, Part } from '../_shared/llm/mod.ts';
 import {
   type EstimateReason,
   type EstimateRequest as Body,
   type EstimateResponse,
   MAX_ESTIMATE_ITEMS,
-  MAX_MEAL_PHOTOS,
   MAX_NOTE_LENGTH,
-  MAX_PHOTO_BYTES,
-  MAX_PHOTOS_BYTES,
   MEAL_PHOTO_TYPES,
 } from '../_shared/meal/estimate.ts';
 import { matchItems } from '../_shared/meal/match.ts';
+import { MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
+import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { ModelOutput, RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
 
@@ -31,19 +32,13 @@ export type EstimateContext = {
   model?: LanguageModel;
 };
 
-/** Base64 without line breaks, as the app sends it. */
-const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
-
 const Photo = z.object({
   mimeType: z.enum(MEAL_PHOTO_TYPES),
-  data: z
-    .string()
-    .regex(BASE64)
-    .refine((data) => data.length % 4 === 0, 'Not base64'),
+  data: Base64Data,
 });
 
 const EstimateRequest = z.object({
-  photos: z.array(Photo).min(1).max(MAX_MEAL_PHOTOS),
+  photos: z.array(Photo).min(1).max(MAX_PHOTOS),
   language: z.enum(LANGUAGES),
   meal: z.enum(Constants.public.Enums.meal).optional(),
   note: z.string().trim().max(MAX_NOTE_LENGTH).optional(),
@@ -63,7 +58,7 @@ type EstimateRequest = z.infer<typeof EstimateRequest>;
  * The largest body read, in bytes: the photos at their largest as base64, and room for the rest.
  * A larger one is refused before it is parsed.
  */
-const MAX_BODY_BYTES = Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + 20_000;
+const MAX_BODY_BYTES = photosBodyBytes(20_000);
 
 /** The HTTP status each reason is answered with. */
 const STATUS: Record<EstimateReason, number> = {
@@ -86,13 +81,10 @@ export async function handleEstimateRequest(
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
-  const length = Number(req.headers.get('content-length'));
-  if (length > MAX_BODY_BYTES) return refused('photos_too_large');
-  // Counted as it comes, as a request may not say its length, or say less than it sends.
-  const text = await readBody(req, MAX_BODY_BYTES);
-  if (text === undefined) return refused('photos_too_large');
+  const json = await readJson(req, MAX_BODY_BYTES);
+  if (json === TOO_LARGE) return refused('photos_too_large');
 
-  const parsed = EstimateRequest.safeParse(parseJson(text));
+  const parsed = EstimateRequest.safeParse(json);
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },
@@ -101,8 +93,7 @@ export async function handleEstimateRequest(
   }
   const request = parsed.data;
   // Too large photos are refused before anything is sent to the model.
-  const sizes = request.photos.map((photo) => decodedBytes(photo.data));
-  if (sizes.some((size) => size > MAX_PHOTO_BYTES) || sum(sizes) > MAX_PHOTOS_BYTES) {
+  if (!photosFit(request.photos)) {
     return refused('photos_too_large');
   }
 
@@ -153,56 +144,6 @@ export async function handleEstimateRequest(
 /** The text of the answer, which holds its JSON. */
 function answerText(parts: Part[]): string {
   return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
-}
-
-/**
- * The body as text, read until it ends or passes `max` bytes, when reading stops and nothing is
- * given; an empty text for a body that cannot be read.
- */
-export async function readBody(req: Request, max: number): Promise<string | undefined> {
-  if (!req.body) return '';
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > max) {
-        await reader.cancel().catch(() => {});
-        return undefined;
-      }
-      chunks.push(value);
-    }
-  } catch {
-    return '';
-  }
-  const body = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(body);
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-/** How many bytes base64 data holds. */
-function decodedBytes(data: string): number {
-  const padding = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
-  return (data.length / 4) * 3 - padding;
-}
-
-function sum(values: number[]): number {
-  return values.reduce((total, value) => total + value, 0);
 }
 
 function refused(reason: EstimateReason): Response {
