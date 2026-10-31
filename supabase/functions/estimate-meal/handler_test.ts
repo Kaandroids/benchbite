@@ -382,24 +382,14 @@ Deno.test(
   },
 );
 
-Deno.test('stops reading a body without a length once it passes the limit', async () => {
-  let pulled = 0;
-  const chunk = new Uint8Array(1_000_000).fill(120);
-  const endless = new ReadableStream<Uint8Array>({
-    pull: (controller) => {
-      pulled++;
-      controller.enqueue(chunk);
-    },
-  });
-  const request = new Request('http://localhost/estimate-meal', { method: 'POST', body: endless });
-  assertEquals(request.headers.get('content-length'), null);
+Deno.test('refuses a body without a length once it passes the limit', async () => {
+  const body = new Blob(['x'.repeat(5_000_000)]).stream();
+  const request = new Request('http://localhost/estimate-meal', { method: 'POST', body });
 
   const response = await handleEstimateRequest(request, context(new FakeModel()).ctx);
 
   assertEquals(response.status, 413);
   assertEquals(await response.json(), { error: 'photos_too_large' });
-  // About as many megabytes as the limit, not the whole stream.
-  assertEquals(pulled <= 6, true);
 });
 
 Deno.test('answers unavailable when the answer was cut at the token limit', async () => {

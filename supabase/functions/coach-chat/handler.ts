@@ -688,7 +688,7 @@ function toMessage(
 }
 
 /** Where an earlier message's photos were, as Bite reads it in later turns. */
-export function photosText(count: number): string {
+function photosText(count: number): string {
   return count === 1 ? '(Sent a photo.)' : `(Sent ${count} photos.)`;
 }
 
