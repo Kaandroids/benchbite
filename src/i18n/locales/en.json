@@ -793,6 +793,7 @@
       "errors": {
         "limit": "A workout can have up to {{max}} alternatives.",
         "inUse": "The one in use can't be deleted. Switch to another first.",
+        "lastOfEmpty": "The one in use has no exercises yet. Add some, or switch to this one first.",
         "gone": "This alternative no longer exists.",
         "switch": "We couldn't switch to it. Try again.",
         "add": "We couldn't add an alternative. Try again.",

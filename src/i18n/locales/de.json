@@ -793,6 +793,7 @@
       "errors": {
         "limit": "Ein Workout kann bis zu {{max}} Alternativen haben.",
         "inUse": "Die aktive Alternative kann nicht gelöscht werden. Wechsle zuerst zu einer anderen.",
+        "lastOfEmpty": "Die aktive Alternative hat noch keine Übungen. Füge welche hinzu oder wechsle zuerst zu dieser.",
         "gone": "Diese Alternative gibt es nicht mehr.",
         "switch": "Der Wechsel hat nicht geklappt. Versuch es noch einmal.",
         "add": "Die Alternative konnte nicht hinzugefügt werden. Versuch es noch einmal.",

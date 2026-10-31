@@ -793,6 +793,7 @@
       "errors": {
         "limit": "Bir antrenmanın en fazla {{max}} alternatifi olabilir.",
         "inUse": "Kullanımdaki alternatif silinemez. Önce başka birine geç.",
+        "lastOfEmpty": "Kullanımdaki alternatifin henüz egzersizi yok. Önce egzersiz ekle ya da bu alternatife geç.",
         "gone": "Bu alternatif artık yok.",
         "switch": "Geçiş yapılamadı. Tekrar dene.",
         "add": "Alternatif eklenemedi. Tekrar dene.",

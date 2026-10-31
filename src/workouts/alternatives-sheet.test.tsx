@@ -359,6 +359,19 @@ it('says why a delete failed', async () => {
   ).toBeTruthy();
 });
 
+it('says why the last other alternative of an empty workout stays', async () => {
+  const alert = jest.spyOn(Alert, 'alert');
+  await renderSheets();
+  await openMenu('Gym');
+  await fireEvent.press(menuItem('Delete')!);
+  const buttons = alert.mock.calls[0]?.[2] as AlertButton[];
+  await act(async () => buttons.find((button) => button.style === 'destructive')?.onPress?.());
+  await act(async () => remove.mock.calls[0]?.[1]?.onError({ code: 'BB043' }));
+  expect(
+    screen.getByText('The one in use has no exercises yet. Add some, or switch to this one first.'),
+  ).toBeTruthy();
+});
+
 it('saves a new order', async () => {
   await renderSheets();
   const [handle] = screen

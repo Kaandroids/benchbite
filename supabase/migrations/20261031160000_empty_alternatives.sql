@@ -1,7 +1,8 @@
 -- A new alternative starts empty, any alternative can be duplicated, and an empty one can be put
--- in use (#367, ADR 0064). Changes add_workout_alternative() and use_workout_alternative() of
--- 20261031120000_workout_alternatives.sql and 20261031130000_alternative_defaults.sql, and takes
--- the time of a workout out of save_workout() of 20261028220000_plan_changes_through_functions.sql.
+-- in use (#367, ADR 0064). Changes add_workout_alternative(), use_workout_alternative() and
+-- delete_workout_alternative() of 20261031120000_workout_alternatives.sql and
+-- 20261031130000_alternative_defaults.sql, and takes the time of a workout out of save_workout()
+-- of 20261028220000_plan_changes_through_functions.sql.
 
 -- The minutes a workout with the exercises `items` takes, as the plan builder counts them: five
 -- to warm up and each exercise's time, three hours at most. Without exercises, the warm-up alone.
@@ -253,5 +254,51 @@ begin
       use_workout_alternative.today
     );
   end if;
+end;
+$$;
+
+-- As before (20261031120000), and the last other alternative is kept while the one in use has no
+-- exercises (BB043): deleting it would leave the workout without alternatives and without
+-- exercises, the ones it had gone with it. Exercises are added to the one in use first, or the
+-- other is put in use.
+create or replace function public.delete_workout_alternative(alternative_id bigint)
+returns void
+language plpgsql
+-- As add_workout_alternative().
+security definer
+set search_path = ''
+as $$
+declare
+  alternative public.workout_alternatives :=
+    public.lock_own_alternative(delete_workout_alternative.alternative_id);
+begin
+  if alternative.in_use then
+    raise exception 'The alternative in use cannot be deleted' using errcode = 'BB042';
+  end if;
+  if (
+    select count(*) from public.workout_alternatives a where a.workout_id = alternative.workout_id
+  ) = 2 and not exists (
+    select 1 from public.workout_exercises e where e.workout_id = alternative.workout_id
+  ) then
+    raise exception 'The last other alternative of an empty workout cannot be deleted'
+      using errcode = 'BB043';
+  end if;
+  delete from public.workout_alternatives a where a.id = alternative.id;
+
+  -- A single one left is the workout itself, so it goes too.
+  if (
+    select count(*) from public.workout_alternatives a where a.workout_id = alternative.workout_id
+  ) = 1 then
+    delete from public.workout_alternatives a where a.workout_id = alternative.workout_id;
+    return;
+  end if;
+  -- The others close the gap, in their order.
+  update public.workout_alternatives a set position = n.position
+  from (
+    select o.id, row_number() over (order by o.position)::smallint as position
+    from public.workout_alternatives o
+    where o.workout_id = alternative.workout_id
+  ) n
+  where a.id = n.id and a.position <> n.position;
 end;
 $$;

@@ -70,7 +70,8 @@ export type AlternativeAction = 'switch' | 'add' | 'duplicate' | 'rename' | 'del
 
 /**
  * A short message for a refused change: the cap of alternatives (BB041), the one in use, which
- * cannot be deleted (BB042), one deleted elsewhere (P0002), or else that `action` failed.
+ * cannot be deleted (BB042), the last other one while the one in use is empty (BB043), one deleted
+ * elsewhere (P0002), or else that `action` failed.
  */
 export function useAlternativeError() {
   const { t } = useTranslation();
@@ -81,6 +82,7 @@ export function useAlternativeError() {
       [
         ['alternativeLimit', t('workout.alternatives.errors.limit', { max })],
         ['alternativeInUse', t('workout.alternatives.errors.inUse')],
+        ['alternativeLastOfEmpty', t('workout.alternatives.errors.lastOfEmpty')],
         ['notFound', t('workout.alternatives.errors.gone')],
       ],
       t(`workout.alternatives.errors.${action}`),
@@ -212,7 +214,10 @@ export function useRenameAlternative(workoutId: number) {
   });
 }
 
-/** Deletes an alternative not in use; the database refuses the one in use with BB042. */
+/**
+ * Deletes an alternative not in use; the database refuses the one in use with BB042, and the last
+ * other one while the one in use has no exercises with BB043.
+ */
 export function useDeleteAlternative(workoutId: number) {
   const queryClient = useQueryClient();
   return useMutation({
