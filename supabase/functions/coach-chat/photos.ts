@@ -3,16 +3,7 @@
 import { decodeBase64 } from '../_shared/base64.ts';
 import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import type { ChatPhotoPart, PhotoRefusal } from '../_shared/coach/chat.ts';
-import {
-  EOI,
-  isCoding,
-  isFrame,
-  isMetadata,
-  KEPT,
-  SOS,
-  standalone,
-  startsWith,
-} from '../_shared/jpeg_metadata.ts';
+import { EOI, isFrame, segments, SOS } from '../_shared/jpeg_metadata.ts';
 import { photosFit } from '../_shared/photos.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
@@ -48,46 +39,24 @@ export function checkPhotos(photos: { data: string }[]): CheckedPhoto[] | Photos
  * segment on iOS (ADR 0065).
  */
 export function readJpeg(bytes: Uint8Array): { width: number; height: number } | PhotoRefusal {
-  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return 'photo_not_jpeg';
   let size: { width: number; height: number } | undefined;
-  let i = 2;
-  while (i < bytes.length) {
-    if (bytes[i] !== 0xff) return 'photo_not_jpeg';
-    // A marker may be padded with any number of 0xFF.
-    while (bytes[i] === 0xff) i++;
-    if (i >= bytes.length) return 'photo_not_jpeg';
-    const marker = bytes[i++];
+  for (const segment of segments(bytes)) {
+    if (!segment) return 'photo_not_jpeg';
+    const { marker, start, end, metadata } = segment;
     if (marker === EOI) {
       // Nothing may follow the end, as other images and their Exif data can.
-      return size && i === bytes.length ? size : 'photo_not_jpeg';
+      return size && end === bytes.length ? size : 'photo_not_jpeg';
     }
-    if (standalone(marker)) continue;
-    if (i + 2 > bytes.length) return 'photo_not_jpeg';
-    const length = (bytes[i] << 8) | bytes[i + 1];
-    if (length < 2 || i + length > bytes.length) return 'photo_not_jpeg';
-    if (isMetadata(marker)) {
-      const name = KEPT[marker];
-      if (!name || !startsWith(bytes, i + 2, i + length, name)) return 'photo_has_exif';
-    } else if (!isCoding(marker)) {
-      return 'photo_not_jpeg';
-    }
+    if (metadata) return 'photo_has_exif';
     if (isFrame(marker)) {
-      if (length < 7) return 'photo_not_jpeg';
-      const height = (bytes[i + 3] << 8) | bytes[i + 4];
-      const width = (bytes[i + 5] << 8) | bytes[i + 6];
+      // The frame's length, at its start, then its precision, height and width.
+      if (end - start < 9) return 'photo_not_jpeg';
+      const height = (bytes[start + 5] << 8) | bytes[start + 6];
+      const width = (bytes[start + 7] << 8) | bytes[start + 8];
       if (!width || !height) return 'photo_not_jpeg';
       size ??= { width, height };
     }
-    i += length;
-    if (marker === SOS) {
-      if (!size) return 'photo_not_jpeg';
-      // The scan's data, to the next marker; 0xFF 0x00 and the restart markers belong to it.
-      while (i + 1 < bytes.length) {
-        if (bytes[i] === 0xff && bytes[i + 1] !== 0 && !standalone(bytes[i + 1])) break;
-        i++;
-      }
-      if (i + 1 >= bytes.length) return 'photo_not_jpeg';
-    }
+    if (marker === SOS && !size) return 'photo_not_jpeg';
   }
   return 'photo_not_jpeg';
 }
