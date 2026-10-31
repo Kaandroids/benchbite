@@ -272,3 +272,11 @@ Deno.test('tells Bite to propose food log changes only when the user asks in wor
   );
   assertEquals(SYSTEM.includes(FOOD_LOG_RULE), true);
 });
+
+Deno.test('tells Bite a card exists only once its tool is called', async () => {
+  const { SYSTEM } = await import('./prompt.ts');
+  assertEquals(
+    SYSTEM.includes('A card exists only once you have called its tool in this answer'),
+    true,
+  );
+});
