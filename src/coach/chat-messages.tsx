@@ -43,16 +43,17 @@ type ChatMessagesProps = {
   tool?: string;
   /** Asks an unanswered question again; without it, as when the user may not ask, it is not offered. */
   onAskAgain?: (question: ChatMessage) => void;
-  /** Where the proposals stand, by id, once loaded. */
-  proposals?: Map<number, ProposalState>;
-  /** Whether where they stand is loading. */
-  loadingProposals: boolean;
-  /** Where the meal cards stand, by id, once loaded. */
-  mealCards?: Map<number, MealCardState>;
-  /** Whether where they stand is loading. */
-  loadingMealCards: boolean;
+  /** Where Bite's cards stand. */
+  cards: CardStates;
   /** The addresses of the chat's kept photos, by path, once read. */
   photoUrls?: Map<string, string>;
+};
+
+/** Where the cards of each kind stand, by id, once loaded, and whether that is loading. */
+export type CardStates = {
+  proposals?: Map<number, ProposalState>;
+  mealCards?: Map<number, MealCardState>;
+  loading: { proposals: boolean; mealCards: boolean };
 };
 
 /**
@@ -66,10 +67,7 @@ export function ChatMessages({
   status,
   tool,
   onAskAgain,
-  proposals,
-  loadingProposals,
-  mealCards,
-  loadingMealCards,
+  cards,
   photoUrls,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
@@ -103,10 +101,7 @@ export function ChatMessages({
               status={status}
               tool={tool}
               onAskAgain={onAskAgain}
-              proposals={proposals}
-              loadingProposals={loadingProposals}
-              mealCards={mealCards}
-              loadingMealCards={loadingMealCards}
+              cards={cards}
               photoUrls={photoUrls}
               onOpenPhoto={setViewing}
             />
@@ -129,14 +124,7 @@ function hasCards(message: ChatMessage | undefined): boolean {
 
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  | 'status'
-  | 'tool'
-  | 'onAskAgain'
-  | 'proposals'
-  | 'loadingProposals'
-  | 'mealCards'
-  | 'loadingMealCards'
-  | 'photoUrls'
+  'status' | 'tool' | 'onAskAgain' | 'cards' | 'photoUrls'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -153,10 +141,7 @@ function MessageRow({
   status,
   tool,
   onAskAgain,
-  proposals,
-  loadingProposals,
-  mealCards,
-  loadingMealCards,
+  cards,
   photoUrls,
   onOpenPhoto,
 }: MessageRowProps) {
@@ -176,16 +161,11 @@ function MessageRow({
   }
   // Only a message with cards gets where they stand, so that the others render again only when
   // they change, not when a card is decided.
-  const proposed = !!message.proposals?.length;
-  const estimated = !!message.mealCards?.length;
   return (
     <BiteMessage
       message={message}
       talking={last && status !== 'idle'}
-      proposals={proposed ? proposals : undefined}
-      loadingProposals={proposed && loadingProposals}
-      mealCards={estimated ? mealCards : undefined}
-      loadingMealCards={estimated && loadingMealCards}
+      cards={hasCards(message) ? cards : undefined}
     />
   );
 }
@@ -252,13 +232,12 @@ const UserMessage = memo(function UserMessage({
 const BiteMessage = memo(function BiteMessage({
   message,
   talking,
-  proposals,
-  loadingProposals,
-  mealCards,
-  loadingMealCards,
-}: Pick<ChatMessagesProps, 'proposals' | 'loadingProposals' | 'mealCards' | 'loadingMealCards'> & {
+  cards,
+}: {
   message: ChatMessage;
   talking: boolean;
+  /** Where its cards stand, for a message with cards. */
+  cards?: CardStates;
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -289,25 +268,25 @@ const BiteMessage = memo(function BiteMessage({
             </View>
           ) : null}
           {message.mealCards?.map((card) => {
-            const state = mealCards?.get(card.id);
+            const state = cards?.mealCards?.get(card.id);
             return (
               <View key={`meal-${card.id}`} style={styles.proposal}>
                 <MealCardView
                   card={card}
                   state={state}
-                  waiting={state === undefined && loadingMealCards}
+                  waiting={state === undefined && !!cards?.loading.mealCards}
                 />
               </View>
             );
           })}
           {message.proposals?.map((card) => {
-            const state = proposals?.get(card.id);
+            const state = cards?.proposals?.get(card.id);
             return (
               <View key={card.id} style={styles.proposal}>
                 <ProposalCard
                   card={card}
                   state={state}
-                  waiting={state === undefined && loadingProposals}
+                  waiting={state === undefined && !!cards?.loading.proposals}
                 />
               </View>
             );

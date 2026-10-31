@@ -430,6 +430,77 @@ it('shows a meal Bite estimated as its card, though Bite said nothing with it', 
   expect(await screen.findByRole('button', { name: 'Add to lunch' })).toBeEnabled();
 });
 
+/** Lets coach_meal_cards answer `pending` for each card, while coach_proposals never answers. */
+function proposalsNeverLoad() {
+  jest.mocked(supabase.from).mockImplementation(
+    (table: string) =>
+      ({
+        select: () => ({
+          in: (_: string, ids: number[]) =>
+            table === 'coach_meal_cards'
+              ? Promise.resolve({
+                  data: ids.map((id) => ({ id, status: 'pending', kcal: null })),
+                  error: null,
+                })
+              : new Promise(() => {}),
+        }),
+      }) as never,
+  );
+}
+
+it('keeps the conversation on the screen while a new card loads where it stands', async () => {
+  jest.mocked(supabase.from).mockReturnValue({
+    select: () => ({ in: () => new Promise(() => {}) }),
+  } as never);
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'text', text: 'A Margherita!' },
+    { event: 'meal_card', mealCard: MEAL_CARD },
+  );
+
+  expect(screen.getByText('How was my week?')).toBeOnTheScreen();
+  expect(screen.getByText('A Margherita!')).toBeOnTheScreen();
+  expect(screen.getByText('Estimate · high confidence')).toBeOnTheScreen();
+});
+
+it("keeps the grams a meal card's Edit changed when Bite proposes after it", async () => {
+  proposalsNeverLoad();
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'meal_card', mealCard: MEAL_CARD },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+  await fireEvent.press(await screen.findByRole('button', { name: 'Edit' }));
+  await fireEvent.changeText(screen.getByLabelText('Grams'), '100');
+  await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+
+  const next = liveStream();
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'And the targets?');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  await next.send(
+    {
+      event: 'proposal',
+      proposal: {
+        kind: 'targets',
+        id: 42,
+        to: { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 },
+      },
+    },
+    { event: 'done', threadId: 7, messageId: 11 },
+  );
+  await next.end();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+
+  expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51, grams: [100] });
+});
+
 it('opens a saved chat on its meal cards as they stand now', async () => {
   liveStream();
   mealCardsStand('logged', 399);
