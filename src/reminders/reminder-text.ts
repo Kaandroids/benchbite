@@ -13,24 +13,28 @@ import type { Reminder } from './reminders';
 export function useReminderText() {
   const { t } = useTranslation();
   const workoutName = useWorkoutName();
-  return ({ date, sessions }: { date: string; sessions: WeekSession[] }): Reminder => {
-    const [only] = sessions;
+  const bodyOf = (sessions: WeekSession[]) => {
     const filled = sessions.filter((session) => session.exercises.length > 0);
-    return {
-      date,
-      title: t('reminders.notification.title', { session: sessions.map(workoutName).join(', ') }),
-      body:
-        sessions.length > 0 && filled.length === 0
-          ? t('reminders.notification.bodyEmpty')
-          : sessions.length === 1 && only
-            ? t('reminders.notification.body', {
-                count: only.exercises.length,
-                minutes: only.estimatedMinutes,
-              })
-            : t('reminders.notification.bodyMany', {
-                count: sessions.length,
-                minutes: filled.reduce((total, session) => total + session.estimatedMinutes, 0),
-              }),
-    };
+    if (sessions.length > 0 && filled.length === 0) {
+      return t('reminders.notification.bodyEmpty');
+    }
+    const [only] = sessions;
+    if (sessions.length === 1 && only) {
+      return t('reminders.notification.body', {
+        count: only.exercises.length,
+        minutes: only.estimatedMinutes,
+      });
+    }
+    // Every workout planned counts, but the time only of those with exercises: an empty one cannot
+    // be started yet, so the warm-up its time holds would add minutes no one trains.
+    return t('reminders.notification.bodyMany', {
+      count: sessions.length,
+      minutes: filled.reduce((total, session) => total + session.estimatedMinutes, 0),
+    });
   };
+  return ({ date, sessions }: { date: string; sessions: WeekSession[] }): Reminder => ({
+    date,
+    title: t('reminders.notification.title', { session: sessions.map(workoutName).join(', ') }),
+    body: bodyOf(sessions),
+  });
 }
