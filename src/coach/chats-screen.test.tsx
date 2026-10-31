@@ -70,6 +70,18 @@ it('lists the chats by day, with their last message', async () => {
   expect(screen.getByText('Try leg press today.')).toBeTruthy();
 });
 
+it('calls a message of photos alone by its photos', async () => {
+  threads([
+    { ...THREADS[0]!, title: null, firstPhotos: 1, lastMessage: null, lastPhotos: 2 },
+    { ...THREADS[1]!, title: null },
+  ]);
+  await render(<ChatsScreen />);
+  // Begun with a photo alone, the thread has no name of its own.
+  expect(screen.getByText('Photo')).toBeTruthy();
+  expect(screen.getByText('2 photos')).toBeTruthy();
+  expect(screen.getByText('Untitled chat')).toBeTruthy();
+});
+
 it('opens a chat over the chats, or a new one in place of the chat under them', async () => {
   await render(<ChatsScreen />);
   await fireEvent.press(screen.getByText('Lunch ideas'));
