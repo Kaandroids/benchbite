@@ -24,10 +24,11 @@ once that food was gone, as when the user undid the meal that made it.
   so that it is refused then rather than when the user taps Add.
 - **A card's Undo removes the own foods it saved only while they are unused.** It removes the card's
   entries only while they are as logged (moved, resized or removed, they are the user's now). Of
-  its foods, it removes one only while it is unchanged since logging and nothing outside the card's
-  entries uses it: no other entry, no removed entry that can still be restored, no recipe
-  ingredient, no star and no pending card. Any other food stays as it is, neither deleted nor
-  archived. Nutrition's photo keeps ADR 0060's rule, as its Undo is a toast shown right after
+  its foods, it removes one only while it is unchanged since logging, no pending card holds it and
+  nothing else names it: no other entry, no removed entry that can still be restored, no recipe
+  ingredient and no star. The first two are checked by hand; the rest is left to the foods' foreign
+  keys, so that a delete they refuse leaves the food, and a new reference counts without a change
+  here. Any other food stays as it is, neither deleted nor archived. Nutrition's photo keeps ADR 0060's rule, as its Undo is a toast shown right after
   logging: the foods it made are deleted, or archived when something names them.
 - **An own food matched by its exact search name is logged by its name and values,** not by its id,
   with `logItemOf()` in `_shared/meal/log.ts`, which both the chat's card and Nutrition's photo use.
