@@ -263,40 +263,37 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   });
 
   /** The menu's actions: the workout's own before any is added can only be duplicated. */
-  const actions = (alternative: WorkoutAlternative): MenuAction[] => {
+  const actionsOf = (alternative: WorkoutAlternative) => {
     const own = rows.length === 0;
-    return [
-      ...(own
-        ? []
-        : [
-            {
-              key: 'rename',
-              icon: 'edit' as const,
-              label: t('workout.alternatives.rename'),
-              onPress: () => onName(alternative),
-            },
-          ]),
-      {
-        key: 'duplicate',
-        icon: 'copy',
-        label: t('workout.alternatives.duplicate'),
-        disabled: full || busy,
-        onPress: () => onAdd({ copyOf: own ? null : alternative.id }),
-      },
-      // The one in use is the workout, which another must replace before it can go.
-      ...(own || alternative.inUse
-        ? []
-        : [
-            {
-              key: 'delete',
-              icon: 'trash' as const,
-              label: t('workout.alternatives.delete'),
-              danger: true,
-              onPress: () => onDelete(alternative),
-            },
-          ]),
-    ];
+    const actions: MenuAction[] = [];
+    if (!own) {
+      actions.push({
+        key: 'rename',
+        icon: 'edit',
+        label: t('workout.alternatives.rename'),
+        onPress: () => onName(alternative),
+      });
+    }
+    actions.push({
+      key: 'duplicate',
+      icon: 'copy',
+      label: t('workout.alternatives.duplicate'),
+      disabled: full || busy,
+      onPress: () => onAdd({ copyOf: own ? null : alternative.id }),
+    });
+    // The one in use is the workout, which another must replace before it can go.
+    if (!own && !alternative.inUse) {
+      actions.push({
+        key: 'delete',
+        icon: 'trash',
+        label: t('workout.alternatives.delete'),
+        danger: true,
+        onPress: () => onDelete(alternative),
+      });
+    }
+    return actions;
   };
+  const menuActions = menu ? actionsOf(menu.alternative) : [];
 
   return (
     <Sheet onClose={onClose}>
@@ -408,15 +405,12 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
       ) : null}
       {menu ? (
         <AlternativeMenu
-          actions={actions(menu.alternative)}
+          actions={menuActions}
           // Under the first row, and over the others, so that it stays on the sheet.
           top={
             menu.index === 0
               ? listTop + ROW_HEIGHT - spacing.sm
-              : listTop +
-                menu.index * ROW_HEIGHT +
-                spacing.sm -
-                menuHeight(actions(menu.alternative))
+              : listTop + menu.index * ROW_HEIGHT + spacing.sm - menuHeight(menuActions)
           }
           right={spacing.xl + spacing.sm}
           onClose={() => setMenu(null)}
