@@ -29,6 +29,11 @@ describe('TargetsCard', () => {
     expect(screen.getByText('kcal over')).toBeTruthy();
   });
 
+  it('leaves the ring and the bars to the label of the card', async () => {
+    await render(<TargetsCard targets={TARGETS} eaten={eaten(1280)} day="2026-10-21" />);
+    expect(screen.queryAllByRole('progressbar')).toHaveLength(0);
+  });
+
   it('opens Nutrition on its day', async () => {
     await render(<TargetsCard targets={TARGETS} eaten={eaten(1280)} day="2026-10-21" />);
     const card = screen.getByRole('button', {

@@ -55,7 +55,8 @@ export function TargetsCard({ entering, targets, eaten, day }: TargetsCardProps)
             <Icon name="forward" size={16} color="textMuted" />
           </View>
         </View>
-        <DayTotals targets={targets} eaten={eaten} />
+        {/* The card reads the totals as its label. */}
+        <DayTotals targets={targets} eaten={eaten} accessible={false} />
       </Card>
     </Pressable>
   );

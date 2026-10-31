@@ -21,13 +21,18 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export type DayTotalsProps = {
   targets: NutritionTargets;
   eaten: Totals;
+  /**
+   * False inside an element that reads the totals itself, such as a button, so that the ring and
+   * the bars are not visited again one by one.
+   */
+  accessible?: boolean;
 };
 
 /**
  * A day's calories left as a ring, over in the warning colour, beside the protein, carbs and fat
  * eaten against their targets. Nutrition's day summary and Today's targets share it.
  */
-export function DayTotals({ targets, eaten }: DayTotalsProps) {
+export function DayTotals({ targets, eaten, accessible = true }: DayTotalsProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -37,13 +42,19 @@ export function DayTotals({ targets, eaten }: DayTotalsProps) {
   return (
     <View style={[styles.row, { gap: spacing.lg }]}>
       <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={t('nutrition.ringLabel', {
-          eaten: format(Math.round(eaten.calories)),
-          target: format(targets.calories),
-        })}
-        accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
+        accessible={accessible}
+        accessibilityRole={accessible ? 'progressbar' : undefined}
+        accessibilityLabel={
+          accessible
+            ? t('nutrition.ringLabel', {
+                eaten: format(Math.round(eaten.calories)),
+                target: format(targets.calories),
+              })
+            : undefined
+        }
+        accessibilityValue={
+          accessible ? { min: 0, max: 100, now: Math.round(share * 100) } : undefined
+        }
         style={styles.ring}
       >
         <Svg width={RING} height={RING}>
@@ -96,6 +107,7 @@ export function DayTotals({ targets, eaten }: DayTotalsProps) {
               color={color}
               size="thin"
               accessibilityLabel={t(`nutrition.macros.${key}`)}
+              accessible={accessible}
             />
           </View>
         ))}
