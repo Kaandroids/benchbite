@@ -2411,6 +2411,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_coach_change: {
+        Args: {
+          before: Json;
+          change: Json;
+          kind: Database['public']['Enums']['coach_proposal_kind'];
+          today: string;
+        };
+        Returns: undefined;
+      };
       undo_coach_meal_card: {
         Args: { card_id: number };
         Returns: {

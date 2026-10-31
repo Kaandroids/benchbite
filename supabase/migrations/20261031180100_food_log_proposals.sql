@@ -339,6 +339,30 @@ begin
 end;
 $$;
 
+-- Undoes an applied `change` of `kind`, putting back what `before` holds: most kinds by applying
+-- `before` as a change, a food log change with undo_food_log_change(), which puts removed entries
+-- back.
+create function public.undo_coach_change(
+  kind public.coach_proposal_kind,
+  change jsonb,
+  before jsonb,
+  today date
+)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+begin
+  case kind
+    when 'food_log' then perform public.undo_food_log_change(change, before);
+    else perform public.apply_coach_change(kind, before, today);
+  end case;
+end;
+$$;
+
+revoke all on function public.undo_coach_change(public.coach_proposal_kind, jsonb, jsonb, date)
+  from public, anon, authenticated;
+
 -- As before, and a food log change, which food_log_change() checks and fills in: it keeps the
 -- entries as they are (`before`), and is tried as the others are, so that a day out of range
 -- (BB020) or grams out of range (23514) are refused now.
@@ -423,8 +447,8 @@ begin
 end;
 $$;
 
--- As before, and a food log change: its entries are locked with the proposal, and undoing it puts
--- them back with undo_food_log_change(), as `before` holds them.
+-- As before, and a food log change, whose entries are locked with the proposal; undoing goes
+-- through undo_coach_change().
 create or replace function public.decide_coach_proposal(
   proposal_id bigint,
   decision public.coach_proposal_decision,
@@ -494,11 +518,9 @@ begin
         is distinct from proposal.after then
         raise exception 'Changed since the proposal was applied' using errcode = 'BB035';
       end if;
-      if proposal.kind = 'food_log' then
-        perform public.undo_food_log_change(proposal.change, proposal.before);
-      else
-        perform public.apply_coach_change(proposal.kind, proposal.before, decide_coach_proposal.today);
-      end if;
+      perform public.undo_coach_change(
+        proposal.kind, proposal.change, proposal.before, decide_coach_proposal.today
+      );
       proposal.status := 'undone';
   end case;
 

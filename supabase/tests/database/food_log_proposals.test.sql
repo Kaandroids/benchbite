@@ -313,7 +313,7 @@ join pg_namespace n on n.oid = p.pronamespace and n.nspname = 'public'
 cross join (values ('anon'), ('authenticated')) roles (role)
 where p.proname in (
   'put_back_meal_entry', 'food_log_entry_ids', 'food_log_entries', 'check_food_log_days',
-  'food_log_change', 'apply_food_log_change', 'undo_food_log_change'
+  'food_log_change', 'apply_food_log_change', 'undo_food_log_change', 'undo_coach_change'
 );
 select ok(
   has_function_privilege('authenticated', 'public.restore_meal_entry(bigint)', 'execute')
