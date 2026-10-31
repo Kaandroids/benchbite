@@ -1,5 +1,6 @@
 // What the app and coach-chat tell each other (ADR 0052), shared by both, so that they agree.
 // This file imports only types, so that the app can bundle it.
+import type { Database } from '../database.types.ts';
 import type { EstimateItem, EstimateMeal } from '../meal/estimate.ts';
 
 /** The longest message the user may send, in characters. */
@@ -185,17 +186,7 @@ export type MealCard = {
 };
 
 /** What a note in Bite's notebook is about (#296, ADR 0071), as `coach_notes` has it. */
-export const NOTE_CATEGORIES = [
-  'allergy',
-  'health',
-  'injury',
-  'training',
-  'food',
-  'goal',
-  'lifestyle',
-] as const;
-
-export type NoteCategory = (typeof NOTE_CATEGORIES)[number];
+export type NoteCategory = Database['public']['Enums']['coach_note_category'];
 
 /**
  * A note Bite saved, changed or archived in its notebook (ADR 0071), as the chat shows it under

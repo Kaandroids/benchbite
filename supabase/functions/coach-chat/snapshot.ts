@@ -1,6 +1,7 @@
 // The user's state as Bite sees it before each answer (#292): who they are, their goal, today's
-// targets and food, their plan and streak, and the notes Bite keeps about them (ADR 0071). Read with the user's token, so row level security
-// decides what Bite may see; what cannot be read is left out rather than failing the answer.
+// targets and food, their plan and streak, and the notes Bite keeps about them (ADR 0071). Read
+// with the user's token, so row level security decides what Bite may see; what cannot be read is
+// left out rather than failing the answer.
 import type { NoteCategory } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';

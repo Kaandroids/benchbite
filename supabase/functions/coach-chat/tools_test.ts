@@ -1089,44 +1089,39 @@ Deno.test('says why the database refused a food log change', async () => {
 });
 
 /**
- * The notebook as the note tools write it: the profile's setting `saves`, and what writing a note
- * gives, with what each write sent.
+ * The notebook as the note tools write it: whether the snapshot found saving from chats on
+ * (`saves`, unknown when undefined), and what writing a note gives, with what each write sent.
  */
 function noteContext(
-  saves: boolean | null,
+  saves: boolean | undefined,
   written: { data?: unknown; error?: unknown } = {
     data: { id: 9, category: 'allergy', text: 'Allergic to kiwi' },
   },
 ) {
   const writes: { op: string; values?: unknown; filters: [string, unknown][] }[] = [];
   const supabase = {
-    from: (table: string) => {
+    from: () => {
       const write = { op: '', values: undefined as unknown, filters: [] as [string, unknown][] };
+      const done = () => {
+        writes.push(write);
+        return Promise.resolve({ data: null, error: null, ...written });
+      };
       const builder: Record<string, unknown> = {
         select: () => builder,
         insert: (values: unknown) => ((write.op = 'insert'), (write.values = values), builder),
         update: (values: unknown) => ((write.op = 'update'), (write.values = values), builder),
         eq: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
         is: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
-        maybeSingle: () => {
-          if (table === 'profiles') {
-            return Promise.resolve({
-              data: saves === null ? null : { coach_saves_notes: saves },
-              error: null,
-            });
-          }
-          writes.push(write);
-          return Promise.resolve({ data: null, error: null, ...written });
-        },
-        single: () => {
-          writes.push(write);
-          return Promise.resolve({ data: null, error: null, ...written });
-        },
+        maybeSingle: done,
+        single: done,
       };
       return builder;
     },
   };
-  return { context: { ...context, supabase } as unknown as ToolContext, writes };
+  return {
+    context: { ...context, supabase, savesNotes: saves } as unknown as ToolContext,
+    writes,
+  };
 }
 
 Deno.test('saves a note from the chat, or asks first when saving is off', async () => {
@@ -1149,8 +1144,8 @@ Deno.test('saves a note from the chat, or asks first when saving is off', async 
     note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'asked' },
   });
   assertEquals((off.writes[0].values as { asked: boolean }).asked, true);
-  // A setting that cannot be read asks first too.
-  const unread = noteContext(null);
+  // A setting that could not be read asks first too.
+  const unread = noteContext(undefined);
   await runTool('save_note', args, unread.context);
   assertEquals((unread.writes[0].values as { asked: boolean }).asked, true);
 });
@@ -1178,9 +1173,11 @@ Deno.test('changes and archives only a note in use, and says when there is none'
   assertEquals(changed.writes[0], {
     op: 'update',
     values: { text: 'Allergic to kiwi and mango' },
+    // Only a note in use: none archived, nor one waiting for the user's yes.
     filters: [
       ['id', 9],
       ['archived_at', null],
+      ['asked', false],
     ],
   });
   const cleared = noteContext(true);
@@ -1196,6 +1193,11 @@ Deno.test('changes and archives only a note in use, and says when there is none'
     note: { id: 9, category: 'allergy', text: 'Allergic to kiwi', action: 'archived' },
   });
   assertEquals((archived.writes[0].values as { archive_reason: string }).archive_reason, 'Healed');
+  assertEquals(archived.writes[0].filters, [
+    ['id', 9],
+    ['archived_at', null],
+    ['asked', false],
+  ]);
 
   const gone = noteContext(true, { data: null });
   assertEquals(await runTool('archive_note', { id: 4, reason: 'Healed' }, gone.context), {

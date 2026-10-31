@@ -1,20 +1,19 @@
 // What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
 // records and plan, and the food and exercise libraries; the changes it may propose, which the
-// user applies (ADR 0058), to the food log too (ADR 0068); and the meals it estimates, as cards
-// the user adds (ADR 0062); and the notes it keeps about the user (ADR 0071). Each tool runs with the user's token, so row level security and the
-// database's functions decide what it sees and may do, and returns little, to keep the answer
-// cheap.
+// user applies (ADR 0058), to the food log too (ADR 0068); the meals it estimates, as cards the
+// user adds (ADR 0062); and the notes it keeps about the user (ADR 0071). Each tool runs with the
+// user's token, so row level security and the database's functions decide what it sees and may
+// do, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
-import {
-  type CoachToolName,
-  type DayTargets,
-  type FoodLogChange,
-  type FoodLogEntry,
-  type MealCard,
-  NOTE_CATEGORIES,
-  type NoteCard,
-  type ProposalCard,
+import type {
+  CoachToolName,
+  DayTargets,
+  FoodLogChange,
+  FoodLogEntry,
+  MealCard,
+  NoteCard,
+  ProposalCard,
 } from '../_shared/coach/chat.ts';
 import { Constants } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
@@ -46,6 +45,8 @@ export type ToolContext = {
    * whatever text it shows.
    */
   hasText: boolean;
+  /** Whether the user lets Bite save notes from chats, as the snapshot read it; unknown asks. */
+  savesNotes?: boolean;
 };
 
 /** The most days one look at the history may cover. */
@@ -126,6 +127,9 @@ const MEAL_REFUSALS = {
   log: 'A meal card could not be made',
 } satisfies Refusals;
 
+/** The longest a note and the reason it was archived may be, as `coach_notes` checks them. */
+const MAX_NOTE_LENGTH = 200;
+
 /** The database's refusals of a note. */
 const NOTE_REFUSALS = {
   meanings: {
@@ -133,19 +137,19 @@ const NOTE_REFUSALS = {
       'The notebook has as many notes in use as it may: change or archive one that no longer holds instead, or tell the user.',
     BB047:
       'The notebook keeps as many notes as it may; tell the user they can remove past ones in it.',
-    '23514': 'A note has text, of up to 200 characters, and an archived one says why.',
+    '23514': `A note has text, of up to ${MAX_NOTE_LENGTH} characters, and an archived one says why.`,
   },
   otherwise: 'The note could not be kept just now.',
   log: 'A note could not be kept',
 } satisfies Refusals;
 
 const NOTE_ID = z.number().int().positive().describe("The note's id, as the snapshot lists it.");
-const NOTE_CATEGORY = z.enum(NOTE_CATEGORIES);
+const NOTE_CATEGORY = z.enum(Constants.public.Enums.coach_note_category);
 const NOTE_TEXT = z
   .string()
   .trim()
   .min(1)
-  .max(200)
+  .max(MAX_NOTE_LENGTH)
   .describe("One fact, in the user's language, as they would say it: 'Allergic to walnuts'.");
 
 /** The longest Bite waits to ask again whether a note still holds. */
@@ -631,13 +635,12 @@ const TOOLS = [
         'For what may pass, as an injury: the day to ask again whether it still holds, YYYY-MM-DD.',
       ),
     }),
-    run: async ({ category, text, reviewOn }, { supabase, today, threadId }) => {
+    run: async ({ category, text, reviewOn }, { supabase, today, threadId, savesNotes }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
-      // Unread, the setting asks first: a note is never kept against the user's choice.
-      const profile = await supabase.from('profiles').select('coach_saves_notes').maybeSingle();
-      if (profile.error) logError('Could not read whether Bite saves notes', profile.error);
-      const asked = !profile.data?.coach_saves_notes;
+      // As the snapshot told Bite; unknown, it asks first: a note is never kept against the
+      // user's choice.
+      const asked = savesNotes !== true;
       const saved = await supabase
         .from('coach_notes')
         .insert({
@@ -683,6 +686,7 @@ const TOOLS = [
         })
         .eq('id', id)
         .is('archived_at', null)
+        .eq('asked', false)
         .select(NOTE_COLUMNS)
         .maybeSingle();
       if (updated.error) return refused(updated.error, NOTE_REFUSALS);
@@ -701,7 +705,7 @@ const TOOLS = [
         .string()
         .trim()
         .min(1)
-        .max(200)
+        .max(MAX_NOTE_LENGTH)
         .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
     }),
     run: async ({ id, reason }, { supabase }) => {
@@ -710,6 +714,7 @@ const TOOLS = [
         .update({ archived_at: new Date().toISOString(), archive_reason: reason })
         .eq('id', id)
         .is('archived_at', null)
+        .eq('asked', false)
         .select(NOTE_COLUMNS)
         .maybeSingle();
       if (archived.error) return refused(archived.error, NOTE_REFUSALS);
