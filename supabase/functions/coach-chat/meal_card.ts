@@ -2,7 +2,7 @@
 // goes to when the user named none, and how Bite reads a card back in the history.
 import type { MealCard } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
-import type { EstimateMeal } from '../_shared/meal/estimate.ts';
+import { estimateValues, type EstimateMeal } from '../_shared/meal/estimate.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** Where a card stands, as `coach_meal_cards` has it. */
@@ -55,9 +55,7 @@ export function mealAt(time: string | undefined): EstimateMeal {
 
 /** What a card's items add, in whole kcal, at the grams Bite gave. */
 export function cardKcal(card: MealCard): number {
-  return Math.round(
-    card.items.reduce((sum, item) => sum + (item.grams * item.per100.kcal) / 100, 0),
-  );
+  return Math.round(estimateValues(card.items).kcal);
 }
 
 /**

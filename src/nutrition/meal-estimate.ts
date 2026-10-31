@@ -1,6 +1,7 @@
 // A meal estimated from photos (#299, ADR 0059): the photos are taken or chosen, scaled down on
 // the device and sent to estimate-meal, which answers with the foods it sees and their values.
 import {
+  estimateValues,
   type EstimateItem,
   type EstimateMeal,
   type EstimateReason,
@@ -22,8 +23,7 @@ import { REFUSALS, type Refusal } from '@/ai/access';
 import { oneOf } from '@/lib/one-of';
 import { functionHeaders, functionUrl } from '@/lib/supabase';
 
-import { amountOf } from './foods';
-import { totalOf, type Totals } from './meals';
+import type { Totals } from './meals';
 
 export type { EstimateItem, EstimateResponse };
 
@@ -159,19 +159,19 @@ export async function estimateMeal(
   return body as EstimateResponse;
 }
 
-/** Values per 100 g as an estimate gives them, as the app names them. */
+/** Values as an estimate gives them, per 100 g or at grams, as the app names them. */
 export function per100Totals({ kcal, proteinG, carbsG, fatG }: Per100): Totals {
   return { calories: kcal, proteinG, carbsG, fatG };
 }
 
 /** What an item adds at its grams. */
 export function itemTotals(item: Pick<EstimateItem, 'per100' | 'grams'>): Totals {
-  return amountOf(per100Totals(item.per100), item.grams);
+  return estimateTotals([item]);
 }
 
 /** What the items add together. */
 export function estimateTotals(items: Pick<EstimateItem, 'per100' | 'grams'>[]): Totals {
-  return totalOf(items.map(itemTotals));
+  return per100Totals(estimateValues(items));
 }
 
 export type Confidence = 'high' | 'medium' | 'low';

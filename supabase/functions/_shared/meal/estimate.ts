@@ -44,6 +44,22 @@ export type EstimateFood = { ref: FoodRef; name: string };
 /** Calories and macros per 100 g. */
 export type Per100 = { kcal: number; proteinG: number; carbsG: number; fatG: number };
 
+/**
+ * What the items add together at their grams, in the units of `Per100`: the one total of an
+ * estimate, which the app shows and Bite reads back a meal card by.
+ */
+export function estimateValues(items: Pick<EstimateItem, 'per100' | 'grams'>[]): Per100 {
+  return items.reduce(
+    (sum, { per100, grams }) => ({
+      kcal: sum.kcal + (per100.kcal * grams) / 100,
+      proteinG: sum.proteinG + (per100.proteinG * grams) / 100,
+      carbsG: sum.carbsG + (per100.carbsG * grams) / 100,
+      fatG: sum.fatG + (per100.fatG * grams) / 100,
+    }),
+    { kcal: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+  );
+}
+
 /** A food seen in the photos, and how much of it. */
 export type EstimateItem = {
   /** What the item is, in the user's language. */
