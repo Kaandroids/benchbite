@@ -17,7 +17,7 @@ import {
 import { matchItems } from '../_shared/meal/match.ts';
 import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
-import { parseJson, readBody } from '../_shared/request.ts';
+import { parseJson, readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { ModelOutput, RESPONSE_SCHEMA, requestParts, SYSTEM } from './prompt.ts';
 
@@ -82,13 +82,10 @@ export async function handleEstimateRequest(
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
-  const length = Number(req.headers.get('content-length'));
-  if (length > MAX_BODY_BYTES) return refused('photos_too_large');
-  // Counted as it comes, as a request may not say its length, or say less than it sends.
-  const text = await readBody(req, MAX_BODY_BYTES);
-  if (text === undefined) return refused('photos_too_large');
+  const json = await readJson(req, MAX_BODY_BYTES);
+  if (json === TOO_LARGE) return refused('photos_too_large');
 
-  const parsed = EstimateRequest.safeParse(parseJson(text));
+  const parsed = EstimateRequest.safeParse(json);
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },

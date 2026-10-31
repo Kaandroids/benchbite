@@ -24,7 +24,7 @@ import {
 } from '../_shared/llm/mod.ts';
 import { BASE64, decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
-import { parseJson, readBody } from '../_shared/request.ts';
+import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   type Expression,
@@ -122,12 +122,10 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   if (req.method !== 'POST') {
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
-  const length = Number(req.headers.get('content-length'));
-  if (length > MAX_BODY_BYTES) return refused('photos_too_large');
-  const text = await readBody(req, MAX_BODY_BYTES);
-  if (text === undefined) return refused('photos_too_large');
+  const json = await readJson(req, MAX_BODY_BYTES);
+  if (json === TOO_LARGE) return refused('photos_too_large');
 
-  const parsed = ChatRequest.safeParse(parseJson(text));
+  const parsed = ChatRequest.safeParse(json);
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_request', issues: z.flattenError(parsed.error).fieldErrors },

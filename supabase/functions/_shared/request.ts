@@ -33,6 +33,19 @@ export async function readBody(req: Request, max: number): Promise<string | unde
   return new TextDecoder().decode(body);
 }
 
+/** What readJson() gives for a body larger than it reads. */
+export const TOO_LARGE = Symbol('too large');
+
+/**
+ * A request's body as JSON: null for a body that is not JSON or cannot be read, and TOO_LARGE for
+ * one that says or turns out to be longer than `max` bytes, which is not read further.
+ */
+export async function readJson(req: Request, max: number): Promise<unknown> {
+  if (Number(req.headers.get('content-length')) > max) return TOO_LARGE;
+  const text = await readBody(req, max);
+  return text === undefined ? TOO_LARGE : parseJson(text);
+}
+
 /** The JSON of a text, or null for text that is not JSON. */
 export function parseJson(text: string): unknown {
   try {
