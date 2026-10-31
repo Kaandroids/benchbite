@@ -24,26 +24,13 @@ type DailyProgressProps = {
   eaten: NutritionTargets;
   /** What was eaten on an average day, shown small under each macro, for a span of days. */
   average?: NutritionTargets;
-  /**
-   * A title on the row of the calories, which then sit at its end, smaller, for a card where the
-   * title is what stands out.
-   */
-  title?: string;
-  /** The macros in the regular weight instead of bold, for a card with less bold (#340). */
-  quiet?: boolean;
 };
 
 /** How much of a target was eaten, none for a target of none. */
 const shareOf = (eaten: number, target: number) => (target > 0 ? eaten / target : 0);
 
 /** How much of the day's calories and macros was eaten, large, against the targets, small. */
-export function DailyProgress({
-  targets,
-  eaten,
-  average,
-  title,
-  quiet = false,
-}: DailyProgressProps) {
+export function DailyProgress({ targets, eaten, average }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -52,37 +39,21 @@ export function DailyProgress({
   return (
     <>
       <View style={{ gap: spacing.sm }}>
-        {title ? (
-          <View style={[styles.titleRow, { gap: spacing.sm }]}>
-            <Text variant="bodyStrong" accessibilityRole="header" style={styles.title}>
-              {title}
-            </Text>
-            <Text color="textMuted">
-              <Text variant="headline">{format(Math.round(eaten.calories))}</Text> {calorieTarget}
-            </Text>
-          </View>
-        ) : (
-          <Text variant="title" color="primaryText">
-            {format(Math.round(eaten.calories))} <Text color="textMuted">{calorieTarget}</Text>
-          </Text>
-        )}
+        <Text variant="title" color="primaryText">
+          {format(Math.round(eaten.calories))} <Text color="textMuted">{calorieTarget}</Text>
+        </Text>
         <ProgressBar
           value={shareOf(eaten.calories, targets.calories)}
           accessibilityLabel={t('nutrition.calorieLabel')}
         />
       </View>
-      <MacroColumns targets={targets} eaten={eaten} average={average} quiet={quiet} />
+      <MacroColumns targets={targets} eaten={eaten} average={average} />
     </>
   );
 }
 
 /** Protein, carbs and fat side by side, each eaten against its target. */
-function MacroColumns({
-  targets,
-  eaten,
-  average,
-  quiet,
-}: Omit<DailyProgressProps, 'title' | 'quiet'> & { quiet: boolean }) {
+function MacroColumns({ targets, eaten, average }: DailyProgressProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -94,7 +65,7 @@ function MacroColumns({
             {t(`nutrition.macros.${key}`)}
           </Text>
           {/* On one line, smaller where a large amount needs it. */}
-          <Text variant={quiet ? 'body' : 'bodyStrong'} numberOfLines={1} adjustsFontSizeToFit>
+          <Text variant="bodyStrong" numberOfLines={1} adjustsFontSizeToFit>
             {format(Math.round(eaten[nutrient]))}{' '}
             <Text variant="caption" color="textMuted">
               {/* A span's totals are long, so its targets leave the unit to the average. */}
@@ -121,13 +92,6 @@ function MacroColumns({
 }
 
 const styles = StyleSheet.create({
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  title: {
-    flex: 1,
-  },
   macros: {
     flexDirection: 'row',
   },
