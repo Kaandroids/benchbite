@@ -47,8 +47,6 @@ This amends ADR 0062, whose Exif decision said re-encoding on the device drops t
 - No Exif, XMP, IPTC or other metadata leaves the device, on iOS or Android.
 - The app needs a small JPEG segment reader of its own, with tests, besides the function's, and
   both keep the same three application segments.
-- A photo from an encoder that writes another application segment the app does not remove is
-  refused until the app removes it as well.
 
 ## Cost of a photo turn
 
