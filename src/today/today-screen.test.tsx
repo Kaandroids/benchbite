@@ -327,6 +327,18 @@ describe('TodayScreen', () => {
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '6' } });
   });
 
+  it('leaves the time of a next workout without exercises out of their size', async () => {
+    jest.setSystemTime(THURSDAY);
+    mockData({
+      plan: loaded<Plan | null>({
+        sessions: [session(6, 'push', 4), { ...session(6, 'pull'), workoutId: 60 }],
+      }),
+    });
+    await render(<TodayScreen />);
+    expect(screen.getByText('Push, Pull')).toBeTruthy();
+    expect(screen.getByText('2 workouts · about 45 min')).toBeTruthy();
+  });
+
   it("shows the next workout once today's is done", async () => {
     mockData({ finished: loaded(finishedOn('2026-10-19', '2026-10-21')) });
     await render(<TodayScreen />);

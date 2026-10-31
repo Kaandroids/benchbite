@@ -40,13 +40,19 @@ export function useSessionSize() {
       : t('workout.session', { count: exercises.length, minutes: estimatedMinutes });
 }
 
-/** The size of several workouts together, such as "2 workouts · about 70 min". */
+/**
+ * The size of several workouts together, such as "2 workouts · about 70 min". Every workout counts,
+ * but the time only of those with exercises: one without them (ADR 0064) holds only a warm-up no
+ * one trains, as in the reminders.
+ */
 export function useSessionsSize() {
   const { t } = useTranslation();
-  return (sessions: readonly Pick<Workout, 'estimatedMinutes'>[]) =>
+  return (sessions: readonly Pick<Workout, 'exercises' | 'estimatedMinutes'>[]) =>
     t('workout.sessions', {
       count: sessions.length,
-      minutes: sessions.reduce((sum, { estimatedMinutes }) => sum + estimatedMinutes, 0),
+      minutes: sessions
+        .filter(({ exercises }) => exercises.length > 0)
+        .reduce((sum, { estimatedMinutes }) => sum + estimatedMinutes, 0),
     });
 }
 
