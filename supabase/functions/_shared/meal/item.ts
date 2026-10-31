@@ -56,9 +56,22 @@ export const SEARCH_NAMES: Record<Language, { examples: string[]; preparations: 
 };
 
 /** The lines of a prompt that teach the model those names, one per language. */
-export const searchNameLines = Object.entries(SEARCH_NAMES)
+const searchNameLines = Object.entries(SEARCH_NAMES)
   .map(
     ([language, { examples, preparations }]) =>
       `  - ${LANGUAGE_NAMES[language as Language]}: such as ${examples.map((name) => `"${name}"`).join(' or ')}; ${preparations}.`,
   )
   .join('\n');
+
+/**
+ * The rules of a prompt for the fields of an item that every estimator asks for alike, as lines in
+ * the order of `ModelItem`; each prompt adds the grams and the values per 100 g, of the meal as
+ * served or as eaten.
+ */
+export const ITEM_LINES = {
+  name: '- name: the item, short, in the reply language.',
+  searchName: `- searchName: the item as the food database names it, always in the reply language, never in English unless the reply language is English: the plain food first and then how it is prepared, with the database's words for that language. No brand, no amount, at most ${FOOD_QUERY_LENGTH.max} characters.
+${searchNameLines}`,
+  confidence: '- confidence: from 0 to 1, how sure you are of the item and its amount together.',
+  note: '- note of an item: what is uncertain, such as hidden oil, in a few words, in the reply language; empty when nothing is.',
+};

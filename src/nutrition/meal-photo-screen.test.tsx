@@ -182,7 +182,7 @@ describe('MealPhotoScreen', () => {
     expect(screen.getByRole('button', { name: /^Orange juice, 100 grams/ })).toBeTruthy();
   });
 
-  it('logs found foods by their reference and the rest by their search name', async () => {
+  it("logs the estimate's items", async () => {
     const logged = {
       day: '2026-10-30',
       entryIds: [1, 2],
@@ -197,14 +197,8 @@ describe('MealPhotoScreen', () => {
     expect(mutateAsync).toHaveBeenCalledWith({
       day: '2026-10-30',
       meal: 'breakfast',
-      entries: [
-        { food: { kind: 'library', id: 'E111200' }, grams: 120 },
-        {
-          name: 'Orange juice',
-          grams: 200,
-          per100g: { calories: 45, proteinG: 0.7, carbsG: 10, fatG: 0.2 },
-        },
-      ],
+      // Turned into what log_meal_estimate() takes as Bite's meal cards turn them (logItemOf).
+      items: [EGGS, JUICE],
     });
     expect(router.back).toHaveBeenCalled();
     expect(takeLoggedEstimate('breakfast', '2026-10-30')).toEqual({ ...logged, meal: 'breakfast' });

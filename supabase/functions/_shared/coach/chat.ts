@@ -1,5 +1,6 @@
 // What the app and coach-chat tell each other (ADR 0052), shared by both, so that they agree.
-// This file imports nothing, so that the app can bundle it.
+// This file imports only types, so that the app can bundle it.
+import type { EstimateItem, EstimateMeal } from '../meal/estimate.ts';
 
 /** The longest message the user may send, in characters. */
 export const MAX_MESSAGE_LENGTH = 4000;
@@ -18,6 +19,7 @@ export const COACH_TOOLS = [
   'get_workouts',
   'propose_workout_change',
   'propose_targets_change',
+  'log_meal_card',
 ] as const;
 
 export type CoachToolName = (typeof COACH_TOOLS)[number];
@@ -129,6 +131,23 @@ export type ProposalCard =
       to: DayTargets;
     };
 
+/**
+ * A meal Bite estimated (ADR 0062), as its card shows it: the items as `estimate-meal` gives them,
+ * matched to the food library alike, on a day and meal. The user adds it, with the grams they may
+ * change, and undoes it, by its `id` (log_coach_meal_card(), undo_coach_meal_card()); where it
+ * stands is read from `coach_meal_cards`, as the card is kept with the message.
+ */
+export type MealCard = {
+  id: number;
+  /** The day it is logged on, YYYY-MM-DD. */
+  day: string;
+  meal: EstimateMeal;
+  /** In the order log_coach_meal_card() takes changed grams in. */
+  items: EstimateItem[];
+  /** Bite's short line about the meal, in the user's language. */
+  note?: string;
+};
+
 /** What the app is told as Bite answers, one server-sent event each, with Bite's faces. */
 export type ChatEvent<Expression extends string = string> =
   /** A new thread, first, so that the app keeps it however the answer ends. */
@@ -139,6 +158,8 @@ export type ChatEvent<Expression extends string = string> =
   | { event: 'text'; text: string }
   /** A change Bite proposed, shown as a card under its answer. */
   | { event: 'proposal'; proposal: ProposalCard }
+  /** A meal Bite estimated, shown as a card under its answer for the user to add. */
+  | { event: 'meal_card'; mealCard: MealCard }
   /**
    * The turn is saved; `interrupted` says why when the answer stopped before its end, and
    * `reason` what failed or was refused, as an error's does.

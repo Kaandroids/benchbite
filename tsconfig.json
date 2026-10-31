@@ -5,6 +5,8 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
+    // Code shared with the Edge Functions imports its siblings with their extension, as Deno needs.
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"],

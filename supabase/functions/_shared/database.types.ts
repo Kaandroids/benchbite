@@ -163,6 +163,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      coach_meal_cards: {
+        Row: {
+          created_at: string;
+          day: string;
+          entry_ids: number[] | null;
+          food_ids: number[] | null;
+          id: number;
+          items: NonNullable<Json>;
+          kcal: number | null;
+          logged: Json | null;
+          logged_at: string | null;
+          meal: Database['public']['Enums']['meal'];
+          status: Database['public']['Enums']['coach_meal_card_status'];
+          thread_id: number;
+          undone_at: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          day: string;
+          entry_ids?: number[] | null;
+          food_ids?: number[] | null;
+          id?: never;
+          items: NonNullable<Json>;
+          kcal?: number | null;
+          logged?: Json | null;
+          logged_at?: string | null;
+          meal: Database['public']['Enums']['meal'];
+          status?: Database['public']['Enums']['coach_meal_card_status'];
+          thread_id: number;
+          undone_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          day?: string;
+          entry_ids?: number[] | null;
+          food_ids?: number[] | null;
+          id?: never;
+          items?: NonNullable<Json>;
+          kcal?: number | null;
+          logged?: Json | null;
+          logged_at?: string | null;
+          meal?: Database['public']['Enums']['meal'];
+          status?: Database['public']['Enums']['coach_meal_card_status'];
+          thread_id?: number;
+          undone_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'coach_meal_cards_thread_id_fkey';
+            columns: ['thread_id'];
+            isOneToOne: false;
+            referencedRelation: 'coach_threads';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       coach_media_deletions: {
         Row: {
           attempts: number;
@@ -1572,6 +1632,15 @@ export type Database = {
         };
         Returns: number;
       };
+      add_coach_meal_card: {
+        Args: {
+          day: string;
+          items: Json;
+          meal: Database['public']['Enums']['meal'];
+          thread_id: number;
+        };
+        Returns: number;
+      };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       add_workout_alternative: {
         Args: {
@@ -1701,6 +1770,8 @@ export type Database = {
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
+      coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
+      coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
@@ -1970,6 +2041,31 @@ export type Database = {
         SetofOptions: {
           from: '*';
           to: 'user_streaks';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      log_coach_meal_card: {
+        Args: { card_id: number; grams?: number[] };
+        Returns: {
+          created_at: string;
+          day: string;
+          entry_ids: number[] | null;
+          food_ids: number[] | null;
+          id: number;
+          items: NonNullable<Json>;
+          kcal: number | null;
+          logged: Json | null;
+          logged_at: string | null;
+          meal: Database['public']['Enums']['meal'];
+          status: Database['public']['Enums']['coach_meal_card_status'];
+          thread_id: number;
+          undone_at: string | null;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'coach_meal_cards';
           isOneToOne: true;
           isSetofReturn: false;
         };
@@ -2308,6 +2404,31 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      undo_coach_meal_card: {
+        Args: { card_id: number };
+        Returns: {
+          created_at: string;
+          day: string;
+          entry_ids: number[] | null;
+          food_ids: number[] | null;
+          id: number;
+          items: NonNullable<Json>;
+          kcal: number | null;
+          logged: Json | null;
+          logged_at: string | null;
+          meal: Database['public']['Enums']['meal'];
+          status: Database['public']['Enums']['coach_meal_card_status'];
+          thread_id: number;
+          undone_at: string | null;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'coach_meal_cards';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       undo_meal_estimate: { Args: { entry_ids: number[]; food_ids: number[] }; Returns: undefined };
       use_calculated_nutrition_targets: { Args: { today: string }; Returns: undefined };
       use_workout_alternative: {
@@ -2338,6 +2459,7 @@ export type Database = {
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
+      coach_meal_card_status: 'pending' | 'logged' | 'undone';
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
       coach_proposal_kind: 'workout' | 'targets';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
@@ -2593,6 +2715,7 @@ export const Constants = {
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
+      coach_meal_card_status: ['pending', 'logged', 'undone'],
       coach_proposal_decision: ['apply', 'keep', 'undo'],
       coach_proposal_kind: ['workout', 'targets'],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],

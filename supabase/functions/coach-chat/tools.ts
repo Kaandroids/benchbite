@@ -1,24 +1,36 @@
 // What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
-// records and plan, and the food and exercise libraries; and the changes it may propose, which the
-// user applies (ADR 0058). Each tool runs with the user's token, so row level security and the
-// database's functions decide what it sees and may do, and returns little, to keep the answer
-// cheap.
+// records and plan, and the food and exercise libraries; the changes it may propose, which the
+// user applies (ADR 0058); and the meals it estimates, as cards the user adds (ADR 0062). Each
+// tool runs with the user's token, so row level security and the database's functions decide what
+// it sees and may do, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
-import type { CoachToolName, DayTargets, ProposalCard } from '../_shared/coach/chat.ts';
+import type { CoachToolName, DayTargets, MealCard, ProposalCard } from '../_shared/coach/chat.ts';
+import { Constants } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
+import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
+import { ModelItem } from '../_shared/meal/item.ts';
+import { LOGGABLE_DAYS } from '../_shared/meal/limits.ts';
+import { logItemOf } from '../_shared/meal/log.ts';
+import { matchItems } from '../_shared/meal/match.ts';
 import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
+import { mealAt } from './meal_card.ts';
 import { workoutName } from './workout.ts';
 
 export type ToolContext = {
   supabase: Client;
   language: Language;
   today: string;
-  /** The thread the answer goes on in, which a proposal belongs to. */
+  /** The thread the answer goes on in, which a proposal or a meal card belongs to. */
   threadId: number;
+  /**
+   * The device's local time, HH:MM, when the app sends it, which picks the meal of a card the user
+   * named none for.
+   */
+  localTime?: string;
 };
 
 /** The most days one look at the history may cover. */
@@ -32,18 +44,46 @@ const FOOD_QUERY = z.string().trim().min(FOOD_QUERY_LENGTH.min).max(FOOD_QUERY_L
 /** Why Bite proposes a change, in the user's language, as the card shows it. */
 const WHY = z.string().trim().min(1).max(120);
 
-/** What the database's refusals of a proposal mean, for the model to correct it. */
-const REFUSALS: Record<string, string> = {
-  BB006: "That workout is not the user's.",
-  BB007:
-    'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
-  BB008: 'Too many exercises for a workout.',
-  BB037: "The calories are under the user's calorie floor.",
-  BB038: 'The user has too many changes waiting; ask them to decide those first.',
-  BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
-  BB040: 'Swaps may not replace an exercise twice, or one another.',
-  '23514': 'The values are out of range, or the macros add up to more than the calories.',
-};
+/**
+ * What the database's refusals mean, by their code, for the model to correct what it sent; what
+ * it is told of any other refusal; and what is logged then.
+ */
+type Refusals = { meanings: Record<string, string>; otherwise: string; log: string };
+
+/** The database's refusals of a proposal. */
+const REFUSALS = {
+  meanings: {
+    BB006: "That workout is not the user's.",
+    BB007:
+      'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
+    BB008: 'Too many exercises for a workout.',
+    BB037: "The calories are under the user's calorie floor.",
+    BB038: 'The user has too many changes waiting; ask them to decide those first.',
+    BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
+    BB040: 'Swaps may not replace an exercise twice, or one another.',
+    '23514': 'The values are out of range, or the macros add up to more than the calories.',
+  },
+  otherwise: 'The change could not be proposed just now.',
+  log: 'A proposal could not be made',
+} satisfies Refusals;
+
+/** The user may save no more foods of their own, which an item the library lacks needs. */
+const NO_MORE_OWN_FOODS =
+  'The user has as many foods of their own as they may have, so an item the library does not have cannot be saved; tell them.';
+
+/** The database's refusals of a meal card. */
+const MEAL_REFUSALS = {
+  meanings: {
+    BB020: `Meals are logged for today and up to ${LOGGABLE_DAYS} days back.`,
+    BB021: 'That day has as many entries as it may have.',
+    BB024: NO_MORE_OWN_FOODS,
+    BB026: NO_MORE_OWN_FOODS,
+    BB038: 'The user has had too many meal cards today; ask them to log it in Nutrition.',
+    '23514': 'A value is out of range.',
+  },
+  otherwise: 'The meal card could not be made just now.',
+  log: 'A meal card could not be made',
+} satisfies Refusals;
 
 type CoachTool<A extends z.ZodType> = {
   /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
@@ -284,7 +324,7 @@ const TOOLS = [
       const found = await workoutForCard(supabase, workoutId);
       if (found.error) throw found.error;
       const workout = found.data;
-      if (!workout) return { error: REFUSALS.BB006 };
+      if (!workout) return { error: REFUSALS.meanings.BB006 };
       // Named before proposing, which also finds an id that does not exist, so that a proposal is
       // never left without its card.
       const names = await exerciseNames(
@@ -306,7 +346,7 @@ const TOOLS = [
         })),
         today,
       });
-      if (proposed.error) return refused(proposed.error);
+      if (proposed.error) return refused(proposed.error, REFUSALS);
       const proposal: ProposalCard = {
         kind: 'workout',
         id: proposed.data,
@@ -342,7 +382,7 @@ const TOOLS = [
           today,
         }),
       ]);
-      if (proposed.error) return refused(proposed.error);
+      if (proposed.error) return refused(proposed.error, REFUSALS);
       // The targets in use, as the user sees them now; none before the onboarding is saved, and
       // left out when they cannot be read, so that the card does not say there were none.
       if (current.error) logError('Could not read the targets in use for a card', current.error);
@@ -364,6 +404,52 @@ const TOOLS = [
         to: targets,
       };
       return { proposal };
+    },
+  }),
+  tool({
+    name: 'log_meal_card',
+    description:
+      'Shows the user a card of a meal they ate, which they add to their food log with a tap; it logs nothing itself. Each item is matched to the food library by its searchName, as a meal photo in the app is.',
+    args: z.object({
+      meal: z
+        .enum(Constants.public.Enums.meal)
+        .optional()
+        .describe('The meal the user named; leave it out otherwise, and the time of day decides.'),
+      day: DAY.optional().describe(
+        `The day it was eaten, YYYY-MM-DD, today or up to ${LOGGABLE_DAYS} days back; today when left out.`,
+      ),
+      items: z.array(ModelItem).min(1).max(MAX_ESTIMATE_ITEMS),
+      note: z
+        .string()
+        .trim()
+        .max(200)
+        .optional()
+        .catch(undefined)
+        .describe("One short line about the meal, in the user's language; never judge it."),
+    }),
+    run: async ({ meal, day, items, note }, { supabase, language, today, threadId, localTime }) => {
+      const eatenOn = day ?? today;
+      if (eatenOn > today || eatenOn < addDays(today, -LOGGABLE_DAYS)) {
+        return { error: MEAL_REFUSALS.meanings.BB020 };
+      }
+      // As the user, so that only their own foods are found.
+      const matched = await matchItems(supabase, language, items);
+      const eaten = meal ?? mealAt(localTime);
+      const added = await supabase.rpc('add_coach_meal_card', {
+        thread_id: threadId,
+        day: eatenOn,
+        meal: eaten,
+        items: matched.map(logItemOf),
+      });
+      if (added.error) return refused(added.error, MEAL_REFUSALS);
+      const mealCard: MealCard = {
+        id: added.data,
+        day: eatenOn,
+        meal: eaten,
+        items: matched,
+        ...(note && { note }),
+      };
+      return { mealCard };
     },
   }),
 ];
@@ -474,9 +560,9 @@ function targetOf(e: {
   };
 }
 
-/** A proposal the database refused, said so that the model can correct it. */
-function refused(error: { code?: string; message?: string }) {
-  const meaning = error.code ? REFUSALS[error.code] : undefined;
-  if (!meaning) logError('A proposal could not be made', error);
-  return { error: meaning ?? 'The change could not be proposed just now.' };
+/** What the database refused, said with `refusals` so that the model can correct it. */
+function refused(error: { code?: string; message?: string }, refusals: Refusals) {
+  const meaning = error.code ? refusals.meanings[error.code] : undefined;
+  if (!meaning) logError(refusals.log, error);
+  return { error: meaning ?? refusals.otherwise };
 }

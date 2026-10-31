@@ -20,7 +20,7 @@ import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
 import { AmountForm } from './amount-form';
-import { useLogEstimate, type EstimatedEntry } from './entries';
+import { useLogEstimate } from './entries';
 import { EstimateCard } from './estimate-card';
 import { EstimateFailure, per100Totals, type EstimateItem } from './meal-estimate';
 import { handOverLoggedEstimate } from './meal-photo-handover';
@@ -40,13 +40,6 @@ type MealPhotoScreenProps = {
 /** How the progress bar fills while Bite looks: most of the way in about ten seconds. */
 const PROGRESS_MS = 6000;
 const PROGRESS_TICK_MS = 250;
-
-/** The item an estimate logs: a found food by its reference, or the model's values by its name. */
-function entryOf(item: EstimateItem): EstimatedEntry {
-  return item.food && !item.estimated
-    ? { food: item.food.ref, grams: item.grams }
-    : { name: item.searchName, grams: item.grams, per100g: per100Totals(item.per100) };
-}
 
 /**
  * Logs a meal from photos (#299, ADR 0059): Bite looks at them, then shows what it sees, each food
@@ -81,7 +74,7 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
   const items = state.kind === 'estimate' ? state.items : [];
   const add = () => {
     logEstimate
-      .mutateAsync({ day, meal, entries: items.map(entryOf) })
+      .mutateAsync({ day, meal, items })
       .then((logged) => {
         // Handed over even if the screen was left meanwhile, so that Undo is offered.
         handOverLoggedEstimate({ ...logged, meal });

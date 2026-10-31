@@ -40,6 +40,7 @@ import {
 import { type CheckedPhoto, checkPhotos, removePhotos, storePhotos } from './photos.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
+import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
 
 export type ChatContext = {
@@ -153,7 +154,11 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
       .order('id', { ascending: false })
       .limit(HISTORY);
     if (messages.error) return failed('Could not read the thread', messages.error);
-    history = messages.data.reverse().flatMap(toMessage);
+    const results = messages.data.flatMap((row) =>
+      (Array.isArray(row.content) ? row.content : []).map(resultOf),
+    );
+    const cards = await mealCardStates(context.supabase, results);
+    history = messages.data.reverse().flatMap((row) => toMessage(row, cards));
   }
 
   const stop = new Stop(context, request.requestId);
@@ -343,6 +348,7 @@ async function answer(
       language: request.language,
       today: request.today,
       threadId,
+      localTime: request.localTime,
     };
 
     for (let round = 0; round <= MAX_TOOL_ROUNDS && !(await stop.look({ now: true })); round++) {
@@ -409,8 +415,8 @@ async function answer(
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
-    // A proposal made is kept with its card, even if the model ended without a word.
-    said: turn.text.trim() !== '' || turn.trace.some(isProposal),
+    // A proposal or a meal made is kept with its card, even if the model ended without a word.
+    said: turn.text.trim() !== '' || turn.trace.some(isCard),
     stopped: stop.stopped,
     finish: turn.finish,
   });
@@ -482,9 +488,12 @@ async function lookUp(
   // What the user named things comes back with it, and may not pass for a snapshot either.
   const result = untaggedAll(await runTool(call.name, call.args, context));
   send({ event: 'tool_end', name: call.name });
-  // A proposed change is shown as a card under the answer; the message keeps it with the result.
+  // A proposed change or a meal is shown as a card under the answer; the message keeps it with the
+  // result.
   const proposal = proposalOf(result);
   if (proposal) send({ event: 'proposal', proposal });
+  const mealCard = mealCardOf(result);
+  if (mealCard) send({ event: 'meal_card', mealCard });
   return result;
 }
 
@@ -502,6 +511,11 @@ function proposalText(proposal: ProposalCard): string {
 /** The card of a change a tool proposed, as its result holds it. */
 function proposalOf(result: unknown): ProposalCard | undefined {
   return (result as { proposal?: ProposalCard } | null)?.proposal;
+}
+
+/** The result of a stored part of a message, when it is a tool's result. */
+function resultOf(part: unknown): unknown {
+  return partOfType(part, 'toolResult') ? part.result : undefined;
 }
 
 /** The user's message as the thread keeps it: a part per photo, by its path, then its text. */
@@ -616,13 +630,13 @@ export function content(trace: Part[], text: string): Part[] {
   const fits = (parts: Part[]) =>
     parts.length <= MAX_PARTS &&
     new TextEncoder().encode(JSON.stringify(parts)).length <= MAX_CONTENT_BYTES;
-  // A proposal's card is kept whatever else goes, as the chat shows it when read back.
-  const proposals = trace.filter(isProposal);
-  const room = MAX_PARTS - 1 - proposals.length;
+  // A proposal's or a meal's card is kept whatever else goes, as the chat shows it when read back.
+  const cards = trace.filter(isCard);
+  const room = MAX_PARTS - 1 - cards.length;
   const kept: Part[] = [];
   let others = 0;
   for (const part of trace) {
-    if (isProposal(part)) {
+    if (isCard(part)) {
       kept.push(part);
     } else if (others < room) {
       kept.push(part);
@@ -632,13 +646,17 @@ export function content(trace: Part[], text: string): Part[] {
   const whole = [...kept, answer];
   if (fits(whole)) return whole;
   const without = whole.map((part) =>
-    part.type === 'toolResult' && !isProposal(part) ? { ...part, result: { omitted: true } } : part,
+    part.type === 'toolResult' && !isCard(part) ? { ...part, result: { omitted: true } } : part,
   );
-  return fits(without) ? without : [...proposals, answer];
+  return fits(without) ? without : [...cards, answer];
 }
 
-function isProposal(part: Part): boolean {
-  return part.type === 'toolResult' && proposalOf(part.result) !== undefined;
+/** Whether a part is the result of a proposal or a meal card, which the chat shows. */
+function isCard(part: Part): boolean {
+  return (
+    part.type === 'toolResult' &&
+    (proposalOf(part.result) !== undefined || mealCardOf(part.result) !== undefined)
+  );
 }
 
 /**
@@ -652,15 +670,20 @@ function toMessage(
     Database['public']['Tables']['coach_messages']['Row'],
     'role' | 'content' | 'expression'
   >,
+  cards: Map<number, MealCardState>,
 ): Message[] {
   const parts = Array.isArray(row.content) ? row.content : [];
   const said = parts.flatMap((part) =>
     partOfType(part, 'text') && typeof part.text === 'string' ? [part.text] : [],
   );
-  // What Bite proposed, so that it knows on later messages, whether or not it said a word.
+  // What Bite proposed and the meals it estimated, with where they stand, so that it knows on
+  // later messages, whether or not it said a word.
   const proposed = parts.flatMap((part) => {
-    const proposal = partOfType(part, 'toolResult') ? proposalOf(part.result) : undefined;
-    return proposal ? [proposalText(proposal)] : [];
+    const result = resultOf(part);
+    const proposal = proposalOf(result);
+    if (proposal) return [proposalText(proposal)];
+    const card = mealCardOf(result);
+    return card ? [mealCardText(card, cards.get(card.id))] : [];
   });
   // A message's photos reach the model in its own turn only (ADR 0062).
   const photos = parts.filter((part) => partOfType(part, 'image')).length;

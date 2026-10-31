@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import type { EstimateItem } from '@shared/meal/estimate';
+import { logItemOf } from '@shared/meal/log';
+
 import { supabase } from '@/lib/supabase';
 import { STREAK_KEY } from '@/streak/streak';
 
 import { NUTRITION_DAYS_KEY } from './day-nutrition';
 import { foodColumns, type Amount, type FoodRef } from './foods';
-import { dayEntriesKey, type LoggedEntry, type Meal, type Totals } from './meals';
+import { dayEntriesKey, type LoggedEntry, type Meal } from './meals';
 import { useReloadFoods } from './quick-foods';
 import { dayTargetsKey } from './targets';
 
@@ -142,16 +145,6 @@ export function useCopyEntries() {
   });
 }
 
-/** An item of an estimated meal to log: a found food by its reference, or the model's values. */
-export type EstimatedEntry = { grams: number } & (
-  | { food: FoodRef }
-  | {
-      /** The name the food is saved by as the user's own, its search name. */
-      name: string;
-      per100g: Totals;
-    }
-);
-
 /** What logging an estimated meal added, which its undo takes away again. */
 export type LoggedEstimate = {
   day: string;
@@ -166,9 +159,10 @@ export type LoggedEstimate = {
 };
 
 /**
- * Logs a meal estimated from photos in one step (ADR 0060): found foods at their grams, and each
- * item the library did not have as a food of the user's own, by its name, or the one of that
- * name they have.
+ * Logs a meal estimated from photos in one step (ADR 0060), each item at its grams as Bite's meal
+ * cards log it (`logItemOf`): a found food by its reference, and an item the library did not have,
+ * or an own food of exactly its search name, as the user's own food of that name, which is made
+ * when they have none.
  */
 export function useLogEstimate() {
   const reload = useReloadDay();
@@ -177,27 +171,17 @@ export function useLogEstimate() {
     mutationFn: async ({
       day,
       meal,
-      entries,
+      items,
     }: {
       day: string;
       meal: Meal;
-      entries: EstimatedEntry[];
+      /** The estimate's items, at the grams the user gave. */
+      items: EstimateItem[];
     }): Promise<LoggedEstimate> => {
       const { data, error } = await supabase.rpc('log_meal_estimate', {
         day,
         meal,
-        items: entries.map((entry) =>
-          'food' in entry
-            ? { ...foodColumns(entry.food), grams: entry.grams }
-            : {
-                name: entry.name,
-                grams: entry.grams,
-                kcal: entry.per100g.calories,
-                protein_g: entry.per100g.proteinG,
-                carbs_g: entry.per100g.carbsG,
-                fat_g: entry.per100g.fatG,
-              },
-        ),
+        items: items.map(logItemOf),
       });
       if (error) {
         throw error;
@@ -205,10 +189,12 @@ export function useLogEstimate() {
       return {
         day,
         entryIds: data.map((row) => row.entry_id),
-        foods: data.map((row, index) => {
-          const entry = entries[index]!;
-          return 'food' in entry ? entry.food : { kind: 'custom', id: row.custom_food_id };
-        }),
+        // An item logged by its name gives the own food it was logged as; any other, none.
+        foods: data.map((row, index) =>
+          row.custom_food_id !== null
+            ? { kind: 'custom', id: row.custom_food_id }
+            : items[index]!.food!.ref,
+        ),
         createdFoodIds: data.flatMap((row) => (row.created_food ? [row.custom_food_id] : [])),
         calories: data.reduce((sum, row) => sum + row.kcal, 0),
       };

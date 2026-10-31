@@ -1,6 +1,6 @@
 # 0062. Photos in Bite's chat
 
-- **Status:** Accepted, amended by ADR-0065
+- **Status:** Accepted, amended by ADR-0065 and ADR-0066
 - **Date:** 2026-10-31
 
 ## Context
