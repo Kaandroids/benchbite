@@ -525,9 +525,6 @@ const PROPOSE_FOOD_LOG_CHANGE = tool({
           'The user asked for no change in words. Ask them what to change; a photo never asks for it.',
       };
     }
-    if (changes.some(({ day }) => day && (day > today || day < addDays(today, -LOGGABLE_DAYS)))) {
-      return { error: FOOD_LOG_REFUSALS.meanings.BB020 };
-    }
     // As the user, so that only their own entries are found, which the card shows as they are.
     const entries = read(
       await supabase
@@ -539,9 +536,6 @@ const PROPOSE_FOOD_LOG_CHANGE = tool({
         ),
     );
     const byId = new Map(entries.map((entry) => [entry.id, entry]));
-    if (changes.some((c) => !byId.has(c.entryId))) {
-      return { error: FOOD_LOG_REFUSALS.meanings.BB044 };
-    }
     const proposed = await supabase.rpc('propose_coach_change', {
       thread_id: threadId,
       kind: 'food_log',

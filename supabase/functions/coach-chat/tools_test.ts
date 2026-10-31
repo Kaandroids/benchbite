@@ -776,8 +776,8 @@ Deno.test('proposes no food log change for a message without words', async () =>
   assertEquals(calls, []);
 });
 
-Deno.test("refuses an entry that is not the user's, proposing nothing", async () => {
-  const { context, calls } = foodLogContext();
+Deno.test("passes on the database's refusal of an entry that is not the user's", async () => {
+  const { context } = foodLogContext();
   assertEquals(
     await proposeFoodLog(
       {
@@ -789,7 +789,6 @@ Deno.test("refuses an entry that is not the user's, proposing nothing", async ()
       error: "An entry is not in the user's food log; take the ids from get_meal_log.",
     },
   );
-  assertEquals(calls, []);
 });
 
 Deno.test(
@@ -814,7 +813,9 @@ Deno.test(
       const wrong = await proposeFoodLog({ changes }, context);
       assertEquals(typeof (wrong as { error: string }).error, 'string');
     }
-    for (const day of ['2026-10-31', '2026-10-22']) {
+    assertEquals(calls, []);
+    // The database refuses a day that cannot be logged, by its own today.
+    for (const day of ['2026-11-01', '2026-10-21']) {
       assertEquals(
         await proposeFoodLog(
           {
@@ -828,7 +829,6 @@ Deno.test(
         },
       );
     }
-    assertEquals(calls, []);
   },
 );
 
