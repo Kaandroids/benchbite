@@ -85,6 +85,11 @@ type StreamedPart = Extract<Part, { type: 'text' | 'toolCall' }>;
 /** What a streamed answer brings, in order: text as it comes, tool calls, and the end. */
 export type StreamEvent = StreamedPart | { type: 'done'; usage: Usage; finish: Finish };
 
+/** The text of an answer's parts, without its tool calls. */
+export function textOf(parts: Part[]): string {
+  return parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
+}
+
 /** A part as a stream brings it, or nothing for a part a stream leaves out. */
 export function streamedPart(part: Part): StreamedPart | undefined {
   return part.type === 'text' || part.type === 'toolCall' ? part : undefined;
