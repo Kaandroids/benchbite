@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
@@ -27,6 +28,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
   const duration = useDurationFormat();
   const exercisesLabel = isPartial(log.exercises, log.plannedExercises)
     ? t('history.exercisesOf', { done: log.exercises, count: log.plannedExercises })
@@ -54,6 +56,11 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
       <View style={[styles.flex, { gap: 2 }]}>
         <Text variant="label" numberOfLines={1}>
           {workoutName(log)}
+          {log.alternative ? (
+            <Text variant="label" color="textMuted">
+              {` · ${alternativeName(log.alternative)}`}
+            </Text>
+          ) : null}
         </Text>
         {icons ? (
           <View style={[styles.stats, { gap: spacing.md }]}>

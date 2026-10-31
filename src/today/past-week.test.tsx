@@ -53,6 +53,7 @@ const log = (id: number, type: LogSummary['type'], startedAt: Date): LogSummary 
   kilograms: 4820,
   estimatedKcal: null,
   plannedExerciseIds: null,
+  alternative: null,
 });
 
 const day = (date: string, calories: number, targets: DayNutrition['targets'] = TARGETS) => ({

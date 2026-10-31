@@ -64,6 +64,7 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   kilograms: 6240,
   estimatedKcal: 390,
   plannedExerciseIds: null,
+  alternative: null,
 });
 
 // A Friday.
@@ -169,6 +170,23 @@ describe('RecentLogs', () => {
     });
   });
 
+  it('names the alternative a workout was done with, an unnamed one by its place', async () => {
+    jest.mocked(useRecentLogs).mockReturnValue(
+      loaded({
+        latest: [
+          { ...LOGS[0]!, alternative: { name: 'Home', position: 2 } },
+          { ...LOGS[1]!, alternative: { name: null, position: 3 } },
+          LOGS[2]!,
+        ],
+        thisWeek: 2,
+      }) as never,
+    );
+    await render(<RecentLogs />);
+    expect(screen.getByText('Push · Home')).toBeTruthy();
+    expect(screen.getByText('Legs · Alternative 3')).toBeTruthy();
+    expect(screen.getByText('Pull')).toBeTruthy();
+  });
+
   it('says when nothing was logged yet', async () => {
     jest.mocked(useRecentLogs).mockReturnValue(loaded({ latest: [], thisWeek: 0 }) as never);
     await render(<RecentLogs />);
@@ -269,6 +287,17 @@ describe('LogScreen', () => {
     // The plank: one hold, its time as the total.
     expect(screen.getByText('1 set · 0:50')).toBeTruthy();
     expect(screen.getByLabelText('BEST SET: 0:50')).toBeTruthy();
+  });
+
+  it('names the alternative the workout was done with before the day', async () => {
+    jest
+      .mocked(useLogSummary)
+      .mockReturnValue(
+        loaded({ ...LOGS[0]!, alternative: { name: 'Home', position: 2 } }) as never,
+      );
+    await render(<LogScreen id={3} />);
+    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getByText('Home · Friday, October 23')).toBeTruthy();
   });
 
   it('opens the workout to edit it', async () => {

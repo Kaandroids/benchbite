@@ -20,6 +20,7 @@ import { describeSet, setKindOf } from '@/sets/fields';
 import { SetChips } from '@/sets/set-chips';
 import type { SetValues } from '@/sets/values';
 import { fonts, useTheme } from '@/theme';
+import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 
 import { useTotalFormat } from './format';
@@ -38,6 +39,7 @@ export function LogScreen({ id }: { id: number }) {
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
   const { format } = useNumberFormat();
   const formatTotal = useTotalFormat();
   const log = summary.data;
@@ -62,13 +64,15 @@ export function LogScreen({ id }: { id: number }) {
   }
 
   // "Friday, October 23" under the name in the top bar, with the year only when it is not this
-  // one; when it started and ended is in the figures below.
+  // one, after the alternative the workout was done with; when it started and ended is in the
+  // figures below.
   const day = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: log.startedAt.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
   }).format(log.startedAt);
+  const subtitle = log.alternative ? `${alternativeName(log.alternative)} · ${day}` : day;
   const totalTime = workoutLength(
     Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000),
   );
@@ -113,7 +117,7 @@ export function LogScreen({ id }: { id: number }) {
         />
       }
       title={workoutName(log)}
-      subtitle={day}
+      subtitle={subtitle}
     >
       {/* Four even columns, like the figures on a workout's screen, over when it started and ended. */}
       <StatColumns

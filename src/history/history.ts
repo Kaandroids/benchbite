@@ -5,6 +5,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
 import { STREAK_KEY } from '@/streak/streak';
+import type { WorkoutAlternative } from '@/workouts/alternatives';
 import type { FinishedWorkout } from '@/workouts/week-schedule';
 import type { Workout } from '@/workouts/workouts';
 
@@ -35,6 +36,8 @@ export type LogSummary = {
   estimatedKcal: number | null;
   /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
   plannedExerciseIds: string[] | null;
+  /** The alternative it was done with (ADR 0069); null without alternatives and for older logs. */
+  alternative: Pick<WorkoutAlternative, 'name' | 'position'> | null;
 };
 
 /** A set of a finished workout. */
@@ -116,6 +119,10 @@ function toSummary(row: SummaryRow): LogSummary {
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
     plannedExerciseIds: row.planned_exercise_ids,
+    alternative:
+      row.alternative_position === null
+        ? null
+        : { name: row.alternative_name, position: row.alternative_position },
   };
 }
 
