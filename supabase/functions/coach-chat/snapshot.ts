@@ -40,7 +40,7 @@ export type Snapshot = {
   targets?: Macros;
   eaten?: Macros;
   training?: string;
-  /** Today's workouts, and whether they are done. */
+  /** Today's workouts, and whether they are done; one without exercises yet says so (ADR 0064). */
   workouts?: string;
   streak?: string;
 };
@@ -124,8 +124,14 @@ export async function loadSnapshot(
   }
   if (planned.data) {
     const done = trained.data?.[0]?.done ?? 0;
+    // One whose empty alternative is in use (ADR 0064).
+    const named = planned.data.map((workout) =>
+      workout.exercise_count === 0
+        ? `${workoutName(workout)} (no exercises yet)`
+        : workoutName(workout),
+    );
     snapshot.workouts = planned.data.length
-      ? `${planned.data.map(workoutName).join(', ')} planned, ${done} done`
+      ? `${named.join(', ')} planned, ${done} done`
       : done
         ? `none planned, ${done} done`
         : 'rest day';

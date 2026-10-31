@@ -58,34 +58,40 @@ export function WorkoutListItem({
         <DayChips weekdays={workout.weekdays} muted={!workout.active} today={today} />
         {/* One line: the counts go without their words, which the icons and labels give. Only the
             calories keep a colour, so that the stats stay quiet beside the days (#334). */}
-        <View style={[styles.stats, { gap: spacing.md }]}>
-          <IconStat
-            icon="dumbbell"
-            color="textMuted"
-            text={String(exercises.length)}
-            label={t('workout.size.exercises', { count: exercises.length })}
-          />
-          <IconStat
-            icon="target"
-            color="textMuted"
-            text={String(sets)}
-            label={t('common.sets', { count: sets })}
-          />
-          <IconStat
-            icon="timer"
-            color="textMuted"
-            text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
-          />
-          {kcalPerMinute ? (
+        {exercises.length === 0 ? (
+          <Text variant="caption" color="textMuted">
+            {t('workout.noExercises')}
+          </Text>
+        ) : (
+          <View style={[styles.stats, { gap: spacing.md }]}>
             <IconStat
-              icon="flame"
-              color="primary"
-              text={t('workout.size.kcal', {
-                kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
-              })}
+              icon="dumbbell"
+              color="textMuted"
+              text={String(exercises.length)}
+              label={t('workout.size.exercises', { count: exercises.length })}
             />
-          ) : null}
-        </View>
+            <IconStat
+              icon="target"
+              color="textMuted"
+              text={String(sets)}
+              label={t('common.sets', { count: sets })}
+            />
+            <IconStat
+              icon="timer"
+              color="textMuted"
+              text={t('workout.size.minutes', { minutes: workout.estimatedMinutes })}
+            />
+            {kcalPerMinute ? (
+              <IconStat
+                icon="flame"
+                color="primary"
+                text={t('workout.size.kcal', {
+                  kcal: Math.round(kcalPerMinute * workout.estimatedMinutes),
+                })}
+              />
+            ) : null}
+          </View>
+        )}
       </Pressable>
       {running ? (
         <View style={[styles.running, { borderRadius: radii.full, backgroundColor: colors.track }]}>

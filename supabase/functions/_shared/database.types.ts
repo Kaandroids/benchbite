@@ -1643,7 +1643,13 @@ export type Database = {
       };
       add_water: { Args: { amount_ml: number; on_day: string }; Returns: number };
       add_workout_alternative: {
-        Args: { exercises?: Json; name?: string; today: string; workout_id: number };
+        Args: {
+          exercises?: Json;
+          name?: string;
+          source_alternative_id?: number;
+          today: string;
+          workout_id: number;
+        };
         Returns: number;
       };
       age_in_years: { Args: { birth_year: number }; Returns: number };
@@ -2154,6 +2160,7 @@ export type Database = {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
           day: string;
+          exercise_count: number;
           name: string;
           type: Database['public']['Enums']['workout_type'];
           workout_id: number;
@@ -2438,6 +2445,7 @@ export type Database = {
           workouts: number;
         }[];
       };
+      workout_minutes: { Args: { items: Json }; Returns: number };
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';

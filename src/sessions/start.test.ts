@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import { act, createTestQueryClient, renderHook } from '@/test/render';
+import { testExercise } from '@/workouts/test-data';
 import type { Workout } from '@/workouts/workouts';
 
 import { startSession } from './session';
@@ -27,17 +28,17 @@ const PUSH: Workout = {
   weekdays: [1],
   active: true,
   estimatedMinutes: 45,
-  exercises: [],
+  exercises: [testExercise('bench')],
 };
 
 const askMove = jest.fn();
 
-async function start(options?: { beforeStart?: () => void }) {
+async function start(options?: { beforeStart?: () => void }, workout = PUSH) {
   jest.mocked(useStartMove).mockReturnValue(askMove);
   const { result } = await renderHook(() => useStartWorkout(), {
     queryClient: createTestQueryClient(),
   });
-  await act(() => result.current(PUSH, options));
+  await act(() => result.current(workout, options));
 }
 
 describe('useStartWorkout', () => {
@@ -87,5 +88,14 @@ describe('useStartWorkout', () => {
     await start({ beforeStart });
     expect(beforeStart).toHaveBeenCalledTimes(1);
     expect(startSession).toHaveBeenCalled();
+  });
+
+  it('opens a workout without exercises instead of starting it', async () => {
+    const beforeStart = jest.fn();
+    await start({ beforeStart }, { ...PUSH, exercises: [] });
+    expect(askMove).not.toHaveBeenCalled();
+    expect(beforeStart).not.toHaveBeenCalled();
+    expect(startSession).not.toHaveBeenCalled();
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '1' } });
   });
 });

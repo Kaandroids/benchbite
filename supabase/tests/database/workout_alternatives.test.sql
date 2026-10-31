@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(49);
+select plan(48);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -145,17 +145,12 @@ select is((select count(*)::integer from public.planned_days), 0,
   'Trying the exercises keeps no days');
 
 select throws_ok(
-  $$ select public.add_workout_alternative(911, current_date, null, '[]') $$,
-  'BB008', null,
-  'An alternative needs exercises'
-);
-select throws_ok(
   $$ select public.add_workout_alternative(
     911, current_date, null,
     '[{"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"reps": {"min": 8, "max": 8}}}]'
   ) $$,
   'BB007', null,
-  'whose targets suit them'
+  'An alternative''s exercises have targets that suit them'
 );
 select throws_ok(
   $$ select public.add_workout_alternative(911, current_date, null, '{}') $$,

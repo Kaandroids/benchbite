@@ -45,4 +45,17 @@ describe('useReminderText', () => {
       body: "2 workouts, about 75 min in all. You've got this!",
     });
   });
+
+  it('counts no time for a workout without exercises yet, and says when none has any', async () => {
+    const { result } = await renderHook(() => useReminderText());
+    expect(result.current({ date: '2026-10-22', sessions: [session('Home', 0, 5)] }).body).toBe(
+      'No exercises yet. Add some before you start.',
+    );
+    expect(
+      result.current({
+        date: '2026-10-22',
+        sessions: [session('Push', 6, 45), session('Home', 0, 5)],
+      }).body,
+    ).toBe("2 workouts, about 45 min in all. You've got this!");
+  });
 });

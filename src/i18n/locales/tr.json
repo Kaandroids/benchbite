@@ -688,6 +688,7 @@
   "workout": {
     "session_one": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
     "session_other": "{{count}} egzersiz · yaklaşık {{minutes}} dk",
+    "noExercises": "Henüz egzersiz yok",
     "sessions_one": "{{count}} antrenman · yaklaşık {{minutes}} dk",
     "sessions_other": "{{count}} antrenman · yaklaşık {{minutes}} dk",
     "sessionTypes": {
@@ -779,6 +780,14 @@
       "resume": "Antrenmana dön"
     },
     "startWorkout": "Antrenmanı başlat",
+    "empty": {
+      "title": "{{name}} için henüz egzersiz yok",
+      "bodyOne": "{{name}} için egzersizleri ekle. {{other}} olduğu gibi kalır.",
+      "bodyOthers": "{{name}} için egzersizleri ekle. Diğer alternatifler olduğu gibi kalır.",
+      "body": "Bu antrenmanı başlatmak için egzersiz ekle.",
+      "add": "Egzersiz ekle",
+      "startHint": "Başlamak için bir egzersiz ekle."
+    },
     "toArchive": "Arşive taşı",
     "fromArchive": "Arşivden geri al",
     "days": "Günler",
@@ -787,28 +796,36 @@
       "errors": {
         "limit": "Bir antrenmanın en fazla {{max}} alternatifi olabilir.",
         "inUse": "Kullanımdaki alternatif silinemez. Önce başka birine geç.",
+        "lastOfEmpty": "Kullanımdaki alternatifin henüz egzersizi yok. Önce egzersiz ekle ya da bu alternatife geç.",
         "gone": "Bu alternatif artık yok.",
         "switch": "Geçiş yapılamadı. Tekrar dene.",
         "add": "Alternatif eklenemedi. Tekrar dene.",
+        "duplicate": "Kopyalanamadı. Tekrar dene.",
         "rename": "Yeniden adlandırılamadı. Tekrar dene.",
         "delete": "Silinemedi. Tekrar dene.",
         "reorder": "Sıralama kaydedilemedi. Tekrar dene."
       },
       "loadError": "Alternatifler yüklenemedi.",
       "title": "Alternatifler",
-      "body": "Bu antrenman için başka egzersiz setleri, örneğin ev için. Kullanımdaki her yerde antrenmanın kendisidir. Sırayı değiştirmek için sürükle.",
-      "inUse_one": "Kullanımda · {{count}} egzersiz",
-      "inUse_other": "Kullanımda · {{count}} egzersiz",
+      "bodyEmpty": "Bu antrenmanın, aralarında geçiş yapabileceğin versiyonları.",
+      "body": "Kullanmak için birine dokun. Sırayı değiştirmek için sürükle.",
+      "example": {
+        "gym": "Spor salonu",
+        "gymExercises": "Barbell squat, leg press…",
+        "home": "Ev",
+        "homeExercises": "Goblet squat, lunge…"
+      },
       "exercises_one": "{{count}} egzersiz",
       "exercises_other": "{{count}} egzersiz",
-      "rename": "Yeniden adlandır: {{name}}",
-      "delete": "Sil: {{name}}",
+      "more": "{{name}} seçenekleri",
+      "rename": "Yeniden adlandır",
+      "duplicate": "Kopyala",
+      "delete": "Sil",
       "add": "Alternatif ekle",
-      "addNote": "Yenisi kullanımdakinin bir kopyası olarak başlar, Düzenle'den değiştirebilirsin.",
-      "full": "En fazla {{max}} alternatif. Yenisini eklemek için birini sil.",
+      "addNote": "Boş başlar",
+      "full": "{{max}}/{{max}}. Yenisini eklemek veya kopyalamak için birini sil.",
       "deleteTitle": "{{name}} silinsin mi?",
       "deleteMessage": "Egzersizleriyle birlikte silinir. Bu geri alınamaz.",
-      "deleteConfirm": "Sil",
       "cancel": "Vazgeç",
       "save": "Kaydet",
       "nameTitle": "Alternatife ad ver",
@@ -1625,7 +1642,8 @@
       "title": "Bugün: {{session}}",
       "body_one": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
       "body_other": "{{count}} egzersiz, yaklaşık {{minutes}} dk. Başarabilirsin!",
-      "bodyMany": "{{count}} antrenman, toplam yaklaşık {{minutes}} dk. Başarabilirsin!"
+      "bodyMany": "{{count}} antrenman, toplam yaklaşık {{minutes}} dk. Başarabilirsin!",
+      "bodyEmpty": "Henüz egzersiz yok. Başlamadan önce birkaç tane ekle."
     }
   },
   "profile": {

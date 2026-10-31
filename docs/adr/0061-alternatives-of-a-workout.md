@@ -1,6 +1,6 @@
 # 0061. Alternatives of a workout
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0064
 - **Date:** 2026-10-30
 
 ## Context
