@@ -11,11 +11,8 @@ import {
 } from '../supabase/functions/_shared/plan/limits.ts';
 import { usesTimeTarget } from '../supabase/functions/_shared/plan/prescription.ts';
 import type { PlanInput, Session } from '../supabase/functions/_shared/plan/types.ts';
+import { KEY, URL } from './lib/local-stack.ts';
 
-const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
-// The local stack's fixed development key, as in .env.example.
-const KEY =
-  process.env.SUPABASE_PUBLISHABLE_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 const PARALLEL_REQUESTS = 8;
 // The local edge runtime fails a request with a server error now and then while it is busy, a
 // 503 or a 500 from a worker it stopped, which says nothing about the plan. Such a request is
