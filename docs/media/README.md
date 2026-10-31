@@ -6,6 +6,7 @@ The screenshots and the onboarding GIF in the README. They are taken on the iOS 
 | File                 | Shows                                                           |
 | -------------------- | --------------------------------------------------------------- |
 | `onboarding.gif`     | The onboarding, from the welcome screen to the finished plan    |
+| `workout-create.gif` | Making a workout: name, days, exercises from the library, sets  |
 | `today.png`          | Today: the week, the daily target and the next workout          |
 | `workout.png`        | Workouts: the active workouts and this week's history           |
 | `nutrition.png`      | Nutrition: the day's meals, macros and water                    |
@@ -38,16 +39,23 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
    lunch. Can you log it?". For `workout-active.png`, start Upper body and tick the first set;
    discard the workout afterwards.
 
-## Recording the onboarding
+## Recording the GIFs
 
 With [idb](https://fbidb.io), [ffmpeg](https://ffmpeg.org) and [gifski](https://gif.ski)
-installed, and the app on the welcome screen as a new guest:
+installed, record the onboarding with the app on the welcome screen as a new guest, then making a
+workout with the app on the Workouts tab:
 
 ```bash
 scripts/record-onboarding.sh onboarding.mov
-mkdir frames
-ffmpeg -ss 2 -i onboarding.mov -vf "setpts=PTS/2.5,fps=12,scale=300:-1:flags=lanczos" frames/f%04d.png
-gifski --fps 12 --width 300 --quality 80 -o docs/media/onboarding.gif frames/f*.png
+scripts/record-workout.sh workout.mov
 ```
 
-The GIF plays at 2.5 times the real speed.
+Then turn each into a GIF, here the onboarding. The status bar is cropped, and the GIF plays at
+twice the real speed:
+
+```bash
+mkdir frames
+ffmpeg -ss 2 -i onboarding.mov \
+  -vf "crop=iw:ih-162:0:162,setpts=PTS/2,fps=12,scale=300:-1:flags=lanczos" frames/f%04d.png
+gifski --fps 12 --width 300 --quality 80 -o docs/media/onboarding.gif frames/f*.png
+```

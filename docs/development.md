@@ -180,5 +180,5 @@ scripts/               the exercise and food imports (shared helpers in lib/), t
                        and the plan check
 docs/adr/              Architecture Decision Records
 docs/development.md    this guide; docs/deployment.md covers the hosted project
-docs/screenshots/      the screenshots in the README
+docs/media/            the screenshots and GIFs in the README, and how to make them
 ```
