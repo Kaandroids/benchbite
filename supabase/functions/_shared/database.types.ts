@@ -2051,7 +2051,10 @@ export type Database = {
         Returns: undefined;
       };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
-      is_own_coach_message: { Args: { message_id: number; thread_id: number }; Returns: boolean };
+      is_own_coach_thread_message: {
+        Args: { message_id: number; thread_id: number };
+        Returns: boolean;
+      };
       is_planned_by_weekdays: {
         Args: {
           day: string;
