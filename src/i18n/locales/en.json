@@ -130,6 +130,8 @@
       "evening": "Good evening, {{name}}"
     },
     "targets": "Your daily target",
+    "targetsLabel": "$t(today.targets): $t(nutrition.ringLabel), {{protein}}, {{carbs}}, {{fat}}",
+    "targetsOpen": "Opens Nutrition",
     "week": {
       "done": "done",
       "missed": "missed",
@@ -294,6 +296,7 @@
     "left": "kcal left",
     "over": "kcal over",
     "ringLabel": "{{eaten}} of {{target}} kcal eaten",
+    "macroLabel": "{{macro}} {{eaten}} of {{target}} g",
     "meals": {
       "breakfast": "Breakfast",
       "lunch": "Lunch",

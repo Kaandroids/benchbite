@@ -130,6 +130,8 @@
       "evening": "Guten Abend, {{name}}"
     },
     "targets": "Dein Tagesziel",
+    "targetsLabel": "$t(today.targets): $t(nutrition.ringLabel), {{protein}}, {{carbs}}, {{fat}}",
+    "targetsOpen": "Öffnet Ernährung",
     "week": {
       "done": "erledigt",
       "missed": "verpasst",
@@ -294,6 +296,7 @@
     "left": "kcal übrig",
     "over": "kcal zu viel",
     "ringLabel": "{{eaten}} von {{target}} kcal gegessen",
+    "macroLabel": "{{macro}} {{eaten}} von {{target}} g",
     "meals": {
       "breakfast": "Frühstück",
       "lunch": "Mittagessen",

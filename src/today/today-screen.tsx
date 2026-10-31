@@ -4,13 +4,12 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { TabScreen } from '@/components/tab-screen';
 import { Button } from '@/components/ui/button';
-import { Card, cardEntering } from '@/components/ui/card';
+import { cardEntering } from '@/components/ui/card';
 import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
 import { toIsoDate } from '@/i18n/dates';
-import { DailyProgress } from '@/nutrition/daily-progress';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
 import { useDisplayName } from '@/profile/display-name';
@@ -29,6 +28,7 @@ import { DayMenu } from './day-menu';
 import { MissedCard } from './missed-card';
 import { PastWeek } from './past-week';
 import { PickDay } from './pick-day';
+import { TargetsCard } from './targets-card';
 import { usePastWeek } from './use-past-week';
 import { WeekCard } from './week-card';
 import { useWeekPaging } from './week-paging';
@@ -126,14 +126,12 @@ export function TodayScreen() {
           onPrevious={paging.onPrevious}
         />
         {targets.data ? (
-          <Card entering={cardEntering(1)}>
-            <DailyProgress
-              title={t('today.targets')}
-              quiet
-              targets={targets.data}
-              eaten={totalOf(eaten.data ?? [])}
-            />
-          </Card>
+          <TargetsCard
+            entering={cardEntering(1)}
+            targets={targets.data}
+            eaten={totalOf(eaten.data ?? [])}
+            day={todayOn}
+          />
         ) : null}
         {missed.length > 0 ? (
           <MissedCard
