@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(31);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -142,6 +142,13 @@ select is(
 select is(
   (pg_temp.card('card')).status::text, 'logged', 'The card reads as logged'
 );
+
+-- A correction, which holds the dal the card saved by its name and values, as Bite's tool keeps an
+-- own food of exactly the search name.
+insert into ids select 'correction', pg_temp.add(jsonb_build_array(
+  jsonb_build_object('name', 'Dal makhani', 'grams', 250, 'kcal', 140, 'protein_g', 6,
+    'carbs_g', 14, 'fat_g', 7)
+));
 select throws_ok(
   format($$ select public.log_coach_meal_card(%s) $$, (select id from ids where name = 'card')),
   'BB036', null, 'A card is logged once'
@@ -179,6 +186,16 @@ select throws_ok(
 select throws_ok(
   format($$ select public.log_coach_meal_card(%s) $$, (select id from ids where name = 'card')),
   'BB036', null, 'and not logged again'
+);
+select is(
+  (public.log_coach_meal_card((select id from ids where name = 'correction'))).status::text,
+  'logged', 'A card that holds the food an undone card saved still logs'
+);
+select results_eq(
+  $$ select c.name, e.grams from public.meal_entries e
+     join public.custom_foods c on c.id = e.custom_food_id $$,
+  $$ values ('Dal makhani'::text, 250.0) $$,
+  'with the food made again'
 );
 
 -- 50 cards today already.

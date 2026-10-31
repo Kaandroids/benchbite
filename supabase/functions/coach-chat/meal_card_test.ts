@@ -14,18 +14,21 @@ Deno.test('takes the meal of the time of day, and a snack without one', () => {
 const PER100 = { kcal: 130, proteinG: 2.7, carbsG: 28, fatG: 0.3 };
 
 Deno.test('logs a found food by its id, and another item by its search name and values', () => {
-  const found = (kind: 'library' | 'custom' | 'recipe', id: string | number) => ({
+  const found = (kind: 'library' | 'custom' | 'recipe', id: string | number, name: string) => ({
     name: 'Rice',
     searchName: 'Rice, boiled',
     grams: 180,
     confidence: 0.7,
-    food: { ref: { kind, id } as never, name: 'Rice, boiled' },
+    food: { ref: { kind, id } as never, name },
     per100: PER100,
     estimated: false,
   });
-  assertEquals(logItem(found('library', 'C1')), { food_id: 'C1', grams: 180 });
-  assertEquals(logItem(found('custom', 4)), { custom_food_id: 4, grams: 180 });
-  assertEquals(logItem(found('recipe', 5)), { recipe_id: 5, grams: 180 });
+  assertEquals(logItem(found('library', 'C1', 'Rice, boiled')), { food_id: 'C1', grams: 180 });
+  assertEquals(logItem(found('custom', 4, 'Rice, boiled (mine)')), {
+    custom_food_id: 4,
+    grams: 180,
+  });
+  assertEquals(logItem(found('recipe', 5, 'Rice, boiled')), { recipe_id: 5, grams: 180 });
   assertEquals(
     logItem({
       name: 'Dal',
@@ -43,6 +46,23 @@ Deno.test('logs a found food by its id, and another item by its search name and 
       carbs_g: 14,
       fat_g: 7,
     },
+  );
+});
+
+Deno.test('logs an own food of exactly the search name by its name and values', () => {
+  // So that the card still logs when that food is gone: log_meal_estimate() finds it by its name,
+  // or makes it again.
+  assertEquals(
+    logItem({
+      name: 'Rice',
+      searchName: 'rice, boiled ',
+      grams: 180,
+      confidence: 0.7,
+      food: { ref: { kind: 'custom', id: 4 }, name: 'Rice, boiled' },
+      per100: PER100,
+      estimated: false,
+    }),
+    { name: 'Rice, boiled', grams: 180, kcal: 130, protein_g: 2.7, carbs_g: 28, fat_g: 0.3 },
   );
 });
 

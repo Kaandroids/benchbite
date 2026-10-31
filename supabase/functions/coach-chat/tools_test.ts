@@ -419,6 +419,39 @@ Deno.test('keeps a meal card of the matched foods, and gives the card as data', 
 });
 
 Deno.test(
+  'keeps an own food of exactly the search name by its name, and another by its id',
+  async () => {
+    const { context, calls } = mealContext({
+      'Chicken breast, grilled': [
+        food({ custom_food_id: 12, name: 'Chicken breast, grilled' }, 160),
+      ],
+      'Rice, boiled': [food({ custom_food_id: 13, name: 'Rice, boiled (mine)' }, 125)],
+    });
+
+    const result = await runTool('log_meal_card', { items: [CHICKEN, RICE] }, context);
+
+    // The own food logging may have made is found by its name, or made again when it is gone
+    // (log_meal_estimate()); the one the user named otherwise is theirs, by its id.
+    assertEquals(calls[2].args.items, [
+      {
+        name: 'Chicken breast, grilled',
+        grams: 150,
+        kcal: 160,
+        protein_g: 10,
+        carbs_g: 20,
+        fat_g: 5,
+      },
+      { custom_food_id: 13, grams: 180 },
+    ]);
+    const { items } = (result as { mealCard: { items: { food?: unknown }[] } }).mealCard;
+    assertEquals(items[0].food, {
+      ref: { kind: 'custom', id: 12 },
+      name: 'Chicken breast, grilled',
+    });
+  },
+);
+
+Deno.test(
   "takes the meal from the time of day when the user named none, and today's day",
   async () => {
     const { context, calls } = mealContext({}, { localTime: '08:15' });
