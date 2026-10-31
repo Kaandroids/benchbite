@@ -1,10 +1,11 @@
 -- The Monitor workflow asks coach_media_purge_status() whether the photo purge of deleted chats
--- works (#368, ADR 0067): it is unhealthy when a folder has waited over an hour or the latest call
--- to purge-coach-media failed. Only the database owner can ask.
+-- works (#368, ADR 0067): it is unhealthy when a folder has waited over an hour and a run failed
+-- it or no call succeeded lately, or when the latest call to purge-coach-media failed while a
+-- folder is queued. Only the database owner can ask.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(27);
 
 -- Answers from pg_net, made up here for requests with negative ids that pg_net never uses.
 create function pg_temp.answer(request_id bigint, status_code integer, minutes_ago integer)
@@ -106,12 +107,46 @@ select results_eq(
 );
 insert into public.coach_media_deletions select * from queued_folders;
 
--- A folder waiting over an hour means the purge keeps failing, whatever the calls answered.
-update public.coach_media_deletions set queued_at = now() - interval '61 minutes';
+-- A run purges about 240 folders an hour, so a larger burst waits longer while every call succeeds.
+select pg_temp.answer(-7, 200, 0);
+insert into public.coach_media_deletions (thread_id, user_id, queued_at)
+  select id, '00000000-0000-0000-0000-00000000000a', now() - interval '2 hours'
+  from generate_series(100, 340) id;
 select results_eq(
-  $$ select oldest_queued_minutes, healthy from public.coach_media_purge_status() $$,
-  $$ values (61, false) $$,
-  'A folder queued for over an hour makes the purge unhealthy'
+  $$ select queued, oldest_queued_minutes, healthy from public.coach_media_purge_status() $$,
+  $$ values (242::bigint, 120, true) $$,
+  'A burst of 241 old folders with a recent successful call is healthy'
+);
+
+-- A folder over an hour old fails once a run has tried it and failed, whatever the calls answered.
+update public.coach_media_deletions set attempts = 1 where thread_id = 100;
+select ok(
+  not (select healthy from public.coach_media_purge_status()),
+  'An old folder that a run failed to purge makes the purge unhealthy'
+);
+select ok(public.coach_media_purge_stalled(), 'The warning of the scheduled call uses the same rule');
+update public.coach_media_deletions set attempts = 0;
+
+-- Old folders without a recent successful call mean the purge has stopped.
+delete from public.coach_media_purge_requests;
+select pg_temp.answer(-8, 401, 1);
+select ok(
+  not (select healthy from public.coach_media_purge_status()),
+  'Old folders with a refused call make the purge unhealthy'
+);
+
+delete from public.coach_media_purge_requests;
+select results_eq(
+  $$ select responses, latest_status, healthy from public.coach_media_purge_status() $$,
+  $$ values (0::bigint, null::integer, false) $$,
+  'Old folders without any call, as when cron calls nothing, make the purge unhealthy'
+);
+
+select pg_temp.answer(-9, 200, 20);
+select results_eq(
+  $$ select latest_status, healthy from public.coach_media_purge_status() $$,
+  $$ values (200, false) $$,
+  'Old folders whose last successful call is over 15 minutes old make the purge unhealthy'
 );
 
 -- The status shows no user ids or folders, and only the owner can ask for it.
@@ -125,10 +160,12 @@ select is(
 );
 
 select ok(
-  not has_function_privilege(role, 'public.coach_media_purge_status()', 'execute'),
-  role || ' cannot ask for the purge status'
+  not has_function_privilege(role, function, 'execute'),
+  role || ' cannot call ' || function
 )
-from (values ('anon'), ('authenticated'), ('service_role')) roles (role);
+from (values ('anon'), ('authenticated'), ('service_role')) roles (role)
+cross join (values ('public.coach_media_purge_status()'), ('public.coach_media_purge_stalled()'))
+  functions (function);
 
 select ok(
   not bool_or(has_table_privilege(role, 'public.coach_media_purge_requests', privilege)),

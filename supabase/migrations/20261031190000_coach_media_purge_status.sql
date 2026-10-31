@@ -16,7 +16,39 @@ revoke all on public.coach_media_purge_requests from anon, authenticated;
 comment on table public.coach_media_purge_requests is
   'pg_net request ids of the calls to purge-coach-media, to find their responses.';
 
--- As before, and records the id of each request it sends.
+-- Whether the purge has stopped working: a folder has waited over an hour, though it is tried every
+-- five minutes, and either a run has already tried it and failed, or no call has succeeded in the
+-- last 15 minutes, as when the key is refused or cron calls nothing. A run purges 20 folders, about
+-- 240 an hour, so a larger burst keeps folders waiting longer while every call succeeds; their age
+-- alone is no failure. The warning of request_coach_media_purge() and coach_media_purge_status()
+-- both use this rule.
+create function public.coach_media_purge_stalled()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.coach_media_deletions where queued_at < now() - interval '1 hour'
+  ) and (
+    exists (
+      select 1 from public.coach_media_deletions
+      where queued_at < now() - interval '1 hour' and attempts > 0
+    )
+    or not exists (
+      select 1
+      from public.coach_media_purge_requests p
+      join net._http_response r on r.id = p.request_id
+      where r.status_code between 200 and 299 and r.created >= now() - interval '15 minutes'
+    )
+  );
+$$;
+
+revoke execute on function public.coach_media_purge_stalled()
+  from public, anon, authenticated, service_role;
+
+-- As before, and records the id of each request it sends. It warns by the shared rule above
+-- instead of the queue's age alone.
 create or replace function public.request_coach_media_purge()
 returns bigint
 language plpgsql
@@ -32,7 +64,7 @@ begin
   if oldest is null then
     return null;
   end if;
-  if oldest < now() - interval '1 hour' then
+  if public.coach_media_purge_stalled() then
     raise warning 'purge-coach-media is failing: a folder has been queued since %', oldest;
   end if;
 
@@ -57,9 +89,9 @@ end;
 $$;
 
 -- Only counts, ages and status codes, never user ids or folders, as the workflow's log is public.
--- The purge is unhealthy when a folder has waited over an hour, as it is tried every five
--- minutes, or when the latest answered call was not a 2xx while a folder is queued; a timeout or
--- a network error has no status code and counts as failed. It runs as its caller, the database owner, as which the
+-- The purge is unhealthy when coach_media_purge_stalled() says it has stopped, or when the latest
+-- answered call was not a 2xx while a folder is queued; a timeout or a network error has no
+-- status code and counts as failed. It runs as its caller, the database owner, as which the
 -- workflow queries through the Management API.
 create function public.coach_media_purge_status()
 returns table (
@@ -96,7 +128,7 @@ as $$
     (select coalesce(array_agg(distinct coalesce(status_code, 0) order by coalesce(status_code, 0)), '{}')
        from answers where not succeeded),
     (select status_code from latest),
-    coalesce(q.oldest >= now() - interval '1 hour', true)
+    not public.coach_media_purge_stalled()
       -- With nothing queued, no new call replaces a failed latest one, though it purged the rest.
       and (q.queued = 0 or coalesce((select succeeded from latest), true))
   from queue q;
