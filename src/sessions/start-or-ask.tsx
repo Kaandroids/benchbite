@@ -7,7 +7,7 @@ import type { Workout } from '@/workouts/workouts';
 
 import { BusySheet } from './busy-sheet';
 import { endSession, useActiveSession } from './session';
-import { openInsteadOfStart, useStartWorkout } from './start';
+import { hasExercises, useStartWorkout } from './start';
 
 /**
  * Starts a workout, or resumes it when it is the one running. While another one runs, it first
@@ -22,8 +22,9 @@ export function useStartOrAsk() {
   const start = (workout: Workout) => {
     if (session?.workoutId === workout.id) {
       router.push('/session');
-    } else if (openInsteadOfStart(workout)) {
+    } else if (!hasExercises(workout)) {
       // Nothing to start, nor to finish or discard the running one for.
+      router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
     } else if (session) {
       setWaiting(workout);
     } else {

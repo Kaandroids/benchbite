@@ -12,15 +12,11 @@ import { startSession, type ExerciseBests, type LastSets } from './session';
 import { useStartMove } from './start-move';
 
 /**
- * Opens the screen of a workout without exercises, which says so and leads to Edit, instead of
- * starting it (ADR 0064). Returns whether it did.
+ * Whether a workout has exercises to start. One without them opens its screen instead, which says
+ * so and leads to Edit (ADR 0064).
  */
-export function openInsteadOfStart(workout: Workout): boolean {
-  if (workout.exercises.length > 0) {
-    return false;
-  }
-  router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
-  return true;
+export function hasExercises(workout: Pick<Workout, 'exercises'>): boolean {
+  return workout.exercises.length > 0;
 }
 
 /**
@@ -36,7 +32,11 @@ export function useStartWorkout() {
   const queryClient = useQueryClient();
   const askMove = useStartMove();
   return async (workout: Workout, { beforeStart }: { beforeStart?: () => void } = {}) => {
-    if (!userId || openInsteadOfStart(workout)) {
+    if (!userId) {
+      return;
+    }
+    if (!hasExercises(workout)) {
+      router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
       return;
     }
     const choice = await askMove(workout, new Date());
