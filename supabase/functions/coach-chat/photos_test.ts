@@ -1,10 +1,10 @@
 import { assertEquals } from '@std/assert';
 
+import { toBase64 } from '../_shared/base64_bytes.ts';
 import { MAX_PHOTO_BYTES } from '../_shared/photos.ts';
 import { checkPhotos, readJpeg } from './photos.ts';
 import {
   ADOBE,
-  base64,
   EOI,
   EXIF,
   FRAME,
@@ -92,7 +92,7 @@ Deno.test('refuses what is not a whole JPEG', () => {
 });
 
 Deno.test('gives checked photos with their bytes and size', () => {
-  const data = base64(PLAIN_JPEG);
+  const data = toBase64(PLAIN_JPEG);
   assertEquals(checkPhotos([{ data }, { data }]), [
     { bytes: PLAIN_JPEG, data, width: 640, height: 480 },
     { bytes: PLAIN_JPEG, data, width: 640, height: 480 },
@@ -103,8 +103,8 @@ Deno.test('gives checked photos with their bytes and size', () => {
 Deno.test('refuses photos too large together, or the first that is not a plain JPEG', () => {
   const large = { data: btoa('x'.repeat(MAX_PHOTO_BYTES)) };
   assertEquals(checkPhotos([large, large, large]), { reason: 'photos_too_large' });
-  const plain = { data: base64(PLAIN_JPEG) };
-  const withExif = { data: base64(jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI)) };
+  const plain = { data: toBase64(PLAIN_JPEG) };
+  const withExif = { data: toBase64(jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI)) };
   const png = { data: btoa('\x89PNG\r\n\x1a\n') };
   assertEquals(checkPhotos([plain, withExif, png]), { reason: 'photo_has_exif', photo: 1 });
   assertEquals(checkPhotos([png, withExif]), { reason: 'photo_not_jpeg', photo: 0 });
