@@ -115,7 +115,7 @@ flowchart LR
 
 - **Decisions are written down.** Every significant choice is an
   [Architecture Decision Record](docs/adr/README.md), from the stack to how Bite's photos are
-  purged: 68 so far.
+  purged.
 - **AI-assisted, reviewed by a person.** Work is planned with
   [Claude Code](https://claude.com/claude-code), implemented in pull requests by the
   `benchbite-bot` GitHub App, reviewed automatically for design, security, and logic and
