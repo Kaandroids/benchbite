@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { ACCESS_KEY, type Refusal } from '@/ai/access';
 import { deviceToday } from '@/i18n/dates';
+import { oneOf } from '@/lib/one-of';
 
 import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
+import { localTime, type MessagePhoto, type PhotosProblem, photosToSend } from './chat-photos';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
 import { THREADS_KEY } from './threads';
 
@@ -34,6 +36,8 @@ export type ChatMessage = {
   id: string;
   role: 'user' | 'bite';
   text: string;
+  /** The user's photos, shown above the text. */
+  photos?: MessagePhoto[];
   /** The face Bite answers with, once it is known. */
   expression?: AnswerExpression;
   /** A question Bite gave no answer to. */
@@ -46,6 +50,32 @@ export type ChatMessage = {
   proposals?: ProposalCard[];
 };
 
+/** What the user writes to Bite: text, photos as base64 JPEG ready to send, or both. */
+export type Draft = { text: string; photos: string[] };
+
+/** The reasons coach-chat refuses a message's photos for, before Bite is asked. */
+const PHOTO_REFUSALS = ['photos_too_large', 'photo_not_jpeg', 'photo_has_exif'] as const;
+
+/**
+ * Whether a message can be sent again as it was: its photos are sent with their data, which only
+ * the photos sent since the chat opened have on the device.
+ */
+export function canSendAgain(message: ChatMessage): boolean {
+  return !message.photos?.some((photo) => photo.data === undefined);
+}
+
+/**
+ * Why coach-chat refused a message's photos, if that is why it failed: by what it said, or by its
+ * status alone for a body too large, which may be refused before the function reads it.
+ */
+function photosRefusal(error: unknown): PhotosProblem | undefined {
+  if (!(error instanceof ChatRequestError)) return undefined;
+  const reason =
+    oneOf(PHOTO_REFUSALS, error.refusal) ?? (error.status === 413 ? 'photos_too_large' : undefined);
+  if (!reason) return undefined;
+  return error.photo === undefined ? { reason } : { reason, photo: error.photo };
+}
+
 /** Waiting for Bite to start answering, or reading its answer as it comes. */
 export type ChatStatus = 'idle' | 'thinking' | 'answering';
 
@@ -53,8 +83,14 @@ export type ChatStatus = 'idle' | 'thinking' | 'answering';
  * A conversation with Bite, as it is on the screen: the messages, what Bite is doing, the tool it
  * is looking something up with, and why a message failed. It goes on in `start`'s thread, with
  * its messages, when one is given, or else in a new thread, until the screen closes.
+ *
+ * A message whose photos are refused, by the app or by coach-chat before Bite is asked, leaves the
+ * chat again: `onRefused` gets it back, with why, for the user to change it and send it again.
  */
-export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
+export function useChat(
+  start?: { threadId: number; messages: ChatMessage[] },
+  onRefused?: (draft: Draft, problem: PhotosProblem) => void,
+) {
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>(start?.messages ?? []);
@@ -99,15 +135,26 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
     settle(questionId, biteId, ending.cut);
   };
 
-  const run = async (text: string) => {
+  const run = async ({ text, photos }: Draft) => {
     const message = text.trim();
-    if (!message || abort.current) return;
+    if ((!message && photos.length === 0) || abort.current) return;
+    const sent = photosToSend(photos);
+    if (!Array.isArray(sent)) {
+      onRefused?.({ text, photos }, sent);
+      return;
+    }
     const biteId = `bite-${++count.current}`;
     const questionId = `user-${count.current}`;
     const now = new Date();
     setMessages((all) => [
       ...all,
-      { id: questionId, role: 'user', text: message, createdAt: now },
+      {
+        id: questionId,
+        role: 'user',
+        text: message,
+        createdAt: now,
+        ...(photos.length > 0 && { photos: photos.map((data) => ({ data })) }),
+      },
       { id: biteId, role: 'bite', text: '', createdAt: now },
     ]);
     let ending = beginning(threadId.current);
@@ -138,10 +185,12 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
 
     try {
       const request = {
-        message,
+        ...(message && { message }),
+        ...(sent.length > 0 && { photos: sent }),
         threadId: threadId.current,
         language: i18n.language,
         today: deviceToday(),
+        localTime: localTime(),
       };
       await streamChat(request, onEvent, controller.signal);
       // The answer just stopped may hold the user's place a moment longer, until the server sees
@@ -157,6 +206,14 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
       }
       ending = afterStream(ending, 'closed');
     } catch (error) {
+      const refused = photosRefusal(error);
+      if (refused && !controller.signal.aborted) {
+        // Refused before Bite was asked: the message goes back to the user, to change.
+        setMessages((all) => all.filter((m) => m.id !== questionId && m.id !== biteId));
+        onRefused?.({ text, photos }, refused);
+        ending = { ...ending, ended: true };
+        return;
+      }
       // Stopped by the user, or no answer came: what came stays.
       ending = controller.signal.aborted
         ? afterStream(ending, 'stopped')
@@ -174,8 +231,15 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
     }
   };
 
-  /** Sends a message to Bite; its answer comes into the messages as it is written. */
-  const send = (text: string) => void run(text);
+  /** Sends a message to Bite, text, photos or both; its answer comes in as it is written. */
+  const send = (text: string, photos: string[] = []) => void run({ text, photos });
+
+  /** Sends a message again as it was, with its photos. */
+  const sendAgain = (message: ChatMessage) =>
+    send(
+      message.text,
+      (message.photos ?? []).flatMap((photo) => (photo.data === undefined ? [] : [photo.data])),
+    );
 
   /** Stops Bite's answer; what came of it stays. */
   const stop = () => {
@@ -186,17 +250,18 @@ export function useChat(start?: { threadId: number; messages: ChatMessage[] }) {
 
   /** Asks an unanswered question again: it moves down, to be answered there. */
   const askAgain = (question: ChatMessage) => {
-    if (abort.current) return;
+    if (abort.current || !canSendAgain(question)) return;
     setMessages((all) => all.filter((message) => message.id !== question.id));
-    send(question.text);
+    sendAgain(question);
   };
 
   // After a failure, the last question is asked again: by Ask again under it when it got no
   // answer, or else by Try again, which keeps what came of the answer above.
   const last = messages.findLast((message) => message.role === 'user');
-  const canRetry = status === 'idle' && !refusal && failure && last && !last.unanswered;
+  const canRetry =
+    status === 'idle' && !refusal && failure && last && !last.unanswered && canSendAgain(last);
   const retry = () => {
-    if (last) send(last.text);
+    if (last) sendAgain(last);
   };
 
   return {

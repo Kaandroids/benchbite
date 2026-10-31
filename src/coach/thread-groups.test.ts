@@ -8,6 +8,8 @@ const thread = (id: number, lastMessageAt: Date): ThreadSummary => ({
   title: `Chat ${id}`,
   lastMessageAt,
   lastMessage: null,
+  lastPhotos: 0,
+  firstPhotos: 0,
   expression: null,
 });
 

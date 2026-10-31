@@ -24,6 +24,8 @@ const THREADS: ThreadSummary[] = [
     title: 'Lunch ideas',
     lastMessageAt: new Date(2026, 9, 30, 12, 40),
     lastMessage: 'A chicken rice bowl.',
+    lastPhotos: 0,
+    firstPhotos: 0,
     expression: 'happy',
   },
   {
@@ -31,6 +33,8 @@ const THREADS: ThreadSummary[] = [
     title: 'Knee pain on squats',
     lastMessageAt: new Date(2026, 9, 29, 18, 20),
     lastMessage: 'Try leg press today.',
+    lastPhotos: 0,
+    firstPhotos: 0,
     expression: 'neutral',
   },
 ];

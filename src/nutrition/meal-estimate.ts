@@ -38,10 +38,14 @@ const PHOTO_QUALITY = 0.7;
 export type PhotoSource = 'camera' | 'library';
 
 /**
- * Takes a photo with the camera, or chooses up to `MAX_PHOTOS` from the library. Resolves to
- * their local URIs, or none when cancelled or the camera is not allowed.
+ * Takes a photo with the camera, or chooses up to `limit` from the library, `MAX_PHOTOS` unless
+ * fewer are wanted. Resolves to their local URIs, or none when cancelled or the camera is not
+ * allowed.
  */
-export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
+export async function pickMealPhotos(
+  source: PhotoSource,
+  limit: number = MAX_PHOTOS,
+): Promise<string[]> {
   if (source === 'camera') {
     const permission = await requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -53,17 +57,17 @@ export async function pickMealPhotos(source: PhotoSource): Promise<string[]> {
       ? await launchCameraAsync({ mediaTypes: ['images'] })
       : await launchImageLibraryAsync({
           mediaTypes: ['images'],
-          allowsMultipleSelection: true,
-          selectionLimit: MAX_PHOTOS,
+          allowsMultipleSelection: limit > 1,
+          selectionLimit: limit,
         });
-  return result.canceled ? [] : result.assets.slice(0, MAX_PHOTOS).map(({ uri }) => uri);
+  return result.canceled ? [] : result.assets.slice(0, limit).map(({ uri }) => uri);
 }
 
 /**
- * A local photo as a JPEG at most `PHOTO_SIDE` on its longest side, as base64. The scaled copy is
- * deleted once it is read.
+ * A local photo as a JPEG at most `PHOTO_SIDE` on its longest side, as base64, as a meal photo and
+ * a photo to Bite are sent. The scaled copy is deleted once it is read.
  */
-async function preparePhoto(uri: string): Promise<MealPhoto> {
+export async function preparePhoto(uri: string): Promise<MealPhoto> {
   // Decoded at the smaller size already, which keeps a large camera photo out of memory.
   const image = await ImageManipulator.manipulate(uri, {
     maxWidth: PHOTO_SIDE,

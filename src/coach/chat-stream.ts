@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
+import type { ChatRefusal, ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
 import { randomUUID } from 'expo-crypto';
 
 import { functionHeaders, functionUrl, supabase } from '@/lib/supabase';
@@ -35,12 +35,31 @@ export function readEvents(buffer: string): { events: ChatEvent[]; rest: string 
   return { events, rest };
 }
 
-/** Why a message could not be sent at all: no answer came from coach-chat. */
+/**
+ * Why a message could not be sent at all: no answer came from coach-chat, or it refused the
+ * message, with `refusal` and the index of the `photo` it is about, when it said.
+ */
 export class ChatRequestError extends Error {
-  constructor(readonly status: number) {
-    super(`coach-chat answered ${status}`);
+  constructor(
+    readonly status: number,
+    readonly refusal?: ChatRefusal,
+    readonly photo?: number,
+  ) {
+    super(`coach-chat answered ${status}${refusal ? ` (${refusal})` : ''}`);
     this.name = 'ChatRequestError';
   }
+}
+
+/** The error of a response that is no answer, from what coach-chat said in its JSON, if it did. */
+async function requestError(response: Response): Promise<ChatRequestError> {
+  const body: unknown = await response.json().catch(() => null);
+  if (typeof body !== 'object' || body === null) return new ChatRequestError(response.status);
+  const { error, photo } = body as { error?: unknown; photo?: unknown };
+  return new ChatRequestError(
+    response.status,
+    typeof error === 'string' ? (error as ChatRefusal) : undefined,
+    typeof photo === 'number' ? photo : undefined,
+  );
 }
 
 /**
@@ -68,7 +87,8 @@ export async function streamChat(
       body: JSON.stringify({ ...request, requestId }),
       signal,
     });
-    if (!response.ok || !response.body) throw new ChatRequestError(response.status);
+    if (!response.ok) throw await requestError(response);
+    if (!response.body) throw new ChatRequestError(response.status);
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
