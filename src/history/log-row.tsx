@@ -54,14 +54,17 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     >
       <DateTile date={log.startedAt} tinted={icons} />
       <View style={[styles.flex, { gap: 2 }]}>
-        <Text variant="label" numberOfLines={1}>
-          {workoutName(log)}
+        {/* A long name is cut before the alternative, which is what tells the logs apart. */}
+        <View style={styles.name}>
+          <Text variant="label" numberOfLines={1} style={styles.shrink}>
+            {workoutName(log)}
+          </Text>
           {log.alternative ? (
-            <Text variant="label" color="textMuted">
+            <Text variant="label" color="textMuted" numberOfLines={1}>
               {` · ${alternativeName(log.alternative)}`}
             </Text>
           ) : null}
-        </Text>
+        </View>
         {icons ? (
           <View style={[styles.stats, { gap: spacing.md }]}>
             <IconStat
@@ -103,6 +106,12 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
 }
 
 const styles = StyleSheet.create({
+  name: {
+    flexDirection: 'row',
+  },
+  shrink: {
+    flexShrink: 1,
+  },
   stats: {
     flexDirection: 'row',
   },

@@ -182,9 +182,24 @@ describe('RecentLogs', () => {
       }) as never,
     );
     await render(<RecentLogs />);
-    expect(screen.getByText('Push · Home')).toBeTruthy();
-    expect(screen.getByText('Legs · Alternative 3')).toBeTruthy();
+    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getByText('· Home')).toBeTruthy();
+    expect(screen.getByText('Legs')).toBeTruthy();
+    expect(screen.getByText('· Alternative 3')).toBeTruthy();
     expect(screen.getByText('Pull')).toBeTruthy();
+  });
+
+  it('cuts a long name, not the alternative after it', async () => {
+    const name = 'Upper body strength and conditioning with a long warm-up';
+    jest.mocked(useRecentLogs).mockReturnValue(
+      loaded({
+        latest: [{ ...LOGS[0]!, name, alternative: { name: 'Home', position: 2 } }],
+        thisWeek: 1,
+      }) as never,
+    );
+    await render(<RecentLogs />);
+    expect(screen.getByText(name)).toHaveStyle({ flexShrink: 1 });
+    expect(screen.getByText('· Home')).not.toHaveStyle({ flexShrink: 1 });
   });
 
   it('says when nothing was logged yet', async () => {
