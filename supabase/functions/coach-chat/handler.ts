@@ -13,6 +13,7 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  type NoteCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
 import type { Database, Json } from '../_shared/database.types.ts';
@@ -164,7 +165,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     const results = messages.data.flatMap((row) =>
       (Array.isArray(row.content) ? row.content : []).map(resultOf),
     );
-    earlierCard = results.some((result) => proposalOf(result) || mealCardOf(result));
+    earlierCard = results.some(isCardResult);
     const cards = await mealCardStates(context.supabase, results);
     history = messages.data.reverse().flatMap((row) => toMessage(row, cards));
   }
@@ -358,6 +359,7 @@ async function answer(
       threadId,
       localTime: request.localTime,
       hasText: !!request.message?.trim(),
+      savesNotes: snapshot.savesNotes,
     };
 
     // The rounds whose lookups ran, and the two things Bite is told at most once a turn: that its
@@ -408,7 +410,7 @@ async function answer(
           !answerOnly &&
           !toldNoCard &&
           !earlierCard &&
-          !turn.trace.some(isCard) &&
+          !turn.trace.some((part) => part.type === 'toolResult' && isCardResult(part.result)) &&
           mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
@@ -466,8 +468,9 @@ async function answer(
 
   if (!threadId) return send({ event: 'error', reason: outcome.failure ?? 'unavailable' });
   const end = ending(outcome, {
-    // A proposal or a meal made is kept with its card, even if the model ended without a word.
-    said: turn.text.trim() !== '' || turn.trace.some(isCard),
+    // A proposal, a meal or a note made is kept with its card, even if the model ended without a
+    // word.
+    said: turn.text.trim() !== '' || turn.trace.some(isShown),
     stopped: stop.stopped,
     finish: turn.finish,
   });
@@ -486,6 +489,7 @@ async function answer(
     saveTurn(context, threadId, request, photos, turn, end.interrupted),
   );
   if (!messageId) {
+    await keepAlive(dropAskedNotes(context, turn.trace));
     const dropped = await dropIfNew(threadId);
     return send({ event: 'error', reason: 'not_saved', ...(dropped && { dropped: true }) });
   }
@@ -669,16 +673,32 @@ async function saveTurn(
  * open the chat there. A note left without stays in the notebook, from its chat.
  */
 async function linkNotes(context: ChatContext, trace: Part[], messageId: number): Promise<void> {
-  const ids = trace.flatMap((part) => {
-    const note = part.type === 'toolResult' ? noteOf(part.result) : undefined;
-    return note && (note.action === 'saved' || note.action === 'asked') ? [note.id] : [];
-  });
+  const ids = notesMade(trace, ['saved', 'asked']);
   if (!ids.length) return;
   const { error } = await context.supabase
     .from('coach_notes')
     .update({ message_id: messageId })
     .in('id', ids);
   if (error) logError('Could not link the notes to their message', error);
+}
+
+/**
+ * Removes the notes asked about in an answer that could not be saved: without the message, no
+ * card is left for the user's yes, and they would wait unseen. Notes Bite saved stay.
+ */
+async function dropAskedNotes(context: ChatContext, trace: Part[]): Promise<void> {
+  const ids = notesMade(trace, ['asked']);
+  if (!ids.length) return;
+  const { error } = await context.supabase.from('coach_notes').delete().in('id', ids);
+  if (error) logError('Could not remove the notes asked about', error);
+}
+
+/** The ids of the notes a turn's tools made, in the ways `actions` names. */
+function notesMade(trace: Part[], actions: NoteCard['action'][]): number[] {
+  return trace.flatMap((part) => {
+    const note = part.type === 'toolResult' ? noteOf(part.result) : undefined;
+    return note && actions.includes(note.action) ? [note.id] : [];
+  });
 }
 
 /**
@@ -709,13 +729,14 @@ export function content(trace: Part[], text: string): Part[] {
   const fits = (parts: Part[]) =>
     parts.length <= MAX_PARTS &&
     new TextEncoder().encode(JSON.stringify(parts)).length <= MAX_CONTENT_BYTES;
-  // A proposal's or a meal's card is kept whatever else goes, as the chat shows it when read back.
-  const cards = trace.filter(isCard);
+  // A proposal's or a meal's card, or a note, is kept whatever else goes, as the chat shows it when
+  // read back.
+  const cards = trace.filter(isShown);
   const room = MAX_PARTS - 1 - cards.length;
   const kept: Part[] = [];
   let others = 0;
   for (const part of trace) {
-    if (isCard(part)) {
+    if (isShown(part)) {
       kept.push(part);
     } else if (others < room) {
       kept.push(part);
@@ -725,18 +746,23 @@ export function content(trace: Part[], text: string): Part[] {
   const whole = [...kept, answer];
   if (fits(whole)) return whole;
   const without = whole.map((part) =>
-    part.type === 'toolResult' && !isCard(part) ? { ...part, result: { omitted: true } } : part,
+    part.type === 'toolResult' && !isShown(part) ? { ...part, result: { omitted: true } } : part,
   );
   return fits(without) ? without : [...cards, answer];
 }
 
+/**
+ * Whether a tool's result is a card Bite may speak of, a proposal's or a meal's, which an answer
+ * that speaks of one without it is told of (#386). A note is no such card.
+ */
+function isCardResult(result: unknown): boolean {
+  return proposalOf(result) !== undefined || mealCardOf(result) !== undefined;
+}
+
 /** Whether a part is the result of a proposal, a meal card or a note, which the chat shows. */
-function isCard(part: Part): boolean {
+function isShown(part: Part): boolean {
   return (
-    part.type === 'toolResult' &&
-    (proposalOf(part.result) !== undefined ||
-      mealCardOf(part.result) !== undefined ||
-      noteOf(part.result) !== undefined)
+    part.type === 'toolResult' && (isCardResult(part.result) || noteOf(part.result) !== undefined)
   );
 }
 

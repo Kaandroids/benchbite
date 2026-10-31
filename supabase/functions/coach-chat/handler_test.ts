@@ -91,6 +91,10 @@ function database(
             values.push(value);
             return filter;
           },
+          in: (_column: string, list: unknown[]) => {
+            values.push(...list);
+            return filter;
+          },
           then: (resolve: (value: unknown) => void) => {
             if (table === 'coach_threads') threads.delete(values[0] as number);
             deleted.push([table, ...values].join(' '));
@@ -932,28 +936,33 @@ Deno.test('tells Bite of a missing card only once, and not when it made one', as
   assertEquals(made.requests.length, 2);
 });
 
+/** A profile the snapshot reads whole. */
+const PROFILE = {
+  birth_year: 1996,
+  sex: 'female',
+  height_cm: 165,
+  weight_unit: 'kg',
+  training_days: [1, 4],
+  session_minutes: 45,
+};
+
+const SAVE_NOTE = {
+  type: 'toolCall' as const,
+  id: 'c1',
+  name: 'save_note',
+  args: { category: 'allergy', text: 'Allergic to kiwi' },
+};
+
 Deno.test('shows a note Bite kept, and names the answer it came from', async () => {
   const model = new FakeModel(
-    [
-      {
-        type: 'toolCall',
-        id: 'c1',
-        name: 'save_note',
-        args: { category: 'allergy', text: 'Allergic to kiwi' },
-      },
-    ],
+    [SAVE_NOTE],
     [{ type: 'text', text: "[[happy]] Got it, I'll keep that in mind." }],
   );
-  const profile = {
-    birth_year: 1996,
-    sex: 'female',
-    height_cm: 165,
-    weight_unit: 'kg',
-    training_days: [1, 4],
-    session_minutes: 45,
-    coach_saves_notes: true,
-  };
-  const { ctx, updated } = context(model, {}, { profiles: [profile] });
+  const { ctx, updated } = context(
+    model,
+    {},
+    { profiles: [{ ...PROFILE, coach_saves_notes: true }] },
+  );
 
   const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
 
@@ -964,6 +973,37 @@ Deno.test('shows a note Bite kept, and names the answer it came from', async () 
   );
   const done = answer.at(-1) as Extract<ChatEvent, { event: 'done' }>;
   assertEquals(updated, [{ table: 'coach_notes', values: { message_id: done.messageId } }]);
+});
+
+Deno.test('still tells Bite of a card it spoke of, though it kept a note', async () => {
+  const model = new FakeModel(
+    [SAVE_NOTE],
+    [{ type: 'text', text: "[[happy]] Here's a card for your lunch." }],
+    [{ type: 'text', text: 'Sorry, I could not make it.' }],
+  );
+  const { ctx } = context(model, {}, { profiles: [{ ...PROFILE, coach_saves_notes: true }] });
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests[2].messages.at(-1), {
+    role: 'user',
+    parts: [{ type: 'text', text: CARD_MISSING }],
+  });
+});
+
+Deno.test('removes a note asked about when its answer cannot be saved', async () => {
+  const model = new FakeModel([SAVE_NOTE], [{ type: 'text', text: '[[happy]] Shall I keep it?' }]);
+  const { ctx, deleted } = context(
+    model,
+    {},
+    { profiles: [{ ...PROFILE, coach_saves_notes: false }] },
+    { deletedThread: 100 },
+  );
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1)?.event, 'error');
+  assertEquals(deleted.includes('coach_notes 101'), true);
 });
 
 Deno.test('tells Bite of the notes it kept earlier, though it said nothing with them', async () => {
