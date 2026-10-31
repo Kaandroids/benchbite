@@ -1,3 +1,4 @@
+import { fromBase64, toBase64 } from '@shared/base64_bytes';
 import { MAX_PHOTO_BYTES } from '@shared/photos';
 
 import { supabase } from '@/lib/supabase';
@@ -5,13 +6,11 @@ import { discardPhotos, preparePhoto } from '@/nutrition/meal-estimate';
 
 import {
   forgetPhotoUrls,
-  fromBase64,
   localTime,
   messagePhotos,
   photosToSend,
   photoUrls,
   prepareChatPhoto,
-  toBase64,
 } from './chat-photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { storage: { from: jest.fn() } } }));
@@ -64,11 +63,6 @@ describe('prepareChatPhoto', () => {
     await expect(prepareChatPhoto('file:///cache/x.png')).rejects.toThrow();
     expect(discardPhotos).toHaveBeenCalledWith(['file:///cache/x.png']);
   });
-});
-
-it('reads base64 back as it was written, for a photo larger than one call takes', () => {
-  const bytes = new Uint8Array(100_000).map((_, index) => index % 256);
-  expect(fromBase64(toBase64(bytes))).toEqual(bytes);
 });
 
 it('gives the local time as HH:MM', () => {

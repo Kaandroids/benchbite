@@ -1,5 +1,6 @@
 // The photos of messages to Bite (#299, ADR 0062): prepared on the device to be sent, and read back
 // from `coach-media` when a chat is opened again.
+import { fromBase64, toBase64 } from '@shared/base64_bytes';
 import type { ChatPhoto, ChatPhotoPart, PHOTO_REFUSALS } from '@shared/coach/chat';
 import { MEDIA_BUCKET } from '@shared/coach/media';
 import { withoutMetadata } from '@shared/jpeg_metadata';
@@ -25,24 +26,6 @@ export type PhotosProblem = {
 /** The address a photo sent now is shown from: its data itself, as it is not kept on the device. */
 export function photoDataUri(data: string): string {
   return `data:image/jpeg;base64,${data}`;
-}
-
-/** The bytes of base64 data. */
-export function fromBase64(data: string): Uint8Array {
-  const text = atob(data);
-  const bytes = new Uint8Array(text.length);
-  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
-  return bytes;
-}
-
-/** Bytes as base64, a part at a time, as one call cannot take a photo's bytes at once. */
-export function toBase64(bytes: Uint8Array): string {
-  const PART = 0x8000;
-  let text = '';
-  for (let i = 0; i < bytes.length; i += PART) {
-    text += String.fromCharCode(...bytes.subarray(i, i + PART));
-  }
-  return btoa(text);
 }
 
 /**
