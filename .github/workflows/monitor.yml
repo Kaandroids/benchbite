@@ -48,12 +48,12 @@ jobs:
           jq --raw-output '
             "Queued folders: \(.queued)",
             "Oldest queued folder: \(if .oldest_queued_minutes == null then "none" else "\(.oldest_queued_minutes) minutes" end)",
-            "Purge responses in the last 6 hours: \(.responses), failed: \(.failed_responses)",
+            "Recent purge responses: \(.responses), failed: \(.failed_responses)",
             "Failed status codes (0 = timeout or network error): \(.failed_statuses | map(tostring) | join(", ") | if . == "" then "none" else . end)",
             "Latest status code: \(.latest_status // "none")"
           ' <<< "$status"
 
           if [ "$(jq --raw-output '.healthy' <<< "$status")" != true ]; then
-            echo "::error::The photo purge of deleted chats is failing: a folder has waited over an hour, or its latest call failed"
+            echo "::error::The photo purge of deleted chats is failing: it has stopped with folders over an hour old, or its latest call failed"
             exit 1
           fi
