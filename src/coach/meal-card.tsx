@@ -16,6 +16,7 @@ import { MEAL_COLORS } from '@/nutrition/meal-list';
 import { MEALS } from '@/nutrition/meals';
 import { spacing, useTheme } from '@/theme';
 
+import { canUndo, cardFailure, refusalOf } from './cards';
 import { CardRefusal, DecidedLine } from './decided-line';
 import {
   type MealCard,
@@ -23,7 +24,6 @@ import {
   type MealCardStatus,
   useMealCardAction,
 } from './meal-cards';
-import { proposalFailure } from './proposals';
 
 type MealCardViewProps = {
   card: MealCard;
@@ -54,15 +54,18 @@ export function MealCardView({ card, state, waiting = false }: MealCardViewProps
   const items = card.items.map((item, index) => ({ ...item, grams: grams[index] ?? item.grams }));
   // A refusal says why on the card while it stands where it was refused: an undo is refused
   // logged, an add pending.
-  const refused =
-    action.isError && (action.variables.action === 'undo') === (status === 'logged')
-      ? proposalFailure(action.error)
-      : undefined;
+  const refused = refusalOf(action, action.variables?.action === 'undo', status === 'logged');
   const act = (request: Parameters<typeof action.mutate>[0]) =>
     action.mutate(request, {
       onSuccess: (row) => {
         setDone({ status: row.status, kcal: row.kcal });
         setEditing(false);
+      },
+      // Added or undone elsewhere: where it stands now, as loaded again, shows instead.
+      onError: (error) => {
+        if (cardFailure(error) === 'outOfDate') {
+          setDone(undefined);
+        }
       },
     });
 
@@ -76,9 +79,7 @@ export function MealCardView({ card, state, waiting = false }: MealCardViewProps
           text={t(`bite.mealCard.added.${card.meal}`, { calories: format(Math.round(kcal)) })}
           action={
             // Undo stands as long as the entries are as they were added, on a day still open.
-            refused === 'changed' ||
-            refused === 'outOfDate' ||
-            refused === 'closedDay' ? undefined : (
+            !canUndo(refused) ? undefined : (
               <TextLink
                 label={t('bite.proposal.undo')}
                 size="regular"

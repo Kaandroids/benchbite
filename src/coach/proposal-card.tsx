@@ -15,12 +15,12 @@ import { spacing, useTheme, type ColorTokens } from '@/theme';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
+import { canUndo, cardFailure, refusalOf } from './cards';
 import { CardRefusal as Refusal, DecidedLine } from './decided-line';
 import {
   type ProposalDecision,
   type ProposalState,
   type ProposalStatus,
-  proposalFailure,
   type ShownProposal as Proposal,
   useDecideProposal,
 } from './proposals';
@@ -49,11 +49,17 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
   const status = decided ?? state?.status ?? 'pending';
   // A refusal says why on the card while the proposal stands where it was refused: an undo is
   // refused applied, the rest pending.
-  const refused =
-    decide.isError && (decide.variables === 'undo') === (status === 'applied')
-      ? proposalFailure(decide.error)
-      : undefined;
-  const choose = (decision: ProposalDecision) => decide.mutate(decision, { onSuccess: setDecided });
+  const refused = refusalOf(decide, decide.variables === 'undo', status === 'applied');
+  const choose = (decision: ProposalDecision) =>
+    decide.mutate(decision, {
+      onSuccess: setDecided,
+      // Decided elsewhere: where it stands now, as loaded again, shows instead.
+      onError: (error) => {
+        if (cardFailure(error) === 'outOfDate') {
+          setDecided(undefined);
+        }
+      },
+    });
 
   if (status === 'applied') {
     return (
@@ -65,9 +71,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
           detail={card.kind === 'food_log' ? foodLogDetail(card) : undefined}
           action={
             // Undo stands as long as nothing changed what applying left, on a day still open.
-            refused === 'changed' ||
-            refused === 'outOfDate' ||
-            refused === 'closedDay' ? undefined : (
+            !canUndo(refused) ? undefined : (
               <TextLink
                 label={t('bite.proposal.undo')}
                 size="regular"
