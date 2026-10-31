@@ -1876,8 +1876,21 @@
         "changed": "Bu o zamandan beri değişti — Bite'a yeniden sor",
         "outOfDate": "Bunun süresi geçti",
         "underFloor": "Bu artık önerdiğimiz en düşük kalorinin altında — Bite'a yeniden sor",
-        "failed": "Olmadı. Tekrar dene."
+        "failed": "Olmadı. Tekrar dene.",
+        "closedDay": "O gün artık değiştirilemez"
       }
+    },
+    "mealCard": {
+      "added": {
+        "breakfast": "Kahvaltıya eklendi · {{calories}} kcal",
+        "lunch": "Öğle yemeğine eklendi · {{calories}} kcal",
+        "dinner": "Akşam yemeğine eklendi · {{calories}} kcal",
+        "snack": "Atıştırmalık olarak eklendi · {{calories}} kcal"
+      },
+      "edit": "Düzenle",
+      "amount": "{{grams}} g · {{calories}} kcal",
+      "row": "{{name}}, {{grams}} gram, {{calories}} kcal",
+      "rowEstimated": "{{name}}, {{grams}} gram, {{calories}} kcal, tahmini, kütüphanede bulunamadı"
     }
   }
 }

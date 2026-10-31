@@ -1876,8 +1876,21 @@
         "changed": "Das hat sich inzwischen geändert – frag Bite noch einmal",
         "outOfDate": "Das ist nicht mehr aktuell",
         "underFloor": "Das liegt jetzt unter dem Minimum, das wir empfehlen – frag Bite noch einmal",
-        "failed": "Das hat nicht geklappt. Versuch es noch einmal."
+        "failed": "Das hat nicht geklappt. Versuch es noch einmal.",
+        "closedDay": "Dieser Tag kann nicht mehr geändert werden"
       }
+    },
+    "mealCard": {
+      "added": {
+        "breakfast": "Zum Frühstück hinzugefügt · {{calories}} kcal",
+        "lunch": "Zum Mittagessen hinzugefügt · {{calories}} kcal",
+        "dinner": "Zum Abendessen hinzugefügt · {{calories}} kcal",
+        "snack": "Als Snack hinzugefügt · {{calories}} kcal"
+      },
+      "edit": "Ändern",
+      "amount": "{{grams}} g · {{calories}} kcal",
+      "row": "{{name}}, {{grams}} Gramm, {{calories}} kcal",
+      "rowEstimated": "{{name}}, {{grams}} Gramm, {{calories}} kcal, geschätzt, nicht in der Datenbank"
     }
   }
 }

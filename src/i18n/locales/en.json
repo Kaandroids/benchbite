@@ -1876,8 +1876,21 @@
         "changed": "This changed since — ask Bite again",
         "outOfDate": "This is out of date",
         "underFloor": "This is now below the least we recommend — ask Bite again",
-        "failed": "That didn't work. Try again."
+        "failed": "That didn't work. Try again.",
+        "closedDay": "That day can no longer be changed"
       }
+    },
+    "mealCard": {
+      "added": {
+        "breakfast": "Added to breakfast · {{calories}} kcal",
+        "lunch": "Added to lunch · {{calories}} kcal",
+        "dinner": "Added to dinner · {{calories}} kcal",
+        "snack": "Added as a snack · {{calories}} kcal"
+      },
+      "edit": "Edit",
+      "amount": "{{grams}} g · {{calories}} kcal",
+      "row": "{{name}}, {{grams}} grams, {{calories}} kcal",
+      "rowEstimated": "{{name}}, {{grams}} grams, {{calories}} kcal, estimated, not found in the library"
     }
   }
 }

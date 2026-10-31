@@ -43,13 +43,15 @@ export function isShownProposal(card: { kind?: unknown; id?: unknown }): card is
 export type ProposalState = { status: ProposalStatus; expired: boolean };
 
 /**
- * Why a decision was refused: what it changes changed since (BB035), it is out of date or decided
- * already (BB036), or gone (P0002), the targets are now under the calorie floor (BB037), or the
+ * Why a decision, or adding or undoing a meal card, was refused: what it changes changed since
+ * (BB035), it is out of date or decided already (BB036), or gone (P0002), the targets are now
+ * under the calorie floor (BB037), a day it changes can no longer be logged (BB020), or the
  * request failed.
  */
-export type ProposalFailure = 'changed' | 'outOfDate' | 'underFloor' | 'failed';
+export type ProposalFailure = 'changed' | 'outOfDate' | 'underFloor' | 'closedDay' | 'failed';
 
 const FAILURES: Record<string, ProposalFailure> = {
+  BB020: 'closedDay',
   BB035: 'changed',
   BB036: 'outOfDate',
   BB037: 'underFloor',
