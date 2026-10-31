@@ -640,6 +640,20 @@ const TOOLS = [
     run: async ({ category, text, reviewOn }, { supabase, today, threadId, savesNotes }) => {
       const wrongDay = reviewRefusal(reviewOn, today);
       if (wrongDay) return wrongDay;
+      // A note the notebook holds already, in use or waiting for the user's yes, is not saved
+      // again: Bite does so now and then, though told not to.
+      const held = await supabase
+        .from('coach_notes')
+        .select('id')
+        .is('archived_at', null)
+        .ilike(
+          'text',
+          text.replace(/[\\%_]/g, (c) => `\\${c}`),
+        )
+        .limit(1)
+        .maybeSingle();
+      if (held.error) return refused(held.error, NOTE_REFUSALS);
+      if (held.data) return { error: `The notebook holds this already, as #${held.data.id}.` };
       // As the snapshot told Bite; unknown, it asks first: a note is never kept against the
       // user's choice.
       const asked = savesNotes !== true;

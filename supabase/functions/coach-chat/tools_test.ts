@@ -1097,12 +1097,16 @@ function noteContext(
   written: { data?: unknown; error?: unknown } = {
     data: { id: 9, category: 'allergy', text: 'Allergic to kiwi' },
   },
+  held: { id: number } | null = null,
 ) {
+  const searched: string[] = [];
   const writes: { op: string; values?: unknown; filters: [string, unknown][] }[] = [];
   const supabase = {
     from: () => {
       const write = { op: '', values: undefined as unknown, filters: [] as [string, unknown][] };
       const done = () => {
+        // A read alone looks for a note the notebook holds already.
+        if (!write.op) return Promise.resolve({ data: held, error: null });
         writes.push(write);
         return Promise.resolve({ data: null, error: null, ...written });
       };
@@ -1112,6 +1116,8 @@ function noteContext(
         update: (values: unknown) => ((write.op = 'update'), (write.values = values), builder),
         eq: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
         is: (column: string, value: unknown) => (write.filters.push([column, value]), builder),
+        ilike: (_column: string, pattern: string) => (searched.push(pattern), builder),
+        limit: () => builder,
         maybeSingle: done,
         single: done,
       };
@@ -1121,6 +1127,7 @@ function noteContext(
   return {
     context: { ...context, supabase, savesNotes: saves } as unknown as ToolContext,
     writes,
+    searched,
   };
 }
 
@@ -1148,6 +1155,15 @@ Deno.test('saves a note from the chat, or asks first when saving is off', async 
   const unread = noteContext(undefined);
   await runTool('save_note', args, unread.context);
   assertEquals((unread.writes[0].values as { asked: boolean }).asked, true);
+});
+
+Deno.test('saves no note the notebook holds already, in use or asked about', async () => {
+  const { context, writes, searched } = noteContext(false, undefined, { id: 4 });
+  assertEquals(await runTool('save_note', { category: 'food', text: '100% vegan_ish' }, context), {
+    error: 'The notebook holds this already, as #4.',
+  });
+  assertEquals(searched, ['100\\% vegan\\_ish']);
+  assertEquals(writes, []);
 });
 
 Deno.test('asks again about a note only on a day ahead, within half a year', async () => {
