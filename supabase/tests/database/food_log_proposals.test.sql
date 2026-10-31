@@ -1,5 +1,5 @@
 -- Bite proposes changes to the food log; the user applies, keeps or undoes them, and only to the
--- entries as Bite saw them (ADR 0067).
+-- entries as Bite saw them (ADR 0068).
 begin;
 create extension if not exists pgtap with schema extensions;
 

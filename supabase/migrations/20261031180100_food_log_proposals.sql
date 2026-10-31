@@ -1,5 +1,5 @@
 -- Changes to the food log Bite proposes, which the user applies, keeps as it is, or undoes (#299,
--- ADR 0067), as its other changes (ADR 0058): moving entries to another meal or day, changing their
+-- ADR 0068), as its other changes (ADR 0058): moving entries to another meal or day, changing their
 -- grams, and removing them. A proposal keeps the entries as Bite saw them (`before`), so that it
 -- applies only while they are still so, and as applying left them (`after`), so that it is undone
 -- only while they are still so. Undoing a removal puts the entry back with the values it was logged
