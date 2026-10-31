@@ -58,8 +58,8 @@ $$;
 
 -- Only counts, ages and status codes, never user ids or folders, as the workflow's log is public.
 -- The purge is unhealthy when a folder has waited over an hour, as it is tried every five
--- minutes, or when the latest answered call was not a 2xx; a timeout or a network error has no
--- status code and counts as failed. It runs as its caller, the database owner, as which the
+-- minutes, or when the latest answered call was not a 2xx while a folder is queued; a timeout or
+-- a network error has no status code and counts as failed. It runs as its caller, the database owner, as which the
 -- workflow queries through the Management API.
 create function public.coach_media_purge_status()
 returns table (
@@ -97,7 +97,8 @@ as $$
        from answers where not succeeded),
     (select status_code from latest),
     coalesce(q.oldest >= now() - interval '1 hour', true)
-      and coalesce((select succeeded from latest), true)
+      -- With nothing queued, no new call replaces a failed latest one, though it purged the rest.
+      and (q.queued = 0 or coalesce((select succeeded from latest), true))
   from queue q;
 $$;
 

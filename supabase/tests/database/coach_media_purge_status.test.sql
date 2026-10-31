@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 -- Answers from pg_net, made up here for requests with negative ids that pg_net never uses.
 create function pg_temp.answer(request_id bigint, status_code integer, minutes_ago integer)
@@ -90,6 +90,21 @@ select results_eq(
   $$ values (4::bigint, 204) $$,
   'Responses to other requests are ignored'
 );
+
+-- With nothing queued, a failed latest call is no failure: no later call replaces it.
+select pg_temp.answer(-6, null, 1);
+select ok(
+  not (select healthy from public.coach_media_purge_status()),
+  'A timed out latest call with a folder queued fails'
+);
+create temp table queued_folders as select * from public.coach_media_deletions;
+delete from public.coach_media_deletions;
+select results_eq(
+  $$ select queued, latest_status, healthy from public.coach_media_purge_status() $$,
+  $$ values (0::bigint, 0, true) $$,
+  'A timed out latest call with nothing queued is healthy'
+);
+insert into public.coach_media_deletions select * from queued_folders;
 
 -- A folder waiting over an hour means the purge keeps failing, whatever the calls answered.
 update public.coach_media_deletions set queued_at = now() - interval '61 minutes';
