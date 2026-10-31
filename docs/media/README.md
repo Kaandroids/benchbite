@@ -1,6 +1,6 @@
 # Media
 
-The screenshots and the onboarding GIF in the README. They are taken on the iOS Simulator
+The screenshots and GIFs in the README. They are taken on the iOS Simulator
 (iPhone 17 Pro) against the local Supabase stack, with a demo account and no real data.
 
 | File                 | Shows                                                           |
@@ -47,15 +47,15 @@ workout with the app on the Workouts tab:
 
 ```bash
 scripts/record-onboarding.sh onboarding.mov
-scripts/record-workout.sh workout.mov
+scripts/record-workout.sh workout-create.mov
 ```
 
-Then turn each into a GIF, here the onboarding. The status bar is cropped, and the GIF plays at
-twice the real speed:
+Then turn each into a GIF, `<name>` being `onboarding` or `workout-create`. The first 2 seconds
+and the status bar are cut, and the GIF plays at twice the real speed:
 
 ```bash
-mkdir frames
-ffmpeg -ss 2 -i onboarding.mov \
+mkdir -p frames && rm -f frames/*
+ffmpeg -ss 2 -i <name>.mov \
   -vf "crop=iw:ih-162:0:162,setpts=PTS/2,fps=12,scale=300:-1:flags=lanczos" frames/f%04d.png
-gifski --fps 12 --width 300 --quality 80 -o docs/media/onboarding.gif frames/f*.png
+gifski --fps 12 --width 300 --quality 80 -o docs/media/<name>.gif frames/f*.png
 ```
