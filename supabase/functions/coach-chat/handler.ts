@@ -24,7 +24,7 @@ import {
   ModelError,
   type Part,
 } from '../_shared/llm/mod.ts';
-import { decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES, untagged } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -133,7 +133,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   }
   const request = parsed.data;
   // Photos are checked before anything is sent or kept (ADR 0062).
-  if (!photosFit(request.photos.map((photo) => decodedBytes(photo.data)))) {
+  if (!photosFit(request.photos)) {
     return refused('photos_too_large');
   }
   const photos: CheckedPhoto[] = [];

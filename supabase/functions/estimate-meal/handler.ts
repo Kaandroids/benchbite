@@ -17,7 +17,7 @@ import {
   MEAL_PHOTO_TYPES,
 } from '../_shared/meal/estimate.ts';
 import { matchItems } from '../_shared/meal/match.ts';
-import { decodedBytes, MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
+import { MAX_PHOTOS, photosBodyBytes, photosFit } from '../_shared/photos.ts';
 import { LANGUAGES } from '../_shared/prompt.ts';
 import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -93,7 +93,7 @@ export async function handleEstimateRequest(
   }
   const request = parsed.data;
   // Too large photos are refused before anything is sent to the model.
-  if (!photosFit(request.photos.map((photo) => decodedBytes(photo.data)))) {
+  if (!photosFit(request.photos)) {
     return refused('photos_too_large');
   }
 

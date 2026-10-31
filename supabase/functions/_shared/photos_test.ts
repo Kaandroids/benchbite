@@ -9,9 +9,11 @@ Deno.test('counts the bytes base64 holds', () => {
 });
 
 Deno.test('takes photos within the limits, each and together', () => {
-  assertEquals(photosFit([MAX_PHOTO_BYTES, MAX_PHOTO_BYTES]), true);
-  assertEquals(photosFit([MAX_PHOTO_BYTES + 1]), false);
-  assertEquals(photosFit([1_100_000, 1_100_000, 1_100_000]), false);
+  // Base64 data of this many bytes, decoded.
+  const photo = (bytes: number) => ({ data: btoa('x'.repeat(bytes)) });
+  assertEquals(photosFit([photo(MAX_PHOTO_BYTES), photo(MAX_PHOTO_BYTES)]), true);
+  assertEquals(photosFit([photo(MAX_PHOTO_BYTES + 1)]), false);
+  assertEquals(photosFit([photo(1_100_000), photo(1_100_000), photo(1_100_000)]), false);
 });
 
 Deno.test('reads a body that holds the photos at their largest', () => {

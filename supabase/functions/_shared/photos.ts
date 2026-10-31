@@ -25,8 +25,9 @@ export function decodedBytes(data: string): number {
   return (data.length / 4) * 3 - padding;
 }
 
-/** Whether photos of these sizes, decoded, are within the limits, each and together. */
-export function photosFit(sizes: number[]): boolean {
+/** Whether photos, as base64 data, are within the limits, decoded, each and together. */
+export function photosFit(photos: { data: string }[]): boolean {
+  const sizes = photos.map((photo) => decodedBytes(photo.data));
   return (
     sizes.every((size) => size <= MAX_PHOTO_BYTES) &&
     sizes.reduce((total, size) => total + size, 0) <= MAX_PHOTOS_BYTES
