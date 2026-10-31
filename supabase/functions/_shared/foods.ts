@@ -17,6 +17,11 @@ export function foodNameKey(name: string): string {
   return name.replace(/[İı]/g, 'i').toLowerCase();
 }
 
+/** A name as search_foods() and food_name_key() compare it, trimmed. */
+export function nameKey(name: string): string {
+  return foodNameKey(name).trim();
+}
+
 /**
  * A food of the library, by its BLS code, or one of the user's own foods or recipes, by its id
  * (ADR 0036, ADR 0038), as a meal entry names it by its food_id, custom_food_id or recipe_id.

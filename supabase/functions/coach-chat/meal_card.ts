@@ -3,7 +3,7 @@
 // history.
 import type { MealCard } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
-import { foodNameKey } from '../_shared/foods.ts';
+import { nameKey } from '../_shared/foods.ts';
 import type { EstimateItem, EstimateMeal } from '../_shared/meal/estimate.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
@@ -78,11 +78,6 @@ export function logItem(item: EstimateItem): Record<string, string | number> {
     carbs_g: carbsG,
     fat_g: fatG,
   };
-}
-
-/** A name as food_name_key() compares it, trimmed. */
-function nameKey(name: string): string {
-  return foodNameKey(name).trim();
 }
 
 /** What a card's items add, in whole kcal, at the grams Bite gave. */
