@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(36);
+select plan(42);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -206,6 +206,54 @@ select results_eq(
      join public.custom_foods c on c.id = e.custom_food_id $$,
   $$ values ('Dal makhani'::text, 250.0) $$,
   'with the food made again'
+);
+
+-- A card saves Ayran, which the user then logs again at lunch: undoing the card leaves it.
+create function pg_temp.own(name text) returns jsonb language sql as $$
+  select jsonb_build_array(jsonb_build_object('name', name, 'grams', 250, 'kcal', 36,
+    'protein_g', 1.7, 'carbs_g', 2.5, 'fat_g', 2));
+$$;
+insert into ids select 'ayran card', pg_temp.add(pg_temp.own('Ayran'));
+select public.log_coach_meal_card((select id from ids where name = 'ayran card'));
+insert into public.meal_entries (day, meal, custom_food_id, grams)
+select current_date, 'lunch', id, 200 from public.custom_foods where name = 'Ayran';
+select is(
+  (public.undo_coach_meal_card((select id from ids where name = 'ayran card'))).status::text,
+  'undone', 'A card whose food the user logged again is undone'
+);
+select results_eq(
+  $$ select e.meal::text, c.archived_at is null from public.meal_entries e
+     join public.custom_foods c on c.id = e.custom_food_id where c.name = 'Ayran' $$,
+  $$ values ('lunch', true) $$,
+  'and only its own entry goes: the food stays, not archived'
+);
+
+-- A card saves Kefir, which the user then changes.
+insert into ids select 'kefir card', pg_temp.add(pg_temp.own('Kefir'));
+select public.log_coach_meal_card((select id from ids where name = 'kefir card'));
+update public.custom_foods set kcal = 60 where name = 'Kefir';
+select is(
+  (public.undo_coach_meal_card((select id from ids where name = 'kefir card'))).status::text,
+  'undone', 'A card whose food the user changed is undone'
+);
+select is(
+  (select count(*)::integer from public.meal_entries e
+   join public.custom_foods c on c.id = e.custom_food_id where c.name = 'Kefir'),
+  0, 'without its entry'
+);
+select results_eq(
+  $$ select kcal, archived_at is null from public.custom_foods where name = 'Kefir' $$,
+  $$ values (60.0, true) $$,
+  'and the changed food stays as the user made it'
+);
+
+-- A card saves Lassi, which nothing else uses: undoing it removes the food.
+insert into ids select 'lassi card', pg_temp.add(pg_temp.own('Lassi'));
+select public.log_coach_meal_card((select id from ids where name = 'lassi card'));
+select public.undo_coach_meal_card((select id from ids where name = 'lassi card'));
+select is(
+  (select count(*)::integer from public.custom_foods where name = 'Lassi'),
+  0, 'A food only its card used goes with it'
 );
 
 -- 50 cards today already.

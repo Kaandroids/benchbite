@@ -1765,6 +1765,7 @@ export type Database = {
       check_sets: { Args: { log: Json }; Returns: undefined };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
+      coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
       coach_message_text: { Args: { content: Json }; Returns: string };
       coach_proposal_state: {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };

@@ -26,8 +26,8 @@ create table public.coach_meal_cards (
   -- What logging made: the entries in the card's order, and the user's own foods it saved.
   entry_ids bigint[],
   food_ids bigint[],
-  -- The entries as logged, as coach_meal_card_entries() reads them, which undoing needs to find as
-  -- they were.
+  -- What logging made as it was then, which undoing compares with what is there: `entries`, as
+  -- coach_meal_card_entries() reads them, and `foods`, as coach_meal_card_foods() does.
   logged jsonb check (octet_length(logged::text) <= 16384),
   -- What the entries added, at the values they were logged with.
   kcal numeric(8, 1),
@@ -75,6 +75,36 @@ as $$
 $$;
 
 revoke all on function public.coach_meal_card_entries(bigint[]) from public, anon, authenticated;
+
+-- The caller's own foods `food_ids` as they are now, by id: what undoing a card compares with the
+-- foods it saved, to leave one the user changed meanwhile.
+create function public.coach_meal_card_foods(food_ids bigint[])
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', c.id,
+        'name', c.name,
+        'kcal', c.kcal,
+        'proteinG', c.protein_g,
+        'carbsG', c.carbs_g,
+        'fatG', c.fat_g,
+        'portionUnit', c.portion_unit,
+        'portionGrams', c.portion_grams
+      )
+      order by c.id
+    ),
+    '[]'
+  )
+  from public.custom_foods c
+  where c.id = any (coach_meal_card_foods.food_ids) and c.user_id = (select auth.uid());
+$$;
+
+revoke all on function public.coach_meal_card_foods(bigint[]) from public, anon, authenticated;
 
 -- Keeps a card of the meal `items` (as log_meal_estimate() takes them) on the caller's `day` and
 -- `meal`, in their `thread_id`, and gives its id. It must log as it is: it is tried and rolled
@@ -192,7 +222,10 @@ begin
   from public.log_meal_estimate(card.day, card.meal, to_log)
     with ordinality l (entry_id, custom_food_id, created_food, kcal, position);
 
-  card.logged := public.coach_meal_card_entries(card.entry_ids);
+  card.logged := jsonb_build_object(
+    'entries', public.coach_meal_card_entries(card.entry_ids),
+    'foods', public.coach_meal_card_foods(card.food_ids)
+  );
   card.status := 'logged';
   card.logged_at := now();
   update public.coach_meal_cards c
@@ -205,7 +238,9 @@ $$;
 
 -- Takes back the caller's logged card `card_id` with undo_meal_estimate(), only while its entries
 -- are as it logged them: one the user moved, resized or removed meanwhile is theirs now (BB035).
--- Gives the card as it is then.
+-- Of the foods it saved, it removes only those the user has not come to use since: one they
+-- changed, logged elsewhere (a removed entry still restorable included), put in a recipe, starred
+-- or that another pending card holds by its id stays as it is. Gives the card as it is then.
 create function public.undo_coach_meal_card(card_id bigint)
 returns public.coach_meal_cards
 language plpgsql
@@ -216,6 +251,7 @@ as $$
 declare
   caller_id uuid := (select auth.uid());
   card public.coach_meal_cards;
+  unused_food_ids bigint[];
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
@@ -234,11 +270,34 @@ begin
   perform 1 from public.meal_entries e
   where e.id = any (card.entry_ids) and e.user_id = caller_id
   for update;
-  if public.coach_meal_card_entries(card.entry_ids) is distinct from card.logged then
+  if public.coach_meal_card_entries(card.entry_ids) is distinct from card.logged -> 'entries' then
     raise exception 'Changed since the meal was logged' using errcode = 'BB035';
   end if;
 
-  perform public.undo_meal_estimate(card.entry_ids, card.food_ids);
+  select coalesce(array_agg(food.value['id']::bigint), '{}') into unused_food_ids
+  from jsonb_array_elements(public.coach_meal_card_foods(card.food_ids)) food
+  where food.value in (select jsonb_array_elements(card.logged -> 'foods'))
+    and not exists (
+      select 1 from public.meal_entries e
+      where e.custom_food_id = food.value['id']::bigint and e.id <> all (card.entry_ids)
+    )
+    and not exists (
+      select 1 from public.removed_meal_entries r
+      where r.custom_food_id = food.value['id']::bigint and r.id <> all (card.entry_ids)
+    )
+    and not exists (
+      select 1 from public.recipe_ingredients i where i.custom_food_id = food.value['id']::bigint
+    )
+    and not exists (
+      select 1 from public.favourite_foods f where f.custom_food_id = food.value['id']::bigint
+    )
+    and not exists (
+      select 1 from public.coach_meal_cards c
+      where c.user_id = caller_id and c.status = 'pending'
+        and c.items @> jsonb_build_array(jsonb_build_object('custom_food_id', food.value['id']))
+    );
+
+  perform public.undo_meal_estimate(card.entry_ids, unused_food_ids);
   card.status := 'undone';
   card.undone_at := now();
   update public.coach_meal_cards c
