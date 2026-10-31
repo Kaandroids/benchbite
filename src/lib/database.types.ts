@@ -1948,6 +1948,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_planned_by_weekdays: {
         Args: {
           day: string;

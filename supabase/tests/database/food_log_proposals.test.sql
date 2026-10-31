@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(40);
+select plan(45);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -320,6 +320,36 @@ select ok(
     and not has_function_privilege('anon', 'public.restore_meal_entry(bigint)', 'execute'),
   'Restoring an entry stays open to signed-in users only'
 );
+
+-- One window for every check that a day can be logged.
+select ok(
+  public.is_loggable_day(current_date) and public.is_loggable_day(current_date + 1)
+    and public.is_loggable_day(public.last_day_closed_to_logging() + 1),
+  'Today, tomorrow for the time zones and the days back to the window can be logged'
+);
+select ok(
+  not public.is_loggable_day(current_date + 2)
+    and not public.is_loggable_day(public.last_day_closed_to_logging()),
+  'Later days and those closed to logging cannot'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.is_loggable_day(date)', 'execute')
+    and not has_function_privilege('anon', 'public.is_loggable_day(date)', 'execute'),
+  'Signed-in users can check a day, as their entries'' trigger does'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ insert into public.meal_entries (day, meal, food_id, grams)
+     values (public.last_day_closed_to_logging(), 'lunch', 'C133000', 100) $$,
+  'BB020', 'Only today and the week before can be logged',
+  'Logging still refuses a closed day with the same message'
+);
+select lives_ok(
+  $$ insert into public.meal_entries (day, meal, food_id, grams)
+     values (public.last_day_closed_to_logging() + 1, 'lunch', 'C133000', 100) $$,
+  'and takes the first day still open'
+);
+reset role;
 
 select * from finish();
 rollback;

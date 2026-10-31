@@ -99,6 +99,34 @@ as $$
   ) e;
 $$;
 
+-- Whether `day` can still be logged: the server's today, the day after for the time zones, and the
+-- days back to the last one closed to logging.
+create function public.is_loggable_day(day date)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select is_loggable_day.day between public.last_day_closed_to_logging() + 1 and current_date + 1;
+$$;
+
+revoke execute on function public.is_loggable_day(date) from public, anon;
+grant execute on function public.is_loggable_day(date) to authenticated;
+
+-- As before (20261029110000_streaks.sql), with the window checked by is_loggable_day().
+create or replace function public.check_log_day()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if not public.is_loggable_day(new.day) then
+    raise exception 'Only today and the week before can be logged' using errcode = 'BB020';
+  end if;
+  return new;
+end;
+$$;
+
 -- Refuses entries on a day that can no longer be logged, as check_log_day() refuses moving one
 -- there, so that Bite changes only the days the user may change themselves (BB020).
 create function public.check_food_log_days(entries jsonb)
@@ -110,8 +138,7 @@ as $$
 begin
   if exists (
     select 1 from jsonb_array_elements(entries) e
-    where (e.value ->> 'day')::date
-      not between public.last_day_closed_to_logging() + 1 and current_date + 1
+    where not public.is_loggable_day((e.value ->> 'day')::date)
   ) then
     raise exception 'Only today and the week before can be logged' using errcode = 'BB020';
   end if;
