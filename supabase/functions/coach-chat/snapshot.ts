@@ -1,6 +1,8 @@
 // The user's state as Bite sees it before each answer (#292): who they are, their goal, today's
-// targets and food, their plan and streak. Read with the user's token, so row level security
-// decides what Bite may see; what cannot be read is left out rather than failing the answer.
+// targets and food, their plan and streak, and the notes Bite keeps about them (ADR 0071). Read
+// with the user's token, so row level security decides what Bite may see; what cannot be read is
+// left out rather than failing the answer.
+import type { NoteCategory } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { workoutName } from './workout.ts';
@@ -43,6 +45,23 @@ export type Snapshot = {
   /** Today's workouts, and whether they are done; one without exercises yet says so (ADR 0064). */
   workouts?: string;
   streak?: string;
+  /** Whether Bite saves notes from chats by itself, or asks first. */
+  savesNotes?: boolean;
+  /**
+   * The notes in use, which every answer reads, and those waiting for the user's yes, so that
+   * Bite does not ask again; past notes are left out.
+   */
+  notes?: Note[];
+};
+
+export type Note = {
+  id: number;
+  category: NoteCategory;
+  text: string;
+  /** The day Bite asks again whether it still holds. */
+  reviewOn?: string;
+  /** Bite asked to save it, and the user has not said yes on its card. */
+  asked?: true;
 };
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -54,27 +73,34 @@ export async function loadSnapshot(
   time?: string,
 ): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, pace, weight, nutrition, planned, trained, streak] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select(
-        'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor',
-      )
-      .maybeSingle(),
-    supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
-    supabase.rpc('my_achievable_weekly_pace_kg'),
-    supabase
-      .from('weight_entries')
-      .select('weight_kg')
-      .order('measured_on', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase.rpc('day_nutrition', day),
-    supabase.rpc('planned_workouts', day),
-    supabase.rpc('day_training', day),
-    supabase.rpc('streak', { today }),
-  ]);
-  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak };
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes] =
+    await Promise.all([
+      supabase
+        .from('profiles')
+        .select(
+          'display_name, birth_year, sex, height_cm, weight_unit, experience, training_setup, training_days, session_minutes, calorie_floor, coach_saves_notes',
+        )
+        .maybeSingle(),
+      supabase.from('goals').select('kind, target_weight_kg, weekly_pace_kg').maybeSingle(),
+      supabase.rpc('my_achievable_weekly_pace_kg'),
+      supabase
+        .from('weight_entries')
+        .select('weight_kg')
+        .order('measured_on', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.rpc('day_nutrition', day),
+      supabase.rpc('planned_workouts', day),
+      supabase.rpc('day_training', day),
+      supabase.rpc('streak', { today }),
+      supabase
+        .from('coach_notes')
+        .select('id, category, text, review_on, asked')
+        .is('archived_at', null)
+        .order('category')
+        .order('id'),
+    ]);
+  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, notes };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -95,6 +121,7 @@ export async function loadSnapshot(
       // The floor the targets keep to (calorie_floor()), which Bite never goes below.
       calorieFloor: p.calorie_floor ?? undefined,
     };
+    snapshot.savesNotes = p.coach_saves_notes;
     snapshot.training = [
       p.experience,
       p.training_setup,
@@ -138,5 +165,14 @@ export async function loadSnapshot(
   }
   const s = streak.data?.[0];
   if (s) snapshot.streak = `${s.count} days, ${s.freezes} freezes left`;
+  if (notes.data) {
+    snapshot.notes = notes.data.map((note) => ({
+      id: note.id,
+      category: note.category,
+      text: note.text,
+      ...(note.review_on && { reviewOn: note.review_on }),
+      ...(note.asked && { asked: true as const }),
+    }));
+  }
   return snapshot;
 }

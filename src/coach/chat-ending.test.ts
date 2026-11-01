@@ -145,3 +145,12 @@ it('takes a meal card for an answer, and keeps its new thread when stopped', () 
   const ending = afterStream(read(undefined, { event: 'thread', threadId: 7 }, card), 'stopped');
   expect(ending).toMatchObject({ said: true, threadId: 7 });
 });
+
+it('takes a note Bite kept for an answer', () => {
+  const note: ChatEvent = {
+    event: 'note',
+    note: { id: 3, action: 'saved', category: 'allergy', text: 'Allergic to kiwi' },
+  };
+  const ending = afterStream(read(undefined, { event: 'thread', threadId: 7 }, note), 'stopped');
+  expect(ending).toMatchObject({ said: true, threadId: 7 });
+});

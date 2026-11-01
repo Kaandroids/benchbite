@@ -1,9 +1,9 @@
 // What Bite may look up while it answers (#292, ADR 0052): the user's training, meals, weeks,
 // records and plan, and the food and exercise libraries; the changes it may propose, which the
-// user applies (ADR 0058), to the food log too (ADR 0068); and the meals it estimates, as cards
-// the user adds (ADR 0062). Each tool runs with the user's token, so row level security and the
-// database's functions decide what it sees and may do, and returns little, to keep the answer
-// cheap.
+// user applies (ADR 0058), to the food log too (ADR 0068); the meals it estimates, as cards the
+// user adds (ADR 0062); and the notes it keeps about the user (ADR 0071). Each tool runs with the
+// user's token, so row level security and the database's functions decide what it sees and may
+// do, and returns little, to keep the answer cheap.
 import { z } from 'zod';
 
 import type {
@@ -12,9 +12,10 @@ import type {
   FoodLogChange,
   FoodLogEntry,
   MealCard,
+  NoteCard,
   ProposalCard,
 } from '../_shared/coach/chat.ts';
-import { Constants } from '../_shared/database.types.ts';
+import { Constants, type Database } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
 import type { Tool } from '../_shared/llm/mod.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
@@ -44,6 +45,8 @@ export type ToolContext = {
    * whatever text it shows.
    */
   hasText: boolean;
+  /** Whether the user lets Bite save notes from chats, as the snapshot read it; unknown asks. */
+  savesNotes?: boolean;
 };
 
 /** The most days one look at the history may cover. */
@@ -123,6 +126,49 @@ const MEAL_REFUSALS = {
   otherwise: 'The meal card could not be made just now.',
   log: 'A meal card could not be made',
 } satisfies Refusals;
+
+/** The longest a note and the reason it was archived may be, as `coach_notes` checks them. */
+const MAX_NOTE_LENGTH = 200;
+
+/** The database's refusals of a note. */
+const NOTE_REFUSALS = {
+  meanings: {
+    BB046:
+      'The notebook has as many notes in use as it may: change or archive one that no longer holds instead, or tell the user.',
+    BB047:
+      'The notebook keeps as many notes as it may; tell the user they can remove past ones in it.',
+    BB048:
+      'As many notes as may be wait for the user to say yes on their cards; ask for no more until they decide.',
+    '23514': `A note has text, of up to ${MAX_NOTE_LENGTH} characters, and an archived one says why.`,
+  },
+  otherwise: 'The note could not be kept just now.',
+  log: 'A note could not be kept',
+} satisfies Refusals;
+
+const NOTE_ID = z.number().int().positive().describe("The note's id, as the snapshot lists it.");
+const NOTE_CATEGORY = z.enum(Constants.public.Enums.coach_note_category);
+const NOTE_TEXT = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_NOTE_LENGTH)
+  .describe("One fact, in the user's language, as they would say it: 'Allergic to walnuts'.");
+
+/** The longest Bite waits to ask again whether a note still holds. */
+const MAX_REVIEW_DAYS = 180;
+
+/** What Bite is told of a note it cannot change. */
+const NO_NOTE = 'There is no such note in use; take its id from the snapshot.';
+
+/** Why a day to ask again on is refused: one is after today and within `MAX_REVIEW_DAYS`. */
+function reviewRefusal(day: string | null | undefined, today: string) {
+  if (!day) return undefined;
+  return day > today && day <= addDays(today, MAX_REVIEW_DAYS)
+    ? undefined
+    : { error: `A day to ask again is after today and within ${MAX_REVIEW_DAYS} days.` };
+}
+
+const NOTE_COLUMNS = 'id, category, text';
 
 type CoachTool<A extends z.ZodType> = {
   /** One of the names the app knows (`COACH_TOOLS`), which it says what Bite is doing by. */
@@ -580,7 +626,124 @@ const TOOLS = [
       return { mealCard };
     },
   }),
+  tool({
+    name: 'save_note',
+    description:
+      "Saves a lasting fact about the user to Bite's notebook, which every answer then reads: an allergy, a health condition, an injury, their gear or training, food they eat or avoid, a goal, their routine. When the user has saving from chats off, it asks them first with a card.",
+    args: z.object({
+      category: NOTE_CATEGORY,
+      text: NOTE_TEXT,
+      reviewOn: DAY.optional().describe(
+        'For what may pass, as an injury: the day to ask again whether it still holds, YYYY-MM-DD.',
+      ),
+    }),
+    run: async ({ category, text, reviewOn }, { supabase, today, threadId, savesNotes }) => {
+      const wrongDay = reviewRefusal(reviewOn, today);
+      if (wrongDay) return wrongDay;
+      // A note the notebook holds already, in use or waiting for the user's yes, is not saved
+      // again: Bite does so now and then, though told not to.
+      const held = await supabase
+        .from('coach_notes')
+        .select('id')
+        .is('archived_at', null)
+        .ilike(
+          'text',
+          text.replace(/[\\%_]/g, (c) => `\\${c}`),
+        )
+        .limit(1)
+        .maybeSingle();
+      if (held.error) return refused(held.error, NOTE_REFUSALS);
+      if (held.data) return { error: `The notebook holds this already, as #${held.data.id}.` };
+      // As the snapshot told Bite; unknown, it asks first: a note is never kept against the
+      // user's choice.
+      const asked = savesNotes !== true;
+      const saved = await supabase
+        .from('coach_notes')
+        .insert({
+          category,
+          text,
+          source: 'chat',
+          thread_id: threadId,
+          asked,
+          review_on: reviewOn ?? null,
+        })
+        .select(NOTE_COLUMNS)
+        .single();
+      if (saved.error) return refused(saved.error, NOTE_REFUSALS);
+      const note: NoteCard = { ...saved.data, action: asked ? 'asked' : 'saved' };
+      return { note };
+    },
+  }),
+  tool({
+    name: 'update_note',
+    description:
+      'Changes a note in the notebook that no longer says it right, as when the user corrects it or an injury is better but not gone; and moves or clears the day to ask again.',
+    args: z
+      .object({
+        id: NOTE_ID,
+        category: NOTE_CATEGORY.optional(),
+        text: NOTE_TEXT.optional(),
+        reviewOn: DAY.nullable()
+          .optional()
+          .describe('The new day to ask again, YYYY-MM-DD, or null for none.'),
+      })
+      .refine((args) => args.category || args.text || args.reviewOn !== undefined, {
+        message: 'Give what to change: the category, the text or the day to ask again.',
+      }),
+    run: async ({ id, category, text, reviewOn }, { supabase, today }) => {
+      const wrongDay = reviewRefusal(reviewOn, today);
+      if (wrongDay) return wrongDay;
+      const patch = {
+        ...(category && { category }),
+        ...(text && { text }),
+        ...(reviewOn !== undefined && { review_on: reviewOn }),
+      };
+      return await changeNote(supabase, id, patch, 'updated');
+    },
+  }),
+  tool({
+    name: 'archive_note',
+    description:
+      'Moves a note that no longer holds to past notes, which answers leave out, as an injury that healed or a goal whose date has passed. The user can restore it.',
+    args: z.object({
+      id: NOTE_ID,
+      reason: z
+        .string()
+        .trim()
+        .min(1)
+        .max(MAX_NOTE_LENGTH)
+        .describe("Why it no longer holds, in the user's language: 'The knee is fine again'."),
+    }),
+    run: async ({ id, reason }, { supabase }) => {
+      const patch = { archived_at: new Date().toISOString(), archive_reason: reason };
+      return await changeNote(supabase, id, patch, 'archived');
+    },
+  }),
 ];
+
+/**
+ * Changes the note `id` by `patch`, only while it is in use: not archived, nor waiting for the
+ * user's yes. Gives its card, saying it was `action`, or why it was not changed.
+ */
+async function changeNote(
+  supabase: Client,
+  id: number,
+  patch: Database['public']['Tables']['coach_notes']['Update'],
+  action: 'updated' | 'archived',
+) {
+  const changed = await supabase
+    .from('coach_notes')
+    .update(patch)
+    .eq('id', id)
+    .is('archived_at', null)
+    .eq('asked', false)
+    .select(NOTE_COLUMNS)
+    .maybeSingle();
+  if (changed.error) return refused(changed.error, NOTE_REFUSALS);
+  if (!changed.data) return { error: NO_NOTE };
+  const note: NoteCard = { ...changed.data, action };
+  return { note };
+}
 
 /** The kinds of proposal the tools offered to Bite make. */
 export const PROPOSAL_KINDS = TOOLS.flatMap((t) => (t.proposes ? [t.proposes] : []));

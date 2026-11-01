@@ -18,6 +18,7 @@ import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
 import { messagePhotos } from './chat-photos';
 import { messageMealCards } from './meal-cards';
+import { messageNotes } from './notes';
 import { messageProposals } from './proposals';
 import type { ChatMessage } from './use-chat';
 
@@ -182,8 +183,8 @@ type StoredMessage = Pick<
 >;
 
 /**
- * A thread's messages, oldest first, as the chat shows them, Bite's with the changes it proposed
- * and the meals it estimated.
+ * A thread's messages, oldest first, as the chat shows them, Bite's with the changes it proposed,
+ * the meals it estimated and the notes it kept.
  * An answer that stopped short says so, as it did when it came. A question no answer of Bite's
  * followed, as one that failed, is shown as not answered, to ask again.
  */
@@ -191,6 +192,7 @@ export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
   return rows.map((row, index) => {
     const proposals = row.role === 'bite' ? messageProposals(row.content) : [];
     const mealCards = row.role === 'bite' ? messageMealCards(row.content) : [];
+    const notes = row.role === 'bite' ? messageNotes(row.content) : [];
     const photos = row.role === 'user' ? messagePhotos(row.content) : [];
     return {
       id: `stored-${row.id}`,
@@ -202,6 +204,7 @@ export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
       createdAt: new Date(row.created_at),
       ...(proposals.length > 0 && { proposals }),
       ...(mealCards.length > 0 && { mealCards }),
+      ...(notes.length > 0 && { notes }),
       ...(row.role === 'user' && rows[index + 1]?.role !== 'bite' && { unanswered: true }),
     };
   });

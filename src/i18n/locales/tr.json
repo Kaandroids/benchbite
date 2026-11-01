@@ -1761,6 +1761,11 @@
     "stop": "Durdur",
     "mistakes": "Bite hata yapabilir. Önemli bilgileri kontrol et.",
     "thinking": "Bite düşünüyor",
+    "notes": {
+      "saved": "Deftere kaydedildi: {{text}}",
+      "updated": "Defterde güncellendi: {{text}}",
+      "archived": "Geçmiş notlara taşındı: {{text}}"
+    },
     "tools": {
       "get_workout_history": "Antrenmanlarına bakıyorum…",
       "get_meal_log": "Öğünlerine bakıyorum…",
@@ -1772,7 +1777,10 @@
       "propose_workout_change": "Antrenman değişikliği hazırlıyorum…",
       "propose_targets_change": "Yeni hedefler hazırlıyorum…",
       "propose_food_log_change": "Öğünlerindeki değişikliği hazırlıyorum…",
-      "log_meal_card": "Öğününü hazırlıyorum…"
+      "log_meal_card": "Öğününü hazırlıyorum…",
+      "save_note": "Bunu not ediyorum…",
+      "update_note": "Notlarımı güncelliyorum…",
+      "archive_note": "Notlarımı güncelliyorum…"
     },
     "failures": {
       "unavailable": "Bite şu an cevap veremedi. Tekrar dene.",

@@ -6,7 +6,7 @@ import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
-import { CARD_MISSING, NO_LOOKUPS_LEFT } from './prompt.ts';
+import { CARD_MISSING, NO_LOOKUPS_LEFT, NOTE_ASKED, SAID_ALREADY } from './prompt.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 
 type Row = Record<string, unknown>;
@@ -21,7 +21,7 @@ type Failures = {
 
 /**
  * A database for the chat: tables with their rows, functions with what they return, or a
- * function giving it, and what is inserted and deleted, which the service role writes. Every
+ * function giving it, and what is inserted, updated and deleted, which the service role writes. Every
  * query resolves with all of a table's rows. Like the real ones, it keeps the threads there are,
  * refuses messages of a thread that is not or is gone and more parts than a message may hold, and
  * its storage has the `coach-media` bucket alone, which takes new JPEG files of at most 1.5 MB, and
@@ -33,6 +33,7 @@ function database(
   { deletedThread, failingUploads = [] }: Failures = {},
 ) {
   const inserted: { table: string; rows: Row[] }[] = [];
+  const updated: { table: string; values: Row }[] = [];
   const deleted: string[] = [];
   const objects = new Map<string, Uint8Array>();
   const removed: string[] = [];
@@ -50,7 +51,7 @@ function database(
       maybeSingle: () => Promise.resolve({ data: result().data[0] ?? null, error: null }),
       single: () => Promise.resolve({ data: result().data[0], error: null }),
     };
-    for (const method of ['select', 'eq', 'in', 'ilike', 'order', 'limit']) {
+    for (const method of ['select', 'eq', 'is', 'in', 'ilike', 'order', 'limit']) {
       builder[method] = () => builder;
     }
     return builder;
@@ -79,11 +80,19 @@ function database(
         inserted.push({ table, rows: list });
         return query(table, list);
       },
+      update: (values: Row) => {
+        updated.push({ table, values });
+        return query(table);
+      },
       delete: () => {
         const values: unknown[] = [];
         const filter = {
           eq: (_column: string, value: unknown) => {
             values.push(value);
+            return filter;
+          },
+          in: (_column: string, list: unknown[]) => {
+            values.push(...list);
             return filter;
           },
           then: (resolve: (value: unknown) => void) => {
@@ -131,7 +140,7 @@ function database(
       }),
     },
   } as unknown as ChatContext['supabase'];
-  return { client, inserted, deleted, objects, removed, threads };
+  return { client, inserted, updated, deleted, objects, removed, threads };
 }
 
 const STARTED = { allowed: true, reason: null, call_id: 'call-1', max_output_tokens: 2048 };
@@ -925,6 +934,137 @@ Deno.test('tells Bite of a missing card only once, and not when it made one', as
     await handleChatRequest(ask(MESSAGE), context(made, { propose_coach_change: 42 }).ctx),
   );
   assertEquals(made.requests.length, 2);
+});
+
+/** A profile the snapshot reads whole. */
+const PROFILE = {
+  birth_year: 1996,
+  sex: 'female',
+  height_cm: 165,
+  weight_unit: 'kg',
+  training_days: [1, 4],
+  session_minutes: 45,
+};
+
+const SAVE_NOTE = {
+  type: 'toolCall' as const,
+  id: 'c1',
+  name: 'save_note',
+  args: { category: 'allergy', text: 'Allergic to kiwi' },
+};
+
+Deno.test('shows a note Bite kept, and names the answer it came from', async () => {
+  const model = new FakeModel(
+    [SAVE_NOTE],
+    [{ type: 'text', text: "[[happy]] Got it, I'll keep that in mind." }],
+  );
+  const { ctx, updated } = context(
+    model,
+    {},
+    { profiles: [{ ...PROFILE, coach_saves_notes: true }] },
+  );
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  const shown = answer.find((e) => e.event === 'note') as Extract<ChatEvent, { event: 'note' }>;
+  assertEquals(
+    [shown.note.id, shown.note.action, shown.note.text],
+    [101, 'saved', 'Allergic to kiwi'],
+  );
+  const done = answer.at(-1) as Extract<ChatEvent, { event: 'done' }>;
+  assertEquals(updated, [{ table: 'coach_notes', values: { message_id: done.messageId } }]);
+});
+
+Deno.test('still tells Bite of a card it spoke of, though it kept a note', async () => {
+  const model = new FakeModel(
+    [SAVE_NOTE],
+    [{ type: 'text', text: "[[happy]] Here's a card for your lunch." }],
+    [{ type: 'text', text: 'Sorry, I could not make it.' }],
+  );
+  const { ctx } = context(model, {}, { profiles: [{ ...PROFILE, coach_saves_notes: true }] });
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests[2].messages.at(-1), {
+    role: 'user',
+    parts: [{ type: 'text', text: CARD_MISSING }],
+  });
+});
+
+Deno.test('tells Bite that what it said with its lookups is shown already', async () => {
+  const model = new FakeModel(
+    [{ type: 'text', text: '[[happy]] Noted.' }, SAVE_NOTE],
+    [{ type: 'text', text: 'Anything else?' }],
+  );
+  const { ctx } = context(model, {}, { profiles: [{ ...PROFILE, coach_saves_notes: true }] });
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests[1].messages.at(-1)?.parts.at(-1), {
+    type: 'text',
+    text: SAID_ALREADY,
+  });
+});
+
+Deno.test('tells Bite beside the results that a note asked about is not kept yet', async () => {
+  const model = new FakeModel([SAVE_NOTE], [{ type: 'text', text: '[[happy]] Got it.' }]);
+  const { ctx } = context(model, {}, { profiles: [{ ...PROFILE, coach_saves_notes: false }] });
+
+  await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(model.requests[1].messages.at(-1)?.parts.at(-1), {
+    type: 'text',
+    text: NOTE_ASKED,
+  });
+});
+
+Deno.test('removes a note asked about when its answer cannot be saved', async () => {
+  const model = new FakeModel([SAVE_NOTE], [{ type: 'text', text: '[[happy]] Shall I keep it?' }]);
+  const { ctx, deleted } = context(
+    model,
+    {},
+    { profiles: [{ ...PROFILE, coach_saves_notes: false }] },
+    { deletedThread: 100 },
+  );
+
+  const answer = await events(await handleChatRequest(ask(MESSAGE), ctx));
+
+  assertEquals(answer.at(-1)?.event, 'error');
+  assertEquals(deleted.includes('coach_notes 101'), true);
+});
+
+Deno.test('tells Bite of the notes it kept earlier, though it said nothing with them', async () => {
+  const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
+  const note = { id: 9, action: 'asked', category: 'allergy', text: 'Allergic to kiwi' };
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'bite',
+          expression: 'neutral',
+          content: [
+            { type: 'toolCall', name: 'save_note', args: {} },
+            { type: 'toolResult', name: 'save_note', result: { note } },
+          ],
+        },
+      ],
+    },
+  );
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests[0].messages[0], {
+    role: 'model',
+    parts: [
+      {
+        type: 'text',
+        text: '[[neutral]] (Asked the user to save a note, #9, allergy: Allergic to kiwi)',
+      },
+    ],
+  });
 });
 
 const TARGETS = { calories: 2100, proteinG: 150, carbsG: 210, fatG: 70 };

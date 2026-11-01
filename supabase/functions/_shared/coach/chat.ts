@@ -1,5 +1,6 @@
 // What the app and coach-chat tell each other (ADR 0052), shared by both, so that they agree.
 // This file imports only types, so that the app can bundle it.
+import type { Database } from '../database.types.ts';
 import type { EstimateItem, EstimateMeal } from '../meal/estimate.ts';
 
 /** The longest message the user may send, in characters. */
@@ -21,6 +22,9 @@ export const COACH_TOOLS = [
   'propose_targets_change',
   'propose_food_log_change',
   'log_meal_card',
+  'save_note',
+  'update_note',
+  'archive_note',
 ] as const;
 
 export type CoachToolName = (typeof COACH_TOOLS)[number];
@@ -181,6 +185,22 @@ export type MealCard = {
   note?: string;
 };
 
+/** What a note in Bite's notebook is about (#296, ADR 0071), as `coach_notes` has it. */
+export type NoteCategory = Database['public']['Enums']['coach_note_category'];
+
+/**
+ * A note Bite saved, changed or archived in its notebook (ADR 0071), as the chat shows it under
+ * the answer: `asked` when the user has saving from chats off, so that the note waits for their
+ * yes. The notebook reads where it stands from `coach_notes`, by its `id`.
+ */
+export type NoteCard = {
+  id: number;
+  action: 'saved' | 'asked' | 'updated' | 'archived';
+  category: NoteCategory;
+  /** In the user's language, as Bite wrote it. */
+  text: string;
+};
+
 /** What the app is told as Bite answers, one server-sent event each, with Bite's faces. */
 export type ChatEvent<Expression extends string = string> =
   /** A new thread, first, so that the app keeps it however the answer ends. */
@@ -193,6 +213,8 @@ export type ChatEvent<Expression extends string = string> =
   | { event: 'proposal'; proposal: ProposalCard }
   /** A meal Bite estimated, shown as a card under its answer for the user to add. */
   | { event: 'meal_card'; mealCard: MealCard }
+  /** A note Bite saved, asked to save, changed or archived, shown as a line under its answer. */
+  | { event: 'note'; note: NoteCard }
   /**
    * The turn is saved; `interrupted` says why when the answer stopped before its end, and
    * `reason` what failed or was refused, as an error's does.
