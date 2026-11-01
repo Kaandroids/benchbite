@@ -1764,7 +1764,69 @@
     "notes": {
       "saved": "Saved to notebook: {{text}}",
       "updated": "Changed in notebook: {{text}}",
-      "archived": "Moved to past notes: {{text}}"
+      "archived": "Moved to past notes: {{text}}",
+      "view": "View",
+      "viewLabel": "Open the notebook"
+    },
+    "notebook": {
+      "title": "Bite's notebook",
+      "add": "Add a note",
+      "intro": "What I know about you. I use it in every answer, and you can change it any time.",
+      "saving": "Save notes from chats",
+      "savingNote": "When off, Bite asks first.",
+      "sections": {
+        "health": "Allergies and health",
+        "injury": "Injuries",
+        "training": "Training",
+        "food": "Food",
+        "goal": "Goals",
+        "lifestyle": "Lifestyle"
+      },
+      "categories": {
+        "allergy": "Allergy",
+        "health": "Health",
+        "injury": "Injury",
+        "training": "Training",
+        "food": "Food",
+        "goal": "Goal",
+        "lifestyle": "Lifestyle"
+      },
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "sources": {
+        "chat": "From a chat · {{when}}",
+        "user": "Added by you · {{when}}",
+        "onboarding": "From onboarding · {{when}}"
+      },
+      "askAgain": "I'll ask again on {{day}}",
+      "asksAgain": "Bite asks again on {{day}}",
+      "asksAgainNote": "If it's better, the note moves to past notes.",
+      "open": "Open",
+      "edit": "Edit",
+      "remove": "Remove",
+      "removed": "Note removed",
+      "undo": "Undo",
+      "notRemoved": "The note couldn't be removed. Try again.",
+      "past_one": "Past notes · {{count}}",
+      "past_other": "Past notes · {{count}}",
+      "archived": "Archived by Bite · {{when}}: {{reason}}",
+      "restore": "Restore",
+      "notRestored": "The note couldn't be restored. Try again.",
+      "pastNote": "Bite doesn't use past notes in answers. Restore one to use it again.",
+      "emptyTitle": "Nothing here yet",
+      "emptyBody": "Tell me about allergies, injuries or what you like to eat, and I'll keep it in mind.",
+      "addNote": "Add a note",
+      "addTitle": "Add a note",
+      "editTitle": "Edit note",
+      "note": "Note",
+      "placeholder": "Allergic to kiwi",
+      "refusals": {
+        "full": "Your notebook has 50 notes in use. Remove one to add another.",
+        "kept": "Your notebook keeps up to 200 notes. Remove past ones to add more."
+      },
+      "notSaved": "The note couldn't be saved. Try again.",
+      "cancel": "Cancel",
+      "save": "Save"
     },
     "tools": {
       "get_workout_history": "Checking your workouts…",

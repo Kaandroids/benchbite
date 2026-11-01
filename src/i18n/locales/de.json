@@ -1764,7 +1764,69 @@
     "notes": {
       "saved": "Im Notizbuch gespeichert: {{text}}",
       "updated": "Im Notizbuch geändert: {{text}}",
-      "archived": "Zu früheren Notizen verschoben: {{text}}"
+      "archived": "Zu früheren Notizen verschoben: {{text}}",
+      "view": "Ansehen",
+      "viewLabel": "Notizbuch öffnen"
+    },
+    "notebook": {
+      "title": "Bites Notizbuch",
+      "add": "Notiz hinzufügen",
+      "intro": "Was ich über dich weiß. Ich nutze es in jeder Antwort, und du kannst es jederzeit ändern.",
+      "saving": "Notizen aus Chats speichern",
+      "savingNote": "Wenn aus, fragt Bite zuerst.",
+      "sections": {
+        "health": "Allergien und Gesundheit",
+        "injury": "Verletzungen",
+        "training": "Training",
+        "food": "Ernährung",
+        "goal": "Ziele",
+        "lifestyle": "Alltag"
+      },
+      "categories": {
+        "allergy": "Allergie",
+        "health": "Gesundheit",
+        "injury": "Verletzung",
+        "training": "Training",
+        "food": "Ernährung",
+        "goal": "Ziel",
+        "lifestyle": "Alltag"
+      },
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "sources": {
+        "chat": "Aus einem Chat · {{when}}",
+        "user": "Von dir hinzugefügt · {{when}}",
+        "onboarding": "Aus dem Onboarding · {{when}}"
+      },
+      "askAgain": "Ich frage am {{day}} nochmal",
+      "asksAgain": "Bite fragt am {{day}} nochmal",
+      "asksAgainNote": "Wenn es besser ist, kommt die Notiz zu den früheren Notizen.",
+      "open": "Öffnen",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "removed": "Notiz entfernt",
+      "undo": "Rückgängig",
+      "notRemoved": "Die Notiz konnte nicht entfernt werden. Versuch es nochmal.",
+      "past_one": "Frühere Notizen · {{count}}",
+      "past_other": "Frühere Notizen · {{count}}",
+      "archived": "Von Bite archiviert · {{when}}: {{reason}}",
+      "restore": "Wiederherstellen",
+      "notRestored": "Die Notiz konnte nicht wiederhergestellt werden. Versuch es nochmal.",
+      "pastNote": "Bite nutzt frühere Notizen nicht in Antworten. Stell eine wieder her, um sie wieder zu nutzen.",
+      "emptyTitle": "Noch nichts hier",
+      "emptyBody": "Erzähl mir von Allergien, Verletzungen oder was du gern isst, und ich behalte es im Kopf.",
+      "addNote": "Notiz hinzufügen",
+      "addTitle": "Notiz hinzufügen",
+      "editTitle": "Notiz bearbeiten",
+      "note": "Notiz",
+      "placeholder": "Allergisch gegen Kiwi",
+      "refusals": {
+        "full": "Dein Notizbuch hat 50 Notizen in Gebrauch. Entferne eine, um eine weitere hinzuzufügen.",
+        "kept": "Dein Notizbuch behält bis zu 200 Notizen. Entferne frühere, um mehr hinzuzufügen."
+      },
+      "notSaved": "Die Notiz konnte nicht gespeichert werden. Versuch es nochmal.",
+      "cancel": "Abbrechen",
+      "save": "Speichern"
     },
     "tools": {
       "get_workout_history": "Schaue mir deine Workouts an…",
