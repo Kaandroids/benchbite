@@ -20,6 +20,7 @@ import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { openNotebook } from './bite-route';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
@@ -504,7 +505,7 @@ const styles = StyleSheet.create({
   },
 });
 
-/** A note Bite kept, as a line under its answer (board 4). */
+/** A note Bite kept, as a line under its answer, with a way to the notebook (board 4). */
 function NoteLine({ note }: { note: NoteCard }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
@@ -516,6 +517,17 @@ function NoteLine({ note }: { note: NoteCard }) {
           text: note.text,
         })}
       </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('bite.notes.viewLabel')}
+        onPress={openNotebook}
+        hitSlop={8}
+        style={{ paddingHorizontal: spacing.xs }}
+      >
+        <Text variant="captionStrong" color="primaryText">
+          {t('bite.notes.view')}
+        </Text>
+      </Pressable>
     </View>
   );
 }

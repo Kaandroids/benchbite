@@ -47,6 +47,16 @@ export function openChat(thread?: number, current?: string) {
   });
 }
 
+/** Opens Bite's notebook over the chat. */
+export function openNotebook() {
+  router.push('/bite/notebook');
+}
+
+/** Opens the chat a note came from over the notebook, which it goes back to. */
+export function openNoteChat(thread: number) {
+  router.push({ pathname: '/bite', params: { thread: String(thread), fresh: '', offer: '' } });
+}
+
 /** Goes on in a saved thread from Bite's own screen, as from its Continue card. */
 export function continueChat(thread: number) {
   router.setParams({ thread: String(thread), fresh: '', offer: '' });

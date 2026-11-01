@@ -1764,7 +1764,69 @@
     "notes": {
       "saved": "Deftere kaydedildi: {{text}}",
       "updated": "Defterde güncellendi: {{text}}",
-      "archived": "Geçmiş notlara taşındı: {{text}}"
+      "archived": "Geçmiş notlara taşındı: {{text}}",
+      "view": "Gör",
+      "viewLabel": "Defteri aç"
+    },
+    "notebook": {
+      "title": "Bite'ın defteri",
+      "add": "Not ekle",
+      "intro": "Senin hakkında bildiklerim. Her cevapta kullanıyorum, istediğin zaman değiştirebilirsin.",
+      "saving": "Sohbetlerden not kaydet",
+      "savingNote": "Kapalıyken Bite önce sorar.",
+      "sections": {
+        "health": "Alerjiler ve sağlık",
+        "injury": "Sakatlıklar",
+        "training": "Antrenman",
+        "food": "Beslenme",
+        "goal": "Hedefler",
+        "lifestyle": "Yaşam tarzı"
+      },
+      "categories": {
+        "allergy": "Alerji",
+        "health": "Sağlık",
+        "injury": "Sakatlık",
+        "training": "Antrenman",
+        "food": "Beslenme",
+        "goal": "Hedef",
+        "lifestyle": "Yaşam tarzı"
+      },
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "sources": {
+        "chat": "Bir sohbetten · {{when}}",
+        "user": "Senin eklediğin · {{when}}",
+        "onboarding": "Onboarding'den · {{when}}"
+      },
+      "askAgain": "{{day}} tekrar soracağım",
+      "asksAgain": "Bite {{day}} tekrar soracak",
+      "asksAgainNote": "Daha iyiyse not geçmiş notlara taşınır.",
+      "open": "Aç",
+      "edit": "Düzenle",
+      "remove": "Kaldır",
+      "removed": "Not kaldırıldı",
+      "undo": "Geri al",
+      "notRemoved": "Not kaldırılamadı. Tekrar dene.",
+      "past_one": "Geçmiş notlar · {{count}}",
+      "past_other": "Geçmiş notlar · {{count}}",
+      "archived": "Bite arşivledi · {{when}}: {{reason}}",
+      "restore": "Geri yükle",
+      "notRestored": "Not geri yüklenemedi. Tekrar dene.",
+      "pastNote": "Bite geçmiş notları cevaplarda kullanmaz. Tekrar kullanmak için birini geri yükle.",
+      "emptyTitle": "Henüz bir şey yok",
+      "emptyBody": "Alerjilerini, sakatlıklarını ya da ne yemeyi sevdiğini anlat, aklımda tutayım.",
+      "addNote": "Not ekle",
+      "addTitle": "Not ekle",
+      "editTitle": "Notu düzenle",
+      "note": "Not",
+      "placeholder": "Kiviye alerjim var",
+      "refusals": {
+        "full": "Defterinde kullanımda 50 not var. Yenisini eklemek için birini kaldır.",
+        "kept": "Defterin en fazla 200 not tutar. Daha fazlası için geçmiş notları kaldır."
+      },
+      "notSaved": "Not kaydedilemedi. Tekrar dene.",
+      "cancel": "Vazgeç",
+      "save": "Kaydet"
     },
     "tools": {
       "get_workout_history": "Antrenmanlarına bakıyorum…",
