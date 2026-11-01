@@ -20,7 +20,13 @@ import { mealCardIds, useMealCardStates } from './meal-cards';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
-import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
+import {
+  type BiteParams,
+  continueChat,
+  openChats,
+  openNotebook,
+  useOpenedChat,
+} from './bite-route';
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
@@ -133,12 +139,15 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
       title={t('bite.title')}
       subtitle={title}
       action={
-        <TopBarButton
-          icon="history"
-          label={t('bite.chats.title')}
-          // The chats are under a chat opened from them.
-          onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
-        />
+        <View style={styles.actions}>
+          <TopBarButton
+            icon="history"
+            label={t('bite.chats.title')}
+            // The chats are under a chat opened from them.
+            onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
+          />
+          <TopBarButton icon="notebook" label={t('bite.notebook.title')} onPress={openNotebook} />
+        </View>
       }
       scrolls={false}
     >
@@ -204,6 +213,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+  },
   flex: {
     flex: 1,
   },
