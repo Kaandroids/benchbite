@@ -20,9 +20,10 @@ microphone and a native module, which the app did not have.
   starts and sends it instead. The first hold asks for the microphone without recording. A
   recording stops and is sent at a minute.
 - **It is recorded as mono AAC at 64 kbit/s,** in an MP4 container: a minute is about 480 KB,
-  and a second weighs a quarter of what coach-chat takes (ADR 0072). The loudness read while it
-  records draws its bars; the bars of a sent message are drawn from its name, as no loudness is
-  kept.
+  and a second weighs a quarter of what coach-chat takes (ADR 0072). Its length is read from the
+  file, as coach-chat reads it, so that a message shows the same length sent and kept. The
+  loudness read while it records draws its bars; the bars of a sent message are drawn from its
+  length in seconds, as no loudness is kept and the message has no other name both sent and kept.
 - **One player plays the chat's voice messages,** one at a time; recording pauses it. A message
   sent now plays from its file on the device, and a kept one from the signed address its photos'
   addresses are read with. The files recorded go when the chat closes.
@@ -35,7 +36,8 @@ microphone and a native module, which the app did not have.
 
 - **Tap to start and tap to send:** easier to find, but two taps for every message, and messaging
   apps teach holding. Screen reader users get the taps.
-- **Keeping the loudness of each message** to draw its bars: a column for decoration.
+- **Keeping the loudness of each message** to draw its bars: a column for decoration. Messages of
+  the same length share their bars.
 - **A player per message:** simpler, but every message would hold a native player.
 
 ## Consequences

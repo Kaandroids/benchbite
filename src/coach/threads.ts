@@ -135,26 +135,18 @@ type FirstMedia = Pick<ThreadSummary, 'firstPhotos' | 'firstVoice'>;
  */
 export function useThreadText() {
   const { t } = useTranslation();
-  const photos = (count: number) => t('bite.photos.count', { count });
+  /** What stands for a message without text: a voice message, or its photos; null for neither. */
+  const media = (voice: boolean, photos: number) =>
+    voice ? t('bite.voice.message') : photos > 0 ? t('bite.photos.count', { count: photos }) : null;
   /** A thread's own name, or its first message's media's; null for neither. */
   const title = (thread: Pick<ThreadSummary, 'title'> & FirstMedia) =>
-    thread.title ??
-    (thread.firstVoice
-      ? t('bite.voice.message')
-      : thread.firstPhotos > 0
-        ? photos(thread.firstPhotos)
-        : null);
+    thread.title ?? media(thread.firstVoice, thread.firstPhotos);
   return {
     title,
     name: (thread: Pick<ThreadSummary, 'title'> & FirstMedia) =>
       title(thread) ?? t('bite.chats.untitled'),
     line: (thread: Pick<ThreadSummary, 'lastMessage' | 'lastPhotos' | 'lastVoice'>) =>
-      thread.lastMessage ||
-      (thread.lastVoice
-        ? t('bite.voice.message')
-        : thread.lastPhotos > 0
-          ? photos(thread.lastPhotos)
-          : null),
+      thread.lastMessage || media(thread.lastVoice, thread.lastPhotos),
   };
 }
 

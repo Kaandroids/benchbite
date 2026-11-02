@@ -1,3 +1,4 @@
+import type { AudioPlayer } from 'expo-audio';
 import { Fragment, memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
@@ -23,7 +24,6 @@ import { BiteAvatar } from './bite-avatar';
 import { TAIL, userBubble } from './bubble-shape';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { VoiceBubble } from './voice-bubble';
-import type { AudioPlayer } from 'expo-audio';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
 import { NoteAskCard } from './note-ask-card';
