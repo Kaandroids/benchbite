@@ -5,10 +5,14 @@ import { useTheme } from '@/theme';
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
-/** The colours of each tone: orange, or amber for something to check, such as an estimate. */
+/**
+ * The colours of each tone: orange, amber for something to check, such as an estimate, or grey for
+ * a quiet label in a list.
+ */
 const TONES = {
   primary: { background: 'selected', text: 'primaryText' },
   warning: { background: 'warningBackground', text: 'warning' },
+  neutral: { background: 'track', text: 'textMuted' },
 } as const;
 
 type TagProps = {

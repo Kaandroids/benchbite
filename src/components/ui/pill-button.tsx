@@ -8,8 +8,11 @@ import { Text } from './text';
 type PillButtonProps = {
   label: string;
   onPress: () => void;
-  /** `soft` for a light action such as Edit, `primary` for one that saves. */
-  variant?: 'soft' | 'primary';
+  /**
+   * `soft` for a light action such as Edit, `primary` for one that saves, `neutral` for one beside
+   * another that should stand out more.
+   */
+  variant?: 'soft' | 'primary' | 'neutral';
   disabled?: boolean;
   /** What screen readers say instead of the label, when the label alone is too short. */
   accessibilityLabel?: string;
@@ -28,6 +31,7 @@ export function PillButton({
 }: PillButtonProps) {
   const { colors, radii, spacing } = useTheme();
   const primary = variant === 'primary';
+  const neutral = variant === 'neutral';
   return (
     <Pressable
       accessibilityRole="button"
@@ -44,7 +48,9 @@ export function PillButton({
             ? disabled
               ? colors.track
               : colors.primaryButton
-            : colors.iconBackground,
+            : neutral
+              ? colors.track
+              : colors.iconBackground,
           opacity: pressed ? 0.6 : 1,
           gap: spacing.xs,
         },
@@ -53,7 +59,7 @@ export function PillButton({
       {icon ? <Icon name={icon} size={16} color={primary ? 'onPrimary' : 'primary'} /> : null}
       <Text
         variant="label"
-        color={primary ? (disabled ? 'textMuted' : 'onPrimary') : 'primaryText'}
+        color={primary ? (disabled ? 'textMuted' : 'onPrimary') : neutral ? 'text' : 'primaryText'}
       >
         {label}
       </Text>
