@@ -45,7 +45,7 @@ $$;
 -- `target`, and 90 s of rest. What it names must match the workout as it is, so that the card
 -- shows what applying does: an exercise to replace or remove that is not in it (BB039), or one
 -- changed twice, an exercise put in that is in it already, or one in it twice that is changed
--- (BB040), is refused. An edit changes something (22023).
+-- (BB040), is refused. An edit changes something, and names each exercise (22023).
 create function public.edited_workout_exercises(workout jsonb, edit jsonb)
 returns jsonb
 language plpgsql
@@ -64,6 +64,21 @@ begin
   if jsonb_typeof(swaps) <> 'array' or jsonb_typeof(added) <> 'array'
     or jsonb_typeof(coalesce(edit -> 'remove', '[]')) <> 'array' then
     raise exception 'Swaps, removals and additions are lists' using errcode = '22023';
+  end if;
+  if exists (
+      select 1 from jsonb_array_elements(swaps) s
+      where jsonb_typeof(s -> 'replace') is distinct from 'string'
+        or jsonb_typeof(s -> 'with') is distinct from 'string'
+    )
+    or exists (
+      select 1 from jsonb_array_elements(coalesce(edit -> 'remove', '[]')) r
+      where jsonb_typeof(r) <> 'string'
+    )
+    or exists (
+      select 1 from jsonb_array_elements(added) a
+      where jsonb_typeof(a -> 'exerciseId') is distinct from 'string'
+    ) then
+    raise exception 'An edit names each exercise it changes' using errcode = '22023';
   end if;
   removed := array(select jsonb_array_elements_text(coalesce(edit -> 'remove', '[]')));
   if jsonb_array_length(swaps) + cardinality(removed) + jsonb_array_length(added) = 0 then
@@ -89,7 +104,8 @@ begin
   end if;
 
   return coalesce((
-    select jsonb_agg(item order by position)
+    -- The workout's own first, in their order, then the added ones in theirs.
+    select jsonb_agg(item order by part, position)
     from (
       select
         case when swap.value is null then e.value
@@ -99,6 +115,7 @@ begin
             'target', swap.value -> 'target'
           )
         end as item,
+        0 as part,
         e.ordinality as position
       from jsonb_array_elements(workout -> 'exercises') with ordinality e
       left join lateral (
@@ -114,11 +131,23 @@ begin
           'restSeconds', 90,
           'target', a.value -> 'target'
         ),
-        1000 + a.ordinality
+        1,
+        a.ordinality
       from jsonb_array_elements(added) with ordinality a
     ) items
   ), '[]'::jsonb);
 end;
+$$;
+
+-- The id of the alternative in use in `state`, as coach_alternatives_state() reads it.
+create function public.alternative_in_use(state jsonb)
+returns bigint
+language sql
+immutable
+set search_path = ''
+as $$
+  select (a ->> 'id')::bigint from jsonb_array_elements(state -> 'alternatives') a
+  where (a ->> 'inUse')::boolean;
 $$;
 
 -- As before (20261031200100_food_log_proposals.sql), and the new kinds: the workouts a change to
@@ -162,8 +191,9 @@ as $$
 $$;
 
 -- As before, and the new kinds: each workout of a change to several saved; a new alternative added
--- and put in use, the one in use named `currentName` when it had no name, as when the workout had
--- no alternatives; and a switch, through use_workout_alternative().
+-- and put in use, the one in use before named `currentName` when the change names one, which
+-- propose_coach_change() leaves only for one without a name; and a switch, through
+-- use_workout_alternative().
 create or replace function public.apply_coach_change(
   kind public.coach_proposal_kind,
   change jsonb,
@@ -176,7 +206,6 @@ as $$
 declare
   workout jsonb;
   added_id bigint;
-  current_id bigint;
 begin
   case kind
     when 'workout' then perform public.save_workout(change, today);
@@ -195,10 +224,13 @@ begin
       added_id := public.add_workout_alternative(
         (change ->> 'workoutId')::bigint, today, change ->> 'name', change -> 'exercises'
       );
-      select a.id into current_id from public.workout_alternatives a
-      where a.workout_id = (change ->> 'workoutId')::bigint and a.in_use and a.name is null;
-      if current_id is not null and nullif(btrim(change ->> 'currentName'), '') is not null then
-        perform public.rename_workout_alternative(current_id, change ->> 'currentName');
+      if change ? 'currentName' then
+        perform public.rename_workout_alternative(
+          public.alternative_in_use(
+            public.coach_alternatives_state((change ->> 'workoutId')::bigint)
+          ),
+          change ->> 'currentName'
+        );
       end if;
       perform public.use_workout_alternative(added_id, today);
     when 'alternative_switch' then
@@ -207,22 +239,12 @@ begin
 end;
 $$;
 
--- The id of the alternative in use in `state`, as coach_alternatives_state() reads it.
-create function public.alternative_in_use(state jsonb)
-returns bigint
-language sql
-immutable
-set search_path = ''
-as $$
-  select (a ->> 'id')::bigint from jsonb_array_elements(state -> 'alternatives') a
-  where (a ->> 'inUse')::boolean;
-$$;
-
 -- Undoes an applied `change` of `kind`, putting back what `before` holds, with what applying left
 -- (`after`): as before (20261031200100_food_log_proposals.sql), and the new kinds. A new
 -- alternative goes again, after the one in use before is put back in use, unnamed again if it was
--- named for it; the first one of a workout that had none, added with it, goes with it. A switch
--- puts the one in use before back in use.
+-- named for it; when the workout had none, that is the workout's own, which applying added as the
+-- other one, and which goes with it as the last left (delete_workout_alternative()). A switch puts
+-- the one in use before back in use.
 drop function public.undo_coach_change(public.coach_proposal_kind, jsonb, jsonb, date);
 create function public.undo_coach_change(
   kind public.coach_proposal_kind,
@@ -241,11 +263,10 @@ begin
   case kind
     when 'food_log' then perform public.undo_food_log_change(change, before);
     when 'alternative' then
-      -- Without alternatives before, the one in use then is the first of them now.
       previous_id := coalesce(
         public.alternative_in_use(before),
         (select (a ->> 'id')::bigint from jsonb_array_elements(after -> 'alternatives') a
-          where (a ->> 'position')::integer = 1)
+          where not (a ->> 'inUse')::boolean)
       );
       perform public.use_workout_alternative(previous_id, today);
       if exists (
@@ -263,8 +284,10 @@ end;
 $$;
 
 -- As before, checking the new kinds: a change to several workouts names 1 to 3 different ones,
--- each whole; an alternative names its workout, its name and exercises; a switch its workout and
--- alternative.
+-- each whole; an alternative names its workout, exercises and a name, and the one in use a name
+-- only when it has none, neither an alternative's of the workout already nor the same (BB049); a
+-- switch names its workout and one of its alternatives (P0002), not the one in use (BB050). Names
+-- are kept trimmed, as the alternatives' functions keep them.
 create or replace function public.propose_coach_change(
   thread_id bigint,
   kind public.coach_proposal_kind,
@@ -280,6 +303,7 @@ as $$
 declare
   caller_id uuid := (select auth.uid());
   before jsonb;
+  names text[];
   proposed_id bigint;
 begin
   if caller_id is null then
@@ -334,6 +358,8 @@ begin
     when 'alternative' then
       if not coalesce(
         change ? 'workoutId' and jsonb_typeof(change -> 'name') = 'string'
+          and btrim(change ->> 'name') <> ''
+          and coalesce(jsonb_typeof(change -> 'currentName'), 'null') in ('string', 'null')
           and jsonb_typeof(change -> 'exercises') = 'array'
           and jsonb_array_length(change -> 'exercises') > 0,
         false
@@ -341,6 +367,10 @@ begin
         raise exception 'An alternative needs its workout, name and exercises'
           using errcode = '22023';
       end if;
+      change := jsonb_strip_nulls(change || jsonb_build_object(
+        'name', btrim(change ->> 'name'),
+        'currentName', nullif(btrim(change ->> 'currentName'), '')
+      ));
     when 'alternative_switch' then
       if not (change ? 'workoutId' and change ? 'alternativeId') then
         raise exception 'A switch needs its workout and alternative' using errcode = '22023';
@@ -350,6 +380,34 @@ begin
   before := public.coach_proposal_state(kind, change);
   if kind in ('workout', 'workouts', 'alternative', 'alternative_switch') and before is null then
     raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+
+  if kind = 'alternative' then
+    -- The one in use keeps a name it has.
+    if exists (
+      select 1 from jsonb_array_elements(before -> 'alternatives') a
+      where (a ->> 'inUse')::boolean and a ->> 'name' is not null
+    ) then
+      change := change - 'currentName';
+    end if;
+    names := array(
+      select lower(a ->> 'name') from jsonb_array_elements(before -> 'alternatives') a
+      where a ->> 'name' is not null
+    );
+    if lower(change ->> 'name') = any (names)
+      or lower(change ->> 'currentName') = any (names || lower(change ->> 'name')) then
+      raise exception 'An alternative of that name exists' using errcode = 'BB049';
+    end if;
+  elsif kind = 'alternative_switch' then
+    if not exists (
+      select 1 from jsonb_array_elements(before -> 'alternatives') a
+      where a -> 'id' = change -> 'alternativeId'
+    ) then
+      raise exception 'Alternative not found' using errcode = 'P0002';
+    end if;
+    if (change ->> 'alternativeId')::bigint = public.alternative_in_use(before) then
+      raise exception 'The alternative is in use already' using errcode = 'BB050';
+    end if;
   end if;
 
   -- Tried, so that the real functions' checks refuse it with their own errors rather than copies
@@ -479,7 +537,8 @@ $$;
 
 -- Proposes `edits` to 1 to 3 of the caller's workouts in one card, each naming its `workoutId`
 -- and the `swaps`, `remove` and `add` of edited_workout_exercises(); the rest of each workout stays
--- as it is. Gives the proposal's id, as propose_coach_change() does.
+-- as it is. More edits are refused before any workout is read. Gives the proposal's id, as
+-- propose_coach_change() does.
 create function public.propose_coach_workouts(thread_id bigint, edits jsonb, today date)
 returns bigint
 language plpgsql
@@ -492,8 +551,9 @@ declare
   edit jsonb;
   workout jsonb;
 begin
-  if edits is null or jsonb_typeof(edits) <> 'array' or jsonb_array_length(edits) = 0 then
-    raise exception 'Edits are a list of at least one' using errcode = '22023';
+  if edits is null or jsonb_typeof(edits) <> 'array'
+    or jsonb_array_length(edits) not between 1 and 3 then
+    raise exception 'Edits are a list of 1 to 3' using errcode = '22023';
   end if;
   for edit in select e from jsonb_array_elements(edits) e loop
     workout := public.saved_workout((edit ->> 'workoutId')::bigint);
@@ -516,8 +576,8 @@ $$;
 -- Proposes a new alternative of the caller's `workout_id`, named `name`: the one in use with
 -- `edit` (edited_workout_exercises()), put in use when applied. The one in use is named
 -- `current_name` then, if it has no name, as when the workout has no alternatives yet. A name an
--- alternative of the workout has already is refused (BB049), so that Bite switches to that one
--- instead. Gives the proposal's id, as propose_coach_change() does.
+-- alternative of the workout has already is refused by propose_coach_change() (BB049), so that
+-- Bite switches to that one instead. Gives the proposal's id, as propose_coach_change() does.
 create function public.propose_coach_alternative(
   thread_id bigint,
   workout_id bigint,
@@ -538,20 +598,13 @@ begin
   if workout is null then
     raise exception 'Workout not found' using errcode = 'BB006';
   end if;
-  if exists (
-    select 1 from public.workout_alternatives a
-    where a.workout_id = propose_coach_alternative.workout_id
-      and lower(a.name) = lower(btrim(propose_coach_alternative.name))
-  ) then
-    raise exception 'An alternative of that name exists' using errcode = 'BB049';
-  end if;
   return public.propose_coach_change(
     propose_coach_alternative.thread_id,
     'alternative',
     jsonb_strip_nulls(jsonb_build_object(
       'workoutId', propose_coach_alternative.workout_id,
-      'name', btrim(propose_coach_alternative.name),
-      'currentName', nullif(btrim(propose_coach_alternative.current_name), ''),
+      'name', propose_coach_alternative.name,
+      'currentName', propose_coach_alternative.current_name,
       'exercises', public.edited_workout_exercises(workout, edit)
     )),
     propose_coach_alternative.today
@@ -559,8 +612,8 @@ begin
 end;
 $$;
 
--- Proposes putting the caller's `alternative_id` in use, which must not be in use already
--- (BB050). Gives the proposal's id, as propose_coach_change() does.
+-- Proposes putting the caller's `alternative_id` in use, which propose_coach_change() refuses
+-- when it is in use already (BB050). Gives the proposal's id, as propose_coach_change() does.
 create function public.propose_coach_alternative_switch(
   thread_id bigint,
   alternative_id bigint,
@@ -568,27 +621,61 @@ create function public.propose_coach_alternative_switch(
 )
 returns bigint
 language plpgsql
--- Writes proposals through propose_coach_change().
+-- Reads the caller's alternatives only, by user_id, as the table's policy would.
 security definer
 set search_path = ''
 as $$
 declare
-  alternative public.workout_alternatives;
+  switched_workout_id bigint;
 begin
-  select * into alternative from public.workout_alternatives a
+  select a.workout_id into switched_workout_id from public.workout_alternatives a
   where a.id = propose_coach_alternative_switch.alternative_id
     and a.user_id = (select auth.uid());
   if not found then
     raise exception 'Alternative not found' using errcode = 'P0002';
   end if;
-  if alternative.in_use then
-    raise exception 'The alternative is in use already' using errcode = 'BB050';
-  end if;
   return public.propose_coach_change(
     propose_coach_alternative_switch.thread_id,
     'alternative_switch',
-    jsonb_build_object('workoutId', alternative.workout_id, 'alternativeId', alternative.id),
+    jsonb_build_object(
+      'workoutId', switched_workout_id,
+      'alternativeId', propose_coach_alternative_switch.alternative_id
+    ),
     propose_coach_alternative_switch.today
+  );
+end;
+$$;
+
+-- As before (20261031090000_propose_coach_swaps.sql), with the swaps made and checked by
+-- edited_workout_exercises(), so that a swap is the same in each of Bite's proposals.
+create or replace function public.propose_coach_swaps(
+  thread_id bigint,
+  workout_id bigint,
+  swaps jsonb,
+  today date
+)
+returns bigint
+language plpgsql
+-- Reads the workout with saved_workout(), which callers may not.
+security definer
+set search_path = ''
+as $$
+declare
+  workout jsonb := public.saved_workout(propose_coach_swaps.workout_id);
+begin
+  if workout is null then
+    raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+  if swaps is null or jsonb_typeof(swaps) <> 'array' or jsonb_array_length(swaps) = 0 then
+    raise exception 'Swaps are a list of at least one' using errcode = '22023';
+  end if;
+  return public.propose_coach_change(
+    propose_coach_swaps.thread_id,
+    'workout',
+    workout || jsonb_build_object(
+      'exercises', public.edited_workout_exercises(workout, jsonb_build_object('swaps', swaps))
+    ),
+    propose_coach_swaps.today
   );
 end;
 $$;
