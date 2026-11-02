@@ -301,6 +301,7 @@ const SWITCH: Card = {
   from: { name: 'Knee-safe', position: 2 },
   to: { name: null, position: 1 },
   back: ['Leg curl'],
+  empty: false,
 };
 
 describe('changes to workouts and their alternatives', () => {
@@ -370,6 +371,18 @@ describe('changes to workouts and their alternatives', () => {
       screen.getByText('Leg curl comes back. Knee-safe is kept, to use again.'),
     ).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Switch' })).toBeOnTheScreen();
+  });
+
+  it('says that a switch to an alternative without exercises leaves the workout without any', async () => {
+    const card = { ...SWITCH, back: [], empty: true } as Card;
+    await render(<ProposalCard card={card} state={pending} />);
+
+    expect(
+      screen.getByText(
+        'Alternative 1 has no exercises yet, so Legs will have none until you add some.',
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('Knee-safe is kept, to use again.')).toBeOnTheScreen();
   });
 
   it('sums up an applied switch', async () => {

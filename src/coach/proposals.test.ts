@@ -161,6 +161,7 @@ describe('useDecideProposal', () => {
       from: { name: 'Knee-safe', position: 2 },
       to: { name: 'Gym', position: 1 },
       back: [],
+      empty: false,
     },
   ])('loads the plan and its alternatives again when a $kind proposal is undone', async (card) => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 'undone', error: null } as never);
