@@ -144,8 +144,8 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
       >
         {(
           [
-            ['chat', 'chats', usage.chats, 'dinner', 'dinnerBackground'],
-            ['camera', 'photos', usage.photos, 'water', 'waterBackground'],
+            ['chat', 'chats', usage.chats, 'info', 'infoBackground'],
+            ['camera', 'photos', usage.photos, 'snack', 'snackBackground'],
             ['trend', 'reviews', usage.reviews, 'breakfast', 'breakfastBackground'],
           ] as const
         ).map(([icon, kind, count, color, background]) => (
