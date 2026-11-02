@@ -35,6 +35,27 @@ export type CoachToolName = (typeof COACH_TOOLS)[number];
  */
 export type ChatPhoto = { mimeType: 'image/jpeg'; data: string };
 
+/**
+ * A voice message to Bite (#298, ADR 0072): AAC in an MP4 container, as base64 data in the request
+ * itself, up to `MAX_VOICE_SECONDS` long, with its length as the app recorded it.
+ */
+export type ChatVoice = { mimeType: 'audio/mp4'; data: string; durationMs: number };
+
+/** The longest voice message, in seconds, and the most it may weigh, decoded, in bytes. */
+export const MAX_VOICE_SECONDS = 60;
+export const MAX_VOICE_BYTES = 1_000_000;
+
+/**
+ * A voice message as the message keeps it: its path in `coach-media` and its length. What was
+ * said is the message's text part, as written down for it.
+ */
+export type ChatVoicePart = {
+  type: 'audio';
+  path: string;
+  mimeType: 'audio/mp4';
+  durationMs: number;
+};
+
 /** A photo of a user's message as the message keeps it: its path in `coach-media`, and its size. */
 export type ChatPhotoPart = {
   type: 'image';
@@ -49,6 +70,8 @@ export type ChatRequest = {
   message?: string;
   /** Up to `MAX_PHOTOS` photos, which only this turn sends to the model. */
   photos?: ChatPhoto[];
+  /** A voice message, sent alone, without text or photos. */
+  voice?: ChatVoice;
   /** The device's local time, HH:MM, so that Bite knows the time of day. */
   localTime?: string;
   /** The thread to go on with; a new one without. */
@@ -75,7 +98,14 @@ export type PhotoRefusal = Exclude<(typeof PHOTO_REFUSALS)[number], 'photos_too_
  * than as events: `{ error, photo? }`, `photo` being the index of the photo refused.
  */
 export type ChatRefusal =
-  'invalid_request' | 'thread_not_found' | (typeof PHOTO_REFUSALS)[number] | 'unavailable';
+  | 'invalid_request'
+  | 'thread_not_found'
+  | (typeof PHOTO_REFUSALS)[number]
+  | (typeof VOICE_REFUSALS)[number]
+  | 'unavailable';
+
+/** Why a voice message is refused: too large, or not AAC in an MP4 container. */
+export const VOICE_REFUSALS = ['voice_too_large', 'voice_not_m4a'] as const;
 
 /**
  * Why Bite gave no answer, or stopped short: the reasons of `ai_access()` and `start_ai_call()`,
@@ -205,6 +235,8 @@ export type NoteCard = {
 export type ChatEvent<Expression extends string = string> =
   /** A new thread, first, so that the app keeps it however the answer ends. */
   | { event: 'thread'; threadId: number }
+  /** What the user said in a voice message, written down, once it is. */
+  | { event: 'transcript'; text: string }
   | { event: 'expression'; expression: Expression }
   | { event: 'tool_start'; name: string }
   | { event: 'tool_end'; name: string }
