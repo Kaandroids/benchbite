@@ -437,7 +437,10 @@ it('shows a note Bite kept as a line, though Bite said nothing with it', async (
   expect(screen.queryByText(/Vegetarian/)).toBeNull();
   // Its View, as the top bar's button, opens the notebook.
   await fireEvent.press(screen.getByRole('button', { name: 'Open the notebook' }));
-  expect(router.push).toHaveBeenCalledWith('/bite/notebook');
+  expect(router.push).toHaveBeenCalledWith({
+    pathname: '/bite/notebook',
+    params: { current: '7' },
+  });
 });
 
 it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {

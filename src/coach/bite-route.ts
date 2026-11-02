@@ -47,13 +47,26 @@ export function openChat(thread?: number, current?: string) {
   });
 }
 
-/** Opens Bite's notebook over the chat. */
-export function openNotebook() {
-  router.push('/bite/notebook');
+/** The params of `/bite/notebook`: `current`, the id of the saved chat under it, if any. */
+export type NotebookParams = { current?: string };
+
+/** Opens Bite's notebook over the chat, naming its thread, `current`, if it has one. */
+export function openNotebook(current?: number) {
+  router.push({
+    pathname: '/bite/notebook',
+    params: current === undefined ? {} : { current: String(current) },
+  });
 }
 
-/** Opens the chat a note came from over the notebook, which it goes back to. */
-export function openNoteChat(thread: number) {
+/**
+ * Opens the chat a note came from over the notebook, which it goes back to. The chat under the
+ * notebook, `current`, is gone back to rather than opened again, so that it is never open twice.
+ */
+export function openNoteChat(thread: number, current?: string) {
+  if (String(thread) === current) {
+    router.back();
+    return;
+  }
   router.push({ pathname: '/bite', params: { thread: String(thread), fresh: '', offer: '' } });
 }
 

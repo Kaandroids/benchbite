@@ -1,6 +1,6 @@
 import { PHOTO_REFUSALS } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ACCESS_KEY, type Refusal } from '@/ai/access';
@@ -103,6 +103,8 @@ export function useChat(
   const [failure, setFailure] = useState<Failure>();
   const [refusal, setRefusal] = useState<Refusal>();
   const threadId = useRef<number | undefined>(start?.threadId);
+  // The same each render, for callbacks that depend on it.
+  const thread = useCallback(() => threadId.current, []);
   const abort = useRef<AbortController | undefined>(undefined);
   /** When the user last stopped an answer. */
   const stoppedAt = useRef(0);
@@ -286,7 +288,7 @@ export function useChat(
   return {
     messages,
     /** The thread the chat goes on in, once it has one. */
-    thread: () => threadId.current,
+    thread,
     status,
     tool,
     failure,

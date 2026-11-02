@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -131,6 +131,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
+  // The same each render, so that the messages with notes do not render again.
+  const { thread } = chat;
+  const openNotebookHere = useCallback(() => openNotebook(thread()), [thread]);
 
   return (
     <Screen
@@ -146,7 +149,11 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
             // The chats are under a chat opened from them.
             onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
           />
-          <TopBarButton icon="notebook" label={t('bite.notebook.title')} onPress={openNotebook} />
+          <TopBarButton
+            icon="notebook"
+            label={t('bite.notebook.title')}
+            onPress={() => openNotebook(chat.thread())}
+          />
         </View>
       }
       scrolls={false}
@@ -178,6 +185,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
+              onOpenNotebook={openNotebookHere}
             />
           )}
           {chat.failure ? (
