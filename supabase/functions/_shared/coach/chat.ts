@@ -19,6 +19,8 @@ export const COACH_TOOLS = [
   'search_exercises',
   'get_workouts',
   'propose_workout_change',
+  'propose_alternative',
+  'propose_alternative_switch',
   'propose_targets_change',
   'propose_food_log_change',
   'log_meal_card',
@@ -172,19 +174,41 @@ export type FoodLogChange = {
 };
 
 /**
+ * What a proposal changes in a workout's exercises (ADR 0075), named in the user's language:
+ * exercises swapped in place, removed, and added at the end, each with why when Bite says.
+ */
+export type ExerciseChanges = {
+  swaps: {
+    from: string;
+    to: string;
+    sets: number;
+    target: ProposalTarget;
+    why?: string;
+  }[];
+  removed: { name: string; why?: string }[];
+  added: { name: string; sets: number; target: ProposalTarget; why?: string }[];
+};
+
+/** A workout as a card names it: by its name, or its type for one without, which the app names. */
+export type CardWorkout = { name: string | null; type: string | null };
+
+/** An alternative of a workout as a card names it: by its name, or its place for one without. */
+export type CardAlternative = { name: string | null; position: number };
+
+/**
  * A change Bite proposed (ADR 0058), as its card shows it, in data the app words and formats
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
- * user's language, the targets in use and the new ones, or entries of the food log moved,
- * resized or removed (ADR 0068). The user applies it, keeps things as they are, or undoes it, by
- * its `id` (decide_coach_proposal()).
+ * user's language, the targets in use and the new ones, entries of the food log moved, resized or
+ * removed (ADR 0068), or changes to several workouts and their alternatives (ADR 0075). Bite
+ * proposes `workout` no more; its cards stay with the messages that have them. The user applies
+ * it, keeps things as they are, or undoes it, by its `id` (decide_coach_proposal()).
  */
 export type ProposalCard =
   | {
       kind: 'workout';
       id: number;
-      /** The workout's name, or its type for one without a name, which the app names. */
-      workout: { name: string | null; type: string | null };
-      swaps: { from: string; to: string; sets: number; target: ProposalTarget; why?: string }[];
+      workout: CardWorkout;
+      swaps: ExerciseChanges['swaps'];
     }
   | {
       kind: 'targets';
@@ -196,7 +220,34 @@ export type ProposalCard =
       from?: DayTargets<number | null> | null;
       to: DayTargets;
     }
-  | { kind: 'food_log'; id: number; changes: FoodLogChange[] };
+  | { kind: 'food_log'; id: number; changes: FoodLogChange[] }
+  | {
+      /** Lasting changes to 1 to 3 workouts, applied together (ADR 0075). */
+      kind: 'workouts';
+      id: number;
+      workouts: ({ workout: CardWorkout; weekdays: number[] } & ExerciseChanges)[];
+    }
+  | ({
+      /** A new alternative of a workout, made from the one in use (`from`) and put in use. */
+      kind: 'alternative';
+      id: number;
+      workout: CardWorkout;
+      from: CardAlternative;
+      to: string;
+    } & ExerciseChanges)
+  | {
+      /**
+       * Another alternative put in use, with the exercises it brings back, named, and whether it
+       * has none, which leaves the workout without exercises (ADR 0064).
+       */
+      kind: 'alternative_switch';
+      id: number;
+      workout: CardWorkout;
+      from: CardAlternative;
+      to: CardAlternative;
+      back: string[];
+      empty: boolean;
+    };
 
 /**
  * The kinds of proposal the chat shows a card for. coach-chat offers Bite a tool only for these,
@@ -206,6 +257,9 @@ export const SHOWN_PROPOSAL_KINDS = [
   'workout',
   'targets',
   'food_log',
+  'workouts',
+  'alternative',
+  'alternative_switch',
 ] as const satisfies readonly ProposalCard['kind'][];
 
 /**

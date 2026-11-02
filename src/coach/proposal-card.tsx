@@ -1,17 +1,25 @@
-import type { DayTargets, FoodLogChange } from '@shared/coach/chat';
+import type {
+  CardWorkout,
+  DayTargets,
+  ExerciseChanges,
+  FoodLogChange,
+  ProposalTarget,
+} from '@shared/coach/chat';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { Was } from '@/components/ui/was';
-import { daysBetween, fromIsoDate } from '@/i18n/dates';
+import { daysBetween, fromIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useDayName } from '@/nutrition/day-name';
 import { spacing, useTheme, type ColorTokens } from '@/theme';
+import { useAlternativeName } from '@/workouts/alternatives';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
 
@@ -35,9 +43,10 @@ type ProposalCardProps = {
 };
 
 /**
- * A change Bite proposed, under its answer (boards 4 and 11, ADR 0058, 0068): what changes, from
- * today, or in the food log, to apply or keep as it is. Once decided it folds into a line that
- * says so, and an applied one offers Undo (boards 5 and 11b).
+ * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075):
+ * what changes, from today, in the food log, or in a workout's alternatives, to apply or keep as
+ * it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
+ * and 11b).
  */
 export function ProposalCard({ card, state, waiting = false }: ProposalCardProps) {
   const { t } = useTranslation();
@@ -103,19 +112,13 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
   const canKeep = line !== 'outOfDate';
   return (
     <Card>
-      {card.kind === 'workout' ? (
-        <WorkoutChange card={card} />
-      ) : card.kind === 'targets' ? (
-        <TargetsChange card={card} />
-      ) : (
-        <FoodLogChanges card={card} />
-      )}
+      <ProposalBody card={card} />
       {line ? <Refusal failure={line} /> : null}
       {canKeep ? (
         <View style={styles.buttons}>
           {canApply ? (
             <Button
-              label={t('bite.proposal.apply')}
+              label={t(applyLabel(card))}
               size="small"
               style={styles.flex}
               // One decision at a time: Keep as is, sent, leaves nothing to apply.
@@ -136,6 +139,41 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
       ) : null}
     </Card>
   );
+}
+
+/** What the button that applies `card` says: Use it for an alternative, Switch for a switch. */
+function applyLabel(card: Proposal) {
+  switch (card.kind) {
+    case 'alternative':
+      return 'bite.proposal.useIt';
+    case 'alternative_switch':
+      return 'bite.proposal.switch';
+    default:
+      return 'bite.proposal.apply';
+  }
+}
+
+/** The one workout a change to workouts names, when it names one only. */
+function onlyWorkout(card: WorkoutsProposal) {
+  return card.workouts.length === 1 ? card.workouts[0] : undefined;
+}
+
+/** What a proposal changes, as its kind shows it. */
+function ProposalBody({ card }: { card: Proposal }) {
+  switch (card.kind) {
+    case 'workout':
+      return <WorkoutChange card={card} />;
+    case 'workouts':
+      return <WorkoutsChange card={card} />;
+    case 'alternative':
+      return <AlternativeChange card={card} />;
+    case 'alternative_switch':
+      return <AlternativeSwitch card={card} />;
+    case 'targets':
+      return <TargetsChange card={card} />;
+    case 'food_log':
+      return <FoodLogChanges card={card} />;
+  }
 }
 
 /** The card's title, and when the change counts from, or the day it changes. */
@@ -160,56 +198,245 @@ function Header({ title, tag }: { title: string; tag?: string | null }) {
 type WorkoutProposal = Extract<Proposal, { kind: 'workout' }>;
 
 /**
- * The workout a proposal changes, as the app names it. The shared card keeps its type a plain
+ * A workout a proposal changes, as the app names it. The shared card keeps its type a plain
  * string, as the chat function's types import nothing; it is one of the database's.
  */
-function proposedWorkout(card: WorkoutProposal): Pick<Workout, 'name' | 'type'> {
-  return { name: card.workout.name, type: card.workout.type as Workout['type'] };
+function proposedWorkout(workout: CardWorkout): Pick<Workout, 'name' | 'type'> {
+  return { name: workout.name, type: workout.type as Workout['type'] };
 }
 
 /** A target as the workouts format it. */
-function workoutTarget(target: WorkoutProposal['swaps'][number]['target']) {
+function workoutTarget(target: ProposalTarget) {
   return target.reps
     ? ({ reps: target.reps } satisfies WorkoutTarget)
     : ({ seconds: target.seconds ?? null, meters: target.meters ?? null } satisfies WorkoutTarget);
 }
 
-/** The exercises swapped: the old one struck through, the new one, its sets and why. */
+/** The exercises swapped in one workout, as Bite proposed before ADR 0075. */
 function WorkoutChange({ card }: { card: WorkoutProposal }) {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
   const workoutName = useWorkoutName();
-  const targetFormat = useTargetFormat();
   return (
     <>
-      <Header title={workoutName(proposedWorkout(card))} />
-      <View>
-        {card.swaps.map((swap, index) => {
-          const detail = [targetFormat(swap.sets, workoutTarget(swap.target)), swap.why]
-            .filter(Boolean)
-            .join(' · ');
-          return (
-            <View
-              key={index}
-              accessible
-              accessibilityLabel={t('bite.proposal.swapLabel', {
-                from: swap.from,
-                to: swap.to,
-                detail,
-              })}
-              style={[styles.row, listDivider(index === 0, colors.border)]}
-            >
-              <Text variant="bodyStrong">
-                <Was value={swap.from} variant="body" />
-                {swap.to}
-              </Text>
-              <Text variant="caption" color="textMuted">
-                {detail}
-              </Text>
-            </View>
-          );
-        })}
+      <Header title={workoutName(proposedWorkout(card.workout))} />
+      <ExerciseRows changes={{ swaps: card.swaps, removed: [], added: [] }} />
+    </>
+  );
+}
+
+/**
+ * What a proposal changes in a workout's exercises: each one swapped, the old one struck through,
+ * each one left out, struck through, and each one added, with their sets and why.
+ */
+function ExerciseRows({ changes }: { changes: ExerciseChanges }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const targetFormat = useTargetFormat();
+  const detail = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
+  const rows = [
+    ...changes.swaps.map((swap) => {
+      const about = detail(targetFormat(swap.sets, workoutTarget(swap.target)), swap.why);
+      return {
+        label: t('bite.proposal.swapLabel', { from: swap.from, to: swap.to, detail: about }),
+        main: (
+          <Text variant="bodyStrong">
+            <Was value={swap.from} variant="body" />
+            {swap.to}
+          </Text>
+        ),
+        about,
+      };
+    }),
+    ...changes.removed.map((exercise) => {
+      const about = detail(t('bite.proposal.removed'), exercise.why);
+      return {
+        label: `${exercise.name}, ${about}`,
+        main: <MarkedName icon="minus" color="danger" name={exercise.name} struck />,
+        about,
+      };
+    }),
+    ...changes.added.map((exercise) => {
+      const about = detail(
+        t('bite.proposal.added'),
+        targetFormat(exercise.sets, workoutTarget(exercise.target)),
+        exercise.why,
+      );
+      return {
+        label: `${exercise.name}, ${about}`,
+        main: <MarkedName icon="plus" color="success" name={exercise.name} />,
+        about,
+      };
+    }),
+  ];
+  return (
+    <View>
+      {rows.map((row, index) => (
+        <View
+          key={index}
+          accessible
+          accessibilityLabel={row.label}
+          style={[styles.row, listDivider(index === 0, colors.border)]}
+        >
+          {row.main}
+          <Text variant="caption" color="textMuted">
+            {row.about}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** An exercise left out, struck through, or added, after its mark. */
+function MarkedName({
+  icon,
+  color,
+  name,
+  struck = false,
+}: {
+  icon: 'minus' | 'plus';
+  color: keyof ColorTokens;
+  name: string;
+  struck?: boolean;
+}) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.marked, { gap: spacing.sm }]}>
+      <Icon name={icon} size={14} color={color} />
+      <Text
+        variant="bodyStrong"
+        color={struck ? 'textMuted' : 'text'}
+        style={[styles.flex, struck && styles.struck]}
+      >
+        {name}
+      </Text>
+    </View>
+  );
+}
+
+type WorkoutsProposal = Extract<Proposal, { kind: 'workouts' }>;
+
+/**
+ * Lasting changes to one or more workouts, applied together (board 43): one workout under its
+ * name, several each under its name and days.
+ */
+function WorkoutsChange({ card }: { card: WorkoutsProposal }) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const workoutName = useWorkoutName();
+  const weekday = useWeekdayFormat('short');
+  const only = onlyWorkout(card);
+  if (only) {
+    return (
+      <>
+        <Header title={workoutName(proposedWorkout(only.workout))} />
+        <ExerciseRows changes={only} />
+      </>
+    );
+  }
+  return (
+    <>
+      <Header title={t('bite.proposal.workoutsTitle', { count: card.workouts.length })} />
+      {card.workouts.map((changed, index) => (
+        <View
+          key={index}
+          style={[listDivider(index === 0, colors.border), index > 0 && { paddingTop: spacing.sm }]}
+        >
+          <View style={[styles.header, { gap: spacing.sm }]}>
+            <Text variant="bodyStrong" accessibilityRole="header" style={styles.flex}>
+              {workoutName(proposedWorkout(changed.workout))}
+            </Text>
+            <Text variant="captionStrong" color="textMuted">
+              {changed.weekdays.map(weekday).join(', ')}
+            </Text>
+          </View>
+          <ExerciseRows changes={changed} />
+        </View>
+      ))}
+    </>
+  );
+}
+
+/** The alternative in use and the one a proposal puts in use, as chips (boards 40 and 42). */
+function Alternatives({ from, to }: { from: string; to: string }) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const chip = {
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  };
+  return (
+    <View
+      accessible
+      accessibilityLabel={t('bite.proposal.alternativesLabel', { from, to })}
+      style={[styles.chips, { gap: spacing.xs }]}
+    >
+      <View style={[chip, { backgroundColor: colors.track }]}>
+        <Text variant="captionStrong" color="textMuted">
+          {from}
+        </Text>
       </View>
+      <Icon name="arrow" size={14} color="textMuted" />
+      <View style={[chip, { backgroundColor: colors.inverseSurface }]}>
+        <Text variant="captionStrong" color="onInverse">
+          {to}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A new alternative of a workout for a while (board 40): made from the one in use, which stays,
+ * with what it changes.
+ */
+function AlternativeChange({ card }: { card: Extract<Proposal, { kind: 'alternative' }> }) {
+  const { t } = useTranslation();
+  const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
+  const workout = workoutName(proposedWorkout(card.workout));
+  return (
+    <>
+      <Header title={workout} tag={t('bite.proposal.newAlternative')} />
+      <Alternatives from={alternativeName(card.from)} to={card.to} />
+      <ExerciseRows changes={card} />
+      <Text variant="caption" color="textMuted">
+        {t('bite.proposal.alternativeNote', { workout })}
+      </Text>
+    </>
+  );
+}
+
+/**
+ * Another alternative of a workout put in use (board 42), as when the user is better again: what
+ * comes back, that one without exercises leaves the workout without any, and that the one in use
+ * stays.
+ */
+function AlternativeSwitch({ card }: { card: Extract<Proposal, { kind: 'alternative_switch' }> }) {
+  const { t } = useTranslation();
+  const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
+  const from = alternativeName(card.from);
+  const to = alternativeName(card.to);
+  const workout = workoutName(proposedWorkout(card.workout));
+  return (
+    <>
+      <Header title={workout} tag={t('bite.proposal.switchTag')} />
+      <Alternatives from={from} to={to} />
+      {card.empty ? (
+        <Text variant="caption" color="warning">
+          {t('bite.proposal.switchEmpty', { to, workout })}
+        </Text>
+      ) : null}
+      <Text variant="caption" color="textMuted">
+        {card.back.length > 0
+          ? t('bite.proposal.switchBack', {
+              count: card.back.length,
+              exercises: card.back.join(', '),
+              from,
+            })
+          : t('bite.proposal.switchKept', { from })}
+      </Text>
     </>
   );
 }
@@ -283,27 +510,48 @@ function useSummary() {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
   return (card: Proposal) => {
-    if (card.kind === 'food_log') {
-      return t('bite.proposal.summary.foodLog', { count: card.changes.length });
+    switch (card.kind) {
+      case 'workouts': {
+        const only = onlyWorkout(card);
+        return only
+          ? t('bite.proposal.summary.workout', {
+              workout: workoutName(proposedWorkout(only.workout)),
+            })
+          : t('bite.proposal.summary.workouts', { count: card.workouts.length });
+      }
+      case 'alternative':
+        return t('bite.proposal.summary.alternative', {
+          workout: workoutName(proposedWorkout(card.workout)),
+          name: card.to,
+        });
+      case 'alternative_switch':
+        return t('bite.proposal.summary.alternative', {
+          workout: workoutName(proposedWorkout(card.workout)),
+          name: alternativeName(card.to),
+        });
+      case 'food_log':
+        return t('bite.proposal.summary.foodLog', { count: card.changes.length });
+      case 'targets':
+        return t('bite.proposal.summary.targets', {
+          calories: format(card.to.calories),
+          protein: format(card.to.proteinG),
+        });
+      case 'workout': {
+        const [first, second] = card.swaps;
+        if (card.swaps.length === 1 && first) {
+          return t('bite.proposal.summary.swap', { from: first.from, to: first.to });
+        }
+        if (card.swaps.length === 2 && first && second) {
+          return t('bite.proposal.summary.twoSwaps', { first: first.to, second: second.to });
+        }
+        return t('bite.proposal.summary.swaps', {
+          number: card.swaps.length,
+          workout: workoutName(proposedWorkout(card.workout)),
+        });
+      }
     }
-    if (card.kind === 'targets') {
-      return t('bite.proposal.summary.targets', {
-        calories: format(card.to.calories),
-        protein: format(card.to.proteinG),
-      });
-    }
-    const [first, second] = card.swaps;
-    if (card.swaps.length === 1 && first) {
-      return t('bite.proposal.summary.swap', { from: first.from, to: first.to });
-    }
-    if (card.swaps.length === 2 && first && second) {
-      return t('bite.proposal.summary.twoSwaps', { first: first.to, second: second.to });
-    }
-    return t('bite.proposal.summary.swaps', {
-      number: card.swaps.length,
-      workout: workoutName(proposedWorkout(card)),
-    });
   };
 }
 
@@ -458,6 +706,15 @@ const styles = StyleSheet.create({
   target: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  marked: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chips: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   buttons: {
     flexDirection: 'row',

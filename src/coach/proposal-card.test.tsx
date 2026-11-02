@@ -256,6 +256,142 @@ it('stays applied when Bite proposes again while Apply is sent', async () => {
   expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
 });
 
+const LEGS = { name: 'Legs', type: null };
+const SWAP = {
+  from: 'Back squat',
+  to: 'Leg press',
+  sets: 3,
+  target: { reps: { min: 10, max: 12 } },
+  why: 'easier on the knee',
+};
+const PLAN: Card = {
+  kind: 'workouts',
+  id: 10,
+  workouts: [
+    {
+      workout: LEGS,
+      weekdays: [1, 4],
+      swaps: [SWAP],
+      removed: [{ name: 'Plank', why: 'done at home' }],
+      added: [],
+    },
+    {
+      workout: { name: 'Push', type: null },
+      weekdays: [2],
+      swaps: [],
+      removed: [],
+      added: [{ name: 'Leg curl', sets: 3, target: { reps: { min: 10, max: 12 } } }],
+    },
+  ],
+};
+const ALTERNATIVE: Card = {
+  kind: 'alternative',
+  id: 11,
+  workout: LEGS,
+  from: { name: 'Gym', position: 1 },
+  to: 'Knee-safe',
+  swaps: [SWAP],
+  removed: [],
+  added: [],
+};
+const SWITCH: Card = {
+  kind: 'alternative_switch',
+  id: 12,
+  workout: LEGS,
+  from: { name: 'Knee-safe', position: 2 },
+  to: { name: null, position: 1 },
+  back: ['Leg curl'],
+  empty: false,
+};
+
+describe('changes to workouts and their alternatives', () => {
+  it('shows each workout a change names, with what it swaps, leaves out and adds', async () => {
+    await render(<ProposalCard card={PLAN} state={pending} />);
+
+    expect(screen.getByText('2 workouts')).toBeOnTheScreen();
+    expect(screen.getByText('Mon, Thu')).toBeOnTheScreen();
+    expect(screen.getByText('Push')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Leg press instead of Back squat, 3 × 10–12 reps · easier on the knee'),
+    ).toBeOnTheScreen();
+    expect(screen.getByLabelText('Plank, Left out · done at home')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Leg curl, Added · 3 × 10–12 reps')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeOnTheScreen();
+  });
+
+  it('shows a change to one workout under its name, from today', async () => {
+    await render(
+      <ProposalCard
+        card={{ ...PLAN, workouts: PLAN.workouts.slice(0, 1) } as Card}
+        state={pending}
+      />,
+    );
+
+    expect(screen.getByText('Legs')).toBeOnTheScreen();
+    expect(screen.getByText('From today')).toBeOnTheScreen();
+    expect(screen.queryByText('Mon, Thu')).not.toBeOnTheScreen();
+  });
+
+  it('sums up applied changes to several workouts', async () => {
+    await render(<ProposalCard card={PLAN} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Applied: changes to 2 workouts')).toBeOnTheScreen();
+  });
+
+  it('shows a new alternative made from the one in use, to use', async () => {
+    await render(<ProposalCard card={ALTERNATIVE} state={pending} />);
+
+    expect(screen.getByText('New alternative')).toBeOnTheScreen();
+    expect(screen.getByLabelText('From Gym to Knee-safe')).toBeOnTheScreen();
+    expect(
+      screen.getByText('The other versions of Legs stay as they are, to switch back to.'),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Use it' })).toBeOnTheScreen();
+  });
+
+  it('names an alternative without a name by its place', async () => {
+    const card = { ...ALTERNATIVE, from: { name: null, position: 1 } } as Card;
+    await render(<ProposalCard card={card} state={pending} />);
+
+    expect(screen.getByLabelText('From Alternative 1 to Knee-safe')).toBeOnTheScreen();
+  });
+
+  it('sums up an applied alternative by the one now in use', async () => {
+    await render(<ProposalCard card={ALTERNATIVE} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Applied: Legs now uses Knee-safe')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
+  });
+
+  it('shows a switch with what comes back, and that the one in use stays', async () => {
+    await render(<ProposalCard card={SWITCH} state={pending} />);
+
+    expect(screen.getByLabelText('From Knee-safe to Alternative 1')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Leg curl comes back. Knee-safe is kept, to use again.'),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Switch' })).toBeOnTheScreen();
+  });
+
+  it('says that a switch to an alternative without exercises leaves the workout without any', async () => {
+    const card = { ...SWITCH, back: [], empty: true } as Card;
+    await render(<ProposalCard card={card} state={pending} />);
+
+    expect(
+      screen.getByText(
+        'Alternative 1 has no exercises yet, so Legs will have none until you add some.',
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('Knee-safe is kept, to use again.')).toBeOnTheScreen();
+  });
+
+  it('sums up an applied switch', async () => {
+    await render(<ProposalCard card={SWITCH} state={{ ...pending, status: 'applied' }} />);
+
+    expect(screen.getByText('Applied: Legs now uses Alternative 1')).toBeOnTheScreen();
+  });
+});
+
 describe('a food log change', () => {
   it('shows each entry it moves and removes, on its day', async () => {
     await render(<ProposalCard card={FOOD_LOG} state={pending} />);

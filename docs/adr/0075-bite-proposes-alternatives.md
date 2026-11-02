@@ -60,3 +60,7 @@ saw only today's workouts (#397).
   workouts it locks are named once, in `coach_proposal_workout_ids()`.
 - A proposal is built after the user's lock is taken (`workout_to_propose()`), so the workout
   cannot change between building it and recording what it replaces.
+- `propose_coach_alternative()` and `propose_coach_alternative_switch()` give what their cards
+  show with the proposal's id: the alternatives as applying names them, the exercises that come
+  back, and whether the one switched to has none. Nothing is read after a proposal is made, so a
+  failed read never leaves one without its card.

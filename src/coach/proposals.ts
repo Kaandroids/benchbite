@@ -139,12 +139,15 @@ export function useDecideProposal(card: ShownProposal) {
 }
 
 /**
- * Loads again what a proposal applied or undone changed: the plan, the targets, or each day of the
- * food log it moved entries from or to.
+ * Loads again what a proposal applied or undone changed: the plan with its alternatives, the
+ * targets, or each day of the food log it moved entries from or to.
  */
 function reloadChanged(queryClient: QueryClient, card: ShownProposal) {
   switch (card.kind) {
     case 'workout':
+    case 'workouts':
+    case 'alternative':
+    case 'alternative_switch':
       return reloadPlan(queryClient);
     case 'targets':
       return reloadTargets(queryClient);

@@ -1857,6 +1857,7 @@ export type Database = {
         Returns: boolean;
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
+      card_alternative: { Args: { alternative: Json }; Returns: Json };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
@@ -2054,6 +2055,7 @@ export type Database = {
         }[];
       };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      in_use_alternative: { Args: { state: Json }; Returns: Json };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
@@ -2326,11 +2328,11 @@ export type Database = {
           today: string;
           workout_id: number;
         };
-        Returns: number;
+        Returns: Json;
       };
       propose_coach_alternative_switch: {
         Args: { alternative_id: number; thread_id: number; today: string };
-        Returns: number;
+        Returns: Json;
       };
       propose_coach_change: {
         Args: {

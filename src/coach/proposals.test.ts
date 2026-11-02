@@ -142,6 +142,41 @@ describe('useDecideProposal', () => {
     expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ['workouts'] });
   });
 
+  it.each<ProposalCard>([
+    { kind: 'workouts', id: 10, workouts: [] },
+    {
+      kind: 'alternative',
+      id: 11,
+      workout: { name: 'Legs', type: null },
+      from: { name: 'Gym', position: 1 },
+      to: 'Knee-safe',
+      swaps: [],
+      removed: [],
+      added: [],
+    },
+    {
+      kind: 'alternative_switch',
+      id: 12,
+      workout: { name: 'Legs', type: null },
+      from: { name: 'Knee-safe', position: 2 },
+      to: { name: 'Gym', position: 1 },
+      back: [],
+      empty: false,
+    },
+  ])('loads the plan and its alternatives again when a $kind proposal is undone', async (card) => {
+    jest.mocked(supabase.rpc).mockResolvedValue({ data: 'undone', error: null } as never);
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const { result } = await renderHook(() => useDecideProposal(card), {
+      queryClient,
+    });
+
+    await act(() => result.current.mutateAsync('undo'));
+
+    // The alternatives' lists are kept under the workouts' key.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+  });
+
   it('loads each day a food log change moved entries from or to again', async () => {
     jest.mocked(supabase.rpc).mockResolvedValue({ data: 'applied', error: null } as never);
     const queryClient = createTestQueryClient();
