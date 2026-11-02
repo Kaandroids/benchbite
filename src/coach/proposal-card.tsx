@@ -18,7 +18,7 @@ import { Was } from '@/components/ui/was';
 import { daysBetween, fromIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useDayName } from '@/nutrition/day-name';
-import { radii, spacing, useTheme, type ColorTokens } from '@/theme';
+import { spacing, useTheme, type ColorTokens } from '@/theme';
 import { useAlternativeName } from '@/workouts/alternatives';
 import { useTargetFormat, useWorkoutName } from '@/workouts/format';
 import type { Workout, WorkoutTarget } from '@/workouts/workouts';
@@ -229,7 +229,7 @@ function WorkoutChange({ card }: { card: WorkoutProposal }) {
  */
 function ExerciseRows({ changes }: { changes: ExerciseChanges }) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors } = useTheme();
   const targetFormat = useTargetFormat();
   const detail = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' · ');
   const rows = [
@@ -250,14 +250,7 @@ function ExerciseRows({ changes }: { changes: ExerciseChanges }) {
       const about = detail(t('bite.proposal.removed'), exercise.why);
       return {
         label: `${exercise.name}, ${about}`,
-        main: (
-          <View style={[styles.marked, { gap: spacing.sm }]}>
-            <Icon name="minus" size={14} color="danger" />
-            <Text variant="bodyStrong" color="textMuted" style={[styles.flex, styles.struck]}>
-              {exercise.name}
-            </Text>
-          </View>
-        ),
+        main: <MarkedName icon="minus" color="danger" name={exercise.name} struck />,
         about,
       };
     }),
@@ -269,14 +262,7 @@ function ExerciseRows({ changes }: { changes: ExerciseChanges }) {
       );
       return {
         label: `${exercise.name}, ${about}`,
-        main: (
-          <View style={[styles.marked, { gap: spacing.sm }]}>
-            <Icon name="plus" size={14} color="success" />
-            <Text variant="bodyStrong" style={styles.flex}>
-              {exercise.name}
-            </Text>
-          </View>
-        ),
+        main: <MarkedName icon="plus" color="success" name={exercise.name} />,
         about,
       };
     }),
@@ -296,6 +282,33 @@ function ExerciseRows({ changes }: { changes: ExerciseChanges }) {
           </Text>
         </View>
       ))}
+    </View>
+  );
+}
+
+/** An exercise left out, struck through, or added, after its mark. */
+function MarkedName({
+  icon,
+  color,
+  name,
+  struck = false,
+}: {
+  icon: 'minus' | 'plus';
+  color: keyof ColorTokens;
+  name: string;
+  struck?: boolean;
+}) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.marked, { gap: spacing.sm }]}>
+      <Icon name={icon} size={14} color={color} />
+      <Text
+        variant="bodyStrong"
+        color={struck ? 'textMuted' : 'text'}
+        style={[styles.flex, struck && styles.struck]}
+      >
+        {name}
+      </Text>
     </View>
   );
 }
@@ -346,20 +359,25 @@ function WorkoutsChange({ card }: { card: WorkoutsProposal }) {
 /** The alternative in use and the one a proposal puts in use, as chips (boards 40 and 42). */
 function Alternatives({ from, to }: { from: string; to: string }) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, radii, spacing } = useTheme();
+  const chip = {
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  };
   return (
     <View
       accessible
       accessibilityLabel={t('bite.proposal.alternativesLabel', { from, to })}
       style={[styles.chips, { gap: spacing.xs }]}
     >
-      <View style={[styles.chip, { backgroundColor: colors.track }]}>
+      <View style={[chip, { backgroundColor: colors.track }]}>
         <Text variant="captionStrong" color="textMuted">
           {from}
         </Text>
       </View>
       <Icon name="arrow" size={14} color="textMuted" />
-      <View style={[styles.chip, { backgroundColor: colors.inverseSurface }]}>
+      <View style={[chip, { backgroundColor: colors.inverseSurface }]}>
         <Text variant="captionStrong" color="onInverse">
           {to}
         </Text>
@@ -391,20 +409,25 @@ function AlternativeChange({ card }: { card: Extract<Proposal, { kind: 'alternat
 
 /**
  * Another alternative of a workout put in use (board 42), as when the user is better again: what
- * comes back, and that the one in use stays.
+ * comes back, that one without exercises leaves the workout without any, and that the one in use
+ * stays.
  */
 function AlternativeSwitch({ card }: { card: Extract<Proposal, { kind: 'alternative_switch' }> }) {
   const { t } = useTranslation();
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
   const from = alternativeName(card.from);
+  const to = alternativeName(card.to);
+  const workout = workoutName(proposedWorkout(card.workout));
   return (
     <>
-      <Header
-        title={workoutName(proposedWorkout(card.workout))}
-        tag={t('bite.proposal.switchTag')}
-      />
-      <Alternatives from={from} to={alternativeName(card.to)} />
+      <Header title={workout} tag={t('bite.proposal.switchTag')} />
+      <Alternatives from={from} to={to} />
+      {card.empty ? (
+        <Text variant="caption" color="warning">
+          {t('bite.proposal.switchEmpty', { to, workout })}
+        </Text>
+      ) : null}
       <Text variant="caption" color="textMuted">
         {card.back.length > 0
           ? t('bite.proposal.switchBack', {
@@ -489,40 +512,46 @@ function useSummary() {
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
   return (card: Proposal) => {
-    if (card.kind === 'workouts') {
-      const only = onlyWorkout(card);
-      return only
-        ? t('bite.proposal.summary.workout', {
-            workout: workoutName(proposedWorkout(only.workout)),
-          })
-        : t('bite.proposal.summary.workouts', { count: card.workouts.length });
+    switch (card.kind) {
+      case 'workouts': {
+        const only = onlyWorkout(card);
+        return only
+          ? t('bite.proposal.summary.workout', {
+              workout: workoutName(proposedWorkout(only.workout)),
+            })
+          : t('bite.proposal.summary.workouts', { count: card.workouts.length });
+      }
+      case 'alternative':
+        return t('bite.proposal.summary.alternative', {
+          workout: workoutName(proposedWorkout(card.workout)),
+          name: card.to,
+        });
+      case 'alternative_switch':
+        return t('bite.proposal.summary.alternative', {
+          workout: workoutName(proposedWorkout(card.workout)),
+          name: alternativeName(card.to),
+        });
+      case 'food_log':
+        return t('bite.proposal.summary.foodLog', { count: card.changes.length });
+      case 'targets':
+        return t('bite.proposal.summary.targets', {
+          calories: format(card.to.calories),
+          protein: format(card.to.proteinG),
+        });
+      case 'workout': {
+        const [first, second] = card.swaps;
+        if (card.swaps.length === 1 && first) {
+          return t('bite.proposal.summary.swap', { from: first.from, to: first.to });
+        }
+        if (card.swaps.length === 2 && first && second) {
+          return t('bite.proposal.summary.twoSwaps', { first: first.to, second: second.to });
+        }
+        return t('bite.proposal.summary.swaps', {
+          number: card.swaps.length,
+          workout: workoutName(proposedWorkout(card.workout)),
+        });
+      }
     }
-    if (card.kind === 'alternative' || card.kind === 'alternative_switch') {
-      return t('bite.proposal.summary.alternative', {
-        workout: workoutName(proposedWorkout(card.workout)),
-        name: card.kind === 'alternative' ? card.to : alternativeName(card.to),
-      });
-    }
-    if (card.kind === 'food_log') {
-      return t('bite.proposal.summary.foodLog', { count: card.changes.length });
-    }
-    if (card.kind === 'targets') {
-      return t('bite.proposal.summary.targets', {
-        calories: format(card.to.calories),
-        protein: format(card.to.proteinG),
-      });
-    }
-    const [first, second] = card.swaps;
-    if (card.swaps.length === 1 && first) {
-      return t('bite.proposal.summary.swap', { from: first.from, to: first.to });
-    }
-    if (card.swaps.length === 2 && first && second) {
-      return t('bite.proposal.summary.twoSwaps', { first: first.to, second: second.to });
-    }
-    return t('bite.proposal.summary.swaps', {
-      number: card.swaps.length,
-      workout: workoutName(proposedWorkout(card.workout)),
-    });
   };
 }
 
@@ -686,11 +715,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-  },
-  chip: {
-    borderRadius: radii.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
   },
   buttons: {
     flexDirection: 'row',

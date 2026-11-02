@@ -1981,6 +1981,7 @@
       "switchBack_one": "{{exercises}} kommt zurück. {{from}} bleibt, um es wieder zu verwenden.",
       "switchBack_other": "{{exercises}} kommen zurück. {{from}} bleibt, um es wieder zu verwenden.",
       "switchKept": "{{from}} bleibt, um es wieder zu verwenden.",
+      "switchEmpty": "{{to}} hat noch keine Übungen, also hat {{workout}} keine, bis du welche hinzufügst.",
       "summary": {
         "swap": "{{to}} statt {{from}}",
         "twoSwaps": "{{first}} und {{second}}",

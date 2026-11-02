@@ -1981,6 +1981,7 @@
       "switchBack_one": "{{exercises}} geri gelir. {{from}} tekrar kullanmak için kalır.",
       "switchBack_other": "{{exercises}} geri gelir. {{from}} tekrar kullanmak için kalır.",
       "switchKept": "{{from}} tekrar kullanmak için kalır.",
+      "switchEmpty": "{{to}} henüz egzersiz içermiyor; sen ekleyene kadar {{workout}} egzersizsiz kalır.",
       "summary": {
         "swap": "{{from}} yerine {{to}}",
         "twoSwaps": "{{first}} ve {{second}}",
