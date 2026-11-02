@@ -28,23 +28,28 @@ Tracking is free; intelligence and room to grow are premium.
 | Bite               | None; earlier chats can be read                      | Chat, voice, photos, cards and notebook |
 | Meals from a photo | 2 a week                                             | Within the AI budget                    |
 
-- **Which workouts count:** active ones and those the user archived, so that archiving is no way
-  around the limit, as ADR 0018 decided. Workouts the plan moved to the archive when premium ended
-  do not count; they wait for premium. Whether a workout is active, and why it was archived, change
-  only through functions that check the limit, not by updating the table.
+- **What is new:** the free limit on alternatives, 1 in all where every workout had 5 versions.
+  The 3 workouts and 20 exercises are the free limits ADR 0018 set. Versions above the new limit
+  when it comes wait for premium, as when premium ends.
+- **Archived workouts count,** so that archiving is no way around the limit, as ADR 0018 decided.
 - **Which versions count:** as ADR 0061 keeps them, adding the first alternative makes the
   workout's own exercises version 1, so a free user's one alternative is two versions of one
   workout. `workout_limits()` gives the versions a workout may have and the alternatives a user may
   add across all workouts.
 - **Nothing is deleted when premium ends:** what is above the free limits waits for premium, and
-  comes back with it. How it waits is recorded in its own ADR, with the change that builds it.
+  comes back with it. How it waits, and how that differs from what the user archived, is recorded
+  in its own ADR, with the change that builds it.
+- **The numbers live in one table,** a row per plan (free, trial and premium) with its limits,
+  budgets and quotas, which `workout_limits()` and the AI functions read. ADR 0018 rejected such a
+  table while there were two limits and no premium; there are now about ten, for three plans.
 
 ### Who is premium
 
 - **Our database decides:** a `subscriptions` table holds each user's plan, whether it is a trial,
   its billing period, and its source. `has_premium()` reads it, and `ai_access()`,
-  `start_ai_call()` and `workout_limits()` ask it. A plan whose period has ended is not premium,
-  whatever was last recorded about it. The app reads the plan and never decides it, and users may
+  `start_ai_call()` and `workout_limits()` ask it. A plan ends an hour after its period does,
+  whatever was last recorded about it: a renewal reaches us a little after the store makes it, and
+  in between Bite should not close. The app reads the plan and never decides it, and users may
   read only their own row.
 - **RevenueCat keeps the purchases,** which the stores report to it, and our database keeps a copy,
   as the limits are checked on every call and must not depend on another service being reachable.
@@ -57,26 +62,31 @@ Tracking is free; intelligence and room to grow are premium.
 - **Seven days, as the stores offer it:** an introductory free trial on the subscription, which
   App Store and Google Play run, with the payment method given at the start.
 - **It needs an account,** as AI does: a guest signs up first.
-- **It is a period of its own,** with $1.50 for AI. What it spends does not count toward the first
-  paid period.
+- **It is a budget period of its own,** with $1.50 for AI. What it spends does not count toward the
+  first paid one.
 
 ### The AI budget
 
-- **Premium has $4 a billing period:** the period the store bills, from one renewal to the next,
-  whatever its length, so that a paid period can never cost more than $4. A yearly subscription is
-  divided into months: month _n_ starts _n_ months after it began, on the same day, or the month's
-  last day when it has fewer.
+- **Premium has $4 a budget period,** so that a premium user can never cost more than that in one.
+  A budget period is the monthly subscription's billing period, from one renewal to the next,
+  whatever its length; a yearly subscription is divided into months, month _n_ starting _n_ months
+  after it began, on the same day, or the month's last day when it has fewer. A yearly price must
+  then cover twelve of them.
 - **And at most $1.50 a week,** about 300 answers from Bite: weeks are counted in 7-day steps from
-  the start of each period, and begin again with every period, so that they do not drift. The days
-  left after the fourth week are a short week of their own. The weekly cap spreads the budget over
-  the period; the period's $4 is what bounds the cost.
+  the start of each budget period, and begin again with every one, so that they do not drift. The
+  days left after the fourth week are a short week of their own. The weekly cap spreads the budget
+  over the period; the period's $4 is what bounds the cost.
 - **A free user's AI is counted, not priced:** two meals estimated from a photo a week, in 7-day
-  steps from when the account was made. Only an estimate given while not premium counts: one
-  refused, broken off or closed unfinished does not. `start_ai_call()` counts calls in flight
-  toward it, as it sets cost aside for the budget, so that two requests sent at once cannot both
-  pass.
-- **One way to count windows:** the period, the week and the free week are all steps from a start
-  date: the period's, or the account's for a free user.
+  steps from when the account was made. Only an estimate given counts: one refused, broken off or
+  closed unfinished does not. A guest has none, as AI needs an account. `start_ai_call()` counts
+  calls in flight toward it, as it sets cost aside for the budget, so that two requests sent at
+  once cannot both pass, and it records on each call whether it counts, so that calls made while
+  premium never do.
+- **Behind the count, a small budget:** calls that do not count still cost, so a free week also has
+  $0.02 for AI, about eight estimates, after which photos wait for the next week.
+- **One function counts the windows:** a user's budget period, week and free week are steps from a
+  start date, the period's or the account's. One internal function gives them, and what was used
+  in each, and `ai_access()`, `start_ai_call()` and `count_ai_call()` all read it.
 - **`ai_access()` decides by feature,** and when it refuses, `resets_at` is when AI opens again:
   the later of the windows that refuse.
 
@@ -86,7 +96,7 @@ Tracking is free; intelligence and room to grow are premium.
   adds, with a design approved first. The stores' rules apply: the price, that it renews,
   restoring purchases, and the terms and privacy links.
 - **The price follows the measured cost:** it is set once `ai_usage` shows what real use costs a
-  period, with the stores' fee and VAT taken off. A premium user can cost at most $4 a period.
+  budget period, with the stores' fee and VAT taken off, and it covers the $4 a period may cost.
 
 ## Alternatives considered
 
@@ -100,6 +110,8 @@ Tracking is free; intelligence and room to grow are premium.
   would leave before seeing what Bite adds.
 - **Calendar months and weeks:** simpler to count, but a period bought mid-month could draw on two
   months' budgets, and a fixed weekly reset treats subscribers unevenly.
+- **Counting every free call that reaches the model:** a cap on cost by itself, but a photo the
+  model could not read, or a call that broke off, would use up one of the week's two estimates.
 - **Keeping everything usable after premium ends:** kinder, but there would be little reason to
   stay premium; kept and waiting, the user's work brings them back instead.
 
@@ -109,9 +121,8 @@ Tracking is free; intelligence and room to grow are premium.
   free quotas, in one place. This amends ADR 0051, whose budget was monthly and set by
   `ai_budgets`, and whose callers did not pass a feature.
 - `workout_limits()` depends on the plan, as ADR 0018 foresaw, and gives a limit per user as well
-  as per workout. Workouts the plan archived no longer count. This amends ADR 0018 and the 5
-  versions per workout of ADR 0061.
-- Users can no longer set a workout active or archived by updating the table.
+  as per workout, from the table ADR 0018 rejected. This amends ADR 0018 and the 5 versions per
+  workout of ADR 0061.
 - `start_ai_call()` and `count_ai_call()` check the free quota by count for counted features, and
   the budget by cost for the rest.
 - The purchases need a development build, as RevenueCat's SDK is native; Expo Go cannot buy.
