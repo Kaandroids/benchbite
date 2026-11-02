@@ -881,7 +881,8 @@ function toMessage(
   const voice = parts.some((part) => partOfType(part, 'audio'));
   const text = [...said.filter(Boolean), ...proposed].join('\n');
   if (row.role === 'user') {
-    const sent = [...(photos ? [photosText(photos)] : []), ...(voice ? [VOICE_SENT] : [])];
+    const heard = text ? VOICE_SENT : VOICE_UNHEARD;
+    const sent = [...(photos ? [photosText(photos)] : []), ...(voice ? [heard] : [])];
     const all = [...sent, untagged(text)].filter(Boolean).join('\n');
     return all ? [{ role: 'user', parts: [{ type: 'text', text: all }] }] : [];
   }
@@ -901,6 +902,9 @@ const VOICE_MESSAGE = '(A voice message, heard above.)';
 
 /** What Bite reads before what was said in an earlier voice message, in later turns. */
 const VOICE_SENT = '(Sent a voice message, which said:)';
+
+/** What Bite reads for an earlier voice message that could not be written down. */
+const VOICE_UNHEARD = '(Sent a voice message that could not be written down.)';
 
 /** Where an earlier message's photos were, as Bite reads it in later turns. */
 function photosText(count: number): string {

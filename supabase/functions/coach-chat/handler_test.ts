@@ -1605,10 +1605,24 @@ Deno.test('keeps a voice message nothing could be written down of, without text'
     answer.some((event) => event.event === 'transcript'),
     false,
   );
+  const content = inserted[1].rows[0].content as { type: string }[];
   assertEquals(
-    (inserted[1].rows[0].content as { type: string }[]).map((part) => part.type),
+    content.map((part) => part.type),
     ['audio'],
   );
+
+  // Later turns read that it could not be written down.
+  const model = new FakeModel(SURE);
+  const later = context(
+    model,
+    {},
+    { coach_threads: [{ id: 7 }], coach_messages: [{ role: 'user', content }] },
+  );
+  await (await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), later.ctx)).text();
+  assertEquals(model.requests[0].messages[0], {
+    role: 'user',
+    parts: [{ type: 'text', text: '(Sent a voice message that could not be written down.)' }],
+  });
 });
 
 /** A model that writes down only once `release()` is called, as a slow one would. */
