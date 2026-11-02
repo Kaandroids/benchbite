@@ -93,6 +93,9 @@ export const PHOTO_REFUSALS = ['photos_too_large', 'photo_not_jpeg', 'photo_has_
 /** Why one photo is refused, which the refusal names by its index. */
 export type PhotoRefusal = Exclude<(typeof PHOTO_REFUSALS)[number], 'photos_too_large'>;
 
+/** Why a voice message is refused: too large, or not AAC in an MP4 container. */
+export const VOICE_REFUSALS = ['voice_too_large', 'voice_not_m4a'] as const;
+
 /**
  * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather
  * than as events: `{ error, photo? }`, `photo` being the index of the photo refused.
@@ -103,9 +106,6 @@ export type ChatRefusal =
   | (typeof PHOTO_REFUSALS)[number]
   | (typeof VOICE_REFUSALS)[number]
   | 'unavailable';
-
-/** Why a voice message is refused: too large, or not AAC in an MP4 container. */
-export const VOICE_REFUSALS = ['voice_too_large', 'voice_not_m4a'] as const;
 
 /**
  * Why Bite gave no answer, or stopped short: the reasons of `ai_access()` and `start_ai_call()`,

@@ -1,6 +1,7 @@
 import { assertEquals } from '@std/assert';
 
-import { decodedBytes, MAX_PHOTO_BYTES, photosBodyBytes, photosFit } from './photos.ts';
+import { decodedBytes } from './base64_bytes.ts';
+import { MAX_PHOTO_BYTES, photosBodyBytes, photosFit } from './photos.ts';
 
 Deno.test('counts the bytes base64 holds', () => {
   for (const bytes of [1, 2, 3, 4, 1000]) {

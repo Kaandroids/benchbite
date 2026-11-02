@@ -46,8 +46,9 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
-import { type CheckedPhoto, checkPhotos, removeMedia, storePhotos } from './photos.ts';
-import { type CheckedVoice, checkVoice, storeVoice, transcribe } from './voice.ts';
+import { removeMedia } from './media.ts';
+import { type CheckedPhoto, checkPhotos, storePhotos } from './photos.ts';
+import { audioPart, type CheckedVoice, checkVoice, storeVoice, transcribe } from './voice.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
@@ -71,6 +72,9 @@ const Photo = z.object({
   data: Base64Data,
 });
 
+/** How much longer than the limit a voice message may be: the recorder stops a moment after it. */
+const VOICE_SLACK_MS = 1000;
+
 const Voice = z.object({
   mimeType: z.literal('audio/mp4'),
   data: Base64Data,
@@ -78,7 +82,7 @@ const Voice = z.object({
     .number()
     .int()
     .positive()
-    .max(MAX_VOICE_SECONDS * 1000 + 1000),
+    .max(MAX_VOICE_SECONDS * 1000 + VOICE_SLACK_MS),
 });
 
 const ChatRequest = z
@@ -333,10 +337,8 @@ async function answer(
   send: (event: ChatEvent) => void,
   stop: Stop,
 ): Promise<void> {
-  const bite = aiModel(
-    { supabase: context.supabase, admin: context.admin, model: context.model },
-    'coach_chat',
-  );
+  const ai = { supabase: context.supabase, admin: context.admin, model: context.model };
+  const bite = aiModel(ai, 'coach_chat');
   const turn = new Turn(send);
   const outcome: Outcome = { refused: false, asked: false };
   let threadId = request.threadId;
@@ -370,11 +372,7 @@ async function answer(
       send({ event: 'thread', threadId });
     }
     if (voice) {
-      const writer = aiModel(
-        { supabase: context.supabase, admin: context.admin, model: context.model },
-        'coach_voice',
-      );
-      transcript = transcribe(writer, voice).then((text) => {
+      transcript = transcribe(aiModel(ai, 'coach_voice'), voice).then((text) => {
         if (text) send({ event: 'transcript', text });
         return text;
       });
@@ -389,7 +387,7 @@ async function answer(
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
           ...photos.map(({ data }): Part => ({ type: 'image', mimeType: 'image/jpeg', data })),
-          ...(voice ? [{ type: 'audio' as const, mimeType: 'audio/mp4', data: voice.data }] : []),
+          ...(voice ? [audioPart(voice)] : []),
           { type: 'text', text: messageText(voice ? VOICE_MESSAGE : request.message) },
         ],
       },
@@ -532,15 +530,16 @@ async function answer(
   const dropIfNew = async (id: number) =>
     !request.threadId && (await keepAlive(dropThread(context, id)));
   // The message keeps what was said in its voice message, once written down.
-  const kept: Kept = { ...media, transcript: await transcript };
+  const said = await transcript;
   if (end.keep !== 'turn') {
     const saved =
-      end.keep === 'question' && (await keepAlive(saveQuestion(context, threadId, request, kept)));
+      end.keep === 'question' &&
+      (await keepAlive(saveQuestion(context, threadId, request, media, said)));
     const dropped = !saved && (await dropIfNew(threadId));
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
   const messageId = await keepAlive(
-    saveTurn(context, threadId, request, kept, turn, end.interrupted),
+    saveTurn(context, threadId, request, media, said, turn, end.interrupted),
   );
   if (!messageId) {
     await keepAlive(dropAskedNotes(context, turn.trace));
@@ -639,9 +638,8 @@ function resultOf(part: unknown): unknown {
   return partOfType(part, 'toolResult') ? part.result : undefined;
 }
 
-/** A message's photos and voice message, checked, and what was said in the voice message. */
+/** A message's photos and voice message, checked. */
 type Media = { photos: CheckedPhoto[]; voice?: CheckedVoice };
-type Kept = Media & { transcript?: string };
 
 /** The parts that name a message's photos and voice message, once kept. */
 type Stored = { images: ChatPhotoPart[]; voice?: ChatVoicePart };
@@ -693,12 +691,11 @@ async function saveQuestion(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
-  kept: Kept,
+  media: Media,
+  transcript: string | undefined,
 ): Promise<boolean> {
-  const saved = await saveWithMedia(context, threadId, kept, (stored) =>
-    context.admin
-      .from('coach_messages')
-      .insert(question(threadId, request, stored, kept.transcript)),
+  const saved = await saveWithMedia(context, threadId, media, (stored) =>
+    context.admin.from('coach_messages').insert(question(threadId, request, stored, transcript)),
   );
   if (saved && !saved.error) return true;
   logError('Could not save the question', saved?.error);
@@ -713,15 +710,16 @@ async function saveTurn(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
-  kept: Kept,
+  media: Media,
+  transcript: string | undefined,
   turn: Turn,
   interrupted: Interruption | undefined,
 ): Promise<number | undefined> {
-  const messages = await saveWithMedia(context, threadId, kept, (stored) =>
+  const messages = await saveWithMedia(context, threadId, media, (stored) =>
     context.admin
       .from('coach_messages')
       .insert([
-        question(threadId, request, stored, kept.transcript),
+        question(threadId, request, stored, transcript),
         {
           thread_id: threadId,
           role: 'bite',

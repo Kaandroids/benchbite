@@ -3,16 +3,16 @@
 // thread keeps what was said as its text.
 import type { AiModel } from '../_shared/ai_usage.ts';
 import { decodeBase64 } from '../_shared/base64.ts';
+import { decodedBytes } from '../_shared/base64_bytes.ts';
 import {
   type ChatVoice,
   type ChatVoicePart,
   MAX_VOICE_BYTES,
   VOICE_REFUSALS,
 } from '../_shared/coach/chat.ts';
-import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
-import { textOf } from '../_shared/llm/mod.ts';
-import { decodedBytes } from '../_shared/photos.ts';
+import { type Part, textOf } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+import { keepFile } from './media.ts';
 
 /** A voice message that passed the checks: its bytes to keep, its base64 data for the model. */
 export type CheckedVoice = { bytes: Uint8Array; data: string; durationMs: number };
@@ -35,21 +35,20 @@ export function checkVoice(voice: ChatVoice): CheckedVoice | VoiceRefusal {
   return { bytes, data: voice.data, durationMs: voice.durationMs };
 }
 
-/**
- * Keeps a voice message in its thread's folder under a new name, and gives the message's part that
- * names it, or nothing when it could not be kept. The bucket refuses what is not MP4 or too large.
- */
+/** The voice message as the model hears it, in its own turn only. */
+export function audioPart(voice: CheckedVoice): Part {
+  return { type: 'audio', mimeType: 'audio/mp4', data: voice.data };
+}
+
+/** Keeps a voice message, and gives the message's part that names it, or nothing when it could not be kept. */
 export async function storeVoice(
   admin: Client,
   userId: string,
   threadId: number,
   voice: CheckedVoice,
 ): Promise<ChatVoicePart | undefined> {
-  const path = `${threadMediaFolder(userId, threadId)}/${crypto.randomUUID()}.m4a`;
-  const { error } = await admin.storage
-    .from(MEDIA_BUCKET)
-    .upload(path, voice.bytes, { contentType: 'audio/mp4', upsert: false });
-  if (error) return void logError('Could not keep a voice message', error);
+  const path = await keepFile(admin, userId, threadId, voice.bytes, 'audio/mp4');
+  if (!path) return undefined;
   return { type: 'audio', path, mimeType: 'audio/mp4', durationMs: voice.durationMs };
 }
 
@@ -65,9 +64,7 @@ export async function transcribe(model: AiModel, voice: CheckedVoice): Promise<s
   try {
     const response = await model.generate({
       system: TRANSCRIBE,
-      messages: [
-        { role: 'user', parts: [{ type: 'audio', mimeType: 'audio/mp4', data: voice.data }] },
-      ],
+      messages: [{ role: 'user', parts: [audioPart(voice)] }],
       maxOutputTokens: 1024,
     });
     return textOf(response.parts).trim() || undefined;
