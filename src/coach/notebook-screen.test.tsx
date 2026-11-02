@@ -72,7 +72,9 @@ beforeEach(() => {
   mockParams = {};
   jest.useFakeTimers({ now: new Date(2026, 10, 1, 15), doNotFake: ['nextTick'] });
   notes(NOTES);
-  jest.mocked(useDeleteNote).mockReturnValue({ mutate: deleteNote, isError: false } as never);
+  jest
+    .mocked(useDeleteNote)
+    .mockReturnValue({ mutate: deleteNote, isError: false, reset: jest.fn() } as never);
   jest.mocked(useRestoreNote).mockReturnValue({ mutate: restoreNote, isError: false } as never);
   jest
     .mocked(useSaveNote)
@@ -108,7 +110,7 @@ it('opens a note, and its chat', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Open' }));
   expect(router.push).toHaveBeenCalledWith({
     pathname: '/bite',
-    params: { thread: '7', fresh: '', offer: '' },
+    params: { thread: '7', fresh: '', offer: '', from: 'notebook' },
   });
 });
 

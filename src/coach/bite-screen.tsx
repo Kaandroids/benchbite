@@ -38,14 +38,14 @@ import { useFollowEnd } from './use-follow-end';
  */
 export function BiteScreen() {
   const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
-  const { fromChats } = opened;
+  const { fromChats, fromNotebook } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   const threadText = useThreadText();
   // A saved chat opens on its messages as they are now, never on ones kept from before.
   if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
-      <Screen onBack={() => router.back()} closes={!fromChats}>
+      <Screen onBack={() => router.back()} closes={!fromChats && !fromNotebook}>
         <LoadState queries={[saved]} />
       </Screen>
     );
@@ -56,6 +56,7 @@ export function BiteScreen() {
     <Chat
       key={key}
       fromChats={fromChats}
+      fromNotebook={fromNotebook}
       title={
         threadText.title({
           title: saved.data.title,
@@ -68,6 +69,7 @@ export function BiteScreen() {
     <Chat
       key={threadId === undefined ? key : `gone-${threadId}`}
       fromChats={fromChats}
+      fromNotebook={fromNotebook}
       continueWith={
         opened.offer && {
           thread: opened.offer,
@@ -82,6 +84,11 @@ export function BiteScreen() {
 type ChatProps = {
   /** Whether the chat was opened over the chats, which it goes back to. */
   fromChats: boolean;
+  /**
+   * Whether the chat was opened over the notebook, from a note, which it goes back to; it then
+   * offers no way to the notebook, so that chats and notebooks do not pile up.
+   */
+  fromNotebook: boolean;
   /** The name of a saved thread the chat goes on in. */
   title?: string;
   start?: Parameters<typeof useChat>[0];
@@ -89,7 +96,7 @@ type ChatProps = {
   continueWith?: ContinueWith;
 };
 
-function Chat({ fromChats, title, start, continueWith }: ChatProps) {
+function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   // A message whose photos were refused comes back to the composer, to change. The composer
@@ -138,7 +145,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   return (
     <Screen
       onBack={() => router.back()}
-      closes={!fromChats}
+      closes={!fromChats && !fromNotebook}
       title={t('bite.title')}
       subtitle={title}
       action={
@@ -149,11 +156,13 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
             // The chats are under a chat opened from them.
             onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
           />
-          <TopBarButton
-            icon="notebook"
-            label={t('bite.notebook.title')}
-            onPress={() => openNotebook(chat.thread())}
-          />
+          {fromNotebook ? null : (
+            <TopBarButton
+              icon="notebook"
+              label={t('bite.notebook.title')}
+              onPress={openNotebookHere}
+            />
+          )}
         </View>
       }
       scrolls={false}
@@ -185,7 +194,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
-              onOpenNotebook={openNotebookHere}
+              onOpenNotebook={fromNotebook ? undefined : openNotebookHere}
             />
           )}
           {chat.failure ? (

@@ -443,6 +443,13 @@ it('shows a note Bite kept as a line, though Bite said nothing with it', async (
   });
 });
 
+it('offers no way to the notebook in a chat opened from it, which it goes back to', async () => {
+  mockParams = { ...NEW_CHAT, from: 'notebook' };
+  await render(<BiteScreen />);
+  expect(screen.queryByRole('button', { name: "Bite's notebook" })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+});
+
 it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {
   mealCardsStand('pending');
   const stream = liveStream();
