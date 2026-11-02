@@ -38,6 +38,7 @@ import {
   CARD_MISSING,
   CARD_NOT_MADE,
   NO_LOOKUPS_LEFT,
+  NO_LOOKUPS_NOR_CARDS,
   NOTE_ASKED,
   SAID_ALREADY,
   type Expression,
@@ -508,7 +509,8 @@ async function answer(
       const words = [
         ...(said.trim() ? [SAID_ALREADY] : []),
         ...(asked ? [NOTE_ASKED] : []),
-        ...(lastLookup ? [NO_LOOKUPS_LEFT] : []),
+        // A card already made is spoken of; only without one is Bite told it can make none.
+        ...(lastLookup ? [turn.trace.some(isShown) ? NO_LOOKUPS_LEFT : NO_LOOKUPS_NOR_CARDS] : []),
       ];
       messages.push(
         { role: 'model', parts: [...spoken, ...calls] },

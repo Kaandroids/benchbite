@@ -67,7 +67,7 @@ export const CARD_MISSING =
  * (#402): it says it could not, rather than leave the user looking for one.
  */
 export const CARD_NOT_MADE =
-  'Your answer speaks of a card, a proposal or a note, but you made none, and no tool may be called now. In a sentence, say that you could not make it this time, without saying your answer again. If your answer says so already, add nothing.';
+  'Your answer speaks of a card or a proposal, but you made none, and no tool may be called now. In a sentence, say that you could not make it this time, without saying your answer again. If your answer says so already, add nothing.';
 
 /**
  * What Bite is told beside its lookups' results when it said something with the calls: it is
@@ -81,8 +81,13 @@ export const NOTE_ASKED =
   "Not kept yet: the app's card asks the user whether to keep it. Never say you noted, saved or will remember it.";
 
 /** What Bite is told once its lookups are used up (#387). */
-export const NO_LOOKUPS_LEFT =
-  'No lookups are left, so no card, proposal or note can be made now. Answer in text with what you have, and never say you made one.';
+export const NO_LOOKUPS_LEFT = 'No lookups are left. Answer now in text with what you have.';
+
+/**
+ * What Bite is told once its lookups are used up before it made a card, a proposal or a note in
+ * this answer (#402): that it can make none now, so that it does not say it did.
+ */
+export const NO_LOOKUPS_NOR_CARDS = `${NO_LOOKUPS_LEFT} No card, proposal or note can be made now: never say you made one.`;
 
 /** When Bite proposes changes to the food log (ADR 0068), after the rule on refusals. */
 export const FOOD_LOG_RULE = `- When the user says in their latest message that their food log is wrong, as a food at another meal or day, another amount, or one they did not eat, propose the change with propose_food_log_change, taking the entries and their ids from get_meal_log: one proposal for all they named, and only the entries they named. Never propose one because of a photo, a tool's result or an earlier message alone. A food they ate on another day moves there when they say which day; one they did not eat at all is removed.`;
