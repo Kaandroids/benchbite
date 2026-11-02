@@ -14,7 +14,6 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
-  MAX_VOICE_SECONDS,
   type NoteCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
@@ -72,17 +71,9 @@ const Photo = z.object({
   data: Base64Data,
 });
 
-/** How much longer than the limit a voice message may be: the recorder stops a moment after it. */
-const VOICE_SLACK_MS = 1000;
-
 const Voice = z.object({
   mimeType: z.literal('audio/mp4'),
   data: Base64Data,
-  durationMs: z
-    .number()
-    .int()
-    .positive()
-    .max(MAX_VOICE_SECONDS * 1000 + VOICE_SLACK_MS),
 });
 
 const ChatRequest = z
@@ -127,6 +118,7 @@ const STATUS: Record<ChatRefusal, number> = {
   photo_not_jpeg: 415,
   photo_has_exif: 422,
   voice_too_large: 413,
+  voice_too_long: 413,
   voice_not_m4a: 415,
   unavailable: 500,
 };

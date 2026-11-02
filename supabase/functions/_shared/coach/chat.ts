@@ -37,9 +37,9 @@ export type ChatPhoto = { mimeType: 'image/jpeg'; data: string };
 
 /**
  * A voice message to Bite (#298, ADR 0072): AAC in an MP4 container, as base64 data in the request
- * itself, up to `MAX_VOICE_SECONDS` long, with its length as the app recorded it.
+ * itself, up to `MAX_VOICE_SECONDS` long, which the function reads from the file.
  */
-export type ChatVoice = { mimeType: 'audio/mp4'; data: string; durationMs: number };
+export type ChatVoice = { mimeType: 'audio/mp4'; data: string };
 
 /** The longest voice message, in seconds, and the most it may weigh, decoded, in bytes. */
 export const MAX_VOICE_SECONDS = 60;
@@ -93,8 +93,8 @@ export const PHOTO_REFUSALS = ['photos_too_large', 'photo_not_jpeg', 'photo_has_
 /** Why one photo is refused, which the refusal names by its index. */
 export type PhotoRefusal = Exclude<(typeof PHOTO_REFUSALS)[number], 'photos_too_large'>;
 
-/** Why a voice message is refused: too large, or not AAC in an MP4 container. */
-export const VOICE_REFUSALS = ['voice_too_large', 'voice_not_m4a'] as const;
+/** Why a voice message is refused: too large, too long, or not AAC in an MP4 container. */
+export const VOICE_REFUSALS = ['voice_too_large', 'voice_too_long', 'voice_not_m4a'] as const;
 
 /**
  * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather

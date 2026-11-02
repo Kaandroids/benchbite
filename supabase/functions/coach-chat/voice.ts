@@ -8,6 +8,7 @@ import {
   type ChatVoice,
   type ChatVoicePart,
   MAX_VOICE_BYTES,
+  MAX_VOICE_SECONDS,
   VOICE_REFUSALS,
 } from '../_shared/coach/chat.ts';
 import { type Part, textOf } from '../_shared/llm/mod.ts';
@@ -19,20 +20,71 @@ export type CheckedVoice = { bytes: Uint8Array; data: string; durationMs: number
 
 export type VoiceRefusal = (typeof VOICE_REFUSALS)[number];
 
-/** The box an MP4 file starts with, after its length: `ftyp`. */
-const FTYP = [0x66, 0x74, 0x79, 0x70];
+/** How much longer than the limit a voice message may be: the recorder stops a moment after it. */
+const VOICE_SLACK_MS = 1000;
 
 /**
- * Checks a voice message, as base64 data, before anything is sent or kept: within its size, and an
- * MP4 file, which AAC audio is kept in. Gives it with its bytes, or why it is refused.
+ * Checks a voice message, as base64 data, before anything is sent or kept: within its size, an MP4
+ * file, which AAC audio is kept in, and within its length, as the file itself gives it, not the
+ * app. Gives it with its bytes and length, or why it is refused.
  */
 export function checkVoice(voice: ChatVoice): CheckedVoice | VoiceRefusal {
   if (decodedBytes(voice.data) > MAX_VOICE_BYTES) return 'voice_too_large';
   const bytes = decodeBase64(voice.data);
-  if (bytes.length < 8 || FTYP.some((byte, index) => bytes[4 + index] !== byte)) {
-    return 'voice_not_m4a';
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (box(view, 0, bytes.length)?.type !== 'ftyp') return 'voice_not_m4a';
+  const durationMs = mp4Length(view);
+  if (!durationMs) return 'voice_not_m4a';
+  if (durationMs > MAX_VOICE_SECONDS * 1000 + VOICE_SLACK_MS) return 'voice_too_long';
+  return { bytes, data: voice.data, durationMs };
+}
+
+/** An MP4 box: its type, and where its contents start and end. */
+type Box = { type: string; start: number; end: number };
+
+/** The box at `at`, within `end`, or nothing for one that does not fit. */
+function box(view: DataView, at: number, end: number): Box | undefined {
+  if (at + 8 > end) return undefined;
+  let size = view.getUint32(at);
+  let header = 8;
+  if (size === 1) {
+    // A 64-bit size follows the type.
+    if (at + 16 > end) return undefined;
+    size = Number(view.getBigUint64(at + 8));
+    header = 16;
+  } else if (size === 0) {
+    // The box goes on to the end.
+    size = end - at;
   }
-  return { bytes, data: voice.data, durationMs: voice.durationMs };
+  if (size < header || at + size > end) return undefined;
+  const type = String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + at + 4, 4));
+  return { type, start: at + header, end: at + size };
+}
+
+/** The first box of a type among those from `at` to `end`. */
+function find(view: DataView, at: number, end: number, type: string): Box | undefined {
+  for (let found = box(view, at, end); found; found = box(view, found.end, end)) {
+    if (found.type === type) return found;
+  }
+  return undefined;
+}
+
+/**
+ * An MP4 file's length in milliseconds, from its movie header (`moov` › `mvhd`), wherever in the
+ * file the movie is; nothing for a file without one.
+ */
+export function mp4Length(view: DataView): number | undefined {
+  const moov = find(view, 0, view.byteLength, 'moov');
+  const mvhd = moov && find(view, moov.start, moov.end, 'mvhd');
+  if (!mvhd) return undefined;
+  // After its version and flags, and its times of creation and change: 4 bytes each, or 8 in
+  // version 1. Then its time scale, and its duration in it.
+  const wide = view.getUint8(mvhd.start) === 1;
+  const at = mvhd.start + (wide ? 20 : 12);
+  if (at + (wide ? 12 : 8) > mvhd.end) return undefined;
+  const scale = view.getUint32(at);
+  const duration = wide ? Number(view.getBigUint64(at + 4)) : view.getUint32(at + 4);
+  return scale ? Math.round((duration / scale) * 1000) : undefined;
 }
 
 /** The voice message as the model hears it, in its own turn only. */
