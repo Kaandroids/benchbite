@@ -29,7 +29,7 @@ Tracking is free; intelligence and room to grow are premium.
 | Meals from a photo | 2 a week                                             | Within the AI budget                    |
 
 - **What is new:** the free limit on alternatives, 1 in all where every workout had 5 versions.
-  The 3 workouts and 20 exercises are the free limits ADR 0018 set. Versions above the new limit
+  The 3 workouts of ADR 0019 and the 20 exercises of ADR 0018 are the free limits as they were. Versions above the new limit
   when it comes wait for premium, as when premium ends.
 - **Archived workouts count,** so that archiving is no way around the limit, as ADR 0018 decided.
 - **Which versions count:** as ADR 0061 keeps them, adding the first alternative makes the
@@ -46,7 +46,7 @@ Tracking is free; intelligence and room to grow are premium.
 ### Who is premium
 
 - **Our database decides:** a `subscriptions` table holds each user's plan, whether it is a trial,
-  its billing period, and its source. `has_premium()` reads it, and `ai_access()`,
+  which picks the trial's row of the plan table, its billing period, and its source. `has_premium()` reads it, and `ai_access()`,
   `start_ai_call()` and `workout_limits()` ask it. A plan ends an hour after its period does,
   whatever was last recorded about it: a renewal reaches us a little after the store makes it, and
   in between Bite should not close. The app reads the plan and never decides it, and users may
@@ -79,11 +79,14 @@ Tracking is free; intelligence and room to grow are premium.
 - **A free user's AI is counted, not priced:** two meals estimated from a photo a week, in 7-day
   steps from when the account was made. Only an estimate given counts: one refused, broken off or
   closed unfinished does not. A guest has none, as AI needs an account. `start_ai_call()` counts
-  calls in flight toward it, as it sets cost aside for the budget, so that two requests sent at
-  once cannot both pass, and it records on each call whether it counts, so that calls made while
-  premium never do.
+  calls in flight toward it, so that two requests sent at once cannot both pass, and records on
+  each call whether it was made without premium. `estimate-meal` marks a call as an estimate given
+  once it has parsed one, through a function only the service role may call; a call that ends
+  without that mark frees its place.
 - **Behind the count, a small budget:** calls that do not count still cost, so a free week also has
-  $0.02 for AI, about eight estimates, after which photos wait for the next week.
+  $0.10 for AI, checked against what its calls made without premium did cost, never against what a
+  call sets aside: that is more than one photo may cost, and would refuse the first. Once it is
+  spent, photos wait for the next week.
 - **One function counts the windows:** a user's budget period, week and free week are steps from a
   start date, the period's or the account's. One internal function gives them, and what was used
   in each, and `ai_access()`, `start_ai_call()` and `count_ai_call()` all read it.
@@ -117,12 +120,13 @@ Tracking is free; intelligence and room to grow are premium.
 
 ## Consequences
 
-- `ai_budgets` gives way to the plan: the budget follows from `subscriptions`, the trial and the
-  free quotas, in one place. This amends ADR 0051, whose budget was monthly and set by
+- `ai_budgets` is dropped: the budget follows from `subscriptions`, the trial and the free quotas,
+  in one place, and in development a plan is given by hand instead. This amends ADR 0051, whose budget was monthly and set by
   `ai_budgets`, and whose callers did not pass a feature.
 - `workout_limits()` depends on the plan, as ADR 0018 foresaw, and gives a limit per user as well
   as per workout, from the table ADR 0018 rejected. This amends ADR 0018 and the 5 versions per
-  workout of ADR 0061.
+  workout of ADR 0061. The plan builder's `FREE_WORKOUTS` and `FREE_WORKOUT_EXERCISES` mirror the
+  free row, and a test checks them against it.
 - `start_ai_call()` and `count_ai_call()` check the free quota by count for counted features, and
   the budget by cost for the rest.
 - The purchases need a development build, as RevenueCat's SDK is native; Expo Go cannot buy.
