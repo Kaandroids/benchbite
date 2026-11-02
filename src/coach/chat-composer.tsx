@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { prepareChatPhoto } from './chat-photos';
-import type { VoiceProblem } from './chat-voice';
+import { isVoiceProblem } from './chat-voice';
 import { PhotoTray } from './photo-tray';
 import type { Draft, DraftProblem } from './use-chat';
 import { useVoiceRecorder } from './use-voice-recorder';
@@ -19,19 +19,6 @@ import { MicButton, RecordingHeader, SlideToCancel } from './voice-recording';
 
 /** A message whose photos or voice message were refused, handed back with why, once each. */
 export type RefusedDraft = { draft: Draft; problem: DraftProblem };
-
-const VOICE_PROBLEMS = [
-  'voice_too_large',
-  'voice_too_long',
-  'voice_not_m4a',
-  'voice_not_recorded',
-  'microphone_denied',
-] as const satisfies readonly VoiceProblem['reason'][];
-
-/** Whether a problem is a voice message's, which has no photo to name. */
-function isVoiceProblem(problem: DraftProblem): problem is VoiceProblem {
-  return (VOICE_PROBLEMS as readonly string[]).includes(problem.reason);
-}
 
 type ChatComposerProps = {
   /** Sends what the user wrote; the composer empties as it does. */
@@ -95,7 +82,11 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
     else if ('tooShort' in end) setHint(true);
   });
   const { recording } = voice;
-  useEffect(() => onRecording?.(recording), [onRecording, recording]);
+  // The chat stops dimming also when the composer goes while it records.
+  useEffect(() => {
+    onRecording?.(recording);
+    return () => onRecording?.(false);
+  }, [onRecording, recording]);
   const room = Math.max(0, MAX_PHOTOS - draft.photos.length - preparing);
   const tooMany = draft.photos.length > MAX_PHOTOS;
   const canSend = (!!draft.text.trim() || draft.photos.length > 0) && preparing === 0 && !tooMany;
@@ -131,6 +122,7 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
     // Emptied first, so that a message refused at once, on the device, comes back to it.
     setDraft(EMPTY_DRAFT);
     setProblem(undefined);
+    setHint(false);
     onSend(draft);
   };
 
@@ -195,7 +187,10 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
               placeholder={t('bite.ask')}
               placeholderTextColor={colors.placeholder}
               value={draft.text}
-              onChangeText={(text) => setDraft((current) => ({ ...current, text }))}
+              onChangeText={(text) => {
+                setHint(false);
+                setDraft((current) => ({ ...current, text }));
+              }}
               multiline
               maxLength={MAX_MESSAGE_LENGTH}
               style={[

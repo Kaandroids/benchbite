@@ -141,6 +141,9 @@ it('cancels a recording slid away to the left, and says how to record after a ta
   await letGo();
   expect(await screen.findByText('Hold the mic to record, then let go to send.')).toBeOnTheScreen();
   expect(streamChat).not.toHaveBeenCalled();
+  // It goes as the user writes instead.
+  await fireEvent.changeText(screen.getByLabelText('Message'), 'Hi');
+  expect(screen.queryByText('Hold the mic to record, then let go to send.')).toBeNull();
 });
 
 it('asks for the microphone first, and says when it is not allowed', async () => {
