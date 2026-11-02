@@ -1,7 +1,7 @@
 import { assertEquals } from '@std/assert';
 
-import { box, FTYP, mvhd, word } from './test-voice.ts';
-import { mp4Length } from './voice.ts';
+import { box, FTYP, mvhd, word } from '../coach-chat/test-voice.ts';
+import { mp4Length } from '../_shared/mp4.ts';
 
 const length = (...boxes: number[][]) => {
   const bytes = new Uint8Array(boxes.flat());
