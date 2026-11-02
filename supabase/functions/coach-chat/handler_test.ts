@@ -1689,14 +1689,23 @@ Deno.test('writes down no voice message whose answer is refused or kept nowhere'
   assertEquals(answer.at(-1), { event: 'error', reason: 'limit_reached', dropped: true });
   assertEquals(refused.objects.size, 0);
 
-  // The model blocks the answer: the app is told without waiting for what is written down.
-  const writer = new SlowWriter({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }, []);
+  // The model blocks the answer: the app is told without waiting for what is written down, which
+  // comes after the answer ended, and is sent nowhere.
+  const writer = new SlowWriter({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }, [
+    { type: 'text', text: 'Hi.' },
+  ]);
   const blocked = context(writer);
+  const kept: Promise<unknown>[] = [];
+  const runtime = globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } };
+  runtime.EdgeRuntime = { waitUntil: (work) => void kept.push(work) };
   try {
     const ended = await events(await handleChatRequest(ask(VOICE_MESSAGE), blocked.ctx));
     assertEquals(ended.at(-1), { event: 'error', reason: 'blocked', dropped: true });
     assertEquals(blocked.objects.size, 0);
+    writer.release();
+    assertEquals((await Promise.all(kept)).includes('Hi.'), true);
   } finally {
+    delete runtime.EdgeRuntime;
     writer.release();
   }
 });

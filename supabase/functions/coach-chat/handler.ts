@@ -200,12 +200,15 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   const body = new ReadableStream<Uint8Array>({
     start: (controller) => {
       const encoder = new TextEncoder();
+      // Closed once the answer ended; a transcript may still come after, as when nothing is kept.
+      let closed = false;
       const send = (event: ChatEvent) => {
-        if (stop.cancelled) return;
+        if (stop.cancelled || closed) return;
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
       return answer(request, media, { history, earlierCard }, context, send, stop).finally(() => {
+        closed = true;
         if (!stop.cancelled) controller.close();
         return keepAlive(stop.forget());
       });
