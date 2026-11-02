@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
+import { Icon, type IconName } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { Was } from '@/components/ui/was';
@@ -95,12 +95,12 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
       </View>
     );
   }
-  if (status === 'undone' || status === 'kept') {
+  if (status !== 'pending') {
     return (
       <DecidedLine
-        icon={status === 'undone' ? 'undo' : 'close'}
+        icon={DECIDED[status].icon}
         iconColor="textMuted"
-        text={t(status === 'undone' ? 'bite.proposal.undone' : 'bite.proposal.kept')}
+        text={t(DECIDED[status].text)}
       />
     );
   }
@@ -175,6 +175,16 @@ function ProposalBody({ card }: { card: Proposal }) {
       return <FoodLogChanges card={card} />;
   }
 }
+
+/**
+ * The line a proposal folds into once kept as things are, undone, or replaced by a newer one for
+ * the same workout (ADR 0077).
+ */
+const DECIDED = {
+  kept: { icon: 'close', text: 'bite.proposal.kept' },
+  undone: { icon: 'undo', text: 'bite.proposal.undone' },
+  replaced: { icon: 'redo', text: 'bite.proposal.replaced' },
+} as const satisfies Partial<Record<ProposalStatus, { icon: IconName; text: string }>>;
 
 /** The card's title, and when the change counts from, or the day it changes. */
 function Header({ title, tag }: { title: string; tag?: string | null }) {

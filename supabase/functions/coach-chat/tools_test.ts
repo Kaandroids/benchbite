@@ -210,10 +210,16 @@ type Row = Record<string, unknown>;
  * names, a few translated, and the user's own, one archived. Every query is filtered and cut to
  * its limit when it is read, as PostgREST does.
  */
-function searchContext(language: 'en' | 'de', more: Row[] = []) {
-  const library = (id: string, name: string, de?: string) => ({
+function searchContext(
+  language: 'en' | 'de',
+  more: Row[] = [],
+  /** More of the library, as `library()` takes them. */
+  extra: [string, string, string?, string?][] = [],
+) {
+  const library = (id: string, name: string, de?: string, target_kind = 'reps') => ({
     id,
     name,
+    target_kind,
     owner_id: null,
     archived_at: null,
     exercise_translations: de ? [{ language: 'de', name: de }] : [],
@@ -221,6 +227,7 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   const own = (id: string, name: string, archived_at: string | null = null) => ({
     id,
     name,
+    target_kind: 'reps',
     owner_id: 'user',
     archived_at,
     exercise_translations: [],
@@ -229,6 +236,7 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
     library('Side_Lateral_Raise', 'Side Lateral Raise', 'Seitheben'),
     library('Barbell_Squat', 'Barbell Squat', 'Kniebeuge'),
     ...more,
+    ...extra.map((args) => library(...args)),
     own('Landmine_Press', 'Landmine Press'),
     own('Old_Raise', 'Old Raise', '2026-10-01'),
   ];
@@ -289,8 +297,53 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   return { ...context, language, supabase: { from: query } } as unknown as ToolContext;
 }
 
-const search = (query: string, context: ToolContext) =>
-  runTool('search_exercises', { query }, context);
+/** The exercises one query finds, by their ids and names. */
+const search = async (query: string, context: ToolContext) => {
+  const [found] = (await runTool('search_exercises', { queries: [query] }, context)) as {
+    exercises: { id: string; name: string }[];
+  }[];
+  return found!.exercises.map(({ id, name }) => ({ id, name }));
+};
+
+Deno.test('searches a plural that finds nothing once more without its last s', async () => {
+  const [found] = (await runTool(
+    'search_exercises',
+    { queries: ['barbell squats'] },
+    searchContext('en'),
+  )) as { query: string; exercises: { id: string }[] }[];
+  assertEquals(found!.query, 'barbell squats');
+  assertEquals(
+    found!.exercises.map((e) => e.id),
+    ['Barbell_Squat'],
+  );
+});
+
+Deno.test('names the target each exercise found takes', async () => {
+  const found = (await runTool(
+    'search_exercises',
+    { queries: ['squat', 'plank'] },
+    searchContext('en', [], [['Plank', 'Plank', undefined, 'time']]),
+  )) as { exercises: unknown }[];
+  assertEquals(
+    found.map((result) => result.exercises),
+    [
+      [{ id: 'Barbell_Squat', name: 'Barbell Squat', target: 'reps' }],
+      [{ id: 'Plank', name: 'Plank', target: 'seconds' }],
+    ],
+  );
+});
+
+Deno.test('searches for several exercises at once, each by its query', async () => {
+  const found = await runTool(
+    'search_exercises',
+    { queries: ['lateral raise', 'Lateral Raise', 'squat'] },
+    searchContext('en'),
+  );
+  assertEquals(
+    (found as { query: string }[]).map((result) => result.query),
+    ['lateral raise', 'squat'],
+  );
+});
 
 Deno.test("finds exercises by their English name, named in the user's language", async () => {
   assertEquals(await search('lateral raise', searchContext('en')), [

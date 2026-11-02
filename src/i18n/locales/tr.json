@@ -1968,6 +1968,7 @@
       "applied": "Uygulandı: {{summary}}",
       "undone": "Geri alındı",
       "kept": "Olduğu gibi kaldı",
+      "replaced": "Aşağıdaki yeni öneriyle değiştirildi",
       "workoutsTitle_one": "{{count}} antrenman",
       "workoutsTitle_other": "{{count}} antrenman",
       "newAlternative": "Yeni alternatif",

@@ -1968,6 +1968,7 @@
       "applied": "Übernommen: {{summary}}",
       "undone": "Rückgängig gemacht",
       "kept": "So gelassen",
+      "replaced": "Ersetzt durch den neueren Vorschlag unten",
       "workoutsTitle_one": "{{count}} Workout",
       "workoutsTitle_other": "{{count}} Workouts",
       "newAlternative": "Neue Alternative",

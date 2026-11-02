@@ -1968,6 +1968,7 @@
       "applied": "Applied: {{summary}}",
       "undone": "Undone",
       "kept": "Kept as it is",
+      "replaced": "Replaced by the newer proposal below",
       "workoutsTitle_one": "{{count}} workout",
       "workoutsTitle_other": "{{count}} workouts",
       "newAlternative": "New alternative",

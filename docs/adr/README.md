@@ -91,3 +91,5 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0073](0073-recording-and-playing-voice-messages.md)                  | Voice messages are held to record, in mono AAC, and played by one player per chat       | Accepted                                   |
 | [0074](0074-keep-fields-above-the-keyboard.md)                        | Keep fields above the keyboard with padding measured in the window                      | Accepted                                   |
 | [0075](0075-bite-proposes-alternatives.md)                            | Bite proposes alternatives for temporary changes, and edits several workouts at once    | Accepted                                   |
+| [0076](0076-bite-searches-many-exercises-in-one-lookup.md)            | Bite searches many exercises in one lookup, in up to five rounds                        | Accepted                                   |
+| [0077](0077-a-newer-proposal-replaces-older-ones.md)                  | A newer proposal for a workout replaces the older ones pending for it                   | Accepted                                   |
