@@ -90,16 +90,18 @@ type IconProps = {
   name: IconName;
   size?: number;
   color?: keyof ColorTokens;
+  /** A colour of its own instead, for a screen that keeps one scheme whatever the theme. */
+  fixedColor?: string;
 };
 
 /** Decorative by default; give the surrounding control an accessibility label instead. */
-export function Icon({ name, size = 24, color = 'text' }: IconProps) {
+export function Icon({ name, size = 24, color = 'text', fixedColor }: IconProps) {
   const { colors } = useTheme();
   return (
     <SymbolView
       name={ICONS[name]}
       size={size}
-      tintColor={colors[color]}
+      tintColor={fixedColor ?? colors[color]}
       weight="semibold"
       accessible={false}
       importantForAccessibility="no"
