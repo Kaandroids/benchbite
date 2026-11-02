@@ -12,6 +12,7 @@ export const ICONS = {
   arrowUp: { ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' },
   average: { ios: 'slash.circle', android: 'block', web: 'block' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
+  barcode: { ios: 'barcode.viewfinder', android: 'barcode_scanner', web: 'barcode_scanner' },
   bell: { ios: 'bell', android: 'notifications', web: 'notifications' },
   bellOff: { ios: 'bell.slash', android: 'notifications_off', web: 'notifications_off' },
   bolt: { ios: 'bolt', android: 'bolt', web: 'bolt' },
