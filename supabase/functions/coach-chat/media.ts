@@ -17,7 +17,8 @@ export async function keepFile(
   bytes: Uint8Array,
   contentType: keyof typeof EXTENSIONS,
 ): Promise<string | undefined> {
-  const path = `${threadMediaFolder(userId, threadId)}/${crypto.randomUUID()}.${EXTENSIONS[contentType]}`;
+  const name = `${crypto.randomUUID()}.${EXTENSIONS[contentType]}`;
+  const path = `${threadMediaFolder(userId, threadId)}/${name}`;
   const { error } = await admin.storage
     .from(MEDIA_BUCKET)
     .upload(path, bytes, { contentType, upsert: false });

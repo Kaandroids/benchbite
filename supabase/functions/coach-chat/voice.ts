@@ -8,8 +8,9 @@ import {
   type ChatVoice,
   type ChatVoicePart,
   MAX_VOICE_BYTES,
+  MAX_VOICE_BYTES_PER_SECOND,
   MAX_VOICE_SECONDS,
-  VOICE_REFUSALS,
+  type VoiceRefusal,
 } from '../_shared/coach/chat.ts';
 import { type Part, textOf } from '../_shared/llm/mod.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
@@ -18,15 +19,16 @@ import { keepFile } from './media.ts';
 /** A voice message that passed the checks: its bytes to keep, its base64 data for the model. */
 export type CheckedVoice = { bytes: Uint8Array; data: string; durationMs: number };
 
-export type VoiceRefusal = (typeof VOICE_REFUSALS)[number];
-
 /** How much longer than the limit a voice message may be: the recorder stops a moment after it. */
 const VOICE_SLACK_MS = 1000;
+
+/** Room for a voice message's boxes beside its audio, in bytes, which a short one weighs most by. */
+const VOICE_HEADER_BYTES = 16_000;
 
 /**
  * Checks a voice message, as base64 data, before anything is sent or kept: within its size, an MP4
  * file, which AAC audio is kept in, and within its length, as the file itself gives it, not the
- * app. Gives it with its bytes and length, or why it is refused.
+ * app, and as its weight bears out. Gives it with its bytes and length, or why it is refused.
  */
 export function checkVoice(voice: ChatVoice): CheckedVoice | VoiceRefusal {
   if (decodedBytes(voice.data) > MAX_VOICE_BYTES) return 'voice_too_large';
@@ -36,6 +38,9 @@ export function checkVoice(voice: ChatVoice): CheckedVoice | VoiceRefusal {
   const durationMs = mp4Length(view);
   if (!durationMs) return 'voice_not_m4a';
   if (durationMs > MAX_VOICE_SECONDS * 1000 + VOICE_SLACK_MS) return 'voice_too_long';
+  // A header can say less than the file holds.
+  const heaviest = (durationMs / 1000) * MAX_VOICE_BYTES_PER_SECOND + VOICE_HEADER_BYTES;
+  if (bytes.length > heaviest) return 'voice_too_long';
   return { bytes, data: voice.data, durationMs };
 }
 
@@ -79,6 +84,7 @@ export function mp4Length(view: DataView): number | undefined {
   if (!mvhd) return undefined;
   // After its version and flags, and its times of creation and change: 4 bytes each, or 8 in
   // version 1. Then its time scale, and its duration in it.
+  if (mvhd.start >= mvhd.end) return undefined;
   const wide = view.getUint8(mvhd.start) === 1;
   const at = mvhd.start + (wide ? 20 : 12);
   if (at + (wide ? 12 : 8) > mvhd.end) return undefined;
@@ -92,7 +98,10 @@ export function audioPart(voice: CheckedVoice): Part {
   return { type: 'audio', mimeType: 'audio/mp4', data: voice.data };
 }
 
-/** Keeps a voice message, and gives the message's part that names it, or nothing when it could not be kept. */
+/**
+ * Keeps a voice message, and gives the message's part that names it, or nothing when it could not
+ * be kept.
+ */
 export async function storeVoice(
   admin: Client,
   userId: string,
@@ -105,7 +114,7 @@ export async function storeVoice(
 }
 
 /** What the model is told to write down a voice message by. */
-export const TRANSCRIBE =
+const TRANSCRIBE =
   'Write down exactly what the speaker says, in the language they speak, with punctuation. Give only the words said, nothing else. If nothing is said, give nothing.';
 
 /**

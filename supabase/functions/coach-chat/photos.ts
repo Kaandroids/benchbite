@@ -62,8 +62,9 @@ export function readJpeg(bytes: Uint8Array): { width: number; height: number } |
 }
 
 /**
- * Keeps the photos of a message, and gives the message's parts that name them, or nothing when one could not be kept, after removing those
- * that were. The bucket refuses what is not a JPEG or larger than a photo may be.
+ * Keeps the photos of a message, and gives the message's parts that name them, or nothing when
+ * one could not be kept, after removing those that were. The bucket refuses what is not a JPEG or
+ * larger than a photo may be.
  */
 export async function storePhotos(
   admin: Client,

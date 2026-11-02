@@ -46,6 +46,12 @@ export const MAX_VOICE_SECONDS = 60;
 export const MAX_VOICE_BYTES = 1_000_000;
 
 /**
+ * The most a second of a voice message may weigh, 256 kbit/s, twice what the app records at: a
+ * file that weighs more for the length its header gives holds more audio than it says.
+ */
+export const MAX_VOICE_BYTES_PER_SECOND = 32_000;
+
+/**
  * A voice message as the message keeps it: its path in `coach-media` and its length. What was
  * said is the message's text part, as written down for it.
  */
@@ -95,6 +101,8 @@ export type PhotoRefusal = Exclude<(typeof PHOTO_REFUSALS)[number], 'photos_too_
 
 /** Why a voice message is refused: too large, too long, or not AAC in an MP4 container. */
 export const VOICE_REFUSALS = ['voice_too_large', 'voice_too_long', 'voice_not_m4a'] as const;
+
+export type VoiceRefusal = (typeof VOICE_REFUSALS)[number];
 
 /**
  * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather

@@ -8,6 +8,7 @@ import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
 import { CARD_MISSING, NO_LOOKUPS_LEFT, NOTE_ASKED, SAID_ALREADY } from './prompt.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
+import { m4a } from './test-voice.ts';
 
 type Row = Record<string, unknown>;
 
@@ -1558,22 +1559,6 @@ Deno.test("takes a card's meal from the device's local time when the user named 
   );
 });
 
-/** An MP4 file's boxes the function reads: its type, and the movie's header, giving its length. */
-function m4a(ms: number): Uint8Array {
-  const word = (n: number) => [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
-  const type = (name: string) => [...name].map((c) => c.charCodeAt(0));
-  const ftyp = [...word(16), ...type('ftyp'), ...type('M4A '), ...word(512)];
-  const mvhd = [
-    ...word(28),
-    ...type('mvhd'),
-    ...word(0),
-    ...word(0),
-    ...word(0),
-    ...word(1000),
-    ...word(ms),
-  ];
-  return new Uint8Array([...ftyp, ...word(8 + mvhd.length), ...type('moov'), ...mvhd]);
-}
 const M4A = m4a(4200);
 const VOICE = { mimeType: 'audio/mp4', data: toBase64(M4A) };
 const VOICE_MESSAGE = { ...MESSAGE, message: '', voice: VOICE };
@@ -1741,6 +1726,11 @@ Deno.test(
     assertEquals(
       await refusal({ ...VOICE_MESSAGE, voice: { ...VOICE, data: toBase64(M4A.subarray(0, 16)) } }),
       [415, 'voice_not_m4a'],
+    );
+    // Nor from its header alone: a file that weighs more than its length bears holds more.
+    assertEquals(
+      await refusal({ ...VOICE_MESSAGE, voice: { ...VOICE, data: toBase64(m4a(1000, 60_000)) } }),
+      [413, 'voice_too_long'],
     );
     // A voice message goes alone.
     assertEquals(await refusal({ ...VOICE_MESSAGE, message: 'And this?' }), [
