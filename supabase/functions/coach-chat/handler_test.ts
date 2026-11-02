@@ -24,8 +24,8 @@ type Failures = {
  * function giving it, and what is inserted, updated and deleted, which the service role writes. Every
  * query resolves with all of a table's rows. Like the real ones, it keeps the threads there are,
  * refuses messages of a thread that is not or is gone and more parts than a message may hold, and
- * its storage has the `coach-media` bucket alone, which takes new JPEG files of at most 1.5 MB, and
- * keeps what is in it.
+ * its storage has the `coach-media` bucket alone, which takes new JPEG and MP4 files of at most
+ * 1.5 MB, and keeps what is in it.
  */
 function database(
   rpc: Record<string, unknown> = {},
@@ -120,7 +120,7 @@ function database(
         ) => {
           const upload = uploads++;
           if (bucket !== MEDIA_BUCKET) return Promise.resolve(refused('404', 'Bucket not found'));
-          if (options.contentType !== 'image/jpeg') {
+          if (options.contentType !== 'image/jpeg' && options.contentType !== 'audio/mp4') {
             return Promise.resolve(refused('415', 'mime type not supported'));
           }
           if (body.byteLength > 1_500_000) return Promise.resolve(refused('413', 'Too large'));
@@ -1554,6 +1554,121 @@ Deno.test("takes a card's meal from the device's local time when the user named 
     answer.filter((e) => e.event === 'meal_card'),
     [{ event: 'meal_card', mealCard: { ...MEAL_CARD, meal: 'lunch' } }],
   );
+});
+
+/** A few bytes that start as an MP4 file does, which is all the function looks at. */
+const M4A = new Uint8Array([
+  0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20, 0, 0, 2, 0,
+]);
+const VOICE = { mimeType: 'audio/mp4', data: toBase64(M4A), durationMs: 4200 };
+const VOICE_MESSAGE = { ...MESSAGE, message: '', voice: VOICE };
+
+Deno.test('hears a voice message in its turn, and keeps it with what was said', async () => {
+  const model = new FakeModel(
+    // Written down, as a request of its own feature.
+    [{ type: 'text', text: ' Had a chicken rice bowl for lunch. ' }],
+    SURE,
+  );
+  const { ctx, inserted, objects } = context(model);
+
+  const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
+
+  const [written, chat] = model.requests;
+  assertEquals(written.task, 'coach_voice');
+  assertEquals(written.messages[0].parts, [
+    { type: 'audio', mimeType: 'audio/mp4', data: VOICE.data },
+  ]);
+  assertEquals(chat.task, 'coach_chat');
+  assertEquals(chat.messages[0].parts.slice(1), [
+    { type: 'audio', mimeType: 'audio/mp4', data: VOICE.data },
+    { type: 'text', text: '<message>\n(A voice message, heard above.)\n</message>' },
+  ]);
+  assertEquals(
+    answer.find((event) => event.event === 'transcript'),
+    { event: 'transcript', text: 'Had a chicken rice bowl for lunch.' },
+  );
+
+  const [voice, said] = inserted[1].rows[0].content as Record<string, unknown>[];
+  const { path, ...rest } = voice as { path: string };
+  assertEquals(rest, { type: 'audio', mimeType: 'audio/mp4', durationMs: 4200 });
+  assertEquals(/^user-1\/100\/[0-9a-f-]{36}\.m4a$/.test(path), true, path);
+  assertEquals(objects.get(path), M4A);
+  assertEquals(said, { type: 'text', text: 'Had a chicken rice bowl for lunch.' });
+});
+
+Deno.test('keeps a voice message nothing could be written down of, without text', async () => {
+  const { ctx, inserted } = context(new FakeModel([], SURE));
+
+  const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
+
+  assertEquals(
+    answer.some((event) => event.event === 'transcript'),
+    false,
+  );
+  assertEquals(
+    (inserted[1].rows[0].content as { type: string }[]).map((part) => part.type),
+    ['audio'],
+  );
+});
+
+Deno.test(
+  'refuses a voice message it does not take, before anything is asked or kept',
+  async () => {
+    const model = new FakeModel();
+    const { ctx, inserted, objects } = context(model);
+    const refusal = async (body: unknown) => {
+      const response = await handleChatRequest(ask(body), ctx);
+      return [response.status, (await response.json()).error];
+    };
+
+    assertEquals(
+      await refusal({ ...VOICE_MESSAGE, voice: { ...VOICE, data: toBase64(PLAIN_JPEG) } }),
+      [415, 'voice_not_m4a'],
+    );
+    const large = new Uint8Array(1_000_001);
+    large.set(M4A);
+    assertEquals(await refusal({ ...VOICE_MESSAGE, voice: { ...VOICE, data: toBase64(large) } }), [
+      413,
+      'voice_too_large',
+    ]);
+    // A voice message goes alone.
+    assertEquals(await refusal({ ...VOICE_MESSAGE, message: 'And this?' }), [
+      400,
+      'invalid_request',
+    ]);
+    assertEquals(model.requests.length, 0);
+    assertEquals(inserted.length, 0);
+    assertEquals(objects.size, 0);
+  },
+);
+
+Deno.test('reads an earlier voice message as what was said in it', async () => {
+  const model = new FakeModel(SURE);
+  const { ctx } = context(
+    model,
+    {},
+    {
+      coach_threads: [{ id: 7 }],
+      coach_messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'audio', path: 'p/1.m4a', mimeType: 'audio/mp4', durationMs: 4200 },
+            { type: 'text', text: 'Had a chicken rice bowl.' },
+          ],
+        },
+      ],
+    },
+  );
+
+  await (await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx)).text();
+
+  assertEquals(model.requests[0].messages[0], {
+    role: 'user',
+    parts: [
+      { type: 'text', text: '(Sent a voice message, which said:)\nHad a chicken rice bowl.' },
+    ],
+  });
 });
 
 Deno.test('logs a meal from photos as a card, and reads both back later', async () => {
