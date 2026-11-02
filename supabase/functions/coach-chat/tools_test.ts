@@ -289,8 +289,25 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   return { ...context, language, supabase: { from: query } } as unknown as ToolContext;
 }
 
-const search = (query: string, context: ToolContext) =>
-  runTool('search_exercises', { query }, context);
+/** The exercises one query finds. */
+const search = async (query: string, context: ToolContext) => {
+  const [found] = (await runTool('search_exercises', { queries: [query] }, context)) as {
+    exercises: unknown;
+  }[];
+  return found!.exercises;
+};
+
+Deno.test('searches for several exercises at once, each by its query', async () => {
+  const found = await runTool(
+    'search_exercises',
+    { queries: ['lateral raise', 'lateral raise', 'squat'] },
+    searchContext('en'),
+  );
+  assertEquals(
+    (found as { query: string }[]).map((result) => result.query),
+    ['lateral raise', 'squat'],
+  );
+});
 
 Deno.test("finds exercises by their English name, named in the user's language", async () => {
   assertEquals(await search('lateral raise', searchContext('en')), [
