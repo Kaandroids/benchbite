@@ -2060,8 +2060,6 @@
     "yearlyPerMonth": "That is {{price}} a month",
     "cancelAnytime": "Cancel anytime",
     "trialEnding": {
-      "title_one": "{{count}} day left",
-      "title_other": "{{count}} days left",
       "chats_one": "chat",
       "chats_other": "chats",
       "photos_one": "meal photo",
@@ -2071,7 +2069,16 @@
       "keepYearly": "Keep premium, yearly",
       "keepMonthly": "Keep premium, monthly",
       "cancel": "Cancel the subscription",
-      "subtitle": "in your free week"
+      "kicker": "Free week · day {{day}} of {{total}}",
+      "startsOn": "Premium starts on {{day}}.",
+      "together_one": "One more day together!",
+      "together_other": "{{count}} more days together!",
+      "today": "Today",
+      "usedDays_one": "You used Bite on {{count}} day",
+      "usedDays_other": "You used Bite on {{count}} days",
+      "yearlyNote": "{{price}} a month, billed once a year",
+      "kept": "Whatever you choose, nothing you made is deleted.",
+      "title": "Your trial summary"
     },
     "offer": {
       "endsIn": "Ends in {{time}}",
@@ -2089,6 +2096,7 @@
       "alternatives_other": "alternatives",
       "chats_one": "chat with Bite",
       "chats_other": "chats with Bite"
-    }
+    },
+    "bestValue": "Best value"
   }
 }

@@ -2060,8 +2060,6 @@
     "yearlyPerMonth": "Das sind {{price}} pro Monat",
     "cancelAnytime": "Jederzeit kündbar",
     "trialEnding": {
-      "title_one": "Noch {{count}} Tag",
-      "title_other": "Noch {{count}} Tage",
       "chats_one": "Chat",
       "chats_other": "Chats",
       "photos_one": "Foto-Mahlzeit",
@@ -2071,7 +2069,16 @@
       "keepYearly": "Premium behalten, jährlich",
       "keepMonthly": "Premium behalten, monatlich",
       "cancel": "Abo kündigen",
-      "subtitle": "in deiner Gratiswoche"
+      "kicker": "Gratiswoche · Tag {{day}} von {{total}}",
+      "startsOn": "Premium beginnt am {{day}}.",
+      "together_one": "Noch ein Tag zusammen!",
+      "together_other": "Noch {{count}} Tage zusammen!",
+      "today": "Heute",
+      "usedDays_one": "Du hast Bite an {{count}} Tag genutzt",
+      "usedDays_other": "Du hast Bite an {{count}} Tagen genutzt",
+      "yearlyNote": "{{price}} pro Monat, einmal im Jahr berechnet",
+      "kept": "Was du auch wählst, nichts von dir wird gelöscht.",
+      "title": "Deine Testwoche im Überblick"
     },
     "offer": {
       "endsIn": "Endet in {{time}}",
@@ -2089,6 +2096,7 @@
       "alternatives_other": "Alternativen",
       "chats_one": "Chat mit Bite",
       "chats_other": "Chats mit Bite"
-    }
+    },
+    "bestValue": "Bester Preis"
   }
 }

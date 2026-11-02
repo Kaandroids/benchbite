@@ -2060,8 +2060,6 @@
     "yearlyPerMonth": "Ayda {{price}} ediyor",
     "cancelAnytime": "İstediğin zaman iptal et",
     "trialEnding": {
-      "title_one": "{{count}} gün kaldı",
-      "title_other": "{{count}} gün kaldı",
       "chats_one": "sohbet",
       "chats_other": "sohbet",
       "photos_one": "fotoğraflı öğün",
@@ -2071,7 +2069,16 @@
       "keepYearly": "Premium'da kal, yıllık",
       "keepMonthly": "Premium'da kal, aylık",
       "cancel": "Aboneliği iptal et",
-      "subtitle": "ücretsiz haftanın bitmesine"
+      "kicker": "Ücretsiz hafta · {{day}}. gün / {{total}}",
+      "startsOn": "Premium {{day}} başlıyor.",
+      "together_one": "Birlikte bir gün daha!",
+      "together_other": "Birlikte {{count}} gün daha!",
+      "today": "Bugün",
+      "usedDays_one": "Bite'ı {{count}} gün kullandın",
+      "usedDays_other": "Bite'ı {{count}} gün kullandın",
+      "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
+      "kept": "Ne seçersen seç, yaptığın hiçbir şey silinmez.",
+      "title": "Deneme özetin"
     },
     "offer": {
       "endsIn": "{{time}} sonra bitiyor",
@@ -2089,6 +2096,7 @@
       "alternatives_other": "alternatif",
       "chats_one": "Bite sohbeti",
       "chats_other": "Bite sohbeti"
-    }
+    },
+    "bestValue": "En avantajlı"
   }
 }
