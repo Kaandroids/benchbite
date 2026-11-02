@@ -23,25 +23,6 @@ export type Database = {
   };
   public: {
     Tables: {
-      ai_budgets: {
-        Row: {
-          monthly_limit_usd: number;
-          updated_at: string;
-          user_id: string;
-        };
-        ComputedFields: never;
-        Insert: {
-          monthly_limit_usd: number;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          monthly_limit_usd?: number;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
       ai_calls_in_flight: {
         Row: {
           call_id: string;
@@ -1104,6 +1085,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      plans: {
+        Row: {
+          added_alternatives: number | null;
+          budget_usd: number;
+          exercises: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_budget_usd: number | null;
+          weekly_free_usd: number | null;
+          weekly_photos: number | null;
+          workouts: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          added_alternatives?: number | null;
+          budget_usd: number;
+          exercises: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_budget_usd?: number | null;
+          weekly_free_usd?: number | null;
+          weekly_photos?: number | null;
+          workouts: number;
+        };
+        Update: {
+          added_alternatives?: number | null;
+          budget_usd?: number;
+          exercises?: number;
+          plan?: Database['public']['Enums']['plan'];
+          versions?: number;
+          weekly_budget_usd?: number | null;
+          weekly_free_usd?: number | null;
+          weekly_photos?: number | null;
+          workouts?: number;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -1362,6 +1380,37 @@ export type Database = {
         Update: {
           day?: string;
           result?: Database['public']['Enums']['streak_state'];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          billing: string;
+          period_end: string;
+          period_start: string;
+          plan: Database['public']['Enums']['plan'];
+          source: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          billing: string;
+          period_end: string;
+          period_start: string;
+          plan: Database['public']['Enums']['plan'];
+          source: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          billing?: string;
+          period_end?: string;
+          period_start?: string;
+          plan?: Database['public']['Enums']['plan'];
+          source?: string;
+          updated_at?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -2055,7 +2104,18 @@ export type Database = {
           times: number;
         }[];
       };
+      give_plan: {
+        Args: {
+          billing?: string;
+          email: string;
+          ends: string;
+          plan?: Database['public']['Enums']['plan'];
+          starts: string;
+        };
+        Returns: string;
+      };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
@@ -2288,6 +2348,8 @@ export type Database = {
           workout_id: number;
         }[];
       };
+      plan_grace: { Args: Record<PropertyKey, never>; Returns: string };
+      plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
@@ -2709,6 +2771,7 @@ export type Database = {
         | 'shoulders'
         | 'traps'
         | 'triceps';
+      plan: 'free' | 'trial' | 'premium';
       plan_slot:
         | 'squat'
         | 'hinge'
@@ -2978,6 +3041,7 @@ export const Constants = {
         'traps',
         'triceps',
       ],
+      plan: ['free', 'trial', 'premium'],
       plan_slot: [
         'squat',
         'hinge',
