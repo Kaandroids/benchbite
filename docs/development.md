@@ -110,13 +110,12 @@ Vault once, and again after `pnpm supabase db reset`:
 pnpm vault:local
 ```
 
-AI comes with a plan, so a user has no budget for it until they get one
-([ADR 0051](adr/0051-ai-usage-and-a-monthly-limit.md)). To give your local account one, run
-in Studio's SQL editor:
+AI comes with premium, so a user has no budget for it until they have it
+([ADR 0078](adr/0078-a-premium-plan-with-a-trial.md)). To give your local account a year of
+premium, run in Studio's SQL editor:
 
 ```sql
-insert into public.ai_budgets (user_id, monthly_limit_usd)
-select id, 4 from auth.users where email = 'you@example.com';
+select public.give_plan('you@example.com', now(), now() + interval '1 year');
 ```
 
 ## Run the app
