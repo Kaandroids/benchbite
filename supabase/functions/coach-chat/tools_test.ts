@@ -179,8 +179,22 @@ function planContext(
     return builder;
   };
   const supabase = {
-    from: (table: string) =>
-      query(table === 'workouts' ? (Array.isArray(workout) ? workout : [workout]) : NAMES),
+    from: (table: string) => {
+      const workouts = Array.isArray(workout) ? workout : [workout];
+      if (table === 'workouts') return query(workouts);
+      // Each alternative with its workout, as PostgREST embeds it.
+      if (table === 'workout_alternatives') {
+        return query(
+          workouts.flatMap((w) =>
+            (w.workout_alternatives as Row[]).map((a) => ({
+              ...a,
+              workouts: { name: w.name, type: w.type },
+            })),
+          ),
+        );
+      }
+      return query(NAMES);
+    },
     rpc: (name: string, args: unknown) => {
       calls.push({ name, args });
       return Promise.resolve({ data: null, error: null, ...rpc[name] });

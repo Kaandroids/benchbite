@@ -7,7 +7,6 @@
 import { z } from 'zod';
 
 import type {
-  CardAlternative,
   CoachToolName,
   DayTargets,
   ExerciseChanges,
@@ -128,8 +127,10 @@ const EDIT = {
 
 type Edit = z.infer<z.ZodObject<typeof EDIT>>;
 
-/** An alternative's name, as the app shows it in a chip. */
-const ALTERNATIVE_NAME = z.string().trim().min(1).max(12);
+/** The longest alternative name, as workout_alternatives' check allows and the app's chips show. */
+const ALTERNATIVE_NAME_LENGTH = 12;
+
+const ALTERNATIVE_NAME = z.string().trim().min(1).max(ALTERNATIVE_NAME_LENGTH);
 
 /**
  * What the database's refusals mean, by their code, for the model to correct what it sent; what
@@ -477,8 +478,17 @@ const TOOLS = [
         }),
     }),
     run: async ({ workouts: edits }, { supabase, language, today, threadId }) => {
-      const plan = read(await planWorkouts(supabase));
-      const changed = edits.map((edit) => plan.find((w) => w.id === edit.workoutId));
+      const found = read(
+        await supabase
+          .from('workouts')
+          .select('id, name, type, weekdays')
+          .eq('active', true)
+          .in(
+            'id',
+            edits.map((edit) => edit.workoutId),
+          ),
+      );
+      const changed = edits.map((edit) => found.find((w) => w.id === edit.workoutId));
       if (changed.some((workout) => !workout)) {
         return { error: REFUSALS.meanings.BB006 };
       }
@@ -511,8 +521,7 @@ const TOOLS = [
   tool({
     name: 'propose_alternative',
     proposes: 'alternative',
-    description:
-      "Proposes a new alternative of one of the user's workouts for a while, as for pain, an injury, travel or a gym closed: the version in use with exercises swapped, removed or added, put in use when the user applies it. The workout's other alternatives stay as they are, to switch back to. It changes nothing itself. Name it in the user's language, in at most 12 characters, as no alternative of the workout is named. When the workout has no alternatives yet, name the version in use now too (currentName), as Gym. Take the ids as for propose_workout_change.",
+    description: `Proposes a new alternative of one of the user's workouts for a while, as for pain, an injury, travel or a gym closed: the version in use with exercises swapped, removed or added, put in use when the user applies it. The workout's other alternatives stay as they are, to switch back to. It changes nothing itself. Name it in the user's language, in at most ${ALTERNATIVE_NAME_LENGTH} characters, as no alternative of the workout is named. When the workout has no alternatives yet, name the version in use now too (currentName), as Gym. Take the ids as for propose_workout_change`,
     args: z.object({
       workoutId: z.number().int().positive(),
       name: ALTERNATIVE_NAME.describe("The new alternative's name, as Knee-safe or Hotel."),
@@ -540,7 +549,7 @@ const TOOLS = [
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
       // The alternative it is made from, as applying names it, which the database gives.
-      const made = proposed.data as { id: number; from: CardAlternative };
+      const made = proposed.data as Pick<AlternativeCard, 'id' | 'from'>;
       const proposal: ProposalCard = {
         kind: 'alternative',
         id: made.id,
@@ -559,12 +568,18 @@ const TOOLS = [
       "Proposes putting another alternative of one of the user's workouts in use, as the usual one again once the user is better. The one in use now is kept, to switch to again. It changes nothing itself. Take the alternative's id from get_workouts.",
     args: z.object({ alternativeId: z.number().int().positive() }),
     run: async ({ alternativeId }, { supabase, language, today, threadId }) => {
-      const plan = read(await planWorkouts(supabase));
-      const workout = plan.find((w) => w.workout_alternatives.some((a) => a.id === alternativeId));
-      if (!workout) return { error: REFUSALS.meanings.P0002 };
+      const found = await supabase
+        .from('workout_alternatives')
+        .select('exercises, workouts!inner (name, type)')
+        .eq('id', alternativeId)
+        .eq('workouts.active', true)
+        .maybeSingle();
+      if (found.error) throw found.error;
+      const next = found.data;
+      if (!next) return { error: REFUSALS.meanings.P0002 };
+      const workout = next.workouts;
       // Named before proposing, so that a proposal is never left without its card: the exercises
       // that may come back are the alternative's.
-      const next = workout.workout_alternatives.find((a) => a.id === alternativeId)!;
       const names = await exerciseNames(
         supabase,
         language,
@@ -577,13 +592,8 @@ const TOOLS = [
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
       // What applying switches between, as the database read it for the proposal.
-      const made = proposed.data as {
-        id: number;
-        from: CardAlternative;
-        to: CardAlternative;
-        back: string[];
-        empty: boolean;
-      };
+      // The exercises that come back by their ids, which the card names.
+      const made = proposed.data as Omit<SwitchCard, 'kind' | 'workout'>;
       const proposal: ProposalCard = {
         kind: 'alternative_switch',
         id: made.id,
@@ -1112,6 +1122,9 @@ type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
 function kept(exercises: unknown) {
   return Array.isArray(exercises) ? (exercises as Kept[]) : [];
 }
+
+type AlternativeCard = Extract<ProposalCard, { kind: 'alternative' }>;
+type SwitchCard = Extract<ProposalCard, { kind: 'alternative_switch' }>;
 
 /** One of the user's active workouts, by its id, with what its card names it by. */
 function workoutForCard(supabase: Client, id: number) {

@@ -646,9 +646,8 @@ function proposalText(proposal: ProposalCard): string {
       proposal.from,
     )} to ${alternativeName(proposal.to)}.)`;
   }
-  const workout = workoutName(proposal.workout);
-  const swaps = proposal.swaps.map((swap) => `${swap.from} → ${swap.to}`).join(', ');
-  return `(Proposed for ${workout}: ${swaps}.)`;
+  const swaps = changesText({ swaps: proposal.swaps, removed: [], added: [] });
+  return `(Proposed for ${workoutName(proposal.workout)}: ${swaps}.)`;
 }
 
 /** What a card changes in a workout's exercises, as Bite reads it back. */
