@@ -86,10 +86,10 @@ const RENEW_MS = SIGNED_MS / 2;
 const KEPT_AFTER_CLOSE_MS = RENEW_MS - 5 * 60 * 1000;
 
 /**
- * Short-lived addresses of photos in `coach-media`, by path, which the user may read under the
+ * Short-lived addresses of photos and voice messages in `coach-media`, by path, which the user may read under the
  * bucket's policies (ADR 0062), asked for in one request.
  */
-export async function photoUrls(paths: string[]): Promise<Map<string, string>> {
+export async function mediaUrls(paths: string[]): Promise<Map<string, string>> {
   const { data, error } = await supabase.storage
     .from(MEDIA_BUCKET)
     .createSignedUrls([...new Set(paths)], SIGNED_MS / 1000);
@@ -99,12 +99,12 @@ export async function photoUrls(paths: string[]): Promise<Map<string, string>> {
   );
 }
 
-/** The addresses of the photos a chat keeps, read once for the chat when it opens. */
-export function usePhotoUrls(threadId: number | undefined, paths: string[]) {
+/** The addresses of the photos and voice messages a chat keeps, read once as it opens. */
+export function useMediaUrls(threadId: number | undefined, paths: string[]) {
   return useQuery({
     queryKey: ['coach-media', threadId, paths],
     enabled: paths.length > 0,
-    queryFn: () => photoUrls(paths),
+    queryFn: () => mediaUrls(paths),
     staleTime: RENEW_MS,
     refetchInterval: RENEW_MS,
     gcTime: KEPT_AFTER_CLOSE_MS,
