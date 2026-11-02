@@ -135,8 +135,8 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
           styles.row,
           {
             gap: spacing.sm,
-            marginTop: spacing.md,
-            paddingTop: spacing.md,
+            marginTop: spacing.lg,
+            paddingTop: spacing.lg,
             borderTopWidth: StyleSheet.hairlineWidth,
             borderTopColor: colors.border,
           },
