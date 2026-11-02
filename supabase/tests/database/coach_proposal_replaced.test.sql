@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
 
@@ -90,6 +90,14 @@ select is(pg_temp.status('second'), 'replaced', 'A proposal for its workouts and
 insert into ids select 'third', pg_temp.propose('thread', 'legs', 'Barbell_Squat');
 select is(pg_temp.status('both'), 'pending', 'One for fewer workouts leaves it, so that no change is lost');
 select is(pg_temp.status('third'), 'pending', 'and is pending beside it');
+
+-- One of another kind, which could not hold it, leaves it.
+insert into ids select 'alt', (public.propose_coach_alternative(
+  pg_temp.id('thread'), pg_temp.id('legs'), 'Knee-safe', 'Gym', '{"remove": ["Plank"]}', current_date
+) ->> 'id')::bigint;
+insert into ids select 'after', pg_temp.propose('thread', 'legs', 'Plank');
+select is(pg_temp.status('alt'), 'pending', 'A change leaves an alternative pending for its workout');
+select is(pg_temp.status('third'), 'replaced', 'and replaces a change');
 
 select * from finish();
 rollback;
