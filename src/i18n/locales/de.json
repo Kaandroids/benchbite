@@ -2050,5 +2050,38 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "billing": "Wie du zahlst",
+    "yearlySave": "Jährlich · −{{percent}} %",
+    "monthly": "Monatlich",
+    "perYearFrom": "pro Jahr ab {{date}}",
+    "perMonthFrom": "pro Monat ab {{date}}",
+    "yearlyPerMonth": "Das sind {{price}} pro Monat",
+    "cancelAnytime": "Jederzeit kündbar",
+    "trialEnding": {
+      "title_one": "Deine Gratiswoche endet morgen",
+      "title_other": "Deine Gratiswoche endet in {{count}} Tagen",
+      "chats_one": "Chat",
+      "chats_other": "Chats",
+      "photos_one": "Foto-Mahlzeit",
+      "photos_other": "Foto-Mahlzeiten",
+      "reviews_one": "Rückblick",
+      "reviews_other": "Rückblicke",
+      "keepYearly": "Premium behalten, jährlich",
+      "keepMonthly": "Premium behalten, monatlich",
+      "cancel": "Abo kündigen"
+    },
+    "offer": {
+      "endsIn": "Endet in {{time}}",
+      "kicker": "Nur für dich",
+      "title": "Komm zurück zu Bite, für weniger",
+      "text": "Deine Trainings und Alternativen warten auf dich.",
+      "usual": "Sonst {{price}}",
+      "firstYear": "für dein erstes Jahr",
+      "then": "Danach {{price}} pro Jahr",
+      "claim": "−{{percent}} % sichern",
+      "legal": "Heute berechnet. Jederzeit kündbar."
+    }
   }
 }

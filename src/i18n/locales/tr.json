@@ -2050,5 +2050,38 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "billing": "Nasıl ödersin",
+    "yearlySave": "Yıllık · −%{{percent}}",
+    "monthly": "Aylık",
+    "perYearFrom": "{{date}} tarihinden itibaren yıllık",
+    "perMonthFrom": "{{date}} tarihinden itibaren aylık",
+    "yearlyPerMonth": "Ayda {{price}} ediyor",
+    "cancelAnytime": "İstediğin zaman iptal et",
+    "trialEnding": {
+      "title_one": "Ücretsiz haftan yarın bitiyor",
+      "title_other": "Ücretsiz haftan {{count}} gün sonra bitiyor",
+      "chats_one": "sohbet",
+      "chats_other": "sohbet",
+      "photos_one": "fotoğraflı öğün",
+      "photos_other": "fotoğraflı öğün",
+      "reviews_one": "değerlendirme",
+      "reviews_other": "değerlendirme",
+      "keepYearly": "Premium'da kal, yıllık",
+      "keepMonthly": "Premium'da kal, aylık",
+      "cancel": "Aboneliği iptal et"
+    },
+    "offer": {
+      "endsIn": "{{time}} sonra bitiyor",
+      "kicker": "Sana özel",
+      "title": "Bite'a daha uygun fiyata dön",
+      "text": "Antrenmanların ve alternatiflerin seni bekliyor.",
+      "usual": "Normalde {{price}}",
+      "firstYear": "ilk yılın için",
+      "then": "Sonra yıllık {{price}}",
+      "claim": "−%{{percent}} indirimi al",
+      "legal": "Bugün ücretlendirilir. İstediğin zaman iptal et."
+    }
   }
 }

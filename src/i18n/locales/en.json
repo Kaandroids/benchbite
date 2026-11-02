@@ -2050,5 +2050,38 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "billing": "How you pay",
+    "yearlySave": "Yearly · −{{percent}}%",
+    "monthly": "Monthly",
+    "perYearFrom": "a year from {{date}}",
+    "perMonthFrom": "a month from {{date}}",
+    "yearlyPerMonth": "That is {{price}} a month",
+    "cancelAnytime": "Cancel anytime",
+    "trialEnding": {
+      "title_one": "Your free week ends tomorrow",
+      "title_other": "Your free week ends in {{count}} days",
+      "chats_one": "chat",
+      "chats_other": "chats",
+      "photos_one": "meal photo",
+      "photos_other": "meal photos",
+      "reviews_one": "review",
+      "reviews_other": "reviews",
+      "keepYearly": "Keep premium, yearly",
+      "keepMonthly": "Keep premium, monthly",
+      "cancel": "Cancel the subscription"
+    },
+    "offer": {
+      "endsIn": "Ends in {{time}}",
+      "kicker": "Just for you",
+      "title": "Come back to Bite for less",
+      "text": "Your workouts and alternatives are waiting.",
+      "usual": "Usually {{price}}",
+      "firstYear": "for your first year",
+      "then": "Then {{price}} a year",
+      "claim": "Claim −{{percent}}%",
+      "legal": "Billed today. Cancel anytime."
+    }
   }
 }
