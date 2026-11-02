@@ -7,7 +7,6 @@ import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai
 import { Base64Data } from '../_shared/base64.ts';
 import { encodedBytes } from '../_shared/base64_bytes.ts';
 import {
-  type CardWorkout,
   type ChatEvent as Event,
   type ChatPhotoPart,
   type ChatVoicePart,
@@ -57,7 +56,7 @@ import { DAY, TIME } from './day.ts';
 import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
 import { noteOf, noteText } from './notes.ts';
 import { runTool, TOOL_DEFINITIONS } from './tools.ts';
-import { alternativeName } from './workout.ts';
+import { alternativeName, workoutName } from './workout.ts';
 
 export type ChatContext = {
   /** A client with the user's token. */
@@ -634,27 +633,22 @@ function proposalText(proposal: ProposalCard): string {
     return `(Proposed food log changes: ${changes.join('; ')}.)`;
   }
   if (proposal.kind === 'workouts') {
-    const workouts = proposal.workouts.map((w) => `${cardWorkout(w.workout)}: ${changesText(w)}`);
+    const workouts = proposal.workouts.map((w) => `${workoutName(w.workout)}: ${changesText(w)}`);
     return `(Proposed for ${workouts.join('; ')}.)`;
   }
   if (proposal.kind === 'alternative') {
-    return `(Proposed a new alternative of ${cardWorkout(
+    return `(Proposed a new alternative of ${workoutName(
       proposal.workout,
     )}, ${proposal.to}, made from ${alternativeName(proposal.from)}: ${changesText(proposal)}.)`;
   }
   if (proposal.kind === 'alternative_switch') {
-    return `(Proposed switching ${cardWorkout(proposal.workout)} from ${alternativeName(
+    return `(Proposed switching ${workoutName(proposal.workout)} from ${alternativeName(
       proposal.from,
     )} to ${alternativeName(proposal.to)}.)`;
   }
-  const workout = cardWorkout(proposal.workout);
+  const workout = workoutName(proposal.workout);
   const swaps = proposal.swaps.map((swap) => `${swap.from} → ${swap.to}`).join(', ');
   return `(Proposed for ${workout}: ${swaps}.)`;
-}
-
-/** A workout a card names, as Bite reads it back. */
-function cardWorkout(workout: CardWorkout): string {
-  return workout.name ?? workout.type ?? 'a workout';
 }
 
 /** What a card changes in a workout's exercises, as Bite reads it back. */

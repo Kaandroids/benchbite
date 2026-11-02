@@ -200,22 +200,15 @@ export type CardAlternative = { name: string | null; position: number };
  * itself, as the card is kept with the message: exercises swapped in a workout, named in the
  * user's language, the targets in use and the new ones, entries of the food log moved, resized or
  * removed (ADR 0068), or changes to several workouts and their alternatives (ADR 0075). Bite
- * proposes `workout` no more; its cards stay with the messages that have them. The user applies it, keeps things as they are, or undoes it, by
- * its `id` (decide_coach_proposal()).
+ * proposes `workout` no more; its cards stay with the messages that have them. The user applies
+ * it, keeps things as they are, or undoes it, by its `id` (decide_coach_proposal()).
  */
 export type ProposalCard =
   | {
       kind: 'workout';
       id: number;
-      /** The workout's name, or its type for one without a name, which the app names. */
-      workout: { name: string | null; type: string | null };
-      swaps: {
-        from: string;
-        to: string;
-        sets: number;
-        target: ProposalTarget;
-        why?: string;
-      }[];
+      workout: CardWorkout;
+      swaps: ExerciseChanges['swaps'];
     }
   | {
       kind: 'targets';
