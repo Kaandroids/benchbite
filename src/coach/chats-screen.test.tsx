@@ -86,6 +86,16 @@ it('calls a message of photos alone by its photos', async () => {
   expect(screen.getByText('Untitled chat')).toBeTruthy();
 });
 
+it('calls a voice message not written down a voice message', async () => {
+  threads([
+    { ...THREADS[0]!, title: null, firstVoice: true, lastMessage: null, lastVoice: true },
+    THREADS[1]!,
+  ]);
+  await render(<ChatsScreen />);
+  // Its name, and its last message's line.
+  expect(screen.getAllByText('Voice message')).toHaveLength(2);
+});
+
 it('opens a chat over the chats, or a new one in place of the chat under them', async () => {
   await render(<ChatsScreen />);
   await fireEvent.press(screen.getByText('Lunch ideas'));
