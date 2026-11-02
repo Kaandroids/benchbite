@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(6);
+select plan(9);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
 
@@ -75,6 +75,21 @@ insert into ids select 'targets', public.propose_coach_change(
   pg_temp.id('thread'), 'targets', '{"calories": 2400, "proteinG": 150, "carbsG": 250, "fatG": 80}', current_date
 );
 select is(pg_temp.status('second'), 'pending', 'A proposal of another kind replaces none');
+
+-- One for more workouts replaces those of its workouts; one for fewer leaves it.
+insert into ids select 'both', public.propose_coach_workouts(
+  pg_temp.id('thread'),
+  jsonb_build_array(
+    jsonb_build_object('workoutId', pg_temp.id('legs'), 'remove', '["Plank"]'::jsonb),
+    jsonb_build_object('workoutId', pg_temp.id('push'), 'add',
+      '[{"exerciseId": "Dips_-_Triceps_Version", "sets": 3, "target": {"reps": {"min": 8, "max": 10}}}]'::jsonb)
+  ),
+  current_date
+);
+select is(pg_temp.status('second'), 'replaced', 'A proposal for its workouts and more replaces one');
+insert into ids select 'third', pg_temp.propose('thread', 'legs', 'Barbell_Squat');
+select is(pg_temp.status('both'), 'pending', 'One for fewer workouts leaves it, so that no change is lost');
+select is(pg_temp.status('third'), 'pending', 'and is pending beside it');
 
 select * from finish();
 rollback;
