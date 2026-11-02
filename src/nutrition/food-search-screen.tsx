@@ -12,6 +12,7 @@ import { SearchField } from '@/components/ui/search-field';
 import { useTheme } from '@/theme';
 
 import { AddEntryError } from './add-entry-error';
+import { AddTiles } from './add-tiles';
 import {
   quickAmountOf,
   useFoodSearch,
@@ -38,8 +39,8 @@ type FoodSearchScreenProps = {
  * Finds a food to add to a meal. Before anything is typed it offers the meal's frequent foods,
  * the favourites and one's own foods (ADR 0037). A food opens the amount screen, or its + adds it
  * at once: a frequent food as it was logged last, others by their default portion. New food is
- * in the top bar, the camera beside the search logs a meal from photos (#299), and Done at the
- * bottom goes back to the day.
+ * in the top bar, the photo tile under the search logs a meal from photos (#299), a barcode tile
+ * waits for scanning, and Done at the bottom goes back to the day.
  */
 export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
   const { t } = useTranslation();
@@ -160,25 +161,14 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
       scrolls={false}
     >
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm }}>
-        <View style={[styles.searchRow, { gap: spacing.sm }]}>
-          <View style={styles.search}>
-            <SearchField
-              label={t('nutrition.search.placeholder')}
-              value={query}
-              onChangeText={setQuery}
-              autoFocus
-              maxLength={50}
-            />
-          </View>
-          <RoundIconButton
-            icon="camera"
-            color="primary"
-            background="iconBackground"
-            size={48}
-            label={t('nutrition.photo.camera')}
-            onPress={photoMeal.openSheet}
-          />
-        </View>
+        <SearchField
+          label={t('nutrition.search.placeholder')}
+          value={query}
+          onChangeText={setQuery}
+          autoFocus
+          maxLength={50}
+        />
+        <AddTiles onPhoto={photoMeal.openSheet} />
         {addEntry.isError ? <AddEntryError error={addEntry.error} /> : null}
         {photoMeal.undoFailed ? <Note tone="danger">{t('nutrition.photo.undoError')}</Note> : null}
       </View>
@@ -189,13 +179,6 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  search: {
-    flex: 1,
-  },
   action: {
     width: 44,
     alignItems: 'center',
