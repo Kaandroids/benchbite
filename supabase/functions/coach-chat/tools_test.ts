@@ -300,7 +300,7 @@ const search = async (query: string, context: ToolContext) => {
 Deno.test('searches for several exercises at once, each by its query', async () => {
   const found = await runTool(
     'search_exercises',
-    { queries: ['lateral raise', 'lateral raise', 'squat'] },
+    { queries: ['lateral raise', 'Lateral Raise', 'squat'] },
     searchContext('en'),
   );
   assertEquals(

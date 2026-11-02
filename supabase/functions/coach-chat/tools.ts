@@ -394,10 +394,16 @@ const TOOLS = [
     }),
     run: ({ queries }, { supabase, language }) =>
       Promise.all(
-        [...new Set(queries)].map(async (query) => ({
-          query,
-          exercises: await searchExercises(supabase, language, query),
-        })),
+        // Each once, whatever its case, as the search ignores it.
+        queries
+          .filter(
+            (query, index) =>
+              queries.findIndex((other) => other.toLowerCase() === query.toLowerCase()) === index,
+          )
+          .map(async (query) => ({
+            query,
+            exercises: await searchExercises(supabase, language, query),
+          })),
       ),
   }),
   tool({
