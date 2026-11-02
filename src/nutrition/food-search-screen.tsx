@@ -140,8 +140,8 @@ export function FoodSearchScreen({ meal, day }: FoodSearchScreenProps) {
         <View style={styles.action}>
           <RoundIconButton
             icon="plus"
-            color="primary"
-            background="iconBackground"
+            color="text"
+            background="track"
             size={36}
             label={t('nutrition.food.create')}
             onPress={() =>

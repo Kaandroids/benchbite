@@ -95,8 +95,12 @@ export function FoodRow({
             {food.name}
           </Text>
           {favourite ? <Star filled size={14} /> : null}
-          {food.ref.kind === 'custom' ? <Tag label={t('nutrition.search.mine')} /> : null}
-          {food.ref.kind === 'recipe' ? <Tag label={t('nutrition.recipe.tag')} /> : null}
+          {food.ref.kind === 'custom' ? (
+            <Tag label={t('nutrition.search.mine')} tone="neutral" />
+          ) : null}
+          {food.ref.kind === 'recipe' ? (
+            <Tag label={t('nutrition.recipe.tag')} tone="neutral" />
+          ) : null}
         </View>
         <Text variant="caption" color="textMuted">
           {detail}
@@ -109,8 +113,8 @@ export function FoodRow({
       ) : (
         <RoundIconButton
           icon="plus"
-          color="primary"
-          background="iconBackground"
+          color="text"
+          background="track"
           size={36}
           label={addLabel}
           onPress={onAdd}
