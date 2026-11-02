@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(28);
 
 -- Budget periods and weeks.
 select is(
@@ -86,6 +86,37 @@ select is(
   'and no call starts'
 );
 
+-- In the hour a plan lasts past its period, what is used counts toward its last window.
+reset role;
+select is(
+  public.budget_period('2027-01-01', '2027-03-31 23:30', 'yearly', '2027-03-31 23:29'),
+  tstzrange('2027-03-01', '2027-03-31 23:30'),
+  'A yearly plan''s last month ends with the plan'
+);
+reset role;
+update public.subscriptions set period_start = now() - interval '30 days',
+  period_end = now() - interval '30 minutes'
+  where user_id = '00000000-0000-0000-0000-00000000000a';
+delete from public.ai_usage where user_id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.used('00000000-0000-0000-0000-00000000000a', 'coach_chat', 1.40, now() - interval '2 days');
+select pg_temp.used('00000000-0000-0000-0000-00000000000a', 'coach_chat', 0.20, now() - interval '10 minutes');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select allowed, reason, used_usd from public.ai_access() $$,
+  $$ values (false, 'limit_reached'::public.ai_access_reason, 1.60::numeric) $$,
+  'What is used in a plan''s grace hour counts toward its last week'
+);
+reset role;
+update public.subscriptions set billing = 'yearly', period_start = now() - interval '2 months',
+  period_end = now() - interval '30 minutes'
+  where user_id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select is(
+  (select used_usd from public.ai_access()),
+  1.60::numeric,
+  'and toward a yearly plan''s last month'
+);
+
 -- B: a trial that spent its $1.50, then premium, which is a budget period of its own.
 reset role;
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
@@ -117,7 +148,7 @@ select results_eq(
   'A free user has no Bite'
 );
 select results_eq(
-  $$ select allowed, counted, left_count, resets_at = now() + interval '5 days'
+  $$ select allowed, by_count, left_count, resets_at = now() + interval '5 days'
      from public.ai_access('meal_photo') $$,
   $$ values (true, true, 2, true) $$,
   'but two photo estimates a week, from when the account was made'

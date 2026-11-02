@@ -5,15 +5,15 @@
 -- ai_access(), start_ai_call() and count_ai_call() read it.
 
 -- Whether a call was made on the free plan, which then counts toward the free week, never toward
--- a paid period; and, for a call counted by number, whether it gave what it was for, as an
--- estimate of a meal. Only a call that gave it counts toward the number.
+-- a paid period; and, for a call limited by number, whether it gave what it was for: a whole
+-- answer, as an estimate. Only a call that gave it counts toward the number.
 alter table public.ai_calls_in_flight add column free boolean not null default false;
 alter table public.ai_usage add column free boolean not null default false;
 alter table public.ai_usage add column given boolean;
 
--- What ai_access() says beside the budget: whether the feature is counted by number on the
+-- What ai_access() says beside the budget: whether the feature is limited by number on the
 -- caller's plan, and how many are left.
-alter type public.ai_access add attribute counted boolean;
+alter type public.ai_access add attribute by_count boolean;
 alter type public.ai_access add attribute left_count integer;
 
 -- The feature the free plan counts by number: meals estimated from a photo.
@@ -69,15 +69,31 @@ immutable
 set search_path = ''
 as $$
   select tstzrange(
-    lower(period) + interval '7 days' * floor(extract(epoch from at - lower(period)) / 604800),
+    date_bin(interval '7 days', at, lower(period)),
     least(
-      lower(period) + interval '7 days' * (floor(extract(epoch from at - lower(period)) / 604800) + 1),
+      date_bin(interval '7 days', at, lower(period)) + interval '7 days',
       coalesce(upper(period), 'infinity')
     )
   );
 $$;
 
--- A user's AI windows now, and what was used in each.
+-- `span`, widened by the hour a plan lasts past its period when it ends with the period, so that
+-- what is used in that hour counts toward it.
+create function public.with_grace(span tstzrange, subscription public.subscriptions)
+returns tstzrange
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when upper(span) = subscription.period_end
+      then tstzrange(lower(span), upper(span) + interval '1 hour')
+    else span
+  end;
+$$;
+
+-- A user's AI windows now, and what was used in each: the paid fields on the trial and premium,
+-- the free ones on the free plan, the others null.
 create type public.ai_windows as (
   plan public.plan,
   -- The trial's or premium's budget period and its week, with their budgets and what calls made
@@ -107,6 +123,7 @@ as $$
 declare
   subscription public.subscriptions;
   limits public.plans;
+  at timestamptz;
   result public.ai_windows;
 begin
   result.plan := public.plan_of(ai_windows.user_id);
@@ -136,16 +153,20 @@ begin
   end if;
 
   select * into subscription from public.subscriptions s where s.user_id = ai_windows.user_id;
+  -- The plan lasts an hour past its period (plan_of()): in that hour the period's last window
+  -- is the one in force, and what is used in the hour counts toward it.
+  at := least(now(), subscription.period_end - interval '1 microsecond');
   result.period := public.budget_period(
-    subscription.period_start, subscription.period_end, subscription.billing, now()
+    subscription.period_start, subscription.period_end, subscription.billing, at
   );
-  result.week := public.week_of(result.period, now());
+  result.week := public.week_of(result.period, at);
   select
     coalesce(sum(u.cost_usd), 0),
-    coalesce(sum(u.cost_usd) filter (where u.created_at <@ result.week), 0)
+    coalesce(sum(u.cost_usd) filter (where u.created_at <@ public.with_grace(result.week, subscription)), 0)
   into result.period_used_usd, result.week_used_usd
   from public.ai_usage u
-  where u.user_id = ai_windows.user_id and not u.free and u.created_at <@ result.period;
+  where u.user_id = ai_windows.user_id and not u.free
+    and u.created_at <@ public.with_grace(result.period, subscription);
   -- What calls running now set aside counts in both.
   select
     result.period_used_usd + coalesce(sum(c.reserved_usd), 0),
@@ -178,7 +199,7 @@ begin
   if (select auth.uid()) is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
-  result.counted := false;
+  result.by_count := false;
   if (select u.is_anonymous from auth.users u where u.id = (select auth.uid())) then
     result.reason := 'account_required';
     result.allowed := false;
@@ -190,7 +211,7 @@ begin
   windows := public.ai_windows((select auth.uid()));
   if windows.plan = 'free' then
     if feature = public.ai_counted_feature() then
-      result.counted := true;
+      result.by_count := true;
       result.left_count := greatest(windows.weekly_count - windows.count_used, 0);
       result.budget_usd := windows.free_budget_usd;
       result.used_usd := windows.free_used_usd;
@@ -230,7 +251,8 @@ end;
 $$;
 
 -- As before (20261030200000_count_ai_call.sql), with no limit by cost when `budget_usd` is null:
--- a call counted by number is held by its count, and its backstop by what calls did cost.
+-- a call limited by number is held by its count, and its backstop by what calls did cost, never
+-- by what one sets aside.
 create or replace function public.ai_call_refusal(
   limits public.ai_feature_limits,
   price public.ai_model_prices,
@@ -298,7 +320,7 @@ begin
     else
       result.reason := public.ai_call_refusal(
         limits, price, input_tokens, access.used_usd,
-        case when access.counted then null else access.budget_usd end
+        case when access.by_count then null else access.budget_usd end
       );
     end if;
     if result.reason is null then
@@ -306,7 +328,7 @@ begin
       values (
         (select auth.uid()), start_ai_call.feature, start_ai_call.model,
         public.ai_cost(price, input_tokens, 0, limits.max_output_tokens), input_tokens > 0,
-        access.counted
+        public.plan_of((select auth.uid())) = 'free'
       )
       returning call_id into result.call_id;
       result.max_output_tokens := limits.max_output_tokens;
@@ -353,7 +375,7 @@ begin
   result.reason := public.ai_call_refusal(
     limits, public.ai_model_price(started.model, started.started_at), input_tokens,
     access.used_usd - started.reserved_usd,
-    case when started.free then null else access.budget_usd end
+    case when access.by_count then null else access.budget_usd end
   );
 
   if result.reason is null then
@@ -375,8 +397,8 @@ end;
 $$;
 
 -- As before (20261030100000_ai_usage.sql), keeping whether the call was made on the free plan,
--- and whether it gave what it was for, which the Edge Function says when it knows: an estimate of
--- a meal, for the free plan's number.
+-- and whether it gave what it was for, which the Edge Function says when it knows: a whole
+-- answer, for the free plan's number.
 drop function public.record_ai_usage(uuid, integer, integer, integer, integer, boolean);
 create function public.record_ai_usage(
   call_id uuid,
@@ -446,6 +468,8 @@ revoke all on function public.ai_counted_feature() from public, anon, authentica
 revoke all on function public.budget_period(timestamptz, timestamptz, public.billing_period, timestamptz)
   from public, anon, authenticated;
 revoke all on function public.week_of(tstzrange, timestamptz) from public, anon, authenticated;
+revoke all on function public.with_grace(tstzrange, public.subscriptions)
+  from public, anon, authenticated;
 revoke all on function public.ai_windows(uuid) from public, anon, authenticated;
 revoke all on function public.ai_access(public.ai_feature) from public, anon;
 grant execute on function public.ai_access(public.ai_feature) to authenticated;

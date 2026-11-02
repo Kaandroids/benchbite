@@ -2703,6 +2703,16 @@ export type Database = {
       };
       week_of: { Args: { at: string; period: unknown }; Returns: unknown };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
+      with_grace: {
+        Args: {
+          span: unknown;
+          subscription: Omit<
+            Database['public']['Tables']['subscriptions']['Row'],
+            Database['public']['Tables']['subscriptions']['ComputedFields']
+          >;
+        };
+        Returns: unknown;
+      };
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -2848,7 +2858,7 @@ export type Database = {
         budget_usd: number | null;
         used_usd: number | null;
         resets_at: string | null;
-        counted: boolean | null;
+        by_count: boolean | null;
         left_count: number | null;
       };
       ai_call: {
