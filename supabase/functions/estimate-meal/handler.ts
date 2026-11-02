@@ -104,13 +104,17 @@ export async function handleEstimateRequest(
       { supabase: context.supabase, admin: context.admin, model: context.model },
       'meal_photo',
     );
-    const response = await bite.generate({
-      system: SYSTEM,
-      messages: [
-        { role: 'user', parts: requestParts({ ...request, note: request.note || undefined }) },
-      ],
-      responseSchema: RESPONSE_SCHEMA,
-    });
+    const response = await bite.generate(
+      {
+        system: SYSTEM,
+        messages: [
+          { role: 'user', parts: requestParts({ ...request, note: request.note || undefined }) },
+        ],
+        responseSchema: RESPONSE_SCHEMA,
+      },
+      // Only an estimate of a meal counts toward a free user's week (ADR 0078).
+      (answer) => answer.finish === 'stop' && estimateOf(answer.parts)?.isFood === true,
+    );
     if (response.finish === 'blocked') return refused('blocked');
     if (response.finish === 'length') {
       // A cut answer is not whole JSON; it is said apart from a wrong shape, as the limit may need
@@ -139,6 +143,12 @@ export async function handleEstimateRequest(
     ...(note && { note }),
   };
   return Response.json(estimate);
+}
+
+/** The estimate an answer gives, or nothing when it is not in the shape asked for. */
+function estimateOf(parts: Part[]) {
+  const output = ModelOutput.safeParse(parseJson(textOf(parts)));
+  return output.success ? output.data : undefined;
 }
 
 function refused(reason: EstimateReason): Response {
