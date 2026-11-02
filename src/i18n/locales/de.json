@@ -1933,6 +1933,29 @@
         "too_many_photos": "In eine Nachricht passen bis zu 3 Fotos. Entferne eines, um sie zu senden."
       }
     },
+    "voice": {
+      "message": "Sprachnachricht",
+      "hold": "Zum Sprechen halten",
+      "holdHint": "Halte das Mikrofon zum Aufnehmen und lass los, um zu senden.",
+      "listening": "Höre zu…",
+      "release": "{{time}} · loslassen zum Senden",
+      "slideToCancel": "‹ zum Abbrechen wischen",
+      "releaseToCancel": "Loslassen zum Abbrechen",
+      "cancel": "Aufnahme abbrechen",
+      "recording": "Aufnahme läuft, loslassen zum Senden",
+      "play": "Sprachnachricht abspielen",
+      "pause": "Sprachnachricht pausieren",
+      "label": "Sprachnachricht, {{length}}",
+      "hearing": "Höre mir deine Nachricht an…",
+      "playFailed": "Diese Sprachnachricht ließ sich nicht abspielen.",
+      "problems": {
+        "voice_too_large": "Diese Sprachnachricht ist zu groß zum Senden. Versuch eine kürzere.",
+        "voice_too_long": "Sprachnachrichten dürfen bis zu einer Minute lang sein. Versuch eine kürzere.",
+        "voice_not_m4a": "Diese Sprachnachricht ließ sich nicht lesen. Nimm sie noch mal auf.",
+        "voice_not_recorded": "Die Sprachnachricht ließ sich nicht aufnehmen. Versuch es noch mal.",
+        "microphone_denied": "Bite braucht das Mikrofon, um dich zu hören. Erlaube es in den Einstellungen."
+      }
+    },
     "proposal": {
       "fromToday": "Ab heute",
       "targetsTitle": "Tagesziele",
