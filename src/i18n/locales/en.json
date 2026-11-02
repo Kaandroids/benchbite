@@ -1766,7 +1766,14 @@
       "updated": "Changed in notebook: {{text}}",
       "archived": "Moved to past notes: {{text}}",
       "view": "View",
-      "viewLabel": "Open the notebook"
+      "viewLabel": "Open the notebook",
+      "ask": {
+        "title": "Remember this?",
+        "note": "{{category}}: {{text}}",
+        "save": "Save to notebook",
+        "notNow": "Not now",
+        "notRemoved": "The note couldn't be removed. Try again."
+      }
     },
     "notebook": {
       "title": "Bite's notebook",

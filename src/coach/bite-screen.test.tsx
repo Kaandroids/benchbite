@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 
 import { supabase } from '@/lib/supabase';
-import { act, fireEvent, render, screen } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { BiteScreen } from './bite-screen';
 import { useLastThread, useThreadMessages } from './threads';
@@ -423,18 +423,12 @@ it('shows a note Bite kept as a line, though Bite said nothing with it', async (
       event: 'note',
       note: { id: 3, action: 'saved', category: 'allergy', text: 'Allergic to kiwi' },
     },
-    // A note asked about gets its card with the notebook, not a line.
-    {
-      event: 'note',
-      note: { id: 4, action: 'asked', category: 'food', text: 'Vegetarian' },
-    },
     { event: 'done', threadId: 7, messageId: 9 },
   );
   await stream.end();
 
   expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
   expect(screen.getByText('Saved to notebook: Allergic to kiwi')).toBeOnTheScreen();
-  expect(screen.queryByText(/Vegetarian/)).toBeNull();
   // Its View, as the top bar's button, opens the notebook.
   await fireEvent.press(screen.getByRole('button', { name: 'Open the notebook' }));
   expect(router.push).toHaveBeenCalledWith({
@@ -448,6 +442,103 @@ it('offers no way to the notebook in a chat opened from it, which it goes back t
   await render(<BiteScreen />);
   expect(screen.queryByRole('button', { name: "Bite's notebook" })).toBeNull();
   expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+});
+
+/**
+ * Lets coach_notes say each note asked about waits until the user answers, and keep the answer,
+ * as the table does.
+ */
+function notesAsked() {
+  const answers = { update: jest.fn(), delete: jest.fn() };
+  const saved = new Set<number>();
+  const removed = new Set<number>();
+  jest.mocked(supabase.from).mockImplementation(
+    () =>
+      ({
+        select: () => ({
+          in: (_: string, ids: number[]) =>
+            Promise.resolve({
+              data: ids
+                .filter((id) => !removed.has(id))
+                .map((id) => ({ id, asked: !saved.has(id) })),
+              error: null,
+            }),
+        }),
+        update: (values: unknown) => ({
+          eq: (_: string, id: number) => {
+            answers.update(id, values);
+            saved.add(id);
+            return Promise.resolve({ error: null });
+          },
+        }),
+        delete: () => ({
+          eq: (_: string, id: number) => {
+            answers.delete(id);
+            removed.add(id);
+            return Promise.resolve({ error: null });
+          },
+        }),
+      }) as never,
+  );
+  return answers;
+}
+
+const ASKED = { id: 4, action: 'asked' as const, category: 'food' as const, text: 'Vegetarian' };
+
+it('asks whether to keep a note, saves it with a tap, then shows it saved', async () => {
+  const answers = notesAsked();
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'note', note: ASKED },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  expect(await screen.findByText('Remember this?')).toBeOnTheScreen();
+  expect(screen.getByText('Food: Vegetarian')).toBeOnTheScreen();
+  await fireEvent.press(await screen.findByRole('button', { name: 'Save to notebook' }));
+  expect(answers.update).toHaveBeenCalledWith(4, { asked: false });
+  expect(await screen.findByText('Saved to notebook: Vegetarian')).toBeOnTheScreen();
+});
+
+it('still asks about a note whose state could not be read', async () => {
+  jest.mocked(supabase.from).mockReturnValue({
+    select: () => ({
+      in: () => Promise.resolve({ data: null, error: { message: 'offline' } }),
+    }),
+  } as never);
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'note', note: ASKED },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Not now' })).toBeEnabled());
+  expect(screen.getByText('Remember this?')).toBeOnTheScreen();
+});
+
+it('removes a note asked about with Not now, and its card', async () => {
+  const answers = notesAsked();
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'note', note: ASKED },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  await fireEvent.press(await screen.findByRole('button', { name: 'Not now' }));
+  expect(answers.delete).toHaveBeenCalledWith(4);
+  await waitFor(() => expect(screen.queryByText('Remember this?')).toBeNull());
 });
 
 it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {

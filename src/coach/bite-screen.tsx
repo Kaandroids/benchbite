@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -17,6 +17,7 @@ import { usePhotoUrls } from './chat-photos';
 import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { mealCardIds, useMealCardStates } from './meal-cards';
+import { askedNoteIds, useAskedNoteStates } from './notes';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
@@ -106,25 +107,30 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   // Where the cards in the chat stand, saved and new, loaded here once for all of them.
   const proposals = useProposalStates(proposalIds(chat.messages));
   const mealCards = useMealCardStates(mealCardIds(chat.messages));
-  const cards = useMemo<CardStates>(
-    () => ({
-      proposals: proposals.data,
-      mealCards: mealCards.data,
-      loading: { proposals: proposals.isFetching, mealCards: mealCards.isFetching },
-    }),
-    [proposals.data, proposals.isFetching, mealCards.data, mealCards.isFetching],
-  );
+  const notes = useAskedNoteStates(askedNoteIds(chat.messages));
+  const states = { proposals, mealCards, notes };
+  const cards: CardStates = {
+    proposals: proposals.data,
+    mealCards: mealCards.data,
+    notes: notes.data,
+    loading: {
+      proposals: proposals.isFetching,
+      mealCards: mealCards.isFetching,
+      notes: notes.isFetching,
+    },
+    failed: { notes: notes.isError },
+  };
   // A saved chat's cards show where they stand from the start, so it waits for the states of the
   // cards it opened with. Cards that come later wait on their own, so the messages never go:
   // a card being edited keeps what the user changed.
   const [openedWith] = useState(() => ({
     proposals: proposalIds(start?.messages ?? []).length > 0,
     mealCards: mealCardIds(start?.messages ?? []).length > 0,
+    notes: askedNoteIds(start?.messages ?? []).length > 0,
   }));
-  const opening = [
-    ...(openedWith.proposals ? [proposals] : []),
-    ...(openedWith.mealCards ? [mealCards] : []),
-  ];
+  const opening = (Object.keys(states) as (keyof typeof states)[])
+    .filter((kind) => openedWith[kind])
+    .map((kind) => states[kind]);
   // The photos the chat kept, read back once for all of them when it opens. Only those it opened
   // with: its messages are read again after each one sent, whose photos show from their data, and
   // a new list would ask for every address again.

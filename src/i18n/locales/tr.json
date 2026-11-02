@@ -1766,7 +1766,14 @@
       "updated": "Defterde güncellendi: {{text}}",
       "archived": "Geçmiş notlara taşındı: {{text}}",
       "view": "Gör",
-      "viewLabel": "Defteri aç"
+      "viewLabel": "Defteri aç",
+      "ask": {
+        "title": "Bunu hatırlayayım mı?",
+        "note": "{{category}}: {{text}}",
+        "save": "Deftere kaydet",
+        "notNow": "Şimdi değil",
+        "notRemoved": "Not kaldırılamadı. Tekrar dene."
+      }
     },
     "notebook": {
       "title": "Bite'ın defteri",
