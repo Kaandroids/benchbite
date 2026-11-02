@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(44);
+select plan(46);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -227,6 +227,26 @@ select results_eq(
   'and the others are as they were'
 );
 select is(pg_temp.exercises('legs'), array['Barbell_Squat', 'Plank'], 'the workout too');
+
+-- One named for it, of a workout with alternatives whose one in use has no name.
+select public.add_workout_alternative(pg_temp.id('push'), current_date, 'Bands', null, null);
+insert into ids select 'dips', public.propose_coach_alternative(
+  pg_temp.id('thread'), pg_temp.id('push'), 'Dips', 'Gym',
+  '{"add": [{"exerciseId": "Dips_-_Triceps_Version", "sets": 3, "target": {"reps": {"min": 8, "max": 10}}}]}',
+  current_date
+);
+select pg_temp.decide('dips', 'apply');
+select results_eq(
+  format($$ select name, in_use from public.workout_alternatives where workout_id = %s order by position $$, pg_temp.id('push')),
+  $$ values ('Gym'::text, false), ('Bands'::text, false), ('Dips'::text, true) $$,
+  'The one in use is named as Bite named it'
+);
+select pg_temp.decide('dips', 'undo');
+select results_eq(
+  format($$ select name, in_use from public.workout_alternatives where workout_id = %s order by position $$, pg_temp.id('push')),
+  $$ values (null::text, true), ('Bands'::text, false) $$,
+  'and has no name again once it is undone'
+);
 
 -- Another user's workout or alternative is not found.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
