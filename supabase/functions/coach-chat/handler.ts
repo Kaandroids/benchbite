@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
 import { Base64Data } from '../_shared/base64.ts';
+import { encodedBytes } from '../_shared/base64_bytes.ts';
 import {
   type ChatEvent as Event,
   type ChatPhotoPart,
@@ -110,7 +111,7 @@ type ChatRequest = z.infer<typeof ChatRequest>;
  * whichever is larger, as a voice message goes alone, and room for the rest, the longest message
  * included. A larger one is refused before it is parsed, as `too_large`, whatever it holds.
  */
-const MAX_BODY_BYTES = Math.max(photosBodyBytes(0), Math.ceil(MAX_VOICE_BYTES / 3) * 4) + 40_000;
+const MAX_BODY_BYTES = Math.max(photosBodyBytes(0), encodedBytes(MAX_VOICE_BYTES)) + 40_000;
 
 /** The HTTP status each refusal is answered with. */
 const STATUS: Record<ChatRefusal, number> = {
@@ -644,10 +645,10 @@ function resultOf(part: unknown): unknown {
   return partOfType(part, 'toolResult') ? part.result : undefined;
 }
 
-/** A message's photos and voice message, checked. */
+/** A message's photos or voice message, checked; never both, as a voice message goes alone. */
 type Media = { photos: CheckedPhoto[]; voice?: CheckedVoice };
 
-/** The parts that name a message's photos and voice message, once kept. */
+/** The parts that name a message's photos or voice message, once kept. */
 type Stored = { images: ChatPhotoPart[]; voice?: ChatVoicePart };
 
 /**
