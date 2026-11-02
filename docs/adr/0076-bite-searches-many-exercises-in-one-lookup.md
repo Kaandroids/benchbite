@@ -19,13 +19,18 @@ exercise at a time.
 - **One search for many exercises:** `search_exercises` takes up to five queries and gives each
   one's matches. Its description and the prompt tell Bite to search for everything it needs in one
   call.
+- **A plural searched again as singular:** a query that finds nothing and ends in s is searched
+  once more without it, as "sissy squats" for "Sissy Squat", rather than costing Bite a round.
 - **Five rounds of lookups:** one more than before. That is enough for the plan, the exercises, a
   proposal, and a second try after the database refuses one, as when an alternative's name is
   taken.
 - **No card claimed once lookups run out:** when the answer has made no card, proposal or note
   yet, the results before the last round say that none can be made now. One made in those rounds
   stays the answer's to speak of. An answer in the last round that still speaks of a card it did
-  not make is told once to say, in a sentence, that it could not make one (`CARD_NOT_MADE`).
+  not make is told once to say, in a sentence, that it could not make one (`CARD_NOT_MADE`), even
+  when the thread has an earlier card: told it can make none, Bite most likely speaks of the one
+  it meant to make. While it may still make one, a card earlier in the thread is left alone, as
+  before (ADR 0070).
 
 - **The target each exercise takes:** each match names it (reps, seconds, or meters or seconds),
   from `target_kind()`, which `target_suits()` now checks by, so that the rule is written once and
