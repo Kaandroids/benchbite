@@ -1941,13 +1941,11 @@
       "release": "{{time}} · loslassen zum Senden",
       "slideToCancel": "‹ zum Abbrechen wischen",
       "releaseToCancel": "Loslassen zum Abbrechen",
-      "cancel": "Aufnahme abbrechen",
       "recording": "Aufnahme läuft, loslassen zum Senden",
       "play": "Sprachnachricht abspielen",
       "pause": "Sprachnachricht pausieren",
       "label": "Sprachnachricht, {{length}}",
       "hearing": "Höre mir deine Nachricht an…",
-      "playFailed": "Diese Sprachnachricht ließ sich nicht abspielen.",
       "problems": {
         "voice_too_large": "Diese Sprachnachricht ist zu groß zum Senden. Versuch eine kürzere.",
         "voice_too_long": "Sprachnachrichten dürfen bis zu einer Minute lang sein. Versuch eine kürzere.",

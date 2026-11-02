@@ -1941,13 +1941,11 @@
       "release": "{{time}} · release to send",
       "slideToCancel": "‹ slide to cancel",
       "releaseToCancel": "Release to cancel",
-      "cancel": "Cancel recording",
       "recording": "Recording, release to send",
       "play": "Play voice message",
       "pause": "Pause voice message",
       "label": "Voice message, {{length}}",
       "hearing": "Listening to your message…",
-      "playFailed": "This voice message couldn't be played.",
       "problems": {
         "voice_too_large": "This voice message is too large to send. Try a shorter one.",
         "voice_too_long": "Voice messages can be up to a minute long. Try a shorter one.",

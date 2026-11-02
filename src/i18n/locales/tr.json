@@ -1941,13 +1941,11 @@
       "release": "{{time}} · göndermek için bırak",
       "slideToCancel": "‹ iptal için kaydır",
       "releaseToCancel": "İptal için bırak",
-      "cancel": "Kaydı iptal et",
       "recording": "Kaydediliyor, göndermek için bırak",
       "play": "Sesli mesajı oynat",
       "pause": "Sesli mesajı duraklat",
       "label": "Sesli mesaj, {{length}}",
       "hearing": "Mesajını dinliyorum…",
-      "playFailed": "Bu sesli mesaj oynatılamadı.",
       "problems": {
         "voice_too_large": "Bu sesli mesaj gönderilemeyecek kadar büyük. Daha kısa bir tane dene.",
         "voice_too_long": "Sesli mesajlar en fazla bir dakika olabilir. Daha kısa bir tane dene.",
