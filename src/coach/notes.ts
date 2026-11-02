@@ -39,11 +39,14 @@ export function shownNotes(notes: NoteCard[] | undefined): NoteCard[] {
   return notes?.filter((note) => note.action !== 'asked') ?? [];
 }
 
+/** The notes a message shows a card for: those Bite asked to save. */
+export function askedNotes(notes: NoteCard[] | undefined): NoteCard[] {
+  return notes?.filter((note) => note.action === 'asked') ?? [];
+}
+
 /** The ids of the notes among `messages` that Bite asked to save. */
 export function askedNoteIds(messages: ChatMessage[]): number[] {
-  return messages.flatMap(
-    (message) => message.notes?.filter((note) => note.action === 'asked').map((n) => n.id) ?? [],
-  );
+  return messages.flatMap((message) => askedNotes(message.notes).map((note) => note.id));
 }
 
 /**
@@ -89,6 +92,8 @@ export function useAnswerNote(note: NoteCard) {
           : await supabase.from('coach_notes').delete().eq('id', note.id);
       if (error) throw error;
     },
+    // A load of the states under way may have read the note as it was, before the answer.
+    onMutate: () => queryClient.cancelQueries({ queryKey: ASKED_NOTES_KEY }),
     onSuccess: (_, answer) => {
       queryClient.setQueriesData<StateRow[]>({ queryKey: ASKED_NOTES_KEY }, (rows) =>
         answer === 'save'
@@ -97,5 +102,6 @@ export function useAnswerNote(note: NoteCard) {
       );
       void queryClient.invalidateQueries({ queryKey: NOTES_KEY });
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ASKED_NOTES_KEY }),
   });
 }

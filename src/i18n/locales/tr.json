@@ -1771,7 +1771,8 @@
         "title": "Bunu hatırlayayım mı?",
         "note": "{{category}}: {{text}}",
         "save": "Deftere kaydet",
-        "notNow": "Şimdi değil"
+        "notNow": "Şimdi değil",
+        "notRemoved": "Not kaldırılamadı. Tekrar dene."
       }
     },
     "notebook": {

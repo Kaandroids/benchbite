@@ -1771,7 +1771,8 @@
         "title": "Remember this?",
         "note": "{{category}}: {{text}}",
         "save": "Save to notebook",
-        "notNow": "Not now"
+        "notNow": "Not now",
+        "notRemoved": "The note couldn't be removed. Try again."
       }
     },
     "notebook": {

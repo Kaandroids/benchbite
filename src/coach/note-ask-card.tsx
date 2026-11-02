@@ -47,11 +47,13 @@ export function NoteAskCard({ note, waiting = false }: NoteAskCardProps) {
       </View>
       {answer.isError ? (
         <Text color="danger">
-          {dbErrorMessage(
-            answer.error,
-            [['notesInUseLimit', t('bite.notebook.refusals.full')]],
-            t('bite.notebook.notSaved'),
-          )}
+          {answer.variables === 'decline'
+            ? t('bite.notes.ask.notRemoved')
+            : dbErrorMessage(
+                answer.error,
+                [['notesInUseLimit', t('bite.notebook.refusals.full')]],
+                t('bite.notebook.notSaved'),
+              )}
         </Text>
       ) : null}
       <View style={[styles.row, { gap: spacing.md }]}>
