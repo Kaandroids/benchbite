@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useMonthDayFormat, useMonthFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
@@ -49,8 +50,6 @@ export function TrialEndingScreen({
 
   return (
     <Screen
-      closes
-      onBack={onClose}
       footer={
         <View style={[styles.stretch, { gap: spacing.md }]}>
           <Button
@@ -63,6 +62,10 @@ export function TrialEndingScreen({
     >
       <View style={[styles.body, { gap: spacing.xl }]}>
         <View style={[styles.group, { gap: spacing.md }]}>
+          {/* The cross sits where a top bar's would, level with the top of Bite. */}
+          <View style={[styles.close, { left: spacing.lg - spacing.xl, top: -10 }]}>
+            <TopBarButton icon="close" label={t('common.close')} onPress={onClose} />
+          </View>
           <View>
             <BiteAvatar size={128} expression="thinking" />
             <View
@@ -94,7 +97,7 @@ export function TrialEndingScreen({
           </Text>
         </View>
 
-        <View style={[styles.group, { gap: spacing.lg }]}>
+        <View style={[styles.group, styles.middle, { gap: spacing.lg }]}>
           <View style={styles.stretch}>
             <SegmentedControl
               accessibilityLabel={t('premium.billing')}
@@ -151,7 +154,15 @@ export function TrialEndingScreen({
 const styles = StyleSheet.create({
   body: {
     flexGrow: 1,
-    justifyContent: 'space-between',
+  },
+  middle: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  close: {
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
   },
   group: {
     alignItems: 'center',

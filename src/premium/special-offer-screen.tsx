@@ -54,30 +54,35 @@ export function SpecialOfferScreen({
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
-      <View style={[styles.top, { paddingHorizontal: spacing.md }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={onClose}
-          hitSlop={8}
-          style={[styles.close, { backgroundColor: colors.inverseRaised }]}
-        >
-          <Icon name="close" size={18} color="onInverse" />
-        </Pressable>
-        <View
-          style={[
-            styles.pill,
-            { backgroundColor: colors.inverseRaised, paddingHorizontal: spacing.md },
-          ]}
-        >
-          <Text variant="captionStrong" color="onInverse" style={styles.digits}>
-            {t('premium.offer.endsIn', { time: left })}
-          </Text>
-        </View>
-      </View>
-
       <View style={[styles.body, { gap: spacing.xl, padding: spacing.xl }]}>
         <View style={[styles.center, { gap: spacing.md }]}>
+          {/* The cross and the time left sit level with the top of Bite. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            onPress={onClose}
+            hitSlop={8}
+            style={[
+              styles.close,
+              { left: spacing.md - spacing.xl, backgroundColor: colors.inverseRaised },
+            ]}
+          >
+            <Icon name="close" size={18} color="onInverse" />
+          </Pressable>
+          <View
+            style={[
+              styles.pill,
+              {
+                right: spacing.md - spacing.xl,
+                backgroundColor: colors.inverseRaised,
+                paddingHorizontal: spacing.md,
+              },
+            ]}
+          >
+            <Text variant="captionStrong" color="onInverse" style={styles.digits}>
+              {t('premium.offer.endsIn', { time: left })}
+            </Text>
+          </View>
           <View>
             <Sparkles size={220}>
               <BiteAvatar size={156} expression="happy" />
@@ -103,7 +108,7 @@ export function SpecialOfferScreen({
           </View>
         </View>
 
-        <View style={[styles.center, { gap: spacing.lg }]}>
+        <View style={[styles.center, styles.middle, { gap: spacing.lg }]}>
           <View style={styles.center}>
             <Text
               variant="headline"
@@ -187,12 +192,10 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  top: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   close: {
+    position: 'absolute',
+    top: 22,
+    zIndex: 1,
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -200,6 +203,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pill: {
+    position: 'absolute',
+    top: 29,
+    zIndex: 1,
     borderRadius: 999,
     paddingVertical: 6,
   },
@@ -208,7 +214,10 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
-    justifyContent: 'space-between',
+  },
+  middle: {
+    flex: 1,
+    justifyContent: 'center',
   },
   stretch: {
     alignSelf: 'stretch',
