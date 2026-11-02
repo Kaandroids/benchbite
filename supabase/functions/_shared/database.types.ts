@@ -2220,6 +2220,10 @@ export type Database = {
           recipe_id: number;
         }[];
       };
+      metric_target_kind: {
+        Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
+        Returns: string;
+      };
       metrics_valid: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][] };
         Returns: boolean;
