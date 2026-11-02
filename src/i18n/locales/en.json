@@ -1933,6 +1933,27 @@
         "too_many_photos": "Up to 3 photos fit in a message. Remove one to send it."
       }
     },
+    "voice": {
+      "message": "Voice message",
+      "hold": "Hold to talk",
+      "holdHint": "Hold the mic to record, then let go to send.",
+      "listening": "Listening…",
+      "release": "{{time}} · release to send",
+      "slideToCancel": "‹ slide to cancel",
+      "releaseToCancel": "Release to cancel",
+      "recording": "Recording, release to send",
+      "play": "Play voice message",
+      "pause": "Pause voice message",
+      "label": "Voice message, {{length}}",
+      "hearing": "Listening to your message…",
+      "problems": {
+        "voice_too_large": "This voice message is too large to send. Try a shorter one.",
+        "voice_too_long": "Voice messages can be up to a minute long. Try a shorter one.",
+        "voice_not_m4a": "This voice message couldn't be read. Try recording it again.",
+        "voice_not_recorded": "The voice message couldn't be recorded. Try again.",
+        "microphone_denied": "Bite needs the microphone to hear you. Allow it in the settings."
+      }
+    },
     "proposal": {
       "fromToday": "From today",
       "targetsTitle": "Daily targets",

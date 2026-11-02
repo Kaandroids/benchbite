@@ -11,3 +11,6 @@ jest.mock('react-native-worklets', () => ({
   ...jest.requireActual<object>('react-native-worklets'),
   getUIRuntimeHolder: () => ({}),
 }));
+
+// expo-audio has no native module in tests; this stand-in records and plays nothing.
+jest.mock('expo-audio', () => require('./src/test/expo-audio'));

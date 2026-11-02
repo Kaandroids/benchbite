@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import type { AnswerExpression } from './bite-expressions';
 import { cutOf } from './chat-ending';
 import { messagePhotos } from './chat-photos';
+import { messageVoice } from './chat-voice';
 import { messageMealCards } from './meal-cards';
 import { messageNotes } from './notes';
 import { messageProposals } from './proposals';
@@ -44,6 +45,13 @@ export type ThreadSummary = {
    * name of its own, and is called by its photos.
    */
   firstPhotos: number;
+  /** Whether the last message is a voice message, which stands for it without text. */
+  lastVoice: boolean;
+  /**
+   * Whether the user's first message is a voice message without text, as one that could not be
+   * written down: such a thread is called a voice message.
+   */
+  firstVoice: boolean;
   /** The face of Bite's last answer, if it answered. */
   expression: AnswerExpression | null;
 };
@@ -61,6 +69,8 @@ function toSummary(
     lastMessage: row.last_message,
     lastPhotos: row.last_photos,
     firstPhotos: row.first_photos,
+    lastVoice: row.last_voice,
+    firstVoice: row.first_voice,
     expression: row.expression,
   };
 }
@@ -115,32 +125,42 @@ export function messageText(content: Json): string {
     .join('\n');
 }
 
+/** What a thread's first message holds without text, which names a thread without a name. */
+type FirstMedia = Pick<ThreadSummary, 'firstPhotos' | 'firstVoice'>;
+
 /**
  * How a thread is named and its last message said in a line, in the history and wherever a chat
- * is offered: a message of photos alone, which has no text, by its photos, "Photo" or "2 photos".
+ * is offered: a message of photos alone, which has no text, by its photos, "Photo" or "2 photos",
+ * and a voice message not written down as a voice message.
  */
 export function useThreadText() {
   const { t } = useTranslation();
-  const photos = (count: number) => t('bite.photos.count', { count });
-  /** A thread's own name, or its photos' for one begun with photos alone; null for neither. */
-  const title = (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
-    thread.title ?? (thread.firstPhotos > 0 ? photos(thread.firstPhotos) : null);
+  /** What stands for a message without text: a voice message, or its photos; null for neither. */
+  const media = (voice: boolean, photos: number) =>
+    voice ? t('bite.voice.message') : photos > 0 ? t('bite.photos.count', { count: photos }) : null;
+  /** A thread's own name, or its first message's media's; null for neither. */
+  const title = (thread: Pick<ThreadSummary, 'title'> & FirstMedia) =>
+    thread.title ?? media(thread.firstVoice, thread.firstPhotos);
   return {
     title,
-    name: (thread: Pick<ThreadSummary, 'title' | 'firstPhotos'>) =>
+    name: (thread: Pick<ThreadSummary, 'title'> & FirstMedia) =>
       title(thread) ?? t('bite.chats.untitled'),
-    line: (thread: Pick<ThreadSummary, 'lastMessage' | 'lastPhotos'>) =>
-      thread.lastMessage || (thread.lastPhotos > 0 ? photos(thread.lastPhotos) : null),
+    line: (thread: Pick<ThreadSummary, 'lastMessage' | 'lastPhotos' | 'lastVoice'>) =>
+      thread.lastMessage || media(thread.lastVoice, thread.lastPhotos),
   };
 }
 
 /**
- * How many photos the user's first message holds when it has no text, as `my_coach_threads()`
- * counts them (`first_photos`), for a chat read with its messages: such a chat is called by them.
+ * What the user's first message holds when it has no text, as `my_coach_threads()` tells it
+ * (`first_photos`, `first_voice`), for a chat read with its messages: such a chat is called by it.
  */
-export function firstPhotos(messages: ChatMessage[]): number {
+export function firstMedia(messages: ChatMessage[]): FirstMedia {
   const first = messages.find((message) => message.role === 'user');
-  return first && !first.text ? (first.photos?.length ?? 0) : 0;
+  const untitled = !!first && !first.text;
+  return {
+    firstPhotos: untitled ? (first.photos?.length ?? 0) : 0,
+    firstVoice: untitled && !!first.voice,
+  };
 }
 
 /**
@@ -194,11 +214,13 @@ export function storedMessages(rows: StoredMessage[]): ChatMessage[] {
     const mealCards = row.role === 'bite' ? messageMealCards(row.content) : [];
     const notes = row.role === 'bite' ? messageNotes(row.content) : [];
     const photos = row.role === 'user' ? messagePhotos(row.content) : [];
+    const voice = row.role === 'user' ? messageVoice(row.content) : undefined;
     return {
       id: `stored-${row.id}`,
       role: row.role,
       text: messageText(row.content),
       ...(photos.length > 0 && { photos }),
+      ...(voice && { voice }),
       expression: row.expression ?? undefined,
       cut: cutOf(row.interrupted),
       createdAt: new Date(row.created_at),
