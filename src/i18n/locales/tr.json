@@ -2077,8 +2077,8 @@
       "usedDays_one": "Bite'ı {{count}} gün kullandın",
       "usedDays_other": "Bite'ı {{count}} gün kullandın",
       "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
-      "kept": "Ne seçersen seç, yaptığın hiçbir şey silinmez.",
-      "title": "Deneme özetin"
+      "title": "Deneme özetin",
+      "titleNamed": "<accent>{{name}}</accent> için deneme özeti"
     },
     "offer": {
       "endsIn": "{{time}} sonra bitiyor",

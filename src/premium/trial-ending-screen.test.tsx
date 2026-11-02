@@ -26,6 +26,11 @@ describe('TrialEndingScreen', () => {
     expect(screen.getByRole('radio', { checked: true })).toHaveTextContent(/€83\.88/);
   });
 
+  it('names the user in the title, when they have a name', async () => {
+    await render(<TrialEndingScreen {...props} name="Kaan" onKeep={jest.fn()} />);
+    expect(screen.getByText("Kaan's")).toBeTruthy();
+  });
+
   it('keeps the plan billed as chosen', async () => {
     const onKeep = jest.fn();
     await render(<TrialEndingScreen {...props} onKeep={onKeep} />);

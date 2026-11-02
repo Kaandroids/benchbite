@@ -2077,8 +2077,8 @@
       "usedDays_one": "You used Bite on {{count}} day",
       "usedDays_other": "You used Bite on {{count}} days",
       "yearlyNote": "{{price}} a month, billed once a year",
-      "kept": "Whatever you choose, nothing you made is deleted.",
-      "title": "Your trial summary"
+      "title": "Your trial summary",
+      "titleNamed": "<accent>{{name}}'s</accent> trial summary"
     },
     "offer": {
       "endsIn": "Ends in {{time}}",

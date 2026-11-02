@@ -2077,8 +2077,8 @@
       "usedDays_one": "Du hast Bite an {{count}} Tag genutzt",
       "usedDays_other": "Du hast Bite an {{count}} Tagen genutzt",
       "yearlyNote": "{{price}} pro Monat, einmal im Jahr berechnet",
-      "kept": "Was du auch wählst, nichts von dir wird gelöscht.",
-      "title": "Deine Testwoche im Überblick"
+      "title": "Deine Testwoche im Überblick",
+      "titleNamed": "Testwoche von <accent>{{name}}</accent>"
     },
     "offer": {
       "endsIn": "Endet in {{time}}",

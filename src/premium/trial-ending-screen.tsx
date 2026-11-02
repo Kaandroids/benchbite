@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
 import { Radio } from '@/components/ui/radio';
 import { Screen } from '@/components/ui/screen';
 import { Tag } from '@/components/ui/tag';
@@ -16,6 +15,8 @@ import type { Billing, PlanPrices } from './prices';
 import { TRIAL_DAYS, TrialWeek } from './trial-week';
 
 type TrialEndingScreenProps = {
+  /** The user's name, shown in the title when they have given one. */
+  name?: string | null;
   /** The trial's first day. */
   startedOn: Date;
   /** Today's place in the trial, from 0 for its first day. */
@@ -35,6 +36,7 @@ type TrialEndingScreenProps = {
  * days left and what the user did, the plan after it, yearly or monthly, and the buttons.
  */
 export function TrialEndingScreen({
+  name,
   startedOn,
   todayIndex,
   usedOn,
@@ -83,12 +85,6 @@ export function TrialEndingScreen({
       }
       footer={
         <View style={[styles.center, { gap: spacing.md }]}>
-          <View style={[styles.row, { gap: spacing.xs }]}>
-            <Icon name="check" size={14} color="textMuted" />
-            <Text variant="caption" color="textMuted">
-              {t('premium.trialEnding.kept')}
-            </Text>
-          </View>
           <View style={styles.stretch}>
             <Button
               label={t(
@@ -103,14 +99,27 @@ export function TrialEndingScreen({
     >
       <View style={{ gap: spacing.xs }}>
         <Text variant="hero" accessibilityRole="header">
-          {t('premium.trialEnding.title')}
+          {name ? (
+            <Trans
+              i18nKey="premium.trialEnding.titleNamed"
+              values={{ name }}
+              components={{ accent: <Text variant="hero" color="primaryText" /> }}
+            />
+          ) : (
+            t('premium.trialEnding.title')
+          )}
         </Text>
         <Text variant="body" color="textMuted">
           {t('premium.trialEnding.startsOn', { day: dayFormat(startsOn) })}
         </Text>
       </View>
 
+      {/* What space is left goes in equal parts above and below the week. */}
+      <View style={styles.flex} />
+
       <TrialWeek startedOn={startedOn} todayIndex={todayIndex} usedOn={usedOn} usage={usage} />
+
+      <View style={styles.flex} />
 
       <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
         {plans.map((plan) => {
