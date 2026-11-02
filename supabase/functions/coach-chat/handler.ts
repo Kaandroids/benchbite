@@ -462,11 +462,15 @@ async function answer(
       if (!calls.length) {
         // The model may write of the card it means to make and end without making it. Told so
         // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
-        // tool may be called, it says it could not (#402). Not after a card earlier in the
-        // thread, which the answer may speak of: told then, the model made it again or said its
-        // answer twice.
+        // tool may be called, it says it could not (#402). While it may, not after a card earlier
+        // in the thread, which the answer may speak of: told then, the model made it again or
+        // said its answer twice. Once it may not, it was told it can make none, and a card it
+        // speaks of is most likely the one it meant to make.
         const noCard =
-          !toldNoCard && !earlierCard && !madeCard && mentionsCard(said, request.language);
+          !toldNoCard &&
+          (!earlierCard || answerOnly) &&
+          !madeCard &&
+          mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
         messages.push(
