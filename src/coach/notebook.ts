@@ -61,33 +61,6 @@ const SAVES_MUTATION_KEY = ['set-coach-saves-notes'];
 const COLUMNS =
   'id, category, text, source, thread_id, created_at, review_on, archived_at, archive_reason';
 
-function noteOf(
-  row: Pick<
-    NoteRow,
-    | 'id'
-    | 'category'
-    | 'text'
-    | 'source'
-    | 'thread_id'
-    | 'created_at'
-    | 'review_on'
-    | 'archived_at'
-    | 'archive_reason'
-  >,
-): Note {
-  return {
-    id: row.id,
-    category: row.category,
-    text: row.text,
-    source: row.source,
-    threadId: row.thread_id,
-    createdAt: new Date(row.created_at),
-    reviewOn: row.review_on,
-    archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-    archiveReason: row.archive_reason,
-  };
-}
-
 /** The user's notes, oldest first, past ones included, but none waiting for their yes. */
 export function useNotes() {
   return useQuery({
@@ -100,7 +73,18 @@ export function useNotes() {
         .order('created_at')
         .order('id');
       if (error) throw error;
-      return data.map(noteOf);
+      // Each row as the columns selected type it.
+      return data.map((row) => ({
+        id: row.id,
+        category: row.category,
+        text: row.text,
+        source: row.source,
+        threadId: row.thread_id,
+        createdAt: new Date(row.created_at),
+        reviewOn: row.review_on,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        archiveReason: row.archive_reason,
+      }));
     },
   });
 }
@@ -121,16 +105,7 @@ export function groupNotes(notes: Note[]): {
   return { sections, past };
 }
 
-/** Why the database refused a note the user added or restored: the notebook is full. */
-export type NoteRefusal = 'full' | 'kept';
-
-/** The refusal an error means, if it is one the notebook explains. */
-export function noteRefusal(error: unknown): NoteRefusal | undefined {
-  const code = (error as { code?: string } | null)?.code;
-  return code === 'BB046' ? 'full' : code === 'BB047' ? 'kept' : undefined;
-}
-
-/** Adds a note of the user's own, or changes one, by its id. */
+/** Adds a note of the user's own, or changes one in use, by its id. */
 export function useSaveNote() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -143,11 +118,22 @@ export function useSaveNote() {
       category: NoteCategory;
       text: string;
     }) => {
-      const { error } =
-        id === undefined
-          ? await supabase.from('coach_notes').insert({ category, text: text.trim() })
-          : await supabase.from('coach_notes').update({ category, text: text.trim() }).eq('id', id);
+      if (id === undefined) {
+        const { error } = await supabase
+          .from('coach_notes')
+          .insert({ category, text: text.trim() });
+        if (error) throw error;
+        return;
+      }
+      // A note removed or archived meanwhile, as by Bite in another chat, is not changed.
+      const { data, error } = await supabase
+        .from('coach_notes')
+        .update({ category, text: text.trim() })
+        .eq('id', id)
+        .is('archived_at', null)
+        .select('id');
       if (error) throw error;
+      if (!data.length) throw new Error('The note is gone');
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: NOTES_KEY }),
   });

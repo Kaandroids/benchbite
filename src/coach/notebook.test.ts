@@ -1,4 +1,4 @@
-import { groupNotes, type Note, noteRefusal } from './notebook';
+import { groupNotes, type Note } from './notebook';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -28,11 +28,4 @@ it('groups allergies with health, leaves out empty sections, and puts past notes
   ]);
   // Last archived first.
   expect(past.map((n) => n.id)).toEqual([5, 4]);
-});
-
-it('tells a full notebook from one that keeps too many', () => {
-  expect(noteRefusal({ code: 'BB046' })).toBe('full');
-  expect(noteRefusal({ code: 'BB047' })).toBe('kept');
-  expect(noteRefusal({ code: '23514' })).toBeUndefined();
-  expect(noteRefusal(new Error('offline'))).toBeUndefined();
 });
