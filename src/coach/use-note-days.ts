@@ -57,9 +57,3 @@ export function useReviewText() {
     },
   };
 }
-
-/** Formats a day of a note, such as when Bite archived it: "Oct 20". */
-export function useNoteDate() {
-  const date = useShortDateFormat(new Date());
-  return (day: Date) => date(day);
-}

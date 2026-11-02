@@ -17,7 +17,7 @@ import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
 import { Tag } from '@/components/ui/tag';
 import { TopBarButton } from '@/components/ui/top-bar-button';
-import { useClockFormat } from '@/i18n/dates';
+import { useClockFormat, useShortDateFormat } from '@/i18n/dates';
 import { dbErrorMessage } from '@/lib/errors';
 import { useTheme } from '@/theme';
 
@@ -28,6 +28,7 @@ import {
   MAX_NOTE_LENGTH,
   type Note,
   NOTE_CATEGORIES,
+  NOTEBOOK_SECTIONS,
   type NoteCategory,
   type NotebookSection,
   useDeleteNote,
@@ -38,16 +39,7 @@ import {
   useSetSavesNotes,
 } from './notebook';
 import { useDeferredDelete } from './use-deferred-delete';
-import { useNoteDate, useNoteSource, useReviewText } from './use-note-days';
-
-const SECTION_ICONS: Record<NotebookSection, IconName> = {
-  health: 'warning',
-  injury: 'injury',
-  training: 'dumbbell',
-  food: 'meal',
-  goal: 'target',
-  lifestyle: 'sun',
-};
+import { useNoteSource, useReviewText } from './use-note-days';
 
 const CATEGORY_ICONS: Record<NoteCategory, IconName> = {
   allergy: 'warning',
@@ -58,6 +50,11 @@ const CATEGORY_ICONS: Record<NoteCategory, IconName> = {
   goal: 'target',
   lifestyle: 'sun',
 };
+
+/** A section's icon: its first category's, so allergies' for allergies and health. */
+function sectionIcon(key: NotebookSection): IconName {
+  return CATEGORY_ICONS[NOTEBOOK_SECTIONS.find((section) => section.key === key)!.categories[0]];
+}
 
 /** What a note sheet edits: a new note, or one of the notebook's. */
 type Editing = { note?: Note };
@@ -75,9 +72,19 @@ export function NotebookScreen() {
   const { deleting, remove, undo, settle } = useDeferredDelete<Note>(deleteNote.mutate);
   const [open, setOpen] = useState<Note | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
+  // Built once for every row, not in each.
+  const source = useNoteSource();
+  const reviewText = useReviewText();
 
   const add = (
-    <TopBarButton icon="plus" label={t('bite.notebook.add')} onPress={() => setEditing({})} />
+    <TopBarButton
+      icon="plus"
+      label={t('bite.notebook.add')}
+      onPress={() => {
+        deleteNote.reset();
+        setEditing({});
+      }}
+    />
   );
   if (notes.data === undefined) {
     return (
@@ -113,7 +120,7 @@ export function NotebookScreen() {
           <SavingSwitch />
           {sections.map((section) => (
             <View key={section.key} style={{ gap: spacing.sm }}>
-              <SectionHeading icon={SECTION_ICONS[section.key]}>
+              <SectionHeading icon={sectionIcon(section.key)}>
                 {t(`bite.notebook.sections.${section.key}`)}
               </SectionHeading>
               <Card list>
@@ -122,7 +129,13 @@ export function NotebookScreen() {
                     key={note.id}
                     note={note}
                     first={index === 0}
-                    onPress={() => setOpen(note)}
+                    source={source(note)}
+                    review={note.reviewOn ? reviewText.tag(note.reviewOn) : ''}
+                    onPress={() => {
+                      // A removal that failed before is not told of again.
+                      deleteNote.reset();
+                      setOpen(note);
+                    }}
                   />
                 ))}
               </Card>
@@ -196,18 +209,22 @@ function SectionHeading({ icon, children }: { icon: IconName; children: string }
   );
 }
 
-type NoteRowProps = { note: Note; first: boolean; onPress: () => void };
+type NoteRowProps = {
+  note: Note;
+  first: boolean;
+  /** Where it came from and when, and when Bite asks again, if it does. */
+  source: string;
+  review: string;
+  onPress: () => void;
+};
 
 /** A note: its text, where it came from, and when Bite asks again about it. */
-function NoteRow({ note, first, onPress }: NoteRowProps) {
+function NoteRow({ note, first, source, review, onPress }: NoteRowProps) {
   const { colors, spacing } = useTheme();
-  const source = useNoteSource();
-  const reviewText = useReviewText();
-  const review = note.reviewOn ? reviewText.tag(note.reviewOn) : '';
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[note.text, source(note), review].filter(Boolean).join(', ')}
+      accessibilityLabel={[note.text, source, review].filter(Boolean).join(', ')}
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
@@ -222,7 +239,7 @@ function NoteRow({ note, first, onPress }: NoteRowProps) {
       <View style={[styles.flex, { gap: 2 }]}>
         <Text variant="bodyStrong">{note.text}</Text>
         <Text variant="caption" color="textMuted">
-          {source(note)}
+          {source}
         </Text>
         {review ? (
           <View style={{ marginTop: spacing.xs }}>
@@ -239,7 +256,7 @@ function NoteRow({ note, first, onPress }: NoteRowProps) {
 function PastNotes({ notes }: { notes: Note[] }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const date = useNoteDate();
+  const date = useShortDateFormat(new Date());
   const restore = useRestoreNote();
   const [unfolded, setUnfolded] = useState(false);
   return (

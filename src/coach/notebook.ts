@@ -4,7 +4,7 @@
 import type { NoteCategory } from '@shared/coach/chat';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { Database } from '@/lib/database.types';
+import { Constants, type Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
@@ -31,16 +31,8 @@ export type Note = {
 /** The longest a note may be, as `coach_notes` checks it. */
 export const MAX_NOTE_LENGTH = 200;
 
-/** The categories in the order the add sheet offers them. */
-export const NOTE_CATEGORIES: readonly NoteCategory[] = [
-  'allergy',
-  'health',
-  'injury',
-  'training',
-  'food',
-  'goal',
-  'lifestyle',
-];
+/** The categories in the order the add sheet offers them, as the database lists them. */
+export const NOTE_CATEGORIES: readonly NoteCategory[] = Constants.public.Enums.coach_note_category;
 
 /** The notebook's sections, in order: allergies share one with health (board 20). */
 export const NOTEBOOK_SECTIONS = [
