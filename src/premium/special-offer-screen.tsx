@@ -21,20 +21,23 @@ type SpecialOfferScreenProps = {
   price: string;
   /** When the offer ends. */
   endsAt: Date;
+  /** What the user made while on premium, kept for them. */
+  waiting: { workouts: number; alternatives: number; chats: number };
   onClaim: () => void;
   onClose: () => void;
 };
 
 /**
- * An offer of premium for less (#411), such as for coming back after it ended: one price for the
- * first year, the usual one struck through, and the time left. Always dark, as it stands apart
- * from the app's own screens.
+ * An offer of premium for less (#411), such as for coming back after it ended: Bite on top, the
+ * first year's price and the button in the middle, and what is waiting for the user at the
+ * bottom, with the time left. Always dark, as it stands apart from the app's own screens.
  */
 export function SpecialOfferScreen({
   percent,
   usualPrice,
   price,
   endsAt,
+  waiting,
   onClaim,
   onClose,
 }: SpecialOfferScreenProps) {
@@ -73,61 +76,94 @@ export function SpecialOfferScreen({
         </View>
       </View>
 
-      <View style={[styles.body, { gap: spacing.xl, paddingHorizontal: spacing.xl }]}>
-        <View>
-          <Sparkles size={168}>
-            <BiteAvatar size={116} expression="happy" />
-          </Sparkles>
-          <View
-            style={[
-              styles.stamp,
-              { backgroundColor: colors.primaryButton, borderRadius: radii.md },
-            ]}
-          >
-            <Text variant="headline" style={{ color: colors.onPrimary }}>
-              −{percent}%
+      <View style={[styles.body, { gap: spacing.xl, padding: spacing.xl }]}>
+        <View style={[styles.center, { gap: spacing.md }]}>
+          <View>
+            <Sparkles size={220}>
+              <BiteAvatar size={156} expression="happy" />
+            </Sparkles>
+            <View
+              style={[
+                styles.stamp,
+                { backgroundColor: colors.primaryButton, borderRadius: radii.md },
+              ]}
+            >
+              <Text variant="headline" style={{ color: colors.onPrimary }}>
+                −{percent}%
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.center, { gap: spacing.xs }]}>
+            <Text variant="captionStrong" style={{ color: BRAND_ORANGE_DARK }}>
+              {t('premium.offer.kicker').toUpperCase()}
+            </Text>
+            <Text variant="title" color="onInverse" style={styles.centerText}>
+              {t('premium.offer.title')}
             </Text>
           </View>
         </View>
 
-        <View style={[styles.center, { gap: spacing.xs }]}>
-          <Text variant="captionStrong" style={{ color: BRAND_ORANGE_DARK }}>
-            {t('premium.offer.kicker').toUpperCase()}
-          </Text>
-          <Text variant="title" color="onInverse" style={styles.centerText}>
-            {t('premium.offer.title')}
-          </Text>
-          <Text variant="body" color="onInverseMuted" style={styles.centerText}>
+        <View style={[styles.center, { gap: spacing.lg }]}>
+          <View style={styles.center}>
+            <Text
+              variant="headline"
+              color="onInverseMuted"
+              style={styles.struck}
+              accessibilityLabel={t('premium.offer.usual', { price: usualPrice })}
+            >
+              {usualPrice}
+            </Text>
+            <Text variant="display" color="onInverse">
+              {price}
+            </Text>
+            <Text variant="label" color="onInverse">
+              {t('premium.offer.firstYear')}
+            </Text>
+            <Text variant="caption" color="onInverseMuted">
+              {t('premium.offer.then', { price: usualPrice })}
+            </Text>
+          </View>
+          <View style={[styles.stretch, { gap: spacing.sm }]}>
+            <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
+            <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
+              {t('premium.offer.legal')}
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ gap: spacing.sm }}>
+          <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
             {t('premium.offer.text')}
           </Text>
+          <View style={[styles.stats, { gap: spacing.sm }]}>
+            {(
+              [
+                ['workouts', waiting.workouts],
+                ['alternatives', waiting.alternatives],
+                ['chats', waiting.chats],
+              ] as const
+            ).map(([kind, count]) => (
+              <View
+                key={kind}
+                style={[
+                  styles.stat,
+                  {
+                    backgroundColor: colors.inverseRaised,
+                    borderRadius: radii.md,
+                    padding: spacing.sm,
+                  },
+                ]}
+              >
+                <Text variant="headline" color="onInverse">
+                  {count}
+                </Text>
+                <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
+                  {t(`premium.offer.${kind}`, { count })}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-
-        <View style={styles.center}>
-          <Text
-            variant="headline"
-            color="onInverseMuted"
-            style={styles.struck}
-            accessibilityLabel={t('premium.offer.usual', { price: usualPrice })}
-          >
-            {usualPrice}
-          </Text>
-          <Text variant="display" color="onInverse">
-            {price}
-          </Text>
-          <Text variant="label" color="onInverse">
-            {t('premium.offer.firstYear')}
-          </Text>
-          <Text variant="caption" color="onInverseMuted">
-            {t('premium.offer.then', { price: usualPrice })}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ padding: spacing.xl, gap: spacing.sm }}>
-        <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
-        <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
-          {t('premium.offer.legal')}
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -170,13 +206,22 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    justifyContent: 'space-between',
+  },
+  stretch: {
+    alignSelf: 'stretch',
+  },
+  stats: {
+    flexDirection: 'row',
+  },
+  stat: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   stamp: {
     position: 'absolute',
-    right: -20,
-    top: 92,
+    right: -16,
+    top: 124,
     paddingHorizontal: 10,
     paddingVertical: 4,
     transform: [{ rotate: '-12deg' }],

@@ -15,6 +15,7 @@ describe('SpecialOfferScreen', () => {
         usualPrice="€83.88"
         price="€50.33"
         endsAt={new Date(2026, 10, 3, 13, 0, 5)}
+        waiting={{ workouts: 7, alternatives: 4, chats: 23 }}
         onClaim={jest.fn()}
         onClose={jest.fn()}
       />,

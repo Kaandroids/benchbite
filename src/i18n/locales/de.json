@@ -2081,7 +2081,13 @@
       "firstYear": "für dein erstes Jahr",
       "then": "Danach {{price}} pro Jahr",
       "claim": "−{{percent}} % sichern",
-      "legal": "Heute berechnet. Jederzeit kündbar."
+      "legal": "Heute berechnet. Jederzeit kündbar.",
+      "workouts_one": "Training",
+      "workouts_other": "Trainings",
+      "alternatives_one": "Alternative",
+      "alternatives_other": "Alternativen",
+      "chats_one": "Chat mit Bite",
+      "chats_other": "Chats mit Bite"
     }
   }
 }

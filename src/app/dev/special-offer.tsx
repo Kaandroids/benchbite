@@ -15,6 +15,7 @@ export default function SpecialOfferPreview() {
       usualPrice="€83.88"
       price="€50.33"
       endsAt={endsAt}
+      waiting={{ workouts: 7, alternatives: 4, chats: 23 }}
       onClaim={() => router.back()}
       onClose={() => router.back()}
     />

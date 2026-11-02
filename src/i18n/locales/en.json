@@ -2081,7 +2081,13 @@
       "firstYear": "for your first year",
       "then": "Then {{price}} a year",
       "claim": "Claim −{{percent}}%",
-      "legal": "Billed today. Cancel anytime."
+      "legal": "Billed today. Cancel anytime.",
+      "workouts_one": "workout",
+      "workouts_other": "workouts",
+      "alternatives_one": "alternative",
+      "alternatives_other": "alternatives",
+      "chats_one": "chat with Bite",
+      "chats_other": "chats with Bite"
     }
   }
 }

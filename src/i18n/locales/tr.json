@@ -2081,7 +2081,13 @@
       "firstYear": "ilk yılın için",
       "then": "Sonra yıllık {{price}}",
       "claim": "−%{{percent}} indirimi al",
-      "legal": "Bugün ücretlendirilir. İstediğin zaman iptal et."
+      "legal": "Bugün ücretlendirilir. İstediğin zaman iptal et.",
+      "workouts_one": "antrenman",
+      "workouts_other": "antrenman",
+      "alternatives_one": "alternatif",
+      "alternatives_other": "alternatif",
+      "chats_one": "Bite sohbeti",
+      "chats_other": "Bite sohbeti"
     }
   }
 }
