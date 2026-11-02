@@ -9,10 +9,16 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false);
 
--- A has a plan's budget; B has two cents.
-insert into public.ai_budgets (user_id, monthly_limit_usd) values
-  ('00000000-0000-0000-0000-00000000000a', 4),
-  ('00000000-0000-0000-0000-00000000000b', 0.02);
+-- A and B are premium, with $4 a month; B has two cents of it left.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+select id, 'premium', now() - interval '1 day', now() + interval '29 days', 'monthly', 'manual'
+from auth.users where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b');
+insert into public.ai_usage
+  (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
+   thinking_tokens, cost_usd)
+values
+  (gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
+   0, 0, 0, 0, 3.98);
 
 -- A model whose price never changes, so that what these calls cost holds on any day.
 insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)

@@ -21,10 +21,16 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000c', null, true),
   ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false);
 
--- A and B have a plan's budget; D has none.
-insert into public.ai_budgets (user_id, monthly_limit_usd) values
-  ('00000000-0000-0000-0000-00000000000a', 4),
-  ('00000000-0000-0000-0000-00000000000b', 0.02);
+-- A and B are premium, with $4 a month; B has used all but two cents of it. D is on the free plan.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+select id, 'premium', now() - interval '1 day', now() + interval '29 days', 'monthly', 'manual'
+from auth.users where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b');
+insert into public.ai_usage
+  (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
+   thinking_tokens, cost_usd)
+values
+  (gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
+   0, 0, 0, 0, 3.98);
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -104,7 +110,7 @@ select is(
   'only the most it may answer'
 );
 
--- B's budget of $0.02 holds one chat call's most, not two.
+-- B's budget left, $0.02, holds one chat call's most, not two.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select results_eq(
   $$ select allowed from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000) $$,
@@ -271,13 +277,13 @@ select throws_ok(
   $$ delete from public.ai_usage $$, '42501', null, 'nor delete it'
 );
 select throws_ok(
-  $$ insert into public.ai_budgets (user_id, monthly_limit_usd)
-     values ('00000000-0000-0000-0000-00000000000d', 1000) $$,
+  $$ insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+     values ('00000000-0000-0000-0000-00000000000d', 'premium', now(), now() + interval '1 year', 'yearly', 'manual') $$,
   '42501', null,
-  'nor give themselves a budget'
+  'nor give themselves a plan'
 );
 select throws_ok(
-  $$ update public.ai_budgets set monthly_limit_usd = 1000 $$,
+  $$ update public.plans set budget_usd = 1000 $$,
   '42501', null,
   'nor raise one'
 );
@@ -299,7 +305,7 @@ select throws_ok(
   $$ update public.ai_model_prices set output_usd = 0 $$, '42501', null, 'nor change a price'
 );
 select throws_ok(
-  $$ select 1 from public.ai_budgets $$, '42501', null, 'nor read anyone''s budget'
+  $$ select 1 from public.plans $$, '42501', null, 'nor read the plans'
 );
 select throws_ok(
   $$ select 1 from public.ai_calls_in_flight $$, '42501', null, 'nor the calls running'
@@ -354,7 +360,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');
 select results_eq(
   $$ select allowed, reason, budget_usd from public.ai_access() $$,
   $$ values (false, 'plan_required'::public.ai_access_reason, 0::numeric) $$,
-  'nor a user without a budget, which is nothing by default'
+  'nor a user on the free plan, which has no budget'
 );
 
 
