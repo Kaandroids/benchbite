@@ -104,18 +104,10 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   // A message whose photos were refused comes back to the composer, to change. The composer
   // keeps what the user writes, so that typing never renders the chat.
   const [refused, setRefused] = useState<RefusedDraft>();
-  // While a voice message records, the chat dims behind the composer, and stops playing (board 6).
+  // While a voice message records, the chat dims behind the composer (board 6); what plays stops
+  // as the mic is held, before anything records.
   const [recording, setRecording] = useState(false);
   const playback = useVoicePlayback();
-  const { pause } = playback;
-  // The same each render: the composer tells it again each time it changes.
-  const onRecording = useCallback(
-    (now: boolean) => {
-      setRecording(now);
-      if (now) pause();
-    },
-    [pause],
-  );
   const chat = useChat(start, (draft, problem) => setRefused({ draft, problem }));
   // Where the cards in the chat stand, saved and new, loaded here once for all of them.
   const proposals = useProposalStates(proposalIds(chat.messages));
@@ -242,10 +234,15 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
             <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
           ) : (
             <ChatComposer
-              onSend={following((draft) => chat.send(draft.text, draft.photos, draft.voice))}
+              onSend={following((message) =>
+                'voice' in message
+                  ? chat.sendVoice(message.voice)
+                  : chat.send(message.text, message.photos),
+              )}
+              onHold={playback.pause}
               onStop={busy ? chat.stop : undefined}
               refused={refused}
-              onRecording={onRecording}
+              onRecording={setRecording}
             />
           )}
         </View>

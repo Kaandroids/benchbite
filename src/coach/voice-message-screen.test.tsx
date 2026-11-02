@@ -115,6 +115,14 @@ it('records while the mic is held, and sends the voice message as it is let go',
   await fireEvent.press(screen.getByRole('button', { name: 'Play voice message' }));
   expect(fakeAudio.player.replace).toHaveBeenCalledWith({ uri: 'file:///cache/voice.m4a' });
   expect(fakeAudio.player.play).toHaveBeenCalled();
+  await stream.end();
+
+  // Held again, what plays stops before anything records.
+  await hold();
+  await screen.findByText('Listening…');
+  expect(fakeAudio.player.pause.mock.invocationCallOrder.at(-1)).toBeLessThan(
+    fakeAudio.recorder.prepareToRecordAsync.mock.invocationCallOrder.at(-1)!,
+  );
 });
 
 it('cancels a recording slid away to the left, and says how to record after a tap', async () => {

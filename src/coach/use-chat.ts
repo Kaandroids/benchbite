@@ -67,11 +67,14 @@ export type ChatMessage = {
   notes?: NoteCard[];
 };
 
-/**
- * What the user sends Bite: text, photos as base64 JPEG ready to send, or both; or a voice message
- * alone.
- */
-export type Draft = { text: string; photos: string[]; voice?: VoiceDraft };
+/** What the user writes to Bite: text, photos as base64 JPEG ready to send, or both. */
+export type Draft = { text: string; photos: string[] };
+
+/** What the user sends Bite: what they wrote, or a voice message, which goes alone. */
+export type Outgoing = Draft | { voice: VoiceDraft };
+
+/** Nothing written, as a voice message refused hands back. */
+const NOTHING_WRITTEN: Draft = { text: '', photos: [] };
 
 /** Why a message was refused before Bite was asked: its photos, or its voice message. */
 export type DraftProblem = PhotosProblem | VoiceProblem;
@@ -94,12 +97,14 @@ export function canSendAgain(message: ChatMessage): boolean {
  */
 function draftRefusal(error: unknown, voice: boolean): DraftProblem | undefined {
   if (!(error instanceof ChatRequestError)) return undefined;
-  const tooLarge = error.status === 413 ? true : undefined;
+  const tooLarge = error.status === 413;
   if (voice) {
-    const reason = oneOf(VOICE_REFUSALS, error.refusal) ?? (tooLarge && 'voice_too_large');
+    const reason =
+      oneOf(VOICE_REFUSALS, error.refusal) ?? (tooLarge ? 'voice_too_large' : undefined);
     return reason ? { reason } : undefined;
   }
-  const reason = oneOf(PHOTO_REFUSALS, error.refusal) ?? (tooLarge && 'photos_too_large');
+  const reason =
+    oneOf(PHOTO_REFUSALS, error.refusal) ?? (tooLarge ? 'photos_too_large' : undefined);
   if (!reason) return undefined;
   return error.photo === undefined ? { reason } : { reason, photo: error.photo };
 }
@@ -177,11 +182,12 @@ export function useChat(
     settle(questionId, biteId, ending.cut);
   };
 
-  const run = async ({ text, photos, voice }: Draft) => {
-    // A voice message goes alone.
-    const message = voice ? '' : text.trim();
+  const run = async (outgoing: Outgoing) => {
+    const voice = 'voice' in outgoing ? outgoing.voice : undefined;
+    const { text, photos } = 'voice' in outgoing ? NOTHING_WRITTEN : outgoing;
+    const message = text.trim();
     if ((!message && photos.length === 0 && !voice) || abort.current) return;
-    const sent = photosToSend(voice ? [] : photos);
+    const sent = photosToSend(photos);
     if (!Array.isArray(sent)) {
       onRefused?.({ text, photos }, sent);
       return;
@@ -299,17 +305,16 @@ export function useChat(
     }
   };
 
-  /**
-   * Sends a message to Bite: text, photos or both, or a voice message; its answer comes in as it
-   * is written.
-   */
-  const send = (text: string, photos: string[] = [], voice?: VoiceDraft) =>
-    void run({ text, photos, voice });
+  /** Sends a message to Bite, text, photos or both; its answer comes in as it is written. */
+  const send = (text: string, photos: string[] = []) => void run({ text, photos });
+
+  /** Sends a voice message to Bite, alone. */
+  const sendVoice = (voice: VoiceDraft) => void run({ voice });
 
   /** Sends a message again as it was, with its photos or its voice message. */
   const sendAgain = ({ voice, ...message }: ChatMessage) =>
     voice?.data !== undefined
-      ? send('', [], { data: voice.data, uri: voice.uri, durationMs: voice.durationMs })
+      ? sendVoice({ data: voice.data, uri: voice.uri, durationMs: voice.durationMs })
       : send(
           message.text,
           (message.photos ?? []).flatMap((photo) => (photo.data === undefined ? [] : [photo.data])),
@@ -347,6 +352,7 @@ export function useChat(
     failure,
     refusal,
     send,
+    sendVoice,
     stop,
     askAgain,
     /** Tries the last question again, when that is what the failure offers. */

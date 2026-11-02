@@ -13,7 +13,7 @@ import { useTheme } from '@/theme';
 import { prepareChatPhoto } from './chat-photos';
 import { isVoiceProblem } from './chat-voice';
 import { PhotoTray } from './photo-tray';
-import type { Draft, DraftProblem } from './use-chat';
+import type { Draft, DraftProblem, Outgoing } from './use-chat';
 import { useVoiceRecorder } from './use-voice-recorder';
 import { MicButton, RecordingHeader, SlideToCancel } from './voice-recording';
 
@@ -21,8 +21,10 @@ import { MicButton, RecordingHeader, SlideToCancel } from './voice-recording';
 export type RefusedDraft = { draft: Draft; problem: DraftProblem };
 
 type ChatComposerProps = {
-  /** Sends what the user wrote; the composer empties as it does. */
-  onSend: (draft: Draft) => void;
+  /** Sends what the user wrote, or a voice message; the composer empties as it does. */
+  onSend: (message: Outgoing) => void;
+  /** Told as the mic is held, before anything records, as what plays has to stop first. */
+  onHold?: () => void;
   /** Stops Bite's answer; set while Bite answers, which the send button becomes. */
   onStop?: () => void;
   /**
@@ -53,7 +55,7 @@ function withRefused(current: Draft, refused: Draft): Draft {
  * above the text, each with an ×; text is optional with them. Empty, it offers the mic instead of
  * sending: held, it records a voice message, which goes as it is let go (boards 1 and 6).
  */
-export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatComposerProps) {
+export function ChatComposer({ onSend, onStop, refused, onRecording, onHold }: ChatComposerProps) {
   const { t } = useTranslation();
   const { colors, spacing, typography } = useTheme();
   // What the user writes stays here, so that typing renders the composer alone, not the chat.
@@ -77,7 +79,7 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
   const [cancelling, setCancelling] = useState(false);
   const voice = useVoiceRecorder((end) => {
     setCancelling(false);
-    if ('sent' in end) onSend({ text: '', photos: [], voice: end.sent });
+    if ('sent' in end) onSend({ voice: end.sent });
     else if ('problem' in end) setProblem(end.problem);
     else if ('tooShort' in end) setHint(true);
   });
@@ -94,6 +96,14 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
   const empty = !draft.text.trim() && draft.photos.length === 0 && preparing === 0;
   // More photos than a message takes, as a message handed back may bring, are said until fewer.
   const shown = problem ?? (tooMany ? { reason: 'too_many_photos' as const } : undefined);
+  // What is said above the field: why the message was refused, or how to record after a tap.
+  const note = shown
+    ? isVoiceProblem(shown)
+      ? t(`bite.voice.problems.${shown.reason}`)
+      : t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })
+    : hint
+      ? t('bite.voice.holdHint')
+      : undefined;
 
   const add = async (uris: string[]) => {
     const wanted = uris.slice(0, room);
@@ -128,25 +138,14 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
 
   return (
     <View style={{ gap: spacing.sm }}>
-      {shown ? (
+      {note ? (
         <Text
           variant="caption"
-          color="danger"
+          color={shown ? 'danger' : 'textMuted'}
           accessibilityLiveRegion="polite"
           style={{ paddingHorizontal: spacing.md }}
         >
-          {isVoiceProblem(shown)
-            ? t(`bite.voice.problems.${shown.reason}`)
-            : t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })}
-        </Text>
-      ) : hint ? (
-        <Text
-          variant="caption"
-          color="textMuted"
-          accessibilityLiveRegion="polite"
-          style={{ paddingHorizontal: spacing.md }}
-        >
-          {t('bite.voice.holdHint')}
+          {note}
         </Text>
       ) : null}
       <View
@@ -216,6 +215,7 @@ export function ChatComposer({ onSend, onStop, refused, onRecording }: ChatCompo
               onHold={() => {
                 setProblem(undefined);
                 setHint(false);
+                onHold?.();
                 voice.start();
               }}
               onSlide={setCancelling}
