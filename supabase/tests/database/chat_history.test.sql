@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(28);
 
 select is(public.coach_thread_title('  How was   my week? '), 'How was my week?', 'A short message is the name');
 select is(
@@ -154,6 +154,33 @@ select results_eq(
   $$ select last_photos, first_photos from public.my_coach_threads() where id = 2 $$,
   $$ values (0, 0) $$,
   'A thread without photos has none'
+);
+
+-- Thread 107 begins with a voice message that could not be written down; thread 108 with one that
+-- was, as its text.
+reset role;
+set local role service_role;
+insert into public.coach_threads (id, user_id, last_message_at) overriding system value values
+  (107, '00000000-0000-0000-0000-00000000000a', now() - interval '3 days'),
+  (108, '00000000-0000-0000-0000-00000000000a', now() - interval '3 days');
+insert into public.coach_messages (thread_id, role, content, expression) values
+  (107, 'user', '[{"type": "audio", "path": "a/107/1.m4a"}]', null),
+  (108, 'user', '[{"type": "audio", "path": "a/108/1.m4a"}, {"type": "text", "text": "Lunch"}]', null);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select title, last_message, last_voice, first_voice from public.my_coach_threads() where id = 107 $$,
+  $$ values (null::text, null::text, true, true) $$,
+  'A thread begun with a voice message not written down has no name, and says it began so'
+);
+select results_eq(
+  $$ select title, last_message, last_voice, first_voice from public.my_coach_threads() where id = 108 $$,
+  $$ values ('Lunch'::text, 'Lunch', true, false) $$,
+  'A voice message written down names its thread, and is its last message'
+);
+select results_eq(
+  $$ select last_voice, first_voice from public.my_coach_threads() where id = 2 $$,
+  $$ values (false, false) $$,
+  'A thread without voice messages has none'
 );
 
 reset role;
