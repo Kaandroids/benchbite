@@ -588,8 +588,9 @@ export type Database = {
           owner_id: string | null;
           primary_muscles: Database['public']['Enums']['muscle'][];
           secondary_muscles: Database['public']['Enums']['muscle'][];
+          target_kind: string | null;
         };
-        ComputedFields: never;
+        ComputedFields: 'target_kind';
         Insert: {
           archived_at?: string | null;
           category: Database['public']['Enums']['exercise_category'];
@@ -2537,6 +2538,15 @@ export type Database = {
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
+      target_kind: {
+        Args: {
+          exercise: Omit<
+            Database['public']['Tables']['exercises']['Row'],
+            Database['public']['Tables']['exercises']['ComputedFields']
+          >;
+        };
+        Returns: string;
+      };
       target_suits: {
         Args: { metrics: Database['public']['Enums']['exercise_metric'][]; target: Json };
         Returns: boolean;
@@ -2625,7 +2635,7 @@ export type Database = {
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
       coach_proposal_kind:
         'workout' | 'targets' | 'food_log' | 'workouts' | 'alternative' | 'alternative_switch';
-      coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
+      coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone' | 'replaced';
       coach_role: 'user' | 'bite';
       equipment:
         | 'barbell'
@@ -2890,7 +2900,7 @@ export const Constants = {
         'alternative',
         'alternative_switch',
       ],
-      coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
+      coach_proposal_status: ['pending', 'applied', 'kept', 'undone', 'replaced'],
       coach_role: ['user', 'bite'],
       equipment: [
         'barbell',

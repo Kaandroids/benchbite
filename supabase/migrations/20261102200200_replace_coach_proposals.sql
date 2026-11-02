@@ -1,0 +1,27 @@
+-- A newer proposal for a workout replaces the ones still pending for it in the same thread (#402,
+-- ADR 0077), as when Bite proposes again what it left out: only the last can then be applied, and
+-- the cards before it say they were replaced. Workouts are matched as decide_coach_proposal()
+-- locks them (coach_proposal_workout_ids()).
+create function public.replace_coach_proposals()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  update public.coach_proposals p
+  set status = 'replaced', decided_at = now()
+  where p.thread_id = new.thread_id
+    and p.user_id = new.user_id
+    and p.status = 'pending'
+    and p.id <> new.id
+    and public.coach_proposal_workout_ids(p.kind, p.change)
+      && public.coach_proposal_workout_ids(new.kind, new.change);
+  return null;
+end;
+$$;
+
+create trigger replace_coach_proposals
+after insert on public.coach_proposals
+for each row execute function public.replace_coach_proposals();
+
+revoke all on function public.replace_coach_proposals() from public, anon, authenticated;
