@@ -53,3 +53,10 @@ saw only today's workouts (#397).
 
 - A workout can have at most 5 alternatives (`BB041`); Bite then switches to one or says so.
 - Alternatives' names stay within 12 characters, as the app shows them as chips.
+- A change to one workout is a `workouts` change too. Once the cards for the new kinds ship, Bite
+  is offered `propose_coach_workouts()` in place of `propose_coach_swaps()`, and the `workout`
+  kind stays only for proposals stored with it.
+- A new kind still needs a branch in reading, applying, undoing and checking a proposal; the
+  workouts it locks are named once, in `coach_proposal_workout_ids()`.
+- A proposal is built after the user's lock is taken (`workout_to_propose()`), so the workout
+  cannot change between building it and recording what it replaces.
