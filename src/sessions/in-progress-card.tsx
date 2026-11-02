@@ -9,7 +9,7 @@ import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
 import { sessionTotals, type Session } from './session';
-import { useNow } from './use-now';
+import { useNow } from '@/lib/use-now';
 
 // Dark in both themes, like the rest timer, so that the workout in progress stands out.
 

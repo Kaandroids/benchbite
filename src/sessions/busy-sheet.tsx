@@ -9,7 +9,7 @@ import { useWorkoutName } from '@/workouts/format';
 import type { Workout } from '@/workouts/workouts';
 
 import { sessionTotals, type Session } from './session';
-import { useNow } from './use-now';
+import { useNow } from '@/lib/use-now';
 
 type BusySheetProps = {
   session: Session;
