@@ -1,6 +1,6 @@
 # 0018. Per-user limits come from the database
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0078
 - **Date:** 2026-10-23
 
 ## Context
