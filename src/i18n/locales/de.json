@@ -1766,7 +1766,13 @@
       "updated": "Im Notizbuch geändert: {{text}}",
       "archived": "Zu früheren Notizen verschoben: {{text}}",
       "view": "Ansehen",
-      "viewLabel": "Notizbuch öffnen"
+      "viewLabel": "Notizbuch öffnen",
+      "ask": {
+        "title": "Soll ich mir das merken?",
+        "note": "{{category}}: {{text}}",
+        "save": "Im Notizbuch speichern",
+        "notNow": "Nicht jetzt"
+      }
     },
     "notebook": {
       "title": "Bites Notizbuch",
