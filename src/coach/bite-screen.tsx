@@ -20,7 +20,7 @@ import { mealCardIds, useMealCardStates } from './meal-cards';
 import { askedNoteIds, useAskedNoteStates } from './notes';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
-import { firstPhotos, useThreadMessages, useThreadText } from './threads';
+import { firstMedia, useThreadMessages, useThreadText } from './threads';
 import {
   type BiteParams,
   continueChat,
@@ -61,7 +61,7 @@ export function BiteScreen() {
       title={
         threadText.title({
           title: saved.data.title,
-          firstPhotos: firstPhotos(saved.data.messages),
+          ...firstMedia(saved.data.messages),
         }) ?? undefined
       }
       start={{ threadId: threadId!, messages: saved.data.messages }}

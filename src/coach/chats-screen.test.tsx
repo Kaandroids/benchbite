@@ -26,6 +26,8 @@ const THREADS: ThreadSummary[] = [
     lastMessage: 'A chicken rice bowl.',
     lastPhotos: 0,
     firstPhotos: 0,
+    lastVoice: false,
+    firstVoice: false,
     expression: 'happy',
   },
   {
@@ -35,6 +37,8 @@ const THREADS: ThreadSummary[] = [
     lastMessage: 'Try leg press today.',
     lastPhotos: 0,
     firstPhotos: 0,
+    lastVoice: false,
+    firstVoice: false,
     expression: 'neutral',
   },
 ];

@@ -10,12 +10,26 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { type PhotosProblem, prepareChatPhoto } from './chat-photos';
+import { prepareChatPhoto } from './chat-photos';
+import type { VoiceProblem } from './chat-voice';
 import { PhotoTray } from './photo-tray';
-import type { Draft } from './use-chat';
+import type { Draft, DraftProblem } from './use-chat';
 
-/** A message whose photos were refused, handed back with why, once for each refusal. */
-export type RefusedDraft = { draft: Draft; problem: PhotosProblem };
+/** A message whose photos or voice message were refused, handed back with why, once each. */
+export type RefusedDraft = { draft: Draft; problem: DraftProblem };
+
+const VOICE_PROBLEMS = [
+  'voice_too_large',
+  'voice_too_long',
+  'voice_not_m4a',
+  'voice_not_recorded',
+  'microphone_denied',
+] as const satisfies readonly VoiceProblem['reason'][];
+
+/** Whether a problem is a voice message's, which has no photo to name. */
+function isVoiceProblem(problem: DraftProblem): problem is VoiceProblem {
+  return (VOICE_PROBLEMS as readonly string[]).includes(problem.reason);
+}
 
 type ChatComposerProps = {
   /** Sends what the user wrote; the composer empties as it does. */
@@ -52,7 +66,7 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
   const { colors, spacing, typography } = useTheme();
   // What the user writes stays here, so that typing renders the composer alone, not the chat.
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [problem, setProblem] = useState<PhotosProblem>();
+  const [problem, setProblem] = useState<DraftProblem>();
   const [picking, setPicking] = useState(false);
   /** How many photos are being prepared, which wait in the tray as they are. */
   const [preparing, setPreparing] = useState(0);
@@ -110,7 +124,9 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
           accessibilityLiveRegion="polite"
           style={{ paddingHorizontal: spacing.md }}
         >
-          {t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })}
+          {isVoiceProblem(shown)
+            ? t(`bite.voice.problems.${shown.reason}`)
+            : t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })}
         </Text>
       ) : null}
       <View
@@ -123,7 +139,7 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
           <PhotoTray
             photos={draft.photos}
             preparing={preparing}
-            refused={problem?.photo}
+            refused={problem && !isVoiceProblem(problem) ? problem.photo : undefined}
             onRemove={remove}
             onAdd={room > 0 ? () => setPicking(true) : undefined}
           />

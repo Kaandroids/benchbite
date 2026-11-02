@@ -858,6 +858,8 @@ describe('opened from the tab bar', () => {
     lastMessage: 'Try leg press.',
     lastPhotos: 0,
     firstPhotos: 0,
+    lastVoice: false,
+    firstVoice: false,
     expression: 'neutral' as const,
   });
   afterEach(() => {
