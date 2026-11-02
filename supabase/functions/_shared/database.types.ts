@@ -1884,6 +1884,10 @@ export type Database = {
         Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
         Returns: Json;
       };
+      coach_proposal_workout_ids: {
+        Args: { change: Json; kind: Database['public']['Enums']['coach_proposal_kind'] };
+        Returns: number[];
+      };
       coach_thread_title: { Args: { message: string }; Returns: string };
       complete_onboarding: { Args: { answers: Json; plan: Json }; Returns: undefined };
       copy_meal_entries: {
@@ -2598,6 +2602,7 @@ export type Database = {
         }[];
       };
       workout_minutes: { Args: { items: Json }; Returns: number };
+      workout_to_propose: { Args: { workout_id: number }; Returns: Json };
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';

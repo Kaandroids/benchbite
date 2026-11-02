@@ -54,6 +54,7 @@ set search_path = ''
 as $$
 declare
   swaps jsonb := coalesce(edit -> 'swaps', '[]');
+  removals jsonb := coalesce(edit -> 'remove', '[]');
   removed text[];
   added jsonb := coalesce(edit -> 'add', '[]');
   present text[];
@@ -62,7 +63,7 @@ declare
   incoming text[];
 begin
   if jsonb_typeof(swaps) <> 'array' or jsonb_typeof(added) <> 'array'
-    or jsonb_typeof(coalesce(edit -> 'remove', '[]')) <> 'array' then
+    or jsonb_typeof(removals) <> 'array' then
     raise exception 'Swaps, removals and additions are lists' using errcode = '22023';
   end if;
   if exists (
@@ -71,7 +72,7 @@ begin
         or jsonb_typeof(s -> 'with') is distinct from 'string'
     )
     or exists (
-      select 1 from jsonb_array_elements(coalesce(edit -> 'remove', '[]')) r
+      select 1 from jsonb_array_elements(removals) r
       where jsonb_typeof(r) <> 'string'
     )
     or exists (
@@ -80,7 +81,7 @@ begin
     ) then
     raise exception 'An edit names each exercise it changes' using errcode = '22023';
   end if;
-  removed := array(select jsonb_array_elements_text(coalesce(edit -> 'remove', '[]')));
+  removed := array(select jsonb_array_elements_text(removals));
   if jsonb_array_length(swaps) + cardinality(removed) + jsonb_array_length(added) = 0 then
     raise exception 'An edit changes something' using errcode = '22023';
   end if;
@@ -162,9 +163,9 @@ language sql
 stable
 set search_path = ''
 as $$
-  select case kind
-    when 'workout' then public.saved_workout((change ->> 'id')::bigint)
-    when 'targets' then (
+  select case
+    when kind = 'workout' then public.saved_workout((change ->> 'id')::bigint)
+    when kind = 'targets' then (
       select jsonb_build_object(
         'calories', o.calories,
         'proteinG', o.protein_g,
@@ -175,8 +176,8 @@ as $$
       from public.own_nutrition_targets o
       where o.user_id = (select auth.uid())
     )
-    when 'food_log' then public.food_log_entries(public.food_log_entry_ids(change))
-    when 'workouts' then (
+    when kind = 'food_log' then public.food_log_entries(public.food_log_entry_ids(change))
+    when kind = 'workouts' then (
       select case when bool_and(saved is not null)
         then jsonb_build_object('workouts', jsonb_agg(saved order by n)) end
       from (
@@ -184,8 +185,7 @@ as $$
         from jsonb_array_elements(change -> 'workouts') with ordinality as x(w, n)
       ) s
     )
-    when 'alternative' then public.coach_alternatives_state((change ->> 'workoutId')::bigint)
-    when 'alternative_switch' then
+    when kind in ('alternative', 'alternative_switch') then
       public.coach_alternatives_state((change ->> 'workoutId')::bigint)
   end;
 $$;
@@ -441,7 +441,28 @@ as $$
   );
 $$;
 
--- As before, locking the workouts of the new kinds, and undoing with what applying left.
+-- The workouts a `change` of `kind` saves or switches alternatives of; none for other kinds.
+create function public.coach_proposal_workout_ids(
+  kind public.coach_proposal_kind,
+  change jsonb
+)
+returns bigint[]
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when kind = 'workout' then array[(change ->> 'id')::bigint]
+    when kind = 'workouts' then
+      array(select (w ->> 'id')::bigint from jsonb_array_elements(change -> 'workouts') w)
+    when kind in ('alternative', 'alternative_switch') then
+      array[(change ->> 'workoutId')::bigint]
+    else '{}'
+  end;
+$$;
+
+-- As before, locking the workouts of every kind that changes them in one place, in id order, and
+-- undoing with what applying left.
 create or replace function public.decide_coach_proposal(
   proposal_id bigint,
   decision public.coach_proposal_decision,
@@ -469,28 +490,19 @@ begin
   end if;
   -- recalculate_nutrition_targets() changes the targets without the user's lock, and the app
   -- changes entries without it, so their rows are locked too.
+  perform 1 from public.workouts w
+  where w.id = any (public.coach_proposal_workout_ids(proposal.kind, proposal.change))
+    and w.user_id = proposal.user_id
+  order by w.id
+  for update;
   case proposal.kind
-    when 'workout' then
-      perform 1 from public.workouts w
-      where w.id = (proposal.change ->> 'id')::bigint and w.user_id = proposal.user_id
-      for update;
-    when 'workouts' then
-      perform 1 from public.workouts w
-      where w.id in (
-        select (x ->> 'id')::bigint from jsonb_array_elements(proposal.change -> 'workouts') x
-      ) and w.user_id = proposal.user_id
-      order by w.id
-      for update;
-    when 'alternative', 'alternative_switch' then
-      perform 1 from public.workouts w
-      where w.id = (proposal.change ->> 'workoutId')::bigint and w.user_id = proposal.user_id
-      for update;
     when 'targets' then
       perform 1 from public.own_nutrition_targets o where o.user_id = proposal.user_id for update;
     when 'food_log' then
       perform 1 from public.meal_entries e
       where e.id = any (public.food_log_entry_ids(proposal.change)) and e.user_id = proposal.user_id
       for update;
+    else null;
   end case;
 
   case decision
@@ -535,6 +547,26 @@ begin
 end;
 $$;
 
+-- The caller's `workout_id` as saved_workout() reads it, for a proposal to be built from (BB006
+-- when it is not theirs). The user's lock is taken first, as propose_coach_change() takes it, so
+-- that the workout cannot change between this read and the proposal's `before`.
+create function public.workout_to_propose(workout_id bigint)
+returns jsonb
+language plpgsql
+set search_path = ''
+as $$
+declare
+  workout jsonb;
+begin
+  perform public.lock_user_limits((select auth.uid()));
+  workout := public.saved_workout(workout_to_propose.workout_id);
+  if workout is null then
+    raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+  return workout;
+end;
+$$;
+
 -- Proposes `edits` to 1 to 3 of the caller's workouts in one card, each naming its `workoutId`
 -- and the `swaps`, `remove` and `add` of edited_workout_exercises(); the rest of each workout stays
 -- as it is. More edits are refused before any workout is read. Gives the proposal's id, as
@@ -542,7 +574,7 @@ $$;
 create function public.propose_coach_workouts(thread_id bigint, edits jsonb, today date)
 returns bigint
 language plpgsql
--- Reads the workouts with saved_workout(), which callers may not.
+-- Reads the workouts with workout_to_propose(), which callers may not.
 security definer
 set search_path = ''
 as $$
@@ -556,10 +588,7 @@ begin
     raise exception 'Edits are a list of 1 to 3' using errcode = '22023';
   end if;
   for edit in select e from jsonb_array_elements(edits) e loop
-    workout := public.saved_workout((edit ->> 'workoutId')::bigint);
-    if workout is null then
-      raise exception 'Workout not found' using errcode = 'BB006';
-    end if;
+    workout := public.workout_to_propose((edit ->> 'workoutId')::bigint);
     workouts := workouts || jsonb_build_array(
       workout || jsonb_build_object('exercises', public.edited_workout_exercises(workout, edit))
     );
@@ -588,16 +617,13 @@ create function public.propose_coach_alternative(
 )
 returns bigint
 language plpgsql
--- Reads the workout with saved_workout(), which callers may not.
+-- Reads the workout with workout_to_propose(), which callers may not.
 security definer
 set search_path = ''
 as $$
 declare
-  workout jsonb := public.saved_workout(propose_coach_alternative.workout_id);
+  workout jsonb := public.workout_to_propose(propose_coach_alternative.workout_id);
 begin
-  if workout is null then
-    raise exception 'Workout not found' using errcode = 'BB006';
-  end if;
   return public.propose_coach_change(
     propose_coach_alternative.thread_id,
     'alternative',
@@ -656,16 +682,13 @@ create or replace function public.propose_coach_swaps(
 )
 returns bigint
 language plpgsql
--- Reads the workout with saved_workout(), which callers may not.
+-- Reads the workout with workout_to_propose(), which callers may not.
 security definer
 set search_path = ''
 as $$
 declare
-  workout jsonb := public.saved_workout(propose_coach_swaps.workout_id);
+  workout jsonb := public.workout_to_propose(propose_coach_swaps.workout_id);
 begin
-  if workout is null then
-    raise exception 'Workout not found' using errcode = 'BB006';
-  end if;
   if swaps is null or jsonb_typeof(swaps) <> 'array' or jsonb_array_length(swaps) = 0 then
     raise exception 'Swaps are a list of at least one' using errcode = '22023';
   end if;
@@ -687,6 +710,9 @@ revoke all on function public.edited_workout_exercises(jsonb, jsonb)
   from public, anon, authenticated;
 revoke all on function public.alternative_in_use(jsonb) from public, anon, authenticated;
 revoke all on function public.is_whole_workout(jsonb) from public, anon, authenticated;
+revoke all on function public.coach_proposal_workout_ids(public.coach_proposal_kind, jsonb)
+  from public, anon, authenticated;
+revoke all on function public.workout_to_propose(bigint) from public, anon, authenticated;
 revoke all on function public.undo_coach_change(
   public.coach_proposal_kind, jsonb, jsonb, jsonb, date
 ) from public, anon, authenticated;
