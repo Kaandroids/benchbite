@@ -9,6 +9,7 @@ import { z } from 'zod';
 import type {
   CoachToolName,
   DayTargets,
+  ExerciseChanges,
   FoodLogChange,
   FoodLogEntry,
   MealCard,
@@ -68,6 +69,67 @@ const FOOD_QUERY = z.string().trim().min(FOOD_QUERY_LENGTH.min).max(FOOD_QUERY_L
 /** Why Bite proposes a change, in the user's language, as the card shows it. */
 const WHY = z.string().trim().min(1).max(120);
 
+/** An exercise's target, as save_workout() takes it. */
+const TARGET = z
+  .object({
+    reps: z.object({
+      min: z.number().int().min(1),
+      max: z.number().int().min(1),
+    }),
+    seconds: z.number().int().min(1),
+    meters: z.number().int().min(1),
+  })
+  .partial()
+  .describe(
+    'Reps for an exercise counted in reps, seconds for a timed one, meters for a distance.',
+  );
+
+const SETS = z.number().int().min(1).max(10);
+
+/**
+ * What a change does to a workout's exercises (edited_workout_exercises()): exercises swapped in
+ * place, removed, and added at the end, each with why.
+ */
+const EDIT = {
+  swaps: z
+    .array(
+      z.object({
+        replace: z.string().min(1).describe('The id of the exercise in the workout.'),
+        with: z.string().min(1).describe("The new exercise's id."),
+        sets: SETS,
+        target: TARGET,
+        why: WHY,
+      }),
+    )
+    .max(5)
+    .optional(),
+  remove: z
+    .array(
+      z.object({
+        exerciseId: z.string().min(1).describe('The id of the exercise in the workout.'),
+        why: WHY,
+      }),
+    )
+    .max(5)
+    .optional(),
+  add: z
+    .array(
+      z.object({
+        exerciseId: z.string().min(1).describe("The new exercise's id."),
+        sets: SETS,
+        target: TARGET,
+        why: WHY,
+      }),
+    )
+    .max(5)
+    .optional(),
+};
+
+type Edit = z.infer<z.ZodObject<typeof EDIT>>;
+
+/** An alternative's name, as the app shows it in a chip. */
+const ALTERNATIVE_NAME = z.string().trim().min(1).max(12);
+
 /**
  * What the database's refusals mean, by their code, for the model to correct what it sent; what
  * it is told of any other refusal; and what is logged then.
@@ -83,8 +145,16 @@ const REFUSALS = {
     BB008: 'Too many exercises for a workout.',
     BB037: "The calories are under the user's calorie floor.",
     BB038: 'The user has too many changes waiting; ask them to decide those first.',
-    BB039: 'An exercise to replace is not in the workout; take it from get_workouts.',
-    BB040: 'Swaps may not replace an exercise twice, or one another.',
+    BB039: 'An exercise to replace or remove is not in the workout; take it from get_workouts.',
+    BB040:
+      'An exercise may be changed once, and one put in may not be in the workout already, nor be one taken out.',
+    BB041:
+      'The workout has as many alternatives as it may have; switch to one with propose_alternative_switch, or change the workout.',
+    BB049:
+      'The workout has an alternative of that name already; switch to it with propose_alternative_switch, or pick another name.',
+    BB050: 'That alternative is in use already.',
+    P0002: 'There is no such alternative; take its id from get_workouts.',
+    '22023': 'A change must change something.',
     '23514': 'The values are out of range, or the macros add up to more than the calories.',
   },
   otherwise: 'The change could not be proposed just now.',
@@ -392,71 +462,127 @@ const TOOLS = [
   }),
   tool({
     name: 'propose_workout_change',
-    proposes: 'workout',
+    proposes: 'workouts',
     description:
-      "Proposes swapping exercises of one of the user's workouts, which the user applies or keeps as it is; it changes nothing itself. The change is permanent and counts from today. Take the workout and its exercise ids from get_workouts, and the new exercises' ids from search_exercises.",
+      "Proposes lasting changes to 1 to 3 of the user's workouts in one card: exercises swapped in place, removed, or added at the end, the rest of each workout as it is. The user applies all of it or keeps things as they are; it changes nothing itself. It counts from today, for good, and changes the alternative in use. Take the workouts and their exercise ids from get_workouts, and new exercises' ids from search_exercises.",
     args: z.object({
-      workoutId: z.number().int().positive(),
-      swaps: z
-        .array(
-          z.object({
-            replace: z.string().min(1).describe('The id of the exercise in the workout.'),
-            with: z.string().min(1).describe("The new exercise's id."),
-            sets: z.number().int().min(1).max(10),
-            target: z
-              .object({
-                reps: z.object({ min: z.number().int().min(1), max: z.number().int().min(1) }),
-                seconds: z.number().int().min(1),
-                meters: z.number().int().min(1),
-              })
-              .partial()
-              .describe(
-                'Reps for an exercise counted in reps, seconds for a timed one, meters for a distance.',
-              ),
-            why: WHY,
-          }),
-        )
+      workouts: z
+        .array(z.object({ workoutId: z.number().int().positive(), ...EDIT }))
         .min(1)
-        .max(5),
+        .max(3),
     }),
-    run: async ({ workoutId, swaps }, { supabase, language, today, threadId }) => {
-      const found = await workoutForCard(supabase, workoutId);
-      if (found.error) throw found.error;
-      const workout = found.data;
-      if (!workout) return { error: REFUSALS.meanings.BB006 };
-      // Named before proposing, which also finds an id that does not exist, so that a proposal is
-      // never left without its card.
-      const names = await exerciseNames(
-        supabase,
-        language,
-        swaps.flatMap((swap) => [swap.replace, swap.with]),
-      );
-      const unknown = swaps.find((swap) => !names.has(swap.with));
-      if (unknown)
-        return { error: `There is no exercise ${unknown.with}; find it with search_exercises.` };
-      const proposed = await supabase.rpc('propose_coach_swaps', {
+    run: async ({ workouts: edits }, { supabase, language, today, threadId }) => {
+      const plan = read(await planWorkouts(supabase));
+      const changed = edits.map((edit) => plan.find((w) => w.id === edit.workoutId));
+      if (changed.some((workout) => !workout)) {
+        return { error: REFUSALS.meanings.BB006 };
+      }
+      const names = await editNames(supabase, language, edits);
+      if (typeof names === 'string') return { error: names };
+      const proposed = await supabase.rpc('propose_coach_workouts', {
         thread_id: threadId,
-        workout_id: workoutId,
-        swaps: swaps.map(({ replace, with: put, sets, target }) => ({
-          replace,
-          with: put,
-          sets,
-          target,
+        edits: edits.map((edit) => ({
+          workoutId: edit.workoutId,
+          ...editOf(edit),
         })),
         today,
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
       const proposal: ProposalCard = {
-        kind: 'workout',
+        kind: 'workouts',
+        id: proposed.data,
+        workouts: edits.map((edit, index) => {
+          const workout = changed[index]!;
+          return {
+            workout: { name: workout.name, type: workout.type },
+            weekdays: workout.weekdays,
+            ...changesOf(edit, names),
+          };
+        }),
+      };
+      return { proposal };
+    },
+  }),
+  tool({
+    name: 'propose_alternative',
+    proposes: 'alternative',
+    description:
+      "Proposes a new alternative of one of the user's workouts for a while, as for pain, an injury, travel or a gym closed: the version in use with exercises swapped, removed or added, put in use when the user applies it. The workout's other alternatives stay as they are, to switch back to. It changes nothing itself. Name it in the user's language, in at most 12 characters, as no alternative of the workout is named. When the workout has no alternatives yet, name the version in use now too (currentName), as Gym. Take the ids as for propose_workout_change.",
+    args: z.object({
+      workoutId: z.number().int().positive(),
+      name: ALTERNATIVE_NAME.describe("The new alternative's name, as Knee-safe or Hotel."),
+      currentName: ALTERNATIVE_NAME.optional().describe(
+        'A name for the version in use now, when it has none.',
+      ),
+      ...EDIT,
+    }),
+    run: async (args, { supabase, language, today, threadId }) => {
+      const plan = read(await planWorkouts(supabase));
+      const workout = plan.find((w) => w.id === args.workoutId);
+      if (!workout) return { error: REFUSALS.meanings.BB006 };
+      const names = await editNames(supabase, language, [args]);
+      if (typeof names === 'string') return { error: names };
+      const proposed = await supabase.rpc('propose_coach_alternative', {
+        thread_id: threadId,
+        workout_id: args.workoutId,
+        name: args.name,
+        // The database leaves it out for a version in use that has a name.
+        current_name: args.currentName ?? '',
+        edit: editOf(args),
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, REFUSALS);
+      const current = workout.workout_alternatives.find((a) => a.in_use);
+      const proposal: ProposalCard = {
+        kind: 'alternative',
         id: proposed.data,
         workout: { name: workout.name, type: workout.type },
-        swaps: swaps.map((swap) => ({
-          from: names.get(swap.replace) ?? swap.replace,
-          to: names.get(swap.with)!,
-          sets: swap.sets,
-          target: swap.target,
-          why: swap.why,
-        })),
+        // Without alternatives, the version in use becomes the first.
+        from: current
+          ? {
+              name: current.name ?? args.currentName ?? null,
+              position: current.position,
+            }
+          : { name: args.currentName ?? null, position: 1 },
+        to: args.name,
+        ...changesOf(args, names),
+      };
+      return { proposal };
+    },
+  }),
+  tool({
+    name: 'propose_alternative_switch',
+    proposes: 'alternative_switch',
+    description:
+      "Proposes putting another alternative of one of the user's workouts in use, as the usual one again once the user is better. The one in use now is kept, to switch to again. It changes nothing itself. Take the alternative's id from get_workouts.",
+    args: z.object({ alternativeId: z.number().int().positive() }),
+    run: async ({ alternativeId }, { supabase, language, today, threadId }) => {
+      const plan = read(await planWorkouts(supabase));
+      const workout = plan.find((w) => w.workout_alternatives.some((a) => a.id === alternativeId));
+      const to = workout?.workout_alternatives.find((a) => a.id === alternativeId);
+      const from = workout?.workout_alternatives.find((a) => a.in_use);
+      if (!workout || !to || !from) return { error: REFUSALS.meanings.P0002 };
+      const proposed = await supabase.rpc('propose_coach_alternative_switch', {
+        thread_id: threadId,
+        alternative_id: alternativeId,
+        today,
+      });
+      if (proposed.error) return refused(proposed.error, REFUSALS);
+      // The exercises it has that the one in use has not, as the card names them.
+      const inUse = new Set(workout.workout_exercises.map((e) => e.exercise_id));
+      const back = [
+        ...new Set(
+          kept(to.exercises).flatMap((e) => (inUse.has(e.exerciseId) ? [] : [e.exerciseId])),
+        ),
+      ];
+      const names = await exerciseNames(supabase, language, back);
+      const proposal: ProposalCard = {
+        kind: 'alternative_switch',
+        id: proposed.data,
+        workout: { name: workout.name, type: workout.type },
+        from: { name: from.name, position: from.position },
+        to: { name: to.name, position: to.position },
+        back: back.map((id) => names.get(id) ?? id),
       };
       return { proposal };
     },
@@ -891,6 +1017,72 @@ function closeness(name: string, query: string): number {
   return a === b ? 0 : a.startsWith(b) ? 1 : 2;
 }
 
+/** An edit as edited_workout_exercises() takes it. */
+function editOf({ swaps = [], remove = [], add = [] }: Edit) {
+  return {
+    swaps: swaps.map(({ replace, with: put, sets, target }) => ({
+      replace,
+      with: put,
+      sets,
+      target,
+    })),
+    remove: remove.map((e) => e.exerciseId),
+    add: add.map(({ exerciseId, sets, target }) => ({
+      exerciseId,
+      sets,
+      target,
+    })),
+  };
+}
+
+/**
+ * The names of the exercises `edits` name, which also finds a new one that does not exist, so that
+ * a proposal is never left without its card; what to tell the model when one does not.
+ */
+async function editNames(
+  supabase: Client,
+  language: Language,
+  edits: Edit[],
+): Promise<Map<string, string> | string> {
+  const incoming = edits.flatMap(({ swaps = [], add = [] }) => [
+    ...swaps.map((swap) => swap.with),
+    ...add.map((e) => e.exerciseId),
+  ]);
+  const names = await exerciseNames(supabase, language, [
+    ...incoming,
+    ...edits.flatMap(({ swaps = [], remove = [] }) => [
+      ...swaps.map((swap) => swap.replace),
+      ...remove.map((e) => e.exerciseId),
+    ]),
+  ]);
+  const unknown = incoming.find((id) => !names.has(id));
+  return unknown ? `There is no exercise ${unknown}; find it with search_exercises.` : names;
+}
+
+/** What an edit changes, named, as its card shows it. */
+function changesOf(
+  { swaps = [], remove = [], add = [] }: Edit,
+  names: Map<string, string>,
+): ExerciseChanges {
+  const named = (id: string) => names.get(id) ?? id;
+  return {
+    swaps: swaps.map((swap) => ({
+      from: named(swap.replace),
+      to: named(swap.with),
+      sets: swap.sets,
+      target: swap.target,
+      why: swap.why,
+    })),
+    removed: remove.map((e) => ({ name: named(e.exerciseId), why: e.why })),
+    added: add.map((e) => ({
+      name: named(e.exerciseId),
+      sets: e.sets,
+      target: e.target,
+      why: e.why,
+    })),
+  };
+}
+
 /** The user's active workouts with their exercises in order, as row level security lets them. */
 function planWorkouts(supabase: Client) {
   return supabase
@@ -910,16 +1102,6 @@ type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
 /** The exercises an alternative keeps, none for the one in use. */
 function kept(exercises: unknown) {
   return Array.isArray(exercises) ? (exercises as Kept[]) : [];
-}
-
-/** One of the user's active workouts, by its id, with what its card names it by. */
-function workoutForCard(supabase: Client, id: number) {
-  return supabase
-    .from('workouts')
-    .select('id, name, type')
-    .eq('active', true)
-    .eq('id', id)
-    .maybeSingle();
 }
 
 /**

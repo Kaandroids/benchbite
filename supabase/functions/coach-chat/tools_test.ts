@@ -27,6 +27,8 @@ Deno.test('tells the model of each tool with its arguments', () => {
       'search_exercises',
       'get_workouts',
       'propose_workout_change',
+      'propose_alternative',
+      'propose_alternative_switch',
       'propose_targets_change',
       'propose_food_log_change',
       'log_meal_card',
@@ -104,12 +106,48 @@ const NAMES = [
   { id: 'Barbell_Squat', name: 'Back squat', exercise_translations: [] },
   { id: 'Leg_Press', name: 'Leg press', exercise_translations: [] },
   { id: 'Plank', name: 'Plank', exercise_translations: [] },
+  { id: 'Lying_Leg_Curls', name: 'Leg curl', exercise_translations: [] },
+  { id: 'Pushups', name: 'Push-up', exercise_translations: [] },
 ];
+
+const PUSH = {
+  ...LEGS,
+  id: 5,
+  name: 'Push',
+  weekdays: [2],
+  workout_exercises: [{ ...LEGS.workout_exercises[0], exercise_id: 'Pushups' }],
+};
+
+/** Legs with the gym version in use and a knee-safe one to switch to. */
+const LEGS_WITH_ALTERNATIVES = {
+  ...LEGS,
+  workout_alternatives: [
+    { id: 11, name: 'Knee-safe', position: 2, in_use: true, exercises: null },
+    {
+      id: 12,
+      name: null,
+      position: 1,
+      in_use: false,
+      exercises: [
+        {
+          exerciseId: 'Barbell_Squat',
+          sets: 4,
+          target: { reps: { min: 6, max: 8 } },
+        },
+        {
+          exerciseId: 'Lying_Leg_Curls',
+          sets: 3,
+          target: { reps: { min: 10, max: 12 } },
+        },
+      ],
+    },
+  ],
+};
 
 /** The user's plan and the library, and what `rpc` answers, with the calls made to it. */
 function planContext(
   rpc: Record<string, { data?: unknown; error?: unknown }> = {},
-  workout: Row = LEGS,
+  workout: Row | Row[] = LEGS,
 ) {
   const calls: { name: string; args: unknown }[] = [];
   // Filters by equality, but not an embedded table's, whose rows here are in the language asked
@@ -141,7 +179,8 @@ function planContext(
     return builder;
   };
   const supabase = {
-    from: (table: string) => query(table === 'workouts' ? [workout] : NAMES),
+    from: (table: string) =>
+      query(table === 'workouts' ? (Array.isArray(workout) ? workout : [workout]) : NAMES),
     rpc: (name: string, args: unknown) => {
       calls.push({ name, args });
       return Promise.resolve({ data: null, error: null, ...rpc[name] });
@@ -335,30 +374,77 @@ Deno.test("reads a workout's alternatives, and the exercises of those not in use
   ]);
 });
 
-Deno.test('proposes swaps to the database, and gives the card as data', async () => {
-  const { context, calls } = planContext({ propose_coach_swaps: { data: 41 } });
-  const swap = {
-    replace: 'Barbell_Squat',
-    with: 'Leg_Press',
-    sets: 3,
-    target: { reps: { min: 10, max: 12 } },
-    why: 'Easier on the knee',
-  };
-  const result = await runTool('propose_workout_change', { workoutId: 3, swaps: [swap] }, context);
+const SWAP = {
+  replace: 'Barbell_Squat',
+  with: 'Leg_Press',
+  sets: 3,
+  target: { reps: { min: 10, max: 12 } },
+  why: 'Easier on the knee',
+};
 
-  // The database builds the workout from the one it has (propose_coach_swaps()).
+Deno.test('proposes changes to several workouts in one card, as data', async () => {
+  const { context, calls } = planContext(
+    {
+      propose_coach_workouts: { data: 41 },
+    },
+    [LEGS, PUSH],
+  );
+  const result = await runTool(
+    'propose_workout_change',
+    {
+      workouts: [
+        {
+          workoutId: 3,
+          swaps: [SWAP],
+          remove: [{ exerciseId: 'Plank', why: 'Done at home' }],
+        },
+        {
+          workoutId: 5,
+          add: [
+            {
+              exerciseId: 'Lying_Leg_Curls',
+              sets: 3,
+              target: { reps: { min: 10, max: 12 } },
+              why: 'More legs',
+            },
+          ],
+        },
+      ],
+    },
+    context,
+  );
+
+  // The database builds each workout from the one it has (propose_coach_workouts()).
   assertEquals(calls, [
     {
-      name: 'propose_coach_swaps',
+      name: 'propose_coach_workouts',
       args: {
         thread_id: 7,
-        workout_id: 3,
-        swaps: [
+        edits: [
           {
-            replace: 'Barbell_Squat',
-            with: 'Leg_Press',
-            sets: 3,
-            target: { reps: { min: 10, max: 12 } },
+            workoutId: 3,
+            swaps: [
+              {
+                replace: 'Barbell_Squat',
+                with: 'Leg_Press',
+                sets: 3,
+                target: { reps: { min: 10, max: 12 } },
+              },
+            ],
+            remove: ['Plank'],
+            add: [],
+          },
+          {
+            workoutId: 5,
+            swaps: [],
+            remove: [],
+            add: [
+              {
+                exerciseId: 'Lying_Leg_Curls',
+                sets: 3,
+                target: { reps: { min: 10, max: 12 } },
+              },
+            ],
           },
         ],
         today: '2026-10-30',
@@ -368,9 +454,121 @@ Deno.test('proposes swaps to the database, and gives the card as data', async ()
   // Words and numbers the app formats, as the card is kept with the message.
   assertEquals(result, {
     proposal: {
-      kind: 'workout',
+      kind: 'workouts',
       id: 41,
+      workouts: [
+        {
+          workout: { name: 'Legs', type: null },
+          weekdays: [1, 4],
+          swaps: [
+            {
+              from: 'Back squat',
+              to: 'Leg press',
+              sets: 3,
+              target: { reps: { min: 10, max: 12 } },
+              why: 'Easier on the knee',
+            },
+          ],
+          removed: [{ name: 'Plank', why: 'Done at home' }],
+          added: [],
+        },
+        {
+          workout: { name: 'Push', type: null },
+          weekdays: [2],
+          swaps: [],
+          removed: [],
+          added: [
+            {
+              name: 'Leg curl',
+              sets: 3,
+              target: { reps: { min: 10, max: 12 } },
+              why: 'More legs',
+            },
+          ],
+        },
+      ],
+    },
+  });
+});
+
+Deno.test('says why a proposal was refused, for the model to correct it', async () => {
+  const swap = { ...SWAP, replace: 'Plank', target: { seconds: 30 } };
+  const change = { workouts: [{ workoutId: 3, swaps: [swap] }] };
+  const { context, calls } = planContext({
+    propose_coach_workouts: { error: { code: 'BB007' } },
+  });
+  const unsuited = await runTool('propose_workout_change', change, context);
+  assertEquals((unsuited as { error: string }).error.startsWith('A target does not suit'), true);
+  const { context: missing } = planContext({
+    propose_coach_workouts: { error: { code: 'BB039' } },
+  });
+  const notInIt = await runTool('propose_workout_change', change, missing);
+  assertEquals((notInIt as { error: string }).error.startsWith('An exercise to replace'), true);
+
+  // An exercise that does not exist, or a workout that is not the user's, is found before
+  // anything is proposed.
+  const made = calls.length;
+  const unknown = await runTool(
+    'propose_workout_change',
+    {
+      workouts: [{ workoutId: 3, add: [{ ...SWAP, exerciseId: 'Moon_Walk' }] }],
+    },
+    context,
+  );
+  assertEquals(unknown, {
+    error: 'There is no exercise Moon_Walk; find it with search_exercises.',
+  });
+  const theirs = await runTool(
+    'propose_workout_change',
+    {
+      workouts: [{ workoutId: 9 }],
+    },
+    context,
+  );
+  assertEquals(theirs, { error: "That workout is not the user's." });
+  assertEquals(calls.length, made);
+});
+
+Deno.test('proposes a first alternative, naming the version in use too', async () => {
+  const { context, calls } = planContext({
+    propose_coach_alternative: { data: 42 },
+  });
+  const result = await runTool(
+    'propose_alternative',
+    { workoutId: 3, name: ' Knee-safe ', currentName: 'Gym', swaps: [SWAP] },
+    context,
+  );
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_alternative',
+      args: {
+        thread_id: 7,
+        workout_id: 3,
+        name: 'Knee-safe',
+        current_name: 'Gym',
+        edit: {
+          swaps: [
+            {
+              replace: 'Barbell_Squat',
+              with: 'Leg_Press',
+              sets: 3,
+              target: { reps: { min: 10, max: 12 } },
+            },
+          ],
+          remove: [],
+          add: [],
+        },
+        today: '2026-10-30',
+      },
+    },
+  ]);
+  assertEquals(result, {
+    proposal: {
+      kind: 'alternative',
+      id: 42,
       workout: { name: 'Legs', type: null },
+      from: { name: 'Gym', position: 1 },
+      to: 'Knee-safe',
       swaps: [
         {
           from: 'Back squat',
@@ -380,32 +578,79 @@ Deno.test('proposes swaps to the database, and gives the card as data', async ()
           why: 'Easier on the knee',
         },
       ],
+      removed: [],
+      added: [],
     },
   });
 });
 
-Deno.test('says why a proposal was refused, for the model to correct it', async () => {
-  const swap = { replace: 'Plank', with: 'Leg_Press', sets: 3, target: { seconds: 30 }, why: 'x' };
-  const { context, calls } = planContext({ propose_coach_swaps: { error: { code: 'BB007' } } });
-  const unsuited = await runTool(
-    'propose_workout_change',
-    { workoutId: 3, swaps: [swap] },
+Deno.test('proposes an alternative made from the one in use, which keeps its name', async () => {
+  const { context, calls } = planContext(
+    { propose_coach_alternative: { error: { code: 'BB049' } } },
+    LEGS_WITH_ALTERNATIVES,
+  );
+  const named = await runTool(
+    'propose_alternative',
+    { workoutId: 3, name: 'Gym', remove: [{ exerciseId: 'Plank', why: 'x' }] },
     context,
   );
-  assertEquals((unsuited as { error: string }).error.startsWith('A target does not suit'), true);
-  const { context: missing } = planContext({ propose_coach_swaps: { error: { code: 'BB039' } } });
-  const notInIt = await runTool('propose_workout_change', { workoutId: 3, swaps: [swap] }, missing);
-  assertEquals((notInIt as { error: string }).error.startsWith('An exercise to replace'), true);
+  assertEquals(
+    (named as { error: string }).error.startsWith('The workout has an alternative'),
+    true,
+  );
+  // The database leaves the version in use as it is named.
+  assertEquals((calls[0]!.args as { current_name: string }).current_name, '');
 
-  // An exercise that does not exist is found before anything is proposed.
-  const made = calls.length;
-  const unknown = await runTool(
-    'propose_workout_change',
-    { workoutId: 3, swaps: [{ ...swap, with: 'Moon_Walk' }] },
+  const { context: made } = planContext(
+    { propose_coach_alternative: { data: 43 } },
+    LEGS_WITH_ALTERNATIVES,
+  );
+  const result = (await runTool(
+    'propose_alternative',
+    {
+      workoutId: 3,
+      name: 'Hotel',
+      currentName: 'Gym',
+      remove: [{ exerciseId: 'Plank', why: 'x' }],
+    },
+    made,
+  )) as { proposal: { from: unknown } };
+  assertEquals(result.proposal.from, { name: 'Knee-safe', position: 2 });
+});
+
+Deno.test('proposes a switch back, with the exercises it brings back', async () => {
+  const { context, calls } = planContext(
+    { propose_coach_alternative_switch: { data: 44 } },
+    LEGS_WITH_ALTERNATIVES,
+  );
+  const result = await runTool(
+    'propose_alternative_switch',
+    {
+      alternativeId: 12,
+    },
     context,
   );
-  assertEquals(unknown, {
-    error: 'There is no exercise Moon_Walk; find it with search_exercises.',
+  assertEquals(calls, [
+    {
+      name: 'propose_coach_alternative_switch',
+      args: { thread_id: 7, alternative_id: 12, today: '2026-10-30' },
+    },
+  ]);
+  assertEquals(result, {
+    proposal: {
+      kind: 'alternative_switch',
+      id: 44,
+      workout: { name: 'Legs', type: null },
+      from: { name: 'Knee-safe', position: 2 },
+      to: { name: null, position: 1 },
+      back: ['Leg curl'],
+    },
+  });
+
+  // One that is not the user's is not proposed.
+  const made = calls.length;
+  assertEquals(await runTool('propose_alternative_switch', { alternativeId: 99 }, context), {
+    error: 'There is no such alternative; take its id from get_workouts.',
   });
   assertEquals(calls.length, made);
 });
@@ -450,29 +695,6 @@ Deno.test('leaves the targets in use off the card when they cannot be read', asy
     proposal: { kind: 'targets', id: 43, to },
   });
 });
-
-Deno.test(
-  "refuses a workout that is not one of the user's active ones, proposing nothing",
-  async () => {
-    const { context, calls } = planContext({ propose_coach_swaps: { data: 44 } });
-    const swap = {
-      replace: 'Plank',
-      with: 'Leg_Press',
-      sets: 3,
-      target: { seconds: 30 },
-      why: 'x',
-    };
-
-    const result = await runTool(
-      'propose_workout_change',
-      { workoutId: 9, swaps: [swap] },
-      context,
-    );
-
-    assertEquals(result, { error: "That workout is not the user's." });
-    assertEquals(calls, []);
-  },
-);
 
 const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -677,7 +899,13 @@ Deno.test('says why the database refused a meal card', async () => {
 });
 
 Deno.test('offers Bite no tool that proposes a change the app has no card for', () => {
-  assertEquals(PROPOSAL_KINDS, ['workout', 'targets', 'food_log']);
+  assertEquals(PROPOSAL_KINDS, [
+    'workouts',
+    'alternative',
+    'alternative_switch',
+    'targets',
+    'food_log',
+  ]);
   for (const kind of PROPOSAL_KINDS) {
     assertEquals((SHOWN_PROPOSAL_KINDS as readonly string[]).includes(kind), true, kind);
   }
