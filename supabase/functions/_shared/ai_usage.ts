@@ -34,7 +34,11 @@ export type AiRequest = Omit<ModelRequest, 'task'>;
 
 /** The model for one task, whose every request is limited and counted. */
 export type AiModel = {
-  generate(request: AiRequest): Promise<ModelResponse>;
+  /**
+   * `gave`, when given, says whether an answer gave what the call was for, as a whole estimate:
+   * on the free plan, only such a call counts toward the week's number (ADR 0078).
+   */
+  generate(request: AiRequest, gave?: (response: ModelResponse) => boolean): Promise<ModelResponse>;
   stream(request: AiRequest): AsyncIterable<StreamEvent>;
 };
 
@@ -51,11 +55,11 @@ export class AiRefusedError extends Error {
 }
 
 /**
- * Makes sure the user of `supabase`, a client with their token, may call a model now: throws
- * `AiRefusedError` with the reason when not, and an error when that cannot be read.
+ * Makes sure the user of `supabase`, a client with their token, may call a model for `feature`
+ * now: throws `AiRefusedError` with the reason when not, and an error when that cannot be read.
  */
-export async function checkAiAccess(supabase: Client): Promise<void> {
-  const access = await supabase.rpc('ai_access');
+export async function checkAiAccess(supabase: Client, feature: Task): Promise<void> {
+  const access = await supabase.rpc('ai_access', { feature });
   if (access.error) throw new Error(`ai_access: ${access.error.message}`);
   if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
 }
@@ -94,7 +98,7 @@ export function aiModel(context: AiContext, task: Task): AiModel {
 
   async function start(request: AiRequest) {
     // Who may not call a model at all is told so before anything is sent to the provider.
-    await checkAiAccess(context.supabase);
+    await checkAiAccess(context.supabase, task);
 
     // A copy of its own, so that what is counted is what is sent, whatever the caller changes.
     const full: ModelRequest = { ...structuredClone(request), task };
@@ -136,18 +140,20 @@ export function aiModel(context: AiContext, task: Task): AiModel {
   }
 
   return {
-    async generate(request) {
+    async generate(request, gave) {
       const { full, callId } = await start(request);
       let used: Used = 'unknown';
+      let given: boolean | undefined;
       try {
         const response = await inner.generate(full);
         used = told(response.usage);
+        given = gave?.(response);
         return response;
       } catch (error) {
         used = usedBy(error);
         throw error;
       } finally {
-        await keepAlive(record(context.admin, callId, used));
+        await keepAlive(record(context.admin, callId, used, given));
       }
     },
 
@@ -194,8 +200,11 @@ export function keepAlive<T>(work: Promise<T>): Promise<T> {
   return work;
 }
 
-/** Records a call, trying again a little later twice if it fails, and logs it if every try does. */
-async function record(admin: Client, callId: string, used: Used) {
+/**
+ * Records a call, with whether it gave what it was for when that is known, trying again a little
+ * later twice if it fails, and logs it if every try does.
+ */
+async function record(admin: Client, callId: string, used: Used, given?: boolean) {
   const usage = typeof used === 'object' ? used : undefined;
   const args = {
     call_id: callId,
@@ -204,6 +213,7 @@ async function record(admin: Client, callId: string, used: Used) {
     output_tokens: usage?.outputTokens ?? 0,
     thinking_tokens: usage?.thinkingTokens ?? 0,
     known: used !== 'unknown',
+    given,
   };
   for (const wait of RECORD_RETRIES_MS) {
     const { error } = await admin.rpc('record_ai_usage', args);

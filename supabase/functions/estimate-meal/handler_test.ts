@@ -21,6 +21,7 @@ function context(
   { foods = {}, rpc = {} }: { foods?: Record<string, Food[]>; rpc?: Record<string, unknown> } = {},
 ) {
   const searched: { query: string; language: string }[] = [];
+  const recorded: { given?: boolean }[] = [];
   const answers: Record<string, unknown> = {
     ai_access: { allowed: true },
     start_ai_call: STARTED,
@@ -30,6 +31,7 @@ function context(
   };
   const client = {
     rpc: (name: string, args: Record<string, string>) => {
+      if (name === 'record_ai_usage') recorded.push(args as { given?: boolean });
       if (name === 'search_foods') {
         searched.push({ query: args.query, language: args.language });
         return Promise.resolve({ data: foods[args.query] ?? [], error: null });
@@ -38,7 +40,7 @@ function context(
     },
   } as unknown as EstimateContext['supabase'];
   const ctx: EstimateContext = { supabase: client, admin: client, model };
-  return { ctx, searched };
+  return { ctx, searched, recorded };
 }
 
 /** Base64 data of `bytes` bytes. */
@@ -255,6 +257,36 @@ Deno.test('gives no items for a photo of no food', async () => {
     note: 'That is a cat, not a meal!',
   });
   assertEquals(searched, []);
+});
+
+Deno.test(
+  "counts a whole answer as given, a photo of no food too, for a free user's week",
+  async () => {
+    const outputs: ModelResponse[] = [
+      answer({ isFood: true, items: [ITEMS[0]] }),
+      answer({ isFood: false, items: [], note: 'That is a cat, not a meal!' }),
+      { ...answer({ isFood: true, items: [ITEMS[0]] }), finish: 'length' },
+      { ...answer({}), parts: [{ type: 'text', text: 'Sure! Here is your meal: rice.' }] },
+    ];
+    const given: (boolean | undefined)[] = [];
+    for (const output of outputs) {
+      const { ctx, recorded } = context(new FakeModel(output));
+      await handleEstimateRequest(ask(REQUEST), ctx);
+      given.push(recorded[0]?.given);
+    }
+
+    assertEquals(given, [true, true, false, false]);
+  },
+);
+
+Deno.test('does not count an estimate the user cancelled', async () => {
+  const { ctx, recorded } = context(new FakeModel(answer({ isFood: true, items: [ITEMS[0]] })));
+  const cancel = new AbortController();
+  cancel.abort();
+
+  await handleEstimateRequest(new Request(ask(REQUEST), { signal: cancel.signal }), ctx);
+
+  assertEquals(recorded[0]?.given, false);
 });
 
 Deno.test('answers unavailable when the model answers in another shape', async () => {

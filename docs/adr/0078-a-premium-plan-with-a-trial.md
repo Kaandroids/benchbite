@@ -77,16 +77,16 @@ Tracking is free; intelligence and room to grow are premium.
   days left after the fourth week are a short week of their own. The weekly cap spreads the budget
   over the period; the period's $4 is what bounds the cost.
 - **A free user's AI is counted, not priced:** two meals estimated from a photo a week, in 7-day
-  steps from when the account was made. Only an estimate given counts: one refused, broken off or
-  closed unfinished does not. A guest has none, as AI needs an account. `start_ai_call()` counts
-  calls in flight toward it, so that two requests sent at once cannot both pass, and records on
-  each call whether it was made without premium. `estimate-meal` marks a call as an estimate given
-  once it has parsed one, through a function only the service role may call; a call that ends
-  without that mark frees its place.
+  steps from when the account was made. A whole answer counts, a photo of no food too; one
+  refused, broken off, cut, or that the user cancelled does not. A guest has none, as AI needs an
+  account. `start_ai_call()` counts calls in flight toward it, so that two requests sent at once
+  cannot both pass, and records on each call whether it was made without premium. `estimate-meal`
+  says whether a call gave a whole answer when it is recorded, through `record_ai_usage()`, which
+  only the service role may call; a call recorded without one frees its place.
 - **Behind the count, a small budget:** calls that do not count still cost, so a free week also has
   $0.10 for AI, checked against what its calls made without premium did cost, never against what a
-  call sets aside: that is more than one photo may cost, and would refuse the first. Once it is
-  spent, photos wait for the next week.
+  call sets aside, which would stop photos well before it. Once it is spent, photos wait for the
+  next week.
 - **One function counts the windows:** a user's budget period, week and free week are steps from a
   start date, the period's or the account's. One internal function gives them, and what was used
   in each, and `ai_access()`, `start_ai_call()` and `count_ai_call()` all read it.

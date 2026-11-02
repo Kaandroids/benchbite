@@ -33,10 +33,14 @@ function context(
   } = {},
 ) {
   const calls: { client: string; name: string; args: unknown }[] = [];
+  const asked: unknown[] = [];
   const client = (name: string) =>
     ({
       rpc: (fn: string, args: unknown) => {
-        if (fn === 'ai_access') return Promise.resolve({ data: access, error: null });
+        if (fn === 'ai_access') {
+          asked.push(args);
+          return Promise.resolve({ data: access, error: null });
+        }
         calls.push({ client: name, name: fn, args });
         if (fn === 'start_ai_call') return Promise.resolve({ data: starts.shift(), error: null });
         if (fn === 'count_ai_call') {
@@ -51,7 +55,7 @@ function context(
       },
     }) as unknown as AiContext['supabase'];
   const ctx: AiContext = { supabase: client('user'), admin: client('admin'), model };
-  return { ctx, calls };
+  return { ctx, calls, asked };
 }
 
 // The place is taken with no input, before anything goes to the provider.
@@ -80,6 +84,7 @@ function recorded(tokens: [number, number, number, number] | 'unknown', callId =
       output_tokens: output,
       thinking_tokens: thinking,
       known: tokens !== 'unknown',
+      given: undefined,
     },
   };
 }
@@ -99,6 +104,23 @@ Deno.test('counts what a request sends, starts its call, and records what it use
 
   assertEquals(answer.parts, [{ type: 'text', text: 'Hello!' }]);
   assertEquals(calls, [START, COUNT, recorded(USED)]);
+});
+
+Deno.test('asks for access to its own feature, and records whether an answer gave it', async () => {
+  const model = new FakeModel([{ type: 'text', text: '{}' }], [{ type: 'text', text: '{}' }]);
+  const { ctx, calls, asked } = context(model, {
+    starts: [STARTED, { ...STARTED, call_id: 'call-2' }],
+  });
+  const meal = aiModel(ctx, 'meal_photo');
+
+  await meal.generate({ messages: [HI] }, () => true);
+  await meal.generate({ messages: [HI] }, () => false);
+
+  assertEquals(asked, [{ feature: 'meal_photo' }, { feature: 'meal_photo' }]);
+  const given = calls
+    .filter((call) => call.name === 'record_ai_usage')
+    .map((call) => (call.args as { given?: boolean }).given);
+  assertEquals(given, [true, false]);
 });
 
 Deno.test('starts and records each request of its own, as a chat with tools makes', async () => {
