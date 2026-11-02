@@ -1799,7 +1799,9 @@
         "onboarding": "Onboarding'den · {{when}}"
       },
       "askAgain": "{{day}} tekrar soracağım",
+      "askNext": "Bir sonraki sohbette soracağım",
       "asksAgain": "Bite {{day}} tekrar soracak",
+      "asksNext": "Bite bir sonraki sohbette soracak",
       "asksAgainNote": "Daha iyiyse not geçmiş notlara taşınır.",
       "open": "Aç",
       "edit": "Düzenle",

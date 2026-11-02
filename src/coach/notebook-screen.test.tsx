@@ -13,7 +13,11 @@ import {
 } from './notebook';
 import { NotebookScreen } from './notebook-screen';
 
-jest.mock('expo-router', () => ({ router: { back: jest.fn(), push: jest.fn() } }));
+let mockParams: { current?: string } = {};
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn(), push: jest.fn() },
+  useLocalSearchParams: () => mockParams,
+}));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./notebook', () => ({
   ...jest.requireActual('./notebook'),
@@ -65,6 +69,7 @@ function notes(data: Note[]) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockParams = {};
   jest.useFakeTimers({ now: new Date(2026, 10, 1, 15), doNotFake: ['nextTick'] });
   notes(NOTES);
   jest.mocked(useDeleteNote).mockReturnValue({ mutate: deleteNote, isError: false } as never);
@@ -105,6 +110,21 @@ it('opens a note, and its chat', async () => {
     pathname: '/bite',
     params: { thread: '7', fresh: '', offer: '' },
   });
+});
+
+it('goes back to the chat a note came from when it is the one under the notebook', async () => {
+  mockParams = { current: '7' };
+  await render(<NotebookScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: /^Allergic to walnuts/ }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Open' }));
+  expect(router.back).toHaveBeenCalled();
+  expect(router.push).not.toHaveBeenCalled();
+});
+
+it('asks next time once the day to ask again has come', async () => {
+  notes([note({ id: 5, category: 'injury', text: 'Sore wrist', reviewOn: '2026-10-30' })]);
+  await render(<NotebookScreen />);
+  expect(screen.getByText("I'll ask next time we chat")).toBeTruthy();
 });
 
 it('removes a note once its Undo has gone, and not when it is undone', async () => {

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
+import { Caption } from '@/components/ui/caption';
 import { Chip } from '@/components/ui/chip';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Icon, type IconName } from '@/components/ui/icon';
@@ -14,12 +15,14 @@ import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
+import { Tag } from '@/components/ui/tag';
 import { TopBarButton } from '@/components/ui/top-bar-button';
-import { isoWeekday, useClockFormat, useShortDateFormat, useWeekdayFormat } from '@/i18n/dates';
+import { useClockFormat } from '@/i18n/dates';
+import { dbErrorMessage } from '@/lib/errors';
 import { useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
-import { openNoteChat } from './bite-route';
+import { type NotebookParams, openNoteChat } from './bite-route';
 import {
   groupNotes,
   MAX_NOTE_LENGTH,
@@ -27,7 +30,6 @@ import {
   NOTE_CATEGORIES,
   type NoteCategory,
   type NotebookSection,
-  noteRefusal,
   useDeleteNote,
   useNotes,
   useRestoreNote,
@@ -36,6 +38,7 @@ import {
   useSetSavesNotes,
 } from './notebook';
 import { useDeferredDelete } from './use-deferred-delete';
+import { useNoteDate, useNoteSource, useReviewText } from './use-note-days';
 
 const SECTION_ICONS: Record<NotebookSection, IconName> = {
   health: 'warning',
@@ -188,59 +191,19 @@ function SectionHeading({ icon, children }: { icon: IconName; children: string }
   return (
     <View style={[styles.row, { gap: spacing.xs + 2, paddingLeft: spacing.xs }]}>
       <Icon name={icon} size={15} color="primaryText" />
-      <Text variant="captionStrong" color="textMuted" accessibilityRole="header">
-        {children.toLocaleUpperCase()}
-      </Text>
+      <Caption accessibilityRole="header">{children}</Caption>
     </View>
   );
-}
-
-/** Where a note came from and when, as "From a chat · Oct 12", or "Yesterday". */
-function useSourceLine() {
-  const { t } = useTranslation();
-  const [today] = useState(() => new Date());
-  const date = useShortDateFormat(today);
-  return (note: Note) => {
-    const days = Math.round(
-      (startOfDay(today).getTime() - startOfDay(note.createdAt).getTime()) / 86_400_000,
-    );
-    const when =
-      days === 0
-        ? t('bite.notebook.today')
-        : days === 1
-          ? t('bite.notebook.yesterday')
-          : date(note.createdAt);
-    return t(`bite.notebook.sources.${note.source}`, { when });
-  };
-}
-
-/** When Bite asks again: on a weekday within the week, or on a date, as "Friday" or "Nov 20". */
-function useReviewDay() {
-  const [today] = useState(() => new Date());
-  const weekday = useWeekdayFormat('long');
-  const date = useShortDateFormat(today);
-  return (day: string) => {
-    const on = new Date(`${day}T00:00:00`);
-    const days = (on.getTime() - startOfDay(today).getTime()) / 86_400_000;
-    return days >= 0 && days < 7 ? weekday(isoWeekday(on)) : date(on);
-  };
-}
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 type NoteRowProps = { note: Note; first: boolean; onPress: () => void };
 
 /** A note: its text, where it came from, and when Bite asks again about it. */
 function NoteRow({ note, first, onPress }: NoteRowProps) {
-  const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const source = useSourceLine();
-  const reviewDay = useReviewDay();
-  const review = note.reviewOn
-    ? t('bite.notebook.askAgain', { day: reviewDay(note.reviewOn) })
-    : '';
+  const { colors, spacing } = useTheme();
+  const source = useNoteSource();
+  const reviewText = useReviewText();
+  const review = note.reviewOn ? reviewText.tag(note.reviewOn) : '';
   return (
     <Pressable
       accessibilityRole="button"
@@ -261,23 +224,9 @@ function NoteRow({ note, first, onPress }: NoteRowProps) {
         <Text variant="caption" color="textMuted">
           {source(note)}
         </Text>
-        {note.reviewOn ? (
-          <View
-            style={[
-              styles.tag,
-              {
-                gap: spacing.xs,
-                marginTop: spacing.xs,
-                paddingHorizontal: spacing.sm,
-                borderRadius: radii.sm,
-                backgroundColor: colors.primaryWash,
-              },
-            ]}
-          >
-            <Icon name="timer" size={13} color="primaryText" />
-            <Text variant="captionStrong" color="primaryText">
-              {review}
-            </Text>
+        {review ? (
+          <View style={{ marginTop: spacing.xs }}>
+            <Tag icon="timer" label={review} />
           </View>
         ) : null}
       </View>
@@ -290,11 +239,9 @@ function NoteRow({ note, first, onPress }: NoteRowProps) {
 function PastNotes({ notes }: { notes: Note[] }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const [today] = useState(() => new Date());
-  const date = useShortDateFormat(today);
+  const date = useNoteDate();
   const restore = useRestoreNote();
   const [unfolded, setUnfolded] = useState(false);
-  const refusal = restore.isError ? noteRefusal(restore.error) : undefined;
   return (
     <View style={{ gap: spacing.sm }}>
       <Pressable
@@ -305,9 +252,7 @@ function PastNotes({ notes }: { notes: Note[] }) {
         style={[styles.row, { gap: spacing.xs + 2, paddingLeft: spacing.xs, minHeight: 44 }]}
       >
         <Icon name="archive" size={15} color="textMuted" />
-        <Text variant="captionStrong" color="textMuted" style={styles.flex}>
-          {t('bite.notebook.past', { count: notes.length }).toLocaleUpperCase()}
-        </Text>
+        <Caption style={styles.flex}>{t('bite.notebook.past', { count: notes.length })}</Caption>
         <Icon name={unfolded ? 'up' : 'down'} size={15} color="textMuted" />
       </Pressable>
       {unfolded ? (
@@ -341,10 +286,14 @@ function PastNotes({ notes }: { notes: Note[] }) {
               </View>
             ))}
           </Card>
-          {refusal ? (
-            <Text color="danger">{t(`bite.notebook.refusals.${refusal}`)}</Text>
-          ) : restore.isError ? (
-            <Text color="danger">{t('bite.notebook.notRestored')}</Text>
+          {restore.isError ? (
+            <Text color="danger">
+              {dbErrorMessage(
+                restore.error,
+                [['notesInUseLimit', t('bite.notebook.refusals.full')]],
+                t('bite.notebook.notRestored'),
+              )}
+            </Text>
           ) : null}
           <Text variant="caption" color="textMuted">
             {t('bite.notebook.pastNote')}
@@ -387,29 +336,17 @@ type NoteSheetProps = {
 function NoteSheet({ note, onClose, onEdit, onRemove }: NoteSheetProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
-  const source = useSourceLine();
+  const { current } = useLocalSearchParams<NotebookParams>();
+  const source = useNoteSource();
   const clock = useClockFormat();
-  const reviewDay = useReviewDay();
+  const reviewText = useReviewText();
   const fromChat = note.source === 'chat' && note.threadId !== null;
   return (
     <Sheet onClose={onClose}>
-      <View
-        style={[
-          styles.tag,
-          {
-            gap: spacing.xs,
-            paddingHorizontal: spacing.sm + 2,
-            paddingVertical: spacing.xs,
-            borderRadius: radii.md,
-            backgroundColor: colors.primaryWash,
-          },
-        ]}
-      >
-        <Icon name={CATEGORY_ICONS[note.category]} size={15} color="primaryText" />
-        <Text variant="captionStrong" color="primaryText">
-          {t(`bite.notebook.categories.${note.category}`)}
-        </Text>
-      </View>
+      <Tag
+        icon={CATEGORY_ICONS[note.category]}
+        label={t(`bite.notebook.categories.${note.category}`)}
+      />
       <Text variant="headline">{note.text}</Text>
       <View style={{ backgroundColor: colors.surface, borderRadius: radii.md }}>
         <View style={[styles.row, { gap: spacing.md, padding: spacing.md }]}>
@@ -433,7 +370,7 @@ function NoteSheet({ note, onClose, onEdit, onRemove }: NoteSheetProps) {
               size="small"
               onPress={() => {
                 onClose();
-                openNoteChat(note.threadId!);
+                openNoteChat(note.threadId!, current);
               }}
             />
           ) : null}
@@ -448,9 +385,7 @@ function NoteSheet({ note, onClose, onEdit, onRemove }: NoteSheetProps) {
           >
             <Icon name="timer" size={20} color="textMuted" />
             <View style={styles.flex}>
-              <Text variant="bodyStrong">
-                {t('bite.notebook.asksAgain', { day: reviewDay(note.reviewOn) })}
-              </Text>
+              <Text variant="bodyStrong">{reviewText.sheet(note.reviewOn)}</Text>
               <Text variant="caption" color="textMuted">
                 {t('bite.notebook.asksAgainNote')}
               </Text>
@@ -514,7 +449,6 @@ function EditSheet({ note, onClose }: { note?: Note; onClose: () => void }) {
   const save = useSaveNote();
   const [category, setCategory] = useState<NoteCategory>(note?.category ?? 'allergy');
   const [text, setText] = useState(note?.text ?? '');
-  const refusal = save.isError ? noteRefusal(save.error) : undefined;
   const submit = () => {
     if (save.isPending || !text.trim()) return;
     save.mutate({ id: note?.id, category, text }, { onSuccess: onClose });
@@ -549,10 +483,17 @@ function EditSheet({ note, onClose }: { note?: Note; onClose: () => void }) {
           style={field}
         />
       </View>
-      {refusal ? (
-        <Text color="danger">{t(`bite.notebook.refusals.${refusal}`)}</Text>
-      ) : save.isError ? (
-        <Text color="danger">{t('bite.notebook.notSaved')}</Text>
+      {save.isError ? (
+        <Text color="danger">
+          {dbErrorMessage(
+            save.error,
+            [
+              ['notesInUseLimit', t('bite.notebook.refusals.full')],
+              ['notesKeptLimit', t('bite.notebook.refusals.kept')],
+            ],
+            t('bite.notebook.notSaved'),
+          )}
+        </Text>
       ) : null}
       <View style={[styles.row, { gap: spacing.md }]}>
         <Button
@@ -583,12 +524,6 @@ const styles = StyleSheet.create({
   },
   center: {
     justifyContent: 'center',
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 3,
   },
   chips: {
     flexDirection: 'row',

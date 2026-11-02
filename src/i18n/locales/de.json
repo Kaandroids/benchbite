@@ -1799,7 +1799,9 @@
         "onboarding": "Aus dem Onboarding · {{when}}"
       },
       "askAgain": "Ich frage am {{day}} nochmal",
+      "askNext": "Ich frage beim nächsten Chat nach",
       "asksAgain": "Bite fragt am {{day}} nochmal",
+      "asksNext": "Bite fragt beim nächsten Chat nach",
       "asksAgainNote": "Wenn es besser ist, kommt die Notiz zu den früheren Notizen.",
       "open": "Öffnen",
       "edit": "Bearbeiten",

@@ -1799,7 +1799,9 @@
         "onboarding": "From onboarding · {{when}}"
       },
       "askAgain": "I'll ask again on {{day}}",
+      "askNext": "I'll ask next time we chat",
       "asksAgain": "Bite asks again on {{day}}",
+      "asksNext": "Bite asks next time you chat",
       "asksAgainNote": "If it's better, the note moves to past notes.",
       "open": "Open",
       "edit": "Edit",
