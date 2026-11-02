@@ -27,8 +27,8 @@ type TrialEndingScreenProps = {
 };
 
 /**
- * A reminder shortly before the free week ends (#411): Bite and the day on top, the plan and its
- * one price in the middle, yearly or monthly, and what the trial gave at the bottom.
+ * A reminder shortly before the free week ends (#411): Bite and the day on top, then the plan and
+ * its one price, yearly or monthly, with what the trial gave, and the buttons at the bottom.
  */
 export function TrialEndingScreen({
   endsOn,
@@ -48,11 +48,23 @@ export function TrialEndingScreen({
   const date = monthDay(endsOn);
 
   return (
-    <Screen closes onClose={onClose}>
+    <Screen
+      closes
+      onBack={onClose}
+      footer={
+        <View style={[styles.stretch, { gap: spacing.md }]}>
+          <Button
+            label={t(yearly ? 'premium.trialEnding.keepYearly' : 'premium.trialEnding.keepMonthly')}
+            onPress={() => onKeep(billing)}
+          />
+          <TextLink tone="muted" label={t('premium.trialEnding.cancel')} onPress={onCancel} />
+        </View>
+      }
+    >
       <View style={[styles.body, { gap: spacing.xl }]}>
         <View style={[styles.group, { gap: spacing.md }]}>
           <View>
-            <BiteAvatar size={104} expression="thinking" />
+            <BiteAvatar size={128} expression="thinking" />
             <View
               accessible
               accessibilityLabel={date}
@@ -108,38 +120,28 @@ export function TrialEndingScreen({
                 : t('premium.cancelAnytime')}
             </Text>
           </View>
-          <View style={[styles.stretch, { gap: spacing.md }]}>
-            <Button
-              label={t(
-                yearly ? 'premium.trialEnding.keepYearly' : 'premium.trialEnding.keepMonthly',
-              )}
-              onPress={() => onKeep(billing)}
-            />
-            <TextLink tone="muted" label={t('premium.trialEnding.cancel')} onPress={onCancel} />
+          <View style={[styles.stats, { gap: spacing.sm }]}>
+            {(
+              [
+                ['chats', usage.chats],
+                ['photos', usage.photos],
+                ['reviews', usage.reviews],
+              ] as const
+            ).map(([kind, count]) => (
+              <View
+                key={kind}
+                style={[
+                  styles.stat,
+                  { backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.sm },
+                ]}
+              >
+                <Text variant="headline">{count}</Text>
+                <Text variant="caption" color="textMuted" style={styles.center}>
+                  {t(`premium.trialEnding.${kind}`, { count })}
+                </Text>
+              </View>
+            ))}
           </View>
-        </View>
-
-        <View style={[styles.stats, { gap: spacing.sm }]}>
-          {(
-            [
-              ['chats', usage.chats],
-              ['photos', usage.photos],
-              ['reviews', usage.reviews],
-            ] as const
-          ).map(([kind, count]) => (
-            <View
-              key={kind}
-              style={[
-                styles.stat,
-                { backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.sm },
-              ]}
-            >
-              <Text variant="headline">{count}</Text>
-              <Text variant="caption" color="textMuted" style={styles.center}>
-                {t(`premium.trialEnding.${kind}`, { count })}
-              </Text>
-            </View>
-          ))}
         </View>
       </View>
     </Screen>
@@ -156,8 +158,8 @@ const styles = StyleSheet.create({
   },
   calendar: {
     position: 'absolute',
-    left: -28,
-    top: 56,
+    left: -24,
+    top: 72,
     width: 56,
     borderWidth: 2,
     overflow: 'hidden',

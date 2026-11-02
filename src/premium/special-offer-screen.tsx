@@ -124,45 +124,47 @@ export function SpecialOfferScreen({
             </Text>
           </View>
           <View style={[styles.stretch, { gap: spacing.sm }]}>
-            <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
             <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
-              {t('premium.offer.legal')}
+              {t('premium.offer.text')}
             </Text>
+            <View style={[styles.stats, { gap: spacing.sm }]}>
+              {(
+                [
+                  ['workouts', waiting.workouts],
+                  ['alternatives', waiting.alternatives],
+                  ['chats', waiting.chats],
+                ] as const
+              ).map(([kind, count]) => (
+                <View
+                  key={kind}
+                  style={[
+                    styles.stat,
+                    {
+                      backgroundColor: colors.inverseRaised,
+                      borderRadius: radii.md,
+                      padding: spacing.sm,
+                    },
+                  ]}
+                >
+                  <Text variant="headline" color="onInverse">
+                    {count}
+                  </Text>
+                  <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
+                    {t(`premium.offer.${kind}`, { count })}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
+      </View>
 
-        <View style={{ gap: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.md }}>
+        <View style={[styles.stretch, { gap: spacing.sm }]}>
+          <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
           <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
-            {t('premium.offer.text')}
+            {t('premium.offer.legal')}
           </Text>
-          <View style={[styles.stats, { gap: spacing.sm }]}>
-            {(
-              [
-                ['workouts', waiting.workouts],
-                ['alternatives', waiting.alternatives],
-                ['chats', waiting.chats],
-              ] as const
-            ).map(([kind, count]) => (
-              <View
-                key={kind}
-                style={[
-                  styles.stat,
-                  {
-                    backgroundColor: colors.inverseRaised,
-                    borderRadius: radii.md,
-                    padding: spacing.sm,
-                  },
-                ]}
-              >
-                <Text variant="headline" color="onInverse">
-                  {count}
-                </Text>
-                <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
-                  {t(`premium.offer.${kind}`, { count })}
-                </Text>
-              </View>
-            ))}
-          </View>
         </View>
       </View>
     </SafeAreaView>
