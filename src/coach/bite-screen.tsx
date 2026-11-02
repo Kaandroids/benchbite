@@ -146,7 +146,7 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
     ]),
   );
   const mediaUrls = useMediaUrls(start?.threadId, keptMedia);
-  const access = useAiAccess();
+  const access = useAiAccess('coach_chat');
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';

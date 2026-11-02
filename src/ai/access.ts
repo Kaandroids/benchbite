@@ -20,7 +20,7 @@ export const REFUSALS = [
 export type Refusal = (typeof REFUSALS)[number];
 
 /** Whether the user may use `feature` now, and when the window that refuses it opens again. */
-export function useAiAccess(feature: Feature = 'coach_chat') {
+export function useAiAccess(feature: Feature) {
   return useQuery({
     queryKey: [...ACCESS_KEY, feature],
     queryFn: async () => {
