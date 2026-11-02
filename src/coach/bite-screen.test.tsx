@@ -146,7 +146,8 @@ it('asks a suggested question, shows Bite looking it up, then its answer as it c
 
   await stream.send({ event: 'done', threadId: 7, messageId: 9 });
   await stream.end();
-  expect(screen.getByRole('button', { name: 'Send' })).toBeOnTheScreen();
+  // Empty again, the composer offers the mic.
+  expect(screen.getByRole('button', { name: 'Hold to talk' })).toBeOnTheScreen();
 });
 
 it('goes on in the same thread with the next message', async () => {
