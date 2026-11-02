@@ -103,7 +103,7 @@ const LOGGABLE_FROM = addDays(TODAY, -8);
 const OVER_DAY = addDays(TODAY, -40); // ate over the target: the streak starts after it
 
 // ---------------------------------------------------------------------------------------------
-// 1. Delete the demo user and sign up again; Bite needs a monthly budget to answer.
+// 1. Delete the demo user and sign up again; Bite needs premium to answer.
 
 sql(`delete from auth.users where email = ${literal(EMAIL)}`);
 const signUp = await request<{ access_token: string; user: { id: string } }>(
@@ -113,7 +113,7 @@ const signUp = await request<{ access_token: string; user: { id: string } }>(
 );
 token = signUp.access_token;
 const uid = signUp.user.id;
-sql(`insert into public.ai_budgets (user_id, monthly_limit_usd) values ('${uid}', 4)`);
+sql(`select public.give_plan(${literal(EMAIL)}, now(), now() + interval '1 year')`);
 console.log(`Signed up ${EMAIL}; today ${TODAY}, the plan starts ${START}.`);
 
 /**
