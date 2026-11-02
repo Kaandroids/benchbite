@@ -22,7 +22,7 @@ export function AddTiles({ onPhoto }: AddTilesProps) {
   return (
     <View style={[styles.row, { gap: spacing.md }]}>
       <AddTile
-        icon={<PhotoIcon />}
+        icon={<Icon name="camera" size={22} color="primary" />}
         iconBackground="iconBackground"
         title={t('nutrition.search.photo')}
         hint={t('nutrition.search.photoHint')}
@@ -101,21 +101,6 @@ function AddTile({ icon, iconBackground, title, hint, label, onPress }: AddTileP
   );
 }
 
-/** A camera with a small plus at its top right: a meal is added from a photo. */
-function PhotoIcon() {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.photoIcon}>
-      <View style={styles.camera}>
-        <Icon name="camera" size={20} color="primary" />
-      </View>
-      <View style={[styles.plus, { backgroundColor: colors.iconBackground }]}>
-        <Icon name="plus" size={10} color="primary" />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -144,24 +129,5 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     lineHeight: 16,
-  },
-  photoIcon: {
-    width: 26,
-    height: 24,
-  },
-  camera: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-  },
-  plus: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
