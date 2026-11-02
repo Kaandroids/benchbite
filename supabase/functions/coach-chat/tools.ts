@@ -397,25 +397,19 @@ const TOOLS = [
     }),
     run: ({ queries }, { supabase, language }) =>
       Promise.all(
-        // Each once, whatever its case, as the search ignores it.
-        queries
-          .filter(
-            (query, index) =>
-              queries.findIndex((other) => other.toLowerCase() === query.toLowerCase()) === index,
-          )
-          .map(async (query) => {
-            const found = await searchExercises(supabase, language, query);
-            // A plural finds nothing in names that are singular, as "Sissy Squat" for "sissy
-            // squats": it is searched once more without its last s.
-            const singular = query.length > QUERY_MIN && /s$/i.test(query);
-            return {
-              query,
-              exercises:
-                found.length || !singular
-                  ? found
-                  : await searchExercises(supabase, language, query.slice(0, -1)),
-            };
-          }),
+        distinctQueries(queries).map(async (query) => {
+          const found = await searchExercises(supabase, language, query);
+          // A plural finds nothing in names that are singular, as "Sissy Squat" for "sissy
+          // squats": it is searched once more without its last s.
+          const singular = query.length > QUERY_MIN && /s$/i.test(query);
+          return {
+            query,
+            exercises:
+              found.length || !singular
+                ? found
+                : await searchExercises(supabase, language, query.slice(0, -1)),
+          };
+        }),
       ),
   }),
   tool({
@@ -908,6 +902,11 @@ async function changeNote(
 /** The kinds of proposal the tools offered to Bite make. */
 export const PROPOSAL_KINDS = TOOLS.flatMap((t) => (t.proposes ? [t.proposes] : []));
 
+/** The tools that make a card: those that propose a change, and the meal card's. */
+export const CARD_TOOLS: string[] = TOOLS.flatMap((t) =>
+  t.proposes || t.name === 'log_meal_card' ? [t.name] : [],
+);
+
 /** The tools as the model is told of them, their arguments as JSON Schema. */
 export const TOOL_DEFINITIONS: Tool[] = TOOLS.map(({ name, description, args }) => {
   const { $schema: _, ...parameters } = z.toJSONSchema(args, { io: 'input' });
@@ -1016,15 +1015,47 @@ function foodLogEntry(
  * (`src/exercises/library.ts`).
  */
 async function exerciseNames(supabase: Client, language: Language, ids: string[]) {
-  if (!ids.length) return new Map<string, string>();
+  return new Map((await exerciseRows(supabase, language, ids)).map((row) => [row.id, row.name]));
+}
+
+/** What Bite reads of an exercise's target kind (target_kind()). */
+const TARGET_WORDS: Record<string, string> = {
+  reps: 'reps',
+  distance: 'meters or seconds',
+  time: 'seconds',
+};
+
+/**
+ * The exercises `ids`, each named in `language` where the library has a translation, else by its
+ * own name, with the target it takes as Bite reads it.
+ */
+async function exerciseRows(supabase: Client, language: Language, ids: string[]) {
+  if (!ids.length) return [];
   const rows = read(
     await supabase
       .from('exercises')
-      .select('id, name, exercise_translations (name)')
+      .select('id, name, target_kind, exercise_translations (name)')
       .in('id', ids)
       .eq('exercise_translations.language', language),
   );
-  return new Map(rows.map((row) => [row.id, row.exercise_translations[0]?.name ?? row.name]));
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.exercise_translations[0]?.name ?? row.name,
+    target: row.target_kind ? TARGET_WORDS[row.target_kind] : undefined,
+  }));
+}
+
+/** `queries` each once, whatever its case, as the search ignores it, in their first spelling. */
+function distinctQueries(queries: string[]): string[] {
+  const seen = new Set<string>();
+  const distinct: string[] = [];
+  for (const query of queries) {
+    const key = query.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    distinct.push(query);
+  }
+  return distinct;
 }
 
 /** How close a name is to what was searched: the name itself, one starting with it, the rest. */
@@ -1126,29 +1157,10 @@ async function searchExercises(supabase: Client, language: Language, query: stri
   const ids = [
     ...new Set([...read(own).map((row) => row.id), ...ranked.map((row) => row.id)]),
   ].slice(0, SEARCH_LIMIT);
-  if (!ids.length) return [];
-  // Named as exerciseNames() names them, with the target each takes (target_kind()), so that a
-  // proposal gives the right one.
-  const found = new Map(
-    read(
-      await supabase
-        .from('exercises')
-        .select('id, name, target_kind, exercise_translations (name)')
-        .in('id', ids)
-        .eq('exercise_translations.language', language),
-    ).map((row) => [row.id, row]),
-  );
+  const found = new Map((await exerciseRows(supabase, language, ids)).map((row) => [row.id, row]));
   return ids.flatMap((id) => {
     const row = found.get(id);
-    return row
-      ? [
-          {
-            id,
-            name: row.exercise_translations[0]?.name ?? row.name,
-            target: row.target_kind ?? undefined,
-          },
-        ]
-      : [];
+    return row ? [{ id, name: row.name, target: row.target }] : [];
   });
 }
 

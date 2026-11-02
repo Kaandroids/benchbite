@@ -322,7 +322,7 @@ Deno.test('names the target each exercise found takes', async () => {
   const found = (await runTool(
     'search_exercises',
     { queries: ['squat', 'plank'] },
-    searchContext('en', [], [['Plank', 'Plank', undefined, 'seconds']]),
+    searchContext('en', [], [['Plank', 'Plank', undefined, 'time']]),
   )) as { exercises: unknown }[];
   assertEquals(
     found.map((result) => result.exercises),
