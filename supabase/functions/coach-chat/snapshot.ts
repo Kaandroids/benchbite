@@ -71,6 +71,11 @@ export type Note = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/** Weekdays, 1 Monday to 7 Sunday, as "Mon, Thu". */
+function dayNames(days: number[]) {
+  return days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ');
+}
+
 /** Reads the user's snapshot on `today`, a date of their device, at `time` there. */
 export async function loadSnapshot(
   supabase: Client,
@@ -136,7 +141,7 @@ export async function loadSnapshot(
     snapshot.training = [
       p.experience,
       p.training_setup,
-      `${p.training_days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ')}`,
+      dayNames(p.training_days),
       `${p.session_minutes} min sessions`,
     ].join(' · ');
   }
@@ -178,7 +183,7 @@ export async function loadSnapshot(
     snapshot.plan = plan.data.length
       ? plan.data
           .map((workout) => {
-            const days = workout.weekdays.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ');
+            const days = dayNames(workout.weekdays);
             const versions = workout.workout_alternatives.map(
               (a) => `${alternativeName(a)}${a.in_use ? ' (in use)' : ''}`,
             );

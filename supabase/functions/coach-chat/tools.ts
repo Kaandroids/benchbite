@@ -355,7 +355,6 @@ const TOOLS = [
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
       const workouts = read(await planWorkouts(supabase));
-      const kept = (exercises: unknown) => (Array.isArray(exercises) ? (exercises as Kept[]) : []);
       const names = await exerciseNames(supabase, language, [
         ...workouts.flatMap((w) => w.workout_exercises.map((e) => e.exercise_id)),
         ...workouts.flatMap((w) =>
@@ -907,6 +906,11 @@ function planWorkouts(supabase: Client) {
 
 /** An exercise of an alternative not in use, as saved_workout() kept it (ADR 0061). */
 type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
+
+/** The exercises an alternative keeps, none for the one in use. */
+function kept(exercises: unknown) {
+  return Array.isArray(exercises) ? (exercises as Kept[]) : [];
+}
 
 /** One of the user's active workouts, by its id, with what its card names it by. */
 function workoutForCard(supabase: Client, id: number) {
