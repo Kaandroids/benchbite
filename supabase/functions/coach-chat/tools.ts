@@ -7,6 +7,7 @@
 import { z } from 'zod';
 
 import type {
+  CardAlternative,
   CoachToolName,
   DayTargets,
   ExerciseChanges,
@@ -155,7 +156,7 @@ const REFUSALS = {
     BB050: 'That alternative is in use already.',
     P0002: 'There is no such alternative; take its id from get_workouts.',
     '22023':
-      'A change must change something, name each workout once, and leave a new alternative at least one exercise.',
+      'A change must change something, name each workout once, with all of its changes, and leave a new alternative at least one exercise.',
     '23514': 'The values are out of range, or the macros add up to more than the calories.',
   },
   otherwise: 'The change could not be proposed just now.',
@@ -472,7 +473,7 @@ const TOOLS = [
         .min(1)
         .max(3)
         .refine((edits) => new Set(edits.map((e) => e.workoutId)).size === edits.length, {
-          message: "each workout once, with all of that workout's changes",
+          message: 'name each workout once, with all of its changes',
         }),
     }),
     run: async ({ workouts: edits }, { supabase, language, today, threadId }) => {
@@ -521,8 +522,9 @@ const TOOLS = [
       ...EDIT,
     }),
     run: async (args, { supabase, language, today, threadId }) => {
-      const plan = read(await planWorkouts(supabase));
-      const workout = plan.find((w) => w.id === args.workoutId);
+      const found = await workoutForCard(supabase, args.workoutId);
+      if (found.error) throw found.error;
+      const workout = found.data;
       if (!workout) return { error: REFUSALS.meanings.BB006 };
       const names = await editNames(supabase, language, [args]);
       if (typeof names === 'string') return { error: names };
@@ -537,19 +539,13 @@ const TOOLS = [
         today,
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
-      const { change, before } = await proposedAlternatives(supabase, proposed.data);
-      // As apply_coach_change() leaves it: the one in use named `currentName` when the change kept
-      // one; without alternatives, the workout's own, which add_workout_alternative() makes the
-      // first.
-      const current = before.alternatives.find((a) => a.inUse);
+      // The alternative it is made from, as applying names it, which the database gives.
+      const made = proposed.data as { id: number; from: CardAlternative };
       const proposal: ProposalCard = {
         kind: 'alternative',
-        id: proposed.data,
+        id: made.id,
         workout: { name: workout.name, type: workout.type },
-        from: {
-          name: change.currentName ?? current?.name ?? null,
-          position: current?.position ?? 1,
-        },
+        from: made.from,
         to: args.name,
         ...changesOf(args, names),
       };
@@ -566,31 +562,36 @@ const TOOLS = [
       const plan = read(await planWorkouts(supabase));
       const workout = plan.find((w) => w.workout_alternatives.some((a) => a.id === alternativeId));
       if (!workout) return { error: REFUSALS.meanings.P0002 };
+      // Named before proposing, so that a proposal is never left without its card: the exercises
+      // that may come back are the alternative's.
+      const next = workout.workout_alternatives.find((a) => a.id === alternativeId)!;
+      const names = await exerciseNames(
+        supabase,
+        language,
+        kept(next.exercises).map((e) => e.exerciseId),
+      );
       const proposed = await supabase.rpc('propose_coach_alternative_switch', {
         thread_id: threadId,
         alternative_id: alternativeId,
         today,
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
-      // As the database read the alternatives for the proposal, which applying switches between.
-      const { before } = await proposedAlternatives(supabase, proposed.data);
-      const now = before.alternatives.find((a) => a.inUse)!;
-      const next = before.alternatives.find((a) => a.id === alternativeId)!;
-      // The exercises it has that the one in use has not, as the card names them.
-      const inUse = new Set(before.workout.exercises.map((e) => e.exerciseId));
-      const back = [
-        ...new Set(
-          kept(next.exercises).flatMap((e) => (inUse.has(e.exerciseId) ? [] : [e.exerciseId])),
-        ),
-      ];
-      const names = await exerciseNames(supabase, language, back);
+      // What applying switches between, as the database read it for the proposal.
+      const made = proposed.data as {
+        id: number;
+        from: CardAlternative;
+        to: CardAlternative;
+        back: string[];
+        empty: boolean;
+      };
       const proposal: ProposalCard = {
         kind: 'alternative_switch',
-        id: proposed.data,
+        id: made.id,
         workout: { name: workout.name, type: workout.type },
-        from: { name: now.name, position: now.position },
-        to: { name: next.name, position: next.position },
-        back: back.map((id) => names.get(id) ?? id),
+        from: made.from,
+        to: made.to,
+        back: made.back.map((id) => names.get(id) ?? id),
+        empty: made.empty,
       };
       return { proposal };
     },
@@ -1025,35 +1026,6 @@ function closeness(name: string, query: string): number {
   return a === b ? 0 : a.startsWith(b) ? 1 : 2;
 }
 
-/**
- * A workout's alternatives as the database read them for a proposal (coach_alternatives_state()),
- * under the user's lock, so that its card shows what applying changes.
- */
-type AlternativesState = {
-  workout: { exercises: { exerciseId: string }[] };
-  alternatives: {
-    id: number;
-    position: number;
-    name: string | null;
-    inUse: boolean;
-    exercises: unknown;
-  }[];
-};
-
-/** What an alternative or switch proposal `id` changes, as stored, and what it read before. */
-async function proposedAlternatives(supabase: Client, id: number) {
-  const { data, error } = await supabase
-    .from('coach_proposals')
-    .select('change, before')
-    .eq('id', id)
-    .maybeSingle();
-  if (error || !data) throw error ?? new Error('The proposal just made could not be read');
-  return {
-    change: data.change as { currentName?: string },
-    before: data.before as unknown as AlternativesState,
-  };
-}
-
 /** An edit as edited_workout_exercises() takes it. */
 function editOf({ swaps = [], remove = [], add = [] }: Edit) {
   return {
@@ -1139,6 +1111,16 @@ type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
 /** The exercises an alternative keeps, none for the one in use. */
 function kept(exercises: unknown) {
   return Array.isArray(exercises) ? (exercises as Kept[]) : [];
+}
+
+/** One of the user's active workouts, by its id, with what its card names it by. */
+function workoutForCard(supabase: Client, id: number) {
+  return supabase
+    .from('workouts')
+    .select('id, name, type')
+    .eq('active', true)
+    .eq('id', id)
+    .maybeSingle();
 }
 
 /**

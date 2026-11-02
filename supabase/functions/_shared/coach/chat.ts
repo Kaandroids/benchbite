@@ -236,13 +236,17 @@ export type ProposalCard =
       to: string;
     } & ExerciseChanges)
   | {
-      /** Another alternative put in use, with the exercises it brings back, named. */
+      /**
+       * Another alternative put in use, with the exercises it brings back, named, and whether it
+       * has none, which leaves the workout without exercises (ADR 0064).
+       */
       kind: 'alternative_switch';
       id: number;
       workout: CardWorkout;
       from: CardAlternative;
       to: CardAlternative;
       back: string[];
+      empty: boolean;
     };
 
 /**

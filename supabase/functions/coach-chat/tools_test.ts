@@ -148,7 +148,6 @@ const LEGS_WITH_ALTERNATIVES = {
 function planContext(
   rpc: Record<string, { data?: unknown; error?: unknown }> = {},
   workout: Row | Row[] = LEGS,
-  proposals: Row[] = [],
 ) {
   const calls: { name: string; args: unknown }[] = [];
   // Filters by equality, but not an embedded table's, whose rows here are in the language asked
@@ -181,15 +180,7 @@ function planContext(
   };
   const supabase = {
     from: (table: string) =>
-      query(
-        table === 'workouts'
-          ? Array.isArray(workout)
-            ? workout
-            : [workout]
-          : table === 'coach_proposals'
-            ? proposals
-            : NAMES,
-      ),
+      query(table === 'workouts' ? (Array.isArray(workout) ? workout : [workout]) : NAMES),
     rpc: (name: string, args: unknown) => {
       calls.push({ name, args });
       return Promise.resolve({ data: null, error: null, ...rpc[name] });
@@ -383,21 +374,6 @@ Deno.test("reads a workout's alternatives, and the exercises of those not in use
   ]);
 });
 
-/** Legs' alternatives as the database read them for a proposal, by coach_alternatives_state(). */
-const STATE = {
-  workout: { exercises: [{ exerciseId: 'Barbell_Squat' }, { exerciseId: 'Plank' }] },
-  alternatives: [
-    {
-      id: 12,
-      position: 1,
-      name: null,
-      inUse: false,
-      exercises: LEGS_WITH_ALTERNATIVES.workout_alternatives[1]!.exercises,
-    },
-    { id: 11, position: 2, name: 'Knee-safe', inUse: true, exercises: null },
-  ],
-};
-
 const SWAP = {
   replace: 'Barbell_Squat',
   with: 'Leg_Press',
@@ -566,13 +542,10 @@ Deno.test('says why a proposal was refused, for the model to correct it', async 
 });
 
 Deno.test('proposes a first alternative, naming the version in use too', async () => {
-  const { context, calls } = planContext({ propose_coach_alternative: { data: 42 } }, LEGS, [
-    {
-      id: 42,
-      change: { workoutId: 3, name: 'Knee-safe', currentName: 'Gym' },
-      before: { workout: STATE.workout, alternatives: [] },
-    },
-  ]);
+  // The database names the alternative it is made from, as applying names it.
+  const { context, calls } = planContext({
+    propose_coach_alternative: { data: { id: 42, from: { name: 'Gym', position: 1 } } },
+  });
   const result = await runTool(
     'propose_alternative',
     { workoutId: 3, name: ' Knee-safe ', currentName: 'Gym', swaps: [SWAP] },
@@ -641,11 +614,9 @@ Deno.test('proposes an alternative made from the one in use, which keeps its nam
   // The database leaves the version in use as it is named.
   assertEquals((calls[0]!.args as { current_name: string }).current_name, '');
 
-  // The database drops the name for the version in use, which has one.
   const { context: made } = planContext(
-    { propose_coach_alternative: { data: 43 } },
+    { propose_coach_alternative: { data: { id: 43, from: { name: 'Knee-safe', position: 2 } } } },
     LEGS_WITH_ALTERNATIVES,
-    [{ id: 43, change: { workoutId: 3, name: 'Hotel' }, before: STATE }],
   );
   const result = (await runTool(
     'propose_alternative',
@@ -661,10 +632,20 @@ Deno.test('proposes an alternative made from the one in use, which keeps its nam
 });
 
 Deno.test('proposes a switch back, with the exercises it brings back', async () => {
+  // The database gives what applying switches between, by the exercises' ids.
   const { context, calls } = planContext(
-    { propose_coach_alternative_switch: { data: 44 } },
+    {
+      propose_coach_alternative_switch: {
+        data: {
+          id: 44,
+          from: { name: 'Knee-safe', position: 2 },
+          to: { name: null, position: 1 },
+          back: ['Lying_Leg_Curls'],
+          empty: false,
+        },
+      },
+    },
     LEGS_WITH_ALTERNATIVES,
-    [{ id: 44, change: { workoutId: 3, alternativeId: 12 }, before: STATE }],
   );
   const result = await runTool(
     'propose_alternative_switch',
@@ -687,6 +668,7 @@ Deno.test('proposes a switch back, with the exercises it brings back', async () 
       from: { name: 'Knee-safe', position: 2 },
       to: { name: null, position: 1 },
       back: ['Leg curl'],
+      empty: false,
     },
   });
 
