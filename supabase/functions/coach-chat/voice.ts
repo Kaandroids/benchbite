@@ -67,7 +67,10 @@ export async function storeVoice(
 
 /** What the model is told to write down a voice message by. */
 const TRANSCRIBE =
-  'Write down exactly what the speaker says, in the language they speak, with punctuation. Give only the words said, nothing else. If nothing is said, give nothing.';
+  'Write down exactly what the speaker says, in the language they speak, with punctuation. Give only the words said, nothing else. If nothing is said, or there is only silence or noise, give nothing at all: no placeholder such as <noise>, and no guess.';
+
+/** A placeholder for what was not said, as "<noise>", "[silence]" or "(inaudible)". */
+const PLACEHOLDER = /^[<[(][^<>[\]()]*[>\])]\.?$/;
 
 /**
  * What was said in a voice message, as the model writes it down; nothing when it could not be, as
@@ -80,7 +83,9 @@ export async function transcribe(model: AiModel, voice: CheckedVoice): Promise<s
       messages: [{ role: 'user', parts: [audioPart(voice)] }],
       maxOutputTokens: 1024,
     });
-    return textOf(response.parts).trim() || undefined;
+    const said = textOf(response.parts).trim();
+    // A placeholder the model gives all the same, as "<noise>" or "[silence]", is nothing said.
+    return said && !PLACEHOLDER.test(said) ? said : undefined;
   } catch (error) {
     logError('Could not write down a voice message', error);
     return undefined;
