@@ -1,11 +1,19 @@
+import { toBase64 } from '@shared/base64_bytes';
 import { setAudioModeAsync } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
 
 import { fakeAudio } from '@/test/expo-audio';
 import { act, renderHook } from '@/test/render';
 
-import { discardVoices } from './chat-voice';
+import { m4a } from '../../supabase/functions/coach-chat/test-voice';
+
+import { discardVoices, readVoice } from './chat-voice';
 import { useVoiceRecorder, type VoiceEnd } from './use-voice-recorder';
 
+jest.mock('expo-haptics', () => ({
+  ...jest.requireActual<typeof import('expo-haptics')>('expo-haptics'),
+  impactAsync: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('./chat-voice', () => ({
   ...jest.requireActual('./chat-voice'),
   readVoice: jest.fn(() => Promise.resolve('dm9pY2U=')),
@@ -49,6 +57,41 @@ it('ends a hold let go before recording started once, as a tap', async () => {
 
   expect(fakeAudio.recorder.stop).toHaveBeenCalledTimes(1);
   expect(ends).toEqual([{ tooShort: true }]);
+  // Let go already, it never showed that it started.
+  expect(Haptics.impactAsync).not.toHaveBeenCalled();
+  expect(result.current.recording).toBe(false);
+});
+
+it('sends the length the file gives, as coach-chat keeps it', async () => {
+  jest.mocked(readVoice).mockResolvedValueOnce(toBase64(m4a(4550)));
+  fakeAudio.recorderState = { ...fakeAudio.recorderState, durationMillis: 4450 };
+  const { result, ends } = await recorder();
+
+  await act(async () => result.current.start());
+  await act(async () => result.current.finish(true));
+
+  expect(ends).toEqual([{ sent: expect.objectContaining({ durationMs: 4550 }) as unknown }]);
+});
+
+it('sends nothing that ends after the screen went', async () => {
+  let read: (data: string) => void = () => {};
+  jest.mocked(readVoice).mockReturnValueOnce(new Promise((resolve) => (read = resolve)));
+  fakeAudio.recorderState = { ...fakeAudio.recorderState, durationMillis: 4200 };
+  const { result, ends, unmount } = await recorder();
+
+  await act(async () => result.current.start());
+  let ending: Promise<void> = Promise.resolve();
+  await act(async () => {
+    ending = result.current.finish(true);
+  });
+  await act(async () => unmount());
+  await act(async () => {
+    read('dm9pY2U=');
+    await ending;
+  });
+
+  expect(ends).toEqual([]);
+  expect(discardVoices).toHaveBeenCalledWith(['file:///cache/voice.m4a']);
 });
 
 it('starts no other recording while the last one is still ending', async () => {

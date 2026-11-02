@@ -6,6 +6,8 @@ import {
 } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { PLAYBACK_MODE } from './chat-voice';
+
 /** How often the playing message's place is read, in ms, for its bars to follow. */
 const UPDATE_MS = 100;
 
@@ -31,7 +33,7 @@ export function useVoicePlayback() {
         return player.playing ? player.pause() : player.play();
       }
       // Out of the speaker, also in silent mode, as the user asked for it.
-      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      void setAudioModeAsync(PLAYBACK_MODE);
       player.replace({ uri: source });
       activeRef.current = messageId;
       setActive(messageId);

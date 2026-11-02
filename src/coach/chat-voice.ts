@@ -1,12 +1,15 @@
 // The voice messages of the chat with Bite (#298, ADRs 0072 and 0073): recorded on the device and
 // sent as base64 AAC, and read back from `coach-media` when a chat is opened again.
 import type { ChatVoicePart } from '@shared/coach/chat';
+import { fromBase64 } from '@shared/base64_bytes';
 import { MAX_VOICE_BYTES_PER_SECOND, VOICE_REFUSALS } from '@shared/coach/chat';
+import { mp4Length } from '@shared/mp4';
 import { AudioQuality, IOSOutputFormat, type RecordingOptions } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 
 import type { Json } from '@/lib/database.types';
 import { readItem, writeItem } from '@/lib/device-storage';
+import { minutesAndSeconds } from '@/lib/time';
 
 /** A voice message recorded, ready to send: its base64 data, its length, and its file. */
 export type VoiceDraft = { data: string; durationMs: number; uri: string };
@@ -58,9 +61,21 @@ if (BIT_RATE / 8 > MAX_VOICE_BYTES_PER_SECOND / 2) {
   throw new Error('Voice messages would be recorded heavier than coach-chat takes them');
 }
 
+/** How the app plays sound once nothing records: out of the speaker, also in silent mode. */
+export const PLAYBACK_MODE = { allowsRecording: false, playsInSilentMode: true } as const;
+
 /** A recording's data, to send, read from its file, which is kept to play it. */
 export async function readVoice(uri: string): Promise<string> {
   return new File(uri).base64();
+}
+
+/**
+ * A recording's length, as its file gives it, which coach-chat keeps too, so that a message shows
+ * the same length sent and kept; nothing for a file without one.
+ */
+export function fileLength(data: string): number | undefined {
+  const bytes = fromBase64(data);
+  return mp4Length(new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength));
 }
 
 /** Where the recordings not deleted yet are listed, on the device. */
@@ -131,6 +146,5 @@ export function messageVoice(content: Json): MessageVoice | undefined {
 
 /** A length as the chat shows it, m:ss. */
 export function voiceLength(ms: number): string {
-  const seconds = Math.max(0, Math.round(ms / 1000));
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return minutesAndSeconds(Math.max(0, Math.round(ms / 1000)));
 }

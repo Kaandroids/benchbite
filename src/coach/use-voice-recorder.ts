@@ -11,7 +11,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   discardVoices,
+  fileLength,
   listRecording,
+  PLAYBACK_MODE,
   readVoice,
   VOICE_RECORDING,
   type VoiceDraft,
@@ -44,9 +46,6 @@ export type VoiceEnd =
   | { tooShort: true }
   | { cancelled: true };
 
-/** Plays out of the speaker again, not the earpiece, once nothing records. */
-const RECORDING_DONE = { allowsRecording: false, playsInSilentMode: true } as const;
-
 /**
  * Records a voice message while the user holds the mic (#298, board 6): `start` asks for the
  * microphone the first time, without recording, as the question takes the hold; `finish` stops
@@ -65,6 +64,8 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
   const busy = useRef(false);
   /** The start of the recording not ended yet, which the one finish() that ends it takes. */
   const starting = useRef<Promise<boolean> | undefined>(undefined);
+  /** Whether the screen went, after which a recording ending is deleted, not sent. */
+  const gone = useRef(false);
 
   // Each reading of the loudness is a bar.
   const metering = state.metering;
@@ -91,7 +92,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       return true;
     } catch (error) {
       console.warn('Could not start recording a voice message', error);
-      void setAudioModeAsync(RECORDING_DONE);
+      void setAudioModeAsync(PLAYBACK_MODE);
       onEnd({ problem: { reason: 'voice_not_recorded' } });
       return false;
     }
@@ -109,8 +110,11 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
         starting.current = undefined;
         return false;
       }
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setRecording(true);
+      // Let go while it started: the finish() waiting ends it, without showing it started.
+      if (held.current) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setRecording(true);
+      }
       return true;
     });
   };
@@ -126,7 +130,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       console.warn('Could not stop recording a voice message', error);
       return null;
     } finally {
-      void setAudioModeAsync(RECORDING_DONE);
+      void setAudioModeAsync(PLAYBACK_MODE);
     }
   };
 
@@ -150,7 +154,11 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
       }
       if (!uri) return onEnd({ problem: { reason: 'voice_not_recorded' } });
       try {
-        onEnd({ sent: { data: await readVoice(uri), durationMs, uri } });
+        const data = await readVoice(uri);
+        // The screen went meanwhile: nothing is sent that it would not show.
+        if (gone.current) return discardVoices([uri]);
+        // As the file gives it, which coach-chat keeps too.
+        onEnd({ sent: { data, durationMs: fileLength(data) ?? durationMs, uri } });
       } catch (error) {
         console.warn('Could not read a voice message recorded', error);
         discardVoices([uri]);
@@ -172,6 +180,7 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
   // A recording the screen leaves, as when the composer gives way, is stopped and deleted.
   useEffect(
     () => () => {
+      gone.current = true;
       if (busy.current) void finish(false);
     },
     // finish() as it is when the screen goes.
