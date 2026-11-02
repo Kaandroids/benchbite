@@ -23,7 +23,8 @@ import { BiteAvatar } from './bite-avatar';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
-import { type NoteCard, shownNotes } from './notes';
+import { NoteAskCard } from './note-ask-card';
+import { type AskedNoteState, type NoteCard, shownNotes } from './notes';
 import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
@@ -57,7 +58,8 @@ type ChatMessagesProps = {
 export type CardStates = {
   proposals?: Map<number, ProposalState>;
   mealCards?: Map<number, MealCardState>;
-  loading: { proposals: boolean; mealCards: boolean };
+  notes?: Map<number, AskedNoteState>;
+  loading: { proposals: boolean; mealCards: boolean; notes: boolean };
 };
 
 /**
@@ -309,6 +311,27 @@ const BiteMessage = memo(function BiteMessage({
               onOpenNotebook={onOpenNotebook}
             />
           ))}
+          {message.notes
+            ?.filter((note) => note.action === 'asked')
+            .map((note) => {
+              const state = cards?.notes?.get(note.id);
+              // Said yes to, it is saved; declined, it is gone, and so is its card.
+              if (state === 'saved') {
+                return (
+                  <NoteLine
+                    key={`asked-${note.id}`}
+                    note={{ ...note, action: 'saved' }}
+                    onOpenNotebook={onOpenNotebook}
+                  />
+                );
+              }
+              if (state === undefined && !cards?.loading.notes) return null;
+              return (
+                <View key={`asked-${note.id}`} style={styles.proposal}>
+                  <NoteAskCard note={note} waiting={state === undefined} />
+                </View>
+              );
+            })}
         </View>
       </View>
       {/* An answer that stopped short says so, under it. */}
