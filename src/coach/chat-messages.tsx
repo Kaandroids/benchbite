@@ -49,6 +49,8 @@ type ChatMessagesProps = {
   cards: CardStates;
   /** The addresses of the chat's kept photos, by path, once read. */
   photoUrls?: Map<string, string>;
+  /** Opens Bite's notebook, from a note's line. */
+  onOpenNotebook?: () => void;
 };
 
 /** Where the cards of each kind stand, by id, once loaded, and whether that is loading. */
@@ -71,6 +73,7 @@ export function ChatMessages({
   onAskAgain,
   cards,
   photoUrls,
+  onOpenNotebook,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
   const [viewing, setViewing] = useState<string>();
@@ -106,6 +109,7 @@ export function ChatMessages({
               cards={cards}
               photoUrls={photoUrls}
               onOpenPhoto={setViewing}
+              onOpenNotebook={onOpenNotebook}
             />
           </Fragment>
         );
@@ -126,7 +130,7 @@ function hasCards(message: ChatMessage | undefined): boolean {
 
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'cards' | 'photoUrls'
+  'status' | 'tool' | 'onAskAgain' | 'cards' | 'photoUrls' | 'onOpenNotebook'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -146,6 +150,7 @@ function MessageRow({
   cards,
   photoUrls,
   onOpenPhoto,
+  onOpenNotebook,
 }: MessageRowProps) {
   if (message.role === 'user') {
     return (
@@ -168,6 +173,7 @@ function MessageRow({
       message={message}
       talking={last && status !== 'idle'}
       cards={hasCards(message) ? cards : undefined}
+      onOpenNotebook={message.notes?.length ? onOpenNotebook : undefined}
     />
   );
 }
@@ -235,11 +241,14 @@ const BiteMessage = memo(function BiteMessage({
   message,
   talking,
   cards,
+  onOpenNotebook,
 }: {
   message: ChatMessage;
   talking: boolean;
   /** Where its cards stand, for a message with cards. */
   cards?: CardStates;
+  /** Opens the notebook, for a message with notes. */
+  onOpenNotebook?: () => void;
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -294,7 +303,11 @@ const BiteMessage = memo(function BiteMessage({
             );
           })}
           {shownNotes(message.notes).map((note) => (
-            <NoteLine key={`note-${note.id}-${note.action}`} note={note} />
+            <NoteLine
+              key={`note-${note.id}-${note.action}`}
+              note={note}
+              onOpenNotebook={onOpenNotebook}
+            />
           ))}
         </View>
       </View>
@@ -504,8 +517,8 @@ const styles = StyleSheet.create({
   },
 });
 
-/** A note Bite kept, as a line under its answer (board 4). */
-function NoteLine({ note }: { note: NoteCard }) {
+/** A note Bite kept, as a line under its answer, with a way to the notebook (board 4). */
+function NoteLine({ note, onOpenNotebook }: { note: NoteCard; onOpenNotebook?: () => void }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   return (
@@ -516,6 +529,19 @@ function NoteLine({ note }: { note: NoteCard }) {
           text: note.text,
         })}
       </Text>
+      {onOpenNotebook ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('bite.notes.viewLabel')}
+          onPress={onOpenNotebook}
+          hitSlop={8}
+          style={{ paddingHorizontal: spacing.xs }}
+        >
+          <Text variant="captionStrong" color="primaryText">
+            {t('bite.notes.view')}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

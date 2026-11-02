@@ -10,7 +10,12 @@ import { isRecent, type ThreadSummary, useLastThread } from './threads';
  * last chat to continue (`offer`, its id). `from` is `chats` for a chat opened over the chats,
  * which it goes back to.
  */
-export type BiteParams = { thread?: string; fresh?: string; offer?: string; from?: 'chats' };
+export type BiteParams = {
+  thread?: string;
+  fresh?: string;
+  offer?: string;
+  from?: 'chats' | 'notebook';
+};
 
 /** The params of `/bite/chats`: `current`, the id of the saved chat under them, if any. */
 export type ChatsParams = { current?: string };
@@ -47,6 +52,33 @@ export function openChat(thread?: number, current?: string) {
   });
 }
 
+/** The params of `/bite/notebook`: `current`, the id of the saved chat under it, if any. */
+export type NotebookParams = { current?: string };
+
+/** Opens Bite's notebook over the chat, naming its thread, `current`, if it has one. */
+export function openNotebook(current?: number) {
+  router.push({
+    pathname: '/bite/notebook',
+    params: current === undefined ? {} : { current: String(current) },
+  });
+}
+
+/**
+ * Opens the chat a note came from over the notebook, which it goes back to. The chat under the
+ * notebook, `current`, is gone back to rather than opened again. A chat opened from the notebook
+ * offers no way to it again, so that chats and notebooks never pile up, nor a chat open twice.
+ */
+export function openNoteChat(thread: number, current?: string) {
+  if (String(thread) === current) {
+    router.back();
+    return;
+  }
+  router.push({
+    pathname: '/bite',
+    params: { thread: String(thread), fresh: '', offer: '', from: 'notebook' },
+  });
+}
+
 /** Goes on in a saved thread from Bite's own screen, as from its Continue card. */
 export function continueChat(thread: number) {
   router.setParams({ thread: String(thread), fresh: '', offer: '' });
@@ -67,6 +99,8 @@ export function useOpenedChat(params: BiteParams): {
   offer?: ThreadSummary;
   /** Opened over the chats, which it goes back to, as on board 18. */
   fromChats: boolean;
+  /** Opened over the notebook, from a note, which it goes back to. */
+  fromNotebook: boolean;
 } {
   const asked = chatOf(params);
   const last = useLastThread(asked.latest);
@@ -87,6 +121,7 @@ export function useOpenedChat(params: BiteParams): {
     offer:
       params.offer && lastThread && String(lastThread.id) === params.offer ? lastThread : undefined,
     fromChats: params.from === 'chats',
+    fromNotebook: params.from === 'notebook',
   };
 }
 

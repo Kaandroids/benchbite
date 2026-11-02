@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -20,7 +20,13 @@ import { mealCardIds, useMealCardStates } from './meal-cards';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
 import { firstPhotos, useThreadMessages, useThreadText } from './threads';
-import { type BiteParams, continueChat, openChats, useOpenedChat } from './bite-route';
+import {
+  type BiteParams,
+  continueChat,
+  openChats,
+  openNotebook,
+  useOpenedChat,
+} from './bite-route';
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
@@ -32,14 +38,14 @@ import { useFollowEnd } from './use-follow-end';
  */
 export function BiteScreen() {
   const opened = useOpenedChat(useLocalSearchParams<BiteParams>());
-  const { fromChats } = opened;
+  const { fromChats, fromNotebook } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   const threadText = useThreadText();
   // A saved chat opens on its messages as they are now, never on ones kept from before.
   if (opened.waiting || (threadId !== undefined && !saved.isFetchedAfterMount)) {
     return (
-      <Screen onBack={() => router.back()} closes={!fromChats}>
+      <Screen onBack={() => router.back()} closes={!fromChats && !fromNotebook}>
         <LoadState queries={[saved]} />
       </Screen>
     );
@@ -50,6 +56,7 @@ export function BiteScreen() {
     <Chat
       key={key}
       fromChats={fromChats}
+      fromNotebook={fromNotebook}
       title={
         threadText.title({
           title: saved.data.title,
@@ -62,6 +69,7 @@ export function BiteScreen() {
     <Chat
       key={threadId === undefined ? key : `gone-${threadId}`}
       fromChats={fromChats}
+      fromNotebook={fromNotebook}
       continueWith={
         opened.offer && {
           thread: opened.offer,
@@ -76,6 +84,11 @@ export function BiteScreen() {
 type ChatProps = {
   /** Whether the chat was opened over the chats, which it goes back to. */
   fromChats: boolean;
+  /**
+   * Whether the chat was opened over the notebook, from a note, which it goes back to; it then
+   * offers no way to the notebook, so that chats and notebooks do not pile up.
+   */
+  fromNotebook: boolean;
   /** The name of a saved thread the chat goes on in. */
   title?: string;
   start?: Parameters<typeof useChat>[0];
@@ -83,7 +96,7 @@ type ChatProps = {
   continueWith?: ContinueWith;
 };
 
-function Chat({ fromChats, title, start, continueWith }: ChatProps) {
+function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   // A message whose photos were refused comes back to the composer, to change. The composer
@@ -125,20 +138,32 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
   const busy = chat.status !== 'idle';
+  // The same each render, so that the messages with notes do not render again.
+  const { thread } = chat;
+  const openNotebookHere = useCallback(() => openNotebook(thread()), [thread]);
 
   return (
     <Screen
       onBack={() => router.back()}
-      closes={!fromChats}
+      closes={!fromChats && !fromNotebook}
       title={t('bite.title')}
       subtitle={title}
       action={
-        <TopBarButton
-          icon="history"
-          label={t('bite.chats.title')}
-          // The chats are under a chat opened from them.
-          onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
-        />
+        <View style={styles.actions}>
+          <TopBarButton
+            icon="history"
+            label={t('bite.chats.title')}
+            // The chats are under a chat opened from them.
+            onPress={() => (fromChats ? router.back() : openChats(chat.thread()))}
+          />
+          {fromNotebook ? null : (
+            <TopBarButton
+              icon="notebook"
+              label={t('bite.notebook.title')}
+              onPress={openNotebookHere}
+            />
+          )}
+        </View>
       }
       scrolls={false}
     >
@@ -169,6 +194,7 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
+              onOpenNotebook={fromNotebook ? undefined : openNotebookHere}
             />
           )}
           {chat.failure ? (
@@ -204,6 +230,9 @@ function Chat({ fromChats, title, start, continueWith }: ChatProps) {
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+  },
   flex: {
     flex: 1,
   },

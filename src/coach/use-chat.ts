@@ -1,6 +1,6 @@
 import { PHOTO_REFUSALS } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ACCESS_KEY, type Refusal } from '@/ai/access';
@@ -14,6 +14,7 @@ import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
 import type { MealCard } from './meal-cards';
 import type { NoteCard } from './notes';
 import { isShownProposal, type ShownProposal } from './proposals';
+import { NOTES_KEY } from './notebook';
 import { THREADS_KEY } from './threads';
 
 /** How soon after a stop a message refused as one at a time is sent again, and when. */
@@ -103,6 +104,8 @@ export function useChat(
   const [failure, setFailure] = useState<Failure>();
   const [refusal, setRefusal] = useState<Refusal>();
   const threadId = useRef<number | undefined>(start?.threadId);
+  // The same each render, for callbacks that depend on it.
+  const thread = useCallback(() => threadId.current, []);
   const abort = useRef<AbortController | undefined>(undefined);
   /** When the user last stopped an answer. */
   const stoppedAt = useRef(0);
@@ -162,6 +165,8 @@ export function useChat(
       { id: biteId, role: 'bite', text: '', createdAt: now },
     ]);
     let ending = beginning(threadId.current);
+    // Whether Bite kept a note in its answer, which the notebook then loads again.
+    let keptNote = false;
     setStatus('thinking');
     setFailure(undefined);
     const controller = new AbortController();
@@ -197,6 +202,7 @@ export function useChat(
         }
         case 'note': {
           const { note } = event;
+          keptNote = true;
           return updateBite(biteId, (m) => ({ ...m, notes: [...(m.notes ?? []), note] }));
         }
       }
@@ -247,6 +253,7 @@ export function useChat(
       // What the message cost counts toward the month's budget, and the thread moves up the history.
       void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
       void queryClient.invalidateQueries({ queryKey: THREADS_KEY });
+      if (keptNote) void queryClient.invalidateQueries({ queryKey: NOTES_KEY });
     }
   };
 
@@ -286,7 +293,7 @@ export function useChat(
   return {
     messages,
     /** The thread the chat goes on in, once it has one. */
-    thread: () => threadId.current,
+    thread,
     status,
     tool,
     failure,
