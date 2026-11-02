@@ -19,6 +19,18 @@ const TOOLS: { icon: IconName; title: string; detail: string; href: Href }[] = [
     detail: 'Every component, the splash screen and resetting the onboarding',
     href: '/dev/components',
   },
+  {
+    icon: 'calendar',
+    title: 'Offer: trial ends soon',
+    detail: 'The reminder before the free week ends, with sample prices',
+    href: '/dev/trial-ending',
+  },
+  {
+    icon: 'star',
+    title: 'Offer: special offer',
+    detail: 'Premium for less, with a countdown and sample prices',
+    href: '/dev/special-offer',
+  },
 ];
 
 /** Everything for development in one place, opened from beside the settings; only in development. */
