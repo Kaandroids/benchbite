@@ -57,7 +57,7 @@ import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
 import { noteOf, noteText } from './notes.ts';
-import { runTool, TOOL_DEFINITIONS } from './tools.ts';
+import { CARD_TOOLS, runTool, TOOL_DEFINITIONS } from './tools.ts';
 import { alternativeName, workoutName } from './workout.ts';
 
 export type ChatContext = {
@@ -454,22 +454,27 @@ async function answer(
       if (stop.stopped) break;
       const said = textOf(spoken);
 
-      // What this answer made so far: a card, which Bite is held to speak of only when made, and
-      // anything the chat shows, notes too, which it may speak of once its lookups run out.
-      const madeCard = turn.trace.some(
-        (part) => part.type === 'toolResult' && isCardResult(part.result),
-      );
       if (!calls.length) {
         // The model may write of the card it means to make and end without making it. Told so
         // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
         // tool may be called, it says it could not (#402). While it may, not after a card earlier
         // in the thread, which the answer may speak of: told then, the model made it again or
-        // said its answer twice. Once it may not, it was told it can make none, and a card it
-        // speaks of is most likely the one it meant to make.
+        // said its answer twice. Once it may not, after one only when a card this answer tried
+        // was refused, as the card it speaks of is then most likely that one.
+        const made = turn.trace.some(
+          (part) => part.type === 'toolResult' && isCardResult(part.result),
+        );
+        const refusedCard = turn.trace.some(
+          (part) =>
+            part.type === 'toolResult' &&
+            CARD_TOOLS.includes(part.name) &&
+            isObject(part.result) &&
+            'error' in part.result,
+        );
         const noCard =
           !toldNoCard &&
-          (!earlierCard || answerOnly) &&
-          !madeCard &&
+          (!earlierCard || (answerOnly && refusedCard)) &&
+          !made &&
           mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
@@ -515,8 +520,8 @@ async function answer(
       const words = [
         ...(said.trim() ? [SAID_ALREADY] : []),
         ...(asked ? [NOTE_ASKED] : []),
-        // A card or note already made is spoken of; only without one is Bite told it can make
-        // none.
+        // A card or note already made, which the chat shows, is spoken of; only without one is
+        // Bite told it can make none.
         ...(lastLookup ? [turn.trace.some(isShown) ? NO_LOOKUPS_LEFT : NO_LOOKUPS_NOR_CARDS] : []),
       ];
       messages.push(

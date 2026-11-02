@@ -1186,43 +1186,61 @@ Deno.test('leaves a card Bite speaks of alone when the thread has an earlier one
   assertEquals(model.requests.length, 1);
 });
 
-Deno.test(
-  'tells Bite it made no card once its lookups ran out, though the thread has one',
-  async () => {
-    const search = (id: string) => [
-      { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
-    ];
-    const model = new FakeModel(
-      ...['c1', 'c2', 'c3', 'c4', 'c5'].map(search),
-      [{ type: 'text', text: "[[happy]] I've proposed a new plan." }],
-      [{ type: 'text', text: 'Sorry, I could not make it this time.' }],
-    );
-    const proposal = { kind: 'targets', id: 42, from: null, to: TARGETS };
-    const { ctx } = context(
-      model,
-      {},
-      {
-        coach_threads: [{ id: 7 }],
-        coach_messages: [
-          {
-            role: 'bite',
-            expression: 'neutral',
-            content: [
-              { type: 'toolCall', name: 'propose_targets_change', args: TARGETS },
-              { type: 'toolResult', name: 'propose_targets_change', result: { proposal } },
-            ],
-          },
-        ],
-      },
-    );
+/** A thread whose earlier answer made a card. */
+const WITH_CARD = {
+  coach_threads: [{ id: 7 }],
+  coach_messages: [
+    {
+      role: 'bite',
+      expression: 'neutral',
+      content: [
+        { type: 'toolCall', name: 'propose_targets_change', args: TARGETS },
+        {
+          type: 'toolResult',
+          name: 'propose_targets_change',
+          result: { proposal: { kind: 'targets', id: 42, from: null, to: TARGETS } },
+        },
+      ],
+    },
+  ],
+};
 
-    await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+Deno.test('tells Bite it made no card once its lookups ran out and one was refused', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
+  ];
+  // A proposal the tool refuses, its arguments being incomplete.
+  const refused = [
+    { type: 'toolCall' as const, id: 'c5', name: 'propose_workout_change', args: {} },
+  ];
+  const model = new FakeModel(
+    ...['c1', 'c2', 'c3', 'c4'].map(search),
+    refused,
+    [{ type: 'text', text: "[[happy]] I've proposed a new plan." }],
+    [{ type: 'text', text: 'Sorry, I could not make it this time.' }],
+  );
+  const { ctx } = context(model, {}, WITH_CARD);
 
-    assertEquals(model.requests.at(-1)?.messages.at(-1)?.parts, [
-      { type: 'text', text: CARD_NOT_MADE },
-    ]);
-  },
-);
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests.at(-1)?.messages.at(-1)?.parts, [
+    { type: 'text', text: CARD_NOT_MADE },
+  ]);
+});
+
+Deno.test('leaves an earlier card Bite speaks of alone once its lookups ran out', async () => {
+  const search = (id: string) => [
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
+  ];
+  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5'].map(search), [
+    { type: 'text', text: '[[happy]] Apply the card above first.' },
+  ]);
+  const { ctx } = context(model, {}, WITH_CARD);
+
+  await events(await handleChatRequest(ask({ ...MESSAGE, threadId: 7 }), ctx));
+
+  assertEquals(model.requests.length, 6);
+});
 
 Deno.test('tells Bite what it proposed earlier, though it said nothing with it', async () => {
   const model = new FakeModel([{ type: 'text', text: '[[happy]] Sure.' }]);
