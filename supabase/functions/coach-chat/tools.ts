@@ -1114,15 +1114,29 @@ async function searchExercises(supabase: Client, language: Language, query: stri
   const ids = [
     ...new Set([...read(own).map((row) => row.id), ...ranked.map((row) => row.id)]),
   ].slice(0, SEARCH_LIMIT);
-  // With the target each takes (target_kind()), so that a proposal gives the right one.
-  const [names, kinds] = await Promise.all([
-    exerciseNames(supabase, language, ids),
-    supabase.from('exercises').select('id, target_kind').in('id', ids),
-  ]);
-  const targets = new Map(read(kinds).map((row) => [row.id, row.target_kind]));
+  if (!ids.length) return [];
+  // Named as exerciseNames() names them, with the target each takes (target_kind()), so that a
+  // proposal gives the right one.
+  const found = new Map(
+    read(
+      await supabase
+        .from('exercises')
+        .select('id, name, target_kind, exercise_translations (name)')
+        .in('id', ids)
+        .eq('exercise_translations.language', language),
+    ).map((row) => [row.id, row]),
+  );
   return ids.flatMap((id) => {
-    const name = names.get(id);
-    return name ? [{ id, name, target: targets.get(id) ?? undefined }] : [];
+    const row = found.get(id);
+    return row
+      ? [
+          {
+            id,
+            name: row.exercise_translations[0]?.name ?? row.name,
+            target: row.target_kind ?? undefined,
+          },
+        ]
+      : [];
   });
 }
 

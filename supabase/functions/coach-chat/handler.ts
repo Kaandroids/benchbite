@@ -454,6 +454,11 @@ async function answer(
       if (stop.stopped) break;
       const said = textOf(spoken);
 
+      // What this answer made so far: a card, which Bite is held to speak of only when made, and
+      // anything the chat shows, notes too, which it may speak of once its lookups run out.
+      const madeCard = turn.trace.some(
+        (part) => part.type === 'toolResult' && isCardResult(part.result),
+      );
       if (!calls.length) {
         // The model may write of the card it means to make and end without making it. Told so
         // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
@@ -461,10 +466,7 @@ async function answer(
         // thread, which the answer may speak of: told then, the model made it again or said its
         // answer twice.
         const noCard =
-          !toldNoCard &&
-          !earlierCard &&
-          !turn.trace.some((part) => part.type === 'toolResult' && isCardResult(part.result)) &&
-          mentionsCard(said, request.language);
+          !toldNoCard && !earlierCard && !madeCard && mentionsCard(said, request.language);
         if (!noCard) break;
         toldNoCard = true;
         messages.push(
@@ -509,7 +511,8 @@ async function answer(
       const words = [
         ...(said.trim() ? [SAID_ALREADY] : []),
         ...(asked ? [NOTE_ASKED] : []),
-        // A card already made is spoken of; only without one is Bite told it can make none.
+        // A card or note already made is spoken of; only without one is Bite told it can make
+        // none.
         ...(lastLookup ? [turn.trace.some(isShown) ? NO_LOOKUPS_LEFT : NO_LOOKUPS_NOR_CARDS] : []),
       ];
       messages.push(

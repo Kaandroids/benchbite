@@ -210,11 +210,16 @@ type Row = Record<string, unknown>;
  * names, a few translated, and the user's own, one archived. Every query is filtered and cut to
  * its limit when it is read, as PostgREST does.
  */
-function searchContext(language: 'en' | 'de', more: Row[] = []) {
-  const library = (id: string, name: string, de?: string) => ({
+function searchContext(
+  language: 'en' | 'de',
+  more: Row[] = [],
+  /** More of the library, as `library()` takes them. */
+  extra: [string, string, string?, string?][] = [],
+) {
+  const library = (id: string, name: string, de?: string, target_kind = 'reps') => ({
     id,
     name,
-    target_kind: 'reps',
+    target_kind,
     owner_id: null,
     archived_at: null,
     exercise_translations: de ? [{ language: 'de', name: de }] : [],
@@ -231,6 +236,7 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
     library('Side_Lateral_Raise', 'Side Lateral Raise', 'Seitheben'),
     library('Barbell_Squat', 'Barbell Squat', 'Kniebeuge'),
     ...more,
+    ...extra.map((args) => library(...args)),
     own('Landmine_Press', 'Landmine Press'),
     own('Old_Raise', 'Old Raise', '2026-10-01'),
   ];
@@ -300,18 +306,10 @@ const search = async (query: string, context: ToolContext) => {
 };
 
 Deno.test('names the target each exercise found takes', async () => {
-  const plank = {
-    id: 'Plank',
-    name: 'Plank',
-    target_kind: 'seconds',
-    owner_id: null,
-    archived_at: null,
-    exercise_translations: [],
-  };
   const found = (await runTool(
     'search_exercises',
     { queries: ['squat', 'plank'] },
-    searchContext('en', [plank]),
+    searchContext('en', [], [['Plank', 'Plank', undefined, 'seconds']]),
   )) as { exercises: unknown }[];
   assertEquals(
     found.map((result) => result.exercises),
