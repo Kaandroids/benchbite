@@ -33,7 +33,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0015](0015-server-data-with-tanstack-query.md)                       | Load and cache the user's data with TanStack Query                                      | Accepted                                   |
 | [0016](0016-workouts-instead-of-a-weekly-plan.md)                     | Store workouts on weekdays instead of one weekly plan                                   | Accepted                                   |
 | [0017](0017-save-workouts-through-a-function.md)                      | Save workouts through a function that checks their targets                              | Accepted                                   |
-| [0018](0018-per-user-limits-come-from-the-database.md)                | Per-user limits come from the database                                                  | Accepted                                   |
+| [0018](0018-per-user-limits-come-from-the-database.md)                | Per-user limits come from the database                                                  | Accepted, amended by ADR-0078              |
 | [0019](0019-plans-repeat-workouts.md)                                 | Plans repeat a workout on every day of its kind                                         | Accepted                                   |
 | [0020](0020-log-finished-workouts.md)                                 | Log a workout once it is finished                                                       | Accepted                                   |
 | [0021](0021-estimate-calories-when-a-workout-is-saved.md)             | Estimate the calories of a workout when it is saved                                     | Accepted                                   |
@@ -66,7 +66,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0048](0048-our-own-tab-bar-with-bite.md)                             | Draw our own tab bar, with Bite in its middle                                           | Accepted                                   |
 | [0049](0049-gemini-behind-our-own-model-interface.md)                 | Gemini behind our own language model interface                                          | Accepted, amended by ADR-0051              |
 | [0050](0050-bites-conversations-in-threads.md)                        | Bite's conversations in threads, written only by the chat function                      | Accepted, amended by ADR-0062              |
-| [0051](0051-ai-usage-and-a-monthly-limit.md)                          | What AI costs, and a limit per user and month                                           | Accepted                                   |
+| [0051](0051-ai-usage-and-a-monthly-limit.md)                          | What AI costs, and a limit per user and month                                           | Accepted, amended by ADR-0078              |
 | [0052](0052-the-coach-chat-function.md)                               | Bite answers in a stream of events, from a prompt, a snapshot and read tools            | Accepted                                   |
 | [0053](0053-bite-errs-on-the-safe-side.md)                            | Bite errs on the safe side when the snapshot is missing or unsafe                       | Accepted                                   |
 | [0054](0054-a-pace-the-user-can-keep.md)                              | A pace the user can keep, and the date it really gives                                  | Accepted                                   |
@@ -76,7 +76,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0058](0058-bite-proposes-the-user-applies.md)                        | Bite proposes, the user applies                                                         | Accepted                                   |
 | [0059](0059-estimating-a-meal-from-photos.md)                         | Estimate a meal from photos in one request, with the values from the food library       | Accepted, amended by ADR-0062              |
 | [0060](0060-logging-an-estimated-meal.md)                             | Log an estimated meal in one step, saving foods the library lacks as the user's own     | Accepted                                   |
-| [0061](0061-alternatives-of-a-workout.md)                             | Alternatives of a workout: the one in use is the workout                                | Accepted, amended by ADR-0064              |
+| [0061](0061-alternatives-of-a-workout.md)                             | Alternatives of a workout: the one in use is the workout                                | Accepted, amended by ADR-0064 and ADR-0078 |
 | [0062](0062-photos-in-bites-chat.md)                                  | Photos in Bite's chat: a normal turn, kept in coach-media, meals through a card         | Accepted, amended by ADR-0065 and ADR-0066 |
 | [0063](0063-purge-chat-photos-from-a-queue.md)                        | Remove a deleted chat's photos from a queue, on a schedule                              | Accepted                                   |
 | [0064](0064-empty-alternatives-and-copies.md)                         | A new alternative starts empty; any alternative can be duplicated                       | Accepted                                   |
