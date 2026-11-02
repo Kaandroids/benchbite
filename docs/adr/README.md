@@ -89,3 +89,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0071](0071-bites-notebook.md)                                        | Bite keeps a notebook of the user, in its own table, read in every answer               | Accepted                                   |
 | [0072](0072-voice-messages-to-bite.md)                                | Voice messages to Bite are kept as photos are, with what was said as their text         | Accepted                                   |
 | [0074](0074-keep-fields-above-the-keyboard.md)                        | Keep fields above the keyboard with padding measured in the window                      | Accepted                                   |
+| [0075](0075-bite-proposes-alternatives.md)                            | Bite proposes alternatives for temporary changes, and edits several workouts at once    | Accepted                                   |
