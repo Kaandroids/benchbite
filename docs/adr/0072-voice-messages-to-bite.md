@@ -13,17 +13,23 @@ records, and the sent message with a play button, its length and what was said.
 ## Decision
 
 - **A voice message is a message of its own.** It goes to `coach-chat` alone, without text or
-  photos, as AAC in an MP4 container, up to 60 seconds and 1 MB, with its length as recorded. The
-  function refuses one that is too large (`voice_too_large`) or not MP4 (`voice_not_m4a`) before
-  anything is asked or kept.
+  photos, as AAC in an MP4 container, up to 60 seconds and 1 MB. The function reads its length
+  from the file's movie header, not from the app, and refuses one that is too large
+  (`voice_too_large`), too long (`voice_too_long`) or not MP4 (`voice_not_m4a`) before anything is
+  asked or kept. A body larger than any message may be is refused as `too_large`, before what it
+  holds is read.
 - **Bite hears it in its own turn,** as an audio part before the message, which says the message
   is the voice. Later turns read what was said instead, as photos are read as "(Sent a photo.)"
   (ADR 0062).
 - **What was said is written down beside the answer,** by a request of its own feature,
   `coach_voice`, so that it runs at once with the answer (one call of a feature at a time,
-  ADR 0051), and is counted toward the same budget. The app is told with a `transcript` event,
-  and the message keeps it as its text part, so the chats' list, their search and Bite's history
-  read it as any message. A voice message that could not be written down is kept without text.
+  ADR 0051), and is counted toward the same budget. It starts once the answer has, so that a
+  message the budget refuses an answer to costs nothing more, and the worker is kept alive for it
+  (ADR 0057). The app is told with a `transcript` event, and the message keeps it as its text
+  part, so the chats' list, their search and Bite's history read it as any message.
+- **A voice message that could not be written down is kept without text.** Bite reads that it
+  could not be, and the chats' list says it is a voice message (`last_voice`, `first_voice`), as
+  it does photos.
 - **The audio is kept as photos are:** in the private `coach-media` bucket, in its thread's
   folder, as `<user id>/<thread id>/<uuid>.m4a`, written only by the function with the service
   role and read by its owner through signed URLs. Deleting the chat or the account queues the
