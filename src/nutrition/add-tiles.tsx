@@ -1,11 +1,8 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
-import { RaisedPressable } from '@/components/ui/raised-pressable';
-import { Text } from '@/components/ui/text';
-import { useTheme, type ColorTokens } from '@/theme';
+import { ActionCard } from '@/components/ui/action-card';
+import { useTheme } from '@/theme';
 
 type AddTilesProps = {
   /** Opens the sheet that logs a meal from photos. */
@@ -21,83 +18,28 @@ export function AddTiles({ onPhoto }: AddTilesProps) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.row, { gap: spacing.md }]}>
-      <AddTile
-        icon={<Icon name="camera" size={22} color="primary" />}
-        iconBackground="iconBackground"
-        title={t('nutrition.search.photo')}
-        hint={t('nutrition.search.photoHint')}
-        label={t('nutrition.photo.camera')}
-        onPress={onPhoto}
-      />
-      <AddTile
-        icon={<Icon name="barcode" size={22} color="text" />}
-        iconBackground="track"
-        title={t('nutrition.search.barcode')}
-        hint={t('nutrition.search.barcodeHint')}
-        label={t('nutrition.search.barcodeLabel')}
-      />
+      <View style={styles.tile}>
+        <ActionCard
+          icon="camera"
+          title={t('nutrition.search.photo')}
+          hint={t('nutrition.search.photoHint')}
+          label={t('nutrition.photo.camera')}
+          onPress={onPhoto}
+          singleLine
+        />
+      </View>
+      <View style={styles.tile}>
+        <ActionCard
+          icon="barcode"
+          iconColor="text"
+          iconBackground="track"
+          title={t('nutrition.search.barcode')}
+          hint={t('nutrition.search.barcodeHint')}
+          label={t('nutrition.search.barcodeLabel')}
+          singleLine
+        />
+      </View>
     </View>
-  );
-}
-
-type AddTileProps = {
-  icon: ReactNode;
-  iconBackground: keyof ColorTokens;
-  title: string;
-  hint: string;
-  /** What the tile does, for screen readers; the hint is read after it. */
-  label: string;
-  /** Without it the tile is disabled. */
-  onPress?: () => void;
-};
-
-function AddTile({ icon, iconBackground, title, hint, label, onPress }: AddTileProps) {
-  const { colors, radii, spacing } = useTheme();
-  const disabled = !onPress;
-  return (
-    <RaisedPressable
-      style={styles.tile}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      haptic={disabled ? undefined : 'selection'}
-      ledgeColor={colors.border}
-      borderRadius={radii.lg}
-      faceStyle={[
-        styles.face,
-        {
-          gap: spacing.md,
-          padding: spacing.md,
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.iconTile,
-          { borderRadius: radii.md, backgroundColor: colors[iconBackground] },
-        ]}
-      >
-        {icon}
-      </View>
-      <View style={styles.text}>
-        <Text
-          variant="bodyStrong"
-          color={disabled ? 'textMuted' : 'text'}
-          numberOfLines={1}
-          style={styles.title}
-        >
-          {title}
-        </Text>
-        <Text variant="caption" color="textMuted" numberOfLines={1} style={styles.hint}>
-          {hint}
-        </Text>
-      </View>
-    </RaisedPressable>
   );
 }
 
@@ -107,27 +49,5 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
-  },
-  face: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-  },
-  iconTile: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  hint: {
-    fontSize: 12,
-    lineHeight: 16,
   },
 });
