@@ -11,7 +11,13 @@ import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import { localTime, type MessagePhoto, type PhotosProblem, photosToSend } from './chat-photos';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
-import { discardVoices, type MessageVoice, type VoiceDraft, type VoiceProblem } from './chat-voice';
+import {
+  discardVoices,
+  type MessageVoice,
+  sweepVoices,
+  type VoiceDraft,
+  type VoiceProblem,
+} from './chat-voice';
 import type { MealCard } from './meal-cards';
 import type { NoteCard } from './notes';
 import { isShownProposal, type ShownProposal } from './proposals';
@@ -132,14 +138,16 @@ export function useChat(
   /** The voice messages recorded in this chat, whose files go when it closes. */
   const recorded = useRef<string[]>([]);
 
-  // A message still on its way when the screen closes is stopped.
-  useEffect(
-    () => () => {
+  // Recordings an earlier run left go as Bite opens; a message still on its way when the screen
+  // closes is stopped, and the recordings of this chat go.
+  useEffect(() => {
+    sweepVoices();
+    const recordings = recorded.current;
+    return () => {
       abort.current?.abort();
-      discardVoices(recorded.current);
-    },
-    [],
-  );
+      discardVoices(recordings);
+    };
+  }, []);
 
   const updateMessage = (id: string, update: (message: ChatMessage) => ChatMessage) =>
     setMessages((all) => all.map((message) => (message.id === id ? update(message) : message)));
