@@ -118,6 +118,13 @@ it('applies a change and folds into a line with Undo, which undoes it', async ()
   expect(screen.queryByRole('button')).not.toBeOnTheScreen();
 });
 
+it('says a proposal a newer one replaced, with nothing to decide', async () => {
+  await render(<ProposalCard card={WORKOUT} state={{ ...pending, status: 'replaced' }} />);
+
+  expect(screen.getByText('Replaced by the newer proposal below')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeOnTheScreen();
+});
+
 it('keeps things as they are', async () => {
   decides('kept');
   await render(<ProposalCard card={WORKOUT} state={pending} />);
