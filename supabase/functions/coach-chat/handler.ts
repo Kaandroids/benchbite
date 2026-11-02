@@ -366,7 +366,7 @@ async function answer(
 
   // Nothing is written for a user who may not ask Bite now.
   try {
-    await checkAiAccess(context.supabase);
+    await checkAiAccess(context.supabase, 'coach_chat');
   } catch (error) {
     if (error instanceof AiRefusedError) return send({ event: 'error', reason: error.reason });
     logError('Could not read the access to Bite', error);

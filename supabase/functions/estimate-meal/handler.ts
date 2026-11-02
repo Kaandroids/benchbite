@@ -7,7 +7,7 @@ import { aiModel, AiRefusedError } from '../_shared/ai_usage.ts';
 import { Base64Data } from '../_shared/base64.ts';
 import { Constants } from '../_shared/database.types.ts';
 import { parseJson } from '../_shared/json.ts';
-import { type LanguageModel, type Part, textOf } from '../_shared/llm/mod.ts';
+import { type LanguageModel, type ModelResponse, textOf } from '../_shared/llm/mod.ts';
 import {
   type EstimateReason,
   type EstimateRequest as Body,
@@ -98,47 +98,65 @@ export async function handleEstimateRequest(
   }
 
   // One request, without history, snapshot or tools, as the estimate needs none (ADR 0059).
-  let parts: Part[];
+  let read: Read | undefined;
   try {
     const bite = aiModel(
       { supabase: context.supabase, admin: context.admin, model: context.model },
       'meal_photo',
     );
-    const response = await bite.generate({
-      system: SYSTEM,
-      messages: [
-        { role: 'user', parts: requestParts({ ...request, note: request.note || undefined }) },
-      ],
-      responseSchema: RESPONSE_SCHEMA,
-    });
-    if (response.finish === 'blocked') return refused('blocked');
-    if (response.finish === 'length') {
-      // A cut answer is not whole JSON; it is said apart from a wrong shape, as the limit may need
-      // raising (ai_feature_limits).
-      console.error('The estimate was cut at the token limit', { usage: response.usage });
-      return refused('unavailable');
-    }
-    parts = response.parts;
+    const response = await bite.generate(
+      {
+        system: SYSTEM,
+        messages: [
+          { role: 'user', parts: requestParts({ ...request, note: request.note || undefined }) },
+        ],
+        responseSchema: RESPONSE_SCHEMA,
+      },
+      // An answer read as an estimate counts toward a free user's week, a photo of no food too;
+      // one refused, cut or in another shape does not, nor one the user cancelled while the model
+      // ran (ADR 0078). A cancel after, while the foods are matched, comes too late to tell.
+      (answer) => {
+        read = readAnswer(answer);
+        return 'estimate' in read && !req.signal.aborted;
+      },
+    );
+    read ??= readAnswer(response);
   } catch (error) {
     if (error instanceof AiRefusedError) return refused(error.reason);
     logError('Could not estimate the meal', error);
     return refused('unavailable');
   }
+  if ('refusal' in read) return refused(read.refusal);
 
-  const output = ModelOutput.safeParse(parseJson(textOf(parts)));
-  if (!output.success) {
-    console.error('The estimate was not in the shape asked for', {
-      issues: output.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
-    });
-    return refused('unavailable');
-  }
-  const { isFood, items, note } = output.data;
+  const { isFood, items, note } = read.estimate;
   const estimate: EstimateResponse = {
     isFood,
     items: isFood ? await matchItems(context.supabase, request.language, items) : [],
     ...(note && { note }),
   };
   return Response.json(estimate);
+}
+
+/** What an answer gives: the estimate, or why there is none to show. */
+type Read = { estimate: z.infer<typeof ModelOutput> } | { refusal: EstimateReason };
+
+/** Reads the model's answer as an estimate, saying why it cannot be one. */
+function readAnswer(response: ModelResponse): Read {
+  if (response.finish === 'blocked') return { refusal: 'blocked' };
+  if (response.finish === 'length') {
+    // A cut answer is not whole JSON; it is said apart from a wrong shape, as the limit may need
+    // raising (ai_feature_limits).
+    console.error('The estimate was cut at the token limit', { usage: response.usage });
+    return { refusal: 'unavailable' };
+  }
+  const output = ModelOutput.safeParse(parseJson(textOf(response.parts)));
+  if (!output.success) {
+    console.error('The estimate was not in the shape asked for', {
+      issues: output.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
+    });
+    return { refusal: 'unavailable' };
+  }
+  return { estimate: output.data };
 }
 
 function refused(reason: EstimateReason): Response {
