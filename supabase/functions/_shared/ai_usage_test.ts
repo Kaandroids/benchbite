@@ -84,6 +84,7 @@ function recorded(tokens: [number, number, number, number] | 'unknown', callId =
       output_tokens: output,
       thinking_tokens: thinking,
       known: tokens !== 'unknown',
+      given: undefined,
     },
   };
 }

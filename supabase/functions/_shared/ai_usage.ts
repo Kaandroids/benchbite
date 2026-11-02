@@ -213,7 +213,7 @@ async function record(admin: Client, callId: string, used: Used, given?: boolean
     output_tokens: usage?.outputTokens ?? 0,
     thinking_tokens: usage?.thinkingTokens ?? 0,
     known: used !== 'unknown',
-    ...(given !== undefined && { given }),
+    given,
   };
   for (const wait of RECORD_RETRIES_MS) {
     const { error } = await admin.rpc('record_ai_usage', args);
