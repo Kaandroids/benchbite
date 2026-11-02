@@ -9,15 +9,19 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false);
 
--- A and B are premium, with $4 a month; B has two cents of it left.
+-- A and B are premium, with $4 a period; B has two cents of it left, used in an earlier week.
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
-select id, 'premium', now() - interval '1 day', now() + interval '29 days', 'monthly', 'manual'
-from auth.users where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b');
+values
+  ('00000000-0000-0000-0000-00000000000a', 'premium', now() - interval '1 day',
+   now() + interval '29 days', 'monthly', 'manual'),
+  ('00000000-0000-0000-0000-00000000000b', 'premium', now() - interval '8 days',
+   now() + interval '22 days', 'monthly', 'manual');
 insert into public.ai_usage
   (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
-   thinking_tokens, cost_usd)
+   thinking_tokens, cost_usd, created_at)
 select gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
-  0, 0, 0, 0, (select budget_usd - 0.02 from public.plans where plan = 'premium');
+  0, 0, 0, 0, (select budget_usd - 0.02 from public.plans where plan = 'premium'),
+  now() - interval '7 days 12 hours';
 
 -- A model whose price never changes, so that what these calls cost holds on any day.
 insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)
