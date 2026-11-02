@@ -161,7 +161,7 @@ export function messageText(message: string): string {
  * whatever of the user's they hold, before its own tags go around them.
  */
 export function snapshotText(snapshot: Snapshot, language: Language): string {
-  const { profile, goal, weightKg, targets, eaten, training, workouts, streak } = snapshot;
+  const { profile, goal, weightKg, targets, eaten, training, workouts, plan, streak } = snapshot;
   const lines = [
     `Date: ${snapshot.date}, ${snapshot.weekday}`,
     ...(snapshot.time ? [`Local time: ${snapshot.time}`] : []),
@@ -194,6 +194,7 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
   if (eaten) lines.push(`Eaten today: ${macros(eaten)}`);
   if (training) lines.push(`Training: ${training}`);
   if (workouts) lines.push(`Today's workouts: ${workouts}`);
+  if (plan) lines.push(`Plan: ${plan}`);
   if (streak) lines.push(`Streak: ${streak}`);
   if (snapshot.notes)
     lines.push(...notebookLines(snapshot.notes, snapshot.date, snapshot.savesNotes));

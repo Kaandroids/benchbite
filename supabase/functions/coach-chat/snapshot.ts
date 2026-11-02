@@ -5,7 +5,7 @@
 import type { NoteCategory } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
-import { workoutName } from './workout.ts';
+import { alternativeName, workoutName } from './workout.ts';
 
 type GoalKind = Database['public']['Enums']['goal_kind'];
 
@@ -44,6 +44,11 @@ export type Snapshot = {
   training?: string;
   /** Today's workouts, and whether they are done; one without exercises yet says so (ADR 0064). */
   workouts?: string;
+  /**
+   * Every active workout, with its days and its alternatives, the one in use marked (ADR 0061),
+   * so that Bite knows the whole plan and which version of each is done (ADR 0075).
+   */
+  plan?: string;
   streak?: string;
   /** Whether Bite saves notes from chats by itself, or asks first. */
   savesNotes?: boolean;
@@ -66,6 +71,11 @@ export type Note = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/** Weekdays, 1 Monday to 7 Sunday, as "Mon, Thu". */
+function dayNames(days: number[]) {
+  return days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ');
+}
+
 /** Reads the user's snapshot on `today`, a date of their device, at `time` there. */
 export async function loadSnapshot(
   supabase: Client,
@@ -73,7 +83,7 @@ export async function loadSnapshot(
   time?: string,
 ): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes] =
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan] =
     await Promise.all([
       supabase
         .from('profiles')
@@ -99,8 +109,14 @@ export async function loadSnapshot(
         .is('archived_at', null)
         .order('category')
         .order('id'),
+      supabase
+        .from('workouts')
+        .select('id, name, type, weekdays, workout_alternatives (name, position, in_use)')
+        .eq('active', true)
+        .order('id')
+        .order('position', { referencedTable: 'workout_alternatives' }),
     ]);
-  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, notes };
+  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -125,7 +141,7 @@ export async function loadSnapshot(
     snapshot.training = [
       p.experience,
       p.training_setup,
-      `${p.training_days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ')}`,
+      dayNames(p.training_days),
       `${p.session_minutes} min sessions`,
     ].join(' · ');
   }
@@ -162,6 +178,23 @@ export async function loadSnapshot(
       : done
         ? `none planned, ${done} done`
         : 'rest day';
+  }
+  if (plan.data) {
+    snapshot.plan = plan.data.length
+      ? plan.data
+          .map((workout) => {
+            const days = dayNames(workout.weekdays);
+            const versions = workout.workout_alternatives.map(
+              (a) => `${alternativeName(a)}${a.in_use ? ' (in use)' : ''}`,
+            );
+            const about = [
+              days || 'no days',
+              ...(versions.length ? [`alternatives: ${versions.join(', ')}`] : []),
+            ];
+            return `${workoutName(workout)} (${about.join('; ')})`;
+          })
+          .join(' · ')
+      : 'no workouts';
   }
   const s = streak.data?.[0];
   if (s) snapshot.streak = `${s.count} days, ${s.freezes} freezes left`;
