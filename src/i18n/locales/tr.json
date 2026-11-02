@@ -352,7 +352,7 @@
       "resultGrams": "{{grams}} g · {{calories}} kcal",
       "mine": "Benim",
       "photo": "Fotoğraf",
-      "photoHint": "Bite tahmin eder",
+      "photoHint": "Bite ile",
       "barcode": "Barkod",
       "barcodeHint": "Yakında",
       "barcodeLabel": "Barkod tara"

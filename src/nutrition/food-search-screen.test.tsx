@@ -402,7 +402,7 @@ describe('FoodSearchScreen', () => {
 
   it('takes photos of a meal from the photo tile under the search', async () => {
     await render(<FoodSearchScreen meal="dinner" day="2026-10-27" />);
-    expect(screen.getByText('Bite estimates it')).toBeTruthy();
+    expect(screen.getByText('With Bite')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
     expect(screen.getByText('Up to 3 photos of the same meal')).toBeTruthy();
 

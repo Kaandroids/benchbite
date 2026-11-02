@@ -85,10 +85,15 @@ function AddTile({ icon, iconBackground, title, hint, label, onPress }: AddTileP
         {icon}
       </View>
       <View style={styles.text}>
-        <Text variant="bodyStrong" color={disabled ? 'textMuted' : 'text'} style={styles.title}>
+        <Text
+          variant="bodyStrong"
+          color={disabled ? 'textMuted' : 'text'}
+          numberOfLines={1}
+          style={styles.title}
+        >
           {title}
         </Text>
-        <Text variant="caption" color="textMuted" style={styles.hint}>
+        <Text variant="caption" color="textMuted" numberOfLines={1} style={styles.hint}>
           {hint}
         </Text>
       </View>

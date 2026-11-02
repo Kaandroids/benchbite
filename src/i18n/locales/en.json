@@ -352,7 +352,7 @@
       "resultGrams": "{{grams}} g · {{calories}} kcal",
       "mine": "Mine",
       "photo": "Photo",
-      "photoHint": "Bite estimates it",
+      "photoHint": "With Bite",
       "barcode": "Barcode",
       "barcodeHint": "Coming soon",
       "barcodeLabel": "Scan a barcode"
