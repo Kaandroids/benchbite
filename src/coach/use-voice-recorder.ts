@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   discardVoices,
+  listRecording,
   readVoice,
   VOICE_RECORDING,
   type VoiceDraft,
@@ -43,11 +44,15 @@ export type VoiceEnd =
   | { tooShort: true }
   | { cancelled: true };
 
+/** Plays out of the speaker again, not the earpiece, once nothing records. */
+const RECORDING_DONE = { allowsRecording: false, playsInSilentMode: true } as const;
+
 /**
  * Records a voice message while the user holds the mic (#298, board 6): `start` asks for the
  * microphone the first time, without recording, as the question takes the hold; `finish` stops
  * and gives the message to send, or why there is none. A recording stops by itself at the most a
- * message may last, and is sent.
+ * message may last, and is sent. Until one has ended and its file is read, no other starts; one
+ * the screen leaves while it records is stopped and deleted.
  */
 export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
   const recorder = useAudioRecorder(VOICE_RECORDING);
@@ -56,6 +61,9 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
   const [levels, setLevels] = useState<number[]>([]);
   /** Whether the user still holds the mic, as starting takes a moment and they may let go. */
   const held = useRef(false);
+  /** Whether a recording is starting, recording or ending, which no other may start during. */
+  const busy = useRef(false);
+  /** The start of the recording not ended yet, which the one finish() that ends it takes. */
   const starting = useRef<Promise<boolean> | undefined>(undefined);
 
   // Each reading of the loudness is a bar.
@@ -77,65 +85,79 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
     try {
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
+      // Listed from the start, so that a recording the app cannot stop is deleted later.
+      if (recorder.uri) listRecording(recorder.uri);
       recorder.record();
       return true;
     } catch (error) {
       console.warn('Could not start recording a voice message', error);
+      void setAudioModeAsync(RECORDING_DONE);
       onEnd({ problem: { reason: 'voice_not_recorded' } });
       return false;
     }
   };
 
   const start = () => {
-    if (starting.current) return;
+    if (busy.current) return;
+    busy.current = true;
     held.current = true;
     setLevels([]);
     starting.current = begin().then((started) => {
       if (!started) {
         held.current = false;
+        busy.current = false;
         starting.current = undefined;
         return false;
       }
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setRecording(true);
-      // Let go while it started: it ends as the user wanted.
-      if (!held.current) void finish(false);
       return true;
     });
   };
 
-  const finish = async (send: boolean) => {
-    held.current = false;
-    const started = await starting.current;
-    if (!started) return;
-    starting.current = undefined;
-    const durationMs = state.durationMillis;
-    setRecording(false);
-    let uri: string | null = null;
+  /** Stops the recording, and gives its file, if it has one, listed until it is deleted. */
+  const stop = async (): Promise<string | null> => {
     try {
       await recorder.stop();
-      uri = recorder.uri;
+      const uri = recorder.uri;
+      if (uri) listRecording(uri);
+      return uri;
     } catch (error) {
       console.warn('Could not stop recording a voice message', error);
+      return null;
     } finally {
-      // Played back through the speaker again, not the earpiece.
-      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      void setAudioModeAsync(RECORDING_DONE);
     }
-    if (!send) {
-      if (uri) discardVoices([uri]);
-      return onEnd({ cancelled: true });
-    }
-    if (durationMs < SHORTEST_MS) {
-      if (uri) discardVoices([uri]);
-      return onEnd({ tooShort: true });
-    }
-    if (!uri) return onEnd({ problem: { reason: 'voice_not_recorded' } });
+  };
+
+  const finish = async (send: boolean) => {
+    held.current = false;
+    // Taken at once, so that a second end of the same hold, as a release and a cancel, does nothing.
+    const run = starting.current;
+    starting.current = undefined;
+    if (!run || !(await run)) return;
+    const durationMs = state.durationMillis;
+    setRecording(false);
     try {
-      onEnd({ sent: { data: await readVoice(uri), durationMs, uri } });
-    } catch (error) {
-      console.warn('Could not read a voice message recorded', error);
-      discardVoices([uri]);
-      onEnd({ problem: { reason: 'voice_not_recorded' } });
+      const uri = await stop();
+      if (!send) {
+        if (uri) discardVoices([uri]);
+        return onEnd({ cancelled: true });
+      }
+      if (durationMs < SHORTEST_MS) {
+        if (uri) discardVoices([uri]);
+        return onEnd({ tooShort: true });
+      }
+      if (!uri) return onEnd({ problem: { reason: 'voice_not_recorded' } });
+      try {
+        onEnd({ sent: { data: await readVoice(uri), durationMs, uri } });
+      } catch (error) {
+        console.warn('Could not read a voice message recorded', error);
+        discardVoices([uri]);
+        onEnd({ problem: { reason: 'voice_not_recorded' } });
+      }
+    } finally {
+      busy.current = false;
     }
   };
 
@@ -146,6 +168,16 @@ export function useVoiceRecorder(onEnd: (end: VoiceEnd) => void) {
     // finish() reads the recorder as it is when the limit is reached.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [full]);
+
+  // A recording the screen leaves, as when the composer gives way, is stopped and deleted.
+  useEffect(
+    () => () => {
+      if (busy.current) void finish(false);
+    },
+    // finish() as it is when the screen goes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return {
     recording,
