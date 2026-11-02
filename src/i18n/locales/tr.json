@@ -2060,8 +2060,8 @@
     "yearlyPerMonth": "Ayda {{price}} ediyor",
     "cancelAnytime": "İstediğin zaman iptal et",
     "trialEnding": {
-      "title_one": "Ücretsiz haftan yarın bitiyor",
-      "title_other": "Ücretsiz haftan {{count}} gün sonra bitiyor",
+      "title_one": "{{count}} gün kaldı",
+      "title_other": "{{count}} gün kaldı",
       "chats_one": "sohbet",
       "chats_other": "sohbet",
       "photos_one": "fotoğraflı öğün",
@@ -2070,7 +2070,8 @@
       "reviews_other": "değerlendirme",
       "keepYearly": "Premium'da kal, yıllık",
       "keepMonthly": "Premium'da kal, aylık",
-      "cancel": "Aboneliği iptal et"
+      "cancel": "Aboneliği iptal et",
+      "subtitle": "ücretsiz haftanın bitmesine"
     },
     "offer": {
       "endsIn": "{{time}} sonra bitiyor",

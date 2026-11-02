@@ -8,7 +8,6 @@ import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
-import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useMonthDayFormat, useMonthFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
@@ -28,8 +27,9 @@ type TrialEndingScreenProps = {
 };
 
 /**
- * A reminder shortly before the free week ends (#411): Bite and the day on top, then the plan and
- * its one price, yearly or monthly, with what the trial gave, and the buttons at the bottom.
+ * A reminder shortly before the free week ends (#411), as one block in the middle of the screen:
+ * Bite and the days left, the plan and its one price, yearly or monthly, what the trial gave, and
+ * the buttons.
  */
 export function TrialEndingScreen({
   endsOn,
@@ -49,23 +49,9 @@ export function TrialEndingScreen({
   const date = monthDay(endsOn);
 
   return (
-    <Screen
-      footer={
-        <View style={[styles.stretch, { gap: spacing.md }]}>
-          <Button
-            label={t(yearly ? 'premium.trialEnding.keepYearly' : 'premium.trialEnding.keepMonthly')}
-            onPress={() => onKeep(billing)}
-          />
-          <TextLink tone="muted" label={t('premium.trialEnding.cancel')} onPress={onCancel} />
-        </View>
-      }
-    >
+    <Screen closes onBack={onClose}>
       <View style={[styles.body, { gap: spacing.xl }]}>
-        <View style={[styles.group, { gap: spacing.md }]}>
-          {/* The cross sits where a top bar's would, level with the top of Bite. */}
-          <View style={[styles.close, { left: spacing.lg - spacing.xl, top: -10 }]}>
-            <TopBarButton icon="close" label={t('common.close')} onPress={onClose} />
-          </View>
+        <View style={[styles.center, { gap: spacing.md }]}>
           <View>
             <BiteAvatar size={128} expression="thinking" />
             <View
@@ -83,21 +69,26 @@ export function TrialEndingScreen({
               <Text
                 variant="captionStrong"
                 color="background"
-                style={[styles.month, { backgroundColor: colors.text }]}
+                style={[styles.centerText, { backgroundColor: colors.text }]}
               >
                 {month(endsOn).toUpperCase()}
               </Text>
-              <Text variant="headline" style={styles.center}>
+              <Text variant="headline" style={styles.centerText}>
                 {endsOn.getDate()}
               </Text>
             </View>
           </View>
-          <Text variant="title" style={styles.center}>
-            {t('premium.trialEnding.title', { count: daysLeft })}
-          </Text>
+          <View style={styles.center}>
+            <Text variant="title" style={styles.centerText}>
+              {t('premium.trialEnding.title', { count: daysLeft })}
+            </Text>
+            <Text variant="body" color="textMuted" style={styles.centerText}>
+              {t('premium.trialEnding.subtitle')}
+            </Text>
+          </View>
         </View>
 
-        <View style={[styles.group, styles.middle, { gap: spacing.lg }]}>
+        <View style={[styles.center, { gap: spacing.md }]}>
           <View style={styles.stretch}>
             <SegmentedControl
               accessibilityLabel={t('premium.billing')}
@@ -112,7 +103,7 @@ export function TrialEndingScreen({
               ]}
             />
           </View>
-          <View style={styles.group}>
+          <View style={styles.center}>
             <Text variant="display">{yearly ? prices.yearly : prices.monthly}</Text>
             <Text variant="label">
               {t(yearly ? 'premium.perYearFrom' : 'premium.perMonthFrom', { date })}
@@ -123,28 +114,37 @@ export function TrialEndingScreen({
                 : t('premium.cancelAnytime')}
             </Text>
           </View>
-          <View style={[styles.stats, { gap: spacing.sm }]}>
-            {(
-              [
-                ['chats', usage.chats],
-                ['photos', usage.photos],
-                ['reviews', usage.reviews],
-              ] as const
-            ).map(([kind, count]) => (
-              <View
-                key={kind}
-                style={[
-                  styles.stat,
-                  { backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.sm },
-                ]}
-              >
-                <Text variant="headline">{count}</Text>
-                <Text variant="caption" color="textMuted" style={styles.center}>
-                  {t(`premium.trialEnding.${kind}`, { count })}
-                </Text>
-              </View>
-            ))}
-          </View>
+        </View>
+
+        <View style={[styles.stats, { gap: spacing.sm }]}>
+          {(
+            [
+              ['chats', usage.chats],
+              ['photos', usage.photos],
+              ['reviews', usage.reviews],
+            ] as const
+          ).map(([kind, count]) => (
+            <View
+              key={kind}
+              style={[
+                styles.stat,
+                { backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.sm },
+              ]}
+            >
+              <Text variant="headline">{count}</Text>
+              <Text variant="caption" color="textMuted" style={styles.centerText}>
+                {t(`premium.trialEnding.${kind}`, { count })}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={[styles.stretch, { gap: spacing.md }]}>
+          <Button
+            label={t(yearly ? 'premium.trialEnding.keepYearly' : 'premium.trialEnding.keepMonthly')}
+            onPress={() => onKeep(billing)}
+          />
+          <TextLink tone="muted" label={t('premium.trialEnding.cancel')} onPress={onCancel} />
         </View>
       </View>
     </Screen>
@@ -154,18 +154,13 @@ export function TrialEndingScreen({
 const styles = StyleSheet.create({
   body: {
     flexGrow: 1,
-  },
-  middle: {
-    flex: 1,
     justifyContent: 'center',
   },
-  close: {
-    position: 'absolute',
-    top: 0,
-    zIndex: 1,
-  },
-  group: {
+  center: {
     alignItems: 'center',
+  },
+  centerText: {
+    textAlign: 'center',
   },
   calendar: {
     position: 'absolute',
@@ -175,15 +170,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     overflow: 'hidden',
   },
-  month: {
-    textAlign: 'center',
-  },
-  center: {
-    textAlign: 'center',
-  },
   stats: {
     flexDirection: 'row',
-    alignSelf: 'stretch',
   },
   stat: {
     flex: 1,

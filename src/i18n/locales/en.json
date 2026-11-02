@@ -2060,8 +2060,8 @@
     "yearlyPerMonth": "That is {{price}} a month",
     "cancelAnytime": "Cancel anytime",
     "trialEnding": {
-      "title_one": "Your free week ends tomorrow",
-      "title_other": "Your free week ends in {{count}} days",
+      "title_one": "{{count}} day left",
+      "title_other": "{{count}} days left",
       "chats_one": "chat",
       "chats_other": "chats",
       "photos_one": "meal photo",
@@ -2070,7 +2070,8 @@
       "reviews_other": "reviews",
       "keepYearly": "Keep premium, yearly",
       "keepMonthly": "Keep premium, monthly",
-      "cancel": "Cancel the subscription"
+      "cancel": "Cancel the subscription",
+      "subtitle": "in your free week"
     },
     "offer": {
       "endsIn": "Ends in {{time}}",

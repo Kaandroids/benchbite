@@ -15,7 +15,7 @@ const props = {
 describe('TrialEndingScreen', () => {
   it('shows what the trial gave and the yearly price first', async () => {
     await render(<TrialEndingScreen {...props} onKeep={jest.fn()} />);
-    expect(screen.getByText('Your free week ends in 2 days')).toBeTruthy();
+    expect(screen.getByText('2 days left')).toBeTruthy();
     expect(screen.getByText('meal photos')).toBeTruthy();
     expect(screen.getByText('1')).toBeTruthy();
     expect(screen.getByText('€83.88')).toBeTruthy();

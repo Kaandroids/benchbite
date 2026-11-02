@@ -2060,8 +2060,8 @@
     "yearlyPerMonth": "Das sind {{price}} pro Monat",
     "cancelAnytime": "Jederzeit kündbar",
     "trialEnding": {
-      "title_one": "Deine Gratiswoche endet morgen",
-      "title_other": "Deine Gratiswoche endet in {{count}} Tagen",
+      "title_one": "Noch {{count}} Tag",
+      "title_other": "Noch {{count}} Tage",
       "chats_one": "Chat",
       "chats_other": "Chats",
       "photos_one": "Foto-Mahlzeit",
@@ -2070,7 +2070,8 @@
       "reviews_other": "Rückblicke",
       "keepYearly": "Premium behalten, jährlich",
       "keepMonthly": "Premium behalten, monatlich",
-      "cancel": "Abo kündigen"
+      "cancel": "Abo kündigen",
+      "subtitle": "in deiner Gratiswoche"
     },
     "offer": {
       "endsIn": "Endet in {{time}}",
