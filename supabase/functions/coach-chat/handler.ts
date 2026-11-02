@@ -36,6 +36,7 @@ import { readJson, TOO_LARGE } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import {
   CARD_MISSING,
+  CARD_NOT_MADE,
   NO_LOOKUPS_LEFT,
   NOTE_ASKED,
   SAID_ALREADY,
@@ -132,8 +133,11 @@ const STATUS: Record<ChatRefusal, number> = {
 /** How many earlier messages Bite reads of a thread. */
 const HISTORY = 20;
 
-/** How many times Bite may look things up before it has to answer. */
-const MAX_TOOL_ROUNDS = 4;
+/**
+ * How many times Bite may look things up before it has to answer: the plan, the exercises, a
+ * proposal, and one more to correct a proposal the database refused (#402).
+ */
+const MAX_TOOL_ROUNDS = 5;
 
 /** How many lookups one round may make; more are answered with an error. */
 const MAX_CALLS_PER_ROUND = 5;
@@ -451,11 +455,11 @@ async function answer(
 
       if (!calls.length) {
         // The model may write of the card it means to make and end without making it. Told so
-        // while it may still make one, it makes it, says why it cannot, or adds nothing. Not
-        // after a card earlier in the thread, which the answer may speak of: told then, the
-        // model made it again or said its answer twice.
+        // while it may still make one, it makes it, says why it cannot, or adds nothing; once no
+        // tool may be called, it says it could not (#402). Not after a card earlier in the
+        // thread, which the answer may speak of: told then, the model made it again or said its
+        // answer twice.
         const noCard =
-          !answerOnly &&
           !toldNoCard &&
           !earlierCard &&
           !turn.trace.some((part) => part.type === 'toolResult' && isCardResult(part.result)) &&
@@ -464,7 +468,10 @@ async function answer(
         toldNoCard = true;
         messages.push(
           { role: 'model', parts: spoken },
-          { role: 'user', parts: [{ type: 'text', text: CARD_MISSING }] },
+          {
+            role: 'user',
+            parts: [{ type: 'text', text: answerOnly ? CARD_NOT_MADE : CARD_MISSING }],
+          },
         );
         continue;
       }

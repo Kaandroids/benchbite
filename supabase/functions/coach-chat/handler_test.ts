@@ -6,7 +6,13 @@ import { FAKE_USAGE, FakeModel } from '../_shared/llm/fake.ts';
 import { ModelError, type ModelRequest, type StreamEvent } from '../_shared/llm/mod.ts';
 import type { ChatContext, ChatEvent } from './handler.ts';
 import { content, ending, handleChatRequest } from './handler.ts';
-import { CARD_MISSING, NO_LOOKUPS_LEFT, NOTE_ASKED, SAID_ALREADY } from './prompt.ts';
+import {
+  CARD_MISSING,
+  CARD_NOT_MADE,
+  NO_LOOKUPS_LEFT,
+  NOTE_ASKED,
+  SAID_ALREADY,
+} from './prompt.ts';
 import { EOI, EXIF, FRAME, JFIF, jpeg, PLAIN_JPEG, SCAN, SOI } from './test-photos.ts';
 import { m4a } from './test-voice.ts';
 
@@ -715,9 +721,9 @@ Deno.test('answers more lookups than a round may make with an error', async () =
 
 Deno.test('tells Bite when its lookups are used up, and asks once more for an answer', async () => {
   const search = (id: string) => [
-    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
   ];
-  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5'].map(search), [
+  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5', 'c6'].map(search), [
     { type: 'text', text: '[[sad]] I found nothing to swap it for.' },
   ]);
   const { ctx, inserted } = context(model);
@@ -726,18 +732,18 @@ Deno.test('tells Bite when its lookups are used up, and asks once more for an an
 
   assertEquals(
     model.requests.map((request) => request.toolChoice),
-    ['auto', 'auto', 'auto', 'auto', 'none', 'none'],
+    ['auto', 'auto', 'auto', 'auto', 'auto', 'none', 'none'],
   );
-  assertEquals(model.requests[4].messages.at(-1)?.parts.at(-1), {
+  assertEquals(model.requests[5].messages.at(-1)?.parts.at(-1), {
     type: 'text',
     text: NO_LOOKUPS_LEFT,
   });
   // The call the last round made anyway is not run, but answered.
-  assertEquals(answer.filter((e) => e.event === 'tool_start').length, 4);
-  assertEquals(model.requests[5].messages.at(-1)?.parts, [
+  assertEquals(answer.filter((e) => e.event === 'tool_start').length, 5);
+  assertEquals(model.requests[6].messages.at(-1)?.parts, [
     {
       type: 'toolResult',
-      id: 'c5',
+      id: 'c6',
       name: 'search_exercises',
       result: { error: NO_LOOKUPS_LEFT },
     },
@@ -750,18 +756,18 @@ Deno.test('tells Bite when its lookups are used up, and asks once more for an an
 
 Deno.test('asks once more though Bite said something before its lookups', async () => {
   const search = (id: string) => [
-    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
   ];
   const model = new FakeModel(
     [{ type: 'text', text: '[[neutral]] Let me check your workouts.' }, ...search('c1')],
-    ...['c2', 'c3', 'c4', 'c5'].map(search),
+    ...['c2', 'c3', 'c4', 'c5', 'c6'].map(search),
     [{ type: 'text', text: 'I found nothing to swap it for.' }],
   );
   const { ctx, inserted } = context(model);
 
   await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(model.requests.length, 6);
+  assertEquals(model.requests.length, 7);
   assertEquals(
     (inserted[1].rows[1].content as { text?: string }[]).at(-1)?.text,
     'Let me check your workouts. I found nothing to swap it for.',
@@ -770,34 +776,39 @@ Deno.test('asks once more though Bite said something before its lookups', async 
 
 Deno.test('tells Bite of a missing card only while it may still make one', async () => {
   const search = (id: string) => [
-    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
   ];
-  const late = new FakeModel(...['c1', 'c2', 'c3', 'c4'].map(search), [
-    { type: 'text', text: '[[happy]] Here is the card.' },
-  ]);
+  // Once none is left, Bite says it could not make it (#402).
+  const late = new FakeModel(
+    ...['c1', 'c2', 'c3', 'c4', 'c5'].map(search),
+    [{ type: 'text', text: "[[happy]] I've proposed a new plan." }],
+    [{ type: 'text', text: 'Sorry, I could not make it this time.' }],
+  );
   await events(await handleChatRequest(ask(MESSAGE), context(late).ctx));
-  assertEquals(late.requests.length, 5);
+  assertEquals(late.requests.length, 7);
+  assertEquals(late.requests[6].toolChoice, 'none');
+  assertEquals(late.requests[6].messages.at(-1)?.parts, [{ type: 'text', text: CARD_NOT_MADE }]);
 
-  // After three lookups one is left, which the card is made with.
+  // After four lookups one is left, which the card is made with.
   const lastLookup = new FakeModel(
-    ...['c1', 'c2', 'c3'].map(search),
+    ...['c1', 'c2', 'c3', 'c4'].map(search),
     [{ type: 'text', text: '[[happy]] Here is the card.' }],
     [{ type: 'text', text: 'Sorry, I could not make it.' }],
   );
   await events(await handleChatRequest(ask(MESSAGE), context(lastLookup).ctx));
-  assertEquals(lastLookup.requests[4].toolChoice, 'auto');
+  assertEquals(lastLookup.requests[5].toolChoice, 'auto');
 });
 
 Deno.test('asks only once more when Bite still calls a tool', async () => {
   const search = (id: string) => [
-    { type: 'toolCall' as const, id, name: 'search_exercises', args: { query: 'press' } },
+    { type: 'toolCall' as const, id, name: 'search_exercises', args: { queries: ['press'] } },
   ];
-  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'].map(search));
+  const model = new FakeModel(...['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'].map(search));
   const { ctx } = context(model);
 
   await events(await handleChatRequest(ask(MESSAGE), ctx));
 
-  assertEquals(model.requests.length, 6);
+  assertEquals(model.requests.length, 7);
 });
 
 Deno.test('keeps a message within what a message may hold', () => {
