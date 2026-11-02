@@ -45,9 +45,9 @@ Tracking is free; intelligence and room to grow are premium.
 
 ### Who is premium
 
-- **Our database decides:** a `subscriptions` table holds each user's plan, whether it is a trial,
-  which picks the trial's row of the plan table, its billing period, and its source. `has_premium()` reads it, and `ai_access()`,
-  `start_ai_call()` and `workout_limits()` ask it. A plan ends an hour after its period does,
+- **Our database decides:** a `subscriptions` row holds the plan a user's subscription gives, the
+  trial or premium, with its billing period and its source. `plan_of()` reads it, and
+  `has_premium()`, `ai_access()`, `start_ai_call()` and `workout_limits()` build on it. A plan ends an hour after its period does,
   whatever was last recorded about it: a renewal reaches us a little after the store makes it, and
   in between Bite should not close. The app reads the plan and never decides it, and users may
   read only their own row.
