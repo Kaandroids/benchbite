@@ -43,9 +43,10 @@ type ProposalCardProps = {
 };
 
 /**
- * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075): what
- * changes, from today, in the food log, or in a workout's alternatives, to apply or keep as it is. Once decided it folds into a line that
- * says so, and an applied one offers Undo (boards 5 and 11b).
+ * A change Bite proposed, under its answer (boards 4, 11, 40, 42 and 43, ADR 0058, 0068, 0075):
+ * what changes, from today, in the food log, or in a workout's alternatives, to apply or keep as
+ * it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
+ * and 11b).
  */
 export function ProposalCard({ card, state, waiting = false }: ProposalCardProps) {
   const { t } = useTranslation();
@@ -117,13 +118,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
         <View style={styles.buttons}>
           {canApply ? (
             <Button
-              label={t(
-                card.kind === 'alternative'
-                  ? 'bite.proposal.useIt'
-                  : card.kind === 'alternative_switch'
-                    ? 'bite.proposal.switch'
-                    : 'bite.proposal.apply',
-              )}
+              label={t(applyLabel(card))}
               size="small"
               style={styles.flex}
               // One decision at a time: Keep as is, sent, leaves nothing to apply.
@@ -144,6 +139,23 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
       ) : null}
     </Card>
   );
+}
+
+/** What the button that applies `card` says: Use it for an alternative, Switch for a switch. */
+function applyLabel(card: Proposal) {
+  switch (card.kind) {
+    case 'alternative':
+      return 'bite.proposal.useIt';
+    case 'alternative_switch':
+      return 'bite.proposal.switch';
+    default:
+      return 'bite.proposal.apply';
+  }
+}
+
+/** The one workout a change to workouts names, when it names one only. */
+function onlyWorkout(card: WorkoutsProposal) {
+  return card.workouts.length === 1 ? card.workouts[0] : undefined;
 }
 
 /** What a proposal changes, as its kind shows it. */
@@ -299,8 +311,8 @@ function WorkoutsChange({ card }: { card: WorkoutsProposal }) {
   const { colors, spacing } = useTheme();
   const workoutName = useWorkoutName();
   const weekday = useWeekdayFormat('short');
-  const [only] = card.workouts;
-  if (card.workouts.length === 1 && only) {
+  const only = onlyWorkout(card);
+  if (only) {
     return (
       <>
         <Header title={workoutName(proposedWorkout(only.workout))} />
@@ -314,15 +326,7 @@ function WorkoutsChange({ card }: { card: WorkoutsProposal }) {
       {card.workouts.map((changed, index) => (
         <View
           key={index}
-          style={
-            index === 0
-              ? undefined
-              : {
-                  borderTopWidth: StyleSheet.hairlineWidth,
-                  borderTopColor: colors.border,
-                  paddingTop: spacing.sm,
-                }
-          }
+          style={[listDivider(index === 0, colors.border), index > 0 && { paddingTop: spacing.sm }]}
         >
           <View style={[styles.header, { gap: spacing.sm }]}>
             <Text variant="bodyStrong" accessibilityRole="header" style={styles.flex}>
@@ -486,8 +490,8 @@ function useSummary() {
   const alternativeName = useAlternativeName();
   return (card: Proposal) => {
     if (card.kind === 'workouts') {
-      const [only] = card.workouts;
-      return card.workouts.length === 1 && only
+      const only = onlyWorkout(card);
+      return only
         ? t('bite.proposal.summary.workout', {
             workout: workoutName(proposedWorkout(only.workout)),
           })
