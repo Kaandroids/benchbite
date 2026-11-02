@@ -344,8 +344,19 @@ async function answer(
   let threadId = request.threadId;
   const { photos, voice } = media;
   // What the user said, written down beside the answer, as a request of its own feature, so that
-  // the two run at once (ADR 0072). The thread keeps it as the message's text.
-  let transcript: Promise<string | undefined> = Promise.resolve(undefined);
+  // the two run at once (ADR 0072). The thread keeps it as the message's text. It starts once the
+  // answer has, so that a message the budget refuses an answer to costs no writing down, and the
+  // worker is kept alive for it, as the app may close the stream meanwhile.
+  let transcript: Promise<string | undefined> | undefined;
+  const writeDown = () => {
+    if (!voice || transcript) return;
+    transcript = keepAlive(
+      transcribe(aiModel(ai, 'coach_voice'), voice).then((text) => {
+        if (text) send({ event: 'transcript', text });
+        return text;
+      }),
+    );
+  };
 
   // Nothing is written for a user who may not ask Bite now.
   try {
@@ -370,12 +381,6 @@ async function answer(
       if (created.error) throw created.error;
       threadId = created.data.id;
       send({ event: 'thread', threadId });
-    }
-    if (voice) {
-      transcript = transcribe(aiModel(ai, 'coach_voice'), voice).then((text) => {
-        if (text) send({ event: 'transcript', text });
-        return text;
-      });
     }
     const snapshot = await loadSnapshot(context.supabase, request.today, request.localTime);
     const messages: Message[] = [
@@ -420,6 +425,7 @@ async function answer(
         tools: TOOL_DEFINITIONS,
         toolChoice: answerOnly ? 'none' : 'auto',
       })) {
+        writeDown();
         outcome.asked = true;
         // The end of a round is kept whatever comes, so that what the answer used is too.
         if (event.type !== 'done' && (await stop.look())) break;
@@ -529,8 +535,10 @@ async function answer(
   // kept either: it would stay empty in the history.
   const dropIfNew = async (id: number) =>
     !request.threadId && (await keepAlive(dropThread(context, id)));
-  // The message keeps what was said in its voice message, once written down.
-  const said = await transcript;
+  // The message keeps what was said in its voice message, once written down, also as a question
+  // whose answer failed before it began. Nothing is waited for when nothing is kept.
+  if (end.keep !== 'nothing') writeDown();
+  const said = end.keep === 'nothing' ? undefined : await transcript;
   if (end.keep !== 'turn') {
     const saved =
       end.keep === 'question' &&

@@ -1565,15 +1565,15 @@ const VOICE_MESSAGE = { ...MESSAGE, message: '', voice: VOICE };
 
 Deno.test('hears a voice message in its turn, and keeps it with what was said', async () => {
   const model = new FakeModel(
-    // Written down, as a request of its own feature.
-    [{ type: 'text', text: ' Had a chicken rice bowl for lunch. ' }],
     SURE,
+    // Written down once the answer has begun, as a request of its own feature.
+    [{ type: 'text', text: ' Had a chicken rice bowl for lunch. ' }],
   );
   const { ctx, inserted, objects } = context(model);
 
   const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
 
-  const [written, chat] = model.requests;
+  const [chat, written] = model.requests;
   assertEquals(written.task, 'coach_voice');
   assertEquals(written.messages[0].parts, [
     { type: 'audio', mimeType: 'audio/mp4', data: VOICE.data },
@@ -1597,7 +1597,7 @@ Deno.test('hears a voice message in its turn, and keeps it with what was said', 
 });
 
 Deno.test('keeps a voice message nothing could be written down of, without text', async () => {
-  const { ctx, inserted } = context(new FakeModel([], SURE));
+  const { ctx, inserted } = context(new FakeModel(SURE, []));
 
   const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
 
@@ -1609,6 +1609,67 @@ Deno.test('keeps a voice message nothing could be written down of, without text'
     (inserted[1].rows[0].content as { type: string }[]).map((part) => part.type),
     ['audio'],
   );
+});
+
+/** A model that writes down only once `release()` is called, as a slow one would. */
+class SlowWriter extends FakeModel {
+  #release = () => {};
+  readonly #released = new Promise<void>((resolve) => (this.#release = resolve));
+
+  release() {
+    this.#release();
+  }
+
+  override async generate(request: ModelRequest) {
+    await this.#released;
+    return super.generate(request);
+  }
+}
+
+Deno.test('keeps the worker alive while a voice message is written down', async () => {
+  const model = new SlowWriter(SURE, [{ type: 'text', text: 'Had a chicken rice bowl.' }]);
+  const { ctx, inserted } = context(model);
+  const kept: Promise<unknown>[] = [];
+  const runtime = globalThis as { EdgeRuntime?: { waitUntil(work: Promise<unknown>): void } };
+  runtime.EdgeRuntime = { waitUntil: (work) => void kept.push(work) };
+  try {
+    const answered = handleChatRequest(ask(VOICE_MESSAGE), ctx).then(events);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    model.release();
+    await answered;
+    // The app may close the stream meanwhile: the worker waits for what is written down.
+    assertEquals((await Promise.all(kept)).includes('Had a chicken rice bowl.'), true);
+    assertEquals(inserted[1].rows.length, 2);
+  } finally {
+    delete runtime.EdgeRuntime;
+    model.release();
+  }
+});
+
+Deno.test('writes down no voice message whose answer is refused or kept nowhere', async () => {
+  // The budget refuses the answer: nothing is written down.
+  const refused = context(new FakeModel(), {
+    start_ai_call: {
+      allowed: false,
+      reason: 'limit_reached',
+      call_id: null,
+      max_output_tokens: null,
+    },
+  });
+  const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), refused.ctx));
+  assertEquals(answer.at(-1), { event: 'error', reason: 'limit_reached', dropped: true });
+  assertEquals(refused.objects.size, 0);
+
+  // The model blocks the answer: the app is told without waiting for what is written down.
+  const writer = new SlowWriter({ parts: [], usage: FAKE_USAGE, finish: 'blocked' }, []);
+  const blocked = context(writer);
+  try {
+    const ended = await events(await handleChatRequest(ask(VOICE_MESSAGE), blocked.ctx));
+    assertEquals(ended.at(-1), { event: 'error', reason: 'blocked', dropped: true });
+    assertEquals(blocked.objects.size, 0);
+  } finally {
+    writer.release();
+  }
 });
 
 Deno.test(
