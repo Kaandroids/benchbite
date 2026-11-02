@@ -85,13 +85,15 @@ export async function storePhotos(
   );
   const stored = results.filter((part) => part !== undefined);
   if (stored.length === photos.length) return stored;
-  await removePhotos(admin, stored);
+  await removeMedia(admin, stored);
   return undefined;
 }
 
-/** Removes kept photos whose message could not be saved, as nothing else would. */
-export async function removePhotos(admin: Client, parts: ChatPhotoPart[]): Promise<void> {
+/**
+ * Removes kept photos and voice messages whose message could not be saved, as nothing else would.
+ */
+export async function removeMedia(admin: Client, parts: { path: string }[]): Promise<void> {
   if (!parts.length) return;
   const { error } = await admin.storage.from(MEDIA_BUCKET).remove(parts.map((part) => part.path));
-  if (error) logError('Could not remove photos of a message not saved', error);
+  if (error) logError('Could not remove the media of a message not saved', error);
 }
