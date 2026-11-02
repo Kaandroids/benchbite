@@ -17,14 +17,15 @@ const PROFILE = {
 };
 
 /**
- * A database whose profile is `profile`, with `goal`, what `rpc` names and the notes in use
- * `notes`, and nothing else.
+ * A database whose profile is `profile`, with `goal`, what `rpc` names, the notes in use `notes`
+ * and the active `workouts`, and nothing else.
  */
 function database(
   profile: Record<string, unknown>,
   goal: Record<string, unknown> | null = null,
   rpc: Record<string, unknown> = {},
   notes: Record<string, unknown>[] = [],
+  workouts: Record<string, unknown>[] | null = null,
 ) {
   const empty = { data: null, error: null };
   const query = (data: unknown) => {
@@ -44,7 +45,9 @@ function database(
             ? goal
             : table === 'coach_notes'
               ? notes
-              : null,
+              : table === 'workouts'
+                ? workouts
+                : null,
       ),
     rpc: (name: string) => Promise.resolve(name in rpc ? { data: rpc[name], error: null } : empty),
   } as unknown as Client;
@@ -90,6 +93,37 @@ Deno.test('tells Bite the pace the targets really give, as the app dates the goa
   const unknown = await loadSnapshot(database(PROFILE, goal), '2026-10-30');
   assertEquals(unknown.goal?.achievablePaceKg, undefined);
   assertEquals(snapshotText(unknown, 'en').includes('held up'), false);
+});
+
+Deno.test('tells Bite the whole plan, and which alternative of a workout is in use', async () => {
+  const snapshot = await loadSnapshot(
+    database(
+      PROFILE,
+      null,
+      {},
+      [],
+      [
+        {
+          id: 1,
+          name: 'Legs',
+          type: 'legs',
+          weekdays: [1, 4],
+          workout_alternatives: [
+            { name: 'Gym', position: 1, in_use: false },
+            { name: null, position: 2, in_use: true },
+          ],
+        },
+        { id: 2, name: null, type: 'full_body', weekdays: [], workout_alternatives: [] },
+      ],
+    ),
+    '2026-10-30',
+  );
+
+  assertEquals(
+    snapshot.plan,
+    'Legs (Mon, Thu; alternatives: Gym, Alternative 2 (in use)) · full body (no days)',
+  );
+  assertEquals(snapshotText(snapshot, 'en').includes(`Plan: ${snapshot.plan}`), true);
 });
 
 Deno.test('tells Bite that a workout planned today has no exercises yet', async () => {
