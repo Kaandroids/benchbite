@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BRAND_ORANGE_DARK } from '@/brand/mark';
 import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+import { darkColors } from '@/theme/colors';
 
 type SpecialOfferScreenProps = {
   /** How much less than the usual price, in whole percent. */
@@ -41,8 +41,10 @@ export function SpecialOfferScreen({
   onClaim,
   onClose,
 }: SpecialOfferScreenProps) {
-  const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { t, i18n } = useTranslation();
+  const { radii, spacing } = useTheme();
+  // Always dark, whatever the theme, as the offer stands apart from the app's own screens.
+  const dark = darkColors;
   const left = useTimeLeft(endsAt);
   // Light on the dark screen while it shows, and back to the theme's when another one covers it.
   useFocusEffect(
@@ -53,108 +55,130 @@ export function SpecialOfferScreen({
   );
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
-      <View style={[styles.body, { gap: spacing.xl, padding: spacing.xl }]}>
+    <SafeAreaView style={[styles.root, { backgroundColor: dark.background }]}>
+      <View style={[styles.row, { paddingHorizontal: spacing.lg, minHeight: 52 }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+          onPress={onClose}
+          hitSlop={8}
+          style={[styles.close, { backgroundColor: dark.track }]}
+        >
+          <Icon name="close" size={18} fixedColor={dark.text} />
+        </Pressable>
+        <View style={styles.flex} />
+        <View
+          style={[
+            styles.row,
+            styles.pill,
+            { backgroundColor: dark.lunchBackground, paddingHorizontal: spacing.md, gap: 6 },
+          ]}
+        >
+          <Icon name="timer" size={14} fixedColor={dark.primary} />
+          <Text variant="captionStrong" style={[styles.digits, { color: dark.primary }]}>
+            {t('premium.offer.endsIn', { time: left })}
+          </Text>
+        </View>
+      </View>
+
+      <View style={[styles.body, { padding: spacing.xl, paddingTop: spacing.md }]}>
         <View style={[styles.center, { gap: spacing.md }]}>
-          {/* The cross and the time left sit level with the top of Bite. */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close')}
-            onPress={onClose}
-            hitSlop={8}
-            style={[
-              styles.close,
-              { left: spacing.md - spacing.xl, backgroundColor: colors.inverseRaised },
-            ]}
-          >
-            <Icon name="close" size={18} color="onInverse" />
-          </Pressable>
-          <View
-            style={[
-              styles.pill,
-              {
-                right: spacing.md - spacing.xl,
-                backgroundColor: colors.inverseRaised,
-                paddingHorizontal: spacing.md,
-              },
-            ]}
-          >
-            <Text variant="captionStrong" color="onInverse" style={styles.digits}>
-              {t('premium.offer.endsIn', { time: left })}
-            </Text>
-          </View>
           <View>
-            <Sparkles size={220}>
-              <BiteAvatar size={156} expression="happy" />
+            <Sparkles size={190}>
+              <BiteAvatar size={132} expression="happy" />
             </Sparkles>
             <View
               style={[
                 styles.stamp,
-                { backgroundColor: colors.primaryButton, borderRadius: radii.md },
+                { backgroundColor: dark.primaryButton, borderRadius: radii.md },
               ]}
             >
-              <Text variant="headline" style={{ color: colors.onPrimary }}>
+              <Text variant="headline" style={{ color: dark.onPrimary }}>
                 −{percent}%
               </Text>
             </View>
           </View>
           <View style={[styles.center, { gap: spacing.xs }]}>
-            <Text variant="captionStrong" style={{ color: BRAND_ORANGE_DARK }}>
-              {t('premium.offer.kicker').toUpperCase()}
+            <Text variant="captionStrong" style={{ color: dark.primary }}>
+              {t('premium.offer.kicker').toLocaleUpperCase(i18n.language)}
             </Text>
-            <Text variant="title" color="onInverse" style={styles.centerText}>
+            <Text variant="title" style={[styles.centerText, { color: dark.text }]}>
               {t('premium.offer.title')}
             </Text>
           </View>
         </View>
 
-        <View style={[styles.center, styles.middle, { gap: spacing.lg }]}>
-          <View style={styles.center}>
-            <Text
-              variant="headline"
-              color="onInverseMuted"
-              style={styles.struck}
-              accessibilityLabel={t('premium.offer.usual', { price: usualPrice })}
-            >
-              {usualPrice}
-            </Text>
-            <Text variant="display" color="onInverse">
-              {price}
-            </Text>
-            <Text variant="label" color="onInverse">
-              {t('premium.offer.firstYear')}
-            </Text>
-            <Text variant="caption" color="onInverseMuted">
-              {t('premium.offer.then', { price: usualPrice })}
-            </Text>
+        {/* What space is left goes in equal parts above the offer and below what is waiting. */}
+        <View style={styles.flex} />
+
+        <View style={{ gap: spacing.md }}>
+          <View
+            style={[
+              styles.row,
+              styles.card,
+              {
+                gap: spacing.md,
+                padding: spacing.md,
+                backgroundColor: dark.surface,
+                borderColor: dark.primary,
+                borderWidth: 2,
+              },
+            ]}
+          >
+            <View style={styles.flex}>
+              <Text variant="label" style={{ color: dark.text }}>
+                {t('premium.offer.firstYear')}
+              </Text>
+              <Text variant="caption" style={{ color: dark.textMuted }}>
+                {t('premium.offer.then', { price: usualPrice })}
+              </Text>
+            </View>
+            <View style={styles.end}>
+              <Text
+                variant="bodyStrong"
+                style={[styles.struck, { color: dark.textMuted }]}
+                accessibilityLabel={t('premium.offer.usual', { price: usualPrice })}
+              >
+                {usualPrice}
+              </Text>
+              <Text variant="title" style={{ color: dark.text }}>
+                {price}
+              </Text>
+            </View>
           </View>
-          <View style={[styles.stretch, { gap: spacing.sm }]}>
-            <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
+
+          <View
+            style={[
+              styles.card,
+              { padding: spacing.md, gap: spacing.md, backgroundColor: dark.surface },
+            ]}
+          >
+            <Text variant="captionStrong" style={[styles.centerText, { color: dark.textMuted }]}>
               {t('premium.offer.text')}
             </Text>
-            <View style={[styles.stats, { gap: spacing.sm }]}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
               {(
                 [
-                  ['workouts', waiting.workouts],
-                  ['alternatives', waiting.alternatives],
-                  ['chats', waiting.chats],
+                  ['dumbbell', 'workouts', waiting.workouts, 'breakfast'],
+                  ['layers', 'alternatives', waiting.alternatives, 'snack'],
+                  ['chat', 'chats', waiting.chats, 'info'],
                 ] as const
-              ).map(([kind, count]) => (
-                <View
-                  key={kind}
-                  style={[
-                    styles.stat,
-                    {
-                      backgroundColor: colors.inverseRaised,
-                      borderRadius: radii.md,
-                      padding: spacing.sm,
-                    },
-                  ]}
-                >
-                  <Text variant="headline" color="onInverse">
+              ).map(([icon, kind, count, tint]) => (
+                <View key={kind} style={[styles.stat, { gap: spacing.xs }]}>
+                  <View
+                    style={[
+                      styles.tile,
+                      {
+                        backgroundColor: dark[`${tint}Background`],
+                      },
+                    ]}
+                  >
+                    <Icon name={icon} size={20} fixedColor={dark[tint]} />
+                  </View>
+                  <Text variant="headline" style={{ color: dark.text }}>
                     {count}
                   </Text>
-                  <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
+                  <Text variant="caption" style={[styles.centerText, { color: dark.textMuted }]}>
                     {t(`premium.offer.${kind}`, { count })}
                   </Text>
                 </View>
@@ -162,15 +186,15 @@ export function SpecialOfferScreen({
             </View>
           </View>
         </View>
+
+        <View style={styles.flex} />
       </View>
 
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.md }}>
-        <View style={[styles.stretch, { gap: spacing.sm }]}>
-          <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
-          <Text variant="caption" color="onInverseMuted" style={styles.centerText}>
-            {t('premium.offer.legal')}
-          </Text>
-        </View>
+      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.md, gap: spacing.sm }}>
+        <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
+        <Text variant="caption" style={[styles.centerText, { color: dark.textMuted }]}>
+          {t('premium.offer.legal')}
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -192,10 +216,14 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flex: {
+    flex: 1,
+  },
   close: {
-    position: 'absolute',
-    top: 22,
-    zIndex: 1,
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -203,9 +231,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pill: {
-    position: 'absolute',
-    top: 29,
-    zIndex: 1,
     borderRadius: 999,
     paddingVertical: 6,
   },
@@ -215,24 +240,27 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
   },
-  middle: {
-    flex: 1,
-    justifyContent: 'center',
+  card: {
+    borderRadius: 20,
   },
-  stretch: {
-    alignSelf: 'stretch',
-  },
-  stats: {
-    flexDirection: 'row',
+  end: {
+    alignItems: 'flex-end',
   },
   stat: {
     flex: 1,
     alignItems: 'center',
   },
+  tile: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   stamp: {
     position: 'absolute',
-    right: -16,
-    top: 124,
+    right: -14,
+    top: 108,
     paddingHorizontal: 10,
     paddingVertical: 4,
     transform: [{ rotate: '-12deg' }],
