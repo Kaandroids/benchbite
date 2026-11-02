@@ -280,6 +280,7 @@ describe('FoodSearchScreen', () => {
     it('says how to start when nothing was logged at the meal yet', async () => {
       await render(<FoodSearchScreen meal="dinner" day="2026-10-27" />);
       expect(screen.getByText('Nothing logged at dinner yet')).toBeTruthy();
+      expect(screen.getByText(/or take a photo/)).toBeTruthy();
     });
 
     const entry = (id: number, name: string, calories: number) =>
@@ -399,8 +400,9 @@ describe('FoodSearchScreen', () => {
     expect(screen.getByLabelText('Egg, raw, 1 piece · 60 g · 82 kcal')).toBeTruthy();
   });
 
-  it('takes photos of a meal from the camera beside the search', async () => {
+  it('takes photos of a meal from the photo tile under the search', async () => {
     await render(<FoodSearchScreen meal="dinner" day="2026-10-27" />);
+    expect(screen.getByText('With Bite')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
     expect(screen.getByText('Up to 3 photos of the same meal')).toBeTruthy();
 
@@ -420,6 +422,16 @@ describe('FoodSearchScreen', () => {
       '2026-10-27',
     ]);
     expect(mealPhotos(params.photos)).toEqual(['file://plate.jpg']);
+  });
+
+  it('shows the barcode tile as disabled until scanning exists', async () => {
+    await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
+    const barcode = screen.getByRole('button', { name: 'Scan a barcode' });
+    expect(barcode.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }));
+    expect(screen.getByText('Coming soon')).toBeTruthy();
+    await fireEvent.press(barcode);
+    expect(router.push).not.toHaveBeenCalled();
+    expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
   });
 
   it('shows a meal logged from photos as added, and undoes it', async () => {

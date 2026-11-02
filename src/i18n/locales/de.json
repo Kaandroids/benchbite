@@ -350,7 +350,12 @@
       "added": "{{name}} hinzugefügt",
       "error": "Die Suche ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Eigenes"
+      "mine": "Eigenes",
+      "photo": "Foto",
+      "photoHint": "Mit Bite",
+      "barcode": "Barcode",
+      "barcodeHint": "Bald verfügbar",
+      "barcodeLabel": "Barcode scannen"
     },
     "photo": {
       "camera": "Mahlzeit per Foto eintragen",
@@ -530,7 +535,7 @@
         "dinner": "Noch nichts zum Abendessen eingetragen",
         "snack": "Noch keine Snacks eingetragen"
       },
-      "emptyFrequentText": "Suche oben nach einem Lebensmittel. Was du am häufigsten einträgst, findest du dann hier, mit einem Tipp.",
+      "emptyFrequentText": "Suche oben nach einem Lebensmittel oder mach ein Foto. Was du am häufigsten einträgst, findest du dann hier, mit einem Tipp.",
       "noFavourites": "Noch keine Favoriten",
       "noFavouritesText": "Tippe auf den Stern eines Lebensmittels, um es hier zu behalten.",
       "favouritesNote": "Neueste zuerst. Tippe auf den Stern eines Lebensmittels, um es hinzuzufügen oder zu entfernen.",

@@ -350,7 +350,12 @@
       "added": "{{name}} eklendi",
       "error": "Arama başarısız oldu. Bağlantını kontrol edip tekrar dene.",
       "resultGrams": "{{grams}} g · {{calories}} kcal",
-      "mine": "Benim"
+      "mine": "Benim",
+      "photo": "Fotoğraf",
+      "photoHint": "Bite ile",
+      "barcode": "Barkod",
+      "barcodeHint": "Yakında",
+      "barcodeLabel": "Barkod tara"
     },
     "photo": {
       "camera": "Fotoğraftan öğün ekle",
@@ -530,7 +535,7 @@
         "dinner": "Akşam yemeğine henüz bir şey eklenmedi",
         "snack": "Henüz atıştırmalık eklenmedi"
       },
-      "emptyFrequentText": "Yukarıdan bir besin ara. En sık eklediklerin burada, tek dokunuş uzağında olacak.",
+      "emptyFrequentText": "Yukarıdan bir besin ara ya da fotoğraf çek. En sık eklediklerin burada, tek dokunuş uzağında olacak.",
       "noFavourites": "Henüz favori yok",
       "noFavouritesText": "Bir besini burada tutmak için yıldızına dokun.",
       "favouritesNote": "En yeniler önce. Eklemek ya da çıkarmak için bir besinin yıldızına dokun.",

@@ -234,8 +234,8 @@ function PastMealCard({ meal, day }: { meal: Meal; day: string }) {
       <Text variant="captionStrong" color="textMuted">
         {t(`nutrition.quick.last.${meal}`)}
       </Text>
-      <Card style={[styles.past, { gap: spacing.md }]}>
-        <View style={styles.pastText} accessible>
+      <Card style={{ gap: spacing.md }}>
+        <View accessible>
           <Text variant="label">
             {t('nutrition.quick.lastSize', {
               count: entries.length,
@@ -257,22 +257,27 @@ function PastMealCard({ meal, day }: { meal: Meal; day: string }) {
             <Icon name="check" size={20} color="success" />
           </View>
         ) : (
-          <View style={{ gap: spacing.xs }}>
-            <PillButton
-              label={t('nutrition.quick.addAll')}
-              accessibilityLabel={t('nutrition.quick.addAllLabel', {
-                count: entries.length,
-                day: name,
-              })}
-              disabled={copyEntries.isPending}
-              onPress={() => add(entries)}
-            />
-            <PillButton
-              label={t('nutrition.quick.choose')}
-              accessibilityLabel={t('nutrition.quick.chooseLabel', { day: name })}
-              disabled={copyEntries.isPending}
-              onPress={() => setChoosing(true)}
-            />
+          <View style={[styles.pastActions, { gap: spacing.sm }]}>
+            <View style={styles.pastAction}>
+              <PillButton
+                label={t('nutrition.quick.addAll')}
+                accessibilityLabel={t('nutrition.quick.addAllLabel', {
+                  count: entries.length,
+                  day: name,
+                })}
+                disabled={copyEntries.isPending}
+                onPress={() => add(entries)}
+              />
+            </View>
+            <View style={styles.pastAction}>
+              <PillButton
+                label={t('nutrition.quick.choose')}
+                accessibilityLabel={t('nutrition.quick.chooseLabel', { day: name })}
+                variant="neutral"
+                disabled={copyEntries.isPending}
+                onPress={() => setChoosing(true)}
+              />
+            </View>
           </View>
         )}
       </Card>
@@ -389,9 +394,11 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: 'center',
   },
-  past: {
+  pastActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+  },
+  pastAction: {
+    flex: 1,
   },
   pastText: {
     flex: 1,

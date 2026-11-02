@@ -1,10 +1,9 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
+import { ActionCard } from '@/components/ui/action-card';
 import { Button } from '@/components/ui/button';
-import { IconTile } from '@/components/ui/icon-tile';
-import { RaisedPressable } from '@/components/ui/raised-pressable';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { toIsoDate, useWeekdayFormat, weekdayOf } from '@/i18n/dates';
@@ -81,7 +80,7 @@ export function useStartMove() {
 /** The sheet that asks `askStartMove`'s question, over every screen. */
 export function StartMoveSheet() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const weekdayName = useWeekdayFormat();
   const current = useSyncExternalStore(subscribe, () => pending);
   // A question left open when the sheet goes, as on signing out, is not answered later.
@@ -104,47 +103,16 @@ export function StartMoveSheet() {
         </Text>
       </View>
       <Button label={t('session.startMove.move')} onPress={() => answer('move')} />
-      <RaisedPressable
-        accessibilityRole="button"
-        accessibilityLabel={t('session.startMove.extra')}
+      <ActionCard
+        icon="plus"
+        title={t('session.startMove.extra')}
+        hint={t(
+          question.missed ? 'session.startMove.extraMissed' : 'session.startMove.extraLater',
+          values,
+        )}
         onPress={() => answer('extra')}
-        ledgeColor={colors.border}
-        borderRadius={radii.lg}
-        faceStyle={[
-          styles.option,
-          {
-            gap: spacing.md,
-            padding: spacing.md,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-          },
-        ]}
-      >
-        <IconTile name="plus" size={40} />
-        <View style={styles.text}>
-          <Text variant="bodyStrong">{t('session.startMove.extra')}</Text>
-          <Text variant="caption" color="textMuted">
-            {t(
-              question.missed ? 'session.startMove.extraMissed' : 'session.startMove.extraLater',
-              values,
-            )}
-          </Text>
-        </View>
-      </RaisedPressable>
+      />
       <Button variant="ghost" label={t('session.startMove.cancel')} onPress={() => answer(null)} />
     </Sheet>
   );
 }
-
-const styles = StyleSheet.create({
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  text: {
-    flex: 1,
-    gap: 2,
-  },
-});
