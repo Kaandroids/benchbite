@@ -214,6 +214,7 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   const library = (id: string, name: string, de?: string) => ({
     id,
     name,
+    target_kind: 'reps',
     owner_id: null,
     archived_at: null,
     exercise_translations: de ? [{ language: 'de', name: de }] : [],
@@ -221,6 +222,7 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   const own = (id: string, name: string, archived_at: string | null = null) => ({
     id,
     name,
+    target_kind: 'reps',
     owner_id: 'user',
     archived_at,
     exercise_translations: [],
@@ -289,13 +291,36 @@ function searchContext(language: 'en' | 'de', more: Row[] = []) {
   return { ...context, language, supabase: { from: query } } as unknown as ToolContext;
 }
 
-/** The exercises one query finds. */
+/** The exercises one query finds, by their ids and names. */
 const search = async (query: string, context: ToolContext) => {
   const [found] = (await runTool('search_exercises', { queries: [query] }, context)) as {
-    exercises: unknown;
+    exercises: { id: string; name: string }[];
   }[];
-  return found!.exercises;
+  return found!.exercises.map(({ id, name }) => ({ id, name }));
 };
+
+Deno.test('names the target each exercise found takes', async () => {
+  const plank = {
+    id: 'Plank',
+    name: 'Plank',
+    target_kind: 'seconds',
+    owner_id: null,
+    archived_at: null,
+    exercise_translations: [],
+  };
+  const found = (await runTool(
+    'search_exercises',
+    { queries: ['squat', 'plank'] },
+    searchContext('en', [plank]),
+  )) as { exercises: unknown }[];
+  assertEquals(
+    found.map((result) => result.exercises),
+    [
+      [{ id: 'Barbell_Squat', name: 'Barbell Squat', target: 'reps' }],
+      [{ id: 'Plank', name: 'Plank', target: 'seconds' }],
+    ],
+  );
+});
 
 Deno.test('searches for several exercises at once, each by its query', async () => {
   const found = await runTool(

@@ -146,7 +146,7 @@ const REFUSALS = {
   meanings: {
     BB006: "That workout is not the user's.",
     BB007:
-      'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
+      'A target does not suit its exercise: give each new exercise the target search_exercises names for it.',
     BB008: 'A workout needs at least one exercise, and may have only so many.',
     BB037: "The calories are under the user's calorie floor.",
     BB038: 'The user has too many changes waiting; ask them to decide those first.',
@@ -385,7 +385,7 @@ const TOOLS = [
   }),
   tool({
     name: 'search_exercises',
-    description: `Exercises in the library and the user's own whose name matches each query, up to ${SEARCH_QUERIES} queries at once. Search for every exercise you need in one call.`,
+    description: `Exercises in the library and the user's own whose name matches each query, up to ${SEARCH_QUERIES} queries at once, each with the target it takes: reps, seconds, or meters or seconds. Search for every exercise you need in one call.`,
     args: z.object({
       queries: z
         .array(QUERY.describe('An exercise name, such as "squat".'))
@@ -1114,10 +1114,15 @@ async function searchExercises(supabase: Client, language: Language, query: stri
   const ids = [
     ...new Set([...read(own).map((row) => row.id), ...ranked.map((row) => row.id)]),
   ].slice(0, SEARCH_LIMIT);
-  const names = await exerciseNames(supabase, language, ids);
+  // With the target each takes (target_kind()), so that a proposal gives the right one.
+  const [names, kinds] = await Promise.all([
+    exerciseNames(supabase, language, ids),
+    supabase.from('exercises').select('id, target_kind').in('id', ids),
+  ]);
+  const targets = new Map(read(kinds).map((row) => [row.id, row.target_kind]));
   return ids.flatMap((id) => {
     const name = names.get(id);
-    return name ? [{ id, name }] : [];
+    return name ? [{ id, name, target: targets.get(id) ?? undefined }] : [];
   });
 }
 
