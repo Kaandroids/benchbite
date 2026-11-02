@@ -98,10 +98,12 @@ export const VOICE_REFUSALS = ['voice_too_large', 'voice_too_long', 'voice_not_m
 
 /**
  * Why a message was refused before Bite was asked, answered as JSON with an HTTP status rather
- * than as events: `{ error, photo? }`, `photo` being the index of the photo refused.
+ * than as events: `{ error, photo? }`, `photo` being the index of the photo refused. `too_large`
+ * is a body larger than any message may be, refused before what it holds is read.
  */
 export type ChatRefusal =
   | 'invalid_request'
+  | 'too_large'
   | 'thread_not_found'
   | (typeof PHOTO_REFUSALS)[number]
   | (typeof VOICE_REFUSALS)[number]

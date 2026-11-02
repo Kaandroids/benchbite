@@ -14,6 +14,7 @@ import {
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  MAX_VOICE_BYTES,
   type NoteCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
@@ -105,14 +106,16 @@ const ChatRequest = z
 type ChatRequest = z.infer<typeof ChatRequest>;
 
 /**
- * The largest body read, in bytes: the photos at their largest as base64, and room for the rest,
- * the longest message included. A larger one is refused before it is parsed.
+ * The largest body read, in bytes: the photos or the voice message at their largest as base64,
+ * whichever is larger, as a voice message goes alone, and room for the rest, the longest message
+ * included. A larger one is refused before it is parsed, as `too_large`, whatever it holds.
  */
-const MAX_BODY_BYTES = photosBodyBytes(40_000);
+const MAX_BODY_BYTES = Math.max(photosBodyBytes(0), Math.ceil(MAX_VOICE_BYTES / 3) * 4) + 40_000;
 
 /** The HTTP status each refusal is answered with. */
 const STATUS: Record<ChatRefusal, number> = {
   invalid_request: 400,
+  too_large: 413,
   thread_not_found: 404,
   photos_too_large: 413,
   photo_not_jpeg: 415,
@@ -148,7 +151,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
   const json = await readJson(req, MAX_BODY_BYTES);
-  if (json === TOO_LARGE) return refused('photos_too_large');
+  if (json === TOO_LARGE) return refused('too_large');
 
   const parsed = ChatRequest.safeParse(json);
   if (!parsed.success) {

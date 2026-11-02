@@ -1420,7 +1420,8 @@ Deno.test('refuses photos it does not take, before anything is asked or kept', a
   const photo = (bytes: Uint8Array) => ({ mimeType: 'image/jpeg', data: toBase64(bytes) });
   const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const withExif = jpeg(SOI, EXIF, JFIF, FRAME, SCAN, EOI);
-  const large = { mimeType: 'image/jpeg', data: btoa('x'.repeat(1_100_000)) };
+  // Together just over the photos' limit, within the largest body.
+  const large = { mimeType: 'image/jpeg', data: btoa('x'.repeat(1_005_000)) };
 
   const cases: [unknown, number, Record<string, unknown>][] = [
     [{ photos: [PHOTO, photo(png)] }, 415, { error: 'photo_not_jpeg', photo: 1 }],
@@ -1444,7 +1445,8 @@ Deno.test('refuses photos it does not take, before anything is asked or kept', a
   }
   // A body larger than any the app sends is not read as JSON at all.
   const huge = ask(`{"photos": "${'x'.repeat(5_000_000)}"}`);
-  assertEquals((await handleChatRequest(huge, ctx)).status, 413);
+  const response = await handleChatRequest(huge, ctx);
+  assertEquals([response.status, await response.json()], [413, { error: 'too_large' }]);
   assertEquals([model.requests, inserted, objects.size], [[], [], 0]);
 });
 
