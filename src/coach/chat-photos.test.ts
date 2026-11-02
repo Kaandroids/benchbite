@@ -5,14 +5,8 @@ import { discardPhotos, preparePhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import {
-  localTime,
-  messagePhotos,
-  photosToSend,
-  mediaUrls,
-  prepareChatPhoto,
-  useMediaUrls,
-} from './chat-photos';
+import { mediaUrls, useMediaUrls } from './chat-media';
+import { localTime, messagePhotos, photosToSend, prepareChatPhoto } from './chat-photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { storage: { from: jest.fn() } } }));
 jest.mock('@/lib/photos', () => ({

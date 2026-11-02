@@ -13,7 +13,7 @@ import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useTheme } from '@/theme';
 
 import { ChatComposer, type RefusedDraft } from './chat-composer';
-import { useMediaUrls } from './chat-photos';
+import { useMediaUrls } from './chat-media';
 import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { mealCardIds, useMealCardStates } from './meal-cards';
@@ -108,6 +108,7 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   const [recording, setRecording] = useState(false);
   const playback = useVoicePlayback();
   const { pause } = playback;
+  // The same each render: the composer tells it again each time it changes.
   const onRecording = useCallback(
     (now: boolean) => {
       setRecording(now);
