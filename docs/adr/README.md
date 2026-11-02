@@ -93,3 +93,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0075](0075-bite-proposes-alternatives.md)                            | Bite proposes alternatives for temporary changes, and edits several workouts at once    | Accepted                                   |
 | [0076](0076-bite-searches-many-exercises-in-one-lookup.md)            | Bite searches many exercises in one lookup, in up to five rounds                        | Accepted                                   |
 | [0077](0077-a-newer-proposal-replaces-older-ones.md)                  | A newer proposal for a workout replaces the older ones pending for it                   | Accepted                                   |
+| [0078](0078-a-premium-plan-with-a-trial.md)                           | A premium plan with a seven-day trial                                                   | Accepted                                   |
