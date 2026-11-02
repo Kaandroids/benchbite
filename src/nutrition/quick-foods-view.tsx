@@ -265,8 +265,6 @@ function PastMealCard({ meal, day }: { meal: Meal; day: string }) {
                   count: entries.length,
                   day: name,
                 })}
-                variant="primary"
-                icon="plus"
                 disabled={copyEntries.isPending}
                 onPress={() => add(entries)}
               />
@@ -275,6 +273,7 @@ function PastMealCard({ meal, day }: { meal: Meal; day: string }) {
               <PillButton
                 label={t('nutrition.quick.choose')}
                 accessibilityLabel={t('nutrition.quick.chooseLabel', { day: name })}
+                variant="neutral"
                 disabled={copyEntries.isPending}
                 onPress={() => setChoosing(true)}
               />
