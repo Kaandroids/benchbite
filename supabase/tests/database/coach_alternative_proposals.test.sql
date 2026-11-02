@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(51);
+select plan(52);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -167,6 +167,16 @@ select is(
   pg_temp.card('knee'),
   '{"from": {"name": "Gym", "position": 1}}'::jsonb,
   'Its card names the version in use as applying names it, the first'
+);
+insert into cards select 'unnamed', public.propose_coach_alternative(
+  pg_temp.id('thread'), pg_temp.id('push'), 'Hotel', null,
+  '{"add": [{"exerciseId": "Dips_-_Triceps_Version", "sets": 3, "target": {"reps": {"min": 8, "max": 10}}}]}',
+  current_date
+);
+select is(
+  pg_temp.card('unnamed'),
+  '{"from": {"name": null, "position": 1}}'::jsonb,
+  'and without a name for it, as the first without one'
 );
 select is(pg_temp.decide('knee', 'apply'), 'applied'::public.coach_proposal_status, 'An alternative is applied');
 select results_eq(

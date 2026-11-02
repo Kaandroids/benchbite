@@ -2055,6 +2055,7 @@ export type Database = {
         }[];
       };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
+      in_use_alternative: { Args: { state: Json }; Returns: Json };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;

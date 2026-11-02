@@ -1,7 +1,17 @@
 -- Bite's cards for an alternative or a switch (#397, ADR 0075) show what applying changes, as the
 -- database read it for the proposal: the proposers give it with the proposal's id, so that the card
--- is built from nothing read after the proposal is made, and the rules of applying are written
--- here only.
+-- is built from nothing read after the proposal is made, in the database, beside the rules of
+-- applying it follows.
+
+-- The alternative in use in `state` (coach_alternatives_state()), whole; null without any.
+create function public.in_use_alternative(state jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select a from jsonb_array_elements(state -> 'alternatives') a where (a ->> 'inUse')::boolean;
+$$;
 
 -- An alternative of `state` (coach_alternatives_state()) as a card names it: its name, or none,
 -- and its place.
@@ -51,13 +61,9 @@ begin
     propose_coach_alternative.today
   );
   select * into proposal from public.coach_proposals p where p.id = proposed_id;
-  in_use := coalesce(
-    (
-      select a from jsonb_array_elements(proposal.before -> 'alternatives') a
-      where (a ->> 'inUse')::boolean
-    ),
-    '{"name": null, "position": 1}'
-  );
+  -- Named as apply_coach_change() names it, and placed first without alternatives, as
+  -- add_workout_alternative() places the workout's own: change them together.
+  in_use := coalesce(public.in_use_alternative(proposal.before), '{"name": null, "position": 1}');
   return jsonb_build_object(
     'id', proposal.id,
     'from', public.card_alternative(
@@ -110,10 +116,7 @@ begin
   );
   return jsonb_build_object(
     'id', proposal.id,
-    'from', public.card_alternative((
-      select a from jsonb_array_elements(proposal.before -> 'alternatives') a
-      where (a ->> 'inUse')::boolean
-    )),
+    'from', public.card_alternative(public.in_use_alternative(proposal.before)),
     'to', public.card_alternative(target),
     'back', coalesce((
       select jsonb_agg(id order by n)
@@ -132,6 +135,7 @@ begin
 end;
 $$;
 
+revoke all on function public.in_use_alternative(jsonb) from public, anon, authenticated;
 revoke all on function public.card_alternative(jsonb) from public, anon, authenticated;
 revoke all on function public.propose_coach_alternative(bigint, bigint, text, text, jsonb, date)
   from public, anon;
