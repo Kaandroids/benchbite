@@ -23,7 +23,8 @@ saw only today's workouts (#397).
   - **`alternative`:** a new alternative of a workout, made from the one in use with such changes,
     and put in use when applied (`propose_coach_alternative()`). The one in use keeps its exercises
     and may be named, as "Gym" when the workout had no alternatives. A name the workout's
-    alternatives have already is refused (`BB049`), so that Bite switches to that one instead.
+    alternatives have already, for the new one or the one in use, is refused (`BB049`), so that
+    Bite switches to that one instead.
     Undoing puts the one in use before back in use and removes the new one.
   - **`alternative_switch`:** puts another alternative in use, as when the user is better again
     (`propose_coach_alternative_switch()`); one in use already is refused (`BB050`). Undoing puts
@@ -31,7 +32,9 @@ saw only today's workouts (#397).
 - **One edit for all of them:** `edited_workout_exercises()` swaps exercises in place, removes
   them, and adds new ones at the end with 90 s of rest. An exercise named that is not in the
   workout (`BB039`), or one changed twice or put in twice (`BB040`), is refused, so that the card
-  shows exactly what applying does.
+  shows exactly what applying does. `propose_coach_swaps()` swaps with it too, so a swap is the
+  same in every proposal, and `propose_coach_change()` checks names and switches for any caller,
+  not only for the tools' functions.
 - **Bite decides which to propose:** an alternative for a temporary situation (an injury, travel,
   a closed gym), a change to the workout for a lasting one, and an alternative whenever the user
   asks for one. The tools and the rules for them come with the app's cards, as a tool is offered
