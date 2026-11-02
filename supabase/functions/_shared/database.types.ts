@@ -1795,6 +1795,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
       apply_coach_change: {
@@ -1860,6 +1861,7 @@ export type Database = {
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
+      coach_alternatives_state: { Args: { workout_id: number }; Returns: Json };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
       coach_meal_card_foods: { Args: { food_ids: number[] }; Returns: Json };
       coach_media_purge_stalled: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -1975,6 +1977,7 @@ export type Database = {
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
+      edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
       exercise_bests: {
         Args: { exercise_ids: string[] };
         Returns: {
@@ -2066,6 +2069,7 @@ export type Database = {
         };
         Returns: boolean;
       };
+      is_whole_workout: { Args: { workout: Json }; Returns: boolean };
       keep_planned_days: { Args: { today: string }; Returns: undefined };
       keep_streak_days: { Args: { through: string; today: string }; Returns: string };
       keep_user_planned_days: { Args: { owner: string; through: string }; Returns: string };
@@ -2309,6 +2313,21 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      propose_coach_alternative: {
+        Args: {
+          current_name: string;
+          edit: Json;
+          name: string;
+          thread_id: number;
+          today: string;
+          workout_id: number;
+        };
+        Returns: number;
+      };
+      propose_coach_alternative_switch: {
+        Args: { alternative_id: number; thread_id: number; today: string };
+        Returns: number;
+      };
       propose_coach_change: {
         Args: {
           change: Json;
@@ -2320,6 +2339,10 @@ export type Database = {
       };
       propose_coach_swaps: {
         Args: { swaps: Json; thread_id: number; today: string; workout_id: number };
+        Returns: number;
+      };
+      propose_coach_workouts: {
+        Args: { edits: Json; thread_id: number; today: string };
         Returns: number;
       };
       put_back_meal_entry: { Args: { removed: Json }; Returns: undefined };
@@ -2524,6 +2547,7 @@ export type Database = {
       };
       undo_coach_change: {
         Args: {
+          after: Json;
           before: Json;
           change: Json;
           kind: Database['public']['Enums']['coach_proposal_kind'];
@@ -2592,7 +2616,8 @@ export type Database = {
         'allergy' | 'health' | 'injury' | 'training' | 'food' | 'goal' | 'lifestyle';
       coach_note_source: 'chat' | 'user' | 'onboarding';
       coach_proposal_decision: 'apply' | 'keep' | 'undo';
-      coach_proposal_kind: 'workout' | 'targets' | 'food_log';
+      coach_proposal_kind:
+        'workout' | 'targets' | 'food_log' | 'workouts' | 'alternative' | 'alternative_switch';
       coach_proposal_status: 'pending' | 'applied' | 'kept' | 'undone';
       coach_role: 'user' | 'bite';
       equipment:
@@ -2850,7 +2875,14 @@ export const Constants = {
       coach_note_category: ['allergy', 'health', 'injury', 'training', 'food', 'goal', 'lifestyle'],
       coach_note_source: ['chat', 'user', 'onboarding'],
       coach_proposal_decision: ['apply', 'keep', 'undo'],
-      coach_proposal_kind: ['workout', 'targets', 'food_log'],
+      coach_proposal_kind: [
+        'workout',
+        'targets',
+        'food_log',
+        'workouts',
+        'alternative',
+        'alternative_switch',
+      ],
       coach_proposal_status: ['pending', 'applied', 'kept', 'undone'],
       coach_role: ['user', 'bite'],
       equipment: [
