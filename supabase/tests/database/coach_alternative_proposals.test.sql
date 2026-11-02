@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(46);
+select plan(51);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -16,6 +16,9 @@ $$;
 
 create temporary table ids (name text primary key, id bigint) on commit drop;
 grant select, insert, update on ids to authenticated;
+-- The cards the alternatives' proposers give, with their ids.
+create temporary table cards (name text primary key, card jsonb) on commit drop;
+grant select, insert on cards to authenticated;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 insert into ids select 'legs', public.save_workout(
@@ -37,7 +40,13 @@ insert into public.coach_threads (user_id) values ('00000000-0000-0000-0000-0000
 insert into ids select 'thread', max(id) from public.coach_threads;
 
 create function pg_temp.id(key text) returns bigint language sql as $$
-  select id from ids where name = key;
+  select coalesce(
+    (select id from ids where name = key),
+    (select (card ->> 'id')::bigint from cards where name = key)
+  );
+$$;
+create function pg_temp.card(key text) returns jsonb language sql as $$
+  select card - 'id' from cards where name = key;
 $$;
 create function pg_temp.exercises(workout text) returns text[] language sql as $$
   select array_agg(exercise_id order by position) from public.workout_exercises
@@ -144,7 +153,7 @@ select throws_ok(
   'BB049', null,
   'and one named as the one in use is to be'
 );
-insert into ids select 'knee', public.propose_coach_alternative(
+insert into cards select 'knee', public.propose_coach_alternative(
   pg_temp.id('thread'), pg_temp.id('legs'), 'Knee-safe', 'Gym',
   '{"swaps": [{"replace": "Barbell_Squat", "with": "Leg_Press", "sets": 3, "target": {"reps": {"min": 10, "max": 12}}}], "remove": ["Dumbbell_Lunges"]}',
   current_date
@@ -153,6 +162,11 @@ select is(
   (select count(*)::integer from public.workout_alternatives where workout_id = pg_temp.id('legs')),
   0,
   'An alternative proposed adds nothing yet'
+);
+select is(
+  pg_temp.card('knee'),
+  '{"from": {"name": "Gym", "position": 1}}'::jsonb,
+  'Its card names the version in use as applying names it, the first'
 );
 select is(pg_temp.decide('knee', 'apply'), 'applied'::public.coach_proposal_status, 'An alternative is applied');
 select results_eq(
@@ -176,14 +190,19 @@ select is(
 select is(pg_temp.exercises('legs'), array['Barbell_Squat', 'Dumbbell_Lunges', 'Plank'], 'and its own exercises');
 
 -- A switch back to an alternative, once there is one.
-insert into ids select 'knee2', public.propose_coach_alternative(
+insert into cards select 'knee2', public.propose_coach_alternative(
   pg_temp.id('thread'), pg_temp.id('legs'), 'Knee-safe', 'Gym', '{"remove": ["Dumbbell_Lunges"]}', current_date
 );
 select pg_temp.decide('knee2', 'apply');
 insert into ids select 'gym', (
   select id from public.workout_alternatives where workout_id = pg_temp.id('legs') and name = 'Gym'
 );
-insert into ids select 'back', public.propose_coach_alternative_switch(pg_temp.id('thread'), pg_temp.id('gym'), current_date);
+insert into cards select 'back', public.propose_coach_alternative_switch(pg_temp.id('thread'), pg_temp.id('gym'), current_date);
+select is(
+  pg_temp.card('back'),
+  '{"from": {"name": "Knee-safe", "position": 2}, "to": {"name": "Gym", "position": 1}, "back": ["Dumbbell_Lunges"], "empty": false}'::jsonb,
+  'A switch''s card names both alternatives and the exercises that come back'
+);
 select is(pg_temp.decide('back', 'apply'), 'applied'::public.coach_proposal_status, 'A switch is applied');
 select is(pg_temp.exercises('legs'), array['Barbell_Squat', 'Dumbbell_Lunges', 'Plank'], 'to the alternative it names');
 select throws_ok(
@@ -206,13 +225,18 @@ select results_eq(
 select is(pg_temp.exercises('legs'), array['Barbell_Squat', 'Plank'], 'with its exercises');
 
 -- Another alternative, once the workout has some.
-insert into ids select 'home', public.propose_coach_alternative(
+insert into cards select 'home', public.propose_coach_alternative(
   pg_temp.id('thread'), pg_temp.id('legs'), ' Home ', 'Other', '{"remove": ["Plank"]}', current_date
 );
 select is(
   (select change - 'exercises' from public.coach_proposals where id = pg_temp.id('home')),
   jsonb_build_object('workoutId', pg_temp.id('legs'), 'name', 'Home'),
   'A new alternative is named trimmed, and the one in use keeps its name'
+);
+select is(
+  pg_temp.card('home'),
+  '{"from": {"name": "Knee-safe", "position": 2}}'::jsonb,
+  'A version in use with a name keeps it on the card'
 );
 select pg_temp.decide('home', 'apply');
 select results_eq(
@@ -230,10 +254,15 @@ select is(pg_temp.exercises('legs'), array['Barbell_Squat', 'Plank'], 'the worko
 
 -- One named for it, of a workout with alternatives whose one in use has no name.
 select public.add_workout_alternative(pg_temp.id('push'), current_date, 'Bands', null, null);
-insert into ids select 'dips', public.propose_coach_alternative(
+insert into cards select 'dips', public.propose_coach_alternative(
   pg_temp.id('thread'), pg_temp.id('push'), 'Dips', 'Gym',
   '{"add": [{"exerciseId": "Dips_-_Triceps_Version", "sets": 3, "target": {"reps": {"min": 8, "max": 10}}}]}',
   current_date
+);
+select is(
+  pg_temp.card('dips'),
+  '{"from": {"name": "Gym", "position": 1}}'::jsonb,
+  'An unnamed one in use is named on the card as Bite named it'
 );
 select pg_temp.decide('dips', 'apply');
 select results_eq(
@@ -246,6 +275,15 @@ select results_eq(
   format($$ select name, in_use from public.workout_alternatives where workout_id = %s order by position $$, pg_temp.id('push')),
   $$ values (null::text, true), ('Bands'::text, false) $$,
   'and has no name again once it is undone'
+);
+
+-- A switch to an alternative without exercises says that it has none.
+insert into ids select 'rest', public.add_workout_alternative(pg_temp.id('push'), current_date, 'Rest', '[]', null);
+insert into cards select 'rest', public.propose_coach_alternative_switch(pg_temp.id('thread'), pg_temp.id('rest'), current_date);
+select is(
+  pg_temp.card('rest') -> 'empty',
+  'true'::jsonb,
+  'A switch to an empty alternative says so on its card'
 );
 
 -- Another user's workout or alternative is not found.
