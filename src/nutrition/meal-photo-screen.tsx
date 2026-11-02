@@ -304,7 +304,7 @@ function Message({
   );
 }
 
-/** Why the user may not use Bite now, as the chat says it, with when the month resets. */
+/** Why no meal may be estimated now, as the chat says it, with when that opens again. */
 function Refused({ refusal }: { refusal: Refusal }) {
   const access = useAiAccess('meal_photo');
   return <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />;
