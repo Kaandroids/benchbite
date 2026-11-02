@@ -1,5 +1,5 @@
-// Whether the user may use AI features now (ADR 0051), which every feature asks before it offers
-// one: Bite's chat, and later meal photos.
+// Whether the user may use an AI feature now (ADR 0051, 0078), which every feature asks before it
+// offers itself: Bite's chat, or meal photos, which a free user has a few of a week.
 import { useQuery } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 export const ACCESS_KEY = ['ai', 'access'];
 
 type AccessReason = Database['public']['Enums']['ai_access_reason'];
+type Feature = Database['public']['Enums']['ai_feature'];
 
 /** Why the user may not use AI at all now, as ai_access() says. */
 export const REFUSALS = [
@@ -18,12 +19,12 @@ export const REFUSALS = [
 ] as const satisfies readonly AccessReason[];
 export type Refusal = (typeof REFUSALS)[number];
 
-/** Whether the user may use AI this month, and when the month's budget resets. */
-export function useAiAccess() {
+/** Whether the user may use `feature` now, and when the window that refuses it opens again. */
+export function useAiAccess(feature: Feature = 'coach_chat') {
   return useQuery({
-    queryKey: ACCESS_KEY,
+    queryKey: [...ACCESS_KEY, feature],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('ai_access');
+      const { data, error } = await supabase.rpc('ai_access', { feature });
       if (error) {
         throw error;
       }
