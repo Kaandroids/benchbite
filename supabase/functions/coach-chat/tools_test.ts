@@ -96,6 +96,7 @@ const LEGS = {
       position: 1,
     },
   ],
+  workout_alternatives: [] as Row[],
 };
 
 // Exercises by their own names, which are English, as the library has them.
@@ -106,7 +107,10 @@ const NAMES = [
 ];
 
 /** The user's plan and the library, and what `rpc` answers, with the calls made to it. */
-function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = {}) {
+function planContext(
+  rpc: Record<string, { data?: unknown; error?: unknown }> = {},
+  workout: Row = LEGS,
+) {
   const calls: { name: string; args: unknown }[] = [];
   // Filters by equality, but not an embedded table's, whose rows here are in the language asked
   // for, and, as PostgREST, fails the request ordered by a table it does not embed.
@@ -137,7 +141,7 @@ function planContext(rpc: Record<string, { data?: unknown; error?: unknown }> = 
     return builder;
   };
   const supabase = {
-    from: (table: string) => query(table === 'workouts' ? [LEGS] : NAMES),
+    from: (table: string) => query(table === 'workouts' ? [workout] : NAMES),
     rpc: (name: string, args: unknown) => {
       calls.push({ name, args });
       return Promise.resolve({ data: null, error: null, ...rpc[name] });
@@ -298,6 +302,35 @@ Deno.test('reads the plan with its exercises and their targets', async () => {
         { id: 'Barbell_Squat', name: 'Back squat', sets: 4, target: { reps: { min: 6, max: 8 } } },
         { id: 'Plank', name: 'Plank', sets: 3, target: { seconds: 45 } },
       ],
+    },
+  ]);
+});
+
+Deno.test("reads a workout's alternatives, and the exercises of those not in use", async () => {
+  const { context } = planContext(
+    {},
+    {
+      ...LEGS,
+      workout_alternatives: [
+        { id: 11, name: 'Gym', position: 1, in_use: true, exercises: null },
+        {
+          id: 12,
+          name: null,
+          position: 2,
+          in_use: false,
+          exercises: [{ exerciseId: 'Plank', sets: 2, target: { seconds: 30 } }],
+        },
+      ],
+    },
+  );
+  const [legs] = (await runTool('get_workouts', {}, context)) as Record<string, unknown>[];
+  assertEquals(legs.alternatives, [
+    { id: 11, name: 'Gym', inUse: true },
+    {
+      id: 12,
+      name: 'Alternative 2',
+      inUse: false,
+      exercises: [{ id: 'Plank', name: 'Plank', sets: 2, target: { seconds: 30 } }],
     },
   ]);
 });

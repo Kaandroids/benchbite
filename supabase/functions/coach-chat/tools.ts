@@ -14,6 +14,7 @@ import type {
   MealCard,
   NoteCard,
   ProposalCard,
+  ProposalTarget,
 } from '../_shared/coach/chat.ts';
 import { Constants, type Database } from '../_shared/database.types.ts';
 import { FOOD_QUERY_LENGTH } from '../_shared/foods.ts';
@@ -27,7 +28,7 @@ import type { Language } from '../_shared/prompt.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 import { addDays, DAY, daysBetween } from './day.ts';
 import { mealAt } from './meal_card.ts';
-import { workoutName } from './workout.ts';
+import { alternativeName, workoutName } from './workout.ts';
 
 export type ToolContext = {
   supabase: Client;
@@ -350,25 +351,43 @@ const TOOLS = [
   tool({
     name: 'get_workouts',
     description:
-      "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises, with their ids, sets and targets.",
+      "The user's active workouts: each one's id, name, weekdays (1 Monday to 7 Sunday) and exercises in use, with their ids, sets and targets; and a workout's alternatives, if it has any (other versions of it, as one for the gym and one for home), each with its id, name, whether it is in use, and the exercises of those not in use.",
     args: z.object({}),
     run: async (_args, { supabase, language }) => {
       const workouts = read(await planWorkouts(supabase));
-      const names = await exerciseNames(
-        supabase,
-        language,
-        workouts.flatMap((w) => w.workout_exercises.map((e) => e.exercise_id)),
-      );
+      const kept = (exercises: unknown) => (Array.isArray(exercises) ? (exercises as Kept[]) : []);
+      const names = await exerciseNames(supabase, language, [
+        ...workouts.flatMap((w) => w.workout_exercises.map((e) => e.exercise_id)),
+        ...workouts.flatMap((w) =>
+          w.workout_alternatives.flatMap((a) => kept(a.exercises).map((e) => e.exerciseId)),
+        ),
+      ]);
+      const named = (id: string) => names.get(id) ?? id;
       return workouts.map((workout) => ({
         id: workout.id,
         name: workoutName(workout),
         weekdays: workout.weekdays,
         exercises: workout.workout_exercises.map((e) => ({
           id: e.exercise_id,
-          name: names.get(e.exercise_id) ?? e.exercise_id,
+          name: named(e.exercise_id),
           sets: e.sets,
           target: targetOf(e),
         })),
+        ...(workout.workout_alternatives.length > 0 && {
+          alternatives: workout.workout_alternatives.map((a) => ({
+            id: a.id,
+            name: alternativeName(a),
+            inUse: a.in_use,
+            ...(!a.in_use && {
+              exercises: kept(a.exercises).map((e) => ({
+                id: e.exerciseId,
+                name: named(e.exerciseId),
+                sets: e.sets,
+                target: e.target,
+              })),
+            }),
+          })),
+        }),
       }));
     },
   }),
@@ -878,12 +897,16 @@ function planWorkouts(supabase: Client) {
   return supabase
     .from('workouts')
     .select(
-      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position)',
+      'id, name, type, weekdays, workout_exercises (exercise_id, sets, target_reps_min, target_reps_max, target_seconds, target_meters, position), workout_alternatives (id, name, position, in_use, exercises)',
     )
     .eq('active', true)
     .order('id')
-    .order('position', { referencedTable: 'workout_exercises' });
+    .order('position', { referencedTable: 'workout_exercises' })
+    .order('position', { referencedTable: 'workout_alternatives' });
 }
+
+/** An exercise of an alternative not in use, as saved_workout() kept it (ADR 0061). */
+type Kept = { exerciseId: string; sets: number; target: ProposalTarget };
 
 /** One of the user's active workouts, by its id, with what its card names it by. */
 function workoutForCard(supabase: Client, id: number) {
