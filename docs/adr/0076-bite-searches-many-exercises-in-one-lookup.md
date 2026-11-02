@@ -27,6 +27,10 @@ exercise at a time.
   stays the answer's to speak of. An answer in the last round that still speaks of a card it did
   not make is told once to say, in a sentence, that it could not make one (`CARD_NOT_MADE`).
 
+- **The target each exercise takes:** each match names it (reps, seconds, or meters or seconds),
+  from `target_kind()`, which `target_suits()` now checks by, so that the rule is written once and
+  Bite gives the right target the first time.
+
 ## Alternatives considered
 
 - **Raising the limit only:** every long answer gets slower and dearer, and Bite still searches
