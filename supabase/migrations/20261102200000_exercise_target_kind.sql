@@ -1,7 +1,7 @@
 -- Which target an exercise takes (#402, ADR 0076), so that Bite gives the right one the first time:
--- reps for one counted in reps, meters or seconds for a distance, seconds for the rest. Written
--- once, for target_suits() to check by and for PostgREST to give as a computed field of
--- `exercises`.
+-- `reps` for one counted in reps, `distance` (meters or seconds) for a distance, `time` (seconds)
+-- for the rest. Written once, for target_suits() to check by and for PostgREST to give as a
+-- computed field of `exercises`.
 create function public.metric_target_kind(metrics public.exercise_metric[])
 returns text
 language sql
@@ -10,8 +10,8 @@ set search_path = ''
 as $$
   select case
     when 'reps' = any(metrics) then 'reps'
-    when 'distance' = any(metrics) then 'meters or seconds'
-    else 'seconds'
+    when 'distance' = any(metrics) then 'distance'
+    else 'time'
   end;
 $$;
 
@@ -42,7 +42,7 @@ as $$
   )
   select case public.metric_target_kind(metrics)
     when 'reps' then coalesce(reps, false)
-    when 'meters or seconds' then reps is null and (seconds or meters)
+    when 'distance' then reps is null and (seconds or meters)
     else reps is null and seconds and not meters
   end
   from given;

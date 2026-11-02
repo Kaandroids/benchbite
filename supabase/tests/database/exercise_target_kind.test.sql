@@ -11,12 +11,12 @@ select is(
 );
 select is(
   (select public.target_kind(e) from public.exercises e where e.id = 'Plank'),
-  'seconds',
+  'time',
   'A timed one takes seconds'
 );
 select is(
   (select public.target_kind(e) from public.exercises e where e.id = 'Rowing_Stationary'),
-  'meters or seconds',
+  'distance',
   'A distance takes meters or seconds'
 );
 select ok(
