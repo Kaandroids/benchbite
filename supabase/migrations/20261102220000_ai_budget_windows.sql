@@ -16,6 +16,35 @@ alter table public.ai_usage add column given boolean;
 alter type public.ai_access add attribute by_count boolean;
 alter type public.ai_access add attribute left_count integer;
 
+-- How long a plan lasts past its period: a renewal reaches us a little after the store makes it,
+-- and in between the plan should not end. plan_of() and the windows both read it.
+create function public.plan_grace()
+returns interval
+language sql
+immutable
+set search_path = ''
+as $$
+  select interval '1 hour';
+$$;
+
+-- As before (20261102210000_plans_and_subscriptions.sql), with the grace from plan_grace().
+create or replace function public.plan_of(user_id uuid)
+returns public.plan
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select s.plan from public.subscriptions s
+      where s.user_id = plan_of.user_id
+        and now() >= s.period_start
+        and now() < s.period_end + public.plan_grace()
+    ),
+    'free'
+  );
+$$;
+
 -- The feature the free plan counts by number: meals estimated from a photo.
 create function public.ai_counted_feature()
 returns public.ai_feature
@@ -77,8 +106,8 @@ as $$
   );
 $$;
 
--- `span`, widened by the hour a plan lasts past its period when it ends with the period, so that
--- what is used in that hour counts toward it.
+-- `span`, widened by the grace a plan lasts past its period when it ends with the period, so that
+-- what is used in the grace counts toward it.
 create function public.with_grace(span tstzrange, subscription public.subscriptions)
 returns tstzrange
 language sql
@@ -87,7 +116,7 @@ set search_path = ''
 as $$
   select case
     when upper(span) = subscription.period_end
-      then tstzrange(lower(span), upper(span) + interval '1 hour')
+      then tstzrange(lower(span), upper(span) + public.plan_grace())
     else span
   end;
 $$;
@@ -244,21 +273,29 @@ begin
     elsif windows.week_used_usd >= windows.weekly_budget_usd then
       result.reason := 'limit_reached';
     end if;
+    -- In a plan's grace its windows have ended, and nothing opens again until it is renewed.
+    if result.resets_at <= now() then
+      result.resets_at := null;
+    end if;
   end if;
   result.allowed := result.reason is null;
   return result;
 end;
 $$;
 
--- As before (20261030200000_count_ai_call.sql), with no limit by cost when `budget_usd` is null:
--- a call limited by number is held by its count, and its backstop by what calls did cost, never
--- by what one sets aside.
-create or replace function public.ai_call_refusal(
+-- As before (20261030200000_count_ai_call.sql), with no limit by cost for a feature limited
+-- `by_count`: its call is held by its count, and its backstop by what calls did cost, never by
+-- what one sets aside.
+drop function public.ai_call_refusal(
+  public.ai_feature_limits, public.ai_model_prices, integer, numeric, numeric
+);
+create function public.ai_call_refusal(
   limits public.ai_feature_limits,
   price public.ai_model_prices,
   input_tokens integer,
   other_used_usd numeric,
-  budget_usd numeric
+  budget_usd numeric,
+  by_count boolean
 )
 returns public.ai_access_reason
 language sql
@@ -268,7 +305,7 @@ as $$
   select case
     when input_tokens > limits.max_input_tokens then 'request_too_large'
     when price is null then 'unpriced_model'
-    when budget_usd is not null
+    when not by_count
       and other_used_usd + public.ai_cost(price, input_tokens, 0, limits.max_output_tokens)
         > budget_usd then 'limit_reached'
   end::public.ai_access_reason;
@@ -319,8 +356,7 @@ begin
       result.reason := 'call_in_progress';
     else
       result.reason := public.ai_call_refusal(
-        limits, price, input_tokens, access.used_usd,
-        case when access.by_count then null else access.budget_usd end
+        limits, price, input_tokens, access.used_usd, access.budget_usd, access.by_count
       );
     end if;
     if result.reason is null then
@@ -374,8 +410,7 @@ begin
   access := public.ai_access(started.feature);
   result.reason := public.ai_call_refusal(
     limits, public.ai_model_price(started.model, started.started_at), input_tokens,
-    access.used_usd - started.reserved_usd,
-    case when access.by_count then null else access.budget_usd end
+    access.used_usd - started.reserved_usd, access.budget_usd, access.by_count
   );
 
   if result.reason is null then
@@ -465,6 +500,10 @@ end;
 $$;
 
 revoke all on function public.ai_counted_feature() from public, anon, authenticated;
+revoke all on function public.plan_grace() from public, anon, authenticated;
+revoke all on function public.ai_call_refusal(
+  public.ai_feature_limits, public.ai_model_prices, integer, numeric, numeric, boolean
+) from public, anon, authenticated;
 revoke all on function public.budget_period(timestamptz, timestamptz, public.billing_period, timestamptz)
   from public, anon, authenticated;
 revoke all on function public.week_of(tstzrange, timestamptz) from public, anon, authenticated;

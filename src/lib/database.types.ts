@@ -1813,6 +1813,7 @@ export type Database = {
       ai_call_refusal: {
         Args: {
           budget_usd: number;
+          by_count: boolean;
           input_tokens: number;
           limits: Omit<
             Database['public']['Tables']['ai_feature_limits']['Row'],
@@ -2380,6 +2381,7 @@ export type Database = {
           workout_id: number;
         }[];
       };
+      plan_grace: { Args: Record<PropertyKey, never>; Returns: string };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };

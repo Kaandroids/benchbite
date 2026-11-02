@@ -102,9 +102,9 @@ select pg_temp.used('00000000-0000-0000-0000-00000000000a', 'coach_chat', 1.40, 
 select pg_temp.used('00000000-0000-0000-0000-00000000000a', 'coach_chat', 0.20, now() - interval '10 minutes');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
-  $$ select allowed, reason, used_usd from public.ai_access() $$,
-  $$ values (false, 'limit_reached'::public.ai_access_reason, 1.60::numeric) $$,
-  'What is used in a plan''s grace hour counts toward its last week'
+  $$ select allowed, reason, used_usd, resets_at from public.ai_access() $$,
+  $$ values (false, 'limit_reached'::public.ai_access_reason, 1.60::numeric, null::timestamptz) $$,
+  'What is used in a plan''s grace hour counts toward its last week, with no reset until renewed'
 );
 reset role;
 update public.subscriptions set billing = 'yearly', period_start = now() - interval '2 months',
