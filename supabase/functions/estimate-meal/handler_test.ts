@@ -259,20 +259,34 @@ Deno.test('gives no items for a photo of no food', async () => {
   assertEquals(searched, []);
 });
 
-Deno.test("counts only an estimate of a meal as given, for a free user's week", async () => {
-  const outputs = [
-    answer({ isFood: true, items: [ITEMS[0]] }),
-    answer({ isFood: false, items: [], note: 'That is a cat, not a meal!' }),
-    { ...answer({ isFood: true, items: [ITEMS[0]] }), finish: 'length' as const },
-  ];
-  const given: (boolean | undefined)[] = [];
-  for (const output of outputs) {
-    const { ctx, recorded } = context(new FakeModel(output));
-    await handleEstimateRequest(ask(REQUEST), ctx);
-    given.push(recorded[0]?.given);
-  }
+Deno.test(
+  "counts a whole answer as given, a photo of no food too, for a free user's week",
+  async () => {
+    const outputs: ModelResponse[] = [
+      answer({ isFood: true, items: [ITEMS[0]] }),
+      answer({ isFood: false, items: [], note: 'That is a cat, not a meal!' }),
+      { ...answer({ isFood: true, items: [ITEMS[0]] }), finish: 'length' },
+      { ...answer({}), parts: [{ type: 'text', text: 'Sure! Here is your meal: rice.' }] },
+    ];
+    const given: (boolean | undefined)[] = [];
+    for (const output of outputs) {
+      const { ctx, recorded } = context(new FakeModel(output));
+      await handleEstimateRequest(ask(REQUEST), ctx);
+      given.push(recorded[0]?.given);
+    }
 
-  assertEquals(given, [true, false, false]);
+    assertEquals(given, [true, true, false, false]);
+  },
+);
+
+Deno.test('does not count an estimate the user cancelled', async () => {
+  const { ctx, recorded } = context(new FakeModel(answer({ isFood: true, items: [ITEMS[0]] })));
+  const cancel = new AbortController();
+  cancel.abort();
+
+  await handleEstimateRequest(new Request(ask(REQUEST), { signal: cancel.signal }), ctx);
+
+  assertEquals(recorded[0]?.given, false);
 });
 
 Deno.test('answers unavailable when the model answers in another shape', async () => {

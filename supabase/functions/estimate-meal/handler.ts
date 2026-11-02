@@ -112,8 +112,10 @@ export async function handleEstimateRequest(
         ],
         responseSchema: RESPONSE_SCHEMA,
       },
-      // Only an estimate of a meal counts toward a free user's week (ADR 0078).
-      (answer) => answer.finish === 'stop' && estimateOf(answer.parts)?.isFood === true,
+      // A whole answer counts toward a free user's week, a photo of no food too; one refused, cut,
+      // in another shape, or that the user cancelled does not (ADR 0078).
+      (answer) =>
+        answer.finish === 'stop' && !req.signal.aborted && estimateOf(answer.parts).success,
     );
     if (response.finish === 'blocked') return refused('blocked');
     if (response.finish === 'length') {
@@ -129,7 +131,7 @@ export async function handleEstimateRequest(
     return refused('unavailable');
   }
 
-  const output = ModelOutput.safeParse(parseJson(textOf(parts)));
+  const output = estimateOf(parts);
   if (!output.success) {
     console.error('The estimate was not in the shape asked for', {
       issues: output.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
@@ -145,10 +147,9 @@ export async function handleEstimateRequest(
   return Response.json(estimate);
 }
 
-/** The estimate an answer gives, or nothing when it is not in the shape asked for. */
+/** The estimate an answer gives, read in the shape asked for. */
 function estimateOf(parts: Part[]) {
-  const output = ModelOutput.safeParse(parseJson(textOf(parts)));
-  return output.success ? output.data : undefined;
+  return ModelOutput.safeParse(parseJson(textOf(parts)));
 }
 
 function refused(reason: EstimateReason): Response {

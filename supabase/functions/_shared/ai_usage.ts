@@ -35,8 +35,8 @@ export type AiRequest = Omit<ModelRequest, 'task'>;
 /** The model for one task, whose every request is limited and counted. */
 export type AiModel = {
   /**
-   * `gave`, when given, says whether an answer gave what the call was for, as an estimate of a
-   * meal: on the free plan, only such a call counts toward the week's number (ADR 0078).
+   * `gave`, when given, says whether an answer gave what the call was for, as a whole estimate:
+   * on the free plan, only such a call counts toward the week's number (ADR 0078).
    */
   generate(request: AiRequest, gave?: (response: ModelResponse) => boolean): Promise<ModelResponse>;
   stream(request: AiRequest): AsyncIterable<StreamEvent>;
@@ -58,7 +58,7 @@ export class AiRefusedError extends Error {
  * Makes sure the user of `supabase`, a client with their token, may call a model for `feature`
  * now: throws `AiRefusedError` with the reason when not, and an error when that cannot be read.
  */
-export async function checkAiAccess(supabase: Client, feature: Task = 'coach_chat'): Promise<void> {
+export async function checkAiAccess(supabase: Client, feature: Task): Promise<void> {
   const access = await supabase.rpc('ai_access', { feature });
   if (access.error) throw new Error(`ai_access: ${access.error.message}`);
   if (!access.data.allowed) throw new AiRefusedError(access.data.reason ?? 'limit_reached');
