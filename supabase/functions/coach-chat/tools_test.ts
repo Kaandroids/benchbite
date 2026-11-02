@@ -148,6 +148,7 @@ const LEGS_WITH_ALTERNATIVES = {
 function planContext(
   rpc: Record<string, { data?: unknown; error?: unknown }> = {},
   workout: Row | Row[] = LEGS,
+  proposals: Row[] = [],
 ) {
   const calls: { name: string; args: unknown }[] = [];
   // Filters by equality, but not an embedded table's, whose rows here are in the language asked
@@ -180,7 +181,15 @@ function planContext(
   };
   const supabase = {
     from: (table: string) =>
-      query(table === 'workouts' ? (Array.isArray(workout) ? workout : [workout]) : NAMES),
+      query(
+        table === 'workouts'
+          ? Array.isArray(workout)
+            ? workout
+            : [workout]
+          : table === 'coach_proposals'
+            ? proposals
+            : NAMES,
+      ),
     rpc: (name: string, args: unknown) => {
       calls.push({ name, args });
       return Promise.resolve({ data: null, error: null, ...rpc[name] });
@@ -374,6 +383,21 @@ Deno.test("reads a workout's alternatives, and the exercises of those not in use
   ]);
 });
 
+/** Legs' alternatives as the database read them for a proposal, by coach_alternatives_state(). */
+const STATE = {
+  workout: { exercises: [{ exerciseId: 'Barbell_Squat' }, { exerciseId: 'Plank' }] },
+  alternatives: [
+    {
+      id: 12,
+      position: 1,
+      name: null,
+      inUse: false,
+      exercises: LEGS_WITH_ALTERNATIVES.workout_alternatives[1]!.exercises,
+    },
+    { id: 11, position: 2, name: 'Knee-safe', inUse: true, exercises: null },
+  ],
+};
+
 const SWAP = {
   replace: 'Barbell_Squat',
   with: 'Leg_Press',
@@ -499,6 +523,11 @@ Deno.test('says why a proposal was refused, for the model to correct it', async 
   });
   const unsuited = await runTool('propose_workout_change', change, context);
   assertEquals((unsuited as { error: string }).error.startsWith('A target does not suit'), true);
+  const { context: emptied } = planContext({
+    propose_coach_workouts: { error: { code: 'BB008' } },
+  });
+  const empty = await runTool('propose_workout_change', change, emptied);
+  assertEquals((empty as { error: string }).error.startsWith('A workout needs at least one'), true);
   const { context: missing } = planContext({
     propose_coach_workouts: { error: { code: 'BB039' } },
   });
@@ -525,14 +554,25 @@ Deno.test('says why a proposal was refused, for the model to correct it', async 
     },
     context,
   );
+  // Each workout once, as the database takes them.
+  const twice = await runTool(
+    'propose_workout_change',
+    { workouts: [{ workoutId: 3, swaps: [SWAP] }, { workoutId: 3 }] },
+    context,
+  );
+  assertEquals((twice as { error: string }).error.includes('each workout once'), true);
   assertEquals(theirs, { error: "That workout is not the user's." });
   assertEquals(calls.length, made);
 });
 
 Deno.test('proposes a first alternative, naming the version in use too', async () => {
-  const { context, calls } = planContext({
-    propose_coach_alternative: { data: 42 },
-  });
+  const { context, calls } = planContext({ propose_coach_alternative: { data: 42 } }, LEGS, [
+    {
+      id: 42,
+      change: { workoutId: 3, name: 'Knee-safe', currentName: 'Gym' },
+      before: { workout: STATE.workout, alternatives: [] },
+    },
+  ]);
   const result = await runTool(
     'propose_alternative',
     { workoutId: 3, name: ' Knee-safe ', currentName: 'Gym', swaps: [SWAP] },
@@ -601,9 +641,11 @@ Deno.test('proposes an alternative made from the one in use, which keeps its nam
   // The database leaves the version in use as it is named.
   assertEquals((calls[0]!.args as { current_name: string }).current_name, '');
 
+  // The database drops the name for the version in use, which has one.
   const { context: made } = planContext(
     { propose_coach_alternative: { data: 43 } },
     LEGS_WITH_ALTERNATIVES,
+    [{ id: 43, change: { workoutId: 3, name: 'Hotel' }, before: STATE }],
   );
   const result = (await runTool(
     'propose_alternative',
@@ -622,6 +664,7 @@ Deno.test('proposes a switch back, with the exercises it brings back', async () 
   const { context, calls } = planContext(
     { propose_coach_alternative_switch: { data: 44 } },
     LEGS_WITH_ALTERNATIVES,
+    [{ id: 44, change: { workoutId: 3, alternativeId: 12 }, before: STATE }],
   );
   const result = await runTool(
     'propose_alternative_switch',

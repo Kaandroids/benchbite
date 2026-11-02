@@ -142,7 +142,7 @@ const REFUSALS = {
     BB006: "That workout is not the user's.",
     BB007:
       'A target does not suit its exercise: reps for reps, seconds for timed, meters for distance.',
-    BB008: 'Too many exercises for a workout.',
+    BB008: 'A workout needs at least one exercise, and may have only so many.',
     BB037: "The calories are under the user's calorie floor.",
     BB038: 'The user has too many changes waiting; ask them to decide those first.',
     BB039: 'An exercise to replace or remove is not in the workout; take it from get_workouts.',
@@ -154,7 +154,8 @@ const REFUSALS = {
       'The workout has an alternative of that name already; switch to it with propose_alternative_switch, or pick another name.',
     BB050: 'That alternative is in use already.',
     P0002: 'There is no such alternative; take its id from get_workouts.',
-    '22023': 'A change must change something.',
+    '22023':
+      'A change must change something, name each workout once, and leave a new alternative at least one exercise.',
     '23514': 'The values are out of range, or the macros add up to more than the calories.',
   },
   otherwise: 'The change could not be proposed just now.',
@@ -469,7 +470,10 @@ const TOOLS = [
       workouts: z
         .array(z.object({ workoutId: z.number().int().positive(), ...EDIT }))
         .min(1)
-        .max(3),
+        .max(3)
+        .refine((edits) => new Set(edits.map((e) => e.workoutId)).size === edits.length, {
+          message: "each workout once, with all of that workout's changes",
+        }),
     }),
     run: async ({ workouts: edits }, { supabase, language, today, threadId }) => {
       const plan = read(await planWorkouts(supabase));
@@ -526,24 +530,26 @@ const TOOLS = [
         thread_id: threadId,
         workout_id: args.workoutId,
         name: args.name,
-        // The database leaves it out for a version in use that has a name.
+        // None is blank, which the database leaves out, as it does for a version in use that
+        // has a name.
         current_name: args.currentName ?? '',
         edit: editOf(args),
         today,
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
-      const current = workout.workout_alternatives.find((a) => a.in_use);
+      const { change, before } = await proposedAlternatives(supabase, proposed.data);
+      // As apply_coach_change() leaves it: the one in use named `currentName` when the change kept
+      // one; without alternatives, the workout's own, which add_workout_alternative() makes the
+      // first.
+      const current = before.alternatives.find((a) => a.inUse);
       const proposal: ProposalCard = {
         kind: 'alternative',
         id: proposed.data,
         workout: { name: workout.name, type: workout.type },
-        // Without alternatives, the version in use becomes the first.
-        from: current
-          ? {
-              name: current.name ?? args.currentName ?? null,
-              position: current.position,
-            }
-          : { name: args.currentName ?? null, position: 1 },
+        from: {
+          name: change.currentName ?? current?.name ?? null,
+          position: current?.position ?? 1,
+        },
         to: args.name,
         ...changesOf(args, names),
       };
@@ -559,20 +565,22 @@ const TOOLS = [
     run: async ({ alternativeId }, { supabase, language, today, threadId }) => {
       const plan = read(await planWorkouts(supabase));
       const workout = plan.find((w) => w.workout_alternatives.some((a) => a.id === alternativeId));
-      const to = workout?.workout_alternatives.find((a) => a.id === alternativeId);
-      const from = workout?.workout_alternatives.find((a) => a.in_use);
-      if (!workout || !to || !from) return { error: REFUSALS.meanings.P0002 };
+      if (!workout) return { error: REFUSALS.meanings.P0002 };
       const proposed = await supabase.rpc('propose_coach_alternative_switch', {
         thread_id: threadId,
         alternative_id: alternativeId,
         today,
       });
       if (proposed.error) return refused(proposed.error, REFUSALS);
+      // As the database read the alternatives for the proposal, which applying switches between.
+      const { before } = await proposedAlternatives(supabase, proposed.data);
+      const now = before.alternatives.find((a) => a.inUse)!;
+      const next = before.alternatives.find((a) => a.id === alternativeId)!;
       // The exercises it has that the one in use has not, as the card names them.
-      const inUse = new Set(workout.workout_exercises.map((e) => e.exercise_id));
+      const inUse = new Set(before.workout.exercises.map((e) => e.exerciseId));
       const back = [
         ...new Set(
-          kept(to.exercises).flatMap((e) => (inUse.has(e.exerciseId) ? [] : [e.exerciseId])),
+          kept(next.exercises).flatMap((e) => (inUse.has(e.exerciseId) ? [] : [e.exerciseId])),
         ),
       ];
       const names = await exerciseNames(supabase, language, back);
@@ -580,8 +588,8 @@ const TOOLS = [
         kind: 'alternative_switch',
         id: proposed.data,
         workout: { name: workout.name, type: workout.type },
-        from: { name: from.name, position: from.position },
-        to: { name: to.name, position: to.position },
+        from: { name: now.name, position: now.position },
+        to: { name: next.name, position: next.position },
         back: back.map((id) => names.get(id) ?? id),
       };
       return { proposal };
@@ -1015,6 +1023,35 @@ async function exerciseNames(supabase: Client, language: Language, ids: string[]
 function closeness(name: string, query: string): number {
   const [a, b] = [name.toLowerCase(), query.trim().toLowerCase()];
   return a === b ? 0 : a.startsWith(b) ? 1 : 2;
+}
+
+/**
+ * A workout's alternatives as the database read them for a proposal (coach_alternatives_state()),
+ * under the user's lock, so that its card shows what applying changes.
+ */
+type AlternativesState = {
+  workout: { exercises: { exerciseId: string }[] };
+  alternatives: {
+    id: number;
+    position: number;
+    name: string | null;
+    inUse: boolean;
+    exercises: unknown;
+  }[];
+};
+
+/** What an alternative or switch proposal `id` changes, as stored, and what it read before. */
+async function proposedAlternatives(supabase: Client, id: number) {
+  const { data, error } = await supabase
+    .from('coach_proposals')
+    .select('change, before')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data) throw error ?? new Error('The proposal just made could not be read');
+  return {
+    change: data.change as { currentName?: string },
+    before: data.before as unknown as AlternativesState,
+  };
 }
 
 /** An edit as edited_workout_exercises() takes it. */
