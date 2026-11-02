@@ -1386,30 +1386,30 @@ export type Database = {
       };
       subscriptions: {
         Row: {
-          billing: string;
+          billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
           plan: Database['public']['Enums']['plan'];
-          source: string;
+          source: Database['public']['Enums']['subscription_source'];
           updated_at: string;
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
-          billing: string;
+          billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
           plan: Database['public']['Enums']['plan'];
-          source: string;
+          source: Database['public']['Enums']['subscription_source'];
           updated_at?: string;
           user_id: string;
         };
         Update: {
-          billing?: string;
+          billing?: Database['public']['Enums']['billing_period'];
           period_end?: string;
           period_start?: string;
           plan?: Database['public']['Enums']['plan'];
-          source?: string;
+          source?: Database['public']['Enums']['subscription_source'];
           updated_at?: string;
           user_id?: string;
         };
@@ -2106,7 +2106,7 @@ export type Database = {
       };
       give_plan: {
         Args: {
-          billing?: string;
+          billing?: Database['public']['Enums']['billing_period'];
           email: string;
           ends: string;
           plan?: Database['public']['Enums']['plan'];
@@ -2348,7 +2348,6 @@ export type Database = {
           workout_id: number;
         }[];
       };
-      plan_grace: { Args: Record<PropertyKey, never>; Returns: string };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
@@ -2692,6 +2691,7 @@ export type Database = {
         | 'unpriced_model'
         | 'call_in_progress';
       ai_feature: 'coach_chat' | 'coach_voice' | 'meal_photo' | 'review';
+      billing_period: 'monthly' | 'yearly';
       bite_expression: 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
       coach_interruption: 'failed' | 'refused' | 'stopped' | 'cut';
       coach_meal_card_status: 'pending' | 'logged' | 'undone';
@@ -2802,6 +2802,7 @@ export type Database = {
         | 'bottle';
       sex: 'female' | 'male' | 'unspecified';
       streak_state: 'done' | 'frozen' | 'missed' | 'open';
+      subscription_source: 'manual' | 'revenuecat';
       training_setup: 'gym' | 'dumbbells' | 'bodyweight';
       weight_unit: 'kg' | 'lb';
       workout_type: 'full_body' | 'upper' | 'lower' | 'push' | 'pull' | 'legs';
@@ -2953,6 +2954,7 @@ export const Constants = {
         'call_in_progress',
       ],
       ai_feature: ['coach_chat', 'coach_voice', 'meal_photo', 'review'],
+      billing_period: ['monthly', 'yearly'],
       bite_expression: ['neutral', 'happy', 'sad', 'angry', 'surprised'],
       coach_interruption: ['failed', 'refused', 'stopped', 'cut'],
       coach_meal_card_status: ['pending', 'logged', 'undone'],
@@ -3074,6 +3076,7 @@ export const Constants = {
       ],
       sex: ['female', 'male', 'unspecified'],
       streak_state: ['done', 'frozen', 'missed', 'open'],
+      subscription_source: ['manual', 'revenuecat'],
       training_setup: ['gym', 'dumbbells', 'bodyweight'],
       weight_unit: ['kg', 'lb'],
       workout_type: ['full_body', 'upper', 'lower', 'push', 'pull', 'legs'],

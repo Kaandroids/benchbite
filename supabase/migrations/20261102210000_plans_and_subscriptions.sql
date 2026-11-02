@@ -4,8 +4,12 @@
 -- of `ai_budgets`; the windows they are counted in come with #409.
 
 create type public.plan as enum ('free', 'trial', 'premium');
+create type public.billing_period as enum ('monthly', 'yearly');
+create type public.subscription_source as enum ('manual', 'revenuecat');
 
--- What each plan gives. Null is no limit of that kind.
+-- What each plan gives. Null is no limit of that kind. Only `budget_usd` is read so far, by
+-- ai_access(): the weekly numbers take effect with #409, and the workout limits with #410, until
+-- which workout_limits() decides them as before.
 create table public.plans (
   plan public.plan primary key,
   -- Workouts a user may have, archived ones included, and exercises in each (ADR 0018).
@@ -32,15 +36,15 @@ values
   ('premium', 500, 20, 5, null, 4, 1.50, null, null);
 
 -- A user's subscription, as the store or a hand gave it: the plan it gives, its billing period,
--- how it is billed, which a yearly budget is divided by, and where it came from. One per user,
--- the latest.
+-- whether it is billed monthly or yearly, as a yearly period's budget is counted by the month,
+-- and where it came from. One per user, the latest.
 create table public.subscriptions (
   user_id uuid primary key references auth.users (id) on delete cascade,
   plan public.plan not null check (plan <> 'free'),
   period_start timestamptz not null,
   period_end timestamptz not null,
-  billing text not null check (billing in ('monthly', 'yearly')),
-  source text not null check (source in ('manual', 'revenuecat')),
+  billing public.billing_period not null,
+  source public.subscription_source not null,
   updated_at timestamptz not null default now(),
   check (period_end > period_start)
 );
@@ -55,19 +59,13 @@ create policy "Users read their own subscription"
 revoke all on public.plans, public.subscriptions from anon, authenticated;
 grant select on public.subscriptions to authenticated;
 
--- How long a plan lasts past its period: a renewal reaches us a little after the store makes it,
--- and in between the plan should not end.
-create function public.plan_grace()
-returns interval
-language sql
-immutable
-set search_path = ''
-as $$
-  select interval '1 hour';
-$$;
+create trigger set_subscriptions_updated_at
+  before update on public.subscriptions
+  for each row execute function extensions.moddatetime(updated_at);
 
--- The plan `user_id` is on now: their subscription's while its period, and its grace, have not
--- ended, free otherwise.
+-- The plan `user_id` is on now: their subscription's while its period, and an hour past it, have
+-- not ended, free otherwise. The hour is a grace: a renewal reaches us a little after the store
+-- makes it, and in between the plan should not end.
 create function public.plan_of(user_id uuid)
 returns public.plan
 language sql
@@ -79,7 +77,7 @@ as $$
       select s.plan from public.subscriptions s
       where s.user_id = plan_of.user_id
         and now() >= s.period_start
-        and now() < s.period_end + public.plan_grace()
+        and now() < s.period_end + interval '1 hour'
     ),
     'free'
   );
@@ -104,7 +102,7 @@ create function public.give_plan(
   starts timestamptz,
   ends timestamptz,
   plan public.plan default 'premium',
-  billing text default 'monthly'
+  billing public.billing_period default 'monthly'
 )
 returns uuid
 language plpgsql
@@ -129,8 +127,7 @@ begin
     period_start = excluded.period_start,
     period_end = excluded.period_end,
     billing = excluded.billing,
-    source = excluded.source,
-    updated_at = now();
+    source = excluded.source;
   return given_id;
 end;
 $$;
@@ -180,11 +177,10 @@ $$;
 
 drop table public.ai_budgets;
 
-revoke all on function public.plan_grace() from public, anon, authenticated;
 revoke all on function public.plan_of(uuid) from public, anon, authenticated;
 revoke all on function public.has_premium() from public, anon;
 grant execute on function public.has_premium() to authenticated;
-revoke all on function public.give_plan(text, timestamptz, timestamptz, public.plan, text)
+revoke all on function public.give_plan(text, timestamptz, timestamptz, public.plan, public.billing_period)
   from public, anon, authenticated;
-grant execute on function public.give_plan(text, timestamptz, timestamptz, public.plan, text)
+grant execute on function public.give_plan(text, timestamptz, timestamptz, public.plan, public.billing_period)
   to service_role;
