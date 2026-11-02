@@ -21,15 +21,20 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000c', null, true),
   ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false);
 
--- A and B are premium, with $4 a month; B has used all but two cents of it. D is on the free plan.
+-- A and B are premium, with $4 a period; B has used all but two cents of it, in an earlier week
+-- of its period, so that the period, not the week, has less left. D is on the free plan.
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
-select id, 'premium', now() - interval '1 day', now() + interval '29 days', 'monthly', 'manual'
-from auth.users where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b');
+values
+  ('00000000-0000-0000-0000-00000000000a', 'premium', now() - interval '1 day',
+   now() + interval '29 days', 'monthly', 'manual'),
+  ('00000000-0000-0000-0000-00000000000b', 'premium', now() - interval '8 days',
+   now() + interval '22 days', 'monthly', 'manual');
 insert into public.ai_usage
   (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
-   thinking_tokens, cost_usd)
+   thinking_tokens, cost_usd, created_at)
 select gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
-  0, 0, 0, 0, (select budget_usd - 0.02 from public.plans where plan = 'premium');
+  0, 0, 0, 0, (select budget_usd - 0.02 from public.plans where plan = 'premium'),
+  now() - interval '7 days 12 hours';
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -68,10 +73,9 @@ insert into calls select 'chat', call_id
   from public.start_ai_call('coach_chat', 'gemini-3.5-flash-lite', 32000);
 select ok((select call_id from calls where name = 'chat') is not null, 'A user with a budget starts a call');
 select results_eq(
-  $$ select budget_usd, used_usd, resets_at = date_trunc('month', now(), 'UTC') + interval '1 month'
-     from public.ai_access() $$,
-  $$ values (4.00::numeric, 0.014720::numeric, true) $$,
-  'which sets the most it may cost aside from the month''s budget'
+  $$ select budget_usd, used_usd, resets_at = now() + interval '6 days' from public.ai_access() $$,
+  $$ values (1.50::numeric, 0.014720::numeric, true) $$,
+  'which sets the most it may cost aside from the week''s budget, which has less left'
 );
 select results_eq(
   $$ select allowed, reason, call_id, max_output_tokens
@@ -322,7 +326,7 @@ select throws_ok(
   'nor price tokens'
 );
 
--- An earlier month, the limit, guests, users without a budget, and lost settings.
+-- An earlier period, the limit, guests, users without a budget, and lost settings.
 set local role service_role;
 delete from public.ai_calls_in_flight;
 insert into public.ai_usage
@@ -330,15 +334,15 @@ insert into public.ai_usage
    thinking_tokens, cost_usd, created_at)
   values
     (gen_random_uuid(), '00000000-0000-0000-0000-00000000000a', 'meal_photo', 'gemini-3.8-flash',
-     0, 0, 0, 0, 10, date_trunc('month', now(), 'UTC') - interval '1 second'),
+     0, 0, 0, 0, 10, now() - interval '1 day 1 second'),
     (gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
-     0, 0, 0, 0, 0.02, date_trunc('month', now(), 'UTC'));
+     0, 0, 0, 0, 0.02, now() - interval '7 days 12 hours');
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   (select used_usd from public.ai_access()),
   0.538031::numeric,
-  'Only the calls of this month count'
+  'Only the calls of this budget period count'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');

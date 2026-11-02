@@ -74,8 +74,8 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select ok(public.has_premium(), 'A premium user is told so');
 select results_eq(
   $$ select budget_usd, reason from public.ai_access() $$,
-  $$ values (4.00::numeric, null::public.ai_access_reason) $$,
-  'and has premium''s budget for AI'
+  $$ values (1.50::numeric, null::public.ai_access_reason) $$,
+  'and has premium''s budget for AI, the week''s while it has less left'
 );
 select is((select count(*)::integer from public.subscriptions), 1, 'and reads their subscription');
 
