@@ -144,19 +144,17 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
       >
         {(
           [
-            ['chat', 'chats', usage.chats],
-            ['camera', 'photos', usage.photos],
-            ['chart', 'reviews', usage.reviews],
+            ['chat', 'chats', usage.chats, 'dinner', 'dinnerBackground'],
+            ['camera', 'photos', usage.photos, 'water', 'waterBackground'],
+            ['trend', 'reviews', usage.reviews, 'breakfast', 'breakfastBackground'],
           ] as const
-        ).map(([icon, kind, count]) => (
-          <View key={kind} style={[styles.stat, { gap: spacing.sm }]}>
-            <IconTile name={icon} size={30} />
-            <View>
-              <Text variant="label">{count}</Text>
-              <Text variant="caption" color="textMuted">
-                {t(`premium.trialEnding.${kind}`, { count })}
-              </Text>
-            </View>
+        ).map(([icon, kind, count, color, background]) => (
+          <View key={kind} style={[styles.stat, { gap: spacing.xs }]}>
+            <IconTile name={icon} size={44} color={color} background={background} />
+            <Text variant="headline">{count}</Text>
+            <Text variant="caption" color="textMuted" style={styles.centerText}>
+              {t(`premium.trialEnding.${kind}`, { count })}
+            </Text>
           </View>
         ))}
       </View>
@@ -233,7 +231,9 @@ const styles = StyleSheet.create({
   },
   stat: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
+  },
+  centerText: {
+    textAlign: 'center',
   },
 });
