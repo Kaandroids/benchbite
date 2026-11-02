@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
+  cancelAnimation,
   FadeInLeft,
   useAnimatedStyle,
   useReducedMotion,
@@ -12,14 +13,13 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { BiteAvatar } from '@/coach/bite-avatar';
-import { IconTile } from '@/components/ui/icon-tile';
 import { SparkleStar } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { addDays, isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
-/** How many days the free trial lasts. */
-export const TRIAL_DAYS = 7;
+import { TRIAL_DAYS, type TrialUsage } from './trial';
+import { UsageStats } from './usage-stats';
 
 type TrialWeekProps = {
   /** The trial's first day. */
@@ -29,19 +29,20 @@ type TrialWeekProps = {
   /** The days the user used Bite on, as ISO dates. */
   usedOn: readonly string[];
   /** What the user did with Bite in the trial. */
-  usage: { chats: number; photos: number; reviews: number };
+  usage: TrialUsage;
 };
 
 /**
  * The trial's week as a strip (#411): the days gone in the brand's orange and those left lighter,
  * Bite standing on today, a dot under each day the user used it, and a star on the last day.
  */
-export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekProps) {
+export function TrialWeek({ startedOn, todayIndex: index, usedOn, usage }: TrialWeekProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const weekday = useWeekdayFormat('short');
   const days = Array.from({ length: TRIAL_DAYS }, (_, index) => addDays(startedOn, index));
   const last = TRIAL_DAYS - 1;
+  const todayIndex = Math.min(Math.max(index, 0), last);
 
   return (
     <View
@@ -79,7 +80,9 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
           ]}
         >
           <Text variant="captionStrong" color="onInverse">
-            {t('premium.trialEnding.together', { count: last - todayIndex })}
+            {todayIndex === last
+              ? t('premium.trialEnding.lastDay')
+              : t('premium.trialEnding.together', { count: last - todayIndex })}
           </Text>
         </Animated.View>
       </View>
@@ -132,9 +135,7 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
 
       <View
         style={[
-          styles.row,
           {
-            gap: spacing.sm,
             marginTop: spacing.lg,
             paddingTop: spacing.lg,
             borderTopWidth: StyleSheet.hairlineWidth,
@@ -142,21 +143,31 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
           },
         ]}
       >
-        {(
-          [
-            ['chat', 'chats', usage.chats, 'info', 'infoBackground'],
-            ['camera', 'photos', usage.photos, 'snack', 'snackBackground'],
-            ['trend', 'reviews', usage.reviews, 'breakfast', 'breakfastBackground'],
-          ] as const
-        ).map(([icon, kind, count, color, background]) => (
-          <View key={kind} style={[styles.stat, { gap: spacing.xs }]}>
-            <IconTile name={icon} size={44} color={color} background={background} />
-            <Text variant="headline">{count}</Text>
-            <Text variant="caption" color="textMuted" style={styles.centerText}>
-              {t(`premium.trialEnding.${kind}`, { count })}
-            </Text>
-          </View>
-        ))}
+        <UsageStats
+          stats={[
+            {
+              icon: 'chat',
+              count: usage.chats,
+              label: t('premium.trialEnding.chats', { count: usage.chats }),
+              color: 'info',
+              background: 'infoBackground',
+            },
+            {
+              icon: 'camera',
+              count: usage.photos,
+              label: t('premium.trialEnding.photos', { count: usage.photos }),
+              color: 'snack',
+              background: 'snackBackground',
+            },
+            {
+              icon: 'trend',
+              count: usage.reviews,
+              label: t('premium.trialEnding.reviews', { count: usage.reviews }),
+              color: 'breakfast',
+              background: 'breakfastBackground',
+            },
+          ]}
+        />
       </View>
     </View>
   );
@@ -170,9 +181,12 @@ function Segment({ gone, pulses, first, last }: SegmentProps) {
   const reduceMotion = useReducedMotion();
   const opacity = useSharedValue(1);
   useEffect(() => {
+    cancelAnimation(opacity);
+    opacity.set(1);
     if (pulses && !reduceMotion) {
       opacity.set(withRepeat(withTiming(0.45, { duration: 800 }), -1, true));
     }
+    return () => cancelAnimation(opacity);
   }, [pulses, reduceMotion, opacity]);
   const pulseStyle = useAnimatedStyle(() => ({ opacity: opacity.get() }));
   return (
@@ -228,12 +242,5 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  centerText: {
-    textAlign: 'center',
   },
 });

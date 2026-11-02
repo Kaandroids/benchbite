@@ -2078,7 +2078,8 @@
       "usedDays_other": "You used Bite on {{count}} days",
       "yearlyNote": "{{price}} a month, billed once a year",
       "title": "Your trial summary",
-      "titleNamed": "<accent>{{name}}'s</accent> trial summary"
+      "titleNamed": "<accent>{{name}}'s</accent> trial summary",
+      "lastDay": "Last day together!"
     },
     "offer": {
       "endsIn": "Ends in {{time}}",

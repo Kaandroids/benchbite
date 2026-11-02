@@ -31,6 +31,11 @@ describe('TrialEndingScreen', () => {
     expect(screen.getByText("Kaan's")).toBeTruthy();
   });
 
+  it('says so on the last day of the trial', async () => {
+    await render(<TrialEndingScreen {...props} todayIndex={6} onKeep={jest.fn()} />);
+    expect(screen.getByText('Last day together!')).toBeTruthy();
+  });
+
   it('keeps the plan billed as chosen', async () => {
     const onKeep = jest.fn();
     await render(<TrialEndingScreen {...props} onKeep={onKeep} />);

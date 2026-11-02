@@ -12,7 +12,8 @@ import { addDays, useDayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import type { Billing, PlanPrices } from './prices';
-import { TRIAL_DAYS, TrialWeek } from './trial-week';
+import { TRIAL_DAYS, type TrialUsage } from './trial';
+import { TrialWeek } from './trial-week';
 
 type TrialEndingScreenProps = {
   /** The user's name, shown in the title when they have given one. */
@@ -24,7 +25,7 @@ type TrialEndingScreenProps = {
   /** The days the user used Bite on, as ISO dates. */
   usedOn: readonly string[];
   /** What the user did with Bite in the trial. */
-  usage: { chats: number; photos: number; reviews: number };
+  usage: TrialUsage;
   prices: PlanPrices;
   onKeep: (billing: Billing) => void;
   onCancel: () => void;

@@ -2078,7 +2078,8 @@
       "usedDays_other": "Du hast Bite an {{count}} Tagen genutzt",
       "yearlyNote": "{{price}} pro Monat, einmal im Jahr berechnet",
       "title": "Deine Testwoche im Überblick",
-      "titleNamed": "Testwoche von <accent>{{name}}</accent>"
+      "titleNamed": "Testwoche von <accent>{{name}}</accent>",
+      "lastDay": "Letzter Tag zusammen!"
     },
     "offer": {
       "endsIn": "Endet in {{time}}",
