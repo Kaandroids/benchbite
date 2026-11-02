@@ -1,17 +1,17 @@
 // The work of purge-coach-media (#361, ADR 0063), apart from signing in, so that it can be tested
 // with a stand-in for the database and storage. It takes a batch of the folders that deleted
-// chats left in coach-media, removes their photos and then their place in the queue. A folder that
-// fails stays queued for the next run.
+// chats left in coach-media, removes their files, photos and voice messages, and then their place
+// in the queue. A folder that fails stays queued for the next run.
 import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** Folders per run: a run has to end well within the scheduled call's timeout. */
 export const BATCH_SIZE = 20;
-/** Photos listed and removed per request. */
+/** Files listed and removed per request. */
 export const PAGE_SIZE = 100;
 
 export type PurgeContext = {
-  /** A client with the service role, which alone reads the queue and removes the photos. */
+  /** A client with the service role, which alone reads the queue and removes the files. */
   admin: Client;
 };
 
@@ -45,7 +45,7 @@ export async function handlePurgeRequest(req: Request, context: PurgeContext): P
       purged.push(folder.thread_id);
     } catch (cause) {
       // The thread id alone: the path also names the user.
-      logError(`Purging the photos of thread ${folder.thread_id} failed`, cause);
+      logError(`Purging the files of thread ${folder.thread_id} failed`, cause);
       failed.push(folder);
     }
   }
@@ -68,7 +68,7 @@ export async function handlePurgeRequest(req: Request, context: PurgeContext): P
 }
 
 /**
- * Removes every photo in a thread's folder, a page at a time, until listing it finds none. Throws
+ * Removes every file in a thread's folder, a page at a time, until listing it finds none. Throws
  * when storage fails, or removes nothing of a page, so that the folder stays queued.
  */
 async function emptyFolder(admin: Client, folder: string): Promise<void> {
@@ -76,7 +76,7 @@ async function emptyFolder(admin: Client, folder: string): Promise<void> {
   for (;;) {
     const { data: listed, error } = await bucket.list(folder, { limit: PAGE_SIZE });
     if (error) throw error;
-    // Photos only: the folder holds no folders (ADR 0062), and a folder entry has no id.
+    // Files only: the folder holds no folders (ADR 0062), and a folder entry has no id.
     const paths = listed
       .filter((entry) => entry.id !== null)
       .map((entry) => `${folder}/${entry.name}`);
@@ -84,6 +84,6 @@ async function emptyFolder(admin: Client, folder: string): Promise<void> {
 
     const { data: removed, error: removeError } = await bucket.remove(paths);
     if (removeError) throw removeError;
-    if (removed.length === 0) throw new Error('Storage removed none of the listed photos');
+    if (removed.length === 0) throw new Error('Storage removed none of the listed files');
   }
 }
