@@ -118,6 +118,38 @@ function useFlashStyle(flash: SharedValue<number>) {
   });
 }
 
+type SparkleStarProps = {
+  size: number;
+  /** Grows and turns a little, again and again, unless the user asks for less motion. */
+  twinkles?: boolean;
+};
+
+/** One of the sparkles' stars on its own, such as to mark a day worth looking forward to. */
+export function SparkleStar({ size, twinkles = false }: SparkleStarProps) {
+  const reduceMotion = useReducedMotion();
+  const twinkle = useSharedValue(0);
+  useEffect(() => {
+    cancelAnimation(twinkle);
+    twinkle.set(0);
+    if (twinkles && !reduceMotion) {
+      twinkle.set(
+        withRepeat(withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.quad) }), -1, true),
+      );
+    }
+    return () => cancelAnimation(twinkle);
+  }, [twinkles, reduceMotion, twinkle]);
+  const twinkleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + 0.25 * twinkle.get() }, { rotate: `${20 * twinkle.get()}deg` }],
+  }));
+  return (
+    <Animated.View style={twinkleStyle}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" accessible={false}>
+        <Path d={STAR} fill={BRAND_ORANGE} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   box: {
     alignItems: 'center',
