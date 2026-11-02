@@ -14,7 +14,8 @@ records, and the sent message with a play button, its length and what was said.
 
 - **A voice message is a message of its own.** It goes to `coach-chat` alone, without text or
   photos, as AAC in an MP4 container, up to 60 seconds and 1 MB. The function reads its length
-  from the file's movie header, not from the app, and refuses one that is too large
+  from the file's movie header, not from the app, and holds it to what the file weighs: at most
+  32 KB a second, twice what the app records at. It refuses one that is too large
   (`voice_too_large`), too long (`voice_too_long`) or not MP4 (`voice_not_m4a`) before anything is
   asked or kept. A body larger than any message may be is refused as `too_large`, before what it
   holds is read.
