@@ -305,6 +305,19 @@ const search = async (query: string, context: ToolContext) => {
   return found!.exercises.map(({ id, name }) => ({ id, name }));
 };
 
+Deno.test('searches a plural that finds nothing once more without its last s', async () => {
+  const [found] = (await runTool(
+    'search_exercises',
+    { queries: ['barbell squats'] },
+    searchContext('en'),
+  )) as { query: string; exercises: { id: string }[] }[];
+  assertEquals(found!.query, 'barbell squats');
+  assertEquals(
+    found!.exercises.map((e) => e.id),
+    ['Barbell_Squat'],
+  );
+});
+
 Deno.test('names the target each exercise found takes', async () => {
   const found = (await runTool(
     'search_exercises',

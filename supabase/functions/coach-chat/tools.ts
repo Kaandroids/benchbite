@@ -54,7 +54,10 @@ export type ToolContext = {
 /** The most days one look at the history may cover. */
 const MAX_DAYS = 31;
 
-const QUERY = z.string().trim().min(2).max(80);
+/** The shortest a search may be. */
+const QUERY_MIN = 2;
+
+const QUERY = z.string().trim().min(QUERY_MIN).max(80);
 
 /**
  * How many exercises a search gives, and how many of the library's it ranks them from: enough
@@ -400,10 +403,19 @@ const TOOLS = [
             (query, index) =>
               queries.findIndex((other) => other.toLowerCase() === query.toLowerCase()) === index,
           )
-          .map(async (query) => ({
-            query,
-            exercises: await searchExercises(supabase, language, query),
-          })),
+          .map(async (query) => {
+            const found = await searchExercises(supabase, language, query);
+            // A plural finds nothing in names that are singular, as "Sissy Squat" for "sissy
+            // squats": it is searched once more without its last s.
+            const singular = query.length > QUERY_MIN && /s$/i.test(query);
+            return {
+              query,
+              exercises:
+                found.length || !singular
+                  ? found
+                  : await searchExercises(supabase, language, query.slice(0, -1)),
+            };
+          }),
       ),
   }),
   tool({
