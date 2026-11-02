@@ -28,6 +28,7 @@ export type Database = {
           call_id: string;
           counted: boolean;
           feature: Database['public']['Enums']['ai_feature'];
+          free: boolean;
           model: string;
           reserved_usd: number;
           started_at: string;
@@ -38,6 +39,7 @@ export type Database = {
           call_id?: string;
           counted?: boolean;
           feature: Database['public']['Enums']['ai_feature'];
+          free?: boolean;
           model: string;
           reserved_usd: number;
           started_at?: string;
@@ -47,6 +49,7 @@ export type Database = {
           call_id?: string;
           counted?: boolean;
           feature?: Database['public']['Enums']['ai_feature'];
+          free?: boolean;
           model?: string;
           reserved_usd?: number;
           started_at?: string;
@@ -106,6 +109,8 @@ export type Database = {
           created_at: string;
           estimated: boolean;
           feature: Database['public']['Enums']['ai_feature'];
+          free: boolean;
+          given: boolean | null;
           id: number;
           input_tokens: number;
           model: string;
@@ -121,6 +126,8 @@ export type Database = {
           created_at?: string;
           estimated?: boolean;
           feature: Database['public']['Enums']['ai_feature'];
+          free?: boolean;
+          given?: boolean | null;
           id?: never;
           input_tokens: number;
           model: string;
@@ -135,6 +142,8 @@ export type Database = {
           created_at?: string;
           estimated?: boolean;
           feature?: Database['public']['Enums']['ai_feature'];
+          free?: boolean;
+          given?: boolean | null;
           id?: never;
           input_tokens?: number;
           model?: string;
@@ -1792,7 +1801,7 @@ export type Database = {
       };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
-        Args: Record<PropertyKey, never>;
+        Args: { feature?: Database['public']['Enums']['ai_feature'] };
         Returns: Database['public']['CompositeTypes']['ai_access'];
         SetofOptions: {
           from: '*';
@@ -1829,6 +1838,10 @@ export type Database = {
         };
         Returns: number;
       };
+      ai_counted_feature: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['Enums']['ai_feature'];
+      };
       ai_model_price: {
         Args: { at: string; model: string };
         Returns: {
@@ -1841,6 +1854,16 @@ export type Database = {
         SetofOptions: {
           from: '*';
           to: 'ai_model_prices';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      ai_windows: {
+        Args: { user_id: string };
+        Returns: Database['public']['CompositeTypes']['ai_windows'];
+        SetofOptions: {
+          from: '*';
+          to: 'ai_windows';
           isOneToOne: true;
           isSetofReturn: false;
         };
@@ -1859,6 +1882,15 @@ export type Database = {
       apply_food_log_change: { Args: { change: Json }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
+      budget_period: {
+        Args: {
+          at: string;
+          billing: Database['public']['Enums']['billing_period'];
+          ends: string;
+          starts: string;
+        };
+        Returns: unknown;
+      };
       calculate_nutrition_targets: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -2432,6 +2464,7 @@ export type Database = {
         Args: {
           cached_input_tokens: number;
           call_id: string;
+          given?: boolean;
           input_tokens: number;
           known?: boolean;
           output_tokens: number;
@@ -2668,6 +2701,7 @@ export type Database = {
         Args: { alternative_id: number; today: string };
         Returns: undefined;
       };
+      week_of: { Args: { at: string; period: unknown }; Returns: unknown };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       workout_limits: {
         Args: Record<PropertyKey, never>;
@@ -2814,12 +2848,28 @@ export type Database = {
         budget_usd: number | null;
         used_usd: number | null;
         resets_at: string | null;
+        counted: boolean | null;
+        left_count: number | null;
       };
       ai_call: {
         allowed: boolean | null;
         reason: Database['public']['Enums']['ai_access_reason'] | null;
         call_id: string | null;
         max_output_tokens: number | null;
+      };
+      ai_windows: {
+        plan: Database['public']['Enums']['plan'] | null;
+        period: unknown;
+        week: unknown;
+        budget_usd: number | null;
+        weekly_budget_usd: number | null;
+        period_used_usd: number | null;
+        week_used_usd: number | null;
+        free_week: unknown;
+        weekly_count: number | null;
+        count_used: number | null;
+        free_budget_usd: number | null;
+        free_used_usd: number | null;
       };
       break_workout: {
         id: number | null;
