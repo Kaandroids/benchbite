@@ -1,12 +1,14 @@
+import type { AudioPlayer } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { radii, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
+import { userBubble } from './bubble-shape';
 import { type MessageVoice, voiceLength } from './chat-voice';
-import type { Playing } from './use-voice-playback';
+import { type Playing, usePlaying } from './use-voice-playback';
 
 /** The play button, and the bars beside it. */
 const BUTTON = 36;
@@ -20,8 +22,8 @@ function barCount(durationMs: number): number {
 }
 
 /**
- * The heights of a voice message's bars, from 0.2 to 1: drawn from its name, as no loudness is
- * kept, so that each message looks its own and the same each time.
+ * The heights of a voice message's bars, from 0.2 to 1: drawn from `seed`, as no loudness is kept,
+ * so that each message looks its own and the same each time.
  */
 export function barHeights(seed: string, count: number): number[] {
   let hash = 2166136261;
@@ -41,25 +43,46 @@ type VoiceBubbleProps = {
   text: string;
   /** Its file on the device, or its address once read; none while it is read. */
   source?: string;
-  /** Where it is, while it plays or after. */
-  playing?: Playing;
+  /** The chat's player, while it holds this message. */
+  player?: AudioPlayer;
   onPlay?: (id: string, source: string) => void;
 };
 
 /**
  * The user's voice message (board 6b): a button that plays and pauses it, its bars, filled as far
  * as it played, and its length, or where it is while it plays; what was said in it under them.
+ * Only the message in the player reads where it is, so that the chat does not render as it plays.
  */
-export function VoiceBubble({ id, voice, text, source, playing, onPlay }: VoiceBubbleProps) {
+export function VoiceBubble({ player, ...props }: VoiceBubbleProps) {
+  return player ? <PlayingVoice player={player} {...props} /> : <Voice {...props} />;
+}
+
+function PlayingVoice({
+  player,
+  ...props
+}: Omit<VoiceBubbleProps, 'player'> & { player: AudioPlayer }) {
+  return <Voice {...props} playing={usePlaying(player)} />;
+}
+
+function Voice({
+  id,
+  voice,
+  text,
+  source,
+  playing,
+  onPlay,
+}: Omit<VoiceBubbleProps, 'player'> & { playing?: Playing }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const heights = barHeights(voice.path ?? id, barCount(voice.durationMs));
+  // Drawn from its length in seconds, which the message has as sent and as kept alike.
+  const seconds = Math.round(voice.durationMs / 1000);
+  const heights = barHeights(String(seconds), barCount(voice.durationMs));
   const played = playing && voice.durationMs > 0 ? playing.positionMs / voice.durationMs : 0;
   const shownMs = playing?.playing || played > 0 ? playing!.positionMs : voice.durationMs;
   return (
     <View
       style={[
-        styles.bubble,
+        userBubble,
         {
           backgroundColor: colors.userBubble,
           gap: spacing.sm,
@@ -118,13 +141,6 @@ export function VoiceBubble({ id, voice, text, source, playing, onPlay }: VoiceB
 }
 
 const styles = StyleSheet.create({
-  bubble: {
-    maxWidth: '80%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    borderBottomLeftRadius: radii.xl,
-    borderBottomRightRadius: 6,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

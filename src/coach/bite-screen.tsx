@@ -211,7 +211,8 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
               messages={chat.messages}
               cards={cards}
               mediaUrls={mediaUrls.data}
-              playing={playback.playing}
+              player={playback.player}
+              playingId={playback.active}
               onPlay={playback.toggle}
               status={chat.status}
               tool={chat.tool}

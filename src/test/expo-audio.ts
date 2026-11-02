@@ -29,6 +29,7 @@ export const fakeAudio = {
   },
   recorderState: recorderState(),
   player: {
+    playing: false,
     play: jest.fn(),
     pause: jest.fn(),
     replace: jest.fn(),

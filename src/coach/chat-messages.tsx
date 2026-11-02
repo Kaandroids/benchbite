@@ -20,9 +20,10 @@ import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { TAIL, userBubble } from './bubble-shape';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { VoiceBubble } from './voice-bubble';
-import type { Playing } from './use-voice-playback';
+import type { AudioPlayer } from 'expo-audio';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
 import { NoteAskCard } from './note-ask-card';
@@ -52,8 +53,9 @@ type ChatMessagesProps = {
   cards: CardStates;
   /** The addresses of the chat's kept photos and voice messages, by path, once read. */
   mediaUrls?: Map<string, string>;
-  /** The voice message playing, or the last one played. */
-  playing?: Playing;
+  /** The chat's player, and the voice message in it: playing, or the last one played. */
+  player?: AudioPlayer;
+  playingId?: string;
   /** Plays a voice message from its file or address, or pauses it. */
   onPlay?: (id: string, source: string) => void;
   /** Opens Bite's notebook, from a note's line. */
@@ -84,7 +86,8 @@ export function ChatMessages({
   onAskAgain,
   cards,
   mediaUrls,
-  playing,
+  player,
+  playingId,
   onPlay,
   onOpenNotebook,
 }: ChatMessagesProps) {
@@ -121,7 +124,8 @@ export function ChatMessages({
               onAskAgain={onAskAgain}
               cards={cards}
               mediaUrls={mediaUrls}
-              playing={playing}
+              player={player}
+              playingId={playingId}
               onPlay={onPlay}
               onOpenPhoto={setViewing}
               onOpenNotebook={onOpenNotebook}
@@ -145,7 +149,15 @@ function hasCards(message: ChatMessage | undefined): boolean {
 
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'cards' | 'mediaUrls' | 'playing' | 'onPlay' | 'onOpenNotebook'
+  | 'status'
+  | 'tool'
+  | 'onAskAgain'
+  | 'cards'
+  | 'mediaUrls'
+  | 'player'
+  | 'playingId'
+  | 'onPlay'
+  | 'onOpenNotebook'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -164,7 +176,8 @@ function MessageRow({
   onAskAgain,
   cards,
   mediaUrls,
-  playing,
+  player,
+  playingId,
   onPlay,
   onOpenPhoto,
   onOpenNotebook,
@@ -175,10 +188,10 @@ function MessageRow({
       <UserMessage
         message={message}
         onAskAgain={onAskAgain}
-        // Only a message with media kept gets their addresses, and only the voice message playing
-        // where it is, so that the others do not render again.
+        // Only a message with media kept gets their addresses, and only the voice message in the
+        // player the player, so that the others do not render again.
         mediaUrls={kept ? mediaUrls : undefined}
-        playing={message.voice && playing?.id === message.id ? playing : undefined}
+        player={message.voice && playingId === message.id ? player : undefined}
         onPlay={message.voice ? onPlay : undefined}
         onOpenPhoto={onOpenPhoto}
       />
@@ -211,14 +224,14 @@ const UserMessage = memo(function UserMessage({
   message,
   onAskAgain,
   mediaUrls,
-  playing,
+  player,
   onPlay,
   onOpenPhoto,
 }: {
   message: ChatMessage;
   onAskAgain?: (question: ChatMessage) => void;
   mediaUrls?: Map<string, string>;
-  playing?: Playing;
+  player?: AudioPlayer;
   onPlay?: (id: string, source: string) => void;
   onOpenPhoto: (uri: string) => void;
 }) {
@@ -237,7 +250,7 @@ const UserMessage = memo(function UserMessage({
           voice={message.voice}
           text={message.text}
           source={message.voice.uri ?? mediaUrls?.get(message.voice.path)}
-          playing={playing}
+          player={player}
           onPlay={onPlay}
         />
       ) : null}
@@ -245,7 +258,7 @@ const UserMessage = memo(function UserMessage({
       {message.text && !message.voice ? (
         <View
           style={[
-            styles.bubble,
+            userBubble,
             {
               backgroundColor: colors.userBubble,
               paddingHorizontal: spacing.md + 2,
@@ -514,19 +527,9 @@ function Dot({ delay, color }: { delay: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, style]} />;
 }
 
-/** The sharper corner of a message, toward who said it. */
-const TAIL = 6;
-
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
-  },
-  bubble: {
-    maxWidth: '80%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    borderBottomLeftRadius: radii.xl,
-    borderBottomRightRadius: TAIL,
   },
   bite: {
     flexDirection: 'row',
