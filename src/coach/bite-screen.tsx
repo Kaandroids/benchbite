@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -108,26 +108,18 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   const proposals = useProposalStates(proposalIds(chat.messages));
   const mealCards = useMealCardStates(mealCardIds(chat.messages));
   const notes = useAskedNoteStates(askedNoteIds(chat.messages));
-  const cards = useMemo<CardStates>(
-    () => ({
-      proposals: proposals.data,
-      mealCards: mealCards.data,
-      notes: notes.data,
-      loading: {
-        proposals: proposals.isFetching,
-        mealCards: mealCards.isFetching,
-        notes: notes.isFetching,
-      },
-    }),
-    [
-      proposals.data,
-      proposals.isFetching,
-      mealCards.data,
-      mealCards.isFetching,
-      notes.data,
-      notes.isFetching,
-    ],
-  );
+  const states = { proposals, mealCards, notes };
+  const cards: CardStates = {
+    proposals: proposals.data,
+    mealCards: mealCards.data,
+    notes: notes.data,
+    loading: {
+      proposals: proposals.isFetching,
+      mealCards: mealCards.isFetching,
+      notes: notes.isFetching,
+    },
+    failed: { notes: notes.isError },
+  };
   // A saved chat's cards show where they stand from the start, so it waits for the states of the
   // cards it opened with. Cards that come later wait on their own, so the messages never go:
   // a card being edited keeps what the user changed.
@@ -136,11 +128,9 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
     mealCards: mealCardIds(start?.messages ?? []).length > 0,
     notes: askedNoteIds(start?.messages ?? []).length > 0,
   }));
-  const opening = [
-    ...(openedWith.proposals ? [proposals] : []),
-    ...(openedWith.mealCards ? [mealCards] : []),
-    ...(openedWith.notes ? [notes] : []),
-  ];
+  const opening = (Object.keys(states) as (keyof typeof states)[])
+    .filter((kind) => openedWith[kind])
+    .map((kind) => states[kind]);
   // The photos the chat kept, read back once for all of them when it opens. Only those it opened
   // with: its messages are read again after each one sent, whose photos show from their data, and
   // a new list would ask for every address again.

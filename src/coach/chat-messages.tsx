@@ -24,7 +24,7 @@ import { type MessagePhoto, photoDataUri } from './chat-photos';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
 import { NoteAskCard } from './note-ask-card';
-import { type AskedNoteState, type NoteCard, shownNotes } from './notes';
+import { askedNotes, type AskedNoteState, type NoteCard, shownNotes } from './notes';
 import { PhotoViewer } from './photo-viewer';
 import { ProposalCard } from './proposal-card';
 import type { ProposalState } from './proposals';
@@ -60,6 +60,8 @@ export type CardStates = {
   mealCards?: Map<number, MealCardState>;
   notes?: Map<number, AskedNoteState>;
   loading: { proposals: boolean; mealCards: boolean; notes: boolean };
+  /** Whether the states of the notes asked about could not be read. */
+  failed?: { notes: boolean };
 };
 
 /**
@@ -311,27 +313,14 @@ const BiteMessage = memo(function BiteMessage({
               onOpenNotebook={onOpenNotebook}
             />
           ))}
-          {message.notes
-            ?.filter((note) => note.action === 'asked')
-            .map((note) => {
-              const state = cards?.notes?.get(note.id);
-              // Said yes to, it is saved; declined, it is gone, and so is its card.
-              if (state === 'saved') {
-                return (
-                  <NoteLine
-                    key={`asked-${note.id}`}
-                    note={{ ...note, action: 'saved' }}
-                    onOpenNotebook={onOpenNotebook}
-                  />
-                );
-              }
-              if (state === undefined && !cards?.loading.notes) return null;
-              return (
-                <View key={`asked-${note.id}`} style={styles.proposal}>
-                  <NoteAskCard note={note} waiting={state === undefined} />
-                </View>
-              );
-            })}
+          {askedNotes(message.notes).map((note) => (
+            <AskedNote
+              key={`asked-${note.id}`}
+              note={note}
+              cards={cards}
+              onOpenNotebook={onOpenNotebook}
+            />
+          ))}
         </View>
       </View>
       {/* An answer that stopped short says so, under it. */}
@@ -539,6 +528,33 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 });
+
+/**
+ * A note Bite asked to save (board 24): its card while it waits for the user's yes, its line once
+ * saved, and nothing once declined, as it is gone. Where it stands not read, as offline, it shows
+ * as waiting, to answer, rather than go.
+ */
+function AskedNote({
+  note,
+  cards,
+  onOpenNotebook,
+}: {
+  note: NoteCard;
+  cards?: CardStates;
+  onOpenNotebook?: () => void;
+}) {
+  const state = cards?.notes?.get(note.id);
+  if (state === 'saved') {
+    return <NoteLine note={{ ...note, action: 'saved' }} onOpenNotebook={onOpenNotebook} />;
+  }
+  const loading = !!cards?.loading.notes;
+  if (state === undefined && !loading && !cards?.failed?.notes) return null;
+  return (
+    <View style={styles.proposal}>
+      <NoteAskCard note={note} waiting={state === undefined && loading} />
+    </View>
+  );
+}
 
 /** A note Bite kept, as a line under its answer, with a way to the notebook (board 4). */
 function NoteLine({ note, onOpenNotebook }: { note: NoteCard; onOpenNotebook?: () => void }) {

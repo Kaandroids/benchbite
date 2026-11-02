@@ -444,24 +444,39 @@ it('offers no way to the notebook in a chat opened from it, which it goes back t
   expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
 });
 
-/** Lets coach_notes say each note asked about still waits, and keeps what the user answers. */
+/**
+ * Lets coach_notes say each note asked about waits until the user answers, and keep the answer,
+ * as the table does.
+ */
 function notesAsked() {
   const answers = { update: jest.fn(), delete: jest.fn() };
+  const saved = new Set<number>();
+  const removed = new Set<number>();
   jest.mocked(supabase.from).mockImplementation(
     () =>
       ({
         select: () => ({
           in: (_: string, ids: number[]) =>
-            Promise.resolve({ data: ids.map((id) => ({ id, asked: true })), error: null }),
+            Promise.resolve({
+              data: ids
+                .filter((id) => !removed.has(id))
+                .map((id) => ({ id, asked: !saved.has(id) })),
+              error: null,
+            }),
         }),
         update: (values: unknown) => ({
-          eq: (_: string, id: number) => (
-            answers.update(id, values),
-            Promise.resolve({ error: null })
-          ),
+          eq: (_: string, id: number) => {
+            answers.update(id, values);
+            saved.add(id);
+            return Promise.resolve({ error: null });
+          },
         }),
         delete: () => ({
-          eq: (_: string, id: number) => (answers.delete(id), Promise.resolve({ error: null })),
+          eq: (_: string, id: number) => {
+            answers.delete(id);
+            removed.add(id);
+            return Promise.resolve({ error: null });
+          },
         }),
       }) as never,
   );
@@ -487,6 +502,26 @@ it('asks whether to keep a note, saves it with a tap, then shows it saved', asyn
   await fireEvent.press(await screen.findByRole('button', { name: 'Save to notebook' }));
   expect(answers.update).toHaveBeenCalledWith(4, { asked: false });
   expect(await screen.findByText('Saved to notebook: Vegetarian')).toBeOnTheScreen();
+});
+
+it('still asks about a note whose state could not be read', async () => {
+  jest.mocked(supabase.from).mockReturnValue({
+    select: () => ({
+      in: () => Promise.resolve({ data: null, error: { message: 'offline' } }),
+    }),
+  } as never);
+  const stream = liveStream();
+  await render(<BiteScreen />);
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  await stream.send(
+    { event: 'thread', threadId: 7 },
+    { event: 'note', note: ASKED },
+    { event: 'done', threadId: 7, messageId: 9 },
+  );
+  await stream.end();
+
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Not now' })).toBeEnabled());
+  expect(screen.getByText('Remember this?')).toBeOnTheScreen();
 });
 
 it('removes a note asked about with Not now, and its card', async () => {
