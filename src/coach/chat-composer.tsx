@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -10,16 +10,21 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { type PhotosProblem, prepareChatPhoto } from './chat-photos';
+import { prepareChatPhoto } from './chat-photos';
+import { isVoiceProblem } from './chat-voice';
 import { PhotoTray } from './photo-tray';
-import type { Draft } from './use-chat';
+import type { Draft, DraftProblem, Outgoing } from './use-chat';
+import { useVoiceRecorder } from './use-voice-recorder';
+import { MicButton, RecordingHeader, SlideToCancel } from './voice-recording';
 
-/** A message whose photos were refused, handed back with why, once for each refusal. */
-export type RefusedDraft = { draft: Draft; problem: PhotosProblem };
+/** A message whose photos or voice message were refused, handed back with why, once each. */
+export type RefusedDraft = { draft: Draft; problem: DraftProblem };
 
 type ChatComposerProps = {
-  /** Sends what the user wrote; the composer empties as it does. */
-  onSend: (draft: Draft) => void;
+  /** Sends what the user wrote, or a voice message; the composer empties as it does. */
+  onSend: (message: Outgoing) => void;
+  /** Told as the mic is held, before anything records, as what plays has to stop first. */
+  onHold?: () => void;
   /** Stops Bite's answer; set while Bite answers, which the send button becomes. */
   onStop?: () => void;
   /**
@@ -27,6 +32,8 @@ type ChatComposerProps = {
    * user wrote since, and why said above it until its photos change.
    */
   refused?: RefusedDraft;
+  /** Told when a voice message starts and stops recording, as the chat dims meanwhile. */
+  onRecording?: (recording: boolean) => void;
 };
 
 const EMPTY_DRAFT: Draft = { text: '', photos: [] };
@@ -45,14 +52,15 @@ function withRefused(current: Draft, refused: Draft): Draft {
 /**
  * Where the user writes to Bite and adds photos (boards 7 and 7b), and the note under it that
  * Bite can be wrong. The + at the start of the field takes or chooses photos, up to 3, which wait
- * above the text, each with an ×; text is optional with them.
+ * above the text, each with an ×; text is optional with them. Empty, it offers the mic instead of
+ * sending: held, it records a voice message, which goes as it is let go (boards 1 and 6).
  */
-export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
+export function ChatComposer({ onSend, onStop, refused, onRecording, onHold }: ChatComposerProps) {
   const { t } = useTranslation();
   const { colors, spacing, typography } = useTheme();
   // What the user writes stays here, so that typing renders the composer alone, not the chat.
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [problem, setProblem] = useState<PhotosProblem>();
+  const [problem, setProblem] = useState<DraftProblem>();
   const [picking, setPicking] = useState(false);
   /** How many photos are being prepared, which wait in the tray as they are. */
   const [preparing, setPreparing] = useState(0);
@@ -65,11 +73,37 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
       setProblem(refused.problem);
     }
   }
+  /** Told how to record, after a tap on the mic too short to be a message. */
+  const [hint, setHint] = useState(false);
+  /** Whether the finger slid far enough left that letting go cancels the recording. */
+  const [cancelling, setCancelling] = useState(false);
+  const voice = useVoiceRecorder((end) => {
+    setCancelling(false);
+    if ('sent' in end) onSend({ voice: end.sent });
+    else if ('problem' in end) setProblem(end.problem);
+    else if ('tooShort' in end) setHint(true);
+  });
+  const { recording } = voice;
+  // The chat stops dimming also when the composer goes while it records.
+  useEffect(() => {
+    onRecording?.(recording);
+    return () => onRecording?.(false);
+  }, [onRecording, recording]);
   const room = Math.max(0, MAX_PHOTOS - draft.photos.length - preparing);
   const tooMany = draft.photos.length > MAX_PHOTOS;
   const canSend = (!!draft.text.trim() || draft.photos.length > 0) && preparing === 0 && !tooMany;
+  // Nothing written or added: the mic stands where Send would.
+  const empty = !draft.text.trim() && draft.photos.length === 0 && preparing === 0;
   // More photos than a message takes, as a message handed back may bring, are said until fewer.
   const shown = problem ?? (tooMany ? { reason: 'too_many_photos' as const } : undefined);
+  // What is said above the field: why the message was refused, or how to record after a tap.
+  const note = shown
+    ? isVoiceProblem(shown)
+      ? t(`bite.voice.problems.${shown.reason}`)
+      : t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })
+    : hint
+      ? t('bite.voice.holdHint')
+      : undefined;
 
   const add = async (uris: string[]) => {
     const wanted = uris.slice(0, room);
@@ -98,60 +132,73 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
     // Emptied first, so that a message refused at once, on the device, comes back to it.
     setDraft(EMPTY_DRAFT);
     setProblem(undefined);
+    setHint(false);
     onSend(draft);
   };
 
   return (
     <View style={{ gap: spacing.sm }}>
-      {shown ? (
+      {note ? (
         <Text
           variant="caption"
-          color="danger"
+          color={shown ? 'danger' : 'textMuted'}
           accessibilityLiveRegion="polite"
           style={{ paddingHorizontal: spacing.md }}
         >
-          {t(`bite.photos.problems.${shown.reason}`, { number: (shown.photo ?? 0) + 1 })}
+          {note}
         </Text>
       ) : null}
       <View
         style={[
           styles.field,
+          recording && styles.recording,
           { gap: spacing.xs, backgroundColor: colors.surface, borderColor: colors.border },
         ]}
       >
-        {draft.photos.length > 0 || preparing > 0 ? (
+        {/* Each part keeps its place, so that the mic held stays the same while it records. */}
+        {recording ? <RecordingHeader durationMs={voice.durationMs} levels={voice.levels} /> : null}
+        {!recording && (draft.photos.length > 0 || preparing > 0) ? (
           <PhotoTray
             photos={draft.photos}
             preparing={preparing}
-            refused={problem?.photo}
+            refused={problem && !isVoiceProblem(problem) ? problem.photo : undefined}
             onRemove={remove}
             onAdd={room > 0 ? () => setPicking(true) : undefined}
           />
         ) : null}
-        <View style={styles.line}>
-          <RoundIconButton
-            icon="plus"
-            color="text"
-            background="surface"
-            label={t('bite.photos.add')}
-            onPress={() => setPicking(true)}
-            size={44}
-            disabled={room <= 0}
-          />
-          <TextInput
-            accessibilityLabel={t('bite.message')}
-            placeholder={t('bite.ask')}
-            placeholderTextColor={colors.placeholder}
-            value={draft.text}
-            onChangeText={(text) => setDraft((current) => ({ ...current, text }))}
-            multiline
-            maxLength={MAX_MESSAGE_LENGTH}
-            style={[
-              typography.body,
-              styles.input,
-              { color: colors.text, paddingHorizontal: spacing.xs },
-            ]}
-          />
+        <View style={[styles.line, recording && styles.recordingLine]}>
+          {recording ? (
+            <SlideToCancel cancelling={cancelling} />
+          ) : (
+            <RoundIconButton
+              icon="plus"
+              color="text"
+              background="surface"
+              label={t('bite.photos.add')}
+              onPress={() => setPicking(true)}
+              size={44}
+              disabled={room <= 0}
+            />
+          )}
+          {recording ? null : (
+            <TextInput
+              accessibilityLabel={t('bite.message')}
+              placeholder={t('bite.ask')}
+              placeholderTextColor={colors.placeholder}
+              value={draft.text}
+              onChangeText={(text) => {
+                setHint(false);
+                setDraft((current) => ({ ...current, text }));
+              }}
+              multiline
+              maxLength={MAX_MESSAGE_LENGTH}
+              style={[
+                typography.body,
+                styles.input,
+                { color: colors.text, paddingHorizontal: spacing.xs },
+              ]}
+            />
+          )}
           {onStop ? (
             <RoundIconButton
               icon="stop"
@@ -160,6 +207,19 @@ export function ChatComposer({ onSend, onStop, refused }: ChatComposerProps) {
               label={t('bite.stop')}
               onPress={onStop}
               size={44}
+            />
+          ) : empty || recording ? (
+            <MicButton
+              recording={recording}
+              cancelling={cancelling}
+              onHold={() => {
+                setProblem(undefined);
+                setHint(false);
+                onHold?.();
+                voice.start();
+              }}
+              onSlide={setCancelling}
+              onRelease={(cancel) => void voice.finish(!cancel)}
             />
           ) : (
             <RoundIconButton
@@ -202,6 +262,14 @@ const styles = StyleSheet.create({
   line: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+  },
+  /** The panel while a voice message records (board 6). */
+  recording: {
+    borderRadius: 28,
+    padding: 12,
+  },
+  recordingLine: {
+    alignItems: 'center',
   },
   input: {
     flex: 1,

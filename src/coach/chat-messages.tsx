@@ -1,3 +1,4 @@
+import type { AudioPlayer } from 'expo-audio';
 import { Fragment, memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
@@ -20,7 +21,9 @@ import { oneOf } from '@/lib/one-of';
 import { radii, useTheme } from '@/theme';
 
 import { BiteAvatar } from './bite-avatar';
+import { TAIL, userBubble } from './bubble-shape';
 import { type MessagePhoto, photoDataUri } from './chat-photos';
+import { VoiceBubble } from './voice-bubble';
 import { MealCardView } from './meal-card';
 import type { MealCardState } from './meal-cards';
 import { NoteAskCard } from './note-ask-card';
@@ -48,8 +51,13 @@ type ChatMessagesProps = {
   onAskAgain?: (question: ChatMessage) => void;
   /** Where Bite's cards stand. */
   cards: CardStates;
-  /** The addresses of the chat's kept photos, by path, once read. */
-  photoUrls?: Map<string, string>;
+  /** The addresses of the chat's kept photos and voice messages, by path, once read. */
+  mediaUrls?: Map<string, string>;
+  /** The chat's player, and the voice message in it: playing, or the last one played. */
+  player?: AudioPlayer;
+  playingId?: string;
+  /** Plays a voice message from its file or address, or pauses it. */
+  onPlay?: (id: string, source: string) => void;
   /** Opens Bite's notebook, from a note's line. */
   onOpenNotebook?: () => void;
 };
@@ -65,10 +73,11 @@ export type CardStates = {
 };
 
 /**
- * The conversation: the user's messages in bubbles, their photos above them, Bite's as text after
- * its face, with the meals it estimated and the changes it proposed under it. Bite's last message thinks while it waits, with
- * what it is looking up or at, and talks while its text comes (boards 2, 3 and 8). A photo opens
- * large when tapped.
+ * The conversation: the user's messages in bubbles, their photos above them, their voice messages
+ * to play with what was said under them, Bite's as text after its face, with the meals it
+ * estimated and the changes it proposed under it. Bite's last message thinks while it waits, with
+ * what it is looking up, at or listening to, and talks while its text comes (boards 2, 3, 6b and
+ * 8). A photo opens large when tapped.
  */
 export function ChatMessages({
   messages,
@@ -76,7 +85,10 @@ export function ChatMessages({
   tool,
   onAskAgain,
   cards,
-  photoUrls,
+  mediaUrls,
+  player,
+  playingId,
+  onPlay,
   onOpenNotebook,
 }: ChatMessagesProps) {
   const { spacing } = useTheme();
@@ -111,7 +123,10 @@ export function ChatMessages({
               tool={tool}
               onAskAgain={onAskAgain}
               cards={cards}
-              photoUrls={photoUrls}
+              mediaUrls={mediaUrls}
+              player={player}
+              playingId={playingId}
+              onPlay={onPlay}
               onOpenPhoto={setViewing}
               onOpenNotebook={onOpenNotebook}
             />
@@ -134,7 +149,15 @@ function hasCards(message: ChatMessage | undefined): boolean {
 
 type MessageRowProps = Pick<
   ChatMessagesProps,
-  'status' | 'tool' | 'onAskAgain' | 'cards' | 'photoUrls' | 'onOpenNotebook'
+  | 'status'
+  | 'tool'
+  | 'onAskAgain'
+  | 'cards'
+  | 'mediaUrls'
+  | 'player'
+  | 'playingId'
+  | 'onPlay'
+  | 'onOpenNotebook'
 > & {
   message: ChatMessage;
   /** The message before, the question Bite's last one answers. */
@@ -152,23 +175,37 @@ function MessageRow({
   tool,
   onAskAgain,
   cards,
-  photoUrls,
+  mediaUrls,
+  player,
+  playingId,
+  onPlay,
   onOpenPhoto,
   onOpenNotebook,
 }: MessageRowProps) {
   if (message.role === 'user') {
+    const kept = message.photos?.some((photo) => photo.path) || !!message.voice?.path;
     return (
       <UserMessage
         message={message}
         onAskAgain={onAskAgain}
-        // Only a message with photos kept gets their addresses, so the others do not render again.
-        photoUrls={message.photos?.some((photo) => photo.path) ? photoUrls : undefined}
+        // Only a message with media kept gets their addresses, and only the voice message in the
+        // player the player, so that the others do not render again.
+        mediaUrls={kept ? mediaUrls : undefined}
+        player={message.voice && playingId === message.id ? player : undefined}
+        onPlay={message.voice ? onPlay : undefined}
         onOpenPhoto={onOpenPhoto}
       />
     );
   }
   if (last && status === 'thinking' && !message.text && !hasCards(message)) {
-    return <Thinking tool={tool} photos={before?.photos?.length ?? 0} />;
+    return (
+      <Thinking
+        tool={tool}
+        photos={before?.photos?.length ?? 0}
+        // Bite listens to a voice message until what was said in it is written down.
+        listening={!!before?.voice && !before.text}
+      />
+    );
   }
   // Only a message with cards gets where they stand, so that the others render again only when
   // they change, not when a card is decided.
@@ -186,12 +223,16 @@ function MessageRow({
 const UserMessage = memo(function UserMessage({
   message,
   onAskAgain,
-  photoUrls,
+  mediaUrls,
+  player,
+  onPlay,
   onOpenPhoto,
 }: {
   message: ChatMessage;
   onAskAgain?: (question: ChatMessage) => void;
-  photoUrls?: Map<string, string>;
+  mediaUrls?: Map<string, string>;
+  player?: AudioPlayer;
+  onPlay?: (id: string, source: string) => void;
   onOpenPhoto: (uri: string) => void;
 }) {
   const { t } = useTranslation();
@@ -201,13 +242,23 @@ const UserMessage = memo(function UserMessage({
   return (
     <View style={[styles.user, { gap: spacing.xs }]}>
       {message.photos?.length ? (
-        <MessagePhotos photos={message.photos} urls={photoUrls} onOpen={onOpenPhoto} />
+        <MessagePhotos photos={message.photos} urls={mediaUrls} onOpen={onOpenPhoto} />
       ) : null}
-      {/* A message may be photos alone. */}
-      {message.text ? (
+      {message.voice ? (
+        <VoiceBubble
+          id={message.id}
+          voice={message.voice}
+          text={message.text}
+          source={message.voice.uri ?? mediaUrls?.get(message.voice.path)}
+          player={player}
+          onPlay={onPlay}
+        />
+      ) : null}
+      {/* A message may be photos alone; a voice message's text is in its bubble. */}
+      {message.text && !message.voice ? (
         <View
           style={[
-            styles.bubble,
+            userBubble,
             {
               backgroundColor: colors.userBubble,
               paddingHorizontal: spacing.md + 2,
@@ -383,27 +434,37 @@ function MessagePhotos({
   );
 }
 
-function Thinking({ tool, photos }: { tool?: string; photos: number }) {
+function Thinking({
+  tool,
+  photos,
+  listening,
+}: {
+  tool?: string;
+  photos: number;
+  listening: boolean;
+}) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.row, { gap: avatarGap(spacing) }]}>
       <BiteAvatar size={AVATAR} state="thinking" />
-      <ToolLine tool={tool} photos={photos} />
+      <ToolLine tool={tool} photos={photos} listening={listening} />
     </View>
   );
 }
 
 /**
- * Bite's dots, and what it looks up, if it says, or else at the `photos` sent with the question;
- * `indent` lines it up with Bite's messages.
+ * Bite's dots, and what it looks up, if it says, or else at the `photos` sent with the question,
+ * or that it is `listening` to a voice message; `indent` lines it up with Bite's messages.
  */
 function ToolLine({
   tool,
   photos = 0,
+  listening = false,
   indent = false,
 }: {
   tool?: string;
   photos?: number;
+  listening?: boolean;
   indent?: boolean;
 }) {
   const { t } = useTranslation();
@@ -411,9 +472,11 @@ function ToolLine({
   const known = oneOf(COACH_TOOLS, tool);
   const line = known
     ? t(`bite.tools.${known}`)
-    : photos > 0
-      ? t('bite.photos.looking', { count: photos })
-      : undefined;
+    : listening
+      ? t('bite.voice.hearing')
+      : photos > 0
+        ? t('bite.photos.looking', { count: photos })
+        : undefined;
   return (
     <View
       style={[
@@ -464,19 +527,9 @@ function Dot({ delay, color }: { delay: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, style]} />;
 }
 
-/** The sharper corner of a message, toward who said it. */
-const TAIL = 6;
-
 const styles = StyleSheet.create({
   user: {
     alignItems: 'flex-end',
-  },
-  bubble: {
-    maxWidth: '80%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    borderBottomLeftRadius: radii.xl,
-    borderBottomRightRadius: TAIL,
   },
   bite: {
     flexDirection: 'row',

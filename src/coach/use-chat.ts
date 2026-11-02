@@ -1,4 +1,4 @@
-import { PHOTO_REFUSALS } from '@shared/coach/chat';
+import { PHOTO_REFUSALS, VOICE_REFUSALS } from '@shared/coach/chat';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,13 @@ import type { AnswerExpression } from './bite-expressions';
 import { afterEvent, afterStream, beginning, type Ending, type Failure } from './chat-ending';
 import { localTime, type MessagePhoto, type PhotosProblem, photosToSend } from './chat-photos';
 import { type ChatEvent, ChatRequestError, streamChat } from './chat-stream';
+import {
+  discardVoices,
+  type MessageVoice,
+  sweepVoices,
+  type VoiceDraft,
+  type VoiceProblem,
+} from './chat-voice';
 import type { MealCard } from './meal-cards';
 import type { NoteCard } from './notes';
 import { isShownProposal, type ShownProposal } from './proposals';
@@ -42,6 +49,8 @@ export type ChatMessage = {
   text: string;
   /** The user's photos, shown above the text. */
   photos?: MessagePhoto[];
+  /** The user's voice message, with what was said in it as the text, once written down. */
+  voice?: MessageVoice;
   /** The face Bite answers with, once it is known. */
   expression?: AnswerExpression;
   /** A question Bite gave no answer to. */
@@ -61,22 +70,41 @@ export type ChatMessage = {
 /** What the user writes to Bite: text, photos as base64 JPEG ready to send, or both. */
 export type Draft = { text: string; photos: string[] };
 
+/** What the user sends Bite: what they wrote, or a voice message, which goes alone. */
+export type Outgoing = Draft | { voice: VoiceDraft };
+
+/** Nothing written, as a voice message refused hands back. */
+const NOTHING_WRITTEN: Draft = { text: '', photos: [] };
+
+/** Why a message was refused before Bite was asked: its photos, or its voice message. */
+export type DraftProblem = PhotosProblem | VoiceProblem;
+
 /**
- * Whether a message can be sent again as it was: its photos are sent with their data, which only
- * the photos sent since the chat opened have on the device.
+ * Whether a message can be sent again as it was: its photos and voice message are sent with their
+ * data, which only those sent since the chat opened have on the device.
  */
 export function canSendAgain(message: ChatMessage): boolean {
-  return !message.photos?.some((photo) => photo.data === undefined);
+  return (
+    !message.photos?.some((photo) => photo.data === undefined) &&
+    (!message.voice || message.voice.data !== undefined)
+  );
 }
 
 /**
- * Why coach-chat refused a message's photos, if that is why it failed: by what it said, or by its
- * status alone for a body too large, which may be refused before the function reads it.
+ * Why coach-chat refused a message's photos or voice message, if that is why it failed: by what it
+ * said, or by its status alone for a body too large, which may be refused before the function
+ * reads it, as what the message held.
  */
-function photosRefusal(error: unknown): PhotosProblem | undefined {
+function draftRefusal(error: unknown, voice: boolean): DraftProblem | undefined {
   if (!(error instanceof ChatRequestError)) return undefined;
+  const tooLarge = error.status === 413;
+  if (voice) {
+    const reason =
+      oneOf(VOICE_REFUSALS, error.refusal) ?? (tooLarge ? 'voice_too_large' : undefined);
+    return reason ? { reason } : undefined;
+  }
   const reason =
-    oneOf(PHOTO_REFUSALS, error.refusal) ?? (error.status === 413 ? 'photos_too_large' : undefined);
+    oneOf(PHOTO_REFUSALS, error.refusal) ?? (tooLarge ? 'photos_too_large' : undefined);
   if (!reason) return undefined;
   return error.photo === undefined ? { reason } : { reason, photo: error.photo };
 }
@@ -89,12 +117,13 @@ export type ChatStatus = 'idle' | 'thinking' | 'answering';
  * is looking something up with, and why a message failed. It goes on in `start`'s thread, with
  * its messages, when one is given, or else in a new thread, until the screen closes.
  *
- * A message whose photos are refused, by the app or by coach-chat before Bite is asked, leaves the
- * chat again: `onRefused` gets it back, with why, for the user to change it and send it again.
+ * A message whose photos or voice message are refused, by the app or by coach-chat before Bite is
+ * asked, leaves the chat again: `onRefused` gets it back, with why, for the user to change it and
+ * send it again; a voice message refused comes back without it, to record again.
  */
 export function useChat(
   start?: { threadId: number; messages: ChatMessage[] },
-  onRefused?: (draft: Draft, problem: PhotosProblem) => void,
+  onRefused?: (draft: Draft, problem: DraftProblem) => void,
 ) {
   const { i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -111,10 +140,21 @@ export function useChat(
   const stoppedAt = useRef(0);
   const count = useRef(0);
 
-  // A message still on its way when the screen closes is stopped.
-  useEffect(() => () => abort.current?.abort(), []);
+  /** The voice messages recorded in this chat, whose files go when it closes. */
+  const recorded = useRef<string[]>([]);
 
-  const updateBite = (id: string, update: (message: ChatMessage) => ChatMessage) =>
+  // Recordings an earlier run left go as Bite opens; a message still on its way when the screen
+  // closes is stopped, and the recordings of this chat go.
+  useEffect(() => {
+    sweepVoices();
+    const recordings = recorded.current;
+    return () => {
+      abort.current?.abort();
+      discardVoices(recordings);
+    };
+  }, []);
+
+  const updateMessage = (id: string, update: (message: ChatMessage) => ChatMessage) =>
     setMessages((all) => all.map((message) => (message.id === id ? update(message) : message)));
   /**
    * How a message to Bite ended: an answer that stopped short says so; when nothing of it came,
@@ -142,14 +182,17 @@ export function useChat(
     settle(questionId, biteId, ending.cut);
   };
 
-  const run = async ({ text, photos }: Draft) => {
+  const run = async (outgoing: Outgoing) => {
+    const voice = 'voice' in outgoing ? outgoing.voice : undefined;
+    const { text, photos } = 'voice' in outgoing ? NOTHING_WRITTEN : outgoing;
     const message = text.trim();
-    if ((!message && photos.length === 0) || abort.current) return;
+    if ((!message && photos.length === 0 && !voice) || abort.current) return;
     const sent = photosToSend(photos);
     if (!Array.isArray(sent)) {
       onRefused?.({ text, photos }, sent);
       return;
     }
+    if (voice && !recorded.current.includes(voice.uri)) recorded.current.push(voice.uri);
     const biteId = `bite-${++count.current}`;
     const questionId = `user-${count.current}`;
     const now = new Date();
@@ -160,7 +203,8 @@ export function useChat(
         role: 'user',
         text: message,
         createdAt: now,
-        ...(photos.length > 0 && { photos: photos.map((data) => ({ data })) }),
+        ...(sent.length > 0 && { photos: photos.map((data) => ({ data })) }),
+        ...(voice && { voice }),
       },
       { id: biteId, role: 'bite', text: '', createdAt: now },
     ]);
@@ -176,26 +220,29 @@ export function useChat(
       ending = afterEvent(ending, event);
       switch (event.event) {
         case 'expression':
-          return updateBite(biteId, (m) => ({ ...m, expression: event.expression }));
+          return updateMessage(biteId, (m) => ({ ...m, expression: event.expression }));
         case 'tool_start':
           return setTool(event.name);
         case 'tool_end':
           return setTool(undefined);
+        case 'transcript':
+          // What was said in the voice message, as Bite's function wrote it down.
+          return updateMessage(questionId, (m) => ({ ...m, text: event.text }));
         case 'text':
           setStatus('answering');
-          return updateBite(biteId, (m) => ({ ...m, text: m.text + event.text }));
+          return updateMessage(biteId, (m) => ({ ...m, text: m.text + event.text }));
         case 'proposal': {
           const { proposal } = event;
           // One of a kind the chat has no card for stays out of it.
           if (!isShownProposal(proposal)) return;
-          return updateBite(biteId, (m) => ({
+          return updateMessage(biteId, (m) => ({
             ...m,
             proposals: [...(m.proposals ?? []), proposal],
           }));
         }
         case 'meal_card': {
           const { mealCard } = event;
-          return updateBite(biteId, (m) => ({
+          return updateMessage(biteId, (m) => ({
             ...m,
             mealCards: [...(m.mealCards ?? []), mealCard],
           }));
@@ -203,7 +250,7 @@ export function useChat(
         case 'note': {
           const { note } = event;
           keptNote = true;
-          return updateBite(biteId, (m) => ({ ...m, notes: [...(m.notes ?? []), note] }));
+          return updateMessage(biteId, (m) => ({ ...m, notes: [...(m.notes ?? []), note] }));
         }
       }
     };
@@ -212,6 +259,7 @@ export function useChat(
       const request = {
         ...(message && { message }),
         ...(sent.length > 0 && { photos: sent }),
+        ...(voice && { voice: { mimeType: 'audio/mp4' as const, data: voice.data } }),
         threadId: threadId.current,
         language: i18n.language,
         today: deviceToday(),
@@ -231,7 +279,7 @@ export function useChat(
       }
       ending = afterStream(ending, 'closed');
     } catch (error) {
-      const refused = photosRefusal(error);
+      const refused = draftRefusal(error, !!voice);
       if (refused && !controller.signal.aborted) {
         // Refused before Bite was asked: the message goes back to the user, to change.
         setMessages((all) => all.filter((m) => m.id !== questionId && m.id !== biteId));
@@ -260,12 +308,17 @@ export function useChat(
   /** Sends a message to Bite, text, photos or both; its answer comes in as it is written. */
   const send = (text: string, photos: string[] = []) => void run({ text, photos });
 
-  /** Sends a message again as it was, with its photos. */
-  const sendAgain = (message: ChatMessage) =>
-    send(
-      message.text,
-      (message.photos ?? []).flatMap((photo) => (photo.data === undefined ? [] : [photo.data])),
-    );
+  /** Sends a voice message to Bite, alone. */
+  const sendVoice = (voice: VoiceDraft) => void run({ voice });
+
+  /** Sends a message again as it was, with its photos or its voice message. */
+  const sendAgain = ({ voice, ...message }: ChatMessage) =>
+    voice?.data !== undefined
+      ? sendVoice({ data: voice.data, uri: voice.uri, durationMs: voice.durationMs })
+      : send(
+          message.text,
+          (message.photos ?? []).flatMap((photo) => (photo.data === undefined ? [] : [photo.data])),
+        );
 
   /** Stops Bite's answer; what came of it stays. */
   const stop = () => {
@@ -299,6 +352,7 @@ export function useChat(
     failure,
     refusal,
     send,
+    sendVoice,
     stop,
     askAgain,
     /** Tries the last question again, when that is what the failure offers. */

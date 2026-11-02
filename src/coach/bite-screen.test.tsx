@@ -146,7 +146,8 @@ it('asks a suggested question, shows Bite looking it up, then its answer as it c
 
   await stream.send({ event: 'done', threadId: 7, messageId: 9 });
   await stream.end();
-  expect(screen.getByRole('button', { name: 'Send' })).toBeOnTheScreen();
+  // Empty again, the composer offers the mic.
+  expect(screen.getByRole('button', { name: 'Hold to talk' })).toBeOnTheScreen();
 });
 
 it('goes on in the same thread with the next message', async () => {
@@ -858,6 +859,8 @@ describe('opened from the tab bar', () => {
     lastMessage: 'Try leg press.',
     lastPhotos: 0,
     firstPhotos: 0,
+    lastVoice: false,
+    firstVoice: false,
     expression: 'neutral' as const,
   });
   afterEach(() => {

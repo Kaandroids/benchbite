@@ -5,14 +5,8 @@ import { discardPhotos, preparePhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 
-import {
-  localTime,
-  messagePhotos,
-  photosToSend,
-  photoUrls,
-  prepareChatPhoto,
-  usePhotoUrls,
-} from './chat-photos';
+import { mediaUrls, useMediaUrls } from './chat-media';
+import { localTime, messagePhotos, photosToSend, prepareChatPhoto } from './chat-photos';
 
 jest.mock('@/lib/supabase', () => ({ supabase: { storage: { from: jest.fn() } } }));
 jest.mock('@/lib/photos', () => ({
@@ -113,14 +107,14 @@ describe("the addresses of a chat's photos", () => {
   });
 
   it('asks for the addresses of all photos at once', async () => {
-    const urls = await photoUrls(['u/1/a.jpg', 'u/1/b.jpg', 'u/1/a.jpg']);
+    const urls = await mediaUrls(['u/1/a.jpg', 'u/1/b.jpg', 'u/1/a.jpg']);
     expect(createSignedUrls).toHaveBeenCalledWith(['u/1/a.jpg', 'u/1/b.jpg'], 3600);
     expect(urls.get('u/1/b.jpg')).toMatch(/^https:\/\/media.test\/u\/1\/b.jpg/);
   });
 
   it('fails when the addresses cannot be read', async () => {
     createSignedUrls.mockResolvedValue({ data: null, error: new Error('denied') });
-    await expect(photoUrls(['u/1/a.jpg'])).rejects.toThrow('denied');
+    await expect(mediaUrls(['u/1/a.jpg'])).rejects.toThrow('denied');
   });
 
   it('asks again before they end, open or opened again, and keeps them for a chat reopened soon', async () => {
@@ -128,7 +122,7 @@ describe("the addresses of a chat's photos", () => {
     const queryClient = createTestQueryClient();
     // The address shown, read as the chat reads it, while it renders.
     const open = () =>
-      renderHook(() => usePhotoUrls(7, ['u/7/a.jpg']).data?.get('u/7/a.jpg'), { queryClient });
+      renderHook(() => useMediaUrls(7, ['u/7/a.jpg']).data?.get('u/7/a.jpg'), { queryClient });
     const url = (hook: Awaited<ReturnType<typeof open>>) => hook.result.current;
 
     // Lets the requests asked for answer, without moving the clock.

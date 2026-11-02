@@ -1,4 +1,4 @@
-import { firstPhotos, messageText, storedMessages } from './threads';
+import { firstMedia, messageText, storedMessages } from './threads';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
@@ -148,11 +148,42 @@ describe('storedMessages', () => {
   });
 });
 
-it('counts the photos of a chat begun with photos alone, as the history does', () => {
+it('tells what a chat begun without text began with, as the history does', () => {
   const photos = [{ path: 'u/1/a.jpg' }, { path: 'u/1/b.jpg' }];
+  const voice = { path: 'u/1/c.m4a', durationMs: 4200 };
   const bite = { id: 'b', role: 'bite' as const, text: 'Two pizzas.' };
-  expect(firstPhotos([{ id: 'u', role: 'user', text: '', photos }, bite])).toBe(2);
-  expect(firstPhotos([{ id: 'u', role: 'user', text: 'These?', photos }, bite])).toBe(0);
-  expect(firstPhotos([{ id: 'u', role: 'user', text: '' }])).toBe(0);
-  expect(firstPhotos([])).toBe(0);
+  const none = { firstPhotos: 0, firstVoice: false };
+  expect(firstMedia([{ id: 'u', role: 'user', text: '', photos }, bite])).toEqual({
+    ...none,
+    firstPhotos: 2,
+  });
+  expect(firstMedia([{ id: 'u', role: 'user', text: 'These?', photos }, bite])).toEqual(none);
+  // A voice message not written down; one that was is named by what was said.
+  expect(firstMedia([{ id: 'u', role: 'user', text: '', voice }])).toEqual({
+    ...none,
+    firstVoice: true,
+  });
+  expect(firstMedia([{ id: 'u', role: 'user', text: 'Lunch', voice }])).toEqual(none);
+  expect(firstMedia([{ id: 'u', role: 'user', text: '' }])).toEqual(none);
+  expect(firstMedia([])).toEqual(none);
+});
+
+it('reads a voice message kept with a chat, with what was said in it', () => {
+  const [message] = storedMessages([
+    {
+      id: 1,
+      role: 'user',
+      content: [
+        { type: 'audio', path: 'u/1/c.m4a', mimeType: 'audio/mp4', durationMs: 4200 },
+        { type: 'text', text: 'Had a chicken rice bowl.' },
+      ],
+      expression: null,
+      interrupted: null,
+      created_at: '2026-11-02T12:40:00Z',
+    },
+  ]);
+  expect(message).toMatchObject({
+    text: 'Had a chicken rice bowl.',
+    voice: { path: 'u/1/c.m4a', durationMs: 4200 },
+  });
 });

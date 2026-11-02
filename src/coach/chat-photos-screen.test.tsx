@@ -113,7 +113,7 @@ it('adds photos from the sheet, up to 3, each with an ×', async () => {
 it('sends photos without text, with the local time, and shows them while Bite looks', async () => {
   const stream = liveStream();
   await render(<BiteScreen />);
-  expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+  expect(screen.queryByRole('button', { name: 'Send' })).toBeNull();
 
   picks('file://plate.jpg');
   await addPhotos();
@@ -361,9 +361,9 @@ describe('a saved chat', () => {
     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
 
     expect(createSignedUrls).toHaveBeenCalledTimes(1);
-    for (const [{ photoUrls }] of jest.mocked(ChatMessages).mock.calls.slice(shown)) {
-      expect(photoUrls?.get('u/7/a.jpg')).toBe('https://media.test/u/7/a.jpg?token=1');
-      expect(photoUrls?.get('u/7/c.jpg')).toBe('https://media.test/u/7/c.jpg?token=1');
+    for (const [{ mediaUrls }] of jest.mocked(ChatMessages).mock.calls.slice(shown)) {
+      expect(mediaUrls?.get('u/7/a.jpg')).toBe('https://media.test/u/7/a.jpg?token=1');
+      expect(mediaUrls?.get('u/7/c.jpg')).toBe('https://media.test/u/7/c.jpg?token=1');
     }
   });
 

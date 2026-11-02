@@ -13,14 +13,14 @@ import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useTheme } from '@/theme';
 
 import { ChatComposer, type RefusedDraft } from './chat-composer';
-import { usePhotoUrls } from './chat-photos';
+import { useMediaUrls } from './chat-media';
 import { type CardStates, ChatMessages } from './chat-messages';
 import { ChatWelcome } from './chat-welcome';
 import { mealCardIds, useMealCardStates } from './meal-cards';
 import { askedNoteIds, useAskedNoteStates } from './notes';
 import { proposalIds, useProposalStates } from './proposals';
 import { RefusalCard } from './refusal-card';
-import { firstPhotos, useThreadMessages, useThreadText } from './threads';
+import { firstMedia, useThreadMessages, useThreadText } from './threads';
 import {
   type BiteParams,
   continueChat,
@@ -31,6 +31,7 @@ import {
 import type { ContinueWith } from './continue-card';
 import { useChat } from './use-chat';
 import { useFollowEnd } from './use-follow-end';
+import { useVoicePlayback } from './use-voice-playback';
 
 /**
  * The chat with Bite (#294, ADR 0052): the one `thread` names, opened from the chats (#295), or a
@@ -61,7 +62,7 @@ export function BiteScreen() {
       title={
         threadText.title({
           title: saved.data.title,
-          firstPhotos: firstPhotos(saved.data.messages),
+          ...firstMedia(saved.data.messages),
         }) ?? undefined
       }
       start={{ threadId: threadId!, messages: saved.data.messages }}
@@ -103,6 +104,10 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   // A message whose photos were refused comes back to the composer, to change. The composer
   // keeps what the user writes, so that typing never renders the chat.
   const [refused, setRefused] = useState<RefusedDraft>();
+  // While a voice message records, the chat dims behind the composer (board 6); what plays stops
+  // as the mic is held, before anything records.
+  const [recording, setRecording] = useState(false);
+  const playback = useVoicePlayback();
   const chat = useChat(start, (draft, problem) => setRefused({ draft, problem }));
   // Where the cards in the chat stand, saved and new, loaded here once for all of them.
   const proposals = useProposalStates(proposalIds(chat.messages));
@@ -131,15 +136,16 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
   const opening = (Object.keys(states) as (keyof typeof states)[])
     .filter((kind) => openedWith[kind])
     .map((kind) => states[kind]);
-  // The photos the chat kept, read back once for all of them when it opens. Only those it opened
-  // with: its messages are read again after each one sent, whose photos show from their data, and
-  // a new list would ask for every address again.
-  const [keptPhotos] = useState(() =>
-    (start?.messages ?? []).flatMap((message) =>
-      (message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
-    ),
+  // The photos and voice messages the chat kept, read back once for all of them when it opens.
+  // Only those it opened with: its messages are read again after each one sent, whose photos and
+  // voice show from the device, and a new list would ask for every address again.
+  const [keptMedia] = useState(() =>
+    (start?.messages ?? []).flatMap((message) => [
+      ...(message.photos ?? []).flatMap((photo) => (photo.path ? [photo.path] : [])),
+      ...(message.voice?.path ? [message.voice.path] : []),
+    ]),
   );
-  const photoUrls = usePhotoUrls(start?.threadId, keptPhotos);
+  const mediaUrls = useMediaUrls(start?.threadId, keptMedia);
   const access = useAiAccess();
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
   const refusal = chat.refusal ?? access.data?.refusal;
@@ -179,6 +185,7 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
           style={styles.flex}
           contentContainerStyle={[
             styles.content,
+            recording && styles.dimmed,
             chat.messages.length > 0 && styles.bottom,
             { padding: spacing.xl, paddingTop: spacing.sm, gap: spacing.lg },
           ]}
@@ -196,7 +203,10 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
             <ChatMessages
               messages={chat.messages}
               cards={cards}
-              photoUrls={photoUrls.data}
+              mediaUrls={mediaUrls.data}
+              player={playback.player}
+              playingId={playback.active}
+              onPlay={playback.toggle}
               status={chat.status}
               tool={chat.tool}
               onAskAgain={refusal || busy ? undefined : following(chat.askAgain)}
@@ -224,9 +234,15 @@ function Chat({ fromChats, fromNotebook, title, start, continueWith }: ChatProps
             <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
           ) : (
             <ChatComposer
-              onSend={following((draft) => chat.send(draft.text, draft.photos))}
+              onSend={following((message) =>
+                'voice' in message
+                  ? chat.sendVoice(message.voice)
+                  : chat.send(message.text, message.photos),
+              )}
+              onHold={playback.pause}
               onStop={busy ? chat.stop : undefined}
               refused={refused}
+              onRecording={setRecording}
             />
           )}
         </View>
@@ -248,6 +264,9 @@ const styles = StyleSheet.create({
   failure: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  dimmed: {
+    opacity: 0.45,
   },
   /** The conversation sits on the composer, as chats do. */
   bottom: {

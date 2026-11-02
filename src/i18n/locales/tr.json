@@ -1933,6 +1933,27 @@
         "too_many_photos": "Bir mesaja en fazla 3 fotoğraf sığar. Göndermek için birini kaldır."
       }
     },
+    "voice": {
+      "message": "Sesli mesaj",
+      "hold": "Konuşmak için basılı tut",
+      "holdHint": "Kaydetmek için mikrofona basılı tut, göndermek için bırak.",
+      "listening": "Dinliyorum…",
+      "release": "{{time}} · göndermek için bırak",
+      "slideToCancel": "‹ iptal için kaydır",
+      "releaseToCancel": "İptal için bırak",
+      "recording": "Kaydediliyor, göndermek için bırak",
+      "play": "Sesli mesajı oynat",
+      "pause": "Sesli mesajı duraklat",
+      "label": "Sesli mesaj, {{length}}",
+      "hearing": "Mesajını dinliyorum…",
+      "problems": {
+        "voice_too_large": "Bu sesli mesaj gönderilemeyecek kadar büyük. Daha kısa bir tane dene.",
+        "voice_too_long": "Sesli mesajlar en fazla bir dakika olabilir. Daha kısa bir tane dene.",
+        "voice_not_m4a": "Bu sesli mesaj okunamadı. Tekrar kaydetmeyi dene.",
+        "voice_not_recorded": "Sesli mesaj kaydedilemedi. Tekrar dene.",
+        "microphone_denied": "Bite'ın seni duyması için mikrofon gerekiyor. Ayarlardan izin ver."
+      }
+    },
     "proposal": {
       "fromToday": "Bugünden itibaren",
       "targetsTitle": "Günlük hedefler",
