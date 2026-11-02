@@ -22,9 +22,10 @@ exercise at a time.
 - **Five rounds of lookups:** one more than before. That is enough for the plan, the exercises, a
   proposal, and a second try after the database refuses one, as when an alternative's name is
   taken.
-- **No card claimed once lookups run out:** the results before the last round say that no card,
-  proposal or note can be made now. An answer in that round that still speaks of a card is told
-  once to say, in a sentence, that it could not make one (`CARD_NOT_MADE`).
+- **No card claimed once lookups run out:** when the answer has made no card, proposal or note
+  yet, the results before the last round say that none can be made now. One made in those rounds
+  stays the answer's to speak of. An answer in the last round that still speaks of a card it did
+  not make is told once to say, in a sentence, that it could not make one (`CARD_NOT_MADE`).
 
 ## Alternatives considered
 
