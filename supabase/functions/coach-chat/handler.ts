@@ -5,14 +5,17 @@ import { z } from 'zod';
 
 import { aiModel, AiRefusedError, checkAiAccess, keepAlive } from '../_shared/ai_usage.ts';
 import { Base64Data } from '../_shared/base64.ts';
+import { encodedBytes } from '../_shared/base64_bytes.ts';
 import {
   type ChatEvent as Event,
   type ChatPhotoPart,
+  type ChatVoicePart,
   type ChatReason,
   type ChatRefusal,
   type ChatRequest as Body,
   type Interruption,
   MAX_MESSAGE_LENGTH,
+  MAX_VOICE_BYTES,
   type NoteCard,
   type ProposalCard,
 } from '../_shared/coach/chat.ts';
@@ -44,7 +47,9 @@ import {
   SYSTEM,
   untaggedAll,
 } from './prompt.ts';
-import { type CheckedPhoto, checkPhotos, removePhotos, storePhotos } from './photos.ts';
+import { removeMedia } from './media.ts';
+import { type CheckedPhoto, checkPhotos, storePhotos } from './photos.ts';
+import { audioPart, type CheckedVoice, checkVoice, storeVoice, transcribe } from './voice.ts';
 import { loadSnapshot } from './snapshot.ts';
 import { DAY, TIME } from './day.ts';
 import { mealCardOf, type MealCardState, mealCardStates, mealCardText } from './meal_card.ts';
@@ -68,6 +73,11 @@ const Photo = z.object({
   data: Base64Data,
 });
 
+const Voice = z.object({
+  mimeType: z.literal('audio/mp4'),
+  data: Base64Data,
+});
+
 const ChatRequest = z
   .object({
     /** The thread to go on with; a new one without. */
@@ -75,6 +85,8 @@ const ChatRequest = z
     /** What the user wrote, which may be nothing with photos. */
     message: z.string().trim().max(MAX_MESSAGE_LENGTH).default(''),
     photos: z.array(Photo).max(MAX_PHOTOS).default([]),
+    /** A voice message, sent alone. */
+    voice: Voice.optional(),
     /** The device's local time, HH:MM. */
     localTime: TIME.optional(),
     /** The app's language, which Bite answers in. */
@@ -84,25 +96,34 @@ const ChatRequest = z
     /** The name the app stops this request by. */
     requestId: z.uuid().optional(),
   })
-  .refine((request) => request.message || request.photos.length, {
+  .refine((request) => request.message || request.photos.length || request.voice, {
     path: ['message'],
-    message: 'A message needs text or a photo',
+    message: 'A message needs text, a photo or a voice message',
+  })
+  .refine((request) => !request.voice || (!request.message && !request.photos.length), {
+    path: ['voice'],
+    message: 'A voice message goes alone',
   }) satisfies z.ZodType<Body>;
 type ChatRequest = z.infer<typeof ChatRequest>;
 
 /**
- * The largest body read, in bytes: the photos at their largest as base64, and room for the rest,
- * the longest message included. A larger one is refused before it is parsed.
+ * The largest body read, in bytes: the photos or the voice message at their largest as base64,
+ * whichever is larger, as a voice message goes alone, and room for the rest, the longest message
+ * included. A larger one is refused before it is parsed, as `too_large`, whatever it holds.
  */
-const MAX_BODY_BYTES = photosBodyBytes(40_000);
+const MAX_BODY_BYTES = Math.max(photosBodyBytes(0), encodedBytes(MAX_VOICE_BYTES)) + 40_000;
 
 /** The HTTP status each refusal is answered with. */
 const STATUS: Record<ChatRefusal, number> = {
   invalid_request: 400,
+  too_large: 413,
   thread_not_found: 404,
   photos_too_large: 413,
   photo_not_jpeg: 415,
   photo_has_exif: 422,
+  voice_too_large: 413,
+  voice_too_long: 413,
+  voice_not_m4a: 415,
   unavailable: 500,
 };
 
@@ -131,7 +152,7 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
   const json = await readJson(req, MAX_BODY_BYTES);
-  if (json === TOO_LARGE) return refused('photos_too_large');
+  if (json === TOO_LARGE) return refused('too_large');
 
   const parsed = ChatRequest.safeParse(json);
   if (!parsed.success) {
@@ -144,6 +165,10 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
     const { reason, ...details } = photos;
     return refused(reason, details);
   }
+  // So is a voice message (ADR 0072).
+  const voice = request.voice && checkVoice(request.voice);
+  if (typeof voice === 'string') return refused(voice);
+  const media = { photos, voice };
 
   // The user reads only their own threads, so a thread they may not go on with is not found.
   let history: Message[] = [];
@@ -176,12 +201,15 @@ export async function handleChatRequest(req: Request, context: ChatContext): Pro
   const body = new ReadableStream<Uint8Array>({
     start: (controller) => {
       const encoder = new TextEncoder();
+      // Closed once the answer ended; a transcript may still come after, as when nothing is kept.
+      let closed = false;
       const send = (event: ChatEvent) => {
-        if (stop.cancelled) return;
+        if (stop.cancelled || closed) return;
         const { event: name, ...data } = event;
         controller.enqueue(encoder.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`));
       };
-      return answer(request, photos, { history, earlierCard }, context, send, stop).finally(() => {
+      return answer(request, media, { history, earlierCard }, context, send, stop).finally(() => {
+        closed = true;
         if (!stop.cancelled) controller.close();
         return keepAlive(stop.forget());
       });
@@ -302,19 +330,32 @@ class Turn {
 
 async function answer(
   request: ChatRequest,
-  photos: CheckedPhoto[],
+  media: Media,
   { history, earlierCard }: { history: Message[]; earlierCard: boolean },
   context: ChatContext,
   send: (event: ChatEvent) => void,
   stop: Stop,
 ): Promise<void> {
-  const bite = aiModel(
-    { supabase: context.supabase, admin: context.admin, model: context.model },
-    'coach_chat',
-  );
+  const ai = { supabase: context.supabase, admin: context.admin, model: context.model };
+  const bite = aiModel(ai, 'coach_chat');
   const turn = new Turn(send);
   const outcome: Outcome = { refused: false, asked: false };
   let threadId = request.threadId;
+  const { photos, voice } = media;
+  // What the user said, written down beside the answer, as a request of its own feature, so that
+  // the two run at once (ADR 0072). The thread keeps it as the message's text. It starts once the
+  // answer has, so that a message the budget refuses an answer to costs no writing down, and the
+  // worker is kept alive for it, as the app may close the stream meanwhile.
+  let transcript: Promise<string | undefined> | undefined;
+  const writeDown = () => {
+    if (!voice || transcript) return;
+    transcript = keepAlive(
+      transcribe(aiModel(ai, 'coach_voice'), voice).then((text) => {
+        if (text) send({ event: 'transcript', text });
+        return text;
+      }),
+    );
+  };
 
   // Nothing is written for a user who may not ask Bite now.
   try {
@@ -350,7 +391,8 @@ async function answer(
         parts: [
           { type: 'text', text: snapshotText(snapshot, request.language) },
           ...photos.map(({ data }): Part => ({ type: 'image', mimeType: 'image/jpeg', data })),
-          { type: 'text', text: messageText(request.message) },
+          ...(voice ? [audioPart(voice)] : []),
+          { type: 'text', text: messageText(voice ? VOICE_MESSAGE : request.message) },
         ],
       },
     ];
@@ -360,7 +402,8 @@ async function answer(
       today: request.today,
       threadId,
       localTime: request.localTime,
-      hasText: !!request.message?.trim(),
+      // A voice message has words, as text does; a photo alone has none.
+      hasText: !!request.message?.trim() || !!voice,
       savesNotes: snapshot.savesNotes,
     };
 
@@ -381,6 +424,7 @@ async function answer(
         tools: TOOL_DEFINITIONS,
         toolChoice: answerOnly ? 'none' : 'auto',
       })) {
+        writeDown();
         outcome.asked = true;
         // The end of a round is kept whatever comes, so that what the answer used is too.
         if (event.type !== 'done' && (await stop.look())) break;
@@ -490,15 +534,19 @@ async function answer(
   // kept either: it would stay empty in the history.
   const dropIfNew = async (id: number) =>
     !request.threadId && (await keepAlive(dropThread(context, id)));
+  // The message keeps what was said in its voice message, once written down, also as a question
+  // whose answer failed before it began. Nothing is waited for when nothing is kept.
+  if (end.keep !== 'nothing') writeDown();
+  const said = end.keep === 'nothing' ? undefined : await transcript;
   if (end.keep !== 'turn') {
     const saved =
       end.keep === 'question' &&
-      (await keepAlive(saveQuestion(context, threadId, request, photos)));
+      (await keepAlive(saveQuestion(context, threadId, request, media, said)));
     const dropped = !saved && (await dropIfNew(threadId));
     return send({ event: 'error', reason: end.reason, ...(dropped && { dropped: true }) });
   }
   const messageId = await keepAlive(
-    saveTurn(context, threadId, request, photos, turn, end.interrupted),
+    saveTurn(context, threadId, request, media, said, turn, end.interrupted),
   );
   if (!messageId) {
     await keepAlive(dropAskedNotes(context, turn.trace));
@@ -597,34 +645,51 @@ function resultOf(part: unknown): unknown {
   return partOfType(part, 'toolResult') ? part.result : undefined;
 }
 
-/** The user's message as the thread keeps it: a part per photo, by its path, then its text. */
-function question(threadId: number, request: ChatRequest, images: ChatPhotoPart[]) {
-  const text = request.message ? [{ type: 'text', text: request.message }] : [];
+/** A message's photos or voice message, checked; never both, as a voice message goes alone. */
+type Media = { photos: CheckedPhoto[]; voice?: CheckedVoice };
+
+/** The parts that name a message's photos or voice message, once kept. */
+type Stored = { images: ChatPhotoPart[]; voice?: ChatVoicePart };
+
+/**
+ * The user's message as the thread keeps it: a part per photo, by its path, or its voice message,
+ * then its text, which for a voice message is what was said in it, as written down.
+ */
+function question(threadId: number, request: ChatRequest, stored: Stored, transcript?: string) {
+  const said = request.message || transcript;
+  const text = said ? [{ type: 'text', text: said }] : [];
   return {
     thread_id: threadId,
     role: 'user' as const,
-    content: [...images, ...text] as unknown as NonNullable<Json>,
+    content: [
+      ...stored.images,
+      ...(stored.voice ? [stored.voice] : []),
+      ...text,
+    ] as unknown as NonNullable<Json>,
   };
 }
 
 /**
- * Keeps the message's photos, if it has any, and saves its messages with them, giving what the
- * insert gives. Photos of a message that could not be saved are removed again, as when its
- * thread was deleted meanwhile: its folder was queued for removal then (ADR 0063), and would not
- * be again.
+ * Keeps the message's photos or voice message, if it has any, and saves its messages with them,
+ * giving what the insert gives. What was kept of a message that could not be saved is removed
+ * again, as when its thread was deleted meanwhile: its folder was queued for removal then
+ * (ADR 0063), and would not be again.
  */
-async function saveWithPhotos<Result extends { error: unknown }>(
+async function saveWithMedia<Result extends { error: unknown }>(
   context: ChatContext,
   threadId: number,
-  photos: CheckedPhoto[],
-  insert: (images: ChatPhotoPart[]) => PromiseLike<Result>,
+  { photos, voice }: Media,
+  insert: (stored: Stored) => PromiseLike<Result>,
 ): Promise<Result | undefined> {
   const images = photos.length
     ? await storePhotos(context.admin, context.userId, threadId, photos)
     : [];
   if (!images) return undefined;
-  const saved = await insert(images);
-  if (saved.error) await removePhotos(context.admin, images);
+  const sound = voice && (await storeVoice(context.admin, context.userId, threadId, voice));
+  if (voice && !sound) return undefined;
+  const stored: Stored = { images, ...(sound && { voice: sound }) };
+  const saved = await insert(stored);
+  if (saved.error) await removeMedia(context.admin, [...images, ...(sound ? [sound] : [])]);
   return saved;
 }
 
@@ -633,10 +698,11 @@ async function saveQuestion(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
-  photos: CheckedPhoto[],
+  media: Media,
+  transcript: string | undefined,
 ): Promise<boolean> {
-  const saved = await saveWithPhotos(context, threadId, photos, (images) =>
-    context.admin.from('coach_messages').insert(question(threadId, request, images)),
+  const saved = await saveWithMedia(context, threadId, media, (stored) =>
+    context.admin.from('coach_messages').insert(question(threadId, request, stored, transcript)),
   );
   if (saved && !saved.error) return true;
   logError('Could not save the question', saved?.error);
@@ -651,15 +717,16 @@ async function saveTurn(
   context: ChatContext,
   threadId: number,
   request: ChatRequest,
-  photos: CheckedPhoto[],
+  media: Media,
+  transcript: string | undefined,
   turn: Turn,
   interrupted: Interruption | undefined,
 ): Promise<number | undefined> {
-  const messages = await saveWithPhotos(context, threadId, photos, (images) =>
+  const messages = await saveWithMedia(context, threadId, media, (stored) =>
     context.admin
       .from('coach_messages')
       .insert([
-        question(threadId, request, images),
+        question(threadId, request, stored, transcript),
         {
           thread_id: threadId,
           role: 'bite',
@@ -807,11 +874,14 @@ function toMessage(
     const note = noteOf(result);
     return note ? [noteText(note)] : [];
   });
-  // A message's photos reach the model in its own turn only (ADR 0062).
+  // A message's photos and voice message reach the model in its own turn only (ADR 0062,
+  // 0072): later turns read what was said in the voice message, as the message's text.
   const photos = parts.filter((part) => partOfType(part, 'image')).length;
+  const voice = parts.some((part) => partOfType(part, 'audio'));
   const text = [...said.filter(Boolean), ...proposed].join('\n');
   if (row.role === 'user') {
-    const sent = photos ? [photosText(photos)] : [];
+    const heard = text ? VOICE_SENT : VOICE_UNHEARD;
+    const sent = [...(photos ? [photosText(photos)] : []), ...(voice ? [heard] : [])];
     const all = [...sent, untagged(text)].filter(Boolean).join('\n');
     return all ? [{ role: 'user', parts: [{ type: 'text', text: all }] }] : [];
   }
@@ -825,6 +895,15 @@ function toMessage(
 function partOfType(part: unknown, type: string): part is Record<string, unknown> {
   return isObject(part) && part.type === type;
 }
+
+/** What Bite reads for a voice message in its own turn, as the voice is the message. */
+const VOICE_MESSAGE = '(A voice message, heard above.)';
+
+/** What Bite reads before what was said in an earlier voice message, in later turns. */
+const VOICE_SENT = '(Sent a voice message, which said:)';
+
+/** What Bite reads for an earlier voice message that could not be written down. */
+const VOICE_UNHEARD = '(Sent a voice message that could not be written down.)';
 
 /** Where an earlier message's photos were, as Bite reads it in later turns. */
 function photosText(count: number): string {

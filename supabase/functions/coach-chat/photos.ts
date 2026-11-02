@@ -1,11 +1,11 @@
 // The photos of a message to Bite (#299, ADR 0062): checked before anything is sent or kept, and
 // kept in `coach-media` with the service role once their turn is saved.
 import { decodeBase64 } from '../_shared/base64.ts';
-import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
 import type { ChatPhotoPart, PhotoRefusal } from '../_shared/coach/chat.ts';
 import { EOI, isFrame, segments, SOS } from '../_shared/jpeg_metadata.ts';
 import { photosFit } from '../_shared/photos.ts';
-import { type Client, logError } from '../_shared/supabase.ts';
+import type { Client } from '../_shared/supabase.ts';
+import { keepFile, removeMedia } from './media.ts';
 
 /** A photo that passed the checks: its bytes to keep, its base64 data for the model, its size. */
 export type CheckedPhoto = { bytes: Uint8Array; data: string; width: number; height: number };
@@ -62,9 +62,9 @@ export function readJpeg(bytes: Uint8Array): { width: number; height: number } |
 }
 
 /**
- * Keeps the photos of a message in its thread's folder, each under a new name, and gives the
- * message's parts that name them, or nothing when one could not be kept, after removing those
- * that were. The bucket refuses what is not a JPEG or larger than a photo may be.
+ * Keeps the photos of a message, and gives the message's parts that name them, or nothing when
+ * one could not be kept, after removing those that were. The bucket refuses what is not a JPEG or
+ * larger than a photo may be.
  */
 export async function storePhotos(
   admin: Client,
@@ -72,26 +72,15 @@ export async function storePhotos(
   threadId: number,
   photos: CheckedPhoto[],
 ): Promise<ChatPhotoPart[] | undefined> {
-  const folder = threadMediaFolder(userId, threadId);
   const results = await Promise.all(
     photos.map(async ({ bytes, width, height }): Promise<ChatPhotoPart | undefined> => {
-      const path = `${folder}/${crypto.randomUUID()}.jpg`;
-      const { error } = await admin.storage
-        .from(MEDIA_BUCKET)
-        .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
-      if (error) return void logError('Could not keep a photo', error);
+      const path = await keepFile(admin, userId, threadId, bytes, 'image/jpeg');
+      if (!path) return undefined;
       return { type: 'image', path, mimeType: 'image/jpeg', width, height };
     }),
   );
   const stored = results.filter((part) => part !== undefined);
   if (stored.length === photos.length) return stored;
-  await removePhotos(admin, stored);
+  await removeMedia(admin, stored);
   return undefined;
-}
-
-/** Removes kept photos whose message could not be saved, as nothing else would. */
-export async function removePhotos(admin: Client, parts: ChatPhotoPart[]): Promise<void> {
-  if (!parts.length) return;
-  const { error } = await admin.storage.from(MEDIA_BUCKET).remove(parts.map((part) => part.path));
-  if (error) logError('Could not remove photos of a message not saved', error);
 }

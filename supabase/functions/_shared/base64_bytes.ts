@@ -19,3 +19,14 @@ export function toBase64(bytes: Uint8Array): string {
   }
   return btoa(text);
 }
+
+/** How long bytes are as base64, padded. */
+export function encodedBytes(bytes: number): number {
+  return Math.ceil(bytes / 3) * 4;
+}
+
+/** How many bytes base64 data holds, without decoding it. */
+export function decodedBytes(data: string): number {
+  const padding = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
+  return (data.length / 4) * 3 - padding;
+}

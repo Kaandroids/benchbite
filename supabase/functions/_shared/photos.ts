@@ -1,6 +1,7 @@
 // The limits of the photos the app sends to a function, a meal photo in Nutrition (ADR 0059) or a
 // photo in Bite's chat (ADR 0062), shared so that both take the same photos. This file imports
-// nothing, so that the app can bundle it.
+// only `base64_bytes.ts`, which imports nothing, so that the app can bundle it.
+import { decodedBytes, encodedBytes } from './base64_bytes.ts';
 
 /** How many photos one request takes. */
 export const MAX_PHOTOS = 3;
@@ -16,13 +17,7 @@ export const MAX_PHOTOS_BYTES = 3_000_000;
  * base64, and `rest` for everything else. A larger one is refused before it is parsed.
  */
 export function photosBodyBytes(rest: number): number {
-  return Math.ceil(MAX_PHOTOS_BYTES / 3) * 4 + rest;
-}
-
-/** How many bytes base64 data holds. */
-export function decodedBytes(data: string): number {
-  const padding = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
-  return (data.length / 4) * 3 - padding;
+  return encodedBytes(MAX_PHOTOS_BYTES) + rest;
 }
 
 /** Whether photos, as base64 data, are within the limits, decoded, each and together. */
