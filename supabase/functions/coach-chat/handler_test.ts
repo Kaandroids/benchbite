@@ -1688,6 +1688,46 @@ Deno.test('hears a voice message in its turn, and keeps it with what was said', 
   assertEquals(said, { type: 'text', text: 'Had a chicken rice bowl for lunch.' });
 });
 
+Deno.test('keeps no placeholder the model wrote for a voice message without words', async () => {
+  for (const placeholder of [
+    '<noise>',
+    '[silence]',
+    '(inaudible).',
+    '<noise> <noise>',
+    '[silence] .',
+  ]) {
+    const { ctx, inserted } = context(new FakeModel(SURE, [{ type: 'text', text: placeholder }]));
+
+    const answer = await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
+
+    assertEquals(
+      answer.some((event) => event.event === 'transcript'),
+      false,
+      placeholder,
+    );
+    const content = inserted[1].rows[0].content as { type: string }[];
+    assertEquals(
+      content.map((part) => part.type),
+      ['audio'],
+      placeholder,
+    );
+  }
+});
+
+Deno.test('keeps what was said beside a placeholder, and words in parentheses', async () => {
+  for (const [written, kept] of [
+    ['[silence] Thank you.', 'Thank you.'],
+    ['(Ja.)', '(Ja.)'],
+  ]) {
+    const { ctx, inserted } = context(new FakeModel(SURE, [{ type: 'text', text: written }]));
+
+    await events(await handleChatRequest(ask(VOICE_MESSAGE), ctx));
+
+    const content = inserted[1].rows[0].content as { type: string; text?: string }[];
+    assertEquals(content.at(-1), { type: 'text', text: kept }, written);
+  }
+});
+
 Deno.test('keeps a voice message nothing could be written down of, without text', async () => {
   const { ctx, inserted } = context(new FakeModel(SURE, []));
 
