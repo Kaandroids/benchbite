@@ -70,7 +70,8 @@ export function TrialEndingScreen({
     <Screen
       closes
       onBack={onClose}
-      title={
+      action={
+        // A tag stands at the top of its row by itself; here it sits in the bar's middle.
         <View style={styles.center}>
           <Tag
             label={t('premium.trialEnding.kicker', {

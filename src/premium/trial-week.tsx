@@ -12,8 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { BiteAvatar } from '@/coach/bite-avatar';
-import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
+import { SparkleStar } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { addDays, isoWeekday, toIsoDate, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
@@ -63,7 +63,7 @@ export function TrialWeek({ startedOn, todayIndex, usedOn, usage }: TrialWeekPro
                 <BiteAvatar size={52} expression="happy" looksAbout />
               </Animated.View>
             ) : index === last ? (
-              <Icon name="star" size={20} color="primary" />
+              <SparkleStar size={22} twinkles />
             ) : null}
           </View>
         ))}
