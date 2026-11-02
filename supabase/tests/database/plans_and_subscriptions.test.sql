@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(28);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -38,7 +38,7 @@ select is(public.plan_of('00000000-0000-0000-0000-00000000000a'), 'premium', 'pr
 select is(public.plan_of('00000000-0000-0000-0000-00000000000b'), 'free', 'A user without one is free');
 select public.give_plan('a@example.com', now(), now() + interval '7 days', 'trial');
 select is(
-  (select count(*)::integer from public.subscriptions),
+  (select count(*)::integer from public.subscriptions where user_id = '00000000-0000-0000-0000-00000000000a'),
   1,
   'A plan given again replaces the one before'
 );
@@ -104,14 +104,30 @@ select throws_ok(
   'nor calls the function that gives one'
 );
 select throws_ok($$ select 1 from public.plans $$, '42501', null, 'nor reads the plans themselves');
+select throws_ok(
+  $$ select public.plan_of('00000000-0000-0000-0000-00000000000a') $$,
+  '42501', null,
+  'nor anyone''s plan by its id'
+);
 
 select set_config('role', 'anon', true);
 select throws_ok($$ select 1 from public.subscriptions $$, '42501', null, 'Guests without a session read none');
+select throws_ok($$ select 1 from public.plans $$, '42501', null, 'nor the plans');
+select throws_ok($$ select public.has_premium() $$, '42501', null, 'nor ask for a plan');
+select throws_ok(
+  $$ select public.give_plan('b@example.com', now(), now() + interval '1 year') $$,
+  '42501', null,
+  'nor give one'
+);
 
 -- A subscription goes with its account.
 reset role;
 delete from auth.users where id = '00000000-0000-0000-0000-00000000000a';
-select is((select count(*)::integer from public.subscriptions), 0, 'A subscription goes with its account');
+select is(
+  (select count(*)::integer from public.subscriptions where user_id = '00000000-0000-0000-0000-00000000000a'),
+  0,
+  'A subscription goes with its account'
+);
 
 select * from finish();
 rollback;

@@ -16,9 +16,8 @@ from auth.users where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0
 insert into public.ai_usage
   (call_id, user_id, feature, model, input_tokens, cached_input_tokens, output_tokens,
    thinking_tokens, cost_usd)
-values
-  (gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
-   0, 0, 0, 0, 3.98);
+select gen_random_uuid(), '00000000-0000-0000-0000-00000000000b', 'review', 'gemini-3.8-flash',
+  0, 0, 0, 0, (select budget_usd - 0.02 from public.plans where plan = 'premium');
 
 -- A model whose price never changes, so that what these calls cost holds on any day.
 insert into public.ai_model_prices (model, valid_from, input_usd, cached_input_usd, output_usd)
