@@ -88,3 +88,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0070](0070-the-server-holds-bite-to-its-cards-and-its-last-round.md) | The server holds Bite to its cards and to its last round                                | Accepted                                   |
 | [0071](0071-bites-notebook.md)                                        | Bite keeps a notebook of the user, in its own table, read in every answer               | Accepted                                   |
 | [0072](0072-voice-messages-to-bite.md)                                | Voice messages to Bite are kept as photos are, with what was said as their text         | Accepted                                   |
+| [0073](0073-recording-and-playing-voice-messages.md)                  | Voice messages are held to record, in mono AAC, and played by one player per chat       | Accepted                                   |
