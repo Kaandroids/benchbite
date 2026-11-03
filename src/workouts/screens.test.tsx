@@ -11,7 +11,13 @@ import { useWorkoutAlternatives, type WorkoutAlternative } from './alternatives'
 import { ArchiveScreen } from './archive-screen';
 import { holdSwitches, testExercise, testWorkout, type HeldSwitch } from './test-data';
 import { WorkoutScreen } from './workout-screen';
-import { useSetWorkoutActive, useWorkoutLimits, useWorkouts, type Workout } from './workouts';
+import {
+  useCurrentWorkoutLimits,
+  useSetWorkoutActive,
+  useWorkoutLimits,
+  useWorkouts,
+  type Workout,
+} from './workouts';
 import { WorkoutsScreen } from './workouts-screen';
 
 jest.mock('@/exercises/images', () => ({
@@ -26,6 +32,7 @@ jest.mock('./workouts', () => ({
   useWorkouts: jest.fn(),
   useSetWorkoutActive: jest.fn(),
   useWorkoutLimits: jest.fn(),
+  useCurrentWorkoutLimits: jest.fn(),
   useKcalPerMinute: () => ({ data: 7.5 }),
 }));
 jest.mock('./alternatives', () => ({
@@ -122,6 +129,9 @@ beforeEach(() => {
   jest
     .mocked(useWorkoutLimits)
     .mockReturnValue({ data: { exercises: 20, workouts: 2, alternatives: 5 } } as never);
+  jest
+    .mocked(useCurrentWorkoutLimits)
+    .mockReturnValue({ exercises: 20, workouts: 2, alternatives: 5 } as never);
   mockAlternatives([]);
   switches = holdSwitches(jest.mocked(supabase.rpc));
 });

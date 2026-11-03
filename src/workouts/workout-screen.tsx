@@ -35,7 +35,7 @@ import { AlternativesSheets } from './alternatives-sheet';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
-import { HeldAlternativeSheet } from './held-workout-sheet';
+import { HeldAlternativeSheet, WorkoutRoom } from './held-workout-sheet';
 import {
   HELD_OPACITY,
   mainMuscles,
@@ -46,7 +46,6 @@ import {
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
-  useWorkoutLimits,
   useSetWorkoutActive,
   useWorkouts,
   type WorkoutExercise,
@@ -68,8 +67,6 @@ export function WorkoutScreen({ id }: { id: number }) {
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { start, sheet: startSheet } = useStartOrAsk();
   const workout = findWorkout(workouts.data, id);
-  // The room the plan has, said beside a workout that waits, as the plan is now.
-  const limits = useWorkoutLimits({ fresh: workout?.held ?? false });
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   // From the library, which loads again when the user renames an exercise of their own.
@@ -216,11 +213,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       footer={
         held ? (
           <View style={{ gap: spacing.sm }}>
-            {limits.data ? (
-              <Text variant="caption" color="textMuted" align="center">
-                {t('workout.held.room', { count: limits.data.workouts })}
-              </Text>
-            ) : null}
+            <WorkoutRoom />
             <Button label={t('workout.held.train')} onPress={openPremium} />
           </View>
         ) : workout.active || running ? (

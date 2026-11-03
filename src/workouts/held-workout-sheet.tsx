@@ -10,7 +10,21 @@ import { useOpenPremium } from '@/premium/open-premium';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
 import { WaitingSheet } from './waiting-sheet';
-import { useWorkoutLimits, type Workout } from './workouts';
+import { useCurrentWorkoutLimits, type Workout } from './workouts';
+
+/**
+ * How many workouts the plan has room for, as it is now, beside a workout that waits; nothing until
+ * that is read.
+ */
+export function WorkoutRoom() {
+  const { t } = useTranslation();
+  const limits = useCurrentWorkoutLimits();
+  return limits ? (
+    <Text variant="caption" color="textMuted" align="center">
+      {t('workout.held.room', { count: limits.workouts })}
+    </Text>
+  ) : null;
+}
 
 /** Closes the sheet, then runs `action`, as iOS shows no alert or screen over a closing sheet. */
 function thenClose(onClose: () => void, action: () => void) {
@@ -31,8 +45,7 @@ type HeldWorkoutSheetProps = {
  */
 export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const { t } = useTranslation();
-  // The room the plan has, as the plan is now.
-  const limits = useWorkoutLimits({ fresh: true });
+  const limits = useCurrentWorkoutLimits();
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   const name = useWorkoutName()(workout);
@@ -41,9 +54,7 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
     <WaitingSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
-        limits.data
-          ? t('workout.held.sheetBody', { count: limits.data.workouts })
-          : t('workout.held.kept')
+        limits ? t('workout.held.sheetBody', { count: limits.workouts }) : t('workout.held.kept')
       }
       onClose={onClose}
     >
@@ -82,10 +93,10 @@ type HeldAlternativeSheetProps = {
  */
 export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativeSheetProps) {
   const { t } = useTranslation();
-  const limits = useWorkoutLimits({ fresh: true });
+  const limits = useCurrentWorkoutLimits();
   const openPremium = useOpenPremium();
   // Null on plans without a limit in all.
-  const inAll = limits.data?.added_alternatives;
+  const inAll = limits?.added_alternatives;
 
   return (
     <WaitingSheet

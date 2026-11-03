@@ -238,26 +238,35 @@ export const WORKOUT_LIMITS_KEY = ['workout-limits'];
  */
 const WORKOUT_LIMITS_STALE_MS = 10 * 60 * 1000;
 
+const workoutLimitsQuery = {
+  queryKey: WORKOUT_LIMITS_KEY,
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc('workout_limits').single();
+    if (error) {
+      throw error;
+    }
+    return data;
+  },
+  staleTime: WORKOUT_LIMITS_STALE_MS,
+};
+
 /**
  * The user's workout limits, from their plan (ADR 0078): how many workouts, exercises in each,
  * versions of each and alternatives in all, how many alternatives the user has added, and how long
- * an alternative's name may be. They change with the plan, so they are read again after a while,
- * and on mount when `fresh`, as where a workout waits for premium, which the plan just held back
- * while the limits kept may still be the plan's before.
+ * an alternative's name may be. They change with the plan, so they are read again after a while.
  */
-export function useWorkoutLimits({ fresh = false }: { fresh?: boolean } = {}) {
-  return useQuery({
-    queryKey: WORKOUT_LIMITS_KEY,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('workout_limits').single();
-      if (error) {
-        throw error;
-      }
-      return data;
-    },
-    staleTime: WORKOUT_LIMITS_STALE_MS,
-    refetchOnMount: fresh ? 'always' : true,
-  });
+export function useWorkoutLimits() {
+  return useQuery(workoutLimitsQuery);
+}
+
+/**
+ * The limits as the plan is now, for beside what waits for premium, which the plan just held back
+ * while the limits kept may still be the plan's before: read again on mount, and undefined until
+ * they are.
+ */
+export function useCurrentWorkoutLimits() {
+  const limits = useQuery({ ...workoutLimitsQuery, refetchOnMount: 'always' });
+  return limits.isFetchedAfterMount ? limits.data : undefined;
 }
 
 /** Saves a new or changed workout with its exercises, and returns its id. */

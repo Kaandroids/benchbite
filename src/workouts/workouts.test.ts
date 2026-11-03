@@ -6,11 +6,11 @@ import { testWorkout } from '@/workouts/test-data';
 import {
   findWorkout,
   fetchWorkouts,
+  useCurrentWorkoutLimits,
   useDeleteWorkout,
   useSaveWorkout,
   useSetWorkoutActive,
   useWeek,
-  useWorkoutLimits,
   useWorkouts,
   weekOf,
   type Workout,
@@ -277,26 +277,24 @@ describe('findWorkout', () => {
   });
 });
 
-describe('useWorkoutLimits', () => {
-  /** Limits kept a moment ago, under a plan that has since ended. */
-  async function renderWithKept(fresh: boolean) {
+describe('useCurrentWorkoutLimits', () => {
+  it('reads the limits again on mount, and gives none of those kept meanwhile', async () => {
     const single = jest.fn().mockResolvedValue({ data: { workouts: 3 }, error: null });
     jest.mocked(supabase.rpc).mockReturnValue({ single } as never);
     const queryClient = createTestQueryClient();
+    // Kept a moment ago, under a plan that has since ended.
     queryClient.setQueryData(['workout-limits'], { workouts: 500 });
-    const { result } = await renderHook(() => useWorkoutLimits({ fresh }), { queryClient });
-    return { result, single };
-  }
-
-  it('keeps limits read a moment ago', async () => {
-    const { result, single } = await renderWithKept(false);
-    expect(result.current.data).toEqual({ workouts: 500 });
-    expect(single).not.toHaveBeenCalled();
-  });
-
-  it('reads them again on mount when fresh', async () => {
-    const { result, single } = await renderWithKept(true);
-    await waitFor(() => expect(result.current.data).toEqual({ workouts: 3 }));
+    const seen: unknown[] = [];
+    const { result } = await renderHook(
+      () => {
+        const limits = useCurrentWorkoutLimits();
+        seen.push(limits);
+        return limits;
+      },
+      { queryClient },
+    );
+    await waitFor(() => expect(result.current).toEqual({ workouts: 3 }));
+    expect(seen).not.toContainEqual({ workouts: 500 });
     expect(single).toHaveBeenCalledTimes(1);
   });
 });
