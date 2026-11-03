@@ -1490,8 +1490,10 @@ export type Database = {
       workout_alternatives: {
         Row: {
           exercises: Json | null;
+          held: boolean;
           id: number;
           in_use: boolean;
+          last_used_at: string | null;
           name: string | null;
           position: number;
           user_id: string;
@@ -1500,8 +1502,10 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           exercises?: Json | null;
+          held?: boolean;
           id?: never;
           in_use?: never;
+          last_used_at?: string | null;
           name?: string | null;
           position: number;
           user_id: string;
@@ -1509,8 +1513,10 @@ export type Database = {
         };
         Update: {
           exercises?: Json | null;
+          held?: boolean;
           id?: never;
           in_use?: never;
+          last_used_at?: string | null;
           name?: string | null;
           position?: number;
           user_id?: string;
@@ -1689,6 +1695,7 @@ export type Database = {
           active: boolean;
           created_at: string;
           estimated_minutes: number;
+          held: boolean;
           id: number;
           name: string | null;
           type: Database['public']['Enums']['workout_type'] | null;
@@ -1700,6 +1707,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           estimated_minutes: number;
+          held?: boolean;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1710,6 +1718,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           estimated_minutes?: number;
+          held?: boolean;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1872,6 +1881,7 @@ export type Database = {
       alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      apply_all_plan_limits: { Args: Record<PropertyKey, never>; Returns: undefined };
       apply_coach_change: {
         Args: {
           change: Json;
@@ -1881,6 +1891,7 @@ export type Database = {
         Returns: undefined;
       };
       apply_food_log_change: { Args: { change: Json }; Returns: undefined };
+      apply_plan_limits: { Args: { owner: string }; Returns: undefined };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       budget_period: {
@@ -2154,6 +2165,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_held_workout: { Args: { workout_id: number }; Returns: boolean };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_own_coach_thread_message: {
         Args: { message_id: number; thread_id: number };
@@ -2231,8 +2243,10 @@ export type Database = {
         Args: { alternative_id: number };
         Returns: {
           exercises: Json | null;
+          held: boolean;
           id: number;
           in_use: boolean;
+          last_used_at: string | null;
           name: string | null;
           position: number;
           user_id: string;
@@ -2718,6 +2732,7 @@ export type Database = {
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
+          added_alternatives: number;
           alternative_name_length: number;
           alternatives: number;
           exercises: number;
