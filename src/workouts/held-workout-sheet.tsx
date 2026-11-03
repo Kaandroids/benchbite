@@ -13,20 +13,6 @@ import { useWorkoutName } from './format';
 import { WaitingSheet } from './waiting-sheet';
 import { useCurrentWorkoutLimits, type Workout } from './workouts';
 
-/**
- * How many workouts the plan has room for, as it is now, beside a workout that waits; nothing until
- * that is read.
- */
-export function WorkoutRoom() {
-  const { t } = useTranslation();
-  const limits = useCurrentWorkoutLimits();
-  return limits ? (
-    <Text variant="caption" color="textMuted" align="center">
-      {t('workout.held.room', { count: limits.workouts })}
-    </Text>
-  ) : null;
-}
-
 /** Closes the sheet, then runs `action`, as iOS shows no alert or screen over a closing sheet. */
 function thenClose(onClose: () => void, action: () => void) {
   return () => {
@@ -105,9 +91,7 @@ export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativ
     <WaitingSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
-        inAll !== undefined && inAll !== null
-          ? t('workout.held.alternativeBody', { count: inAll })
-          : t('workout.held.kept')
+        inAll != null ? t('workout.held.alternativeBody', { count: inAll }) : t('workout.held.kept')
       }
       onClose={onClose}
     >

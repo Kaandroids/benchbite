@@ -14,8 +14,13 @@ import { useTheme } from '@/theme';
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
 import { HeldWorkoutSheet } from './held-workout-sheet';
-import { HELD_OPACITY } from './waiting-sheet';
-import { showsAsWaiting, useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
+import {
+  HELD_OPACITY,
+  showsAsWaiting,
+  useKcalPerMinute,
+  useSetWorkoutActive,
+  type Workout,
+} from './workouts';
 
 type WorkoutListItemProps = {
   workout: Workout;

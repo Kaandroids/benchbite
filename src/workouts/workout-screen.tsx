@@ -35,9 +35,8 @@ import { AlternativesSheets } from './alternatives-sheet';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
-import { HeldAlternativeSheet, WorkoutRoom } from './held-workout-sheet';
+import { HeldAlternativeSheet } from './held-workout-sheet';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { HELD_OPACITY } from './waiting-sheet';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
@@ -45,7 +44,9 @@ import {
   useWorkouts,
   type WorkoutExercise,
   findWorkout,
+  HELD_OPACITY,
   showsAsWaiting,
+  useCurrentWorkoutLimits,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -332,6 +333,20 @@ export function WorkoutScreen({ id }: { id: number }) {
       ) : null}
     </Screen>
   );
+}
+
+/**
+ * How many workouts the plan has room for, as it is now, beside a workout that waits; nothing until
+ * that is read.
+ */
+function WorkoutRoom() {
+  const { t } = useTranslation();
+  const limits = useCurrentWorkoutLimits();
+  return limits ? (
+    <Text variant="caption" color="textMuted" align="center">
+      {t('workout.held.room', { count: limits.workouts })}
+    </Text>
+  ) : null;
 }
 
 const styles = StyleSheet.create({

@@ -37,6 +37,9 @@ export type Workout = {
   exercises: WorkoutExercise[];
 };
 
+/** How dimmed a workout that waits for premium is, in a list and on its screen. */
+export const HELD_OPACITY = 0.6;
+
 /**
  * Whether a workout shows as waiting for premium: one running stays as it is, to be resumed and
  * finished, though its plan has ended meanwhile.

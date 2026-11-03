@@ -6,9 +6,6 @@ import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-/** How dimmed what waits for premium is, such as a workout in a list and on its screen. */
-export const HELD_OPACITY = 0.6;
-
 const BITE_SIZE = 64;
 /** How far Bite stands above the sheet's top edge, the rest of it over the sheet's corner. */
 const BITE_PEEK = 44;
