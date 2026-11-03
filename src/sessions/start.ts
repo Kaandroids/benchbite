@@ -1,10 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Alert } from 'react-native';
 
 import { toIsoDate } from '@/i18n/dates';
+import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
-import type { Workout } from '@/workouts/workouts';
+import { useWorkoutName } from '@/workouts/format';
+import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
 import { fetchBests, fetchLastSets } from './logs';
 import { offerRestAlarm } from './rest-alarm';
@@ -25,18 +28,40 @@ export function hasExercises(workout: Pick<Workout, 'exercises'>): boolean {
  * planned today that has a missed or later day this week first asks whether it counts for that
  * day (ADR 0028); `beforeStart` runs once it is sure to start, for example to end the workout it
  * replaces. The first time, it offers to signal the end of rests.
+ *
+ * The cached list can be older than the plan, so whether the workout waits for premium is read
+ * again first: one that waits is not started, as its session would not be saved (ADR 0079).
+ * Without a connection it starts as the list shows it.
  */
 export function useStartWorkout() {
   const { t } = useTranslation();
   const userId = useUserId();
   const queryClient = useQueryClient();
   const askMove = useStartMove();
+  const workoutName = useWorkoutName();
+  const openPremium = useOpenPremium();
   return async (workout: Workout, { beforeStart }: { beforeStart?: () => void } = {}) => {
     if (!userId) {
       return;
     }
     if (!hasExercises(workout)) {
       router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } });
+      return;
+    }
+    const held = await fetchWorkoutHeld(workout.id).catch((error: unknown) => {
+      console.warn('Could not check whether the workout waits for premium', error);
+      return false;
+    });
+    if (held) {
+      void reloadPlan(queryClient);
+      Alert.alert(
+        t('workout.held.sheetTitle', { name: workoutName(workout) }),
+        t('workout.held.kept'),
+        [
+          { text: t('common.close'), style: 'cancel' },
+          { text: t('workout.held.getBack'), onPress: openPremium },
+        ],
+      );
       return;
     }
     const choice = await askMove(workout, new Date());
