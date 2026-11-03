@@ -1460,6 +1460,7 @@
       "discardMessage": "Die eingetragenen Sätze werden nicht gespeichert.",
       "empty": "Trage mindestens einen Satz ein, um das Training zu speichern.",
       "saveError": "Das Training konnte nicht gespeichert werden. Prüfe deine Verbindung und versuche es erneut.",
+      "waitsError": "Dieses Training wartet auf Premium und kann nicht gespeichert werden.",
       "records_one": "{{count}} neuer Rekord",
       "records_other": "{{count}} neue Rekorde"
     },

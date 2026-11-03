@@ -1712,6 +1712,7 @@ export type Database = {
           created_at: string;
           estimated_minutes: number;
           held: boolean;
+          held_at: string | null;
           id: number;
           name: string | null;
           type: Database['public']['Enums']['workout_type'] | null;
@@ -1724,6 +1725,7 @@ export type Database = {
           created_at?: string;
           estimated_minutes: number;
           held?: boolean;
+          held_at?: string | null;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1735,6 +1737,7 @@ export type Database = {
           created_at?: string;
           estimated_minutes?: number;
           held?: boolean;
+          held_at?: string | null;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;

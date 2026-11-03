@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { act, createTestQueryClient, renderHook } from '@/test/render';
 import { testExercise } from '@/workouts/test-data';
-import type { Workout } from '@/workouts/workouts';
+import { fetchWorkoutHeld, reloadPlan, type Workout } from '@/workouts/workouts';
 
 import { startSession } from './session';
 import { useStartWorkout } from './start';
@@ -17,6 +18,11 @@ jest.mock('./logs', () => ({
 jest.mock('./rest-alarm', () => ({ offerRestAlarm: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('./session', () => ({ startSession: jest.fn() }));
 jest.mock('./start-move', () => ({ useStartMove: jest.fn() }));
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/workouts/workouts', () => ({
+  fetchWorkoutHeld: jest.fn(),
+  reloadPlan: jest.fn(),
+}));
 
 // Wednesday, October 21.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
@@ -45,6 +51,7 @@ async function start(options?: { beforeStart?: () => void }, workout = PUSH) {
 describe('useStartWorkout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(fetchWorkoutHeld).mockResolvedValue(false);
     jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
   });
   afterEach(() => jest.useRealTimers());
@@ -98,5 +105,31 @@ describe('useStartWorkout', () => {
     expect(beforeStart).not.toHaveBeenCalled();
     expect(startSession).not.toHaveBeenCalled();
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '1' } });
+  });
+
+  it('does not start a workout that waits for premium since the list was loaded', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const beforeStart = jest.fn();
+    jest.mocked(fetchWorkoutHeld).mockResolvedValue(true);
+    await start({ beforeStart });
+    expect(fetchWorkoutHeld).toHaveBeenCalledWith(1);
+    expect(alert).toHaveBeenCalledWith(
+      'Push waits for premium',
+      'Nothing is deleted. It comes back as it was with premium.',
+      expect.any(Array),
+    );
+    expect(reloadPlan).toHaveBeenCalled();
+    expect(askMove).not.toHaveBeenCalled();
+    expect(beforeStart).not.toHaveBeenCalled();
+    expect(startSession).not.toHaveBeenCalled();
+  });
+
+  it('starts as the list shows it without a connection', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.mocked(fetchWorkoutHeld).mockRejectedValue(new TypeError('Network request failed'));
+    askMove.mockResolvedValue({});
+    await start();
+    expect(startSession).toHaveBeenCalled();
+    expect(reloadPlan).not.toHaveBeenCalled();
   });
 });
