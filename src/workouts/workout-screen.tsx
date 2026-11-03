@@ -50,6 +50,7 @@ import {
   useWorkouts,
   type WorkoutExercise,
   findWorkout,
+  showsAsWaiting,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -128,8 +129,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   }
 
   const name = workoutName(workout);
-  // One running is resumed and finished as before, though its plan has ended meanwhile.
-  const held = workout.held && !running;
+  const held = showsAsWaiting(workout, running);
   // As when an empty alternative was just put in use: nothing to show or start until it is edited.
   const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
@@ -291,7 +291,8 @@ export function WorkoutScreen({ id }: { id: number }) {
         </>
       )}
 
-      {/* Switching a workout off moves it to the archive, and back; not one that waits. */}
+      {/* Switching a workout off moves it to the archive, and back; not one that waits, even while
+          it runs, as the database refuses that (BB051). */}
       {workout.held ? null : (
         <Pressable
           accessibilityRole="button"

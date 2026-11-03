@@ -14,7 +14,7 @@ import { useTheme } from '@/theme';
 import { DayChips } from './day-chips';
 import { HELD_OPACITY, useWorkoutName } from './format';
 import { HeldWorkoutSheet } from './held-workout-sheet';
-import { useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
+import { showsAsWaiting, useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
 
 type WorkoutListItemProps = {
   workout: Workout;
@@ -44,8 +44,7 @@ export function WorkoutListItem({
   const { exercises } = workout;
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const isToday = today !== undefined && workout.weekdays.includes(today);
-  // One running stays as it is, to be resumed or finished, though its plan has ended meanwhile.
-  const held = workout.held && !running;
+  const held = showsAsWaiting(workout, running);
   const [showingHeld, setShowingHeld] = useState(false);
   // Muted as an archived one, as neither is planned on a day.
   const muted = !workout.active || held;

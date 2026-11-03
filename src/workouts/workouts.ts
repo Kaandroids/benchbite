@@ -37,6 +37,14 @@ export type Workout = {
   exercises: WorkoutExercise[];
 };
 
+/**
+ * Whether a workout shows as waiting for premium: one running stays as it is, to be resumed and
+ * finished, though its plan has ended meanwhile.
+ */
+export function showsAsWaiting(workout: Workout, running: boolean): boolean {
+  return workout.held && !running;
+}
+
 /** A workout as a session on a weekday. */
 export function sessionOf(workout: Workout, weekday: number): WeekSession {
   return {
