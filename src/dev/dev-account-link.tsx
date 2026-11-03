@@ -2,7 +2,7 @@ import { accountError, useSignIn } from '@/account/account';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 
-import { canUseDevAccount, DEV_ACCOUNT } from './dev-account';
+import { canUseDevTools, DEV_ACCOUNT } from './dev-account';
 
 /**
  * Signs in to the seeded dev account, which has finished the onboarding; only in development
@@ -11,7 +11,7 @@ import { canUseDevAccount, DEV_ACCOUNT } from './dev-account';
  */
 export function DevAccountLink({ note }: { note?: string }) {
   const signIn = useSignIn();
-  if (!canUseDevAccount()) {
+  if (!canUseDevTools()) {
     return null;
   }
   const error = signIn.isError ? accountError(signIn.error) : null;

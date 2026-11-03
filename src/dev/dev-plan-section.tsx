@@ -8,7 +8,7 @@ import { TRIAL_DAYS } from '@/premium/trial';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
-import { canUseDevAccount } from './dev-account';
+import { canUseDevTools } from './dev-account';
 import { PLANS, useDevPlan, useSetDevPlan, type Plan } from './dev-plan';
 
 const LABELS: Record<Plan, string> = { free: 'Free', trial: 'Trial', premium: 'Premium' };
@@ -20,7 +20,7 @@ const LABELS: Record<Plan, string> = { free: 'Free', trial: 'Trial', premium: 'P
  */
 export function DevPlanSection() {
   const isAccount = useIsAccount();
-  if (!canUseDevAccount() || !isAccount) {
+  if (!canUseDevTools() || !isAccount) {
     return null;
   }
   return <PlanSwitcher />;

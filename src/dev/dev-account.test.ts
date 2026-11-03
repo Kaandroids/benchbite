@@ -1,4 +1,4 @@
-import { isLocalSupabase } from './dev-account';
+import { canUseDevTools, isLocalSupabase } from './dev-account';
 
 describe('isLocalSupabase', () => {
   it.each([
@@ -20,5 +20,22 @@ describe('isLocalSupabase', () => {
     undefined,
   ])('does not take %s', (url) => {
     expect(isLocalSupabase(url)).toBe(false);
+  });
+});
+
+describe('canUseDevTools', () => {
+  const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  afterEach(() => {
+    process.env.EXPO_PUBLIC_SUPABASE_URL = URL;
+  });
+
+  it('is true in development against the local database', () => {
+    process.env.EXPO_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321';
+    expect(canUseDevTools()).toBe(true);
+  });
+
+  it('is false against a hosted project', () => {
+    process.env.EXPO_PUBLIC_SUPABASE_URL = 'https://abcdefgh.supabase.co';
+    expect(canUseDevTools()).toBe(false);
   });
 });
