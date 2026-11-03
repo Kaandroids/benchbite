@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(17);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -72,6 +72,17 @@ select ok(
   (select week_resets_at < period_resets_at from b_summary), 'and when each opens again'
 );
 select is((select photos_left from b_summary), null, 'and no photo count');
+
+-- What each plan allows.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+create temp table numbers as select * from public.plan_numbers();
+reset role;
+select is(
+  (select (workouts, added_alternatives, weekly_photos) from numbers where plan = 'free'),
+  (select (p.workouts, p.added_alternatives, p.weekly_photos) from public.plans p where p.plan = 'free'),
+  'Each plan''s numbers can be compared'
+);
+select is((select count(*) from numbers)::integer, 3, 'for every plan');
 
 -- Only a signed-in user.
 select ok(

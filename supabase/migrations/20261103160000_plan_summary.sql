@@ -1,7 +1,7 @@
 -- What the premium page shows of the caller's plan (#411, ADR 0078): the plan, how it is billed
--- and when it renews, and how much of each AI window is left. The windows are given as a share
--- left and when they open again, never in money, which the app does not show; the free plan's
--- meal photos are a number, which it does.
+-- and when it renews, and how much of each AI window is left; and what each plan allows, for its
+-- comparison. The windows are given as a share left and when they open again, never in money,
+-- which the app does not show; the free plan's meal photos are a number, which it does.
 
 create type public.plan_summary as (
   plan public.plan,
@@ -65,11 +65,35 @@ begin
   result.period_left := public.share_left(windows.period_used_usd, windows.budget_usd);
   result.period_resets_at := upper(windows.period);
   result.week_left := public.share_left(windows.week_used_usd, windows.weekly_budget_usd);
-  result.week_resets_at := case when windows.weekly_budget_usd is null then null else upper(windows.week) end;
+  result.week_resets_at :=
+    case when windows.weekly_budget_usd is null then null else upper(windows.week) end;
   return result;
 end;
+$$;
+
+-- What each plan allows that the premium page compares: workouts, versions of each, alternatives
+-- added in all and meal photos a week, null being no limit. Not the budgets, which it never shows.
+create function public.plan_numbers()
+returns table (
+  plan public.plan,
+  workouts integer,
+  versions integer,
+  added_alternatives integer,
+  weekly_photos integer
+)
+language sql
+stable
+-- Reads `plans`, which callers may not.
+security definer
+set search_path = ''
+as $$
+  select p.plan, p.workouts, p.versions, p.added_alternatives, p.weekly_photos
+  from public.plans p
+  order by p.plan;
 $$;
 
 revoke all on function public.share_left(numeric, numeric) from public, anon, authenticated;
 revoke all on function public.plan_summary() from public, anon;
 grant execute on function public.plan_summary() to authenticated;
+revoke all on function public.plan_numbers() from public, anon;
+grant execute on function public.plan_numbers() to authenticated;

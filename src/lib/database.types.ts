@@ -2453,6 +2453,16 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      plan_numbers: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          added_alternatives: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_photos: number;
+          workouts: number;
+        }[];
+      };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       plan_summary: {
         Args: Record<PropertyKey, never>;
