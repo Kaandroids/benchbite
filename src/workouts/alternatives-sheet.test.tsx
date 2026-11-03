@@ -475,7 +475,9 @@ it('points to premium once the plan allows no more', async () => {
     screen.getByText("You've added the 1 alternative your plan allows. Delete it to add one here."),
   ).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'More with premium' }));
-  expect(router.push).toHaveBeenCalledWith('/premium');
+  // Closed first, so that the page does not open behind the sheet.
+  expect(onClose).toHaveBeenCalled();
+  await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
 });
 
 it('closes on the scrim', async () => {

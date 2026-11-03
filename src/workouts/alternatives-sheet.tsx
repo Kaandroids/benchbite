@@ -19,7 +19,7 @@ import { PillButton } from '@/components/ui/pill-button';
 import { Radio } from '@/components/ui/radio';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
-import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
+import { afterSheetCloses, closeThen, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { move } from '@/lib/move';
@@ -466,7 +466,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             <TextLink
               label={t('workout.alternatives.morePremium')}
               align="start"
-              onPress={openPremium}
+              // The page opens once the sheet has closed, not behind it.
+              onPress={closeThen(onClose, openPremium)}
             />
           </View>
         </View>
