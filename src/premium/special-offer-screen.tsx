@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
-import { darkColors } from '@/theme/colors';
+import { useNow } from '@/lib/use-now';
+import { ThemeScheme, useTheme } from '@/theme';
+
+import { UsageStats } from './usage-stats';
 
 type SpecialOfferScreenProps = {
   /** How much less than the usual price, in whole percent. */
@@ -28,11 +30,19 @@ type SpecialOfferScreenProps = {
 };
 
 /**
- * An offer of premium for less (#411), such as for coming back after it ended: Bite on top, the
- * first year's price and the button in the middle, and what is waiting for the user at the
- * bottom, with the time left. Always dark, as it stands apart from the app's own screens.
+ * An offer of premium for less (#411), such as for coming back after it ended: Bite with the
+ * discount, the first year's price, what is waiting for the user, and the time left. Always dark,
+ * as it stands apart from the app's own screens; once the time is up, it can no longer be claimed.
  */
-export function SpecialOfferScreen({
+export function SpecialOfferScreen(props: SpecialOfferScreenProps) {
+  return (
+    <ThemeScheme scheme="dark">
+      <Offer {...props} />
+    </ThemeScheme>
+  );
+}
+
+function Offer({
   percent,
   usualPrice,
   price,
@@ -42,10 +52,8 @@ export function SpecialOfferScreen({
   onClose,
 }: SpecialOfferScreenProps) {
   const { t, i18n } = useTranslation();
-  const { radii, spacing } = useTheme();
-  // Always dark, whatever the theme, as the offer stands apart from the app's own screens.
-  const dark = darkColors;
-  const left = useTimeLeft(endsAt);
+  const { colors, radii, spacing } = useTheme();
+  const [expired, setExpired] = useState(() => endsAt.getTime() <= Date.now());
   // Light on the dark screen while it shows, and back to the theme's when another one covers it.
   useFocusEffect(
     useCallback(() => {
@@ -55,30 +63,19 @@ export function SpecialOfferScreen({
   );
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: dark.background }]}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.row, { paddingHorizontal: spacing.lg, minHeight: 52 }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.close')}
           onPress={onClose}
           hitSlop={8}
-          style={[styles.close, { backgroundColor: dark.track }]}
+          style={[styles.close, { backgroundColor: colors.track }]}
         >
-          <Icon name="close" size={18} fixedColor={dark.text} />
+          <Icon name="close" size={18} />
         </Pressable>
         <View style={styles.flex} />
-        <View
-          style={[
-            styles.row,
-            styles.pill,
-            { backgroundColor: dark.lunchBackground, paddingHorizontal: spacing.md, gap: 6 },
-          ]}
-        >
-          <Icon name="timer" size={14} fixedColor={dark.primary} />
-          <Text variant="captionStrong" style={[styles.digits, { color: dark.primary }]}>
-            {t('premium.offer.endsIn', { time: left })}
-          </Text>
-        </View>
+        <Countdown endsAt={endsAt} expired={expired} onExpire={() => setExpired(true)} />
       </View>
 
       <View style={[styles.body, { padding: spacing.xl, paddingTop: spacing.md }]}>
@@ -90,19 +87,19 @@ export function SpecialOfferScreen({
             <View
               style={[
                 styles.stamp,
-                { backgroundColor: dark.primaryButton, borderRadius: radii.md },
+                { backgroundColor: colors.primaryButton, borderRadius: radii.md },
               ]}
             >
-              <Text variant="headline" style={{ color: dark.onPrimary }}>
+              <Text variant="headline" color="onPrimary">
                 −{percent}%
               </Text>
             </View>
           </View>
           <View style={[styles.center, { gap: spacing.xs }]}>
-            <Text variant="captionStrong" style={{ color: dark.primary }}>
+            <Text variant="captionStrong" color="primaryText">
               {t('premium.offer.kicker').toLocaleUpperCase(i18n.language)}
             </Text>
-            <Text variant="title" style={[styles.centerText, { color: dark.text }]}>
+            <Text variant="title" style={styles.centerText}>
               {t('premium.offer.title')}
             </Text>
           </View>
@@ -116,74 +113,68 @@ export function SpecialOfferScreen({
             style={[
               styles.row,
               styles.card,
+              styles.offer,
               {
                 gap: spacing.md,
                 padding: spacing.md,
-                backgroundColor: dark.surface,
-                borderColor: dark.primary,
-                borderWidth: 2,
+                backgroundColor: colors.surface,
+                borderColor: colors.primary,
               },
             ]}
           >
             <View style={styles.flex}>
-              <Text variant="label" style={{ color: dark.text }}>
-                {t('premium.offer.firstYear')}
-              </Text>
-              <Text variant="caption" style={{ color: dark.textMuted }}>
+              <Text variant="label">{t('premium.offer.firstYear')}</Text>
+              <Text variant="caption" color="textMuted">
                 {t('premium.offer.then', { price: usualPrice })}
               </Text>
             </View>
             <View style={styles.end}>
               <Text
                 variant="bodyStrong"
-                style={[styles.struck, { color: dark.textMuted }]}
+                color="textMuted"
+                style={styles.struck}
                 accessibilityLabel={t('premium.offer.usual', { price: usualPrice })}
               >
                 {usualPrice}
               </Text>
-              <Text variant="title" style={{ color: dark.text }}>
-                {price}
-              </Text>
+              <Text variant="title">{price}</Text>
             </View>
           </View>
 
           <View
             style={[
               styles.card,
-              { padding: spacing.md, gap: spacing.md, backgroundColor: dark.surface },
+              { padding: spacing.md, gap: spacing.md, backgroundColor: colors.surface },
             ]}
           >
-            <Text variant="captionStrong" style={[styles.centerText, { color: dark.textMuted }]}>
+            <Text variant="captionStrong" color="textMuted" style={styles.centerText}>
               {t('premium.offer.text')}
             </Text>
-            <View style={[styles.row, { gap: spacing.sm }]}>
-              {(
-                [
-                  ['dumbbell', 'workouts', waiting.workouts, 'breakfast'],
-                  ['layers', 'alternatives', waiting.alternatives, 'snack'],
-                  ['chat', 'chats', waiting.chats, 'info'],
-                ] as const
-              ).map(([icon, kind, count, tint]) => (
-                <View key={kind} style={[styles.stat, { gap: spacing.xs }]}>
-                  <View
-                    style={[
-                      styles.tile,
-                      {
-                        backgroundColor: dark[`${tint}Background`],
-                      },
-                    ]}
-                  >
-                    <Icon name={icon} size={20} fixedColor={dark[tint]} />
-                  </View>
-                  <Text variant="headline" style={{ color: dark.text }}>
-                    {count}
-                  </Text>
-                  <Text variant="caption" style={[styles.centerText, { color: dark.textMuted }]}>
-                    {t(`premium.offer.${kind}`, { count })}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <UsageStats
+              stats={[
+                {
+                  icon: 'dumbbell',
+                  count: waiting.workouts,
+                  label: t('premium.offer.workouts', { count: waiting.workouts }),
+                  color: 'breakfast',
+                  background: 'breakfastBackground',
+                },
+                {
+                  icon: 'layers',
+                  count: waiting.alternatives,
+                  label: t('premium.offer.alternatives', { count: waiting.alternatives }),
+                  color: 'snack',
+                  background: 'snackBackground',
+                },
+                {
+                  icon: 'chat',
+                  count: waiting.chats,
+                  label: t('premium.offer.chats', { count: waiting.chats }),
+                  color: 'info',
+                  background: 'infoBackground',
+                },
+              ]}
+            />
           </View>
         </View>
 
@@ -191,8 +182,12 @@ export function SpecialOfferScreen({
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.md, gap: spacing.sm }}>
-        <Button label={t('premium.offer.claim', { percent })} onPress={onClaim} />
-        <Text variant="caption" style={[styles.centerText, { color: dark.textMuted }]}>
+        <Button
+          label={t(expired ? 'premium.offer.ended' : 'premium.offer.claim', { percent })}
+          disabled={expired}
+          onPress={onClaim}
+        />
+        <Text variant="caption" color="textMuted" style={styles.centerText}>
           {t('premium.offer.legal')}
         </Text>
       </View>
@@ -200,16 +195,45 @@ export function SpecialOfferScreen({
   );
 }
 
-/** The time left until `endsAt`, as hours, minutes and seconds, counting down each second. */
-function useTimeLeft(endsAt: Date) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+type CountdownProps = {
+  endsAt: Date;
+  /** Whether the time is up, after which it stops. */
+  expired: boolean;
+  /** Called when the time is up. */
+  onExpire: () => void;
+};
+
+/**
+ * The time left until `endsAt`, as hours, minutes and seconds, in a tag. It ticks on its own, so
+ * that the rest of the screen does not draw again each second, and stops at the end.
+ */
+function Countdown({ endsAt, expired, onExpire }: CountdownProps) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const now = useNow(!expired);
   const seconds = Math.max(0, Math.floor((endsAt.getTime() - now) / 1000));
+  useEffect(() => {
+    if (!expired && seconds === 0) {
+      onExpire();
+    }
+  }, [expired, seconds, onExpire]);
   const two = (value: number) => String(value).padStart(2, '0');
-  return `${two(Math.floor(seconds / 3600))}:${two(Math.floor((seconds % 3600) / 60))}:${two(seconds % 60)}`;
+  const time = `${two(Math.floor(seconds / 3600))}:${two(Math.floor((seconds % 3600) / 60))}:${two(seconds % 60)}`;
+
+  return (
+    <View
+      style={[
+        styles.row,
+        styles.pill,
+        { backgroundColor: colors.lunchBackground, paddingHorizontal: spacing.md, gap: 6 },
+      ]}
+    >
+      <Icon name="timer" size={14} color="primary" />
+      <Text variant="captionStrong" color="primaryText" style={styles.digits}>
+        {t('premium.offer.endsIn', { time })}
+      </Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -243,19 +267,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
   },
+  offer: {
+    borderWidth: 2,
+  },
   end: {
     alignItems: 'flex-end',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  tile: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   stamp: {
     position: 'absolute',
