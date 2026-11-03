@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useOpenPremium } from '@/premium/open-premium';
+import { useTheme } from '@/theme';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
@@ -45,6 +46,7 @@ type HeldWorkoutSheetProps = {
  */
 export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const { t } = useTranslation();
+  const { spacing } = useTheme();
   const limits = useCurrentWorkoutLimits();
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
@@ -66,12 +68,13 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
           router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } }),
         )}
       />
+      {/* Quiet and close under the buttons, as a way out rather than an offer. */}
       <Pressable
         accessibilityRole="button"
         onPress={thenClose(onClose, () => confirmDelete(workout.id))}
-        style={styles.delete}
+        style={[styles.delete, { marginTop: -spacing.sm }]}
       >
-        <Text variant="label" color="danger">
+        <Text variant="bodyStrong" color="danger" style={styles.quiet}>
           {t('workout.held.deleteToMakeRoom')}
         </Text>
       </Pressable>
@@ -120,8 +123,11 @@ export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativ
 
 const styles = StyleSheet.create({
   delete: {
-    height: 48,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  quiet: {
+    opacity: 0.7,
   },
 });

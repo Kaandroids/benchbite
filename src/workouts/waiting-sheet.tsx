@@ -41,7 +41,9 @@ export function WaitingSheet({ title, body, children, onClose }: WaitingSheetPro
       >
         <BiteAvatar size={BITE_SIZE} looksAbout />
       </View>
-      <View style={{ gap: spacing.xs, paddingRight: BITE_SIZE + spacing.md }}>
+      <View
+        style={{ gap: spacing.xs, paddingRight: BITE_SIZE + spacing.md, marginBottom: spacing.sm }}
+      >
         <Text variant="headline" accessibilityRole="header">
           {title}
         </Text>
