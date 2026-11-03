@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(52);
+select plan(53);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -36,7 +36,7 @@ where p.proname in (
   'answer_breaks_through', 'ai_model_price', 'ai_cost', 'record_ai_usage',
   'lock_own_workout', 'lock_own_alternative', 'queue_coach_media_deletion',
   'plan_limits', 'refuse_held_workout', 'is_held_workout', 'refuse_held_workout_rows',
-  'check_alternative', 'stamp_alternative_last_used', 'apply_plan_limits',
+  'refuse_held_alternative', 'added_alternative_count', 'stamp_alternative_last_used', 'apply_plan_limits',
   'apply_plan_limits_on_subscription', 'apply_plan_limits_after_delete', 'apply_changed_plan_limits'
 )
 group by p.proname

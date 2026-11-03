@@ -4,12 +4,13 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
-  ('00000000-0000-0000-0000-00000000000c', 'c@example.com');
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.com'),
+  ('00000000-0000-0000-0000-00000000000d', 'd@example.com');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -160,7 +161,7 @@ select is((select count(*)::integer from public.workouts), 4, 'which is gone');
 
 -- Applying again trades nothing: what is usable stays, and what waits waits.
 reset role;
-select public.apply_changed_plan_limits();
+select public.apply_plan_limits('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select id from public.workouts where user_id = '00000000-0000-0000-0000-00000000000a' and held order by id $$,
   $$ values (104::bigint) $$,
@@ -253,6 +254,25 @@ select results_eq(
   $$ select (select held from public.workouts where id = 301), (select held from public.workout_alternatives where id = 3012) $$,
   $$ values (true, true) $$,
   'A waiting workout''s alternative waits with it, though the alternatives fit'
+);
+
+-- The sweep applies a plan whose end has passed without a change to its row: D had premium and
+-- four workouts.
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, estimated_minutes, weekdays)
+overriding system value values
+  (401, '00000000-0000-0000-0000-00000000000d', 'One', 30, '{}'),
+  (402, '00000000-0000-0000-0000-00000000000d', 'Two', 30, '{}'),
+  (403, '00000000-0000-0000-0000-00000000000d', 'Three', 30, '{}'),
+  (404, '00000000-0000-0000-0000-00000000000d', 'Four', 30, '{}');
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source, applied_plan)
+values ('00000000-0000-0000-0000-00000000000d', 'premium', now() - interval '30 days', now() - interval '2 hours', 'monthly', 'manual', 'premium');
+set local session_replication_role = origin;
+select public.apply_changed_plan_limits();
+select results_eq(
+  $$ select id from public.workouts where user_id = '00000000-0000-0000-0000-00000000000d' and held $$,
+  $$ values (401::bigint) $$,
+  'The sweep holds what is above a plan whose end has passed'
 );
 
 select is(
