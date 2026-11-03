@@ -50,7 +50,8 @@ revoke execute on function public.stamp_held_workout() from public, anon, authen
 update public.workouts set held_at = now() where held;
 
 -- As before (20261029100000), refusing a log of a workout that waits for premium whose session
--- started after the workout began to wait (BB051). One started before is saved.
+-- started more than five minutes after the workout began to wait (BB051). One started before is
+-- saved.
 create or replace function public.log_workout(log jsonb)
 returns bigint
 language plpgsql
@@ -99,7 +100,8 @@ begin
     raise exception 'Workout not found' using errcode = 'BB006';
   end if;
 
-  if source.held and started > source.held_at then
+  -- As for the end, a phone's clock may be up to five minutes ahead.
+  if source.held and started > source.held_at + interval '5 minutes' then
     raise exception 'The workout waits for premium' using errcode = 'BB051';
   end if;
 
