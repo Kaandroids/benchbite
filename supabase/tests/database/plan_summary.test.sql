@@ -4,11 +4,15 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(23);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false);
+  ('00000000-0000-0000-0000-00000000000b', 'b@example.com', false),
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.com', false),
+  ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false),
+  ('00000000-0000-0000-0000-00000000000e', 'e@example.com', false),
+  ('00000000-0000-0000-0000-00000000000f', 'f@example.com', false);
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -72,6 +76,64 @@ select ok(
   (select week_resets_at < period_resets_at from b_summary), 'and when each opens again'
 );
 select is((select photos_left from b_summary), null, 'and no photo count');
+
+-- C on the free plan, whose photos gave no estimate but spent the week's backstop.
+select pg_temp.used(
+  '00000000-0000-0000-0000-00000000000c',
+  (select p.weekly_free_usd from public.plans p where p.plan = 'free'),
+  now(), true, false
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
+create temp table c_summary as select * from public.plan_summary();
+reset role;
+select is(
+  (select photos_left from c_summary), 0,
+  'No photo is left once the week''s backstop is spent, though none was counted'
+);
+
+-- D on premium, monthly, with all but a fifth of a week's budget spent in its first week.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+  values ('00000000-0000-0000-0000-00000000000d', 'premium', now() - interval '10 days',
+    now() + interval '20 days', 'monthly', 'manual');
+select pg_temp.used(
+  '00000000-0000-0000-0000-00000000000d',
+  (select p.budget_usd - p.weekly_budget_usd / 5 from public.plans p where p.plan = 'premium'),
+  now() - interval '9 days'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000d');
+create temp table d_summary as select * from public.plan_summary();
+reset role;
+select is(
+  (select week_left from d_summary), 0.2,
+  'A fresh week has no more left than the period does'
+);
+
+-- E on the trial, whose week is its period.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+  values ('00000000-0000-0000-0000-00000000000e', 'trial', now() - interval '1 day',
+    now() + interval '6 days', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000e');
+create temp table e_summary as select * from public.plan_summary();
+reset role;
+select is(
+  (select (week_left, week_resets_at) from e_summary), (null::numeric, null::timestamptz),
+  'The trial has no week apart from its period'
+);
+select is((select period_left from e_summary), 1::numeric, 'only the period');
+
+-- F on premium, its period ended twenty minutes ago, in the hour of grace.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+  values ('00000000-0000-0000-0000-00000000000f', 'premium', now() - interval '30 days',
+    now() - interval '20 minutes', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000f');
+create temp table f_summary as select * from public.plan_summary();
+reset role;
+select is((select plan from f_summary), 'premium'::public.plan, 'In its grace a plan is still on');
+select is(
+  (select (period_end, period_resets_at, week_resets_at) from f_summary),
+  (null::timestamptz, null::timestamptz, null::timestamptz),
+  'with no renewal or reset that has already passed'
+);
 
 -- What each plan allows.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');

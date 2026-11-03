@@ -5,11 +5,13 @@
 
 create type public.plan_summary as (
   plan public.plan,
-  -- The trial's or premium's billing and the end of its period; null on the free plan.
+  -- The trial's or premium's billing, and the end of its period; the end is null on the free plan
+  -- and in the hour of grace after it has passed.
   billing public.billing_period,
   period_end timestamptz,
   -- On the trial and premium: the share of the week's and the period's budget left, from 0 to 1,
-  -- and when each starts again. The week's is null on a plan without a weekly budget.
+  -- and when each starts again. The week's is null on a plan whose week is its period, such as the
+  -- trial; the times are null in the plan's grace.
   week_left numeric,
   week_resets_at timestamptz,
   period_left numeric,
@@ -54,19 +56,38 @@ begin
   result.plan := windows.plan;
   if windows.plan = 'free' then
     result.photos_per_week := windows.weekly_count;
-    result.photos_left := greatest(windows.weekly_count - windows.count_used, 0);
+    -- None left once the week's backstop is spent, as ai_access() then refuses too.
+    result.photos_left := case
+      when windows.free_used_usd >= windows.free_budget_usd then 0
+      else greatest(windows.weekly_count - windows.count_used, 0)
+    end;
     result.photos_reset_at := upper(windows.free_week);
     return result;
   end if;
 
   select * into subscription from public.subscriptions s where s.user_id = (select auth.uid());
   result.billing := subscription.billing;
-  result.period_end := subscription.period_end;
   result.period_left := public.share_left(windows.period_used_usd, windows.budget_usd);
-  result.period_resets_at := upper(windows.period);
-  result.week_left := public.share_left(windows.week_used_usd, windows.weekly_budget_usd);
-  result.week_resets_at :=
-    case when windows.weekly_budget_usd is null then null else upper(windows.week) end;
+  -- A week only when the plan has one apart from its period: the trial's week is its period.
+  -- Calls are held to both, so the week has no more left than the period does.
+  if windows.weekly_budget_usd is not null and windows.week <> windows.period then
+    result.week_left := public.share_left(
+      greatest(
+        windows.week_used_usd,
+        windows.weekly_budget_usd - (windows.budget_usd - windows.period_used_usd)
+      ),
+      windows.weekly_budget_usd
+    );
+    result.week_resets_at := upper(windows.week);
+  end if;
+  -- In a plan's grace its period has ended, and nothing renews or starts again until the store
+  -- renews it, as in ai_access().
+  if subscription.period_end > now() then
+    result.period_end := subscription.period_end;
+    result.period_resets_at := upper(windows.period);
+  else
+    result.week_resets_at := null;
+  end if;
   return result;
 end;
 $$;
