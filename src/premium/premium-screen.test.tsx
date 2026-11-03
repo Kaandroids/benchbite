@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { Alert, Linking } from 'react-native';
 
-import { useIsAccount } from '@/providers/session-provider';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { usePlanNumbers, usePlanSummary, type PlanSummary } from './plan';
@@ -9,7 +8,6 @@ import { PremiumScreen } from './premium-screen';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/providers/session-provider', () => ({ useIsAccount: jest.fn() }));
 jest.mock('./plan', () => ({
   ...jest.requireActual<typeof import('./plan')>('./plan'),
   usePlanSummary: jest.fn(),
@@ -19,7 +17,12 @@ jest.mock('./plan', () => ({
 // A Monday, so that the next week starts on one.
 const MONDAY = new Date(2026, 10, 9, 9, 0);
 
-const FREE: PlanSummary = { plan: 'free', photos: { perWeek: 2, left: 1, resetsAt: MONDAY } };
+const FREE: PlanSummary = {
+  plan: 'free',
+  accountRequired: false,
+  hadTrial: false,
+  photos: { perWeek: 2, left: 1, resetsAt: MONDAY },
+};
 const PREMIUM: PlanSummary = {
   plan: 'premium',
   billing: 'yearly',
@@ -30,8 +33,7 @@ const PREMIUM: PlanSummary = {
 
 const loaded = (data: unknown) => ({ data, isPending: false, isError: false, isFetching: false });
 
-function mockPlan(summary: PlanSummary, isAccount = true) {
-  jest.mocked(useIsAccount).mockReturnValue(isAccount);
+function mockPlan(summary: PlanSummary) {
   jest.mocked(usePlanSummary).mockReturnValue(loaded(summary) as never);
   jest.mocked(usePlanNumbers).mockReturnValue(
     loaded({
@@ -75,7 +77,7 @@ describe('PremiumScreen', () => {
   });
 
   it('asks a guest for an account before the plans, without their photos', async () => {
-    mockPlan(FREE, false);
+    mockPlan({ ...FREE, accountRequired: true });
     await render(<PremiumScreen onClose={onClose} />);
     expect(screen.queryByText('Meal photos this week')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Try 7 days free' }));
@@ -83,6 +85,17 @@ describe('PremiumScreen', () => {
     expect(screen.getByText('First, keep your progress safe')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
     await waitFor(() => expect(router.push).toHaveBeenCalledWith('/account/create'));
+  });
+
+  it('offers premium without a trial to a user who has had it', async () => {
+    mockPlan({ ...FREE, hadTrial: true });
+    await render(<PremiumScreen onClose={onClose} />);
+    expect(screen.queryByText('Try 7 days free')).toBeNull();
+    expect(screen.getByText('From €6.99 a month. Cancel anytime.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Get premium' }));
+    expect(screen.getByText('Pick a plan')).toBeTruthy();
+    expect(screen.queryByText(/Nothing due today/)).toBeNull();
+    expect(screen.getByText(/^€83\.88 a year/)).toBeTruthy();
   });
 
   it('says restoring opens with the purchases', async () => {

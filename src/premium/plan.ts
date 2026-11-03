@@ -4,6 +4,7 @@ import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import type { Billing } from './prices';
+import { PLAN_SUMMARY_KEY } from './reload';
 
 type Plan = Database['public']['Enums']['plan'];
 
@@ -19,7 +20,14 @@ export type Window = { left: number; resetsAt: Date | null };
  * window is left, never in money.
  */
 export type PlanSummary =
-  | { plan: 'free'; photos: { perWeek: number; left: number; resetsAt: Date } }
+  | {
+      plan: 'free';
+      /** A guest, who has no AI until they have an account. */
+      accountRequired: boolean;
+      /** Whether the user has had the trial, which is offered once. */
+      hadTrial: boolean;
+      photos: { perWeek: number; left: number; resetsAt: Date };
+    }
   | {
       plan: Exclude<Plan, 'free'>;
       billing: Billing;
@@ -30,10 +38,14 @@ export type PlanSummary =
       period: Window;
     };
 
+/** The translation key of how a plan is billed. */
+export const BILLING_LABEL = {
+  yearly: 'premium.mine.yearly',
+  monthly: 'premium.mine.monthly',
+} as const satisfies Record<Billing, string>;
+
 export type FreeSummary = Extract<PlanSummary, { plan: 'free' }>;
 export type PaidSummary = Exclude<PlanSummary, FreeSummary>;
-
-export const PLAN_SUMMARY_KEY = ['plan-summary'];
 
 type Row = Database['public']['CompositeTypes']['plan_summary'];
 
@@ -51,6 +63,8 @@ export function toPlanSummary(row: Row): PlanSummary | null {
     }
     return {
       plan: 'free',
+      accountRequired: row.account_required ?? false,
+      hadTrial: row.had_trial ?? false,
       photos: {
         perWeek: row.photos_per_week,
         left: row.photos_left,
@@ -99,10 +113,12 @@ export type PlanNumbers = {
   weeklyPhotos: number | null;
 };
 
+const PLAN_NUMBERS_KEY = ['plan-numbers'];
+
 /** The free plan's numbers and premium's, which only change with a migration. */
 export function usePlanNumbers() {
   return useQuery({
-    queryKey: ['plan-numbers'],
+    queryKey: PLAN_NUMBERS_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('plan_numbers');
       if (error) {

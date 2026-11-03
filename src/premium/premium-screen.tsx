@@ -9,15 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
-import { afterSheetCloses } from '@/components/ui/sheet';
+import { closeThen } from '@/components/ui/sheet';
 import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
-import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
 import { AccountFirstSheet } from './account-first-sheet';
-import { usePlanNumbers, usePlanSummary, type PaidSummary } from './plan';
+import { BILLING_LABEL, usePlanNumbers, usePlanSummary, type PaidSummary } from './plan';
 import { PlanComparison } from './plan-comparison';
 import { FreeUsage, PaidUsage } from './plan-usage';
 import { PlansSheet } from './plans-sheet';
@@ -37,21 +36,19 @@ type Shown = 'plans' | 'account' | null;
 export function PremiumScreen({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const isAccount = useIsAccount();
   const summary = usePlanSummary();
   const numbers = usePlanNumbers();
   const restore = usePurchasesSoon();
   const [shown, setShown] = useState<Shown>(null);
   // Prices from the store come with the purchases; until then the planned ones.
   const prices = SAMPLE_PRICES;
-  const paid = summary.data !== undefined && summary.data.plan !== 'free';
+  const free = summary.data?.plan === 'free' ? summary.data : null;
+  const paid = summary.data !== undefined && !free;
+  // The trial is offered once, to a user who has not had it.
+  const trial = free !== null && !free.hadTrial;
 
-  const tryPremium = () => setShown(isAccount ? 'plans' : 'account');
-  /** Closes the sheet, then goes on, as iOS opens nothing over a closing sheet. */
-  const thenClose = (action: () => void) => () => {
-    setShown(null);
-    afterSheetCloses(action);
-  };
+  const getPremium = () => setShown(free?.accountRequired ? 'account' : 'plans');
+  const closeSheet = () => setShown(null);
 
   return (
     <Screen
@@ -63,11 +60,16 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         )
       }
       footer={
-        summary.data && !paid ? (
+        free ? (
           <View style={{ gap: spacing.sm }}>
-            <Button label={t('premium.page.try')} onPress={tryPremium} />
+            <Button
+              label={trial ? t('premium.page.try') : t('premium.page.get')}
+              onPress={getPremium}
+            />
             <Text variant="caption" color="textMuted" align="center">
-              {t('premium.page.then', { price: prices.yearlyPerMonth })}
+              {t(trial ? 'premium.page.then' : 'premium.page.from', {
+                price: prices.yearlyPerMonth,
+              })}
             </Text>
           </View>
         ) : undefined
@@ -94,7 +96,7 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         summary.data.plan === 'free' ? (
           <>
             {/* A guest has no meal photos until they have an account. */}
-            {isAccount ? <FreeUsage photos={summary.data.photos} /> : null}
+            {summary.data.accountRequired ? null : <FreeUsage photos={summary.data.photos} />}
             <PlanComparison free={numbers.data.free} premium={numbers.data.premium} />
           </>
         ) : (
@@ -102,18 +104,12 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         )
       ) : null}
 
-      {shown === 'plans' ? (
-        <PlansSheet
-          prices={prices}
-          trial={summary.data?.plan === 'free'}
-          onClose={() => setShown(null)}
-        />
-      ) : null}
+      {shown === 'plans' ? <PlansSheet prices={prices} trial={trial} onClose={closeSheet} /> : null}
       {shown === 'account' ? (
         <AccountFirstSheet
-          onCreate={thenClose(() => router.push('/account/create'))}
-          onLogIn={thenClose(() => router.push('/account/login'))}
-          onClose={() => setShown(null)}
+          onCreate={closeThen(closeSheet, () => router.push('/account/create'))}
+          onLogIn={closeThen(closeSheet, () => router.push('/account/login'))}
+          onClose={closeSheet}
         />
       ) : null}
     </Screen>
@@ -128,7 +124,7 @@ function Paid({ summary, onChangePlan }: { summary: PaidSummary; onChangePlan: (
   const rows = [
     {
       label: t('premium.mine.changePlan'),
-      value: t(summary.billing === 'yearly' ? 'premium.mine.yearly' : 'premium.mine.monthly'),
+      value: t(BILLING_LABEL[summary.billing]),
       onPress: onChangePlan,
     },
     {

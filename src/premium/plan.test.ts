@@ -4,6 +4,8 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 
 const EMPTY = {
   plan: null,
+  account_required: false,
+  had_trial: false,
   billing: null,
   period_end: null,
   week_left: null,
@@ -27,6 +29,8 @@ describe('toPlanSummary', () => {
       }),
     ).toEqual({
       plan: 'free',
+      accountRequired: false,
+      hadTrial: false,
       photos: { perWeek: 2, left: 1, resetsAt: new Date('2026-11-09T00:00:00Z') },
     });
   });

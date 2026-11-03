@@ -2136,7 +2136,9 @@
       "titlePremium": "Premium'un var",
       "thanks": "Bite ile antrenman yaptığın için teşekkürler.",
       "try": "7 gün ücretsiz dene",
-      "then": "Sonra ayda {{price}}'dan başlar. İstediğin zaman iptal et."
+      "then": "Sonra ayda {{price}}'dan başlar. İstediğin zaman iptal et.",
+      "get": "Premium al",
+      "from": "Ayda {{price}}'dan başlar. İstediğin zaman iptal et."
     },
     "compare": {
       "free": "Ücretsiz",

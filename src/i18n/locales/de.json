@@ -2136,7 +2136,9 @@
       "titlePremium": "Du hast Premium",
       "thanks": "Danke, dass du mit Bite trainierst.",
       "try": "7 Tage gratis testen",
-      "then": "Danach ab {{price}} im Monat. Jederzeit kündbar."
+      "then": "Danach ab {{price}} im Monat. Jederzeit kündbar.",
+      "get": "Premium holen",
+      "from": "Ab {{price}} im Monat. Jederzeit kündbar."
     },
     "compare": {
       "free": "Gratis",

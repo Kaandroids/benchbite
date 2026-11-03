@@ -2136,7 +2136,9 @@
       "titlePremium": "You have premium",
       "thanks": "Thanks for training with Bite.",
       "try": "Try 7 days free",
-      "then": "Then from {{price}} a month. Cancel anytime."
+      "then": "Then from {{price}} a month. Cancel anytime.",
+      "get": "Get premium",
+      "from": "From {{price}} a month. Cancel anytime."
     },
     "compare": {
       "free": "Free",

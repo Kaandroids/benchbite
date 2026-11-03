@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { isoWeekday, useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
-import type { FreeSummary, PaidSummary, Window } from './plan';
+import { BILLING_LABEL, type FreeSummary, type PaidSummary, type Window } from './plan';
 
 /** The free plan's meal photos this week, as a number and a bar, and when new ones come. */
 export function FreeUsage({ photos }: { photos: FreeSummary['photos'] }) {
@@ -56,7 +56,7 @@ export function PaidUsage({ summary }: { summary: PaidSummary }) {
       <View style={[styles.row, { gap: spacing.sm, paddingBottom: spacing.md }]}>
         <Tag label={t(trial ? 'premium.mine.trial' : 'premium.mine.premium')} />
         <Text variant="bodyStrong" style={styles.flex}>
-          {t(summary.billing === 'yearly' ? 'premium.mine.yearly' : 'premium.mine.monthly')}
+          {t(BILLING_LABEL[summary.billing])}
         </Text>
         {summary.renewsAt ? (
           <Text variant="caption" color="textMuted">
