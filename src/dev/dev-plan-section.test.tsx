@@ -57,6 +57,7 @@ describe('DevPlanSection', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-limits'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['ai', 'access'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['plan-summary'] });
   });
 
   it('says how to turn the developer tools on when the database refuses', async () => {

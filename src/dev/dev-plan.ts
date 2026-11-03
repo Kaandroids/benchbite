@@ -2,10 +2,9 @@
 // and switching it with dev_set_plan(), which only a local stack with dev_tools in Vault allows.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ACCESS_KEY } from '@/ai/access';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
-import { reloadPlan, WORKOUT_LIMITS_KEY } from '@/workouts/workouts';
+import { reloadAfterPlanChange } from '@/premium/reload';
 
 export type Plan = Database['public']['Enums']['plan'];
 
@@ -36,10 +35,7 @@ export function useDevPlan() {
   });
 }
 
-/**
- * Puts the user on `plan`, and loads again what depends on it: the workouts, of which some may
- * now wait for premium or come back, the workout limits and access to AI.
- */
+/** Puts the user on `plan`, and loads again what depends on it. */
 export function useSetDevPlan() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -52,9 +48,7 @@ export function useSetDevPlan() {
     onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: DEV_PLAN_KEY }),
-        reloadPlan(queryClient),
-        queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY }),
-        queryClient.invalidateQueries({ queryKey: ACCESS_KEY }),
+        reloadAfterPlanChange(queryClient),
       ]),
   });
 }
