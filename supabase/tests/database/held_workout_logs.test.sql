@@ -1,10 +1,10 @@
 -- A session of a workout that waits for premium (#420, ADR 0079): `held_at` follows `held`, a
--- session started before the workout began to wait is saved, one started after is refused, and one
--- is saved again once premium brings the workout back.
+-- session started before the workout began to wait, or within five minutes after, is saved, one
+-- started later is refused, and one is saved again once premium brings the workout back.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com');
@@ -64,19 +64,28 @@ select is(
   'nor given to a workout that does not wait'
 );
 
+-- Workout 101 began to wait an hour ago, so that sessions after it can end by now.
+set local session_replication_role = replica;
+update public.workouts set held_at = now() - interval '1 hour' where id = 101;
+set local session_replication_role = origin;
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select lives_ok(
-  $$ select public.log_workout(pg_temp.log(now() - interval '1 hour')) $$,
+  $$ select public.log_workout(pg_temp.log(now() - interval '2 hours')) $$,
   'A session started before the workout began to wait is saved'
 );
+select lives_ok(
+  $$ select public.log_workout(pg_temp.log(now() - interval '58 minutes')) $$,
+  'and so is one started within five minutes after, for a phone clock ahead'
+);
 select throws_ok(
-  $$ select public.log_workout(pg_temp.log(now() + interval '1 minute')) $$,
+  $$ select public.log_workout(pg_temp.log(now() - interval '30 minutes')) $$,
   'BB051', null,
-  'one started after is refused'
+  'one started later is refused'
 );
 select is(
   (select count(*)::integer from public.workout_logs where user_id = '00000000-0000-0000-0000-00000000000a'),
-  1,
+  2,
   'and leaves no log'
 );
 select throws_ok(
@@ -97,12 +106,12 @@ select results_eq(
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select lives_ok(
-  $$ select public.log_workout(pg_temp.log(now() + interval '1 minute')) $$,
+  $$ select public.log_workout(pg_temp.log(now() - interval '30 minutes')) $$,
   'and a session started after it came back is saved again'
 );
 select is(
   (select count(*)::integer from public.workout_logs where user_id = '00000000-0000-0000-0000-00000000000a'),
-  2,
+  3,
   'with its log'
 );
 
