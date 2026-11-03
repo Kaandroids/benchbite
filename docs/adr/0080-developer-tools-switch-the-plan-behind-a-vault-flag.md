@@ -19,7 +19,14 @@ cannot change one by itself. Whatever lets it must never work in production.
 - **`dev_set_plan(plan)` switches the caller's own plan,** called via `rpc()` from a **Plan**
   section of the developer tools: free deletes the subscription, the trial is its seven days from
   now and premium a month from now, both as plans given by hand (source `manual`). It writes
-  `subscriptions` as any change does, so that its trigger applies the plan's limits at once.
+  `subscriptions` as any change does, so that its trigger applies the plan's limits at once, and
+  gives back the plan the caller is then on.
+- **One function gives a plan by hand:** `give_plan_by_hand()` writes the subscription for both
+  `give_plan()` and `dev_set_plan()`, so that a new column is written in one place. No client
+  role may call it.
+- **The server says which plan the caller is on:** `my_plan()` gives `plan_of()` for the caller,
+  so the app never works it out itself. After a switch the app reloads what depends on the plan
+  with `reloadAfterPlanChange()`, which a purchase or a restore will use too.
 - **It works only where the Vault holds `dev_tools` set to `on`,** and refuses with `BB053`
   otherwise, before anything else. `pnpm vault:local` sets it on a local stack, beside the secrets
   it already stores there. A hosted project never has it, so the function is there in production
@@ -27,7 +34,7 @@ cannot change one by itself. Whatever lets it must never work in production.
 - **It needs an account:** a guest has no plan, as the trial needs one. Only `authenticated` may
   call it.
 - **The app shows the section only in development against a local Supabase,** as it shows the dev
-  account (`canUseDevAccount()`), and only to a signed-in account. The server's flag is what
+  account, both through `canUseDevTools()`, and only to a signed-in account. The server's flag is what
   guards it; the app's check only keeps the section out of the way.
 
 ## Alternatives considered
