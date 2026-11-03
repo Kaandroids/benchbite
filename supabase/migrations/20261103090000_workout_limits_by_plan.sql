@@ -32,10 +32,23 @@ as $$
   select p from public.plans p where p.plan = public.plan_of(plan_limits.user_id);
 $$;
 
+-- How many alternatives `user_id` has added to all their workouts, waiting ones included; the one
+-- in use of each workout is the workout itself and does not count.
+create function public.added_alternative_count(user_id uuid)
+returns integer
+language sql
+stable
+set search_path = ''
+as $$
+  select count(*)::integer from public.workout_alternatives a
+  where a.user_id = added_alternative_count.user_id and a.exercises is not null;
+$$;
+
 -- The caller's limits, from their plan (ADR 0078): `alternatives` is how many versions a workout
 -- may have, its own exercises included, and `added_alternatives` how many a user may add in all,
--- null for no limit. A new column changes the result's type, so the function is made again; its
--- callers read the columns by name.
+-- null for no limit, with `alternatives_added`, how many they have, so that the app counts them as
+-- the limit does. New columns change the result's type, so the function is made again; its callers
+-- read the columns by name.
 drop function public.workout_limits();
 create function public.workout_limits()
 returns table (
@@ -43,7 +56,8 @@ returns table (
   workouts integer,
   alternatives integer,
   alternative_name_length integer,
-  added_alternatives integer
+  added_alternatives integer,
+  alternatives_added integer
 )
 language sql
 stable
@@ -51,7 +65,8 @@ stable
 security definer
 set search_path = ''
 as $$
-  select p.exercises, p.workouts, p.versions, 12, p.added_alternatives
+  select p.exercises, p.workouts, p.versions, 12, p.added_alternatives,
+    public.added_alternative_count((select auth.uid()))
   from public.plan_limits((select auth.uid())) p;
 $$;
 
@@ -116,7 +131,7 @@ as $$
 $$;
 
 -- A waiting workout's exercises do not change. A workout already done is still logged: the
--- database sees it only at the end, and starting one that waits is refused by the app.
+-- database sees it only at the end, and not starting one that waits is left to the app.
 create function public.refuse_held_workout_rows()
 returns trigger
 language plpgsql
@@ -136,17 +151,6 @@ create trigger workout_exercises_refuse_held
   before insert or update or delete on public.workout_exercises
   for each row execute function public.refuse_held_workout_rows();
 
--- How many alternatives `user_id` has added to all their workouts, waiting ones included; the one
--- in use of each workout is the workout itself and does not count.
-create function public.added_alternative_count(user_id uuid)
-returns integer
-language sql
-stable
-set search_path = ''
-as $$
-  select count(*)::integer from public.workout_alternatives a
-  where a.user_id = added_alternative_count.user_id and a.exercises is not null;
-$$;
 
 -- As before (20261031160000), with the limits of the caller's plan: the versions a workout may have
 -- (BB041) and the alternatives a user may add in all (BB052), read from workout_limits() as the
@@ -396,9 +400,11 @@ security definer
 set search_path = ''
 as $$
 declare
-  limits public.plans := public.plan_limits(apply_plan_limits.owner);
+  limits public.plans;
 begin
+  -- The plan is read under the lock, so that one applied while this waited is not undone.
   perform public.lock_user_limits(apply_plan_limits.owner);
+  limits := public.plan_limits(apply_plan_limits.owner);
   perform public.apply_workout_limits(apply_plan_limits.owner, limits);
   perform public.apply_alternative_limits(apply_plan_limits.owner, limits);
   insert into public.applied_plans (user_id, plan) values (apply_plan_limits.owner, limits.plan)
@@ -480,6 +486,42 @@ begin
   set active = set_workout_active.active
   where w.id = set_workout_active.workout_id;
 end;
+$$;
+
+-- As before (20261028220000), and a waiting workout is not moved, as an archived one is not.
+create or replace function public.move_fits(
+  source public.workouts, from_on date, to_on date, on_day date
+)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select source.active
+    and not source.held
+    and public.plans_workout_on(source, from_on, on_day)
+    and date_trunc('week', from_on)
+      between date_trunc('week', on_day - 1) and date_trunc('week', on_day + 1)
+    and (
+      to_on is null
+      or (
+        to_on <> from_on
+        and date_trunc('week', to_on) = date_trunc('week', from_on)
+        and to_on >= on_day - 1
+        and not (
+          public.is_planned_by_weekdays(source, to_on)
+          and not exists (
+            select 1 from public.workout_moves m
+            where m.workout_id = source.id and m.from_on = move_fits.to_on
+          )
+        )
+        and not exists (
+          select 1 from public.workout_moves m
+          where m.workout_id = source.id and m.to_on = move_fits.to_on
+            and m.from_on <> move_fits.from_on
+        )
+      )
+    );
 $$;
 
 -- As before (20261029110000), a waiting workout leaving the plan as an archived one does: a move to
