@@ -59,7 +59,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const { start, sheet: startSheet } = useStartOrAsk();
   const limits = useWorkoutLimits();
   const openPremium = useOpenPremium();
-  const confirmDelete = useConfirmDeleteWorkout();
+  const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
@@ -185,7 +185,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       return;
     }
     // Back first, so that the deleted workout never shows as not found.
-    confirmDelete(workout.id, () => router.back());
+    confirmDelete(workout.id, { onConfirm: () => router.back() });
   };
 
   return (

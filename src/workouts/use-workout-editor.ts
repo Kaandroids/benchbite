@@ -8,15 +8,10 @@ import { useExerciseLibrary } from '@/exercises/library';
 import { dbErrorMessage } from '@/lib/errors';
 import { move } from '@/lib/move';
 
+import { useConfirmDeleteWorkout } from './confirm-delete';
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
 import { useWorkoutName } from './format';
-import {
-  findWorkout,
-  useDeleteWorkout,
-  useSaveWorkout,
-  useWorkoutLimits,
-  useWorkouts,
-} from './workouts';
+import { findWorkout, useSaveWorkout, useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
  * The draft of the workout with the id, or of a new one, started once the workouts load, with
@@ -30,7 +25,7 @@ export function useWorkoutEditor(id: number | undefined) {
   const limits = useWorkoutLimits();
   const draft = useDraft();
   const save = useSaveWorkout();
-  const remove = useDeleteWorkout();
+  const { confirm: confirmDelete, deleting } = useConfirmDeleteWorkout();
   const workoutName = useWorkoutName();
   const workout = findWorkout(workouts.data, id);
   // A workout from the plan builder is named by its type until the user gives it a name.
@@ -106,20 +101,8 @@ export function useWorkoutEditor(id: number | undefined) {
     if (draft?.id === undefined) {
       return;
     }
-    const workoutId = draft.id;
-    Alert.alert(t('editor.deleteTitle'), t('editor.deleteMessage'), [
-      { text: t('editor.cancel'), style: 'cancel' },
-      {
-        text: t('editor.delete'),
-        style: 'destructive',
-        onPress: () =>
-          void remove.mutateAsync(workoutId).then(
-            // Closes the editor and the deleted workout, back to the list it was opened from.
-            () => router.dismiss(2),
-            (error: unknown) => console.warn('Could not delete the workout', error),
-          ),
-      },
-    ]);
+    // Closes the editor and the deleted workout, back to the list it was opened from.
+    confirmDelete(draft.id, { onDeleted: () => router.dismiss(2) });
   };
 
   const setExercises = (change: (exercises: DraftExercise[]) => DraftExercise[]) =>
@@ -146,7 +129,7 @@ export function useWorkoutEditor(id: number | undefined) {
     over,
     canSave,
     saving: save.isPending,
-    deleting: remove.isPending,
+    deleting,
     onSave,
     onDelete,
     setName,

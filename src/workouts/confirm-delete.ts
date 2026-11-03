@@ -3,14 +3,21 @@ import { Alert } from 'react-native';
 
 import { useDeleteWorkout } from './workouts';
 
+type ConfirmDeleteOptions = {
+  /** Runs once the user confirms, before the delete, such as to leave the workout's screen. */
+  onConfirm?: () => void;
+  /** Runs once the workout is deleted, such as to close the editor with it. */
+  onDeleted?: () => void;
+};
+
 /**
- * Asks before deleting a workout, then deletes it; `onConfirm` runs first, such as to leave the
- * workout's screen, so that the deleted workout never shows as not found.
+ * Asks before deleting a workout, then deletes it, and says when that failed. `deleting` holds
+ * while a delete runs.
  */
 export function useConfirmDeleteWorkout() {
   const { t } = useTranslation();
   const remove = useDeleteWorkout();
-  return (id: number, onConfirm?: () => void) =>
+  const confirm = (id: number, { onConfirm, onDeleted }: ConfirmDeleteOptions = {}) =>
     Alert.alert(t('editor.deleteTitle'), t('editor.deleteMessage'), [
       { text: t('editor.cancel'), style: 'cancel' },
       {
@@ -18,11 +25,15 @@ export function useConfirmDeleteWorkout() {
         style: 'destructive',
         onPress: () => {
           onConfirm?.();
-          remove.mutateAsync(id).catch((error: unknown) => {
-            console.warn('Could not delete the workout', error);
-            Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
-          });
+          remove.mutateAsync(id).then(
+            () => onDeleted?.(),
+            (error: unknown) => {
+              console.warn('Could not delete the workout', error);
+              Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
+            },
+          );
         },
       },
     ]);
+  return { confirm, deleting: remove.isPending };
 }

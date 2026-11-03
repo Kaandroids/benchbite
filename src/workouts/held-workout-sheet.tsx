@@ -31,7 +31,7 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const { colors, spacing } = useTheme();
   const limits = useWorkoutLimits();
   const openPremium = useOpenPremium();
-  const confirmDelete = useConfirmDeleteWorkout();
+  const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   const name = useWorkoutName()(workout);
 
   // Once the sheet has closed, as iOS shows no alert or screen over a closing sheet.

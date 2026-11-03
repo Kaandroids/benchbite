@@ -213,6 +213,18 @@ describe('EditorScreen', () => {
     expect(router.dismiss).toHaveBeenCalledWith(2);
   });
 
+  it('says when the delete failed, and stays open', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    deleteWorkout.mockRejectedValueOnce(new Error('offline'));
+    await render(<EditorScreen id={5} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    const buttons = alert.mock.calls[0]?.[2] ?? [];
+    const confirm = buttons.find((button) => button.style === 'destructive');
+    await act(async () => confirm?.onPress?.());
+    expect(alert.mock.lastCall?.[0]).toBe('Not deleted');
+    expect(router.dismiss).not.toHaveBeenCalled();
+  });
+
   describe('the exercise sheet', () => {
     const open = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
     const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
