@@ -25,7 +25,8 @@ stored, and how it differs from what the user archived, to this decision.
   cannot be edited, archived or brought back, and not starting it is left to the app; the same holds for a
   waiting alternative, which cannot be put in use or renamed. A workout already under way when it
   began to wait is still saved: the database sees a workout only at its end, and refusing it then
-  would lose what the user did. Choosing which ones stay would let a free user rotate through many
+  would lose what the user did. `workouts.held_at` stamps when a workout began to wait, and
+  `log_workout()` refuses a session started after it (BB051, #420). Choosing which ones stay would let a free user rotate through many
   workouts.
 - **Waiting counts toward the limits,** as archived workouts do (ADR 0018), so that a free user with
   more than 3 workouts adds a new one only after deleting some.
@@ -65,9 +66,9 @@ stored, and how it differs from what the user archived, to this decision.
   and the database refuses changing them with BB051, and adding an alternative above the limit in
   all with BB052.
 - A plan's end takes effect up to ten minutes after its hour of grace.
-- A known gap: a free user who calls `log_workout()` directly can still log a waiting workout, as
-  the database lets a workout already under way be saved and leaves not starting one to the app.
-  It gives them no more than the history of a workout they may not change.
+- A session is told apart by the start the app sends, so a client that calls `log_workout()`
+  directly could still date one before the workout began to wait. It gives them no more than a
+  past log of a workout they may not change.
 - `apply_plan_limits()` is the one place that knows the ranking; a plan with other limits needs no
   change to it.
 - This amends ADR 0018, whose limits were the same for everyone, and ADR 0061, whose 5 versions
