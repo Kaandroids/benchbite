@@ -4,11 +4,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
-  ('00000000-0000-0000-0000-00000000000b', 'b@example.com');
+  ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
+  ('00000000-0000-0000-0000-00000000000c', 'c@example.com');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -83,16 +84,28 @@ select results_eq(
   $$ values (1012::bigint), (1013), (1042) $$,
   'The alternative last in use stays, and a waiting workout''s wait'
 );
+reset role;
+select is(
+  (select applied_plan::text from public.subscriptions where user_id = '00000000-0000-0000-0000-00000000000a'),
+  'free',
+  'The plan applied is remembered'
+);
+select is(
+  (select count(*)::integer from public.subscriptions where applied_plan is distinct from public.plan_of(user_id)),
+  0,
+  'so the sweep has no user left to apply'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 -- What waits can be seen but not used.
 select throws_ok(
   $$ select public.save_workout('{"id": 104, "name": "Core", "exercises": [{"exerciseId": "Plank", "sets": 3, "restSeconds": 60, "target": {"seconds": 45}}]}', current_date) $$,
-  'BB044', null,
+  'BB051', null,
   'A waiting workout cannot be edited'
 );
 select throws_ok(
   $$ select public.set_workout_active(104, false, current_date) $$,
-  'BB044', null,
+  'BB051', null,
   'nor archived'
 );
 select lives_ok(
@@ -101,25 +114,24 @@ select lives_ok(
 );
 select throws_ok(
   $$ select public.add_workout_alternative(104, current_date) $$,
-  'BB044', null,
+  'BB051', null,
   'and it is given no new one'
 );
 select throws_ok(
   $$ select public.use_workout_alternative(1012, current_date) $$,
-  'BB044', null,
+  'BB051', null,
   'A waiting alternative cannot be put in use'
 );
 select throws_ok(
   $$ select public.rename_workout_alternative(1012, 'Hotel') $$,
-  'BB044', null,
+  'BB051', null,
   'nor renamed'
 );
 reset role;
-select throws_ok(
+select lives_ok(
   $$ insert into public.workout_logs (user_id, workout_id, name, started_at, finished_at, started_on)
      values ('00000000-0000-0000-0000-00000000000a', 104, 'Core', now() - interval '1 hour', now(), current_date) $$,
-  'BB044', null,
-  'and a waiting workout is not logged'
+  'A workout done before it began to wait is still logged'
 );
 select is(
   (select count(*)::integer from public.plan_by_weekdays('00000000-0000-0000-0000-00000000000a', current_date, current_date + 6) p where p.workout_id = 104),
@@ -148,7 +160,7 @@ select is((select count(*)::integer from public.workouts), 4, 'which is gone');
 
 -- Applying again trades nothing: what is usable stays, and what waits waits.
 reset role;
-select public.apply_all_plan_limits();
+select public.apply_changed_plan_limits();
 select results_eq(
   $$ select id from public.workouts where user_id = '00000000-0000-0000-0000-00000000000a' and held order by id $$,
   $$ values (104::bigint) $$,
@@ -190,7 +202,7 @@ select lives_ok(
 );
 select throws_ok(
   $$ select public.add_workout_alternative(202, current_date) $$,
-  'BB045', null,
+  'BB052', null,
   'but not a second, to another workout'
 );
 select throws_ok(
@@ -199,11 +211,54 @@ select throws_ok(
   'nor a third version of the same one'
 );
 
+-- What fits again after a delete comes back, for a user without a subscription too.
+reset role;
+set local session_replication_role = replica;
+insert into public.workout_alternatives (id, workout_id, user_id, position, exercises, last_used_at)
+overriding system value values
+  (2021, 202, '00000000-0000-0000-0000-00000000000b', 1, null, null),
+  (2022, 202, '00000000-0000-0000-0000-00000000000b', 2, '[]', now() - interval '3 days');
+set local session_replication_role = origin;
+select public.apply_plan_limits('00000000-0000-0000-0000-00000000000b');
+select is(
+  (select held from public.workout_alternatives where workout_id = 201 and exercises is not null),
+  true,
+  'A free user''s alternative never in use waits, the one last in use stays'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select public.delete_workout_alternative(2022);
 reset role;
 select is(
-  (select count(*)::integer from cron.job where jobname = 'apply-plan-limits'),
-  1,
-  'Plans are applied every ten minutes'
+  (select held from public.workout_alternatives where workout_id = 201 and exercises is not null),
+  false,
+  'and comes back once the other is deleted'
+);
+
+-- A waiting workout's alternative waits, even when the alternatives fit: C, free, has four
+-- workouts never trained, and one alternative of the oldest.
+set local session_replication_role = replica;
+insert into public.workouts (id, user_id, name, estimated_minutes, weekdays)
+overriding system value values
+  (301, '00000000-0000-0000-0000-00000000000c', 'One', 30, '{}'),
+  (302, '00000000-0000-0000-0000-00000000000c', 'Two', 30, '{}'),
+  (303, '00000000-0000-0000-0000-00000000000c', 'Three', 30, '{}'),
+  (304, '00000000-0000-0000-0000-00000000000c', 'Four', 30, '{}');
+insert into public.workout_alternatives (id, workout_id, user_id, position, exercises)
+overriding system value values
+  (3011, 301, '00000000-0000-0000-0000-00000000000c', 1, null),
+  (3012, 301, '00000000-0000-0000-0000-00000000000c', 2, '[]');
+set local session_replication_role = origin;
+select public.apply_plan_limits('00000000-0000-0000-0000-00000000000c');
+select results_eq(
+  $$ select (select held from public.workouts where id = 301), (select held from public.workout_alternatives where id = 3012) $$,
+  $$ values (true, true) $$,
+  'A waiting workout''s alternative waits with it, though the alternatives fit'
+);
+
+select is(
+  (select command from cron.job where jobname = 'apply-plan-limits'),
+  'select public.apply_changed_plan_limits()',
+  'Plans that changed are applied every ten minutes'
 );
 
 select * from finish();
