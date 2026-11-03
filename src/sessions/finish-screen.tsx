@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,10 +12,11 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
+import { dbErrorMessage, isDbError } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
-import { useWorkouts, findWorkout } from '@/workouts/workouts';
+import { reloadPlan, useWorkouts, findWorkout } from '@/workouts/workouts';
 
 import { EndSheet } from './end-sheet';
 import { EndTime, ExerciseSummary, FinishStats, NewRecords } from './finish-sections';
@@ -42,6 +44,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const active = useActiveSession(useUserId());
   const library = useExerciseLibrary();
   const logWorkout = useLogWorkout();
+  const queryClient = useQueryClient();
   const workouts = useWorkouts();
   const startWorkout = useStartWorkout();
   const workoutName = useWorkoutName();
@@ -96,7 +99,19 @@ export function FinishScreen({ next }: { next?: number }) {
     } catch (error) {
       saving.current = false;
       console.warn('Could not save the workout', error);
-      Alert.alert(t('common.notSaved'), t('session.summary.saveError'));
+      // The workout already waited for premium when this session started, as from a list cached
+      // before the plan changed: the list is loaded again to show it locked.
+      if (isDbError(error, 'waitsForPremium')) {
+        void reloadPlan(queryClient);
+      }
+      Alert.alert(
+        t('common.notSaved'),
+        dbErrorMessage(
+          error,
+          [['waitsForPremium', t('session.summary.waitsError')]],
+          t('session.summary.saveError'),
+        ),
+      );
     }
   };
 

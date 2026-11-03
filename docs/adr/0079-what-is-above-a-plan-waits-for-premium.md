@@ -22,11 +22,11 @@ stored, and how it differs from what the user archived, to this decision.
   may have and the alternatives a user may add; the rest wait, and so do all of a waiting workout's.
   The version in use is the workout itself and never waits.
 - **The user cannot choose others:** a waiting workout can be seen and deleted, nothing else. It
-  cannot be edited, archived or brought back, and not starting it is left to the app; the same holds for a
-  waiting alternative, which cannot be put in use or renamed. A workout already under way when it
-  began to wait is still saved: the database sees a workout only at its end, and refusing it then
-  would lose what the user did. Choosing which ones stay would let a free user rotate through many
-  workouts.
+  cannot be edited, archived or brought back, and the database refuses a session started after it
+  began to wait (BB051, #420); the same holds for a waiting alternative, which cannot be put in use
+  or renamed. Choosing which ones stay would let a free user rotate through many workouts. A
+  workout already under way when it began to wait is still saved: refusing it at its end would
+  lose what the user did.
 - **Waiting counts toward the limits,** as archived workouts do (ADR 0018), so that a free user with
   more than 3 workouts adds a new one only after deleting some.
 - **A waiting workout is not planned:** its days stay on it and come back with it, but no day plans
@@ -65,9 +65,11 @@ stored, and how it differs from what the user archived, to this decision.
   and the database refuses changing them with BB051, and adding an alternative above the limit in
   all with BB052.
 - A plan's end takes effect up to ten minutes after its hour of grace.
-- A known gap: a free user who calls `log_workout()` directly can still log a waiting workout, as
-  the database lets a workout already under way be saved and leaves not starting one to the app.
-  It gives them no more than the history of a workout they may not change.
+- `workouts.held_at` stamps when a workout began to wait, and `log_workout()` compares a
+  session's start with it, allowing five minutes for a phone's clock ahead, as it does for the end.
+  The start is the one the app sends, so a client that calls `log_workout()` directly could still
+  date a session before the workout began to wait. It gives them no more than a past log of a
+  workout they may not change.
 - `apply_plan_limits()` is the one place that knows the ranking; a plan with other limits needs no
   change to it.
 - This amends ADR 0018, whose limits were the same for everyone, and ADR 0061, whose 5 versions
