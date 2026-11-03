@@ -22,7 +22,7 @@ stored, and how it differs from what the user archived, to this decision.
   may have and the alternatives a user may add; the rest wait, and so do all of a waiting workout's.
   The version in use is the workout itself and never waits.
 - **The user cannot choose others:** a waiting workout can be seen and deleted, nothing else. It
-  cannot be edited, archived or brought back, and the app does not start it; the same holds for a
+  cannot be edited, archived or brought back, and not starting it is left to the app; the same holds for a
   waiting alternative, which cannot be put in use or renamed. A workout already under way when it
   began to wait is still saved: the database sees a workout only at its end, and refusing it then
   would lose what the user did. Choosing which ones stay would let a free user rotate through many
