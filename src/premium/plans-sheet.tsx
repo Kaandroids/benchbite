@@ -26,6 +26,8 @@ type PlansSheetProps = {
   prices: PlanPrices;
   /** False for a user who has had their trial, who starts premium straight away. */
   trial: boolean;
+  /** The plan chosen at first: the one a paid user is on, or yearly. */
+  initialBilling?: Billing;
   onClose: () => void;
 };
 
@@ -42,10 +44,10 @@ export function PlansSheet(props: PlansSheetProps) {
   );
 }
 
-function Plans({ prices, trial, onClose }: PlansSheetProps) {
+function Plans({ prices, trial, initialBilling = 'yearly', onClose }: PlansSheetProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const [billing, setBilling] = useState<Billing>('yearly');
+  const [billing, setBilling] = useState<Billing>(initialBilling);
   const restore = usePurchasesSoon();
   const price = billing === 'yearly' ? prices.yearly : prices.monthly;
 

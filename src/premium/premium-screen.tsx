@@ -23,6 +23,7 @@ import { PlansSheet } from './plans-sheet';
 import { usePurchasesSoon } from './purchases';
 import { SAMPLE_PRICES } from './sample-prices';
 import { STORE_NAME, SUBSCRIPTIONS_URL } from './store';
+import { TRIAL_DAYS } from './trial';
 
 const BITE_SIZE = 80;
 
@@ -43,7 +44,7 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
   // Prices from the store come with the purchases; until then the planned ones.
   const prices = SAMPLE_PRICES;
   const free = summary.data?.plan === 'free' ? summary.data : null;
-  const paid = summary.data !== undefined && !free;
+  const paid = summary.data?.plan === 'free' ? null : (summary.data ?? null);
   // The trial is offered once, to a user who has not had it.
   const trial = free !== null && !free.hadTrial;
 
@@ -63,7 +64,7 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         free ? (
           <View style={{ gap: spacing.sm }}>
             <Button
-              label={trial ? t('premium.page.try') : t('premium.page.get')}
+              label={trial ? t('premium.page.try', { count: TRIAL_DAYS }) : t('premium.page.get')}
               onPress={getPremium}
             />
             <Text variant="caption" color="textMuted" align="center">
@@ -80,11 +81,9 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
           <BiteAvatar size={BITE_SIZE} expression="happy" looksAbout />
         </Sparkles>
         <Text variant="title" align="center" accessibilityRole="header">
-          {summary.data?.plan === 'trial'
-            ? t('premium.page.titleTrial')
-            : paid
-              ? t('premium.page.titlePremium')
-              : t('premium.page.title')}
+          {paid
+            ? t(paid.plan === 'trial' ? 'premium.page.titleTrial' : 'premium.page.titlePremium')
+            : t('premium.page.title')}
         </Text>
         <Text color="textMuted" align="center">
           {paid ? t('premium.page.thanks') : t('premium.page.subtitle')}
@@ -92,19 +91,27 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
       </View>
 
       <LoadState queries={[summary, numbers]} />
-      {allLoaded([summary, numbers]) && summary.data && numbers.data ? (
-        summary.data.plan === 'free' ? (
+      {allLoaded([summary, numbers]) && numbers.data ? (
+        free ? (
           <>
             {/* A guest has no meal photos until they have an account. */}
-            {summary.data.accountRequired ? null : <FreeUsage photos={summary.data.photos} />}
+            {free.accountRequired ? null : <FreeUsage photos={free.photos} />}
             <PlanComparison free={numbers.data.free} premium={numbers.data.premium} />
           </>
-        ) : (
-          <Paid summary={summary.data} onChangePlan={() => setShown('plans')} />
-        )
+        ) : paid ? (
+          <Paid summary={paid} onChangePlan={() => setShown('plans')} onRestore={restore} />
+        ) : null
       ) : null}
 
-      {shown === 'plans' ? <PlansSheet prices={prices} trial={trial} onClose={closeSheet} /> : null}
+      {shown === 'plans' ? (
+        <PlansSheet
+          prices={prices}
+          trial={trial}
+          // A paid user changing plan starts from the one they are on.
+          initialBilling={paid?.billing}
+          onClose={closeSheet}
+        />
+      ) : null}
       {shown === 'account' ? (
         <AccountFirstSheet
           onCreate={closeThen(closeSheet, () => router.push('/account/create'))}
@@ -117,10 +124,17 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
 }
 
 /** The trial's or premium's plan, how much of Bite is left, and where to change or cancel it. */
-function Paid({ summary, onChangePlan }: { summary: PaidSummary; onChangePlan: () => void }) {
+function Paid({
+  summary,
+  onChangePlan,
+  onRestore,
+}: {
+  summary: PaidSummary;
+  onChangePlan: () => void;
+  onRestore: () => void;
+}) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const restore = usePurchasesSoon();
   const rows = [
     {
       label: t('premium.mine.changePlan'),
@@ -132,7 +146,7 @@ function Paid({ summary, onChangePlan }: { summary: PaidSummary; onChangePlan: (
       value: STORE_NAME,
       onPress: () => void Linking.openURL(SUBSCRIPTIONS_URL),
     },
-    { label: t('premium.restore'), value: '', onPress: restore },
+    { label: t('premium.restore'), value: '', onPress: onRestore },
   ];
   return (
     <>

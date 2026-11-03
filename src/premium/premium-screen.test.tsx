@@ -127,6 +127,13 @@ describe('PremiumScreen', () => {
     expect(screen.getByRole('button', { name: 'Get premium' })).toBeDisabled();
   });
 
+  it('starts a change of plan from the one the user is on', async () => {
+    mockPlan({ ...PREMIUM, billing: 'monthly' });
+    await render(<PremiumScreen onClose={onClose} />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Change plan/ }));
+    expect(screen.getByRole('radio', { checked: true })).toHaveTextContent(/€8\.99/);
+  });
+
   it('names the trial as such, with its one window and when it ends', async () => {
     mockPlan({ ...PREMIUM, plan: 'trial', billing: 'monthly', week: null });
     await render(<PremiumScreen onClose={onClose} />);

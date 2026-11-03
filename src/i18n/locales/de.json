@@ -2135,7 +2135,8 @@
       "titleTrial": "Deine Gratiswoche",
       "titlePremium": "Du hast Premium",
       "thanks": "Danke, dass du mit Bite trainierst.",
-      "try": "7 Tage gratis testen",
+      "try_one": "{{count}} Tag gratis testen",
+      "try_other": "{{count}} Tage gratis testen",
       "then": "Danach ab {{price}} im Monat. Jederzeit kündbar.",
       "get": "Premium holen",
       "from": "Ab {{price}} im Monat. Jederzeit kündbar."

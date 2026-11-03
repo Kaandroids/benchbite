@@ -2135,7 +2135,8 @@
       "titleTrial": "Your free week",
       "titlePremium": "You have premium",
       "thanks": "Thanks for training with Bite.",
-      "try": "Try 7 days free",
+      "try_one": "Try {{count}} day free",
+      "try_other": "Try {{count}} days free",
       "then": "Then from {{price}} a month. Cancel anytime.",
       "get": "Get premium",
       "from": "From {{price}} a month. Cancel anytime."
