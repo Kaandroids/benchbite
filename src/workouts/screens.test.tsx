@@ -389,6 +389,16 @@ describe('ArchiveScreen', () => {
     expect(screen.getByRole('button', { name: 'Cardio, waits for premium' })).toBeTruthy();
   });
 
+  it('shows one running as running, though it waits for premium', async () => {
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 2 });
+    mockWorkouts([testWorkout(2, { name: 'Cardio', active: false, held: true })]);
+    await render(<ArchiveScreen />);
+    expect(screen.getByText('Running')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Cardio, waits for premium' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cardio' }));
+    expect(screen.queryByText('Cardio waits for premium')).toBeNull();
+  });
+
   it('says when the archive is empty, and goes back', async () => {
     mockWorkouts([testWorkout(1)]);
     await render(<ArchiveScreen />);
