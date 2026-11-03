@@ -1460,6 +1460,7 @@
       "discardMessage": "Girdiğin setler kaydedilmez.",
       "empty": "Kaydetmek için en az bir set gir.",
       "saveError": "Antrenman kaydedilemedi. Bağlantını kontrol edip tekrar dene.",
+      "waitsError": "Bu antrenman premium'u beklediği için kaydedilemiyor.",
       "records_one": "{{count}} yeni rekor",
       "records_other": "{{count}} yeni rekor"
     },

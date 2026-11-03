@@ -1460,6 +1460,7 @@
       "discardMessage": "The sets you logged are not saved.",
       "empty": "Log at least one set to save the workout.",
       "saveError": "We couldn't save the workout. Check your connection and try again.",
+      "waitsError": "This workout waits for premium, so it can't be saved.",
       "records_one": "{{count}} new record",
       "records_other": "{{count}} new records"
     },

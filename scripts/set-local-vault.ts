@@ -1,5 +1,7 @@
 // Stores the project URL and the secret API key of the local Supabase stack in its Vault, where
-// the scheduled jobs read them to call Edge Functions (ADR 0063). Run with `pnpm vault:local`
+// the scheduled jobs read them to call Edge Functions (ADR 0063), and turns on the developer tools
+// that change data on the server, such as the plan switcher (ADR 0080), which a hosted project never
+// has. Run with `pnpm vault:local`
 // while the stack is running, and again after `pnpm supabase db reset`. The key is read from
 // `supabase status`, so that it is never written into the repository; it works only locally.
 import { execFileSync } from 'node:child_process';
@@ -21,9 +23,10 @@ if (!secretKey || !/^sb_secret_[\w-]+$/.test(secretKey)) {
 
 // One statement, as `db query` runs no more.
 const sql = `do $$ begin
-  delete from vault.secrets where name in ('project_url', 'secret_key');
+  delete from vault.secrets where name in ('project_url', 'secret_key', 'dev_tools');
   perform vault.create_secret('${PROJECT_URL}', 'project_url');
   perform vault.create_secret('${secretKey}', 'secret_key');
+  perform vault.create_secret('on', 'dev_tools');
 end $$`;
 try {
   execFileSync('pnpm', ['-s', 'supabase', 'db', 'query', '--local', sql], {
@@ -34,4 +37,4 @@ try {
   console.error('Storing the secrets in the local Vault failed.');
   process.exit(1);
 }
-console.log('Stored project_url and secret_key in the local Vault.');
+console.log('Stored project_url, secret_key and dev_tools in the local Vault.');

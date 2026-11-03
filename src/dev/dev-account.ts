@@ -29,6 +29,9 @@ export function isLocalSupabase(url: string | undefined): boolean {
   );
 }
 
-/** Whether the dev account can be used: in development, against the local database. */
-export const canUseDevAccount = () =>
+/**
+ * Whether the developer tools that use the local database, such as the dev account and the plan
+ * switcher, can be used: in development, against the local database.
+ */
+export const canUseDevTools = () =>
   __DEV__ && isLocalSupabase(process.env.EXPO_PUBLIC_SUPABASE_URL);

@@ -138,6 +138,19 @@ export async function fetchWorkouts(): Promise<Workout[]> {
   });
 }
 
+/** Whether a workout waits for premium now, read fresh rather than from the cached list. */
+export async function fetchWorkoutHeld(workoutId: number): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('held')
+    .eq('id', workoutId)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data?.held ?? false;
+}
+
 /**
  * The week from the active workouts: a session for each weekday a workout is on, from Monday on.
  * Workouts without weekdays are left out, as they are not planned for a day, and so are ones that

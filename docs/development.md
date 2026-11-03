@@ -110,9 +110,15 @@ Vault once, and again after `pnpm supabase db reset`:
 pnpm vault:local
 ```
 
+It also sets `dev_tools` to `on`, which lets the developer tools change data on the server, such
+as putting the signed-in account on the free plan, the trial or premium
+([ADR 0080](adr/0080-developer-tools-switch-the-plan-behind-a-vault-flag.md)). A hosted project
+never has it.
+
 AI comes with premium, so a user has no budget for it until they have it
-([ADR 0078](adr/0078-a-premium-plan-with-a-trial.md)). To give your local account a year of
-premium, run in Studio's SQL editor:
+([ADR 0078](adr/0078-a-premium-plan-with-a-trial.md)). Switch the plan of the account you are
+signed in with under **Plan** in the app's developer tools, or, to give your local account a year
+of premium, run in Studio's SQL editor:
 
 ```sql
 select public.give_plan('you@example.com', now(), now() + interval '1 year');
@@ -160,7 +166,7 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |
 | `pnpm icons`            | Draw the app icons and the splash image from the mark |
 | `pnpm functions:check`  | Type-check, lint and test the Edge Functions          |
-| `pnpm vault:local`      | Store the local URL and secret key for the purge      |
+| `pnpm vault:local`      | Store the local Vault secrets and turn on dev tools   |
 | `pnpm check:plans`      | Check every generated workout plan on the local stack |
 | `pnpm seed:demo`        | Recreate the demo account of the README screenshots   |
 
