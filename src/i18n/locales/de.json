@@ -2099,6 +2099,10 @@
       "chats_other": "Chats mit Bite",
       "ended": "Angebot beendet"
     },
-    "bestValue": "Bester Preis"
+    "bestValue": "Bester Preis",
+    "soon": {
+      "title": "Premium ist unterwegs",
+      "message": "Bald kannst du Premium direkt hier holen."
+    }
   }
 }
