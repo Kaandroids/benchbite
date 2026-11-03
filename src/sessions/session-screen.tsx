@@ -19,7 +19,7 @@ import { enableRestAlerts, useNotificationPermission } from './rest-alarm';
 import { RestBar } from './rest-bar';
 import { changeRest, sessionTotals, updateSession, useActiveSession } from './session';
 import { FoldedExercise, OpenExercise } from './session-exercise';
-import { useNow } from './use-now';
+import { useNow } from '@/lib/use-now';
 
 /** The workout in progress: one exercise open with its sets, the rest folded, and the rest timer. */
 export function SessionScreen() {

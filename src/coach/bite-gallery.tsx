@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -30,6 +31,14 @@ export function BiteGallery() {
         ))}
         <Sample label="looks about">
           <BiteAvatar size={88} looksAbout />
+        </Sample>
+      </View>
+      <Text variant="label">Cheering, with sparkles</Text>
+      <View style={[styles.grid, { gap: spacing.lg }]}>
+        <Sample label="Sparkles">
+          <Sparkles size={140}>
+            <BiteAvatar size={88} expression="happy" />
+          </Sparkles>
         </Sample>
       </View>
       <Text variant="label">Sizes</Text>

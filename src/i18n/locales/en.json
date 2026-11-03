@@ -2050,5 +2050,51 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "yearlySave": "Yearly · −{{percent}}%",
+    "monthly": "Monthly",
+    "cancelAnytime": "Cancel anytime",
+    "trialEnding": {
+      "chats_one": "chat",
+      "chats_other": "chats",
+      "photos_one": "meal photo",
+      "photos_other": "meal photos",
+      "reviews_one": "review",
+      "reviews_other": "reviews",
+      "keepYearly": "Keep premium, yearly",
+      "keepMonthly": "Keep premium, monthly",
+      "cancel": "Cancel the subscription",
+      "kicker": "Free week · day {{day}} of {{total}}",
+      "startsOn": "Premium starts on {{day}}.",
+      "together_one": "One more day together!",
+      "together_other": "{{count}} more days together!",
+      "today": "Today",
+      "usedDays_one": "You used Bite on {{count}} day",
+      "usedDays_other": "You used Bite on {{count}} days",
+      "yearlyNote": "{{price}} a month, billed once a year",
+      "title": "Your trial summary",
+      "titleNamed": "<accent>{{name}}'s</accent> trial summary",
+      "lastDay": "Last day together!"
+    },
+    "offer": {
+      "endsIn": "Ends in {{time}}",
+      "kicker": "Just for you",
+      "title": "Come back to Bite for less",
+      "text": "Your workouts are waiting.",
+      "usual": "Usually {{price}}",
+      "firstYear": "For your first year",
+      "then": "Then {{price}} a year",
+      "claim": "Claim −{{percent}}%",
+      "legal": "Billed today. Cancel anytime.",
+      "workouts_one": "workout",
+      "workouts_other": "workouts",
+      "alternatives_one": "alternative",
+      "alternatives_other": "alternatives",
+      "chats_one": "chat with Bite",
+      "chats_other": "chats with Bite",
+      "ended": "Offer ended"
+    },
+    "bestValue": "Best value"
   }
 }

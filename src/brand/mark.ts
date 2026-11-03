@@ -8,6 +8,8 @@
 
 /** The brand orange behind the light icon and splash screen. */
 export const BRAND_ORANGE = '#FF6A10';
+/** A lighter orange beside the brand's, for every other of Bite's sparkles. */
+export const BRAND_ORANGE_LIGHT = '#FFB27F';
 /** The mark's colour on dark backgrounds: the dark theme's `primary`. */
 export const BRAND_ORANGE_DARK = '#FF7F26';
 /** The dark icon's background: the dark theme's `surface`. */

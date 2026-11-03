@@ -2050,5 +2050,51 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "yearlySave": "Yıllık · −%{{percent}}",
+    "monthly": "Aylık",
+    "cancelAnytime": "İstediğin zaman iptal et",
+    "trialEnding": {
+      "chats_one": "sohbet",
+      "chats_other": "sohbet",
+      "photos_one": "fotoğraflı öğün",
+      "photos_other": "fotoğraflı öğün",
+      "reviews_one": "değerlendirme",
+      "reviews_other": "değerlendirme",
+      "keepYearly": "Premium'da kal, yıllık",
+      "keepMonthly": "Premium'da kal, aylık",
+      "cancel": "Aboneliği iptal et",
+      "kicker": "Ücretsiz hafta · {{day}}. gün / {{total}}",
+      "startsOn": "Premium {{day}} başlıyor.",
+      "together_one": "Birlikte bir gün daha!",
+      "together_other": "Birlikte {{count}} gün daha!",
+      "today": "Bugün",
+      "usedDays_one": "Bite'ı {{count}} gün kullandın",
+      "usedDays_other": "Bite'ı {{count}} gün kullandın",
+      "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
+      "title": "Deneme özetin",
+      "titleNamed": "<accent>{{name}}</accent> için deneme özeti",
+      "lastDay": "Birlikte son gün!"
+    },
+    "offer": {
+      "endsIn": "{{time}} sonra bitiyor",
+      "kicker": "Sana özel",
+      "title": "Bite'a daha uygun fiyata dön",
+      "text": "Antrenmanların seni bekliyor.",
+      "usual": "Normalde {{price}}",
+      "firstYear": "İlk yılın için",
+      "then": "Sonra yıllık {{price}}",
+      "claim": "−%{{percent}} indirimi al",
+      "legal": "Bugün ücretlendirilir. İstediğin zaman iptal et.",
+      "workouts_one": "antrenman",
+      "workouts_other": "antrenman",
+      "alternatives_one": "alternatif",
+      "alternatives_other": "alternatif",
+      "chats_one": "Bite sohbeti",
+      "chats_other": "Bite sohbeti",
+      "ended": "Teklif sona erdi"
+    },
+    "bestValue": "En avantajlı"
   }
 }

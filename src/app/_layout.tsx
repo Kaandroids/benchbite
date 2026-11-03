@@ -127,6 +127,8 @@ function RootNavigator() {
           <Stack.Screen name="account/create" />
           <Stack.Screen name="account/login" />
           <Stack.Screen name="dev/components" />
+          <Stack.Screen name="dev/trial-ending" />
+          <Stack.Screen name="dev/special-offer" />
         </Stack>
       )}
       {/* Over every screen, as the app may open on any of them. */}

@@ -2050,5 +2050,51 @@
         "withGrams": "{{change}}, {{grams}}"
       }
     }
+  },
+  "premium": {
+    "yearlySave": "Jährlich · −{{percent}} %",
+    "monthly": "Monatlich",
+    "cancelAnytime": "Jederzeit kündbar",
+    "trialEnding": {
+      "chats_one": "Chat",
+      "chats_other": "Chats",
+      "photos_one": "Foto-Mahlzeit",
+      "photos_other": "Foto-Mahlzeiten",
+      "reviews_one": "Rückblick",
+      "reviews_other": "Rückblicke",
+      "keepYearly": "Premium behalten, jährlich",
+      "keepMonthly": "Premium behalten, monatlich",
+      "cancel": "Abo kündigen",
+      "kicker": "Gratiswoche · Tag {{day}} von {{total}}",
+      "startsOn": "Premium beginnt am {{day}}.",
+      "together_one": "Noch ein Tag zusammen!",
+      "together_other": "Noch {{count}} Tage zusammen!",
+      "today": "Heute",
+      "usedDays_one": "Du hast Bite an {{count}} Tag genutzt",
+      "usedDays_other": "Du hast Bite an {{count}} Tagen genutzt",
+      "yearlyNote": "{{price}} pro Monat, einmal im Jahr berechnet",
+      "title": "Deine Testwoche im Überblick",
+      "titleNamed": "Testwoche von <accent>{{name}}</accent>",
+      "lastDay": "Letzter Tag zusammen!"
+    },
+    "offer": {
+      "endsIn": "Endet in {{time}}",
+      "kicker": "Nur für dich",
+      "title": "Komm zurück zu Bite, für weniger",
+      "text": "Deine Trainings warten auf dich.",
+      "usual": "Sonst {{price}}",
+      "firstYear": "Für dein erstes Jahr",
+      "then": "Danach {{price}} pro Jahr",
+      "claim": "−{{percent}} % sichern",
+      "legal": "Heute berechnet. Jederzeit kündbar.",
+      "workouts_one": "Training",
+      "workouts_other": "Trainings",
+      "alternatives_one": "Alternative",
+      "alternatives_other": "Alternativen",
+      "chats_one": "Chat mit Bite",
+      "chats_other": "Chats mit Bite",
+      "ended": "Angebot beendet"
+    },
+    "bestValue": "Bester Preis"
   }
 }
