@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(34);
+select plan(35);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -54,7 +54,7 @@ values ('00000000-0000-0000-0000-00000000000a', 'premium', now() - interval '30 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 500, 5, 12, null::integer) $$,
+  $$ values (20, 500, 5, 12, null::integer, 4) $$,
   'Premium has 500 workouts and 5 versions of each, with no limit on alternatives in all'
 );
 select is((select count(*)::integer from public.workouts where held), 0, 'Nothing waits while it fits');
@@ -77,8 +77,8 @@ where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 2, 12, 1) $$,
-  'Free has 3 workouts and 1 alternative in all'
+  $$ values (20, 3, 2, 12, 1, 4) $$,
+  'Free has 3 workouts and 1 alternative in all, with the ones the user has'
 );
 select results_eq(
   $$ select id from public.workouts where held order by id $$,
@@ -153,6 +153,17 @@ select is(
   'A waiting workout plans no day'
 );
 -- day_workouts() reads the caller's days and is for owner-rights functions only.
+-- Nor is it moved, from a day kept before it began to wait.
+update public.planned_days_kept set through = greatest(through, current_date - 1)
+where user_id = '00000000-0000-0000-0000-00000000000a';
+insert into public.planned_days (user_id, day, workout_id, name)
+values ('00000000-0000-0000-0000-00000000000a', current_date - 1, 104, 'Core');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select throws_ok(
+  $$ select public.move_workout(104, current_date - 1, null) $$,
+  'BB019', null,
+  'A waiting workout is not moved or skipped'
+);
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 reset role;
 select is(
