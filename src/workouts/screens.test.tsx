@@ -254,6 +254,8 @@ describe('WorkoutsScreen', () => {
       mockWorkouts(waiting);
       await render(<WorkoutsScreen />);
       expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
+      // The banner counts only the archived one, which shows as waiting.
+      expect(screen.getByText('1 workout waits for premium.')).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: 'Core' }));
       expect(screen.queryByText('Core waits for premium')).toBeNull();
       expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });

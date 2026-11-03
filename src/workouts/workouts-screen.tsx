@@ -18,7 +18,7 @@ import { useTheme } from '@/theme';
 
 import { HeldBanner } from './held-banner';
 import { WorkoutListItem } from './workout-list-item';
-import { useWorkoutLimits, useWorkouts } from './workouts';
+import { showsAsWaiting, useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
  * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below,
@@ -34,8 +34,10 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
-  // Archived ones too, which the archive shows locked as this list does.
-  const held = workouts.data?.filter((workout) => workout.held).length ?? 0;
+  // Archived ones too, which the archive shows locked as this list does; not one running.
+  const held =
+    workouts.data?.filter((workout) => showsAsWaiting(workout, session?.workoutId === workout.id))
+      .length ?? 0;
   const today = isoWeekday(new Date());
   // Archived workouts count too (ADR 0018).
   const full = limits.data !== undefined && (workouts.data?.length ?? 0) >= limits.data.workouts;
