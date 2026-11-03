@@ -12,6 +12,11 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000b', 'b@example.com'),
   ('00000000-0000-0000-0000-00000000000c', 'c@example.com');
 
+-- On premium, so that a workout may have 5 versions (ADR 0078).
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+select id, 'premium', now() - interval '1 day', now() + interval '29 days', 'monthly', 'manual'
+from auth.users where email like '%@example.com';
+
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
@@ -179,7 +184,7 @@ select throws_ok(
 );
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 5, 12) $$,
+  $$ values (20, 500, 5, 12, null::integer) $$,
   'which the limits say'
 );
 
