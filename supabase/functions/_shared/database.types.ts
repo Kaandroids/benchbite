@@ -2113,10 +2113,6 @@ export type Database = {
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       delete_workout_alternative: { Args: { alternative_id: number }; Returns: undefined };
-      dev_set_plan: {
-        Args: { plan: Database['public']['Enums']['plan'] };
-        Returns: Database['public']['Enums']['plan'];
-      };
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
@@ -2175,6 +2171,10 @@ export type Database = {
       food_log_entries: { Args: { entry_ids: number[] }; Returns: Json };
       food_log_entry_ids: { Args: { change: Json }; Returns: number[] };
       food_name_key: { Args: { name: string }; Returns: string };
+      free_count_left: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: number;
+      };
       frequent_foods: {
         Args: { for_meal: Database['public']['Enums']['meal']; language: string };
         Returns: {
@@ -2202,18 +2202,12 @@ export type Database = {
         };
         Returns: string;
       };
-      give_plan_by_hand: {
-        Args: {
-          billing: Database['public']['Enums']['billing_period'];
-          ends: string;
-          plan: Database['public']['Enums']['plan'];
-          starts: string;
-          user_id: string;
-        };
-        Returns: undefined;
-      };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
+      in_grace: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: boolean;
+      };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
@@ -2431,7 +2425,6 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      my_plan: { Args: Record<PropertyKey, never>; Returns: Database['public']['Enums']['plan'] };
       my_streak_states: {
         Args: { first_open: string; today: string };
         Returns: {
@@ -2814,6 +2807,10 @@ export type Database = {
         Returns: undefined;
       };
       week_of: { Args: { at: string; period: unknown }; Returns: unknown };
+      week_room: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: number;
+      };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       with_grace: {
         Args: {
@@ -3009,6 +3006,8 @@ export type Database = {
       };
       plan_summary: {
         plan: Database['public']['Enums']['plan'] | null;
+        account_required: boolean | null;
+        had_trial: boolean | null;
         billing: Database['public']['Enums']['billing_period'] | null;
         period_end: string | null;
         week_left: number | null;

@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(26);
 
 insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com', false),
@@ -12,7 +12,9 @@ insert into auth.users (id, email, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000c', 'c@example.com', false),
   ('00000000-0000-0000-0000-00000000000d', 'd@example.com', false),
   ('00000000-0000-0000-0000-00000000000e', 'e@example.com', false),
-  ('00000000-0000-0000-0000-00000000000f', 'f@example.com', false);
+  ('00000000-0000-0000-0000-00000000000f', 'f@example.com', false),
+  ('00000000-0000-0000-0000-000000000010', null, true),
+  ('00000000-0000-0000-0000-000000000011', 'h@example.com', false);
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -45,6 +47,10 @@ select is(
   'with the week''s meal photos and those left'
 );
 select ok((public.plan_summary()).photos_reset_at > now(), 'and when the next week starts');
+select is(
+  ((public.plan_summary()).account_required, (public.plan_summary()).had_trial), (false, false),
+  'with an account, and the trial still to try'
+);
 select is((public.plan_summary()).period_left, null, 'and no budget windows');
 reset role;
 
@@ -133,6 +139,27 @@ select is(
   (select (period_end, period_resets_at, week_resets_at) from f_summary),
   (null::timestamptz, null::timestamptz, null::timestamptz),
   'with no renewal or reset that has already passed'
+);
+
+-- A guest, who has no AI until they have an account.
+select pg_temp.sign_in('00000000-0000-0000-0000-000000000010');
+create temp table guest_summary as select * from public.plan_summary();
+reset role;
+select is(
+  (select (account_required, photos_left) from guest_summary), (true, 0),
+  'A guest needs an account first, with no photos meanwhile'
+);
+
+-- H, whose trial ended two days ago, is on the free plan again.
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+  values ('00000000-0000-0000-0000-000000000011', 'trial', now() - interval '9 days',
+    now() - interval '2 days', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-000000000011');
+create temp table h_summary as select * from public.plan_summary();
+reset role;
+select is(
+  (select (plan, had_trial) from h_summary), ('free'::public.plan, true),
+  'A user whose trial ended is free, and has had it'
 );
 
 -- What each plan allows.
