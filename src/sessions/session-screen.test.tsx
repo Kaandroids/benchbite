@@ -460,4 +460,18 @@ describe('FinishScreen', () => {
     );
     expect(router.dismissAll).not.toHaveBeenCalled();
   });
+
+  it('says when the workout waits for premium', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    logWorkout.mockRejectedValueOnce({ code: 'BB051' });
+    doFirstSet();
+    await render(<FinishScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
+    expect(alert).toHaveBeenCalledWith(
+      'Not saved',
+      "This workout waits for premium, so it can't be saved.",
+    );
+    expect(router.dismissAll).not.toHaveBeenCalled();
+  });
 });

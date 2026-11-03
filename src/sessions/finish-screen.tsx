@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
+import { dbErrorMessage } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
@@ -96,7 +97,15 @@ export function FinishScreen({ next }: { next?: number }) {
     } catch (error) {
       saving.current = false;
       console.warn('Could not save the workout', error);
-      Alert.alert(t('common.notSaved'), t('session.summary.saveError'));
+      // A workout that began to wait for premium after this one started, which the app did not see.
+      Alert.alert(
+        t('common.notSaved'),
+        dbErrorMessage(
+          error,
+          [['waitsForPremium', t('session.summary.waitsError')]],
+          t('session.summary.saveError'),
+        ),
+      );
     }
   };
 
