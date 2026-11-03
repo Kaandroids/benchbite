@@ -73,8 +73,8 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         ) : undefined
       }
     >
-      <View style={[styles.hero, { gap: spacing.sm }]}>
-        <Sparkles size={BITE_SIZE + 40}>
+      <View style={[styles.hero, { gap: spacing.xs, marginTop: -spacing.lg }]}>
+        <Sparkles size={BITE_SIZE + 24}>
           <BiteAvatar size={BITE_SIZE} expression="happy" looksAbout />
         </Sparkles>
         <Text variant="title" align="center" accessibilityRole="header">
