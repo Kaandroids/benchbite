@@ -42,6 +42,23 @@ export function FreeUsage({ photos }: { photos: FreeSummary['photos'] }) {
 }
 
 /**
+ * How a paid plan is billed, and when it renews or, for the trial, ends; no date in the plan's
+ * grace, once its period has passed.
+ */
+export function usePaidTerms(summary: PaidSummary) {
+  const { t } = useTranslation();
+  const monthDay = useMonthDayFormat();
+  return {
+    billing: t(BILLING_LABEL[summary.billing]),
+    when: summary.renewsAt
+      ? t(summary.plan === 'trial' ? 'premium.mine.ends' : 'premium.mine.renews', {
+          day: monthDay(summary.renewsAt),
+        })
+      : null,
+  };
+}
+
+/**
  * The trial's or premium's plan: how it is billed and when it renews or ends, and how much of Bite
  * is left this week and this period, as a bar and a share, never in money.
  */
@@ -51,18 +68,17 @@ export function PaidUsage({ summary }: { summary: PaidSummary }) {
   const weekday = useWeekdayFormat('long');
   const monthDay = useMonthDayFormat();
   const trial = summary.plan === 'trial';
+  const { billing, when } = usePaidTerms(summary);
   return (
     <Card style={{ gap: 0, paddingVertical: spacing.md }}>
       <View style={[styles.row, { gap: spacing.sm, paddingBottom: spacing.md }]}>
         <Tag label={t(trial ? 'premium.mine.trial' : 'premium.mine.premium')} />
         <Text variant="bodyStrong" style={styles.flex}>
-          {t(BILLING_LABEL[summary.billing])}
+          {billing}
         </Text>
-        {summary.renewsAt ? (
+        {when ? (
           <Text variant="caption" color="textMuted">
-            {t(trial ? 'premium.mine.ends' : 'premium.mine.renews', {
-              day: monthDay(summary.renewsAt),
-            })}
+            {when}
           </Text>
         ) : null}
       </View>
