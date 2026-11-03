@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image, Modal, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { useTheme } from '@/theme';
@@ -14,9 +14,6 @@ type PhotoViewerProps = {
 export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  // Read from the app's provider: a SafeAreaView inside the modal measures no insets, which put
-  // the button under the status bar, where it could not be pressed (#425).
-  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible
@@ -24,14 +21,16 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
       onRequestClose={onClose}
       supportedOrientations={['portrait']}
     >
-      <View style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
+      {/* On iOS, a full-screen modal gets no safe area without a provider of its own, which put the
+          close button under the status bar, where it could not be pressed (#425). */}
+      <SafeAreaProvider style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
         <Image
           source={{ uri }}
           resizeMode="contain"
           accessibilityLabel={t('bite.photos.viewer')}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.top, { padding: spacing.md, paddingTop: insets.top + spacing.md }]}>
+        <SafeAreaView edges={['top']} style={[styles.top, { padding: spacing.md }]}>
           <RoundIconButton
             icon="close"
             color="onInverse"
@@ -40,8 +39,8 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
             onPress={onClose}
             size={40}
           />
-        </View>
-      </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
