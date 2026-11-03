@@ -2792,6 +2792,7 @@ export type Database = {
           added_alternatives: number;
           alternative_name_length: number;
           alternatives: number;
+          alternatives_added: number;
           exercises: number;
           workouts: number;
         }[];

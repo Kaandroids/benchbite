@@ -230,14 +230,22 @@ export function useKcalPerMinute() {
   });
 }
 
+export const WORKOUT_LIMITS_KEY = ['workout-limits'];
+
+/**
+ * How long the limits are kept before they are read again: as long as the server waits between
+ * applying the plans that changed (`apply-plan-limits` in pg_cron, ADR 0079).
+ */
+const WORKOUT_LIMITS_STALE_MS = 10 * 60 * 1000;
+
 /**
  * The user's workout limits, from their plan (ADR 0078): how many workouts, exercises in each,
- * versions of each and alternatives in all, and how long an alternative's name may be. They change
- * with the plan, so they are read again after a while, as often as the server applies plans.
+ * versions of each and alternatives in all, how many alternatives the user has added, and how long
+ * an alternative's name may be. They change with the plan, so they are read again after a while.
  */
 export function useWorkoutLimits() {
   return useQuery({
-    queryKey: ['workout-limits'],
+    queryKey: WORKOUT_LIMITS_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('workout_limits').single();
       if (error) {
@@ -245,7 +253,7 @@ export function useWorkoutLimits() {
       }
       return data;
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: WORKOUT_LIMITS_STALE_MS,
   });
 }
 

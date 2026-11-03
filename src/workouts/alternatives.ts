@@ -6,7 +6,7 @@ import { deviceToday } from '@/i18n/dates';
 import { dbErrorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
-import { reloadPlan, useWorkoutLimits, WORKOUTS_KEY } from './workouts';
+import { reloadPlan, useWorkoutLimits, WORKOUT_LIMITS_KEY, WORKOUTS_KEY } from './workouts';
 
 /** One version of a workout's exercises, such as one for the gym and one for home (ADR 0061). */
 export type WorkoutAlternative = {
@@ -21,35 +21,15 @@ export type WorkoutAlternative = {
   exerciseCount: number | null;
 };
 
+/** Every workout's alternatives, which a delete may all touch, as it may let waiting ones go. */
+const ALL_ALTERNATIVES_KEY = [...WORKOUTS_KEY, 'alternatives'];
+
 /**
  * The query key of a workout's alternatives. Under the workouts, so that whatever loads the
  * workouts again, such as an edit or a switch, loads them too.
  */
-/** Every workout's alternatives, and how many the user has added, which a change may all touch. */
-const ALL_ALTERNATIVES_KEY = [...WORKOUTS_KEY, 'alternatives'];
-
 export function alternativesKey(workoutId: number) {
   return [...ALL_ALTERNATIVES_KEY, workoutId];
-}
-
-/**
- * How many alternatives the user has added to all their workouts, waiting ones included, for the
- * limit a plan puts on them in all (ADR 0078); the one in use of each workout is not counted.
- */
-export function useAddedAlternativeCount() {
-  return useQuery({
-    queryKey: [...ALL_ALTERNATIVES_KEY, 'added'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('workout_alternatives')
-        .select('id', { count: 'exact', head: true })
-        .not('exercises', 'is', null);
-      if (error) {
-        throw error;
-      }
-      return count ?? 0;
-    },
-  });
 }
 
 /**
@@ -228,8 +208,12 @@ export function useAddAlternative(workoutId: number) {
       }
       return data;
     },
-    // Every workout's, with the count in all.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ALL_ALTERNATIVES_KEY }),
+    // The workout's, and the limits, which count the alternatives the user has added.
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
+        queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY }),
+      ]),
   });
 }
 
@@ -265,8 +249,12 @@ export function useDeleteAlternative(workoutId: number) {
         throw error;
       }
     },
-    // Every workout's, as a delete may let waiting ones go, and the count in all.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ALL_ALTERNATIVES_KEY }),
+    // Every workout's, as a delete may let waiting ones go, and the limits, which count them.
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ALL_ALTERNATIVES_KEY }),
+        queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY }),
+      ]),
   });
 }
 
