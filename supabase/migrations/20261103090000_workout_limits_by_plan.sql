@@ -1,17 +1,33 @@
 -- Workout limits by plan (#410, ADR 0079): workout_limits() reads the caller's plan, and what is
 -- above it waits for premium. Waiting is `held`, apart from `active`, which stays the user's choice
 -- to archive. apply_plan_limits() holds and lets go; triggers keep what is held from being used.
+-- New error codes:
+--   BB051  a workout or alternative waits for premium
+--   BB052  a user has added as many alternatives as their plan allows
 
 alter table public.workouts add column held boolean not null default false;
 alter table public.workout_alternatives add column held boolean not null default false;
 -- When an alternative was last the one in use, set as it stops being in use; null for one never in
 -- use since it was added. apply_plan_limits() keeps the ones last in use.
 alter table public.workout_alternatives add column last_used_at timestamptz;
+-- The plan apply_plan_limits() last applied for the subscription's user, so that the sweep below
+-- applies only plans that have changed since, such as one whose end has passed.
+alter table public.subscriptions add column applied_plan public.plan;
 
--- The caller's limits, from their plan's row (ADR 0078): `alternatives` is how many versions a
--- workout may have, its own exercises included, and `added_alternatives` how many a user may add
--- in all, null for no limit. A new column changes the result's type, so the function is made
--- again; its callers read the columns by name.
+-- The row of `plans` that `user_id` is on now.
+create function public.plan_limits(user_id uuid)
+returns public.plans
+language sql
+stable
+set search_path = ''
+as $$
+  select p from public.plans p where p.plan = public.plan_of(plan_limits.user_id);
+$$;
+
+-- The caller's limits, from their plan (ADR 0078): `alternatives` is how many versions a workout
+-- may have, its own exercises included, and `added_alternatives` how many a user may add in all,
+-- null for no limit. A new column changes the result's type, so the function is made again; its
+-- callers read the columns by name.
 drop function public.workout_limits();
 create function public.workout_limits()
 returns table (
@@ -28,8 +44,7 @@ security definer
 set search_path = ''
 as $$
   select p.exercises, p.workouts, p.versions, 12, p.added_alternatives
-  from public.plans p
-  where p.plan = public.plan_of((select auth.uid()));
+  from public.plan_limits((select auth.uid())) p;
 $$;
 
 revoke execute on function public.workout_limits from public, anon;
@@ -60,19 +75,16 @@ create trigger workouts_keep_planned_days_on_change
   )
   execute function public.keep_planned_days_before_change();
 
--- Refuses using what waits for premium (BB044): it can be seen and deleted, nothing else.
+-- Refuses using what waits for premium (BB051): it can be seen and deleted, nothing else. Any
+-- column but `held` counts, so that one added later is guarded too.
 create function public.refuse_held_workout()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
 begin
-  if old.held and new.held and (
-    old.name, old.type, old.weekdays, old.active, old.estimated_minutes
-  ) is distinct from (
-    new.name, new.type, new.weekdays, new.active, new.estimated_minutes
-  ) then
-    raise exception 'The workout waits for premium' using errcode = 'BB044';
+  if old.held and new.held and (to_jsonb(old) - 'held') is distinct from (to_jsonb(new) - 'held') then
+    raise exception 'The workout waits for premium' using errcode = 'BB051';
   end if;
   return new;
 end;
@@ -95,7 +107,8 @@ as $$
   );
 $$;
 
--- A waiting workout's exercises do not change, and it is not logged.
+-- A waiting workout's exercises do not change. A workout already done is still logged: the
+-- database sees it only at the end, and starting one that waits is refused by the app.
 create function public.refuse_held_workout_rows()
 returns trigger
 language plpgsql
@@ -105,7 +118,7 @@ declare
   workout_id bigint := case when tg_op = 'DELETE' then old.workout_id else new.workout_id end;
 begin
   if public.is_held_workout(workout_id) then
-    raise exception 'The workout waits for premium' using errcode = 'BB044';
+    raise exception 'The workout waits for premium' using errcode = 'BB051';
   end if;
   return case when tg_op = 'DELETE' then old else new end;
 end;
@@ -114,14 +127,11 @@ $$;
 create trigger workout_exercises_refuse_held
   before insert or update or delete on public.workout_exercises
   for each row execute function public.refuse_held_workout_rows();
-create trigger workout_logs_refuse_held
-  before insert on public.workout_logs
-  for each row execute function public.refuse_held_workout_rows();
 
 -- An alternative of a waiting workout gains none and changes no exercises; a waiting alternative is
 -- not put in use or renamed. Their order may change and they may be deleted. Adding one checks the
--- alternatives a user may add in all (BB045); the versions of a workout add_workout_alternative()
--- checks. One that stops being in use is stamped.
+-- alternatives a user may add in all (BB052). The versions of one workout stay checked by
+-- add_workout_alternative(), as it counts them before it adds the workout's own as the first.
 create function public.check_alternative()
 returns trigger
 language plpgsql
@@ -134,27 +144,18 @@ declare
 begin
   if tg_op = 'INSERT' then
     if public.is_held_workout(new.workout_id) then
-      raise exception 'The workout waits for premium' using errcode = 'BB044';
+      raise exception 'The workout waits for premium' using errcode = 'BB051';
     end if;
-    most := (
-      select p.added_alternatives from public.plans p
-      where p.plan = public.plan_of(new.user_id)
-    );
+    most := (public.plan_limits(new.user_id)).added_alternatives;
     if new.exercises is not null and most is not null and (
       select count(*) from public.workout_alternatives a
       where a.user_id = new.user_id and a.exercises is not null
     ) >= most then
-      raise exception 'A user can add up to % alternatives', most using errcode = 'BB045';
+      raise exception 'A user can add up to % alternatives', most using errcode = 'BB052';
     end if;
-    return new;
-  end if;
-
-  if (old.name, old.exercises) is distinct from (new.name, new.exercises)
+  elsif (old.name, old.exercises) is distinct from (new.name, new.exercises)
     and (old.held or public.is_held_workout(new.workout_id)) then
-    raise exception 'The alternative waits for premium' using errcode = 'BB044';
-  end if;
-  if old.exercises is null and new.exercises is not null then
-    new.last_used_at := now();
+    raise exception 'The alternative waits for premium' using errcode = 'BB051';
   end if;
   return new;
 end;
@@ -164,16 +165,30 @@ create trigger workout_alternatives_check
   before insert or update on public.workout_alternatives
   for each row execute function public.check_alternative();
 
-revoke execute on function public.refuse_held_workout(), public.is_held_workout(bigint),
-  public.refuse_held_workout_rows(), public.check_alternative()
-  from public, anon, authenticated;
+-- Stamps an alternative as it stops being the one in use.
+create function public.stamp_alternative_last_used()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.last_used_at := now();
+  return new;
+end;
+$$;
+
+create trigger workout_alternatives_stamp_last_used
+  before update of exercises on public.workout_alternatives
+  for each row
+  when (old.exercises is null and new.exercises is not null)
+  execute function public.stamp_alternative_last_used();
 
 -- Holds what is above `owner`'s plan, and lets it go once everything fits (ADR 0079):
 -- - workouts, archived ones included: while more are usable than the plan allows, the ones last
 --   trained stay, active before archived, newer before older; the rest wait;
 -- - alternatives not in use: while more are usable than the plan allows, the ones last in use stay,
---   up to the versions a workout may have and the alternatives a user may add; the rest wait, and
---   so do all of a waiting workout's.
+--   up to the versions a workout may have and the alternatives a user may add; the rest wait. A
+--   waiting workout's all wait.
 -- It never trades one for another: it holds only what is above the plan, and lets go only of all.
 create function public.apply_plan_limits(owner uuid)
 returns void
@@ -182,9 +197,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  limits public.plans := (
-    select p from public.plans p where p.plan = public.plan_of(apply_plan_limits.owner)
-  );
+  limits public.plans := public.plan_limits(apply_plan_limits.owner);
 begin
   perform public.lock_user_limits(apply_plan_limits.owner);
 
@@ -208,6 +221,12 @@ begin
     );
   end if;
 
+  -- A waiting workout's alternatives wait with it.
+  update public.workout_alternatives a set held = true
+  from public.workouts w
+  where w.id = a.workout_id and w.held and a.user_id = apply_plan_limits.owner
+    and a.exercises is not null and not a.held;
+
   if not exists (
     select 1 from public.workout_alternatives a
     where a.user_id = apply_plan_limits.owner
@@ -221,32 +240,40 @@ begin
     ) <= limits.added_alternatives
   ) then
     update public.workout_alternatives a set held = false
-    where a.user_id = apply_plan_limits.owner and a.held;
+    from public.workouts w
+    where w.id = a.workout_id and not w.held and a.user_id = apply_plan_limits.owner and a.held;
   else
+    with usable as (
+      -- The alternatives that may stay: not in use, not waiting, of a workout that does not wait.
+      select a.id, a.workout_id, a.last_used_at
+      from public.workout_alternatives a
+      join public.workouts w on w.id = a.workout_id and not w.held
+      where a.user_id = apply_plan_limits.owner and a.exercises is not null and not a.held
+    ), ranked_in_workout as (
+      -- Each workout's, last in use first; the one in use is a version too.
+      select u.*, row_number() over (
+        partition by u.workout_id order by u.last_used_at desc nulls last, u.id desc
+      ) as place
+      from usable u
+    ), kept as (
+      -- The ones a workout may have, then the ones a user may add in all, last in use first.
+      select o.id
+      from (
+        select r.id, row_number() over (order by r.last_used_at desc nulls last, r.id desc) as overall
+        from ranked_in_workout r
+        where r.place < limits.versions
+      ) o
+      where limits.added_alternatives is null or o.overall <= limits.added_alternatives
+    )
     update public.workout_alternatives a set held = true
-    where a.user_id = apply_plan_limits.owner and not a.held and a.exercises is not null
-      and a.id not in (
-        select k.id from (
-          select r.id, row_number() over (order by r.last_used_at desc nulls last, r.id desc) as n
-          from (
-            select a2.id, a2.last_used_at,
-              row_number() over (
-                partition by a2.workout_id order by a2.last_used_at desc nulls last, a2.id desc
-              ) as in_workout
-            from public.workout_alternatives a2
-            join public.workouts w on w.id = a2.workout_id
-            where a2.user_id = apply_plan_limits.owner
-              and a2.exercises is not null and not a2.held and not w.held
-          ) r
-          where r.in_workout < limits.versions
-        ) k
-        where limits.added_alternatives is null or k.n <= limits.added_alternatives
-      );
+    where a.id in (select u.id from usable u) and a.id not in (select k.id from kept k);
   end if;
+
+  update public.subscriptions s
+  set applied_plan = limits.plan
+  where s.user_id = apply_plan_limits.owner and s.applied_plan is distinct from limits.plan;
 end;
 $$;
-
-revoke execute on function public.apply_plan_limits(uuid) from public, anon, authenticated;
 
 -- A subscription given, changed or gone applies its plan at once.
 create function public.apply_plan_limits_on_subscription()
@@ -261,26 +288,57 @@ begin
 end;
 $$;
 
-revoke execute on function public.apply_plan_limits_on_subscription()
-  from public, anon, authenticated;
-
 create trigger subscriptions_apply_plan_limits
-  after insert or update or delete on public.subscriptions
+  after insert or delete or update of plan, period_start, period_end on public.subscriptions
   for each row execute function public.apply_plan_limits_on_subscription();
 
--- Every user with a subscription, for plans whose end has passed since they last changed.
-create function public.apply_all_plan_limits()
+-- Deleting a workout or alternative may make everything fit again, so the plan is applied after,
+-- for each user who still has an account.
+create function public.apply_plan_limits_after_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform public.apply_plan_limits(g.user_id)
+  from (select distinct d.user_id from gone d) g
+  where exists (select 1 from auth.users u where u.id = g.user_id);
+  return null;
+end;
+$$;
+
+create trigger workouts_apply_plan_limits_after_delete
+  after delete on public.workouts
+  referencing old table as gone
+  for each statement execute function public.apply_plan_limits_after_delete();
+create trigger workout_alternatives_apply_plan_limits_after_delete
+  after delete on public.workout_alternatives
+  referencing old table as gone
+  for each statement execute function public.apply_plan_limits_after_delete();
+
+-- The users whose plan changed since it was last applied, such as one whose end has passed.
+create function public.apply_changed_plan_limits()
 returns void
 language sql
 security definer
 set search_path = ''
 as $$
-  select public.apply_plan_limits(s.user_id) from public.subscriptions s;
+  select public.apply_plan_limits(s.user_id)
+  from public.subscriptions s
+  where s.applied_plan is distinct from public.plan_of(s.user_id);
 $$;
 
-revoke execute on function public.apply_all_plan_limits() from public, anon, authenticated;
+revoke execute on function public.plan_limits(uuid), public.refuse_held_workout(),
+  public.is_held_workout(bigint), public.refuse_held_workout_rows(), public.check_alternative(),
+  public.stamp_alternative_last_used(), public.apply_plan_limits(uuid),
+  public.apply_plan_limits_on_subscription(), public.apply_plan_limits_after_delete(),
+  public.apply_changed_plan_limits()
+  from public, anon, authenticated;
 
-select cron.schedule('apply-plan-limits', '*/10 * * * *', 'select public.apply_all_plan_limits()');
+select cron.schedule(
+  'apply-plan-limits', '*/10 * * * *', 'select public.apply_changed_plan_limits()'
+);
 
 -- The free limit on alternatives applies to everyone now; the plans given so far are applied too.
 select public.apply_plan_limits(u.id) from auth.users u;
