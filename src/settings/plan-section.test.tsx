@@ -46,7 +46,7 @@ describe('PlanSection', () => {
     mockPlan({ ...FREE, hadTrial: true });
     await render(<PlanSection />);
     expect(screen.queryByText(/Try premium free/)).toBeNull();
-    expect(screen.getByText('Chat with Bite, and room for more')).toBeTruthy();
+    expect(screen.getByText('Chat with Bite, and more')).toBeTruthy();
   });
 
   it('shows premium with its billing and when it renews', async () => {
