@@ -292,11 +292,13 @@ export function useDeleteWorkout() {
       }
     },
     // Removed from the list at once, without waiting for the refetch, so the screens can close.
+    // The limits load again too, as its alternatives went with it and count no longer.
     onSuccess: (_data, id) => {
       queryClient.setQueryData<Workout[]>(WORKOUTS_KEY, (workouts) =>
         workouts?.filter((workout) => workout.id !== id),
       );
       void reloadPlan(queryClient);
+      void queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY });
     },
   });
 }

@@ -262,6 +262,8 @@ describe('useDeleteWorkout', () => {
     });
     expect(queryClient.getQueryData(['workouts'])).toEqual([{ id: 5 }]);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+    // Its alternatives went with it, which the limits count.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-limits'] });
   });
 });
 
