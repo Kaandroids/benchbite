@@ -425,6 +425,8 @@ it('adds and duplicates no more than the cap', async () => {
   await renderSheets();
   expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
   expect(screen.getByText('5 of 5. Delete one to add or duplicate another.')).toBeTruthy();
+  // Premium has the same cap on versions, so it is not offered here.
+  expect(screen.queryByRole('button', { name: 'More with premium' })).toBeNull();
   await openMenu('Alternative 2');
   expect(menuItem('Duplicate')!.props.accessibilityState).toEqual({ disabled: true });
   await fireEvent.press(menuItem('Duplicate')!);

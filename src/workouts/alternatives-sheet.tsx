@@ -444,8 +444,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             : t('workout.alternatives.fullInAll', { count: maxInAll ?? 0 })}
         </Text>
       ) : null}
-      {/* Premium lifts both limits. */}
-      {loaded && full ? (
+      {/* Only the free plan limits the alternatives in all, which premium lifts. */}
+      {loaded && fullInAll ? (
         <TextLink label={t('workout.alternatives.morePremium')} onPress={openPremium} />
       ) : null}
       {error || choice.error ? (
