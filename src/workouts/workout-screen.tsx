@@ -57,10 +57,11 @@ export function WorkoutScreen({ id }: { id: number }) {
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { start, sheet: startSheet } = useStartOrAsk();
-  const limits = useWorkoutLimits();
+  const workout = findWorkout(workouts.data, id);
+  // The room the plan has, said beside a workout that waits, as the plan is now.
+  const limits = useWorkoutLimits({ fresh: workout?.held ?? false });
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
-  const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
   const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';

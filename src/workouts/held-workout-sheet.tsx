@@ -29,7 +29,8 @@ type HeldWorkoutSheetProps = {
 export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const limits = useWorkoutLimits();
+  // The room the plan has, as the plan is now.
+  const limits = useWorkoutLimits({ fresh: true });
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   const name = useWorkoutName()(workout);

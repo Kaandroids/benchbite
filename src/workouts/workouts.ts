@@ -241,9 +241,11 @@ const WORKOUT_LIMITS_STALE_MS = 10 * 60 * 1000;
 /**
  * The user's workout limits, from their plan (ADR 0078): how many workouts, exercises in each,
  * versions of each and alternatives in all, how many alternatives the user has added, and how long
- * an alternative's name may be. They change with the plan, so they are read again after a while.
+ * an alternative's name may be. They change with the plan, so they are read again after a while,
+ * and on mount when `fresh`, as where a workout waits for premium, which the plan just held back
+ * while the limits kept may still be the plan's before.
  */
-export function useWorkoutLimits() {
+export function useWorkoutLimits({ fresh = false }: { fresh?: boolean } = {}) {
   return useQuery({
     queryKey: WORKOUT_LIMITS_KEY,
     queryFn: async () => {
@@ -254,6 +256,7 @@ export function useWorkoutLimits() {
       return data;
     },
     staleTime: WORKOUT_LIMITS_STALE_MS,
+    refetchOnMount: fresh ? 'always' : true,
   });
 }
 

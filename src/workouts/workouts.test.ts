@@ -10,6 +10,7 @@ import {
   useSaveWorkout,
   useSetWorkoutActive,
   useWeek,
+  useWorkoutLimits,
   useWorkouts,
   weekOf,
   type Workout,
@@ -271,5 +272,29 @@ describe('findWorkout', () => {
     expect(findWorkout(workouts, 3)).toBeUndefined();
     expect(findWorkout(workouts, null)).toBeUndefined();
     expect(findWorkout(undefined, 1)).toBeUndefined();
+  });
+});
+
+describe('useWorkoutLimits', () => {
+  /** Limits kept a moment ago, under a plan that has since ended. */
+  async function renderWithKept(fresh: boolean) {
+    const single = jest.fn().mockResolvedValue({ data: { workouts: 3 }, error: null });
+    jest.mocked(supabase.rpc).mockReturnValue({ single } as never);
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(['workout-limits'], { workouts: 500 });
+    const { result } = await renderHook(() => useWorkoutLimits({ fresh }), { queryClient });
+    return { result, single };
+  }
+
+  it('keeps limits read a moment ago', async () => {
+    const { result, single } = await renderWithKept(false);
+    expect(result.current.data).toEqual({ workouts: 500 });
+    expect(single).not.toHaveBeenCalled();
+  });
+
+  it('reads them again on mount when fresh', async () => {
+    const { result, single } = await renderWithKept(true);
+    await waitFor(() => expect(result.current.data).toEqual({ workouts: 3 }));
+    expect(single).toHaveBeenCalledTimes(1);
   });
 });
