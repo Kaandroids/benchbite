@@ -14,10 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { BRAND_ORANGE } from '@/brand/mark';
-
-/** A lighter orange for every other star, so that they do not all look alike. */
-const LIGHT_ORANGE = '#FFB27F';
+import { BRAND_ORANGE, BRAND_ORANGE_LIGHT } from '@/brand/mark';
 
 /** A four-pointed star in a 24 × 24 box. */
 const STAR = 'M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z';
@@ -29,8 +26,8 @@ const STAR = 'M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z';
 const STARS = [
   { x: 0.02, y: 0.24, size: 0.14, color: BRAND_ORANGE, delay: 0 },
   { x: 0.82, y: 0.02, size: 0.1, color: BRAND_ORANGE, delay: 120 },
-  { x: 0.88, y: 0.42, size: 0.12, color: LIGHT_ORANGE, delay: 240 },
-  { x: 0.2, y: 0.0, size: 0.08, color: LIGHT_ORANGE, delay: 80 },
+  { x: 0.88, y: 0.42, size: 0.12, color: BRAND_ORANGE_LIGHT, delay: 240 },
+  { x: 0.2, y: 0.0, size: 0.08, color: BRAND_ORANGE_LIGHT, delay: 80 },
 ] as const;
 
 /** How long a star takes to flash, and how long all of them wait before the next flash. */
