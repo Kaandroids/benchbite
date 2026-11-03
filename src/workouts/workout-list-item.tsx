@@ -12,7 +12,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
-import { useWorkoutName } from './format';
+import { HELD_OPACITY, useWorkoutName } from './format';
 import { HeldWorkoutSheet } from './held-workout-sheet';
 import { useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
 
@@ -69,7 +69,7 @@ export function WorkoutListItem({
         }
         style={({ pressed }) => [
           styles.body,
-          { gap: spacing.xs, opacity: pressed ? 0.6 : held ? HELD_OPACITY : 1 },
+          { gap: spacing.xs, opacity: (held ? HELD_OPACITY : 1) * (pressed ? 0.6 : 1) },
         ]}
       >
         <Text variant="headline" color={muted ? 'textMuted' : 'text'}>
@@ -154,9 +154,6 @@ export function WorkoutListItem({
     </Card>
   );
 }
-
-/** A workout that waits for premium is dimmed, as the design draws it, while its tag is not. */
-const HELD_OPACITY = 0.55;
 
 const styles = StyleSheet.create({
   card: {

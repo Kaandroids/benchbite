@@ -30,7 +30,13 @@ import { AlternativesSheets } from './alternatives-sheet';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
-import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import {
+  HELD_OPACITY,
+  mainMuscles,
+  useRestFormat,
+  useTargetFormat,
+  useWorkoutName,
+} from './format';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
@@ -42,8 +48,6 @@ import {
 } from './workouts';
 
 const IMAGE_SIZE = 60;
-/** A workout that waits for premium shows its exercises dimmed, as it cannot be started. */
-const HELD_OPACITY = 0.6;
 
 /**
  * A workout with every exercise's picture, target and rest. One that waits for premium can be looked
