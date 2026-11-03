@@ -47,8 +47,9 @@ select throws_ok(
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
--- FREE_WORKOUT_EXERCISES and FREE_WORKOUTS in supabase/functions/_shared/plan/limits.ts hold the
--- same numbers for the plan builder; change them together.
+-- A free user's limits come from the free row of `plans`. FREE_WORKOUT_EXERCISES and FREE_WORKOUTS
+-- in supabase/functions/_shared/plan/limits.ts hold the same numbers for the plan builder; change
+-- them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
   $$ values (20, 3, 2, 12, 1) $$,

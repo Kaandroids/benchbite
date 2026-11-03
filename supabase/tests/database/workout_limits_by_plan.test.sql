@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(33);
+select plan(34);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -59,8 +59,18 @@ select results_eq(
 );
 select is((select count(*)::integer from public.workouts where held), 0, 'Nothing waits while it fits');
 
--- Premium ends.
+-- Before premium ends, A moved Core from this week's Monday, already kept, to its Sunday.
 reset role;
+insert into public.planned_days_kept (user_id, through)
+values ('00000000-0000-0000-0000-00000000000a', date_trunc('week', current_date)::date)
+on conflict (user_id) do update set through = excluded.through;
+insert into public.workout_moves (user_id, workout_id, from_on, to_on)
+values (
+  '00000000-0000-0000-0000-00000000000a', 104,
+  date_trunc('week', current_date)::date, date_trunc('week', current_date)::date + 6
+);
+
+-- Premium ends.
 update public.subscriptions set period_end = now() - interval '2 hours'
 where user_id = '00000000-0000-0000-0000-00000000000a';
 
@@ -87,12 +97,12 @@ select results_eq(
 );
 reset role;
 select is(
-  (select applied_plan::text from public.subscriptions where user_id = '00000000-0000-0000-0000-00000000000a'),
+  (select plan::text from public.applied_plans where user_id = '00000000-0000-0000-0000-00000000000a'),
   'free',
   'The plan applied is remembered'
 );
 select is(
-  (select count(*)::integer from public.subscriptions where applied_plan is distinct from public.plan_of(user_id)),
+  (select count(*)::integer from public.subscriptions s left join public.applied_plans a using (user_id) where a.plan is distinct from public.plan_of(s.user_id)),
   0,
   'so the sweep has no user left to apply'
 );
@@ -113,11 +123,14 @@ select lives_ok(
   $$ select public.delete_workout_alternative(1042) $$,
   'but its alternatives can be deleted'
 );
+reset role;
 select throws_ok(
-  $$ select public.add_workout_alternative(104, current_date) $$,
+  $$ insert into public.workout_alternatives (workout_id, user_id, position)
+     values (104, '00000000-0000-0000-0000-00000000000a', 1) $$,
   'BB051', null,
-  'and it is given no new one'
+  'and it is given no new one, however it is added'
 );
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select throws_ok(
   $$ select public.use_workout_alternative(1012, current_date) $$,
   'BB051', null,
@@ -138,6 +151,14 @@ select is(
   (select count(*)::integer from public.plan_by_weekdays('00000000-0000-0000-0000-00000000000a', current_date, current_date + 6) p where p.workout_id = 104),
   0,
   'A waiting workout plans no day'
+);
+-- day_workouts() reads the caller's days and is for owner-rights functions only.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+reset role;
+select is(
+  (select count(*)::integer from public.day_workouts(date_trunc('week', current_date)::date + 6, date_trunc('week', current_date)::date + 6, current_date) d where d.workout_id = 104),
+  0,
+  'not even the one it was moved to'
 );
 
 -- It counts toward the limits.
@@ -265,8 +286,9 @@ overriding system value values
   (402, '00000000-0000-0000-0000-00000000000d', 'Two', 30, '{}'),
   (403, '00000000-0000-0000-0000-00000000000d', 'Three', 30, '{}'),
   (404, '00000000-0000-0000-0000-00000000000d', 'Four', 30, '{}');
-insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source, applied_plan)
-values ('00000000-0000-0000-0000-00000000000d', 'premium', now() - interval '30 days', now() - interval '2 hours', 'monthly', 'manual', 'premium');
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+values ('00000000-0000-0000-0000-00000000000d', 'premium', now() - interval '30 days', now() - interval '2 hours', 'monthly', 'manual');
+insert into public.applied_plans (user_id, plan) values ('00000000-0000-0000-0000-00000000000d', 'premium');
 set local session_replication_role = origin;
 select public.apply_changed_plan_limits();
 select results_eq(
