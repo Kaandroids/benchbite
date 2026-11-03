@@ -846,7 +846,8 @@
       "counterLabel": "{{length}} of {{max}} characters",
       "emptyName": "Left empty, it shows as “{{fallback}}”.",
       "fullInAll_one": "You've added the {{count}} alternative your plan allows. Delete it to add one here.",
-      "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here."
+      "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here.",
+      "morePremium": "More with premium"
     },
     "waits": "This workout waits for premium. You can still delete it.",
     "held": {

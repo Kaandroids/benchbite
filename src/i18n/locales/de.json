@@ -846,7 +846,8 @@
       "counterLabel": "{{length}} von {{max}} Zeichen",
       "emptyName": "Leer gelassen, heißt sie „{{fallback}}“.",
       "fullInAll_one": "Du hast die {{count}} Alternative hinzugefügt, die dein Plan erlaubt. Lösche sie, um hier eine hinzuzufügen.",
-      "fullInAll_other": "Du hast die {{count}} Alternativen hinzugefügt, die dein Plan erlaubt. Lösche eine, um hier eine hinzuzufügen."
+      "fullInAll_other": "Du hast die {{count}} Alternativen hinzugefügt, die dein Plan erlaubt. Lösche eine, um hier eine hinzuzufügen.",
+      "morePremium": "Mehr mit Premium"
     },
     "waits": "Dieses Training wartet auf Premium. Du kannst es trotzdem löschen.",
     "held": {

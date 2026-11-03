@@ -21,7 +21,9 @@ import { ReorderList } from '@/components/ui/reorder-list';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
 import { move } from '@/lib/move';
+import { useOpenPremium } from '@/premium/open-premium';
 import { useTheme } from '@/theme';
 
 import {
@@ -149,6 +151,7 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   const reorder = useReorderAlternatives(workout.id);
   const nameOf = useAlternativeName();
   const errorOf = useAlternativeError();
+  const openPremium = useOpenPremium();
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   // Fills the sheet as the menu does, to place the menu by its button in the window.
@@ -254,12 +257,15 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   const row = (alternative: WorkoutAlternative, index: number) => {
     const name = nameOf(alternative);
     const chosen = isChosen(alternative);
+    const { held } = alternative;
     return (
       <View style={[styles.row, { height: ROW_HEIGHT, gap: spacing.sm }]}>
         <Pressable
           accessibilityRole="radio"
           accessibilityLabel={name}
-          accessibilityHint={sizeOf(alternative)}
+          accessibilityHint={
+            held ? `${sizeOf(alternative)}, ${t('workout.held.waits')}` : sizeOf(alternative)
+          }
           accessibilityState={{ checked: chosen }}
           onPress={() => onUse(alternative)}
           style={({ pressed }) => [
@@ -268,9 +274,15 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             { height: ROW_HEIGHT, gap: spacing.md, opacity: pressed && !chosen ? 0.6 : 1 },
           ]}
         >
-          <Radio checked={chosen} />
+          {held ? (
+            <View style={styles.lock}>
+              <Icon name="lock" size={18} color="textMuted" />
+            </View>
+          ) : (
+            <Radio checked={chosen} />
+          )}
           <View style={styles.text}>
-            <Text variant="bodyStrong" numberOfLines={1}>
+            <Text variant="bodyStrong" color={held ? 'textMuted' : 'text'} numberOfLines={1}>
               {name}
             </Text>
             <Text variant="caption" color="textMuted">
@@ -299,7 +311,8 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
   const actionsOf = (alternative: WorkoutAlternative) => {
     const own = rows.length === 0;
     const actions: MenuAction[] = [];
-    if (!own) {
+    // One that waits for premium keeps its name until it comes back (BB051).
+    if (!own && !alternative.held) {
       actions.push({
         key: 'rename',
         icon: 'edit',
@@ -430,6 +443,10 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             ? t('workout.alternatives.full', { max })
             : t('workout.alternatives.fullInAll', { count: maxInAll ?? 0 })}
         </Text>
+      ) : null}
+      {/* Premium lifts both limits. */}
+      {loaded && full ? (
+        <TextLink label={t('workout.alternatives.morePremium')} onPress={openPremium} />
       ) : null}
       {error || choice.error ? (
         <Text variant="caption" color="danger" accessibilityRole="alert">
@@ -701,6 +718,10 @@ const styles = StyleSheet.create({
   },
   single: {
     justifyContent: 'center',
+  },
+  lock: {
+    width: 22,
+    alignItems: 'center',
   },
   addIcon: {
     width: 28,

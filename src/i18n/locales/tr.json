@@ -846,7 +846,8 @@
       "counterLabel": "{{max}} karakterden {{length}}",
       "emptyName": "Boş bırakılırsa “{{fallback}}” olarak görünür.",
       "fullInAll_one": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için onu sil.",
-      "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil."
+      "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil.",
+      "morePremium": "Premium ile daha fazlası"
     },
     "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin.",
     "held": {

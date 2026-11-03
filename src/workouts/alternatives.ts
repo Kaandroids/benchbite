@@ -141,6 +141,7 @@ export function useChooseAlternative({
   running,
   onRunning,
 }: ChooseAlternativeOptions) {
+  const { t } = useTranslation();
   const switchAlternative = useSwitchAlternative();
   const errorOf = useAlternativeError();
   const [error, setError] = useState<string | null>(null);
@@ -162,6 +163,11 @@ export function useChooseAlternative({
       return false;
     }
     if (switchAlternative.isPending || id === chosenId) return false;
+    // One that waits for premium, which the database would refuse (BB051), says so at once.
+    if (alternatives?.find((alternative) => alternative.id === id)?.held) {
+      setError(t('workout.alternatives.errors.waits'));
+      return false;
+    }
     setError(null);
     switchAlternative.mutate(id, {
       onSuccess: callbacks.onSuccess,
