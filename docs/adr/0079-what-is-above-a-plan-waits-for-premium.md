@@ -30,7 +30,8 @@ stored, and how it differs from what the user archived, to this decision.
 - **Waiting counts toward the limits,** as archived workouts do (ADR 0018), so that a free user with
   more than 3 workouts adds a new one only after deleting some.
 - **A waiting workout is not planned:** its days stay on it and come back with it, but no day plans
-  it meanwhile.
+  it meanwhile. Its moves to days ahead are settled as an archived workout's are, so it is not
+  planned on a day it was moved to either.
 - **The database enforces it,** with triggers on the tables rather than a check in each function,
   so that every way a workout or alternative changes, the coach's included, is held to it. The
   limits on adding alternatives, the versions of a workout and the ones a user may add in all, are
@@ -38,12 +39,13 @@ stored, and how it differs from what the user archived, to this decision.
 - **When it runs:** `apply_plan_limits()` holds what is above the user's plan and lets it go when
   everything fits again. It runs when a subscription is given, changes or goes; after a workout or
   alternative is deleted, which may make everything fit; and every ten minutes for the users whose
-  plan differs from the one last applied (`subscriptions.applied_plan`), which catches a plan whose
+  plan differs from the one last applied (`applied_plans`), which catches a plan whose
   end has passed without going through every subscription. This migration runs it once for
   everyone, for the new free limit on alternatives. It only holds while more is usable than the plan
   allows and only lets go when everything fits, so it never trades one workout for another.
 - **The limits come from `plans`:** `workout_limits()` reads the caller's plan, and gives the
-  alternatives a user may add in all with the others.
+  alternatives a user may add in all with the others. The plan last applied for each user is kept
+  in `applied_plans`, apart from the subscriptions the store keeps.
 
 ## Alternatives considered
 

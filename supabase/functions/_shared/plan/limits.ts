@@ -11,7 +11,7 @@ export type SessionMinutes = (typeof SESSION_MINUTES)[number];
 
 /**
  * The most exercises a workout may have without premium. The database has the
- * same limit in workout_limits(), and plans stay within it.
+ * same limit in the free row of `plans`, and plans stay within it.
  */
 export const FREE_WORKOUT_EXERCISES = 20;
 
@@ -22,7 +22,7 @@ export const FREE_WORKOUT_EXERCISES = 20;
 export const PLAN_WORKOUT_EXERCISES = 12;
 
 /**
- * The most workouts a user may have without premium, as in workout_limits(). A plan has at most
+ * The most workouts a user may have without premium, as in the free row of `plans`. A plan has at most
  * this many, so that every user can start with the whole plan; complete_onboarding() refuses more
  * (BB009).
  */
