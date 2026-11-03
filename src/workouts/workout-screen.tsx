@@ -36,13 +36,8 @@ import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
 import { HeldAlternativeSheet, WorkoutRoom } from './held-workout-sheet';
-import {
-  HELD_OPACITY,
-  mainMuscles,
-  useRestFormat,
-  useTargetFormat,
-  useWorkoutName,
-} from './format';
+import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import { HELD_OPACITY } from './waiting-sheet';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
@@ -265,30 +260,29 @@ export function WorkoutScreen({ id }: { id: number }) {
           onAdd={held ? undefined : onEdit}
         />
       ) : (
-        <>
+        // Dimmed as a whole while it waits, as it cannot be started.
+        <View style={{ gap: spacing.lg, opacity: held ? HELD_OPACITY : 1 }}>
           {/* One card of even columns over the workout's days, like a finished workout's figures
               over when it started and ended. */}
-          <View style={{ opacity: held ? HELD_OPACITY : 1 }}>
-            <StatColumns
-              stats={stats}
-              footer={
-                <View style={[styles.days, { gap: spacing.sm }]}>
-                  <Text variant="caption" color="textMuted">
-                    {t('workout.days')}
-                  </Text>
-                  <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-                </View>
-              }
-            />
-          </View>
-          <Card style={{ opacity: held ? HELD_OPACITY : 1 }}>
+          <StatColumns
+            stats={stats}
+            footer={
+              <View style={[styles.days, { gap: spacing.sm }]}>
+                <Text variant="caption" color="textMuted">
+                  {t('workout.days')}
+                </Text>
+                <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+              </View>
+            }
+          />
+          <Card>
             <View>
               {workout.exercises.map((exercise, index) =>
                 row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
               )}
             </View>
           </Card>
-        </>
+        </View>
       )}
 
       {/* Switching a workout off moves it to the archive, and back; not one that waits, even while

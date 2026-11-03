@@ -5,9 +5,6 @@ import { minutesAndSeconds } from '@/lib/time';
 
 import type { Muscle, WeekSession, Workout, WorkoutTarget } from './workouts';
 
-/** How dimmed a workout that waits for premium is, in a list and on its screen. */
-export const HELD_OPACITY = 0.6;
-
 /**
  * How long a workout took: minutes and seconds under an hour, such as 52:00, and hours and
  * minutes from an hour, such as 1:05 h.

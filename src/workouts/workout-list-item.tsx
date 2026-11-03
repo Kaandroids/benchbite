@@ -12,8 +12,9 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
-import { HELD_OPACITY, useWorkoutName } from './format';
+import { useWorkoutName } from './format';
 import { HeldWorkoutSheet } from './held-workout-sheet';
+import { HELD_OPACITY } from './waiting-sheet';
 import { showsAsWaiting, useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
 
 type WorkoutListItemProps = {
