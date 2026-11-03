@@ -82,7 +82,16 @@
     "phoneLanguageNow": "Gerade {{language}}",
     "waterGoal": "Tägliches Wasserziel",
     "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je {{ml}} ml.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Kostenloser Plan",
+      "trial": "Kostenlose Testphase",
+      "premium": "Premium",
+      "tryFree_one": "Teste Premium {{count}} Tag kostenlos",
+      "tryFree_other": "Teste Premium {{count}} Tage kostenlos",
+      "more": "Chatte mit Bite und hab Platz für mehr",
+      "hint": "Öffnet deinen Plan und was Premium bietet"
+    }
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",

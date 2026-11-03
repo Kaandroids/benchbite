@@ -82,7 +82,16 @@
     "phoneLanguageNow": "{{language}} now",
     "waterGoal": "Daily water goal",
     "waterGoalNote": "The glasses to fill on the Nutrition tab, {{ml}} ml each.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Free plan",
+      "trial": "Free trial",
+      "premium": "Premium",
+      "tryFree_one": "Try premium free for {{count}} day",
+      "tryFree_other": "Try premium free for {{count}} days",
+      "more": "Chat with Bite, and room for more",
+      "hint": "Opens your plan and what premium adds"
+    }
   },
   "loadError": {
     "title": "This couldn't load",

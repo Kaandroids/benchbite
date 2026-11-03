@@ -82,7 +82,16 @@
     "phoneLanguageNow": "Şu an {{language}}",
     "waterGoal": "Günlük su hedefi",
     "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri {{ml}} ml.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Ücretsiz plan",
+      "trial": "Ücretsiz deneme",
+      "premium": "Premium",
+      "tryFree_one": "Premium'u {{count}} gün ücretsiz dene",
+      "tryFree_other": "Premium'u {{count}} gün ücretsiz dene",
+      "more": "Bite ile sohbet et, daha fazlasına yer aç",
+      "hint": "Planını ve premium'un sunduklarını açar"
+    }
   },
   "loadError": {
     "title": "Yüklenemedi",
