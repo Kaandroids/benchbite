@@ -26,6 +26,7 @@ import { useTheme } from '@/theme';
 
 import {
   useAddAlternative,
+  useAddedAlternativeCount,
   useAlternativeError,
   useAlternativeName,
   useDeleteAlternative,
@@ -155,10 +156,15 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
 
   const loaded = alternatives.data !== undefined;
   const rows = alternatives.data ?? [];
+  const added = useAddedAlternativeCount();
   const max = limits.data?.alternatives;
+  const maxInAll = limits.data?.added_alternatives ?? null;
   // A workout without alternatives is one set of exercises: the first, in use.
   const count = Math.max(rows.length, 1);
-  const full = max !== undefined && count >= max;
+  // Full when the workout has all its versions, or the user has added all their plan allows.
+  const fullHere = max !== undefined && count >= max;
+  const fullInAll = maxInAll !== null && added.data !== undefined && added.data >= maxInAll;
+  const full = fullHere || fullInAll;
   // No other added while one is, nor while a switch runs, which would hold back putting it in use.
   const busy = add.isPending || choice.isPending;
   const failed =
@@ -420,7 +426,9 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
       </Card>
       {loaded && full ? (
         <Text variant="caption" color="textMuted" align="center">
-          {t('workout.alternatives.full', { max })}
+          {fullHere
+            ? t('workout.alternatives.full', { max })
+            : t('workout.alternatives.fullInAll', { count: maxInAll ?? 0 })}
         </Text>
       ) : null}
       {error || choice.error ? (

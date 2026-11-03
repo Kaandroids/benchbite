@@ -814,7 +814,8 @@
         "duplicate": "Kopyalanamadı. Tekrar dene.",
         "rename": "Yeniden adlandırılamadı. Tekrar dene.",
         "delete": "Silinemedi. Tekrar dene.",
-        "reorder": "Sıralama kaydedilemedi. Tekrar dene."
+        "reorder": "Sıralama kaydedilemedi. Tekrar dene.",
+        "waits": "Bu alternatif premium'u bekliyor. Yine de silebilirsin."
       },
       "loadError": "Alternatifler yüklenemedi.",
       "title": "Alternatifler",
@@ -843,8 +844,11 @@
       "nameLabel": "Kısa olsun, antrenmanın üstünde görünür",
       "counter": "{{length}}/{{max}}",
       "counterLabel": "{{max}} karakterden {{length}}",
-      "emptyName": "Boş bırakılırsa “{{fallback}}” olarak görünür."
-    }
+      "emptyName": "Boş bırakılırsa “{{fallback}}” olarak görünür.",
+      "fullInAll_one": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için onu sil.",
+      "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil."
+    },
+    "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin."
   },
   "exercise": {
     "start": "Başlangıç",

@@ -93,7 +93,9 @@ export function useWorkoutEditor(id: number | undefined) {
           ? t('editor.limit', { max })
           : isDbError(error, 'workoutLimit')
             ? t('workout.limit', { max: limits.data?.workouts ?? 0 })
-            : t('editor.saveError'),
+            : isDbError(error, 'waitsForPremium')
+              ? t('workout.waits')
+              : t('editor.saveError'),
       );
     }
   };

@@ -73,9 +73,15 @@ it('names an unnamed alternative by its place', async () => {
 
 it('tells the refusals apart, with the cap from the limits', async () => {
   const queryClient = createTestQueryClient();
-  queryClient.setQueryData(['workout-limits'], { alternatives: 5 });
+  queryClient.setQueryData(['workout-limits'], { alternatives: 5, added_alternatives: 1 });
   const { result } = await renderHook(() => useAlternativeError(), { queryClient });
   expect(result.current({ code: 'BB041' }, 'add')).toBe('A workout can have up to 5 alternatives.');
+  expect(result.current({ code: 'BB052' }, 'add')).toBe(
+    "You've added the 1 alternative your plan allows. Delete it to add one here.",
+  );
+  expect(result.current({ code: 'BB051' }, 'switch')).toBe(
+    'This alternative waits for premium. You can still delete it.',
+  );
   expect(result.current({ code: 'BB042' }, 'delete')).toBe(
     "The one in use can't be deleted. Switch to another first.",
   );

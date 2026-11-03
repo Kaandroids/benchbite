@@ -25,8 +25,31 @@ export type WorkoutAlternative = {
  * The query key of a workout's alternatives. Under the workouts, so that whatever loads the
  * workouts again, such as an edit or a switch, loads them too.
  */
+/** Every workout's alternatives, and how many the user has added, which a change may all touch. */
+const ALL_ALTERNATIVES_KEY = [...WORKOUTS_KEY, 'alternatives'];
+
 export function alternativesKey(workoutId: number) {
-  return [...WORKOUTS_KEY, 'alternatives', workoutId];
+  return [...ALL_ALTERNATIVES_KEY, workoutId];
+}
+
+/**
+ * How many alternatives the user has added to all their workouts, waiting ones included, for the
+ * limit a plan puts on them in all (ADR 0078); the one in use of each workout is not counted.
+ */
+export function useAddedAlternativeCount() {
+  return useQuery({
+    queryKey: [...ALL_ALTERNATIVES_KEY, 'added'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('workout_alternatives')
+        .select('id', { count: 'exact', head: true })
+        .not('exercises', 'is', null);
+      if (error) {
+        throw error;
+      }
+      return count ?? 0;
+    },
+  });
 }
 
 /**
@@ -69,18 +92,23 @@ export function useAlternativeName() {
 export type AlternativeAction = 'switch' | 'add' | 'duplicate' | 'rename' | 'delete' | 'reorder';
 
 /**
- * A short message for a refused change: the cap of alternatives (BB041), the one in use, which
- * cannot be deleted (BB042), the last other one while the one in use is empty (BB043), one deleted
- * elsewhere (P0002), or else that `action` failed.
+ * A short message for a refused change: the cap of alternatives of a workout (BB041) or in all
+ * (BB052), the one in use, which cannot be deleted (BB042), the last other one while the one in use
+ * is empty (BB043), one that waits for premium (BB051), one deleted elsewhere (P0002), or else that
+ * `action` failed.
  */
 export function useAlternativeError() {
   const { t } = useTranslation();
-  const max = useWorkoutLimits().data?.alternatives ?? 0;
+  const limits = useWorkoutLimits().data;
+  const max = limits?.alternatives ?? 0;
+  const maxInAll = limits?.added_alternatives ?? 0;
   return (error: unknown, action: AlternativeAction) =>
     dbErrorMessage(
       error,
       [
         ['alternativeLimit', t('workout.alternatives.errors.limit', { max })],
+        ['alternativeTotalLimit', t('workout.alternatives.fullInAll', { count: maxInAll })],
+        ['waitsForPremium', t('workout.alternatives.errors.waits')],
         ['alternativeInUse', t('workout.alternatives.errors.inUse')],
         ['alternativeLastOfEmpty', t('workout.alternatives.errors.lastOfEmpty')],
         ['notFound', t('workout.alternatives.errors.gone')],
@@ -200,7 +228,8 @@ export function useAddAlternative(workoutId: number) {
       }
       return data;
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
+    // Every workout's, with the count in all.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ALL_ALTERNATIVES_KEY }),
   });
 }
 
@@ -236,7 +265,8 @@ export function useDeleteAlternative(workoutId: number) {
         throw error;
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: alternativesKey(workoutId) }),
+    // Every workout's, as a delete may let waiting ones go, and the count in all.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ALL_ALTERNATIVES_KEY }),
   });
 }
 

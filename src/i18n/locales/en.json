@@ -814,7 +814,8 @@
         "duplicate": "We couldn't duplicate it. Try again.",
         "rename": "We couldn't rename it. Try again.",
         "delete": "We couldn't delete it. Try again.",
-        "reorder": "We couldn't save the order. Try again."
+        "reorder": "We couldn't save the order. Try again.",
+        "waits": "This alternative waits for premium. You can still delete it."
       },
       "loadError": "We couldn't load the alternatives.",
       "title": "Alternatives",
@@ -843,8 +844,11 @@
       "nameLabel": "Short, as it shows above the workout",
       "counter": "{{length}}/{{max}}",
       "counterLabel": "{{length}} of {{max}} characters",
-      "emptyName": "Left empty, it shows as “{{fallback}}”."
-    }
+      "emptyName": "Left empty, it shows as “{{fallback}}”.",
+      "fullInAll_one": "You've added the {{count}} alternative your plan allows. Delete it to add one here.",
+      "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here."
+    },
+    "waits": "This workout waits for premium. You can still delete it."
   },
   "exercise": {
     "start": "Start",
