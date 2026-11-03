@@ -32,7 +32,9 @@ stored, and how it differs from what the user archived, to this decision.
 - **A waiting workout is not planned:** its days stay on it and come back with it, but no day plans
   it meanwhile.
 - **The database enforces it,** with triggers on the tables rather than a check in each function,
-  so that every way a workout or alternative changes, the coach's included, is held to it.
+  so that every way a workout or alternative changes, the coach's included, is held to it. The
+  limits on adding alternatives, the versions of a workout and the ones a user may add in all, are
+  checked together in `add_workout_alternative()`, the only way one is added.
 - **When it runs:** `apply_plan_limits()` holds what is above the user's plan and lets it go when
   everything fits again. It runs when a subscription is given, changes or goes; after a workout or
   alternative is deleted, which may make everything fit; and every ten minutes for the users whose
@@ -61,6 +63,9 @@ stored, and how it differs from what the user archived, to this decision.
   and the database refuses changing them with BB051, and adding an alternative above the limit in
   all with BB052.
 - A plan's end takes effect up to ten minutes after its hour of grace.
+- A known gap: a free user who calls `log_workout()` directly can still log a waiting workout, as
+  the database lets a workout already under way be saved and leaves not starting one to the app.
+  It gives them no more than the history of a workout they may not change.
 - `apply_plan_limits()` is the one place that knows the ranking; a plan with other limits needs no
   change to it.
 - This amends ADR 0018, whose limits were the same for everyone, and ADR 0061, whose 5 versions
