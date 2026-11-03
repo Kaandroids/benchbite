@@ -2113,6 +2113,10 @@ export type Database = {
       };
       delete_workout: { Args: { today: string; workout_id: number }; Returns: undefined };
       delete_workout_alternative: { Args: { alternative_id: number }; Returns: undefined };
+      dev_set_plan: {
+        Args: { plan: Database['public']['Enums']['plan'] };
+        Returns: Database['public']['Enums']['plan'];
+      };
       device_today_or_server: { Args: { sent: string }; Returns: string };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
@@ -2197,6 +2201,16 @@ export type Database = {
           starts: string;
         };
         Returns: string;
+      };
+      give_plan_by_hand: {
+        Args: {
+          billing: Database['public']['Enums']['billing_period'];
+          ends: string;
+          plan: Database['public']['Enums']['plan'];
+          starts: string;
+          user_id: string;
+        };
+        Returns: undefined;
       };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
@@ -2417,6 +2431,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      my_plan: { Args: Record<PropertyKey, never>; Returns: Database['public']['Enums']['plan'] };
       my_streak_states: {
         Args: { first_open: string; today: string };
         Returns: {
