@@ -10,7 +10,7 @@ import { useTheme } from '@/theme';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
-import { WaitingSheet } from './waiting-sheet';
+import { BiteSheet } from '@/coach/bite-sheet';
 import { useCurrentWorkoutLimits, type Workout } from './workouts';
 
 /** Closes the sheet, then runs `action`, as iOS shows no alert or screen over a closing sheet. */
@@ -39,7 +39,7 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const name = useWorkoutName()(workout);
 
   return (
-    <WaitingSheet
+    <BiteSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
         limits ? t('workout.held.sheetBody', { count: limits.workouts }) : t('workout.held.kept')
@@ -64,7 +64,7 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
           {t('workout.held.deleteToMakeRoom')}
         </Text>
       </Pressable>
-    </WaitingSheet>
+    </BiteSheet>
   );
 }
 
@@ -88,7 +88,7 @@ export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativ
   const inAll = limits?.added_alternatives;
 
   return (
-    <WaitingSheet
+    <BiteSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
         inAll != null ? t('workout.held.alternativeBody', { count: inAll }) : t('workout.held.kept')
@@ -101,7 +101,7 @@ export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativ
         variant="secondary"
         onPress={thenClose(onClose, onManage)}
       />
-    </WaitingSheet>
+    </BiteSheet>
   );
 }
 

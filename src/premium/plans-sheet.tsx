@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { BITE_PEEK_ROOM, BitePeek } from '@/coach/bite-peek';
+import { BiteSheet } from '@/coach/bite-sheet';
 import { Button } from '@/components/ui/button';
-import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { PRIVACY_POLICY_URL } from '@/onboarding/consent';
@@ -43,16 +42,11 @@ function Plans({ prices, trial, onClose }: PlansSheetProps) {
   const price = billing === 'yearly' ? prices.yearly : prices.monthly;
 
   return (
-    <Sheet onClose={onClose}>
-      <BitePeek />
-      <View style={{ gap: spacing.xs, paddingRight: BITE_PEEK_ROOM + spacing.md }}>
-        <Text variant="headline" accessibilityRole="header">
-          {t(trial ? 'premium.plans.titleTrial' : 'premium.plans.title')}
-        </Text>
-        <Text color="textMuted">
-          {trial ? t('premium.plans.trialThen', { count: TRIAL_DAYS }) : t('premium.plans.body')}
-        </Text>
-      </View>
+    <BiteSheet
+      title={t(trial ? 'premium.plans.titleTrial' : 'premium.plans.title')}
+      body={trial ? t('premium.plans.trialThen', { count: TRIAL_DAYS }) : t('premium.plans.body')}
+      onClose={onClose}
+    >
       <PlanPicker
         prices={prices}
         billing={billing}
@@ -90,7 +84,7 @@ function Plans({ prices, trial, onClose }: PlansSheetProps) {
           onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
         />
       </View>
-    </Sheet>
+    </BiteSheet>
   );
 }
 
