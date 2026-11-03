@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Alert, type AlertButton } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
@@ -16,6 +17,7 @@ import { AlternativesSheets } from './alternatives-sheet';
 import { holdSwitches, testExercise, testWorkout, type HeldSwitch } from './test-data';
 import { useWorkoutLimits } from './workouts';
 
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
 jest.mock('./alternatives', () => ({
   ...jest.requireActual<typeof import('./alternatives')>('./alternatives'),
@@ -457,7 +459,6 @@ it('locks one that waits for premium: not put in use nor renamed, but deleted', 
 });
 
 it('points to premium once the plan allows no more', async () => {
-  const alert = jest.spyOn(Alert, 'alert');
   jest.mocked(useWorkoutLimits).mockReturnValue({
     data: {
       exercises: 20,
@@ -474,7 +475,7 @@ it('points to premium once the plan allows no more', async () => {
     screen.getByText("You've added the 1 alternative your plan allows. Delete it to add one here."),
   ).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'More with premium' }));
-  expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String));
+  expect(router.push).toHaveBeenCalledWith('/premium');
 });
 
 it('closes on the scrim', async () => {

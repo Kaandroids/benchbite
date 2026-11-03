@@ -231,7 +231,6 @@ describe('WorkoutsScreen', () => {
     ];
 
     it('locks them in their place, under a banner that counts the archived one too', async () => {
-      const alert = jest.spyOn(Alert, 'alert');
       mockWorkouts(waiting);
       await render(<WorkoutsScreen />);
       expect(screen.getByText('2 workouts wait for premium.')).toBeTruthy();
@@ -240,7 +239,7 @@ describe('WorkoutsScreen', () => {
       expect(screen.queryByRole('button', { name: 'Start Core' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Core, waits for premium' })).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: /wait for premium/ }));
-      expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String));
+      expect(router.push).toHaveBeenCalledWith('/premium');
     });
 
     it('shows no banner while none waits', async () => {
@@ -290,9 +289,7 @@ describe('WorkoutsScreen', () => {
 
       await fireEvent.press(screen.getByRole('button', { name: 'Core, waits for premium' }));
       await fireEvent.press(screen.getByRole('button', { name: 'Get it back with premium' }));
-      await waitFor(() =>
-        expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String)),
-      );
+      await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
     });
   });
 
@@ -552,7 +549,7 @@ describe('WorkoutScreen', () => {
     expect(screen.getByText('Name of pulldown')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Train it with premium' }));
-    expect(alert).toHaveBeenLastCalledWith('Premium is on its way', expect.any(String));
+    expect(router.push).toHaveBeenLastCalledWith('/premium');
     await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
     expect(alert.mock.lastCall?.[0]).toBe('Delete this workout?');
   });
@@ -586,7 +583,6 @@ describe('WorkoutScreen', () => {
     });
 
     it('opens a sheet for one that waits for premium instead of putting it in use', async () => {
-      const alert = jest.spyOn(Alert, 'alert');
       mockWorkouts([pull]);
       mockAlternatives([
         { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
@@ -603,9 +599,7 @@ describe('WorkoutScreen', () => {
 
       await fireEvent.press(screen.getByRole('tab', { name: 'Knee-safe' }));
       await fireEvent.press(screen.getByRole('button', { name: 'Get it back with premium' }));
-      await waitFor(() =>
-        expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String)),
-      );
+      await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
     });
 
     it('shows no chips for a workout without alternatives', async () => {
