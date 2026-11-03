@@ -1,6 +1,7 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 
+import { SAMPLE_PRICES } from '@/premium/sample-prices';
 import { SpecialOfferScreen } from '@/premium/special-offer-screen';
 
 /** The special offer, with sample prices and a day to go, to look at in development. */
@@ -12,7 +13,7 @@ export default function SpecialOfferPreview() {
   return (
     <SpecialOfferScreen
       percent={40}
-      usualPrice="€83.88"
+      usualPrice={SAMPLE_PRICES.yearly}
       price="€50.33"
       endsAt={endsAt}
       waiting={{ workouts: 7, alternatives: 4, chats: 23 }}

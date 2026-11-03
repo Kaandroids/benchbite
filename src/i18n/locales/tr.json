@@ -2052,12 +2052,8 @@
     }
   },
   "premium": {
-    "billing": "Nasıl ödersin",
     "yearlySave": "Yıllık · −%{{percent}}",
     "monthly": "Aylık",
-    "perYearFrom": "{{date}} tarihinden itibaren yıllık",
-    "perMonthFrom": "{{date}} tarihinden itibaren aylık",
-    "yearlyPerMonth": "Ayda {{price}} ediyor",
     "cancelAnytime": "İstediğin zaman iptal et",
     "trialEnding": {
       "chats_one": "sohbet",
@@ -2096,7 +2092,8 @@
       "alternatives_one": "alternatif",
       "alternatives_other": "alternatif",
       "chats_one": "Bite sohbeti",
-      "chats_other": "Bite sohbeti"
+      "chats_other": "Bite sohbeti",
+      "ended": "Teklif sona erdi"
     },
     "bestValue": "En avantajlı"
   }

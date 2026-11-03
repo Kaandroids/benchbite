@@ -2052,12 +2052,8 @@
     }
   },
   "premium": {
-    "billing": "Wie du zahlst",
     "yearlySave": "Jährlich · −{{percent}} %",
     "monthly": "Monatlich",
-    "perYearFrom": "pro Jahr ab {{date}}",
-    "perMonthFrom": "pro Monat ab {{date}}",
-    "yearlyPerMonth": "Das sind {{price}} pro Monat",
     "cancelAnytime": "Jederzeit kündbar",
     "trialEnding": {
       "chats_one": "Chat",
@@ -2096,7 +2092,8 @@
       "alternatives_one": "Alternative",
       "alternatives_other": "Alternativen",
       "chats_one": "Chat mit Bite",
-      "chats_other": "Chats mit Bite"
+      "chats_other": "Chats mit Bite",
+      "ended": "Angebot beendet"
     },
     "bestValue": "Bester Preis"
   }
