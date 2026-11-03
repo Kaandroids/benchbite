@@ -1395,6 +1395,7 @@ export type Database = {
       };
       subscriptions: {
         Row: {
+          applied_plan: Database['public']['Enums']['plan'] | null;
           billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
@@ -1405,6 +1406,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          applied_plan?: Database['public']['Enums']['plan'] | null;
           billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
@@ -1414,6 +1416,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          applied_plan?: Database['public']['Enums']['plan'] | null;
           billing?: Database['public']['Enums']['billing_period'];
           period_end?: string;
           period_start?: string;
@@ -1881,7 +1884,7 @@ export type Database = {
       alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
-      apply_all_plan_limits: { Args: Record<PropertyKey, never>; Returns: undefined };
+      apply_changed_plan_limits: { Args: Record<PropertyKey, never>; Returns: undefined };
       apply_coach_change: {
         Args: {
           change: Json;
@@ -2396,6 +2399,26 @@ export type Database = {
         }[];
       };
       plan_grace: { Args: Record<PropertyKey, never>; Returns: string };
+      plan_limits: {
+        Args: { user_id: string };
+        Returns: {
+          added_alternatives: number | null;
+          budget_usd: number;
+          exercises: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_budget_usd: number | null;
+          weekly_free_usd: number | null;
+          weekly_photos: number | null;
+          workouts: number;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'plans';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
