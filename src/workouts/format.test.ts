@@ -83,6 +83,7 @@ describe('mainMuscles', () => {
       type: 'pull',
       weekdays: [],
       active: true,
+      held: false,
       estimatedMinutes: 45,
       exercises: [
         exercise(['lats']),

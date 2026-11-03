@@ -16,6 +16,7 @@ const PUSH: Workout = {
   type: null,
   weekdays: [1],
   active: true,
+  held: false,
   estimatedMinutes: 45,
   exercises: [],
 };

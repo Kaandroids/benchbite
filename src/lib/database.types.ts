@@ -153,6 +153,22 @@ export type Database = {
         };
         Relationships: [];
       };
+      applied_plans: {
+        Row: {
+          plan: Database['public']['Enums']['plan'];
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          plan: Database['public']['Enums']['plan'];
+          user_id: string;
+        };
+        Update: {
+          plan?: Database['public']['Enums']['plan'];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_meal_cards: {
         Row: {
           created_at: string;
@@ -1395,7 +1411,6 @@ export type Database = {
       };
       subscriptions: {
         Row: {
-          applied_plan: Database['public']['Enums']['plan'] | null;
           billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
@@ -1406,7 +1421,6 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
-          applied_plan?: Database['public']['Enums']['plan'] | null;
           billing: Database['public']['Enums']['billing_period'];
           period_end: string;
           period_start: string;
@@ -1416,7 +1430,6 @@ export type Database = {
           user_id: string;
         };
         Update: {
-          applied_plan?: Database['public']['Enums']['plan'] | null;
           billing?: Database['public']['Enums']['billing_period'];
           period_end?: string;
           period_start?: string;
@@ -1885,6 +1898,16 @@ export type Database = {
       alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      apply_alternative_limits: {
+        Args: {
+          limits: Omit<
+            Database['public']['Tables']['plans']['Row'],
+            Database['public']['Tables']['plans']['ComputedFields']
+          >;
+          owner: string;
+        };
+        Returns: undefined;
+      };
       apply_changed_plan_limits: { Args: Record<PropertyKey, never>; Returns: undefined };
       apply_coach_change: {
         Args: {
@@ -1896,6 +1919,16 @@ export type Database = {
       };
       apply_food_log_change: { Args: { change: Json }; Returns: undefined };
       apply_plan_limits: { Args: { owner: string }; Returns: undefined };
+      apply_workout_limits: {
+        Args: {
+          limits: Omit<
+            Database['public']['Tables']['plans']['Row'],
+            Database['public']['Tables']['plans']['ComputedFields']
+          >;
+          owner: string;
+        };
+        Returns: undefined;
+      };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       budget_period: {

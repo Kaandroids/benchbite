@@ -24,6 +24,7 @@ export function testWorkout(id: number, more: Partial<Workout> = {}): Workout {
     type: 'full_body',
     weekdays: [1],
     active: true,
+    held: false,
     estimatedMinutes: 45,
     exercises: [testExercise('squat')],
     ...more,

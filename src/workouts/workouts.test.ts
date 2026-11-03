@@ -54,6 +54,7 @@ const workout = (id: number, weekdays: number[], active = true): Workout => ({
   type: 'full_body',
   weekdays,
   active,
+  held: false,
   estimatedMinutes: 45,
   exercises: [],
 });

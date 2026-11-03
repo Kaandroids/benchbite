@@ -32,7 +32,7 @@ export type Workout = {
   weekdays: number[];
   active: boolean;
   /** Waits for premium (ADR 0079): it plans no day, apart from being archived or not. */
-  held?: boolean;
+  held: boolean;
   estimatedMinutes: number;
   exercises: WorkoutExercise[];
 };
