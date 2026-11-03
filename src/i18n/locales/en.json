@@ -871,6 +871,13 @@
       "alternativeBody_one": "Your plan allows {{count}} alternative in all. This one is kept as it was.",
       "alternativeBody_other": "Your plan allows {{count}} alternatives in all. This one is kept as it was.",
       "manageAlternatives": "Manage alternatives"
+    },
+    "limitSheet": {
+      "title_one": "You have {{count}} of {{count}} workout",
+      "title_other": "You have {{count}} of {{count}} workouts",
+      "body": "Archived ones count too. Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room.",
+      "seePremium": "See premium",
+      "notNow": "Not now"
     }
   },
   "exercise": {
