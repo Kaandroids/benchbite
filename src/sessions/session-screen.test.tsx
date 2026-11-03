@@ -8,6 +8,7 @@ import { Alert, Keyboard } from 'react-native';
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
 import { act, fireEvent, render, renderHook, screen } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
+import { reloadPlan } from '@/workouts/workouts';
 
 import { FinishScreen } from './finish-screen';
 import { useLogWorkout } from './logs';
@@ -55,6 +56,7 @@ jest.mock('expo-notifications/build/NotificationPermissions', () => ({
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),
+  reloadPlan: jest.fn(),
 }));
 
 const exercise = (
@@ -459,9 +461,10 @@ describe('FinishScreen', () => {
       "We couldn't save the workout. Check your connection and try again.",
     );
     expect(router.dismissAll).not.toHaveBeenCalled();
+    expect(reloadPlan).not.toHaveBeenCalled();
   });
 
-  it('says when the workout waits for premium', async () => {
+  it('says when the workout waits for premium and loads the list again', async () => {
     const alert = jest.spyOn(Alert, 'alert');
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     logWorkout.mockRejectedValueOnce({ code: 'BB051' });
@@ -473,5 +476,7 @@ describe('FinishScreen', () => {
       "This workout waits for premium, so it can't be saved.",
     );
     expect(router.dismissAll).not.toHaveBeenCalled();
+    // The list is loaded again, so that it shows the workout locked.
+    expect(reloadPlan).toHaveBeenCalled();
   });
 });
