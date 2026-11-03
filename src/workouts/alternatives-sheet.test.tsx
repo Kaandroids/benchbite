@@ -41,9 +41,9 @@ let switches: HeldSwitch[] = [];
 const workout = testWorkout(7, { exercises: [testExercise('squat'), testExercise('row')] });
 
 const GYM_HOME_HOTEL: WorkoutAlternative[] = [
-  { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
-  { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
-  { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 0 },
+  { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
+  { id: 5, position: 2, name: null, inUse: true, held: false, exerciseCount: null },
+  { id: 6, position: 3, name: 'Hotel', inUse: false, held: false, exerciseCount: 0 },
 ];
 
 function mockAlternatives(data: WorkoutAlternative[]) {
@@ -419,6 +419,7 @@ it('adds and duplicates no more than the cap', async () => {
       name: null,
       inUse: position === 1,
       exerciseCount: position === 1 ? null : 1,
+      held: false,
     })),
   );
   await renderSheets();

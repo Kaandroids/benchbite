@@ -435,9 +435,9 @@ describe('WorkoutScreen', () => {
 
   describe('with alternatives', () => {
     const gymHomeHotel: WorkoutAlternative[] = [
-      { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
-      { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
-      { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 2 },
+      { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
+      { id: 5, position: 2, name: null, inUse: true, held: false, exerciseCount: null },
+      { id: 6, position: 3, name: 'Hotel', inUse: false, held: false, exerciseCount: 2 },
     ];
 
     it('opens them from the top bar, with one set of exercises too', async () => {
@@ -559,8 +559,8 @@ describe('WorkoutScreen', () => {
     it('says so in place of its exercises, and leads to Edit', async () => {
       mockWorkouts([empty]);
       mockAlternatives([
-        { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
-        { id: 5, position: 2, name: 'Home', inUse: true, exerciseCount: null },
+        { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
+        { id: 5, position: 2, name: 'Home', inUse: true, held: false, exerciseCount: null },
       ]);
       await render(<WorkoutScreen id={7} />);
       expect(screen.getByText('No exercises yet')).toBeTruthy();
@@ -588,9 +588,9 @@ describe('WorkoutScreen', () => {
       expect(screen.getByText('Add the exercises for this workout to start it.')).toBeTruthy();
 
       mockAlternatives([
-        { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
-        { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
-        { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 2 },
+        { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
+        { id: 5, position: 2, name: null, inUse: true, held: false, exerciseCount: null },
+        { id: 6, position: 3, name: 'Hotel', inUse: false, held: false, exerciseCount: 2 },
       ]);
       await render(<WorkoutScreen id={7} />);
       expect(

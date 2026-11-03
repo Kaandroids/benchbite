@@ -51,6 +51,7 @@ const OWN: WorkoutAlternative = {
   name: null,
   inUse: true,
   exerciseCount: null,
+  held: false,
 };
 
 /**
