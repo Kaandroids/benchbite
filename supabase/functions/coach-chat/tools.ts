@@ -161,6 +161,10 @@ const REFUSALS = {
     BB049:
       'The workout has an alternative of that name already; switch to it with propose_alternative_switch, or pick another name.',
     BB050: 'That alternative is in use already.',
+    BB051:
+      'That workout or alternative waits for premium: the user can only delete it, or get premium to use it again.',
+    BB052:
+      'The user has added as many alternatives as their plan allows; they can delete one, or get premium for more.',
     P0002: 'There is no such alternative; take its id from get_workouts.',
     '22023':
       'A change must change something, name each workout once, with all of its changes, and leave a new alternative at least one exercise.',

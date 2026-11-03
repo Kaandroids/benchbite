@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 
 import { allLoaded } from '@/components/load-state';
 import { useExerciseLibrary } from '@/exercises/library';
-import { isDbError } from '@/lib/errors';
+import { dbErrorMessage } from '@/lib/errors';
 import { move } from '@/lib/move';
 
 import { clearDraft, startDraft, updateDraft, useDraft, type DraftExercise } from './draft';
@@ -89,11 +89,15 @@ export function useWorkoutEditor(id: number | undefined) {
       // The limits can change after they were loaded, or another device can add a workout.
       Alert.alert(
         t('common.notSaved'),
-        isDbError(error, 'exerciseLimit')
-          ? t('editor.limit', { max })
-          : isDbError(error, 'workoutLimit')
-            ? t('workout.limit', { max: limits.data?.workouts ?? 0 })
-            : t('editor.saveError'),
+        dbErrorMessage(
+          error,
+          [
+            ['exerciseLimit', t('editor.limit', { max })],
+            ['workoutLimit', t('workout.limit', { max: limits.data?.workouts ?? 0 })],
+            ['waitsForPremium', t('workout.waits')],
+          ],
+          t('editor.saveError'),
+        ),
       );
     }
   };

@@ -31,6 +31,8 @@ export type Workout = {
   /** ISO weekdays, 1 for Monday to 7 for Sunday, from Monday on; empty for any day. */
   weekdays: number[];
   active: boolean;
+  /** Waits for premium (ADR 0079): it plans no day, apart from being archived or not. */
+  held: boolean;
   estimatedMinutes: number;
   exercises: WorkoutExercise[];
 };
@@ -99,7 +101,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
   const { data, error } = await supabase
     .from('workouts')
     .select(
-      `id, name, weekdays, active, type, estimated_minutes,
+      `id, name, weekdays, active, held, type, estimated_minutes,
       workout_exercises (
         position, exercise_id, sets, target_reps_min, target_reps_max, target_seconds,
         target_meters, rest_seconds,
@@ -118,6 +120,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
       type: row.type,
       weekdays: [...row.weekdays].sort((a, b) => a - b),
       active: row.active,
+      held: row.held,
       estimatedMinutes: row.estimated_minutes,
       exercises: rows.map(workoutExercise),
     };
@@ -126,11 +129,12 @@ export async function fetchWorkouts(): Promise<Workout[]> {
 
 /**
  * The week from the active workouts: a session for each weekday a workout is on, from Monday on.
- * Workouts without weekdays are left out, as they are not planned for a day.
+ * Workouts without weekdays are left out, as they are not planned for a day, and so are ones that
+ * wait for premium, as the server plans no day for them (ADR 0079).
  */
 export function weekOf(workouts: Workout[]): { sessions: WeekSession[] } {
   const sessions = workouts
-    .filter((workout) => workout.active)
+    .filter((workout) => workout.active && !workout.held)
     .flatMap((workout) => workout.weekdays.map((weekday) => sessionOf(workout, weekday)))
     .sort((a, b) => a.weekday - b.weekday);
   return { sessions };
@@ -226,10 +230,22 @@ export function useKcalPerMinute() {
   });
 }
 
-/** The user's workout limits (ADR 0018, ADR 0061): how many workouts, exercises in each and alternatives of each, which premium will raise, and how long an alternative's name may be. */
+export const WORKOUT_LIMITS_KEY = ['workout-limits'];
+
+/**
+ * How long the limits are kept before they are read again: as long as the server waits between
+ * applying the plans that changed (`apply-plan-limits` in pg_cron, ADR 0079).
+ */
+const WORKOUT_LIMITS_STALE_MS = 10 * 60 * 1000;
+
+/**
+ * The user's workout limits, from their plan (ADR 0078): how many workouts, exercises in each,
+ * versions of each and alternatives in all, how many alternatives the user has added, and how long
+ * an alternative's name may be. They change with the plan, so they are read again after a while.
+ */
 export function useWorkoutLimits() {
   return useQuery({
-    queryKey: ['workout-limits'],
+    queryKey: WORKOUT_LIMITS_KEY,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('workout_limits').single();
       if (error) {
@@ -237,7 +253,7 @@ export function useWorkoutLimits() {
       }
       return data;
     },
-    staleTime: Infinity,
+    staleTime: WORKOUT_LIMITS_STALE_MS,
   });
 }
 

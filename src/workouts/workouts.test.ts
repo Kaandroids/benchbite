@@ -54,6 +54,7 @@ const workout = (id: number, weekdays: number[], active = true): Workout => ({
   type: 'full_body',
   weekdays,
   active,
+  held: false,
   estimatedMinutes: 45,
   exercises: [],
 });
@@ -146,6 +147,11 @@ describe('weekOf', () => {
   it('leaves out inactive workouts and workouts without weekdays', () => {
     const week = weekOf([workout(1, [1], false), workout(2, []), workout(3, [3])]);
     expect(week.sessions.map((session) => session.workoutId)).toEqual([3]);
+  });
+
+  it('leaves out workouts that wait for premium', () => {
+    const week = weekOf([{ ...workout(1, [1]), held: true }, workout(2, [2])]);
+    expect(week.sessions.map((session) => session.workoutId)).toEqual([2]);
   });
 });
 

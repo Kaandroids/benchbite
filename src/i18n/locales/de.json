@@ -814,7 +814,8 @@
         "duplicate": "Sie konnte nicht dupliziert werden. Versuch es noch einmal.",
         "rename": "Sie konnte nicht umbenannt werden. Versuch es noch einmal.",
         "delete": "Sie konnte nicht gelöscht werden. Versuch es noch einmal.",
-        "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal."
+        "reorder": "Die Reihenfolge konnte nicht gespeichert werden. Versuch es noch einmal.",
+        "waits": "Diese Alternative wartet auf Premium. Du kannst sie trotzdem löschen."
       },
       "loadError": "Die Alternativen konnten nicht geladen werden.",
       "title": "Alternativen",
@@ -843,8 +844,11 @@
       "nameLabel": "Kurz, denn er steht über dem Workout",
       "counter": "{{length}}/{{max}}",
       "counterLabel": "{{length}} von {{max}} Zeichen",
-      "emptyName": "Leer gelassen, heißt sie „{{fallback}}“."
-    }
+      "emptyName": "Leer gelassen, heißt sie „{{fallback}}“.",
+      "fullInAll_one": "Du hast die {{count}} Alternative hinzugefügt, die dein Plan erlaubt. Lösche sie, um hier eine hinzuzufügen.",
+      "fullInAll_other": "Du hast die {{count}} Alternativen hinzugefügt, die dein Plan erlaubt. Lösche eine, um hier eine hinzuzufügen."
+    },
+    "waits": "Dieses Training wartet auf Premium. Du kannst es trotzdem löschen."
   },
   "exercise": {
     "start": "Start",

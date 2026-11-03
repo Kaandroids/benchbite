@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(42);
+select plan(55);
 
 -- A new table or view without them would be open to every client.
 select is_empty(
@@ -34,7 +34,11 @@ where p.proname in (
   'keep_planned_days_before_change', 'plan_by_weekdays', 'device_today_or_server', 'plans_workout_on', 'kept_through', 'is_planned_by_weekdays', 'default_started_on',
   'day_workouts', 'lock_user_streak', 'keep_streak_days', 'day_calories', 'my_streak_states', 'first_day_of_break', 'calories_count',
   'answer_breaks_through', 'ai_model_price', 'ai_cost', 'record_ai_usage',
-  'lock_own_workout', 'lock_own_alternative', 'queue_coach_media_deletion'
+  'lock_own_workout', 'lock_own_alternative', 'queue_coach_media_deletion',
+  'plan_limits', 'refuse_held_workout', 'is_held_workout', 'refuse_held_workout_rows',
+  'refuse_held_alternative', 'added_alternative_count', 'stamp_alternative_last_used', 'apply_plan_limits', 'apply_workout_limits',
+  'apply_alternative_limits',
+  'apply_plan_limits_on_subscription', 'apply_plan_limits_after_delete', 'apply_changed_plan_limits'
 )
 group by p.proname
 order by p.proname;

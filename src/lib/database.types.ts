@@ -153,6 +153,22 @@ export type Database = {
         };
         Relationships: [];
       };
+      applied_plans: {
+        Row: {
+          plan: Database['public']['Enums']['plan'];
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          plan: Database['public']['Enums']['plan'];
+          user_id: string;
+        };
+        Update: {
+          plan?: Database['public']['Enums']['plan'];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       coach_meal_cards: {
         Row: {
           created_at: string;
@@ -1490,8 +1506,10 @@ export type Database = {
       workout_alternatives: {
         Row: {
           exercises: Json | null;
+          held: boolean;
           id: number;
           in_use: boolean;
+          last_used_at: string | null;
           name: string | null;
           position: number;
           user_id: string;
@@ -1500,8 +1518,10 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           exercises?: Json | null;
+          held?: boolean;
           id?: never;
           in_use?: never;
+          last_used_at?: string | null;
           name?: string | null;
           position: number;
           user_id: string;
@@ -1509,8 +1529,10 @@ export type Database = {
         };
         Update: {
           exercises?: Json | null;
+          held?: boolean;
           id?: never;
           in_use?: never;
+          last_used_at?: string | null;
           name?: string | null;
           position?: number;
           user_id?: string;
@@ -1689,6 +1711,7 @@ export type Database = {
           active: boolean;
           created_at: string;
           estimated_minutes: number;
+          held: boolean;
           id: number;
           name: string | null;
           type: Database['public']['Enums']['workout_type'] | null;
@@ -1700,6 +1723,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           estimated_minutes: number;
+          held?: boolean;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1710,6 +1734,7 @@ export type Database = {
           active?: boolean;
           created_at?: string;
           estimated_minutes?: number;
+          held?: boolean;
           id?: never;
           name?: string | null;
           type?: Database['public']['Enums']['workout_type'] | null;
@@ -1799,6 +1824,7 @@ export type Database = {
         };
         Returns: number;
       };
+      added_alternative_count: { Args: { user_id: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
         Args: { feature?: Database['public']['Enums']['ai_feature'] };
@@ -1872,6 +1898,17 @@ export type Database = {
       alternative_in_use: { Args: { state: Json }; Returns: number };
       answer_breaks_through: { Args: { through: string; today: string }; Returns: string };
       answer_streak_break: { Args: { today: string; use_freezes: boolean }; Returns: undefined };
+      apply_alternative_limits: {
+        Args: {
+          limits: Omit<
+            Database['public']['Tables']['plans']['Row'],
+            Database['public']['Tables']['plans']['ComputedFields']
+          >;
+          owner: string;
+        };
+        Returns: undefined;
+      };
+      apply_changed_plan_limits: { Args: Record<PropertyKey, never>; Returns: undefined };
       apply_coach_change: {
         Args: {
           change: Json;
@@ -1881,6 +1918,17 @@ export type Database = {
         Returns: undefined;
       };
       apply_food_log_change: { Args: { change: Json }; Returns: undefined };
+      apply_plan_limits: { Args: { owner: string }; Returns: undefined };
+      apply_workout_limits: {
+        Args: {
+          limits: Omit<
+            Database['public']['Tables']['plans']['Row'],
+            Database['public']['Tables']['plans']['ComputedFields']
+          >;
+          owner: string;
+        };
+        Returns: undefined;
+      };
       archive_exercise: { Args: { archived: boolean; exercise_id: string }; Returns: undefined };
       assert_device_today: { Args: { today: string }; Returns: undefined };
       budget_period: {
@@ -2154,6 +2202,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_held_workout: { Args: { workout_id: number }; Returns: boolean };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_own_coach_thread_message: {
         Args: { message_id: number; thread_id: number };
@@ -2231,8 +2280,10 @@ export type Database = {
         Args: { alternative_id: number };
         Returns: {
           exercises: Json | null;
+          held: boolean;
           id: number;
           in_use: boolean;
+          last_used_at: string | null;
           name: string | null;
           position: number;
           user_id: string;
@@ -2382,6 +2433,26 @@ export type Database = {
         }[];
       };
       plan_grace: { Args: Record<PropertyKey, never>; Returns: string };
+      plan_limits: {
+        Args: { user_id: string };
+        Returns: {
+          added_alternatives: number | null;
+          budget_usd: number;
+          exercises: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_budget_usd: number | null;
+          weekly_free_usd: number | null;
+          weekly_photos: number | null;
+          workouts: number;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'plans';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
@@ -2718,8 +2789,10 @@ export type Database = {
       workout_limits: {
         Args: Record<PropertyKey, never>;
         Returns: {
+          added_alternatives: number;
           alternative_name_length: number;
           alternatives: number;
+          alternatives_added: number;
           exercises: number;
           workouts: number;
         }[];
