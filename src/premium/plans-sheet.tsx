@@ -6,13 +6,21 @@ import { BiteSheet } from '@/coach/bite-sheet';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
-import { PRIVACY_POLICY_URL } from '@/onboarding/consent';
+import { PRIVACY_POLICY_URL } from '@/lib/links';
 import { ThemeScheme, useTheme } from '@/theme';
 
 import { usePurchasesSoon } from './purchases';
 import { PlanPicker } from './plan-picker';
 import type { Billing, PlanPrices } from './prices';
 import { TRIAL_DAYS } from './trial';
+
+/** What is due and when it renews, by whether the trial comes first and how it is billed. */
+const TERMS = {
+  'trial-yearly': 'premium.plans.termsTrialYearly',
+  'trial-monthly': 'premium.plans.termsTrialMonthly',
+  'paid-yearly': 'premium.plans.termsYearly',
+  'paid-monthly': 'premium.plans.termsMonthly',
+} as const;
 
 type PlansSheetProps = {
   prices: PlanPrices;
@@ -60,15 +68,7 @@ function Plans({ prices, trial, onClose }: PlansSheetProps) {
         </Text>
       </View>
       <Text variant="caption" color="textMuted" align="center">
-        {billing === 'yearly'
-          ? t(trial ? 'premium.plans.termsTrialYearly' : 'premium.plans.termsYearly', {
-              count: TRIAL_DAYS,
-              price,
-            })
-          : t(trial ? 'premium.plans.termsTrialMonthly' : 'premium.plans.termsMonthly', {
-              count: TRIAL_DAYS,
-              price,
-            })}
+        {t(TERMS[`${trial ? 'trial' : 'paid'}-${billing}`], { count: TRIAL_DAYS, price })}
       </Text>
       <View style={[styles.links, { gap: spacing.lg }]}>
         <TextLink tone="muted" label={t('premium.restore')} onPress={restore} />

@@ -1,6 +1,7 @@
 import { Linking } from 'react-native';
 
-import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '@/onboarding/consent';
+import { PRIVACY_POLICY_URL } from '@/lib/links';
+import { PRIVACY_POLICY_VERSION } from '@/onboarding/consent';
 import { createStep } from '@/test/step-mock';
 import { fireEvent, render, screen } from '@/test/render';
 

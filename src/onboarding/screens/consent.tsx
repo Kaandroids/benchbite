@@ -12,9 +12,10 @@ import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { PRIVACY_POLICY_URL } from '@/lib/links';
 import { useTheme } from '@/theme';
 
-import { PRIVACY_POLICY_URL, PRIVACY_POLICY_VERSION } from '../consent';
+import { PRIVACY_POLICY_VERSION } from '../consent';
 import { useStep } from '../use-step';
 
 const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName }[] = [
