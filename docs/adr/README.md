@@ -95,3 +95,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0077](0077-a-newer-proposal-replaces-older-ones.md)                  | A newer proposal for a workout replaces the older ones pending for it                   | Accepted                                     |
 | [0078](0078-a-premium-plan-with-a-trial.md)                           | A premium plan with a seven-day trial                                                   | Accepted                                     |
 | [0079](0079-what-is-above-a-plan-waits-for-premium.md)                | What is above a plan's limits waits for premium                                         | Accepted                                     |
+| [0080](0080-developer-tools-switch-the-plan-behind-a-vault-flag.md)   | Developer tools switch the plan behind a Vault flag                                     | Accepted                                     |
