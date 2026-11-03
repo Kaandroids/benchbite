@@ -448,11 +448,9 @@ it('locks one that waits for premium: not put in use nor renamed, but deleted', 
   await renderSheets();
   const row = screen.getByRole('radio', { name: 'Knee-safe' });
   expect(row.props.accessibilityHint).toBe('2 exercises, Waits for premium');
+  expect(row.props.accessibilityState).toEqual({ checked: false, disabled: true });
   await fireEvent.press(row);
   expect(switched()).toEqual([]);
-  expect(
-    screen.getByText('This alternative waits for premium. You can still delete it.'),
-  ).toBeTruthy();
   await openMenu('Knee-safe');
   expect(menuItem('Rename')).toBeNull();
   expect(menuItem('Delete')).toBeTruthy();

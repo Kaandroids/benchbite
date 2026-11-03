@@ -266,7 +266,9 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
           accessibilityHint={
             held ? `${sizeOf(alternative)}, ${t('workout.held.waits')}` : sizeOf(alternative)
           }
-          accessibilityState={{ checked: chosen }}
+          // One that waits shows its lock, and the card under the list says why.
+          accessibilityState={held ? { checked: false, disabled: true } : { checked: chosen }}
+          disabled={held || undefined}
           onPress={() => onUse(alternative)}
           style={({ pressed }) => [
             styles.row,
@@ -285,7 +287,7 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
             <Text variant="bodyStrong" color={held ? 'textMuted' : 'text'} numberOfLines={1}>
               {name}
             </Text>
-            <Text variant="caption" color="textMuted">
+            <Text variant="caption" color="textMuted" numberOfLines={1}>
               {sizeOf(alternative)}
             </Text>
           </View>
@@ -437,16 +439,41 @@ function ManageAlternativesSheet({ workout, choice, onClose, onName }: ManagePro
           </Pressable>
         ) : null}
       </Card>
-      {loaded && full ? (
-        <Text variant="caption" color="textMuted" align="center">
-          {fullHere
-            ? t('workout.alternatives.full', { max })
-            : t('workout.alternatives.fullInAll', { count: maxInAll ?? 0 })}
-        </Text>
-      ) : null}
-      {/* Only the free plan limits the alternatives in all, which premium lifts. */}
+      {/* Only the free plan limits the alternatives in all, which premium lifts, so that limit
+          comes with a way to premium, in one card. */}
       {loaded && fullInAll ? (
-        <TextLink label={t('workout.alternatives.morePremium')} onPress={openPremium} />
+        <View
+          style={[
+            styles.limit,
+            {
+              gap: spacing.md,
+              padding: spacing.md,
+              borderRadius: radii.lg,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <View
+            style={[styles.limitIcon, { borderRadius: radii.full, backgroundColor: colors.track }]}
+          >
+            <Icon name="lock" size={16} color="textMuted" />
+          </View>
+          <View style={[styles.text, { gap: spacing.xs }]}>
+            <Text variant="caption">
+              {t('workout.alternatives.fullInAll', { count: maxInAll ?? 0 })}
+            </Text>
+            <TextLink
+              label={t('workout.alternatives.morePremium')}
+              align="start"
+              onPress={openPremium}
+            />
+          </View>
+        </View>
+      ) : loaded && fullHere ? (
+        <Text variant="caption" color="textMuted" align="center">
+          {t('workout.alternatives.full', { max })}
+        </Text>
       ) : null}
       {error || choice.error ? (
         <Text variant="caption" color="danger" accessibilityRole="alert">
@@ -722,6 +749,17 @@ const styles = StyleSheet.create({
   lock: {
     width: 22,
     alignItems: 'center',
+  },
+  limit: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+  },
+  limitIcon: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addIcon: {
     width: 28,
