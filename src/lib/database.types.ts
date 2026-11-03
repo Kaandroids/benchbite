@@ -2227,6 +2227,7 @@ export type Database = {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_guest: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_held_workout: { Args: { workout_id: number }; Returns: boolean };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_own_coach_thread_message: {

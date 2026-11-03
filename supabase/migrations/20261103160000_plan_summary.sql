@@ -71,6 +71,18 @@ as $$
   );
 $$;
 
+-- Whether the caller is a guest, who has no AI until they have an account.
+create function public.is_guest()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    (select u.is_anonymous from auth.users u where u.id = (select auth.uid())), false
+  );
+$$;
+
 -- Whether a paid plan is in its grace: its period has passed, and nothing starts again until the
 -- store renews it.
 create function public.in_grace(windows public.ai_windows)
@@ -100,8 +112,7 @@ begin
   end if;
   windows := public.ai_windows((select auth.uid()));
   result.plan := windows.plan;
-  result.account_required :=
-    (select u.is_anonymous from auth.users u where u.id = (select auth.uid()));
+  result.account_required := public.is_guest();
   -- Any subscription row, the trial's or one that followed it, means the trial was had.
   select * into subscription from public.subscriptions s where s.user_id = (select auth.uid());
   result.had_trial := found;
@@ -154,7 +165,8 @@ as $$
 $$;
 
 -- As 20261102220000_ai_budget_windows.sql's, with the rules it shares with plan_summary() taken
--- from free_count_left(), week_room() and in_grace().
+-- from free_count_left(), week_room(), in_grace() and is_guest(). Its left_count now counts the
+-- backstop too, as the refusal does.
 create or replace function public.ai_access(feature public.ai_feature default 'coach_chat')
 returns public.ai_access
 language plpgsql
@@ -171,7 +183,7 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
   result.by_count := false;
-  if (select u.is_anonymous from auth.users u where u.id = (select auth.uid())) then
+  if public.is_guest() then
     result.reason := 'account_required';
     result.allowed := false;
     result.budget_usd := 0;
@@ -183,11 +195,11 @@ begin
   if windows.plan = 'free' then
     if feature = public.ai_counted_feature() then
       result.by_count := true;
-      result.left_count := greatest(windows.weekly_count - windows.count_used, 0);
+      result.left_count := public.free_count_left(windows);
       result.budget_usd := windows.free_budget_usd;
       result.used_usd := windows.free_used_usd;
       result.resets_at := upper(windows.free_week);
-      if public.free_count_left(windows) = 0 then
+      if result.left_count = 0 then
         result.reason := 'limit_reached';
       end if;
     else
@@ -226,6 +238,7 @@ $$;
 revoke all on function public.free_count_left(public.ai_windows) from public, anon, authenticated;
 revoke all on function public.week_room(public.ai_windows) from public, anon, authenticated;
 revoke all on function public.in_grace(public.ai_windows) from public, anon, authenticated;
+revoke all on function public.is_guest() from public, anon, authenticated;
 revoke all on function public.share_left(numeric, numeric) from public, anon, authenticated;
 revoke all on function public.plan_summary() from public, anon;
 grant execute on function public.plan_summary() to authenticated;
