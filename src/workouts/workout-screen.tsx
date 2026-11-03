@@ -25,12 +25,12 @@ import { useTheme } from '@/theme';
 
 import { useChooseAlternative, useWorkoutAlternatives } from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
+import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
-  useDeleteWorkout,
   useKcalPerMinute,
   useSetWorkoutActive,
   useWorkouts,
@@ -49,7 +49,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { start, sheet: startSheet } = useStartOrAsk();
-  const remove = useDeleteWorkout();
+  const confirmDelete = useConfirmDeleteWorkout();
   const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
@@ -172,21 +172,8 @@ export function WorkoutScreen({ id }: { id: number }) {
       askToFinish();
       return;
     }
-    Alert.alert(t('editor.deleteTitle'), t('editor.deleteMessage'), [
-      { text: t('editor.cancel'), style: 'cancel' },
-      {
-        text: t('editor.delete'),
-        style: 'destructive',
-        onPress: () => {
-          // Back first, so that the deleted workout never shows as not found.
-          router.back();
-          remove.mutateAsync(workout.id).catch((error: unknown) => {
-            console.warn('Could not delete the workout', error);
-            Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
-          });
-        },
-      },
-    ]);
+    // Back first, so that the deleted workout never shows as not found.
+    confirmDelete(workout.id, () => router.back());
   };
 
   return (
