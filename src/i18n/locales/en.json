@@ -848,7 +848,22 @@
       "fullInAll_one": "You've added the {{count}} alternative your plan allows. Delete it to add one here.",
       "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here."
     },
-    "waits": "This workout waits for premium. You can still delete it."
+    "waits": "This workout waits for premium. You can still delete it.",
+    "held": {
+      "banner_one": "{{count}} workout waits for premium.",
+      "banner_other": "{{count}} workouts wait for premium.",
+      "kept": "Nothing is deleted. It comes back as it was with premium.",
+      "premium": "Premium",
+      "tag": "Premium",
+      "label": "{{name}}, waits for premium",
+      "sheetTitle": "{{name}} waits for premium",
+      "sheetBody_one": "Your plan has room for {{count}} workout. This one is kept as it was, with its days and history.",
+      "sheetBody_other": "Your plan has room for {{count}} workouts. This one is kept as it was, with its days and history.",
+      "getBack": "Get it back with premium",
+      "seeExercises": "See its exercises",
+      "deleteToMakeRoom": "Delete it to make room",
+      "nothingDeleted": "Nothing is deleted."
+    }
   },
   "exercise": {
     "start": "Start",

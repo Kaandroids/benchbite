@@ -16,12 +16,14 @@ import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
+import { HeldBanner } from './held-banner';
 import { WorkoutListItem } from './workout-list-item';
 import { useWorkoutLimits, useWorkouts } from './workouts';
 
 /**
  * The Workout tab: the active workouts, with today's highlighted, and the finished workouts below,
- * which the tab passes in as `history`. Inactive workouts are kept in the archive.
+ * which the tab passes in as `history`. Inactive workouts are kept in the archive. Those that wait
+ * for premium stay in their place, locked, under a banner that says how many wait.
  */
 export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const { t } = useTranslation();
@@ -32,6 +34,8 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
+  // Archived ones too, which the archive shows locked as this list does.
+  const held = workouts.data?.filter((workout) => workout.held).length ?? 0;
   const today = isoWeekday(new Date());
   // Archived workouts count too (ADR 0018).
   const full = limits.data !== undefined && (workouts.data?.length ?? 0) >= limits.data.workouts;
@@ -91,6 +95,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
         <LoadState queries={[workouts]} />
         {allLoaded([workouts]) ? (
           <>
+            {held > 0 ? <HeldBanner count={held} /> : null}
             {session ? <InProgressCard session={session} /> : null}
             <Text variant="captionStrong" color="textMuted">
               {t('workout.activeCount', { count: active.length })}

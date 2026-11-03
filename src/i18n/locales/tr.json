@@ -848,7 +848,22 @@
       "fullInAll_one": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için onu sil.",
       "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil."
     },
-    "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin."
+    "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin.",
+    "held": {
+      "banner_one": "{{count}} antrenman premium'u bekliyor.",
+      "banner_other": "{{count}} antrenman premium'u bekliyor.",
+      "kept": "Hiçbir şey silinmez. Premium ile olduğu gibi geri gelir.",
+      "premium": "Premium",
+      "tag": "Premium",
+      "label": "{{name}}, premium'u bekliyor",
+      "sheetTitle": "{{name}} premium'u bekliyor",
+      "sheetBody_one": "Planında {{count}} antrenmanlık yer var. Bu antrenman günleri ve geçmişiyle olduğu gibi saklanıyor.",
+      "sheetBody_other": "Planında {{count}} antrenmanlık yer var. Bu antrenman günleri ve geçmişiyle olduğu gibi saklanıyor.",
+      "getBack": "Premium ile geri al",
+      "seeExercises": "Egzersizlerini gör",
+      "deleteToMakeRoom": "Yer açmak için sil",
+      "nothingDeleted": "Hiçbir şey silinmez."
+    }
   },
   "exercise": {
     "start": "Başlangıç",
