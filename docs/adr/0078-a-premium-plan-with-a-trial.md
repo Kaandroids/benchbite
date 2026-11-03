@@ -98,6 +98,11 @@ Tracking is free; intelligence and room to grow are premium.
 - **The limits lead to the plan:** reaching a free limit, or `plan_required`, shows what premium
   adds, with a design approved first. The stores' rules apply: the price, that it renews,
   restoring purchases, and the terms and privacy links.
+- **The budget is never shown in money** (#411): the page shows how much of each window is left
+  as a bar and a share, with when it starts again, and the free plan's meal photos as a number.
+  The dollars are what AI costs us, not a promise to the user, and would read as a quota to use
+  up. `plan_summary()` and `plan_numbers()` give the page what it shows, without the budgets, so
+  `plans` and `ai_windows()` stay closed to the app.
 - **The price follows the measured cost:** it is set once `ai_usage` shows what real use costs a
   budget period, with the stores' fee and VAT taken off, and it covers the $4 a period may cost.
 

@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { Radio } from '@/components/ui/radio';
 import { Screen } from '@/components/ui/screen';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
@@ -14,6 +13,7 @@ import { useTheme } from '@/theme';
 import type { Billing, PlanPrices } from './prices';
 import { TRIAL_DAYS, type TrialUsage } from './trial';
 import { TrialWeek } from './trial-week';
+import { PlanPicker } from './plan-picker';
 
 type TrialEndingScreenProps = {
   /** The user's name, shown in the title when they have given one. */
@@ -48,26 +48,11 @@ export function TrialEndingScreen({
   onClose,
 }: TrialEndingScreenProps) {
   const { t, i18n } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const dayFormat = useDayFormat();
   const [billing, setBilling] = useState<Billing>('yearly');
   const yearly = billing === 'yearly';
   const startsOn = addDays(startedOn, TRIAL_DAYS);
-
-  const plans = [
-    {
-      value: 'yearly',
-      name: t('premium.yearlySave', { percent: prices.yearlySavePercent }),
-      note: t('premium.trialEnding.yearlyNote', { price: prices.yearlyPerMonth }),
-      price: prices.yearly,
-    },
-    {
-      value: 'monthly',
-      name: t('premium.monthly'),
-      note: t('premium.cancelAnytime'),
-      price: prices.monthly,
-    },
-  ] as const;
 
   return (
     <Screen
@@ -122,51 +107,7 @@ export function TrialEndingScreen({
 
       <View style={styles.flex} />
 
-      <View accessibilityRole="radiogroup" style={{ gap: spacing.sm }}>
-        {plans.map((plan) => {
-          const checked = billing === plan.value;
-          return (
-            <Pressable
-              key={plan.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked }}
-              onPress={() => setBilling(plan.value)}
-              style={[
-                styles.row,
-                styles.plan,
-                {
-                  gap: spacing.md,
-                  padding: spacing.md,
-                  backgroundColor: colors.surface,
-                  borderColor: checked ? colors.primary : colors.border,
-                  borderWidth: checked ? 2 : 1,
-                },
-              ]}
-            >
-              <Radio checked={checked} />
-              <View style={styles.flex}>
-                <Text variant="label">{plan.name}</Text>
-                <Text variant="caption" color="textMuted">
-                  {plan.note}
-                </Text>
-              </View>
-              <Text variant="headline">{plan.price}</Text>
-              {plan.value === 'yearly' ? (
-                <View
-                  style={[
-                    styles.badge,
-                    { backgroundColor: colors.inverseSurface, paddingHorizontal: spacing.sm },
-                  ]}
-                >
-                  <Text variant="captionStrong" color="onInverse">
-                    {t('premium.bestValue').toLocaleUpperCase(i18n.language)}
-                  </Text>
-                </View>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
+      <PlanPicker prices={prices} billing={billing} onChange={setBilling} />
     </Screen>
   );
 }
@@ -175,23 +116,10 @@ const styles = StyleSheet.create({
   center: {
     alignItems: 'center',
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   stretch: {
     alignSelf: 'stretch',
   },
   flex: {
     flex: 1,
-  },
-  plan: {
-    borderRadius: 18,
-  },
-  badge: {
-    position: 'absolute',
-    top: -10,
-    right: 14,
-    borderRadius: 999,
   },
 });

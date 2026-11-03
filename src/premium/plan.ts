@@ -1,0 +1,143 @@
+import { useQuery } from '@tanstack/react-query';
+
+import type { Database } from '@/lib/database.types';
+import { supabase } from '@/lib/supabase';
+
+import type { Billing } from './prices';
+import { PLAN_SUMMARY_KEY } from './reload';
+
+type Plan = Database['public']['Enums']['plan'];
+
+/**
+ * One AI window of a paid plan: the share of it left, from 0 to 1, and when it starts again; null
+ * in the plan's grace, when its period has passed and only the store renews it.
+ */
+export type Window = { left: number; resetsAt: Date | null };
+
+/**
+ * The user's plan as the premium page shows it (ADR 0078): on the free plan, the week's meal
+ * photos; on the trial and premium, how they are billed, when they renew and how much of each AI
+ * window is left, never in money.
+ */
+export type PlanSummary =
+  | {
+      plan: 'free';
+      /** A guest, who has no AI until they have an account. */
+      accountRequired: boolean;
+      /** Whether the user has had the trial, which is offered once. */
+      hadTrial: boolean;
+      photos: { perWeek: number; left: number; resetsAt: Date };
+    }
+  | {
+      plan: Exclude<Plan, 'free'>;
+      billing: Billing;
+      /** Null in the plan's grace, once its period has passed. */
+      renewsAt: Date | null;
+      /** Null on a plan whose week is its period, such as the trial. */
+      week: Window | null;
+      period: Window;
+    };
+
+/** The translation key of how a plan is billed. */
+export const BILLING_LABEL = {
+  yearly: 'premium.mine.yearly',
+  monthly: 'premium.mine.monthly',
+} as const satisfies Record<Billing, string>;
+
+export type FreeSummary = Extract<PlanSummary, { plan: 'free' }>;
+export type PaidSummary = Exclude<PlanSummary, FreeSummary>;
+
+type Row = Database['public']['CompositeTypes']['plan_summary'];
+
+const dateOf = (value: string | null) => (value ? new Date(value) : null);
+
+function windowOf(left: number | null, resetsAt: string | null): Window | null {
+  return left === null ? null : { left, resetsAt: dateOf(resetsAt) };
+}
+
+/** Reads plan_summary()'s row into a summary; null for a row missing what its plan needs. */
+export function toPlanSummary(row: Row): PlanSummary | null {
+  if (row.plan === 'free') {
+    if (row.photos_per_week === null || row.photos_left === null || !row.photos_reset_at) {
+      return null;
+    }
+    return {
+      plan: 'free',
+      accountRequired: row.account_required ?? false,
+      hadTrial: row.had_trial ?? false,
+      photos: {
+        perWeek: row.photos_per_week,
+        left: row.photos_left,
+        resetsAt: new Date(row.photos_reset_at),
+      },
+    };
+  }
+  const period = windowOf(row.period_left, row.period_resets_at);
+  if (!row.plan || !row.billing || !period) {
+    return null;
+  }
+  return {
+    plan: row.plan,
+    billing: row.billing,
+    renewsAt: dateOf(row.period_end),
+    week: windowOf(row.week_left, row.week_resets_at),
+    period,
+  };
+}
+
+/** The signed-in user's plan; a guest's is the free plan, without AI until they have an account. */
+export function usePlanSummary() {
+  return useQuery({
+    queryKey: PLAN_SUMMARY_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('plan_summary').single();
+      if (error) {
+        throw error;
+      }
+      const summary = toPlanSummary(data);
+      if (!summary) {
+        throw new Error('The plan summary is incomplete');
+      }
+      return summary;
+    },
+    // Read again whenever the page opens, as chats and photos use the windows meanwhile.
+    staleTime: 0,
+  });
+}
+
+/** What a plan allows that the premium page compares, null being no limit. */
+export type PlanNumbers = {
+  workouts: number | null;
+  versions: number | null;
+  addedAlternatives: number | null;
+  weeklyPhotos: number | null;
+};
+
+const PLAN_NUMBERS_KEY = ['plan-numbers'];
+
+/** The free plan's numbers and premium's, which only change with a migration. */
+export function usePlanNumbers() {
+  return useQuery({
+    queryKey: PLAN_NUMBERS_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('plan_numbers');
+      if (error) {
+        throw error;
+      }
+      const numbers = (plan: Plan): PlanNumbers => {
+        const row = data.find((other) => other.plan === plan);
+        if (!row) {
+          throw new Error(`No numbers for the ${plan} plan`);
+        }
+        return {
+          workouts: row.workouts,
+          versions: row.versions,
+          addedAlternatives: row.added_alternatives,
+          weeklyPhotos: row.weekly_photos,
+        };
+      };
+      return { free: numbers('free'), premium: numbers('premium') };
+    },
+    staleTime: Infinity,
+  });
+}

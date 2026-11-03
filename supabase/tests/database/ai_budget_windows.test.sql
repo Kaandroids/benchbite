@@ -210,7 +210,7 @@ select pg_temp.used('00000000-0000-0000-0000-00000000000c', 'meal_photo', 0.10, 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');
 select results_eq(
   $$ select allowed, reason, left_count from public.ai_access('meal_photo') $$,
-  $$ values (false, 'limit_reached'::public.ai_access_reason, 2) $$,
+  $$ values (false, 'limit_reached'::public.ai_access_reason, 0) $$,
   'Free calls that gave nothing still stop at the backstop'
 );
 

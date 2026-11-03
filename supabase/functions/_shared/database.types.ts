@@ -2175,6 +2175,10 @@ export type Database = {
       food_log_entries: { Args: { entry_ids: number[] }; Returns: Json };
       food_log_entry_ids: { Args: { change: Json }; Returns: number[] };
       food_name_key: { Args: { name: string }; Returns: string };
+      free_count_left: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: number;
+      };
       frequent_foods: {
         Args: { for_meal: Database['public']['Enums']['meal']; language: string };
         Returns: {
@@ -2214,11 +2218,16 @@ export type Database = {
       };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
+      in_grace: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: boolean;
+      };
       in_use_alternative: { Args: { state: Json }; Returns: Json };
       insert_workout_exercises: {
         Args: { items: Json; user_id: string; workout_id: number };
         Returns: undefined;
       };
+      is_guest: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_held_workout: { Args: { workout_id: number }; Returns: boolean };
       is_loggable_day: { Args: { day: string }; Returns: boolean };
       is_own_coach_thread_message: {
@@ -2471,7 +2480,27 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      plan_numbers: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          added_alternatives: number;
+          plan: Database['public']['Enums']['plan'];
+          versions: number;
+          weekly_photos: number;
+          workouts: number;
+        }[];
+      };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
+      plan_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['plan_summary'];
+        SetofOptions: {
+          from: '*';
+          to: 'plan_summary';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
@@ -2682,6 +2711,7 @@ export type Database = {
         };
         Returns: undefined;
       };
+      share_left: { Args: { budget: number; used: number }; Returns: number };
       start_ai_call: {
         Args: {
           feature: Database['public']['Enums']['ai_feature'];
@@ -2793,6 +2823,10 @@ export type Database = {
         Returns: undefined;
       };
       week_of: { Args: { at: string; period: unknown }; Returns: unknown };
+      week_room: {
+        Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
+        Returns: number;
+      };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
       with_grace: {
         Args: {
@@ -2985,6 +3019,20 @@ export type Database = {
         protein_g: number | null;
         carbs_g: number | null;
         fat_g: number | null;
+      };
+      plan_summary: {
+        plan: Database['public']['Enums']['plan'] | null;
+        account_required: boolean | null;
+        had_trial: boolean | null;
+        billing: Database['public']['Enums']['billing_period'] | null;
+        period_end: string | null;
+        week_left: number | null;
+        week_resets_at: string | null;
+        period_left: number | null;
+        period_resets_at: string | null;
+        photos_per_week: number | null;
+        photos_left: number | null;
+        photos_reset_at: string | null;
       };
     };
   };

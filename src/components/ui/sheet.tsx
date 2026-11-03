@@ -22,6 +22,17 @@ export function afterSheetCloses(action: () => void) {
   }
 }
 
+/**
+ * A handler that closes a sheet with `onClose`, then runs `action` once it has closed, for an
+ * action that opens an alert, a screen or another sheet, which iOS would not show over it.
+ */
+export function closeThen(onClose: () => void, action: () => void) {
+  return () => {
+    onClose();
+    afterSheetCloses(action);
+  };
+}
+
 type SheetProps = {
   onClose: () => void;
   children: ReactNode;

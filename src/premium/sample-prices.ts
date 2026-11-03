@@ -1,6 +1,9 @@
 import type { PlanPrices } from './prices';
 
-/** Prices to show while the store's are not there yet, in development only. */
+/**
+ * The planned prices, which the premium page and the previews show until the store's are read with
+ * the purchases.
+ */
 export const SAMPLE_PRICES: PlanPrices = {
   yearly: '€83.88',
   monthly: '€8.99',

@@ -2,24 +2,16 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 
+import { BiteSheet } from '@/coach/bite-sheet';
 import { Button } from '@/components/ui/button';
-import { afterSheetCloses } from '@/components/ui/sheet';
+import { closeThen } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useTheme } from '@/theme';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
-import { WaitingSheet } from './waiting-sheet';
 import { useCurrentWorkoutLimits, type Workout } from './workouts';
-
-/** Closes the sheet, then runs `action`, as iOS shows no alert or screen over a closing sheet. */
-function thenClose(onClose: () => void, action: () => void) {
-  return () => {
-    onClose();
-    afterSheetCloses(action);
-  };
-}
 
 type HeldWorkoutSheetProps = {
   workout: Workout;
@@ -39,32 +31,32 @@ export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const name = useWorkoutName()(workout);
 
   return (
-    <WaitingSheet
+    <BiteSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
         limits ? t('workout.held.sheetBody', { count: limits.workouts }) : t('workout.held.kept')
       }
       onClose={onClose}
     >
-      <Button label={t('workout.held.getBack')} onPress={thenClose(onClose, openPremium)} />
+      <Button label={t('workout.held.getBack')} onPress={closeThen(onClose, openPremium)} />
       <Button
         label={t('workout.held.seeExercises')}
         variant="secondary"
-        onPress={thenClose(onClose, () =>
+        onPress={closeThen(onClose, () =>
           router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } }),
         )}
       />
       {/* Quiet and close under the buttons, as a way out rather than an offer. */}
       <Pressable
         accessibilityRole="button"
-        onPress={thenClose(onClose, () => confirmDelete(workout.id))}
+        onPress={closeThen(onClose, () => confirmDelete(workout.id))}
         style={[styles.delete, { marginTop: -spacing.sm }]}
       >
         <Text variant="bodyStrong" color="danger" style={styles.quiet}>
           {t('workout.held.deleteToMakeRoom')}
         </Text>
       </Pressable>
-    </WaitingSheet>
+    </BiteSheet>
   );
 }
 
@@ -88,20 +80,20 @@ export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativ
   const inAll = limits?.added_alternatives;
 
   return (
-    <WaitingSheet
+    <BiteSheet
       title={t('workout.held.sheetTitle', { name })}
       body={
         inAll != null ? t('workout.held.alternativeBody', { count: inAll }) : t('workout.held.kept')
       }
       onClose={onClose}
     >
-      <Button label={t('workout.held.getBack')} onPress={thenClose(onClose, openPremium)} />
+      <Button label={t('workout.held.getBack')} onPress={closeThen(onClose, openPremium)} />
       <Button
         label={t('workout.held.manageAlternatives')}
         variant="secondary"
-        onPress={thenClose(onClose, onManage)}
+        onPress={closeThen(onClose, onManage)}
       />
-    </WaitingSheet>
+    </BiteSheet>
   );
 }
 
