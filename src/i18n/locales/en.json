@@ -846,9 +846,32 @@
       "counterLabel": "{{length}} of {{max}} characters",
       "emptyName": "Left empty, it shows as “{{fallback}}”.",
       "fullInAll_one": "You've added the {{count}} alternative your plan allows. Delete it to add one here.",
-      "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here."
+      "fullInAll_other": "You've added the {{count}} alternatives your plan allows. Delete one to add one here.",
+      "morePremium": "More with premium"
     },
-    "waits": "This workout waits for premium. You can still delete it."
+    "waits": "This workout waits for premium. You can still delete it.",
+    "held": {
+      "banner_one": "{{count}} workout waits for premium.",
+      "banner_other": "{{count}} workouts wait for premium.",
+      "kept": "Nothing is deleted. It comes back as it was with premium.",
+      "premium": "Premium",
+      "tag": "Premium",
+      "label": "{{name}}, waits for premium",
+      "sheetTitle": "{{name}} waits for premium",
+      "sheetBody_one": "Your plan has room for {{count}} workout. This one is kept as it was, with its days and history.",
+      "sheetBody_other": "Your plan has room for {{count}} workouts. This one is kept as it was, with its days and history.",
+      "getBack": "Get it back with premium",
+      "seeExercises": "See its exercises",
+      "deleteToMakeRoom": "Delete it to make room",
+      "nothingDeleted": "Nothing is deleted.",
+      "waits": "Waits for premium",
+      "room_one": "Your plan has room for {{count}} workout.",
+      "room_other": "Your plan has room for {{count}} workouts.",
+      "train": "Train it with premium",
+      "alternativeBody_one": "Your plan allows {{count}} alternative in all. This one is kept as it was.",
+      "alternativeBody_other": "Your plan allows {{count}} alternatives in all. This one is kept as it was.",
+      "manageAlternatives": "Manage alternatives"
+    }
   },
   "exercise": {
     "start": "Start",
@@ -2099,6 +2122,10 @@
       "chats_other": "chats with Bite",
       "ended": "Offer ended"
     },
-    "bestValue": "Best value"
+    "bestValue": "Best value",
+    "soon": {
+      "title": "Premium is on its way",
+      "message": "Soon you can get premium right here."
+    }
   }
 }

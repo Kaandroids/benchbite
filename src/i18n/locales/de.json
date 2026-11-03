@@ -846,9 +846,32 @@
       "counterLabel": "{{length}} von {{max}} Zeichen",
       "emptyName": "Leer gelassen, heißt sie „{{fallback}}“.",
       "fullInAll_one": "Du hast die {{count}} Alternative hinzugefügt, die dein Plan erlaubt. Lösche sie, um hier eine hinzuzufügen.",
-      "fullInAll_other": "Du hast die {{count}} Alternativen hinzugefügt, die dein Plan erlaubt. Lösche eine, um hier eine hinzuzufügen."
+      "fullInAll_other": "Du hast die {{count}} Alternativen hinzugefügt, die dein Plan erlaubt. Lösche eine, um hier eine hinzuzufügen.",
+      "morePremium": "Mehr mit Premium"
     },
-    "waits": "Dieses Training wartet auf Premium. Du kannst es trotzdem löschen."
+    "waits": "Dieses Training wartet auf Premium. Du kannst es trotzdem löschen.",
+    "held": {
+      "banner_one": "{{count}} Workout wartet auf Premium.",
+      "banner_other": "{{count}} Workouts warten auf Premium.",
+      "kept": "Nichts wird gelöscht. Mit Premium kommt es zurück, wie es war.",
+      "premium": "Premium",
+      "tag": "Premium",
+      "label": "{{name}}, wartet auf Premium",
+      "sheetTitle": "{{name}} wartet auf Premium",
+      "sheetBody_one": "Dein Plan hat Platz für {{count}} Workout. Dieses bleibt, wie es war, mit seinen Tagen und seinem Verlauf.",
+      "sheetBody_other": "Dein Plan hat Platz für {{count}} Workouts. Dieses bleibt, wie es war, mit seinen Tagen und seinem Verlauf.",
+      "getBack": "Mit Premium zurückholen",
+      "seeExercises": "Übungen ansehen",
+      "deleteToMakeRoom": "Löschen, um Platz zu machen",
+      "nothingDeleted": "Nichts wird gelöscht.",
+      "waits": "Wartet auf Premium",
+      "room_one": "Dein Plan hat Platz für {{count}} Workout.",
+      "room_other": "Dein Plan hat Platz für {{count}} Workouts.",
+      "train": "Mit Premium trainieren",
+      "alternativeBody_one": "Dein Plan erlaubt insgesamt {{count}} Alternative. Diese bleibt, wie sie war.",
+      "alternativeBody_other": "Dein Plan erlaubt insgesamt {{count}} Alternativen. Diese bleibt, wie sie war.",
+      "manageAlternatives": "Alternativen verwalten"
+    }
   },
   "exercise": {
     "start": "Start",
@@ -2099,6 +2122,10 @@
       "chats_other": "Chats mit Bite",
       "ended": "Angebot beendet"
     },
-    "bestValue": "Bester Preis"
+    "bestValue": "Bester Preis",
+    "soon": {
+      "title": "Premium ist unterwegs",
+      "message": "Bald kannst du Premium direkt hier holen."
+    }
   }
 }

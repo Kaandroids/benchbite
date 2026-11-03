@@ -6,6 +6,7 @@ import { testWorkout } from '@/workouts/test-data';
 import {
   findWorkout,
   fetchWorkouts,
+  useCurrentWorkoutLimits,
   useDeleteWorkout,
   useSaveWorkout,
   useSetWorkoutActive,
@@ -261,6 +262,8 @@ describe('useDeleteWorkout', () => {
     });
     expect(queryClient.getQueryData(['workouts'])).toEqual([{ id: 5 }]);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workouts'] });
+    // Its alternatives went with it, which the limits count.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workout-limits'] });
   });
 });
 
@@ -271,5 +274,27 @@ describe('findWorkout', () => {
     expect(findWorkout(workouts, 3)).toBeUndefined();
     expect(findWorkout(workouts, null)).toBeUndefined();
     expect(findWorkout(undefined, 1)).toBeUndefined();
+  });
+});
+
+describe('useCurrentWorkoutLimits', () => {
+  it('reads the limits again on mount, and gives none of those kept meanwhile', async () => {
+    const single = jest.fn().mockResolvedValue({ data: { workouts: 3 }, error: null });
+    jest.mocked(supabase.rpc).mockReturnValue({ single } as never);
+    const queryClient = createTestQueryClient();
+    // Kept a moment ago, under a plan that has since ended.
+    queryClient.setQueryData(['workout-limits'], { workouts: 500 });
+    const seen: unknown[] = [];
+    const { result } = await renderHook(
+      () => {
+        const limits = useCurrentWorkoutLimits();
+        seen.push(limits);
+        return limits;
+      },
+      { queryClient },
+    );
+    await waitFor(() => expect(result.current).toEqual({ workouts: 3 }));
+    expect(seen).not.toContainEqual({ workouts: 500 });
+    expect(single).toHaveBeenCalledTimes(1);
   });
 });

@@ -41,9 +41,9 @@ let switches: HeldSwitch[] = [];
 const workout = testWorkout(7, { exercises: [testExercise('squat'), testExercise('row')] });
 
 const GYM_HOME_HOTEL: WorkoutAlternative[] = [
-  { id: 3, position: 1, name: 'Gym', inUse: false, exerciseCount: 4 },
-  { id: 5, position: 2, name: null, inUse: true, exerciseCount: null },
-  { id: 6, position: 3, name: 'Hotel', inUse: false, exerciseCount: 0 },
+  { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
+  { id: 5, position: 2, name: null, inUse: true, held: false, exerciseCount: null },
+  { id: 6, position: 3, name: 'Hotel', inUse: false, held: false, exerciseCount: 0 },
 ];
 
 function mockAlternatives(data: WorkoutAlternative[]) {
@@ -419,11 +419,14 @@ it('adds and duplicates no more than the cap', async () => {
       name: null,
       inUse: position === 1,
       exerciseCount: position === 1 ? null : 1,
+      held: false,
     })),
   );
   await renderSheets();
   expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
   expect(screen.getByText('5 of 5. Delete one to add or duplicate another.')).toBeTruthy();
+  // Premium has the same cap on versions, so it is not offered here.
+  expect(screen.queryByRole('button', { name: 'More with premium' })).toBeNull();
   await openMenu('Alternative 2');
   expect(menuItem('Duplicate')!.props.accessibilityState).toEqual({ disabled: true });
   await fireEvent.press(menuItem('Duplicate')!);
@@ -435,6 +438,43 @@ it('says when the cap refused an add', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Add alternative' }));
   await act(async () => add.mock.calls[0]?.[1]?.onError({ code: 'BB041' }));
   expect(screen.getByText('A workout can have up to 5 alternatives.')).toBeTruthy();
+});
+
+it('locks one that waits for premium: not put in use nor renamed, but deleted', async () => {
+  mockAlternatives([
+    { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
+    { id: 5, position: 2, name: 'Knee-safe', inUse: false, held: true, exerciseCount: 2 },
+  ]);
+  await renderSheets();
+  const row = screen.getByRole('radio', { name: 'Knee-safe' });
+  expect(row.props.accessibilityHint).toBe('2 exercises, Waits for premium');
+  expect(row.props.accessibilityState).toEqual({ checked: false, disabled: true });
+  await fireEvent.press(row);
+  expect(switched()).toEqual([]);
+  await openMenu('Knee-safe');
+  expect(menuItem('Rename')).toBeNull();
+  expect(menuItem('Delete')).toBeTruthy();
+});
+
+it('points to premium once the plan allows no more', async () => {
+  const alert = jest.spyOn(Alert, 'alert');
+  jest.mocked(useWorkoutLimits).mockReturnValue({
+    data: {
+      exercises: 20,
+      workouts: 3,
+      alternatives: 5,
+      added_alternatives: 1,
+      alternatives_added: 1,
+      alternative_name_length: 12,
+    },
+  } as never);
+  await renderSheets();
+  expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
+  expect(
+    screen.getByText("You've added the 1 alternative your plan allows. Delete it to add one here."),
+  ).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'More with premium' }));
+  expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String));
 });
 
 it('closes on the scrim', async () => {

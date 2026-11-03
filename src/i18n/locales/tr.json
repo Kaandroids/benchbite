@@ -846,9 +846,32 @@
       "counterLabel": "{{max}} karakterden {{length}}",
       "emptyName": "Boş bırakılırsa “{{fallback}}” olarak görünür.",
       "fullInAll_one": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için onu sil.",
-      "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil."
+      "fullInAll_other": "Planının izin verdiği {{count}} alternatifi ekledin. Buraya eklemek için birini sil.",
+      "morePremium": "Premium ile daha fazlası"
     },
-    "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin."
+    "waits": "Bu antrenman premium'u bekliyor. Yine de silebilirsin.",
+    "held": {
+      "banner_one": "{{count}} antrenman premium'u bekliyor.",
+      "banner_other": "{{count}} antrenman premium'u bekliyor.",
+      "kept": "Hiçbir şey silinmez. Premium ile olduğu gibi geri gelir.",
+      "premium": "Premium",
+      "tag": "Premium",
+      "label": "{{name}}, premium'u bekliyor",
+      "sheetTitle": "{{name}} premium'u bekliyor",
+      "sheetBody_one": "Planında {{count}} antrenmanlık yer var. Bu antrenman günleri ve geçmişiyle olduğu gibi saklanıyor.",
+      "sheetBody_other": "Planında {{count}} antrenmanlık yer var. Bu antrenman günleri ve geçmişiyle olduğu gibi saklanıyor.",
+      "getBack": "Premium ile geri al",
+      "seeExercises": "Egzersizlerini gör",
+      "deleteToMakeRoom": "Yer açmak için sil",
+      "nothingDeleted": "Hiçbir şey silinmez.",
+      "waits": "Premium'u bekliyor",
+      "room_one": "Planında {{count}} antrenmanlık yer var.",
+      "room_other": "Planında {{count}} antrenmanlık yer var.",
+      "train": "Premium ile çalış",
+      "alternativeBody_one": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
+      "alternativeBody_other": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
+      "manageAlternatives": "Alternatifleri yönet"
+    }
   },
   "exercise": {
     "start": "Başlangıç",
@@ -2099,6 +2122,10 @@
       "chats_other": "Bite sohbeti",
       "ended": "Teklif sona erdi"
     },
-    "bestValue": "En avantajlı"
+    "bestValue": "En avantajlı",
+    "soon": {
+      "title": "Premium yolda",
+      "message": "Yakında premium'u tam buradan alabileceksin."
+    }
   }
 }

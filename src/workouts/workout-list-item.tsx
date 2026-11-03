@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -6,12 +7,20 @@ import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Switch } from '@/components/ui/switch';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { DayChips } from './day-chips';
 import { useWorkoutName } from './format';
-import { useKcalPerMinute, useSetWorkoutActive, type Workout } from './workouts';
+import { HeldWorkoutSheet } from './held-workout-sheet';
+import {
+  HELD_OPACITY,
+  showsAsWaiting,
+  useKcalPerMinute,
+  useSetWorkoutActive,
+  type Workout,
+} from './workouts';
 
 type WorkoutListItemProps = {
   workout: Workout;
@@ -25,6 +34,7 @@ type WorkoutListItemProps = {
 /**
  * A workout in a list: its name, days and size, with a button to start it while it is active and a
  * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
+ * One that waits for premium is dimmed and locked in its place, and opens a sheet that says so.
  */
 export function WorkoutListItem({
   workout,
@@ -40,22 +50,37 @@ export function WorkoutListItem({
   const { exercises } = workout;
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const isToday = today !== undefined && workout.weekdays.includes(today);
+  const held = showsAsWaiting(workout, running);
+  const [showingHeld, setShowingHeld] = useState(false);
+  // Muted as an archived one, as neither is planned on a day.
+  const muted = !workout.active || held;
 
   return (
     <Card style={[styles.card, { padding: spacing.lg }]}>
       <Pressable
         accessibilityRole="button"
         // The day chips sit inside this button, so it says itself when it is today's.
-        accessibilityLabel={isToday ? t('workout.todayLabel', { name }) : name}
-        onPress={() =>
-          router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
+        accessibilityLabel={
+          held
+            ? t('workout.held.label', { name })
+            : isToday
+              ? t('workout.todayLabel', { name })
+              : name
         }
-        style={({ pressed }) => [styles.body, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
+        onPress={() =>
+          held
+            ? setShowingHeld(true)
+            : router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
+        }
+        style={({ pressed }) => [
+          styles.body,
+          { gap: spacing.xs, opacity: (held ? HELD_OPACITY : 1) * (pressed ? 0.6 : 1) },
+        ]}
       >
-        <Text variant="headline" color={workout.active ? 'text' : 'textMuted'}>
+        <Text variant="headline" color={muted ? 'textMuted' : 'text'}>
           {name}
         </Text>
-        <DayChips weekdays={workout.weekdays} muted={!workout.active} today={today} />
+        <DayChips weekdays={workout.weekdays} muted={muted} today={held ? undefined : today} />
         {/* One line: the counts go without their words, which the icons and labels give. Only the
             calories keep a colour, so that the stats stay quiet beside the days (#334). */}
         {exercises.length === 0 ? (
@@ -93,7 +118,12 @@ export function WorkoutListItem({
           </View>
         )}
       </Pressable>
-      {running ? (
+      {held ? (
+        // Centred as the start button is, which the tag otherwise tops.
+        <View style={styles.tag}>
+          <Tag label={t('workout.held.tag')} icon="lock" />
+        </View>
+      ) : running ? (
         <View style={[styles.running, { borderRadius: radii.full, backgroundColor: colors.track }]}>
           <Text variant="captionStrong" color="textMuted">
             {t('session.running')}
@@ -123,6 +153,9 @@ export function WorkoutListItem({
           onValueChange={(active) => setActive.mutate({ id: workout.id, active })}
         />
       )}
+      {showingHeld ? (
+        <HeldWorkoutSheet workout={workout} onClose={() => setShowingHeld(false)} />
+      ) : null}
     </Card>
   );
 }
@@ -142,6 +175,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tag: {
     justifyContent: 'center',
   },
   running: {

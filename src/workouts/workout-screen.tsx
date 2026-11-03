@@ -13,34 +13,48 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { StatColumns } from '@/components/ui/stat-columns';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
-import { useChooseAlternative, useWorkoutAlternatives } from './alternatives';
+import {
+  useAlternativeName,
+  useChooseAlternative,
+  useWorkoutAlternatives,
+  type WorkoutAlternative,
+} from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
+import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
+import { HeldAlternativeSheet } from './held-workout-sheet';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
-  useDeleteWorkout,
   useKcalPerMinute,
   useSetWorkoutActive,
   useWorkouts,
   type WorkoutExercise,
   findWorkout,
+  HELD_OPACITY,
+  showsAsWaiting,
+  useCurrentWorkoutLimits,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
 
-/** A workout with every exercise's picture, target and rest. */
+/**
+ * A workout with every exercise's picture, target and rest. One that waits for premium can be looked
+ * at and deleted, and offers premium in place of Start, editing, alternatives and the archive.
+ */
 export function WorkoutScreen({ id }: { id: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -49,8 +63,9 @@ export function WorkoutScreen({ id }: { id: number }) {
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { start, sheet: startSheet } = useStartOrAsk();
-  const remove = useDeleteWorkout();
   const workout = findWorkout(workouts.data, id);
+  const openPremium = useOpenPremium();
+  const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   // From the library, which loads again when the user renames an exercise of their own.
   const library = useExerciseLibrary();
   const nameOf = (exerciseId: string) => findExercise(library.data, exerciseId)?.name ?? '';
@@ -58,6 +73,9 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
   const [managing, setManaging] = useState(false);
+  // An alternative that waits for premium, tapped among the chips.
+  const [waiting, setWaiting] = useState<WorkoutAlternative | null>(null);
+  const alternativeName = useAlternativeName();
   const alternatives = useWorkoutAlternatives(id);
 
   // A workout that is running cannot change under it, nor be deleted before it is saved; it is
@@ -107,6 +125,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   }
 
   const name = workoutName(workout);
+  const held = showsAsWaiting(workout, running);
   // As when an empty alternative was just put in use: nothing to show or start until it is edited.
   const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
@@ -172,21 +191,8 @@ export function WorkoutScreen({ id }: { id: number }) {
       askToFinish();
       return;
     }
-    Alert.alert(t('editor.deleteTitle'), t('editor.deleteMessage'), [
-      { text: t('editor.cancel'), style: 'cancel' },
-      {
-        text: t('editor.delete'),
-        style: 'destructive',
-        onPress: () => {
-          // Back first, so that the deleted workout never shows as not found.
-          router.back();
-          remove.mutateAsync(workout.id).catch((error: unknown) => {
-            console.warn('Could not delete the workout', error);
-            Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
-          });
-        },
-      },
-    ]);
+    // Back first, so that the deleted workout never shows as not found.
+    confirmDelete(workout.id, { onConfirm: () => router.back() });
   };
 
   return (
@@ -201,7 +207,12 @@ export function WorkoutScreen({ id }: { id: number }) {
               .join(' · ')
       }
       footer={
-        workout.active ? (
+        held ? (
+          <View style={{ gap: spacing.sm }}>
+            <WorkoutRoom />
+            <Button label={t('workout.held.train')} onPress={openPremium} />
+          </View>
+        ) : workout.active || running ? (
           <View style={{ gap: spacing.sm }}>
             <Button
               label={running ? t('session.resume') : t('workout.startWorkout')}
@@ -218,26 +229,40 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : undefined
       }
       action={
-        <View style={[styles.actions, { gap: spacing.sm }]}>
-          <RoundIconButton
-            icon="layers"
-            color="text"
-            background="surface"
-            bordered
-            size={40}
-            label={t('workout.alternatives.title')}
-            onPress={() => setManaging(true)}
-          />
-          <PillButton label={t('workout.edit')} onPress={onEdit} />
-        </View>
+        held ? (
+          <View accessible accessibilityLabel={t('workout.held.waits')} style={styles.actions}>
+            <Tag label={t('workout.held.tag')} icon="lock" />
+          </View>
+        ) : (
+          <View style={[styles.actions, { gap: spacing.sm }]}>
+            <RoundIconButton
+              icon="layers"
+              color="text"
+              background="surface"
+              bordered
+              size={40}
+              label={t('workout.alternatives.title')}
+              onPress={() => setManaging(true)}
+            />
+            <PillButton label={t('workout.edit')} onPress={onEdit} />
+          </View>
+        )
       }
     >
-      <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />
+      {held ? null : (
+        <WorkoutAlternatives alternatives={alternatives.data} choice={choice} onHeld={setWaiting} />
+      )}
 
       {empty ? (
-        <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} />
+        // One that waits cannot be edited (BB051), so it offers premium alone.
+        <EmptyWorkout
+          alternatives={alternatives.data}
+          name={name}
+          onAdd={held ? undefined : onEdit}
+        />
       ) : (
-        <>
+        // Dimmed as a whole while it waits, as it cannot be started.
+        <View style={{ gap: spacing.lg, opacity: held ? HELD_OPACITY : 1 }}>
           {/* One card of even columns over the workout's days, like a finished workout's figures
               over when it started and ended. */}
           <StatColumns
@@ -258,29 +283,32 @@ export function WorkoutScreen({ id }: { id: number }) {
               )}
             </View>
           </Card>
-        </>
+        </View>
       )}
 
-      {/* Switching a workout off moves it to the archive, and back. */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
-        style={({ pressed }) => [
-          styles.archive,
-          {
-            gap: spacing.sm,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            opacity: pressed ? 0.6 : 1,
-          },
-        ]}
-      >
-        <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
-        <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
-          {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
-        </Text>
-      </Pressable>
+      {/* Switching a workout off moves it to the archive, and back; not one that waits, even while
+          it runs, as the database refuses that (BB051). */}
+      {workout.held ? null : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
+          style={({ pressed }) => [
+            styles.archive,
+            {
+              gap: spacing.sm,
+              borderRadius: radii.lg,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
+          <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
+            {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
+          </Text>
+        </Pressable>
+      )}
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
         <Text variant="label" color="danger">
           {t('editor.delete')}
@@ -288,6 +316,13 @@ export function WorkoutScreen({ id }: { id: number }) {
       </Pressable>
 
       {startSheet}
+      {waiting ? (
+        <HeldAlternativeSheet
+          name={alternativeName(waiting)}
+          onManage={() => setManaging(true)}
+          onClose={() => setWaiting(null)}
+        />
+      ) : null}
       {managing ? (
         <AlternativesSheets
           workout={workout}
@@ -298,6 +333,20 @@ export function WorkoutScreen({ id }: { id: number }) {
       ) : null}
     </Screen>
   );
+}
+
+/**
+ * How many workouts the plan has room for, as it is now, beside a workout that waits; nothing until
+ * that is read.
+ */
+function WorkoutRoom() {
+  const { t } = useTranslation();
+  const limits = useCurrentWorkoutLimits();
+  return limits ? (
+    <Text variant="caption" color="textMuted" align="center">
+      {t('workout.held.room', { count: limits.workouts })}
+    </Text>
+  ) : null;
 }
 
 const styles = StyleSheet.create({

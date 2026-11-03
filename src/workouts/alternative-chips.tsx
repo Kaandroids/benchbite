@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
@@ -16,7 +17,8 @@ type AlternativeChipsProps = {
 
 /**
  * A workout's alternatives as a row of name chips that scrolls sideways, the one in use filled
- * with the text colour. Tapping another puts it in use.
+ * with the text colour. Tapping another puts it in use. One that waits for premium is dashed, with
+ * a lock.
  */
 export function AlternativeChips({
   alternatives,
@@ -38,10 +40,12 @@ export function AlternativeChips({
       >
         {alternatives.map((alternative) => {
           const selected = alternative.id === selectedId;
+          const { held } = alternative;
           return (
             <Pressable
               key={alternative.id}
               accessibilityRole="tab"
+              accessibilityHint={held ? t('workout.held.waits') : undefined}
               accessibilityState={{ selected, disabled }}
               disabled={disabled}
               onPress={() => {
@@ -54,12 +58,15 @@ export function AlternativeChips({
                 {
                   borderRadius: radii.full,
                   paddingHorizontal: spacing.md,
+                  gap: spacing.xs,
+                  borderStyle: held ? 'dashed' : 'solid',
                   borderColor: selected ? colors.text : colors.border,
                   backgroundColor: selected ? colors.text : colors.surface,
                   opacity: pressed ? 0.6 : 1,
                 },
               ]}
             >
+              {held ? <Icon name="lock" size={13} color="textMuted" /> : null}
               <Text
                 variant="captionStrong"
                 color={selected ? 'background' : 'textMuted'}
@@ -78,7 +85,8 @@ export function AlternativeChips({
 const styles = StyleSheet.create({
   chip: {
     height: 36,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
   },
 });

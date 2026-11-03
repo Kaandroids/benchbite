@@ -19,6 +19,8 @@ export type WorkoutAlternative = {
   inUse: boolean;
   /** How many exercises one not in use has; null for the one in use, whose are the workout's. */
   exerciseCount: number | null;
+  /** Waits for premium (ADR 0079): it can be seen, reordered and deleted, not put in use. */
+  held: boolean;
 };
 
 /** Every workout's alternatives, which a delete may all touch, as it may let waiting ones go. */
@@ -39,7 +41,7 @@ export function alternativesKey(workoutId: number) {
 export async function fetchAlternatives(workoutId: number): Promise<WorkoutAlternative[]> {
   const { data, error } = await supabase
     .from('workout_alternatives')
-    .select('id, position, name, in_use, exercises')
+    .select('id, position, name, in_use, held, exercises')
     .eq('workout_id', workoutId)
     .order('position');
   if (error) {
@@ -50,6 +52,7 @@ export async function fetchAlternatives(workoutId: number): Promise<WorkoutAlter
     position: row.position,
     name: row.name,
     inUse: row.in_use,
+    held: row.held,
     exerciseCount: Array.isArray(row.exercises) ? row.exercises.length : null,
   }));
 }

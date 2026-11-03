@@ -44,14 +44,14 @@ describe('fetchAlternatives', () => {
   it('returns the alternatives in order, counting the exercises of those not in use', async () => {
     order.mockResolvedValue({
       data: [
-        { id: 3, position: 1, name: 'Gym', in_use: true, exercises: null },
-        { id: 5, position: 2, name: null, in_use: false, exercises: [{}, {}, {}] },
+        { id: 3, position: 1, name: 'Gym', in_use: true, held: false, exercises: null },
+        { id: 5, position: 2, name: null, in_use: false, held: true, exercises: [{}, {}, {}] },
       ],
       error: null,
     });
     await expect(fetchAlternatives(7)).resolves.toEqual([
-      { id: 3, position: 1, name: 'Gym', inUse: true, exerciseCount: null },
-      { id: 5, position: 2, name: null, inUse: false, exerciseCount: 3 },
+      { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
+      { id: 5, position: 2, name: null, inUse: false, held: true, exerciseCount: 3 },
     ]);
     expect(supabase.from).toHaveBeenCalledWith('workout_alternatives');
     expect(eq).toHaveBeenCalledWith('workout_id', 7);
