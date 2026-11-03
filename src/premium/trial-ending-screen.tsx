@@ -107,12 +107,7 @@ export function TrialEndingScreen({
 
       <View style={styles.flex} />
 
-      <PlanPicker
-        prices={prices}
-        billing={billing}
-        onChange={setBilling}
-        yearlyNote={t('premium.trialEnding.yearlyNote', { price: prices.yearlyPerMonth })}
-      />
+      <PlanPicker prices={prices} billing={billing} onChange={setBilling} />
     </Screen>
   );
 }

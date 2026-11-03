@@ -2082,6 +2082,7 @@
     "yearlySave": "Jährlich · −{{percent}} %",
     "monthly": "Monatlich",
     "cancelAnytime": "Jederzeit kündbar",
+    "yearlyNote": "{{price}} im Monat, einmal im Jahr abgerechnet",
     "trialEnding": {
       "chats_one": "Chat",
       "chats_other": "Chats",
@@ -2099,7 +2100,6 @@
       "today": "Heute",
       "usedDays_one": "Du hast Bite an {{count}} Tag genutzt",
       "usedDays_other": "Du hast Bite an {{count}} Tagen genutzt",
-      "yearlyNote": "{{price}} pro Monat, einmal im Jahr berechnet",
       "title": "Deine Testwoche im Überblick",
       "titleNamed": "Testwoche von <accent>{{name}}</accent>",
       "lastDay": "Letzter Tag zusammen!"
@@ -2187,7 +2187,6 @@
       "trialThen_one": "{{count}} Tag geht auf uns, dann:",
       "trialThen_other": "{{count}} Tage gehen auf uns, dann:",
       "body": "Jederzeit ändern oder kündigen.",
-      "yearlyNote": "{{price}} im Monat, einmal im Jahr abgerechnet",
       "startTrial_one": "{{count}} Tag gratis starten",
       "startTrial_other": "{{count}} Tage gratis starten",
       "start": "Premium holen",

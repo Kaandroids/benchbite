@@ -2082,6 +2082,7 @@
     "yearlySave": "Yearly · −{{percent}}%",
     "monthly": "Monthly",
     "cancelAnytime": "Cancel anytime",
+    "yearlyNote": "{{price}} a month, billed once a year",
     "trialEnding": {
       "chats_one": "chat",
       "chats_other": "chats",
@@ -2099,7 +2100,6 @@
       "today": "Today",
       "usedDays_one": "You used Bite on {{count}} day",
       "usedDays_other": "You used Bite on {{count}} days",
-      "yearlyNote": "{{price}} a month, billed once a year",
       "title": "Your trial summary",
       "titleNamed": "<accent>{{name}}'s</accent> trial summary",
       "lastDay": "Last day together!"
@@ -2187,7 +2187,6 @@
       "trialThen_one": "{{count}} day on us, then:",
       "trialThen_other": "{{count}} days on us, then:",
       "body": "Change it or cancel it any time.",
-      "yearlyNote": "{{price}} a month, billed once a year",
       "startTrial_one": "Start {{count}} day free",
       "startTrial_other": "Start {{count}} days free",
       "start": "Get premium",

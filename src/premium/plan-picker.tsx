@@ -11,27 +11,19 @@ type PlanPickerProps = {
   prices: PlanPrices;
   billing: Billing;
   onChange: (billing: Billing) => void;
-  /** What the yearly plan's row says under its name, such as its price a month. */
-  yearlyNote: string;
-  /** The yearly plan's badge: dark on a light screen, orange on a dark one. */
-  badge?: 'inverse' | 'primary';
 };
 
 /** The yearly and the monthly plan as two rows to choose from, the yearly one marked best value. */
-export function PlanPicker({
-  prices,
-  billing,
-  onChange,
-  yearlyNote,
-  badge = 'inverse',
-}: PlanPickerProps) {
+export function PlanPicker({ prices, billing, onChange }: PlanPickerProps) {
   const { t, i18n } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { colors, scheme, spacing } = useTheme();
+  // The badge stands out of either: dark on a light screen, orange on a dark one.
+  const darkScreen = scheme === 'dark';
   const plans = [
     {
       value: 'yearly',
       name: t('premium.yearlySave', { percent: prices.yearlySavePercent }),
-      note: yearlyNote,
+      note: t('premium.yearlyNote', { price: prices.yearlyPerMonth }),
       price: prices.yearly,
     },
     {
@@ -77,15 +69,12 @@ export function PlanPicker({
                 style={[
                   styles.badge,
                   {
-                    backgroundColor: badge === 'primary' ? colors.primary : colors.inverseSurface,
+                    backgroundColor: darkScreen ? colors.primary : colors.inverseSurface,
                     paddingHorizontal: spacing.sm,
                   },
                 ]}
               >
-                <Text
-                  variant="captionStrong"
-                  color={badge === 'primary' ? 'onPrimary' : 'onInverse'}
-                >
+                <Text variant="captionStrong" color={darkScreen ? 'onPrimary' : 'onInverse'}>
                   {t('premium.bestValue').toLocaleUpperCase(i18n.language)}
                 </Text>
               </View>

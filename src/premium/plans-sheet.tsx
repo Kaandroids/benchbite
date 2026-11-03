@@ -47,13 +47,7 @@ function Plans({ prices, trial, onClose }: PlansSheetProps) {
       body={trial ? t('premium.plans.trialThen', { count: TRIAL_DAYS }) : t('premium.plans.body')}
       onClose={onClose}
     >
-      <PlanPicker
-        prices={prices}
-        billing={billing}
-        onChange={setBilling}
-        yearlyNote={t('premium.plans.yearlyNote', { price: prices.yearlyPerMonth })}
-        badge="primary"
-      />
+      <PlanPicker prices={prices} billing={billing} onChange={setBilling} />
       <View style={{ gap: spacing.sm }}>
         <Button
           label={

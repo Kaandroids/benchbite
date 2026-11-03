@@ -2082,6 +2082,7 @@
     "yearlySave": "Yıllık · −%{{percent}}",
     "monthly": "Aylık",
     "cancelAnytime": "İstediğin zaman iptal et",
+    "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
     "trialEnding": {
       "chats_one": "sohbet",
       "chats_other": "sohbet",
@@ -2099,7 +2100,6 @@
       "today": "Bugün",
       "usedDays_one": "Bite'ı {{count}} gün kullandın",
       "usedDays_other": "Bite'ı {{count}} gün kullandın",
-      "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
       "title": "Deneme özetin",
       "titleNamed": "<accent>{{name}}</accent> için deneme özeti",
       "lastDay": "Birlikte son gün!"
@@ -2187,7 +2187,6 @@
       "trialThen_one": "{{count}} gün bizden, sonra:",
       "trialThen_other": "{{count}} gün bizden, sonra:",
       "body": "İstediğin zaman değiştir ya da iptal et.",
-      "yearlyNote": "Ayda {{price}}, yılda bir kez ödenir",
       "startTrial_one": "{{count}} gün ücretsiz başla",
       "startTrial_other": "{{count}} gün ücretsiz başla",
       "start": "Premium al",
