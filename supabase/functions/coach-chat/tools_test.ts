@@ -664,6 +664,27 @@ Deno.test('proposes a first alternative, naming the version in use too', async (
   });
 });
 
+Deno.test(
+  'says when the plan stops an alternative, so that the model does not ask to retry',
+  async () => {
+    for (const [code, start] of [
+      ['BB051', 'That workout or alternative waits for premium'],
+      ['BB052', 'The user has added as many alternatives as their plan allows'],
+    ] as const) {
+      const { context } = planContext(
+        { propose_coach_alternative: { error: { code } } },
+        LEGS_WITH_ALTERNATIVES,
+      );
+      const refused = await runTool(
+        'propose_alternative',
+        { workoutId: 3, name: 'Home', remove: [{ exerciseId: 'Plank', why: 'x' }] },
+        context,
+      );
+      assertEquals((refused as { error: string }).error.startsWith(start), true);
+    }
+  },
+);
+
 Deno.test('proposes an alternative made from the one in use, which keeps its name', async () => {
   const { context, calls } = planContext(
     { propose_coach_alternative: { error: { code: 'BB049' } } },
