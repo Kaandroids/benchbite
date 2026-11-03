@@ -4,6 +4,7 @@ import { Caption } from '@/components/ui/caption';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { isDbError } from '@/lib/errors';
+import { TRIAL_DAYS } from '@/premium/trial';
 import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
@@ -53,7 +54,7 @@ function PlanSwitcher() {
             ? 'The developer tools are off on this database. Run pnpm vault:local to turn them on.'
             : error.message
           : shown
-            ? 'The trial lasts 7 days and premium a month, from the switch.'
+            ? `The trial lasts ${TRIAL_DAYS} days and premium a month, from the switch.`
             : 'Loading the plan…'}
       </Text>
     </View>

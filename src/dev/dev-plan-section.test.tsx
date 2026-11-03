@@ -38,6 +38,7 @@ describe('DevPlanSection', () => {
     await render(<DevPlanSection />);
     expect(await screen.findByRole('radio', { name: 'Trial', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Free', checked: false })).toBeTruthy();
+    expect(screen.getByText(/trial lasts 7 days/)).toBeTruthy();
   });
 
   it('switches the plan and loads again what depends on it', async () => {
