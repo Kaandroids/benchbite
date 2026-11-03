@@ -13,11 +13,13 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Screen } from '@/components/ui/screen';
 import { afterSheetCloses } from '@/components/ui/sheet';
 import { StatColumns } from '@/components/ui/stat-columns';
+import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
@@ -32,6 +34,7 @@ import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './f
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
+  useWorkoutLimits,
   useSetWorkoutActive,
   useWorkouts,
   type WorkoutExercise,
@@ -39,8 +42,13 @@ import {
 } from './workouts';
 
 const IMAGE_SIZE = 60;
+/** A workout that waits for premium shows its exercises dimmed, as it cannot be started. */
+const HELD_OPACITY = 0.6;
 
-/** A workout with every exercise's picture, target and rest. */
+/**
+ * A workout with every exercise's picture, target and rest. One that waits for premium can be looked
+ * at and deleted, and offers premium in place of Start, editing, alternatives and the archive.
+ */
 export function WorkoutScreen({ id }: { id: number }) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
@@ -49,6 +57,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   const session = useActiveSession(useUserId());
   const { data: kcalPerMinute } = useKcalPerMinute();
   const { start, sheet: startSheet } = useStartOrAsk();
+  const limits = useWorkoutLimits();
+  const openPremium = useOpenPremium();
   const confirmDelete = useConfirmDeleteWorkout();
   const workout = findWorkout(workouts.data, id);
   // From the library, which loads again when the user renames an exercise of their own.
@@ -107,6 +117,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   }
 
   const name = workoutName(workout);
+  const { held } = workout;
   // As when an empty alternative was just put in use: nothing to show or start until it is edited.
   const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
@@ -188,7 +199,16 @@ export function WorkoutScreen({ id }: { id: number }) {
               .join(' · ')
       }
       footer={
-        workout.active ? (
+        held ? (
+          <View style={{ gap: spacing.sm }}>
+            {limits.data ? (
+              <Text variant="caption" color="textMuted" align="center">
+                {t('workout.held.room', { count: limits.data.workouts })}
+              </Text>
+            ) : null}
+            <Button label={t('workout.held.train')} onPress={openPremium} />
+          </View>
+        ) : workout.active ? (
           <View style={{ gap: spacing.sm }}>
             <Button
               label={running ? t('session.resume') : t('workout.startWorkout')}
@@ -205,21 +225,27 @@ export function WorkoutScreen({ id }: { id: number }) {
         ) : undefined
       }
       action={
-        <View style={[styles.actions, { gap: spacing.sm }]}>
-          <RoundIconButton
-            icon="layers"
-            color="text"
-            background="surface"
-            bordered
-            size={40}
-            label={t('workout.alternatives.title')}
-            onPress={() => setManaging(true)}
-          />
-          <PillButton label={t('workout.edit')} onPress={onEdit} />
-        </View>
+        held ? (
+          <View accessible accessibilityLabel={t('workout.held.waits')} style={styles.actions}>
+            <Tag label={t('workout.held.tag')} icon="lock" />
+          </View>
+        ) : (
+          <View style={[styles.actions, { gap: spacing.sm }]}>
+            <RoundIconButton
+              icon="layers"
+              color="text"
+              background="surface"
+              bordered
+              size={40}
+              label={t('workout.alternatives.title')}
+              onPress={() => setManaging(true)}
+            />
+            <PillButton label={t('workout.edit')} onPress={onEdit} />
+          </View>
+        )
       }
     >
-      <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />
+      {held ? null : <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />}
 
       {empty ? (
         <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} />
@@ -227,18 +253,20 @@ export function WorkoutScreen({ id }: { id: number }) {
         <>
           {/* One card of even columns over the workout's days, like a finished workout's figures
               over when it started and ended. */}
-          <StatColumns
-            stats={stats}
-            footer={
-              <View style={[styles.days, { gap: spacing.sm }]}>
-                <Text variant="caption" color="textMuted">
-                  {t('workout.days')}
-                </Text>
-                <DayChips weekdays={workout.weekdays} muted={!workout.active} />
-              </View>
-            }
-          />
-          <Card>
+          <View style={{ opacity: held ? HELD_OPACITY : 1 }}>
+            <StatColumns
+              stats={stats}
+              footer={
+                <View style={[styles.days, { gap: spacing.sm }]}>
+                  <Text variant="caption" color="textMuted">
+                    {t('workout.days')}
+                  </Text>
+                  <DayChips weekdays={workout.weekdays} muted={!workout.active} />
+                </View>
+              }
+            />
+          </View>
+          <Card style={{ opacity: held ? HELD_OPACITY : 1 }}>
             <View>
               {workout.exercises.map((exercise, index) =>
                 row(exercise, `${exercise.exerciseId}-${index}`, index > 0),
@@ -248,26 +276,28 @@ export function WorkoutScreen({ id }: { id: number }) {
         </>
       )}
 
-      {/* Switching a workout off moves it to the archive, and back. */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
-        style={({ pressed }) => [
-          styles.archive,
-          {
-            gap: spacing.sm,
-            borderRadius: radii.lg,
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            opacity: pressed ? 0.6 : 1,
-          },
-        ]}
-      >
-        <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
-        <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
-          {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
-        </Text>
-      </Pressable>
+      {/* Switching a workout off moves it to the archive, and back; not one that waits. */}
+      {held ? null : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
+          style={({ pressed }) => [
+            styles.archive,
+            {
+              gap: spacing.sm,
+              borderRadius: radii.lg,
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              opacity: pressed ? 0.6 : 1,
+            },
+          ]}
+        >
+          <Icon name="archive" size={20} color={workout.active ? 'textMuted' : 'primaryText'} />
+          <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
+            {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
+          </Text>
+        </Pressable>
+      )}
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
         <Text variant="label" color="danger">
           {t('editor.delete')}

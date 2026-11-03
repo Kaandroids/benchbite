@@ -862,7 +862,11 @@
       "getBack": "Get it back with premium",
       "seeExercises": "See its exercises",
       "deleteToMakeRoom": "Delete it to make room",
-      "nothingDeleted": "Nothing is deleted."
+      "nothingDeleted": "Nothing is deleted.",
+      "waits": "Waits for premium",
+      "room_one": "Your plan has room for {{count}} workout.",
+      "room_other": "Your plan has room for {{count}} workouts.",
+      "train": "Train it with premium"
     }
   },
   "exercise": {

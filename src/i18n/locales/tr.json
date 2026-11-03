@@ -862,7 +862,11 @@
       "getBack": "Premium ile geri al",
       "seeExercises": "Egzersizlerini gör",
       "deleteToMakeRoom": "Yer açmak için sil",
-      "nothingDeleted": "Hiçbir şey silinmez."
+      "nothingDeleted": "Hiçbir şey silinmez.",
+      "waits": "Premium'u bekliyor",
+      "room_one": "Planında {{count}} antrenmanlık yer var.",
+      "room_other": "Planında {{count}} antrenmanlık yer var.",
+      "train": "Premium ile çalış"
     }
   },
   "exercise": {

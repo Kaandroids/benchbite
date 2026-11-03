@@ -862,7 +862,11 @@
       "getBack": "Mit Premium zurückholen",
       "seeExercises": "Übungen ansehen",
       "deleteToMakeRoom": "Löschen, um Platz zu machen",
-      "nothingDeleted": "Nichts wird gelöscht."
+      "nothingDeleted": "Nichts wird gelöscht.",
+      "waits": "Wartet auf Premium",
+      "room_one": "Dein Plan hat Platz für {{count}} Workout.",
+      "room_other": "Dein Plan hat Platz für {{count}} Workouts.",
+      "train": "Mit Premium trainieren"
     }
   },
   "exercise": {
