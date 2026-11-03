@@ -44,7 +44,8 @@ export function WorkoutListItem({
   const { exercises } = workout;
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const isToday = today !== undefined && workout.weekdays.includes(today);
-  const { held } = workout;
+  // One running stays as it is, to be resumed or finished, though its plan has ended meanwhile.
+  const held = workout.held && !running;
   const [showingHeld, setShowingHeld] = useState(false);
   // Muted as an archived one, as neither is planned on a day.
   const muted = !workout.active || held;

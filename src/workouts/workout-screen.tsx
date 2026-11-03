@@ -117,7 +117,8 @@ export function WorkoutScreen({ id }: { id: number }) {
   }
 
   const name = workoutName(workout);
-  const { held } = workout;
+  // One running is resumed and finished as before, though its plan has ended meanwhile.
+  const held = workout.held && !running;
   // As when an empty alternative was just put in use: nothing to show or start until it is edited.
   const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
@@ -208,7 +209,7 @@ export function WorkoutScreen({ id }: { id: number }) {
             ) : null}
             <Button label={t('workout.held.train')} onPress={openPremium} />
           </View>
-        ) : workout.active ? (
+        ) : workout.active || running ? (
           <View style={{ gap: spacing.sm }}>
             <Button
               label={running ? t('session.resume') : t('workout.startWorkout')}
@@ -277,7 +278,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       )}
 
       {/* Switching a workout off moves it to the archive, and back; not one that waits. */}
-      {held ? null : (
+      {workout.held ? null : (
         <Pressable
           accessibilityRole="button"
           onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}

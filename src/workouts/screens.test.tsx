@@ -239,6 +239,16 @@ describe('WorkoutsScreen', () => {
       expect(screen.queryByText(/wait for premium/)).toBeNull();
     });
 
+    it('keeps one running as it is, to be resumed rather than deleted from a sheet', async () => {
+      jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 2 });
+      mockWorkouts(waiting);
+      await render(<WorkoutsScreen />);
+      expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
+      await fireEvent.press(screen.getByRole('button', { name: 'Core' }));
+      expect(screen.queryByText('Core waits for premium')).toBeNull();
+      expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });
+    });
+
     it('opens a sheet for one, which offers premium, its exercises and a delete', async () => {
       const alert = jest.spyOn(Alert, 'alert');
       mockWorkouts(waiting);
@@ -523,6 +533,18 @@ describe('WorkoutScreen', () => {
     expect(alert).toHaveBeenLastCalledWith('Premium is on its way', expect.any(String));
     await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
     expect(alert.mock.lastCall?.[0]).toBe('Delete this workout?');
+  });
+
+  it('resumes a running workout that waits for premium, and asks to finish it before a delete', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest.mocked(useActiveSession).mockReturnValue({ ...RUNNING, workoutId: 7 });
+    mockWorkouts([{ ...pull, held: true }]);
+    await render(<WorkoutScreen id={7} />);
+    expect(screen.getByRole('button', { name: 'Resume' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Train it with premium' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Move to archive' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.calls[0]?.[0]).toBe('Pull is running');
   });
 
   describe('with alternatives', () => {
