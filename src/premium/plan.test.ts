@@ -64,6 +64,18 @@ describe('toPlanSummary', () => {
     expect(summary).toMatchObject({ plan: 'trial', week: null });
   });
 
+  it('reads a plan in its grace without the dates that have passed', () => {
+    expect(
+      toPlanSummary({ ...EMPTY, plan: 'premium', billing: 'monthly', period_left: 0.5 }),
+    ).toEqual({
+      plan: 'premium',
+      billing: 'monthly',
+      renewsAt: null,
+      week: null,
+      period: { left: 0.5, resetsAt: null },
+    });
+  });
+
   it('gives nothing for a row missing what its plan needs', () => {
     expect(toPlanSummary({ ...EMPTY, plan: 'free' })).toBeNull();
     expect(toPlanSummary({ ...EMPTY, plan: 'premium', billing: 'yearly' })).toBeNull();

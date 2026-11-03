@@ -114,11 +114,27 @@ describe('PremiumScreen', () => {
     expect(screen.getByRole('button', { name: 'Get premium' })).toBeDisabled();
   });
 
-  it('names the trial as such, and when it ends', async () => {
-    mockPlan({ ...PREMIUM, plan: 'trial', billing: 'monthly' });
+  it('names the trial as such, with its one window and when it ends', async () => {
+    mockPlan({ ...PREMIUM, plan: 'trial', billing: 'monthly', week: null });
     await render(<PremiumScreen onClose={onClose} />);
     expect(screen.getByText('Your free week')).toBeTruthy();
     expect(screen.getByText('Ends November 2')).toBeTruthy();
+    expect(screen.getByText('This trial')).toBeTruthy();
+    expect(screen.queryByText('This week')).toBeNull();
+  });
+
+  it('says no date that has passed while the plan is in its grace', async () => {
+    mockPlan({
+      ...PREMIUM,
+      renewsAt: null,
+      week: { left: 0.64, resetsAt: null },
+      period: { left: 0.82, resetsAt: null },
+    });
+    await render(<PremiumScreen onClose={onClose} />);
+    expect(screen.getByText('82%')).toBeTruthy();
+    expect(screen.queryByText(/^Renews/)).toBeNull();
+    expect(screen.queryByText(/^Starts again/)).toBeNull();
+    expect(screen.queryByText(/^A new week/)).toBeNull();
   });
 
   it('closes', async () => {

@@ -2131,8 +2131,8 @@
     "page": {
       "title": "Bite ile antrenman yap, beslen",
       "subtitle": "Takip ücretsiz kalır. Premium koçunu ekler.",
-      "title_trial": "Ücretsiz haftan",
-      "title_premium": "Premium'un var",
+      "titleTrial": "Ücretsiz haftan",
+      "titlePremium": "Premium'un var",
       "thanks": "Bite ile antrenman yaptığın için teşekkürler.",
       "try": "7 gün ücretsiz dene",
       "then": "Sonra ayda {{price}}'dan başlar. İstediğin zaman iptal et."
@@ -2173,6 +2173,7 @@
       "biteLeft": "Bite, kullanabileceğin",
       "week": "Bu hafta",
       "period": "Bu ay",
+      "trialWeek": "Bu deneme",
       "newWeek": "Yeni hafta {{day}}",
       "startsAgain": "{{day}} yeniden başlar",
       "percent": "%{{percent}}",

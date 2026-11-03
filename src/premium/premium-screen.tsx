@@ -17,7 +17,7 @@ import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
 import { AccountFirstSheet } from './account-first-sheet';
-import { usePlanNumbers, usePlanSummary, type PlanSummary } from './plan';
+import { usePlanNumbers, usePlanSummary, type PaidSummary } from './plan';
 import { PlanComparison } from './plan-comparison';
 import { FreeUsage, PaidUsage } from './plan-usage';
 import { PlansSheet } from './plans-sheet';
@@ -79,9 +79,9 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
         </Sparkles>
         <Text variant="title" align="center" accessibilityRole="header">
           {summary.data?.plan === 'trial'
-            ? t('premium.page.title_trial')
+            ? t('premium.page.titleTrial')
             : paid
-              ? t('premium.page.title_premium')
+              ? t('premium.page.titlePremium')
               : t('premium.page.title')}
         </Text>
         <Text color="textMuted" align="center">
@@ -121,13 +121,7 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
 }
 
 /** The trial's or premium's plan, how much of Bite is left, and where to change or cancel it. */
-function Paid({
-  summary,
-  onChangePlan,
-}: {
-  summary: Exclude<PlanSummary, { plan: 'free' }>;
-  onChangePlan: () => void;
-}) {
+function Paid({ summary, onChangePlan }: { summary: PaidSummary; onChangePlan: () => void }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const restore = usePurchasesSoon();

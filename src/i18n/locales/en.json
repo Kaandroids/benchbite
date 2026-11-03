@@ -2131,8 +2131,8 @@
     "page": {
       "title": "Train and eat with Bite",
       "subtitle": "Tracking stays free. Premium adds your coach.",
-      "title_trial": "Your free week",
-      "title_premium": "You have premium",
+      "titleTrial": "Your free week",
+      "titlePremium": "You have premium",
       "thanks": "Thanks for training with Bite.",
       "try": "Try 7 days free",
       "then": "Then from {{price}} a month. Cancel anytime."
@@ -2173,6 +2173,7 @@
       "biteLeft": "Bite, left to use",
       "week": "This week",
       "period": "This month",
+      "trialWeek": "This trial",
       "newWeek": "A new week on {{day}}",
       "startsAgain": "Starts again on {{day}}",
       "percent": "{{percent}}%",

@@ -7,8 +7,11 @@ import type { Billing } from './prices';
 
 type Plan = Database['public']['Enums']['plan'];
 
-/** One AI window of a paid plan: the share of it left, from 0 to 1, and when it starts again. */
-export type Window = { left: number; resetsAt: Date };
+/**
+ * One AI window of a paid plan: the share of it left, from 0 to 1, and when it starts again; null
+ * in the plan's grace, when its period has passed and only the store renews it.
+ */
+export type Window = { left: number; resetsAt: Date | null };
 
 /**
  * The user's plan as the premium page shows it (ADR 0078): on the free plan, the week's meal
@@ -20,18 +23,24 @@ export type PlanSummary =
   | {
       plan: Exclude<Plan, 'free'>;
       billing: Billing;
-      renewsAt: Date;
-      /** Null on a plan without a weekly budget. */
+      /** Null in the plan's grace, once its period has passed. */
+      renewsAt: Date | null;
+      /** Null on a plan whose week is its period, such as the trial. */
       week: Window | null;
       period: Window;
     };
+
+export type FreeSummary = Extract<PlanSummary, { plan: 'free' }>;
+export type PaidSummary = Exclude<PlanSummary, FreeSummary>;
 
 export const PLAN_SUMMARY_KEY = ['plan-summary'];
 
 type Row = Database['public']['CompositeTypes']['plan_summary'];
 
+const dateOf = (value: string | null) => (value ? new Date(value) : null);
+
 function windowOf(left: number | null, resetsAt: string | null): Window | null {
-  return left === null || resetsAt === null ? null : { left, resetsAt: new Date(resetsAt) };
+  return left === null ? null : { left, resetsAt: dateOf(resetsAt) };
 }
 
 /** Reads plan_summary()'s row into a summary; null for a row missing what its plan needs. */
@@ -50,13 +59,13 @@ export function toPlanSummary(row: Row): PlanSummary | null {
     };
   }
   const period = windowOf(row.period_left, row.period_resets_at);
-  if (!row.plan || !row.billing || !row.period_end || !period) {
+  if (!row.plan || !row.billing || !period) {
     return null;
   }
   return {
     plan: row.plan,
     billing: row.billing,
-    renewsAt: new Date(row.period_end),
+    renewsAt: dateOf(row.period_end),
     week: windowOf(row.week_left, row.week_resets_at),
     period,
   };
@@ -77,6 +86,8 @@ export function usePlanSummary() {
       }
       return summary;
     },
+    // Read again whenever the page opens, as chats and photos use the windows meanwhile.
+    staleTime: 0,
   });
 }
 

@@ -9,10 +9,7 @@ import { Text } from '@/components/ui/text';
 import { isoWeekday, useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
-import type { PlanSummary, Window } from './plan';
-
-type FreeSummary = Extract<PlanSummary, { plan: 'free' }>;
-type PaidSummary = Exclude<PlanSummary, FreeSummary>;
+import type { FreeSummary, PaidSummary, Window } from './plan';
 
 /** The free plan's meal photos this week, as a number and a bar, and when new ones come. */
 export function FreeUsage({ photos }: { photos: FreeSummary['photos'] }) {
@@ -61,38 +58,51 @@ export function PaidUsage({ summary }: { summary: PaidSummary }) {
         <Text variant="bodyStrong" style={styles.flex}>
           {t(summary.billing === 'yearly' ? 'premium.mine.yearly' : 'premium.mine.monthly')}
         </Text>
-        <Text variant="caption" color="textMuted">
-          {t(trial ? 'premium.mine.ends' : 'premium.mine.renews', {
-            day: monthDay(summary.renewsAt),
-          })}
-        </Text>
+        {summary.renewsAt ? (
+          <Text variant="caption" color="textMuted">
+            {t(trial ? 'premium.mine.ends' : 'premium.mine.renews', {
+              day: monthDay(summary.renewsAt),
+            })}
+          </Text>
+        ) : null}
       </View>
       <Caption>{t('premium.mine.biteLeft')}</Caption>
       {summary.week ? (
         <Meter
           label={t('premium.mine.week')}
           window={summary.week}
-          note={t('premium.mine.newWeek', { day: weekday(isoWeekday(summary.week.resetsAt)) })}
+          note={
+            summary.week.resetsAt
+              ? t('premium.mine.newWeek', { day: weekday(isoWeekday(summary.week.resetsAt)) })
+              : undefined
+          }
         />
       ) : null}
       <Meter
-        label={t('premium.mine.period')}
+        // The trial's one window is its week.
+        label={t(trial ? 'premium.mine.trialWeek' : 'premium.mine.period')}
         window={summary.period}
-        note={t('premium.mine.startsAgain', { day: monthDay(summary.period.resetsAt) })}
+        note={
+          summary.period.resetsAt
+            ? t('premium.mine.startsAgain', { day: monthDay(summary.period.resetsAt) })
+            : undefined
+        }
       />
     </Card>
   );
 }
 
 /** One window: its name and the share left, a bar of it, and when it starts again. */
-function Meter({ label, window, note }: { label: string; window: Window; note: string }) {
+function Meter({ label, window, note }: { label: string; window: Window; note?: string }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const percent = t('premium.mine.percent', { percent: Math.round(window.left * 100) });
   return (
     <View
       accessible
-      accessibilityLabel={`${label}, ${t('premium.mine.leftLabel', { percent })}. ${note}`}
+      accessibilityLabel={[`${label}, ${t('premium.mine.leftLabel', { percent })}`, note]
+        .filter(Boolean)
+        .join('. ')}
       style={[{ gap: spacing.xs, paddingVertical: spacing.md }, listDivider(false, colors.border)]}
     >
       <View style={styles.row}>
@@ -102,9 +112,11 @@ function Meter({ label, window, note }: { label: string; window: Window; note: s
         <Text variant="bodyStrong">{percent}</Text>
       </View>
       <ProgressBar value={window.left} accessible={false} />
-      <Text variant="caption" color="textMuted">
-        {note}
-      </Text>
+      {note ? (
+        <Text variant="caption" color="textMuted">
+          {note}
+        </Text>
+      ) : null}
     </View>
   );
 }

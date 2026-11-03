@@ -2131,8 +2131,8 @@
     "page": {
       "title": "Trainieren und essen mit Bite",
       "subtitle": "Tracking bleibt kostenlos. Premium bringt deinen Coach dazu.",
-      "title_trial": "Deine Gratiswoche",
-      "title_premium": "Du hast Premium",
+      "titleTrial": "Deine Gratiswoche",
+      "titlePremium": "Du hast Premium",
       "thanks": "Danke, dass du mit Bite trainierst.",
       "try": "7 Tage gratis testen",
       "then": "Danach ab {{price}} im Monat. Jederzeit kündbar."
@@ -2173,6 +2173,7 @@
       "biteLeft": "Bite, noch verfügbar",
       "week": "Diese Woche",
       "period": "Dieser Monat",
+      "trialWeek": "Diese Testphase",
       "newWeek": "Neue Woche am {{day}}",
       "startsAgain": "Beginnt neu am {{day}}",
       "percent": "{{percent}} %",
