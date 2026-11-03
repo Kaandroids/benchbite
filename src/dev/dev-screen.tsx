@@ -10,6 +10,7 @@ import { useIsAccount } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
 import { DevAccountLink } from './dev-account-link';
+import { DevPlanSection } from './dev-plan-section';
 
 /** The tools, one row each. Text here is for developers only, so it is not translated. */
 const TOOLS: { icon: IconName; title: string; detail: string; href: Href }[] = [
@@ -67,6 +68,7 @@ export function DevScreen() {
           </Pressable>
         ))}
       </Card>
+      <DevPlanSection />
       <DevAccountLink
         // Logging in warns about this; here it is said beside the link.
         note={isAccount ? undefined : 'This guest is signed out, and its data stays behind.'}
