@@ -1,0 +1,102 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Linking, StyleSheet, View } from 'react-native';
+
+import { BITE_PEEK_ROOM, BitePeek } from '@/coach/bite-peek';
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
+import { Text } from '@/components/ui/text';
+import { TextLink } from '@/components/ui/text-link';
+import { PRIVACY_POLICY_URL } from '@/onboarding/consent';
+import { ThemeScheme, useTheme } from '@/theme';
+
+import { usePurchasesSoon } from './purchases';
+import { PlanPicker } from './plan-picker';
+import type { Billing, PlanPrices } from './prices';
+import { TRIAL_DAYS } from './trial';
+
+type PlansSheetProps = {
+  prices: PlanPrices;
+  /** False for a user who has had their trial, who starts premium straight away. */
+  trial: boolean;
+  onClose: () => void;
+};
+
+/**
+ * The plans to choose from after the premium page (#411): yearly or monthly, what is due and when
+ * it renews, with Bite over the corner. Always dark, as it stands apart from the page under it.
+ * The purchase stays inactive until the purchases are built.
+ */
+export function PlansSheet(props: PlansSheetProps) {
+  return (
+    <ThemeScheme scheme="dark">
+      <Plans {...props} />
+    </ThemeScheme>
+  );
+}
+
+function Plans({ prices, trial, onClose }: PlansSheetProps) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const [billing, setBilling] = useState<Billing>('yearly');
+  const restore = usePurchasesSoon();
+  const price = billing === 'yearly' ? prices.yearly : prices.monthly;
+
+  return (
+    <Sheet onClose={onClose}>
+      <BitePeek />
+      <View style={{ gap: spacing.xs, paddingRight: BITE_PEEK_ROOM + spacing.md }}>
+        <Text variant="headline" accessibilityRole="header">
+          {t(trial ? 'premium.plans.titleTrial' : 'premium.plans.title')}
+        </Text>
+        <Text color="textMuted">
+          {trial ? t('premium.plans.trialThen', { count: TRIAL_DAYS }) : t('premium.plans.body')}
+        </Text>
+      </View>
+      <PlanPicker
+        prices={prices}
+        billing={billing}
+        onChange={setBilling}
+        yearlyNote={t('premium.plans.yearlyNote', { price: prices.yearlyPerMonth })}
+        badge="primary"
+      />
+      <View style={{ gap: spacing.sm }}>
+        <Button
+          label={
+            trial ? t('premium.plans.startTrial', { count: TRIAL_DAYS }) : t('premium.plans.start')
+          }
+          disabled
+        />
+        <Text variant="captionStrong" color="primaryText" align="center">
+          {t('premium.plans.soon')}
+        </Text>
+      </View>
+      <Text variant="caption" color="textMuted" align="center">
+        {billing === 'yearly'
+          ? t(trial ? 'premium.plans.termsTrialYearly' : 'premium.plans.termsYearly', {
+              count: TRIAL_DAYS,
+              price,
+            })
+          : t(trial ? 'premium.plans.termsTrialMonthly' : 'premium.plans.termsMonthly', {
+              count: TRIAL_DAYS,
+              price,
+            })}
+      </Text>
+      <View style={[styles.links, { gap: spacing.lg }]}>
+        <TextLink tone="muted" label={t('premium.restore')} onPress={restore} />
+        <TextLink
+          tone="muted"
+          label={t('premium.plans.privacy')}
+          onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+        />
+      </View>
+    </Sheet>
+  );
+}
+
+const styles = StyleSheet.create({
+  links: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+});
