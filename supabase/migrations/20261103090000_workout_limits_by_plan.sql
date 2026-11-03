@@ -4,6 +4,7 @@
 -- New error codes:
 --   BB051  a workout or alternative waits for premium
 --   BB052  a user has added as many alternatives as their plan allows
+-- BB041 now counts the versions the caller's plan allows.
 
 alter table public.workouts add column held boolean not null default false;
 alter table public.workout_alternatives add column held boolean not null default false;
@@ -11,7 +12,8 @@ alter table public.workout_alternatives add column held boolean not null default
 -- use since it was added. apply_plan_limits() keeps the ones last in use.
 alter table public.workout_alternatives add column last_used_at timestamptz;
 -- The plan apply_plan_limits() last applied for the subscription's user, so that the sweep below
--- applies only plans that have changed since, such as one whose end has passed.
+-- applies only plans that have changed since, such as one whose end has passed. It is the workout
+-- limits' and not the store's: what keeps subscriptions from the store leaves it alone.
 alter table public.subscriptions add column applied_plan public.plan;
 
 -- The row of `plans` that `user_id` is on now.
@@ -128,32 +130,132 @@ create trigger workout_exercises_refuse_held
   before insert or update or delete on public.workout_exercises
   for each row execute function public.refuse_held_workout_rows();
 
--- An alternative of a waiting workout gains none and changes no exercises; a waiting alternative is
--- not put in use or renamed. Their order may change and they may be deleted. Adding one checks the
--- alternatives a user may add in all (BB052). The versions of one workout stay checked by
--- add_workout_alternative(), as it counts them before it adds the workout's own as the first.
-create function public.check_alternative()
-returns trigger
+-- How many alternatives `user_id` has added to all their workouts, waiting ones included; the one
+-- in use of each workout is the workout itself and does not count.
+create function public.added_alternative_count(user_id uuid)
+returns integer
+language sql
+stable
+set search_path = ''
+as $$
+  select count(*)::integer from public.workout_alternatives a
+  where a.user_id = added_alternative_count.user_id and a.exercises is not null;
+$$;
+
+-- As before (20261031160000), with the limits of the caller's plan: the versions a workout may have
+-- (BB041) and the alternatives a user may add in all (BB052), and none for a workout that waits
+-- (BB051). Every alternative is added here, so its limits are checked here, beside each other.
+create or replace function public.add_workout_alternative(
+  workout_id bigint,
+  today date,
+  name text default null,
+  exercises jsonb default null,
+  source_alternative_id bigint default null
+)
+returns bigint
 language plpgsql
--- Reads the owner's plan, which users may not.
+-- Writes alternatives, which callers may only read, and reads saved_workout(), which they may not.
 security definer
 set search_path = ''
 as $$
 declare
-  most integer;
+  caller_id uuid := (select auth.uid());
+  workout jsonb;
+  source public.workout_alternatives;
+  kept jsonb;
+  added_id bigint;
+  limits public.plans := public.plan_limits(caller_id);
 begin
-  if tg_op = 'INSERT' then
-    if public.is_held_workout(new.workout_id) then
-      raise exception 'The workout waits for premium' using errcode = 'BB051';
+  perform public.lock_own_workout(add_workout_alternative.workout_id);
+  workout := public.saved_workout(add_workout_alternative.workout_id);
+
+  if public.is_held_workout(add_workout_alternative.workout_id) then
+    raise exception 'The workout waits for premium' using errcode = 'BB051';
+  end if;
+  -- The versions of the workout, its own first among them once it has an alternative, and the
+  -- alternatives the user has added to all their workouts, waiting ones included.
+  if (
+    select count(*) from public.workout_alternatives a
+    where a.workout_id = add_workout_alternative.workout_id
+  ) >= limits.versions then
+    raise exception 'A workout can have up to % alternatives', limits.versions
+      using errcode = 'BB041';
+  end if;
+  if public.added_alternative_count(caller_id) >= limits.added_alternatives then
+    raise exception 'A user can add up to % alternatives', limits.added_alternatives
+      using errcode = 'BB052';
+  end if;
+
+  if add_workout_alternative.source_alternative_id is not null then
+    if add_workout_alternative.exercises is not null then
+      raise exception 'An alternative is a copy or has exercises, not both' using errcode = '22023';
     end if;
-    most := (public.plan_limits(new.user_id)).added_alternatives;
-    if new.exercises is not null and most is not null and (
-      select count(*) from public.workout_alternatives a
-      where a.user_id = new.user_id and a.exercises is not null
-    ) >= most then
-      raise exception 'A user can add up to % alternatives', most using errcode = 'BB052';
+    -- Of the workout locked above, which is the caller's.
+    select * into source from public.workout_alternatives a
+    where a.id = add_workout_alternative.source_alternative_id
+      and a.workout_id = add_workout_alternative.workout_id;
+    if not found then
+      raise exception 'Alternative not found' using errcode = 'P0002';
     end if;
-  elsif (old.name, old.exercises) is distinct from (new.name, new.exercises)
+    kept := coalesce(source.exercises, workout -> 'exercises');
+  elsif add_workout_alternative.exercises is null then
+    kept := workout -> 'exercises';
+  else
+    if jsonb_typeof(add_workout_alternative.exercises) <> 'array' then
+      raise exception 'Exercises are a list' using errcode = '22023';
+    end if;
+    if jsonb_array_length(add_workout_alternative.exercises) = 0 then
+      kept := '[]';
+    else
+      -- As propose_coach_change(): nothing but BBTRY may be caught here, or the tried workout
+      -- would be kept. The variable keeps what was read before the rollback.
+      begin
+        perform public.save_workout(
+          workout || jsonb_build_object('exercises', add_workout_alternative.exercises),
+          add_workout_alternative.today
+        );
+        kept := public.saved_workout(add_workout_alternative.workout_id) -> 'exercises';
+        raise exception 'Tried' using errcode = 'BBTRY';
+      exception when sqlstate 'BBTRY' then
+        null;
+      end;
+    end if;
+  end if;
+
+  if not exists (
+    select 1 from public.workout_alternatives a
+    where a.workout_id = add_workout_alternative.workout_id
+  ) then
+    insert into public.workout_alternatives (workout_id, user_id, position)
+    values (add_workout_alternative.workout_id, caller_id, 1);
+  end if;
+
+  insert into public.workout_alternatives (workout_id, user_id, position, name, exercises)
+  values (
+    add_workout_alternative.workout_id,
+    caller_id,
+    (
+      select max(a.position) + 1 from public.workout_alternatives a
+      where a.workout_id = add_workout_alternative.workout_id
+    ),
+    nullif(btrim(add_workout_alternative.name), ''),
+    kept
+  )
+  returning id into added_id;
+  return added_id;
+end;
+$$;
+
+
+-- A waiting alternative is not put in use or renamed, and a waiting workout's alternatives change no
+-- exercises. Their order may change and they may be deleted.
+create function public.refuse_held_alternative()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if (old.name, old.exercises) is distinct from (new.name, new.exercises)
     and (old.held or public.is_held_workout(new.workout_id)) then
     raise exception 'The alternative waits for premium' using errcode = 'BB051';
   end if;
@@ -161,9 +263,9 @@ begin
 end;
 $$;
 
-create trigger workout_alternatives_check
-  before insert or update on public.workout_alternatives
-  for each row execute function public.check_alternative();
+create trigger workout_alternatives_refuse_held
+  before update on public.workout_alternatives
+  for each row execute function public.refuse_held_alternative();
 
 -- Stamps an alternative as it stops being the one in use.
 create function public.stamp_alternative_last_used()
@@ -234,10 +336,7 @@ begin
     having count(*) > limits.versions
   ) and (
     limits.added_alternatives is null
-    or (
-      select count(*) from public.workout_alternatives a
-      where a.user_id = apply_plan_limits.owner and a.exercises is not null
-    ) <= limits.added_alternatives
+    or public.added_alternative_count(apply_plan_limits.owner) <= limits.added_alternatives
   ) then
     update public.workout_alternatives a set held = false
     from public.workouts w
@@ -282,8 +381,13 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  owner uuid := case when tg_op = 'DELETE' then old.user_id else new.user_id end;
 begin
-  perform public.apply_plan_limits(case when tg_op = 'DELETE' then old.user_id else new.user_id end);
+  -- A user being deleted takes their subscription with them; there is nothing left to apply.
+  if exists (select 1 from auth.users u where u.id = owner) then
+    perform public.apply_plan_limits(owner);
+  end if;
   return null;
 end;
 $$;
@@ -317,6 +421,31 @@ create trigger workout_alternatives_apply_plan_limits_after_delete
   referencing old table as gone
   for each statement execute function public.apply_plan_limits_after_delete();
 
+-- As before (20261028220000), with the user's limits locked first, as save_workout() locks them, so
+-- that the plan applied after the delete waits for no lock this already holds the other way round.
+create or replace function public.delete_workout(workout_id bigint, today date)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  perform public.lock_user_limits((select auth.uid()));
+  -- The workout's row before the plan's lock, as in set_workout_active().
+  perform 1 from public.workouts w
+  where w.id = delete_workout.workout_id and w.user_id = (select auth.uid())
+  for update;
+  if not found then
+    raise exception 'Workout not found' using errcode = 'BB006';
+  end if;
+  perform public.keep_planned_days(delete_workout.today);
+  delete from public.workouts w where w.id = delete_workout.workout_id;
+end;
+$$;
+
 -- The users whose plan changed since it was last applied, such as one whose end has passed.
 create function public.apply_changed_plan_limits()
 returns void
@@ -330,7 +459,8 @@ as $$
 $$;
 
 revoke execute on function public.plan_limits(uuid), public.refuse_held_workout(),
-  public.is_held_workout(bigint), public.refuse_held_workout_rows(), public.check_alternative(),
+  public.is_held_workout(bigint), public.refuse_held_workout_rows(),
+  public.added_alternative_count(uuid), public.refuse_held_alternative(),
   public.stamp_alternative_last_used(), public.apply_plan_limits(uuid),
   public.apply_plan_limits_on_subscription(), public.apply_plan_limits_after_delete(),
   public.apply_changed_plan_limits()
