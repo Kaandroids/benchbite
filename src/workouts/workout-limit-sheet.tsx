@@ -16,8 +16,8 @@ type WorkoutLimitSheetProps = {
 };
 
 /**
- * No room for another workout on the free plan (#411): how much room premium has, with a way to
- * it, or to delete one instead.
+ * No room for another workout on a plan with less room than premium (#411): how much room premium
+ * has, with a way to it, or to delete one instead.
  */
 export function WorkoutLimitSheet({ count, max, premium, onClose }: WorkoutLimitSheetProps) {
   const { t } = useTranslation();
