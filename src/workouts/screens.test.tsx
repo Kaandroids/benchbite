@@ -563,7 +563,8 @@ describe('WorkoutScreen', () => {
       expect(screen.getByText('4 exercises')).toBeTruthy();
     });
 
-    it('says why one that waits for premium is not put in use', async () => {
+    it('opens a sheet for one that waits for premium instead of putting it in use', async () => {
+      const alert = jest.spyOn(Alert, 'alert');
       mockWorkouts([pull]);
       mockAlternatives([
         { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
@@ -572,9 +573,17 @@ describe('WorkoutScreen', () => {
       await render(<WorkoutScreen id={7} />);
       await fireEvent.press(screen.getByRole('tab', { name: 'Knee-safe' }));
       expect(switched()).toEqual([]);
-      expect(
-        screen.getByText('This alternative waits for premium. You can still delete it.'),
-      ).toBeTruthy();
+      expect(screen.getByText('Knee-safe waits for premium')).toBeTruthy();
+      expect(screen.getByText(/as it was/)).toBeTruthy();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Manage alternatives' }));
+      await waitFor(() => expect(screen.getByText('Add alternative')).toBeTruthy());
+
+      await fireEvent.press(screen.getByRole('tab', { name: 'Knee-safe' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Get it back with premium' }));
+      await waitFor(() =>
+        expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String)),
+      );
     });
 
     it('shows no chips for a workout without alternatives', async () => {

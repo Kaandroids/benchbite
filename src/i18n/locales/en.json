@@ -867,7 +867,10 @@
       "waits": "Waits for premium",
       "room_one": "Your plan has room for {{count}} workout.",
       "room_other": "Your plan has room for {{count}} workouts.",
-      "train": "Train it with premium"
+      "train": "Train it with premium",
+      "alternativeBody_one": "Your plan allows {{count}} alternative in all. This one is kept as it was.",
+      "alternativeBody_other": "Your plan allows {{count}} alternatives in all. This one is kept as it was.",
+      "manageAlternatives": "Manage alternatives"
     }
   },
   "exercise": {

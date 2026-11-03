@@ -867,7 +867,10 @@
       "waits": "Premium'u bekliyor",
       "room_one": "Planında {{count}} antrenmanlık yer var.",
       "room_other": "Planında {{count}} antrenmanlık yer var.",
-      "train": "Premium ile çalış"
+      "train": "Premium ile çalış",
+      "alternativeBody_one": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
+      "alternativeBody_other": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
+      "manageAlternatives": "Alternatifleri yönet"
     }
   },
   "exercise": {

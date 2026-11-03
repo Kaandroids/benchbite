@@ -867,7 +867,10 @@
       "waits": "Wartet auf Premium",
       "room_one": "Dein Plan hat Platz für {{count}} Workout.",
       "room_other": "Dein Plan hat Platz für {{count}} Workouts.",
-      "train": "Mit Premium trainieren"
+      "train": "Mit Premium trainieren",
+      "alternativeBody_one": "Dein Plan erlaubt insgesamt {{count}} Alternative. Diese bleibt, wie sie war.",
+      "alternativeBody_other": "Dein Plan erlaubt insgesamt {{count}} Alternativen. Diese bleibt, wie sie war.",
+      "manageAlternatives": "Alternativen verwalten"
     }
   },
   "exercise": {

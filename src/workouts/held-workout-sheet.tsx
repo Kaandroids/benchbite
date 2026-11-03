@@ -1,21 +1,24 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
-import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
-import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
+import { afterSheetCloses } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useOpenPremium } from '@/premium/open-premium';
-import { useTheme } from '@/theme';
 
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { useWorkoutName } from './format';
+import { WaitingSheet } from './waiting-sheet';
 import { useWorkoutLimits, type Workout } from './workouts';
 
-const BITE_SIZE = 64;
-/** How far Bite stands above the sheet's top edge, the rest of it over the sheet's corner. */
-const BITE_PEEK = 44;
+/** Closes the sheet, then runs `action`, as iOS shows no alert or screen over a closing sheet. */
+function thenClose(onClose: () => void, action: () => void) {
+  return () => {
+    onClose();
+    afterSheetCloses(action);
+  };
+}
 
 type HeldWorkoutSheetProps = {
   workout: Workout;
@@ -24,80 +27,89 @@ type HeldWorkoutSheetProps = {
 
 /**
  * A workout that waits for premium, tapped in a list: that it is kept as it was, with premium to
- * get it back, its exercises to look at and a delete to make room. Bite looks over the sheet.
+ * get it back, its exercises to look at and a delete to make room.
  */
 export function HeldWorkoutSheet({ workout, onClose }: HeldWorkoutSheetProps) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
   // The room the plan has, as the plan is now.
   const limits = useWorkoutLimits({ fresh: true });
   const openPremium = useOpenPremium();
   const { confirm: confirmDelete } = useConfirmDeleteWorkout();
   const name = useWorkoutName()(workout);
 
-  // Once the sheet has closed, as iOS shows no alert or screen over a closing sheet.
-  const thenClose = (action: () => void) => () => {
-    onClose();
-    afterSheetCloses(action);
-  };
+  return (
+    <WaitingSheet
+      title={t('workout.held.sheetTitle', { name })}
+      body={
+        limits.data
+          ? t('workout.held.sheetBody', { count: limits.data.workouts })
+          : t('workout.held.kept')
+      }
+      onClose={onClose}
+    >
+      <Button label={t('workout.held.getBack')} onPress={thenClose(onClose, openPremium)} />
+      <Button
+        label={t('workout.held.seeExercises')}
+        variant="secondary"
+        onPress={thenClose(onClose, () =>
+          router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } }),
+        )}
+      />
+      <Pressable
+        accessibilityRole="button"
+        onPress={thenClose(onClose, () => confirmDelete(workout.id))}
+        style={styles.delete}
+      >
+        <Text variant="label" color="danger">
+          {t('workout.held.deleteToMakeRoom')}
+        </Text>
+      </Pressable>
+    </WaitingSheet>
+  );
+}
+
+type HeldAlternativeSheetProps = {
+  /** The alternative's name, as its chip shows it. */
+  name: string;
+  /** Opens the workout's alternatives, where it can be deleted or another put in use. */
+  onManage: () => void;
+  onClose: () => void;
+};
+
+/**
+ * An alternative that waits for premium, tapped among a workout's chips: that it is kept, with
+ * premium to get it back and the alternatives to make room.
+ */
+export function HeldAlternativeSheet({ name, onManage, onClose }: HeldAlternativeSheetProps) {
+  const { t } = useTranslation();
+  const limits = useWorkoutLimits({ fresh: true });
+  const openPremium = useOpenPremium();
+  // Null on plans without a limit in all.
+  const inAll = limits.data?.added_alternatives;
 
   return (
-    <Sheet onClose={onClose}>
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={[
-          styles.bite,
-          {
-            top: -BITE_PEEK,
-            right: spacing.xl,
-            borderRadius: BITE_SIZE,
-            borderColor: colors.background,
-          },
-        ]}
-      >
-        <BiteAvatar size={BITE_SIZE} looksAbout />
-      </View>
-      <View style={{ gap: spacing.xs, paddingRight: BITE_SIZE + spacing.md }}>
-        <Text variant="headline" accessibilityRole="header">
-          {t('workout.held.sheetTitle', { name })}
-        </Text>
-        <Text color="textMuted">
-          {limits.data
-            ? t('workout.held.sheetBody', { count: limits.data.workouts })
-            : t('workout.held.kept')}
-        </Text>
-      </View>
-      <View style={{ gap: spacing.sm }}>
-        <Button label={t('workout.held.getBack')} onPress={thenClose(openPremium)} />
-        <Button
-          label={t('workout.held.seeExercises')}
-          variant="secondary"
-          onPress={thenClose(() =>
-            router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } }),
-          )}
-        />
-        <Pressable
-          accessibilityRole="button"
-          onPress={thenClose(() => confirmDelete(workout.id))}
-          style={styles.delete}
-        >
-          <Text variant="label" color="danger">
-            {t('workout.held.deleteToMakeRoom')}
-          </Text>
-        </Pressable>
-      </View>
-    </Sheet>
+    <WaitingSheet
+      title={t('workout.held.sheetTitle', { name })}
+      body={
+        inAll !== undefined && inAll !== null
+          ? t('workout.held.alternativeBody', { count: inAll })
+          : t('workout.held.kept')
+      }
+      onClose={onClose}
+    >
+      <Button label={t('workout.held.getBack')} onPress={thenClose(onClose, openPremium)} />
+      <Button
+        label={t('workout.held.manageAlternatives')}
+        variant="secondary"
+        onPress={thenClose(onClose, onManage)}
+      />
+    </WaitingSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  bite: {
-    position: 'absolute',
-    borderWidth: 4,
-  },
   delete: {
-    height: 44,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },

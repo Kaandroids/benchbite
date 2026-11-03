@@ -25,11 +25,17 @@ import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
-import { useChooseAlternative, useWorkoutAlternatives } from './alternatives';
+import {
+  useAlternativeName,
+  useChooseAlternative,
+  useWorkoutAlternatives,
+  type WorkoutAlternative,
+} from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
+import { HeldAlternativeSheet } from './held-workout-sheet';
 import {
   HELD_OPACITY,
   mainMuscles,
@@ -73,6 +79,9 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
   const [managing, setManaging] = useState(false);
+  // An alternative that waits for premium, tapped among the chips.
+  const [waiting, setWaiting] = useState<WorkoutAlternative | null>(null);
+  const alternativeName = useAlternativeName();
   const alternatives = useWorkoutAlternatives(id);
 
   // A workout that is running cannot change under it, nor be deleted before it is saved; it is
@@ -251,7 +260,9 @@ export function WorkoutScreen({ id }: { id: number }) {
         )
       }
     >
-      {held ? null : <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />}
+      {held ? null : (
+        <WorkoutAlternatives alternatives={alternatives.data} choice={choice} onHeld={setWaiting} />
+      )}
 
       {empty ? (
         // One that waits cannot be edited (BB051), so it offers premium alone.
@@ -316,6 +327,13 @@ export function WorkoutScreen({ id }: { id: number }) {
       </Pressable>
 
       {startSheet}
+      {waiting ? (
+        <HeldAlternativeSheet
+          name={alternativeName(waiting)}
+          onManage={() => setManaging(true)}
+          onClose={() => setWaiting(null)}
+        />
+      ) : null}
       {managing ? (
         <AlternativesSheets
           workout={workout}
