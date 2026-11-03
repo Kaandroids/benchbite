@@ -213,6 +213,67 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '5' } });
   });
 
+  describe('with workouts that wait for premium', () => {
+    const waiting = [
+      testWorkout(1, { type: 'push' }),
+      testWorkout(2, { name: 'Core', held: true }),
+      testWorkout(3, { name: 'Cardio', active: false, held: true }),
+    ];
+
+    it('locks them in their place, under a banner that counts the archived one too', async () => {
+      const alert = jest.spyOn(Alert, 'alert');
+      mockWorkouts(waiting);
+      await render(<WorkoutsScreen />);
+      expect(screen.getByText('2 workouts wait for premium.')).toBeTruthy();
+      expect(screen.getByText('Active · 2')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Start Push' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Start Core' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Core, waits for premium' })).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: /wait for premium/ }));
+      expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String));
+    });
+
+    it('shows no banner while none waits', async () => {
+      mockWorkouts([testWorkout(1)]);
+      await render(<WorkoutsScreen />);
+      expect(screen.queryByText(/wait for premium/)).toBeNull();
+    });
+
+    it('opens a sheet for one, which offers premium, its exercises and a delete', async () => {
+      const alert = jest.spyOn(Alert, 'alert');
+      mockWorkouts(waiting);
+      await render(<WorkoutsScreen />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Core, waits for premium' }));
+      expect(router.push).not.toHaveBeenCalled();
+      expect(screen.getByText('Core waits for premium')).toBeTruthy();
+      expect(screen.getByText(/Your plan has room for 2 workouts/)).toBeTruthy();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'See its exercises' }));
+      await waitFor(() =>
+        expect(router.push).toHaveBeenCalledWith({
+          pathname: '/workout/[id]',
+          params: { id: '2' },
+        }),
+      );
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Core, waits for premium' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Delete it to make room' }));
+      await waitFor(() =>
+        expect(alert).toHaveBeenCalledWith(
+          'Delete this workout?',
+          expect.any(String),
+          expect.any(Array),
+        ),
+      );
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Core, waits for premium' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Get it back with premium' }));
+      await waitFor(() =>
+        expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String)),
+      );
+    });
+  });
+
   describe('with a workout in progress', () => {
     beforeEach(() => {
       jest
@@ -297,6 +358,13 @@ describe('ArchiveScreen', () => {
     expect(screen.queryByRole('button', { name: /^Start / })).toBeNull();
     await fireEvent(screen.getByLabelText('Upper body is active'), 'valueChange', true);
     expect(mutate).toHaveBeenCalledWith({ id: 2, active: true });
+  });
+
+  it('locks one that waits for premium instead of offering to switch it on', async () => {
+    mockWorkouts([testWorkout(2, { name: 'Cardio', active: false, held: true })]);
+    await render(<ArchiveScreen />);
+    expect(screen.queryByLabelText('Cardio is active')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cardio, waits for premium' })).toBeTruthy();
   });
 
   it('says when the archive is empty, and goes back', async () => {
@@ -433,6 +501,30 @@ describe('WorkoutScreen', () => {
     expect(mutate).toHaveBeenCalledWith({ id: 7, active: true });
   });
 
+  it('offers premium instead of Start, editing, alternatives and the archive while it waits', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    mockWorkouts([{ ...pull, held: true }]);
+    mockAlternatives([
+      { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
+      { id: 5, position: 2, name: 'Home', inUse: false, held: false, exerciseCount: 2 },
+    ]);
+    await render(<WorkoutScreen id={7} />);
+    expect(screen.getByLabelText('Waits for premium')).toBeTruthy();
+    expect(screen.getByText('Your plan has room for 2 workouts.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Start workout' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Alternatives' })).toBeNull();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: 'Move to archive' })).toBeNull();
+    // Its exercises can still be looked at.
+    expect(screen.getByText('Name of pulldown')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Train it with premium' }));
+    expect(alert).toHaveBeenLastCalledWith('Premium is on its way', expect.any(String));
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+    expect(alert.mock.lastCall?.[0]).toBe('Delete this workout?');
+  });
+
   describe('with alternatives', () => {
     const gymHomeHotel: WorkoutAlternative[] = [
       { id: 3, position: 1, name: 'Gym', inUse: false, held: false, exerciseCount: 4 },
@@ -447,6 +539,20 @@ describe('WorkoutScreen', () => {
       expect(screen.getByText('Add alternative')).toBeTruthy();
       expect(screen.getByRole('radio', { name: 'Alternative 1', checked: true })).toBeTruthy();
       expect(screen.getByText('4 exercises')).toBeTruthy();
+    });
+
+    it('says why one that waits for premium is not put in use', async () => {
+      mockWorkouts([pull]);
+      mockAlternatives([
+        { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
+        { id: 5, position: 2, name: 'Knee-safe', inUse: false, held: true, exerciseCount: 2 },
+      ]);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('tab', { name: 'Knee-safe' }));
+      expect(switched()).toEqual([]);
+      expect(
+        screen.getByText('This alternative waits for premium. You can still delete it.'),
+      ).toBeTruthy();
     });
 
     it('shows no chips for a workout without alternatives', async () => {

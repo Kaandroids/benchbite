@@ -438,6 +438,45 @@ it('says when the cap refused an add', async () => {
   expect(screen.getByText('A workout can have up to 5 alternatives.')).toBeTruthy();
 });
 
+it('locks one that waits for premium: not put in use nor renamed, but deleted', async () => {
+  mockAlternatives([
+    { id: 3, position: 1, name: 'Gym', inUse: true, held: false, exerciseCount: null },
+    { id: 5, position: 2, name: 'Knee-safe', inUse: false, held: true, exerciseCount: 2 },
+  ]);
+  await renderSheets();
+  const row = screen.getByRole('radio', { name: 'Knee-safe' });
+  expect(row.props.accessibilityHint).toBe('2 exercises, Waits for premium');
+  await fireEvent.press(row);
+  expect(switched()).toEqual([]);
+  expect(
+    screen.getByText('This alternative waits for premium. You can still delete it.'),
+  ).toBeTruthy();
+  await openMenu('Knee-safe');
+  expect(menuItem('Rename')).toBeNull();
+  expect(menuItem('Delete')).toBeTruthy();
+});
+
+it('points to premium once the plan allows no more', async () => {
+  const alert = jest.spyOn(Alert, 'alert');
+  jest.mocked(useWorkoutLimits).mockReturnValue({
+    data: {
+      exercises: 20,
+      workouts: 3,
+      alternatives: 5,
+      added_alternatives: 1,
+      alternatives_added: 1,
+      alternative_name_length: 12,
+    },
+  } as never);
+  await renderSheets();
+  expect(screen.queryByRole('button', { name: 'Add alternative' })).toBeNull();
+  expect(
+    screen.getByText("You've added the 1 alternative your plan allows. Delete it to add one here."),
+  ).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'More with premium' }));
+  expect(alert).toHaveBeenCalledWith('Premium is on its way', expect.any(String));
+});
+
 it('closes on the scrim', async () => {
   await renderSheets();
   await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
