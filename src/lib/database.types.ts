@@ -1811,6 +1811,7 @@ export type Database = {
         };
         Returns: number;
       };
+      added_alternative_count: { Args: { user_id: string }; Returns: number };
       age_in_years: { Args: { birth_year: number }; Returns: number };
       ai_access: {
         Args: { feature?: Database['public']['Enums']['ai_feature'] };
