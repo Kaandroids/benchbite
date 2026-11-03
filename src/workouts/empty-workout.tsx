@@ -14,8 +14,8 @@ type EmptyWorkoutProps = {
   alternatives: WorkoutAlternative[] | undefined;
   /** The workout's name, for one without alternatives. */
   name: string;
-  /** Opens the editor to add the exercises. */
-  onAdd: () => void;
+  /** Opens the editor to add the exercises; without it, as while the workout waits, no button. */
+  onAdd?: () => void;
 };
 
 /**
@@ -46,12 +46,14 @@ export function EmptyWorkout({ alternatives = [], name, onAdd }: EmptyWorkoutPro
       <Text color="textMuted" align="center">
         {body}
       </Text>
-      <Button
-        label={t('workout.empty.add')}
-        size="small"
-        onPress={onAdd}
-        style={{ marginTop: spacing.sm }}
-      />
+      {onAdd ? (
+        <Button
+          label={t('workout.empty.add')}
+          size="small"
+          onPress={onAdd}
+          style={{ marginTop: spacing.sm }}
+        />
+      ) : null}
     </Card>
   );
 }

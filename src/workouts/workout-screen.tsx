@@ -249,7 +249,12 @@ export function WorkoutScreen({ id }: { id: number }) {
       {held ? null : <WorkoutAlternatives alternatives={alternatives.data} choice={choice} />}
 
       {empty ? (
-        <EmptyWorkout alternatives={alternatives.data} name={name} onAdd={onEdit} />
+        // One that waits cannot be edited (BB051), so it offers premium alone.
+        <EmptyWorkout
+          alternatives={alternatives.data}
+          name={name}
+          onAdd={held ? undefined : onEdit}
+        />
       ) : (
         <>
           {/* One card of even columns over the workout's days, like a finished workout's figures

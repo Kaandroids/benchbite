@@ -684,6 +684,14 @@ describe('WorkoutScreen', () => {
   describe('without exercises', () => {
     const empty = { ...pull, exercises: [] };
 
+    it('offers no way to add exercises while it waits for premium', async () => {
+      mockWorkouts([{ ...pull, exercises: [], held: true }]);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByText('Pull has no exercises yet')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Add exercises' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Train it with premium' })).toBeTruthy();
+    });
+
     it('says so in place of its exercises, and leads to Edit', async () => {
       mockWorkouts([empty]);
       mockAlternatives([
