@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Image, Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { useTheme } from '@/theme';
@@ -14,6 +14,9 @@ type PhotoViewerProps = {
 export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
+  // Read from the app's provider: a SafeAreaView inside the modal measures no insets, which put
+  // the button under the status bar, where it could not be pressed (#425).
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible
@@ -28,7 +31,7 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
           accessibilityLabel={t('bite.photos.viewer')}
           style={StyleSheet.absoluteFill}
         />
-        <SafeAreaView edges={['top']} style={[styles.top, { padding: spacing.md }]}>
+        <View style={[styles.top, { padding: spacing.md, paddingTop: insets.top + spacing.md }]}>
           <RoundIconButton
             icon="close"
             color="onInverse"
@@ -37,7 +40,7 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
             onPress={onClose}
             size={40}
           />
-        </SafeAreaView>
+        </View>
       </View>
     </Modal>
   );
