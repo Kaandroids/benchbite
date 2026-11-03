@@ -2454,6 +2454,16 @@ export type Database = {
         };
       };
       plan_of: { Args: { user_id: string }; Returns: Database['public']['Enums']['plan'] };
+      plan_summary: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database['public']['CompositeTypes']['plan_summary'];
+        SetofOptions: {
+          from: '*';
+          to: 'plan_summary';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       planned_workouts: {
         Args: { from_day: string; to_day: string; today: string };
         Returns: {
@@ -2664,6 +2674,7 @@ export type Database = {
         };
         Returns: undefined;
       };
+      share_left: { Args: { budget: number; used: number }; Returns: number };
       start_ai_call: {
         Args: {
           feature: Database['public']['Enums']['ai_feature'];
@@ -2967,6 +2978,18 @@ export type Database = {
         protein_g: number | null;
         carbs_g: number | null;
         fat_g: number | null;
+      };
+      plan_summary: {
+        plan: Database['public']['Enums']['plan'] | null;
+        billing: Database['public']['Enums']['billing_period'] | null;
+        period_end: string | null;
+        week_left: number | null;
+        week_resets_at: string | null;
+        period_left: number | null;
+        period_resets_at: string | null;
+        photos_per_week: number | null;
+        photos_left: number | null;
+        photos_reset_at: string | null;
       };
     };
   };
