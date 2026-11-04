@@ -10,14 +10,16 @@ import { useTheme } from '@/theme';
 
 import { AppearanceSection } from './appearance-section';
 import { LanguageSection } from './language-section';
+import { PlanSection } from './plan-section';
 import { ProfileSection } from './profile-section';
 import { WaterGoalSection } from './water-goal-section';
 
-/** The app's settings, one section per topic. */
+/** The app's settings: the user's plan, then one section per topic. */
 export function SettingsScreen() {
   const { t } = useTranslation();
   return (
     <Screen onBack={() => router.back()} title={t('settings.title')}>
+      <PlanSection />
       <Section title={t('settings.profile')}>
         <ProfileSection />
       </Section>

@@ -82,7 +82,15 @@
     "phoneLanguageNow": "Şu an {{language}}",
     "waterGoal": "Günlük su hedefi",
     "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri {{ml}} ml.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Ücretsiz plan",
+      "trial": "Ücretsiz deneme",
+      "tryFree_one": "Premium'u {{count}} gün ücretsiz dene",
+      "tryFree_other": "Premium'u {{count}} gün ücretsiz dene",
+      "more": "Bite ile sohbet ve fazlası",
+      "hint": "Planını ve premium'un sunduklarını açar"
+    }
   },
   "loadError": {
     "title": "Yüklenemedi",
@@ -871,6 +879,13 @@
       "alternativeBody_one": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
       "alternativeBody_other": "Planın toplamda {{count}} alternatife izin veriyor. Bu alternatif olduğu gibi saklanıyor.",
       "manageAlternatives": "Alternatifleri yönet"
+    },
+    "limitSheet": {
+      "title_one": "{{count}}/{{count}} antrenmanın var",
+      "title_other": "{{count}}/{{count}} antrenmanın var",
+      "body": "Arşivdekiler de sayılır. Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil.",
+      "seePremium": "Premium'a bak",
+      "notNow": "Şimdi değil"
     }
   },
   "exercise": {

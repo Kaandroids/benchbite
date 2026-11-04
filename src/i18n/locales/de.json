@@ -82,7 +82,15 @@
     "phoneLanguageNow": "Gerade {{language}}",
     "waterGoal": "Tägliches Wasserziel",
     "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je {{ml}} ml.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Kostenloser Plan",
+      "trial": "Kostenlose Testphase",
+      "tryFree_one": "Teste Premium {{count}} Tag kostenlos",
+      "tryFree_other": "Teste Premium {{count}} Tage kostenlos",
+      "more": "Chatte mit Bite, und mehr",
+      "hint": "Öffnet deinen Plan und was Premium bietet"
+    }
   },
   "loadError": {
     "title": "Das konnte nicht geladen werden",
@@ -871,6 +879,13 @@
       "alternativeBody_one": "Dein Plan erlaubt insgesamt {{count}} Alternative. Diese bleibt, wie sie war.",
       "alternativeBody_other": "Dein Plan erlaubt insgesamt {{count}} Alternativen. Diese bleibt, wie sie war.",
       "manageAlternatives": "Alternativen verwalten"
+    },
+    "limitSheet": {
+      "title_one": "Du hast {{count}} von {{count}} Workout",
+      "title_other": "Du hast {{count}} von {{count}} Workouts",
+      "body": "Archivierte zählen mit. Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen.",
+      "seePremium": "Premium ansehen",
+      "notNow": "Nicht jetzt"
     }
   },
   "exercise": {

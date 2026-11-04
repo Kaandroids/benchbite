@@ -60,6 +60,14 @@ jest.mock('@/sessions/session', () => ({
   endSession: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/premium/plan', () => ({
+  usePlanNumbers: () => ({
+    data: {
+      free: { workouts: 2, versions: 2, addedAlternatives: 1, weeklyPhotos: 2 },
+      premium: { workouts: 500, versions: 5, addedAlternatives: null, weeklyPhotos: null },
+    },
+  }),
+}));
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: () => ({
@@ -193,15 +201,41 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
-  it('says when there is no room for another workout, counting the archive', async () => {
-    const alert = jest.spyOn(Alert, 'alert');
+  it('offers premium when there is no room for another workout, counting the archive', async () => {
     mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
     await render(<WorkoutsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
     expect(router.push).not.toHaveBeenCalled();
+    expect(screen.getByText('You have 2 of 2 workouts')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Archived ones count too. Premium has room for 500, with 5 alternatives each. Or delete one to make room.',
+      ),
+    ).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
+  });
+
+  it('closes the offer without opening premium', async () => {
+    mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
+    await render(<WorkoutsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+    await waitFor(() => expect(screen.queryByText('You have 2 of 2 workouts')).toBeNull());
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it('says only that there is no room on premium, which has no more to offer', async () => {
+    const alert = jest.spyOn(Alert, 'alert');
+    jest
+      .mocked(useWorkoutLimits)
+      .mockReturnValue({ data: { exercises: 20, workouts: 500, alternatives: 5 } } as never);
+    mockWorkouts(Array.from({ length: 500 }, (_, i) => testWorkout(i + 1, { active: false })));
+    await render(<WorkoutsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
     expect(alert).toHaveBeenCalledWith(
       'No room for another workout',
-      'You can have up to 2 workouts, archived ones included. Delete one to make room.',
+      'You can have up to 500 workouts, archived ones included. Delete one to make room.',
     );
   });
 

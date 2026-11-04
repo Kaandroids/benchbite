@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { TabHeader } from '@/components/tab-header';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { isoWeekday } from '@/i18n/dates';
+import { usePlanNumbers } from '@/premium/plan';
 import { useUserId } from '@/providers/session-provider';
 import { InProgressCard } from '@/sessions/in-progress-card';
 import { useActiveSession } from '@/sessions/session';
@@ -17,6 +18,7 @@ import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
 import { HeldBanner } from './held-banner';
+import { WorkoutLimitSheet } from './workout-limit-sheet';
 import { WorkoutListItem } from './workout-list-item';
 import { showsAsWaiting, useWorkoutLimits, useWorkouts } from './workouts';
 
@@ -31,6 +33,8 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const { ref, barSpace } = useTabScroll();
   const workouts = useWorkouts();
   const limits = useWorkoutLimits();
+  const numbers = usePlanNumbers();
+  const [limitShown, setLimitShown] = useState(false);
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
@@ -40,11 +44,25 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
       .length ?? 0;
   const today = isoWeekday(new Date());
   // Archived workouts count too (ADR 0018).
-  const full = limits.data !== undefined && (workouts.data?.length ?? 0) >= limits.data.workouts;
+  const count = workouts.data?.length ?? 0;
+  const full = limits.data !== undefined && count >= limits.data.workouts;
+  // The room premium would give, on a plan with less; none on premium itself.
+  const premium = numbers.data?.premium;
+  const premiumRoom =
+    limits.data &&
+    premium?.workouts != null &&
+    premium.versions != null &&
+    premium.workouts > limits.data.workouts
+      ? { workouts: premium.workouts, versions: premium.versions }
+      : null;
 
   const create = () => {
     if (full) {
-      Alert.alert(t('workout.limitTitle'), t('workout.limit', { max: limits.data.workouts }));
+      if (premiumRoom) {
+        setLimitShown(true);
+      } else {
+        Alert.alert(t('workout.limitTitle'), t('workout.limit', { max: limits.data.workouts }));
+      }
       return;
     }
     router.push('/workout/edit');
@@ -121,6 +139,14 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
         ) : null}
       </ScrollView>
       {startSheet}
+      {limitShown && limits.data && premiumRoom ? (
+        <WorkoutLimitSheet
+          count={count}
+          max={limits.data.workouts}
+          premium={premiumRoom}
+          onClose={() => setLimitShown(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
