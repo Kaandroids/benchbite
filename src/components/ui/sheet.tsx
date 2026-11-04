@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme';
 
@@ -44,28 +44,32 @@ export function Sheet({ onClose, children }: SheetProps) {
   const { colors, radii, spacing } = useTheme();
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      {/* A field in the sheet stays above the keyboard. */}
-      <KeyboardAvoiding style={styles.root}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={onClose}
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-        />
-        <SafeAreaView
-          edges={['bottom']}
-          style={{
-            backgroundColor: colors.background,
-            borderTopLeftRadius: radii.xl,
-            borderTopRightRadius: radii.xl,
-            padding: spacing.xl,
-            gap: spacing.lg,
-          }}
-        >
-          <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          {children}
-        </SafeAreaView>
-      </KeyboardAvoiding>
+      {/* On iOS, a modal gets no safe area without a provider of its own, which left the sheet's
+          last button over the home indicator. */}
+      <SafeAreaProvider>
+        {/* A field in the sheet stays above the keyboard. */}
+        <KeyboardAvoiding style={styles.root}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            onPress={onClose}
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
+          />
+          <SafeAreaView
+            edges={['bottom']}
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: radii.xl,
+              borderTopRightRadius: radii.xl,
+              padding: spacing.xl,
+              gap: spacing.lg,
+            }}
+          >
+            <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+            {children}
+          </SafeAreaView>
+        </KeyboardAvoiding>
+      </SafeAreaProvider>
     </Modal>
   );
 }

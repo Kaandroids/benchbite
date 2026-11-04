@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, Modal, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { useTheme } from '@/theme';
@@ -21,7 +21,9 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
       onRequestClose={onClose}
       supportedOrientations={['portrait']}
     >
-      <View style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
+      {/* On iOS, a full-screen modal gets no safe area without a provider of its own, which put the
+          close button under the status bar, where it could not be pressed (#425). */}
+      <SafeAreaProvider style={[styles.root, { backgroundColor: colors.inverseSurface }]}>
         <Image
           source={{ uri }}
           resizeMode="contain"
@@ -38,7 +40,7 @@ export function PhotoViewer({ uri, onClose }: PhotoViewerProps) {
             size={40}
           />
         </SafeAreaView>
-      </View>
+      </SafeAreaProvider>
     </Modal>
   );
 }
