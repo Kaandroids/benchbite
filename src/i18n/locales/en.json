@@ -82,7 +82,15 @@
     "phoneLanguageNow": "{{language}} now",
     "waterGoal": "Daily water goal",
     "waterGoalNote": "The glasses to fill on the Nutrition tab, {{ml}} ml each.",
-    "liters": "{{amount}} L"
+    "liters": "{{amount}} L",
+    "plan": {
+      "free": "Free plan",
+      "trial": "Free trial",
+      "tryFree_one": "Try premium free for {{count}} day",
+      "tryFree_other": "Try premium free for {{count}} days",
+      "more": "Chat with Bite, and more",
+      "hint": "Opens your plan and what premium adds"
+    }
   },
   "loadError": {
     "title": "This couldn't load",
@@ -871,6 +879,13 @@
       "alternativeBody_one": "Your plan allows {{count}} alternative in all. This one is kept as it was.",
       "alternativeBody_other": "Your plan allows {{count}} alternatives in all. This one is kept as it was.",
       "manageAlternatives": "Manage alternatives"
+    },
+    "limitSheet": {
+      "title_one": "You have {{count}} of {{count}} workout",
+      "title_other": "You have {{count}} of {{count}} workouts",
+      "body": "Archived ones count too. Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room.",
+      "seePremium": "See premium",
+      "notNow": "Not now"
     }
   },
   "exercise": {
