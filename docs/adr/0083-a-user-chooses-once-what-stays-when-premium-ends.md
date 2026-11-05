@@ -16,9 +16,11 @@ workout they only did last week because of travel.
 - **A user chooses once for each premium that ends.** `applied_plans.choice_open` says the choice is
   theirs. `apply_plan_limits()` opens it when a plan with more room ends and something waits, and
   closes it when nothing is left to choose between. Only the next end of a plan opens it again.
-- **`choose_what_stays(workouts, alternatives)` makes the choice** and closes it. It takes as many
+- **`choose_what_stays(workouts, alternatives, today)` makes the choice** and closes it. It takes as many
   active workouts as the plan has room for, or all there are, and likewise the alternatives of those
   workouts. It refuses when there is no choice to make (BB055) and what does not fit the plan (BB056).
+- **It takes the device's today,** as what changes the plan does (ADR 0041), so that the days before
+  it keep the plan they had.
 - **Until then the automatic rule holds:** the ones last trained and used stay, so a user who never
   chooses keeps working, and `workout_limits()` gives the app `choice_open` so that it can ask.
 - **What is in the archive is not among the choices** (ADR 0082): it stays as it is.
