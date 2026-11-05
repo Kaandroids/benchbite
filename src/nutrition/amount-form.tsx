@@ -299,7 +299,12 @@ export function AmountForm({
                     {t(`nutrition.macros.${key}`)}
                   </Text>
                 </View>
-                <Text variant="label">
+                <Text
+                  variant="label"
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={MACRO_TEXT_MIN_SCALE}
+                >
                   {t('nutrition.grams', { count: Math.round(adds[nutrient]) })}
                 </Text>
               </View>
@@ -357,10 +362,12 @@ const styles = StyleSheet.create({
   macros: {
     flexDirection: 'row',
   },
-  // As wide as its name needs, and the room left shared out, so that a long name stays whole.
+  // As wide as its name needs, and the room left shared out, so that a long name stays whole. On a
+  // narrow phone the minimum makes the long name give way, not the short one beside it.
   macro: {
     flexGrow: 1,
     flexShrink: 1,
+    minWidth: 64,
     gap: 2,
   },
   macroName: {
