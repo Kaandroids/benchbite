@@ -2080,7 +2080,6 @@
     },
     "mealCard": {
       "add": "Hinzufügen",
-      "mealChoice": "Mahlzeit",
       "added": {
         "breakfast": "Zum Frühstück hinzugefügt · {{calories}} kcal",
         "lunch": "Zum Mittagessen hinzugefügt · {{calories}} kcal",

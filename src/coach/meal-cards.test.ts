@@ -24,7 +24,7 @@ const CARD: MealCard = {
 };
 
 /** Lets coach_meal_cards answer with `rows`. */
-function cardRows(rows: { id: number; status: string; meal: string; kcal: number | null }[]) {
+function cardRows(rows: { id: number; status: string; kcal: number | null }[]) {
   const inIds = jest.fn().mockResolvedValue({ data: rows, error: null });
   jest.mocked(supabase.from).mockReturnValue({ select: () => ({ in: inIds }) } as never);
   return inIds;
@@ -45,8 +45,8 @@ it("reads the cards out of a stored message's tool results, in order", () => {
 
 it('reads where the cards stand in one request, and keeps what Add changed', async () => {
   const inIds = cardRows([
-    { id: 51, status: 'pending', meal: 'lunch', kcal: null },
-    { id: 52, status: 'undone', meal: 'lunch', kcal: 120 },
+    { id: 51, status: 'pending', kcal: null },
+    { id: 52, status: 'undone', kcal: 120 },
   ]);
   const queryClient = createTestQueryClient();
   const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
@@ -58,30 +58,22 @@ it('reads where the cards stand in one request, and keeps what Add changed', asy
   expect(supabase.from).toHaveBeenCalledWith('coach_meal_cards');
   expect(inIds).toHaveBeenCalledTimes(1);
   expect(inIds).toHaveBeenCalledWith('id', [52, 51]);
-  expect(result.current.states.data?.get(52)).toEqual({
-    status: 'undone',
-    meal: 'lunch',
-    kcal: 120,
-  });
+  expect(result.current.states.data?.get(52)).toEqual({ status: 'undone', kcal: 120 });
 
   // As the database has it once logged, with an own food it saved.
   cardRows([
-    { id: 51, status: 'logged', meal: 'lunch', kcal: 399 },
-    { id: 52, status: 'undone', meal: 'lunch', kcal: 120 },
+    { id: 51, status: 'logged', kcal: 399 },
+    { id: 52, status: 'undone', kcal: 120 },
   ]);
   jest.mocked(supabase.rpc).mockResolvedValue({
-    data: { id: 51, status: 'logged', meal: 'lunch', kcal: 399, food_ids: [3] },
+    data: { id: 51, status: 'logged', kcal: 399, food_ids: [3] },
     error: null,
   } as never);
-  await act(() => result.current.act.mutateAsync({ action: 'log', grams: [100], meal: 'lunch' }));
+  await act(() => result.current.act.mutateAsync({ action: 'log', grams: [100] }));
 
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51, grams: [100] });
   await waitFor(() =>
-    expect(result.current.states.data?.get(51)).toEqual({
-      status: 'logged',
-      meal: 'lunch',
-      kcal: 399,
-    }),
+    expect(result.current.states.data?.get(51)).toEqual({ status: 'logged', kcal: 399 }),
   );
   // The day's totals, as Today and Nutrition show them, and the foods load again.
   expect(invalidate).toHaveBeenCalledWith({ queryKey: ['meal-entries', '2026-10-30'] });

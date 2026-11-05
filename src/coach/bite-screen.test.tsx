@@ -61,7 +61,7 @@ function mealCardsStand(status: string, kcal: number | null = null) {
             Promise.resolve({
               data: ids.map((id) =>
                 table === 'coach_meal_cards'
-                  ? { id, status, meal: 'lunch', kcal }
+                  ? { id, status, kcal }
                   : { id, status: 'pending', expires_at: '2099-01-01T00:00:00Z' },
               ),
               error: null,
@@ -683,7 +683,7 @@ function proposalsNeverLoad() {
           in: (_: string, ids: number[]) =>
             table === 'coach_meal_cards'
               ? Promise.resolve({
-                  data: ids.map((id) => ({ id, status: 'pending', meal: 'lunch', kcal: null })),
+                  data: ids.map((id) => ({ id, status: 'pending', kcal: null })),
                   error: null,
                 })
               : new Promise(() => {}),
@@ -722,7 +722,6 @@ it("keeps the grams a meal card's Edit changed when Bite proposes after it", asy
   );
   await stream.end();
   await fireEvent.press(await screen.findByRole('button', { name: 'Edit' }));
-  await fireEvent.press(screen.getByRole('button', { name: /^Pizza Margherita, 150 grams/ }));
   await fireEvent.changeText(screen.getByLabelText('Grams'), '100');
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
