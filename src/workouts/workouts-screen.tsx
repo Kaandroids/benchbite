@@ -132,7 +132,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
               ))
             ) : (
               <Text color="textMuted">
-                {t(limits.data?.archive === false ? 'workout.noActiveFree' : 'workout.noActive')}
+                {t(limits.data?.archive === false ? 'workout.noActiveLocked' : 'workout.noActive')}
               </Text>
             )}
 

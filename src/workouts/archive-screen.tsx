@@ -10,7 +10,7 @@ import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
 
 import { WorkoutListItem } from './workout-list-item';
-import { useCurrentWorkoutLimits, useWorkouts } from './workouts';
+import { useWorkouts } from './workouts';
 
 /**
  * The inactive workouts, kept out of the week until they are switched on again. One archived while
@@ -24,21 +24,21 @@ export function ArchiveScreen() {
   const session = useActiveSession(useUserId());
   const openPremium = useOpenPremium();
   const inactive = workouts.data?.filter((workout) => !workout.active) ?? [];
-  // As the plan is now, as it may have just put what is here on hold.
-  const locked = useCurrentWorkoutLimits()?.archive === false;
+  // As the rows show, whichever way the plan changed: only what waits is locked.
+  const locked = inactive.some((workout) => workout.held);
 
   return (
     <Screen
       onBack={() => router.back()}
       title={t('workout.archive.title')}
       footer={
-        locked && inactive.length > 0 ? (
-          <Button label={t('workout.limitSheet.seePremium')} onPress={openPremium} />
+        locked ? (
+          <Button label={t('workout.premiumOffer.seePremium')} onPress={openPremium} />
         ) : undefined
       }
     >
       <Text color="textMuted">
-        {t(locked ? 'workout.archive.bodyFree' : 'workout.archive.body')}
+        {t(locked ? 'workout.archive.bodyLocked' : 'workout.archive.body')}
       </Text>
       <LoadState queries={[workouts]} />
       {allLoaded([workouts]) ? (

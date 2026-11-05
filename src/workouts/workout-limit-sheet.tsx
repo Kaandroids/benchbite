@@ -1,9 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { BiteSheet } from '@/coach/bite-sheet';
-import { Button } from '@/components/ui/button';
-import { closeThen } from '@/components/ui/sheet';
-import { useOpenPremium } from '@/premium/open-premium';
+import { PremiumOfferSheet } from './premium-offer-sheet';
 
 type WorkoutLimitSheetProps = {
   /** How many workouts count toward the limit. */
@@ -21,9 +18,8 @@ type WorkoutLimitSheetProps = {
  */
 export function WorkoutLimitSheet({ count, max, premium, onClose }: WorkoutLimitSheetProps) {
   const { t } = useTranslation();
-  const openPremium = useOpenPremium();
   return (
-    <BiteSheet
+    <PremiumOfferSheet
       // More than the plan has room for when some wait for premium.
       title={count === max ? t('workout.limitSheet.title', { count }) : t('workout.limitTitle')}
       body={t('workout.limitSheet.body', {
@@ -31,12 +27,6 @@ export function WorkoutLimitSheet({ count, max, premium, onClose }: WorkoutLimit
         versions: premium.versions,
       })}
       onClose={onClose}
-    >
-      <Button
-        label={t('workout.limitSheet.seePremium')}
-        onPress={closeThen(onClose, openPremium)}
-      />
-      <Button label={t('workout.limitSheet.notNow')} variant="secondary" onPress={onClose} />
-    </BiteSheet>
+    />
   );
 }

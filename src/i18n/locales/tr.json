@@ -726,6 +726,7 @@
     "activeCount_one": "Aktif · {{count}}",
     "activeCount_other": "Aktif · {{count}}",
     "noActive": "Aktif antrenman yok. Arşivden birini aç.",
+    "noActiveLocked": "Aktif antrenman yok. Başlamak için bir tane ekle.",
     "active": "Aktif",
     "inactive": "Pasif",
     "activeLabel": "{{name}} aktif",
@@ -739,7 +740,7 @@
       "title": "Arşiv",
       "body": "Pasif antrenmanlar burada saklanır ve haftana dahil edilmez.",
       "empty": "Arşivde antrenman yok.",
-      "bodyFree": "Olduğu gibi saklanır. Premium ile geri alabilirsin. Antrenman sayına dahil edilmez.",
+      "bodyLocked": "Olduğu gibi saklanır. Premium ile geri alabilirsin. Antrenman sayına dahil edilmez.",
       "inArchive": "Arşivinde",
       "sheetTitle": "Arşiv premium ile gelir",
       "sheetBody": "Bir antrenmanı kaldır, haftandan çıksın, istediğinde geri al.",
@@ -791,7 +792,7 @@
     "edit": "Düzenle",
     "startLabel": "{{name}} başlat",
     "limitTitle": "Yeni antrenmana yer yok",
-    "limit": "Arşivdekiler dahil en fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil.",
+    "limit": "En fazla {{max}} antrenmanın olabilir. Yer açmak için birini sil.",
     "size": {
       "exercises_one": "{{count}} egzersiz",
       "exercises_other": "{{count}} egzersiz",
@@ -888,11 +889,12 @@
     "limitSheet": {
       "title_one": "{{count}}/{{count}} antrenmanın var",
       "title_other": "{{count}}/{{count}} antrenmanın var",
-      "body": "Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil.",
+      "body": "Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil."
+    },
+    "premiumOffer": {
       "seePremium": "Premium'a bak",
       "notNow": "Şimdi değil"
-    },
-    "noActiveFree": "Aktif antrenman yok. Başlamak için bir tane ekle."
+    }
   },
   "exercise": {
     "start": "Başlangıç",

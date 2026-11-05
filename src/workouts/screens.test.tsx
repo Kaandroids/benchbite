@@ -260,7 +260,7 @@ describe('WorkoutsScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
     expect(alert).toHaveBeenCalledWith(
       'No room for another workout',
-      'You can have up to 500 workouts, archived ones included. Delete one to make room.',
+      'You can have up to 500 workouts. Delete one to make room.',
     );
   });
 
@@ -455,17 +455,7 @@ describe('ArchiveScreen', () => {
     expect(screen.queryByText('Cardio waits for premium')).toBeNull();
   });
 
-  describe('on a plan without the archive', () => {
-    beforeEach(() => {
-      jest.mocked(useCurrentWorkoutLimits).mockReturnValue({
-        exercises: 20,
-        workouts: 2,
-        alternatives: 5,
-        archive: false,
-        workouts_counted: 0,
-      } as never);
-    });
-
+  describe('with workouts that wait in it', () => {
     it('shows them to look at, opening one rather than a sheet, with a way to premium', async () => {
       mockWorkouts([testWorkout(2, { name: 'Cardio', active: false, held: true })]);
       await render(<ArchiveScreen />);
@@ -477,9 +467,17 @@ describe('ArchiveScreen', () => {
       expect(router.push).toHaveBeenLastCalledWith('/premium');
     });
 
-    it('offers nothing when it is empty', async () => {
+    it('says nothing of premium over rows still to switch on, as a plan just ended', async () => {
+      mockWorkouts([testWorkout(2, { name: 'Cardio', active: false })]);
+      await render(<ArchiveScreen />);
+      expect(screen.queryByText(/They don't count toward your workouts/)).toBeNull();
+      expect(screen.queryByRole('button', { name: 'See premium' })).toBeNull();
+    });
+
+    it('says nothing of premium when it is empty', async () => {
       mockWorkouts([testWorkout(1)]);
       await render(<ArchiveScreen />);
+      expect(screen.queryByText(/They don't count toward your workouts/)).toBeNull();
       expect(screen.queryByRole('button', { name: 'See premium' })).toBeNull();
     });
   });
@@ -620,8 +618,11 @@ describe('WorkoutScreen', () => {
 
   describe('on a plan without the archive', () => {
     beforeEach(() => {
-      jest.mocked(useWorkoutLimits).mockReturnValue({
-        data: { exercises: 20, workouts: 2, alternatives: 5, archive: false, workouts_counted: 1 },
+      jest.mocked(useCurrentWorkoutLimits).mockReturnValue({
+        exercises: 20,
+        workouts: 2,
+        alternatives: 5,
+        archive: false,
       } as never);
     });
 
@@ -651,7 +652,16 @@ describe('WorkoutScreen', () => {
     });
   });
 
-  it('offers premium when the server refuses the archive, as the limits kept may be old', async () => {
+  it('asks the server while the plan is read, so that a new plan is not held back', async () => {
+    jest.mocked(useCurrentWorkoutLimits).mockReturnValue(undefined as never);
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: false }, expect.anything());
+    expect(screen.queryByText('The archive comes with premium')).toBeNull();
+  });
+
+  it('offers premium when the server refuses the archive, as the plan may have ended', async () => {
     mutate.mockImplementationOnce((_variables, options) => options.onError({ code: 'BB054' }));
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
