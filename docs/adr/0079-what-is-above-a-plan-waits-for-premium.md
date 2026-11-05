@@ -1,6 +1,6 @@
 # 0079. What is above a plan's limits waits for premium
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0082
 - **Date:** 2026-11-03
 
 ## Context
