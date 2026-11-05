@@ -39,5 +39,8 @@ what stays: they compete with active ones for the 3 places, and a user asked whi
 - A free user cannot lose access to a workout by archiving it, and cannot use the archive to rotate
   workouts around the limit, as nothing goes in or out.
 - This amends ADR 0018 and ADR 0079, whose count included archived workouts on every plan.
-- The app shows the archive as read-only and offers premium where it offered moving to the archive;
-  until that change, a free user who tries it is refused with BB054.
+- `workout_limits()` gives the app the count as well, as `workouts_counted`, so that it counts as
+  the limit does; the rule lives in `counts_on_plan()` alone.
+- The app shows the archive as read-only and offers premium where it offered moving to the archive.
+  Until that change, and in older builds after it, a free user who tries it is refused with BB054
+  with no message: the button flips and flips back.
