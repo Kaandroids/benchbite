@@ -110,3 +110,20 @@ export function useSignOut() {
   const { signOut } = useSession();
   return useMutation({ mutationFn: signOut });
 }
+
+/**
+ * Deletes the user on this device, guest or account, and all that is theirs (ADR 0087); the app
+ * starts over as a new guest. Nothing is left to sign out of, so the deleted session is only replaced.
+ */
+export function useDeleteAccount() {
+  const { startAgain } = useSession();
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+      if (error) {
+        throw error;
+      }
+      await startAgain();
+    },
+  });
+}
