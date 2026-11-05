@@ -264,6 +264,29 @@ describe('MealPhotoScreen', () => {
     expect(screen.getByText('Estimate · high confidence')).toBeTruthy();
   });
 
+  it("says the week's photos are used up in a sheet, and leaves with it", async () => {
+    jest.mocked(useAiAccess).mockReturnValue({
+      data: { byCount: true, resetsAt: new Date(2026, 10, 9) },
+    } as never);
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('limit_reached'));
+
+    expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
+    expect(screen.queryByText("You've used Bite for this month")).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('tells a plan with Bite that its budget is used up, as the chat does', async () => {
+    jest.mocked(useAiAccess).mockReturnValue({ data: { byCount: false } } as never);
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('limit_reached'));
+
+    expect(screen.getByText("You've used Bite for this month")).toBeTruthy();
+  });
+
   it('tells why Bite cannot be used now, as the chat does', async () => {
     const first = pendingEstimate();
     await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);

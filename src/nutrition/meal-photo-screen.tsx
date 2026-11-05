@@ -23,6 +23,7 @@ import { ItemAmount } from './item-amount';
 import { EstimateFailure } from './meal-estimate';
 import { handOverLoggedEstimate } from './meal-photo-handover';
 import { MealPhotoSheet } from './meal-photo-sheet';
+import { PhotosUsedUpSheet } from './photos-used-up-sheet';
 import type { Meal } from './meals';
 import { useMealEstimate } from './use-meal-estimate';
 
@@ -179,7 +180,7 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
 
         {state.kind === 'failed' ? (
           refusal ? (
-            <Refused refusal={refusal} />
+            <Refused refusal={refusal} onLeave={leave} />
           ) : (
             <Message
               expression="sad"
@@ -304,10 +305,17 @@ function Message({
   );
 }
 
-/** Why no meal may be estimated now, as the chat says it, with when that opens again. */
-function Refused({ refusal }: { refusal: Refusal }) {
+/**
+ * Why no meal may be estimated now, as the chat says it, with when that opens again; the week's
+ * photos used up in a sheet, with a way to premium, which leaves with it.
+ */
+function Refused({ refusal, onLeave }: { refusal: Refusal; onLeave: () => void }) {
   const access = useAiAccess('meal_photo');
-  return <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />;
+  return access.data?.byCount && refusal === 'limit_reached' ? (
+    <PhotosUsedUpSheet resetsAt={access.data.resetsAt} onClose={onLeave} />
+  ) : (
+    <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
+  );
 }
 
 const styles = StyleSheet.create({
