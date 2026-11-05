@@ -172,7 +172,7 @@ export const darkColors: ColorTokens = {
   primaryButton: '#FF7F26', // 7.6:1 with onPrimary
   primaryButtonLedge: '#D45A00',
   onPrimary: '#1C0C00',
-  dangerButton: '#F87171', // 8.0:1 with onDanger
+  dangerButton: '#F87171', // 6.6:1 with onDanger
   dangerButtonLedge: '#C94C4C',
   onDanger: '#2A0A0A',
   userBubble: '#2A2C31', // 12.6:1 with text
