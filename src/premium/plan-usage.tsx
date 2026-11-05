@@ -6,7 +6,7 @@ import { Card, listDivider } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
-import { isoWeekday, useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
+import { isoWeekday, useComingDayFormat, useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { BILLING_LABEL, type FreeSummary, type PaidSummary, type Window } from './plan';
@@ -15,7 +15,7 @@ import { BILLING_LABEL, type FreeSummary, type PaidSummary, type Window } from '
 export function FreeUsage({ photos }: { photos: FreeSummary['photos'] }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const weekday = useWeekdayFormat('long');
+  const comingDay = useComingDayFormat();
   return (
     <Card style={{ gap: spacing.sm, paddingVertical: spacing.md }}>
       <View style={[styles.row, { gap: spacing.sm }]}>
@@ -34,7 +34,7 @@ export function FreeUsage({ photos }: { photos: FreeSummary['photos'] }) {
       <Text variant="caption" color="textMuted">
         {t('premium.mine.photosLeft', {
           count: photos.left,
-          day: weekday(isoWeekday(photos.resetsAt)),
+          day: comingDay(photos.resetsAt),
         })}
       </Text>
     </Card>

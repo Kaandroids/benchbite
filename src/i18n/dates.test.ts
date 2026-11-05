@@ -9,6 +9,7 @@ import {
   monthsBetween,
   monthWeeks,
   toIsoDate,
+  useComingDayFormat,
   useDateFormat,
   useMonthYearFormat,
   useShortDateFormat,
@@ -219,5 +220,24 @@ describe('useMonthYearFormat', () => {
     const thisYear = await renderHook(() => useMonthYearFormat(new Date(2026, 9, 29)));
     expect(thisYear.result.current(new Date(2026, 8, 1))).toBe('September');
     expect(thisYear.result.current(new Date(2025, 8, 1))).toBe('September 2025');
+  });
+});
+
+describe('useComingDayFormat', () => {
+  beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick'] });
+    // A Thursday.
+    jest.setSystemTime(new Date(2026, 10, 5, 12));
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('names another weekday', async () => {
+    const { result } = await renderHook(() => useComingDayFormat());
+    expect(result.current(new Date(2026, 10, 9))).toBe('Monday');
+  });
+
+  it("gives the date when it is today's weekday, a week away", async () => {
+    const { result } = await renderHook(() => useComingDayFormat());
+    expect(result.current(new Date(2026, 10, 12))).toBe('November 12');
   });
 });
