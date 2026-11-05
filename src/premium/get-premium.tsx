@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
 import { closeThen } from '@/components/ui/sheet';
+import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
@@ -15,6 +17,32 @@ import { PlansSheet } from './plans-sheet';
 import { usePurchasesSoon } from './purchases';
 import { SAMPLE_PRICES } from './sample-prices';
 import { TRIAL_DAYS } from './trial';
+
+/** Bite cheering over a page's title and what it says under it, at the top of a premium page. */
+export function PremiumHero({
+  size,
+  title,
+  subtitle,
+}: {
+  size: number;
+  title: string;
+  subtitle: string;
+}) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.hero, { gap: spacing.xs, marginTop: -spacing.lg }]}>
+      <Sparkles size={size + 24}>
+        <BiteAvatar size={size} expression="happy" looksAbout />
+      </Sparkles>
+      <Text variant="title" align="center" accessibilityRole="header">
+        {title}
+      </Text>
+      <Text color="textMuted" align="center">
+        {subtitle}
+      </Text>
+    </View>
+  );
+}
 
 /** Restores a purchase, at the top of a page that offers premium. */
 export function RestoreLink() {
@@ -57,3 +85,9 @@ export function GetPremiumFooter({ free }: { free: FreeSummary }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: {
+    alignItems: 'center',
+  },
+});

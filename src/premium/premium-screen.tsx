@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
-import { BiteAvatar } from '@/coach/bite-avatar';
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
-import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { GetPremiumFooter, RestoreLink } from './get-premium';
+import { GetPremiumFooter, PremiumHero, RestoreLink } from './get-premium';
 import { BILLING_LABEL, usePlanNumbers, usePlanSummary, type PaidSummary } from './plan';
 import { PlanComparison } from './plan-comparison';
 import { FreeUsage, PaidUsage } from './plan-usage';
@@ -45,19 +43,15 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
       action={paid ? undefined : <RestoreLink />}
       footer={free ? <GetPremiumFooter free={free} /> : undefined}
     >
-      <View style={[styles.hero, { gap: spacing.xs, marginTop: -spacing.lg }]}>
-        <Sparkles size={BITE_SIZE + 24}>
-          <BiteAvatar size={BITE_SIZE} expression="happy" looksAbout />
-        </Sparkles>
-        <Text variant="title" align="center" accessibilityRole="header">
-          {paid
+      <PremiumHero
+        size={BITE_SIZE}
+        title={
+          paid
             ? t(paid.plan === 'trial' ? 'premium.page.titleTrial' : 'premium.page.titlePremium')
-            : t('premium.page.title')}
-        </Text>
-        <Text color="textMuted" align="center">
-          {paid ? t('premium.page.thanks') : t('premium.page.subtitle')}
-        </Text>
-      </View>
+            : t('premium.page.title')
+        }
+        subtitle={paid ? t('premium.page.thanks') : t('premium.page.subtitle')}
+      />
 
       <LoadState queries={[summary, numbers]} />
       {allLoaded([summary, numbers]) && numbers.data ? (
@@ -143,9 +137,6 @@ function Paid({
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

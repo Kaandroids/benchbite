@@ -7,13 +7,10 @@ import { Card, listDivider } from '@/components/ui/card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
-import { Sparkles } from '@/components/ui/sparkles';
 import { Text } from '@/components/ui/text';
-import { GetPremiumFooter, RestoreLink } from '@/premium/get-premium';
+import { GetPremiumFooter, PremiumHero, RestoreLink } from '@/premium/get-premium';
 import { usePlanSummary } from '@/premium/plan';
 import { useTheme, type ColorTokens } from '@/theme';
-
-import { BiteAvatar } from './bite-avatar';
 
 const BITE_SIZE = 110;
 
@@ -44,17 +41,11 @@ export function BitePremiumScreen() {
       action={<RestoreLink />}
       footer={summary.data?.plan === 'free' ? <GetPremiumFooter free={summary.data} /> : undefined}
     >
-      <View style={[styles.hero, { gap: spacing.xs, marginTop: -spacing.lg }]}>
-        <Sparkles size={BITE_SIZE + 24}>
-          <BiteAvatar size={BITE_SIZE} expression="happy" looksAbout />
-        </Sparkles>
-        <Text variant="title" align="center" accessibilityRole="header">
-          {t('bite.premium.title')}
-        </Text>
-        <Text color="textMuted" align="center">
-          {t('bite.premium.subtitle')}
-        </Text>
-      </View>
+      <PremiumHero
+        size={BITE_SIZE}
+        title={t('bite.premium.title')}
+        subtitle={t('bite.premium.subtitle')}
+      />
       <Card list>
         {POINTS.map(({ key, icon, color, background }, index) => (
           <View
@@ -81,9 +72,6 @@ export function BitePremiumScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-  },
   point: {
     flexDirection: 'row',
     alignItems: 'center',
