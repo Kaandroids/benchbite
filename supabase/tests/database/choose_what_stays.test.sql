@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -57,7 +57,7 @@ where w.id in (101, 102, 103, 104, 105, 201, 202, 301, 302, 303, 304, 401);
 -- Trained in this order, so that Core is the one that waits at first.
 insert into public.workout_logs (user_id, workout_id, name, started_at, finished_at, started_on)
 select '00000000-0000-0000-0000-00000000000a', t.workout_id, 'Log', now() - t.ago - interval '1 hour', now() - t.ago, current_date - t.days
-from (values (101, interval '1 day', 1), (102, interval '2 days', 2), (103, interval '3 days', 3)) t(workout_id, ago, days);
+from (values (101, interval '1 day', 1), (101, interval '9 days', 9), (102, interval '2 days', 2), (103, interval '3 days', 3)) t(workout_id, ago, days);
 set local session_replication_role = origin;
 
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source) values
@@ -182,6 +182,21 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select public.delete_workout(104, current_date);
 reset role;
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), false, 'All fitting again closes it');
+
+-- Each workout's last training, of the caller's alone.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select workout_id, started_on from public.workouts_last_trained() order by workout_id $$,
+  $$ values (101::bigint, current_date - 1), (102, current_date - 2), (103, current_date - 3) $$,
+  'The last training of each workout is read'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is_empty($$ select * from public.workouts_last_trained() $$, 'of the caller alone');
+reset role;
+select ok(
+  not has_function_privilege('anon', 'public.workouts_last_trained()', 'execute'),
+  'Anon cannot read it'
+);
 
 -- The days before the device's today stay as they were: the workout usable yesterday, not the chosen.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');

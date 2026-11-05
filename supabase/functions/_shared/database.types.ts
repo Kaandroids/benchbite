@@ -2880,6 +2880,13 @@ export type Database = {
       };
       workout_minutes: { Args: { items: Json }; Returns: number };
       workout_to_propose: { Args: { workout_id: number }; Returns: Json };
+      workouts_last_trained: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          started_on: string;
+          workout_id: number;
+        }[];
+      };
     };
     Enums: {
       activity_level: 'sedentary' | 'light' | 'moderate' | 'active';
