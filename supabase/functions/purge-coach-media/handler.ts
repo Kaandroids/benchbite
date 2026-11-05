@@ -3,13 +3,11 @@
 // chats left in coach-media, removes their files, photos and voice messages, and then their place
 // in the queue. A folder that fails stays queued for the next run.
 import { MEDIA_BUCKET, threadMediaFolder } from '../_shared/coach/media.ts';
+import { emptyFolder } from '../_shared/storage.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
 
 /** Folders per run: a run has to end well within the scheduled call's timeout. */
 export const BATCH_SIZE = 20;
-/** Files listed and removed per request. */
-export const PAGE_SIZE = 100;
-
 export type PurgeContext = {
   /** A client with the service role, which alone reads the queue and removes the files. */
   admin: Client;
@@ -41,7 +39,7 @@ export async function handlePurgeRequest(req: Request, context: PurgeContext): P
   const failed: Queued[] = [];
   for (const folder of queued as Queued[]) {
     try {
-      await emptyFolder(admin, threadMediaFolder(folder.user_id, folder.thread_id));
+      await emptyFolder(admin, MEDIA_BUCKET, threadMediaFolder(folder.user_id, folder.thread_id));
       purged.push(folder.thread_id);
     } catch (cause) {
       // The thread id alone: the path also names the user.
@@ -65,25 +63,4 @@ export async function handlePurgeRequest(req: Request, context: PurgeContext): P
 
   const result: PurgeResult = { purged: purged.length, failed: failed.length };
   return Response.json(result);
-}
-
-/**
- * Removes every file in a thread's folder, a page at a time, until listing it finds none. Throws
- * when storage fails, or removes nothing of a page, so that the folder stays queued.
- */
-async function emptyFolder(admin: Client, folder: string): Promise<void> {
-  const bucket = admin.storage.from(MEDIA_BUCKET);
-  for (;;) {
-    const { data: listed, error } = await bucket.list(folder, { limit: PAGE_SIZE });
-    if (error) throw error;
-    // Files only: the folder holds no folders (ADR 0062), and a folder entry has no id.
-    const paths = listed
-      .filter((entry) => entry.id !== null)
-      .map((entry) => `${folder}/${entry.name}`);
-    if (paths.length === 0) return;
-
-    const { data: removed, error: removeError } = await bucket.remove(paths);
-    if (removeError) throw removeError;
-    if (removed.length === 0) throw new Error('Storage removed none of the listed files');
-  }
 }

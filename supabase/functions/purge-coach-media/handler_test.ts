@@ -1,7 +1,8 @@
 import { assertEquals } from '@std/assert';
 
 import { MEDIA_BUCKET } from '../_shared/coach/media.ts';
-import { BATCH_SIZE, handlePurgeRequest, PAGE_SIZE, type PurgeContext } from './handler.ts';
+import { PAGE_SIZE } from '../_shared/storage.ts';
+import { BATCH_SIZE, handlePurgeRequest, type PurgeContext } from './handler.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
