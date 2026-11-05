@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Card, listDivider } from '@/components/ui/card';
@@ -26,7 +26,6 @@ const BITE_SIZE = 80;
  */
 export function PremiumScreen({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const summary = usePlanSummary();
   const numbers = usePlanNumbers();
   const restore = usePurchasesSoon();
