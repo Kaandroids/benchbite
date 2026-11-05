@@ -2092,7 +2092,26 @@
         "resized": "{{food}} jetzt {{grams}}",
         "withGrams": "{{change}}, {{grams}}"
       }
-    }
+    },
+    "premium": {
+      "title": "Sprich mit Bite",
+      "subtitle": "Dein Coach für Training und Ernährung, mit Premium.",
+      "points": {
+        "chat": {
+          "title": "Chat und Sprache",
+          "note": "Frag alles, zu jeder Tageszeit"
+        },
+        "week": {
+          "title": "Plant deine Woche",
+          "note": "Trainings und Mahlzeiten, die zu deinen Tagen passen"
+        },
+        "reviews": {
+          "title": "Rückblicke",
+          "note": "Deine Woche, dein Monat und Zeitraum, erklärt"
+        }
+      }
+    },
+    "locked": "Der Chat mit Bite gehört zu Premium"
   },
   "premium": {
     "yearlySave": "Jährlich · −{{percent}} %",
