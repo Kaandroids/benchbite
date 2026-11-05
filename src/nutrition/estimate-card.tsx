@@ -134,7 +134,7 @@ export function EstimateTotals({ items }: { items: EstimateItem[] }) {
       }}
     >
       <Text variant="captionStrong" color="textMuted">
-        {t('nutrition.estimateTotal')}
+        {t('nutrition.photo.total')}
       </Text>
       <View style={[styles.totals, { gap: spacing.xs }]}>
         <Total value={format(Math.round(totals.calories))} label="kcal" />

@@ -283,7 +283,6 @@
   "nutrition": {
     "calories": "{{calories}} kcal a day",
     "grams": "{{count}} g",
-    "estimateTotal": "Total",
     "macros": {
       "protein": "Protein",
       "carbs": "Carbs",
@@ -385,6 +384,7 @@
         "medium": "Estimate · medium confidence",
         "low": "Estimate · low confidence"
       },
+      "total": "Total",
       "estimated": "Estimated",
       "row": "{{name}}, {{grams}} grams, {{calories}} kcal, change the amount",
       "rowEstimated": "{{name}}, {{grams}} grams, {{calories}} kcal, estimated, not found in the library, change the amount",

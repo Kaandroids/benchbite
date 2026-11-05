@@ -283,7 +283,6 @@
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
     "grams": "{{count}} g",
-    "estimateTotal": "Toplam",
     "macros": {
       "protein": "Protein",
       "carbs": "Karbonhidrat",
@@ -385,6 +384,7 @@
         "medium": "Tahmin · orta güven",
         "low": "Tahmin · düşük güven"
       },
+      "total": "Toplam",
       "estimated": "Tahmini",
       "row": "{{name}}, {{grams}} gram, {{calories}} kcal, miktarı değiştir",
       "rowEstimated": "{{name}}, {{grams}} gram, {{calories}} kcal, tahmini, kütüphanede bulunamadı, miktarı değiştir",

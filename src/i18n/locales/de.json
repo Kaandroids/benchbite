@@ -283,7 +283,6 @@
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",
     "grams": "{{count}} g",
-    "estimateTotal": "Gesamt",
     "macros": {
       "protein": "Protein",
       "carbs": "Kohlenhydrate",
@@ -385,6 +384,7 @@
         "medium": "Schätzung · einigermaßen sicher",
         "low": "Schätzung · unsicher"
       },
+      "total": "Gesamt",
       "estimated": "Geschätzt",
       "row": "{{name}}, {{grams}} Gramm, {{calories}} kcal, Menge ändern",
       "rowEstimated": "{{name}}, {{grams}} Gramm, {{calories}} kcal, geschätzt, nicht in der Datenbank, Menge ändern",
