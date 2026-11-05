@@ -11,6 +11,9 @@ export default function WorkoutLayout() {
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
       }}
-    />
+    >
+      {/* Its own buttons say where back goes, as the list would only open it again. */}
+      <Stack.Screen name="choose" options={{ gestureEnabled: false }} />
+    </Stack>
   );
 }

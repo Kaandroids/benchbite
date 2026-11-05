@@ -894,6 +894,24 @@
     "premiumOffer": {
       "seePremium": "Premium ansehen",
       "notNow": "Nicht jetzt"
+    },
+    "choose": {
+      "title": "Dein Premium ist beendet",
+      "nothingDeleted": "Nichts wird gelöscht.",
+      "body_one": "Wähle das Workout, mit dem du weitertrainierst. Die anderen wandern unverändert in dein Archiv.",
+      "body_other": "Wähle die {{count}} Workouts, mit denen du weitertrainierst. Die anderen wandern unverändert in dein Archiv.",
+      "workouts": "Workouts",
+      "chosen": "{{chosen}} von {{count}} gewählt",
+      "note": "Wir haben die zuletzt trainierten gewählt. Das kannst du später nicht ändern, aber mit Premium holst du sie zurück.",
+      "keep_one": "Dieses behalten",
+      "keep_other": "Diese {{count}} behalten",
+      "getBack": "Premium zurückholen",
+      "trained": "trainiert am {{day}}",
+      "notTrained": "noch nicht trainiert",
+      "alternativeTitle": "Eine Alternative bleibt",
+      "alternativeBody": "Bei den Workouts, die du behältst, kannst du zu einer anderen Version wechseln. Die übrigen warten unverändert auf Premium.",
+      "used": "genutzt am {{day}}",
+      "failed": "Deine Wahl konnte nicht gespeichert werden. Versuch es noch einmal."
     }
   },
   "exercise": {

@@ -1,10 +1,10 @@
--- A user chooses once what stays when premium ends (#411, ADR 0083): the choice opens with the end
--- of premium when something waits, the chosen stay and the rest wait, it cannot be made again, and
--- only the end of premium opens it again.
+-- A user chooses once what stays when premium ends (#411, ADR 0083, 0084): the choice opens with the
+-- end of premium when something waits, the chosen stay and the rest go to the archive, it cannot be
+-- made again, and only the end of premium opens it again.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -57,7 +57,7 @@ where w.id in (101, 102, 103, 104, 105, 201, 202, 301, 302, 303, 304, 401);
 -- Trained in this order, so that Core is the one that waits at first.
 insert into public.workout_logs (user_id, workout_id, name, started_at, finished_at, started_on)
 select '00000000-0000-0000-0000-00000000000a', t.workout_id, 'Log', now() - t.ago - interval '1 hour', now() - t.ago, current_date - t.days
-from (values (101, interval '1 day', 1), (102, interval '2 days', 2), (103, interval '3 days', 3)) t(workout_id, ago, days);
+from (values (101, interval '1 day', 1), (101, interval '9 days', 9), (102, interval '2 days', 2), (103, interval '3 days', 3)) t(workout_id, ago, days);
 set local session_replication_role = origin;
 
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source) values
@@ -140,9 +140,9 @@ select lives_ok(
   'A choice that fits is made'
 );
 select results_eq(
-  $$ select id, held from public.workouts where active order by id $$,
-  $$ values (101::bigint, true), (102, false), (103, false), (104, false) $$,
-  'The chosen stay and the rest wait'
+  $$ select id, active, held from public.workouts where id <= 104 order by id $$,
+  $$ values (101::bigint, false, true), (102, true, false), (103, true, false), (104, true, false) $$,
+  'The chosen stay, and the one not chosen goes to the archive, to look at'
 );
 select results_eq(
   $$ select id, held from public.workout_alternatives where exercises is not null order by id $$,
@@ -163,16 +163,25 @@ select throws_ok(
 -- Applying the plan again trades nothing, and does not open it.
 reset role;
 select public.apply_plan_limits('00000000-0000-0000-0000-00000000000a');
-select results_eq(
+select is_empty(
   $$ select id from public.workouts where user_id = '00000000-0000-0000-0000-00000000000a' and active and held $$,
-  $$ values (101::bigint) $$,
   'Applying the plan again keeps the choice'
 );
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), false, 'and leaves it closed');
 
--- Premium comes back and ends again.
+-- Premium comes back: what was not chosen stays in the archive, to bring back from it.
 update public.subscriptions set period_end = now() + interval '30 days'
 where user_id = '00000000-0000-0000-0000-00000000000a';
+select results_eq(
+  $$ select active, held from public.workouts where id = 101 $$,
+  $$ values (false, false) $$,
+  'With premium what was not chosen stays in the archive, no longer waiting'
+);
+
+-- Brought back and premium ending again, there is a choice again.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select public.set_workout_active(101, true, current_date);
+reset role;
 update public.subscriptions set period_end = now() - interval '2 hours'
 where user_id = '00000000-0000-0000-0000-00000000000a';
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), true, 'The next end of premium opens it again');
@@ -182,6 +191,21 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select public.delete_workout(104, current_date);
 reset role;
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), false, 'All fitting again closes it');
+
+-- Each workout's last training, of the caller's alone.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select results_eq(
+  $$ select workout_id, started_on from public.workouts_last_trained() order by workout_id $$,
+  $$ values (101::bigint, current_date - 1), (102, current_date - 2), (103, current_date - 3) $$,
+  'The last training of each workout is read'
+);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is_empty($$ select * from public.workouts_last_trained() $$, 'of the caller alone');
+reset role;
+select ok(
+  not has_function_privilege('anon', 'public.workouts_last_trained()', 'execute'),
+  'Anon cannot read it'
+);
 
 -- The days before the device's today stay as they were: the workout usable yesterday, not the chosen.
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000c');

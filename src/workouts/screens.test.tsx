@@ -26,6 +26,7 @@ jest.mock('@/exercises/images', () => ({
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useScrollToTop: jest.fn(),
+  useFocusEffect: jest.fn(),
 }));
 jest.mock('./workouts', () => ({
   ...jest.requireActual<typeof import('./workouts')>('./workouts'),

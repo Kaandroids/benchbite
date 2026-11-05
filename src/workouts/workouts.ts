@@ -271,7 +271,7 @@ export const WORKOUT_LIMITS_KEY = ['workout-limits'];
  */
 const WORKOUT_LIMITS_STALE_MS = 10 * 60 * 1000;
 
-const workoutLimitsQuery = {
+export const workoutLimitsQuery = {
   queryKey: WORKOUT_LIMITS_KEY,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('workout_limits').single();

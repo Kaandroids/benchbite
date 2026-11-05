@@ -17,6 +17,7 @@ import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
 import { useTheme } from '@/theme';
 
+import { useAskWhatStays } from './choice';
 import { HeldBanner } from './held-banner';
 import { WorkoutLimitSheet } from './workout-limit-sheet';
 import { WorkoutListItem } from './workout-list-item';
@@ -37,6 +38,7 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const [limitShown, setLimitShown] = useState(false);
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
+  useAskWhatStays();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
   // Not archived ones, which the archive says of itself (ADR 0082); not one running.
   const held = active.filter((workout) =>
