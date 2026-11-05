@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { needsPremium, useAiAccess } from '@/ai/access';
+import { type AiAccess, needsPremium, useChatAccess } from '@/ai/access';
 import { LoadState } from '@/components/load-state';
 import { KeyboardAvoiding } from '@/components/ui/keyboard-avoiding';
 import { Screen } from '@/components/ui/screen';
@@ -42,37 +42,52 @@ import { useVoicePlayback } from './use-voice-playback';
  * sees what premium adds without one (#411).
  */
 export function BiteScreen() {
-  const access = useAiAccess('coach_chat');
-  // Read again after it failed, it counts as pending; the chat that went on without it stays.
-  const known = !access.isPending || access.errorUpdateCount > 0;
-  const readOnly = known ? needsPremium(access.data?.refusal) : undefined;
-  const opened = useOpenedChat(useLocalSearchParams<BiteParams>(), readOnly);
+  const access = useChatAccess();
+  const opened = useOpenedChat(
+    useLocalSearchParams<BiteParams>(),
+    access.settled ? access.readOnly : undefined,
+  );
   const { fromChats, fromNotebook } = opened;
   const { threadId, key } = opened;
   const saved = useThreadMessages(threadId);
   const threadText = useThreadText();
-  // A saved chat opens on its messages as they are now, never on ones kept from before.
+  // What opens is decided once for each chat: a plan that ends under an open chat locks its
+  // composer, and a new read of access never takes it from the screen.
+  const [openKey, setOpenKey] = useState<string>();
+  const open = openKey === key;
+  // A chat deleted by a user who can only read: they have no new chat, so the last one left opens.
+  const gone =
+    access.readOnly && threadId !== undefined && saved.isFetchedAfterMount && saved.data === null;
+  useEffect(() => {
+    if (gone) router.setParams({ thread: '', fresh: '', offer: '' });
+  }, [gone]);
+  const unread = access.readOnly && saved.isError && saved.data === undefined;
+  // A saved chat opens on its messages as they are now, never on ones kept from before; nothing to
+  // write in is offered before it is known that the user may.
   if (
-    opened.waiting ||
-    // Nothing to write in is offered before it is known that the user may.
-    readOnly === undefined ||
-    (threadId !== undefined && !saved.isFetchedAfterMount)
+    gone ||
+    (!open &&
+      (opened.waiting ||
+        !access.settled ||
+        unread ||
+        (threadId !== undefined && !saved.isFetchedAfterMount)))
   ) {
     return (
       <Screen onBack={() => router.back()} closes={!fromChats && !fromNotebook}>
-        <LoadState queries={known ? [saved] : [access]} />
+        <LoadState queries={access.settled ? [opened.last, saved] : [access.query]} />
       </Screen>
     );
   }
-  if (!saved.data && readOnly) {
+  if (!open && !saved.data && access.readOnly) {
     return <BitePremiumScreen />;
   }
+  if (!open) setOpenKey(key);
   // A thread of its own for each chat opened, so that one's messages never go on in another; a
   // thread that is gone, as one deleted from the chats, gives way to a new chat.
   return saved.data ? (
     <Chat
       key={key}
-      access={access}
+      access={access.answer}
       fromChats={fromChats}
       fromNotebook={fromNotebook}
       title={
@@ -86,7 +101,7 @@ export function BiteScreen() {
   ) : (
     <Chat
       key={threadId === undefined ? key : `gone-${threadId}`}
-      access={access}
+      access={access.answer}
       fromChats={fromChats}
       fromNotebook={fromNotebook}
       continueWith={
@@ -101,8 +116,8 @@ export function BiteScreen() {
 }
 
 type ChatProps = {
-  /** Whether the user may chat, read once for the screen: a second reader would read it again. */
-  access: ReturnType<typeof useAiAccess>;
+  /** Whether the user may chat, as the screen read it. */
+  access?: AiAccess;
   /** Whether the chat was opened over the chats, which it goes back to. */
   fromChats: boolean;
   /**
@@ -166,7 +181,7 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
   );
   const mediaUrls = useMediaUrls(start?.threadId, keptMedia);
   const { scrollProps, following } = useFollowEnd(chat.status === 'idle');
-  const refusal = chat.refusal ?? access.data?.refusal;
+  const refusal = chat.refusal ?? access?.refusal;
   const readOnly = needsPremium(refusal);
   const busy = chat.status !== 'idle';
   // The same each render, so that the messages with notes do not render again.
@@ -252,7 +267,7 @@ function Chat({ access, fromChats, fromNotebook, title, start, continueWith }: C
           {readOnly ? (
             <LockedComposer />
           ) : refusal ? (
-            <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
+            <RefusalCard refusal={refusal} resetsAt={access?.resetsAt} />
           ) : (
             <ChatComposer
               onSend={following((message) =>

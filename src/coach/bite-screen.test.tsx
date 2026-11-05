@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 
+import { ACCESS_KEY } from '@/ai/access';
 import { supabase } from '@/lib/supabase';
-import { act, fireEvent, screen, waitFor } from '@/test/render';
+import { act, createTestQueryClient, fireEvent, screen, waitFor } from '@/test/render';
 import { renderBite } from '@/test/render-bite';
 
 import { BiteScreen } from './bite-screen';
@@ -26,6 +27,8 @@ jest.mock('./chat-stream', () => ({
   ...jest.requireActual('./chat-stream'),
   streamChat: jest.fn(),
 }));
+
+const ACCESS = [...ACCESS_KEY, 'coach_chat'];
 
 /** Lets ai_access() answer with `reason`, or allow the user. */
 function access(reason: string | null = null) {
@@ -289,6 +292,80 @@ it('opens the last chat of a user without a plan however old it is', async () =>
   await waitFor(() =>
     expect(router.setParams).toHaveBeenCalledWith({ thread: '7', fresh: '', offer: '' }),
   );
+});
+
+it('keeps a new chat open when the plan ends under it, locking its composer', async () => {
+  const stream = liveStream();
+  await renderBite();
+  await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
+  access('plan_required');
+  await stream.send({ event: 'text', text: 'Good.' }, { event: 'done', threadId: 7, messageId: 9 });
+  await stream.end();
+
+  expect(await screen.findByText('Chat with Bite comes with premium')).toBeOnTheScreen();
+  expect(screen.getByText('How was my week?')).toBeOnTheScreen();
+  expect(screen.queryByText('Talk to Bite')).toBeNull();
+});
+
+it('reads access again before it decides, as what is cached may be from before the plan', async () => {
+  mockParams = {};
+  access('plan_required');
+  jest.mocked(useLastThread).mockReturnValue({
+    isPending: false,
+    data: { id: 7, lastMessageAt: new Date(2020, 0, 1) },
+  } as never);
+  const queryClient = createTestQueryClient();
+  queryClient.setQueryData(ACCESS, {});
+  await queryClient.invalidateQueries({ queryKey: ACCESS });
+  await renderBite({ queryClient });
+
+  await waitFor(() =>
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '7', fresh: '', offer: '' }),
+  );
+  expect(router.setParams).toHaveBeenCalledTimes(1);
+});
+
+it('offers to try again a chat that could not be read, not premium', async () => {
+  mockParams = { thread: '7', fresh: '' };
+  access('plan_required');
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: undefined,
+    isError: true,
+    isFetchedAfterMount: true,
+  } as never);
+  await renderBite();
+
+  expect(await screen.findByRole('button', { name: 'Try again' })).toBeOnTheScreen();
+  expect(screen.queryByText('Talk to Bite')).toBeNull();
+});
+
+it('offers to try again a last chat that could not be read, not premium', async () => {
+  mockParams = {};
+  access('plan_required');
+  jest.mocked(useLastThread).mockReturnValue({
+    isPending: false,
+    isError: true,
+    data: undefined,
+  } as never);
+  await renderBite();
+
+  expect(await screen.findByRole('button', { name: 'Try again' })).toBeOnTheScreen();
+  expect(router.setParams).not.toHaveBeenCalled();
+});
+
+it('opens the last chat left when a user without a plan deleted the open one', async () => {
+  mockParams = { thread: '7', fresh: '' };
+  access('plan_required');
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: null,
+    isFetchedAfterMount: true,
+  } as never);
+  await renderBite();
+
+  await waitFor(() =>
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '', fresh: '', offer: '' }),
+  );
+  expect(screen.queryByText('Talk to Bite')).toBeNull();
 });
 
 it('shows a refusal that comes with an answer', async () => {

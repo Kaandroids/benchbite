@@ -93,13 +93,15 @@ export function continueChat(thread: number) {
  */
 export function useOpenedChat(
   params: BiteParams,
-  /** Whether the user can only read their chats, once known: the last one opens however old. */
+  /** Whether the user can only read their chats, once settled: the last one opens however old. */
   readOnly: boolean | undefined,
 ): {
   threadId?: number;
   key: string;
   /** Until the last chat is known, from the tab bar. */
   waiting: boolean;
+  /** The read of the last chat, for what shows while waiting: it may fail. */
+  last: ReturnType<typeof useLastThread>;
   /** The last chat, no longer recent, which a new chat offers to continue. */
   offer?: ThreadSummary;
   /** Opened over the chats, which it goes back to, as on board 18. */
@@ -109,7 +111,14 @@ export function useOpenedChat(
 } {
   const asked = chatOf(params);
   const last = useLastThread(asked.latest);
-  const decided = asked.latest && !last.isPending && readOnly !== undefined;
+  // Read again when it is stale, as a chat deleted since may be the one cached. A user who can only
+  // read has nothing to start instead, so a failed read waits to be tried again.
+  const decided =
+    asked.latest &&
+    !last.isPending &&
+    !last.isFetching &&
+    readOnly !== undefined &&
+    !(readOnly && last.isError && last.data === undefined);
   const lastThread = last.data;
   useEffect(() => {
     if (!decided) return;
@@ -123,6 +132,7 @@ export function useOpenedChat(
     threadId: asked.threadId,
     key: asked.key,
     waiting: asked.latest,
+    last,
     offer:
       params.offer && lastThread && String(lastThread.id) === params.offer ? lastThread : undefined,
     fromChats: params.from === 'chats',

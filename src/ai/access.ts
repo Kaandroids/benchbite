@@ -23,14 +23,15 @@ export type Refusal = (typeof REFUSALS)[number];
 export const needsPremium = (refusal?: Refusal) =>
   refusal === 'plan_required' || refusal === 'account_required';
 
+/** What ai_access() says: why the user may not use a feature, and when that opens again. */
+export type AiAccess = { refusal?: Refusal; resetsAt?: Date };
+
 /** Whether the user may use `feature` now, and when the window that refuses it opens again. */
-export function useAiAccess(feature: Feature) {
+export function useAiAccess(feature: Feature, options?: { retry?: false }) {
   return useQuery({
     queryKey: [...ACCESS_KEY, feature],
-    // Bite waits for it before a new chat shows; one that fails goes on at once, not after tries,
-    // as the server refuses what the user may not do anyway.
-    retry: false,
-    queryFn: async () => {
+    ...options,
+    queryFn: async (): Promise<AiAccess> => {
       const { data, error } = await supabase.rpc('ai_access', { feature });
       if (error) {
         throw error;
@@ -41,4 +42,20 @@ export function useAiAccess(feature: Feature) {
       };
     },
   });
+}
+
+/**
+ * Whether the user may chat with Bite, for the screen that decides what opens: `readOnly` when the
+ * plan has no chat, and `settled` once no read is under way, as what is cached may be from before
+ * the plan changed. Bite waits for it; one that fails goes on at once, not after tries, as the
+ * server refuses what the user may not do anyway.
+ */
+export function useChatAccess() {
+  const query = useAiAccess('coach_chat', { retry: false });
+  return {
+    query,
+    answer: query.data,
+    readOnly: needsPremium(query.data?.refusal),
+    settled: !query.isFetching,
+  };
 }
