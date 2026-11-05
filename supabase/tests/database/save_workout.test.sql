@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -52,7 +52,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 -- them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 2, 12, 1, 0) $$,
+  $$ values (20, 3, 2, 12, 1, 0, false) $$,
   'A free user may have 3 workouts with 20 exercises each, and 1 alternative in all'
 );
 
@@ -131,6 +131,12 @@ select lives_ok(
 );
 
 -- Saving again replaces the workout but keeps it switched off.
+-- The archive comes with premium (ADR 0082).
+reset role;
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+values ('00000000-0000-0000-0000-00000000000a', 'premium', now(), now() + interval '1 day', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
 select public.set_workout_active(current_setting('test.workout_id')::bigint, false, current_date);
 select is(
   public.save_workout(pg_temp.workout(
@@ -153,15 +159,22 @@ select results_eq(
   'The exercises are replaced'
 );
 
--- A fourth workout is rejected, archived ones counted.
+-- On the free plan a fourth workout is rejected; an archived one does not count (ADR 0082).
+reset role;
+delete from public.subscriptions where user_id = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select lives_ok(
   $$ select public.save_workout(pg_temp.valid(), current_date) $$,
   'Users can have up to 3 workouts'
 );
+select lives_ok(
+  $$ select public.save_workout(pg_temp.valid(), current_date) $$,
+  'not counting the inactive one'
+);
 select throws_ok(
   $$ select public.save_workout(pg_temp.valid(), current_date) $$,
   'BB009', 'A user can have up to 3 workouts',
-  'A fourth workout is rejected, the inactive one counted'
+  'A fourth workout is rejected'
 );
 select public.delete_workout(w.id, current_date) from public.workouts w where w.name = 'Arms';
 
