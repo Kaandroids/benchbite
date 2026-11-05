@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(46);
+select plan(43);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -206,21 +206,6 @@ select results_eq(
      join public.custom_foods c on c.id = e.custom_food_id $$,
   $$ values ('Dal makhani'::text, 250.0) $$,
   'with the food made again'
-);
-
--- The user chooses another meal than the dinner Bite gave.
-insert into ids select 'chosen meal card', pg_temp.add('[{"food_id": "C133000", "grams": 100}]');
-select is(
-  (public.log_coach_meal_card((select id from ids where name = 'chosen meal card'), meal => 'lunch')).meal::text,
-  'lunch', 'A card is added to the meal the user chose'
-);
-select is(
-  (select e.meal::text from public.meal_entries e where e.id = any ((pg_temp.card('chosen meal card')).entry_ids)),
-  'lunch', 'and logs there'
-);
-select is(
-  (public.undo_coach_meal_card((select id from ids where name = 'chosen meal card'))).status::text,
-  'undone', 'and can be undone from there'
 );
 
 -- A card saves Ayran, which the user then logs again at lunch: undoing the card leaves it.

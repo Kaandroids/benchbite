@@ -2365,7 +2365,7 @@ export type Database = {
         };
       };
       log_coach_meal_card: {
-        Args: { card_id: number; grams?: number[]; meal?: Database['public']['Enums']['meal'] };
+        Args: { card_id: number; grams?: number[] };
         Returns: {
           created_at: string;
           day: string;
