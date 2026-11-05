@@ -1916,8 +1916,8 @@
         "message": "{{date}} tarihinde geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       },
       "plan_required": {
-        "title": "Bite bir planla gelir",
-        "message": "Bite'lı planlar yakında. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
+        "title": "Bite premium ile gelir",
+        "message": "Bite'ı kullanmak için premium al. Öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       },
       "account_required": {
         "title": "Bite için hesap gerekiyor",

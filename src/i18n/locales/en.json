@@ -1916,8 +1916,8 @@
         "message": "I'm back on {{date}}. Your plan, meals and workouts keep working as usual."
       },
       "plan_required": {
-        "title": "Bite comes with a plan",
-        "message": "Plans with Bite are coming soon. Your plan, meals and workouts keep working as usual."
+        "title": "Bite comes with premium",
+        "message": "Get premium to use Bite. Your meals and workouts keep working as usual."
       },
       "account_required": {
         "title": "Bite needs an account",

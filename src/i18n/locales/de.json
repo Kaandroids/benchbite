@@ -1916,8 +1916,8 @@
         "message": "Ich bin am {{date}} zurück. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
       },
       "plan_required": {
-        "title": "Bite gibt es mit einem Plan",
-        "message": "Pläne mit Bite kommen bald. Dein Plan, deine Mahlzeiten und Workouts laufen wie gewohnt weiter."
+        "title": "Bite gibt es mit Premium",
+        "message": "Hol dir Premium, um Bite zu nutzen. Deine Mahlzeiten und Trainings laufen wie gewohnt weiter."
       },
       "account_required": {
         "title": "Für Bite brauchst du ein Konto",
