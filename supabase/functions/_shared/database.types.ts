@@ -1113,6 +1113,7 @@ export type Database = {
       plans: {
         Row: {
           added_alternatives: number | null;
+          archive: boolean;
           budget_usd: number;
           exercises: number;
           plan: Database['public']['Enums']['plan'];
@@ -1125,6 +1126,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           added_alternatives?: number | null;
+          archive: boolean;
           budget_usd: number;
           exercises: number;
           plan: Database['public']['Enums']['plan'];
@@ -1136,6 +1138,7 @@ export type Database = {
         };
         Update: {
           added_alternatives?: number | null;
+          archive?: boolean;
           budget_usd?: number;
           exercises?: number;
           plan?: Database['public']['Enums']['plan'];
@@ -2039,6 +2042,20 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      counted_workouts: { Args: { user_id: string }; Returns: number };
+      counts_on_plan: {
+        Args: {
+          limits: Omit<
+            Database['public']['Tables']['plans']['Row'],
+            Database['public']['Tables']['plans']['ComputedFields']
+          >;
+          workout: Omit<
+            Database['public']['Tables']['workouts']['Row'],
+            Database['public']['Tables']['workouts']['ComputedFields']
+          >;
+        };
+        Returns: boolean;
+      };
       create_exercise: { Args: { exercise: Json }; Returns: string };
       custom_exercise_fields: {
         Args: { exercise: Json };
@@ -2464,6 +2481,7 @@ export type Database = {
         Args: { user_id: string };
         Returns: {
           added_alternatives: number | null;
+          archive: boolean;
           budget_usd: number;
           exercises: number;
           plan: Database['public']['Enums']['plan'];
@@ -2845,8 +2863,10 @@ export type Database = {
           alternative_name_length: number;
           alternatives: number;
           alternatives_added: number;
+          archive: boolean;
           exercises: number;
           workouts: number;
+          workouts_counted: number;
         }[];
       };
       workout_minutes: { Args: { items: Json }; Returns: number };

@@ -43,8 +43,8 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
     workouts.data?.filter((workout) => showsAsWaiting(workout, session?.workoutId === workout.id))
       .length ?? 0;
   const today = isoWeekday(new Date());
-  // Archived workouts count too (ADR 0018).
-  const count = workouts.data?.length ?? 0;
+  // As the limit counts them: archived ones only on a plan with the archive (ADR 0082).
+  const count = limits.data?.workouts_counted ?? 0;
   const full = limits.data !== undefined && count >= limits.data.workouts;
   // The room premium would give, on a plan with less; none on premium itself.
   const premium = numbers.data?.premium;

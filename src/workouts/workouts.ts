@@ -223,7 +223,11 @@ export function useSetWorkoutActive() {
     onError: (_error, _variables, context) => {
       queryClient.setQueryData(WORKOUTS_KEY, context?.previous);
     },
-    onSettled: () => reloadPlan(queryClient),
+    onSettled: () =>
+      Promise.all([
+        reloadPlan(queryClient),
+        queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY }),
+      ]),
   });
 }
 
@@ -276,8 +280,8 @@ const workoutLimitsQuery = {
 
 /**
  * The user's workout limits, from their plan (ADR 0078): how many workouts, exercises in each,
- * versions of each and alternatives in all, how many alternatives the user has added, and how long
- * an alternative's name may be. They change with the plan, so they are read again after a while.
+ * versions of each and alternatives in all, how many workouts count and how many alternatives the
+ * user has added, whether the plan has the archive, and how long an alternative's name may be. They change with the plan, so they are read again after a while.
  */
 export function useWorkoutLimits() {
   return useQuery(workoutLimitsQuery);
@@ -307,7 +311,11 @@ export function useSaveWorkout() {
       }
       return data;
     },
-    onSuccess: () => reloadPlan(queryClient),
+    onSuccess: () =>
+      Promise.all([
+        reloadPlan(queryClient),
+        queryClient.invalidateQueries({ queryKey: WORKOUT_LIMITS_KEY }),
+      ]),
   });
 }
 

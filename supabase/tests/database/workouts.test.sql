@@ -50,6 +50,10 @@ select is(
   'New workouts are active'
 );
 
+-- The archive comes with premium (ADR 0082).
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+values ('00000000-0000-0000-0000-00000000000a', 'premium', now(), now() + interval '1 day', 'monthly', 'manual');
+
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select lives_ok(

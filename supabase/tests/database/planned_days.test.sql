@@ -62,6 +62,12 @@ select is_empty(
   'Today follows the plan as it is'
 );
 
+-- The archive comes with premium (ADR 0082).
+reset role;
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+values ('00000000-0000-0000-0000-00000000000a', 'premium', now(), now() + interval '1 day', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
 select public.set_workout_active(901, false, current_date);
 select is(pg_temp.kept('00000000-0000-0000-0000-00000000000a'), 14,
   'Archiving the workout leaves past days planned with it');
@@ -119,6 +125,12 @@ select results_eq(
   $$ values (current_date - 1, 7) $$,
   'Saving a workout with the device''s today keeps the days before it with the plan they had'
 );
+-- The archive comes with premium (ADR 0082).
+reset role;
+insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
+values ('00000000-0000-0000-0000-0000000000a8', 'premium', now(), now() + interval '1 day', 'monthly', 'manual');
+select pg_temp.sign_in('00000000-0000-0000-0000-0000000000a8');
+
 select public.set_workout_active(908, false, current_date + 1);
 select is(pg_temp.through('00000000-0000-0000-0000-0000000000a8'), current_date,
   'as does archiving it, from a device a day ahead'
