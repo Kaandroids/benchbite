@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 
 import { supabase } from '@/lib/supabase';
-import { act, fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, screen, waitFor } from '@/test/render';
+import { renderBite } from '@/test/render-bite';
 
 import { BiteScreen } from './bite-screen';
 import { useLastThread, useThreadMessages } from './threads';
@@ -108,13 +109,15 @@ function liveStream() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockParams = NEW_CHAT;
+  jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: null } as never);
   // No saved chat unless a test opens one.
   jest.mocked(useThreadMessages).mockReturnValue({ data: undefined } as never);
   access();
 });
 
 it('greets the user by name, with questions to ask', async () => {
-  await render(<BiteScreen />);
+  await renderBite();
 
   expect(screen.getByText("Hi Sam, I'm Bite")).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'How was my week?' })).toBeOnTheScreen();
@@ -123,7 +126,7 @@ it('greets the user by name, with questions to ask', async () => {
 
 it('asks a suggested question, shows Bite looking it up, then its answer as it comes', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
 
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
 
@@ -152,7 +155,7 @@ it('asks a suggested question, shows Bite looking it up, then its answer as it c
 
 it('goes on in the same thread with the next message', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'text', text: 'Good.' }, { event: 'done', threadId: 7, messageId: 9 });
   await stream.end();
@@ -165,7 +168,7 @@ it('goes on in the same thread with the next message', async () => {
 
 it('stops an answer, keeping what came of it', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'text', text: 'Your week was' });
 
@@ -183,7 +186,7 @@ describe('a message sent right after a stop', () => {
   /** Stops an answer, then sends 'And today?', which the server refuses as one at a time. */
   async function refusedAfterStop() {
     const stream = liveStream();
-    await render(<BiteScreen />);
+    await renderBite();
     await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
     await stream.send({ event: 'text', text: 'Your week was' });
     await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
@@ -219,7 +222,7 @@ describe('a message sent right after a stop', () => {
 
 it('says so when Bite could not answer', async () => {
   jest.mocked(streamChat).mockRejectedValue(new Error('offline'));
-  await render(<BiteScreen />);
+  await renderBite();
 
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
 
@@ -229,7 +232,7 @@ it('says so when Bite could not answer', async () => {
 
 it('shows why the user cannot chat in place of the composer', async () => {
   access('limit_reached');
-  await render(<BiteScreen />);
+  await renderBite();
 
   expect(await screen.findByText("You've used Bite for this month")).toBeOnTheScreen();
   expect(screen.getByText(/I'm back on November 1/)).toBeOnTheScreen();
@@ -237,25 +240,60 @@ it('shows why the user cannot chat in place of the composer', async () => {
   expect(screen.queryByRole('button', { name: 'How was my week?' })).toBeNull();
 });
 
-it('tells a user without a plan that Bite comes with one', async () => {
+it('shows what premium adds to a user without a plan or a chat', async () => {
   access('plan_required');
-  await render(<BiteScreen />);
+  await renderBite();
 
-  expect(await screen.findByText('Bite comes with a plan')).toBeOnTheScreen();
+  expect(await screen.findByText('Talk to Bite')).toBeOnTheScreen();
+  expect(screen.getByText('Plans your week')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
 });
 
-it('offers a guest an account', async () => {
+it('shows a guest what premium adds', async () => {
   access('account_required');
-  await render(<BiteScreen />);
+  await renderBite();
 
-  await fireEvent.press(await screen.findByRole('button', { name: 'Create an account' }));
+  expect(await screen.findByText('Talk to Bite')).toBeOnTheScreen();
+});
 
-  expect(router.push).toHaveBeenCalledWith('/account/create');
+it('lets a user without a plan read a chat, with a way to premium to go on', async () => {
+  mockParams = { thread: '7', fresh: '' };
+  access('plan_required');
+  jest.mocked(useThreadMessages).mockReturnValue({
+    data: {
+      title: 'Lunch',
+      messages: [{ id: '1', role: 'user', text: 'Can you plan my week?' }],
+    },
+    isFetchedAfterMount: true,
+  } as never);
+  await renderBite();
+
+  expect(await screen.findByText('Can you plan my week?')).toBeOnTheScreen();
+  expect(screen.getByText('Chat with Bite comes with premium')).toBeOnTheScreen();
+  expect(screen.queryByLabelText('Message')).toBeNull();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Get premium' }));
+
+  expect(router.push).toHaveBeenCalledWith('/premium');
+});
+
+it('opens the last chat of a user without a plan however old it is', async () => {
+  mockParams = {};
+  access('plan_required');
+  jest.mocked(useLastThread).mockReturnValue({
+    isPending: false,
+    data: { id: 7, lastMessageAt: new Date(2020, 0, 1) },
+  } as never);
+  await renderBite();
+
+  await waitFor(() =>
+    expect(router.setParams).toHaveBeenCalledWith({ thread: '7', fresh: '', offer: '' }),
+  );
 });
 
 it('shows a refusal that comes with an answer', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
 
   await stream.send({ event: 'error', reason: 'limit_reached' });
@@ -265,14 +303,14 @@ it('shows a refusal that comes with an answer', async () => {
 });
 
 it('closes', async () => {
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'Close' }));
   expect(router.back).toHaveBeenCalled();
 });
 
 it('goes on in the thread of an answer that was stopped', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'thread', threadId: 7 }, { event: 'text', text: 'Your week' });
   await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
@@ -285,7 +323,7 @@ it('goes on in the thread of an answer that was stopped', async () => {
 
 it('shows a lookup Bite makes after it started writing', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
 
   await stream.send(
@@ -299,7 +337,7 @@ it('shows a lookup Bite makes after it started writing', async () => {
 
 it('says an answer was stopped, under what came of it', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'text', text: 'Your week' });
 
@@ -310,7 +348,7 @@ it('says an answer was stopped, under what came of it', async () => {
 
 it('says a question was not answered, and asks it again', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
 
@@ -326,7 +364,7 @@ it('says a question was not answered, and asks it again', async () => {
 
 it('says an answer was cut off, and tries the question again', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'text', text: 'Your week' },
@@ -342,7 +380,7 @@ it('says an answer was cut off, and tries the question again', async () => {
 
 it('offers to try again an answer the model broke off, but not one cut at its limit', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'text', text: 'Your week' },
@@ -368,7 +406,7 @@ it('offers to try again an answer the model broke off, but not one cut at its li
 
 it('says why an answer was refused after it began', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'text', text: 'Let me check.' },
@@ -391,7 +429,7 @@ it('says why an answer was refused after it began', async () => {
 it('keeps an answer that is only a proposal, rather than offering to ask again', async () => {
   proposalsStand('pending');
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -416,7 +454,7 @@ it('keeps an answer that is only a proposal, rather than offering to ask again',
 
 it('shows a note Bite kept as a line, though Bite said nothing with it', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -440,7 +478,7 @@ it('shows a note Bite kept as a line, though Bite said nothing with it', async (
 
 it('offers no way to the notebook in a chat opened from it, which it goes back to', async () => {
   mockParams = { ...NEW_CHAT, from: 'notebook' };
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.queryByRole('button', { name: "Bite's notebook" })).toBeNull();
   expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
 });
@@ -489,7 +527,7 @@ const ASKED = { id: 4, action: 'asked' as const, category: 'food' as const, text
 it('asks whether to keep a note, saves it with a tap, then shows it saved', async () => {
   const answers = notesAsked();
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -512,7 +550,7 @@ it('still asks about a note whose state could not be read', async () => {
     }),
   } as never);
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -528,7 +566,7 @@ it('still asks about a note whose state could not be read', async () => {
 it('removes a note asked about with Not now, and its card', async () => {
   const answers = notesAsked();
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -545,7 +583,7 @@ it('removes a note asked about with Not now, and its card', async () => {
 it('shows a meal Bite estimated as its card, though Bite said nothing with it', async () => {
   mealCardsStand('pending');
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -582,7 +620,7 @@ it('keeps the conversation on the screen while a new card loads where it stands'
     select: () => ({ in: () => new Promise(() => {}) }),
   } as never);
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -598,7 +636,7 @@ it('keeps the conversation on the screen while a new card loads where it stands'
 it("keeps the grams a meal card's Edit changed when Bite proposes after it", async () => {
   proposalsNeverLoad();
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -644,7 +682,7 @@ it('opens a saved chat on its meal cards as they stand now', async () => {
       ],
     },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
 
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
@@ -686,7 +724,7 @@ it('opens a saved chat on its proposals as they stand now', async () => {
       ],
     },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
 
   expect(await screen.findByText('Applied: Leg press instead of Back squat')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
@@ -696,7 +734,7 @@ it('opens a saved chat on its proposals as they stand now', async () => {
 
 it('says when Bite answers on another device', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'error', reason: 'call_in_progress' });
   await stream.end();
@@ -708,7 +746,7 @@ it('says when Bite answers on another device', async () => {
 
 it('forgets the new thread of a message that was refused', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'thread', threadId: 7 },
@@ -723,7 +761,7 @@ it('forgets the new thread of a message that was refused', async () => {
 
 it('keeps the new thread of a question that stays in it unanswered', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'thread', threadId: 7 }, { event: 'error', reason: 'unavailable' });
   await stream.end();
@@ -735,7 +773,7 @@ it('keeps the new thread of a question that stays in it unanswered', async () =>
 
 it('starts a new thread when its thread is gone', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'thread', threadId: 7 }, { event: 'error', reason: 'unavailable' });
   await stream.end();
@@ -749,7 +787,7 @@ it('starts a new thread when its thread is gone', async () => {
 
 it('says an answer was cut off when it ends without its end', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send({ event: 'text', text: 'Your week' });
 
@@ -761,7 +799,7 @@ it('says an answer was cut off when it ends without its end', async () => {
 
 it('does not call an answer cut off that came whole but was not saved', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
   await stream.send(
     { event: 'text', text: 'A good week.' },
@@ -791,7 +829,7 @@ it('goes on in a saved chat, with its name and messages, and opens the chats', a
       ],
     },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.getByText('Knee pain on squats')).toBeTruthy();
   expect(screen.getByText('Try leg press today.')).toBeTruthy();
 
@@ -815,7 +853,7 @@ it('goes back to the chats from a chat opened over them', async () => {
     isFetchedAfterMount: true,
     data: { title: 'Knee pain on squats', messages: [] },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
 
   await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
@@ -832,7 +870,7 @@ it('starts a new chat when the saved one is gone', async () => {
   jest
     .mocked(useThreadMessages)
     .mockReturnValue({ isFetchedAfterMount: true, data: null } as never);
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.getByRole('button', { name: 'How was my week?' })).toBeTruthy();
   mockParams = NEW_CHAT;
 });
@@ -846,7 +884,7 @@ it('waits for a saved chat as it is now, not as it was kept', async () => {
     isFetching: true,
     data: { title: 'Old', messages: [{ id: 'stored-1', role: 'user', text: 'Kept from before' }] },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.queryByText('Kept from before')).toBeNull();
   mockParams = NEW_CHAT;
 });
@@ -871,14 +909,14 @@ describe('opened from the tab bar', () => {
   it('goes on in the last chat while it is recent, deciding once', async () => {
     mockParams = {};
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(2) } as never);
-    await render(<BiteScreen />);
+    await renderBite();
     expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '', offer: '' });
   });
 
   it('starts a new chat after six hours, offering the last', async () => {
     mockParams = {};
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
-    await render(<BiteScreen />);
+    await renderBite();
     expect(router.setParams).toHaveBeenCalledWith({
       thread: '',
       fresh: expect.stringMatching(/^\d+$/),
@@ -889,7 +927,7 @@ describe('opened from the tab bar', () => {
   it('offers the last chat to continue, and all chats', async () => {
     mockParams = { thread: '', fresh: '1', offer: '9' };
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
-    await render(<BiteScreen />);
+    await renderBite();
     expect(screen.getByText('CONTINUE')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /Knee pain on squats/ }));
     expect(router.setParams).toHaveBeenCalledWith({ thread: '9', fresh: '', offer: '' });
@@ -899,13 +937,13 @@ describe('opened from the tab bar', () => {
 
   it('offers nothing to continue on a new chat asked for from the chats', async () => {
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(8) } as never);
-    await render(<BiteScreen />);
+    await renderBite();
     expect(screen.queryByText('CONTINUE')).toBeNull();
   });
 
   it('keeps a new chat open when its own first message makes it the last chat', async () => {
     const stream = liveStream();
-    const { rerender } = await render(<BiteScreen />);
+    const { rerender } = await renderBite();
     await fireEvent.press(screen.getByRole('button', { name: 'How was my week?' }));
     await stream.send({ event: 'thread', threadId: 9 }, { event: 'text', text: 'A quiet week.' });
     jest.mocked(useLastThread).mockReturnValue({ isPending: false, data: lastChat(0) } as never);
@@ -929,7 +967,7 @@ it('shows when each day of a chat over several days began', async () => {
       ],
     },
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.getByText(/^Yesterday /)).toBeTruthy();
   expect(screen.getByText(/^Today /)).toBeTruthy();
   mockParams = NEW_CHAT;

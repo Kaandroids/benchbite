@@ -19,10 +19,17 @@ export const REFUSALS = [
 ] as const satisfies readonly AccessReason[];
 export type Refusal = (typeof REFUSALS)[number];
 
+/** Whether a refusal is the plan's, which premium lifts, not the use of a plan that has Bite. */
+export const needsPremium = (refusal?: Refusal) =>
+  refusal === 'plan_required' || refusal === 'account_required';
+
 /** Whether the user may use `feature` now, and when the window that refuses it opens again. */
 export function useAiAccess(feature: Feature) {
   return useQuery({
     queryKey: [...ACCESS_KEY, feature],
+    // Bite waits for it before a new chat shows; one that fails goes on at once, not after tries,
+    // as the server refuses what the user may not do anyway.
+    retry: false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('ai_access', { feature });
       if (error) {

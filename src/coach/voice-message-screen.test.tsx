@@ -2,9 +2,9 @@ import { requestRecordingPermissionsAsync } from 'expo-audio';
 
 import { supabase } from '@/lib/supabase';
 import { fakeAudio } from '@/test/expo-audio';
-import { act, fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, screen, waitFor } from '@/test/render';
+import { renderBite } from '@/test/render-bite';
 
-import { BiteScreen } from './bite-screen';
 import { type ChatEvent, type ChatRequest, ChatRequestError, streamChat } from './chat-stream';
 import { useThreadMessages } from './threads';
 
@@ -88,7 +88,7 @@ beforeEach(() => {
 
 it('records while the mic is held, and sends the voice message as it is let go', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   fakeAudio.recorderState = { ...fakeAudio.recorderState, durationMillis: 4200 };
 
   await hold();
@@ -127,7 +127,7 @@ it('records while the mic is held, and sends the voice message as it is let go',
 
 it('cancels a recording slid away to the left, and says how to record after a tap', async () => {
   liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   fakeAudio.recorderState = { ...fakeAudio.recorderState, durationMillis: 3000 };
 
   await hold();
@@ -155,7 +155,7 @@ it('cancels a recording slid away to the left, and says how to record after a ta
 });
 
 it('asks for the microphone first, and says when it is not allowed', async () => {
-  await render(<BiteScreen />);
+  await renderBite();
   fakeAudio.permission = { ...fakeAudio.permission, granted: false, status: 'denied' };
 
   await hold();
@@ -168,7 +168,7 @@ it('asks for the microphone first, and says when it is not allowed', async () =>
 
 it('takes a voice message refused back out of the chat, and says why', async () => {
   jest.mocked(streamChat).mockRejectedValue(new ChatRequestError(413, 'voice_too_long'));
-  await render(<BiteScreen />);
+  await renderBite();
   fakeAudio.recorderState = { ...fakeAudio.recorderState, durationMillis: 4200 };
 
   await hold();
@@ -204,7 +204,7 @@ it('plays a voice message kept with a chat from its address', async () => {
       error: null,
     }),
   } as never);
-  await render(<BiteScreen />);
+  await renderBite();
 
   expect(screen.getByText('Had a chicken rice bowl.')).toBeOnTheScreen();
   expect(screen.getByText('0:04', { includeHiddenElements: true })).toBeOnTheScreen();

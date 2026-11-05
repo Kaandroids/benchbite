@@ -1,6 +1,7 @@
 import { pickPhotos } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { act, createTestQueryClient, fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, createTestQueryClient, fireEvent, screen, waitFor } from '@/test/render';
+import { renderBite } from '@/test/render-bite';
 
 import { MAX_PHOTO_BYTES } from '@shared/photos';
 
@@ -85,7 +86,7 @@ beforeEach(() => {
 });
 
 it('adds photos from the sheet, up to 3, each with an ×', async () => {
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.press(screen.getByRole('button', { name: 'Add a photo' }));
   expect(
     screen.getByText('Up to 3 photos. A meal, a menu, a label: Bite looks at what you send.'),
@@ -112,7 +113,7 @@ it('adds photos from the sheet, up to 3, each with an ×', async () => {
 
 it('sends photos without text, with the local time, and shows them while Bite looks', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   expect(screen.queryByRole('button', { name: 'Send' })).toBeNull();
 
   picks('file://plate.jpg');
@@ -137,7 +138,7 @@ it('sends photos without text, with the local time, and shows them while Bite lo
 
 it('sends the local time with a message of text alone', async () => {
   const stream = liveStream();
-  await render(<BiteScreen />);
+  await renderBite();
   await fireEvent.changeText(screen.getByLabelText('Message'), 'Hi');
   await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
 
@@ -147,7 +148,7 @@ it('sends the local time with a message of text alone', async () => {
 
 it('hands a message whose photo was refused back to the composer, saying which', async () => {
   jest.mocked(streamChat).mockRejectedValueOnce(new ChatRequestError(422, 'photo_has_exif', 1));
-  await render(<BiteScreen />);
+  await renderBite();
   picks('file://a.jpg', 'file://b.jpg');
   await addPhotos();
   await waitFor(() => expect(screen.getByLabelText('Photo 2')).toBeOnTheScreen());
@@ -173,7 +174,7 @@ it('hands a message whose photo was refused back to the composer, saying which',
 it('renders none of the messages again while the user types', async () => {
   const stream = liveStream();
   const queryClient = createTestQueryClient();
-  await render(<BiteScreen />, { queryClient });
+  await renderBite({ queryClient });
   picks('file://plate.jpg');
   await addPhotos();
   await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled());
@@ -193,7 +194,7 @@ it('renders none of the messages again while the user types', async () => {
 });
 
 it('keeps a message refused on the device, as photos too large together', async () => {
-  await render(<BiteScreen />);
+  await renderBite();
   // Each within the limit, together over it.
   const large = 'A'.repeat(Math.floor((MAX_PHOTO_BYTES * 0.9) / 3) * 4);
   jest.mocked(pickPhotos).mockResolvedValueOnce(['file://a.jpg', 'file://b.jpg', 'file://c.jpg']);
@@ -219,7 +220,7 @@ it('puts a message refused by coach-chat before what was written since, dropping
         refuse = reject;
       }),
   );
-  await render(<BiteScreen />);
+  await renderBite();
   picks('file://a.jpg', 'file://b.jpg');
   await addPhotos();
   await waitFor(() => expect(screen.getByLabelText('Photo 2')).toBeOnTheScreen());
@@ -256,7 +257,7 @@ it('puts a message refused by coach-chat before what was written since, dropping
 it('says when a photo could not be prepared', async () => {
   jest.mocked(pickPhotos).mockResolvedValueOnce(['file://broken.heic']);
   jest.mocked(prepareChatPhoto).mockRejectedValueOnce(new Error('unreadable'));
-  await render(<BiteScreen />);
+  await renderBite();
   await addPhotos();
 
   await waitFor(() =>
@@ -298,7 +299,7 @@ describe('a saved chat', () => {
   });
 
   it('shows its photos from coach-media, read in one batch, and opens one large', async () => {
-    await render(<BiteScreen />);
+    await renderBite();
 
     await waitFor(() => expect(createSignedUrls).toHaveBeenCalledTimes(1));
     expect(supabase.storage.from).toHaveBeenCalledWith('coach-media');
@@ -331,7 +332,7 @@ describe('a saved chat', () => {
         error: null,
       });
     });
-    const view = await render(<BiteScreen />, { queryClient });
+    const view = await renderBite({ queryClient });
     await waitFor(() =>
       expect(screen.getAllByRole('imagebutton', { name: 'Photo 1' })[1]).toBeEnabled(),
     );
@@ -369,11 +370,11 @@ describe('a saved chat', () => {
 
   it('keeps the addresses, so that the chat opened again soon asks for none', async () => {
     const queryClient = createTestQueryClient();
-    const first = await render(<BiteScreen />, { queryClient });
+    const first = await renderBite({ queryClient });
     await waitFor(() => expect(createSignedUrls).toHaveBeenCalledTimes(1));
     await first.unmount();
 
-    await render(<BiteScreen />, { queryClient });
+    await renderBite({ queryClient });
     await waitFor(() =>
       expect(screen.getAllByRole('imagebutton', { name: 'Photo 1' })[1]).toBeEnabled(),
     );

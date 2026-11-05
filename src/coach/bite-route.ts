@@ -88,9 +88,14 @@ export function continueChat(thread: number) {
  * The chat the params open. Opened from the tab bar, Bite reads its last chat once and decides:
  * it goes on in it while it is recent, and starts a new chat offering it otherwise. The decision
  * goes into the params, so that a chat, once open, is never swapped for another, as when its own
- * first message makes it the last chat.
+ * first message makes it the last chat. A user who can only read their chats has no new chat to
+ * start, so the last one opens however old it is.
  */
-export function useOpenedChat(params: BiteParams): {
+export function useOpenedChat(
+  params: BiteParams,
+  /** Whether the user can only read their chats, once known: the last one opens however old. */
+  readOnly: boolean | undefined,
+): {
   threadId?: number;
   key: string;
   /** Until the last chat is known, from the tab bar. */
@@ -104,16 +109,16 @@ export function useOpenedChat(params: BiteParams): {
 } {
   const asked = chatOf(params);
   const last = useLastThread(asked.latest);
-  const decided = asked.latest && !last.isPending;
+  const decided = asked.latest && !last.isPending && readOnly !== undefined;
   const lastThread = last.data;
   useEffect(() => {
     if (!decided) return;
     router.setParams(
-      lastThread && isRecent(lastThread, new Date())
+      lastThread && (readOnly || isRecent(lastThread, new Date()))
         ? { thread: String(lastThread.id), fresh: '', offer: '' }
         : { thread: '', fresh: String(Date.now()), offer: lastThread ? String(lastThread.id) : '' },
     );
-  }, [decided, lastThread]);
+  }, [decided, lastThread, readOnly]);
   return {
     threadId: asked.threadId,
     key: asked.key,
