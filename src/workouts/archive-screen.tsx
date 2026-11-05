@@ -31,11 +31,7 @@ export function ArchiveScreen() {
     <Screen
       onBack={() => router.back()}
       title={t('workout.archive.title')}
-      footer={
-        locked ? (
-          <Button label={t('workout.premiumOffer.seePremium')} onPress={openPremium} />
-        ) : undefined
-      }
+      footer={locked ? <Button label={t('premium.seePremium')} onPress={openPremium} /> : undefined}
     >
       <Text color="textMuted">
         {t(locked ? 'workout.archive.bodyLocked' : 'workout.archive.body')}

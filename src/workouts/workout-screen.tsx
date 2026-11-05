@@ -21,6 +21,7 @@ import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
 import { isDbError } from '@/lib/errors';
 import { useOpenPremium } from '@/premium/open-premium';
+import { PremiumOfferSheet } from '@/premium/premium-offer-sheet';
 import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
 import { useStartOrAsk } from '@/sessions/start-or-ask';
@@ -38,7 +39,6 @@ import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
 import { HeldAlternativeSheet } from './held-workout-sheet';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
-import { PremiumOfferSheet } from './premium-offer-sheet';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,

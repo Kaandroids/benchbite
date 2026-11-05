@@ -62,6 +62,14 @@ describe('PremiumScreen', () => {
     expect(screen.getByText('Then from €6.99 a month. Cancel anytime.')).toBeTruthy();
   });
 
+  it('says the archive comes with premium', async () => {
+    mockPlan(FREE);
+    await render(<PremiumScreen onClose={onClose} />);
+    expect(
+      screen.getByLabelText('Archive: free, Not included; premium, Included'),
+    ).toBeOnTheScreen();
+  });
+
   it('opens the plans, whose purchase waits until purchases open', async () => {
     mockPlan(FREE);
     await render(<PremiumScreen onClose={onClose} />);

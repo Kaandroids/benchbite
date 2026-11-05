@@ -104,6 +104,17 @@ export function useDayFormat() {
 }
 
 /** Formats a day of this year without its weekday, for example "October 23". */
+/**
+ * A day ahead, within a week, by its weekday; by its date when that is today's weekday, as it would
+ * otherwise read as today.
+ */
+export function useComingDayFormat() {
+  const weekday = useWeekdayFormat('long');
+  const monthDay = useMonthDayFormat();
+  return (date: Date) =>
+    isoWeekday(date) === isoWeekday(new Date()) ? monthDay(date) : weekday(isoWeekday(date));
+}
+
 export function useMonthDayFormat() {
   const { i18n } = useTranslation();
   const formatter = new Intl.DateTimeFormat(i18n.language, { month: 'long', day: 'numeric' });

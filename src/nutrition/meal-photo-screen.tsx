@@ -5,7 +5,7 @@ import { Image, StyleSheet, TextInput, View } from 'react-native';
 
 import { MAX_NOTE_LENGTH } from '@shared/meal/estimate';
 
-import { useAiAccess, type Refusal } from '@/ai/access';
+import { countUsedUpUntil, useAiAccess, type Refusal } from '@/ai/access';
 import { RefusalCard } from '@/coach/refusal-card';
 import { BiteAvatar } from '@/coach/bite-avatar';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { ItemAmount } from './item-amount';
 import { EstimateFailure } from './meal-estimate';
 import { handOverLoggedEstimate } from './meal-photo-handover';
 import { MealPhotoSheet } from './meal-photo-sheet';
+import { PhotosUsedUpSheet } from './photos-used-up-sheet';
 import type { Meal } from './meals';
 import { useMealEstimate } from './use-meal-estimate';
 
@@ -179,7 +180,11 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
 
         {state.kind === 'failed' ? (
           refusal ? (
-            <Refused refusal={refusal} />
+            <Refused
+              refusal={refusal}
+              // A correction refused goes back to the estimate there was; else there is nothing here.
+              onClose={state.previous ? () => setItems(state.previous!) : leave}
+            />
           ) : (
             <Message
               expression="sad"
@@ -304,10 +309,30 @@ function Message({
   );
 }
 
-/** Why no meal may be estimated now, as the chat says it, with when that opens again. */
-function Refused({ refusal }: { refusal: Refusal }) {
+/**
+ * Why no meal may be estimated now, as the chat says it, with when that opens again; the week's
+ * photos used up in a sheet, with a way to premium, which closes with `onClose`.
+ */
+function Refused({ refusal, onClose }: { refusal: Refusal; onClose: () => void }) {
   const access = useAiAccess('meal_photo');
-  return <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />;
+  // Closed here too, as it must be gone before premium opens, whatever `onClose` does.
+  const [closed, setClosed] = useState(false);
+  // Which of the two only that read says.
+  if (access.isPending) return null;
+  const usedUpUntil = countUsedUpUntil(access.data, refusal);
+  return usedUpUntil ? (
+    closed ? null : (
+      <PhotosUsedUpSheet
+        until={usedUpUntil}
+        onClose={() => {
+          setClosed(true);
+          onClose();
+        }}
+      />
+    )
+  ) : (
+    <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
+  );
 }
 
 const styles = StyleSheet.create({

@@ -20,5 +20,6 @@ it('asks for the feature given, with when its window opens again', async () => {
   expect(result.current.data).toEqual({
     refusal: 'limit_reached',
     resetsAt: new Date('2026-11-09T00:00:00Z'),
+    byCount: false,
   });
 });

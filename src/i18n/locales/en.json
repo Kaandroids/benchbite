@@ -399,7 +399,11 @@
       "tryAnother": "Try another photo",
       "failed": "Bite couldn’t look at your meal",
       "failedHint": "Check your connection and try again.",
-      "blockedHint": "Bite can’t estimate these photos. Try other photos."
+      "blockedHint": "Bite can’t estimate these photos. Try other photos.",
+      "usedUp": {
+        "title": "You've used this week's meal photos",
+        "body": "New ones on {{day}}. With premium you can use them every day."
+      }
     },
     "amount": {
       "per100g": "{{calories}} kcal per 100 g",
@@ -890,10 +894,6 @@
       "title_one": "You have {{count}} of {{count}} workout",
       "title_other": "You have {{count}} of {{count}} workouts",
       "body": "Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room."
-    },
-    "premiumOffer": {
-      "seePremium": "See premium",
-      "notNow": "Not now"
     },
     "choose": {
       "title": "Your premium has ended",
@@ -2216,6 +2216,7 @@
       "inAll_other": "{{count}} in all",
       "each_one": "{{count}} each",
       "each_other": "{{count}} each",
+      "archive": "Archive",
       "logging": "Logging and progress",
       "noLimit": "No limit",
       "included": "Included",
@@ -2269,6 +2270,10 @@
       "body": "Premium stays with your account, also on a new phone. Everything you logged comes along.",
       "create": "Create account",
       "logIn": "I have an account"
+    },
+    "seePremium": "See premium",
+    "offerSheet": {
+      "notNow": "Not now"
     }
   }
 }

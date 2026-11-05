@@ -23,8 +23,19 @@ export type Refusal = (typeof REFUSALS)[number];
 export const needsPremium = (refusal?: Refusal) =>
   refusal === 'plan_required' || refusal === 'account_required';
 
-/** What ai_access() says: why the user may not use a feature, and when that opens again. */
-export type AiAccess = { refusal?: Refusal; resetsAt?: Date };
+/**
+ * What ai_access() says: why the user may not use a feature, when that opens again, and whether
+ * the feature is counted rather than budgeted, as meal photos on the free plan are.
+ */
+export type AiAccess = { refusal?: Refusal; resetsAt?: Date; byCount: boolean };
+
+/**
+ * When a counted feature opens again, if `refusal` means its count is used up, as the free plan's
+ * meal photos; undefined for anything else, such as a plan's budget.
+ */
+export function countUsedUpUntil(access?: AiAccess, refusal = access?.refusal) {
+  return access?.byCount && refusal === 'limit_reached' ? access.resetsAt : undefined;
+}
 
 /** Whether the user may use `feature` now, and when the window that refuses it opens again. */
 export function useAiAccess(feature: Feature, options?: { retry?: false }) {
@@ -39,6 +50,7 @@ export function useAiAccess(feature: Feature, options?: { retry?: false }) {
       return {
         refusal: oneOf(REFUSALS, data.reason ?? undefined),
         resetsAt: data.resets_at ? new Date(data.resets_at) : undefined,
+        byCount: data.by_count ?? false,
       };
     },
   });
