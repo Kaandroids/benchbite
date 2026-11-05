@@ -42,6 +42,7 @@ export function MealCardView({
   readOnly = false,
 }: MealCardViewProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { format } = useNumberFormat();
   const action = useMealCardAction(card);
   // The grams the user changed, which only this card keeps until it is added.
@@ -109,7 +110,7 @@ export function MealCardView({
     <Card style={{ gap: spacing.md }}>
       <Header meal={meal} confidence={t(`nutrition.photo.confidence.${confidenceOf(items)}`)} />
       {changing ? <MealChoice meal={meal} disabled={action.isPending} onChange={setMeal} /> : null}
-      <View>
+      <View style={changing && { borderTopWidth: 1, borderTopColor: colors.border }}>
         {items.map((item, index) =>
           changing ? (
             <EstimateItemRow
@@ -216,6 +217,7 @@ function MealChoice({
           <Pressable
             key={row.meal}
             accessibilityRole="radio"
+            accessibilityLabel={t(`nutrition.meals.${row.meal}`)}
             accessibilityState={{ checked: selected, disabled }}
             disabled={disabled}
             onPress={() => onChange(row.meal)}
