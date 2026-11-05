@@ -1,10 +1,10 @@
--- A user chooses once what stays when premium ends (#411, ADR 0083): the choice opens with the end
--- of premium when something waits, the chosen stay and the rest wait, it cannot be made again, and
--- only the end of premium opens it again.
+-- A user chooses once what stays when premium ends (#411, ADR 0083, 0084): the choice opens with the
+-- end of premium when something waits, the chosen stay and the rest go to the archive, it cannot be
+-- made again, and only the end of premium opens it again.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -140,9 +140,9 @@ select lives_ok(
   'A choice that fits is made'
 );
 select results_eq(
-  $$ select id, held from public.workouts where active order by id $$,
-  $$ values (101::bigint, true), (102, false), (103, false), (104, false) $$,
-  'The chosen stay and the rest wait'
+  $$ select id, active, held from public.workouts where id <= 104 order by id $$,
+  $$ values (101::bigint, false, true), (102, true, false), (103, true, false), (104, true, false) $$,
+  'The chosen stay, and the one not chosen goes to the archive, to look at'
 );
 select results_eq(
   $$ select id, held from public.workout_alternatives where exercises is not null order by id $$,
@@ -163,16 +163,25 @@ select throws_ok(
 -- Applying the plan again trades nothing, and does not open it.
 reset role;
 select public.apply_plan_limits('00000000-0000-0000-0000-00000000000a');
-select results_eq(
+select is_empty(
   $$ select id from public.workouts where user_id = '00000000-0000-0000-0000-00000000000a' and active and held $$,
-  $$ values (101::bigint) $$,
   'Applying the plan again keeps the choice'
 );
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), false, 'and leaves it closed');
 
--- Premium comes back and ends again.
+-- Premium comes back: what was not chosen stays in the archive, to bring back from it.
 update public.subscriptions set period_end = now() + interval '30 days'
 where user_id = '00000000-0000-0000-0000-00000000000a';
+select results_eq(
+  $$ select active, held from public.workouts where id = 101 $$,
+  $$ values (false, false) $$,
+  'With premium what was not chosen stays in the archive, no longer waiting'
+);
+
+-- Brought back and premium ending again, there is a choice again.
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select public.set_workout_active(101, true, current_date);
+reset role;
 update public.subscriptions set period_end = now() - interval '2 hours'
 where user_id = '00000000-0000-0000-0000-00000000000a';
 select is(pg_temp.open_for('00000000-0000-0000-0000-00000000000a'), true, 'The next end of premium opens it again');
