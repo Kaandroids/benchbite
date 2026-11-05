@@ -16,7 +16,7 @@ import { typography, useTheme } from '@/theme';
 
 import { amountOf, DEFAULT_GRAMS, type Amount, type Portion } from './foods';
 import { MacroDot } from './macro-dot';
-import { MACRO_NAME_MIN_SCALE, MACROS } from './macro-targets';
+import { MACRO_TEXT_MIN_SCALE, MACROS } from './macro-targets';
 import type { Totals } from './meals';
 import { usePortionLabel } from './portion-label';
 
@@ -293,7 +293,7 @@ export function AmountForm({
                     color="textMuted"
                     numberOfLines={1}
                     adjustsFontSizeToFit
-                    minimumFontScale={MACRO_NAME_MIN_SCALE}
+                    minimumFontScale={MACRO_TEXT_MIN_SCALE}
                     style={styles.macroLabel}
                   >
                     {t(`nutrition.macros.${key}`)}

@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
-import { MACRO_NAME_MIN_SCALE, MACROS } from './macro-targets';
+import { MACRO_TEXT_MIN_SCALE, MACROS } from './macro-targets';
 import { confidenceOf, estimateTotals, itemTotals, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
 
@@ -168,7 +168,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={MACRO_NAME_MIN_SCALE}
+        minimumFontScale={MACRO_TEXT_MIN_SCALE}
       >
         {value}
       </Text>
@@ -178,7 +178,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={MACRO_NAME_MIN_SCALE}
+        minimumFontScale={MACRO_TEXT_MIN_SCALE}
       >
         {label}
       </Text>
