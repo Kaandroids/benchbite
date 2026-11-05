@@ -399,7 +399,12 @@
       "tryAnother": "Başka fotoğraf dene",
       "failed": "Bite öğününe bakamadı",
       "failedHint": "Bağlantını kontrol edip tekrar dene.",
-      "blockedHint": "Bite bu fotoğrafları tahmin edemiyor. Başka fotoğraflar dene."
+      "blockedHint": "Bite bu fotoğrafları tahmin edemiyor. Başka fotoğraflar dene.",
+      "usedUp": {
+        "title": "Bu haftaki öğün fotoğraflarını kullandın",
+        "body": "Yenileri {{day}} günü. Premium ile her gün kullanabilirsin.",
+        "bodyNoDay": "Premium ile her gün kullanabilirsin."
+      }
     },
     "amount": {
       "per100g": "100 g'da {{calories}} kcal",
@@ -890,10 +895,6 @@
       "title_one": "{{count}}/{{count}} antrenmanın var",
       "title_other": "{{count}}/{{count}} antrenmanın var",
       "body": "Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil."
-    },
-    "premiumOffer": {
-      "seePremium": "Premium'a bak",
-      "notNow": "Şimdi değil"
     },
     "choose": {
       "title": "Premium'un bitti",
@@ -2216,6 +2217,7 @@
       "inAll_other": "Toplam {{count}}",
       "each_one": "Her birine {{count}}",
       "each_other": "Her birine {{count}}",
+      "archive": "Arşiv",
       "logging": "Kayıt ve ilerleme",
       "noLimit": "Sınırsız",
       "included": "Dahil",
@@ -2269,6 +2271,10 @@
       "body": "Premium hesabında kalır, yeni bir telefonda da. Kaydettiğin her şey seninle gelir.",
       "create": "Hesap oluştur",
       "logIn": "Hesabım var"
+    },
+    "offerSheet": {
+      "seePremium": "Premium'a bak",
+      "notNow": "Şimdi değil"
     }
   }
 }

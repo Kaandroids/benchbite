@@ -33,7 +33,7 @@ export function ArchiveScreen() {
       title={t('workout.archive.title')}
       footer={
         locked ? (
-          <Button label={t('workout.premiumOffer.seePremium')} onPress={openPremium} />
+          <Button label={t('premium.offerSheet.seePremium')} onPress={openPremium} />
         ) : undefined
       }
     >

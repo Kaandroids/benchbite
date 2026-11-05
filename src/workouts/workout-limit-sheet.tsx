@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { PremiumOfferSheet } from './premium-offer-sheet';
+import { PremiumOfferSheet } from '@/premium/premium-offer-sheet';
 
 type WorkoutLimitSheetProps = {
   /** How many workouts count toward the limit. */

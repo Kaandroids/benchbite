@@ -399,7 +399,12 @@
       "tryAnother": "Anderes Foto versuchen",
       "failed": "Bite konnte sich deine Mahlzeit nicht ansehen",
       "failedHint": "Prüfe deine Verbindung und versuche es erneut.",
-      "blockedHint": "Bite kann diese Fotos nicht schätzen. Versuche andere Fotos."
+      "blockedHint": "Bite kann diese Fotos nicht schätzen. Versuche andere Fotos.",
+      "usedUp": {
+        "title": "Du hast die Essensfotos dieser Woche aufgebraucht",
+        "body": "Neue gibt es am {{day}}. Mit Premium kannst du sie jeden Tag nutzen.",
+        "bodyNoDay": "Mit Premium kannst du sie jeden Tag nutzen."
+      }
     },
     "amount": {
       "per100g": "{{calories}} kcal pro 100 g",
@@ -890,10 +895,6 @@
       "title_one": "Du hast {{count}} von {{count}} Workout",
       "title_other": "Du hast {{count}} von {{count}} Workouts",
       "body": "Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen."
-    },
-    "premiumOffer": {
-      "seePremium": "Premium ansehen",
-      "notNow": "Nicht jetzt"
     },
     "choose": {
       "title": "Dein Premium ist beendet",
@@ -2216,6 +2217,7 @@
       "inAll_other": "{{count}} insgesamt",
       "each_one": "je {{count}}",
       "each_other": "je {{count}}",
+      "archive": "Archiv",
       "logging": "Erfassen und Fortschritt",
       "noLimit": "Unbegrenzt",
       "included": "Enthalten",
@@ -2269,6 +2271,10 @@
       "body": "Premium bleibt bei deinem Konto, auch auf einem neuen Handy. Alles, was du erfasst hast, kommt mit.",
       "create": "Konto erstellen",
       "logIn": "Ich habe ein Konto"
+    },
+    "offerSheet": {
+      "seePremium": "Premium ansehen",
+      "notNow": "Nicht jetzt"
     }
   }
 }
