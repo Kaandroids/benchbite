@@ -422,8 +422,8 @@
       "closedDay": "Mahlzeiten können nur für heute und die Woche davor eingetragen werden.",
       "failed": "Das Lebensmittel konnte nicht hinzugefügt werden. Prüfe deine Verbindung und versuche es erneut.",
       "archived": "Dieses Lebensmittel ist nicht mehr verfügbar.",
-      "foodLimit": "Diese Mahlzeit enthält ein neues Lebensmittel, und du hast schon 200 eigene. Lösche eins unter „Eigenes“, um Platz zu schaffen.",
-      "foodTotalLimit": "Diese Mahlzeit enthält ein neues Lebensmittel, aber du hast schon 1.000 eigene hinzugefügt, gelöschte mitgezählt. Mehr geht nicht."
+      "foodLimit": "Die neuen Lebensmittel in dieser Mahlzeit würden dich über 200 eigene bringen. Lösche unter „$t(nutrition.quick.mine)“ welche, um Platz zu schaffen. Diese Schätzung geht dabei verloren.",
+      "foodTotalLimit": "Die neuen Lebensmittel in dieser Mahlzeit würden dich über 1.000 hinzugefügte bringen, gelöschte mitgezählt. Mehr geht nicht."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",

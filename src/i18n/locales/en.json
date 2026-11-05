@@ -422,8 +422,8 @@
       "closedDay": "Meals can only be added to today and the week before.",
       "failed": "The food could not be added. Check your connection and try again.",
       "archived": "This food is no longer available.",
-      "foodLimit": "This meal has a new food, and you already have 200 of your own. Delete one under Mine to make room.",
-      "foodTotalLimit": "This meal has a new food, but you have added 1,000 of your own, deleted ones included, which is the most anyone can."
+      "foodLimit": "The new foods in this meal would take you past 200 of your own. To make room, delete some under $t(nutrition.quick.mine). This estimate will be lost.",
+      "foodTotalLimit": "The new foods in this meal would take you past 1,000 added in all, deleted ones included, which is the most anyone can."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",
