@@ -98,4 +98,5 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0080](0080-developer-tools-switch-the-plan-behind-a-vault-flag.md)   | Developer tools switch the plan behind a Vault flag                                     | Accepted                                             |
 | [0081](0081-bite-without-a-plan-reads-chats-or-offers-premium.md)     | Bite without a plan reads the chats there are, or offers premium                        | Accepted                                             |
 | [0082](0082-the-archive-comes-with-premium.md)                        | The archive comes with premium                                                          | Accepted                                             |
-| [0083](0083-a-user-chooses-once-what-stays-when-premium-ends.md)      | A user chooses once what stays when premium ends                                        | Accepted                                             |
+| [0083](0083-a-user-chooses-once-what-stays-when-premium-ends.md)      | A user chooses once what stays when premium ends                                        | Accepted, amended by ADR-0084                        |
+| [0084](0084-what-is-not-chosen-goes-to-the-archive.md)                | What is not chosen goes to the archive                                                  | Accepted                                             |

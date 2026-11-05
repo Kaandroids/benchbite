@@ -1,6 +1,6 @@
 # 0083. A user chooses once what stays when premium ends
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0084
 - **Date:** 2026-11-05
 
 ## Context
