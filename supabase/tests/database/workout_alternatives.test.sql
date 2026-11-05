@@ -184,7 +184,7 @@ select throws_ok(
 );
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 500, 5, 12, null::integer, 4) $$,
+  $$ values (20, 500, 5, 12, null::integer, 4, true, 1) $$,
   'which the limits say'
 );
 

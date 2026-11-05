@@ -26,6 +26,7 @@ const DB_ERRORS = {
   waitsForPremium: 'BB051',
   alternativeTotalLimit: 'BB052',
   devToolsOff: 'BB053',
+  archiveWithPremium: 'BB054',
   // Postgres's own, for a row that is not there, such as an alternative deleted elsewhere.
   notFound: 'P0002',
   // Postgres's own, for a row that would repeat a unique value, such as a food's name.
