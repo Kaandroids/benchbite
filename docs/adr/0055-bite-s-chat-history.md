@@ -1,6 +1,6 @@
 # 0055. Bite's chat history: named by the first message, opened by recency
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0081
 - **Date:** 2026-10-30
 
 ## Context
