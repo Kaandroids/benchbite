@@ -297,6 +297,7 @@ describe('MealPhotoScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
 
     expect(router.back).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'See premium' })).toBeNull();
     await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
   });
 

@@ -315,11 +315,21 @@ function Message({
  */
 function Refused({ refusal, onClose }: { refusal: Refusal; onClose: () => void }) {
   const access = useAiAccess('meal_photo');
+  // Closed here too, as it must be gone before premium opens, whatever `onClose` does.
+  const [closed, setClosed] = useState(false);
   // Which of the two only that read says.
   if (access.isPending) return null;
   const usedUpUntil = countUsedUpUntil(access.data, refusal);
   return usedUpUntil ? (
-    <PhotosUsedUpSheet until={usedUpUntil} onClose={onClose} />
+    closed ? null : (
+      <PhotosUsedUpSheet
+        until={usedUpUntil}
+        onClose={() => {
+          setClosed(true);
+          onClose();
+        }}
+      />
+    )
   ) : (
     <RefusalCard refusal={refusal} resetsAt={access.data?.resetsAt} />
   );
