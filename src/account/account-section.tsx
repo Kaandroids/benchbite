@@ -10,13 +10,29 @@ import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
+import { TextLink } from '@/components/ui/text-link';
 
 import { accountError, useSignOut } from './account';
 import { PASSWORD_LIMITS } from './passwords';
 
-/** The settings' account section: a guest is offered an account, an account can log out. */
+/**
+ * The settings' account section: a guest is offered an account, an account can log out, and either
+ * can delete all that is theirs.
+ */
 export function AccountSection() {
-  return useIsAccount() ? <SignedIn /> : <Guest />;
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const isAccount = useIsAccount();
+  return (
+    <View style={{ gap: spacing.md }}>
+      {isAccount ? <SignedIn /> : <Guest />}
+      <TextLink
+        label={t(isAccount ? 'account.delete.delete' : 'account.delete.deleteGuest')}
+        tone="muted"
+        onPress={() => router.push('/account/delete')}
+      />
+    </View>
+  );
 }
 
 function Guest() {

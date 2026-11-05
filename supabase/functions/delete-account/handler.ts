@@ -9,7 +9,7 @@ import { type Client, logError } from '../_shared/supabase.ts';
 export const EXERCISE_PHOTOS_BUCKET = 'exercise-photos';
 
 export type DeleteContext = {
-  /** A client with the service role, which alone removes another path's files and users. */
+  /** A client with the service role, which alone deletes users. */
   admin: Client;
   /** The user the request's token belongs to, the only one it may delete. */
   userId: string;
