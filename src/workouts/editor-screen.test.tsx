@@ -196,7 +196,7 @@ describe('EditorScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
     expect(alert).toHaveBeenLastCalledWith(
       'Not saved',
-      'You can have up to 5 workouts, archived ones included. Delete one to make room.',
+      'You can have up to 5 workouts. Delete one to make room.',
     );
     expect(router.back).not.toHaveBeenCalled();
   });

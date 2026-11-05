@@ -17,6 +17,7 @@ import { HeldWorkoutSheet } from './held-workout-sheet';
 import {
   HELD_OPACITY,
   showsAsWaiting,
+  waitsInArchive,
   useKcalPerMinute,
   useSetWorkoutActive,
   type Workout,
@@ -34,7 +35,8 @@ type WorkoutListItemProps = {
 /**
  * A workout in a list: its name, days and size, with a button to start it while it is active and a
  * switch to turn it back on while it is not. Active workouts are switched off on their own screen.
- * One that waits for premium is dimmed and locked in its place, and opens a sheet that says so.
+ * One that waits for premium is dimmed and locked in its place: an active one opens a sheet that
+ * says so, an archived one opens to be looked at.
  */
 export function WorkoutListItem({
   workout,
@@ -51,6 +53,7 @@ export function WorkoutListItem({
   const sets = exercises.reduce((total, exercise) => total + exercise.sets, 0);
   const isToday = today !== undefined && workout.weekdays.includes(today);
   const held = showsAsWaiting(workout, running);
+  const inArchive = waitsInArchive(workout, running);
   const [showingHeld, setShowingHeld] = useState(false);
   // Muted as an archived one, as neither is planned on a day.
   const muted = !workout.active || held;
@@ -68,7 +71,7 @@ export function WorkoutListItem({
               : name
         }
         onPress={() =>
-          held
+          held && !inArchive
             ? setShowingHeld(true)
             : router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
         }

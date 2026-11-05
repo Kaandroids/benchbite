@@ -48,6 +48,11 @@ export function showsAsWaiting(workout: Workout, running: boolean): boolean {
   return workout.held && !running;
 }
 
+/** Whether a workout shows as waiting in the archive, where it is only to look at (ADR 0082). */
+export function waitsInArchive(workout: Workout, running: boolean): boolean {
+  return showsAsWaiting(workout, running) && !workout.active;
+}
+
 /** A workout as a session on a weekday. */
 export function sessionOf(workout: Workout, weekday: number): WeekSession {
   return {

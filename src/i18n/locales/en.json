@@ -726,6 +726,7 @@
     "activeCount_one": "Active · {{count}}",
     "activeCount_other": "Active · {{count}}",
     "noActive": "No active workouts. Switch one on in the archive.",
+    "noActiveLocked": "No active workouts. Add one to get started.",
     "active": "Active",
     "inactive": "Inactive",
     "activeLabel": "{{name}} is active",
@@ -738,7 +739,12 @@
     "archive": {
       "title": "Archive",
       "body": "Inactive workouts are kept here and left out of your week.",
-      "empty": "No archived workouts."
+      "empty": "No archived workouts.",
+      "bodyLocked": "Kept as they were. With premium you can bring them back. They don't count toward your workouts.",
+      "inArchive": "In your archive",
+      "sheetTitle": "The archive comes with premium",
+      "sheetBody": "Put a workout away, out of your week, and bring it back whenever you like.",
+      "bringBack": "Bring it back with premium"
     },
     "notFound": {
       "title": "Workout not found",
@@ -786,7 +792,7 @@
     "edit": "Edit",
     "startLabel": "Start {{name}}",
     "limitTitle": "No room for another workout",
-    "limit": "You can have up to {{max}} workouts, archived ones included. Delete one to make room.",
+    "limit": "You can have up to {{max}} workouts. Delete one to make room.",
     "size": {
       "exercises_one": "{{count}} exercise",
       "exercises_other": "{{count}} exercises",
@@ -883,7 +889,9 @@
     "limitSheet": {
       "title_one": "You have {{count}} of {{count}} workout",
       "title_other": "You have {{count}} of {{count}} workouts",
-      "body": "Archived ones count too. Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room.",
+      "body": "Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room."
+    },
+    "premiumOffer": {
       "seePremium": "See premium",
       "notNow": "Not now"
     }

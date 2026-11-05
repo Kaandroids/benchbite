@@ -19,6 +19,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { isDbError } from '@/lib/errors';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
@@ -37,6 +38,7 @@ import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
 import { HeldAlternativeSheet } from './held-workout-sheet';
 import { mainMuscles, useRestFormat, useTargetFormat, useWorkoutName } from './format';
+import { PremiumOfferSheet } from './premium-offer-sheet';
 import { WorkoutAlternatives } from './workout-alternatives';
 import {
   useKcalPerMinute,
@@ -47,6 +49,7 @@ import {
   HELD_OPACITY,
   showsAsWaiting,
   useCurrentWorkoutLimits,
+  waitsInArchive,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -73,6 +76,10 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
   const [managing, setManaging] = useState(false);
+  // Premium offered for the archive, on a plan without it (ADR 0082).
+  const [archiveOffered, setArchiveOffered] = useState(false);
+  // As the plan is now: while that is read, the server says, so a new plan is never held back.
+  const archiveLocked = useCurrentWorkoutLimits()?.archive === false;
   // An alternative that waits for premium, tapped among the chips.
   const [waiting, setWaiting] = useState<WorkoutAlternative | null>(null);
   const alternativeName = useAlternativeName();
@@ -126,6 +133,8 @@ export function WorkoutScreen({ id }: { id: number }) {
 
   const name = workoutName(workout);
   const held = showsAsWaiting(workout, running);
+  const inArchive = waitsInArchive(workout, running);
+  const offersArchive = archiveLocked && workout.active;
   // As when an empty alternative was just put in use: nothing to show or start until it is edited.
   const empty = workout.exercises.length === 0;
   const sets = workout.exercises.reduce((total, exercise) => total + exercise.sets, 0);
@@ -186,6 +195,22 @@ export function WorkoutScreen({ id }: { id: number }) {
     router.push({ pathname: '/workout/edit', params: { id: String(workout.id) } });
   };
 
+  const onArchive = () => {
+    if (offersArchive) {
+      setArchiveOffered(true);
+      return;
+    }
+    setActive.mutate(
+      { id: workout.id, active: !workout.active },
+      {
+        // The plan may have ended since it was read.
+        onError: (error) => {
+          if (isDbError(error, 'archiveWithPremium')) setArchiveOffered(true);
+        },
+      },
+    );
+  };
+
   const onDelete = () => {
     if (running) {
       askToFinish();
@@ -200,14 +225,18 @@ export function WorkoutScreen({ id }: { id: number }) {
       onBack={() => router.back()}
       title={name}
       subtitle={
-        empty
-          ? t('workout.noExercises')
-          : mainMuscles(workout)
-              .map((muscle) => t(`workout.muscles.${muscle}`))
-              .join(' · ')
+        inArchive
+          ? t('workout.archive.inArchive')
+          : empty
+            ? t('workout.noExercises')
+            : mainMuscles(workout)
+                .map((muscle) => t(`workout.muscles.${muscle}`))
+                .join(' · ')
       }
       footer={
-        held ? (
+        inArchive ? (
+          <Button label={t('workout.archive.bringBack')} onPress={openPremium} />
+        ) : held ? (
           <View style={{ gap: spacing.sm }}>
             <WorkoutRoom />
             <Button label={t('workout.held.train')} onPress={openPremium} />
@@ -291,7 +320,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       {workout.held ? null : (
         <Pressable
           accessibilityRole="button"
-          onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
+          onPress={onArchive}
           style={({ pressed }) => [
             styles.archive,
             {
@@ -307,6 +336,12 @@ export function WorkoutScreen({ id }: { id: number }) {
           <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
             {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
           </Text>
+          {offersArchive ? (
+            // Level with the label, as a tag otherwise sits at the top of its row.
+            <View>
+              <Tag label={t('workout.held.tag')} icon="lock" tone="neutral" />
+            </View>
+          ) : null}
         </Pressable>
       )}
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
@@ -316,6 +351,13 @@ export function WorkoutScreen({ id }: { id: number }) {
       </Pressable>
 
       {startSheet}
+      {archiveOffered ? (
+        <PremiumOfferSheet
+          title={t('workout.archive.sheetTitle')}
+          body={t('workout.archive.sheetBody')}
+          onClose={() => setArchiveOffered(false)}
+        />
+      ) : null}
       {waiting ? (
         <HeldAlternativeSheet
           name={alternativeName(waiting)}

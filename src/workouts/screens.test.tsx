@@ -201,6 +201,15 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
+  it('says to add a workout, not to switch one on, on a plan without the archive', async () => {
+    jest.mocked(useWorkoutLimits).mockReturnValue({
+      data: { exercises: 20, workouts: 2, alternatives: 5, archive: false, workouts_counted: 0 },
+    } as never);
+    mockWorkouts([testWorkout(5, { active: false })]);
+    await render(<WorkoutsScreen />);
+    expect(screen.getByText('No active workouts. Add one to get started.')).toBeTruthy();
+  });
+
   it('offers a new workout when the archive does not count, as the limits say', async () => {
     jest.mocked(useWorkoutLimits).mockReturnValue({
       data: { exercises: 20, workouts: 2, alternatives: 5, archive: false, workouts_counted: 0 },
@@ -222,7 +231,7 @@ describe('WorkoutsScreen', () => {
     expect(screen.getByText('You have 2 of 2 workouts')).toBeTruthy();
     expect(
       screen.getByText(
-        'Archived ones count too. Premium has room for 500, with 5 alternatives each. Or delete one to make room.',
+        'Premium has room for 500, with 5 alternatives each. Or delete one to make room.',
       ),
     ).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
@@ -251,7 +260,7 @@ describe('WorkoutsScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
     expect(alert).toHaveBeenCalledWith(
       'No room for another workout',
-      'You can have up to 500 workouts, archived ones included. Delete one to make room.',
+      'You can have up to 500 workouts. Delete one to make room.',
     );
   });
 
@@ -280,15 +289,15 @@ describe('WorkoutsScreen', () => {
       testWorkout(3, { name: 'Cardio', active: false, held: true }),
     ];
 
-    it('locks them in their place, under a banner that counts the archived one too', async () => {
+    it('locks them in their place, under a banner that does not count the archived one', async () => {
       mockWorkouts(waiting);
       await render(<WorkoutsScreen />);
-      expect(screen.getByText('2 workouts wait for premium.')).toBeTruthy();
+      expect(screen.getByText('1 workout waits for premium.')).toBeTruthy();
       expect(screen.getByText('Active · 2')).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Start Push' })).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Start Core' })).toBeNull();
       expect(screen.getByRole('button', { name: 'Core, waits for premium' })).toBeTruthy();
-      await fireEvent.press(screen.getByRole('button', { name: /wait for premium/ }));
+      await fireEvent.press(screen.getByRole('button', { name: /^1 workout waits/ }));
       expect(router.push).toHaveBeenCalledWith('/premium');
     });
 
@@ -303,8 +312,8 @@ describe('WorkoutsScreen', () => {
       mockWorkouts(waiting);
       await render(<WorkoutsScreen />);
       expect(screen.getAllByText('Running').length).toBeGreaterThan(0);
-      // The banner counts only the archived one, which shows as waiting.
-      expect(screen.getByText('1 workout waits for premium.')).toBeTruthy();
+      // Nothing else active waits, and the archive says of itself what waits there.
+      expect(screen.queryByText(/waits? for premium\./)).toBeNull();
       await fireEvent.press(screen.getByRole('button', { name: 'Core' }));
       expect(screen.queryByText('Core waits for premium')).toBeNull();
       expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });
@@ -446,6 +455,33 @@ describe('ArchiveScreen', () => {
     expect(screen.queryByText('Cardio waits for premium')).toBeNull();
   });
 
+  describe('with workouts that wait in it', () => {
+    it('shows them to look at, opening one rather than a sheet, with a way to premium', async () => {
+      mockWorkouts([testWorkout(2, { name: 'Cardio', active: false, held: true })]);
+      await render(<ArchiveScreen />);
+      expect(screen.getByText(/They don't count toward your workouts/)).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: 'Cardio, waits for premium' }));
+      expect(screen.queryByText('Cardio waits for premium')).toBeNull();
+      expect(router.push).toHaveBeenCalledWith({ pathname: '/workout/[id]', params: { id: '2' } });
+      await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
+      expect(router.push).toHaveBeenLastCalledWith('/premium');
+    });
+
+    it('says nothing of premium over rows still to switch on, as a plan just ended', async () => {
+      mockWorkouts([testWorkout(2, { name: 'Cardio', active: false })]);
+      await render(<ArchiveScreen />);
+      expect(screen.queryByText(/They don't count toward your workouts/)).toBeNull();
+      expect(screen.queryByRole('button', { name: 'See premium' })).toBeNull();
+    });
+
+    it('says nothing of premium when it is empty', async () => {
+      mockWorkouts([testWorkout(1)]);
+      await render(<ArchiveScreen />);
+      expect(screen.queryByText(/They don't count toward your workouts/)).toBeNull();
+      expect(screen.queryByRole('button', { name: 'See premium' })).toBeNull();
+    });
+  });
+
   it('says when the archive is empty, and goes back', async () => {
     mockWorkouts([testWorkout(1)]);
     await render(<ArchiveScreen />);
@@ -572,12 +608,65 @@ describe('WorkoutScreen', () => {
     mockWorkouts([pull]);
     await render(<WorkoutScreen id={7} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
-    expect(mutate).toHaveBeenCalledWith({ id: 7, active: false });
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: false }, expect.anything());
 
     mockWorkouts([{ ...pull, active: false }]);
     await render(<WorkoutScreen id={7} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Bring back from the archive' }));
-    expect(mutate).toHaveBeenCalledWith({ id: 7, active: true });
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: true }, expect.anything());
+  });
+
+  describe('on a plan without the archive', () => {
+    beforeEach(() => {
+      jest.mocked(useCurrentWorkoutLimits).mockReturnValue({
+        exercises: 20,
+        workouts: 2,
+        alternatives: 5,
+        archive: false,
+      } as never);
+    });
+
+    it('offers premium in place of moving the workout to the archive', async () => {
+      mockWorkouts([pull]);
+      await render(<WorkoutScreen id={7} />);
+      await fireEvent.press(screen.getByRole('button', { name: /^Move to archive/ }));
+      expect(mutate).not.toHaveBeenCalled();
+      expect(screen.getByText('The archive comes with premium')).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
+      await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
+    });
+
+    it('shows an archived workout to look at, with a way to premium and a delete', async () => {
+      const alert = jest.spyOn(Alert, 'alert');
+      mockWorkouts([{ ...pull, active: false, held: true }]);
+      await render(<WorkoutScreen id={7} />);
+      expect(screen.getByText('In your archive')).toBeTruthy();
+      expect(screen.getByText('Name of pulldown')).toBeTruthy();
+      expect(screen.queryByText(/Your plan has room/)).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+      expect(screen.queryByRole('button', { name: /from the archive/ })).toBeNull();
+      await fireEvent.press(screen.getByRole('button', { name: 'Bring it back with premium' }));
+      expect(router.push).toHaveBeenLastCalledWith('/premium');
+      await fireEvent.press(screen.getByRole('button', { name: 'Delete workout' }));
+      expect(alert.mock.lastCall?.[0]).toBe('Delete this workout?');
+    });
+  });
+
+  it('asks the server while the plan is read, so that a new plan is not held back', async () => {
+    jest.mocked(useCurrentWorkoutLimits).mockReturnValue(undefined as never);
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
+    expect(mutate).toHaveBeenCalledWith({ id: 7, active: false }, expect.anything());
+    expect(screen.queryByText('The archive comes with premium')).toBeNull();
+  });
+
+  it('offers premium when the server refuses the archive, as the plan may have ended', async () => {
+    mutate.mockImplementationOnce((_variables, options) => options.onError({ code: 'BB054' }));
+    mockWorkouts([pull]);
+    await render(<WorkoutScreen id={7} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Move to archive' }));
+    expect(await screen.findByText('The archive comes with premium')).toBeTruthy();
   });
 
   it('offers premium instead of Start, editing, alternatives and the archive while it waits', async () => {

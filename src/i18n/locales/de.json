@@ -726,6 +726,7 @@
     "activeCount_one": "Aktiv · {{count}}",
     "activeCount_other": "Aktiv · {{count}}",
     "noActive": "Keine aktiven Workouts. Schalte eines im Archiv ein.",
+    "noActiveLocked": "Keine aktiven Workouts. Füge eines hinzu, um loszulegen.",
     "active": "Aktiv",
     "inactive": "Inaktiv",
     "activeLabel": "{{name}} ist aktiv",
@@ -738,7 +739,12 @@
     "archive": {
       "title": "Archiv",
       "body": "Inaktive Workouts bleiben hier und gehören nicht zu deiner Woche.",
-      "empty": "Keine archivierten Workouts."
+      "empty": "Keine archivierten Workouts.",
+      "bodyLocked": "Sie bleiben, wie sie sind. Mit Premium holst du sie zurück. Sie zählen nicht zu deinen Workouts.",
+      "inArchive": "In deinem Archiv",
+      "sheetTitle": "Das Archiv gibt es mit Premium",
+      "sheetBody": "Leg ein Workout beiseite, raus aus deiner Woche, und hol es zurück, wann du willst.",
+      "bringBack": "Mit Premium zurückholen"
     },
     "notFound": {
       "title": "Workout nicht gefunden",
@@ -786,7 +792,7 @@
     "edit": "Bearbeiten",
     "startLabel": "{{name}} starten",
     "limitTitle": "Kein Platz für ein weiteres Training",
-    "limit": "Du kannst bis zu {{max}} Trainings haben, archivierte mitgezählt. Lösche eins, um Platz zu schaffen.",
+    "limit": "Du kannst bis zu {{max}} Trainings haben. Lösche eins, um Platz zu schaffen.",
     "size": {
       "exercises_one": "{{count}} Übung",
       "exercises_other": "{{count}} Übungen",
@@ -883,7 +889,9 @@
     "limitSheet": {
       "title_one": "Du hast {{count}} von {{count}} Workout",
       "title_other": "Du hast {{count}} von {{count}} Workouts",
-      "body": "Archivierte zählen mit. Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen.",
+      "body": "Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen."
+    },
+    "premiumOffer": {
       "seePremium": "Premium ansehen",
       "notNow": "Nicht jetzt"
     }

@@ -38,10 +38,10 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
   const session = useActiveSession(useUserId());
   const { start, sheet: startSheet } = useStartOrAsk();
   const active = workouts.data?.filter((workout) => workout.active) ?? [];
-  // Archived ones too, which the archive shows locked as this list does; not one running.
-  const held =
-    workouts.data?.filter((workout) => showsAsWaiting(workout, session?.workoutId === workout.id))
-      .length ?? 0;
+  // Not archived ones, which the archive says of itself (ADR 0082); not one running.
+  const held = active.filter((workout) =>
+    showsAsWaiting(workout, session?.workoutId === workout.id),
+  ).length;
   const today = isoWeekday(new Date());
   // As the limit counts them: archived ones only on a plan with the archive (ADR 0082).
   const count = limits.data?.workouts_counted ?? 0;
@@ -131,7 +131,9 @@ export function WorkoutsScreen({ history }: { history?: ReactNode }) {
                 />
               ))
             ) : (
-              <Text color="textMuted">{t('workout.noActive')}</Text>
+              <Text color="textMuted">
+                {t(limits.data?.archive === false ? 'workout.noActiveLocked' : 'workout.noActive')}
+              </Text>
             )}
 
             {history ? <View style={{ marginTop: spacing.md }}>{history}</View> : null}
