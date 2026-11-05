@@ -201,7 +201,20 @@ describe('WorkoutsScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/workout/edit');
   });
 
+  it('offers a new workout when the archive does not count, as the limits say', async () => {
+    jest.mocked(useWorkoutLimits).mockReturnValue({
+      data: { exercises: 20, workouts: 2, alternatives: 5, archive: false, workouts_counted: 0 },
+    } as never);
+    mockWorkouts([testWorkout(5, { active: false }), testWorkout(6, { active: false })]);
+    await render(<WorkoutsScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
+    expect(router.push).toHaveBeenCalledWith('/workout/edit');
+  });
+
   it('offers premium when there is no room for another workout, counting the archive', async () => {
+    jest.mocked(useWorkoutLimits).mockReturnValue({
+      data: { exercises: 20, workouts: 2, alternatives: 5, workouts_counted: 2 },
+    } as never);
     mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
     await render(<WorkoutsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
@@ -217,6 +230,9 @@ describe('WorkoutsScreen', () => {
   });
 
   it('closes the offer without opening premium', async () => {
+    jest.mocked(useWorkoutLimits).mockReturnValue({
+      data: { exercises: 20, workouts: 2, alternatives: 5, workouts_counted: 2 },
+    } as never);
     mockWorkouts([testWorkout(5, { type: 'pull' }), testWorkout(6, { active: false })]);
     await render(<WorkoutsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
@@ -227,9 +243,9 @@ describe('WorkoutsScreen', () => {
 
   it('says only that there is no room on premium, which has no more to offer', async () => {
     const alert = jest.spyOn(Alert, 'alert');
-    jest
-      .mocked(useWorkoutLimits)
-      .mockReturnValue({ data: { exercises: 20, workouts: 500, alternatives: 5 } } as never);
+    jest.mocked(useWorkoutLimits).mockReturnValue({
+      data: { exercises: 20, workouts: 500, alternatives: 5, workouts_counted: 500 },
+    } as never);
     mockWorkouts(Array.from({ length: 500 }, (_, i) => testWorkout(i + 1, { active: false })));
     await render(<WorkoutsScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'New workout' }));
