@@ -30,8 +30,8 @@ const leave = () => router.navigate('/');
 
 /**
  * Premium has ended and more waits than the plan has room for (ADR 0083): the user chooses once
- * which workouts stay, starting from the ones that stay now, then which alternative when more could
- * than the one the free plan allows. It goes back once there is no choice to make, whether made
+ * which workouts stay, starting from the ones that stay now, and the rest go to the archive
+ * (ADR 0084), then which alternative when more could than the one the free plan allows. It goes back once there is no choice to make, whether made
  * here or elsewhere, or as premium returned.
  */
 export function ChooseWhatStaysScreen() {
