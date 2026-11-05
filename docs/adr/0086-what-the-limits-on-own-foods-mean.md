@@ -19,12 +19,12 @@ as they were read on this date.
 
 ## Decision
 
-- **A refused meal says why.** The photo screen names the limit it reached, and how to make room
-  where there is a way to.
-- **The 1,000 stays, and it is final.** Deleting archives a food, and archived foods still count, so
-  at 1,000 foods added in all a user can add no new own food, on any plan, and no meal estimate
-  holding a food the library lacks. The limit guards the database, and is looked at again if real
-  use comes near it.
+- **A refused meal says why.** The photo screen names the limit it reached, how to make room where
+  there is a way to, and that leaving loses the estimate.
+- **The 1,000 stays for now, with no way past it on any plan.** Deleting archives a food, and
+  archived foods still count, so at 1,000 foods added in all a user can add no new own food, and no
+  meal estimate holding a food the library lacks. It is checked before the 200, as at both limits
+  deleting a food cannot help.
 - **The case against a lower free limit is how often it would refuse,** not that the refusal would
   be new.
 
@@ -41,6 +41,9 @@ as they were read on this date.
 - Someone who estimates meals daily can reach the 200 sooner than someone adding foods by hand, and
   learns from the refusal what to do. Daily estimates come with premium, so paying users reach it
   first.
+- Making room means leaving the photo screen, which loses the estimate and its photos, so logging
+  the meal takes a new photo, which counts. Keeping the estimate while the user makes room would
+  need a new flow, for a rare case; real use decides if it is worth it.
 - Nothing yet warns before a limit is reached, and nothing merges near-identical foods the model
   named differently.
 - This amends ADR 0085.
