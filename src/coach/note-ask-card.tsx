@@ -15,13 +15,15 @@ type NoteAskCardProps = {
   note: NoteCard;
   /** While where it stands is not known yet, as for a saved chat opening. */
   waiting?: boolean;
+  /** Only to read, offering nothing to do. */
+  readOnly?: boolean;
 };
 
 /**
  * A note Bite asked to save, while the user has saving from chats off (board 24): what it would
  * keep, saved to the notebook with a tap, or removed with Not now.
  */
-export function NoteAskCard({ note, waiting = false }: NoteAskCardProps) {
+export function NoteAskCard({ note, waiting = false, readOnly = false }: NoteAskCardProps) {
   const { t } = useTranslation();
   const { colors, radii, spacing } = useTheme();
   const answer = useAnswerNote(note);
@@ -56,24 +58,26 @@ export function NoteAskCard({ note, waiting = false }: NoteAskCardProps) {
               )}
         </Text>
       ) : null}
-      <View style={[styles.row, { gap: spacing.md }]}>
-        <Button
-          label={t('bite.notes.ask.save')}
-          size="small"
-          style={styles.flex}
-          disabled={waiting || (answer.isPending && answer.variables !== 'save')}
-          loading={answer.isPending && answer.variables === 'save'}
-          onPress={() => answer.mutate('save')}
-        />
-        <TextLink
-          label={t('bite.notes.ask.notNow')}
-          tone="muted"
-          size="regular"
-          align="center"
-          disabled={waiting || answer.isPending}
-          onPress={() => answer.mutate('decline')}
-        />
-      </View>
+      {readOnly ? null : (
+        <View style={[styles.row, { gap: spacing.md }]}>
+          <Button
+            label={t('bite.notes.ask.save')}
+            size="small"
+            style={styles.flex}
+            disabled={waiting || (answer.isPending && answer.variables !== 'save')}
+            loading={answer.isPending && answer.variables === 'save'}
+            onPress={() => answer.mutate('save')}
+          />
+          <TextLink
+            label={t('bite.notes.ask.notNow')}
+            tone="muted"
+            size="regular"
+            align="center"
+            disabled={waiting || answer.isPending}
+            onPress={() => answer.mutate('decline')}
+          />
+        </View>
+      )}
     </Card>
   );
 }

@@ -70,6 +70,8 @@ export type CardStates = {
   loading: { proposals: boolean; mealCards: boolean; notes: boolean };
   /** Whether the states of the notes asked about could not be read. */
   failed?: { notes: boolean };
+  /** Whether the cards are only to read, offering nothing to do, as on a plan without Bite. */
+  readOnly?: boolean;
 };
 
 /**
@@ -341,6 +343,7 @@ const BiteMessage = memo(function BiteMessage({
                   card={card}
                   state={state}
                   waiting={state === undefined && !!cards?.loading.mealCards}
+                  readOnly={cards?.readOnly}
                 />
               </View>
             );
@@ -353,6 +356,7 @@ const BiteMessage = memo(function BiteMessage({
                   card={card}
                   state={state}
                   waiting={state === undefined && !!cards?.loading.proposals}
+                  readOnly={cards?.readOnly}
                 />
               </View>
             );
@@ -604,7 +608,11 @@ function AskedNote({
   if (state === undefined && !loading && !cards?.failed?.notes) return null;
   return (
     <View style={styles.proposal}>
-      <NoteAskCard note={note} waiting={state === undefined && loading} />
+      <NoteAskCard
+        note={note}
+        waiting={state === undefined && loading}
+        readOnly={cards?.readOnly}
+      />
     </View>
   );
 }

@@ -179,3 +179,18 @@ it('shows a meal undone elsewhere once its Undo here is refused as out of date',
 
   expect(await screen.findByText('Undone')).toBeOnTheScreen();
 });
+
+it('offers nothing to do when only to read', async () => {
+  await render(<MealCardView card={CARD} state={pending} readOnly />);
+
+  expect(screen.getByText('Pizza Margherita')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
+});
+
+it('offers no Undo when only to read', async () => {
+  await render(<MealCardView card={CARD} state={{ status: 'logged', kcal: 399 }} readOnly />);
+
+  expect(screen.getByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+});
