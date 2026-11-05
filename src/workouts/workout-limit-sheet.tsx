@@ -6,7 +6,7 @@ import { closeThen } from '@/components/ui/sheet';
 import { useOpenPremium } from '@/premium/open-premium';
 
 type WorkoutLimitSheetProps = {
-  /** How many workouts the user has, archived ones included. */
+  /** How many workouts count toward the limit. */
   count: number;
   /** How many their plan has room for. */
   max: number;
