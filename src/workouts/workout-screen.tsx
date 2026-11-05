@@ -19,6 +19,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { useExerciseLibrary, findExercise } from '@/exercises/library';
+import { isDbError } from '@/lib/errors';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useUserId } from '@/providers/session-provider';
 import { useActiveSession } from '@/sessions/session';
@@ -32,6 +33,7 @@ import {
   type WorkoutAlternative,
 } from './alternatives';
 import { AlternativesSheets } from './alternatives-sheet';
+import { ArchiveSheet } from './archive-sheet';
 import { useConfirmDeleteWorkout } from './confirm-delete';
 import { DayChips } from './day-chips';
 import { EmptyWorkout } from './empty-workout';
@@ -47,6 +49,7 @@ import {
   HELD_OPACITY,
   showsAsWaiting,
   useCurrentWorkoutLimits,
+  useWorkoutLimits,
 } from './workouts';
 
 const IMAGE_SIZE = 60;
@@ -73,6 +76,9 @@ export function WorkoutScreen({ id }: { id: number }) {
   const formatRest = useRestFormat();
   const workoutName = useWorkoutName();
   const [managing, setManaging] = useState(false);
+  // Premium offered for the archive, on a plan without it (ADR 0082).
+  const [archiveOffered, setArchiveOffered] = useState(false);
+  const archiveLocked = useWorkoutLimits().data?.archive === false;
   // An alternative that waits for premium, tapped among the chips.
   const [waiting, setWaiting] = useState<WorkoutAlternative | null>(null);
   const alternativeName = useAlternativeName();
@@ -200,14 +206,18 @@ export function WorkoutScreen({ id }: { id: number }) {
       onBack={() => router.back()}
       title={name}
       subtitle={
-        empty
-          ? t('workout.noExercises')
-          : mainMuscles(workout)
-              .map((muscle) => t(`workout.muscles.${muscle}`))
-              .join(' · ')
+        held && !workout.active
+          ? t('workout.archive.inArchive')
+          : empty
+            ? t('workout.noExercises')
+            : mainMuscles(workout)
+                .map((muscle) => t(`workout.muscles.${muscle}`))
+                .join(' · ')
       }
       footer={
-        held ? (
+        held && !workout.active ? (
+          <Button label={t('workout.archive.bringBack')} onPress={openPremium} />
+        ) : held ? (
           <View style={{ gap: spacing.sm }}>
             <WorkoutRoom />
             <Button label={t('workout.held.train')} onPress={openPremium} />
@@ -291,7 +301,19 @@ export function WorkoutScreen({ id }: { id: number }) {
       {workout.held ? null : (
         <Pressable
           accessibilityRole="button"
-          onPress={() => setActive.mutate({ id: workout.id, active: !workout.active })}
+          onPress={() =>
+            archiveLocked && workout.active
+              ? setArchiveOffered(true)
+              : setActive.mutate(
+                  { id: workout.id, active: !workout.active },
+                  {
+                    // The limits kept may be from before the plan ended.
+                    onError: (error) => {
+                      if (isDbError(error, 'archiveWithPremium')) setArchiveOffered(true);
+                    },
+                  },
+                )
+          }
           style={({ pressed }) => [
             styles.archive,
             {
@@ -307,6 +329,12 @@ export function WorkoutScreen({ id }: { id: number }) {
           <Text variant="label" color={workout.active ? 'text' : 'primaryText'}>
             {workout.active ? t('workout.toArchive') : t('workout.fromArchive')}
           </Text>
+          {archiveLocked && workout.active ? (
+            // Level with the label, as a tag otherwise sits at the top of its row.
+            <View>
+              <Tag label={t('workout.held.tag')} icon="lock" tone="neutral" />
+            </View>
+          ) : null}
         </Pressable>
       )}
       <Pressable accessibilityRole="button" onPress={onDelete} style={styles.delete}>
@@ -316,6 +344,7 @@ export function WorkoutScreen({ id }: { id: number }) {
       </Pressable>
 
       {startSheet}
+      {archiveOffered ? <ArchiveSheet onClose={() => setArchiveOffered(false)} /> : null}
       {waiting ? (
         <HeldAlternativeSheet
           name={alternativeName(waiting)}
