@@ -54,7 +54,25 @@
     "logInSubtitle": "Willkommen zurück. Dein Plan und deine Workouts warten.",
     "noAccount": "Noch kein Konto?",
     "createOne": "Erstelle eins",
-    "guestDataStays": "Was du als Gast auf diesem Handy gespeichert hast, kommt nicht in dieses Konto. Um es zu behalten, erstelle stattdessen ein Konto."
+    "guestDataStays": "Was du als Gast auf diesem Handy gespeichert hast, kommt nicht in dieses Konto. Um es zu behalten, erstelle stattdessen ein Konto.",
+    "delete": {
+      "title": "Konto löschen?",
+      "titleGuest": "Deine Daten löschen?",
+      "body": "Alles hier wird endgültig gelöscht. Es lässt sich nicht wiederherstellen.",
+      "workouts": "Dein Plan, deine Workouts und dein Verlauf",
+      "meals": "Mahlzeiten, Rezepte und eigene Lebensmittel",
+      "progress": "Gewicht, Ziele und Fortschritt",
+      "bite": "Chats mit Bite, Fotos und Sprachnachrichten",
+      "keep": "Konto behalten",
+      "keepGuest": "Daten behalten",
+      "delete": "Konto löschen",
+      "deleteGuest": "Meine Daten löschen",
+      "sheetTitle": "Endgültig löschen?",
+      "sheetBody": "Du kannst als neuer Gast neu anfangen, aber nichts davon kommt zurück.",
+      "confirm": "Endgültig löschen",
+      "notNow": "Nicht jetzt",
+      "failed": "Das Löschen hat nicht geklappt. Prüfe deine Verbindung und versuche es erneut."
+    }
   },
   "settings": {
     "title": "Einstellungen",
