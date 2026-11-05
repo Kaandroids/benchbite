@@ -15,7 +15,7 @@ import { AccountFirstSheet } from './account-first-sheet';
 import type { FreeSummary } from './plan';
 import { PlansSheet } from './plans-sheet';
 import { usePurchasesSoon } from './purchases';
-import { SAMPLE_PRICES } from './sample-prices';
+import { PLAN_PRICES } from './sample-prices';
 import { TRIAL_DAYS } from './trial';
 
 /** Bite cheering over a page's title and what it says under it, at the top of a premium page. */
@@ -59,8 +59,6 @@ export function GetPremiumFooter({ free }: { free: FreeSummary }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const [shown, setShown] = useState<'plans' | 'account' | null>(null);
-  // Prices from the store come with the purchases; until then the planned ones.
-  const prices = SAMPLE_PRICES;
   // The trial is offered once, to a user who has not had it.
   const trial = !free.hadTrial;
   const close = () => setShown(null);
@@ -72,9 +70,11 @@ export function GetPremiumFooter({ free }: { free: FreeSummary }) {
         onPress={() => setShown(free.accountRequired ? 'account' : 'plans')}
       />
       <Text variant="caption" color="textMuted" align="center">
-        {t(trial ? 'premium.page.then' : 'premium.page.from', { price: prices.yearlyPerMonth })}
+        {t(trial ? 'premium.page.then' : 'premium.page.from', {
+          price: PLAN_PRICES.yearlyPerMonth,
+        })}
       </Text>
-      {shown === 'plans' ? <PlansSheet prices={prices} trial={trial} onClose={close} /> : null}
+      {shown === 'plans' ? <PlansSheet trial={trial} onClose={close} /> : null}
       {shown === 'account' ? (
         <AccountFirstSheet
           onCreate={closeThen(close, () => router.push('/account/create'))}

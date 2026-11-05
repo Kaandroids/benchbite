@@ -15,7 +15,6 @@ import { PlanComparison } from './plan-comparison';
 import { FreeUsage, PaidUsage } from './plan-usage';
 import { PlansSheet } from './plans-sheet';
 import { usePurchasesSoon } from './purchases';
-import { SAMPLE_PRICES } from './sample-prices';
 import { STORE_NAME, SUBSCRIPTIONS_URL } from './store';
 
 const BITE_SIZE = 80;
@@ -68,7 +67,6 @@ export function PremiumScreen({ onClose }: { onClose: () => void }) {
 
       {changing && paid ? (
         <PlansSheet
-          prices={SAMPLE_PRICES}
           trial={false}
           initialBilling={paid.billing}
           onClose={() => setChanging(false)}

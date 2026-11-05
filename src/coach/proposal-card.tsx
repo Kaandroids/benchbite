@@ -116,12 +116,12 @@ export function ProposalCard({
   // unless it is out of date; a request that failed may be tried again.
   const line = state?.expired ? 'outOfDate' : refused;
   const canApply = line === undefined || line === 'failed';
-  const canKeep = !readOnly && line !== 'outOfDate';
+  const canKeep = line !== 'outOfDate';
   return (
     <Card>
       <ProposalBody card={card} />
       {line ? <Refusal failure={line} /> : null}
-      {canKeep ? (
+      {!readOnly && canKeep ? (
         <View style={styles.buttons}>
           {canApply ? (
             <Button

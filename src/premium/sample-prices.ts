@@ -10,3 +10,6 @@ export const SAMPLE_PRICES: PlanPrices = {
   yearlyPerMonth: '€6.99',
   yearlySavePercent: 22,
 };
+
+/** The prices the plans are offered at; the store's take their place with the purchases. */
+export const PLAN_PRICES = SAMPLE_PRICES;
