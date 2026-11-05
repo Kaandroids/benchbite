@@ -44,6 +44,7 @@ export function PlanComparison({ free, premium }: { free: PlanNumbers; premium: 
       free: count(free.addedAlternatives, (n) => t('premium.compare.inAll', { count: n })),
       premium: count(premium.versions, (n) => t('premium.compare.each', { count: n })),
     },
+    { label: t('premium.compare.archive'), free: false, premium: true },
     { label: t('premium.compare.logging'), free: true, premium: true },
   ];
 
