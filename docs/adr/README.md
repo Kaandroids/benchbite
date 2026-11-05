@@ -70,7 +70,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0052](0052-the-coach-chat-function.md)                               | Bite answers in a stream of events, from a prompt, a snapshot and read tools            | Accepted                                     |
 | [0053](0053-bite-errs-on-the-safe-side.md)                            | Bite errs on the safe side when the snapshot is missing or unsafe                       | Accepted                                     |
 | [0054](0054-a-pace-the-user-can-keep.md)                              | A pace the user can keep, and the date it really gives                                  | Accepted                                     |
-| [0055](0055-bite-s-chat-history.md)                                   | Bite's chat history: named by the first message, opened by recency                      | Accepted                                     |
+| [0055](0055-bite-s-chat-history.md)                                   | Bite's chat history: named by the first message, opened by recency                      | Accepted, amended by ADR-0081                |
 | [0056](0056-count-a-call-after-its-place-is-taken.md)                 | A model call's input is counted after its place is taken                                | Accepted                                     |
 | [0057](0057-stop-bite-on-the-server-too.md)                           | Stop Bite's answer on the server too                                                    | Accepted                                     |
 | [0058](0058-bite-proposes-the-user-applies.md)                        | Bite proposes, the user applies                                                         | Accepted                                     |
@@ -96,3 +96,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0078](0078-a-premium-plan-with-a-trial.md)                           | A premium plan with a seven-day trial                                                   | Accepted                                     |
 | [0079](0079-what-is-above-a-plan-waits-for-premium.md)                | What is above a plan's limits waits for premium                                         | Accepted                                     |
 | [0080](0080-developer-tools-switch-the-plan-behind-a-vault-flag.md)   | Developer tools switch the plan behind a Vault flag                                     | Accepted                                     |
+| [0081](0081-bite-without-a-plan-reads-chats-or-offers-premium.md)     | Bite without a plan reads the chats there are, or offers premium                        | Accepted                                     |

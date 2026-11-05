@@ -11,7 +11,8 @@ import { ThemeScheme, useTheme } from '@/theme';
 
 import { usePurchasesSoon } from './purchases';
 import { PlanPicker } from './plan-picker';
-import type { Billing, PlanPrices } from './prices';
+import type { Billing } from './prices';
+import { PLAN_PRICES } from './sample-prices';
 import { TRIAL_DAYS } from './trial';
 
 /** What is due and when it renews, by whether the trial comes first and how it is billed. */
@@ -23,7 +24,6 @@ const TERMS = {
 } as const;
 
 type PlansSheetProps = {
-  prices: PlanPrices;
   /** False for a user who has had their trial, who starts premium straight away. */
   trial: boolean;
   /** The plan chosen at first: the one a paid user is on, or yearly. */
@@ -44,12 +44,12 @@ export function PlansSheet(props: PlansSheetProps) {
   );
 }
 
-function Plans({ prices, trial, initialBilling = 'yearly', onClose }: PlansSheetProps) {
+function Plans({ trial, initialBilling = 'yearly', onClose }: PlansSheetProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const [billing, setBilling] = useState<Billing>(initialBilling);
   const restore = usePurchasesSoon();
-  const price = billing === 'yearly' ? prices.yearly : prices.monthly;
+  const price = billing === 'yearly' ? PLAN_PRICES.yearly : PLAN_PRICES.monthly;
 
   return (
     <BiteSheet
@@ -57,7 +57,7 @@ function Plans({ prices, trial, initialBilling = 'yearly', onClose }: PlansSheet
       body={trial ? t('premium.plans.trialThen', { count: TRIAL_DAYS }) : t('premium.plans.body')}
       onClose={onClose}
     >
-      <PlanPicker prices={prices} billing={billing} onChange={setBilling} />
+      <PlanPicker prices={PLAN_PRICES} billing={billing} onChange={setBilling} />
       <View style={{ gap: spacing.sm }}>
         <Button
           label={

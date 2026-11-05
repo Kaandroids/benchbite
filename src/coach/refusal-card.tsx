@@ -18,8 +18,8 @@ type RefusalCardProps = {
 };
 
 /**
- * In place of the composer, why the user cannot chat with Bite now: the month's use is up
- * (board 12), there is no plan with Bite (board 12b), or a guest needs an account.
+ * Why the user cannot use Bite now, in place of what asks it: the month's use is up (board 12), in
+ * the chat too; on meal photos, the plan has no Bite (board 12b) or a guest needs an account.
  */
 export function RefusalCard({ refusal, resetsAt }: RefusalCardProps) {
   const { t } = useTranslation();

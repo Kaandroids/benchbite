@@ -1916,8 +1916,8 @@
         "message": "{{date}} tarihinde geri döneceğim. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       },
       "plan_required": {
-        "title": "Bite bir planla gelir",
-        "message": "Bite'lı planlar yakında. Planın, öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
+        "title": "Bite premium ile gelir",
+        "message": "Bite'ı kullanmak için premium al. Öğünlerin ve antrenmanların her zamanki gibi çalışmaya devam ediyor."
       },
       "account_required": {
         "title": "Bite için hesap gerekiyor",
@@ -2092,7 +2092,26 @@
         "resized": "{{food}} artık {{grams}}",
         "withGrams": "{{change}}, {{grams}}"
       }
-    }
+    },
+    "premium": {
+      "title": "Bite ile konuş",
+      "subtitle": "Antrenman ve beslenme koçun, premium ile.",
+      "points": {
+        "chat": {
+          "title": "Yazışma ve ses",
+          "note": "Günün her saati her şeyi sor"
+        },
+        "week": {
+          "title": "Haftanı planlar",
+          "note": "Günlerine uyan antrenman ve öğünler"
+        },
+        "reviews": {
+          "title": "Değerlendirmeler",
+          "note": "Haftan, ayın ve dönemin, açıklamalı"
+        }
+      }
+    },
+    "locked": "Bite ile sohbet premium ile gelir"
   },
   "premium": {
     "yearlySave": "Yıllık · −%{{percent}}",

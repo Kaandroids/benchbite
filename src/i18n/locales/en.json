@@ -1916,8 +1916,8 @@
         "message": "I'm back on {{date}}. Your plan, meals and workouts keep working as usual."
       },
       "plan_required": {
-        "title": "Bite comes with a plan",
-        "message": "Plans with Bite are coming soon. Your plan, meals and workouts keep working as usual."
+        "title": "Bite comes with premium",
+        "message": "Get premium to use Bite. Your meals and workouts keep working as usual."
       },
       "account_required": {
         "title": "Bite needs an account",
@@ -2092,7 +2092,26 @@
         "resized": "{{food}} now {{grams}}",
         "withGrams": "{{change}}, {{grams}}"
       }
-    }
+    },
+    "premium": {
+      "title": "Talk to Bite",
+      "subtitle": "Your coach for training and eating, with premium.",
+      "points": {
+        "chat": {
+          "title": "Chat and voice",
+          "note": "Ask anything, any time of day"
+        },
+        "week": {
+          "title": "Plans your week",
+          "note": "Workouts and meals that fit your days"
+        },
+        "reviews": {
+          "title": "Reviews",
+          "note": "Your week, month and period, explained"
+        }
+      }
+    },
+    "locked": "Chat with Bite comes with premium"
   },
   "premium": {
     "yearlySave": "Yearly · −{{percent}}%",

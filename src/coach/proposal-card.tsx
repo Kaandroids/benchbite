@@ -40,6 +40,8 @@ type ProposalCardProps = {
   state?: ProposalState;
   /** Waits for where it stands before it may be decided. */
   waiting?: boolean;
+  /** Only to read, offering nothing to do. */
+  readOnly?: boolean;
 };
 
 /**
@@ -48,7 +50,12 @@ type ProposalCardProps = {
  * it is. Once decided it folds into a line that says so, and an applied one offers Undo (boards 5
  * and 11b).
  */
-export function ProposalCard({ card, state, waiting = false }: ProposalCardProps) {
+export function ProposalCard({
+  card,
+  state,
+  waiting = false,
+  readOnly = false,
+}: ProposalCardProps) {
   const { t } = useTranslation();
   const decide = useDecideProposal(card);
   const summary = useSummary();
@@ -81,7 +88,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
           detail={card.kind === 'food_log' ? foodLogDetail(card) : undefined}
           action={
             // Undo stands as long as nothing changed what applying left, on a day still open.
-            !canUndo(refused) ? undefined : (
+            readOnly || !canUndo(refused) ? undefined : (
               <TextLink
                 label={t('bite.proposal.undo')}
                 size="regular"
@@ -114,7 +121,7 @@ export function ProposalCard({ card, state, waiting = false }: ProposalCardProps
     <Card>
       <ProposalBody card={card} />
       {line ? <Refusal failure={line} /> : null}
-      {canKeep ? (
+      {!readOnly && canKeep ? (
         <View style={styles.buttons}>
           {canApply ? (
             <Button

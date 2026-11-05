@@ -30,6 +30,8 @@ type MealCardViewProps = {
   state?: MealCardState;
   /** Waits for where it stands before it may be added. */
   waiting?: boolean;
+  /** Only to read, offering nothing to do. */
+  readOnly?: boolean;
 };
 
 /**
@@ -38,7 +40,12 @@ type MealCardViewProps = {
  * grams here, before the meal is added. Once added it folds into a line that says so, with Undo
  * (board 10).
  */
-export function MealCardView({ card, state, waiting = false }: MealCardViewProps) {
+export function MealCardView({
+  card,
+  state,
+  waiting = false,
+  readOnly = false,
+}: MealCardViewProps) {
   const { t } = useTranslation();
   const { format } = useNumberFormat();
   const action = useMealCardAction(card);
@@ -78,7 +85,7 @@ export function MealCardView({ card, state, waiting = false }: MealCardViewProps
           text={t(`bite.mealCard.added.${card.meal}`, { calories: format(Math.round(kcal)) })}
           action={
             // Undo stands as long as the entries are as they were added, on a day still open.
-            !canUndo(refused) ? undefined : (
+            readOnly || !canUndo(refused) ? undefined : (
               <TextLink
                 label={t('bite.proposal.undo')}
                 size="regular"
@@ -97,7 +104,7 @@ export function MealCardView({ card, state, waiting = false }: MealCardViewProps
   }
 
   // A meal on a day that is closed, or that was added elsewhere, can no longer be added.
-  const canAdd = refused !== 'closedDay' && refused !== 'outOfDate';
+  const canAdd = !readOnly && refused !== 'closedDay' && refused !== 'outOfDate';
   const edit = () => (items.length === 1 ? setAmountOf(0) : setEditing((now) => !now));
   return (
     <Card style={{ gap: spacing.md }}>

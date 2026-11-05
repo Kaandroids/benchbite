@@ -533,3 +533,19 @@ describe('a food log change', () => {
     expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeOnTheScreen();
   });
 });
+
+it('offers nothing to decide when only to read', async () => {
+  await render(<ProposalCard card={WORKOUT} state={pending} readOnly />);
+
+  expect(screen.getByText('Lower body')).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Keep as is' })).toBeNull();
+});
+
+it('offers no Undo when only to read', async () => {
+  await render(
+    <ProposalCard card={WORKOUT} state={{ status: 'applied', expired: false }} readOnly />,
+  );
+
+  expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+});
