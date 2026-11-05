@@ -100,3 +100,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0082](0082-the-archive-comes-with-premium.md)                        | The archive comes with premium                                                          | Accepted                                             |
 | [0083](0083-a-user-chooses-once-what-stays-when-premium-ends.md)      | A user chooses once what stays when premium ends                                        | Accepted, amended by ADR-0084                        |
 | [0084](0084-what-is-not-chosen-goes-to-the-archive.md)                | What is not chosen goes to the archive                                                  | Accepted                                             |
+| [0085](0085-own-foods-and-recipes-stay-free.md)                       | Own foods and recipes stay free                                                         | Accepted                                             |
