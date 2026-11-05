@@ -6,8 +6,19 @@
 
 alter table public.plans add column archive boolean not null default true;
 update public.plans set archive = false where plan = 'free';
+alter table public.plans alter column archive drop default;
 
--- How many workouts count toward `user_id`'s limit: on a plan with the archive, archived ones too.
+-- Whether `workout` counts toward `limits`: on a plan with the archive, archived ones too.
+create function public.counts_on_plan(workout public.workouts, limits public.plans)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select (counts_on_plan.workout).active or (counts_on_plan.limits).archive;
+$$;
+
+-- How many workouts count toward `user_id`'s limit.
 create function public.counted_workouts(user_id uuid)
 returns integer
 language sql
@@ -16,7 +27,7 @@ set search_path = ''
 as $$
   select count(*)::integer from public.workouts w
   where w.user_id = counted_workouts.user_id
-    and (w.active or (select p.archive from public.plan_limits(counted_workouts.user_id) p));
+    and public.counts_on_plan(w, (select public.plan_limits(counted_workouts.user_id)));
 $$;
 
 -- As before (20261103090000), and on a plan without the archive, none of an archived workout's.
@@ -29,10 +40,11 @@ as $$
   select count(*)::integer from public.workout_alternatives a
   join public.workouts w on w.id = a.workout_id
   where a.user_id = added_alternative_count.user_id and a.exercises is not null
-    and (w.active or (select p.archive from public.plan_limits(added_alternative_count.user_id) p));
+    and public.counts_on_plan(w, (select public.plan_limits(added_alternative_count.user_id)));
 $$;
 
--- As before (20261103090000), with `archive`, whether the plan has the archive.
+-- As before (20261103090000), with `archive`, whether the plan has the archive, and
+-- `workouts_counted`, how many workouts count, so that the app counts them as the limit does.
 drop function public.workout_limits();
 create function public.workout_limits()
 returns table (
@@ -42,7 +54,8 @@ returns table (
   alternative_name_length integer,
   added_alternatives integer,
   alternatives_added integer,
-  archive boolean
+  archive boolean,
+  workouts_counted integer
 )
 language sql
 stable
@@ -51,7 +64,8 @@ security definer
 set search_path = ''
 as $$
   select p.exercises, p.workouts, p.versions, 12, p.added_alternatives,
-    public.added_alternative_count((select auth.uid())), p.archive
+    public.added_alternative_count((select auth.uid())), p.archive,
+    public.counted_workouts((select auth.uid()))
   from public.plan_limits((select auth.uid())) p;
 $$;
 
@@ -93,7 +107,7 @@ begin
   if jsonb_array_length(items) not between 1 and max_exercises then
     raise exception 'A workout needs 1 to % exercises', max_exercises using errcode = 'BB008';
   end if;
-  -- Workouts from the plan builder count too, archived ones as well.
+  -- Workouts from the plan builder count too, as the plan counts them.
   if saved_id is null
     and public.counted_workouts(caller_id) >= max_workouts then
     raise exception 'A user can have up to % workouts', max_workouts using errcode = 'BB009';
@@ -135,6 +149,132 @@ begin
   );
 
   return saved_id;
+end;
+$$;
+
+-- As before (20261028200000), with the workouts counted as the plan counts them.
+create or replace function public.complete_onboarding(answers jsonb, plan jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  -- Named apart from the tables' columns, so that queries cannot confuse the two.
+  caller_id uuid := (select auth.uid());
+  goal public.goal_kind := (answers ->> 'goal')::public.goal_kind;
+  training_days smallint[] := array(
+    select value::smallint from jsonb_array_elements_text(answers -> 'trainingDays')
+  );
+  session jsonb;
+  new_workout_id bigint;
+begin
+  if caller_id is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+
+  if exists (
+    select 1 from public.profiles p
+    where p.user_id = caller_id and p.onboarding_completed_at is not null
+  ) then
+    raise exception 'The onboarding is already completed' using errcode = 'BB001';
+  end if;
+
+  -- The app checks these too; the server must not rely on it. The minimum age is checked by the
+  -- profiles table.
+  if coalesce(answers ->> 'consentedPolicyVersion', '') = '' then
+    raise exception 'Health data consent is required' using errcode = 'BB003';
+  end if;
+  -- Every training day is in exactly one session.
+  if (
+    select array_agg(d.value::smallint order by d.value::smallint)
+    from jsonb_array_elements(plan -> 'sessions') s,
+      jsonb_array_elements_text(s -> 'weekdays') d
+  ) is distinct from (select array_agg(d order by d) from unnest(training_days) d) then
+    raise exception 'The plan does not match the training days' using errcode = 'BB004';
+  end if;
+  perform public.lock_user_limits(caller_id);
+  -- Workouts a guest saved before finishing the onboarding count too.
+  if jsonb_array_length(plan -> 'sessions')
+    + public.counted_workouts(caller_id)
+    > (select l.workouts from public.workout_limits() l) then
+    raise exception 'A user can have up to % workouts', (select l.workouts from public.workout_limits() l)
+      using errcode = 'BB009';
+  end if;
+  -- A plan's workouts stay shorter than the 20 exercises a user may build: the plan builder fills
+  -- at most 12 (PLAN_WORKOUT_EXERCISES), and never leaves one empty.
+  if exists (
+    select 1 from jsonb_array_elements(plan -> 'sessions') s
+    where coalesce(jsonb_array_length(s -> 'exercises'), 0) not between 1 and 12
+  ) then
+    raise exception 'A session needs 1 to 12 exercises' using errcode = 'BB005';
+  end if;
+  -- Each target suits what its exercise records, as save_workout() checks; a workout would
+  -- otherwise start with sets that its log refuses. Unknown exercises are left to the foreign key.
+  if exists (
+    select 1
+    from jsonb_array_elements(plan -> 'sessions') s,
+      jsonb_array_elements(s -> 'exercises') e
+    join public.exercises x on x.id = e.value ->> 'exerciseId'
+    where not public.target_suits(x.metrics, e.value -> 'target')
+  ) then
+    raise exception 'A target does not suit its exercise' using errcode = 'BB007';
+  end if;
+
+  insert into public.profiles (
+    user_id, sex, birth_year, height_cm, weight_unit, height_unit, activity_level, experience,
+    training_setup, training_days, session_minutes, display_name, onboarding_completed_at
+  )
+  values (
+    caller_id,
+    (answers ->> 'sex')::public.sex,
+    (answers ->> 'birthYear')::integer,
+    (answers ->> 'heightCm')::numeric,
+    (answers ->> 'weightUnit')::public.weight_unit,
+    (answers ->> 'heightUnit')::public.height_unit,
+    (answers ->> 'activityLevel')::public.activity_level,
+    (answers ->> 'experience')::public.experience,
+    (answers ->> 'setup')::public.training_setup,
+    training_days,
+    (answers ->> 'sessionMinutes')::smallint,
+    -- Optional: a skipped or blank name is no name. The table checks the rest.
+    nullif(btrim(answers ->> 'displayName'), ''),
+    now()
+  );
+
+  -- The plan starts on the device's today, sent with the answers (ADR 0041), before any
+  -- workout of it is saved. Without one, or with a device clock more than a day off, it starts on
+  -- the server's, so that the onboarding can always be finished.
+  perform public.start_user_plan(caller_id, public.device_today_or_server(answers ->> 'today'));
+
+  -- Only goals that change the weight keep a target weight and a pace.
+  insert into public.goals (user_id, kind, target_weight_kg, weekly_pace_kg)
+  values (
+    caller_id,
+    goal,
+    case when goal in ('lose_fat', 'build_muscle') then (answers ->> 'targetWeightKg')::numeric end,
+    case when goal in ('lose_fat', 'build_muscle') then (answers ->> 'weeklyPaceKg')::numeric end
+  );
+
+  insert into public.weight_entries (user_id, weight_kg)
+  values (caller_id, (answers ->> 'weightKg')::numeric);
+
+  insert into public.health_data_consents (user_id, policy_version)
+  values (caller_id, answers ->> 'consentedPolicyVersion');
+
+  for session in select value from jsonb_array_elements(plan -> 'sessions') loop
+    insert into public.workouts (user_id, weekdays, type, estimated_minutes)
+    values (
+      caller_id,
+      array(select value::smallint from jsonb_array_elements_text(session -> 'weekdays')),
+      (session ->> 'type')::public.workout_type,
+      (session ->> 'estimatedMinutes')::smallint
+    )
+    returning id into new_workout_id;
+
+    -- The exercises in order; conditioning for fat loss is the last of them.
+    perform public.insert_workout_exercises(new_workout_id, caller_id, session -> 'exercises');
+  end loop;
 end;
 $$;
 
@@ -184,7 +324,7 @@ begin
 
   if public.counted_workouts(apply_workout_limits.owner) <= limits.workouts then
     update public.workouts w set held = false
-    where w.user_id = apply_workout_limits.owner and w.held and (w.active or limits.archive);
+    where w.user_id = apply_workout_limits.owner and w.held and public.counts_on_plan(w, limits);
   elsif (
     select count(*) from public.workouts w
     where w.user_id = apply_workout_limits.owner and not w.held
@@ -220,7 +360,7 @@ begin
   if not exists (
     select 1 from public.workout_alternatives a
     join public.workouts w on w.id = a.workout_id
-    where a.user_id = apply_alternative_limits.owner and (w.active or limits.archive)
+    where a.user_id = apply_alternative_limits.owner and public.counts_on_plan(w, limits)
     group by a.workout_id
     having count(*) > limits.versions
   ) and (
@@ -261,7 +401,9 @@ begin
 end;
 $$;
 
-revoke execute on function public.counted_workouts(uuid) from public, anon, authenticated;
+revoke execute on function public.counts_on_plan(public.workouts, public.plans),
+  public.counted_workouts(uuid)
+  from public, anon, authenticated;
 
 -- On the free plan, what is in the archive waits from now on.
 select public.apply_plan_limits(u.id) from auth.users u;

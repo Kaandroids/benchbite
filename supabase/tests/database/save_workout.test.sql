@@ -52,7 +52,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 -- them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 2, 12, 1, 0, false) $$,
+  $$ values (20, 3, 2, 12, 1, 0, false, 0) $$,
   'A free user may have 3 workouts with 20 exercises each, and 1 alternative in all'
 );
 
@@ -130,13 +130,13 @@ select lives_ok(
   'A time and a distance can be set together'
 );
 
--- Saving again replaces the workout but keeps it switched off.
 -- The archive comes with premium (ADR 0082).
 reset role;
 insert into public.subscriptions (user_id, plan, period_start, period_end, billing, source)
 values ('00000000-0000-0000-0000-00000000000a', 'premium', now(), now() + interval '1 day', 'monthly', 'manual');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
+-- Saving again replaces the workout but keeps it switched off.
 select public.set_workout_active(current_setting('test.workout_id')::bigint, false, current_date);
 select is(
   public.save_workout(pg_temp.workout(

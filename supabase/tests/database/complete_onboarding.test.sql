@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -188,6 +188,19 @@ select throws_ok(
      values ('00000000-0000-0000-0000-00000000000b', '{2}', 'push', 30) $$,
   '42501', null,
   'Users cannot add workouts directly'
+);
+
+-- Workouts in the archive do not count on a plan without it, though they may be from before that.
+reset role;
+set local session_replication_role = replica;
+insert into public.workouts (user_id, name, estimated_minutes, weekdays, active)
+select '00000000-0000-0000-0000-00000000000b', 'Archived ' || n, 30, '{}', false
+from generate_series(1, 2) n;
+set local session_replication_role = origin;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select lives_ok(
+  $$ select public.complete_onboarding(pg_temp.answers(), pg_temp.plan()) $$,
+  'A plan fits beside workouts in the archive'
 );
 
 select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);

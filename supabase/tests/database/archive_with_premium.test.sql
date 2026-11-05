@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(18);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -61,6 +61,11 @@ where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
 select is((select l.archive from public.workout_limits() l), false, 'Free has no archive');
+select is(
+  (select l.workouts_counted from public.workout_limits() l),
+  3,
+  'and the limits count the active ones alone'
+);
 select results_eq(
   $$ select id, active from public.workouts where held order by id $$,
   $$ values (104::bigint, false), (105, false) $$,
@@ -121,7 +126,7 @@ select results_eq(
   'With premium it stops waiting, in the archive'
 );
 select is(
-  (select count(*)::integer from public.workout_alternatives where held),
+  (select count(*)::integer from public.workout_alternatives where held and user_id = '00000000-0000-0000-0000-00000000000a'),
   0,
   'and so do its alternatives'
 );
