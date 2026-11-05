@@ -155,15 +155,18 @@ export type Database = {
       };
       applied_plans: {
         Row: {
+          choice_open: boolean;
           plan: Database['public']['Enums']['plan'];
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
+          choice_open?: boolean;
           plan: Database['public']['Enums']['plan'];
           user_id: string;
         };
         Update: {
+          choice_open?: boolean;
           plan?: Database['public']['Enums']['plan'];
           user_id?: string;
         };
@@ -1998,6 +2001,10 @@ export type Database = {
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
+      choose_what_stays: {
+        Args: { alternatives: number[]; today: string; workouts: number[] };
+        Returns: undefined;
+      };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
       coach_alternatives_state: { Args: { workout_id: number }; Returns: Json };
       coach_meal_card_entries: { Args: { entry_ids: number[] }; Returns: Json };
@@ -2235,6 +2242,7 @@ export type Database = {
       };
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
+      has_waiting_choices: { Args: { owner: string }; Returns: boolean };
       in_grace: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
         Returns: boolean;
@@ -2864,6 +2872,7 @@ export type Database = {
           alternatives: number;
           alternatives_added: number;
           archive: boolean;
+          choice_open: boolean;
           exercises: number;
           workouts: number;
           workouts_counted: number;

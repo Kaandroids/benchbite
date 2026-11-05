@@ -54,7 +54,7 @@ values ('00000000-0000-0000-0000-00000000000a', 'premium', now() - interval '30 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 500, 5, 12, null::integer, 4, true, 5) $$,
+  $$ values (20, 500, 5, 12, null::integer, 4, true, 5, false) $$,
   'Premium has 500 workouts and 5 versions of each, with no limit on alternatives in all'
 );
 select is((select count(*)::integer from public.workouts where held), 0, 'Nothing waits while it fits');
@@ -77,7 +77,7 @@ where user_id = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 2, 12, 1, 4, false, 4) $$,
+  $$ values (20, 3, 2, 12, 1, 4, false, 4, true) $$,
   'Free has 3 workouts and 1 alternative in all, with the ones the user has'
 );
 select results_eq(
