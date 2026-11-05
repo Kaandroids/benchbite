@@ -38,6 +38,9 @@ export function DeleteAccountScreen() {
 
   return (
     <Screen
+      onBack={() => {
+        if (!deleting) router.back();
+      }}
       footer={
         <View style={{ gap: spacing.md }}>
           {deleteAccount.isError ? (
@@ -72,6 +75,7 @@ export function DeleteAccountScreen() {
               styles.row,
               {
                 gap: spacing.md,
+                paddingVertical: spacing.sm,
                 borderTopWidth: index === 0 ? 0 : StyleSheet.hairlineWidth,
                 borderTopColor: colors.border,
               },
