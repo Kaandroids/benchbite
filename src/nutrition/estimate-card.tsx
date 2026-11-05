@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
-import { MACROS } from './macro-targets';
+import { MACRO_NAME_MIN_SCALE, MACROS } from './macro-targets';
 import { confidenceOf, estimateTotals, itemTotals, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
 
@@ -136,12 +136,6 @@ export function EstimateTotals({ items }: { items: EstimateItem[] }) {
   );
 }
 
-/**
- * How far a total and its label may shrink to stay on one line in its quarter of the card, as
- * "Kohlenhydrate" does on a narrow phone.
- */
-const TOTAL_MIN_SCALE = 0.7;
-
 function Total({
   value,
   label,
@@ -159,7 +153,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={TOTAL_MIN_SCALE}
+        minimumFontScale={MACRO_NAME_MIN_SCALE}
       >
         {value}
       </Text>
@@ -169,7 +163,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={TOTAL_MIN_SCALE}
+        minimumFontScale={MACRO_NAME_MIN_SCALE}
       >
         {label}
       </Text>
