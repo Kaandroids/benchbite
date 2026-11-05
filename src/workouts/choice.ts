@@ -1,15 +1,15 @@
 // What stays when premium ends (ADR 0083): the user chooses once, in the Workouts tab, each time
-// until they have, which workouts and alternatives stay. Until then the ones last trained and used
-// do, which is what the choice starts from.
+// until they have, which workouts and alternative stay. Until then the ones last trained and used
+// do, which is what the choice starts from. The one on a screen of its own, so it is read fresh.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
-import { toIsoDate } from '@/i18n/dates';
+import { deviceToday } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterPlanChange } from '@/premium/reload';
 
-import { useWorkoutLimits, WORKOUTS_KEY } from './workouts';
+import { fetchWorkouts, useWorkoutLimits, workoutLimitsQuery, WORKOUTS_KEY } from './workouts';
 
 /** An alternative that could stay: one added to a workout, not the one in use. */
 export type ChoiceAlternative = {
@@ -22,9 +22,6 @@ export type ChoiceAlternative = {
   lastUsedAt: Date | null;
 };
 
-/** What the plan allows of the alternatives: versions of a workout, and in all with no limit null. */
-type AlternativeLimits = { versions: number; added: number | null };
-
 /** Opens the choice whenever the Workouts tab shows while it is the user's to make. */
 export function useAskWhatStays() {
   const open = useWorkoutLimits().data?.choice_open === true;
@@ -35,10 +32,20 @@ export function useAskWhatStays() {
   );
 }
 
-/** The alternatives of the user's active workouts that could stay. */
-export function useChoiceAlternatives() {
-  return useQuery({
+/**
+ * All the choice starts from, read as it opens: what was kept may be from before premium ended,
+ * when nothing waited, and it would pick the wrong workouts on a choice made once.
+ */
+export function useChoiceData() {
+  const limits = useQuery({ ...workoutLimitsQuery, refetchOnMount: 'always' });
+  const workouts = useQuery({
+    queryKey: WORKOUTS_KEY,
+    queryFn: fetchWorkouts,
+    refetchOnMount: 'always',
+  });
+  const alternatives = useQuery({
     queryKey: [...WORKOUTS_KEY, 'choice-alternatives'],
+    refetchOnMount: 'always',
     queryFn: async (): Promise<ChoiceAlternative[]> => {
       const { data, error } = await supabase
         .from('workout_alternatives')
@@ -59,56 +66,22 @@ export function useChoiceAlternatives() {
       }));
     },
   });
-}
-
-/** When each workout was last trained, as an ISO date by its id. */
-export function useLastTrained() {
-  return useQuery({
+  const lastTrained = useQuery({
     queryKey: [...WORKOUTS_KEY, 'last-trained'],
-    queryFn: async (): Promise<Map<number, string>> => {
-      const { data, error } = await supabase
-        .from('workout_logs')
-        .select('workout_id, started_on')
-        .not('workout_id', 'is', null)
-        .order('started_on');
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('workouts_last_trained');
       if (error) {
         throw error;
       }
-      // Oldest first, so that each workout ends on its latest.
-      return new Map(data.map((log) => [log.workout_id as number, log.started_on]));
+      return new Map(data.map((row) => [row.workout_id, row.started_on]));
     },
   });
+  return { limits, workouts, alternatives, lastTrained };
 }
 
-/** Of `alternatives`, those of the `kept` workouts. */
-export function alternativesOf(alternatives: ChoiceAlternative[], kept: number[]) {
-  return alternatives.filter((alternative) => kept.includes(alternative.workoutId));
-}
-
-/**
- * How many of a kept workouts' alternatives stay: of each workout as many as its versions allow,
- * the one in use being one, and of those as many as the plan allows in all.
- */
-export function alternativesThatStay(candidates: ChoiceAlternative[], limits: AlternativeLimits) {
-  const perWorkout = new Map<number, number>();
-  for (const { workoutId } of candidates) {
-    perWorkout.set(workoutId, (perWorkout.get(workoutId) ?? 0) + 1);
-  }
-  const allowed = [...perWorkout.values()].reduce(
-    (total, count) => total + Math.min(count, limits.versions - 1),
-    0,
-  );
-  return Math.min(allowed, limits.added ?? allowed);
-}
-
-/**
- * The alternatives picked at first: the ones that stay now and then the ones last used, up to
- * `count`. `candidates` come last used first.
- */
-export function firstAlternatives(candidates: ChoiceAlternative[], count: number) {
-  const staying = candidates.filter((alternative) => !alternative.held);
-  const rest = candidates.filter((alternative) => alternative.held);
-  return [...staying, ...rest].slice(0, count).map((alternative) => alternative.id);
+/** The alternative picked at first, of those of the kept workouts: the one that stays now, or the one last used. */
+export function firstAlternative(candidates: ChoiceAlternative[]) {
+  return (candidates.find((alternative) => !alternative.held) ?? candidates[0])?.id;
 }
 
 /** Makes the user's one choice, and loads again all that depends on it. */
@@ -125,7 +98,7 @@ export function useChooseWhatStays() {
       const { error } = await supabase.rpc('choose_what_stays', {
         workouts,
         alternatives,
-        today: toIsoDate(new Date()),
+        today: deviceToday(),
       });
       if (error) {
         throw error;

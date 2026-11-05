@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { BackHandler, StyleSheet, View } from 'react-native';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
@@ -10,38 +10,50 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useUpperCase } from '@/i18n/case';
-import { useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
+import { fromIsoDate, useMonthDayFormat, useWeekdayFormat } from '@/i18n/dates';
 import { isDbError } from '@/lib/errors';
 import { useOpenPremium } from '@/premium/open-premium';
 import { useTheme } from '@/theme';
 
 import { useAlternativeName } from './alternatives';
 import {
-  alternativesOf,
-  alternativesThatStay,
   type ChoiceAlternative,
-  firstAlternatives,
-  useChoiceAlternatives,
+  firstAlternative,
+  useChoiceData,
   useChooseWhatStays,
-  useLastTrained,
 } from './choice';
 import { useWorkoutName } from './format';
-import { useWorkoutLimits, useWorkouts, type Workout } from './workouts';
+import type { Workout } from './workouts';
+
+/** To the Today tab; the choice waits in the Workouts tab until it is made. */
+const leave = () => router.navigate('/');
 
 /**
  * Premium has ended and more waits than the plan has room for (ADR 0083): the user chooses once
- * which workouts stay, starting from the ones that stay now, then which alternatives when there are
- * more than can stay. The cross leaves for the Today tab, to choose later.
+ * which workouts stay, starting from the ones that stay now, then which alternative when more could
+ * than the one the free plan allows. It goes back once there is no choice to make, whether made
+ * here or elsewhere, or as premium returned.
  */
 export function ChooseWhatStaysScreen() {
-  const workouts = useWorkouts();
-  const limits = useWorkoutLimits();
-  const alternatives = useChoiceAlternatives();
-  const lastTrained = useLastTrained();
-  const queries = [workouts, limits, alternatives, lastTrained];
-  const active = workouts.data?.filter((workout) => workout.active) ?? [];
+  const { limits, workouts, alternatives, lastTrained } = useChoiceData();
+  const queries = [limits, workouts, alternatives, lastTrained];
+  const closed = limits.isFetchedAfterMount && limits.data?.choice_open === false;
+  useFocusEffect(
+    useCallback(() => {
+      if (closed) router.back();
+    }, [closed]),
+  );
 
-  if (!allLoaded(queries) || !limits.data || !alternatives.data) {
+  if (
+    !allLoaded(queries) ||
+    !workouts.isFetchedAfterMount ||
+    !alternatives.isFetchedAfterMount ||
+    !limits.isFetchedAfterMount ||
+    !limits.data ||
+    !workouts.data ||
+    !alternatives.data ||
+    !lastTrained.data
+  ) {
     return (
       <Screen closes onBack={leave}>
         <LoadState queries={queries} />
@@ -50,39 +62,26 @@ export function ChooseWhatStaysScreen() {
   }
   return (
     <Choice
-      workouts={active}
+      workouts={workouts.data.filter((workout) => workout.active)}
       room={limits.data.workouts}
-      alternativeLimits={{
-        versions: limits.data.alternatives,
-        added: limits.data.added_alternatives,
-      }}
       alternatives={alternatives.data}
-      lastTrained={lastTrained.data ?? new Map()}
+      lastTrained={lastTrained.data}
     />
   );
 }
 
-/** To the Today tab; the choice waits in the Workouts tab until it is made. */
-const leave = () => router.navigate('/');
-
 type ChoiceProps = {
   workouts: Workout[];
   room: number;
-  alternativeLimits: Parameters<typeof alternativesThatStay>[1];
   alternatives: ChoiceAlternative[];
   lastTrained: Map<number, string>;
 };
 
-function Choice({ workouts, room, alternativeLimits, alternatives, lastTrained }: ChoiceProps) {
+/** What was chosen so far, and the step that asks for the rest. */
+function Choice({ workouts, room, alternatives, lastTrained }: ChoiceProps) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
-  const upper = useUpperCase();
   const openPremium = useOpenPremium();
   const choose = useChooseWhatStays();
-  const workoutName = useWorkoutName();
-  const alternativeName = useAlternativeName();
-  const weekdayName = useWeekdayFormat('short');
-  const monthDay = useMonthDayFormat();
 
   const stay = Math.min(workouts.length, room);
   const [kept, setKept] = useState(() =>
@@ -91,128 +90,156 @@ function Choice({ workouts, room, alternativeLimits, alternatives, lastTrained }
       .slice(0, stay)
       .map((workout) => workout.id),
   );
-  const candidates = alternativesOf(alternatives, kept);
-  const alternativesStay = alternativesThatStay(candidates, alternativeLimits);
-  // What the user picked of them, until the workouts they belong to change.
-  const [picked, setPicked] = useState<number[] | null>(null);
-  const keptAlternatives = picked ?? firstAlternatives(candidates, alternativesStay);
+  const candidates = alternatives.filter((alternative) => kept.includes(alternative.workoutId));
+  // What the user picked, until the workouts it belongs to change.
+  const [picked, setPicked] = useState<number>();
+  const alternative = picked ?? firstAlternative(candidates);
+  // The free plan, where every choice ends, allows one in all.
+  const asksAlternative = candidates.length > 1;
   const asksWorkouts = workouts.length > room;
-  const asksAlternatives = candidates.length > alternativesStay;
-  const [step, setStep] = useState<'workouts' | 'alternatives'>(
-    asksWorkouts ? 'workouts' : 'alternatives',
+  const [onWorkouts, setOnWorkouts] = useState(asksWorkouts);
+
+  const saving = choose.isPending;
+  const goBack = useCallback(() => {
+    if (saving) return;
+    if (asksWorkouts && !onWorkouts) setOnWorkouts(true);
+    else leave();
+  }, [saving, asksWorkouts, onWorkouts]);
+  useFocusEffect(
+    useCallback(() => {
+      const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+        goBack();
+        return true;
+      });
+      return () => listener.remove();
+    }, [goBack]),
   );
 
-  const toggleWorkout = (id: number) => {
-    setPicked(null);
-    setKept((now) =>
-      now.includes(id)
-        ? now.filter((other) => other !== id)
-        : now.length < stay
-          ? [...now, id]
-          : now,
-    );
-  };
-  const pickAlternative = (id: number) =>
-    setPicked(
-      alternativesStay === 1
-        ? [id]
-        : keptAlternatives.includes(id)
-          ? keptAlternatives.filter((other) => other !== id)
-          : keptAlternatives.length < alternativesStay
-            ? [...keptAlternatives, id]
-            : keptAlternatives,
-    );
-
   const submit = () =>
-    choose.mutate(
-      {
-        workouts: kept,
-        alternatives: asksAlternatives ? keptAlternatives : candidates.map((a) => a.id),
-      },
-      {
-        onSuccess: () => router.back(),
-        onError: (error) => {
-          // Made elsewhere meanwhile: there is nothing left to choose here.
-          if (isDbError(error, 'noChoiceToMake')) router.back();
-        },
-      },
-    );
+    choose.mutate({
+      workouts: kept,
+      alternatives: alternative === undefined ? [] : [alternative],
+    });
+  const failed =
+    choose.isError && !isDbError(choose.error, 'noChoiceToMake') ? t('workout.choose.failed') : '';
 
-  const failure =
-    choose.isError && !isDbError(choose.error, 'noChoiceToMake') ? (
-      <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
-        {t('workout.choose.failed')}
-      </Text>
-    ) : null;
+  return onWorkouts ? (
+    <WorkoutsStep
+      workouts={workouts}
+      stay={stay}
+      lastTrained={lastTrained}
+      kept={kept}
+      onToggle={(id) => {
+        setPicked(undefined);
+        setKept((now) =>
+          now.includes(id)
+            ? now.filter((other) => other !== id)
+            : now.length < stay
+              ? [...now, id]
+              : now,
+        );
+      }}
+      onClose={goBack}
+      onGetPremium={() => {
+        if (!saving) openPremium();
+      }}
+      onKeep={() => (asksAlternative ? setOnWorkouts(false) : submit())}
+      saving={saving}
+      failed={failed}
+    />
+  ) : (
+    <AlternativeStep
+      candidates={candidates}
+      workouts={workouts}
+      alternative={alternative}
+      onPick={setPicked}
+      closes={!asksWorkouts}
+      onBack={goBack}
+      onKeep={submit}
+      saving={saving}
+      failed={failed}
+    />
+  );
+}
 
-  if (step === 'alternatives' && asksAlternatives) {
-    return (
-      <Screen
-        closes={!asksWorkouts}
-        onBack={asksWorkouts ? () => setStep('workouts') : leave}
-        footer={
-          <View style={{ gap: spacing.sm }}>
-            {failure}
-            <Button
-              label={t('workout.choose.keep', { count: alternativesStay })}
-              disabled={keptAlternatives.length !== alternativesStay}
-              loading={choose.isPending}
-              onPress={submit}
-            />
-          </View>
-        }
-      >
-        <Text variant="title" accessibilityRole="header">
-          {t('workout.choose.alternativesTitle', { count: alternativesStay })}
+/** What a step's footer has in common: why the choice failed, and the button that goes on. */
+function StepFooter({
+  label,
+  disabled,
+  saving,
+  failed,
+  onPress,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  saving: boolean;
+  failed: string;
+  onPress: () => void;
+  children?: ReactNode;
+}) {
+  const { spacing } = useTheme();
+  return (
+    <View style={{ gap: spacing.sm }}>
+      {failed ? (
+        <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
+          {failed}
         </Text>
-        <Text>{t('workout.choose.alternativesBody', { count: alternativesStay })}</Text>
-        <View style={{ gap: spacing.sm }}>
-          {candidates.map((alternative) => {
-            const workout = workouts.find(({ id }) => id === alternative.workoutId);
-            return (
-              <ChoiceCard
-                key={alternative.id}
-                type={alternativesStay === 1 ? 'radio' : 'checkbox'}
-                size="compact"
-                title={alternativeName(alternative)}
-                description={[
-                  workout ? workoutName(workout) : null,
-                  alternative.lastUsedAt
-                    ? t('workout.choose.used', { day: monthDay(alternative.lastUsedAt) })
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-                selected={keptAlternatives.includes(alternative.id)}
-                onPress={() => pickAlternative(alternative.id)}
-              />
-            );
-          })}
-        </View>
-      </Screen>
-    );
-  }
+      ) : null}
+      <Button label={label} disabled={disabled} loading={saving} onPress={onPress} />
+      {children}
+    </View>
+  );
+}
 
+function WorkoutsStep({
+  workouts,
+  stay,
+  lastTrained,
+  kept,
+  onToggle,
+  onClose,
+  onGetPremium,
+  onKeep,
+  saving,
+  failed,
+}: {
+  workouts: Workout[];
+  stay: number;
+  lastTrained: Map<number, string>;
+  kept: number[];
+  onToggle: (id: number) => void;
+  onClose: () => void;
+  onGetPremium: () => void;
+  onKeep: () => void;
+  saving: boolean;
+  failed: string;
+}) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const upper = useUpperCase();
+  const workoutName = useWorkoutName();
+  const weekdayName = useWeekdayFormat('short');
+  const monthDay = useMonthDayFormat();
   return (
     <Screen
       closes
-      onBack={leave}
+      onBack={onClose}
       footer={
-        <View style={{ gap: spacing.sm }}>
-          {failure}
-          <Button
-            label={t('workout.choose.keep', { count: stay })}
-            disabled={kept.length !== stay}
-            loading={choose.isPending}
-            onPress={() => (asksAlternatives ? setStep('alternatives') : submit())}
-          />
+        <StepFooter
+          label={t('workout.choose.keep', { count: stay })}
+          disabled={kept.length !== stay}
+          saving={saving}
+          failed={failed}
+          onPress={onKeep}
+        >
           <TextLink
             label={t('workout.choose.getBack')}
             align="center"
             size="regular"
-            onPress={openPremium}
+            onPress={onGetPremium}
           />
-        </View>
+        </StepFooter>
       }
     >
       <View style={{ gap: 2 }}>
@@ -246,11 +273,11 @@ function Choice({ workouts, room, alternativeLimits, alternatives, lastTrained }
                   ? workout.weekdays.map((weekday) => weekdayName(weekday)).join(' ')
                   : t('workout.anyDay'),
                 trained
-                  ? t('workout.choose.trained', { day: monthDay(new Date(`${trained}T12:00:00`)) })
+                  ? t('workout.choose.trained', { day: monthDay(fromIsoDate(trained)) })
                   : t('workout.choose.notTrained'),
               ].join(' · ')}
               selected={kept.includes(workout.id)}
-              onPress={() => toggleWorkout(workout.id)}
+              onPress={() => onToggle(workout.id)}
             />
           );
         })}
@@ -258,6 +285,77 @@ function Choice({ workouts, room, alternativeLimits, alternatives, lastTrained }
       <Text variant="caption" color="textMuted">
         {t('workout.choose.note')}
       </Text>
+    </Screen>
+  );
+}
+
+function AlternativeStep({
+  candidates,
+  workouts,
+  alternative,
+  onPick,
+  closes,
+  onBack,
+  onKeep,
+  saving,
+  failed,
+}: {
+  candidates: ChoiceAlternative[];
+  workouts: Workout[];
+  alternative?: number;
+  onPick: (id: number) => void;
+  /** Whether it is the first step, whose cross leaves, rather than going back to the workouts. */
+  closes: boolean;
+  onBack: () => void;
+  onKeep: () => void;
+  saving: boolean;
+  failed: string;
+}) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const workoutName = useWorkoutName();
+  const alternativeName = useAlternativeName();
+  const monthDay = useMonthDayFormat();
+  return (
+    <Screen
+      closes={closes}
+      onBack={onBack}
+      footer={
+        <StepFooter
+          label={t('workout.choose.keep', { count: 1 })}
+          disabled={alternative === undefined}
+          saving={saving}
+          failed={failed}
+          onPress={onKeep}
+        />
+      }
+    >
+      <Text variant="title" accessibilityRole="header">
+        {t('workout.choose.alternativeTitle')}
+      </Text>
+      <Text>{t('workout.choose.alternativeBody')}</Text>
+      <View style={{ gap: spacing.sm }}>
+        {candidates.map((candidate) => {
+          const workout = workouts.find(({ id }) => id === candidate.workoutId);
+          return (
+            <ChoiceCard
+              key={candidate.id}
+              size="compact"
+              title={alternativeName(candidate)}
+              description={[
+                workout ? workoutName(workout) : null,
+                candidate.lastUsedAt
+                  ? t('workout.choose.used', { day: monthDay(candidate.lastUsedAt) })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              selected={alternative === candidate.id}
+              onPress={() => onPick(candidate.id)}
+            />
+          );
+        })}
+      </View>
     </Screen>
   );
 }
