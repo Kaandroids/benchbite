@@ -283,6 +283,7 @@
   "nutrition": {
     "calories": "{{calories}} kcal pro Tag",
     "grams": "{{count}} g",
+    "estimateTotal": "Gesamt",
     "macros": {
       "protein": "Protein",
       "carbs": "Kohlenhydrate",

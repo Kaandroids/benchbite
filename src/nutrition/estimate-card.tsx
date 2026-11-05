@@ -115,23 +115,38 @@ export function EstimateItemRow({
   );
 }
 
-/** What the items add up to: the calories and each macro in its colour, a quarter each. */
+/**
+ * What the items add up to, set apart from them under its title: the calories and each macro in
+ * its colour, a quarter each.
+ */
 export function EstimateTotals({ items }: { items: EstimateItem[] }) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const totals = estimateTotals(items);
   return (
-    <View style={[styles.totals, { gap: spacing.xs }]}>
-      <Total value={format(Math.round(totals.calories))} label="kcal" />
-      {MACROS.map(({ key, grams, color }) => (
-        <Total
-          key={key}
-          value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
-          label={t(`nutrition.macros.${key}`)}
-          color={color}
-        />
-      ))}
+    <View
+      style={{
+        gap: spacing.sm,
+        paddingTop: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+      }}
+    >
+      <Text variant="captionStrong" color="textMuted">
+        {t('nutrition.estimateTotal')}
+      </Text>
+      <View style={[styles.totals, { gap: spacing.xs }]}>
+        <Total value={format(Math.round(totals.calories))} label="kcal" />
+        {MACROS.map(({ key, grams, color }) => (
+          <Total
+            key={key}
+            value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
+            label={t(`nutrition.macros.${key}`)}
+            color={color}
+          />
+        ))}
+      </View>
     </View>
   );
 }

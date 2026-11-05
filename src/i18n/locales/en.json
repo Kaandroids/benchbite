@@ -283,6 +283,7 @@
   "nutrition": {
     "calories": "{{calories}} kcal a day",
     "grams": "{{count}} g",
+    "estimateTotal": "Total",
     "macros": {
       "protein": "Protein",
       "carbs": "Carbs",

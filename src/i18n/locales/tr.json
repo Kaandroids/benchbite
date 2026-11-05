@@ -283,6 +283,7 @@
   "nutrition": {
     "calories": "Günde {{calories}} kcal",
     "grams": "{{count}} g",
+    "estimateTotal": "Toplam",
     "macros": {
       "protein": "Protein",
       "carbs": "Karbonhidrat",

@@ -63,6 +63,7 @@ it('shows the meal, how sure Bite is, each food and the totals', async () => {
   expect(screen.getByText('Estimate · high confidence')).toBeOnTheScreen();
   expect(screen.getByLabelText('Pizza Margherita, 150 grams, 399 kcal')).toBeOnTheScreen();
   expect(screen.getByText('150 g · 399 kcal')).toBeOnTheScreen();
+  expect(screen.getByText('Total')).toBeOnTheScreen();
   expect(screen.getByLabelText('17 g Protein')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Add' })).toBeOnTheScreen();
   expect(screen.getByHintText('Add to lunch')).toBeOnTheScreen();
