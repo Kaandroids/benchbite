@@ -1,7 +1,15 @@
 import { router } from 'expo-router';
 
 import { useAiAccess } from '@/ai/access';
-import { act, fireEvent, render, screen, within } from '@/test/render';
+import {
+  act,
+  createTestQueryClient,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@/test/render';
 
 import { useLogEstimate } from './entries';
 import { takeLoggedEstimate } from './meal-photo-handover';
@@ -276,6 +284,59 @@ describe('MealPhotoScreen', () => {
     expect(screen.queryByText("You've used Bite for this month")).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('opens premium from the sheet, leaving the screen', async () => {
+    jest.mocked(useAiAccess).mockReturnValue({
+      data: { byCount: true, resetsAt: new Date(2026, 10, 9) },
+    } as never);
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('limit_reached'));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'See premium' }));
+
+    expect(router.back).toHaveBeenCalled();
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/premium'));
+  });
+
+  it('goes back to the estimate there was when a correction is refused', async () => {
+    jest.mocked(useAiAccess).mockReturnValue({
+      data: { byCount: true, resetsAt: new Date(2026, 10, 9) },
+    } as never);
+    await showEstimate();
+    await fireEvent.changeText(screen.getByLabelText('Something off?'), 'Half the juice');
+    const second = pendingEstimate();
+    await fireEvent.press(screen.getByRole('button', { name: 'Estimate again' }));
+    await second.fail(new EstimateFailure('limit_reached'));
+
+    expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+
+    expect(router.back).not.toHaveBeenCalled();
+    expect(screen.queryByText("You've used this week's meal photos")).toBeNull();
+    expect(screen.getByRole('button', { name: 'Add to breakfast' })).toBeTruthy();
+  });
+
+  it('shows neither refusal until it is known which it is', async () => {
+    jest.mocked(useAiAccess).mockReturnValue({ data: undefined, isPending: true } as never);
+    const first = pendingEstimate();
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />);
+    await first.fail(new EstimateFailure('limit_reached'));
+
+    expect(screen.queryByText("You've used Bite for this month")).toBeNull();
+    expect(screen.queryByText("You've used this week's meal photos")).toBeNull();
+  });
+
+  it('reads access again once an estimate settles, as it may have used the last photo', async () => {
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    jest.mocked(estimateMeal).mockResolvedValueOnce({ isFood: true, items: [EGGS] });
+    await render(<MealPhotoScreen meal="lunch" day="2026-10-30" photos={['file://a.jpg']} />, {
+      queryClient,
+    });
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['ai', 'access'] }));
   });
 
   it('tells a plan with Bite that its budget is used up, as the chat does', async () => {

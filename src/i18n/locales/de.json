@@ -402,8 +402,7 @@
       "blockedHint": "Bite kann diese Fotos nicht schätzen. Versuche andere Fotos.",
       "usedUp": {
         "title": "Du hast die Essensfotos dieser Woche aufgebraucht",
-        "body": "Neue gibt es am {{day}}. Mit Premium kannst du sie jeden Tag nutzen.",
-        "bodyNoDay": "Mit Premium kannst du sie jeden Tag nutzen."
+        "body": "Neue gibt es am {{day}}. Mit Premium kannst du sie jeden Tag nutzen."
       }
     },
     "amount": {
@@ -2272,8 +2271,8 @@
       "create": "Konto erstellen",
       "logIn": "Ich habe ein Konto"
     },
+    "seePremium": "Premium ansehen",
     "offerSheet": {
-      "seePremium": "Premium ansehen",
       "notNow": "Nicht jetzt"
     }
   }

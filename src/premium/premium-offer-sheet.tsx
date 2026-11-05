@@ -21,10 +21,7 @@ export function PremiumOfferSheet({ title, body, expression, onClose }: PremiumO
   const openPremium = useOpenPremium();
   return (
     <BiteSheet title={title} body={body} expression={expression} onClose={onClose}>
-      <Button
-        label={t('premium.offerSheet.seePremium')}
-        onPress={closeThen(onClose, openPremium)}
-      />
+      <Button label={t('premium.seePremium')} onPress={closeThen(onClose, openPremium)} />
       <Button label={t('premium.offerSheet.notNow')} variant="secondary" onPress={onClose} />
     </BiteSheet>
   );

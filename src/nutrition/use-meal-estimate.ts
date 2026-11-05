@@ -1,6 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ACCESS_KEY } from '@/ai/access';
 import { discardPhotos } from '@/lib/photos';
 
 import { EstimateFailure, estimateMeal, type Correction, type EstimateItem } from './meal-estimate';
@@ -12,7 +14,8 @@ export type EstimateState =
   | { kind: 'estimate'; items: EstimateItem[] }
   /** The photos show no food, with what Bite says it sees, if anything. */
   | { kind: 'notFood'; note?: string }
-  | { kind: 'failed'; error: unknown };
+  /** With the estimate there was, for a correction the user may not make now. */
+  | { kind: 'failed'; error: unknown; previous?: EstimateItem[] };
 
 /**
  * Estimates the photos of a meal, and again with a correction, or with other photos; each
@@ -20,9 +23,12 @@ export type EstimateState =
  */
 export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
   const { i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const [photos, setPhotos] = useState(initialPhotos);
   const [state, setState] = useState<EstimateState>({ kind: 'estimating' });
   const running = useRef<AbortController | null>(null);
+  // The estimate a correction would replace, until it does.
+  const corrected = useRef<EstimateItem[] | undefined>(undefined);
 
   // Sets the state only once the answer comes, so that an effect may start it.
   const request = useCallback(
@@ -32,6 +38,7 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
       running.current = controller;
       estimateMeal({ photos, language: i18n.language, meal, correction }, controller.signal)
         .then((answer) => {
+          void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
           if (controller.signal.aborted) return;
           setState(
             answer.isFood && answer.items.length > 0
@@ -40,16 +47,23 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
           );
         })
         .catch((error: unknown) => {
+          // What is left of the week's photos has changed, or was seen while this one was counted.
+          void queryClient.invalidateQueries({ queryKey: ACCESS_KEY });
           if (controller.signal.aborted) return;
           // A refusal is the user's state, not a failure; anything else would go unseen, as
           // preparing the photos on the device or a request the function turns down.
           if (!(error instanceof EstimateFailure && error.refusal)) {
             console.warn('Could not estimate the meal', error);
           }
-          setState({ kind: 'failed', error });
+          setState({
+            kind: 'failed',
+            error,
+            previous:
+              error instanceof EstimateFailure && error.refusal ? corrected.current : undefined,
+          });
         });
     },
-    [photos, i18n.language, meal],
+    [photos, i18n.language, meal, queryClient],
   );
 
   // The photos are estimated as they come.
@@ -67,11 +81,13 @@ export function useMealEstimate(meal: Meal, initialPhotos: string[]) {
     setItems: (items: EstimateItem[]) => setState({ kind: 'estimate', items }),
     /** Estimates the same photos again, with a correction or after a failure. */
     again: (correction?: Correction) => {
+      corrected.current = state.kind === 'estimate' ? state.items : undefined;
       setState({ kind: 'estimating' });
       request(correction);
     },
     /** Estimates other photos of the meal. */
     retake: (next: string[]) => {
+      corrected.current = undefined;
       setState({ kind: 'estimating' });
       setPhotos(next);
     },

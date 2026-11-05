@@ -402,8 +402,7 @@
       "blockedHint": "Bite can’t estimate these photos. Try other photos.",
       "usedUp": {
         "title": "You've used this week's meal photos",
-        "body": "New ones on {{day}}. With premium you can use them every day.",
-        "bodyNoDay": "With premium you can use them every day."
+        "body": "New ones on {{day}}. With premium you can use them every day."
       }
     },
     "amount": {
@@ -2272,8 +2271,8 @@
       "create": "Create account",
       "logIn": "I have an account"
     },
+    "seePremium": "See premium",
     "offerSheet": {
-      "seePremium": "See premium",
       "notNow": "Not now"
     }
   }

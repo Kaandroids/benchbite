@@ -17,7 +17,7 @@ type Cell = boolean | string;
 
 /**
  * The free plan beside premium, a row for each difference: Bite's chat and reviews, meal photos,
- * workouts and alternatives, and the logging both keep. Premium's column is tinted, and its values
+ * workouts, alternatives and the archive, and the logging both keep. Premium's column is tinted, and its values
  * stand out.
  */
 export function PlanComparison({ free, premium }: { free: PlanNumbers; premium: PlanNumbers }) {

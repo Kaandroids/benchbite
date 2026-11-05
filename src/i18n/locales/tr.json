@@ -402,8 +402,7 @@
       "blockedHint": "Bite bu fotoğrafları tahmin edemiyor. Başka fotoğraflar dene.",
       "usedUp": {
         "title": "Bu haftaki öğün fotoğraflarını kullandın",
-        "body": "Yenileri {{day}} günü. Premium ile her gün kullanabilirsin.",
-        "bodyNoDay": "Premium ile her gün kullanabilirsin."
+        "body": "Yenileri {{day}} günü. Premium ile her gün kullanabilirsin."
       }
     },
     "amount": {
@@ -2272,8 +2271,8 @@
       "create": "Hesap oluştur",
       "logIn": "Hesabım var"
     },
+    "seePremium": "Premium'a bak",
     "offerSheet": {
-      "seePremium": "Premium'a bak",
       "notNow": "Şimdi değil"
     }
   }

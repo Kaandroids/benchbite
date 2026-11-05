@@ -2,7 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAiAccess } from '@/ai/access';
+import { countUsedUpUntil, useAiAccess } from '@/ai/access';
 import { Toast } from '@/components/ui/toast';
 import { useNumberFormat } from '@/i18n/units';
 
@@ -25,8 +25,8 @@ type LoggedEstimateOptions = {
 
 /**
  * Logging a meal from photos from the add screen (#299): the sheet that takes or chooses the
- * photos, or says the week's are used up (#411), and opens the photo screen with them, and, once that screen logged the meal, the toast
- * that says so and offers to undo it (ADR 0060).
+ * photos and opens the photo screen with them, or says the week's are used up (#411); and, once
+ * that screen logged the meal, the toast that says so and offers to undo it (ADR 0060).
  */
 export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstimateOptions): {
   openSheet: () => void;
@@ -38,9 +38,9 @@ export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstima
   const { format } = useNumberFormat();
   const undoEstimate = useUndoEstimate();
   const access = useAiAccess('meal_photo');
-  // The week's photos used up says so at once, rather than after taking one.
-  const usedUp = access.data?.byCount === true && access.data.refusal === 'limit_reached';
-  const [picking, setPicking] = useState(false);
+  const usedUpUntil = countUsedUpUntil(access.data);
+  // Which sheet the tile opened: decided on the tap, so that an answer coming later never swaps it.
+  const [open, setOpen] = useState<{ usedUpUntil?: Date } | null>(null);
   // The meal logged last from photos, which the toast offers to undo.
   const [logged, setLogged] = useState<HandedEstimate | null>(null);
 
@@ -60,9 +60,10 @@ export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstima
     undoEstimate.mutate(estimate, { onSuccess: () => onUndone(estimate.foods.map(refKey)) });
 
   return {
-    openSheet: () => setPicking(true),
-    sheet: !picking ? null : usedUp ? (
-      <PhotosUsedUpSheet resetsAt={access.data?.resetsAt} onClose={() => setPicking(false)} />
+    // The week's photos used up says so at once, rather than after taking one.
+    openSheet: () => setOpen({ usedUpUntil }),
+    sheet: !open ? null : open.usedUpUntil ? (
+      <PhotosUsedUpSheet until={open.usedUpUntil} onClose={() => setOpen(null)} />
     ) : (
       <MealPhotoSheet
         onPick={(photos) =>
@@ -71,7 +72,7 @@ export function useLoggedEstimate({ meal, day, onAdded, onUndone }: LoggedEstima
             params: { meal, day, photos: handOverMealPhotos(photos) },
           })
         }
-        onClose={() => setPicking(false)}
+        onClose={() => setOpen(null)}
       />
     ),
     toast: logged ? (
