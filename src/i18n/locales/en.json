@@ -738,7 +738,12 @@
     "archive": {
       "title": "Archive",
       "body": "Inactive workouts are kept here and left out of your week.",
-      "empty": "No archived workouts."
+      "empty": "No archived workouts.",
+      "bodyFree": "Kept as they were. With premium you can bring them back. They don't count toward your workouts.",
+      "inArchive": "In your archive",
+      "sheetTitle": "The archive comes with premium",
+      "sheetBody": "Put a workout away, out of your week, and bring it back whenever you like.",
+      "bringBack": "Bring it back with premium"
     },
     "notFound": {
       "title": "Workout not found",
@@ -883,10 +888,11 @@
     "limitSheet": {
       "title_one": "You have {{count}} of {{count}} workout",
       "title_other": "You have {{count}} of {{count}} workouts",
-      "body": "Archived ones count too. Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room.",
+      "body": "Premium has room for {{count}}, with {{versions}} alternatives each. Or delete one to make room.",
       "seePremium": "See premium",
       "notNow": "Not now"
-    }
+    },
+    "noActiveFree": "No active workouts. Add one to get started."
   },
   "exercise": {
     "start": "Start",

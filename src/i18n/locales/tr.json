@@ -738,7 +738,12 @@
     "archive": {
       "title": "Arşiv",
       "body": "Pasif antrenmanlar burada saklanır ve haftana dahil edilmez.",
-      "empty": "Arşivde antrenman yok."
+      "empty": "Arşivde antrenman yok.",
+      "bodyFree": "Olduğu gibi saklanır. Premium ile geri alabilirsin. Antrenman sayına dahil edilmez.",
+      "inArchive": "Arşivinde",
+      "sheetTitle": "Arşiv premium ile gelir",
+      "sheetBody": "Bir antrenmanı kaldır, haftandan çıksın, istediğinde geri al.",
+      "bringBack": "Premium ile geri al"
     },
     "notFound": {
       "title": "Antrenman bulunamadı",
@@ -883,10 +888,11 @@
     "limitSheet": {
       "title_one": "{{count}}/{{count}} antrenmanın var",
       "title_other": "{{count}}/{{count}} antrenmanın var",
-      "body": "Arşivdekiler de sayılır. Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil.",
+      "body": "Premium'da {{count}} antrenmana, her birine {{versions}} alternatife yer var. Ya da yer açmak için birini sil.",
       "seePremium": "Premium'a bak",
       "notNow": "Şimdi değil"
-    }
+    },
+    "noActiveFree": "Aktif antrenman yok. Başlamak için bir tane ekle."
   },
   "exercise": {
     "start": "Başlangıç",

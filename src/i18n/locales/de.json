@@ -738,7 +738,12 @@
     "archive": {
       "title": "Archiv",
       "body": "Inaktive Workouts bleiben hier und gehören nicht zu deiner Woche.",
-      "empty": "Keine archivierten Workouts."
+      "empty": "Keine archivierten Workouts.",
+      "bodyFree": "Sie bleiben, wie sie sind. Mit Premium holst du sie zurück. Sie zählen nicht zu deinen Workouts.",
+      "inArchive": "In deinem Archiv",
+      "sheetTitle": "Das Archiv gibt es mit Premium",
+      "sheetBody": "Leg ein Workout beiseite, raus aus deiner Woche, und hol es zurück, wann du willst.",
+      "bringBack": "Mit Premium zurückholen"
     },
     "notFound": {
       "title": "Workout nicht gefunden",
@@ -883,10 +888,11 @@
     "limitSheet": {
       "title_one": "Du hast {{count}} von {{count}} Workout",
       "title_other": "Du hast {{count}} von {{count}} Workouts",
-      "body": "Archivierte zählen mit. Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen.",
+      "body": "Premium hat Platz für {{count}}, mit je {{versions}} Alternativen. Oder lösche eines, um Platz zu schaffen.",
       "seePremium": "Premium ansehen",
       "notNow": "Nicht jetzt"
-    }
+    },
+    "noActiveFree": "Keine aktiven Workouts. Füge eines hinzu, um loszulegen."
   },
   "exercise": {
     "start": "Start",
