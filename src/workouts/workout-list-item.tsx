@@ -68,7 +68,8 @@ export function WorkoutListItem({
               : name
         }
         onPress={() =>
-          held
+          // An archived one has nothing to make room for: it opens to be looked at.
+          held && workout.active
             ? setShowingHeld(true)
             : router.push({ pathname: '/workout/[id]', params: { id: String(workout.id) } })
         }
