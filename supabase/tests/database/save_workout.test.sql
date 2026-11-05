@@ -52,7 +52,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 -- them together.
 select results_eq(
   $$ select * from public.workout_limits() $$,
-  $$ values (20, 3, 2, 12, 1, 0, false, 0) $$,
+  $$ values (20, 3, 2, 12, 1, 0, false, 0, false) $$,
   'A free user may have 3 workouts with 20 exercises each, and 1 alternative in all'
 );
 
