@@ -2078,6 +2078,8 @@
       }
     },
     "mealCard": {
+      "add": "Ekle",
+      "mealChoice": "Öğün",
       "added": {
         "breakfast": "Kahvaltıya eklendi · {{calories}} kcal",
         "lunch": "Öğle yemeğine eklendi · {{calories}} kcal",

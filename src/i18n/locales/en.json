@@ -2078,6 +2078,8 @@
       }
     },
     "mealCard": {
+      "add": "Add",
+      "mealChoice": "Meal",
       "added": {
         "breakfast": "Added to breakfast · {{calories}} kcal",
         "lunch": "Added to lunch · {{calories}} kcal",

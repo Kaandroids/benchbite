@@ -1,12 +1,13 @@
 // Bite's meal cards (#299, ADR 0066): where each one stands, and the user adding it, with the
-// grams they may change, or undoing it. Bite only keeps the card; log_coach_meal_card() logs it,
-// as the user, and undo_coach_meal_card() takes it back while its entries are as logged.
+// grams and meal they may change, or undoing it. Bite only keeps the card; log_coach_meal_card()
+// logs it, as the user, and undo_coach_meal_card() takes it back while its entries are as logged.
 import type { MealCard } from '@shared/coach/chat';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Database, Json } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import { reloadDay } from '@/nutrition/entries';
+import type { Meal } from '@/nutrition/meals';
 import { reloadFoods } from '@/nutrition/quick-foods';
 
 import { cardFailure, cardStatesKey, toolResultField } from './cards';
@@ -20,11 +21,11 @@ export type MealCardStatus = Database['public']['Enums']['coach_meal_card_status
 
 type StateRow = Pick<
   Database['public']['Tables']['coach_meal_cards']['Row'],
-  'id' | 'status' | 'kcal'
+  'id' | 'status' | 'meal' | 'kcal'
 >;
 
-/** Where a card stands, and what it added once logged, in kcal. */
-export type MealCardState = { status: MealCardStatus; kcal: number | null };
+/** Where a card stands, the meal it is on, and what it added once logged, in kcal. */
+export type MealCardState = Omit<StateRow, 'id'>;
 
 /** Whether `card` is a meal card, as a tool's result keeps it. */
 function isMealCard(card: unknown): card is MealCard {
@@ -57,7 +58,9 @@ export function mealCardIds(messages: ChatMessage[]): number[] {
 }
 
 function statesOf(rows: StateRow[]): Map<number, MealCardState> {
-  return new Map(rows.map((row) => [row.id, { status: row.status, kcal: row.kcal }]));
+  return new Map(
+    rows.map((row) => [row.id, { status: row.status, meal: row.meal, kcal: row.kcal }]),
+  );
 }
 
 /**
@@ -72,7 +75,7 @@ export function useMealCardStates(ids: number[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('coach_meal_cards')
-        .select('id, status, kcal')
+        .select('id, status, meal, kcal')
         .in('id', ids);
       if (error) {
         throw error;
@@ -83,11 +86,11 @@ export function useMealCardStates(ids: number[]) {
   });
 }
 
-/** What the user does with a card: adds it, at the grams of its items, or undoes it. */
-export type MealCardAction = { action: 'log'; grams: number[] } | { action: 'undo' };
+/** What the user does with a card: adds it, at the grams of its items to a meal, or undoes it. */
+export type MealCardAction = { action: 'log'; grams: number[]; meal: Meal } | { action: 'undo' };
 
 /**
- * Adds a meal card, with the grams the user may have changed, or undoes it. Its new status goes
+ * Adds a meal card, with the grams and meal the user may have changed, or undoes it. Its new status goes
  * into every list of states that has it, and the day it is logged on loads again, with the foods
  * when it saved or removed some of the user's own.
  */
@@ -99,10 +102,11 @@ export function useMealCardAction(card: MealCard) {
         request.action === 'log'
           ? await supabase.rpc('log_coach_meal_card', {
               card_id: card.id,
-              // Only grams that changed are sent, so that the card logs as Bite gave it otherwise.
+              // Only what changed is sent, so that the card logs as Bite gave it otherwise.
               ...(request.grams.some((grams, index) => grams !== card.items[index]?.grams) && {
                 grams: request.grams,
               }),
+              ...(request.meal !== card.meal && { meal: request.meal }),
             })
           : await supabase.rpc('undo_coach_meal_card', { card_id: card.id });
       if (error) {
@@ -113,7 +117,9 @@ export function useMealCardAction(card: MealCard) {
     onSuccess: (row) => {
       queryClient.setQueriesData<StateRow[]>({ queryKey: MEAL_CARDS_KEY }, (rows) =>
         rows?.map((state) =>
-          state.id === card.id ? { ...state, status: row.status, kcal: row.kcal } : state,
+          state.id === card.id
+            ? { ...state, status: row.status, meal: row.meal, kcal: row.kcal }
+            : state,
         ),
       );
       // A list loading meanwhile, as when Bite made another card, may have read it as it was.

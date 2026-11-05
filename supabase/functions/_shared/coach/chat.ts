@@ -264,9 +264,10 @@ export const SHOWN_PROPOSAL_KINDS = [
 
 /**
  * A meal Bite estimated (ADR 0062), as its card shows it: the items as `estimate-meal` gives them,
- * matched to the food library alike, on a day and meal. The user adds it, with the grams they may
- * change, and undoes it, by its `id` (log_coach_meal_card(), undo_coach_meal_card()); where it
- * stands is read from `coach_meal_cards`, as the card is kept with the message.
+ * matched to the food library alike, on a day and meal. The user adds it, with the grams and meal
+ * they may change, and undoes it, by its `id` (log_coach_meal_card(), undo_coach_meal_card()); where
+ * it stands and the meal it went to are read from `coach_meal_cards`, as the card is kept with the
+ * message.
  */
 export type MealCard = {
   id: number;

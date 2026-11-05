@@ -35,12 +35,17 @@ const SALAD = {
   estimated: true,
 };
 const CARD: MealCard = { id: 51, day: '2026-10-30', meal: 'lunch', items: [PIZZA] };
-const pending: MealCardState = { status: 'pending', kcal: null };
+const pending: MealCardState = { status: 'pending', meal: 'lunch', kcal: null };
 
 /** Lets the card's function answer with the card as `status`, or refuse with `code`. */
-function answers(status: string | null, code?: string, kcal: number | null = 399) {
+function answers(
+  status: string | null,
+  code?: string,
+  kcal: number | null = 399,
+  meal: string = 'lunch',
+) {
   jest.mocked(supabase.rpc).mockResolvedValue({
-    data: status && { id: 51, status, kcal, food_ids: [] },
+    data: status && { id: 51, status, meal, kcal, food_ids: [] },
     error: code ? { code } : null,
   } as never);
 }
@@ -59,7 +64,8 @@ it('shows the meal, how sure Bite is, each food and the totals', async () => {
   expect(screen.getByLabelText('Pizza Margherita, 150 grams, 399 kcal')).toBeOnTheScreen();
   expect(screen.getByText('150 g · 399 kcal')).toBeOnTheScreen();
   expect(screen.getByLabelText('17 g Protein')).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeOnTheScreen();
+  expect(screen.getByHintText('Add to lunch')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Edit' })).toBeOnTheScreen();
 });
 
@@ -67,12 +73,12 @@ it('adds the meal and folds into a line with Undo, which undoes it', async () =>
   answers('logged');
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   // Grams as Bite gave them are not sent.
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51 });
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
-  expect(screen.queryByRole('button', { name: 'Add to lunch' })).not.toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Add' })).not.toBeOnTheScreen();
 
   answers('undone');
   await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
@@ -87,13 +93,57 @@ it('changes the grams of the only food with Edit, and adds the meal with them', 
   await render(<MealCardView card={CARD} state={pending} />);
 
   await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+  await fireEvent.press(screen.getByRole('button', { name: /^Pizza Margherita, 150 grams/ }));
   await fireEvent.changeText(screen.getByLabelText('Grams'), '100');
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
+  await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
   expect(screen.getByText('100 g · 266 kcal')).toBeOnTheScreen();
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51, grams: [100] });
   expect(await screen.findByText('Added to lunch · 266 kcal')).toBeOnTheScreen();
+});
+
+it('adds the meal to the meal chosen with Edit, and says so', async () => {
+  answers('logged', undefined, 399, 'dinner');
+  await render(<MealCardView card={CARD} state={pending} />);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+  expect(screen.getByRole('radio', { name: 'Lunch' })).toBeChecked();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Dinner' }));
+
+  expect(screen.getByRole('header')).toHaveTextContent('Dinner');
+  expect(screen.getByRole('radio', { name: 'Dinner' })).toBeChecked();
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
+
+  expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', {
+    card_id: 51,
+    meal: 'dinner',
+  });
+  expect(await screen.findByText('Added to dinner · 399 kcal')).toBeOnTheScreen();
+});
+
+it('sends no meal when the one Bite gave is chosen again', async () => {
+  answers('logged');
+  await render(<MealCardView card={CARD} state={pending} />);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Snacks' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
+
+  expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51 });
+});
+
+it('keeps the chosen meal when Done closes the choice', async () => {
+  await render(<MealCardView card={CARD} state={pending} />);
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Breakfast' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+  expect(screen.queryByRole('radio')).toBeNull();
+  expect(screen.getByRole('header')).toHaveTextContent('Breakfast');
 });
 
 it('lets each food of a meal of more than one be changed', async () => {
@@ -112,14 +162,22 @@ it('lets each food of a meal of more than one be changed', async () => {
 });
 
 it('shows a card added earlier as its line, with what it added', async () => {
-  await render(<MealCardView card={CARD} state={{ status: 'logged', kcal: 412.5 }} />);
+  await render(
+    <MealCardView card={CARD} state={{ status: 'logged', meal: 'lunch', kcal: 412.5 }} />,
+  );
 
   expect(screen.getByText('Added to lunch · 413 kcal')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
 });
 
+it('shows a card added earlier to another meal as added there', async () => {
+  await render(<MealCardView card={CARD} state={{ status: 'logged', meal: 'snack', kcal: 399 }} />);
+
+  expect(screen.getByText('Added as a snack · 399 kcal')).toBeOnTheScreen();
+});
+
 it('shows a card undone earlier as undone', async () => {
-  await render(<MealCardView card={CARD} state={{ status: 'undone', kcal: 399 }} />);
+  await render(<MealCardView card={CARD} state={{ status: 'undone', meal: 'lunch', kcal: 399 }} />);
 
   expect(screen.getByText('Undone')).toBeOnTheScreen();
   expect(screen.queryByRole('button')).not.toBeOnTheScreen();
@@ -127,7 +185,7 @@ it('shows a card undone earlier as undone', async () => {
 
 it('no longer offers Undo once the meal changed since it was added', async () => {
   answers(null, 'BB035');
-  await render(<MealCardView card={CARD} state={{ status: 'logged', kcal: 399 }} />);
+  await render(<MealCardView card={CARD} state={{ status: 'logged', meal: 'lunch', kcal: 399 }} />);
 
   await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
 
@@ -143,7 +201,7 @@ it.each([
   answers(null, code);
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   expect(await screen.findByText(line)).toBeOnTheScreen();
   expect(screen.queryByRole('button')).not.toBeOnTheScreen();
@@ -153,28 +211,30 @@ it('offers Add again after a request that failed', async () => {
   jest.mocked(supabase.rpc).mockRejectedValue(new Error('Network request failed'));
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   expect(await screen.findByText("That didn't work. Try again.")).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeOnTheScreen();
 });
 
 it('waits for where the card stands before it may be added', async () => {
   await render(<MealCardView card={CARD} waiting />);
 
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
 });
 
 it('shows a meal undone elsewhere once its Undo here is refused as out of date', async () => {
   answers('logged');
   const { rerender } = await render(<MealCardView card={CARD} state={pending} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
 
   // Undone on another device: the states, loaded again, say so.
   answers(null, 'BB036');
-  await rerender(<MealCardView card={CARD} state={{ status: 'undone', kcal: null }} />);
+  await rerender(
+    <MealCardView card={CARD} state={{ status: 'undone', meal: 'lunch', kcal: null }} />,
+  );
   await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
 
   expect(await screen.findByText('Undone')).toBeOnTheScreen();
@@ -185,11 +245,13 @@ it('offers nothing to do when only to read', async () => {
 
   expect(screen.getByText('Pizza Margherita')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
 });
 
 it('offers no Undo when only to read', async () => {
-  await render(<MealCardView card={CARD} state={{ status: 'logged', kcal: 399 }} readOnly />);
+  await render(
+    <MealCardView card={CARD} state={{ status: 'logged', meal: 'lunch', kcal: 399 }} readOnly />,
+  );
 
   expect(screen.getByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
