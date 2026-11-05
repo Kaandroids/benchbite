@@ -27,8 +27,6 @@ const DB_ERRORS = {
   alternativeTotalLimit: 'BB052',
   devToolsOff: 'BB053',
   archiveWithPremium: 'BB054',
-  noChoiceToMake: 'BB055',
-  choiceDoesNotFit: 'BB056',
   // Postgres's own, for a row that is not there, such as an alternative deleted elsewhere.
   notFound: 'P0002',
   // Postgres's own, for a row that would repeat a unique value, such as a food's name.

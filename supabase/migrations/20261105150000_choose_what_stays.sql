@@ -44,8 +44,14 @@ begin
   limits := public.plan_limits(apply_plan_limits.owner);
   select a.* into last_applied from public.applied_plans a
   where a.user_id = apply_plan_limits.owner;
-  had_more_room := (select p.workouts from public.plans p where p.plan = last_applied.plan)
-    > limits.workouts;
+  -- More room of any kind, as any of them may leave something waiting; null is no limit.
+  had_more_room := (
+    select p.workouts > limits.workouts
+      or p.versions > limits.versions
+      or (p.added_alternatives is null and limits.added_alternatives is not null)
+      or p.added_alternatives > limits.added_alternatives
+    from public.plans p where p.plan = last_applied.plan
+  );
   perform public.apply_workout_limits(apply_plan_limits.owner, limits);
   perform public.apply_alternative_limits(apply_plan_limits.owner, limits);
   insert into public.applied_plans (user_id, plan, choice_open)
@@ -96,9 +102,10 @@ revoke execute on function public.workout_limits from public, anon;
 grant execute on function public.workout_limits to authenticated;
 
 -- Makes the caller's one choice: `workouts` are the active ones that stay, as many as the plan has
--- room for or all there are, and `alternatives` likewise among theirs. The rest wait; what is
--- in the archive stays as it is.
-create function public.choose_what_stays(workouts bigint[], alternatives bigint[])
+-- room for or all there are, and `alternatives` likewise among theirs, as the plan's limits on them
+-- allow. The rest wait; what is in the archive stays as it is. The plan changes, so the days before
+-- the device's `today` are kept with the plan they had (ADR 0041).
+create function public.choose_what_stays(workouts bigint[], alternatives bigint[], today date)
 returns void
 language plpgsql
 security definer
@@ -110,7 +117,7 @@ declare
   kept bigint[] := coalesce(choose_what_stays.workouts, '{}');
   kept_alternatives bigint[] := coalesce(choose_what_stays.alternatives, '{}');
   active_count integer;
-  added_count integer;
+  allowed_alternatives integer;
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
@@ -118,7 +125,7 @@ begin
   perform public.lock_user_limits(caller_id);
   limits := public.plan_limits(caller_id);
   if not coalesce(
-    (select a.choice_open from public.applied_plans a where a.user_id = caller_id for update),
+    (select a.choice_open from public.applied_plans a where a.user_id = caller_id),
     false
   ) then
     raise exception 'There is no choice to make' using errcode = 'BB055';
@@ -140,10 +147,15 @@ begin
     raise exception 'The workouts do not fit the plan' using errcode = 'BB056';
   end if;
 
-  select count(*)::integer into added_count from public.workout_alternatives a
-  where a.user_id = caller_id and a.workout_id = any (kept) and a.exercises is not null;
+  -- As many as the kept workouts could keep: each up to its versions, then up to the plan's total.
+  select coalesce(sum(least(c.added, limits.versions - 1)), 0)::integer into allowed_alternatives
+  from (
+    select count(*) as added from public.workout_alternatives a
+    where a.user_id = caller_id and a.workout_id = any (kept) and a.exercises is not null
+    group by a.workout_id
+  ) c;
   if cardinality(kept_alternatives)
-      <> least(added_count, coalesce(limits.added_alternatives, added_count))
+      <> least(allowed_alternatives, coalesce(limits.added_alternatives, allowed_alternatives))
     or (select count(distinct k) from unnest(kept_alternatives) k) <> cardinality(kept_alternatives)
     or exists (
       select 1 from unnest(kept_alternatives) k
@@ -162,6 +174,7 @@ begin
     raise exception 'The alternatives do not fit the plan' using errcode = 'BB056';
   end if;
 
+  perform public.keep_planned_days(choose_what_stays.today);
   update public.workouts w set held = not (w.id = any (kept))
   where w.user_id = caller_id and w.active and w.held is distinct from not (w.id = any (kept));
   update public.workout_alternatives a set held = not (a.id = any (kept_alternatives))
@@ -172,8 +185,8 @@ begin
 end;
 $$;
 
-revoke execute on function public.choose_what_stays(bigint[], bigint[]) from public, anon;
-grant execute on function public.choose_what_stays(bigint[], bigint[]) to authenticated;
+revoke execute on function public.choose_what_stays(bigint[], bigint[], date) from public, anon;
+grant execute on function public.choose_what_stays(bigint[], bigint[], date) to authenticated;
 revoke execute on function public.has_waiting_choices(uuid) from public, anon, authenticated;
 
 -- Those who wait for premium now have not had the choice: it is theirs too.

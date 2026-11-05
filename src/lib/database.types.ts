@@ -2002,7 +2002,7 @@ export type Database = {
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
       choose_what_stays: {
-        Args: { alternatives: number[]; workouts: number[] };
+        Args: { alternatives: number[]; today: string; workouts: number[] };
         Returns: undefined;
       };
       clear_own_nutrition_targets: { Args: { today: string }; Returns: undefined };
