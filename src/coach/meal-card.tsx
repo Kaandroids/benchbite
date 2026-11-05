@@ -129,7 +129,8 @@ export function MealCardView({
       {canAdd ? (
         <View style={styles.buttons}>
           <Button
-            label={t(`nutrition.addTo.${card.meal}`)}
+            label={t('bite.mealCard.add')}
+            accessibilityHint={t(`nutrition.addTo.${card.meal}`)}
             size="small"
             style={styles.flex}
             disabled={waiting}

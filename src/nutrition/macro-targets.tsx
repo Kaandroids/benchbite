@@ -19,6 +19,12 @@ export const MACROS: {
   { key: 'fat', grams: 'fatG', color: 'fat' },
 ];
 
+/**
+ * How far a macro's name or value may shrink to stay whole on one line, as "Kohlenhydrate" does on
+ * a narrow phone.
+ */
+export const MACRO_TEXT_MIN_SCALE = 0.7;
+
 /** The daily calories, with the protein, carbs and fat in grams below them. */
 export function MacroTargets({ targets }: { targets: NutritionTargets }) {
   const { t } = useTranslation();

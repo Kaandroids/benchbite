@@ -671,7 +671,7 @@ it('shows a meal Bite estimated as its card, though Bite said nothing with it', 
 
   expect(screen.queryByRole('button', { name: 'Ask again' })).toBeNull();
   expect(screen.getByText('Estimate · high confidence')).toBeOnTheScreen();
-  expect(await screen.findByRole('button', { name: 'Add to lunch' })).toBeEnabled();
+  expect(await screen.findByRole('button', { name: 'Add' })).toBeEnabled();
 });
 
 /** Lets coach_meal_cards answer `pending` for each card, while coach_proposals never answers. */
@@ -740,7 +740,7 @@ it("keeps the grams a meal card's Edit changed when Bite proposes after it", asy
     { event: 'done', threadId: 7, messageId: 11 },
   );
   await next.end();
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51, grams: [100] });
 });
@@ -762,7 +762,7 @@ it('opens a saved chat on its meal cards as they stand now', async () => {
   await renderBite();
 
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
-  expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Undo' })).toBeOnTheScreen();
   expect(supabase.from).toHaveBeenCalledWith('coach_meal_cards');
   mockParams = NEW_CHAT;

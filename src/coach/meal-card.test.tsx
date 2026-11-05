@@ -58,8 +58,10 @@ it('shows the meal, how sure Bite is, each food and the totals', async () => {
   expect(screen.getByText('Estimate · high confidence')).toBeOnTheScreen();
   expect(screen.getByLabelText('Pizza Margherita, 150 grams, 399 kcal')).toBeOnTheScreen();
   expect(screen.getByText('150 g · 399 kcal')).toBeOnTheScreen();
+  expect(screen.getByText('Total')).toBeOnTheScreen();
   expect(screen.getByLabelText('17 g Protein')).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeOnTheScreen();
+  expect(screen.getByHintText('Add to lunch')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Edit' })).toBeOnTheScreen();
 });
 
@@ -67,12 +69,12 @@ it('adds the meal and folds into a line with Undo, which undoes it', async () =>
   answers('logged');
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   // Grams as Bite gave them are not sent.
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51 });
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
-  expect(screen.queryByRole('button', { name: 'Add to lunch' })).not.toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Add' })).not.toBeOnTheScreen();
 
   answers('undone');
   await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
@@ -91,7 +93,7 @@ it('changes the grams of the only food with Edit, and adds the meal with them', 
   await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
 
   expect(screen.getByText('100 g · 266 kcal')).toBeOnTheScreen();
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
   expect(supabase.rpc).toHaveBeenCalledWith('log_coach_meal_card', { card_id: 51, grams: [100] });
   expect(await screen.findByText('Added to lunch · 266 kcal')).toBeOnTheScreen();
 });
@@ -143,7 +145,7 @@ it.each([
   answers(null, code);
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   expect(await screen.findByText(line)).toBeOnTheScreen();
   expect(screen.queryByRole('button')).not.toBeOnTheScreen();
@@ -153,23 +155,23 @@ it('offers Add again after a request that failed', async () => {
   jest.mocked(supabase.rpc).mockRejectedValue(new Error('Network request failed'));
   await render(<MealCardView card={CARD} state={pending} />);
 
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
 
   expect(await screen.findByText("That didn't work. Try again.")).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeOnTheScreen();
 });
 
 it('waits for where the card stands before it may be added', async () => {
   await render(<MealCardView card={CARD} waiting />);
 
-  expect(screen.getByRole('button', { name: 'Add to lunch' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Edit' })).toBeDisabled();
 });
 
 it('shows a meal undone elsewhere once its Undo here is refused as out of date', async () => {
   answers('logged');
   const { rerender } = await render(<MealCardView card={CARD} state={pending} />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Add to lunch' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
   expect(await screen.findByText('Added to lunch · 399 kcal')).toBeOnTheScreen();
 
   // Undone on another device: the states, loaded again, say so.
@@ -185,7 +187,7 @@ it('offers nothing to do when only to read', async () => {
 
   expect(screen.getByText('Pizza Margherita')).toBeOnTheScreen();
   expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Add to lunch' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
 });
 
 it('offers no Undo when only to read', async () => {

@@ -384,6 +384,7 @@
         "medium": "Schätzung · einigermaßen sicher",
         "low": "Schätzung · unsicher"
       },
+      "total": "Gesamt",
       "estimated": "Geschätzt",
       "row": "{{name}}, {{grams}} Gramm, {{calories}} kcal, Menge ändern",
       "rowEstimated": "{{name}}, {{grams}} Gramm, {{calories}} kcal, geschätzt, nicht in der Datenbank, Menge ändern",
@@ -2078,6 +2079,7 @@
       }
     },
     "mealCard": {
+      "add": "Hinzufügen",
       "added": {
         "breakfast": "Zum Frühstück hinzugefügt · {{calories}} kcal",
         "lunch": "Zum Mittagessen hinzugefügt · {{calories}} kcal",

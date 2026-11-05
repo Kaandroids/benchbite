@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme, type ColorTokens } from '@/theme';
 
-import { MACROS } from './macro-targets';
+import { MACRO_TEXT_MIN_SCALE, MACROS } from './macro-targets';
 import { confidenceOf, estimateTotals, itemTotals, type EstimateItem } from './meal-estimate';
 import type { Meal } from './meals';
 
@@ -115,32 +115,41 @@ export function EstimateItemRow({
   );
 }
 
-/** What the items add up to: the calories and each macro in its colour, a quarter each. */
+/**
+ * What the items add up to, set apart from them under its title: the calories and each macro in
+ * its colour, a quarter each.
+ */
 export function EstimateTotals({ items }: { items: EstimateItem[] }) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
   const totals = estimateTotals(items);
   return (
-    <View style={[styles.totals, { gap: spacing.xs }]}>
-      <Total value={format(Math.round(totals.calories))} label="kcal" />
-      {MACROS.map(({ key, grams, color }) => (
-        <Total
-          key={key}
-          value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
-          label={t(`nutrition.macros.${key}`)}
-          color={color}
-        />
-      ))}
+    <View
+      style={{
+        gap: spacing.sm,
+        paddingTop: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+      }}
+    >
+      <Text variant="captionStrong" color="textMuted">
+        {t('nutrition.photo.total')}
+      </Text>
+      <View style={[styles.totals, { gap: spacing.xs }]}>
+        <Total value={format(Math.round(totals.calories))} label="kcal" />
+        {MACROS.map(({ key, grams, color }) => (
+          <Total
+            key={key}
+            value={t('nutrition.grams', { count: Math.round(totals[grams]) })}
+            label={t(`nutrition.macros.${key}`)}
+            color={color}
+          />
+        ))}
+      </View>
     </View>
   );
 }
-
-/**
- * How far a total and its label may shrink to stay on one line in its quarter of the card, as
- * "Kohlenhydrate" does on a narrow phone.
- */
-const TOTAL_MIN_SCALE = 0.7;
 
 function Total({
   value,
@@ -159,7 +168,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={TOTAL_MIN_SCALE}
+        minimumFontScale={MACRO_TEXT_MIN_SCALE}
       >
         {value}
       </Text>
@@ -169,7 +178,7 @@ function Total({
         align="center"
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={TOTAL_MIN_SCALE}
+        minimumFontScale={MACRO_TEXT_MIN_SCALE}
       >
         {label}
       </Text>
