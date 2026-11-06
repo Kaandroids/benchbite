@@ -1,13 +1,18 @@
 import { assertEquals } from '@std/assert';
 
+import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import { PAGE_SIZE } from '../_shared/storage.ts';
-import { EXERCISE_PHOTOS_BUCKET, handleDeleteRequest } from './handler.ts';
+import { handleDeleteRequest } from './handler.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
 
 type Options = {
   storageError?: boolean;
+  /** Storage fails only once the user is deleted. */
+  storageErrorAfter?: boolean;
+  /** A photo another device uploads just as the user is deleted. */
+  uploadedLate?: string;
   deleteError?: { status: number } | null;
 };
 
@@ -15,15 +20,21 @@ type Options = {
  * A stand-in for the service role client: the exercise-photos bucket as a set of paths, refusing
  * other buckets, and auth's deleting of users, which records the ids and the order of the calls.
  */
-function fakeAdmin(objects: Set<string>, { storageError, deleteError = null }: Options = {}) {
+function fakeAdmin(
+  objects: Set<string>,
+  { storageError, storageErrorAfter, uploadedLate, deleteError = null }: Options = {},
+) {
   const calls: string[] = [];
+  let deleted = false;
   const admin = {
     storage: {
       from: (bucket: string) => {
         if (bucket !== EXERCISE_PHOTOS_BUCKET) throw new Error(`Unexpected bucket ${bucket}`);
         return {
           list: (folder: string, { limit }: { limit: number }) => {
-            if (storageError) return Promise.resolve({ data: null, error: new Error('down') });
+            if (storageError || (storageErrorAfter && deleted)) {
+              return Promise.resolve({ data: null, error: new Error('down') });
+            }
             const names = [...objects]
               .filter((path) => path.startsWith(`${folder}/`))
               .slice(0, limit)
@@ -42,6 +53,8 @@ function fakeAdmin(objects: Set<string>, { storageError, deleteError = null }: O
       admin: {
         deleteUser: (id: string) => {
           calls.push(`delete ${id}`);
+          deleted = true;
+          if (uploadedLate) objects.add(uploadedLate);
           return Promise.resolve({ data: {}, error: deleteError });
         },
       },
@@ -75,6 +88,26 @@ Deno.test('deletes a user without photos', async () => {
   assertEquals(response.status, 200);
   assertEquals(calls, [`delete ${A}`]);
 });
+
+Deno.test('removes a photo uploaded while the user was being deleted', async () => {
+  const objects = new Set<string>();
+  const { admin } = fakeAdmin(objects, { uploadedLate: `${A}/late.jpg` });
+
+  await handleDeleteRequest(post(), { admin, userId: A });
+
+  assertEquals([...objects], []);
+});
+
+Deno.test(
+  'answers that the user is deleted when only the last look at the photos fails',
+  async () => {
+    const { admin } = fakeAdmin(new Set(), { storageErrorAfter: true });
+
+    const response = await handleDeleteRequest(post(), { admin, userId: A });
+
+    assertEquals(response.status, 200);
+  },
+);
 
 Deno.test('keeps the user when the photos cannot be removed', async () => {
   const { admin, calls } = fakeAdmin(new Set([`${A}/0.jpg`]), { storageError: true });

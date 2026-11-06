@@ -11,11 +11,12 @@ import {
   requestCameraPermissionsAsync,
 } from 'expo-image-picker';
 
+import { EXERCISE_PHOTOS_BUCKET } from '@shared/exercise_photos';
+
 import { supabase } from '@/lib/supabase';
 
 import { exerciseImageUrl } from './images';
 
-const BUCKET = 'exercise-photos';
 const MAX_WIDTH = 1080;
 /** A signed URL lasts an hour; it is asked for again a little before it runs out. */
 const SIGNED_SECONDS = 3600;
@@ -71,7 +72,7 @@ export async function uploadPhoto(uri: string): Promise<string> {
   const body = await shrink(uri);
   const path = `${userId}/${randomUUID()}.jpg`;
   const { error } = await supabase.storage
-    .from(BUCKET)
+    .from(EXERCISE_PHOTOS_BUCKET)
     .upload(path, body, { contentType: 'image/jpeg' });
   if (error) {
     throw error;
@@ -84,7 +85,7 @@ export async function removePhotos(paths: string[]) {
   if (paths.length === 0) {
     return;
   }
-  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  const { error } = await supabase.storage.from(EXERCISE_PHOTOS_BUCKET).remove(paths);
   if (error) {
     throw error;
   }
@@ -100,7 +101,7 @@ export function usePictureUrls(paths: readonly string[]): Record<string, string>
     queryKey: ['exercise-photos', ...photos],
     queryFn: async () => {
       const { data, error } = await supabase.storage
-        .from(BUCKET)
+        .from(EXERCISE_PHOTOS_BUCKET)
         .createSignedUrls(photos, SIGNED_SECONDS);
       if (error) {
         throw error;
