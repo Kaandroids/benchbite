@@ -27,7 +27,7 @@ type Equipment = Database['public']['Enums']['equipment'];
 
 const MAX_STEPS = 20;
 /** How much of the screen the muscles may take in their sheet. */
-const MUSCLES_MAX_HEIGHT = 0.6;
+const MUSCLES_MAX_HEIGHT = 0.68;
 const EQUIPMENT: Equipment[] = [
   'barbell',
   'dumbbell',
