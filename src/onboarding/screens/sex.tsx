@@ -69,39 +69,19 @@ export function SexStep() {
       />
       <Card style={{ gap: spacing.sm, marginTop: spacing.xs }}>
         <Caption>{t('onboarding.sex.why')}</Caption>
-        <Reason
-          icon="flame"
-          color="breakfast"
-          background="breakfastBackground"
-          text={t('onboarding.sex.burn')}
-        />
-        <Reason
-          icon="check"
-          color="success"
-          background="waterBackground"
-          text={t('onboarding.sex.only')}
-        />
+        <Reason icon="flame" text={t('onboarding.sex.burn')} />
+        <Reason icon="check" text={t('onboarding.sex.only')} />
       </Card>
     </Screen>
   );
 }
 
-/** One reason, with its icon in its colours, like the points of the other steps. */
-function Reason({
-  icon,
-  color,
-  background,
-  text,
-}: {
-  icon: IconName;
-  color: keyof ColorTokens;
-  background: keyof ColorTokens;
-  text: string;
-}) {
+/** One reason, its icon on a tile like the points of other steps, grey as it only informs. */
+function Reason({ icon, text }: { icon: IconName; text: string }) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.reason, { gap: spacing.md }]}>
-      <IconTile name={icon} size={36} color={color} background={background} />
+      <IconTile name={icon} size={36} color="textMuted" background="track" />
       <Text variant="caption" color="textMuted" style={styles.flex}>
         {text}
       </Text>
