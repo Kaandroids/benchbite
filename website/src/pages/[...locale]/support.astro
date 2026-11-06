@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { support } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="support" title={support.title}>
+  <main class="page wide">
+    <div>
+      <h1>{support.title}</h1>
+      <p class="muted lead">{support.text}</p>
+    </div>
+    <div class="contacts">
+      <a class="contact app" href="mailto:support@benchbite.com">
+        <strong>{support.app}</strong>
+        <span>support@benchbite.com</span>
+      </a>
+      <a class="contact privacy" href="mailto:privacy@benchbite.com">
+        <strong>{support.privacy}</strong>
+        <span>privacy@benchbite.com</span>
+      </a>
+    </div>
+    <section class="questions">
+      <h2 class="section-title">{support.questions}</h2>
+      <a class="question" href={localePath(locale, 'delete-account')}>{support.deleteQuestion}</a>
+      <p class="placeholder">{support.questionPlaceholder}</p>
+      <p class="placeholder">{support.questionPlaceholder}</p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .wide {
+    max-width: 900px;
+  }
+
+  .lead {
+    margin-top: 8px;
+  }
+
+  .contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 20px;
+  }
+
+  .contact {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-radius: 24px;
+    text-decoration: none;
+  }
+
+  .contact strong {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .app {
+    background: var(--lunch-background);
+  }
+
+  .privacy {
+    background: var(--dinner-background);
+  }
+
+  .questions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .question {
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    font-weight: 800;
+    text-decoration: none;
+  }
+</style>

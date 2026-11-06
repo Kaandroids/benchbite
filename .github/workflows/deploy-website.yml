@@ -1,0 +1,100 @@
+name: Deploy website
+
+# Deploys the website in website/ to Netlify (ADR 0089). It runs only when started by hand, as each
+# production deploy spends credits of a plan that pauses the site when they run out.
+on:
+  workflow_dispatch:
+
+# One deploy at a time, and a started deploy is never cancelled halfway.
+concurrency:
+  group: deploy-website
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Packages run here, so this job has no secrets. Keeping them apart in steps of one job would not
+  # be enough, as a package could leave a process or a changed PATH behind for a later step.
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only main is deployed. The website environment holds the secrets and allows only main.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Actions are pinned to commit SHAs because tags can be moved to point at different code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: website
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: website
+        run: pnpm build
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: website
+          path: website/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  # Netlify's API takes the built site as a zip, so this job needs no checkout and no package.
+  netlify:
+    name: Netlify
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: website
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: website
+          path: site
+
+      # A failed request while waiting does not end the job, as the deploy may still finish, and a
+      # second one would spend more credits.
+      - name: Deploy
+        working-directory: site
+        shell: bash
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          zip -qr "$RUNNER_TEMP/site.zip" .
+          api() { curl --fail-with-body --silent --show-error --header "Authorization: Bearer $NETLIFY_AUTH_TOKEN" "$@"; }
+          if ! created=$(api --header 'Content-Type: application/zip' --data-binary "@$RUNNER_TEMP/site.zip" \
+            "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID/deploys?title=$GITHUB_SHA"); then
+            echo "Netlify refused the deploy: $created"
+            exit 1
+          fi
+          id=$(jq -r .id <<< "$created")
+          state=$(jq -r .state <<< "$created")
+          for _ in $(seq 1 60); do
+            if deploy=$(api "https://api.netlify.com/api/v1/deploys/$id"); then
+              state=$(jq -r .state <<< "$deploy")
+              if [ "$state" = ready ]; then
+                jq -r '"Deployed to " + .ssl_url' <<< "$deploy" | tee -a "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              if [ "$state" = error ]; then
+                jq -r '"Deploy failed: " + (.error_message // "no message")' <<< "$deploy"
+                exit 1
+              fi
+            fi
+            sleep 5
+          done
+          echo "The deploy was not ready after five minutes; it stopped at: $state"
+          exit 1

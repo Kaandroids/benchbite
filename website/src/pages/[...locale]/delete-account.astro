@@ -1,0 +1,70 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { deleteAccount } = messagesFor(locale);
+const emailLink = `mailto:privacy@benchbite.com?subject=${encodeURIComponent(deleteAccount.emailSubject)}`;
+---
+
+<Layout locale={locale} page="delete-account" title={deleteAccount.title}>
+  <main class="page">
+    <div>
+      <h1>{deleteAccount.title}</h1>
+      <p class="muted lead">{deleteAccount.text}</p>
+    </div>
+    <section class="card">
+      <h2 class="section-title">{deleteAccount.inApp}</h2>
+      <ol>
+        {deleteAccount.steps.map((step) => <li>{step}</li>)}
+      </ol>
+    </section>
+    <section class="without-app">
+      <h2 class="section-title">{deleteAccount.withoutApp}</h2>
+      <p>{deleteAccount.withoutAppText}</p>
+      <a class="button" href={emailLink}>{deleteAccount.emailButton}</a>
+    </section>
+    <section>
+      <h2 class="section-title">{deleteAccount.kept}</h2>
+      <p class="placeholder">{deleteAccount.keptPlaceholder}</p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .lead {
+    margin-top: 8px;
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .without-app {
+    padding: 24px;
+    border-radius: 24px;
+    background: var(--lunch-background);
+  }
+
+  .button {
+    margin-top: 16px;
+    padding: 14px 22px;
+    display: inline-block;
+    border-radius: 16px;
+    background: var(--primary-button);
+    box-shadow: 0 4px 0 var(--primary-button-ledge);
+    color: var(--on-primary);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .button:hover {
+    color: var(--on-primary);
+  }
+</style>

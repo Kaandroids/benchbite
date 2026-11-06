@@ -1,0 +1,6 @@
+# The website is its own package, apart from the app: it has its own dependencies and lockfile.
+# The same rule as the app's: dependencies may only run install scripts when listed here with true.
+# esbuild and sharp ship prebuilt binaries as platform-specific optional dependencies.
+allowBuilds:
+  esbuild: false
+  sharp: false

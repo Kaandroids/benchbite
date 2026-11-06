@@ -1,0 +1,53 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { imprint } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="imprint" title={imprint.title}>
+  <main class="page">
+    <h1>{imprint.title}</h1>
+    <p class="note">{imprint.draft}</p>
+    <div class="card details">
+      <section>
+        <h2 class="muted">{imprint.provider}</h2>
+        <p class="name">{imprint.name}</p>
+        <p>{imprint.street}</p>
+        <p>{imprint.city}</p>
+        <p>{imprint.country}</p>
+      </section>
+      <section>
+        <h2 class="muted">{imprint.contact}</h2>
+        <p>{imprint.email}: <a href="mailto:support@benchbite.com">support@benchbite.com</a></p>
+        <p>{imprint.fastContact}</p>
+      </section>
+      <section>
+        <h2 class="muted">{imprint.further}</h2>
+        <p>{imprint.register}</p>
+        <p>{imprint.notes}</p>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  h2 {
+    margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .name {
+    font-weight: 800;
+  }
+</style>

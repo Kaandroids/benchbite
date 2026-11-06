@@ -1,0 +1,171 @@
+---
+import { localePath, messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+};
+
+const { locale } = Astro.props;
+const { footer } = messagesFor(locale);
+
+const links = [
+  { page: 'support', label: footer.support },
+  { page: 'delete-account', label: footer.deleteAccount },
+  { page: 'privacy', label: footer.privacy },
+  { page: 'terms', label: footer.terms },
+  { page: 'imprint', label: footer.imprint },
+];
+---
+
+<footer>
+  <div class="content">
+    <div class="night">
+      <div class="message">
+        <p class="time">23:59</p>
+        <h2>{footer.night}</h2>
+        <p class="question">
+          {footer.question}{' '}
+          <a href="mailto:support@benchbite.com">support@benchbite.com</a>
+        </p>
+      </div>
+      <div class="bite">
+        <img
+          src="/images/bite-sleeping.svg"
+          alt={footer.biteAlt}
+          width="240"
+          height="214"
+          loading="lazy"
+        />
+        <span class="z big" aria-hidden="true">z</span>
+        <span class="z small" aria-hidden="true">z</span>
+      </div>
+    </div>
+    <nav aria-label={footer.links}>
+      {links.map((link) => <a href={localePath(locale, link.page)}>{link.label}</a>)}
+    </nav>
+    <div class="small-print">
+      <span>{footer.note}</span>
+      <span>© 2026 Benchbite</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    overflow: hidden;
+    background: #232a4d;
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  footer a {
+    color: #ffffff;
+  }
+
+  footer a:hover {
+    color: #ffb27f;
+  }
+
+  .content {
+    max-width: 1184px;
+    margin: 0 auto;
+    padding: 64px clamp(20px, 5vw, 24px) 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .night {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .message {
+    flex: 1 1 520px;
+    min-width: 0;
+  }
+
+  .time {
+    font-size: clamp(72px, 10vw, 136px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: #9aa6f5;
+  }
+
+  h2 {
+    margin: 4px 0 8px;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 900;
+    line-height: 1.05;
+  }
+
+  .question,
+  .small-print {
+    color: #dde1fa;
+  }
+
+  .question a {
+    font-weight: 900;
+  }
+
+  .bite {
+    position: relative;
+    flex: none;
+    width: 216px;
+    height: 216px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  .bite img {
+    max-width: none;
+  }
+
+  .z {
+    position: absolute;
+    font-weight: 900;
+    color: #9aa6f5;
+  }
+
+  .big {
+    top: -6px;
+    left: -18px;
+    font-size: 42px;
+  }
+
+  .small {
+    top: -34px;
+    left: 14px;
+    font-size: 28px;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  nav a {
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: #343d6b;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .small-print {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    font-size: 15px;
+  }
+</style>
