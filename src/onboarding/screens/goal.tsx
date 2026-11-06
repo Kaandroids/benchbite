@@ -5,7 +5,7 @@ import { type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { GoalChoices } from '@/goals/goal-choices';
-import { GOAL_COLORS } from '@/goals/goal-icons';
+import { GOAL_TONES } from '@/goals/goal-icons';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { useStep } from '../use-step';
@@ -46,7 +46,7 @@ export function GoalStep() {
               <InsightRow
                 key={key}
                 icon={icon}
-                iconColors={GOAL_COLORS[goal]}
+                tone={GOAL_TONES[goal]}
                 label={t(`onboarding.goal.effects.${key}`)}
                 value={t(`onboarding.goal.effects.${goal}.${key}`)}
               />

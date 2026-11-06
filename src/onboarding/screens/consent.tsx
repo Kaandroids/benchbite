@@ -12,20 +12,15 @@ import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { PRIVACY_POLICY_URL } from '@/lib/links';
-import { useTheme, type ColorTokens } from '@/theme';
+import { TONES, useTheme, type Tone } from '@/theme';
 
 import { PRIVACY_POLICY_VERSION } from '../consent';
 import { useStep } from '../use-step';
 
-const POINTS: {
-  key: 'what' | 'why' | 'control';
-  icon: IconName;
-  color: keyof ColorTokens;
-  background: keyof ColorTokens;
-}[] = [
-  { key: 'what', icon: 'chart', color: 'dinner', background: 'dinnerBackground' },
-  { key: 'why', icon: 'target', color: 'water', background: 'waterBackground' },
-  { key: 'control', icon: 'shield', color: 'snack', background: 'snackBackground' },
+const POINTS: { key: 'what' | 'why' | 'control'; icon: IconName; tone: Tone }[] = [
+  { key: 'what', icon: 'chart', tone: 'dinner' },
+  { key: 'why', icon: 'target', tone: 'water' },
+  { key: 'control', icon: 'shield', tone: 'snack' },
 ];
 
 /**
@@ -67,7 +62,7 @@ export function ConsentStep() {
         intro={t('onboarding.consent.intro')}
       />
       <Card list>
-        {POINTS.map(({ key, icon, color, background }, index) => (
+        {POINTS.map(({ key, icon, tone }, index) => (
           <View
             key={key}
             style={[
@@ -79,7 +74,7 @@ export function ConsentStep() {
               },
             ]}
           >
-            <IconTile name={icon} size={48} color={color} background={background} />
+            <IconTile name={icon} size={48} {...TONES[tone]} />
             <View style={styles.pointText}>
               <Text variant="label">{t(`onboarding.consent.${key}.title`)}</Text>
               <Text variant="caption" color="textMuted">

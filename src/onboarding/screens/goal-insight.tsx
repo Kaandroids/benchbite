@@ -7,7 +7,7 @@ import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
+import { TONES, useTheme } from '@/theme';
 
 import { AccentTitle, NAME_SLOT } from '../accent-title';
 import { GoalScene } from '../goal-scene';
@@ -39,11 +39,7 @@ const TIPS = {
   ],
 } as const satisfies Record<Goal, readonly { key: string; icon: IconName }[]>;
 /** The colours of a goal's tips, in order, so that they read apart. */
-const TIP_COLORS = [
-  { color: 'dinner', background: 'dinnerBackground' },
-  { color: 'water', background: 'waterBackground' },
-  { color: 'snack', background: 'snackBackground' },
-] as const;
+const TIP_COLORS = [TONES.dinner, TONES.water, TONES.snack];
 /** The stage's least height: about the tallest scene at three quarters of its size. */
 const STAGE_MIN_HEIGHT = 240;
 /** When the title shows, after the scene has started; each tip follows a moment later. */

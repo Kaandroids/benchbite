@@ -62,7 +62,7 @@ export const ICONS = {
   redo: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
   scale: { ios: 'scalemass', android: 'monitor_weight', web: 'monitor_weight' },
   seated: {
-    ios: 'figure.seated.side',
+    ios: 'figure.seated.seatbelt',
     android: 'airline_seat_recline_normal',
     web: 'airline_seat_recline_normal',
   },
@@ -73,6 +73,7 @@ export const ICONS = {
   speed: { ios: 'speedometer', android: 'speed', web: 'speed' },
   snowflake: { ios: 'snowflake', android: 'ac_unit', web: 'ac_unit' },
   stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
+  standing: { ios: 'figure.stand', android: 'accessibility_new', web: 'accessibility_new' },
   star: { ios: 'star', android: 'star', web: 'star' },
   sun: { ios: 'sun.max', android: 'light_mode', web: 'light_mode' },
   sunrise: { ios: 'sunrise', android: 'wb_twilight', web: 'wb_twilight' },

@@ -10,7 +10,7 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
-import { useTheme, type ColorTokens } from '@/theme';
+import { useTheme, type Tone } from '@/theme';
 
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -18,13 +18,9 @@ import { useStep } from '../use-step';
 type Sex = NonNullable<OnboardingAnswers['sex']>;
 
 /** The two answers shown side by side; "prefer not to say" goes under them. */
-const PAIR: {
-  sex: Sex;
-  icon: IconName;
-  tone: { color: keyof ColorTokens; background: keyof ColorTokens };
-}[] = [
-  { sex: 'female', icon: 'woman', tone: { color: 'snack', background: 'snackBackground' } },
-  { sex: 'male', icon: 'man', tone: { color: 'dinner', background: 'dinnerBackground' } },
+const PAIR: { sex: Sex; icon: IconName; tone: Tone }[] = [
+  { sex: 'female', icon: 'woman', tone: 'snack' },
+  { sex: 'male', icon: 'man', tone: 'dinner' },
 ];
 
 /**
@@ -60,7 +56,7 @@ export function SexStep() {
       </View>
       <ChoiceCard
         icon="notSaid"
-        tone={{ color: 'water', background: 'waterBackground' }}
+        tone="water"
         title={t('onboarding.options.sex.unspecified')}
         description={t('onboarding.sex.unspecified')}
         selected={answers.sex === 'unspecified'}

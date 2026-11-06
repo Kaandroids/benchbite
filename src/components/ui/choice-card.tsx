@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useTheme, type ColorTokens } from '@/theme';
+import { TONES, useTheme, type Tone } from '@/theme';
 
 import { CheckBox } from './check-box';
 import { Icon, type IconName } from './icon';
@@ -28,7 +28,7 @@ type ChoiceCardProps = {
   description?: string;
   icon?: IconName;
   /** The colours of the icon, and of the card once selected, for answers that should read apart. */
-  tone?: { color: keyof ColorTokens; background: keyof ColorTokens };
+  tone?: Tone;
   selected: boolean;
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
@@ -55,7 +55,11 @@ export function ChoiceCard({
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
   const size = SIZES[sizeName];
-  const accent = tone ? colors[tone.color] : colors.primary;
+  // The card's colours: the tone's, or the brand's, whose selected face and idle tile differ.
+  const accentColor = tone ? TONES[tone].color : 'primary';
+  const accent = colors[accentColor];
+  const selectedFace = colors[tone ? TONES[tone].background : 'selected'];
+  const idleTile = colors[tone ? TONES[tone].background : 'iconBackground'];
   const stacked = sizeName === 'tile';
   // Without an icon, the level takes the tile; with one, it follows the text.
   const levelInTile = level && !icon;
@@ -96,11 +100,7 @@ export function ChoiceCard({
             gap: spacing.md,
             paddingVertical: spacing[size.padding],
             paddingHorizontal: spacing.md,
-            backgroundColor: !selected
-              ? colors.surface
-              : tone
-                ? colors[tone.background]
-                : colors.selected,
+            backgroundColor: selected ? selectedFace : colors.surface,
             borderColor: selected ? accent : colors.border,
           },
         ]}
@@ -114,18 +114,14 @@ export function ChoiceCard({
                 width: size.tile,
                 height: size.tile,
                 borderRadius: radii.md,
-                backgroundColor: selected ? accent : colors[tone?.background ?? 'iconBackground'],
+                backgroundColor: selected ? accent : idleTile,
               },
             ]}
           >
             {icon ? (
-              <Icon
-                name={icon}
-                size={size.icon}
-                color={selected ? 'onPrimary' : (tone?.color ?? 'primary')}
-              />
+              <Icon name={icon} size={size.icon} color={selected ? 'onPrimary' : accentColor} />
             ) : level ? (
-              <LevelBars value={level.value} of={level.of} inverse={selected} color={tone?.color} />
+              <LevelBars value={level.value} of={level.of} inverse={selected} color={accentColor} />
             ) : null}
           </View>
         ) : null}
@@ -139,7 +135,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {level && icon ? <LevelBars value={level.value} of={level.of} color={tone?.color} /> : null}
+        {level && icon ? <LevelBars value={level.value} of={level.of} color={accentColor} /> : null}
       </RaisedPressable>
     </Animated.View>
   );

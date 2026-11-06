@@ -5,6 +5,7 @@ import { ChoiceCard } from '@/components/ui/choice-card';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Constants } from '@/lib/database.types';
+import type { Tone } from '@/theme';
 import { prescribe } from '@shared/plan/prescription';
 import { splitFor } from '@shared/plan/split';
 
@@ -18,11 +19,11 @@ type Experience = NonNullable<OnboardingAnswers['experience']>;
 
 const LEVELS = Constants.public.Enums.experience;
 /** From cool to warm with experience, as the activity levels go. */
-const TONES = [
-  { color: 'water', background: 'waterBackground' },
-  { color: 'breakfast', background: 'breakfastBackground' },
-  { color: 'lunch', background: 'lunchBackground' },
-] as const;
+const LEVEL_TONES: Record<Experience, Tone> = {
+  beginner: 'water',
+  intermediate: 'breakfast',
+  advanced: 'lunch',
+};
 
 /**
  * Experience, each level with a mark of one to three bars, and a card on what the chosen level
@@ -49,20 +50,14 @@ export function ExperienceStep() {
           title={t(`onboarding.options.experience.${level}`)}
           description={t(`onboarding.experience.descriptions.${level}`)}
           level={{ value: index + 1, of: LEVELS.length }}
-          tone={TONES[index]}
+          tone={LEVEL_TONES[level]}
           selected={experience === level}
           onPress={() => select({ experience: level })}
           size="compact"
         />
       ))}
       <ChoiceInsight title={t('onboarding.experience.plan')} choice={experience}>
-        {experience ? (
-          <LevelPlan
-            experience={experience}
-            goal={required(answers, 'goal')}
-            tone={TONES[LEVELS.indexOf(experience)]}
-          />
-        ) : null}
+        {experience ? <LevelPlan experience={experience} goal={required(answers, 'goal')} /> : null}
       </ChoiceInsight>
     </Screen>
   );
@@ -72,11 +67,9 @@ export function ExperienceStep() {
 function LevelPlan({
   experience,
   goal,
-  tone,
 }: {
   experience: Experience;
   goal: NonNullable<OnboardingAnswers['goal']>;
-  tone: (typeof TONES)[number] | undefined;
 }) {
   const { t } = useTranslation();
   const days = RECOMMENDED_DAYS[experience].length;
@@ -87,13 +80,13 @@ function LevelPlan({
   return (
     <>
       <InsightRow
-        iconColors={tone}
+        tone={LEVEL_TONES[experience]}
         icon="calendar"
         label={t('onboarding.experience.week')}
         value={t('onboarding.experience.days', { count: days, types })}
       />
       <InsightRow
-        iconColors={tone}
+        tone={LEVEL_TONES[experience]}
         icon="dumbbell"
         label={t('onboarding.experience.main')}
         value={t('onboarding.experience.sets', { count: sets })}
