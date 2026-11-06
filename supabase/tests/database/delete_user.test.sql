@@ -64,7 +64,7 @@ insert into public.workout_exercises (
   workout_id, user_id, position, exercise_id, sets, target_reps_min, target_reps_max, rest_seconds
 )
 values (902, '00000000-0000-0000-0000-00000000000b', 0, 'Barbell_Squat', 3, 8, 10, 90);
-update public.workouts set held_at = now() where id = 901;
+update public.workouts set held = true where id = 901;
 
 -- While A exists nothing of this changes: undoing a meal estimate relies on the foreign key to
 -- leave a food that a recipe holds, and a workout that waits stays as it is.
@@ -82,11 +82,17 @@ select lives_ok(
   'A user is deleted with all of that'
 );
 
-select is((select count(*)::integer from public.custom_foods), 0, 'Their foods go');
-select is((select count(*)::integer from public.recipes), 0, 'their recipes');
-select is((select count(*)::integer from public.recipe_ingredients), 0, 'and ingredients');
-select is((select count(*)::integer from public.meal_entries), 0, 'their entries');
-select is((select count(*)::integer from public.removed_meal_entries), 0, 'and removed ones');
+select is((select count(*)::integer from public.custom_foods where user_id = '00000000-0000-0000-0000-00000000000a'), 0,
+  'Their foods go');
+select is((select count(*)::integer from public.recipes where user_id = '00000000-0000-0000-0000-00000000000a'), 0,
+  'their recipes');
+select is((select count(*)::integer from public.recipe_ingredients
+   where recipe_id = (select id from ids where key = 'recipe')), 0,
+  'and ingredients');
+select is((select count(*)::integer from public.meal_entries where user_id = '00000000-0000-0000-0000-00000000000a'), 0,
+  'their entries');
+select is((select count(*)::integer from public.removed_meal_entries where user_id = '00000000-0000-0000-0000-00000000000a'), 0,
+  'and removed ones');
 select is(
   (select count(*)::integer from public.exercises where id = (select id from made)), 0,
   'their exercises'
