@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Caption } from '@/components/ui/caption';
 import { Card } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
-import { Icon, type IconName } from '@/components/ui/icon';
+import type { IconName } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
@@ -68,19 +69,39 @@ export function SexStep() {
       />
       <Card style={{ gap: spacing.sm, marginTop: spacing.xs }}>
         <Caption>{t('onboarding.sex.why')}</Caption>
-        <Reason icon="flame" text={t('onboarding.sex.burn')} />
-        <Reason icon="check" text={t('onboarding.sex.only')} />
+        <Reason
+          icon="flame"
+          color="lunch"
+          background="lunchBackground"
+          text={t('onboarding.sex.burn')}
+        />
+        <Reason
+          icon="check"
+          color="water"
+          background="waterBackground"
+          text={t('onboarding.sex.only')}
+        />
       </Card>
     </Screen>
   );
 }
 
-/** One reason, with its icon. */
-function Reason({ icon, text }: { icon: IconName; text: string }) {
+/** One reason, with its icon in its colours, like the points of the other steps. */
+function Reason({
+  icon,
+  color,
+  background,
+  text,
+}: {
+  icon: IconName;
+  color: keyof ColorTokens;
+  background: keyof ColorTokens;
+  text: string;
+}) {
   const { spacing } = useTheme();
   return (
-    <View style={[styles.reason, { gap: spacing.sm }]}>
-      <Icon name={icon} size={16} color="textMuted" />
+    <View style={[styles.reason, { gap: spacing.md }]}>
+      <IconTile name={icon} size={36} color={color} background={background} />
       <Text variant="caption" color="textMuted" style={styles.flex}>
         {text}
       </Text>
@@ -97,6 +118,6 @@ const styles = StyleSheet.create({
   },
   reason: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
 });

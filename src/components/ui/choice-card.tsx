@@ -20,7 +20,7 @@ const SIZES = {
   regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
   compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
   /** A tall card, the icon over the title, for two answers side by side. */
-  tile: { minHeight: 112, tile: 48, icon: 24, padding: 'lg' },
+  tile: { minHeight: 128, tile: 72, icon: 44, padding: 'lg' },
 } as const;
 
 type ChoiceCardProps = {
