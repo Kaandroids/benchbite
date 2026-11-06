@@ -421,7 +421,9 @@
     "addError": {
       "closedDay": "Öğünler yalnızca bugüne ve önceki haftaya eklenebilir.",
       "failed": "Besin eklenemedi. Bağlantını kontrol edip tekrar dene.",
-      "archived": "Bu besin artık mevcut değil."
+      "archived": "Bu besin artık mevcut değil.",
+      "foodLimit": "Bu öğündeki yeni besinler seni 200 kendi besin sınırının üstüne çıkarıyor. Yer açmak için “$t(nutrition.quick.mine)” bölümünden besin sil. Bu tahmin kaybolur.",
+      "foodTotalLimit": "Bu öğündeki yeni besinler, silinenler dahil 1.000 besinlik sınırı aşıyor; bu, eklenebilecek en fazla sayı."
     },
     "meal": {
       "dayLine": "{{name}} · {{date}}",

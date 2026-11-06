@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(26);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -203,6 +203,22 @@ select throws_ok(
   'BB026',
   null,
   'Deleted foods count too, up to 1,000'
+);
+
+-- One brought back past the trigger that refuses it makes 200 as well as 1,000.
+reset role;
+set local session_replication_role = replica;
+update public.custom_foods set archived_at = null
+where id = (select max(id) from public.custom_foods where archived_at is not null);
+set local session_replication_role = origin;
+select set_config('role', 'authenticated', true);
+
+select throws_ok(
+  $$ insert into public.custom_foods (name, kcal, protein_g, carbs_g, fat_g)
+     values ('One too many', 17, 1, 1, 1) $$,
+  'BB026',
+  null,
+  'At both limits the 1,000 is the one that says deleting cannot help'
 );
 
 select set_config('role', 'anon', true);

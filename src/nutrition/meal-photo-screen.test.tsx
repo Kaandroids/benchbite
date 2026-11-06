@@ -217,6 +217,31 @@ describe('MealPhotoScreen', () => {
     expect(takeLoggedEstimate('breakfast', '2026-10-30')).toEqual({ ...logged, meal: 'breakfast' });
   });
 
+  it('says why an estimate was refused, only while it is the one on the screen', async () => {
+    mutateAsync.mockRejectedValue({ code: 'BB024' });
+    await showEstimate();
+    await fireEvent.press(screen.getByRole('button', { name: 'Add to breakfast' }));
+    jest.mocked(useLogEstimate).mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      isError: true,
+      error: { code: 'BB024' },
+      variables: mutateAsync.mock.calls[0][0],
+    } as never);
+    await screen.rerender(
+      <MealPhotoScreen meal="breakfast" day="2026-10-30" photos={['file://a.jpg']} />,
+    );
+    const refusal = /would take you past 200 of your own/;
+    expect(screen.getByText(refusal)).toBeOnTheScreen();
+
+    const pending = pendingEstimate();
+    await fireEvent.changeText(screen.getByLabelText('Something off?'), 'No juice');
+    await fireEvent.press(screen.getByRole('button', { name: 'Estimate again' }));
+    await pending.answer({ isFood: true, items: [EGGS] });
+
+    expect(screen.queryByText(refusal)).toBeNull();
+  });
+
   it('waits to be left while the foods are added', async () => {
     await showEstimate();
     mockLogging({ isPending: true });

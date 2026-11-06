@@ -166,7 +166,10 @@ export function MealPhotoScreen({ meal, day, photos: initialPhotos }: MealPhotoS
                 style={styles.end}
               />
             </View>
-            {logEstimate.isError ? <AddEntryError error={logEstimate.error} /> : null}
+            {/* Only for the estimate it refused: a changed one may no longer be refused. */}
+            {logEstimate.isError && logEstimate.variables?.items === items ? (
+              <AddEntryError error={logEstimate.error} />
+            ) : null}
           </>
         ) : null}
 
