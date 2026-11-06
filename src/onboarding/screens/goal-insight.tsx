@@ -51,7 +51,7 @@ const TITLE_MS = 400;
 const TIP_MS = 150;
 
 /**
- * What the chosen goal looks like in the app, as a scene on a tinted stage like the welcome's, and
+ * What the chosen goal looks like in the app, as a scene on a stage like the welcome's, and
  * what to expect along the way. What the goal sets in the plan is on the goal step already.
  */
 export function GoalInsightStep() {
