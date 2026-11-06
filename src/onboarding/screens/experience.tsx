@@ -17,6 +17,12 @@ import { useStep } from '../use-step';
 type Experience = NonNullable<OnboardingAnswers['experience']>;
 
 const LEVELS = Constants.public.Enums.experience;
+/** From cool to warm with experience, as the activity levels go. */
+const TONES = [
+  { color: 'water', background: 'waterBackground' },
+  { color: 'breakfast', background: 'breakfastBackground' },
+  { color: 'lunch', background: 'lunchBackground' },
+] as const;
 
 /**
  * Experience, each level with a mark of one to three bars, and a card on what the chosen level
@@ -43,6 +49,7 @@ export function ExperienceStep() {
           title={t(`onboarding.options.experience.${level}`)}
           description={t(`onboarding.experience.descriptions.${level}`)}
           level={{ value: index + 1, of: LEVELS.length }}
+          tone={TONES[index]}
           selected={experience === level}
           onPress={() => select({ experience: level })}
           size="compact"
