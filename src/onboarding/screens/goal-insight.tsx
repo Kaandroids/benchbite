@@ -38,6 +38,12 @@ const TIPS = {
     { key: 'onboarding.goalInsight.stay_healthy.tips.habits', icon: 'heart' },
   ],
 } as const satisfies Record<Goal, readonly { key: string; icon: IconName }[]>;
+/** The colours of a goal's tips, in order, so that they read apart. */
+const TIP_COLORS = [
+  { color: 'dinner', background: 'dinnerBackground' },
+  { color: 'water', background: 'waterBackground' },
+  { color: 'snack', background: 'snackBackground' },
+] as const;
 /** The stage's least height: about the tallest scene at three quarters of its size. */
 const STAGE_MIN_HEIGHT = 240;
 /** When the title shows, after the scene has started; each tip follows a moment later. */
@@ -68,16 +74,16 @@ export function GoalInsightStep() {
               : t(`onboarding.goalInsight.${goal}.title`)}
           </AccentTitle>
         </Animated.View>
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.md }}>
           {TIPS[goal].map(({ key, icon }, index) => (
             <Animated.View
               key={key}
               entering={FadeInDown.delay(TITLE_MS + TIP_MS * (index + 1)).duration(400)}
               style={[styles.tip, { gap: spacing.md }]}
             >
-              <IconTile name={icon} size={28} />
-              <Text variant="caption" color="textMuted" style={styles.flex}>
-                <Trans i18nKey={key} components={{ strong: <Text variant="captionStrong" /> }} />
+              <IconTile name={icon} size={36} {...TIP_COLORS[index]} />
+              <Text color="textMuted" style={styles.flex}>
+                <Trans i18nKey={key} components={{ strong: <Text variant="bodyStrong" /> }} />
               </Text>
             </Animated.View>
           ))}
