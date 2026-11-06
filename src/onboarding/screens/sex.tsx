@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import type { OnboardingAnswers } from '../types';
 import { useStep } from '../use-step';
@@ -17,9 +17,13 @@ import { useStep } from '../use-step';
 type Sex = NonNullable<OnboardingAnswers['sex']>;
 
 /** The two answers shown side by side; "prefer not to say" goes under them. */
-const PAIR: { sex: Sex; icon: IconName }[] = [
-  { sex: 'female', icon: 'woman' },
-  { sex: 'male', icon: 'man' },
+const PAIR: {
+  sex: Sex;
+  icon: IconName;
+  tone: { color: keyof ColorTokens; background: keyof ColorTokens };
+}[] = [
+  { sex: 'female', icon: 'woman', tone: { color: 'snack', background: 'snackBackground' } },
+  { sex: 'male', icon: 'man', tone: { color: 'dinner', background: 'dinnerBackground' } },
 ];
 
 /**
@@ -40,10 +44,11 @@ export function SexStep() {
     >
       <StepHeading title={t('onboarding.steps.sex.title')} intro={t('onboarding.sex.intro')} />
       <View style={[styles.row, { gap: spacing.md }]}>
-        {PAIR.map(({ sex, icon }) => (
+        {PAIR.map(({ sex, icon, tone }) => (
           <View key={sex} style={styles.flex}>
             <ChoiceCard
               icon={icon}
+              tone={tone}
               title={t(`onboarding.options.sex.${sex}`)}
               selected={answers.sex === sex}
               onPress={() => select({ sex })}
@@ -54,6 +59,7 @@ export function SexStep() {
       </View>
       <ChoiceCard
         icon="notSaid"
+        tone={{ color: 'water', background: 'waterBackground' }}
         title={t('onboarding.options.sex.unspecified')}
         description={t('onboarding.sex.unspecified')}
         selected={answers.sex === 'unspecified'}
