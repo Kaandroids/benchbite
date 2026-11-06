@@ -105,6 +105,7 @@ export function ChoiceCard({
           },
         ]}
       >
+        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
         {icon || levelInTile ? (
           <View
             style={[
@@ -139,7 +140,6 @@ export function ChoiceCard({
           ) : null}
         </View>
         {level && icon ? <LevelBars value={level.value} of={level.of} /> : null}
-        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
       </RaisedPressable>
     </Animated.View>
   );
