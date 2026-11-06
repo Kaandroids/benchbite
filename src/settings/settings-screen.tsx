@@ -14,17 +14,16 @@ import { PlanSection } from './plan-section';
 import { ProfileSection } from './profile-section';
 import { WaterGoalSection } from './water-goal-section';
 
-/** The app's settings: the user's plan, then one section per topic. */
+/** The app's settings: the account with its plan, then one section per topic. */
 export function SettingsScreen() {
   const { t } = useTranslation();
   return (
     <Screen onBack={() => router.back()} title={t('settings.title')}>
-      <PlanSection />
+      <Section title={t('settings.account')}>
+        <AccountSection plan={<PlanSection />} />
+      </Section>
       <Section title={t('settings.profile')}>
         <ProfileSection />
-      </Section>
-      <Section title={t('settings.account')}>
-        <AccountSection />
       </Section>
       <Section title={t('settings.waterGoal')}>
         <WaterGoalSection />
