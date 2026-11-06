@@ -8,6 +8,8 @@ import { Chip } from '@/components/ui/chip';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Sheet } from '@/components/ui/sheet';
+import { Text } from '@/components/ui/text';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
 import { typography, useTheme } from '@/theme';
@@ -21,7 +23,7 @@ import {
   type CustomExerciseForm,
   type KindLock,
 } from './custom';
-import { LogKindField, PhotosField, StepsField } from './exercise-form-fields';
+import { LogKindField, PhotosField, SheetField, StepsField } from './exercise-form-fields';
 
 type Enums = Database['public']['Enums'];
 
@@ -66,7 +68,8 @@ type Editing = {
 
 /**
  * Creates the user's own exercise (#33), or edits it: what it needs at the top, a name, how it is
- * logged, its main muscles and its level, and what may be added below. `name` fills in the name,
+ * logged, its main muscles and its level, and what may be added below. The longer choices open in
+ * sheets, so that the form fits on a look. `name` fills in the name,
  * as when the picker found nothing by it.
  */
 export function CreateExerciseScreen({ name = '', editing }: { name?: string; editing?: Editing }) {
@@ -105,6 +108,12 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           leaveWithoutAsking(() => router.back());
         }, failed);
   const kindLock = editing?.kindLock ?? null;
+  const [open, setOpen] = useState<'logKind' | 'mainMuscles' | 'otherMuscles' | 'equipment' | null>(
+    null,
+  );
+  const close = () => setOpen(null);
+  const muscleNames = (muscles: Enums['muscle'][]) =>
+    muscles.length > 0 ? muscles.map((muscle) => t(`workout.muscles.${muscle}`)).join(', ') : null;
 
   const toggle = <T,>(list: T[], item: T) =>
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
@@ -141,34 +150,20 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 
       <View style={section}>
         <FieldLabel text={t('customExercise.logKind')} />
-        <LogKindField
-          value={form.logKind}
-          lock={kindLock}
-          onChange={(logKind) => change({ logKind })}
+        <SheetField
+          label={t('customExercise.logKind')}
+          value={form.logKind && t(`customExercise.logKinds.${form.logKind}.title`)}
+          onPress={() => setOpen('logKind')}
         />
       </View>
 
       <View style={section}>
         <FieldLabel text={t('customExercise.mainMuscles')} />
-        <View style={wrap}>
-          {MUSCLES.map((muscle) => {
-            const on = form.primaryMuscles.includes(muscle);
-            return (
-              <Chip
-                key={muscle}
-                label={t(`workout.muscles.${muscle}`)}
-                selected={on}
-                disabled={!on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
-                onPress={() =>
-                  change({
-                    primaryMuscles: toggle(form.primaryMuscles, muscle),
-                    secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
-                  })
-                }
-              />
-            );
-          })}
-        </View>
+        <SheetField
+          label={t('customExercise.mainMuscles')}
+          value={muscleNames(form.primaryMuscles)}
+          onPress={() => setOpen('mainMuscles')}
+        />
       </View>
 
       <View style={section}>
@@ -203,30 +198,20 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
 
       <View style={section}>
         <FieldLabel text={t('customExercise.otherMuscles')} />
-        <View style={wrap}>
-          {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) => (
-            <Chip
-              key={muscle}
-              label={t(`workout.muscles.${muscle}`)}
-              selected={form.secondaryMuscles.includes(muscle)}
-              onPress={() => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })}
-            />
-          ))}
-        </View>
+        <SheetField
+          label={t('customExercise.otherMuscles')}
+          value={muscleNames(form.secondaryMuscles)}
+          onPress={() => setOpen('otherMuscles')}
+        />
       </View>
 
       <View style={section}>
         <FieldLabel text={t('exercise.equipment')} />
-        <View style={wrap}>
-          {EQUIPMENT.map((item) => (
-            <Chip
-              key={item}
-              label={t(`exercise.equipmentKinds.${item}`)}
-              selected={form.equipment === item}
-              onPress={() => change({ equipment: form.equipment === item ? null : item })}
-            />
-          ))}
-        </View>
+        <SheetField
+          label={t('exercise.equipment')}
+          value={form.equipment && t(`exercise.equipmentKinds.${form.equipment}`)}
+          onPress={() => setOpen('equipment')}
+        />
       </View>
 
       <View style={section}>
@@ -236,7 +221,88 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           onChange={(instructions) => change({ instructions })}
         />
       </View>
+
+      {open === 'logKind' ? (
+        <Sheet onClose={close}>
+          <SheetTitle text={t('customExercise.logKind')} />
+          <LogKindField
+            value={form.logKind}
+            lock={kindLock}
+            onChange={(logKind) => {
+              change({ logKind });
+              close();
+            }}
+          />
+        </Sheet>
+      ) : null}
+      {open === 'mainMuscles' ? (
+        <Sheet onClose={close}>
+          <SheetTitle text={t('customExercise.mainMuscles')} />
+          <View style={wrap}>
+            {MUSCLES.map((muscle) => {
+              const on = form.primaryMuscles.includes(muscle);
+              return (
+                <Chip
+                  key={muscle}
+                  label={t(`workout.muscles.${muscle}`)}
+                  selected={on}
+                  disabled={!on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
+                  onPress={() =>
+                    change({
+                      primaryMuscles: toggle(form.primaryMuscles, muscle),
+                      secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
+                    })
+                  }
+                />
+              );
+            })}
+          </View>
+          <Button label={t('common.done')} onPress={close} />
+        </Sheet>
+      ) : null}
+      {open === 'otherMuscles' ? (
+        <Sheet onClose={close}>
+          <SheetTitle text={t('customExercise.otherMuscles')} />
+          <View style={wrap}>
+            {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) => (
+              <Chip
+                key={muscle}
+                label={t(`workout.muscles.${muscle}`)}
+                selected={form.secondaryMuscles.includes(muscle)}
+                onPress={() => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })}
+              />
+            ))}
+          </View>
+          <Button label={t('common.done')} onPress={close} />
+        </Sheet>
+      ) : null}
+      {open === 'equipment' ? (
+        <Sheet onClose={close}>
+          <SheetTitle text={t('exercise.equipment')} />
+          <View style={wrap}>
+            {EQUIPMENT.map((item) => (
+              <Chip
+                key={item}
+                label={t(`exercise.equipmentKinds.${item}`)}
+                selected={form.equipment === item}
+                onPress={() => {
+                  change({ equipment: form.equipment === item ? null : item });
+                  close();
+                }}
+              />
+            ))}
+          </View>
+        </Sheet>
+      ) : null}
     </Screen>
+  );
+}
+
+function SheetTitle({ text }: { text: string }) {
+  return (
+    <Text variant="headline" accessibilityRole="header">
+      {text}
+    </Text>
   );
 }
 

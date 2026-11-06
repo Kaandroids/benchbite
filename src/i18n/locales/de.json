@@ -1760,7 +1760,8 @@
     "restore": "Zurückholen",
     "archived": "Archiviert",
     "archiveErrorTitle": "Nicht geändert",
-    "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal."
+    "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal.",
+    "choose": "Auswählen"
   },
   "reorder": {
     "moveUp": "Nach oben",

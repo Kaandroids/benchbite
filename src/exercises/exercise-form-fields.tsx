@@ -11,6 +11,49 @@ import { isUserPhoto, pickPhoto, usePictureUrls } from './photos';
 
 const MAX_STEPS = 20;
 
+/** A choice kept in a sheet: what is chosen so far, or a prompt, and a way to open it. */
+export function SheetField({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  /** What is chosen, or null while nothing is. */
+  value: string | null;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const shown = value ?? t('customExercise.choose');
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${shown}`}
+      onPress={onPress}
+      style={[
+        styles.sheetField,
+        {
+          gap: spacing.sm,
+          borderRadius: radii.md,
+          paddingHorizontal: spacing.md,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        },
+      ]}
+    >
+      <Text
+        variant="label"
+        color={value ? 'text' : 'placeholder'}
+        numberOfLines={1}
+        style={styles.sheetFieldValue}
+      >
+        {shown}
+      </Text>
+      <Icon name="forward" size={16} color="textMuted" />
+    </Pressable>
+  );
+}
+
 /** How the exercise is logged, as cards, with why it cannot change when it cannot. */
 export function LogKindField({
   value,
@@ -230,6 +273,15 @@ export function StepsField({
 }
 
 const styles = StyleSheet.create({
+  sheetField: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  sheetFieldValue: {
+    flex: 1,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

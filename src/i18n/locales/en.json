@@ -1760,7 +1760,8 @@
     "restore": "Bring back",
     "archived": "Archived",
     "archiveErrorTitle": "Not changed",
-    "archiveError": "We couldn't change the exercise. Check your connection and try again."
+    "archiveError": "We couldn't change the exercise. Check your connection and try again.",
+    "choose": "Choose"
   },
   "reorder": {
     "moveUp": "Move up",

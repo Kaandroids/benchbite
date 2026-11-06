@@ -1760,7 +1760,8 @@
     "restore": "Geri getir",
     "archived": "Arşivlendi",
     "archiveErrorTitle": "Değiştirilemedi",
-    "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene."
+    "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene.",
+    "choose": "Seç"
   },
   "reorder": {
     "moveUp": "Yukarı taşı",
