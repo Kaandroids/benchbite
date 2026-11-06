@@ -1,4 +1,4 @@
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -15,7 +15,7 @@ import { Stage } from '../stage';
 import type { Goal } from '../types';
 import { useStep } from '../use-step';
 
-/** The tips of each goal, in order, with their icons. */
+/** The tips of each goal, in order, with icons other than those of its scene. */
 const TIPS = {
   lose_fat: [
     { key: 'onboarding.goalInsight.lose_fat.tips.trend', icon: 'chart' },
@@ -30,7 +30,7 @@ const TIPS = {
   get_stronger: [
     { key: 'onboarding.goalInsight.get_stronger.tips.steps', icon: 'trend' },
     { key: 'onboarding.goalInsight.get_stronger.tips.lighter', icon: 'snowflake' },
-    { key: 'onboarding.goalInsight.get_stronger.tips.records', icon: 'trophy' },
+    { key: 'onboarding.goalInsight.get_stronger.tips.records', icon: 'star' },
   ],
   stay_healthy: [
     { key: 'onboarding.goalInsight.stay_healthy.tips.enough', icon: 'dumbbell' },
@@ -81,10 +81,13 @@ export function GoalInsightStep() {
               entering={FadeInDown.delay(TITLE_MS + TIP_MS * (index + 1)).duration(400)}
               style={[styles.tip, { gap: spacing.md }]}
             >
-              <IconTile name={icon} size={36} {...TIP_COLORS[index]} />
-              <Text color="textMuted" style={styles.flex}>
-                <Trans i18nKey={key} components={{ strong: <Text variant="bodyStrong" /> }} />
-              </Text>
+              <IconTile name={icon} size={40} {...TIP_COLORS[index]} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong">{t(`${key}.title`)}</Text>
+                <Text variant="caption" color="textMuted">
+                  {t(`${key}.note`)}
+                </Text>
+              </View>
             </Animated.View>
           ))}
         </View>

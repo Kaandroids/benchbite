@@ -1174,9 +1174,18 @@
           "chip": "−{{weight}} pro Woche im Schnitt"
         },
         "tips": {
-          "trend": "<strong>Schwankungen sind normal.</strong> Wir folgen dem Trend.",
-          "time": "Erste Veränderungen nach <strong>3–4 Wochen</strong>.",
-          "weighIn": "<strong>Wiege dich</strong> ein paarmal pro Woche für einen klaren Trend."
+          "trend": {
+            "title": "Schwankungen sind normal",
+            "note": "Wir folgen dem Trend."
+          },
+          "time": {
+            "title": "Erste Veränderungen nach 3–4 Wochen",
+            "note": "Das braucht etwas Zeit."
+          },
+          "weighIn": {
+            "title": "Wiege dich ein paarmal pro Woche",
+            "note": "So wird der Trend klar."
+          }
         }
       },
       "build_muscle": {
@@ -1187,9 +1196,18 @@
           "detail": "Bester Satz, alle 4 Wochen"
         },
         "tips": {
-          "sleep": "Im <strong>Schlaf</strong> wachsen Muskeln: 7–9 Stunden sind ideal.",
-          "more": "<strong>Steigere</strong> Gewicht oder Wiederholungen, wenn es leicht fällt.",
-          "time": "Sichtbare Erfolge brauchen <strong>8–12 Wochen</strong>."
+          "sleep": {
+            "title": "Muskeln wachsen im Schlaf",
+            "note": "7–9 Stunden sind ideal."
+          },
+          "more": {
+            "title": "Steigere dich, wenn es leicht fällt",
+            "note": "Mehr Gewicht oder mehr Wiederholungen."
+          },
+          "time": {
+            "title": "Sichtbare Erfolge in 8–12 Wochen",
+            "note": "Bleib Woche für Woche dran."
+          }
         }
       },
       "get_stronger": {
@@ -1201,9 +1219,18 @@
           "chip": "+{{weight}} pro Schritt"
         },
         "tips": {
-          "steps": "<strong>Kleine Sprünge</strong> ergeben große Gewichte.",
-          "lighter": "Alle 4–6 Wochen eine <strong>leichtere Woche</strong>.",
-          "records": "Jede <strong>neue Bestleistung</strong> wird markiert."
+          "steps": {
+            "title": "Kleine Sprünge summieren sich",
+            "note": "Sie führen zu großen Gewichten."
+          },
+          "lighter": {
+            "title": "Alle 4–6 Wochen leichter trainieren",
+            "note": "Das hilft dir bei der Erholung."
+          },
+          "records": {
+            "title": "Jede neue Bestleistung wird markiert",
+            "note": "So siehst du jede einzelne."
+          }
         }
       },
       "stay_healthy": {
@@ -1214,9 +1241,18 @@
           "detail": "3 von 3 Workouts erledigt"
         },
         "tips": {
-          "enough": "<strong>2–3 Workouts</strong> pro Woche reichen.",
-          "moved": "Einen Tag verpasst? <strong>Verschieb das Workout</strong> einfach.",
-          "habits": "Kleine Gewohnheiten <strong>summieren sich</strong>."
+          "enough": {
+            "title": "2–3 Workouts pro Woche",
+            "note": "Das reicht, um gesund zu bleiben."
+          },
+          "moved": {
+            "title": "Einen Tag verpasst?",
+            "note": "Verschieb es auf einen anderen Tag."
+          },
+          "habits": {
+            "title": "Kleine Gewohnheiten summieren sich",
+            "note": "Jedes Workout zählt."
+          }
         }
       }
     },

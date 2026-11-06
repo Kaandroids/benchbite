@@ -225,7 +225,7 @@ function StayHealthyScene() {
     <Card>
       <View style={[styles.row, { gap: spacing.md }]}>
         <View style={styles.flex}>
-          <SceneHeader goal="stay_healthy" icon="heart" />
+          <SceneHeader goal="stay_healthy" icon="calendar" />
         </View>
         <Animated.View entering={ZoomIn.delay(STEP_MS * 5)}>
           <StreakBadge streak={EXAMPLE_STREAK} />

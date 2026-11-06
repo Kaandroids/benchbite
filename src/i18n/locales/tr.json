@@ -1174,9 +1174,18 @@
           "chip": "Haftada ortalama −{{weight}}"
         },
         "tips": {
-          "trend": "<strong>Günlük iniş çıkışlar normal.</strong> Eğilime bakarız.",
-          "time": "İlk değişimler <strong>3–4 haftada</strong> görünür.",
-          "weighIn": "Net bir eğilim için haftada birkaç kez <strong>tartıl</strong>."
+          "trend": {
+            "title": "Günlük iniş çıkışlar normal",
+            "note": "Biz eğilime bakarız."
+          },
+          "time": {
+            "title": "İlk değişimler 3–4 haftada",
+            "note": "Biraz zaman ister."
+          },
+          "weighIn": {
+            "title": "Haftada birkaç kez tartıl",
+            "note": "Böylece eğilim netleşir."
+          }
         }
       },
       "build_muscle": {
@@ -1187,9 +1196,18 @@
           "detail": "En iyi set, 4 haftada bir"
         },
         "tips": {
-          "sleep": "Kas <strong>uykuda</strong> gelişir: 7–9 saat hedefle.",
-          "more": "Setler kolaylaşınca <strong>biraz ağırlık ya da tekrar ekle</strong>.",
-          "time": "Görünür sonuç <strong>8–12 hafta</strong> sürer."
+          "sleep": {
+            "title": "Kas uykuda gelişir",
+            "note": "7–9 saat uyumayı hedefle."
+          },
+          "more": {
+            "title": "Setler kolaylaşınca biraz artır",
+            "note": "Ağırlık ya da tekrar ekle."
+          },
+          "time": {
+            "title": "Görünür sonuç 8–12 hafta sürer",
+            "note": "Haftadan haftaya devam et."
+          }
         }
       },
       "get_stronger": {
@@ -1201,9 +1219,18 @@
           "chip": "Her seferinde +{{weight}}"
         },
         "tips": {
-          "steps": "<strong>Küçük artışlar</strong> büyük ağırlıklara götürür.",
-          "lighter": "4–6 haftada bir <strong>hafif bir hafta</strong>.",
-          "records": "Her <strong>yeni rekor</strong> işaretlenir."
+          "steps": {
+            "title": "Küçük artışlar birikir",
+            "note": "Büyük ağırlıklara götürür."
+          },
+          "lighter": {
+            "title": "4–6 haftada bir hafif hafta",
+            "note": "Toparlanmana yardımcı olur."
+          },
+          "records": {
+            "title": "Her yeni rekor işaretlenir",
+            "note": "Hepsini görürsün."
+          }
         }
       },
       "stay_healthy": {
@@ -1214,9 +1241,18 @@
           "detail": "3 antrenmanın 3’ü tamam"
         },
         "tips": {
-          "enough": "Haftada <strong>2–3 antrenman</strong> yeterli.",
-          "moved": "Bir günü kaçırdın mı? <strong>Antrenmanı başka güne kaydır</strong>.",
-          "habits": "Küçük alışkanlıklar zamanla <strong>birikir</strong>."
+          "enough": {
+            "title": "Haftada 2–3 antrenman",
+            "note": "Sağlıklı kalmak için yeterli."
+          },
+          "moved": {
+            "title": "Bir günü mü kaçırdın?",
+            "note": "Başka bir güne kaydır."
+          },
+          "habits": {
+            "title": "Küçük alışkanlıklar birikir",
+            "note": "Her antrenman önemli."
+          }
         }
       }
     },
