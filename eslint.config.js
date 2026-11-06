@@ -4,9 +4,9 @@ const expoConfig = require('eslint-config-expo/flat');
 // Turns off ESLint rules that conflict with Prettier; formatting is checked by Prettier itself.
 const prettierConfig = require('eslint-config-prettier/flat');
 
-// Edge Functions run on Deno and are linted with `deno lint`.
+// Edge Functions run on Deno and are linted with `deno lint`. The website is its own package.
 module.exports = defineConfig([
-  globalIgnores(['dist/*', '.expo/*', 'supabase/functions/*']),
+  globalIgnores(['dist/*', '.expo/*', 'supabase/functions/*', 'website/*']),
   expoConfig,
   prettierConfig,
 ]);

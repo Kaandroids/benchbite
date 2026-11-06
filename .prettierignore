@@ -1,5 +1,6 @@
 pnpm-lock.yaml
 dist/
 .expo/
+.astro/
 assets/
 supabase/functions/deno.lock
