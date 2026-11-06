@@ -141,6 +141,7 @@ export const en = {
     country: '[COUNTRY]',
     contact: 'Contact',
     email: 'Email',
+    emailAddress: '[EMAIL ADDRESS]',
     fastContact: '[PHONE OR OTHER FAST CONTACT, IF REQUIRED]',
     further: 'Further details',
     register: '[VAT ID OR OTHER REGISTER DETAILS, IF ANY]',

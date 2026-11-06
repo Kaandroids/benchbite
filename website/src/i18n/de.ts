@@ -139,6 +139,7 @@ export const de: Messages = {
     country: '[LAND]',
     contact: 'Kontakt',
     email: 'E-Mail',
+    emailAddress: '[E-MAIL-ADRESSE]',
     fastContact: '[TELEFON ODER ANDERER SCHNELLER KONTAKT, FALLS ERFORDERLICH]',
     further: 'Weitere Angaben',
     register: '[UST-IDNR. ODER REGISTERANGABEN, FALLS VORHANDEN]',

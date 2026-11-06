@@ -139,6 +139,7 @@ export const tr: Messages = {
     country: '[ÜLKE]',
     contact: 'İletişim',
     email: 'E-posta',
+    emailAddress: '[E-POSTA ADRESİ]',
     fastContact: '[TELEFON VEYA DİĞER HIZLI İLETİŞİM, GEREKİYORSA]',
     further: 'Diğer bilgiler',
     register: '[VERGİ NO VEYA SİCİL BİLGİLERİ, VARSA]',
