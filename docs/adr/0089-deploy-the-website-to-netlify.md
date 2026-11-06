@@ -15,10 +15,11 @@ points at it. It is a folder of static files, built the same way each time.
   when started, like the Supabase deploy of ADR 0030. Netlify's free plan has 300 credits a month,
   a production deploy spends 15, and the site is paused when they run out, so a deploy should be a
   choice and not a side effect of every merge.
-- **The workflow sends a zip to Netlify's API with `curl`.** It adds no dependency, and no other
-  package runs in the step that holds the token. A Netlify token is tied to the account and not to
-  this site, so it lives in a `website` environment that allows only `main`, and is given to the
-  deploy step alone.
+- **The workflow sends a zip to Netlify's API with `curl`, in a job of its own.** A Netlify token is
+  tied to the account and not to this site. So one job without secrets installs and builds, and the
+  deploy job takes only the built files, with no checkout and no package. Secrets kept to one step
+  of the same job would not do, as a package could leave a process or a changed `PATH` behind. The
+  token lives in a `website` environment that allows only `main`.
 - **The CI workflow checks and builds the site on every pull request,** so that a broken site is
   found before a deploy.
 - **Search engines are kept away with `X-Robots-Tag: noindex`** while the legal pages hold
