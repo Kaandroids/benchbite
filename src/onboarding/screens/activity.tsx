@@ -1,14 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { activityShare } from '@/body/body';
 import { Button } from '@/components/ui/button';
+import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
-import { ActivityChoices } from '@/goals/activity-choices';
+import { ACTIVITY_TONES, ActivityChoices } from '@/goals/activity-choices';
 import { useNumberFormat } from '@/i18n/units';
-import { useTheme } from '@/theme';
+import { TONES, useTheme } from '@/theme';
 
 import { ChoiceInsight } from '../choice-insight';
 import type { OnboardingAnswers } from '../types';
@@ -53,20 +54,33 @@ function CaloriesLine({ level }: { level: ActivityLevel }) {
   const { format } = useNumberFormat();
   const share = activityShare(level);
   return (
-    <View style={{ gap: spacing.xs }}>
-      <Text variant="bodyStrong" color={share > 0 ? 'primaryText' : 'text'}>
-        {share > 0
-          ? t('onboarding.activity.more', {
-              percent: format(share, {
-                style: 'percent',
-                maximumFractionDigits: 0,
-              }),
-            })
-          : t('onboarding.activity.base')}
-      </Text>
-      <Text variant="caption" color="textMuted">
-        {t(level === 'active' ? 'onboarding.activity.noteActive' : 'onboarding.activity.note')}
-      </Text>
+    <View style={[styles.row, { gap: spacing.md }]}>
+      <IconTile name="flame" size={36} {...TONES[ACTIVITY_TONES[level]]} />
+      <View style={[styles.flex, { gap: spacing.xs }]}>
+        <Text variant="bodyStrong">
+          {share > 0
+            ? t('onboarding.activity.more', {
+                percent: format(share, {
+                  style: 'percent',
+                  maximumFractionDigits: 0,
+                }),
+              })
+            : t('onboarding.activity.base')}
+        </Text>
+        <Text variant="caption" color="textMuted">
+          {t(level === 'active' ? 'onboarding.activity.noteActive' : 'onboarding.activity.note')}
+        </Text>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flex: {
+    flex: 1,
+  },
+});
