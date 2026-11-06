@@ -1736,7 +1736,6 @@
     "discardTitle": "Discard this exercise?",
     "discardMessage": "What you filled in is not saved.",
     "createRow": "Create exercise",
-    "createRowHint": "Add one the library does not have",
     "noneTitle": "No exercise found",
     "noneMessage": "The library does not have it yet. Add it as your own, and log it like any other.",
     "createNamed": "Create “{{name}}”",

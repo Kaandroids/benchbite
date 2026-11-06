@@ -8,6 +8,7 @@ import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
 import { Text } from '@/components/ui/text';
@@ -139,8 +140,14 @@ export function PickerScreen() {
         <View style={styles.title}>
           <ScreenTitle title={t('picker.title')} />
         </View>
-        {/* Keeps the title in the middle, balanced against the cross. */}
-        <View style={styles.close} />
+        <RoundIconButton
+          icon="plus"
+          color="onPrimary"
+          background="primaryButton"
+          label={t('customExercise.createRow')}
+          size={40}
+          onPress={() => openCreate()}
+        />
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
@@ -161,39 +168,11 @@ export function PickerScreen() {
           data={results}
           keyExtractor={(item) => item.id}
           renderItem={row}
-          // The row that creates an exercise is as tall as an exercise's, above the first.
           getItemLayout={(_data, index) => ({
             length: ROW_HEIGHT,
-            offset: ROW_HEIGHT * (index + 1),
+            offset: ROW_HEIGHT * index,
             index,
           })}
-          ListHeaderComponent={
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('customExercise.createRow')}
-              accessibilityHint={t('customExercise.createRowHint')}
-              onPress={() => openCreate()}
-              style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}
-            >
-              <View style={styles.buttonsRoom} />
-              <View
-                style={[
-                  styles.createTile,
-                  { borderRadius: radii.md, backgroundColor: colors.iconBackground },
-                ]}
-              >
-                <Icon name="plus" size={24} color="primary" />
-              </View>
-              <View style={[styles.text, { marginLeft: spacing.xs }]}>
-                <Text variant="label" color="primaryText">
-                  {t('customExercise.createRow')}
-                </Text>
-                <Text variant="caption" color="textMuted">
-                  {t('customExercise.createRowHint')}
-                </Text>
-              </View>
-            </Pressable>
-          }
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingHorizontal: spacing.xl }}
@@ -268,16 +247,6 @@ export function PickerScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  // Where an exercise's info and history buttons are.
-  buttonsRoom: {
-    width: 32,
-  },
-  createTile: {
-    width: 52,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   none: {
     alignItems: 'center',

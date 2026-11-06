@@ -1736,7 +1736,6 @@
     "discardTitle": "Diese Übung verwerfen?",
     "discardMessage": "Was du eingegeben hast, wird nicht gespeichert.",
     "createRow": "Übung erstellen",
-    "createRowHint": "Eine, die die Bibliothek nicht hat",
     "noneTitle": "Keine Übung gefunden",
     "noneMessage": "Die Bibliothek hat sie noch nicht. Lege sie als deine eigene an und trage sie wie jede andere ein.",
     "createNamed": "„{{name}}“ erstellen",
