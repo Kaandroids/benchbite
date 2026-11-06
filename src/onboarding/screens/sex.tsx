@@ -77,8 +77,8 @@ export function SexStep() {
         />
         <Reason
           icon="check"
-          color="lunch"
-          background="lunchBackground"
+          color="success"
+          background="waterBackground"
           text={t('onboarding.sex.only')}
         />
       </Card>
