@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
-import { AccountSection } from '@/account/account-section';
+import { AccountSection, DeleteAccountLink } from '@/account/account-section';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
 import { useTheme } from '@/theme';
@@ -35,6 +35,7 @@ export function SettingsScreen() {
       <Section title={t('settings.language')}>
         <LanguageSection />
       </Section>
+      <DeleteAccountLink />
     </Screen>
   );
 }

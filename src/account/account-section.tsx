@@ -15,23 +15,20 @@ import { TextLink } from '@/components/ui/text-link';
 import { accountError, useSignOut } from './account';
 import { PASSWORD_LIMITS } from './passwords';
 
-/**
- * The settings' account section: a guest is offered an account, an account can log out, and either
- * can delete all that is theirs.
- */
+/** The settings' account section: a guest is offered an account, an account can log out. */
 export function AccountSection() {
+  return useIsAccount() ? <SignedIn /> : <Guest />;
+}
+
+/** The way to delete all that is the user's, guest or account, at the end of the settings. */
+export function DeleteAccountLink() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
-  const isAccount = useIsAccount();
   return (
-    <View style={{ gap: spacing.md }}>
-      {isAccount ? <SignedIn /> : <Guest />}
-      <TextLink
-        label={t(isAccount ? 'account.delete.delete' : 'account.delete.deleteGuest')}
-        tone="muted"
-        onPress={() => router.push('/account/delete')}
-      />
-    </View>
+    <TextLink
+      label={t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest')}
+      tone="muted"
+      onPress={() => router.push('/account/delete')}
+    />
   );
 }
 
