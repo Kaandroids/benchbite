@@ -43,7 +43,7 @@ export function SheetField({
     >
       <Text
         variant="label"
-        color={value ? 'text' : 'placeholder'}
+        color={value ? 'text' : 'textMuted'}
         numberOfLines={1}
         style={styles.sheetFieldValue}
       >

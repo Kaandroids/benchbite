@@ -1766,7 +1766,8 @@
       "back": "Sırt",
       "arms": "Kollar",
       "legs": "Bacaklar"
-    }
+    },
+    "stillNeeded": "Eksik: {{fields}}"
   },
   "reorder": {
     "moveUp": "Yukarı taşı",

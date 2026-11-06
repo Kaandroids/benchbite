@@ -1766,7 +1766,8 @@
       "back": "Back",
       "arms": "Arms",
       "legs": "Legs"
-    }
+    },
+    "stillNeeded": "Still needed: {{fields}}"
   },
   "reorder": {
     "moveUp": "Move up",

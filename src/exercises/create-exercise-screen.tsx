@@ -62,9 +62,9 @@ type Editing = {
 
 /**
  * Creates the user's own exercise (#33), or edits it: what it needs at the top, a name, how it is
- * logged, its main muscles and its level, and what may be added below. The longer choices open in
- * sheets, so that the form fits on a look. `name` fills in the name,
- * as when the picker found nothing by it.
+ * logged and its main muscles, marked as needed, and what may be added under them. The longer
+ * choices open in sheets, so that the form stays short. `name` fills in the name, as when the
+ * picker found nothing by it.
  */
 export function CreateExerciseScreen({ name = '', editing }: { name?: string; editing?: Editing }) {
   const { t } = useTranslation();
@@ -113,6 +113,12 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
 
   const section = { gap: spacing.sm };
+  // What Create still waits for, so that its being off is not a riddle.
+  const missing = [
+    form.name.trim() === '' && t('customExercise.name'),
+    form.logKind === null && t('customExercise.logKind'),
+    form.primaryMuscles.length === 0 && t('customExercise.mainMuscles'),
+  ].filter((field) => field !== false);
   const wrap = [styles.wrap, { gap: spacing.sm }];
   const field = useFieldStyle();
 
@@ -122,11 +128,18 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       closes
       title={editing ? t('customExercise.editTitle') : t('customExercise.title')}
       footer={
-        <Button
-          label={editing ? t('customExercise.save') : t('customExercise.create')}
-          disabled={!isComplete(form) || saving || (editing !== undefined && !changed)}
-          onPress={() => void save()}
-        />
+        <View style={section}>
+          {missing.length > 0 ? (
+            <Text variant="caption" color="textMuted" align="center">
+              {t('customExercise.stillNeeded', { fields: missing.join(', ') })}
+            </Text>
+          ) : null}
+          <Button
+            label={editing ? t('customExercise.save') : t('customExercise.create')}
+            disabled={!isComplete(form) || saving || (editing !== undefined && !changed)}
+            onPress={() => void save()}
+          />
+        </View>
       }
     >
       <View style={section}>
@@ -161,6 +174,24 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
+        <FieldLabel text={t('customExercise.otherMuscles')} />
+        <SheetField
+          label={t('customExercise.otherMuscles')}
+          value={muscleNames(form.secondaryMuscles)}
+          onPress={() => setOpen('otherMuscles')}
+        />
+      </View>
+
+      <View style={section}>
+        <FieldLabel text={t('exercise.equipment')} />
+        <SheetField
+          label={t('exercise.equipment')}
+          value={form.equipment && t(`exercise.equipmentKinds.${form.equipment}`)}
+          onPress={() => setOpen('equipment')}
+        />
+      </View>
+
+      <View style={section}>
         <FieldLabel text={t('exercise.level')} />
         <SegmentedControl
           options={LEVELS.map((level) => ({ value: level, label: t(`exercise.levels.${level}`) }))}
@@ -181,24 +212,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
               return { ...current, photos };
             })
           }
-        />
-      </View>
-
-      <View style={section}>
-        <FieldLabel text={t('customExercise.otherMuscles')} />
-        <SheetField
-          label={t('customExercise.otherMuscles')}
-          value={muscleNames(form.secondaryMuscles)}
-          onPress={() => setOpen('otherMuscles')}
-        />
-      </View>
-
-      <View style={section}>
-        <FieldLabel text={t('exercise.equipment')} />
-        <SheetField
-          label={t('exercise.equipment')}
-          value={form.equipment && t(`exercise.equipmentKinds.${form.equipment}`)}
-          onPress={() => setOpen('equipment')}
         />
       </View>
 

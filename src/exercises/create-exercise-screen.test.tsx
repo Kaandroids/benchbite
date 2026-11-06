@@ -35,6 +35,8 @@ describe('CreateExerciseScreen', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('Hip thrust');
     const create = screen.getByRole('button', { name: 'Create exercise' });
     expect(create).toBeDisabled();
+    // Says what it waits for.
+    expect(screen.getByText('Still needed: What you log, Main muscles')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'What you log: Choose' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Weight × reps' }));
@@ -58,6 +60,8 @@ describe('CreateExerciseScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add a step' }));
     await fireEvent.changeText(screen.getByLabelText('Step 1'), 'Drive up.');
     expect(screen.getByRole('button', { name: 'Create exercise' })).toBeEnabled();
+
+    expect(screen.queryByText(/Still needed/)).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Create exercise' }));
     expect(mutateAsync).toHaveBeenCalledWith(

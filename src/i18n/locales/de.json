@@ -1766,7 +1766,8 @@
       "back": "Rücken",
       "arms": "Arme",
       "legs": "Beine"
-    }
+    },
+    "stillNeeded": "Fehlt noch: {{fields}}"
   },
   "reorder": {
     "moveUp": "Nach oben",
