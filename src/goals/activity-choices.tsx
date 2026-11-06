@@ -6,11 +6,12 @@ import type { IconName } from '@/components/ui/icon';
 import { Constants } from '@/lib/database.types';
 import type { ColorTokens } from '@/theme';
 
+/** One figure throughout, doing more through the day; none of them training. */
 const ICONS: Record<ActivityLevel, IconName> = {
-  sedentary: 'chair',
-  light: 'person',
-  moderate: 'run',
-  active: 'hammer',
+  sedentary: 'seated',
+  light: 'man',
+  moderate: 'person',
+  active: 'hiking',
 };
 /** From cool to warm as the day gets more active, in the colours of the meals and of water. */
 const TONES: Record<ActivityLevel, { color: keyof ColorTokens; background: keyof ColorTokens }> = {
