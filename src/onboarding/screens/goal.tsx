@@ -19,7 +19,8 @@ const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] =
 
 /**
  * The main goal, which decides both the training scheme and the calorie direction. Choosing one
- * shows what it sets in the plan, in the goal's colour, and Continue moves on, so the choice can be compared first.
+ * shows what it sets in the plan, in the goal's colour, and Continue moves on, so the choice can be
+ * compared first.
  */
 export function GoalStep() {
   const { t } = useTranslation();
