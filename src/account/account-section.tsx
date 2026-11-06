@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -15,12 +14,9 @@ import { LinkPrompt } from '@/components/ui/link-prompt';
 import { accountError, useSignOut } from './account';
 import { PASSWORD_LIMITS } from './passwords';
 
-/**
- * The settings' account section: a guest is offered an account, an account can log out, and the
- * card holds the user's `plan` for either.
- */
-export function AccountSection({ plan }: { plan?: ReactNode }) {
-  return useIsAccount() ? <SignedIn plan={plan} /> : <Guest plan={plan} />;
+/** The settings' account section: a guest is offered an account, an account can log out. */
+export function AccountSection() {
+  return useIsAccount() ? <SignedIn /> : <Guest />;
 }
 
 /** The way to delete all that is the user's, guest or account, at the end of the settings. */
@@ -52,7 +48,7 @@ export function DeleteAccountLink() {
   );
 }
 
-function Guest({ plan }: { plan: ReactNode }) {
+function Guest() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   return (
@@ -72,12 +68,11 @@ function Guest({ plan }: { plan: ReactNode }) {
         action={t('account.logIn')}
         onPress={() => router.push('/account/login')}
       />
-      {plan}
     </Card>
   );
 }
 
-function SignedIn({ plan }: { plan: ReactNode }) {
+function SignedIn() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const session = useSession();
@@ -115,7 +110,6 @@ function SignedIn({ plan }: { plan: ReactNode }) {
           </Text>
         </View>
       </View>
-      {plan}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: signOut.isPending }}

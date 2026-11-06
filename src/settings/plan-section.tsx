@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { BiteAvatar } from '@/coach/bite-avatar';
-import { listDivider } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useOpenPremium } from '@/premium/open-premium';
@@ -16,11 +16,11 @@ import { usePaidTerms } from '@/premium/plan-usage';
 import { TRIAL_DAYS } from '@/premium/trial';
 import { useTheme } from '@/theme';
 
-const BITE_SIZE = 44;
+const BITE_SIZE = 48;
 
 /**
- * The user's plan as a row of the account's card (#411), which opens the premium page. Nothing
- * shows until the plan has loaded.
+ * The user's plan at the top of the settings (#411), which opens the premium page. Nothing until
+ * the plan has loaded.
  */
 export function PlanSection() {
   const summary = usePlanSummary();
@@ -42,34 +42,28 @@ function PlanCard({ summary }: { summary: PlanSummary }) {
       accessibilityRole="button"
       accessibilityHint={t('settings.plan.hint')}
       onPress={openPremium}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          gap: spacing.md,
-          paddingVertical: spacing.lg,
-          opacity: pressed ? 0.6 : 1,
-          ...listDivider(false, colors.border),
-        },
-      ]}
+      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
-      <BiteAvatar size={BITE_SIZE} />
-      {free ? <FreeLines summary={summary} /> : <PaidLines summary={summary} />}
-      {free ? (
-        <View
-          style={{
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.xs,
-            borderRadius: radii.full,
-            backgroundColor: colors.primaryButton,
-          }}
-        >
-          <Text variant="captionStrong" color="onPrimary">
-            {t('premium.mine.premium')}
-          </Text>
-        </View>
-      ) : (
-        <Icon name="forward" size={18} color="textMuted" />
-      )}
+      <Card style={[styles.row, { gap: spacing.md }]}>
+        <BiteAvatar size={BITE_SIZE} />
+        {free ? <FreeLines summary={summary} /> : <PaidLines summary={summary} />}
+        {free ? (
+          <View
+            style={{
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.xs,
+              borderRadius: radii.full,
+              backgroundColor: colors.primaryButton,
+            }}
+          >
+            <Text variant="captionStrong" color="onPrimary">
+              {t('premium.mine.premium')}
+            </Text>
+          </View>
+        ) : (
+          <Icon name="forward" size={18} color="textMuted" />
+        )}
+      </Card>
     </Pressable>
   );
 }
