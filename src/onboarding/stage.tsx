@@ -24,7 +24,7 @@ export function Stage({ children, minHeight }: StageProps) {
         styles.stage,
         {
           borderRadius: radii.xl,
-          backgroundColor: colors.primaryWash,
+          backgroundColor: colors.stage,
           padding: spacing.lg,
           minHeight,
         },
