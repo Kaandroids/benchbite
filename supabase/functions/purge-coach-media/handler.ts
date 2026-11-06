@@ -8,6 +8,7 @@ import { type Client, logError } from '../_shared/supabase.ts';
 
 /** Folders per run: a run has to end well within the scheduled call's timeout. */
 export const BATCH_SIZE = 20;
+
 export type PurgeContext = {
   /** A client with the service role, which alone reads the queue and removes the files. */
   admin: Client;

@@ -160,6 +160,23 @@ describe('SessionProvider', () => {
     expect(result.current.status).toBe('ready');
   });
 
+  it("drops a deleted user's session and starts over as a new guest", async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    await act(() => result.current.leaveDeletedUser());
+    expect(auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    await waitFor(() => expect(auth.signInAnonymously).toHaveBeenCalledTimes(1));
+    expect(result.current.status).not.toBe('ended');
+  });
+
+  it("signs in as a new guest when a deleted user's session cannot be dropped", async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    auth.signOut.mockResolvedValueOnce({ error: new Error('offline') } as never);
+    await act(() => result.current.leaveDeletedUser());
+    expect(auth.signInAnonymously).toHaveBeenCalledTimes(1);
+  });
+
   it('signs out on this device only and starts over as a new guest', async () => {
     const { result } = await renderSession();
     await emit(SESSION);
