@@ -15,7 +15,6 @@ import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
 import { closeThen, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useExerciseCaption } from '@/exercises/caption';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
@@ -132,11 +131,24 @@ export function PickerScreen() {
         </Pressable>
         {/* Beside the choice rather than in it, so that screen readers reach it on its own. */}
         <View style={styles.more}>
-          <TopBarButton
-            icon="more"
-            label={t('picker.more', { name: item.name })}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('picker.more', { name: item.name })}
+            hitSlop={8}
             onPress={() => setOptionsOf(item)}
-          />
+            style={[
+              styles.moreButton,
+              {
+                borderRadius: radii.sm,
+                borderColor: selected ? colors.planned : colors.border,
+              },
+            ]}
+          >
+            {/* iOS has no upright version of this symbol. */}
+            <View style={styles.upright}>
+              <Icon name="more" size={18} color={selected ? 'primary' : 'textMuted'} />
+            </View>
+          </Pressable>
         </View>
       </View>
     );
@@ -358,6 +370,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  moreButton: {
+    width: 28,
+    height: 44,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  upright: {
+    transform: [{ rotate: '90deg' }],
+  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -365,8 +387,10 @@ const styles = StyleSheet.create({
   },
   more: {
     position: 'absolute',
-    right: 0,
+    right: 8,
     top: 0,
+    bottom: 8,
+    justifyContent: 'center',
   },
   // The card, with the gap to the next one under it.
   row: {
@@ -384,7 +408,7 @@ const styles = StyleSheet.create({
   },
   // Clear of the button in the card's corner.
   name: {
-    paddingRight: 28,
+    paddingRight: 32,
   },
   check: {
     position: 'absolute',
