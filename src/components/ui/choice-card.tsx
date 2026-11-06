@@ -27,8 +27,8 @@ type ChoiceCardProps = {
   title: string;
   description?: string;
   icon?: IconName;
-  /** The icon's colour and its tile's while not selected; the brand's by default. */
-  iconColors?: { color: keyof ColorTokens; background: keyof ColorTokens };
+  /** The colours of the icon, and of the card once selected, for answers that should read apart. */
+  tone?: { color: keyof ColorTokens; background: keyof ColorTokens };
   selected: boolean;
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
@@ -46,7 +46,7 @@ export function ChoiceCard({
   title,
   description,
   icon,
-  iconColors = { color: 'primary', background: 'iconBackground' },
+  tone,
   selected,
   onPress,
   type = 'radio',
@@ -55,6 +55,7 @@ export function ChoiceCard({
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
   const size = SIZES[sizeName];
+  const accent = tone ? colors[tone.color] : colors.primary;
   const stacked = sizeName === 'tile';
   // Without an icon, the level takes the tile; with one, it follows the text.
   const levelInTile = level && !icon;
@@ -85,7 +86,7 @@ export function ChoiceCard({
         accessibilityState={{ checked: selected }}
         onPress={onPress}
         haptic="selection"
-        ledgeColor={selected ? colors.primary : colors.border}
+        ledgeColor={selected ? accent : colors.border}
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
@@ -95,8 +96,12 @@ export function ChoiceCard({
             gap: spacing.md,
             paddingVertical: spacing[size.padding],
             paddingHorizontal: spacing.md,
-            backgroundColor: selected ? colors.selected : colors.surface,
-            borderColor: selected ? colors.primary : colors.border,
+            backgroundColor: !selected
+              ? colors.surface
+              : tone
+                ? colors[tone.background]
+                : colors.selected,
+            borderColor: selected ? accent : colors.border,
           },
         ]}
       >
@@ -108,7 +113,7 @@ export function ChoiceCard({
                 width: size.tile,
                 height: size.tile,
                 borderRadius: radii.md,
-                backgroundColor: selected ? colors.primary : colors[iconColors.background],
+                backgroundColor: selected ? accent : colors[tone?.background ?? 'iconBackground'],
               },
             ]}
           >
@@ -116,7 +121,7 @@ export function ChoiceCard({
               <Icon
                 name={icon}
                 size={size.icon}
-                color={selected ? 'onPrimary' : iconColors.color}
+                color={selected ? 'onPrimary' : (tone?.color ?? 'primary')}
               />
             ) : level ? (
               <LevelBars value={level.value} of={level.of} inverse={selected} />

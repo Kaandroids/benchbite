@@ -19,7 +19,7 @@ export function GoalChoices({
     <ChoiceCard
       key={option}
       icon={GOAL_ICONS[option]}
-      iconColors={GOAL_COLORS[option]}
+      tone={GOAL_COLORS[option]}
       title={t(`goals.goal.${option}`)}
       description={t(`goals.goalDescriptions.${option}`)}
       selected={value === option}
