@@ -10,7 +10,6 @@ import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
-import { TextLink } from '@/components/ui/text-link';
 
 import { accountError, useSignOut } from './account';
 import { PASSWORD_LIMITS } from './passwords';
@@ -23,12 +22,29 @@ export function AccountSection() {
 /** The way to delete all that is the user's, guest or account, at the end of the settings. */
 export function DeleteAccountLink() {
   const { t } = useTranslation();
+  const { colors, radii, spacing } = useTheme();
+  const label = t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest');
   return (
-    <TextLink
-      label={t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest')}
-      tone="muted"
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={() => router.push('/account/delete')}
-    />
+      style={[
+        styles.delete,
+        {
+          gap: spacing.sm,
+          borderRadius: radii.md,
+          // Faded, as it is rarely wanted; its words stay readable.
+          borderColor: `${colors.danger}59`,
+          backgroundColor: `${colors.dangerBackground}66`,
+        },
+      ]}
+    >
+      <Icon name="trash" size={18} color="danger" />
+      <Text variant="captionStrong" color="danger">
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -115,6 +131,15 @@ function SignedIn() {
 }
 
 const styles = StyleSheet.create({
+  // Dashed like the form's "Add a step", in the colour of what cannot be undone.
+  delete: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
