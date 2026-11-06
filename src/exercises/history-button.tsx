@@ -17,7 +17,7 @@ type HistoryButtonProps = {
   size?: number;
 };
 
-/** A small teal chart that opens an exercise's records and progress. */
+/** A small indigo chart that opens an exercise's records and progress. */
 export function HistoryButton({
   exerciseId,
   exerciseName,
@@ -29,8 +29,8 @@ export function HistoryButton({
   return (
     <RoundIconButton
       icon="trend"
-      color="water"
-      background="waterBackground"
+      color="dinner"
+      background="dinnerBackground"
       size={size}
       label={t('exercise.history', { name: exerciseName })}
       onPress={() => {
