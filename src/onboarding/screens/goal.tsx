@@ -5,6 +5,7 @@ import { type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { GoalChoices } from '@/goals/goal-choices';
+import { GOAL_COLORS } from '@/goals/goal-icons';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { useStep } from '../use-step';
@@ -15,12 +16,10 @@ const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] =
   { key: 'training', icon: 'dumbbell' },
   { key: 'progress', icon: 'trend' },
 ];
-/** Neutral, so that the rows stay quiet beside the coloured goals above them. */
-const EFFECT_COLORS = { color: 'textMuted', background: 'track' } as const;
 
 /**
  * The main goal, which decides both the training scheme and the calorie direction. Choosing one
- * shows what it sets in the plan, and Continue moves on, so the choice can be compared first.
+ * shows what it sets in the plan, in the goal's colour, and Continue moves on, so the choice can be compared first.
  */
 export function GoalStep() {
   const { t } = useTranslation();
@@ -46,7 +45,7 @@ export function GoalStep() {
               <InsightRow
                 key={key}
                 icon={icon}
-                iconColors={EFFECT_COLORS}
+                iconColors={GOAL_COLORS[goal]}
                 label={t(`onboarding.goal.effects.${key}`)}
                 value={t(`onboarding.goal.effects.${goal}.${key}`)}
               />
