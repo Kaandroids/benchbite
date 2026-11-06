@@ -1,0 +1,114 @@
+---
+import { LOCALES, localePath, messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  page: string;
+  /** On the brand's orange. */
+  brand: boolean;
+};
+
+const { locale, page, brand } = Astro.props;
+const messages = messagesFor(locale);
+---
+
+<header class:list={{ 'on-brand': brand }}>
+  <div class="bar">
+    <a class="brand" href={localePath(locale)}>
+      <img src="/images/icon.png" alt="" width="36" height="36" />
+      <span>benchbite</span>
+    </a>
+    <div class="controls">
+      <nav aria-label={messages.language}>
+        {
+          LOCALES.map((option) => (
+            <a
+              class:list={['language', { current: option === locale }]}
+              href={localePath(option, page)}
+              hreflang={option}
+              aria-current={option === locale ? 'true' : undefined}
+            >
+              {option.toUpperCase()}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </div>
+</header>
+
+<style>
+  .on-brand {
+    --surface: #ffffff;
+    --text: var(--ink);
+    --text-muted: #c9cbd1;
+    --track: var(--ink);
+    --primary-text: #ffb27f;
+    background: var(--brand);
+    color: #ffffff;
+  }
+
+  .on-brand .brand:hover {
+    color: var(--ink);
+  }
+
+  .on-brand .language.current:hover {
+    color: var(--ink);
+  }
+
+  .bar {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(19px, 5.5vw, 22px);
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .brand img {
+    border-radius: 10px;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  nav {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 11px;
+    background: var(--track);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .language {
+    min-height: 32px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .language.current {
+    background: var(--surface);
+    color: var(--text);
+  }
+</style>

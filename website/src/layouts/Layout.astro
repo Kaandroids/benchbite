@@ -1,0 +1,37 @@
+---
+import '@fontsource-variable/nunito';
+import '../styles/global.css';
+
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  /** The page's address relative to the root, such as `privacy`, for the language links. */
+  page?: string;
+  /** Without it, the page goes by the site's own title. */
+  title?: string;
+  /** The header on the brand's orange, for a page that starts on it. */
+  brandHeader?: boolean;
+};
+
+const { locale, page = '', title, brandHeader = false } = Astro.props;
+const { meta } = messagesFor(locale);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={meta.description} />
+    <title>{title ? `${title} | Benchbite` : meta.title}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+  </head>
+  <body>
+    <Header locale={locale} page={page} brand={brandHeader} />
+    <slot />
+    <Footer locale={locale} />
+  </body>
+</html>
