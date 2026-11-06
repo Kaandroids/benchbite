@@ -1,6 +1,6 @@
 # 0085. Own foods and recipes stay free
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0086
 - **Date:** 2026-11-06
 
 ## Context
