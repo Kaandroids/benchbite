@@ -21,6 +21,8 @@ export function AddTiles({ onPhoto }: AddTilesProps) {
       <View style={styles.tile}>
         <ActionCard
           icon="camera"
+          iconColor="dinner"
+          iconBackground="dinnerBackground"
           title={t('nutrition.search.photo')}
           hint={t('nutrition.search.photoHint')}
           label={t('nutrition.photo.camera')}
@@ -31,8 +33,8 @@ export function AddTiles({ onPhoto }: AddTilesProps) {
       <View style={styles.tile}>
         <ActionCard
           icon="barcode"
-          iconColor="text"
-          iconBackground="track"
+          iconColor="water"
+          iconBackground="waterBackground"
           title={t('nutrition.search.barcode')}
           hint={t('nutrition.search.barcodeHint')}
           label={t('nutrition.search.barcodeLabel')}

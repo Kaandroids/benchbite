@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 
 import { setCreatedExercise } from '@/exercises/custom';
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { fireEvent, render, screen } from '@/test/render';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
@@ -140,18 +140,33 @@ describe('PickerScreen', () => {
     expect(screen.getByRole('checkbox', { name: 'Rowing' })).toBeEnabled();
   });
 
-  it('opens an exercise’s details', async () => {
+  it.each([
+    ['Details', '/workout/exercise/[id]'],
+    ['Records and progress', '/workout/exercise/history'],
+  ])('opens %s of an exercise from its card', async (option, pathname) => {
     await render(<PickerScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Details of Bench press' }));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/exercise/[id]',
-      params: { id: 'bench' },
-    });
+    await fireEvent.press(screen.getByRole('button', { name: 'More about Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: new RegExp(option) }));
+    // Once the sheet has closed.
+    await waitFor(() =>
+      expect(router.push).toHaveBeenCalledWith({ pathname, params: { id: 'bench' } }),
+    );
   });
 
   it('chooses an exercise just created on coming back', async () => {
     setCreatedExercise(exercise('hip', 'Hip thrust', { custom: true }));
     await render(<PickerScreen />);
+    expect(screen.getByRole('button', { name: 'Add 1 exercise' })).toBeTruthy();
+  });
+
+  it('keeps an exercise just created until the limits have loaded', async () => {
+    setCreatedExercise(exercise('hip', 'Hip thrust', { custom: true }));
+    jest.mocked(useWorkoutLimits).mockReturnValue({ data: undefined } as never);
+    await render(<PickerScreen />);
+    expect(screen.queryByRole('button', { name: 'Add 1 exercise' })).toBeNull();
+
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 10, workouts: 5 }) as never);
+    await screen.rerender(<PickerScreen />);
     expect(screen.getByRole('button', { name: 'Add 1 exercise' })).toBeTruthy();
   });
 

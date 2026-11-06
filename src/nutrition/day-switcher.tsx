@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
+import { StepArrow } from '@/components/ui/step-arrow';
 import { Text } from '@/components/ui/text';
 import { addDays } from '@/i18n/dates';
 import { useTheme } from '@/theme';
@@ -30,25 +30,13 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
 
   const { name, date } = dayLabel(day, daysBack);
 
-  const step = (icon: 'back' | 'forward', enabled: boolean, by: number) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={t(icon === 'back' ? 'nutrition.day.previous' : 'nutrition.day.next')}
-      accessibilityState={{ disabled: !enabled }}
-      disabled={!enabled}
-      hitSlop={4}
-      onPress={() => onChange(daysBack - by)}
-      // An arrow alone, without a filled circle, so that the day stands out more than the way
-      // to another.
-      style={({ pressed }) => [styles.step, { opacity: pressed ? 0.6 : 1 }]}
-    >
-      <Icon name={icon} size={22} color={enabled ? 'primary' : 'placeholder'} />
-    </Pressable>
-  );
-
   return (
     <View style={[styles.row, { gap: spacing.sm }]}>
-      {step('back', canGoBack, -1)}
+      <StepArrow
+        direction="back"
+        label={t('nutrition.day.previous')}
+        onPress={canGoBack ? () => onChange(daysBack + 1) : undefined}
+      />
       <View style={styles.label} accessible accessibilityLiveRegion="polite">
         <Text variant="label" align="center" numberOfLines={1}>
           {name}
@@ -57,7 +45,11 @@ export function DaySwitcher({ today, daysBack, onChange }: DaySwitcherProps) {
           {date}
         </Text>
       </View>
-      {step('forward', canGoForward, 1)}
+      <StepArrow
+        direction="forward"
+        label={t('nutrition.day.next')}
+        onPress={canGoForward ? () => onChange(daysBack - 1) : undefined}
+      />
     </View>
   );
 }
@@ -66,12 +58,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  step: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   label: {
     flex: 1,

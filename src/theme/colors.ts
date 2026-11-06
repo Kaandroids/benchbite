@@ -42,6 +42,9 @@ export type ColorTokens = {
   warningBackground: string;
   /** Behind an error message, with `text` and a `danger` icon on it. */
   dangerBackground: string;
+  /** A faded `danger` for an action that is rarely wanted, with `danger` words on it. */
+  dangerFaintBorder: string;
+  dangerFaintBackground: string;
   /**
    * Teal, so that protein never reads as the orange of calories and buttons, beside the yellow
    * carbs and purple fat. At least 3:1 on `surface` in both themes.
@@ -124,6 +127,8 @@ export const lightColors: ColorTokens = {
   danger: '#DC2626',
   warningBackground: '#FEF3C7',
   dangerBackground: '#FEE2E2',
+  dangerFaintBorder: 'rgba(220, 38, 38, 0.35)',
+  dangerFaintBackground: 'rgba(254, 226, 226, 0.4)',
   protein: '#0E9384', // 3.8:1 on surface
   carbs: '#B98000', // 3.4:1 on surface; the brighter #F5B800 had 1.8:1
   fat: '#6E5BD8',
@@ -184,6 +189,8 @@ export const darkColors: ColorTokens = {
   danger: '#F87171',
   warningBackground: '#2E2410',
   dangerBackground: '#3A1C1C',
+  dangerFaintBorder: 'rgba(248, 113, 113, 0.35)',
+  dangerFaintBackground: 'rgba(58, 28, 28, 0.4)',
   protein: '#2DD4BF', // 9.2:1 on surface
   carbs: '#FFD23F',
   fat: '#9F8CFF',

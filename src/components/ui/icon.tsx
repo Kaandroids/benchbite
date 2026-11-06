@@ -95,17 +95,19 @@ type IconProps = {
   name: IconName;
   size?: number;
   color?: keyof ColorTokens;
+  /** Heavier for an icon that stands alone as a button. */
+  weight?: 'semibold' | 'bold';
 };
 
 /** Decorative by default; give the surrounding control an accessibility label instead. */
-export function Icon({ name, size = 24, color = 'text' }: IconProps) {
+export function Icon({ name, size = 24, color = 'text', weight = 'semibold' }: IconProps) {
   const { colors } = useTheme();
   return (
     <SymbolView
       name={ICONS[name]}
       size={size}
       tintColor={colors[color]}
-      weight="semibold"
+      weight={weight}
       accessible={false}
       importantForAccessibility="no"
     />

@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 import { KeyboardAvoiding } from './keyboard-avoiding';
+import { Text } from './text';
 
 /** How long iOS takes to close a sheet, during which it cannot present another one. */
 const CLOSE_MS = 400;
@@ -31,6 +32,15 @@ export function closeThen(onClose: () => void, action: () => void) {
     onClose();
     afterSheetCloses(action);
   };
+}
+
+/** A sheet's title, for screen readers its header. */
+export function SheetTitle({ children }: { children: string }) {
+  return (
+    <Text variant="headline" accessibilityRole="header">
+      {children}
+    </Text>
+  );
 }
 
 type SheetProps = {

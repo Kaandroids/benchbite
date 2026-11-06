@@ -5,6 +5,7 @@ import {
   emptyForm,
   formOf,
   isComplete,
+  missingFields,
   setCreatedExercise,
   takeCreatedExercise,
   toExercise,
@@ -40,6 +41,15 @@ describe('isComplete', () => {
     expect(isComplete({ ...HIP, name: ' ' })).toBe(false);
     expect(isComplete({ ...HIP, logKind: null })).toBe(false);
     expect(isComplete({ ...HIP, primaryMuscles: [] })).toBe(false);
+  });
+
+  it('says what is missing, in the order of the form', () => {
+    expect(missingFields(HIP)).toEqual([]);
+    expect(missingFields({ ...HIP, name: ' ', logKind: null, primaryMuscles: [] })).toEqual([
+      'name',
+      'logKind',
+      'mainMuscles',
+    ]);
   });
 });
 

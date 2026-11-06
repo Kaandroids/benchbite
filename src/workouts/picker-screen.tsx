@@ -6,16 +6,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { Card, listDivider } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
+import { closeThen, Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
+import { exerciseDetailsRoute, exerciseHistoryRoute } from '@/exercises/routes';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { HistoryButton } from '@/exercises/history-button';
-import { InfoButton } from '@/exercises/info-button';
 import {
   filterExercises,
   MUSCLE_GROUPS,
@@ -30,7 +33,17 @@ import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
-const ROW_HEIGHT = 73;
+const ROW_HEIGHT = 84;
+const CARD_GAP = 8;
+/** The options button, which stands over the card's end, and the room the words leave for it. */
+const OPTIONS_WIDTH = 28;
+const OPTIONS_INSET = 8;
+const OPTIONS_ROOM = OPTIONS_WIDTH + 4;
+/** The top bar's ends, as wide as each other, so that the title is in the middle. */
+const BAR_END = 52;
+/** A name and caption fit the fixed height of a card up to this font scale. */
+const MAX_TEXT_SCALE = 1.2;
+const THUMBNAIL = 60;
 
 /**
  * Searches the library and the user's own exercises, and adds the chosen ones to the workout
@@ -47,21 +60,25 @@ export function PickerScreen() {
   const [filter, setFilter] = useState<ExerciseFilter | null>(null);
   // In the order they were chosen, which is the order they are added in.
   const [chosen, setChosen] = useState<LibraryExercise[]>([]);
+  const [optionsOf, setOptionsOf] = useState<LibraryExercise | null>(null);
   const results = library.data ? filterExercises(library.data, query, filter, i18n.language) : [];
   const hasOwn = library.data?.some((exercise) => exercise.custom && !exercise.archived) ?? false;
 
   // How many more the workout has room for; the rest of the library waits until one is unchosen.
   const room = (limits.data?.exercises ?? 0) - (draft?.exercises.length ?? 0);
+  const roomKnown = limits.data !== undefined;
   const full = chosen.length >= room;
 
   // An exercise just created on its own screen is chosen on coming back, if there is room.
   useFocusEffect(
     useCallback(() => {
+      // Kept until there is room to tell; the top bar's + does not wait for the limits.
+      if (!roomKnown) return;
       const created = takeCreatedExercise();
       if (created) {
         setChosen((current) => (current.length < room ? [...current, created] : current));
       }
-    }, [room]),
+    }, [room, roomKnown]),
   );
 
   const openCreate = (name?: string) =>
@@ -84,40 +101,73 @@ export function PickerScreen() {
     const disabled = full && !selected;
     const detail = caption(item);
     return (
-      <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
-        {/* Two buttons fit the row's height only a little apart. */}
-        <View style={{ gap: spacing.xs }}>
-          <InfoButton exerciseId={item.id} exerciseName={item.name} />
-          <HistoryButton exerciseId={item.id} exerciseName={item.name} />
-        </View>
+      <View style={styles.row}>
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected, disabled }}
           accessibilityLabel={item.name}
           disabled={disabled}
           onPress={() => toggle(item)}
-          style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
+          style={[
+            styles.choice,
+            {
+              gap: spacing.md,
+              padding: spacing.sm,
+              borderRadius: radii.lg,
+              borderColor: selected ? colors.primary : colors.border,
+              backgroundColor: selected ? colors.selected : colors.surface,
+              opacity: disabled ? 0.4 : 1,
+            },
+          ]}
         >
-          <ExerciseThumbnail path={thumbnailOf(item)} size={52} name={item.name} />
-          <View style={styles.text}>
-            <Text variant="bodyStrong" numberOfLines={2}>
+          <View>
+            <ExerciseThumbnail path={thumbnailOf(item)} size={THUMBNAIL} name={item.name} />
+            {selected ? (
+              <View
+                style={[
+                  styles.check,
+                  { backgroundColor: colors.primaryButton, borderColor: colors.selected },
+                ]}
+              >
+                <Icon name="check" size={12} color="onPrimary" />
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.words}>
+            <Text variant="bodyStrong" numberOfLines={2} maxFontSizeMultiplier={MAX_TEXT_SCALE}>
               {item.name}
             </Text>
-            <Text variant="caption" color="textMuted">
+            <Text
+              variant="caption"
+              color="textMuted"
+              numberOfLines={1}
+              maxFontSizeMultiplier={MAX_TEXT_SCALE}
+            >
               {detail}
             </Text>
           </View>
-          <View
+        </Pressable>
+        {/* Beside the choice rather than in it, so that screen readers reach it on its own. */}
+        <View style={styles.more}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('picker.more', { name: item.name })}
+            hitSlop={8}
+            onPress={() => setOptionsOf(item)}
             style={[
-              styles.check,
-              selected
-                ? { backgroundColor: colors.primaryButton, borderColor: colors.primaryButton }
-                : { borderColor: colors.border },
+              styles.moreButton,
+              {
+                borderRadius: radii.sm,
+                borderColor: selected ? colors.planned : colors.border,
+              },
             ]}
           >
-            {selected ? <Icon name="check" size={16} color="onPrimary" /> : null}
-          </View>
-        </Pressable>
+            {/* iOS has no upright version of this symbol. */}
+            <View style={styles.upright}>
+              <Icon name="more" size={18} color={selected ? 'primary' : 'textMuted'} />
+            </View>
+          </Pressable>
+        </View>
       </View>
     );
   };
@@ -128,22 +178,40 @@ export function PickerScreen() {
       edges={['top', 'bottom']}
     >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={() => router.back()}
-          style={styles.close}
-        >
-          <Icon name="close" color="textMuted" />
-        </Pressable>
+        <View style={styles.barEnd}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            onPress={() => router.back()}
+            style={styles.close}
+          >
+            <Icon name="close" color="textMuted" />
+          </Pressable>
+        </View>
         <View style={styles.title}>
           <ScreenTitle title={t('picker.title')} />
         </View>
-        {/* Keeps the title in the middle, balanced against the cross. */}
-        <View style={styles.close} />
+        {/* What is left of its end lines it up with the search field below. */}
+        <View style={styles.barEnd}>
+          <RoundIconButton
+            icon="plus"
+            color="onPrimary"
+            background="primaryButton"
+            label={t('customExercise.createRow')}
+            size={40}
+            onPress={() => openCreate()}
+          />
+        </View>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
+      <View
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.md,
+          gap: spacing.md,
+          paddingBottom: spacing.md,
+        }}
+      >
         <SearchField label={t('picker.search')} value={query} onChangeText={setQuery} />
         <ScrollView
           horizontal
@@ -161,39 +229,11 @@ export function PickerScreen() {
           data={results}
           keyExtractor={(item) => item.id}
           renderItem={row}
-          // The row that creates an exercise is as tall as an exercise's, above the first.
           getItemLayout={(_data, index) => ({
             length: ROW_HEIGHT,
-            offset: ROW_HEIGHT * (index + 1),
+            offset: ROW_HEIGHT * index,
             index,
           })}
-          ListHeaderComponent={
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('customExercise.createRow')}
-              accessibilityHint={t('customExercise.createRowHint')}
-              onPress={() => openCreate()}
-              style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}
-            >
-              <View style={styles.buttonsRoom} />
-              <View
-                style={[
-                  styles.createTile,
-                  { borderRadius: radii.md, backgroundColor: colors.iconBackground },
-                ]}
-              >
-                <Icon name="plus" size={24} color="primary" />
-              </View>
-              <View style={[styles.text, { marginLeft: spacing.xs }]}>
-                <Text variant="label" color="primaryText">
-                  {t('customExercise.createRow')}
-                </Text>
-                <Text variant="caption" color="textMuted">
-                  {t('customExercise.createRowHint')}
-                </Text>
-              </View>
-            </Pressable>
-          }
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingHorizontal: spacing.xl }}
@@ -261,23 +301,67 @@ export function PickerScreen() {
           }}
         />
       </View>
+      {optionsOf ? (
+        <ExerciseOptions exercise={optionsOf} onClose={() => setOptionsOf(null)} />
+      ) : null}
     </SafeAreaView>
+  );
+}
+
+/** What can be read about an exercise of the list, without choosing it. */
+function ExerciseOptions({
+  exercise,
+  onClose,
+}: {
+  exercise: LibraryExercise;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const options = [
+    {
+      key: 'details',
+      icon: 'info',
+      color: 'info',
+      background: 'infoBackground',
+      label: t('picker.details'),
+      open: () => router.push(exerciseDetailsRoute(exercise.id)),
+    },
+    {
+      key: 'progress',
+      icon: 'trend',
+      color: 'dinner',
+      background: 'dinnerBackground',
+      label: t('picker.progress'),
+      open: () => router.push(exerciseHistoryRoute(exercise.id)),
+    },
+  ] as const;
+  return (
+    <Sheet onClose={onClose}>
+      <SheetTitle>{exercise.name}</SheetTitle>
+      <Card list>
+        {options.map(({ key, icon, color, background, label, open }, index) => (
+          <Pressable
+            key={key}
+            accessibilityRole="button"
+            onPress={closeThen(onClose, open)}
+            style={[styles.option, { gap: spacing.md }, listDivider(index === 0, colors.border)]}
+          >
+            <IconTile name={icon} size={36} color={color} background={background} />
+            <Text variant="label" style={styles.text}>
+              {label}
+            </Text>
+            <Icon name="forward" size={16} color="textMuted" />
+          </Pressable>
+        ))}
+      </Card>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  // Where an exercise's info and history buttons are.
-  buttonsRoom: {
-    width: 32,
-  },
-  createTile: {
-    width: 52,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   none: {
     alignItems: 'center',
@@ -296,30 +380,63 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
   },
+  barEnd: {
+    width: BAR_END,
+  },
   close: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  row: {
-    height: ROW_HEIGHT,
+  moreButton: {
+    width: OPTIONS_WIDTH,
+    height: 44,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  upright: {
+    transform: [{ rotate: '90deg' }],
+  },
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
+    minHeight: 56,
+  },
+  more: {
+    position: 'absolute',
+    right: OPTIONS_INSET,
+    top: 0,
+    bottom: CARD_GAP,
+    justifyContent: 'center',
+  },
+  // The card, with the gap to the next one under it.
+  row: {
+    height: ROW_HEIGHT,
+    paddingBottom: CARD_GAP,
   },
   choice: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
   },
   text: {
     flex: 1,
   },
+  // Clear of the options button over the card's end.
+  words: {
+    flex: 1,
+    paddingRight: OPTIONS_ROOM,
+  },
   check: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    position: 'absolute',
+    right: -6,
+    top: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',

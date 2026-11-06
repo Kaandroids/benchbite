@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 
+import { exerciseHistoryRoute } from './routes';
+
 type HistoryButtonProps = {
   exerciseId: string;
   exerciseName: string;
@@ -31,10 +33,7 @@ export function HistoryButton({
       label={t('exercise.history', { name: exerciseName })}
       onPress={() => {
         onOpen?.();
-        router.push({
-          pathname: inSession ? '/session/exercise/history' : '/workout/exercise/history',
-          params: { id: exerciseId },
-        });
+        router.push(exerciseHistoryRoute(exerciseId, inSession));
       }}
     />
   );

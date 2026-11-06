@@ -4,34 +4,32 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DashedButton } from '@/components/ui/dashed-button';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
-import { TextLink } from '@/components/ui/text-link';
 
 import { accountError, useSignOut } from './account';
 import { PASSWORD_LIMITS } from './passwords';
 
-/**
- * The settings' account section: a guest is offered an account, an account can log out, and either
- * can delete all that is theirs.
- */
+/** The settings' account section: a guest is offered an account, an account can log out. */
 export function AccountSection() {
+  return useIsAccount() ? <SignedIn /> : <Guest />;
+}
+
+/** The way to delete all that is the user's, guest or account, at the end of the settings. */
+export function DeleteAccountButton() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
-  const isAccount = useIsAccount();
   return (
-    <View style={{ gap: spacing.md }}>
-      {isAccount ? <SignedIn /> : <Guest />}
-      <TextLink
-        label={t(isAccount ? 'account.delete.delete' : 'account.delete.deleteGuest')}
-        tone="muted"
-        onPress={() => router.push('/account/delete')}
-      />
-    </View>
+    <DashedButton
+      icon="trash"
+      label={t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest')}
+      tone="danger"
+      onPress={() => router.push('/account/delete')}
+    />
   );
 }
 
@@ -61,7 +59,7 @@ function Guest() {
 
 function SignedIn() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const session = useSession();
   const email = session.status === 'ready' ? session.session.user.email : undefined;
   const signOut = useSignOut();
@@ -85,48 +83,46 @@ function SignedIn() {
     ]);
 
   return (
-    <Card list>
-      <View style={[styles.row, { gap: spacing.md, paddingVertical: spacing.lg }]}>
-        <IconTile name="account" />
-        <View style={styles.flex}>
-          <Text variant="caption" color="textMuted">
-            {t('settings.signedInAs')}
-          </Text>
-          <Text variant="label" numberOfLines={1}>
-            {email}
-          </Text>
-        </View>
+    <Card style={[styles.row, { gap: spacing.md }]}>
+      <IconTile name="account" />
+      <View style={styles.flex}>
+        <Text variant="caption" color="textMuted">
+          {t('settings.signedInAs')}
+        </Text>
+        <Text variant="label" numberOfLines={1}>
+          {email}
+        </Text>
       </View>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={t('settings.logOut')}
         accessibilityState={{ disabled: signOut.isPending }}
         disabled={signOut.isPending}
         onPress={logOut}
-        style={[
-          styles.row,
+        style={({ pressed }) => [
           styles.logOut,
-          { gap: spacing.md, borderTopColor: colors.border, opacity: signOut.isPending ? 0.4 : 1 },
+          { opacity: signOut.isPending ? 0.4 : pressed ? 0.6 : 1 },
         ]}
       >
-        <Icon name="logOut" size={22} color="danger" />
-        <Text variant="label" color="danger">
-          {t('settings.logOut')}
-        </Text>
+        <Icon name="logOut" size={22} color="danger" weight="bold" />
       </Pressable>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  // At the card's edge, in line with the arrows of the rows around it.
+  logOut: {
+    width: 44,
+    height: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   flex: {
     flex: 1,
-  },
-  logOut: {
-    minHeight: 52,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

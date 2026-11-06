@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
 import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Screen } from '@/components/ui/screen';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Sheet, SheetTitle } from '@/components/ui/sheet';
+import { Text } from '@/components/ui/text';
 import { useLeavePrompt } from '@/components/use-leave-prompt';
 import type { Database } from '@/lib/database.types';
 import { typography, useTheme } from '@/theme';
@@ -15,45 +16,24 @@ import { typography, useTheme } from '@/theme';
 import {
   emptyForm,
   isComplete,
+  missingFields,
   setCreatedExercise,
   useCreateExercise,
   useEditExercise,
   type CustomExerciseForm,
   type KindLock,
 } from './custom';
-import { LogKindField, PhotosField, StepsField } from './exercise-form-fields';
+import {
+  EquipmentChoice,
+  LogKindField,
+  MuscleChoice,
+  PhotosField,
+  SheetField,
+  StepsField,
+} from './exercise-form-fields';
 
 type Enums = Database['public']['Enums'];
 
-const MUSCLES: Enums['muscle'][] = [
-  'chest',
-  'lats',
-  'middle back',
-  'lower back',
-  'traps',
-  'shoulders',
-  'biceps',
-  'triceps',
-  'forearms',
-  'abdominals',
-  'quadriceps',
-  'hamstrings',
-  'glutes',
-  'calves',
-  'abductors',
-  'adductors',
-  'neck',
-];
-const EQUIPMENT: Enums['equipment'][] = [
-  'barbell',
-  'dumbbell',
-  'body only',
-  'cable',
-  'machine',
-  'kettlebells',
-  'bands',
-  'other',
-];
 const LEVELS: Enums['exercise_level'][] = ['beginner', 'intermediate', 'expert'];
 const MAX_MAIN_MUSCLES = 5;
 
@@ -66,8 +46,9 @@ type Editing = {
 
 /**
  * Creates the user's own exercise (#33), or edits it: what it needs at the top, a name, how it is
- * logged, its main muscles and its level, and what may be added below. `name` fills in the name,
- * as when the picker found nothing by it.
+ * logged and its main muscles, marked as needed, and what may be added under them. The longer
+ * choices open in sheets, so that the form stays short. `name` fills in the name, as when the
+ * picker found nothing by it.
  */
 export function CreateExerciseScreen({ name = '', editing }: { name?: string; editing?: Editing }) {
   const { t } = useTranslation();
@@ -105,12 +86,19 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           leaveWithoutAsking(() => router.back());
         }, failed);
   const kindLock = editing?.kindLock ?? null;
+  const [open, setOpen] = useState<'logKind' | 'mainMuscles' | 'otherMuscles' | 'equipment' | null>(
+    null,
+  );
+  const close = () => setOpen(null);
+  const muscleNames = (muscles: Enums['muscle'][]) =>
+    muscles.length > 0 ? muscles.map((muscle) => t(`workout.muscles.${muscle}`)).join(', ') : null;
 
   const toggle = <T,>(list: T[], item: T) =>
     list.includes(item) ? list.filter((value) => value !== item) : [...list, item];
 
   const section = { gap: spacing.sm };
-  const wrap = [styles.wrap, { gap: spacing.sm }];
+  // What Create still waits for, so that its being off is not a riddle.
+  const missing = missingFields(form).map((field) => t(`customExercise.${field}`));
   const field = useFieldStyle();
 
   return (
@@ -119,15 +107,22 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       closes
       title={editing ? t('customExercise.editTitle') : t('customExercise.title')}
       footer={
-        <Button
-          label={editing ? t('customExercise.save') : t('customExercise.create')}
-          disabled={!isComplete(form) || saving || (editing !== undefined && !changed)}
-          onPress={() => void save()}
-        />
+        <View style={section}>
+          {missing.length > 0 ? (
+            <Text variant="caption" color="textMuted" align="center">
+              {t('customExercise.stillNeeded', { fields: missing.join(', ') })}
+            </Text>
+          ) : null}
+          <Button
+            label={editing ? t('customExercise.save') : t('customExercise.create')}
+            disabled={!isComplete(form) || saving || (editing !== undefined && !changed)}
+            onPress={() => void save()}
+          />
+        </View>
       }
     >
       <View style={section}>
-        <FieldLabel text={t('customExercise.name')} />
+        <FieldLabel text={t('customExercise.name')} required />
         <TextInput
           accessibilityLabel={t('customExercise.name')}
           value={form.name}
@@ -139,37 +134,31 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
         />
       </View>
 
-      <View style={section}>
-        <FieldLabel text={t('customExercise.logKind')} />
-        <LogKindField
-          value={form.logKind}
-          lock={kindLock}
-          onChange={(logKind) => change({ logKind })}
-        />
-      </View>
+      <SheetField
+        label={t('customExercise.logKind')}
+        required
+        value={form.logKind && t(`customExercise.logKinds.${form.logKind}.title`)}
+        onPress={() => setOpen('logKind')}
+      />
 
-      <View style={section}>
-        <FieldLabel text={t('customExercise.mainMuscles')} />
-        <View style={wrap}>
-          {MUSCLES.map((muscle) => {
-            const on = form.primaryMuscles.includes(muscle);
-            return (
-              <Chip
-                key={muscle}
-                label={t(`workout.muscles.${muscle}`)}
-                selected={on}
-                disabled={!on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
-                onPress={() =>
-                  change({
-                    primaryMuscles: toggle(form.primaryMuscles, muscle),
-                    secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
-                  })
-                }
-              />
-            );
-          })}
-        </View>
-      </View>
+      <SheetField
+        label={t('customExercise.mainMuscles')}
+        required
+        value={muscleNames(form.primaryMuscles)}
+        onPress={() => setOpen('mainMuscles')}
+      />
+
+      <SheetField
+        label={t('customExercise.otherMuscles')}
+        value={muscleNames(form.secondaryMuscles)}
+        onPress={() => setOpen('otherMuscles')}
+      />
+
+      <SheetField
+        label={t('exercise.equipment')}
+        value={form.equipment && t(`exercise.equipmentKinds.${form.equipment}`)}
+        onPress={() => setOpen('equipment')}
+      />
 
       <View style={section}>
         <FieldLabel text={t('exercise.level')} />
@@ -179,12 +168,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           onChange={(level) => change({ level })}
           accessibilityLabel={t('exercise.level')}
         />
-      </View>
-
-      <View style={[styles.divider, { gap: spacing.sm, marginTop: spacing.sm }]}>
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
-        <FieldLabel text={t('customExercise.optional')} />
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
       </View>
 
       <View style={section}>
@@ -202,55 +185,67 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        <FieldLabel text={t('customExercise.otherMuscles')} />
-        <View style={wrap}>
-          {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) => (
-            <Chip
-              key={muscle}
-              label={t(`workout.muscles.${muscle}`)}
-              selected={form.secondaryMuscles.includes(muscle)}
-              onPress={() => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View style={section}>
-        <FieldLabel text={t('exercise.equipment')} />
-        <View style={wrap}>
-          {EQUIPMENT.map((item) => (
-            <Chip
-              key={item}
-              label={t(`exercise.equipmentKinds.${item}`)}
-              selected={form.equipment === item}
-              onPress={() => change({ equipment: form.equipment === item ? null : item })}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View style={section}>
         <FieldLabel text={t('exercise.howTo')} />
         <StepsField
           steps={form.instructions}
           onChange={(instructions) => change({ instructions })}
         />
       </View>
+
+      {open === 'logKind' ? (
+        <Sheet onClose={close}>
+          <SheetTitle>{t('customExercise.logKind')}</SheetTitle>
+          <LogKindField
+            value={form.logKind}
+            lock={kindLock}
+            onChange={(logKind) => {
+              change({ logKind });
+              close();
+            }}
+          />
+        </Sheet>
+      ) : null}
+      {open === 'mainMuscles' ? (
+        <Sheet onClose={close}>
+          <SheetTitle>{t('customExercise.mainMuscles')}</SheetTitle>
+          <MuscleChoice
+            selected={form.primaryMuscles}
+            full={form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
+            onToggle={(muscle) =>
+              change({
+                primaryMuscles: toggle(form.primaryMuscles, muscle),
+                secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
+              })
+            }
+          />
+          <Button label={t('common.done')} onPress={close} />
+        </Sheet>
+      ) : null}
+      {open === 'otherMuscles' ? (
+        <Sheet onClose={close}>
+          <SheetTitle>{t('customExercise.otherMuscles')}</SheetTitle>
+          <MuscleChoice
+            selected={form.secondaryMuscles}
+            hidden={form.primaryMuscles}
+            onToggle={(muscle) =>
+              change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })
+            }
+          />
+          <Button label={t('common.done')} onPress={close} />
+        </Sheet>
+      ) : null}
+      {open === 'equipment' ? (
+        <Sheet onClose={close}>
+          <SheetTitle>{t('exercise.equipment')}</SheetTitle>
+          <EquipmentChoice
+            value={form.equipment}
+            onChange={(equipment) => {
+              change({ equipment });
+              close();
+            }}
+          />
+        </Sheet>
+      ) : null}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  line: {
-    flex: 1,
-    height: 1,
-  },
-});

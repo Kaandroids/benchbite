@@ -35,17 +35,33 @@ describe('CreateExerciseScreen', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('Hip thrust');
     const create = screen.getByRole('button', { name: 'Create exercise' });
     expect(create).toBeDisabled();
+    // Says what it waits for.
+    expect(screen.getByText('Still needed: What you log, Main muscles')).toBeTruthy();
 
+    await fireEvent.press(screen.getByRole('button', { name: 'What you log: Choose' }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Weight × reps' }));
-    await fireEvent.press(screen.getAllByRole('button', { name: 'Glutes' })[0]!);
+    // Choosing it closes the sheet and shows it on the form.
+    expect(screen.queryByRole('radio', { name: 'Reps' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'What you log: Weight × reps' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Main muscles: Choose' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Glutes' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByRole('button', { name: 'Main muscles: Glutes' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Other muscles: Choose' }));
     // A main muscle is no longer offered as another one.
-    expect(screen.getAllByRole('button', { name: 'Glutes' })).toHaveLength(1);
-    // The second Hamstrings is among the other muscles.
-    await fireEvent.press(screen.getAllByRole('button', { name: 'Hamstrings' })[1]!);
+    expect(screen.queryByRole('button', { name: 'Glutes' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Hamstrings' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Equipment: Choose' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Machine' }));
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add a step' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add a step' }));
     await fireEvent.changeText(screen.getByLabelText('Step 1'), 'Drive up.');
     expect(screen.getByRole('button', { name: 'Create exercise' })).toBeEnabled();
+
+    expect(screen.queryByText(/Still needed/)).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Create exercise' }));
     expect(mutateAsync).toHaveBeenCalledWith(
@@ -71,8 +87,11 @@ describe('CreateExerciseScreen', () => {
     };
     await render(<CreateExerciseScreen editing={{ id: 'custom-1', form, kindLock: 'logged' }} />);
     expect(screen.getByText('Edit exercise')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'What you log: Weight × reps' }));
     expect(screen.getByRole('radio', { name: 'Reps' })).toBeDisabled();
     expect(screen.getByText('It has been logged, so this stays.')).toBeTruthy();
+    // The sheet's scrim, after the screen's own cross.
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
     // Nothing changed yet, so nothing to save.
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
 
@@ -90,6 +109,7 @@ describe('CreateExerciseScreen', () => {
     await render(
       <CreateExerciseScreen editing={{ id: 'custom-1', form, kindLock: 'inWorkout' }} />,
     );
+    await fireEvent.press(screen.getByRole('button', { name: 'What you log: Reps' }));
     expect(screen.getByRole('radio', { name: 'Reps' })).toBeDisabled();
     expect(
       screen.getByText(

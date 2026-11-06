@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { Card, type CardProps } from '@/components/ui/card';
+import { Card, CardDivider, type CardProps } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
+import { StepArrow } from '@/components/ui/step-arrow';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import {
@@ -249,21 +249,15 @@ export function WeekCard({
 
   return (
     <Card entering={entering}>
-      <View style={[styles.header, { gap: spacing.xs }]}>
+      <View style={[styles.header, { gap: spacing.sm }]}>
         {pages ? (
-          <RoundIconButton
-            icon="left"
-            color="text"
-            background="surface"
-            label={t('today.week.previous')}
-            disabled={!onPrevious}
-            onPress={() => onPrevious?.()}
-          />
+          <StepArrow direction="back" label={t('today.week.previous')} onPress={onPrevious} />
         ) : null}
         <View style={styles.flex}>
           <Text
-            variant="headline"
+            variant="label"
             accessibilityRole="header"
+            align="center"
             numberOfLines={1}
             adjustsFontSizeToFit
           >
@@ -272,7 +266,7 @@ export function WeekCard({
           {progress || onBackToToday ? (
             <View style={[styles.progress, { gap: spacing.sm }]}>
               {progress ? (
-                <Text variant="caption" color="textMuted" style={styles.bold}>
+                <Text variant="caption" color="textMuted" align="center" style={styles.bold}>
                   {progress}
                 </Text>
               ) : null}
@@ -281,23 +275,16 @@ export function WeekCard({
                   icon="calendar"
                   label={t('today.week.backToToday')}
                   onPress={onBackToToday}
-                  align="start"
                 />
               ) : null}
             </View>
           ) : null}
         </View>
         {pages ? (
-          <RoundIconButton
-            icon="forward"
-            color="text"
-            background="surface"
-            label={t('today.week.next')}
-            disabled={!onNext}
-            onPress={() => onNext?.()}
-          />
+          <StepArrow direction="forward" label={t('today.week.next')} onPress={onNext} />
         ) : null}
       </View>
+      <CardDivider />
       <View>
         <View
           // Kept in place while the week loads, so that the card does not change its height.
@@ -352,12 +339,13 @@ export function WeekCard({
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   progress: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'baseline',
+    justifyContent: 'center',
   },
   flex: {
     flex: 1,
