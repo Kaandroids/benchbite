@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useTheme } from '@/theme';
+import { TONES, useTheme, type Tone } from '@/theme';
 
 import { CheckBox } from './check-box';
 import { Icon, type IconName } from './icon';
@@ -20,13 +20,15 @@ const SIZES = {
   regular: { minHeight: 68, tile: 44, icon: 22, padding: 'md' },
   compact: { minHeight: 56, tile: 36, icon: 18, padding: 'sm' },
   /** A tall card, the icon over the title, for two answers side by side. */
-  tile: { minHeight: 112, tile: 48, icon: 24, padding: 'lg' },
+  tile: { minHeight: 128, tile: 72, icon: 44, padding: 'lg' },
 } as const;
 
 type ChoiceCardProps = {
   title: string;
   description?: string;
   icon?: IconName;
+  /** The colours of the icon, and of the card once selected, for answers that should read apart. */
+  tone?: Tone;
   selected: boolean;
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
@@ -44,6 +46,7 @@ export function ChoiceCard({
   title,
   description,
   icon,
+  tone,
   selected,
   onPress,
   type = 'radio',
@@ -52,6 +55,11 @@ export function ChoiceCard({
 }: ChoiceCardProps) {
   const { colors, radii, spacing } = useTheme();
   const size = SIZES[sizeName];
+  // The card's colours: the tone's, or the brand's, whose selected face and idle tile differ.
+  const accentColor = tone ? TONES[tone].color : 'primary';
+  const accent = colors[accentColor];
+  const selectedFace = colors[tone ? TONES[tone].background : 'selected'];
+  const idleTile = colors[tone ? TONES[tone].background : 'iconBackground'];
   const stacked = sizeName === 'tile';
   // Without an icon, the level takes the tile; with one, it follows the text.
   const levelInTile = level && !icon;
@@ -82,7 +90,7 @@ export function ChoiceCard({
         accessibilityState={{ checked: selected }}
         onPress={onPress}
         haptic="selection"
-        ledgeColor={selected ? colors.primary : colors.border}
+        ledgeColor={selected ? accent : colors.border}
         borderRadius={radii.lg}
         faceStyle={[
           styles.face,
@@ -92,11 +100,12 @@ export function ChoiceCard({
             gap: spacing.md,
             paddingVertical: spacing[size.padding],
             paddingHorizontal: spacing.md,
-            backgroundColor: selected ? colors.selected : colors.surface,
-            borderColor: selected ? colors.primary : colors.border,
+            backgroundColor: selected ? selectedFace : colors.surface,
+            borderColor: selected ? accent : colors.border,
           },
         ]}
       >
+        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
         {icon || levelInTile ? (
           <View
             style={[
@@ -105,14 +114,14 @@ export function ChoiceCard({
                 width: size.tile,
                 height: size.tile,
                 borderRadius: radii.md,
-                backgroundColor: selected ? colors.primary : colors.iconBackground,
+                backgroundColor: selected ? accent : idleTile,
               },
             ]}
           >
             {icon ? (
-              <Icon name={icon} size={size.icon} color={selected ? 'onPrimary' : 'primary'} />
+              <Icon name={icon} size={size.icon} color={selected ? 'onPrimary' : accentColor} />
             ) : level ? (
-              <LevelBars value={level.value} of={level.of} inverse={selected} />
+              <LevelBars value={level.value} of={level.of} inverse={selected} color={accentColor} />
             ) : null}
           </View>
         ) : null}
@@ -126,8 +135,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {level && icon ? <LevelBars value={level.value} of={level.of} /> : null}
-        {type === 'checkbox' ? <CheckBox checked={selected} /> : null}
+        {level && icon ? <LevelBars value={level.value} of={level.of} color={accentColor} /> : null}
       </RaisedPressable>
     </Animated.View>
   );

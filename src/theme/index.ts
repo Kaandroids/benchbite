@@ -31,3 +31,5 @@ export function useTheme(): Theme {
 export { ThemeScheme } from './scheme';
 export { fonts, LEDGE_HEIGHT, radii, spacing, typography };
 export type { ColorTokens, TypographyVariant };
+
+export { TONES, type Tone } from './tones';

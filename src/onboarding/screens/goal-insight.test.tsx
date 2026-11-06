@@ -18,7 +18,8 @@ describe('GoalInsightStep', () => {
     expect(screen.getByText('Bench press')).toBeTruthy();
     expect(screen.getByText('Week 12')).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Muscle is built week by week' })).toBeTruthy();
-    expect(screen.getByText(/aim for 7–9 hours/)).toBeTruthy();
+    expect(screen.getByText('Muscle grows while you sleep')).toBeTruthy();
+    expect(screen.getByText('Aim for 7–9 hours.')).toBeTruthy();
   });
 
   it('speaks to the user by name', async () => {

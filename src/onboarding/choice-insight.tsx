@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
+import { TONES, useTheme, type Tone } from '@/theme';
 
 type ChoiceInsightProps = {
   title: string;
@@ -49,17 +49,20 @@ export function ChoiceInsight({ title, choice, empty, children }: ChoiceInsightP
 /** One thing a choice means, with its icon, a label and its value. */
 export function InsightRow({
   icon,
+  tone,
   label,
   value,
 }: {
   icon: IconName;
+  /** The icon's colours; the brand's by default. */
+  tone?: Tone;
   label: string;
   value: string;
 }) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.row, { gap: spacing.md }]}>
-      <IconTile name={icon} size={36} />
+      <IconTile name={icon} size={36} {...(tone && TONES[tone])} />
       <View style={styles.flex}>
         <Text variant="caption" color="textMuted">
           {label}

@@ -127,8 +127,8 @@ export const lightColors: ColorTokens = {
   protein: '#0E9384', // 3.8:1 on surface
   carbs: '#B98000', // 3.4:1 on surface; the brighter #F5B800 had 1.8:1
   fat: '#6E5BD8',
-  breakfast: '#B45309', // 4.5:1 on breakfastBackground
-  breakfastBackground: '#FEF3C7',
+  breakfast: '#B45309', // 4.3:1 on breakfastBackground
+  breakfastBackground: '#FCECC0',
   lunch: '#E05300', // 3.4:1 on lunchBackground
   lunchBackground: '#FFEDE2',
   dinner: '#4F5FD0', // 4.6:1 on dinnerBackground

@@ -1,4 +1,4 @@
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -7,7 +7,7 @@ import { type IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
+import { TONES, useTheme } from '@/theme';
 
 import { AccentTitle, NAME_SLOT } from '../accent-title';
 import { GoalScene } from '../goal-scene';
@@ -15,7 +15,7 @@ import { Stage } from '../stage';
 import type { Goal } from '../types';
 import { useStep } from '../use-step';
 
-/** The tips of each goal, in order, with their icons. */
+/** The tips of each goal, in order, with icons other than those of its scene. */
 const TIPS = {
   lose_fat: [
     { key: 'onboarding.goalInsight.lose_fat.tips.trend', icon: 'chart' },
@@ -30,7 +30,7 @@ const TIPS = {
   get_stronger: [
     { key: 'onboarding.goalInsight.get_stronger.tips.steps', icon: 'trend' },
     { key: 'onboarding.goalInsight.get_stronger.tips.lighter', icon: 'snowflake' },
-    { key: 'onboarding.goalInsight.get_stronger.tips.records', icon: 'trophy' },
+    { key: 'onboarding.goalInsight.get_stronger.tips.records', icon: 'star' },
   ],
   stay_healthy: [
     { key: 'onboarding.goalInsight.stay_healthy.tips.enough', icon: 'dumbbell' },
@@ -38,6 +38,8 @@ const TIPS = {
     { key: 'onboarding.goalInsight.stay_healthy.tips.habits', icon: 'heart' },
   ],
 } as const satisfies Record<Goal, readonly { key: string; icon: IconName }[]>;
+/** The colours of a goal's tips, in order, so that they read apart. */
+const TIP_COLORS = [TONES.dinner, TONES.water, TONES.snack];
 /** The stage's least height: about the tallest scene at three quarters of its size. */
 const STAGE_MIN_HEIGHT = 240;
 /** When the title shows, after the scene has started; each tip follows a moment later. */
@@ -45,7 +47,7 @@ const TITLE_MS = 400;
 const TIP_MS = 150;
 
 /**
- * What the chosen goal looks like in the app, as a scene on a tinted stage like the welcome's, and
+ * What the chosen goal looks like in the app, as a scene on a stage like the welcome's, and
  * what to expect along the way. What the goal sets in the plan is on the goal step already.
  */
 export function GoalInsightStep() {
@@ -68,17 +70,20 @@ export function GoalInsightStep() {
               : t(`onboarding.goalInsight.${goal}.title`)}
           </AccentTitle>
         </Animated.View>
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.md }}>
           {TIPS[goal].map(({ key, icon }, index) => (
             <Animated.View
               key={key}
               entering={FadeInDown.delay(TITLE_MS + TIP_MS * (index + 1)).duration(400)}
               style={[styles.tip, { gap: spacing.md }]}
             >
-              <IconTile name={icon} size={28} />
-              <Text variant="caption" color="textMuted" style={styles.flex}>
-                <Trans i18nKey={key} components={{ strong: <Text variant="captionStrong" /> }} />
-              </Text>
+              <IconTile name={icon} size={40} {...TIP_COLORS[index]} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong">{t(`${key}.title`)}</Text>
+                <Text variant="caption" color="textMuted">
+                  {t(`${key}.note`)}
+                </Text>
+              </View>
             </Animated.View>
           ))}
         </View>

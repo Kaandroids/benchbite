@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 /** The shortest and the tallest bar; the ones between rise evenly. */
 const MIN_BAR = 5;
@@ -13,12 +13,14 @@ type LevelBarsProps = {
   of: number;
   /** On a filled tile, the bars take its foreground colour. */
   inverse?: boolean;
+  /** The bars' colour on a card, the brand's by default. */
+  color?: keyof ColorTokens;
 };
 
 /** A level as rising bars, some filled, like a signal meter. Decorative. */
-export function LevelBars({ value, of, inverse = false }: LevelBarsProps) {
+export function LevelBars({ value, of, inverse = false, color = 'primary' }: LevelBarsProps) {
   const { colors } = useTheme();
-  const on = inverse ? colors.onPrimary : colors.primary;
+  const on = inverse ? colors.onPrimary : colors[color];
   return (
     <View style={styles.bars} accessible={false}>
       {Array.from({ length: of }, (_, index) => (

@@ -1174,9 +1174,18 @@
           "chip": "−{{weight}} a week on average"
         },
         "tips": {
-          "trend": "<strong>Daily ups and downs are normal.</strong> We follow the trend.",
-          "time": "First changes show in <strong>3–4 weeks</strong>.",
-          "weighIn": "<strong>Weigh in</strong> a few times a week for a clear trend."
+          "trend": {
+            "title": "Daily ups and downs are normal",
+            "note": "We follow the trend."
+          },
+          "time": {
+            "title": "First changes in 3–4 weeks",
+            "note": "It takes a little time."
+          },
+          "weighIn": {
+            "title": "Weigh in a few times a week",
+            "note": "That makes the trend clear."
+          }
         }
       },
       "build_muscle": {
@@ -1187,9 +1196,18 @@
           "detail": "Best set, every 4 weeks"
         },
         "tips": {
-          "sleep": "<strong>Sleep</strong> is when muscle grows: aim for 7–9 hours.",
-          "more": "<strong>Add a little</strong> weight or reps when sets feel easy.",
-          "time": "Visible gains take <strong>8–12 weeks</strong>."
+          "sleep": {
+            "title": "Muscle grows while you sleep",
+            "note": "Aim for 7–9 hours."
+          },
+          "more": {
+            "title": "Add a little when sets feel easy",
+            "note": "More weight or more reps."
+          },
+          "time": {
+            "title": "Visible gains take 8–12 weeks",
+            "note": "Keep going week by week."
+          }
         }
       },
       "get_stronger": {
@@ -1201,9 +1219,18 @@
           "chip": "+{{weight}} at a time"
         },
         "tips": {
-          "steps": "<strong>Small jumps</strong> add up to big lifts.",
-          "lighter": "A <strong>lighter week</strong> every 4–6 weeks.",
-          "records": "Every <strong>new best</strong> is marked."
+          "steps": {
+            "title": "Small jumps add up",
+            "note": "They lead to big lifts."
+          },
+          "lighter": {
+            "title": "A lighter week every 4–6 weeks",
+            "note": "It helps you recover."
+          },
+          "records": {
+            "title": "Every new best is marked",
+            "note": "You'll see each one."
+          }
         }
       },
       "stay_healthy": {
@@ -1214,14 +1241,23 @@
           "detail": "3 of 3 workouts done"
         },
         "tips": {
-          "enough": "<strong>2–3 workouts</strong> a week are enough.",
-          "moved": "Missed a day? <strong>Move the workout</strong> to another.",
-          "habits": "Small habits <strong>add up</strong> over time."
+          "enough": {
+            "title": "2–3 workouts a week",
+            "note": "That's enough to stay healthy."
+          },
+          "moved": {
+            "title": "Missed a day?",
+            "note": "Move the workout to another day."
+          },
+          "habits": {
+            "title": "Small habits add up",
+            "note": "Every workout counts."
+          }
         }
       }
     },
     "consent": {
-      "intro": "We need your OK to use a few health details.",
+      "intro": "We need your OK to use a few health details. Without it, we can't build your plan.",
       "what": {
         "title": "What we collect",
         "body": "Your sex, age, height, weight, activity and training."
@@ -1235,13 +1271,7 @@
         "body": "Only you can see it. Withdraw or delete it any time."
       },
       "agree": "I agree that Benchbite processes my health data for these purposes.",
-      "policy": "Read the privacy policy",
-      "whyLink": "Why is this needed?",
-      "needed": {
-        "title": "A personal plan needs your consent",
-        "body": "Without health data, Benchbite can't calculate your targets or build your plan. You can change your mind at any time.",
-        "back": "Back to the consent"
-      }
+      "policy": "Read the privacy policy"
     },
     "units": {
       "kg": "kg",
