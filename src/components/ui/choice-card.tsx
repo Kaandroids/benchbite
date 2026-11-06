@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { CheckBox } from './check-box';
 import { Icon, type IconName } from './icon';
@@ -27,6 +27,8 @@ type ChoiceCardProps = {
   title: string;
   description?: string;
   icon?: IconName;
+  /** The icon's colour and its tile's while not selected; the brand's by default. */
+  iconColors?: { color: keyof ColorTokens; background: keyof ColorTokens };
   selected: boolean;
   onPress: () => void;
   /** `radio` for one answer out of several, `checkbox` when several can be picked. */
@@ -44,6 +46,7 @@ export function ChoiceCard({
   title,
   description,
   icon,
+  iconColors = { color: 'primary', background: 'iconBackground' },
   selected,
   onPress,
   type = 'radio',
@@ -105,12 +108,16 @@ export function ChoiceCard({
                 width: size.tile,
                 height: size.tile,
                 borderRadius: radii.md,
-                backgroundColor: selected ? colors.primary : colors.iconBackground,
+                backgroundColor: selected ? colors.primary : colors[iconColors.background],
               },
             ]}
           >
             {icon ? (
-              <Icon name={icon} size={size.icon} color={selected ? 'onPrimary' : 'primary'} />
+              <Icon
+                name={icon}
+                size={size.icon}
+                color={selected ? 'onPrimary' : iconColors.color}
+              />
             ) : level ? (
               <LevelBars value={level.value} of={level.of} inverse={selected} />
             ) : null}
