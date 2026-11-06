@@ -23,6 +23,10 @@ export type ColorTokens = {
   /** The ledge below a filled button that the face presses down onto. */
   primaryButtonLedge: string;
   onPrimary: string;
+  /** Face of a button that deletes for good, at least 4.5:1 with `onDanger`. */
+  dangerButton: string;
+  dangerButtonLedge: string;
+  onDanger: string;
   /** The user's messages to Bite: a quiet grey beside Bite's cards, with `text` on it. */
   userBubble: string;
   /** Background of a selected card. */
@@ -108,6 +112,9 @@ export const lightColors: ColorTokens = {
   primaryButton: '#F25A00', // 3.4:1 with white
   primaryButtonLedge: '#C24800',
   onPrimary: '#FFFFFF',
+  dangerButton: '#DC2626', // 4.8:1 with white
+  dangerButtonLedge: '#A61B1B',
+  onDanger: '#FFFFFF',
   userBubble: '#ECEDF0', // 15.3:1 with text
   selected: '#FFF2E9',
   iconBackground: '#FFEDE2',
@@ -165,6 +172,9 @@ export const darkColors: ColorTokens = {
   primaryButton: '#FF7F26', // 7.6:1 with onPrimary
   primaryButtonLedge: '#D45A00',
   onPrimary: '#1C0C00',
+  dangerButton: '#F87171', // 6.6:1 with onDanger
+  dangerButtonLedge: '#C94C4C',
+  onDanger: '#2A0A0A',
   userBubble: '#2A2C31', // 12.6:1 with text
   selected: '#24262B',
   iconBackground: '#2A2C31',

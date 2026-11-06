@@ -6,8 +6,11 @@ import { Text } from './text';
 type TextLinkProps = {
   label: string;
   onPress: () => void;
-  /** `primary` for a link to follow, `muted` for a quiet one beside a main button. */
-  tone?: 'primary' | 'muted';
+  /**
+   * `primary` for a link to follow, `muted` for a quiet one beside a main button, `danger` for one
+   * that goes on to delete.
+   */
+  tone?: keyof typeof TONES;
   /** `small` beside captions, `regular` beside body text, such as in a sentence. */
   size?: 'small' | 'regular';
   /** `start` to sit under left-aligned text, such as a field's error. */
@@ -17,6 +20,8 @@ type TextLinkProps = {
   /** Dims the link and ignores presses, as while what it does is running. */
   disabled?: boolean;
 };
+
+const TONES = { primary: 'primaryText', muted: 'textMuted', danger: 'danger' } as const;
 
 /** Reaches past the label to a touch target at least 44 points high, as the guidelines ask. */
 const HIT_SLOP = { top: 10, bottom: 10, left: 8, right: 8 };
@@ -31,7 +36,7 @@ export function TextLink({
   icon,
   disabled = false,
 }: TextLinkProps) {
-  const color = tone === 'primary' ? 'primaryText' : 'textMuted';
+  const color = TONES[tone];
   return (
     <Pressable
       accessibilityRole="button"

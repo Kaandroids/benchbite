@@ -54,7 +54,25 @@
     "logInSubtitle": "Tekrar hoş geldin. Planın ve antrenmanların seni bekliyor.",
     "noAccount": "Henüz hesabın yok mu?",
     "createOne": "Hesap oluştur",
-    "guestDataStays": "Bu telefonda misafir olarak kaydettiklerin bu hesaba taşınmaz. Saklamak istiyorsan bunun yerine hesap oluştur."
+    "guestDataStays": "Bu telefonda misafir olarak kaydettiklerin bu hesaba taşınmaz. Saklamak istiyorsan bunun yerine hesap oluştur.",
+    "delete": {
+      "title": "Hesabın silinsin mi?",
+      "titleGuest": "Verilerin silinsin mi?",
+      "body": "Aşağıdakilerin hepsi kalıcı olarak silinir. Geri getirilemez.",
+      "workouts": "Planın, antrenmanların ve geçmişin",
+      "meals": "Öğünler, tarifler ve kendi besinlerin",
+      "progress": "Kilo, hedefler ve ilerleme",
+      "bite": "Bite ile sohbetler, fotoğraflar ve sesler",
+      "keep": "Hesabımı koru",
+      "keepGuest": "Verilerimi koru",
+      "delete": "Hesabı sil",
+      "deleteGuest": "Verilerimi sil",
+      "sheetTitle": "Kalıcı olarak silinsin mi?",
+      "sheetBody": "Yeni bir misafir olarak baştan başlayabilirsin, ama bunların hiçbiri geri gelmez.",
+      "confirm": "Kalıcı olarak sil",
+      "notNow": "Şimdi değil",
+      "failed": "Silinemedi. Bağlantını kontrol edip tekrar dene."
+    }
   },
   "settings": {
     "title": "Ayarlar",

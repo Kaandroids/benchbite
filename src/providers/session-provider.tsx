@@ -23,6 +23,8 @@ type SessionContextValue = SessionState & {
   retry: () => Promise<void>;
   /** After a session ended, starts over as a new guest. */
   startAgain: () => Promise<void>;
+  /** After the user on this device was deleted, drops their session and starts as a new guest. */
+  leaveDeletedUser: () => Promise<void>;
   /** Signs the account out on this device and starts over as a new guest. */
   signOut: () => Promise<void>;
 };
@@ -98,6 +100,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await startAnonymousSession();
   }, [startAnonymousSession]);
 
+  const leaveDeletedUser = useCallback(async () => {
+    // Forgetting the user makes the session that ends start a new guest. A session left on the
+    // device would open again as a user who no longer exists.
+    rememberUser(null);
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    // Still there, as offline: signing in as a new guest is what replaces it.
+    if (error) {
+      await startAnonymousSession();
+    }
+  }, [startAnonymousSession]);
+
   const signOut = useCallback(async () => {
     // Signing out needs a session that is still valid. One that cannot be refreshed, as offline,
     // fails here and stays signed in, rather than in the middle of signing out.
@@ -123,7 +136,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <SessionContext value={{ ...state, retry: startAnonymousSession, startAgain, signOut }}>
+    <SessionContext
+      value={{ ...state, retry: startAnonymousSession, startAgain, leaveDeletedUser, signOut }}
+    >
       {children}
     </SessionContext>
   );

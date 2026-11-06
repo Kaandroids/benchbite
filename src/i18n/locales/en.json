@@ -54,7 +54,25 @@
     "logInSubtitle": "Welcome back. Your plan and workouts are waiting.",
     "noAccount": "No account yet?",
     "createOne": "Create one",
-    "guestDataStays": "What you saved as a guest on this phone won’t move to this account. To keep it, create an account instead."
+    "guestDataStays": "What you saved as a guest on this phone won’t move to this account. To keep it, create an account instead.",
+    "delete": {
+      "title": "Delete your account?",
+      "titleGuest": "Delete your data?",
+      "body": "Everything below is deleted for good. It can’t be brought back.",
+      "workouts": "Your plan, workouts and history",
+      "meals": "Meals, recipes and your own foods",
+      "progress": "Weight, goals and progress",
+      "bite": "Chats with Bite, photos and voice",
+      "keep": "Keep my account",
+      "keepGuest": "Keep my data",
+      "delete": "Delete account",
+      "deleteGuest": "Delete my data",
+      "sheetTitle": "Delete it for good?",
+      "sheetBody": "You can start again as a new guest, but nothing of this comes back.",
+      "confirm": "Delete for good",
+      "notNow": "Not now",
+      "failed": "We couldn’t delete it. Check your connection and try again."
+    }
   },
   "settings": {
     "title": "Settings",

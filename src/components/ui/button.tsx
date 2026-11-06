@@ -5,7 +5,7 @@ import { useTheme, type ColorTokens } from '@/theme';
 import { RaisedPressable } from './raised-pressable';
 import { Text } from './text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 /** The height, side padding and label of each size; a small button fits in a row beside text. */
 const SIZES = {
@@ -45,6 +45,8 @@ function variantColors(
       return { face: colors.primaryButton, ledge: colors.primaryButtonLedge, label: 'onPrimary' };
     case 'secondary':
       return { face: colors.surface, ledge: colors.border, border: colors.border, label: 'text' };
+    case 'danger':
+      return { face: colors.dangerButton, ledge: colors.dangerButtonLedge, label: 'onDanger' };
     case 'ghost':
       return { face: 'transparent', label: inactive ? 'textMuted' : 'primaryText' };
   }

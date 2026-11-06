@@ -102,3 +102,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0084](0084-what-is-not-chosen-goes-to-the-archive.md)                | What is not chosen goes to the archive                                                  | Accepted                                             |
 | [0085](0085-own-foods-and-recipes-stay-free.md)                       | Own foods and recipes stay free                                                         | Accepted, amended by ADR-0086                        |
 | [0086](0086-what-the-limits-on-own-foods-mean.md)                     | What the limits on own foods mean                                                       | Accepted                                             |
+| [0087](0087-delete-a-user-and-all-that-is-theirs.md)                  | Delete a user and all that is theirs                                                    | Accepted                                             |
