@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, type CardProps } from '@/components/ui/card';
+import { Card, CardDivider, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
@@ -64,6 +64,7 @@ export function TargetsCard({ entering, targets, eaten, day }: TargetsCardProps)
             <Icon name="forward" size={16} color="textMuted" />
           </View>
         </View>
+        <CardDivider />
         {/* The card reads the totals as its label. */}
         <DayTotals targets={targets} eaten={eaten} accessible={false} />
       </Card>
