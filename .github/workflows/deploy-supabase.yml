@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Supabase
 
 # Deploys the database, its settings and the Edge Functions to the hosted Supabase project
 # (ADR 0030). It runs only when started by hand for now; it will follow main once trusted.
@@ -12,7 +12,7 @@ on:
 
 # One deploy at a time, and a started deploy is never cancelled halfway.
 concurrency:
-  group: deploy
+  group: deploy-supabase
   cancel-in-progress: false
 
 permissions:
