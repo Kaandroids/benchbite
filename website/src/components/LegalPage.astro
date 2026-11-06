@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  page: string;
+  title: string;
+  sections: { id: string; title: string; placeholder: string }[];
+};
+
+const { locale, page, title, sections } = Astro.props;
+const { legal } = messagesFor(locale);
+---
+
+<Layout locale={locale} page={page} title={title}>
+  <main>
+    <nav aria-label={legal.onThisPage}>
+      <strong>{legal.onThisPage}</strong>
+      {sections.map((section) => <a href={`#${section.id}`}>{section.title}</a>)}
+    </nav>
+    <article>
+      <div>
+        <h1>{title}</h1>
+        <p class="muted version">
+          {legal.version} <span>{legal.versionPlaceholder}</span>
+        </p>
+      </div>
+      <p class="note">{legal.draft}</p>
+      {
+        sections.map((section) => (
+          <section id={section.id}>
+            <h2 class="section-title">{section.title}</h2>
+            <p class="placeholder">{section.placeholder}</p>
+          </section>
+        ))
+      }
+    </article>
+  </main>
+</Layout>
+
+<style>
+  main {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 72px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 48px;
+  }
+
+  nav {
+    flex: 1 1 220px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 16px;
+  }
+
+  nav strong {
+    font-weight: 900;
+  }
+
+  nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--primary-text);
+  }
+
+  article {
+    flex: 999 1 560px;
+    min-width: 0;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .version {
+    margin-top: 8px;
+  }
+
+  .version span {
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: var(--warning-background);
+    color: var(--text);
+  }
+
+  section {
+    scroll-margin-top: 16px;
+  }
+</style>
