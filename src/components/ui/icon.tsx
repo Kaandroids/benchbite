@@ -62,7 +62,7 @@ export const ICONS = {
   redo: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
   scale: { ios: 'scalemass', android: 'monitor_weight', web: 'monitor_weight' },
   seated: {
-    ios: 'figure.seated.side.left',
+    ios: 'figure.seated.side',
     android: 'airline_seat_recline_normal',
     web: 'airline_seat_recline_normal',
   },
