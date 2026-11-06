@@ -14,12 +14,12 @@ jest.mock('@/providers/session-provider', () => ({
   useIsAccount: jest.fn(),
 }));
 
-const startAgain = jest.fn();
+const leaveDeletedUser = jest.fn();
 
 function given(isAccount: boolean) {
   jest.mocked(useIsAccount).mockReturnValue(isAccount);
   const value = sessionValue('user-1', { isAnonymous: !isAccount });
-  jest.mocked(useSession).mockReturnValue({ ...value, startAgain });
+  jest.mocked(useSession).mockReturnValue({ ...value, leaveDeletedUser });
 }
 
 beforeEach(() => {
@@ -57,8 +57,8 @@ it('asks once more before deleting, and starts over as a new guest', async () =>
 
   await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 
-  expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', { method: 'POST' });
-  await waitFor(() => expect(startAgain).toHaveBeenCalled());
+  expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account');
+  await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
 });
 
 it('deletes nothing when the last question is declined', async () => {
@@ -83,6 +83,6 @@ it('stays when deleting fails, and says so', async () => {
   expect(
     await screen.findByText('We couldn’t delete it. Check your connection and try again.'),
   ).toBeOnTheScreen();
-  expect(startAgain).not.toHaveBeenCalled();
+  expect(leaveDeletedUser).not.toHaveBeenCalled();
   expect(screen.queryByRole('button', { name: 'Delete for good' })).toBeNull();
 });

@@ -73,16 +73,16 @@ describe('AccountSection', () => {
       ),
     );
   });
-});
 
-it.each([
-  [true, 'Delete account'],
-  [false, 'Delete my data'],
-])('opens deleting from the section, as an account: %s', async (isAccount, label) => {
-  given(isAccount);
-  await render(<AccountSection />);
+  it.each([
+    [true, 'Delete account'],
+    [false, 'Delete my data'],
+  ])('opens deleting from the section, as an account: %s', async (isAccount, label) => {
+    given(isAccount);
+    await render(<AccountSection />);
 
-  await fireEvent.press(screen.getByRole('button', { name: label }));
+    await fireEvent.press(screen.getByRole('button', { name: label }));
 
-  expect(router.push).toHaveBeenCalledWith('/account/delete');
+    expect(router.push).toHaveBeenCalledWith('/account/delete');
+  });
 });

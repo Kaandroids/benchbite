@@ -5,23 +5,28 @@ import { StyleSheet, View } from 'react-native';
 
 import { BiteSheet } from '@/coach/bite-sheet';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, listDivider } from '@/components/ui/card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useIsAccount } from '@/providers/session-provider';
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { useDeleteAccount } from './account';
 
 /** What goes, as the user knows it; the database deletes the rest with them. */
-const WHAT_GOES: { key: 'workouts' | 'meals' | 'progress' | 'bite'; icon: IconName }[] = [
-  { key: 'workouts', icon: 'dumbbell' },
-  { key: 'meals', icon: 'meal' },
-  { key: 'progress', icon: 'chart' },
-  { key: 'bite', icon: 'chat' },
+const WHAT_GOES: {
+  key: 'workouts' | 'meals' | 'progress' | 'bite';
+  icon: IconName;
+  color: keyof ColorTokens;
+  background: keyof ColorTokens;
+}[] = [
+  { key: 'workouts', icon: 'dumbbell', color: 'lunch', background: 'lunchBackground' },
+  { key: 'meals', icon: 'meal', color: 'breakfast', background: 'breakfastBackground' },
+  { key: 'progress', icon: 'chart', color: 'water', background: 'waterBackground' },
+  { key: 'bite', icon: 'chat', color: 'dinner', background: 'dinnerBackground' },
 ];
 
 /**
@@ -38,9 +43,7 @@ export function DeleteAccountScreen() {
 
   return (
     <Screen
-      onBack={() => {
-        if (!deleting) router.back();
-      }}
+      onBack={() => router.back()}
       footer={
         <View style={{ gap: spacing.md }}>
           {deleteAccount.isError ? (
@@ -68,20 +71,16 @@ export function DeleteAccountScreen() {
         <Text color="textMuted">{t('account.delete.body')}</Text>
       </View>
       <Card list style={{ marginTop: spacing.xl }}>
-        {WHAT_GOES.map(({ key, icon }, index) => (
+        {WHAT_GOES.map(({ key, icon, color, background }, index) => (
           <View
             key={key}
             style={[
               styles.row,
-              {
-                gap: spacing.md,
-                paddingVertical: spacing.sm,
-                borderTopWidth: index === 0 ? 0 : StyleSheet.hairlineWidth,
-                borderTopColor: colors.border,
-              },
+              { gap: spacing.md, paddingVertical: spacing.sm },
+              listDivider(index === 0, colors.border),
             ]}
           >
-            <IconTile name={icon} size={36} color="textMuted" background="track" />
+            <IconTile name={icon} size={36} color={color} background={background} />
             <Text variant="label" style={styles.flex}>
               {t(`account.delete.${key}`)}
             </Text>
