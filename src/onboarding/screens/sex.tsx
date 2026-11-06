@@ -71,14 +71,14 @@ export function SexStep() {
         <Caption>{t('onboarding.sex.why')}</Caption>
         <Reason
           icon="flame"
-          color="lunch"
-          background="lunchBackground"
+          color="breakfast"
+          background="breakfastBackground"
           text={t('onboarding.sex.burn')}
         />
         <Reason
           icon="check"
-          color="water"
-          background="waterBackground"
+          color="lunch"
+          background="lunchBackground"
           text={t('onboarding.sex.only')}
         />
       </Card>
