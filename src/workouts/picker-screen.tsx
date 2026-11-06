@@ -139,7 +139,8 @@ export function PickerScreen() {
         >
           <Icon name="close" color="textMuted" />
         </Pressable>
-        <View style={styles.title}>
+        {/* Centred, as the button at the end reaches further in than the cross at the start. */}
+        <View style={[styles.title, { paddingLeft: spacing.sm }]}>
           <ScreenTitle title={t('picker.title')} />
         </View>
         {/* In line with the search field below, whose side is wider than the bar's. */}
