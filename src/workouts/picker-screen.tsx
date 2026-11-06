@@ -13,9 +13,10 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
-import { closeThen, Sheet } from '@/components/ui/sheet';
+import { closeThen, Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useExerciseCaption } from '@/exercises/caption';
+import { exerciseDetailsRoute, exerciseHistoryRoute } from '@/exercises/routes';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import {
@@ -33,6 +34,15 @@ import { useWorkoutLimits } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
 const ROW_HEIGHT = 84;
+const CARD_GAP = 8;
+/** The options button, which stands over the card's end, and the room the words leave for it. */
+const OPTIONS_WIDTH = 28;
+const OPTIONS_INSET = 8;
+const OPTIONS_ROOM = OPTIONS_WIDTH + 4;
+/** The top bar's ends, as wide as each other, so that the title is in the middle. */
+const BAR_END = 52;
+/** A name and caption fit the fixed height of a card up to this font scale. */
+const MAX_TEXT_SCALE = 1.2;
 const THUMBNAIL = 60;
 
 /**
@@ -56,16 +66,19 @@ export function PickerScreen() {
 
   // How many more the workout has room for; the rest of the library waits until one is unchosen.
   const room = (limits.data?.exercises ?? 0) - (draft?.exercises.length ?? 0);
+  const roomKnown = limits.data !== undefined;
   const full = chosen.length >= room;
 
   // An exercise just created on its own screen is chosen on coming back, if there is room.
   useFocusEffect(
     useCallback(() => {
+      // Kept until there is room to tell; the top bar's + does not wait for the limits.
+      if (!roomKnown) return;
       const created = takeCreatedExercise();
       if (created) {
         setChosen((current) => (current.length < room ? [...current, created] : current));
       }
-    }, [room]),
+    }, [room, roomKnown]),
   );
 
   const openCreate = (name?: string) =>
@@ -120,11 +133,16 @@ export function PickerScreen() {
               </View>
             ) : null}
           </View>
-          <View style={styles.text}>
-            <Text variant="bodyStrong" numberOfLines={2} style={styles.name}>
+          <View style={styles.words}>
+            <Text variant="bodyStrong" numberOfLines={2} maxFontSizeMultiplier={MAX_TEXT_SCALE}>
               {item.name}
             </Text>
-            <Text variant="caption" color="textMuted" numberOfLines={1}>
+            <Text
+              variant="caption"
+              color="textMuted"
+              numberOfLines={1}
+              maxFontSizeMultiplier={MAX_TEXT_SCALE}
+            >
               {detail}
             </Text>
           </View>
@@ -160,20 +178,21 @@ export function PickerScreen() {
       edges={['top', 'bottom']}
     >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          onPress={() => router.back()}
-          style={styles.close}
-        >
-          <Icon name="close" color="textMuted" />
-        </Pressable>
-        {/* Centred, as the button at the end reaches further in than the cross at the start. */}
-        <View style={[styles.title, { paddingLeft: spacing.sm }]}>
+        <View style={styles.barEnd}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            onPress={() => router.back()}
+            style={styles.close}
+          >
+            <Icon name="close" color="textMuted" />
+          </Pressable>
+        </View>
+        <View style={styles.title}>
           <ScreenTitle title={t('picker.title')} />
         </View>
-        {/* In line with the search field below, whose side is wider than the bar's. */}
-        <View style={{ marginRight: spacing.xl - spacing.md }}>
+        {/* What is left of its end lines it up with the search field below. */}
+        <View style={styles.barEnd}>
           <RoundIconButton
             icon="plus"
             color="onPrimary"
@@ -299,7 +318,6 @@ function ExerciseOptions({
 }) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const params = { id: exercise.id };
   const options = [
     {
       key: 'details',
@@ -307,7 +325,7 @@ function ExerciseOptions({
       color: 'info',
       background: 'infoBackground',
       label: t('picker.details'),
-      open: () => router.push({ pathname: '/workout/exercise/[id]', params }),
+      open: () => router.push(exerciseDetailsRoute(exercise.id)),
     },
     {
       key: 'progress',
@@ -315,14 +333,12 @@ function ExerciseOptions({
       color: 'dinner',
       background: 'dinnerBackground',
       label: t('picker.progress'),
-      open: () => router.push({ pathname: '/workout/exercise/history', params }),
+      open: () => router.push(exerciseHistoryRoute(exercise.id)),
     },
   ] as const;
   return (
     <Sheet onClose={onClose}>
-      <Text variant="headline" accessibilityRole="header">
-        {exercise.name}
-      </Text>
+      <SheetTitle>{exercise.name}</SheetTitle>
       <Card list>
         {options.map(({ key, icon, color, background, label, open }, index) => (
           <Pressable
@@ -364,6 +380,9 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
   },
+  barEnd: {
+    width: BAR_END,
+  },
   close: {
     width: 44,
     height: 44,
@@ -371,7 +390,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreButton: {
-    width: 28,
+    width: OPTIONS_WIDTH,
     height: 44,
     borderWidth: 1,
     alignItems: 'center',
@@ -387,15 +406,15 @@ const styles = StyleSheet.create({
   },
   more: {
     position: 'absolute',
-    right: 8,
+    right: OPTIONS_INSET,
     top: 0,
-    bottom: 8,
+    bottom: CARD_GAP,
     justifyContent: 'center',
   },
   // The card, with the gap to the next one under it.
   row: {
     height: ROW_HEIGHT,
-    paddingBottom: 8,
+    paddingBottom: CARD_GAP,
   },
   choice: {
     flex: 1,
@@ -406,9 +425,10 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
   },
-  // Clear of the button in the card's corner.
-  name: {
-    paddingRight: 32,
+  // Clear of the options button over the card's end.
+  words: {
+    flex: 1,
+    paddingRight: OPTIONS_ROOM,
   },
   check: {
     position: 'absolute',

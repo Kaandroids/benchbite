@@ -159,6 +159,17 @@ describe('PickerScreen', () => {
     expect(screen.getByRole('button', { name: 'Add 1 exercise' })).toBeTruthy();
   });
 
+  it('keeps an exercise just created until the limits have loaded', async () => {
+    setCreatedExercise(exercise('hip', 'Hip thrust', { custom: true }));
+    jest.mocked(useWorkoutLimits).mockReturnValue({ data: undefined } as never);
+    await render(<PickerScreen />);
+    expect(screen.queryByRole('button', { name: 'Add 1 exercise' })).toBeNull();
+
+    jest.mocked(useWorkoutLimits).mockReturnValue(loaded({ exercises: 10, workouts: 5 }) as never);
+    await screen.rerender(<PickerScreen />);
+    expect(screen.getByRole('button', { name: 'Add 1 exercise' })).toBeTruthy();
+  });
+
   it("creates an exercise and filters the user's own", async () => {
     jest
       .mocked(useExerciseLibrary)

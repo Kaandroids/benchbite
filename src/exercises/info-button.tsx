@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 
+import { exerciseDetailsRoute } from './routes';
+
 type InfoButtonProps = {
   exerciseId: string;
   exerciseName: string;
@@ -31,10 +33,7 @@ export function InfoButton({
       label={t('exercise.details', { name: exerciseName })}
       onPress={() => {
         onOpen?.();
-        router.push({
-          pathname: inSession ? '/session/exercise/[id]' : '/workout/exercise/[id]',
-          params: { id: exerciseId },
-        });
+        router.push(exerciseDetailsRoute(exerciseId, inSession));
       }}
     />
   );
