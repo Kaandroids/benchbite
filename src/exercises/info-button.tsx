@@ -13,6 +13,8 @@ type InfoButtonProps = {
   inSession?: boolean;
   /** Called before the details open, for example to close a sheet. */
   onOpen?: () => void;
+  /** The button's width and height, for a row that needs it to match a picture. */
+  size?: number;
 };
 
 /** A small blue "i" that opens how to do an exercise. */
@@ -21,6 +23,7 @@ export function InfoButton({
   exerciseName,
   inSession = false,
   onOpen,
+  size,
 }: InfoButtonProps) {
   const { t } = useTranslation();
   return (
@@ -28,6 +31,7 @@ export function InfoButton({
       icon="info"
       color="info"
       background="infoBackground"
+      size={size}
       label={t('exercise.details', { name: exerciseName })}
       onPress={() => {
         onOpen?.();

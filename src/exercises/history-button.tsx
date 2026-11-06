@@ -13,21 +13,25 @@ type HistoryButtonProps = {
   inSession?: boolean;
   /** Called before the history opens, for example to close a sheet. */
   onOpen?: () => void;
+  /** The button's width and height, for a row that needs it to match a picture. */
+  size?: number;
 };
 
-/** A small grey chart that opens an exercise's records and progress. */
+/** A small teal chart that opens an exercise's records and progress. */
 export function HistoryButton({
   exerciseId,
   exerciseName,
   inSession = false,
   onOpen,
+  size,
 }: HistoryButtonProps) {
   const { t } = useTranslation();
   return (
     <RoundIconButton
       icon="trend"
-      color="textMuted"
-      background="track"
+      color="water"
+      background="waterBackground"
+      size={size}
       label={t('exercise.history', { name: exerciseName })}
       onPress={() => {
         onOpen?.();

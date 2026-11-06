@@ -31,7 +31,10 @@ import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
-const ROW_HEIGHT = 73;
+const ROW_HEIGHT = 81;
+/** The picture's size; the two buttons beside it, and the gap between them, add up to it. */
+const THUMBNAIL = 64;
+const BUTTON = 30;
 
 /**
  * Searches the library and the user's own exercises, and adds the chosen ones to the workout
@@ -86,10 +89,9 @@ export function PickerScreen() {
     const detail = caption(item);
     return (
       <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
-        {/* Two buttons fit the row's height only a little apart. */}
         <View style={{ gap: spacing.xs }}>
-          <InfoButton exerciseId={item.id} exerciseName={item.name} />
-          <HistoryButton exerciseId={item.id} exerciseName={item.name} />
+          <InfoButton exerciseId={item.id} exerciseName={item.name} size={BUTTON} />
+          <HistoryButton exerciseId={item.id} exerciseName={item.name} size={BUTTON} />
         </View>
         <Pressable
           accessibilityRole="checkbox"
@@ -99,7 +101,7 @@ export function PickerScreen() {
           onPress={() => toggle(item)}
           style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
         >
-          <ExerciseThumbnail path={thumbnailOf(item)} size={52} name={item.name} />
+          <ExerciseThumbnail path={thumbnailOf(item)} size={THUMBNAIL} name={item.name} />
           <View style={styles.text}>
             <Text variant="bodyStrong" numberOfLines={2}>
               {item.name}
