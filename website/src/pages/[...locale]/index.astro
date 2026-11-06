@@ -1,0 +1,320 @@
+---
+import DaySection from '../../components/DaySection.astro';
+import Layout from '../../layouts/Layout.astro';
+import { localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { hero, day } = messagesFor(locale);
+
+const INK = '#16171a';
+
+// The day's colours are the app's meal colours.
+const PLAN = { band: '#fce7f0', text: INK, time: '#c2346f' };
+const BREAKFAST = { band: '#fcecc0', text: INK, time: '#b45309' };
+const LUNCH = { band: '#ffede2', text: INK, time: '#c2410c' };
+const WORKOUT = { band: INK, text: '#ffffff', time: '#4fd1c5' };
+const PROGRESS = { band: '#e8ebfb', text: INK, time: '#4f5fd0' };
+
+const hours = [
+  { id: 'plan', time: '06:45', color: '#f28ab7', nav: day.plan.nav },
+  { id: 'breakfast', time: '07:30', color: '#f5b54a', nav: day.breakfast.nav },
+  { id: 'lunch', time: '12:30', color: '#ff7f26', nav: day.lunch.nav },
+  { id: 'workout', time: '18:00', color: '#4fd1c5', nav: day.workout.nav },
+  { id: 'progress', time: '22:00', color: '#9aa6f5', nav: day.progress.nav },
+];
+---
+
+<Layout locale={locale} brandHeader>
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>{hero.title.map((part) => <span>{part}</span>)}</h1>
+          <p class="intro">{hero.text}</p>
+          <p class="soon">{hero.soon}</p>
+        </div>
+        <div class="hero-bite">
+          <p class="bubble">{hero.greeting}<br />{hero.promise}</p>
+          <img src="/images/bite-happy.svg" alt={hero.biteAlt} width="760" height="679" />
+        </div>
+      </div>
+    </section>
+
+    <nav class="hours" aria-label={day.label}>
+      {
+        hours.map((hour) => (
+          <a href={`#${hour.id}`}>
+            <span style={`color: ${hour.color}`}>{hour.time}</span> {hour.nav}
+          </a>
+        ))
+      }
+    </nav>
+
+    <DaySection
+      id="plan"
+      time="06:45"
+      bite="thinking"
+      title={day.plan.title}
+      text={day.plan.text}
+      colors={PLAN}
+    >
+      <ul class="chips" slot="after-text">
+        {day.plan.chips.map((chip) => <li>{chip}</li>)}
+      </ul>
+      <div class="chat">
+        <p class="you">{day.plan.you}</p>
+        <p class="reply">{day.plan.bite}</p>
+        <div class="proposal">
+          <strong>{day.plan.cardTitle}</strong>
+          <span class="meta">{day.plan.cardMeta}</span>
+          <div class="actions">
+            <span class="add">{day.plan.cardAdd}</span>
+            <span class="edit">{day.plan.cardEdit}</span>
+          </div>
+        </div>
+      </div>
+    </DaySection>
+
+    <DaySection
+      id="breakfast"
+      time="07:30"
+      bite="neutral"
+      title={day.breakfast.title}
+      text={day.breakfast.text}
+      colors={BREAKFAST}
+      image="/images/nutrition.png"
+      alt={day.breakfast.alt}
+    />
+
+    <DaySection
+      id="lunch"
+      time="12:30"
+      bite="thinking"
+      title={day.lunch.title}
+      text={day.lunch.text}
+      colors={LUNCH}
+      image="/images/bite.png"
+      alt={day.lunch.alt}
+      flip
+    />
+
+    <DaySection
+      id="workout"
+      time="18:00"
+      bite="surprised"
+      title={day.workout.title}
+      text={day.workout.text}
+      colors={WORKOUT}
+      image="/images/workout-active.png"
+      alt={day.workout.alt}
+    />
+
+    <DaySection
+      id="progress"
+      time="22:00"
+      bite="happy"
+      title={day.progress.title}
+      text={day.progress.text}
+      colors={PROGRESS}
+      image="/images/progress.png"
+      alt={day.progress.alt}
+      flip
+    />
+  </main>
+</Layout>
+
+<style>
+  main {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .hero {
+    overflow: hidden;
+    padding: 0 clamp(20px, 5vw, 72px);
+    background: var(--brand);
+    color: var(--ink);
+  }
+
+  .hero-content {
+    max-width: 1136px;
+    margin: 0 auto;
+    padding-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .hero-text {
+    flex: 1 1 680px;
+    min-width: 0;
+    padding-bottom: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  h1 {
+    font-size: clamp(46px, 7.6vw, 104px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: #ffffff;
+  }
+
+  h1 span {
+    display: block;
+  }
+
+  .intro {
+    max-width: 480px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .soon {
+    padding: 14px 22px;
+    border-radius: 16px;
+    background: var(--ink);
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  .hero-bite {
+    flex: 1 1 400px;
+    min-width: 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .hero-bite img {
+    width: 125%;
+    max-width: 760px;
+    height: auto;
+    margin-bottom: -16%;
+  }
+
+  .bubble {
+    position: absolute;
+    bottom: calc(100% - 16px);
+    left: 0;
+    z-index: 1;
+    padding: 14px 20px;
+    border-radius: 22px 22px 22px 4px;
+    background: #ffffff;
+    font-size: 21px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .hours {
+    padding: 18px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px clamp(20px, 4vw, 56px);
+    background: var(--ink);
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 900;
+  }
+
+  .hours a {
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .chips {
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chips li {
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #ffffff;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .chat {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 18px;
+    line-height: 1.32;
+  }
+
+  .you,
+  .reply {
+    max-width: 85%;
+    padding: 14px 18px;
+  }
+
+  .you {
+    align-self: flex-end;
+    border-radius: 22px 22px 6px 22px;
+    background: var(--ink);
+    color: #ffffff;
+  }
+
+  .reply {
+    align-self: flex-start;
+    border-radius: 22px 22px 22px 6px;
+    background: #ffffff;
+  }
+
+  .proposal {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 2px solid #e3e4e8;
+  }
+
+  .proposal strong {
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+
+  .meta {
+    color: #676a72;
+  }
+
+  .actions {
+    padding-top: 6px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .add,
+  .edit {
+    padding: 12px 18px;
+    border-radius: 14px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .add {
+    flex-grow: 1;
+    background: #f25a00;
+    box-shadow: 0 3px 0 #c24800;
+    color: #ffffff;
+  }
+
+  .edit {
+    border: 2px solid #e3e4e8;
+  }
+</style>
