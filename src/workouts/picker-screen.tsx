@@ -142,14 +142,17 @@ export function PickerScreen() {
         <View style={styles.title}>
           <ScreenTitle title={t('picker.title')} />
         </View>
-        <RoundIconButton
-          icon="plus"
-          color="onPrimary"
-          background="primaryButton"
-          label={t('customExercise.createRow')}
-          size={40}
-          onPress={() => openCreate()}
-        />
+        {/* In line with the search field below, whose side is wider than the bar's. */}
+        <View style={{ marginRight: spacing.xl - spacing.md }}>
+          <RoundIconButton
+            icon="plus"
+            color="onPrimary"
+            background="primaryButton"
+            label={t('customExercise.createRow')}
+            size={40}
+            onPress={() => openCreate()}
+          />
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
