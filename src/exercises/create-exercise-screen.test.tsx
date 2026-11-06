@@ -55,7 +55,7 @@ describe('CreateExerciseScreen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Equipment: Choose' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Machine' }));
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add a step' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add a step' }));
     await fireEvent.changeText(screen.getByLabelText('Step 1'), 'Drive up.');
     expect(screen.getByRole('button', { name: 'Create exercise' })).toBeEnabled();
 

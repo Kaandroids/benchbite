@@ -1731,7 +1731,7 @@
     "otherMuscles": "Other muscles",
     "step": "Step {{number}}",
     "removeStep": "Remove step {{number}}",
-    "addStep": "+ Add a step",
+    "addStep": "Add a step",
     "create": "Create exercise",
     "saveErrorTitle": "Not created",
     "saveError": "We couldn't create the exercise. Check your connection and try again.",

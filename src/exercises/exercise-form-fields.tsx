@@ -194,7 +194,7 @@ export function PhotosField({
                 </>
               ) : (
                 <>
-                  <Icon name="camera" size={26} color="textMuted" />
+                  <Icon name="camera" size={22} color="textMuted" />
                   <Text variant="captionStrong" color="textMuted">
                     {name}
                   </Text>
@@ -226,8 +226,8 @@ export function StepsField({
     <>
       {steps.map((step, index) => (
         <View key={index} style={[styles.step, { gap: spacing.sm }]}>
-          <View style={[styles.number, { backgroundColor: colors.iconBackground }]}>
-            <Text variant="captionStrong" color="primaryText">
+          <View style={[styles.number, { backgroundColor: colors.track }]}>
+            <Text variant="captionStrong" color="textMuted">
               {index + 1}
             </Text>
           </View>
@@ -257,13 +257,15 @@ export function StepsField({
           style={[
             styles.addStep,
             {
-              borderRadius: radii.full,
-              backgroundColor: colors.iconBackground,
-              paddingHorizontal: spacing.md,
+              gap: spacing.sm,
+              borderRadius: radii.md,
+              borderColor: colors.placeholder,
+              backgroundColor: colors.surface,
             },
           ]}
         >
-          <Text variant="captionStrong" color="primaryText">
+          <Icon name="plus" size={18} color="textMuted" />
+          <Text variant="captionStrong" color="textMuted">
             {t('customExercise.addStep')}
           </Text>
         </Pressable>
@@ -296,7 +298,7 @@ const styles = StyleSheet.create({
   },
   photo: {
     flex: 1,
-    aspectRatio: 1,
+    height: 104,
     borderWidth: 1.5,
     overflow: 'hidden',
     alignItems: 'center',
@@ -332,9 +334,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Dashed like the photos' empty frames, as what is not there yet.
   addStep: {
-    alignSelf: 'flex-start',
-    height: 40,
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
   },
 });

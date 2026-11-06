@@ -1731,7 +1731,7 @@
     "otherMuscles": "Weitere Muskeln",
     "step": "Schritt {{number}}",
     "removeStep": "Schritt {{number}} entfernen",
-    "addStep": "+ Schritt hinzufügen",
+    "addStep": "Schritt hinzufügen",
     "create": "Übung erstellen",
     "saveErrorTitle": "Nicht erstellt",
     "saveError": "Wir konnten die Übung nicht erstellen. Prüfe deine Verbindung und versuche es noch einmal.",

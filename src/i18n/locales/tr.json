@@ -1731,7 +1731,7 @@
     "otherMuscles": "Diğer kaslar",
     "step": "Adım {{number}}",
     "removeStep": "{{number}}. adımı kaldır",
-    "addStep": "+ Adım ekle",
+    "addStep": "Adım ekle",
     "create": "Hareketi oluştur",
     "saveErrorTitle": "Oluşturulamadı",
     "saveError": "Hareketi oluşturamadık. Bağlantını kontrol edip tekrar dene.",
