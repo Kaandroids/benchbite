@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 
 import { setCreatedExercise } from '@/exercises/custom';
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { fireEvent, render, screen } from '@/test/render';
+import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { addExercises, useDraft } from './draft';
 import { PickerScreen } from './picker-screen';
@@ -140,13 +140,18 @@ describe('PickerScreen', () => {
     expect(screen.getByRole('checkbox', { name: 'Rowing' })).toBeEnabled();
   });
 
-  it('opens an exercise’s details', async () => {
+  it.each([
+    ['Details', '/workout/exercise/[id]'],
+    ['Records and progress', '/workout/exercise/history'],
+  ])('opens %s of an exercise from its card', async (option, pathname) => {
     await render(<PickerScreen />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Details of Bench press' }));
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/workout/exercise/[id]',
-      params: { id: 'bench' },
-    });
+    await fireEvent.press(screen.getByRole('button', { name: 'More about Bench press' }));
+    await fireEvent.press(screen.getByRole('button', { name: new RegExp(option) }));
+    // Once the sheet has closed.
+    await waitFor(() =>
+      expect(router.push).toHaveBeenCalledWith({ pathname, params: { id: 'bench' } }),
+    );
+  });
   });
 
   it('chooses an exercise just created on coming back', async () => {

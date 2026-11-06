@@ -984,7 +984,10 @@
       "core": "Karın",
       "cardio": "Kardiyo"
     },
-    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir."
+    "limit": "Bir antrenmanda en fazla {{max}} egzersiz olabilir.",
+    "more": "{{name}} hakkında daha fazla",
+    "details": "Detaylar",
+    "progress": "Rekorlar ve ilerleme"
   },
   "editor": {
     "newTitle": "Yeni antrenman",

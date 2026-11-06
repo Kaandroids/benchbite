@@ -984,7 +984,10 @@
       "core": "Core",
       "cardio": "Cardio"
     },
-    "limit": "Workouts can have up to {{max}} exercises."
+    "limit": "Workouts can have up to {{max}} exercises.",
+    "more": "More about {{name}}",
+    "details": "Details",
+    "progress": "Records and progress"
   },
   "editor": {
     "newTitle": "New workout",

@@ -6,17 +6,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { allLoaded, LoadState } from '@/components/load-state';
 import { Button } from '@/components/ui/button';
+import { Card, listDivider } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Icon } from '@/components/ui/icon';
+import { IconTile } from '@/components/ui/icon-tile';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { ScreenTitle } from '@/components/ui/screen-title';
 import { SearchField } from '@/components/ui/search-field';
+import { closeThen, Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
+import { TopBarButton } from '@/components/ui/top-bar-button';
 import { useExerciseCaption } from '@/exercises/caption';
 import { takeCreatedExercise } from '@/exercises/custom';
 import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
-import { HistoryButton } from '@/exercises/history-button';
-import { InfoButton } from '@/exercises/info-button';
 import {
   filterExercises,
   MUSCLE_GROUPS,
@@ -31,10 +33,8 @@ import { addExercises, useDraft } from './draft';
 import { useWorkoutLimits } from './workouts';
 
 const FILTERS: ExerciseFilter[] = [...(Object.keys(MUSCLE_GROUPS) as ExerciseFilter[]), 'cardio'];
-const ROW_HEIGHT = 81;
-/** The picture's size; the two buttons beside it, and the gap between them, add up to it. */
-const THUMBNAIL = 64;
-const BUTTON = 30;
+const ROW_HEIGHT = 84;
+const THUMBNAIL = 60;
 
 /**
  * Searches the library and the user's own exercises, and adds the chosen ones to the workout
@@ -51,6 +51,7 @@ export function PickerScreen() {
   const [filter, setFilter] = useState<ExerciseFilter | null>(null);
   // In the order they were chosen, which is the order they are added in.
   const [chosen, setChosen] = useState<LibraryExercise[]>([]);
+  const [optionsOf, setOptionsOf] = useState<LibraryExercise | null>(null);
   const results = library.data ? filterExercises(library.data, query, filter, i18n.language) : [];
   const hasOwn = library.data?.some((exercise) => exercise.custom && !exercise.archived) ?? false;
 
@@ -88,39 +89,55 @@ export function PickerScreen() {
     const disabled = full && !selected;
     const detail = caption(item);
     return (
-      <View style={[styles.row, { gap: spacing.sm, borderTopColor: colors.border }]}>
-        <View style={{ gap: spacing.xs }}>
-          <InfoButton exerciseId={item.id} exerciseName={item.name} size={BUTTON} />
-          <HistoryButton exerciseId={item.id} exerciseName={item.name} size={BUTTON} />
-        </View>
+      <View style={styles.row}>
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected, disabled }}
           accessibilityLabel={item.name}
           disabled={disabled}
           onPress={() => toggle(item)}
-          style={[styles.choice, { gap: spacing.md, opacity: disabled ? 0.4 : 1 }]}
+          style={[
+            styles.choice,
+            {
+              gap: spacing.md,
+              padding: spacing.sm,
+              borderRadius: radii.lg,
+              borderColor: selected ? colors.primary : colors.border,
+              backgroundColor: selected ? colors.selected : colors.surface,
+              opacity: disabled ? 0.4 : 1,
+            },
+          ]}
         >
-          <ExerciseThumbnail path={thumbnailOf(item)} size={THUMBNAIL} name={item.name} />
+          <View>
+            <ExerciseThumbnail path={thumbnailOf(item)} size={THUMBNAIL} name={item.name} />
+            {selected ? (
+              <View
+                style={[
+                  styles.check,
+                  { backgroundColor: colors.primaryButton, borderColor: colors.selected },
+                ]}
+              >
+                <Icon name="check" size={12} color="onPrimary" />
+              </View>
+            ) : null}
+          </View>
           <View style={styles.text}>
-            <Text variant="bodyStrong" numberOfLines={2}>
+            <Text variant="bodyStrong" numberOfLines={2} style={styles.name}>
               {item.name}
             </Text>
-            <Text variant="caption" color="textMuted">
+            <Text variant="caption" color="textMuted" numberOfLines={1}>
               {detail}
             </Text>
           </View>
-          <View
-            style={[
-              styles.check,
-              selected
-                ? { backgroundColor: colors.primaryButton, borderColor: colors.primaryButton }
-                : { borderColor: colors.border },
-            ]}
-          >
-            {selected ? <Icon name="check" size={16} color="onPrimary" /> : null}
-          </View>
         </Pressable>
+        {/* Beside the choice rather than in it, so that screen readers reach it on its own. */}
+        <View style={styles.more}>
+          <TopBarButton
+            icon="more"
+            label={t('picker.more', { name: item.name })}
+            onPress={() => setOptionsOf(item)}
+          />
+        </View>
       </View>
     );
   };
@@ -253,7 +270,64 @@ export function PickerScreen() {
           }}
         />
       </View>
+      {optionsOf ? (
+        <ExerciseOptions exercise={optionsOf} onClose={() => setOptionsOf(null)} />
+      ) : null}
     </SafeAreaView>
+  );
+}
+
+/** What can be read about an exercise of the list, without choosing it. */
+function ExerciseOptions({
+  exercise,
+  onClose,
+}: {
+  exercise: LibraryExercise;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const params = { id: exercise.id };
+  const options = [
+    {
+      key: 'details',
+      icon: 'info',
+      color: 'info',
+      background: 'infoBackground',
+      label: t('picker.details'),
+      open: () => router.push({ pathname: '/workout/exercise/[id]', params }),
+    },
+    {
+      key: 'progress',
+      icon: 'trend',
+      color: 'dinner',
+      background: 'dinnerBackground',
+      label: t('picker.progress'),
+      open: () => router.push({ pathname: '/workout/exercise/history', params }),
+    },
+  ] as const;
+  return (
+    <Sheet onClose={onClose}>
+      <Text variant="headline" accessibilityRole="header">
+        {exercise.name}
+      </Text>
+      <Card list>
+        {options.map(({ key, icon, color, background, label, open }, index) => (
+          <Pressable
+            key={key}
+            accessibilityRole="button"
+            onPress={closeThen(onClose, open)}
+            style={[styles.option, { gap: spacing.md }, listDivider(index === 0, colors.border)]}
+          >
+            <IconTile name={icon} size={36} color={color} background={background} />
+            <Text variant="label" style={styles.text}>
+              {label}
+            </Text>
+            <Icon name="forward" size={16} color="textMuted" />
+          </Pressable>
+        ))}
+      </Card>
+    </Sheet>
   );
 }
 
@@ -284,24 +358,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  row: {
-    height: ROW_HEIGHT,
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
+    minHeight: 56,
+  },
+  more: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  // The card, with the gap to the next one under it.
+  row: {
+    height: ROW_HEIGHT,
+    paddingBottom: 8,
   },
   choice: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
   },
   text: {
     flex: 1,
   },
+  // Clear of the button in the card's corner.
+  name: {
+    paddingRight: 28,
+  },
   check: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    position: 'absolute',
+    right: -6,
+    top: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',

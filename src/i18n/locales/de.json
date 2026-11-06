@@ -984,7 +984,10 @@
       "core": "Rumpf",
       "cardio": "Cardio"
     },
-    "limit": "Ein Training kann bis zu {{max}} Übungen haben."
+    "limit": "Ein Training kann bis zu {{max}} Übungen haben.",
+    "more": "Mehr zu {{name}}",
+    "details": "Details",
+    "progress": "Rekorde und Fortschritt"
   },
   "editor": {
     "newTitle": "Neues Workout",
