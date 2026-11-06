@@ -125,7 +125,7 @@ export function ChoiceCard({
                 color={selected ? 'onPrimary' : (tone?.color ?? 'primary')}
               />
             ) : level ? (
-              <LevelBars value={level.value} of={level.of} inverse={selected} />
+              <LevelBars value={level.value} of={level.of} inverse={selected} color={tone?.color} />
             ) : null}
           </View>
         ) : null}
@@ -139,7 +139,7 @@ export function ChoiceCard({
             </Text>
           ) : null}
         </View>
-        {level && icon ? <LevelBars value={level.value} of={level.of} /> : null}
+        {level && icon ? <LevelBars value={level.value} of={level.of} color={tone?.color} /> : null}
       </RaisedPressable>
     </Animated.View>
   );

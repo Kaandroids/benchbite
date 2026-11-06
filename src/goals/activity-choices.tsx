@@ -4,12 +4,20 @@ import type { ActivityLevel } from '@/body/body';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { Constants } from '@/lib/database.types';
+import type { ColorTokens } from '@/theme';
 
 const ICONS: Record<ActivityLevel, IconName> = {
   sedentary: 'chair',
   light: 'person',
   moderate: 'run',
   active: 'hammer',
+};
+/** From cool to warm as the day gets more active, in the colours of the meals and of water. */
+const TONES: Record<ActivityLevel, { color: keyof ColorTokens; background: keyof ColorTokens }> = {
+  sedentary: { color: 'dinner', background: 'dinnerBackground' },
+  light: { color: 'water', background: 'waterBackground' },
+  moderate: { color: 'breakfast', background: 'breakfastBackground' },
+  active: { color: 'lunch', background: 'lunchBackground' },
 };
 const LEVELS = Constants.public.Enums.activity_level;
 
@@ -26,6 +34,7 @@ export function ActivityChoices({
     <ChoiceCard
       key={level}
       icon={ICONS[level]}
+      tone={TONES[level]}
       title={t(`goals.activityLevel.${level}`)}
       description={t(`goals.activityDescriptions.${level}`)}
       level={{ value: index + 1, of: LEVELS.length }}
