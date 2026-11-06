@@ -150,6 +150,21 @@ to open the iOS Simulator or Android Emulator instead. Restart the dev server af
   address on the local network, for example `http://192.168.1.20:54321`. The phone must be on
   the same network. On macOS, `ipconfig getifaddr en0` prints the address.
 
+## Run the website
+
+The website in `website/` is a package of its own, with its own dependencies:
+
+```bash
+cd website
+pnpm install
+pnpm dev     # serves it on http://localhost:4321
+pnpm check   # type-checks the translations
+pnpm build   # writes the static site to website/dist
+```
+
+`pnpm dev` runs in the background; `pnpm astro dev stop` stops it. Its text is in `src/i18n/`, one
+file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md).
+
 ## Scripts
 
 | Command                 | Description                                           |
@@ -183,6 +198,7 @@ supabase/tests/        pgTAP tests of tables, policies and functions
 supabase/functions/    Edge Functions, with shared code in _shared/
 scripts/               the exercise and food imports (shared helpers in lib/), the locale check
                        and the plan check
+website/               the website, a package of its own
 docs/adr/              Architecture Decision Records
 docs/development.md    this guide; docs/deployment.md covers the hosted project
 docs/media/            the screenshots and GIFs in the README, and how to make them
