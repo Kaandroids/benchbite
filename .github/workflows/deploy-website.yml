@@ -1,0 +1,72 @@
+name: Deploy website
+
+# Deploys the website in website/ to Netlify (ADR 0089). It runs only when started by hand, as each
+# production deploy spends credits of a plan that pauses the site when they run out.
+on:
+  workflow_dispatch:
+
+# One deploy at a time, and a started deploy is never cancelled halfway.
+concurrency:
+  group: deploy-website
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  netlify:
+    name: Netlify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only main is deployed. The website environment holds the secrets and allows only main.
+    if: github.ref == 'refs/heads/main'
+    environment: website
+    steps:
+      # Actions are pinned to commit SHAs because tags can be moved to point at different code.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: website
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: website
+        run: pnpm build
+
+      # Netlify's API takes the built site as a zip, so that the deploy needs no further package
+      # with the token in reach. The secrets are given only to this step.
+      - name: Deploy
+        working-directory: website/dist
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          zip -qr "$RUNNER_TEMP/site.zip" .
+          api() { curl --fail-with-body --silent --show-error --header "Authorization: Bearer $NETLIFY_AUTH_TOKEN" "$@"; }
+          id=$(api --header 'Content-Type: application/zip' --data-binary "@$RUNNER_TEMP/site.zip" \
+            "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID/deploys?title=$GITHUB_SHA" | jq -r .id)
+          for _ in $(seq 1 60); do
+            deploy=$(api "https://api.netlify.com/api/v1/deploys/$id")
+            state=$(jq -r .state <<< "$deploy")
+            if [ "$state" = ready ]; then
+              jq -r '"Deployed to " + .ssl_url' <<< "$deploy" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$state" = error ]; then
+              jq -r '"Deploy failed: " + (.error_message // "no message")' <<< "$deploy"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "The deploy was not ready after five minutes; it stopped at: $state"
+          exit 1
