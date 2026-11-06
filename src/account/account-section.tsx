@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
+import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
@@ -74,7 +75,7 @@ function Guest() {
 
 function SignedIn() {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const session = useSession();
   const email = session.status === 'ready' ? session.session.user.email : undefined;
   const signOut = useSignOut();
@@ -98,34 +99,25 @@ function SignedIn() {
     ]);
 
   return (
-    <Card list>
-      <View style={[styles.row, { gap: spacing.md, paddingVertical: spacing.lg }]}>
-        <IconTile name="account" />
-        <View style={styles.flex}>
-          <Text variant="caption" color="textMuted">
-            {t('settings.signedInAs')}
-          </Text>
-          <Text variant="label" numberOfLines={1}>
-            {email}
-          </Text>
-        </View>
+    <Card style={[styles.row, { gap: spacing.md }]}>
+      <IconTile name="account" />
+      <View style={styles.flex}>
+        <Text variant="caption" color="textMuted">
+          {t('settings.signedInAs')}
+        </Text>
+        <Text variant="label" numberOfLines={1}>
+          {email}
+        </Text>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: signOut.isPending }}
+      <RoundIconButton
+        icon="logOut"
+        color="danger"
+        background="dangerBackground"
+        label={t('settings.logOut')}
+        size={44}
         disabled={signOut.isPending}
         onPress={logOut}
-        style={[
-          styles.row,
-          styles.logOut,
-          { gap: spacing.md, borderTopColor: colors.border, opacity: signOut.isPending ? 0.4 : 1 },
-        ]}
-      >
-        <Icon name="logOut" size={22} color="danger" />
-        <Text variant="label" color="danger">
-          {t('settings.logOut')}
-        </Text>
-      </Pressable>
+      />
     </Card>
   );
 }
@@ -146,9 +138,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  logOut: {
-    minHeight: 52,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });
