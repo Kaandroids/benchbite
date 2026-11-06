@@ -152,7 +152,6 @@ describe('PickerScreen', () => {
       expect(router.push).toHaveBeenCalledWith({ pathname, params: { id: 'bench' } }),
     );
   });
-  });
 
   it('chooses an exercise just created on coming back', async () => {
     setCreatedExercise(exercise('hip', 'Hip thrust', { custom: true }));
