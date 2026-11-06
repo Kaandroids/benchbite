@@ -10,10 +10,10 @@ import { GOAL_COLORS } from '@/goals/goal-icons';
 import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { useStep } from '../use-step';
 
-/** What a goal sets in the plan, one row each. */
+/** What a goal sets in the plan, one row each, with icons other than those of the goals above. */
 const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] = [
-  { key: 'calories', icon: 'flame' },
-  { key: 'training', icon: 'dumbbell' },
+  { key: 'calories', icon: 'meal' },
+  { key: 'training', icon: 'calendar' },
   { key: 'progress', icon: 'trend' },
 ];
 
