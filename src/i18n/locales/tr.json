@@ -1257,7 +1257,7 @@
       }
     },
     "consent": {
-      "intro": "Birkaç sağlık bilgisini kullanmak için onayın gerekiyor.",
+      "intro": "Birkaç sağlık bilgisini kullanmak için onayın gerekiyor. Onay olmadan planını oluşturamayız.",
       "what": {
         "title": "Ne topluyoruz",
         "body": "Cinsiyetin, yaşın, boyun, kilon, aktiviten ve antrenmanın."
@@ -1271,13 +1271,7 @@
         "body": "Sadece sen görebilirsin. İstediğin an geri çek ya da sil."
       },
       "agree": "Benchbite'ın sağlık verilerimi bu amaçlarla işlemesine onay veriyorum.",
-      "policy": "Gizlilik politikasını oku",
-      "whyLink": "Bu neden gerekli?",
-      "needed": {
-        "title": "Kişisel bir plan için onayın gerekiyor",
-        "body": "Sağlık verileri olmadan Benchbite hedeflerini hesaplayamaz ve planını oluşturamaz. İstediğin zaman fikrini değiştirebilirsin.",
-        "back": "Onay metnine dön"
-      }
+      "policy": "Gizlilik politikasını oku"
     },
     "units": {
       "kg": "kg",

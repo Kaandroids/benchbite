@@ -66,25 +66,9 @@ describe('ConsentStep', () => {
     expect(continueButton()).toBeDisabled();
   });
 
-  it('explains why the consent is needed and goes back to it', async () => {
+  it('says the plan cannot be built without the consent', async () => {
     await render(<ConsentStep />);
-    await fireEvent.press(agreeBox());
-    await fireEvent.press(screen.getByRole('button', { name: 'Why is this needed?' }));
-    expect(screen.getByText('A personal plan needs your consent')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Back to the consent' }));
-    expect(agreeBox()).toBeChecked();
-    expect(mockStep.answer).not.toHaveBeenCalled();
-  });
-
-  it('closes the explanation with its back arrow, keeping the tick', async () => {
-    await render(<ConsentStep />);
-    await fireEvent.press(agreeBox());
-    await fireEvent.press(screen.getByRole('button', { name: 'Why is this needed?' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-    expect(agreeBox()).toBeChecked();
-    expect(mockStep.back).not.toHaveBeenCalled();
+    expect(screen.getByText(/Without it, we can't build your plan/)).toBeTruthy();
   });
 
   it('opens the privacy policy', async () => {

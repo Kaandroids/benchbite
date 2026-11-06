@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card, listDivider } from '@/components/ui/card';
 import { ChoiceCard } from '@/components/ui/choice-card';
 import type { IconName } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
-import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { StepHeading } from '@/components/ui/step-heading';
 import { Text } from '@/components/ui/text';
@@ -31,8 +30,8 @@ const POINTS: {
 
 /**
  * Explicit consent to process health data (GDPR Article 9), before any body data is asked. The
- * box starts unticked; leaving it unticked is how to decline, and a link explains why the
- * onboarding cannot go on without it.
+ * box starts unticked; leaving it unticked is how to decline, and the intro says the onboarding
+ * cannot go on without it.
  *
  * The consent is saved only by Continue, with the current policy version. Unticking, or a saved
  * consent to an older policy, clears it at once, so no consent stays saved that the box does not
@@ -43,7 +42,6 @@ export function ConsentStep() {
   const { colors, spacing } = useTheme();
   const { answers, answer, next, bar } = useStep('consent');
   const [agreed, setAgreed] = useState(answers.consentedPolicyVersion === PRIVACY_POLICY_VERSION);
-  const [explaining, setExplaining] = useState(false);
   const saved = answers.consentedPolicyVersion;
 
   // A consent to an older policy no longer counts; the box shows it unticked, so clear it too.
@@ -53,56 +51,15 @@ export function ConsentStep() {
     }
   }, [saved, answer]);
 
-  // Android's back button closes the explanation, as its back arrow does, rather than leaving the
-  // step and the tick not saved yet. Added after the step's own handler, so it is asked first.
-  useEffect(() => {
-    if (!explaining) return;
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      setExplaining(false);
-      return true;
-    });
-    return () => subscription.remove();
-  }, [explaining]);
-
-  if (explaining) {
-    return (
-      <Screen
-        {...bar}
-        // Back to the consent itself, which the explanation is part of.
-        onBack={() => setExplaining(false)}
-        footer={
-          <Button
-            label={t('onboarding.consent.needed.back')}
-            onPress={() => setExplaining(false)}
-          />
-        }
-      >
-        <MessageView
-          icon="shield"
-          title={t('onboarding.consent.needed.title')}
-          message={t('onboarding.consent.needed.body')}
-        />
-      </Screen>
-    );
-  }
-
   return (
     <Screen
       {...bar}
       footer={
-        <View style={{ gap: spacing.md }}>
-          <Button
-            label={t('common.continue')}
-            disabled={!agreed}
-            onPress={() => next({ consentedPolicyVersion: PRIVACY_POLICY_VERSION })}
-          />
-          {/* Quiet, so it does not compete with Continue: it only explains. */}
-          <TextLink
-            label={t('onboarding.consent.whyLink')}
-            tone="muted"
-            onPress={() => setExplaining(true)}
-          />
-        </View>
+        <Button
+          label={t('common.continue')}
+          disabled={!agreed}
+          onPress={() => next({ consentedPolicyVersion: PRIVACY_POLICY_VERSION })}
+        />
       }
     >
       <StepHeading
@@ -117,7 +74,7 @@ export function ConsentStep() {
               styles.point,
               {
                 gap: spacing.md,
-                paddingVertical: spacing.md,
+                paddingVertical: spacing.md + 2,
                 ...listDivider(index === 0, colors.border),
               },
             ]}
@@ -133,7 +90,7 @@ export function ConsentStep() {
         ))}
       </Card>
       {/* A little apart from the points, as the step's one answer. */}
-      <View style={{ marginTop: spacing.sm }}>
+      <View style={{ marginTop: spacing.md }}>
         <ChoiceCard
           type="checkbox"
           title={t('onboarding.consent.agree')}

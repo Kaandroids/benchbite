@@ -1257,7 +1257,7 @@
       }
     },
     "consent": {
-      "intro": "Wir brauchen dein Okay für ein paar Gesundheitsdaten.",
+      "intro": "Wir brauchen dein Okay für ein paar Gesundheitsdaten. Ohne das können wir deinen Plan nicht erstellen.",
       "what": {
         "title": "Was wir erfassen",
         "body": "Dein Geschlecht, Alter, Größe, Gewicht, Aktivität und Training."
@@ -1271,13 +1271,7 @@
         "body": "Nur du kannst sie sehen. Jederzeit widerrufen oder löschen."
       },
       "agree": "Ich willige ein, dass Benchbite meine Gesundheitsdaten für diese Zwecke verarbeitet.",
-      "policy": "Datenschutzerklärung lesen",
-      "whyLink": "Wozu wird das gebraucht?",
-      "needed": {
-        "title": "Ein persönlicher Plan braucht deine Einwilligung",
-        "body": "Ohne Gesundheitsdaten kann Benchbite weder deine Ziele berechnen noch deinen Plan erstellen. Du kannst es dir jederzeit anders überlegen.",
-        "back": "Zurück zur Einwilligung"
-      }
+      "policy": "Datenschutzerklärung lesen"
     },
     "units": {
       "kg": "kg",
