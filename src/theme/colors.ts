@@ -35,8 +35,6 @@ export type ColorTokens = {
   iconBackground: string;
   /** A faint wash of the brand colour behind a picture, which cards stand out from. */
   primaryWash: string;
-  /** A warm beige stage behind a picture of the app, which its cards stand out from. */
-  stage: string;
   success: string;
   warning: string;
   danger: string;
@@ -121,7 +119,6 @@ export const lightColors: ColorTokens = {
   selected: '#FFF2E9',
   iconBackground: '#FFEDE2',
   primaryWash: 'rgba(255, 106, 16, 0.1)',
-  stage: '#F1EADF',
   success: '#15803D',
   warning: '#B45309',
   danger: '#DC2626',
@@ -182,7 +179,6 @@ export const darkColors: ColorTokens = {
   selected: '#24262B',
   iconBackground: '#2A2C31',
   primaryWash: 'rgba(255, 127, 38, 0.1)',
-  stage: '#2A2622',
   success: '#4ADE80',
   warning: '#FBBF24',
   danger: '#F87171',

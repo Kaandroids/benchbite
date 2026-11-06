@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTheme } from '@/theme';
 
 /**
- * A tinted stage for a picture of the app, filling the space it is given. The picture shrinks to
+ * A neutral stage for a picture of the app, filling the space it is given. The picture shrinks to
  * fit it, so the words under the stage stay in place on a small screen or with a large font.
  */
 type StageProps = {
@@ -24,7 +24,7 @@ export function Stage({ children, minHeight }: StageProps) {
         styles.stage,
         {
           borderRadius: radii.xl,
-          backgroundColor: colors.stage,
+          backgroundColor: colors.track,
           padding: spacing.lg,
           minHeight,
         },
