@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DashedButton } from '@/components/ui/dashed-button';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
@@ -20,31 +21,15 @@ export function AccountSection() {
 }
 
 /** The way to delete all that is the user's, guest or account, at the end of the settings. */
-export function DeleteAccountLink() {
+export function DeleteAccountButton() {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
-  const label = t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest');
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
+    <DashedButton
+      icon="trash"
+      label={t(useIsAccount() ? 'account.delete.delete' : 'account.delete.deleteGuest')}
+      tone="danger"
       onPress={() => router.push('/account/delete')}
-      style={[
-        styles.delete,
-        {
-          gap: spacing.sm,
-          borderRadius: radii.md,
-          // Faded, as it is rarely wanted; its words stay readable.
-          borderColor: `${colors.danger}59`,
-          backgroundColor: `${colors.dangerBackground}66`,
-        },
-      ]}
-    >
-      <Icon name="trash" size={18} color="danger" />
-      <Text variant="captionStrong" color="danger">
-        {label}
-      </Text>
-    </Pressable>
+    />
   );
 }
 
@@ -132,15 +117,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'flex-end',
     justifyContent: 'center',
-  },
-  // Dashed like the form's "Add a step", in the colour of what cannot be undone.
-  delete: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
   },
   row: {
     flexDirection: 'row',

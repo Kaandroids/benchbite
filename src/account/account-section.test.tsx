@@ -6,7 +6,7 @@ import { useIsAccount, useSession } from '@/providers/session-provider';
 import { sessionValue } from '@/test/context-mocks';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { AccountSection, DeleteAccountLink } from './account-section';
+import { AccountSection, DeleteAccountButton } from './account-section';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -79,7 +79,7 @@ describe('AccountSection', () => {
     [false, 'Delete my data'],
   ])('opens deleting from its link, as an account: %s', async (isAccount, label) => {
     given(isAccount);
-    await render(<DeleteAccountLink />);
+    await render(<DeleteAccountButton />);
 
     await fireEvent.press(screen.getByRole('button', { name: label }));
 

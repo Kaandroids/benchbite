@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { DashedButton } from '@/components/ui/dashed-button';
 import { Icon } from '@/components/ui/icon';
 import { ReorderList } from '@/components/ui/reorder-list';
 import { Text } from '@/components/ui/text';
@@ -40,7 +41,7 @@ export function EditorExercises({
   onDragChange,
 }: EditorExercisesProps) {
   const { t } = useTranslation();
-  const { colors, radii, spacing } = useTheme();
+  const { spacing } = useTheme();
   const formatTarget = useTargetFormat();
   const formatRest = useRestFormat();
 
@@ -98,24 +99,12 @@ export function EditorExercises({
         </Text>
       ) : null}
       {over < 0 ? (
-        <Pressable
-          accessibilityRole="button"
+        <DashedButton
+          icon="plus"
+          label={t('picker.title')}
+          tone="primary"
           onPress={() => router.push('/workout/pick')}
-          style={[
-            styles.add,
-            {
-              gap: spacing.sm,
-              borderRadius: radii.lg,
-              borderColor: colors.planned,
-              backgroundColor: colors.selected,
-            },
-          ]}
-        >
-          <Icon name="plus" size={20} color="primaryText" />
-          <Text variant="label" color="primaryText">
-            {t('picker.title')}
-          </Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );
@@ -128,13 +117,5 @@ const styles = StyleSheet.create({
   exercise: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  add: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderStyle: 'dashed',
   },
 });
