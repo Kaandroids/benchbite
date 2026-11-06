@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
-import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
@@ -109,20 +108,31 @@ function SignedIn() {
           {email}
         </Text>
       </View>
-      <RoundIconButton
-        icon="logOut"
-        color="danger"
-        background="dangerBackground"
-        label={t('settings.logOut')}
-        size={44}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('settings.logOut')}
+        accessibilityState={{ disabled: signOut.isPending }}
         disabled={signOut.isPending}
         onPress={logOut}
-      />
+        style={({ pressed }) => [
+          styles.logOut,
+          { opacity: signOut.isPending ? 0.4 : pressed ? 0.6 : 1 },
+        ]}
+      >
+        <Icon name="logOut" size={22} color="danger" weight="bold" />
+      </Pressable>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  // At the card's edge, in line with the arrows of the rows around it.
+  logOut: {
+    width: 44,
+    height: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   // Dashed like the form's "Add a step", in the colour of what cannot be undone.
   delete: {
     minHeight: 52,
