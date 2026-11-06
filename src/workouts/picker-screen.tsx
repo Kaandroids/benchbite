@@ -156,7 +156,14 @@ export function PickerScreen() {
         </View>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.md }}>
+      <View
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.md,
+          gap: spacing.md,
+          paddingBottom: spacing.md,
+        }}
+      >
         <SearchField label={t('picker.search')} value={query} onChangeText={setQuery} />
         <ScrollView
           horizontal
