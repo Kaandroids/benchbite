@@ -5,25 +5,18 @@ import { type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { GoalChoices } from '@/goals/goal-choices';
-import type { ColorTokens } from '@/theme';
 
 import { ChoiceInsight, InsightRow } from '../choice-insight';
 import { useStep } from '../use-step';
 
-/** What a goal sets in the plan, one row each, in the colours of the app's lists. */
-const EFFECTS: {
-  key: 'calories' | 'training' | 'progress';
-  icon: IconName;
-  iconColors: { color: keyof ColorTokens; background: keyof ColorTokens };
-}[] = [
-  { key: 'calories', icon: 'flame', iconColors: { color: 'lunch', background: 'lunchBackground' } },
-  {
-    key: 'training',
-    icon: 'dumbbell',
-    iconColors: { color: 'dinner', background: 'dinnerBackground' },
-  },
-  { key: 'progress', icon: 'trend', iconColors: { color: 'water', background: 'waterBackground' } },
+/** What a goal sets in the plan, one row each. */
+const EFFECTS: { key: 'calories' | 'training' | 'progress'; icon: IconName }[] = [
+  { key: 'calories', icon: 'flame' },
+  { key: 'training', icon: 'dumbbell' },
+  { key: 'progress', icon: 'trend' },
 ];
+/** Neutral, so that the rows stay quiet beside the coloured goals above them. */
+const EFFECT_COLORS = { color: 'textMuted', background: 'track' } as const;
 
 /**
  * The main goal, which decides both the training scheme and the calorie direction. Choosing one
@@ -49,11 +42,11 @@ export function GoalStep() {
         empty={<Text color="textMuted">{t('onboarding.goal.effects.empty')}</Text>}
       >
         {goal
-          ? EFFECTS.map(({ key, icon, iconColors }) => (
+          ? EFFECTS.map(({ key, icon }) => (
               <InsightRow
                 key={key}
                 icon={icon}
-                iconColors={iconColors}
+                iconColors={EFFECT_COLORS}
                 label={t(`onboarding.goal.effects.${key}`)}
                 value={t(`onboarding.goal.effects.${goal}.${key}`)}
               />
