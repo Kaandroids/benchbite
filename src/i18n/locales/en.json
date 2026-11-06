@@ -1728,7 +1728,6 @@
       }
     },
     "mainMuscles": "Main muscles",
-    "optional": "Optional",
     "otherMuscles": "Other muscles",
     "step": "Step {{number}}",
     "removeStep": "Remove step {{number}}",
@@ -1761,7 +1760,13 @@
     "archived": "Archived",
     "archiveErrorTitle": "Not changed",
     "archiveError": "We couldn't change the exercise. Check your connection and try again.",
-    "choose": "Choose"
+    "choose": "Choose",
+    "muscleGroups": {
+      "upperBody": "Upper body",
+      "back": "Back",
+      "arms": "Arms",
+      "legs": "Legs"
+    }
   },
   "reorder": {
     "moveUp": "Move up",

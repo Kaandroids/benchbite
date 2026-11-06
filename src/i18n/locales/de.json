@@ -1728,7 +1728,6 @@
       }
     },
     "mainMuscles": "Hauptmuskeln",
-    "optional": "Optional",
     "otherMuscles": "Weitere Muskeln",
     "step": "Schritt {{number}}",
     "removeStep": "Schritt {{number}} entfernen",
@@ -1761,7 +1760,13 @@
     "archived": "Archiviert",
     "archiveErrorTitle": "Nicht geändert",
     "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal.",
-    "choose": "Auswählen"
+    "choose": "Auswählen",
+    "muscleGroups": {
+      "upperBody": "Oberkörper",
+      "back": "Rücken",
+      "arms": "Arme",
+      "legs": "Beine"
+    }
   },
   "reorder": {
     "moveUp": "Nach oben",

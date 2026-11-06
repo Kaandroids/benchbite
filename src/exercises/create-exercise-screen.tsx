@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -27,25 +27,17 @@ import { LogKindField, PhotosField, SheetField, StepsField } from './exercise-fo
 
 type Enums = Database['public']['Enums'];
 
-const MUSCLES: Enums['muscle'][] = [
-  'chest',
-  'lats',
-  'middle back',
-  'lower back',
-  'traps',
-  'shoulders',
-  'biceps',
-  'triceps',
-  'forearms',
-  'abdominals',
-  'quadriceps',
-  'hamstrings',
-  'glutes',
-  'calves',
-  'abductors',
-  'adductors',
-  'neck',
-];
+/** The muscles by where they are, so that one is found by its group. */
+const MUSCLE_GROUPS: { key: 'upperBody' | 'back' | 'arms' | 'legs'; muscles: Enums['muscle'][] }[] =
+  [
+    { key: 'upperBody', muscles: ['chest', 'shoulders', 'abdominals', 'traps', 'neck'] },
+    { key: 'back', muscles: ['lats', 'middle back', 'lower back'] },
+    { key: 'arms', muscles: ['biceps', 'triceps', 'forearms'] },
+    {
+      key: 'legs',
+      muscles: ['quadriceps', 'hamstrings', 'glutes', 'calves', 'abductors', 'adductors'],
+    },
+  ];
 const EQUIPMENT: Enums['equipment'][] = [
   'barbell',
   'dumbbell',
@@ -58,6 +50,8 @@ const EQUIPMENT: Enums['equipment'][] = [
 ];
 const LEVELS: Enums['exercise_level'][] = ['beginner', 'intermediate', 'expert'];
 const MAX_MAIN_MUSCLES = 5;
+/** How much of the screen the muscles may take in their sheet. */
+const MUSCLES_MAX_HEIGHT = 0.6;
 
 type Editing = {
   id: string;
@@ -136,7 +130,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       }
     >
       <View style={section}>
-        <FieldLabel text={t('customExercise.name')} />
+        <FieldLabel text={`${t('customExercise.name')} *`} />
         <TextInput
           accessibilityLabel={t('customExercise.name')}
           value={form.name}
@@ -149,7 +143,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        <FieldLabel text={t('customExercise.logKind')} />
+        <FieldLabel text={`${t('customExercise.logKind')} *`} />
         <SheetField
           label={t('customExercise.logKind')}
           value={form.logKind && t(`customExercise.logKinds.${form.logKind}.title`)}
@@ -158,7 +152,7 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       </View>
 
       <View style={section}>
-        <FieldLabel text={t('customExercise.mainMuscles')} />
+        <FieldLabel text={`${t('customExercise.mainMuscles')} *`} />
         <SheetField
           label={t('customExercise.mainMuscles')}
           value={muscleNames(form.primaryMuscles)}
@@ -174,12 +168,6 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
           onChange={(level) => change({ level })}
           accessibilityLabel={t('exercise.level')}
         />
-      </View>
-
-      <View style={[styles.divider, { gap: spacing.sm, marginTop: spacing.sm }]}>
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
-        <FieldLabel text={t('customExercise.optional')} />
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
       </View>
 
       <View style={section}>
@@ -238,41 +226,29 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
       {open === 'mainMuscles' ? (
         <Sheet onClose={close}>
           <SheetTitle text={t('customExercise.mainMuscles')} />
-          <View style={wrap}>
-            {MUSCLES.map((muscle) => {
-              const on = form.primaryMuscles.includes(muscle);
-              return (
-                <Chip
-                  key={muscle}
-                  label={t(`workout.muscles.${muscle}`)}
-                  selected={on}
-                  disabled={!on && form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
-                  onPress={() =>
-                    change({
-                      primaryMuscles: toggle(form.primaryMuscles, muscle),
-                      secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
-                    })
-                  }
-                />
-              );
-            })}
-          </View>
+          <MuscleChoice
+            selected={form.primaryMuscles}
+            full={form.primaryMuscles.length >= MAX_MAIN_MUSCLES}
+            onToggle={(muscle) =>
+              change({
+                primaryMuscles: toggle(form.primaryMuscles, muscle),
+                secondaryMuscles: form.secondaryMuscles.filter((other) => other !== muscle),
+              })
+            }
+          />
           <Button label={t('common.done')} onPress={close} />
         </Sheet>
       ) : null}
       {open === 'otherMuscles' ? (
         <Sheet onClose={close}>
           <SheetTitle text={t('customExercise.otherMuscles')} />
-          <View style={wrap}>
-            {MUSCLES.filter((muscle) => !form.primaryMuscles.includes(muscle)).map((muscle) => (
-              <Chip
-                key={muscle}
-                label={t(`workout.muscles.${muscle}`)}
-                selected={form.secondaryMuscles.includes(muscle)}
-                onPress={() => change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })}
-              />
-            ))}
-          </View>
+          <MuscleChoice
+            selected={form.secondaryMuscles}
+            hidden={form.primaryMuscles}
+            onToggle={(muscle) =>
+              change({ secondaryMuscles: toggle(form.secondaryMuscles, muscle) })
+            }
+          />
           <Button label={t('common.done')} onPress={close} />
         </Sheet>
       ) : null}
@@ -298,6 +274,54 @@ export function CreateExerciseScreen({ name = '', editing }: { name?: string; ed
   );
 }
 
+/** The muscles in their groups, scrolling when they do not fit under the sheet's other parts. */
+function MuscleChoice({
+  selected,
+  hidden = [],
+  full = false,
+  onToggle,
+}: {
+  selected: Enums['muscle'][];
+  /** Muscles not on offer, as a main muscle is not also another one. */
+  hidden?: Enums['muscle'][];
+  /** No more can be chosen. */
+  full?: boolean;
+  onToggle: (muscle: Enums['muscle']) => void;
+}) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const { height } = useWindowDimensions();
+  return (
+    <ScrollView
+      style={{ maxHeight: height * MUSCLES_MAX_HEIGHT }}
+      contentContainerStyle={{ gap: spacing.md }}
+    >
+      {MUSCLE_GROUPS.map(({ key, muscles }) => {
+        const shown = muscles.filter((muscle) => !hidden.includes(muscle));
+        return shown.length > 0 ? (
+          <View key={key} style={{ gap: spacing.sm }}>
+            <FieldLabel text={t(`customExercise.muscleGroups.${key}`)} />
+            <View style={[styles.wrap, { gap: spacing.sm }]}>
+              {shown.map((muscle) => {
+                const on = selected.includes(muscle);
+                return (
+                  <Chip
+                    key={muscle}
+                    label={t(`workout.muscles.${muscle}`)}
+                    selected={on}
+                    disabled={full && !on}
+                    onPress={() => onToggle(muscle)}
+                  />
+                );
+              })}
+            </View>
+          </View>
+        ) : null;
+      })}
+    </ScrollView>
+  );
+}
+
 function SheetTitle({ text }: { text: string }) {
   return (
     <Text variant="headline" accessibilityRole="header">
@@ -310,13 +334,5 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  line: {
-    flex: 1,
-    height: 1,
   },
 });

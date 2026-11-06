@@ -1728,7 +1728,6 @@
       }
     },
     "mainMuscles": "Ana kaslar",
-    "optional": "İsteğe bağlı",
     "otherMuscles": "Diğer kaslar",
     "step": "Adım {{number}}",
     "removeStep": "{{number}}. adımı kaldır",
@@ -1761,7 +1760,13 @@
     "archived": "Arşivlendi",
     "archiveErrorTitle": "Değiştirilemedi",
     "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene.",
-    "choose": "Seç"
+    "choose": "Seç",
+    "muscleGroups": {
+      "upperBody": "Üst vücut",
+      "back": "Sırt",
+      "arms": "Kollar",
+      "legs": "Bacaklar"
+    }
   },
   "reorder": {
     "moveUp": "Yukarı taşı",
