@@ -5,12 +5,13 @@ import { useUpperCase } from '@/i18n/case';
 
 import { Text } from './text';
 
-/** A field's small upper-case label. */
-export function FieldLabel({ text }: { text: string }) {
+/** A field's small upper-case label, with a star when the field is required. */
+export function FieldLabel({ text, required = false }: { text: string; required?: boolean }) {
   const upperCase = useUpperCase();
   return (
     <Text variant="caption" color="textMuted" style={styles.label}>
       {upperCase(text)}
+      {required ? ' *' : ''}
     </Text>
   );
 }

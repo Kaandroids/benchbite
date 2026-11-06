@@ -1761,12 +1761,6 @@
     "archiveErrorTitle": "Not changed",
     "archiveError": "We couldn't change the exercise. Check your connection and try again.",
     "choose": "Choose",
-    "muscleGroups": {
-      "upperBody": "Upper body",
-      "back": "Back",
-      "arms": "Arms",
-      "legs": "Legs"
-    },
     "stillNeeded": "Still needed: {{fields}}"
   },
   "reorder": {

@@ -1761,12 +1761,6 @@
     "archiveErrorTitle": "Nicht geändert",
     "archiveError": "Wir konnten die Übung nicht ändern. Prüfe deine Verbindung und versuche es noch einmal.",
     "choose": "Auswählen",
-    "muscleGroups": {
-      "upperBody": "Oberkörper",
-      "back": "Rücken",
-      "arms": "Arme",
-      "legs": "Beine"
-    },
     "stillNeeded": "Fehlt noch: {{fields}}"
   },
   "reorder": {

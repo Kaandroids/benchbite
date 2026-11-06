@@ -103,9 +103,18 @@ async function savingPhotos<T>(
   }
 }
 
-/** Whether the form has what an exercise needs: a name, a way of logging and a main muscle. */
+/** What an exercise needs that the form does not have yet: a name, a way of logging, a muscle. */
+export function missingFields(form: CustomExerciseForm): ('name' | 'logKind' | 'mainMuscles')[] {
+  return [
+    ...(form.name.trim() === '' ? (['name'] as const) : []),
+    ...(form.logKind === null ? (['logKind'] as const) : []),
+    ...(form.primaryMuscles.length === 0 ? (['mainMuscles'] as const) : []),
+  ];
+}
+
+/** Whether the form has what an exercise needs. */
 export function isComplete(form: CustomExerciseForm): boolean {
-  return form.name.trim() !== '' && form.logKind !== null && form.primaryMuscles.length > 0;
+  return missingFields(form).length === 0;
 }
 
 /** The exercise as create_exercise() takes it, with the paths of its uploaded photos. */

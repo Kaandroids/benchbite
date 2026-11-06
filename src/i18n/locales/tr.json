@@ -1761,12 +1761,6 @@
     "archiveErrorTitle": "Değiştirilemedi",
     "archiveError": "Hareketi değiştiremedik. Bağlantını kontrol edip tekrar dene.",
     "choose": "Seç",
-    "muscleGroups": {
-      "upperBody": "Üst vücut",
-      "back": "Sırt",
-      "arms": "Kollar",
-      "legs": "Bacaklar"
-    },
     "stillNeeded": "Eksik: {{fields}}"
   },
   "reorder": {
