@@ -117,8 +117,7 @@ export function ConsentStep() {
               styles.point,
               {
                 gap: spacing.md,
-                // Roomier than a list's usual rows, as the points are what the screen is about.
-                paddingVertical: spacing.lg + spacing.xs,
+                paddingVertical: spacing.md,
                 ...listDivider(index === 0, colors.border),
               },
             ]}
