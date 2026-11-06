@@ -56,7 +56,13 @@ export function ExperienceStep() {
         />
       ))}
       <ChoiceInsight title={t('onboarding.experience.plan')} choice={experience}>
-        {experience ? <LevelPlan experience={experience} goal={required(answers, 'goal')} /> : null}
+        {experience ? (
+          <LevelPlan
+            experience={experience}
+            goal={required(answers, 'goal')}
+            tone={TONES[LEVELS.indexOf(experience)]}
+          />
+        ) : null}
       </ChoiceInsight>
     </Screen>
   );
@@ -66,9 +72,11 @@ export function ExperienceStep() {
 function LevelPlan({
   experience,
   goal,
+  tone,
 }: {
   experience: Experience;
   goal: NonNullable<OnboardingAnswers['goal']>;
+  tone: (typeof TONES)[number] | undefined;
 }) {
   const { t } = useTranslation();
   const days = RECOMMENDED_DAYS[experience].length;
@@ -79,11 +87,13 @@ function LevelPlan({
   return (
     <>
       <InsightRow
+        iconColors={tone}
         icon="calendar"
         label={t('onboarding.experience.week')}
         value={t('onboarding.experience.days', { count: days, types })}
       />
       <InsightRow
+        iconColors={tone}
         icon="dumbbell"
         label={t('onboarding.experience.main')}
         value={t('onboarding.experience.sets', { count: sets })}
