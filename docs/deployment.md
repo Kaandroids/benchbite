@@ -1,7 +1,7 @@
 # Deployment
 
-How the hosted Supabase project is deployed and monitored, and how to install a release build on an
-iPhone. To run everything locally, see [Development](development.md).
+How the hosted Supabase project and the website are deployed and monitored, and how to install a
+release build on an iPhone. To run everything locally, see [Development](development.md).
 
 ## Deploy the Supabase project
 
@@ -25,6 +25,25 @@ select vault.create_secret('<default secret key>', 'secret_key');
 
 After rotating the key, update it with
 `select vault.update_secret(id, '<new key>') from vault.secrets where name = 'secret_key';`.
+
+## Deploy the website
+
+The website is deployed to Netlify by the **Deploy website** workflow in GitHub Actions
+([ADR 0089](adr/0089-deploy-the-website-to-netlify.md)). It builds `website/` from `main` and sends
+it to Netlify's API. Start it from the Actions tab with **Run workflow**. Each deploy spends 15 of
+the free plan's 300 credits a month, and the site is paused when they run out.
+
+To set it up once:
+
+1. In Netlify, create a project without connecting a repository, and copy its **Project ID** from
+   Project configuration → General → Project details.
+2. In Netlify, under Applications → Personal access tokens, create a token with an expiry date.
+3. In GitHub, under Settings → Environments, create the `website` environment, limit it to `main`,
+   and add the two values as the secrets `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN`.
+
+The token reaches the whole Netlify account, so replace it if it may have leaked. Before the site
+goes live, replace the placeholder texts and remove `website/public/_headers`, which keeps search
+engines away.
 
 ## Monitoring
 

@@ -28,7 +28,7 @@ no page needs a server, an account or anything from the database.
 - **English has the short addresses,** as the app's links do, and other languages sit below their
   code: `/privacy`, `/de/privacy`, `/tr/privacy`.
 
-Where the site is hosted, and how it is deployed, is a later decision.
+Where the site is hosted, and how it is deployed, is ADR 0089.
 
 ## Alternatives considered
 

@@ -104,3 +104,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0086](0086-what-the-limits-on-own-foods-mean.md)                     | What the limits on own foods mean                                                       | Accepted                                             |
 | [0087](0087-delete-a-user-and-all-that-is-theirs.md)                  | Delete a user and all that is theirs                                                    | Accepted                                             |
 | [0088](0088-a-static-website-in-the-repository.md)                    | A static website in the repository                                                      | Accepted                                             |
+| [0089](0089-deploy-the-website-to-netlify.md)                         | Deploy the website to Netlify                                                           | Accepted                                             |
