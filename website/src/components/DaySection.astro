@@ -1,19 +1,31 @@
 ---
+import type { ComponentProps } from 'astro/types';
+
+import BiteCircle from './BiteCircle.astro';
+
 type Props = {
   id: string;
   time: string;
-  /** Bite's face in this hour: the name of its picture. */
-  bite: string;
+  /** Bite's face in this hour. */
+  bite: ComponentProps<typeof BiteCircle>['face'];
   title: string;
   text: string;
   /** This hour's background, text and time colours. */
   colors: { band: string; text: string; time: string };
-  /** A screenshot beside the text; without one, the slot goes there. */
-  image?: string;
-  alt?: string;
   /** Puts the picture on the left. */
   flip?: boolean;
-};
+} & (
+  | {
+      /** A screenshot beside the text. */
+      image: string;
+      alt: string;
+    }
+  | {
+      /** Without a screenshot, the slot goes there. */
+      image?: never;
+      alt?: never;
+    }
+);
 
 const { id, time, bite, title, text, colors, image, alt, flip = false } = Astro.props;
 ---
@@ -26,12 +38,10 @@ const { id, time, bite, title, text, colors, image, alt, flip = false } = Astro.
   <div class="content">
     <div class="text">
       <div class="moment">
-        <p class="time">{time}</p>
-        <div class="bite">
-          <img src={`/images/bite-${bite}.svg`} alt="" width="124" height="111" loading="lazy" />
-        </div>
+        <p class="hour-time time">{time}</p>
+        <BiteCircle face={bite} size={112} imageWidth={124} />
       </div>
-      <h2>{title}</h2>
+      <h2 class="hour-title">{title}</h2>
       <p>{text}</p>
       <slot name="after-text" />
     </div>
@@ -50,7 +60,6 @@ const { id, time, bite, title, text, colors, image, alt, flip = false } = Astro.
 <style>
   section {
     padding: 80px clamp(20px, 5vw, 72px);
-    scroll-margin-top: 0;
     font-size: 20px;
     line-height: 1.4;
     font-weight: 700;
@@ -76,39 +85,18 @@ const { id, time, bite, title, text, colors, image, alt, flip = false } = Astro.
 
   .moment {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
   }
 
   .time {
-    font-size: clamp(72px, 10vw, 136px);
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.04em;
     color: var(--time);
-  }
-
-  .bite {
-    flex: none;
-    width: 112px;
-    height: 112px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: var(--brand);
-  }
-
-  .bite img {
-    max-width: none;
   }
 
   h2 {
     margin-bottom: 12px;
-    font-size: clamp(32px, 4vw, 48px);
-    font-weight: 900;
-    line-height: 1.05;
   }
 
   .aside {
