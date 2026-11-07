@@ -6,6 +6,9 @@ type Props = {
   iconSize: number;
 };
 
+/** The icon's corner radius, as a share of its size. */
+const CORNER_RATIO = 0.28;
+
 const { locale, iconSize } = Astro.props;
 ---
 
@@ -15,7 +18,7 @@ const { locale, iconSize } = Astro.props;
     alt=""
     width={iconSize}
     height={iconSize}
-    style={`border-radius: ${Math.round(iconSize * 0.28)}px`}
+    style={`border-radius: ${Math.round(iconSize * CORNER_RATIO)}px`}
   />
   <span>benchbite</span>
 </a>
@@ -28,5 +31,9 @@ const { locale, iconSize } = Astro.props;
     font-size: clamp(19px, 5.5vw, 22px);
     font-weight: 900;
     text-decoration: none;
+  }
+
+  .brand:hover {
+    color: var(--brand-hover, var(--primary-text));
   }
 </style>
