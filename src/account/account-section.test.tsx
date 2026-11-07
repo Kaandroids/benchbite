@@ -60,6 +60,17 @@ describe('AccountSection', () => {
     await waitFor(() => expect(signOut).toHaveBeenCalled());
   });
 
+  it('opens changing the password, for an account only', async () => {
+    given(true);
+    const { unmount } = await render(<AccountSection />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Change password' }));
+    expect(router.push).toHaveBeenCalledWith('/account/password');
+    await unmount();
+    given(false);
+    await render(<AccountSection />);
+    expect(screen.queryByRole('button', { name: 'Change password' })).not.toBeOnTheScreen();
+  });
+
   it('says why logging out failed', async () => {
     given(true);
     signOut.mockRejectedValue(new AuthRetryableFetchError('Failed to fetch', 0));
