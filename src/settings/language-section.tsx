@@ -4,13 +4,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, listDivider } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
+import { SettingRow } from '@/components/ui/setting-row';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { deviceLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, type Language } from '@/i18n';
 import { useTheme } from '@/theme';
 
 import { setLanguageChoice, useLanguageChoice, type LanguageChoice } from './preferences';
-import { SettingRow } from '@/components/ui/setting-row';
 
 /** The app's language in a row, chosen in a sheet: one of its languages, or the phone's. */
 export function LanguageSection() {
