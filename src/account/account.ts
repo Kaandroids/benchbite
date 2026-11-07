@@ -102,6 +102,17 @@ export function useAccountError(error: unknown) {
     : { reason: null, message: null };
 }
 
+/**
+ * Saves the signed-in user's password. Being the password already counts as saved: the person knows
+ * it, as after an answer that got lost or a new password that is the current one.
+ */
+async function savePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
+    throw error;
+  }
+}
+
 const normalized = ({ email, password }: Credentials): Credentials => ({
   email: email.trim(),
   password,
@@ -160,11 +171,7 @@ export function useConfirmAccount() {
         }
         setAccepted(true);
       }
-      const { error } = await supabase.auth.updateUser({ password });
-      // Being the password already is what this step wants, as after an answer that got lost.
-      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
-        throw error;
-      }
+      await savePassword(password);
     },
   });
   return { ...mutation, accepted };
@@ -228,20 +235,15 @@ export function useSaveNewPassword() {
   const { passwordChosen } = useSession();
   return useMutation({
     mutationFn: async (password: string) => {
-      const { error } = await supabase.auth.updateUser({ password });
-      // The password it had: the person knows it, which is all this step is for.
-      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
-        throw error;
-      }
+      await savePassword(password);
     },
     onSuccess: passwordChosen,
   });
 }
 
 /**
- * Changes the signed-in account's password. Auth checks the current one, as signing in with it,
- * and only lets a recent session change a password, so a session left open on a lost phone cannot
- * change it without the password (ADR 0093).
+ * Changes the signed-in account's password. The app checks the current one by signing in with it,
+ * as Auth does not; Auth only refuses a session older than a day (ADR 0093).
  */
 export function useChangePassword() {
   const session = useSession();
@@ -257,11 +259,7 @@ export function useChangePassword() {
           ? new WrongCurrentPassword()
           : signIn.error;
       }
-      const { error } = await supabase.auth.updateUser({ password });
-      // The new password is the current one: nothing changes, which is no failure.
-      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
-        throw error;
-      }
+      await savePassword(password);
     },
   });
 }

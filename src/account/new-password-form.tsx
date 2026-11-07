@@ -9,6 +9,7 @@ import { useTheme } from '@/theme';
 import { errorField, useAccountError } from './account';
 import { PasswordField } from './account-fields';
 import { isPasswordValid } from './passwords';
+import { startingAgain } from './use-credentials-form';
 
 type NewPasswordFormProps = {
   title: string;
@@ -50,12 +51,7 @@ export function NewPasswordForm({
     return () => subscription.remove();
   }, []);
 
-  const change = (value: string) => {
-    setPassword(value);
-    if (!saving) {
-      reset();
-    }
-  };
+  const change = startingAgain({ isPending: saving, reset })(setPassword);
 
   return (
     <FormScreen
