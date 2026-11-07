@@ -11,7 +11,7 @@ const { notFound } = messagesFor(locale);
 
 <Layout locale={locale} title={notFound.title}>
   <main class="page not-found">
-    <BiteCircle face="sad" size={200} imageWidth={178} alt={notFound.biteAlt} />
+    <BiteCircle face="sad" size={200} imageWidth={178} alt={notFound.biteAlt} loading="eager" />
     <h1>{notFound.heading}</h1>
     <p class="muted">{notFound.text}</p>
     <a class="back" href={localePath(locale)}>{notFound.back}</a>
@@ -21,7 +21,6 @@ const { notFound } = messagesFor(locale);
 <style>
   .not-found {
     max-width: 808px;
-    padding: 24px clamp(20px, 5vw, 24px) 80px;
     align-items: center;
     gap: 16px;
     text-align: center;
