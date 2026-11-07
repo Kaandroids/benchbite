@@ -60,6 +60,12 @@ See [ADR 0003](adr/0003-local-first-database-development.md) for how database ch
 
 After changing the schema, regenerate the TypeScript types with `pnpm db:types`.
 
+### Email
+
+Locally, Auth sends email to Mailpit and not to anyone: read codes at <http://127.0.0.1:54324>. After
+changing `supabase/config.toml` or `supabase/templates/`, run `pnpm supabase stop` and
+`pnpm supabase start`, which keeps the data.
+
 ### Dev account
 
 `pnpm supabase db reset` also runs `supabase/seed.sql`, which creates an account that has finished
