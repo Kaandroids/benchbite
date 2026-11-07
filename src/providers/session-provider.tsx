@@ -27,6 +27,10 @@ type SessionContextValue = SessionState & {
   leaveDeletedUser: () => Promise<void>;
   /** Signs the account out on this device and starts over as a new guest. */
   signOut: () => Promise<void>;
+  /** Signed in with a reset code, so the account needs a new password first (ADR 0092). */
+  recovering: boolean;
+  /** The new password after a reset code is saved. */
+  passwordChosen: () => void;
 };
 
 /** The id of the user signed in on this device last, to tell a first start from a lost session. */
@@ -61,6 +65,8 @@ function signInAnonymously(): Promise<void> {
  */
 export function SessionProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
+  // Kept here, outside what starts again for another user, as the reset code signs in as one.
+  const [recovering, setRecovering] = useState(false);
 
   const startAnonymousSession = useCallback(async () => {
     try {
@@ -77,12 +83,16 @@ export function SessionProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         rememberUser(session.user.id);
         setState({ status: 'ready', session });
+        if (event === 'PASSWORD_RECOVERY') {
+          setRecovering(true);
+        }
         return;
       }
+      setRecovering(false);
       if (lastUser()) {
         setState({ status: 'ended' });
         return;
@@ -135,9 +145,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
     console.warn('Could not revoke the session', error);
   }, []);
 
+  const passwordChosen = useCallback(() => setRecovering(false), []);
+
   return (
     <SessionContext
-      value={{ ...state, retry: startAnonymousSession, startAgain, leaveDeletedUser, signOut }}
+      value={{
+        ...state,
+        retry: startAnonymousSession,
+        startAgain,
+        leaveDeletedUser,
+        signOut,
+        recovering,
+        passwordChosen,
+      }}
     >
       {children}
     </SessionContext>

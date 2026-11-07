@@ -181,6 +181,55 @@ export function useResendCode() {
 }
 
 /**
+ * Sends a code to choose a new password with (ADR 0092). Auth answers the same for an address
+ * without an account, so nobody learns which addresses have one.
+ */
+export function useSendResetCode() {
+  return useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) {
+        throw error;
+      }
+    },
+  });
+}
+
+/**
+ * Signs in to an account with a reset code. Auth then reports a password recovery, and the app asks
+ * for the new password before anything else (ADR 0092).
+ */
+export function useConfirmReset() {
+  return useMutation({
+    mutationFn: async ({ email, token }: { email: string; token: string }) => {
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token,
+        type: 'recovery',
+      });
+      if (error) {
+        throw error;
+      }
+    },
+  });
+}
+
+/** Saves the password chosen after a reset code, and lets the app go on. */
+export function useSaveNewPassword() {
+  const { passwordChosen } = useSession();
+  return useMutation({
+    mutationFn: async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password });
+      // The password it had: the person knows it, which is all this step is for.
+      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
+        throw error;
+      }
+    },
+    onSuccess: passwordChosen,
+  });
+}
+
+/**
  * Signs in to an account. A guest who signs in leaves their guest data behind for good, so the
  * screens warn about it first.
  */

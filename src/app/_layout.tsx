@@ -13,6 +13,7 @@ import { ActivityIndicator, Appearance, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useClaimDevice } from '@/account/device-owner';
+import { NewPasswordScreen } from '@/account/new-password-screen';
 import { SessionEnded } from '@/account/session-ended';
 import { AnimatedSplash } from '@/brand/animated-splash';
 import { SessionError } from '@/components/session-error';
@@ -53,7 +54,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { status, retry, startAgain } = useSession();
+  const { status, retry, startAgain, recovering } = useSession();
   const { completed, checking } = useOnboarding();
   useClaimDevice();
   const { t } = useTranslation();
@@ -92,6 +93,8 @@ function RootNavigator() {
         <SessionError onRetry={retry} />
       ) : status === 'ended' ? (
         <SessionEnded onStartAgain={startAgain} />
+      ) : recovering ? (
+        <NewPasswordScreen />
       ) : checking ? (
         <View style={[styles.root, styles.center, { backgroundColor: colors.background }]}>
           <ActivityIndicator color={colors.primary} accessibilityLabel={t('common.loading')} />

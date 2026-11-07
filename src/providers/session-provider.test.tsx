@@ -36,10 +36,10 @@ let listeners: AuthListener[] = [];
 
 const SESSION = { access_token: 'token', user: { id: 'user-1' } } as Session;
 
-async function emit(session: Session | null) {
+async function emit(session: Session | null, event = session ? 'SIGNED_IN' : 'INITIAL_SESSION') {
   await act(() => {
     for (const listener of listeners) {
-      listener(session ? 'SIGNED_IN' : 'INITIAL_SESSION', session);
+      listener(event, session);
     }
   });
 }
@@ -138,6 +138,25 @@ describe('SessionProvider', () => {
     expect(result.current.status).toBe('ended');
     await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
     expect(auth.signInAnonymously).not.toHaveBeenCalled();
+  });
+
+  it('asks for a new password after a reset code signed in, until it is saved', async () => {
+    const { result } = await renderSession();
+    await emit(SESSION);
+    expect(result.current.recovering).toBe(false);
+    await emit(SESSION, 'PASSWORD_RECOVERY');
+    expect(result.current).toMatchObject({ status: 'ready', recovering: true });
+    await emit(SESSION, 'TOKEN_REFRESHED');
+    expect(result.current.recovering).toBe(true);
+    await act(() => result.current.passwordChosen());
+    expect(result.current.recovering).toBe(false);
+  });
+
+  it('forgets the new password that was owed when the session ends', async () => {
+    const { result } = await renderSession();
+    await emit(SESSION, 'PASSWORD_RECOVERY');
+    await emit(null);
+    expect(result.current.recovering).toBe(false);
   });
 
   it('remembers the last user across starts of the app', async () => {

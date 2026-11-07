@@ -63,7 +63,8 @@ export function PasswordField({
   error: answered,
   isNew = false,
   editable = true,
-}: FieldProps & { isNew?: boolean }) {
+  label,
+}: FieldProps & { isNew?: boolean; label?: string }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
@@ -75,10 +76,10 @@ export function PasswordField({
   const hint = isNew ? t('account.passwordHint', { min: MIN_PASSWORD_LENGTH }) : null;
   return (
     <View style={styles.field}>
-      <FieldLabel text={t('account.password')} />
+      <FieldLabel text={label ?? t('account.password')} />
       <View>
         <TextInput
-          accessibilityLabel={t('account.password')}
+          accessibilityLabel={label ?? t('account.password')}
           value={value}
           onChangeText={onChange}
           editable={editable}

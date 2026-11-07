@@ -12,7 +12,10 @@ import type { SessionState, useSession } from '@/providers/session-provider';
 type SessionValue = ReturnType<typeof useSession>;
 type OnboardingValue = ReturnType<typeof useOnboarding>;
 type SessionOptions = Partial<
-  Pick<SessionValue, 'retry' | 'startAgain' | 'leaveDeletedUser' | 'signOut'>
+  Pick<
+    SessionValue,
+    'retry' | 'startAgain' | 'leaveDeletedUser' | 'signOut' | 'recovering' | 'passwordChosen'
+  >
 > & {
   /** Whether the signed-in user is a guest; they are unless this is false. */
   isAnonymous?: boolean;
@@ -34,6 +37,8 @@ export function sessionValue(
     startAgain: jest.fn(),
     leaveDeletedUser: jest.fn(),
     signOut: jest.fn(),
+    recovering: false,
+    passwordChosen: jest.fn(),
     ...functions,
   };
 }

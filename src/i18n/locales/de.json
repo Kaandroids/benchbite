@@ -89,7 +89,16 @@
     "confirmPasswordLeft": "Deine E-Mail-Adresse ist bestätigt. Es fehlt nur noch dein Passwort.",
     "readyTitle": "Dein Konto ist bereit",
     "readyMessage": "Dein Plan und deine Trainings sind sicher, auch auf einem neuen Handy.",
-    "readyContinue": "Weiter"
+    "readyContinue": "Weiter",
+    "forgotPassword": "Passwort vergessen?",
+    "resetTitle": "Setze dein Passwort zurück",
+    "resetSubtitle": "Gib die E-Mail-Adresse deines Kontos ein, und wir schicken dir einen Code.",
+    "resetSend": "Code senden",
+    "resetSent": "Falls {{email}} ein Konto hat, ist ein {{length}}-stelliger Code unterwegs.",
+    "newPasswordTitle": "Wähle ein neues Passwort",
+    "newPasswordSubtitle": "Du bleibst auf diesem Handy angemeldet.",
+    "newPassword": "Neues Passwort",
+    "newPasswordSave": "Passwort speichern"
   },
   "settings": {
     "title": "Einstellungen",
