@@ -10,7 +10,7 @@ The hosted Supabase project is deployed by the **Deploy Supabase** workflow in G
 settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
 the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
 `SUPABASE_DB_PASSWORD` from the repository's `production` environment, with `SMTP_PASSWORD`, the Lettermint project token that sends the account emails ([ADR 0091](adr/0091-confirm-accounts-with-a-code.md)). The Edge Functions' own
-secrets, such as `GEMINI_API_KEY`, are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
+secrets, such as `GEMINI_API_KEY` and `LETTERMINT_API_TOKEN` (a Lettermint project token, for the emails Edge Functions send, [ADR 0094](adr/0094-delete-an-account-from-the-website.md)), are set in the Supabase dashboard under Edge Functions → Secrets. Start it from the Actions tab
 with **Run workflow**.
 
 The scheduled photo purge reads the project URL and a secret API key from the project's Vault
