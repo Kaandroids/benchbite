@@ -61,6 +61,13 @@ describe('accountError', () => {
     expect(accountError(new AuthRetryableFetchError('Failed to fetch', 0))).toBe('offline');
   });
 
+  it.each([500, 502, 504])(
+    'reads a server error (%i), which supabase-js also calls retryable, as one',
+    (status) => {
+      expect(accountError(new AuthRetryableFetchError('Server error', status))).toBe('serverError');
+    },
+  );
+
   it('reads anything else as unknown', () => {
     expect(accountError(new Error('boom'))).toBe('unknown');
   });

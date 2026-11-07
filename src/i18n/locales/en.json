@@ -37,6 +37,7 @@
       "rateLimited": "Too many tries. Wait a moment and try again.",
       "codeWait": "We sent a code a moment ago. Try again in a minute.",
       "offline": "No connection. Check your internet and try again.",
+      "serverError": "Something went wrong on our side. Try again in a moment.",
       "unknown": "Something went wrong. Please try again.",
       "emailNotConfirmed": "Confirm your email first. Look for the code we sent you.",
       "invalidCode": "That code isn’t right, or it has expired. Try again, or send a new one.",

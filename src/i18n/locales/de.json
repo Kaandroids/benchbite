@@ -37,6 +37,7 @@
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
       "codeWait": "Wir haben gerade einen Code geschickt. Versuch es in einer Minute noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
+      "serverError": "Bei uns ist etwas schiefgelaufen. Versuch es gleich noch einmal.",
       "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
       "emailNotConfirmed": "Bestätige zuerst deine E-Mail. Such nach dem Code, den wir dir geschickt haben.",
       "invalidCode": "Dieser Code stimmt nicht oder ist abgelaufen. Versuch es noch einmal oder fordere einen neuen an.",

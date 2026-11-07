@@ -37,6 +37,7 @@
       "rateLimited": "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.",
       "codeWait": "Az önce bir kod gönderdik. Bir dakika sonra tekrar dene.",
       "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
+      "serverError": "Bizim tarafımızda bir sorun oldu. Birazdan tekrar dene.",
       "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene.",
       "emailNotConfirmed": "Önce e-postanı onayla. Sana gönderdiğimiz kodu bul.",
       "invalidCode": "Bu kod yanlış veya süresi dolmuş. Tekrar dene ya da yeni kod iste.",
