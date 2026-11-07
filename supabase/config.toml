@@ -242,14 +242,6 @@ otp_expiry = 900
 
 # The deploy workflow adds the SMTP settings for the hosted project (ADR 0091); locally, email goes
 # to Mailpit.
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
 
 [auth.email.template.confirmation]
 subject = "{{ if eq .Data.locale \"de\" }}{{ .Token }} ist dein Benchbite-Code{{ else if eq .Data.locale \"tr\" }}{{ .Token }} Benchbite kodun{{ else }}{{ .Token }} is your Benchbite code{{ end }}"
