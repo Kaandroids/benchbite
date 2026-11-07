@@ -1,0 +1,71 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { notFound } = messagesFor(locale);
+---
+
+<Layout locale={locale} title={notFound.title}>
+  <main>
+    <div class="bite">
+      <img src="/images/bite-sad.svg" alt={notFound.biteAlt} width="178" height="159" />
+    </div>
+    <h1>{notFound.heading}</h1>
+    <p class="muted">{notFound.text}</p>
+    <a class="back" href={localePath(locale)}>{notFound.back}</a>
+  </main>
+</Layout>
+
+<style>
+  main {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 808px;
+    margin: 0 auto;
+    padding: 24px clamp(20px, 5vw, 24px) 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .bite {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  .bite img {
+    max-width: none;
+  }
+
+  h1 {
+    margin-top: 8px;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .back {
+    margin-top: 8px;
+    padding: 14px 24px;
+    border-radius: 16px;
+    background: var(--primary-button);
+    box-shadow: 0 4px 0 var(--primary-button-ledge);
+    color: var(--on-primary);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--on-primary);
+  }
+</style>

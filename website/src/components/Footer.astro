@@ -3,9 +3,11 @@ import { localePath, messagesFor, type Locale } from '../i18n';
 
 type Props = {
   locale: Locale;
+  /** With the last hour of the day, as the landing page ends. Other pages stay quiet. */
+  night?: boolean;
 };
 
-const { locale } = Astro.props;
+const { locale, night = false } = Astro.props;
 const { footer } = messagesFor(locale);
 
 const links = [
@@ -17,32 +19,46 @@ const links = [
 ];
 ---
 
-<footer>
+<footer class:list={{ quiet: !night }}>
   <div class="content">
-    <div class="night">
-      <div class="message">
-        <p class="time">23:59</p>
-        <h2>{footer.night}</h2>
-        <p class="question">
-          {footer.question}{' '}
-          <a href="mailto:support@benchbite.com">support@benchbite.com</a>
-        </p>
-      </div>
-      <div class="bite">
-        <img
-          src="/images/bite-sleeping.svg"
-          alt={footer.biteAlt}
-          width="240"
-          height="214"
-          loading="lazy"
-        />
-        <span class="z big" aria-hidden="true">z</span>
-        <span class="z small" aria-hidden="true">z</span>
-      </div>
+    {
+      night && (
+        <div class="night">
+          <div class="message">
+            <p class="time">23:59</p>
+            <h2>{footer.night}</h2>
+            <p class="question">
+              {footer.question}{' '}
+              <a href="mailto:support@benchbite.com">support@benchbite.com</a>
+            </p>
+          </div>
+          <div class="bite">
+            <img
+              src="/images/bite-sleeping.svg"
+              alt={footer.biteAlt}
+              width="240"
+              height="214"
+              loading="lazy"
+            />
+            <span class="z big" aria-hidden="true">z</span>
+            <span class="z small" aria-hidden="true">z</span>
+          </div>
+        </div>
+      )
+    }
+    <div class="links">
+      {
+        !night && (
+          <a class="brand" href={localePath(locale)}>
+            <img src="/images/icon.png" alt="" width="32" height="32" loading="lazy" />
+            <span>benchbite</span>
+          </a>
+        )
+      }
+      <nav aria-label={footer.links}>
+        {links.map((link) => <a href={localePath(locale, link.page)}>{link.label}</a>)}
+      </nav>
     </div>
-    <nav aria-label={footer.links}>
-      {links.map((link) => <a href={localePath(locale, link.page)}>{link.label}</a>)}
-    </nav>
     <div class="small-print">
       <span>{footer.note}</span>
       <span>© 2026 Benchbite</span>
@@ -74,6 +90,33 @@ const links = [
     display: flex;
     flex-direction: column;
     gap: 40px;
+  }
+
+  .quiet .content {
+    padding-top: 32px;
+    padding-bottom: 24px;
+    gap: 20px;
+  }
+
+  .quiet .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 40px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .brand img {
+    border-radius: 9px;
   }
 
   .night {
@@ -159,6 +202,20 @@ const links = [
     background: #343d6b;
     font-weight: 800;
     text-decoration: none;
+  }
+
+  .quiet nav {
+    gap: 8px 24px;
+  }
+
+  .quiet nav a {
+    padding: 0;
+    background: none;
+  }
+
+  .quiet .small-print {
+    padding-top: 16px;
+    border-top: 1px solid #343d6b;
   }
 
   .small-print {
