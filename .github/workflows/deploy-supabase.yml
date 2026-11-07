@@ -52,11 +52,27 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
-      # Auth and API settings come from supabase/config.toml, such as guest sign-ins and email
-      # sign-ups without confirmation. Only what the file declares is changed.
+      # Added here and not in the file, so that local email stays in Mailpit (ADR 0091).
+      - name: Add the email sender
+        run: |
+          cat >> supabase/config.toml <<'TOML'
+
+          [auth.email.smtp]
+          enabled = true
+          host = "smtp.lettermint.co"
+          port = 587
+          user = "lettermint"
+          pass = "env(SMTP_PASSWORD)"
+          admin_email = "no-reply@benchbite.com"
+          sender_name = "Benchbite"
+          TOML
+
+      # Auth and API settings come from supabase/config.toml, such as guest sign-ins and confirming
+      # email addresses. Only what the file declares is changed.
       - name: Push the settings
         run: pnpm supabase config push --yes
         env:
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
