@@ -10,7 +10,9 @@ ADR 0031 creates accounts without confirming the email address, because no domai
 ## Decision
 
 - **An account's email address is confirmed with a 6-digit code typed into the app,** not a link, as a code does not depend on a link opening the app. It works for 15 minutes, and another can be asked for after a minute.
-- **A guest stays a guest until the code is confirmed.** `updateUser` adds the address as a pending change, and leaving loses nothing. Auth refuses a password before that, so the app keeps it in memory and sets it right after confirming. If only that step fails, trying again does not use the code twice. The user id stays the same, so all data stays with it (ADR 0005). Without a session, `signUp` takes the password at once, and the code confirms that user.
+- **A guest stays a guest until the code is confirmed.** `updateUser` adds the address as a pending change, and leaving loses nothing. Asking for it again is what sends a new code, as `resend` does not find a pending address. The user id stays the same, so all data stays with it (ADR 0005). Without a session, `signUp` creates the user, and the code confirms it.
+- **The password is set right after every confirmed code.** Auth refuses one for a guest before that. Auth also keeps the first password given for an unconfirmed address, so someone who signed up with another person's address would otherwise know the password of that person's account. If only this step fails, trying again does not use the code twice, and the screen no longer offers the way back.
+- **A sign-up nobody confirmed is removed after a day,** by a `pg_cron` job. It would otherwise hold its address for good, and with it someone else's address that nobody proved.
 - **Passwords have at least 8 characters.** This applies when one is set, so existing ones keep working.
 - **Email goes through SMTP, from `no-reply@benchbite.com`.** The templates are in `supabase/templates/`. One template holds all three languages, chosen with the `locale` the app stores in the user's metadata, in the subject too. An Auth Hook was not needed for this.
 - **The SMTP settings are added to `supabase/config.toml` by the deploy workflow.** Locally, email stays in Mailpit, with no password to set and nothing leaving the machine.
@@ -26,4 +28,7 @@ ADR 0031 creates accounts without confirming the email address, because no domai
 
 - A sign-up on the hosted project needs a working sender: if email fails, nobody can finish creating an account.
 - An account can have an address but no password, if the app stops right after the code is confirmed. A password reset will solve that, and until then it only signs in on the same session.
+- Without a session, the app leaves the screen as soon as the code is confirmed. If setting the password fails in that moment, the account keeps the password given at sign-up.
+- Someone can hold another person's address for up to a day, by signing up with it and not confirming.
+- The email limit of `supabase/config.toml` is shared by all users and there is no captcha yet, so one client can use it up and stop sign-ups for up to an hour.
 - Local tools that sign up need the code, or confirm the user in the database as `pnpm seed:demo` does.
