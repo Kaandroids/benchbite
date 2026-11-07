@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+  <body
+    style="
+      margin: 0;
+      padding: 24px;
+      background: #f6f6f8;
+      font-family: Helvetica, Arial, sans-serif;
+      color: #16171a;
+    "
+  >
+    <div
+      style="
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 32px;
+        border-radius: 20px;
+        background: #ffffff;
+      "
+    >
+      <p style="margin: 0 0 24px; font-size: 22px; font-weight: 800">benchbite</p>
+      {{ if eq .Data.locale "de" }}
+      <h1 style="margin: 0 0 12px; font-size: 24px">Bestätige deine E-Mail-Adresse</h1>
+      <p style="margin: 0 0 16px">
+        Gib diesen Code in der App ein, um dein Konto fertig einzurichten:
+      </p>
+      {{ else if eq .Data.locale "tr" }}
+      <h1 style="margin: 0 0 12px; font-size: 24px">E-posta adresini onayla</h1>
+      <p style="margin: 0 0 16px">Hesabını tamamlamak için bu kodu uygulamaya gir:</p>
+      {{ else }}
+      <h1 style="margin: 0 0 12px; font-size: 24px">Confirm your email</h1>
+      <p style="margin: 0 0 16px">Enter this code in the app to finish creating your account:</p>
+      {{ end }}
+      <p
+        style="
+          margin: 0 0 16px;
+          padding: 14px 24px;
+          display: inline-block;
+          border-radius: 14px;
+          background: #f6f6f8;
+          font-size: 32px;
+          font-weight: 800;
+          letter-spacing: 4px;
+        "
+      >
+        {{ .Token }}
+      </p>
+      {{ if eq .Data.locale "de" }}
+      <p style="margin: 0; color: #676a72">
+        Er gilt 15 Minuten. Falls du das nicht warst, kannst du diese E-Mail ignorieren.
+      </p>
+      {{ else if eq .Data.locale "tr" }}
+      <p style="margin: 0; color: #676a72">
+        15 dakika geçerlidir. Bunu sen istemediysen bu e-postayı yok sayabilirsin.
+      </p>
+      {{ else }}
+      <p style="margin: 0; color: #676a72">
+        It works for 15 minutes. If you didn't ask for this, you can ignore this email.
+      </p>
+      {{ end }}
+    </div>
+  </body>
+</html>

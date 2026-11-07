@@ -5,7 +5,16 @@ import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { LogInScreen } from './log-in-screen';
 
-jest.mock('@/lib/supabase', () => ({ supabase: { auth: { signInWithPassword: jest.fn() } } }));
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithPassword: jest.fn(),
+      resend: jest.fn(),
+      verifyOtp: jest.fn(),
+      updateUser: jest.fn(),
+    },
+  },
+}));
 
 const auth = jest.mocked(supabase.auth);
 const onClose = jest.fn();
@@ -82,6 +91,41 @@ describe('LogInScreen', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'That email and password don’t match an account.',
     );
+  });
+
+  describe('with an email address nobody confirmed', () => {
+    beforeEach(async () => {
+      auth.signInWithPassword.mockResolvedValue({
+        data: {},
+        error: new AuthApiError('not confirmed', 400, 'email_not_confirmed'),
+      } as never);
+      auth.resend.mockResolvedValue({ data: {}, error: null } as never);
+      auth.verifyOtp.mockResolvedValue({ data: {}, error: null } as never);
+      auth.updateUser.mockResolvedValue({ data: {}, error: null } as never);
+      await renderScreen();
+      await fill(' kaan@example.com ', 'secret12');
+      await fireEvent.press(screen.getByRole('button', { name: 'Log in' }));
+    });
+
+    it('sends a code and asks for it', async () => {
+      expect(
+        await screen.findByText('We sent a 6-digit code to kaan@example.com.'),
+      ).toBeOnTheScreen();
+      expect(auth.resend).toHaveBeenCalledWith({ email: 'kaan@example.com', type: 'signup' });
+      await fireEvent.changeText(screen.getByLabelText('6-digit code'), '123456');
+      await waitFor(() =>
+        expect(auth.verifyOtp).toHaveBeenCalledWith({
+          email: 'kaan@example.com',
+          token: '123456',
+          type: 'signup',
+        }),
+      );
+    });
+
+    it('goes back to the form', async () => {
+      await fireEvent.press(await screen.findByRole('button', { name: 'Use another email' }));
+      expect(screen.getByLabelText('Email')).toHaveProp('value', ' kaan@example.com ');
+    });
   });
 
   it('warns a guest with data that it stays behind', async () => {

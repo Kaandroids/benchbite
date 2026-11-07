@@ -35,8 +35,11 @@
       "weakPassword": "Dein Passwort braucht mindestens {{min}} Zeichen.",
       "passwordTooLong": "Dein Passwort darf höchstens {{max}} Zeichen haben.",
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
+      "codeWait": "Wir haben gerade einen Code geschickt. Versuch es in einer Minute noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
-      "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal."
+      "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
+      "emailNotConfirmed": "Bestätige zuerst deine E-Mail. Such nach dem Code, den wir dir geschickt haben.",
+      "invalidCode": "Dieser Code stimmt nicht oder ist abgelaufen. Versuch es noch einmal oder fordere einen neuen an."
     },
     "email": "E-Mail",
     "emailPlaceholder": "du@beispiel.de",
@@ -72,7 +75,21 @@
       "confirm": "Endgültig löschen",
       "notNow": "Nicht jetzt",
       "failed": "Das Löschen hat nicht geklappt. Prüfe deine Verbindung und versuche es erneut."
-    }
+    },
+    "code": "{{length}}-stelliger Code",
+    "confirmTitle": "Schau in deine E-Mails",
+    "confirmSent": "Wir haben einen {{length}}-stelligen Code an {{email}} geschickt.",
+    "confirmSpam": "Nichts angekommen? Schau in deinen Spam-Ordner.",
+    "confirmResendIn": "Erneut senden in {{time}}",
+    "confirmResend": "Neuen Code senden",
+    "confirmAnotherEmail": "Andere E-Mail verwenden",
+    "confirmGuestNote": "Du bleibst Gast, bis der Code bestätigt ist. Wenn du jetzt gehst, geht nichts verloren.",
+    "confirm": "Bestätigen",
+    "confirmPasswordTitle": "Speichere dein Passwort",
+    "confirmPasswordLeft": "Deine E-Mail-Adresse ist bestätigt. Es fehlt nur noch dein Passwort.",
+    "readyTitle": "Dein Konto ist bereit",
+    "readyMessage": "Dein Plan und deine Trainings sind sicher, auch auf einem neuen Handy.",
+    "readyContinue": "Weiter"
   },
   "settings": {
     "title": "Einstellungen",

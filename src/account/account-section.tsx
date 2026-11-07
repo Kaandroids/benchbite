@@ -12,8 +12,7 @@ import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 
-import { accountError, useSignOut } from './account';
-import { PASSWORD_LIMITS } from './passwords';
+import { accountErrorMessage, useSignOut } from './account';
 
 /** The settings' account section: a guest is offered an account, an account can log out. */
 export function AccountSection() {
@@ -74,10 +73,7 @@ function SignedIn() {
         onPress: () =>
           signOut.mutate(undefined, {
             onError: (error) =>
-              Alert.alert(
-                t('settings.logOutFailed'),
-                t(`account.errors.${accountError(error)}`, PASSWORD_LIMITS),
-              ),
+              Alert.alert(t('settings.logOutFailed'), accountErrorMessage(t, error)),
           }),
       },
     ]);

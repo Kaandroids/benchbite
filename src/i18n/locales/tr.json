@@ -35,8 +35,11 @@
       "weakPassword": "Şifren en az {{min}} karakter olmalı.",
       "passwordTooLong": "Şifren en fazla {{max}} karakter olabilir.",
       "rateLimited": "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.",
+      "codeWait": "Az önce bir kod gönderdik. Bir dakika sonra tekrar dene.",
       "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
-      "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene."
+      "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene.",
+      "emailNotConfirmed": "Önce e-postanı onayla. Sana gönderdiğimiz kodu bul.",
+      "invalidCode": "Bu kod yanlış veya süresi dolmuş. Tekrar dene ya da yeni kod iste."
     },
     "email": "E-posta",
     "emailPlaceholder": "sen@ornek.com",
@@ -72,7 +75,21 @@
       "confirm": "Kalıcı olarak sil",
       "notNow": "Şimdi değil",
       "failed": "Silinemedi. Bağlantını kontrol edip tekrar dene."
-    }
+    },
+    "code": "{{length}} haneli kod",
+    "confirmTitle": "E-postanı kontrol et",
+    "confirmSent": "{{email}} adresine {{length}} haneli bir kod gönderdik.",
+    "confirmSpam": "Gelmedi mi? Spam klasörüne bak.",
+    "confirmResendIn": "{{time}} sonra tekrar gönder",
+    "confirmResend": "Yeni kod gönder",
+    "confirmAnotherEmail": "Başka e-posta kullan",
+    "confirmGuestNote": "Kod onaylanana kadar misafir kalırsın. Şimdi çıkarsan kaydettiklerin kaybolmaz.",
+    "confirm": "Onayla",
+    "confirmPasswordTitle": "Şifreni kaydet",
+    "confirmPasswordLeft": "E-posta adresin onaylandı. Sadece şifren kaldı.",
+    "readyTitle": "Hesabın hazır",
+    "readyMessage": "Planın ve antrenmanların güvende, yeni telefonda da.",
+    "readyContinue": "Devam et"
   },
   "settings": {
     "title": "Ayarlar",

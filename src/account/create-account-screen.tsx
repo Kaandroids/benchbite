@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -8,27 +9,47 @@ import { Note } from '@/components/ui/note';
 import { TextLink } from '@/components/ui/text-link';
 import { FormScreen } from '@/components/ui/form-screen';
 
-import { errorField, useCreateAccount } from './account';
+import { errorField, useCreateAccount, type NewAccountKind } from './account';
+import { AccountReadyScreen } from './account-ready-screen';
+import { ConfirmEmailScreen } from './confirm-email-screen';
 import { EmailField, PasswordField } from './account-fields';
-import { MIN_PASSWORD_LENGTH } from './passwords';
+import { isPasswordValid } from './passwords';
 import { useCredentialsForm } from './use-credentials-form';
 
 type CreateAccountScreenProps = {
   onClose: () => void;
   /** Switches to logging in, as for an email address that has an account. */
   onLogIn: () => void;
-  /** After the account was created. */
+  /** After the account was created and its email address confirmed. */
   onCreated?: () => void;
 };
 
-/** Creates an account with an email address and a password (ADR 0031). */
+/** Creates an account with an email address and a password, confirmed by a code (ADR 0091). */
 export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccountScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const create = useCreateAccount();
   const { email, password, setEmail, setPassword, reason, message } = useCredentialsForm(create);
   const field = reason ? errorField(reason) : null;
-  const ready = email.trim() !== '' && password.length >= MIN_PASSWORD_LENGTH;
+  const ready = email.trim() !== '' && isPasswordValid(password);
+  const [step, setStep] = useState<
+    { name: 'code'; kind: NewAccountKind } | { name: 'ready' } | null
+  >(null);
+
+  if (step?.name === 'ready') {
+    return <AccountReadyScreen onContinue={() => onCreated?.()} />;
+  }
+  if (step?.name === 'code') {
+    return (
+      <ConfirmEmailScreen
+        email={email}
+        password={password}
+        kind={step.kind}
+        onBack={() => setStep(null)}
+        onConfirmed={() => setStep({ name: 'ready' })}
+      />
+    );
+  }
 
   return (
     <FormScreen
@@ -43,7 +64,12 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
             label={t('account.create')}
             disabled={!ready}
             loading={create.isPending}
-            onPress={() => create.mutate({ email, password }, { onSuccess: onCreated })}
+            onPress={() =>
+              create.mutate(
+                { email, password },
+                { onSuccess: (kind) => setStep({ name: 'code', kind }) },
+              )
+            }
           />
           <LinkPrompt
             question={t('account.haveAccount')}
@@ -69,7 +95,6 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
         onChange={setPassword}
         editable={!create.isPending}
         error={field === 'password' ? message : null}
-        hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
         isNew
       />
     </FormScreen>

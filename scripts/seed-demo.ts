@@ -106,13 +106,24 @@ const OVER_DAY = addDays(TODAY, -40); // ate over the target: the streak starts 
 // 1. Delete the demo user and sign up again; Bite needs premium to answer.
 
 sql(`delete from auth.users where email = ${literal(EMAIL)}`);
-const signUp = await request<{ access_token: string; user: { id: string } }>(
+const signUp = await request<{ id: string }>('POST', '/auth/v1/signup', {
+  email: EMAIL,
+  password: PASSWORD,
+});
+// Accounts confirm their email address with a code, which a script has no way to read. Confirming
+// forgets the password given before (ADR 0091), so it is set again.
+sql(`update auth.users set email_confirmed_at = now() where email = ${literal(EMAIL)}`);
+sql(
+  `update auth.users set encrypted_password = extensions.crypt(${literal(PASSWORD)}, extensions.gen_salt('bf'))
+   where email = ${literal(EMAIL)}`,
+);
+const signIn = await request<{ access_token: string }>(
   'POST',
-  '/auth/v1/signup',
+  '/auth/v1/token?grant_type=password',
   { email: EMAIL, password: PASSWORD },
 );
-token = signUp.access_token;
-const uid = signUp.user.id;
+token = signIn.access_token;
+const uid = signUp.id;
 sql(`select public.give_plan(${literal(EMAIL)}, now(), now() + interval '1 year')`);
 console.log(`Signed up ${EMAIL}; today ${TODAY}, the plan starts ${START}.`);
 

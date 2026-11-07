@@ -17,7 +17,10 @@ export default function CreateAccountRoute() {
       onLogIn={() => router.replace('/account/login')}
       // A guest who finished the onboarding keeps their data, so the app goes on with it on Today.
       onCreated={() => {
-        router.dismissAll();
+        // Nothing is under this screen when a link opened it.
+        if (router.canDismiss()) {
+          router.dismissAll();
+        }
         router.navigate('/');
       }}
     />

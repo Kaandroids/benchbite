@@ -1,6 +1,6 @@
 # 0031. Create accounts with an email address and a password
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0091
 - **Date:** 2026-10-25
 
 ## Context

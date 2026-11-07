@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -7,8 +8,9 @@ import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
 import { FormScreen } from '@/components/ui/form-screen';
 
-import { useSignIn } from './account';
+import { accountError, useResendCode, useSignIn } from './account';
 import { EmailField, PasswordField } from './account-fields';
+import { ConfirmEmailScreen } from './confirm-email-screen';
 import { useCredentialsForm } from './use-credentials-form';
 
 type LogInScreenProps = {
@@ -21,13 +23,40 @@ type LogInScreenProps = {
 
 /**
  * Logs in to an account. The app then starts again as that user, so this screen does not navigate
- * on success.
+ * on success. An account whose email address was never confirmed goes on to its code.
  */
 export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogInScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
   const signIn = useSignIn();
+  const resend = useResendCode();
   const { email, password, setEmail, setPassword, message } = useCredentialsForm(signIn);
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <ConfirmEmailScreen
+        email={email}
+        password={password}
+        kind="new"
+        onBack={() => setConfirming(false)}
+      />
+    );
+  }
+
+  const logIn = () =>
+    signIn.mutate(
+      { email, password },
+      {
+        onError: (error) => {
+          if (accountError(error) === 'emailNotConfirmed') {
+            // Refused only within a minute of the last code, which then still works.
+            resend.mutate({ email, kind: 'new' });
+            setConfirming(true);
+          }
+        },
+      },
+    );
 
   return (
     <FormScreen
@@ -42,7 +71,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
             label={t('account.logIn')}
             disabled={email.trim() === '' || password === ''}
             loading={signIn.isPending}
-            onPress={() => signIn.mutate({ email, password })}
+            onPress={logIn}
           />
           <LinkPrompt
             question={t('account.noAccount')}

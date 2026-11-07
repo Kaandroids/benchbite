@@ -24,21 +24,23 @@ describe('PasswordField', () => {
     expect(screen.getByLabelText('Password')).toHaveProp('secureTextEntry', true);
   });
 
-  it('shows the hint, and the error instead of it', async () => {
-    const { rerender } = await render(
-      <PasswordField value="" onChange={jest.fn()} hint="At least 6 characters." />,
-    );
-    expect(screen.getByText('At least 6 characters.')).toBeOnTheScreen();
-    await rerender(
-      <PasswordField
-        value=""
-        onChange={jest.fn()}
-        hint="At least 6 characters."
-        error="Too short."
-      />,
-    );
+  it('shows the rules of a new password, and an error instead of them', async () => {
+    const { rerender } = await render(<PasswordField value="" onChange={jest.fn()} isNew />);
+    expect(screen.getByText('At least 8 characters.')).toBeOnTheScreen();
+    await rerender(<PasswordField value="" onChange={jest.fn()} isNew error="Too short." />);
     expect(screen.getByText('Too short.')).toBeOnTheScreen();
-    expect(screen.queryByText('At least 6 characters.')).not.toBeOnTheScreen();
+    expect(screen.queryByText('At least 8 characters.')).not.toBeOnTheScreen();
+  });
+
+  it('says a new password is too long as soon as it is, counted in bytes', async () => {
+    await render(<PasswordField value={'ü'.repeat(37)} onChange={jest.fn()} isNew />);
+    expect(screen.getByText('Use a password with at most 72 characters.')).toBeOnTheScreen();
+  });
+
+  it('shows no rules for a password being typed to log in', async () => {
+    await render(<PasswordField value={'ü'.repeat(37)} onChange={jest.fn()} />);
+    expect(screen.queryByText('At least 8 characters.')).not.toBeOnTheScreen();
+    expect(screen.queryByText(/at most 72/)).not.toBeOnTheScreen();
   });
 
   it('offers a new password to the password manager as one', async () => {
