@@ -110,8 +110,10 @@ export function useCreateAccount() {
 type ConfirmAccount = Credentials & { token: string; kind: NewAccountKind };
 
 /**
- * Confirms a new account's email address with its code, and gives a guest their password. The code
- * can be used once, so a try after only the password failed does not send it again.
+ * Confirms a new account's email address with its code, then sets the password. A new user gave one
+ * when signing up, but Auth keeps the first one given for an address nobody confirmed, which could
+ * be someone else's (ADR 0091). The code can be used once, so a try after only the password failed
+ * does not send it again.
  */
 export function useConfirmAccount() {
   const confirmed = useRef(false);
@@ -129,24 +131,26 @@ export function useConfirmAccount() {
         }
         confirmed.current = true;
       }
-      if (kind === 'guest') {
-        const { error } = await supabase.auth.updateUser({ password });
-        if (error) {
-          throw error;
-        }
+      const { error } = await supabase.auth.updateUser({ password });
+      // Being the password already is what this step wants, as after an answer that got lost.
+      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
+        throw error;
       }
     },
   });
 }
 
-/** Sends a new account's code again. */
+/**
+ * Sends a new account's code again. A guest's address is only pending, where `resend` does not find
+ * it and answers as if it had sent the code, so a guest asks for the change again.
+ */
 export function useResendCode() {
   return useMutation({
     mutationFn: async ({ email, kind }: { email: string; kind: NewAccountKind }) => {
-      const { error } = await supabase.auth.resend({
-        email: email.trim(),
-        type: kind === 'guest' ? 'email_change' : 'signup',
-      });
+      const { error } =
+        kind === 'guest'
+          ? await supabase.auth.updateUser({ email })
+          : await supabase.auth.resend({ email, type: 'signup' });
       if (error) {
         throw error;
       }

@@ -59,12 +59,22 @@ describe('ConfirmEmailScreen', () => {
     );
   });
 
-  it('confirms a new user, who gave their password when signing up', async () => {
+  it('sets the password of a new user too, as Auth may keep an earlier one', async () => {
     await renderScreen('new');
     await typeCode('123456');
     await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
     expect(auth.verifyOtp).toHaveBeenCalledWith({ email: EMAIL, token: '123456', type: 'signup' });
-    expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(auth.updateUser).toHaveBeenCalledWith({ password: 'secret12' });
+  });
+
+  it('goes on when the password is the same one already', async () => {
+    auth.updateUser.mockResolvedValue({
+      data: {},
+      error: new AuthApiError('same', 422, 'same_password'),
+    } as never);
+    await renderScreen('new');
+    await typeCode('123456');
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
   });
 
   it('keeps only the digits of what is typed or pasted', async () => {
@@ -117,17 +127,26 @@ describe('ConfirmEmailScreen', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
 
-    it('waits a minute, sends the same kind of code, and starts waiting again', async () => {
+    it('waits a minute, asks for the change again for a guest, and starts waiting', async () => {
       await renderScreen();
       const waiting = screen.getByRole('button', { name: 'Send again in 1:00' });
       await fireEvent.press(waiting);
       expect(auth.resend).not.toHaveBeenCalled();
       await act(async () => jest.advanceTimersByTime(60_000));
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
-      await waitFor(() =>
-        expect(auth.resend).toHaveBeenCalledWith({ email: EMAIL, type: 'email_change' }),
-      );
+      await waitFor(() => expect(auth.updateUser).toHaveBeenCalledWith({ email: EMAIL }));
+      expect(auth.resend).not.toHaveBeenCalled();
       expect(await screen.findByRole('button', { name: 'Send again in 1:00' })).toBeOnTheScreen();
+    });
+
+    it('sends a new user their code again', async () => {
+      await renderScreen('new');
+      await act(async () => jest.advanceTimersByTime(60_000));
+      await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
+      await waitFor(() =>
+        expect(auth.resend).toHaveBeenCalledWith({ email: EMAIL, type: 'signup' }),
+      );
+      expect(auth.updateUser).not.toHaveBeenCalled();
     });
   });
 
