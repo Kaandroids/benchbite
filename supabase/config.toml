@@ -252,11 +252,11 @@ otp_expiry = 900
 
 [auth.email.template.confirmation]
 subject = "{{ if eq .Data.locale \"de\" }}{{ .Token }} ist dein Benchbite-Code{{ else if eq .Data.locale \"tr\" }}{{ .Token }} Benchbite kodun{{ else }}{{ .Token }} is your Benchbite code{{ end }}"
-content_path = "./supabase/templates/confirmation.html"
+content_path = "./supabase/templates/account-code.html"
 
 [auth.email.template.email_change]
 subject = "{{ if eq .Data.locale \"de\" }}{{ .Token }} ist dein Benchbite-Code{{ else if eq .Data.locale \"tr\" }}{{ .Token }} Benchbite kodun{{ else }}{{ .Token }} is your Benchbite code{{ end }}"
-content_path = "./supabase/templates/email_change.html"
+content_path = "./supabase/templates/account-code.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
