@@ -25,9 +25,11 @@ alter table public.account_deletion_requests enable row level security;
 revoke all on public.account_deletion_links, public.account_deletion_requests
   from anon, authenticated;
 
--- Records a request and, unless the address or the IP asked too often, makes a link for the
--- account with this confirmed address. Whether it made one is for the function only: the website
--- answers the same either way.
+-- Records a request and, unless it came too often, makes a link for the account with this confirmed
+-- address. Whether it made one is for the function only: the website answers the same either way.
+-- An address gets 3 an hour from each IP and 10 from all, so others cannot use up its owner's; an IP
+-- gets 10 an hour. Locks make requests for one address or IP wait their turn, so requests sent at
+-- the same moment cannot all pass the counts.
 create function public.start_account_deletion(
   p_email text,
   p_ip_hash bytea,
@@ -43,10 +45,16 @@ declare
   v_email_hash bytea := extensions.digest(v_email, 'sha256');
   v_user uuid;
 begin
+  perform pg_advisory_xact_lock(1, hashtext(encode(v_email_hash, 'hex')));
+  perform pg_advisory_xact_lock(2, hashtext(encode(p_ip_hash, 'hex')));
+
   if (
     select count(*) from public.account_deletion_requests
-    where email_hash = v_email_hash and created_at > now() - interval '1 hour'
+    where email_hash = v_email_hash and ip_hash = p_ip_hash and created_at > now() - interval '1 hour'
   ) >= 3 or (
+    select count(*) from public.account_deletion_requests
+    where email_hash = v_email_hash and created_at > now() - interval '1 hour'
+  ) >= 10 or (
     select count(*) from public.account_deletion_requests
     where ip_hash = p_ip_hash and created_at > now() - interval '1 hour'
   ) >= 10 then
@@ -56,8 +64,9 @@ begin
   insert into public.account_deletion_requests (email_hash, ip_hash)
   values (v_email_hash, p_ip_hash);
 
+  -- Auth keeps addresses in lower case, so the unique index finds it.
   select id into v_user from auth.users
-  where lower(email) = v_email and not is_anonymous and email_confirmed_at is not null;
+  where email = v_email and not is_sso_user and not is_anonymous and email_confirmed_at is not null;
   if v_user is null then
     return false;
   end if;

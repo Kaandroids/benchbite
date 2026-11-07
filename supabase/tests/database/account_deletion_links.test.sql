@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(15);
 
 insert into auth.users (id, email, email_confirmed_at, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'kaan@example.com', now(), false),
@@ -28,13 +28,23 @@ select ok(
 );
 select is(public.account_deletion_user('\xcc'), null, 'Nor does it have one');
 
-select public.start_account_deletion('kaan@example.com', '\x02', '\xa1');
-select public.start_account_deletion('kaan@example.com', '\x03', '\xa2');
+select public.start_account_deletion('kaan@example.com', '\x01', '\xa1');
+select public.start_account_deletion('kaan@example.com', '\x01', '\xa2');
 select ok(
-  not public.start_account_deletion('kaan@example.com', '\x04', '\xa3'),
-  'An address asking a fourth time within an hour gets no link'
+  not public.start_account_deletion('kaan@example.com', '\x01', '\xa3'),
+  'An address asking a fourth time from one IP within an hour gets no link'
 );
 select is(public.account_deletion_user('\xa3'), null, 'The link it was refused does not work');
+select ok(
+  public.start_account_deletion('kaan@example.com', '\x05', '\xa4'),
+  'Its owner, from another IP, still gets one'
+);
+select public.start_account_deletion('kaan@example.com', ('\x1' || n)::bytea, ('\xb' || n)::bytea)
+  from generate_series(0, 5) n;
+select ok(
+  not public.start_account_deletion('kaan@example.com', '\x07', '\xa5'),
+  'An address gets no more than 10 an hour from all IPs'
+);
 
 select public.start_account_deletion(
   'other' || n || '@example.com', '\x09', extensions.digest(n::text, 'sha256')
