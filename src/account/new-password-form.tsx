@@ -6,10 +6,9 @@ import { FormScreen } from '@/components/ui/form-screen';
 import { Note } from '@/components/ui/note';
 import { useTheme } from '@/theme';
 
-import { errorField, useAccountError } from './account';
+import { errorField, startingAgain, useAccountError } from './account';
 import { PasswordField } from './account-fields';
 import { isPasswordValid } from './passwords';
-import { startingAgain } from './use-credentials-form';
 
 type NewPasswordFormProps = {
   title: string;

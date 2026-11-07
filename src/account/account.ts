@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
+import { useSession, useUserEmail } from '@/providers/session-provider';
 
 import { PASSWORD_LIMITS } from './passwords';
 
@@ -87,6 +87,22 @@ export function accountError(error: unknown): AccountError {
     return AUTH_ERRORS[error.code] ?? 'unknown';
   }
   return 'unknown';
+}
+
+/** A request to Supabase as a form holds it, to start a new attempt of it. */
+type Attempt = { isPending: boolean; reset: () => void };
+
+/**
+ * Sets a field's value as a new attempt, without the request's last error. Resetting a running
+ * request would leave the screen without its answer.
+ */
+export function startingAgain(request: Attempt) {
+  return (set: (value: string) => void) => (value: string) => {
+    set(value);
+    if (!request.isPending) {
+      request.reset();
+    }
+  };
 }
 
 /** The message that says why a request to Supabase Auth failed. */
@@ -246,8 +262,7 @@ export function useSaveNewPassword() {
  * as Auth does not; Auth only refuses a session older than a day (ADR 0093).
  */
 export function useChangePassword() {
-  const session = useSession();
-  const email = session.status === 'ready' ? session.session.user.email : undefined;
+  const email = useUserEmail();
   return useMutation({
     mutationFn: async ({ current, password }: { current: string; password: string }) => {
       if (!email) {

@@ -1,7 +1,7 @@
 import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
+import { useSession, useUserEmail } from '@/providers/session-provider';
 import { sessionValue } from '@/test/context-mocks';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
@@ -16,7 +16,10 @@ jest.mock('@/lib/supabase', () => ({
     },
   },
 }));
-jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
+jest.mock('@/providers/session-provider', () => ({
+  useSession: jest.fn(),
+  useUserEmail: jest.fn(),
+}));
 
 const auth = jest.mocked(supabase.auth);
 const onBack = jest.fn();
@@ -40,6 +43,7 @@ beforeEach(() => {
     value.session.user.email = 'kaan@example.com';
   }
   jest.mocked(useSession).mockReturnValue(value);
+  jest.mocked(useUserEmail).mockReturnValue('kaan@example.com');
   auth.signInWithPassword.mockResolvedValue({ data: {}, error: null } as never);
   auth.updateUser.mockResolvedValue({ data: {}, error: null } as never);
   auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null } as never);

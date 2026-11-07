@@ -178,6 +178,12 @@ export function useUserId(): string | undefined {
   return state.status === 'ready' ? state.session.user.id : undefined;
 }
 
+/** The signed-in account's email address; none for a guest. */
+export function useUserEmail(): string | undefined {
+  const state = useSession();
+  return state.status === 'ready' ? state.session.user.email || undefined : undefined;
+}
+
 /** Whether the signed-in user has an account, as opposed to being a guest (ADR 0031). */
 export function useIsAccount(): boolean {
   const state = useSession();

@@ -10,16 +10,16 @@ import { useTheme } from '@/theme';
 import {
   CODE_LENGTH,
   errorField,
+  startingAgain,
   useAccountError,
   useConfirmReset,
   useSendResetCode,
 } from './account';
 import { EmailField } from './account-fields';
 import { CodeEntry, useCodeEntry } from './code-entry';
-import { startingAgain } from './use-credentials-form';
 
 type ForgotPasswordScreenProps = {
-  /** What the log-in form held, to start from. */
+  /** The address to start from: what the log-in form held, or the signed-in account's. */
   email: string;
   /** Sends the code to this email only, for the account signed in, which stays the one reset. */
   fixedEmail?: boolean;

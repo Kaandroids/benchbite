@@ -2,7 +2,7 @@ import { AuthRetryableFetchError } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { Alert, type AlertButton } from 'react-native';
 
-import { useIsAccount, useSession } from '@/providers/session-provider';
+import { useIsAccount, useSession, useUserEmail } from '@/providers/session-provider';
 import { sessionValue } from '@/test/context-mocks';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
@@ -13,6 +13,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/providers/session-provider', () => ({
   useSession: jest.fn(),
   useIsAccount: jest.fn(),
+  useUserEmail: jest.fn(),
 }));
 
 const signOut = jest.fn();
@@ -24,6 +25,7 @@ function given(isAccount: boolean) {
   }
   jest.mocked(useSession).mockReturnValue(value);
   jest.mocked(useIsAccount).mockReturnValue(isAccount);
+  jest.mocked(useUserEmail).mockReturnValue(isAccount ? 'kaan@example.com' : undefined);
 }
 
 /** Taps the button of the alert shown last that has the given text. */

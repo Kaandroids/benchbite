@@ -7,12 +7,12 @@ import { Card } from '@/components/ui/card';
 import { DashedButton } from '@/components/ui/dashed-button';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
-import { Text } from '@/components/ui/text';
-import { useIsAccount, useSession } from '@/providers/session-provider';
-import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
-
 import { SettingRow } from '@/components/ui/setting-row';
+import { Text } from '@/components/ui/text';
+import { useIsAccount, useUserEmail } from '@/providers/session-provider';
+import { useTheme } from '@/theme';
+
 import { accountErrorMessage, useSignOut } from './account';
 
 /** The settings' account section: a guest is offered an account, an account can log out. */
@@ -60,8 +60,7 @@ function Guest() {
 function SignedIn() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const session = useSession();
-  const email = session.status === 'ready' ? session.session.user.email : undefined;
+  const email = useUserEmail();
   const signOut = useSignOut();
 
   const logOut = () =>

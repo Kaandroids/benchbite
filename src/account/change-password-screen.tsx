@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { FormScreen } from '@/components/ui/form-screen';
 import { Note } from '@/components/ui/note';
 import { TextLink } from '@/components/ui/text-link';
-import { useSession } from '@/providers/session-provider';
+import { useUserEmail } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 
-import { errorField, useAccountError, useChangePassword } from './account';
+import { errorField, startingAgain, useAccountError, useChangePassword } from './account';
 import { PasswordField } from './account-fields';
 import { ForgotPasswordScreen } from './forgot-password-screen';
 import { isPasswordValid } from './passwords';
-import { startingAgain } from './use-credentials-form';
 
 type ChangePasswordScreenProps = {
   onBack: () => void;
@@ -27,8 +26,7 @@ type ChangePasswordScreenProps = {
 export function ChangePasswordScreen({ onBack, onChanged }: ChangePasswordScreenProps) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const session = useSession();
-  const email = session.status === 'ready' ? (session.session.user.email ?? '') : '';
+  const email = useUserEmail() ?? '';
   const change = useChangePassword();
   const [current, setCurrent] = useState('');
   const [password, setPassword] = useState('');
