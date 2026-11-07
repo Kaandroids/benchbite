@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/text';
 import { displayNameOf, useDisplayName, useSetDisplayName } from '@/profile/display-name';
 import { NameField } from '@/profile/name-field';
 
-import { SettingRow } from './setting-row';
+import { SettingRow } from '@/components/ui/setting-row';
 
 /** The user's name in a row, changed in a sheet. */
 export function ProfileSection() {

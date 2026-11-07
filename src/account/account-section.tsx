@@ -12,8 +12,7 @@ import { useIsAccount, useSession } from '@/providers/session-provider';
 import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 
-import { SettingRow } from '@/settings/setting-row';
-
+import { SettingRow } from '@/components/ui/setting-row';
 import { accountErrorMessage, useSignOut } from './account';
 
 /** The settings' account section: a guest is offered an account, an account can log out. */

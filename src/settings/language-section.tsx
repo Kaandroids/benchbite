@@ -10,7 +10,7 @@ import { deviceLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES, type Language } fr
 import { useTheme } from '@/theme';
 
 import { setLanguageChoice, useLanguageChoice, type LanguageChoice } from './preferences';
-import { SettingRow } from './setting-row';
+import { SettingRow } from '@/components/ui/setting-row';
 
 /** The app's language in a row, chosen in a sheet: one of its languages, or the phone's. */
 export function LanguageSection() {
