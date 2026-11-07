@@ -158,7 +158,7 @@ The website in `website/` is a package of its own, with its own dependencies:
 cd website
 pnpm install
 pnpm dev     # serves it on http://localhost:4321
-pnpm check   # type-checks the translations
+pnpm check   # type-checks the pages and the translations
 pnpm build   # writes the static site to website/dist
 ```
 
