@@ -1,4 +1,5 @@
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useRef } from 'react';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { useTheme } from '@/theme';
 
@@ -16,15 +17,19 @@ type CodeFieldProps = {
 
 /**
  * A code from an email, a box for each digit. One input lies over the boxes, unseen, so typing,
- * pasting and the keyboard's suggestion of the code all work as in any field.
+ * pasting and the keyboard's suggestion of the code all work as in any field. iOS does not pass
+ * touches to so faint a view, so a press on the boxes focuses the input, which brings back a
+ * keyboard that was closed.
  */
 export function CodeField({ value, onChange, length, label, invalid = false }: CodeFieldProps) {
   const { colors, radii } = useTheme();
+  const input = useRef<TextInputInstance>(null);
   const active = (index: number) =>
     index < value.length || (index === value.length && index < length);
 
   return (
-    <View style={styles.row}>
+    // Not a target of its own for screen readers, which reach the input.
+    <Pressable accessible={false} onPress={() => input.current?.focus()} style={styles.row}>
       {Array.from({ length }, (_, index) => (
         <View
           key={index}
@@ -41,6 +46,7 @@ export function CodeField({ value, onChange, length, label, invalid = false }: C
         </View>
       ))}
       <TextInput
+        ref={input}
         accessibilityLabel={label}
         value={value}
         onChangeText={(text) => onChange(text.replace(/\D/g, '').slice(0, length))}
@@ -51,7 +57,7 @@ export function CodeField({ value, onChange, length, label, invalid = false }: C
         caretHidden
         style={styles.input}
       />
-    </View>
+    </Pressable>
   );
 }
 
