@@ -36,7 +36,9 @@
       "passwordTooLong": "Dein Passwort darf höchstens {{max}} Zeichen haben.",
       "rateLimited": "Zu viele Versuche. Warte kurz und versuch es noch einmal.",
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
-      "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal."
+      "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
+      "emailNotConfirmed": "Bestätige zuerst deine E-Mail. Such nach dem Code, den wir dir geschickt haben.",
+      "invalidCode": "Dieser Code stimmt nicht oder ist abgelaufen. Versuch es noch einmal oder fordere einen neuen an."
     },
     "email": "E-Mail",
     "emailPlaceholder": "du@beispiel.de",
@@ -72,7 +74,19 @@
       "confirm": "Endgültig löschen",
       "notNow": "Nicht jetzt",
       "failed": "Das Löschen hat nicht geklappt. Prüfe deine Verbindung und versuche es erneut."
-    }
+    },
+    "code": "6-stelliger Code",
+    "confirmTitle": "Schau in deine E-Mails",
+    "confirmSent": "Wir haben einen 6-stelligen Code an {{email}} geschickt.",
+    "confirmSpam": "Nichts angekommen? Schau in deinen Spam-Ordner.",
+    "confirmResendIn": "Erneut senden in {{time}}",
+    "confirmResend": "Neuen Code senden",
+    "confirmAnotherEmail": "Andere E-Mail verwenden",
+    "confirmGuestNote": "Du bleibst Gast, bis der Code bestätigt ist. Wenn du jetzt gehst, geht nichts verloren.",
+    "confirm": "Bestätigen",
+    "readyTitle": "Dein Konto ist bereit",
+    "readyMessage": "Dein Plan und deine Trainings sind sicher, auch auf einem neuen Handy.",
+    "readyContinue": "Weiter"
   },
   "settings": {
     "title": "Einstellungen",

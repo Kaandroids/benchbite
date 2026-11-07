@@ -18,6 +18,7 @@ const auth = jest.mocked(supabase.auth);
 const signOut = jest.fn();
 const CREDENTIALS = { email: ' kaan@example.com ', password: 'secret12' };
 const TRIMMED = { email: 'kaan@example.com', password: 'secret12' };
+const LOCALE = { locale: 'en' };
 
 function given(status: 'ready' | 'ended') {
   jest
@@ -65,18 +66,18 @@ describe('accountError', () => {
 });
 
 describe('useCreateAccount', () => {
-  it('adds the email and password to the guest, keeping their data', async () => {
+  it('adds the email to the guest, keeping their data, with the password left for later', async () => {
     const { result } = await renderHook(useCreateAccount);
-    await act(() => result.current.mutateAsync(CREDENTIALS));
-    expect(auth.updateUser).toHaveBeenCalledWith(TRIMMED);
+    await expect(act(() => result.current.mutateAsync(CREDENTIALS))).resolves.toBe('guest');
+    expect(auth.updateUser).toHaveBeenCalledWith({ email: TRIMMED.email, data: LOCALE });
     expect(auth.signUp).not.toHaveBeenCalled();
   });
 
   it('creates a new user when the guest session ended', async () => {
     given('ended');
     const { result } = await renderHook(useCreateAccount);
-    await act(() => result.current.mutateAsync(CREDENTIALS));
-    expect(auth.signUp).toHaveBeenCalledWith(TRIMMED);
+    await expect(act(() => result.current.mutateAsync(CREDENTIALS))).resolves.toBe('new');
+    expect(auth.signUp).toHaveBeenCalledWith({ ...TRIMMED, options: { data: LOCALE } });
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 

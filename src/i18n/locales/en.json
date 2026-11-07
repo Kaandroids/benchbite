@@ -36,7 +36,9 @@
       "passwordTooLong": "Use a password with at most {{max}} characters.",
       "rateLimited": "Too many tries. Wait a moment and try again.",
       "offline": "No connection. Check your internet and try again.",
-      "unknown": "Something went wrong. Please try again."
+      "unknown": "Something went wrong. Please try again.",
+      "emailNotConfirmed": "Confirm your email first. Look for the code we sent you.",
+      "invalidCode": "That code isn’t right, or it has expired. Try again, or send a new one."
     },
     "email": "Email",
     "emailPlaceholder": "you@example.com",
@@ -72,7 +74,19 @@
       "confirm": "Delete for good",
       "notNow": "Not now",
       "failed": "We couldn’t delete it. Check your connection and try again."
-    }
+    },
+    "code": "6-digit code",
+    "confirmTitle": "Check your email",
+    "confirmSent": "We sent a 6-digit code to {{email}}.",
+    "confirmSpam": "Didn’t get it? Check your spam folder.",
+    "confirmResendIn": "Send again in {{time}}",
+    "confirmResend": "Send a new code",
+    "confirmAnotherEmail": "Use another email",
+    "confirmGuestNote": "You stay a guest until the code is confirmed. Nothing you saved is lost if you leave now.",
+    "confirm": "Confirm",
+    "readyTitle": "Your account is ready",
+    "readyMessage": "Your plan and workouts are safe, also on a new phone.",
+    "readyContinue": "Continue"
   },
   "settings": {
     "title": "Settings",
