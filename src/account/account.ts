@@ -48,6 +48,7 @@ export type AccountError =
   | 'rateLimited'
   | 'codeWait'
   | 'offline'
+  | 'serverError'
   | 'unknown';
 
 // The codes Supabase Auth answers with, by what they mean to the user.
@@ -72,8 +73,10 @@ export function accountError(error: unknown): AccountError {
   if (error instanceof WrongCurrentPassword) {
     return 'wrongCurrentPassword';
   }
+  // supabase-js reports both a request that never got an answer (status 0) and a server error
+  // (5xx) as retryable; only the first is about the connection.
   if (isAuthRetryableFetchError(error)) {
-    return 'offline';
+    return error.status === 0 ? 'offline' : 'serverError';
   }
   if (isAuthApiError(error) && error.code === 'validation_failed') {
     // One code for any input Auth refuses; only the message says which.
