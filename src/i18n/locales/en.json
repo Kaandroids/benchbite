@@ -39,7 +39,8 @@
       "offline": "No connection. Check your internet and try again.",
       "unknown": "Something went wrong. Please try again.",
       "emailNotConfirmed": "Confirm your email first. Look for the code we sent you.",
-      "invalidCode": "That code isn’t right, or it has expired. Try again, or send a new one."
+      "invalidCode": "That code isn’t right, or it has expired. Try again, or send a new one.",
+      "wrongCurrentPassword": "That isn’t your current password."
     },
     "email": "Email",
     "emailPlaceholder": "you@example.com",
@@ -98,7 +99,10 @@
     "newPasswordTitle": "Choose a new password",
     "newPasswordSubtitle": "You’ll stay logged in on this phone.",
     "newPassword": "New password",
-    "newPasswordSave": "Save password"
+    "newPasswordSave": "Save password",
+    "changePassword": "Change password",
+    "changePasswordHint": "Opens where you change your password",
+    "currentPassword": "Current password"
   },
   "settings": {
     "title": "Settings",

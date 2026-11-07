@@ -20,8 +20,10 @@ export const RESEND_SECONDS = 60;
 export type NewAccountKind = 'guest' | 'new';
 
 /** Where a form shows each reason: under the field it is about, or above the button. */
-export function errorField(reason: AccountError): 'email' | 'password' | null {
+export function errorField(reason: AccountError): 'email' | 'password' | 'current' | null {
   switch (reason) {
+    case 'wrongCurrentPassword':
+      return 'current';
     case 'emailTaken':
     case 'invalidEmail':
       return 'email';
@@ -38,6 +40,7 @@ export type AccountError =
   | 'invalidCredentials'
   | 'emailNotConfirmed'
   | 'invalidCode'
+  | 'wrongCurrentPassword'
   | 'emailTaken'
   | 'invalidEmail'
   | 'weakPassword'
@@ -61,8 +64,14 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   over_email_send_rate_limit: 'codeWait',
 };
 
+/** The current password given to change it was not the account's. */
+class WrongCurrentPassword extends Error {}
+
 /** The reason a request to Supabase Auth failed. */
 export function accountError(error: unknown): AccountError {
+  if (error instanceof WrongCurrentPassword) {
+    return 'wrongCurrentPassword';
+  }
   if (isAuthRetryableFetchError(error)) {
     return 'offline';
   }
@@ -226,6 +235,34 @@ export function useSaveNewPassword() {
       }
     },
     onSuccess: passwordChosen,
+  });
+}
+
+/**
+ * Changes the signed-in account's password. Auth checks the current one, as signing in with it,
+ * and only lets a recent session change a password, so a session left open on a lost phone cannot
+ * change it without the password (ADR 0093).
+ */
+export function useChangePassword() {
+  const session = useSession();
+  const email = session.status === 'ready' ? session.session.user.email : undefined;
+  return useMutation({
+    mutationFn: async ({ current, password }: { current: string; password: string }) => {
+      if (!email) {
+        throw new Error('No account is signed in');
+      }
+      const signIn = await supabase.auth.signInWithPassword({ email, password: current });
+      if (signIn.error) {
+        throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
+          ? new WrongCurrentPassword()
+          : signIn.error;
+      }
+      const { error } = await supabase.auth.updateUser({ password });
+      // The new password is the current one: nothing changes, which is no failure.
+      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
+        throw error;
+      }
+    },
   });
 }
 

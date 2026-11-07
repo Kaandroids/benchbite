@@ -120,6 +120,7 @@ function RootNavigator() {
             <Stack.Screen name="session/exercise/history" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="account/delete" />
+            <Stack.Screen name="account/password" />
             {/* What premium adds, opened wherever the plan stops the user. */}
             <Stack.Screen name="premium" />
             {/* Bite's chat, opened from the middle of the tab bar. */}
