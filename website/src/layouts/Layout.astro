@@ -4,12 +4,12 @@ import '../styles/global.css';
 
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import { messagesFor, type Locale } from '../i18n';
+import { messagesFor, type Locale, type Page } from '../i18n';
 
 type Props = {
   locale: Locale;
-  /** The page's address relative to the root, such as `privacy`, for the language links. */
-  page?: string;
+  /** The page, for the language links; without one, they lead to the landing page. */
+  page?: Page;
   /** Without it, the page goes by the site's own title. */
   title?: string;
   /** The header on the brand's orange, for a page that starts on it. */
@@ -18,7 +18,7 @@ type Props = {
   nightFooter?: boolean;
 };
 
-const { locale, page = '', title, brandHeader = false, nightFooter = false } = Astro.props;
+const { locale, page, title, brandHeader = false, nightFooter = false } = Astro.props;
 const { meta } = messagesFor(locale);
 ---
 

@@ -1,0 +1,32 @@
+---
+import { localePath, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+  iconSize: number;
+};
+
+const { locale, iconSize } = Astro.props;
+---
+
+<a class="brand" href={localePath(locale)}>
+  <img
+    src="/images/icon.png"
+    alt=""
+    width={iconSize}
+    height={iconSize}
+    style={`border-radius: ${Math.round(iconSize * 0.28)}px`}
+  />
+  <span>benchbite</span>
+</a>
+
+<style>
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(19px, 5.5vw, 22px);
+    font-weight: 900;
+    text-decoration: none;
+  }
+</style>

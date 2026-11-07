@@ -1,9 +1,10 @@
 ---
-import { LOCALES, localePath, messagesFor, type Locale } from '../i18n';
+import Brand from './Brand.astro';
+import { LOCALES, localePath, messagesFor, type Locale, type Page } from '../i18n';
 
 type Props = {
   locale: Locale;
-  page: string;
+  page?: Page;
   /** On the brand's orange. */
   brand: boolean;
 };
@@ -14,41 +15,34 @@ const messages = messagesFor(locale);
 
 <header class:list={{ 'on-brand': brand }}>
   <div class="bar">
-    <a class="brand" href={localePath(locale)}>
-      <img src="/images/icon.png" alt="" width="36" height="36" />
-      <span>benchbite</span>
-    </a>
-    <div class="controls">
-      <nav aria-label={messages.language}>
-        {
-          LOCALES.map((option) => (
-            <a
-              class:list={['language', { current: option === locale }]}
-              href={localePath(option, page)}
-              hreflang={option}
-              aria-current={option === locale ? 'true' : undefined}
-            >
-              {option.toUpperCase()}
-            </a>
-          ))
-        }
-      </nav>
-    </div>
+    <Brand locale={locale} iconSize={36} />
+    <nav aria-label={messages.language}>
+      {
+        LOCALES.map((option) => (
+          <a
+            class:list={['language', { current: option === locale }]}
+            href={localePath(option, page)}
+            hreflang={option}
+            aria-current={option === locale ? 'true' : undefined}
+          >
+            {option.toUpperCase()}
+          </a>
+        ))
+      }
+    </nav>
   </div>
 </header>
 
 <style>
   .on-brand {
-    --surface: #ffffff;
-    --text: var(--ink);
-    --text-muted: #c9cbd1;
+    --text-muted: var(--on-inverse-muted);
     --track: var(--ink);
-    --primary-text: #ffb27f;
+    --primary-text: var(--brand-light);
     background: var(--brand);
-    color: #ffffff;
+    color: var(--on-inverse);
   }
 
-  .on-brand .brand:hover {
+  .on-brand :global(.brand:hover) {
     color: var(--ink);
   }
 
@@ -65,25 +59,6 @@ const messages = messagesFor(locale);
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: clamp(19px, 5.5vw, 22px);
-    font-weight: 900;
-    text-decoration: none;
-  }
-
-  .brand img {
-    border-radius: 10px;
-  }
-
-  .controls {
-    display: flex;
-    align-items: center;
     gap: 8px;
   }
 

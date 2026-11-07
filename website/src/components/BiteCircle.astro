@@ -1,0 +1,42 @@
+---
+type Props = {
+  face: 'neutral' | 'happy' | 'sad' | 'surprised' | 'thinking' | 'sleeping';
+  /** The circle's diameter. */
+  size: number;
+  /**
+   * The picture's width, which holds Bite and its crumbs. At about 0.9 of the size, the crumbs stay
+   * on the orange; above the size they run past it, where a dark or coloured ground still shows them.
+   */
+  imageWidth: number;
+  alt?: string;
+};
+
+const { face, size, imageWidth, alt = '' } = Astro.props;
+---
+
+<div class="circle" style={`width: ${size}px; height: ${size}px`}>
+  <img
+    src={`/images/bite-${face}.svg`}
+    alt={alt}
+    width={imageWidth}
+    height={Math.round((imageWidth * 100) / 112)}
+    loading="lazy"
+  />
+  <slot />
+</div>
+
+<style>
+  .circle {
+    position: relative;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  img {
+    max-width: none;
+  }
+</style>
