@@ -5,7 +5,7 @@ release build on an iPhone. To run everything locally, see [Development](develop
 
 ## Deploy the Supabase project
 
-The hosted Supabase project is deployed by the **Deploy** workflow in GitHub Actions
+The hosted Supabase project is deployed by the **Deploy Supabase** workflow in GitHub Actions
 ([ADR 0030](adr/0030-deploy-supabase-from-github-actions.md)). It links the project, pushes the
 settings in `supabase/config.toml`, applies new migrations and deploys the Edge Functions; it uploads
 the exercise images when asked. It reads `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID` and
