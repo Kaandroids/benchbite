@@ -75,9 +75,9 @@
       "notNow": "Not now",
       "failed": "We couldn’t delete it. Check your connection and try again."
     },
-    "code": "6-digit code",
+    "code": "{{length}}-digit code",
     "confirmTitle": "Check your email",
-    "confirmSent": "We sent a 6-digit code to {{email}}.",
+    "confirmSent": "We sent a {{length}}-digit code to {{email}}.",
     "confirmSpam": "Didn’t get it? Check your spam folder.",
     "confirmResendIn": "Send again in {{time}}",
     "confirmResend": "Send a new code",

@@ -75,9 +75,9 @@
       "notNow": "Şimdi değil",
       "failed": "Silinemedi. Bağlantını kontrol edip tekrar dene."
     },
-    "code": "6 haneli kod",
+    "code": "{{length}} haneli kod",
     "confirmTitle": "E-postanı kontrol et",
-    "confirmSent": "{{email}} adresine 6 haneli bir kod gönderdik.",
+    "confirmSent": "{{email}} adresine {{length}} haneli bir kod gönderdik.",
     "confirmSpam": "Gelmedi mi? Spam klasörüne bak.",
     "confirmResendIn": "{{time}} sonra tekrar gönder",
     "confirmResend": "Yeni kod gönder",

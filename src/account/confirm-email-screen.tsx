@@ -8,6 +8,7 @@ import { FormScreen } from '@/components/ui/form-screen';
 import { Note } from '@/components/ui/note';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import { PasswordField } from './account-fields';
@@ -15,6 +16,7 @@ import {
   accountError,
   CODE_LENGTH,
   errorField,
+  useAccountError,
   useConfirmAccount,
   useResendCode,
   type NewAccountKind,
@@ -113,8 +115,7 @@ export function ConfirmEmailScreen({
   };
 
   const error = confirm.error ?? resend.error;
-  const reason = error ? accountError(error) : null;
-  const message = reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null;
+  const { reason, message } = useAccountError(error);
 
   const changePassword = (value: string) => {
     setNewPassword(value);
@@ -127,7 +128,9 @@ export function ConfirmEmailScreen({
     <FormScreen
       title={confirm.accepted ? t('account.confirmPasswordTitle') : t('account.confirmTitle')}
       subtitle={
-        confirm.accepted ? t('account.confirmPasswordLeft') : t('account.confirmSent', { email })
+        confirm.accepted
+          ? t('account.confirmPasswordLeft')
+          : t('account.confirmSent', { email, length: CODE_LENGTH })
       }
       onBack={confirm.accepted ? undefined : onBack}
       footer={
@@ -159,7 +162,7 @@ export function ConfirmEmailScreen({
       {confirm.accepted ? null : (
         <>
           <CodeField
-            label={t('account.code')}
+            label={t('account.code', { length: CODE_LENGTH })}
             value={code}
             onChange={change}
             length={CODE_LENGTH}
@@ -170,7 +173,7 @@ export function ConfirmEmailScreen({
             <TextLink
               label={
                 waiting
-                  ? t('account.confirmResendIn', { time: formatWait(secondsLeft) })
+                  ? t('account.confirmResendIn', { time: minutesAndSeconds(secondsLeft) })
                   : t('account.confirmResend')
               }
               align="start"
@@ -194,8 +197,4 @@ export function ConfirmEmailScreen({
       )}
     </FormScreen>
   );
-}
-
-function formatWait(seconds: number) {
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }

@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
 
+import { PASSWORD_LIMITS } from './passwords';
+
 export type Credentials = { email: string; password: string };
 
 /** The digits of the code sent by email, as `otp_length` in `supabase/config.toml`. */
@@ -73,6 +75,13 @@ export function accountError(error: unknown): AccountError {
   return 'unknown';
 }
 
+/** The reason a request failed, with the message that says it. */
+export function useAccountError(error: unknown) {
+  const { t } = useTranslation();
+  const reason = error ? accountError(error) : null;
+  return { reason, message: reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null };
+}
+
 const normalized = ({ email, password }: Credentials): Credentials => ({
   email: email.trim(),
   password,
@@ -118,8 +127,7 @@ type ConfirmAccount = Credentials & { token: string; kind: NewAccountKind };
 export function useConfirmAccount() {
   const [accepted, setAccepted] = useState(false);
   const mutation = useMutation({
-    mutationFn: async ({ token, kind, ...credentials }: ConfirmAccount) => {
-      const { email, password } = normalized(credentials);
+    mutationFn: async ({ email, password, token, kind }: ConfirmAccount) => {
       if (!accepted) {
         const { error } = await supabase.auth.verifyOtp({
           email,
