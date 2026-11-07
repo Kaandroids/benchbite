@@ -14,15 +14,27 @@
   --warning: #b45309;
   --warning-background: #fef3c7;
   --lunch-background: #ffede2;
+  --breakfast: #b45309;
   --breakfast-background: #fcecc0;
+  --dinner: #4f5fd0;
   --dinner-background: #e8ebfb;
+  --snack: #c2346f;
   --snack-background: #fce7f0;
-  --water-background: #e1f4f2;
-  --inverse-surface: #16171a;
   --on-inverse: #ffffff;
   --on-inverse-muted: #c9cbd1;
   --brand: #ff6a10;
+  --brand-light: #ffb27f;
   --ink: #16171a;
+  /* The meals' colours from the app's dark theme, for use on dark grounds. */
+  --breakfast-on-dark: #f5b54a;
+  --lunch-on-dark: #ff7f26;
+  --dinner-on-dark: #9aa6f5;
+  --snack-on-dark: #f28ab7;
+  --water-on-dark: #4fd1c5;
+  /* The footer's ground, with what sits on it. */
+  --night: #232a4d;
+  --night-raised: #343d6b;
+  --on-night-muted: #dde1fa;
 }
 
 * {
@@ -85,6 +97,24 @@ h1 {
 
 .muted {
   color: var(--text-muted);
+}
+
+.lead {
+  margin-top: 8px;
+}
+
+/* An hour of the day, as the landing page and its footer show them. */
+.hour-time {
+  font-size: clamp(72px, 10vw, 136px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hour-title {
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 900;
+  line-height: 1.05;
 }
 
 .note {
