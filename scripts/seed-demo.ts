@@ -110,8 +110,13 @@ const signUp = await request<{ id: string }>('POST', '/auth/v1/signup', {
   email: EMAIL,
   password: PASSWORD,
 });
-// Accounts confirm their email address with a code, which a script has no way to read.
+// Accounts confirm their email address with a code, which a script has no way to read. Confirming
+// forgets the password given before (ADR 0091), so it is set again.
 sql(`update auth.users set email_confirmed_at = now() where email = ${literal(EMAIL)}`);
+sql(
+  `update auth.users set encrypted_password = extensions.crypt(${literal(PASSWORD)}, extensions.gen_salt('bf'))
+   where email = ${literal(EMAIL)}`,
+);
 const signIn = await request<{ access_token: string }>(
   'POST',
   '/auth/v1/token?grant_type=password',
