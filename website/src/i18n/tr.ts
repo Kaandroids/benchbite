@@ -131,7 +131,7 @@ export const tr: Messages = {
   },
   imprint: {
     title: 'Künye',
-    draft: 'Yer tutucu. Ad, adres ve yasal metin yayından önce eklenecek.',
+    draft: 'Yer tutucu. Ad, adres, e-posta ve yasal metin yayından önce eklenecek.',
     provider: 'Sağlayıcı',
     name: '[AD SOYAD]',
     street: '[SOKAK VE NUMARA]',

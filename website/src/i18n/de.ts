@@ -131,7 +131,8 @@ export const de: Messages = {
   },
   imprint: {
     title: 'Impressum',
-    draft: 'Platzhalter. Name, Anschrift und Rechtstext werden vor der Veröffentlichung ergänzt.',
+    draft:
+      'Platzhalter. Name, Anschrift, E-Mail-Adresse und Rechtstext werden vor der Veröffentlichung ergänzt.',
     provider: 'Anbieter',
     name: '[VOLLSTÄNDIGER NAME]',
     street: '[STRASSE UND HAUSNUMMER]',
