@@ -13,8 +13,8 @@ type TextLinkProps = {
   tone?: keyof typeof TONES;
   /** `small` beside captions, `regular` beside body text, such as in a sentence. */
   size?: 'small' | 'regular';
-  /** `start` to sit under left-aligned text, such as a field's error. */
-  align?: 'center' | 'start';
+  /** `start` to sit under left-aligned text, such as a field's error; `end` under a field's end. */
+  align?: 'center' | 'start' | 'end';
   /** A small icon before the label, in its colour. */
   icon?: IconName;
   /** Dims the link and ignores presses, as while what it does is running. */
@@ -22,6 +22,7 @@ type TextLinkProps = {
 };
 
 const TONES = { primary: 'primaryText', muted: 'textMuted', danger: 'danger' } as const;
+const ALIGN_SELF = { center: 'center', start: 'flex-start', end: 'flex-end' } as const;
 
 /** Reaches past the label to a touch target at least 44 points high, as the guidelines ask. */
 const HIT_SLOP = { top: 10, bottom: 10, left: 8, right: 8 };
@@ -47,7 +48,7 @@ export function TextLink({
       style={({ pressed }) => [
         styles.link,
         {
-          alignSelf: align === 'start' ? 'flex-start' : 'center',
+          alignSelf: ALIGN_SELF[align],
           opacity: pressed || disabled ? 0.6 : 1,
         },
       ]}

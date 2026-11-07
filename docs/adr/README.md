@@ -107,3 +107,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0089](0089-deploy-the-website-to-netlify.md)                         | Deploy the website to Netlify                                                           | Accepted                                             |
 | [0090](0090-check-the-websites-astro-files.md)                        | Check the website's Astro files                                                         | Accepted                                             |
 | [0091](0091-confirm-accounts-with-a-code.md)                          | Confirm accounts with a code                                                            | Accepted                                             |
+| [0092](0092-reset-a-password-with-a-code.md)                          | Reset a password with a code                                                            | Accepted                                             |

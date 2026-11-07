@@ -89,7 +89,16 @@
     "confirmPasswordLeft": "E-posta adresin onaylandı. Sadece şifren kaldı.",
     "readyTitle": "Hesabın hazır",
     "readyMessage": "Planın ve antrenmanların güvende, yeni telefonda da.",
-    "readyContinue": "Devam et"
+    "readyContinue": "Devam et",
+    "forgotPassword": "Şifreni mi unuttun?",
+    "resetTitle": "Şifreni sıfırla",
+    "resetSubtitle": "Hesabının e-posta adresini gir, sana bir kod gönderelim.",
+    "resetSend": "Kod gönder",
+    "resetSent": "{{email}} adresine ait bir hesap varsa {{length}} haneli bir kod yolda.",
+    "newPasswordTitle": "Yeni bir şifre seç",
+    "newPasswordSubtitle": "Bu telefonda oturumun açık kalır.",
+    "newPassword": "Yeni şifre",
+    "newPasswordSave": "Şifreyi kaydet"
   },
   "settings": {
     "title": "Ayarlar",
