@@ -157,17 +157,18 @@ export const de: Messages = {
   },
   deleteAccount: {
     title: 'Dein Benchbite-Konto löschen',
-    text: 'Das gilt für Konten und Gastdaten. Das Löschen kann nicht rückgängig gemacht werden.',
+    text: 'Konten und Gastdaten lassen sich in der App löschen. Das Löschen kann nicht rückgängig gemacht werden.',
     inApp: 'In der App',
     steps: [
-      'Öffne Benchbite und gehe zu den Einstellungen.',
-      'Wähle die Option, dein Konto oder deine Gastdaten zu löschen.',
+      'Öffne Benchbite. Wenn du ein Konto hast, melde dich zuerst an.',
+      'Gehe zu den Einstellungen und wähle die Option, dein Konto oder deine Gastdaten zu löschen.',
       'Bestätige.',
     ],
+    guestNote:
+      'Nutzt du Benchbite als Gast? Lösche deine Daten in der App, bevor du sie entfernst. Gastdaten haben keine E-Mail-Adresse, deshalb können wir sie später nicht finden.',
     withoutApp: 'Ohne die App',
-    withoutAppText: 'App schon entfernt? Schreib uns von der E-Mail-Adresse deines Kontos.',
-    emailSubject: 'Mein Benchbite-Konto löschen',
-    emailButton: 'E-Mail an privacy@benchbite.com',
+    withoutAppText:
+      'App schon entfernt und du hast ein Konto? Installiere sie erneut und melde dich an, um dein Konto zu löschen. Bald kannst du die Löschung auch hier anfordern und per E-Mail bestätigen.',
     kept: 'Was gelöscht wird und was bleibt',
     keptPlaceholder: '[RECHTSTEXT: GELÖSCHTE DATEN, VERBLEIBENDE DATEN, FRISTEN]',
   },

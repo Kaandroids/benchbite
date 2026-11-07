@@ -6,7 +6,6 @@ export const getStaticPaths = localeStaticPaths;
 
 const locale = Astro.props.locale as Locale;
 const { deleteAccount } = messagesFor(locale);
-const emailLink = `mailto:privacy@benchbite.com?subject=${encodeURIComponent(deleteAccount.emailSubject)}`;
 ---
 
 <Layout locale={locale} page="delete-account" title={deleteAccount.title}>
@@ -20,11 +19,11 @@ const emailLink = `mailto:privacy@benchbite.com?subject=${encodeURIComponent(del
       <ol>
         {deleteAccount.steps.map((step) => <li>{step}</li>)}
       </ol>
+      <p class="guest-note">{deleteAccount.guestNote}</p>
     </section>
     <section class="without-app">
       <h2 class="section-title">{deleteAccount.withoutApp}</h2>
       <p>{deleteAccount.withoutAppText}</p>
-      <a class="button" href={emailLink}>{deleteAccount.emailButton}</a>
     </section>
     <section>
       <h2 class="section-title">{deleteAccount.kept}</h2>
@@ -52,19 +51,7 @@ const emailLink = `mailto:privacy@benchbite.com?subject=${encodeURIComponent(del
     background: var(--lunch-background);
   }
 
-  .button {
+  .guest-note {
     margin-top: 16px;
-    padding: 14px 22px;
-    display: inline-block;
-    border-radius: 16px;
-    background: var(--primary-button);
-    box-shadow: 0 4px 0 var(--primary-button-ledge);
-    color: var(--on-primary);
-    font-weight: 800;
-    text-decoration: none;
-  }
-
-  .button:hover {
-    color: var(--on-primary);
   }
 </style>

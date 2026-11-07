@@ -156,17 +156,18 @@ export const tr: Messages = {
   },
   deleteAccount: {
     title: 'Benchbite hesabını sil',
-    text: 'Bu, hesaplar ve misafir verileri için geçerlidir. Silme işlemi geri alınamaz.',
+    text: 'Hesaplar ve misafir verileri uygulamadan silinebilir. Silme işlemi geri alınamaz.',
     inApp: 'Uygulamada',
     steps: [
-      'Benchbite’ı aç ve Ayarlar’a git.',
-      'Hesabını veya misafir verilerini silme seçeneğini seç.',
+      'Benchbite’ı aç. Hesabın varsa önce giriş yap.',
+      'Ayarlar’a git ve hesabını veya misafir verilerini silme seçeneğini seç.',
       'Onayla.',
     ],
+    guestNote:
+      'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamayı kaldırmadan önce verilerini uygulamanın içinden sil. Misafir verilerinin e-posta adresi olmadığı için onları sonradan bulamayız.',
     withoutApp: 'Uygulama olmadan',
-    withoutAppText: 'Uygulamayı kaldırdın mı? Hesabının e-posta adresinden bize yaz.',
-    emailSubject: 'Benchbite hesabımı sil',
-    emailButton: 'privacy@benchbite.com adresine yaz',
+    withoutAppText:
+      'Uygulamayı kaldırdın ve hesabın var mı? Hesabını silmek için uygulamayı yeniden kurup giriş yap. Yakında silme isteğini buradan da gönderip e-postayla onaylayabileceksin.',
     kept: 'Neler silinir, neler kalır',
     keptPlaceholder: '[YASAL METİN: SİLİNEN VERİLER, KALAN VERİLER, SÜRELER]',
   },
