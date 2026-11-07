@@ -54,6 +54,13 @@ export const de: Messages = {
       alt: 'Das Gewicht über drei Monate und die Übersicht des letzten Monats',
     },
   },
+  notFound: {
+    title: 'Seite nicht gefunden',
+    heading: 'Wir glauben, Bite hat diese Seite gegessen.',
+    text: 'Sie ist nicht hier oder war es nie. Tut uns leid.',
+    back: 'Zum Start',
+    biteAlt: 'Bite schaut entschuldigend',
+  },
   footer: {
     night: 'Gute Nacht. Morgen derselbe Plan.',
     question: 'Brauchst du vorher noch etwas?',

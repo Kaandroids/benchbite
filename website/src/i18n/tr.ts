@@ -54,6 +54,13 @@ export const tr: Messages = {
       alt: 'Üç aylık kilo grafiği ve geçen ayın özeti',
     },
   },
+  notFound: {
+    title: 'Sayfa bulunamadı',
+    heading: 'Sanırız bu sayfayı Bite yedi.',
+    text: 'Burada değil ya da hiç olmadı. Kusura bakma.',
+    back: 'Başa dön',
+    biteAlt: 'Özür dileyen Bite',
+  },
   footer: {
     night: 'İyi geceler. Yarın aynı plan.',
     question: 'O zamana kadar bir şey lazım olursa:',

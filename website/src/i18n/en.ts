@@ -52,6 +52,13 @@ export const en = {
       alt: "The weight over three months and last month's summary",
     },
   },
+  notFound: {
+    title: 'Page not found',
+    heading: 'We think Bite ate this page.',
+    text: 'It is not here, or it never was. Sorry about that.',
+    back: 'Go to the start',
+    biteAlt: 'Bite looking sorry',
+  },
   footer: {
     night: 'Good night. Same plan tomorrow.',
     question: 'Need anything before then?',
