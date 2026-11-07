@@ -78,14 +78,20 @@ Deno.test('asks nothing for what is no token', async () => {
 Deno.test('sends back to the page, to try again, when deleting fails', async () => {
   const { admin } = fakeAdmin({ deleteError: { status: 500 } });
   const response = await handleDeletionConfirm(post({ token: TOKEN }), { admin, siteUrl: SITE });
-  assertEquals(response.headers.get('location'), `${SITE}/delete-account/confirm#failed`);
+  assertEquals(
+    response.headers.get('location'),
+    `${SITE}/delete-account/confirm#token=${TOKEN}&failed`,
+  );
 
   const down = fakeAdmin({ rpcError: true });
   const again = await handleDeletionConfirm(post({ token: TOKEN }), {
     admin: down.admin,
     siteUrl: SITE,
   });
-  assertEquals(again.headers.get('location'), `${SITE}/delete-account/confirm#failed`);
+  assertEquals(
+    again.headers.get('location'),
+    `${SITE}/delete-account/confirm#token=${TOKEN}&failed`,
+  );
   assertEquals(down.deleted, []);
 });
 
