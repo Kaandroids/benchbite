@@ -4,3 +4,7 @@
 allowBuilds:
   esbuild: false
   sharp: false
+
+# Its 2.0 beta, which an optional peer range picks, crashes `astro check` at start.
+overrides:
+  '@emnapi/runtime': 1.11.3
