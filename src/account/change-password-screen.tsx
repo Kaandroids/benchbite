@@ -13,6 +13,7 @@ import { errorField, useAccountError, useChangePassword } from './account';
 import { PasswordField } from './account-fields';
 import { ForgotPasswordScreen } from './forgot-password-screen';
 import { isPasswordValid } from './passwords';
+import { startingAgain } from './use-credentials-form';
 
 type ChangePasswordScreenProps = {
   onBack: () => void;
@@ -37,17 +38,16 @@ export function ChangePasswordScreen({ onBack, onChanged }: ChangePasswordScreen
 
   if (forgot) {
     return (
-      <ForgotPasswordScreen email={email} leavesGuestData={false} onBack={() => setForgot(false)} />
+      <ForgotPasswordScreen
+        email={email}
+        fixedEmail
+        leavesGuestData={false}
+        onBack={() => setForgot(false)}
+      />
     );
   }
 
-  // A change starts a new attempt without the last one's error.
-  const changeOf = (set: (value: string) => void) => (value: string) => {
-    set(value);
-    if (!change.isPending) {
-      change.reset();
-    }
-  };
+  const changeOf = startingAgain(change);
 
   return (
     <FormScreen

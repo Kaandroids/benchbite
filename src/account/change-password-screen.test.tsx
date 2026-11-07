@@ -124,6 +124,8 @@ describe('ChangePasswordScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Forgot your password?' }));
     expect(screen.getByText('Reset your password')).toBeOnTheScreen();
     expect(screen.getByLabelText('Email')).toHaveProp('value', 'kaan@example.com');
+    // The account signed in is the one reset, never another.
+    expect(screen.getByLabelText('Email')).toHaveProp('editable', false);
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByLabelText('Current password')).toBeOnTheScreen();
   });
