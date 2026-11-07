@@ -22,6 +22,7 @@
   --snack-background: #fce7f0;
   --on-inverse: #ffffff;
   --on-inverse-muted: #c9cbd1;
+  /* The site's own, with no token of the same name in the app. */
   --brand: #ff6a10;
   --brand-light: #ffb27f;
   --ink: #16171a;
