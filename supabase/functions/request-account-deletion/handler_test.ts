@@ -2,7 +2,7 @@ import { assert, assertEquals } from '@std/assert';
 
 import type { Email } from '../_shared/email.ts';
 import type { Client } from '../_shared/supabase.ts';
-import { handleDeletionRequest } from './handler.ts';
+import { clientIp, handleDeletionRequest } from './handler.ts';
 
 const SITE = 'https://www.benchbite.com';
 
@@ -32,14 +32,19 @@ function post(fields: Record<string, string>, ip = '203.0.113.7') {
 function context(made: boolean | null, error: { message: string } | null = null) {
   const sent: Email[] = [];
   const waits: number[] = [];
+  const background: Promise<unknown>[] = [];
   const { admin, calls } = fakeAdmin({ data: made, error });
   return {
     sent,
     waits,
     calls,
+    background,
     ctx: {
       admin,
       siteUrl: SITE,
+      inBackground: (work: Promise<unknown>) => {
+        background.push(work);
+      },
       send: (email: Email) => {
         sent.push(email);
         return Promise.resolve();
@@ -67,7 +72,7 @@ Deno.test(
     assertEquals(calls[0]!.args.p_email, 'Kaan@Example.com');
     assert(calls[0]!.args.p_ip_hash!.startsWith('\\x'));
     assertEquals(sent.length, 1);
-    assertEquals(sent[0]!.to, 'kaan@example.com');
+    assertEquals(sent[0]!.to, 'Kaan@Example.com');
     assertEquals(sent[0]!.subject, 'Lösche dein Benchbite-Konto');
     const link = sent[0]!.text.match(/https:\S+/)![0];
     const [page, token] = link.split('#token=');
@@ -77,6 +82,37 @@ Deno.test(
     assert(!calls[0]!.args.p_token_hash!.includes(token!));
   },
 );
+
+Deno.test(
+  'answers without waiting for the email, which could make only accounts slow',
+  async () => {
+    const { ctx, background } = context(true);
+    const response = await handleDeletionRequest(post({ email: 'kaan@example.com' }), {
+      ...ctx,
+      send: () => new Promise(() => {}),
+    });
+    assertEquals(response.headers.get('location'), `${SITE}/delete-account/sent`);
+    assertEquals(background.length, 1);
+  },
+);
+
+Deno.test('limits by an IP the platform sets, never by the first X-Forwarded-For entry', () => {
+  assertEquals(
+    clientIp(
+      new Headers({ 'cf-connecting-ip': '198.51.100.1', 'x-forwarded-for': 'chosen, 10.0.0.1' }),
+    ),
+    '198.51.100.1',
+  );
+  assertEquals(
+    clientIp(new Headers({ 'x-real-ip': '198.51.100.2', 'x-forwarded-for': 'chosen' })),
+    '198.51.100.2',
+  );
+  assertEquals(
+    clientIp(new Headers({ 'x-forwarded-for': 'chosen, 198.51.100.3' })),
+    '198.51.100.3',
+  );
+  assertEquals(clientIp(new Headers()), 'unknown');
+});
 
 Deno.test('answers the same, sending nothing, for an address without a link', async () => {
   const { ctx, sent } = context(false);
@@ -97,12 +133,14 @@ Deno.test('answers the same when the database or the email fails', async () => {
   const one = await handleDeletionRequest(post({ email: 'kaan@example.com' }), failing.ctx);
   assertEquals(one.headers.get('location'), `${SITE}/delete-account/sent`);
 
-  const { ctx } = context(true);
+  const { ctx, background } = context(true);
   const two = await handleDeletionRequest(post({ email: 'kaan@example.com' }), {
     ...ctx,
     send: () => Promise.reject(new Error('Sending an email failed with 500')),
   });
   assertEquals(two.headers.get('location'), `${SITE}/delete-account/sent`);
+  // The failure is logged, not thrown, after the answer.
+  await Promise.all(background);
 });
 
 Deno.test(
