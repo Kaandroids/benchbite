@@ -8,7 +8,7 @@ import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 import { CreateAccountScreen } from './create-account-screen';
 
 jest.mock('@/lib/supabase', () => ({
-  supabase: { auth: { updateUser: jest.fn(), signUp: jest.fn() } },
+  supabase: { auth: { updateUser: jest.fn(), signUp: jest.fn(), verifyOtp: jest.fn() } },
 }));
 jest.mock('@/providers/session-provider', () => ({ useSession: jest.fn() }));
 
@@ -30,6 +30,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(useSession).mockReturnValue(sessionValue('guest'));
   auth.updateUser.mockResolvedValue({ data: {}, error: null } as never);
+  auth.verifyOtp.mockResolvedValue({ data: {}, error: null } as never);
 });
 
 describe('CreateAccountScreen', () => {
@@ -43,15 +44,33 @@ describe('CreateAccountScreen', () => {
     expect(button).toBeEnabled();
   });
 
-  it('creates the account and reports it', async () => {
+  it('asks for the code, then says the account is ready, and reports it after that', async () => {
+    await renderScreen();
+    await fill(' kaan@example.com ', 'secret12');
+    await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
+    expect(
+      await screen.findByText('We sent a 6-digit code to kaan@example.com.'),
+    ).toBeOnTheScreen();
+    expect(auth.updateUser).toHaveBeenCalledWith({
+      email: 'kaan@example.com',
+      data: { locale: 'en' },
+    });
+    expect(onCreated).not.toHaveBeenCalled();
+
+    await fireEvent.changeText(screen.getByLabelText('6-digit code'), '123456');
+    expect(await screen.findByText('Your account is ready')).toBeOnTheScreen();
+    expect(onCreated).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(onCreated).toHaveBeenCalled();
+  });
+
+  it('keeps what was typed when going back for another email', async () => {
     await renderScreen();
     await fill('kaan@example.com', 'secret12');
     await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
-    await waitFor(() => expect(onCreated).toHaveBeenCalled());
-    expect(auth.updateUser).toHaveBeenCalledWith({
-      email: 'kaan@example.com',
-      password: 'secret12',
-    });
+    await fireEvent.press(await screen.findByRole('button', { name: 'Use another email' }));
+    expect(screen.getByLabelText('Email')).toHaveProp('value', 'kaan@example.com');
+    expect(screen.getByLabelText('Password')).toHaveProp('value', 'secret12');
   });
 
   it('shows a taken email under the field, with a way to log in instead', async () => {
@@ -78,7 +97,7 @@ describe('CreateAccountScreen', () => {
     await renderScreen();
     await fill('kaan@example.com', 'secret12');
     await fireEvent.press(screen.getByRole('button', { name: 'Create account' }));
-    expect(await screen.findByText('Use a password with at least 6 characters.')).toBeOnTheScreen();
+    expect(await screen.findByText('Use a password with at least 8 characters.')).toBeOnTheScreen();
   });
 
   it('shows an error that is not about a field above the button, until the next change', async () => {
@@ -109,7 +128,7 @@ describe('CreateAccountScreen', () => {
     await waitFor(() => expect(screen.getByLabelText('Password')).toHaveProp('editable', false));
     await fireEvent.changeText(screen.getByLabelText('Password'), 'secret123');
     await act(async () => answer({ data: {}, error: null }));
-    expect(onCreated).toHaveBeenCalled();
+    expect(screen.getByText('We sent a 6-digit code to kaan@example.com.')).toBeOnTheScreen();
     expect(auth.updateUser).toHaveBeenCalledTimes(1);
   });
 
