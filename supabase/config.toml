@@ -251,6 +251,10 @@ content_path = "./supabase/templates/account-code.html"
 subject = "{{ if eq .Data.locale \"de\" }}{{ .Token }} ist dein Benchbite-Code{{ else if eq .Data.locale \"tr\" }}{{ .Token }} Benchbite kodun{{ else }}{{ .Token }} is your Benchbite code{{ end }}"
 content_path = "./supabase/templates/account-code.html"
 
+[auth.email.template.recovery]
+subject = "{{ if eq .Data.locale \"de\" }}{{ .Token }} ist dein Benchbite-Code{{ else if eq .Data.locale \"tr\" }}{{ .Token }} Benchbite kodun{{ else }}{{ .Token }} is your Benchbite code{{ end }}"
+content_path = "./supabase/templates/password-code.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
