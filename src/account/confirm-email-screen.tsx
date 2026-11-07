@@ -3,12 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { BackHandler, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { CodeField } from '@/components/ui/code-field';
 import { FormScreen } from '@/components/ui/form-screen';
 import { Note } from '@/components/ui/note';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
-import { minutesAndSeconds } from '@/lib/time';
 import { useTheme } from '@/theme';
 
 import { PasswordField } from './account-fields';
@@ -16,12 +14,12 @@ import {
   accountError,
   CODE_LENGTH,
   errorField,
-  RESEND_SECONDS,
   useAccountError,
   useConfirmAccount,
   useResendCode,
   type NewAccountKind,
 } from './account';
+import { CodeEntry, useResendWait } from './code-entry';
 import { isPasswordValid } from './passwords';
 
 type ConfirmEmailScreenProps = {
@@ -51,16 +49,7 @@ export function ConfirmEmailScreen({
   const confirm = useConfirmAccount();
   const resend = useResendCode();
   const [code, setCode] = useState('');
-  const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
-  const waiting = secondsLeft > 0;
-
-  useEffect(() => {
-    if (!waiting) {
-      return;
-    }
-    const timer = setInterval(() => setSecondsLeft((seconds) => Math.max(seconds - 1, 0)), 1000);
-    return () => clearInterval(timer);
-  }, [waiting]);
+  const wait = useResendWait();
 
   const send = (token: string) =>
     confirm.mutate(
@@ -96,7 +85,7 @@ export function ConfirmEmailScreen({
         onSuccess: () => {
           setCode('');
           confirm.reset();
-          setSecondsLeft(RESEND_SECONDS);
+          wait.restart();
         },
       },
     );
@@ -138,33 +127,21 @@ export function ConfirmEmailScreen({
         </View>
       }
     >
-      <CodeField
-        label={t('account.code', { length: CODE_LENGTH })}
-        value={code}
+      <CodeEntry
+        code={code}
         onChange={change}
-        length={CODE_LENGTH}
         invalid={reason === 'invalidCode'}
-      />
-      <View style={{ gap: spacing.md, alignItems: 'flex-start' }}>
-        <Text color="textMuted">{t('account.confirmSpam')}</Text>
-        <TextLink
-          label={
-            waiting
-              ? t('account.confirmResendIn', { time: minutesAndSeconds(secondsLeft) })
-              : t('account.confirmResend')
-          }
-          align="start"
-          size="regular"
-          disabled={waiting || resend.isPending}
-          onPress={sendAgain}
-        />
+        wait={wait}
+        onResend={sendAgain}
+        resending={resend.isPending}
+      >
         <TextLink
           label={t('account.confirmAnotherEmail')}
           align="start"
           size="regular"
           onPress={onBack}
         />
-      </View>
+      </CodeEntry>
       {kind === 'guest' ? (
         <Text variant="caption" color="textMuted">
           {t('account.confirmGuestNote')}
