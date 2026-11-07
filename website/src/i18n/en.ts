@@ -133,7 +133,7 @@ export const en = {
   },
   imprint: {
     title: 'Imprint',
-    draft: 'Placeholder. The name, address and legal wording are filled in before release.',
+    draft: 'Placeholder. The name, address, email and legal wording are filled in before release.',
     provider: 'Provider',
     name: '[FULL NAME]',
     street: '[STREET AND NUMBER]',
@@ -141,6 +141,7 @@ export const en = {
     country: '[COUNTRY]',
     contact: 'Contact',
     email: 'Email',
+    emailAddress: '[EMAIL ADDRESS]',
     fastContact: '[PHONE OR OTHER FAST CONTACT, IF REQUIRED]',
     further: 'Further details',
     register: '[VAT ID OR OTHER REGISTER DETAILS, IF ANY]',

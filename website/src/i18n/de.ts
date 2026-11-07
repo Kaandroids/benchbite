@@ -131,7 +131,8 @@ export const de: Messages = {
   },
   imprint: {
     title: 'Impressum',
-    draft: 'Platzhalter. Name, Anschrift und Rechtstext werden vor der Veröffentlichung ergänzt.',
+    draft:
+      'Platzhalter. Name, Anschrift, E-Mail-Adresse und Rechtstext werden vor der Veröffentlichung ergänzt.',
     provider: 'Anbieter',
     name: '[VOLLSTÄNDIGER NAME]',
     street: '[STRASSE UND HAUSNUMMER]',
@@ -139,6 +140,7 @@ export const de: Messages = {
     country: '[LAND]',
     contact: 'Kontakt',
     email: 'E-Mail',
+    emailAddress: '[E-MAIL-ADRESSE]',
     fastContact: '[TELEFON ODER ANDERER SCHNELLER KONTAKT, FALLS ERFORDERLICH]',
     further: 'Weitere Angaben',
     register: '[UST-IDNR. ODER REGISTERANGABEN, FALLS VORHANDEN]',
