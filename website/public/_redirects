@@ -1,0 +1,4 @@
+# Addresses that do not exist get the not found page in their language. Files that exist win over
+# these rules, and everything else gets 404.html at the root, which is in English.
+/de/* /de/404/ 404
+/tr/* /tr/404/ 404
