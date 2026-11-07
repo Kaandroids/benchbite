@@ -35,7 +35,8 @@ type ConfirmEmailScreenProps = {
   kind: NewAccountKind;
   /** Goes back to the form, to use another email address. */
   onBack: () => void;
-  onConfirmed: () => void;
+  /** Left out when confirming starts the app again as this user, as after logging in. */
+  onConfirmed?: () => void;
 };
 
 /**
