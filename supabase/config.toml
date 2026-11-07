@@ -261,11 +261,12 @@ content_path = "./supabase/templates/password-code.html"
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
 
-# Uncomment to customize notification email template
-# [auth.email.notification.password_changed]
-# enabled = true
-# subject = "Your password has been changed"
-# content_path = "./supabase/templates/password_changed_notification.html"
+# Tells the owner whenever their password is saved, as a session that signed in recently can change
+# it without the current one (ADR 0093). Auth sends it for the first password of an account too.
+[auth.email.notification.password_changed]
+enabled = true
+subject = "{{ if eq .Data.locale \"de\" }}Dein Benchbite-Passwort wurde gespeichert{{ else if eq .Data.locale \"tr\" }}Benchbite şifren kaydedildi{{ else }}Your Benchbite password was saved{{ end }}"
+content_path = "./supabase/templates/password-saved.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
