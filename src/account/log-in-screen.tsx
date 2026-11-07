@@ -36,7 +36,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   if (confirming) {
     return (
       <ConfirmEmailScreen
-        email={email.trim()}
+        email={email}
         password={password}
         kind="new"
         onBack={() => setConfirming(false)}
@@ -51,7 +51,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
         onError: (error) => {
           if (accountError(error) === 'emailNotConfirmed') {
             // Refused only within a minute of the last code, which then still works.
-            resend.mutate({ email: email.trim(), kind: 'new' });
+            resend.mutate({ email, kind: 'new' });
             setConfirming(true);
           }
         },

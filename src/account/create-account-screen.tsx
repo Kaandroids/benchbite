@@ -13,12 +13,7 @@ import { errorField, useCreateAccount, type NewAccountKind } from './account';
 import { AccountReadyScreen } from './account-ready-screen';
 import { ConfirmEmailScreen } from './confirm-email-screen';
 import { EmailField, PasswordField } from './account-fields';
-import {
-  isPasswordTooLong,
-  isPasswordValid,
-  MIN_PASSWORD_LENGTH,
-  PASSWORD_LIMITS,
-} from './passwords';
+import { isPasswordValid } from './passwords';
 import { useCredentialsForm } from './use-credentials-form';
 
 type CreateAccountScreenProps = {
@@ -47,7 +42,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
   if (step?.name === 'code') {
     return (
       <ConfirmEmailScreen
-        email={email.trim()}
+        email={email}
         password={password}
         kind={step.kind}
         onBack={() => setStep(null)}
@@ -99,14 +94,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
         value={password}
         onChange={setPassword}
         editable={!create.isPending}
-        error={
-          isPasswordTooLong(password)
-            ? t('account.errors.passwordTooLong', PASSWORD_LIMITS)
-            : field === 'password'
-              ? message
-              : null
-        }
-        hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
+        error={field === 'password' ? message : null}
         isNew
       />
     </FormScreen>

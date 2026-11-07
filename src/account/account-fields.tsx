@@ -8,7 +8,12 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { MAX_PASSWORD_LENGTH } from './passwords';
+import {
+  isPasswordTooLong,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_LIMITS,
+} from './passwords';
 
 type FieldProps = {
   value: string;
@@ -48,19 +53,26 @@ export function EmailField({ value, onChange, error, errorAction, editable = tru
   );
 }
 
-/** A password, hidden until shown. A new one is offered to the password manager as such. */
+/**
+ * A password, hidden until shown. A new one is offered to the password manager as such, with its
+ * rules under it and an error as soon as it is too long.
+ */
 export function PasswordField({
   value,
   onChange,
-  error,
-  hint,
+  error: answered,
   isNew = false,
   editable = true,
-}: FieldProps & { hint?: string; isNew?: boolean }) {
+}: FieldProps & { isNew?: boolean }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const field = useFieldStyle();
   const [shown, setShown] = useState(false);
+  const error =
+    isNew && isPasswordTooLong(value)
+      ? t('account.errors.passwordTooLong', PASSWORD_LIMITS)
+      : answered;
+  const hint = isNew ? t('account.passwordHint', { min: MIN_PASSWORD_LENGTH }) : null;
   return (
     <View style={styles.field}>
       <FieldLabel text={t('account.password')} />
