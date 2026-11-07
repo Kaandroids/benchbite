@@ -23,6 +23,47 @@ export type Database = {
   };
   public: {
     Tables: {
+      account_deletion_links: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          expires_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      account_deletion_requests: {
+        Row: {
+          created_at: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          email_hash: string;
+          ip_hash: string;
+        };
+        Update: {
+          created_at?: string;
+          email_hash?: string;
+          ip_hash?: string;
+        };
+        Relationships: [];
+      };
       ai_calls_in_flight: {
         Row: {
           call_id: string;
@@ -1798,6 +1839,7 @@ export type Database = {
       };
     };
     Functions: {
+      account_deletion_user: { Args: { p_token_hash: string }; Returns: string };
       achievable_weekly_pace_kg: {
         Args: {
           activity_level: Database['public']['Enums']['activity_level'];
@@ -2650,6 +2692,7 @@ export type Database = {
         }[];
       };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
+      remove_old_account_deletions: { Args: Record<PropertyKey, never>; Returns: undefined };
       remove_unconfirmed_users: { Args: Record<PropertyKey, never>; Returns: undefined };
       rename_workout_alternative: {
         Args: { alternative_id: number; name: string };
@@ -2739,6 +2782,10 @@ export type Database = {
         Returns: undefined;
       };
       share_left: { Args: { budget: number; used: number }; Returns: number };
+      start_account_deletion: {
+        Args: { p_email: string; p_ip_hash: string; p_token_hash: string };
+        Returns: boolean;
+      };
       start_ai_call: {
         Args: {
           feature: Database['public']['Enums']['ai_feature'];
