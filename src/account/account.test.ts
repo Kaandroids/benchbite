@@ -43,6 +43,7 @@ describe('accountError', () => {
     ['user_already_exists', 'emailTaken'],
     ['weak_password', 'weakPassword'],
     ['over_request_rate_limit', 'rateLimited'],
+    ['over_email_send_rate_limit', 'codeWait'],
     ['something_new', 'unknown'],
   ])('reads %s as %s', (code, reason) => {
     expect(accountError(apiError(code))).toBe(reason);

@@ -1,5 +1,6 @@
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +13,8 @@ export type Credentials = { email: string; password: string };
 
 /** The digits of the code sent by email, as `otp_length` in `supabase/config.toml`. */
 export const CODE_LENGTH = 6;
+/** How long before another code can be asked for, as `max_frequency` in `supabase/config.toml`. */
+export const RESEND_SECONDS = 60;
 
 /** A guest becoming an account, or a new user for someone without a session. */
 export type NewAccountKind = 'guest' | 'new';
@@ -40,6 +43,7 @@ export type AccountError =
   | 'weakPassword'
   | 'passwordTooLong'
   | 'rateLimited'
+  | 'codeWait'
   | 'offline'
   | 'unknown';
 
@@ -53,7 +57,8 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   email_address_invalid: 'invalidEmail',
   weak_password: 'weakPassword',
   over_request_rate_limit: 'rateLimited',
-  over_email_send_rate_limit: 'rateLimited',
+  // Another code within a minute of the last, as for a guest who corrects their address.
+  over_email_send_rate_limit: 'codeWait',
 };
 
 /** The reason a request to Supabase Auth failed. */
@@ -75,11 +80,17 @@ export function accountError(error: unknown): AccountError {
   return 'unknown';
 }
 
+/** The message that says why a request to Supabase Auth failed. */
+export function accountErrorMessage(t: TFunction, error: unknown): string {
+  return t(`account.errors.${accountError(error)}`, PASSWORD_LIMITS);
+}
+
 /** The reason a request failed, with the message that says it. */
 export function useAccountError(error: unknown) {
   const { t } = useTranslation();
-  const reason = error ? accountError(error) : null;
-  return { reason, message: reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null };
+  return error
+    ? { reason: accountError(error), message: accountErrorMessage(t, error) }
+    : { reason: null, message: null };
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({
@@ -127,7 +138,8 @@ type ConfirmAccount = Credentials & { token: string; kind: NewAccountKind };
 export function useConfirmAccount() {
   const [accepted, setAccepted] = useState(false);
   const mutation = useMutation({
-    mutationFn: async ({ email, password, token, kind }: ConfirmAccount) => {
+    mutationFn: async ({ token, kind, ...credentials }: ConfirmAccount) => {
+      const { email, password } = normalized(credentials);
       if (!accepted) {
         const { error } = await supabase.auth.verifyOtp({
           email,
@@ -155,7 +167,8 @@ export function useConfirmAccount() {
  */
 export function useResendCode() {
   return useMutation({
-    mutationFn: async ({ email, kind }: { email: string; kind: NewAccountKind }) => {
+    mutationFn: async ({ kind, ...address }: { email: string; kind: NewAccountKind }) => {
+      const email = address.email.trim();
       const { error } =
         kind === 'guest'
           ? await supabase.auth.updateUser({ email })
