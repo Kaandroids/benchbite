@@ -1,4 +1,5 @@
 import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
+import { BackHandler } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/providers/session-provider';
@@ -73,8 +74,14 @@ describe('NewPasswordScreen', () => {
     expect(passwordChosen).not.toHaveBeenCalled();
   });
 
-  it('offers no way back', async () => {
+  it('offers no way back, and stops Android’s back button', async () => {
+    const listen = jest.spyOn(BackHandler, 'addEventListener');
     await render(<NewPasswordScreen />);
+    const [event, handler] = listen.mock.calls[0]!;
+    expect(event).toBe('hardwareBackPress');
+    // Handled, so Android does not close the app's screen.
+    expect((handler as () => boolean)()).toBe(true);
+    listen.mockRestore();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Close' })).not.toBeOnTheScreen();
   });
