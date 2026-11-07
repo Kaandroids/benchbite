@@ -108,3 +108,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0090](0090-check-the-websites-astro-files.md)                        | Check the website's Astro files                                                         | Accepted                                             |
 | [0091](0091-confirm-accounts-with-a-code.md)                          | Confirm accounts with a code                                                            | Accepted                                             |
 | [0092](0092-reset-a-password-with-a-code.md)                          | Reset a password with a code                                                            | Accepted                                             |
+| [0093](0093-change-a-password-with-the-current-one.md)                | Change a password with the current one                                                  | Accepted                                             |

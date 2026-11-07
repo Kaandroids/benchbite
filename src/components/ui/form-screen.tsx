@@ -10,7 +10,7 @@ import { Text } from './text';
 
 type FormScreenProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   /** The fields. */
   children: ReactNode;
   /** The buttons, kept above the keyboard. */
@@ -43,7 +43,7 @@ export function FormScreen({
           <Text variant="title" accessibilityRole="header">
             {title}
           </Text>
-          <Text color="textMuted">{subtitle}</Text>
+          {subtitle ? <Text color="textMuted">{subtitle}</Text> : null}
         </View>
         <View style={{ gap: spacing.xl, marginTop: spacing.sm }}>{children}</View>
       </Screen>

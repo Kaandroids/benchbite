@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useAccountError } from './account';
+import { startingAgain, useAccountError } from './account';
 
 type Request = { isPending: boolean; error: unknown; reset: () => void };
 
@@ -13,13 +13,7 @@ export function useCredentialsForm(request: Request) {
   const [password, setPassword] = useState('');
   const { reason, message } = useAccountError(request.error);
 
-  const change = (set: (value: string) => void) => (value: string) => {
-    set(value);
-    // Resetting a running request would leave the screen without its answer.
-    if (!request.isPending) {
-      request.reset();
-    }
-  };
+  const change = startingAgain(request);
 
   return {
     email,

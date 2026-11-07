@@ -39,7 +39,8 @@
       "offline": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
       "unknown": "Bir şeyler ters gitti. Lütfen tekrar dene.",
       "emailNotConfirmed": "Önce e-postanı onayla. Sana gönderdiğimiz kodu bul.",
-      "invalidCode": "Bu kod yanlış veya süresi dolmuş. Tekrar dene ya da yeni kod iste."
+      "invalidCode": "Bu kod yanlış veya süresi dolmuş. Tekrar dene ya da yeni kod iste.",
+      "wrongCurrentPassword": "Bu şu anki şifren değil."
     },
     "email": "E-posta",
     "emailPlaceholder": "sen@ornek.com",
@@ -98,7 +99,10 @@
     "newPasswordTitle": "Yeni bir şifre seç",
     "newPasswordSubtitle": "Bu telefonda oturumun açık kalır.",
     "newPassword": "Yeni şifre",
-    "newPasswordSave": "Şifreyi kaydet"
+    "newPasswordSave": "Şifreyi kaydet",
+    "changePassword": "Şifreyi değiştir",
+    "changePasswordHint": "Şifreni değiştirdiğin yeri açar",
+    "currentPassword": "Mevcut şifre"
   },
   "settings": {
     "title": "Ayarlar",

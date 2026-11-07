@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
-import { useSession } from '@/providers/session-provider';
+import { useSession, useUserEmail } from '@/providers/session-provider';
 
 import { PASSWORD_LIMITS } from './passwords';
 
@@ -20,8 +20,10 @@ export const RESEND_SECONDS = 60;
 export type NewAccountKind = 'guest' | 'new';
 
 /** Where a form shows each reason: under the field it is about, or above the button. */
-export function errorField(reason: AccountError): 'email' | 'password' | null {
+export function errorField(reason: AccountError): 'email' | 'password' | 'current' | null {
   switch (reason) {
+    case 'wrongCurrentPassword':
+      return 'current';
     case 'emailTaken':
     case 'invalidEmail':
       return 'email';
@@ -38,6 +40,7 @@ export type AccountError =
   | 'invalidCredentials'
   | 'emailNotConfirmed'
   | 'invalidCode'
+  | 'wrongCurrentPassword'
   | 'emailTaken'
   | 'invalidEmail'
   | 'weakPassword'
@@ -61,8 +64,14 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   over_email_send_rate_limit: 'codeWait',
 };
 
+/** The current password given to change it was not the account's. */
+class WrongCurrentPassword extends Error {}
+
 /** The reason a request to Supabase Auth failed. */
 export function accountError(error: unknown): AccountError {
+  if (error instanceof WrongCurrentPassword) {
+    return 'wrongCurrentPassword';
+  }
   if (isAuthRetryableFetchError(error)) {
     return 'offline';
   }
@@ -80,6 +89,22 @@ export function accountError(error: unknown): AccountError {
   return 'unknown';
 }
 
+/** A request to Supabase as a form holds it, to start a new attempt of it. */
+type Attempt = { isPending: boolean; reset: () => void };
+
+/**
+ * Sets a field's value as a new attempt, without the request's last error. Resetting a running
+ * request would leave the screen without its answer.
+ */
+export function startingAgain(request: Attempt) {
+  return (set: (value: string) => void) => (value: string) => {
+    set(value);
+    if (!request.isPending) {
+      request.reset();
+    }
+  };
+}
+
 /** The message that says why a request to Supabase Auth failed. */
 export function accountErrorMessage(t: TFunction, error: unknown): string {
   return t(`account.errors.${accountError(error)}`, PASSWORD_LIMITS);
@@ -91,6 +116,17 @@ export function useAccountError(error: unknown) {
   return error
     ? { reason: accountError(error), message: accountErrorMessage(t, error) }
     : { reason: null, message: null };
+}
+
+/**
+ * Saves the signed-in user's password. Being the password already counts as saved: the person knows
+ * it, as after an answer that got lost or a new password that is the current one.
+ */
+async function savePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
+    throw error;
+  }
 }
 
 const normalized = ({ email, password }: Credentials): Credentials => ({
@@ -151,11 +187,7 @@ export function useConfirmAccount() {
         }
         setAccepted(true);
       }
-      const { error } = await supabase.auth.updateUser({ password });
-      // Being the password already is what this step wants, as after an answer that got lost.
-      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
-        throw error;
-      }
+      await savePassword(password);
     },
   });
   return { ...mutation, accepted };
@@ -219,13 +251,31 @@ export function useSaveNewPassword() {
   const { passwordChosen } = useSession();
   return useMutation({
     mutationFn: async (password: string) => {
-      const { error } = await supabase.auth.updateUser({ password });
-      // The password it had: the person knows it, which is all this step is for.
-      if (error && !(isAuthApiError(error) && error.code === 'same_password')) {
-        throw error;
-      }
+      await savePassword(password);
     },
     onSuccess: passwordChosen,
+  });
+}
+
+/**
+ * Changes the signed-in account's password. The app checks the current one by signing in with it,
+ * as Auth does not; Auth only refuses a session older than a day (ADR 0093).
+ */
+export function useChangePassword() {
+  const email = useUserEmail();
+  return useMutation({
+    mutationFn: async ({ current, password }: { current: string; password: string }) => {
+      if (!email) {
+        throw new Error('No account is signed in');
+      }
+      const signIn = await supabase.auth.signInWithPassword({ email, password: current });
+      if (signIn.error) {
+        throw isAuthApiError(signIn.error) && signIn.error.code === 'invalid_credentials'
+          ? new WrongCurrentPassword()
+          : signIn.error;
+      }
+      await savePassword(password);
+    },
   });
 }
 

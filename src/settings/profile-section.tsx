@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
+import { SettingRow } from '@/components/ui/setting-row';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { displayNameOf, useDisplayName, useSetDisplayName } from '@/profile/display-name';
 import { NameField } from '@/profile/name-field';
-
-import { SettingRow } from './setting-row';
 
 /** The user's name in a row, changed in a sheet. */
 export function ProfileSection() {

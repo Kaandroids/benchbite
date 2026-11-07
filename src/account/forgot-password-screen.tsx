@@ -10,6 +10,7 @@ import { useTheme } from '@/theme';
 import {
   CODE_LENGTH,
   errorField,
+  startingAgain,
   useAccountError,
   useConfirmReset,
   useSendResetCode,
@@ -18,8 +19,10 @@ import { EmailField } from './account-fields';
 import { CodeEntry, useCodeEntry } from './code-entry';
 
 type ForgotPasswordScreenProps = {
-  /** What the log-in form held, to start from. */
+  /** The address to start from: what the log-in form held, or the signed-in account's. */
   email: string;
+  /** Sends the code to this email only, for the account signed in, which stays the one reset. */
+  fixedEmail?: boolean;
   /** Warns that the guest's data stays behind, for a guest who has some. */
   leavesGuestData: boolean;
   onBack: () => void;
@@ -31,6 +34,7 @@ type ForgotPasswordScreenProps = {
  */
 export function ForgotPasswordScreen({
   email: given,
+  fixedEmail = false,
   leavesGuestData,
   onBack,
 }: ForgotPasswordScreenProps) {
@@ -46,12 +50,7 @@ export function ForgotPasswordScreen({
     return <ResetCodeScreen email={sentTo} onBack={() => setSentTo(null)} />;
   }
 
-  const change = (value: string) => {
-    setEmail(value);
-    if (!send.isPending) {
-      send.reset();
-    }
-  };
+  const change = startingAgain(send)(setEmail);
 
   return (
     <FormScreen
@@ -74,7 +73,7 @@ export function ForgotPasswordScreen({
       <EmailField
         value={email}
         onChange={change}
-        editable={!send.isPending}
+        editable={!fixedEmail && !send.isPending}
         error={field === 'email' ? message : null}
       />
     </FormScreen>

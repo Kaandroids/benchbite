@@ -7,10 +7,11 @@ import { Card } from '@/components/ui/card';
 import { DashedButton } from '@/components/ui/dashed-button';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
-import { Text } from '@/components/ui/text';
-import { useIsAccount, useSession } from '@/providers/session-provider';
-import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
+import { SettingRow } from '@/components/ui/setting-row';
+import { Text } from '@/components/ui/text';
+import { useIsAccount, useUserEmail } from '@/providers/session-provider';
+import { useTheme } from '@/theme';
 
 import { accountErrorMessage, useSignOut } from './account';
 
@@ -59,8 +60,7 @@ function Guest() {
 function SignedIn() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const session = useSession();
-  const email = session.status === 'ready' ? session.session.user.email : undefined;
+  const email = useUserEmail();
   const signOut = useSignOut();
 
   const logOut = () =>
@@ -79,30 +79,37 @@ function SignedIn() {
     ]);
 
   return (
-    <Card style={[styles.row, { gap: spacing.md }]}>
-      <IconTile name="account" />
-      <View style={styles.flex}>
-        <Text variant="caption" color="textMuted">
-          {t('settings.signedInAs')}
-        </Text>
-        <Text variant="label" numberOfLines={1}>
-          {email}
-        </Text>
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('settings.logOut')}
-        accessibilityState={{ disabled: signOut.isPending }}
-        disabled={signOut.isPending}
-        onPress={logOut}
-        style={({ pressed }) => [
-          styles.logOut,
-          { opacity: signOut.isPending ? 0.4 : pressed ? 0.6 : 1 },
-        ]}
-      >
-        <Icon name="logOut" size={22} color="danger" weight="bold" />
-      </Pressable>
-    </Card>
+    <>
+      <Card style={[styles.row, { gap: spacing.md }]}>
+        <IconTile name="account" />
+        <View style={styles.flex}>
+          <Text variant="caption" color="textMuted">
+            {t('settings.signedInAs')}
+          </Text>
+          <Text variant="label" numberOfLines={1}>
+            {email}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.logOut')}
+          accessibilityState={{ disabled: signOut.isPending }}
+          disabled={signOut.isPending}
+          onPress={logOut}
+          style={({ pressed }) => [
+            styles.logOut,
+            { opacity: signOut.isPending ? 0.4 : pressed ? 0.6 : 1 },
+          ]}
+        >
+          <Icon name="logOut" size={22} color="danger" weight="bold" />
+        </Pressable>
+      </Card>
+      <SettingRow
+        label={t('account.changePassword')}
+        hint={t('account.changePasswordHint')}
+        onPress={() => router.push('/account/password')}
+      />
+    </>
   );
 }
 

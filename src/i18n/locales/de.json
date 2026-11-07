@@ -39,7 +39,8 @@
       "offline": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
       "unknown": "Etwas ist schiefgelaufen. Bitte versuch es noch einmal.",
       "emailNotConfirmed": "Bestätige zuerst deine E-Mail. Such nach dem Code, den wir dir geschickt haben.",
-      "invalidCode": "Dieser Code stimmt nicht oder ist abgelaufen. Versuch es noch einmal oder fordere einen neuen an."
+      "invalidCode": "Dieser Code stimmt nicht oder ist abgelaufen. Versuch es noch einmal oder fordere einen neuen an.",
+      "wrongCurrentPassword": "Das ist nicht dein aktuelles Passwort."
     },
     "email": "E-Mail",
     "emailPlaceholder": "du@beispiel.de",
@@ -98,7 +99,10 @@
     "newPasswordTitle": "Wähle ein neues Passwort",
     "newPasswordSubtitle": "Du bleibst auf diesem Handy angemeldet.",
     "newPassword": "Neues Passwort",
-    "newPasswordSave": "Passwort speichern"
+    "newPasswordSave": "Passwort speichern",
+    "changePassword": "Passwort ändern",
+    "changePasswordHint": "Öffnet, wo du dein Passwort änderst",
+    "currentPassword": "Aktuelles Passwort"
   },
   "settings": {
     "title": "Einstellungen",

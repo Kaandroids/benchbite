@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet } from 'react-native';
 
-import { Card } from '@/components/ui/card';
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
+
+import { Card } from './card';
+import { Icon } from './icon';
+import { Text } from './text';
 
 type SettingRowProps = {
   label: string;
