@@ -1,4 +1,5 @@
 ---
+import BiteCircle from '../../components/BiteCircle.astro';
 import Layout from '../../layouts/Layout.astro';
 import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../i18n';
 
@@ -9,10 +10,8 @@ const { notFound } = messagesFor(locale);
 ---
 
 <Layout locale={locale} title={notFound.title}>
-  <main>
-    <div class="bite">
-      <img src="/images/bite-sad.svg" alt={notFound.biteAlt} width="178" height="159" />
-    </div>
+  <main class="page not-found">
+    <BiteCircle face="sad" size={200} imageWidth={178} alt={notFound.biteAlt} loading="eager" />
     <h1>{notFound.heading}</h1>
     <p class="muted">{notFound.text}</p>
     <a class="back" href={localePath(locale)}>{notFound.back}</a>
@@ -20,31 +19,11 @@ const { notFound } = messagesFor(locale);
 </Layout>
 
 <style>
-  main {
-    flex-grow: 1;
-    width: 100%;
+  .not-found {
     max-width: 808px;
-    margin: 0 auto;
-    padding: 24px clamp(20px, 5vw, 24px) 80px;
-    display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 16px;
     text-align: center;
-  }
-
-  .bite {
-    width: 200px;
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: var(--brand);
-  }
-
-  .bite img {
-    max-width: none;
   }
 
   h1 {

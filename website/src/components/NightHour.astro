@@ -1,0 +1,76 @@
+---
+import BiteCircle from './BiteCircle.astro';
+import { SUPPORT_EMAIL } from '../contact';
+import { messagesFor, type Locale } from '../i18n';
+
+type Props = {
+  locale: Locale;
+};
+
+const { footer } = messagesFor(Astro.props.locale);
+---
+
+<div class="night-hour">
+  <div class="message">
+    <p class="hour-time">23:59</p>
+    <h2 class="hour-title">{footer.night}</h2>
+    <p class="question">
+      {footer.question}{' '}
+      <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+    </p>
+  </div>
+  <BiteCircle face="sleeping" size={216} imageWidth={240} alt={footer.biteAlt}>
+    <span class="z big" aria-hidden="true">z</span>
+    <span class="z small" aria-hidden="true">z</span>
+  </BiteCircle>
+</div>
+
+<style>
+  .night-hour {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .message {
+    flex: 1 1 520px;
+    min-width: 0;
+  }
+
+  .hour-time,
+  .z {
+    color: var(--dinner-on-dark);
+  }
+
+  .hour-title {
+    margin: 4px 0 8px;
+  }
+
+  .question {
+    color: var(--on-night-muted);
+  }
+
+  .question a {
+    color: var(--on-inverse);
+    font-weight: 900;
+  }
+
+  .z {
+    position: absolute;
+    font-weight: 900;
+  }
+
+  .big {
+    top: -6px;
+    left: -18px;
+    font-size: 42px;
+  }
+
+  .small {
+    top: -34px;
+    left: 14px;
+    font-size: 28px;
+  }
+</style>

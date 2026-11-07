@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { PRIVACY_EMAIL, SUPPORT_EMAIL } from '../../contact';
 import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../i18n';
 
 export const getStaticPaths = localeStaticPaths;
@@ -15,13 +16,13 @@ const { support } = messagesFor(locale);
       <p class="muted lead">{support.text}</p>
     </div>
     <div class="contacts">
-      <a class="contact app" href="mailto:support@benchbite.com">
+      <a class="contact app" href={`mailto:${SUPPORT_EMAIL}`}>
         <strong>{support.app}</strong>
-        <span>support@benchbite.com</span>
+        <span>{SUPPORT_EMAIL}</span>
       </a>
-      <a class="contact privacy" href="mailto:privacy@benchbite.com">
+      <a class="contact privacy" href={`mailto:${PRIVACY_EMAIL}`}>
         <strong>{support.privacy}</strong>
-        <span>privacy@benchbite.com</span>
+        <span>{PRIVACY_EMAIL}</span>
       </a>
     </div>
     <section class="questions">
@@ -36,10 +37,6 @@ const { support } = messagesFor(locale);
 <style>
   .wide {
     max-width: 900px;
-  }
-
-  .lead {
-    margin-top: 8px;
   }
 
   .contacts {

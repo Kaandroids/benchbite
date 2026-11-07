@@ -2,8 +2,12 @@ import { de } from './de';
 import { en, type Messages } from './en';
 import { tr } from './tr';
 
+/** A new language also needs its rule in `public/_redirects`. */
 export const LOCALES = ['en', 'de', 'tr'] as const;
 export type Locale = (typeof LOCALES)[number];
+
+/** The pages below the landing page, as they appear in addresses. */
+export type Page = 'privacy' | 'terms' | 'imprint' | 'support' | 'delete-account';
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';
@@ -12,8 +16,8 @@ const MESSAGES: Record<Locale, Messages> = { en, de, tr };
 
 export const messagesFor = (locale: Locale) => MESSAGES[locale];
 
-/** A page's address in a language; `page` is relative to the root, such as `privacy`. */
-export const localePath = (locale: Locale, page = '') => {
+/** A page's address in a language; without a page, the landing page's. */
+export const localePath = (locale: Locale, page: Page | '' = '') => {
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
   return `${prefix}/${page}`;
 };

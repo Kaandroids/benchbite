@@ -1,16 +1,16 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from './Layout.astro';
 import { messagesFor, type Locale } from '../i18n';
 
 type Props = {
   locale: Locale;
-  page: string;
-  title: string;
-  sections: { id: string; title: string; placeholder: string }[];
+  page: 'privacy' | 'terms';
 };
 
-const { locale, page, title, sections } = Astro.props;
-const { legal } = messagesFor(locale);
+const { locale, page } = Astro.props;
+const messages = messagesFor(locale);
+const { legal } = messages;
+const { title, sections } = messages[page];
 ---
 
 <Layout locale={locale} page={page} title={title}>

@@ -2,7 +2,6 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   site: 'https://benchbite.com',
-  output: 'static',
   devToolbar: { enabled: false },
   vite: {
     // Files outside this tsconfig's `include`, such as those of packages, would otherwise go by the

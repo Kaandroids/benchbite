@@ -1,16 +1,18 @@
 ---
-import { localePath, messagesFor, type Locale } from '../i18n';
+import Brand from './Brand.astro';
+import NightHour from './NightHour.astro';
+import { localePath, messagesFor, type Locale, type Page } from '../i18n';
 
 type Props = {
   locale: Locale;
   /** With the last hour of the day, as the landing page ends. Other pages stay quiet. */
-  night?: boolean;
+  night: boolean;
 };
 
-const { locale, night = false } = Astro.props;
+const { locale, night } = Astro.props;
 const { footer } = messagesFor(locale);
 
-const links = [
+const links: { page: Page; label: string }[] = [
   { page: 'support', label: footer.support },
   { page: 'delete-account', label: footer.deleteAccount },
   { page: 'privacy', label: footer.privacy },
@@ -19,42 +21,11 @@ const links = [
 ];
 ---
 
-<footer class:list={{ quiet: !night }}>
-  <div class="content">
-    {
-      night && (
-        <div class="night">
-          <div class="message">
-            <p class="time">23:59</p>
-            <h2>{footer.night}</h2>
-            <p class="question">
-              {footer.question}{' '}
-              <a href="mailto:support@benchbite.com">support@benchbite.com</a>
-            </p>
-          </div>
-          <div class="bite">
-            <img
-              src="/images/bite-sleeping.svg"
-              alt={footer.biteAlt}
-              width="240"
-              height="214"
-              loading="lazy"
-            />
-            <span class="z big" aria-hidden="true">z</span>
-            <span class="z small" aria-hidden="true">z</span>
-          </div>
-        </div>
-      )
-    }
+<footer>
+  <div class:list={['content', { night }]}>
+    {night && <NightHour locale={locale} />}
     <div class="links">
-      {
-        !night && (
-          <a class="brand" href={localePath(locale)}>
-            <img src="/images/icon.png" alt="" width="32" height="32" loading="lazy" />
-            <span>benchbite</span>
-          </a>
-        )
-      }
+      {!night && <Brand locale={locale} iconSize={32} />}
       <nav aria-label={footer.links}>
         {links.map((link) => <a href={localePath(locale, link.page)}>{link.label}</a>)}
       </nav>
@@ -69,36 +40,23 @@ const links = [
 <style>
   footer {
     overflow: hidden;
-    background: #232a4d;
-    color: #ffffff;
+    background: var(--night);
+    --primary-text: var(--brand-light);
+    color: var(--on-inverse);
     font-weight: 700;
     line-height: 1.4;
-  }
-
-  footer a {
-    color: #ffffff;
-  }
-
-  footer a:hover {
-    color: #ffb27f;
   }
 
   .content {
     max-width: 1184px;
     margin: 0 auto;
-    padding: 64px clamp(20px, 5vw, 24px) 32px;
+    padding: 32px clamp(20px, 5vw, 24px) 24px;
     display: flex;
     flex-direction: column;
-    gap: 40px;
-  }
-
-  .quiet .content {
-    padding-top: 32px;
-    padding-bottom: 24px;
     gap: 20px;
   }
 
-  .quiet .links {
+  .links {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -106,123 +64,44 @@ const links = [
     gap: 16px 40px;
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 22px;
-    font-weight: 900;
-    text-decoration: none;
-  }
-
-  .brand img {
-    border-radius: 9px;
-  }
-
-  .night {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 32px;
-  }
-
-  .message {
-    flex: 1 1 520px;
-    min-width: 0;
-  }
-
-  .time {
-    font-size: clamp(72px, 10vw, 136px);
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.04em;
-    color: #9aa6f5;
-  }
-
-  h2 {
-    margin: 4px 0 8px;
-    font-size: clamp(32px, 4vw, 48px);
-    font-weight: 900;
-    line-height: 1.05;
-  }
-
-  .question,
-  .small-print {
-    color: #dde1fa;
-  }
-
-  .question a {
-    font-weight: 900;
-  }
-
-  .bite {
-    position: relative;
-    flex: none;
-    width: 216px;
-    height: 216px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: var(--brand);
-  }
-
-  .bite img {
-    max-width: none;
-  }
-
-  .z {
-    position: absolute;
-    font-weight: 900;
-    color: #9aa6f5;
-  }
-
-  .big {
-    top: -6px;
-    left: -18px;
-    font-size: 42px;
-  }
-
-  .small {
-    top: -34px;
-    left: 14px;
-    font-size: 28px;
-  }
-
   nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px 24px;
   }
 
   nav a {
-    padding: 12px 18px;
-    border-radius: 14px;
-    background: #343d6b;
     font-weight: 800;
     text-decoration: none;
   }
 
-  .quiet nav {
-    gap: 8px 24px;
-  }
-
-  .quiet nav a {
-    padding: 0;
-    background: none;
-  }
-
-  .quiet .small-print {
-    padding-top: 16px;
-    border-top: 1px solid #343d6b;
-  }
-
   .small-print {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 8px 24px;
+    color: var(--on-night-muted);
     font-size: 15px;
+  }
+
+  .content:not(.night) .small-print {
+    padding-top: 16px;
+    border-top: 1px solid var(--night-raised);
+  }
+
+  .night {
+    padding-top: 64px;
+    padding-bottom: 32px;
+    gap: 40px;
+  }
+
+  .night nav {
+    gap: 10px;
+  }
+
+  .night nav a {
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--night-raised);
   }
 </style>
