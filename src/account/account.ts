@@ -1,6 +1,6 @@
 import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
-import { useRef } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { supabase } from '@/lib/supabase';
@@ -113,14 +113,14 @@ type ConfirmAccount = Credentials & { token: string; kind: NewAccountKind };
  * Confirms a new account's email address with its code, then sets the password. A new user gave one
  * when signing up, but Auth keeps the first one given for an address nobody confirmed, which could
  * be someone else's (ADR 0091). The code can be used once, so a try after only the password failed
- * does not send it again.
+ * does not send it again, and `accepted` says that only the password is left.
  */
 export function useConfirmAccount() {
-  const confirmed = useRef(false);
-  return useMutation({
+  const [accepted, setAccepted] = useState(false);
+  const mutation = useMutation({
     mutationFn: async ({ token, kind, ...credentials }: ConfirmAccount) => {
       const { email, password } = normalized(credentials);
-      if (!confirmed.current) {
+      if (!accepted) {
         const { error } = await supabase.auth.verifyOtp({
           email,
           token,
@@ -129,7 +129,7 @@ export function useConfirmAccount() {
         if (error) {
           throw error;
         }
-        confirmed.current = true;
+        setAccepted(true);
       }
       const { error } = await supabase.auth.updateUser({ password });
       // Being the password already is what this step wants, as after an answer that got lost.
@@ -138,6 +138,7 @@ export function useConfirmAccount() {
       }
     },
   });
+  return { ...mutation, accepted };
 }
 
 /**

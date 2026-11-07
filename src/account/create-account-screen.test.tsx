@@ -44,6 +44,13 @@ describe('CreateAccountScreen', () => {
     expect(button).toBeEnabled();
   });
 
+  it('refuses a password over the byte limit before any code is sent', async () => {
+    await renderScreen();
+    await fill('kaan@example.com', 'ü'.repeat(37));
+    expect(screen.getByText('Use a password with at most 72 characters.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Create account' })).toBeDisabled();
+  });
+
   it('asks for the code, then says the account is ready, and reports it after that', async () => {
     await renderScreen();
     await fill(' kaan@example.com ', 'secret12');

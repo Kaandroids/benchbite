@@ -84,6 +84,8 @@
     "confirmAnotherEmail": "Use another email",
     "confirmGuestNote": "You stay a guest until the code is confirmed. Nothing you saved is lost if you leave now.",
     "confirm": "Confirm",
+    "confirmPasswordTitle": "Save your password",
+    "confirmPasswordLeft": "Your email is confirmed. Only your password is left.",
     "readyTitle": "Your account is ready",
     "readyMessage": "Your plan and workouts are safe, also on a new phone.",
     "readyContinue": "Continue"

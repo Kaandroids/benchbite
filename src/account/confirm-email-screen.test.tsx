@@ -114,6 +114,47 @@ describe('ConfirmEmailScreen', () => {
     expect(auth.updateUser).toHaveBeenCalledTimes(2);
   });
 
+  describe('after the code was accepted', () => {
+    const failPassword = (error: Error) =>
+      auth.updateUser.mockResolvedValueOnce({ data: {}, error } as never);
+
+    it('leaves no way back to the form, only trying again', async () => {
+      failPassword(new AuthRetryableFetchError('Failed to fetch', 0));
+      await renderScreen();
+      await typeCode('123456');
+      expect(await screen.findByText('Save your password')).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Back' })).not.toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Use another email' })).not.toBeOnTheScreen();
+      expect(screen.queryByLabelText('6-digit code')).not.toBeOnTheScreen();
+      expect(screen.queryByText(/You stay a guest/)).not.toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled();
+    });
+
+    it('lets a refused password be typed anew', async () => {
+      failPassword(new AuthApiError('weak', 422, 'weak_password'));
+      await renderScreen();
+      await typeCode('123456');
+      expect(
+        await screen.findByText('Use a password with at least 8 characters.'),
+      ).toBeOnTheScreen();
+      await fireEvent.changeText(screen.getByLabelText('Password'), 'a better one');
+      await fireEvent.press(screen.getByRole('button', { name: 'Confirm' }));
+      await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
+      expect(auth.updateUser).toHaveBeenLastCalledWith({ password: 'a better one' });
+      expect(auth.verifyOtp).toHaveBeenCalledTimes(1);
+    });
+
+    it('asks for a shorter password before sending it', async () => {
+      failPassword(new AuthApiError('Too long', 422, 'weak_password'));
+      await renderScreen();
+      await typeCode('123456');
+      const field = await screen.findByLabelText('Password');
+      await fireEvent.changeText(field, 'ü'.repeat(37));
+      expect(screen.getByText('Use a password with at most 72 characters.')).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    });
+  });
+
   it('tells a guest that they stay one, but not a new user', async () => {
     const note = /You stay a guest/;
     const { unmount } = await renderScreen();

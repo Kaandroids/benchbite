@@ -84,6 +84,8 @@
     "confirmAnotherEmail": "Başka e-posta kullan",
     "confirmGuestNote": "Kod onaylanana kadar misafir kalırsın. Şimdi çıkarsan kaydettiklerin kaybolmaz.",
     "confirm": "Onayla",
+    "confirmPasswordTitle": "Şifreni kaydet",
+    "confirmPasswordLeft": "E-posta adresin onaylandı. Sadece şifren kaldı.",
     "readyTitle": "Hesabın hazır",
     "readyMessage": "Planın ve antrenmanların güvende, yeni telefonda da.",
     "readyContinue": "Devam et"

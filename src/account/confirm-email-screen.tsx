@@ -10,14 +10,21 @@ import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
+import { PasswordField } from './account-fields';
 import {
   accountError,
   CODE_LENGTH,
+  errorField,
   useConfirmAccount,
   useResendCode,
   type NewAccountKind,
 } from './account';
-import { PASSWORD_LIMITS } from './passwords';
+import {
+  isPasswordTooLong,
+  isPasswordValid,
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_LIMITS,
+} from './passwords';
 
 /** How long before another code can be asked for, as `max_frequency` in `supabase/config.toml`. */
 const RESEND_SECONDS = 60;
@@ -33,7 +40,8 @@ type ConfirmEmailScreenProps = {
 
 /**
  * Takes the code sent to a new account's email address (ADR 0091). A guest stays a guest until it
- * is confirmed, so leaving here loses nothing.
+ * is confirmed, so leaving here loses nothing. After that the account exists and the form can do no
+ * more, so the only way on is to save the password, which can be typed anew if Auth refuses it.
  */
 export function ConfirmEmailScreen({
   email,
@@ -47,6 +55,8 @@ export function ConfirmEmailScreen({
   const confirm = useConfirmAccount();
   const resend = useResendCode();
   const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState(password);
+  const [asksPassword, setAsksPassword] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const waiting = secondsLeft > 0;
 
@@ -60,13 +70,16 @@ export function ConfirmEmailScreen({
 
   const send = (token: string) =>
     confirm.mutate(
-      { email, token, password, kind },
+      { email, token, password: newPassword, kind },
       {
         onSuccess: onConfirmed,
         // A wrong code is typed anew. Otherwise it stays, for the button to try again.
         onError: (error) => {
-          if (accountError(error) === 'invalidCode') {
+          const failure = accountError(error);
+          if (failure === 'invalidCode') {
             setCode('');
+          } else if (errorField(failure) === 'password') {
+            setAsksPassword(true);
           }
         },
       },
@@ -100,58 +113,84 @@ export function ConfirmEmailScreen({
 
   const error = confirm.error ?? resend.error;
   const reason = error ? accountError(error) : null;
+  const message = reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null;
+
+  const changePassword = (value: string) => {
+    setNewPassword(value);
+    if (!confirm.isPending) {
+      confirm.reset();
+    }
+  };
 
   return (
     <FormScreen
-      title={t('account.confirmTitle')}
-      subtitle={t('account.confirmSent', { email })}
-      onBack={onBack}
+      title={confirm.accepted ? t('account.confirmPasswordTitle') : t('account.confirmTitle')}
+      subtitle={
+        confirm.accepted ? t('account.confirmPasswordLeft') : t('account.confirmSent', { email })
+      }
+      onBack={confirm.accepted ? undefined : onBack}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {reason ? (
-            <Note tone="danger">{t(`account.errors.${reason}`, PASSWORD_LIMITS)}</Note>
-          ) : null}
+          {message && !asksPassword ? <Note tone="danger">{message}</Note> : null}
           <Button
             label={t('account.confirm')}
-            disabled={code.length < CODE_LENGTH}
+            disabled={confirm.accepted ? !isPasswordValid(newPassword) : code.length < CODE_LENGTH}
             loading={confirm.isPending}
             onPress={() => send(code)}
           />
         </View>
       }
     >
-      <CodeField
-        label={t('account.code')}
-        value={code}
-        onChange={change}
-        length={CODE_LENGTH}
-        invalid={reason === 'invalidCode'}
-      />
-      <View style={{ gap: spacing.md, alignItems: 'flex-start' }}>
-        <Text color="textMuted">{t('account.confirmSpam')}</Text>
-        <TextLink
-          label={
-            waiting
-              ? t('account.confirmResendIn', { time: formatWait(secondsLeft) })
-              : t('account.confirmResend')
+      {asksPassword ? (
+        <PasswordField
+          value={newPassword}
+          onChange={changePassword}
+          editable={!confirm.isPending}
+          error={
+            isPasswordTooLong(newPassword)
+              ? t('account.errors.passwordTooLong', PASSWORD_LIMITS)
+              : message
           }
-          align="start"
-          size="regular"
-          disabled={waiting || resend.isPending}
-          onPress={sendAgain}
+          hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
+          isNew
         />
-        <TextLink
-          label={t('account.confirmAnotherEmail')}
-          align="start"
-          size="regular"
-          onPress={onBack}
-        />
-      </View>
-      {kind === 'guest' ? (
-        <Text variant="caption" color="textMuted">
-          {t('account.confirmGuestNote')}
-        </Text>
       ) : null}
+      {confirm.accepted ? null : (
+        <>
+          <CodeField
+            label={t('account.code')}
+            value={code}
+            onChange={change}
+            length={CODE_LENGTH}
+            invalid={reason === 'invalidCode'}
+          />
+          <View style={{ gap: spacing.md, alignItems: 'flex-start' }}>
+            <Text color="textMuted">{t('account.confirmSpam')}</Text>
+            <TextLink
+              label={
+                waiting
+                  ? t('account.confirmResendIn', { time: formatWait(secondsLeft) })
+                  : t('account.confirmResend')
+              }
+              align="start"
+              size="regular"
+              disabled={waiting || resend.isPending}
+              onPress={sendAgain}
+            />
+            <TextLink
+              label={t('account.confirmAnotherEmail')}
+              align="start"
+              size="regular"
+              onPress={onBack}
+            />
+          </View>
+          {kind === 'guest' ? (
+            <Text variant="caption" color="textMuted">
+              {t('account.confirmGuestNote')}
+            </Text>
+          ) : null}
+        </>
+      )}
     </FormScreen>
   );
 }

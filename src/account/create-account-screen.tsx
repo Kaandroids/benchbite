@@ -13,7 +13,12 @@ import { errorField, useCreateAccount, type NewAccountKind } from './account';
 import { AccountReadyScreen } from './account-ready-screen';
 import { ConfirmEmailScreen } from './confirm-email-screen';
 import { EmailField, PasswordField } from './account-fields';
-import { MIN_PASSWORD_LENGTH } from './passwords';
+import {
+  isPasswordTooLong,
+  isPasswordValid,
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_LIMITS,
+} from './passwords';
 import { useCredentialsForm } from './use-credentials-form';
 
 type CreateAccountScreenProps = {
@@ -31,7 +36,7 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
   const create = useCreateAccount();
   const { email, password, setEmail, setPassword, reason, message } = useCredentialsForm(create);
   const field = reason ? errorField(reason) : null;
-  const ready = email.trim() !== '' && password.length >= MIN_PASSWORD_LENGTH;
+  const ready = email.trim() !== '' && isPasswordValid(password);
   const [step, setStep] = useState<
     { name: 'code'; kind: NewAccountKind } | { name: 'ready' } | null
   >(null);
@@ -94,7 +99,13 @@ export function CreateAccountScreen({ onClose, onLogIn, onCreated }: CreateAccou
         value={password}
         onChange={setPassword}
         editable={!create.isPending}
-        error={field === 'password' ? message : null}
+        error={
+          isPasswordTooLong(password)
+            ? t('account.errors.passwordTooLong', PASSWORD_LIMITS)
+            : field === 'password'
+              ? message
+              : null
+        }
         hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
         isNew
       />

@@ -84,6 +84,8 @@
     "confirmAnotherEmail": "Andere E-Mail verwenden",
     "confirmGuestNote": "Du bleibst Gast, bis der Code bestätigt ist. Wenn du jetzt gehst, geht nichts verloren.",
     "confirm": "Bestätigen",
+    "confirmPasswordTitle": "Speichere dein Passwort",
+    "confirmPasswordLeft": "Deine E-Mail-Adresse ist bestätigt. Es fehlt nur noch dein Passwort.",
     "readyTitle": "Dein Konto ist bereit",
     "readyMessage": "Dein Plan und deine Trainings sind sicher, auch auf einem neuen Handy.",
     "readyContinue": "Weiter"
