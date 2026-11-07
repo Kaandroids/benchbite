@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { BackHandler, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { CodeField } from '@/components/ui/code-field';
@@ -16,20 +16,13 @@ import {
   accountError,
   CODE_LENGTH,
   errorField,
+  RESEND_SECONDS,
   useAccountError,
   useConfirmAccount,
   useResendCode,
   type NewAccountKind,
 } from './account';
-import {
-  isPasswordTooLong,
-  isPasswordValid,
-  MIN_PASSWORD_LENGTH,
-  PASSWORD_LIMITS,
-} from './passwords';
-
-/** How long before another code can be asked for, as `max_frequency` in `supabase/config.toml`. */
-const RESEND_SECONDS = 60;
+import { isPasswordValid } from './passwords';
 
 type ConfirmEmailScreenProps = {
   email: string;
@@ -44,7 +37,7 @@ type ConfirmEmailScreenProps = {
 /**
  * Takes the code sent to a new account's email address (ADR 0091). A guest stays a guest until it
  * is confirmed, so leaving here loses nothing. After that the account exists and the form can do no
- * more, so the only way on is to save the password, which can be typed anew if Auth refuses it.
+ * more, so the only way on is to save the password.
  */
 export function ConfirmEmailScreen({
   email,
@@ -58,8 +51,6 @@ export function ConfirmEmailScreen({
   const confirm = useConfirmAccount();
   const resend = useResendCode();
   const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState(password);
-  const [asksPassword, setAsksPassword] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const waiting = secondsLeft > 0;
 
@@ -73,16 +64,13 @@ export function ConfirmEmailScreen({
 
   const send = (token: string) =>
     confirm.mutate(
-      { email, token, password: newPassword, kind },
+      { email, token, password, kind },
       {
         onSuccess: onConfirmed,
         // A wrong code is typed anew. Otherwise it stays, for the button to try again.
         onError: (error) => {
-          const failure = accountError(error);
-          if (failure === 'invalidCode') {
+          if (accountError(error) === 'invalidCode') {
             setCode('');
-          } else if (errorField(failure) === 'password') {
-            setAsksPassword(true);
           }
         },
       },
@@ -114,87 +102,133 @@ export function ConfirmEmailScreen({
     );
   };
 
-  const error = confirm.error ?? resend.error;
-  const { reason, message } = useAccountError(error);
+  const { reason, message } = useAccountError(confirm.error ?? resend.error);
 
-  const changePassword = (value: string) => {
-    setNewPassword(value);
-    if (!confirm.isPending) {
-      confirm.reset();
-    }
-  };
+  if (confirm.accepted) {
+    return (
+      <SavePassword
+        password={password}
+        save={(newPassword) =>
+          confirm.mutate(
+            { email, token: code, password: newPassword, kind },
+            { onSuccess: onConfirmed },
+          )
+        }
+        saving={confirm.isPending}
+        error={confirm.error}
+        reset={confirm.reset}
+      />
+    );
+  }
 
   return (
     <FormScreen
-      title={confirm.accepted ? t('account.confirmPasswordTitle') : t('account.confirmTitle')}
-      subtitle={
-        confirm.accepted
-          ? t('account.confirmPasswordLeft')
-          : t('account.confirmSent', { email, length: CODE_LENGTH })
-      }
-      onBack={confirm.accepted ? undefined : onBack}
+      title={t('account.confirmTitle')}
+      subtitle={t('account.confirmSent', { email: email.trim(), length: CODE_LENGTH })}
+      onBack={onBack}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {message && !asksPassword ? <Note tone="danger">{message}</Note> : null}
+          {message ? <Note tone="danger">{message}</Note> : null}
           <Button
             label={t('account.confirm')}
-            disabled={confirm.accepted ? !isPasswordValid(newPassword) : code.length < CODE_LENGTH}
+            disabled={code.length < CODE_LENGTH}
             loading={confirm.isPending}
             onPress={() => send(code)}
           />
         </View>
       }
     >
-      {asksPassword ? (
-        <PasswordField
-          value={newPassword}
-          onChange={changePassword}
-          editable={!confirm.isPending}
-          error={
-            isPasswordTooLong(newPassword)
-              ? t('account.errors.passwordTooLong', PASSWORD_LIMITS)
-              : message
+      <CodeField
+        label={t('account.code', { length: CODE_LENGTH })}
+        value={code}
+        onChange={change}
+        length={CODE_LENGTH}
+        invalid={reason === 'invalidCode'}
+      />
+      <View style={{ gap: spacing.md, alignItems: 'flex-start' }}>
+        <Text color="textMuted">{t('account.confirmSpam')}</Text>
+        <TextLink
+          label={
+            waiting
+              ? t('account.confirmResendIn', { time: minutesAndSeconds(secondsLeft) })
+              : t('account.confirmResend')
           }
-          hint={t('account.passwordHint', { min: MIN_PASSWORD_LENGTH })}
-          isNew
+          align="start"
+          size="regular"
+          disabled={waiting || resend.isPending}
+          onPress={sendAgain}
         />
+        <TextLink
+          label={t('account.confirmAnotherEmail')}
+          align="start"
+          size="regular"
+          onPress={onBack}
+        />
+      </View>
+      {kind === 'guest' ? (
+        <Text variant="caption" color="textMuted">
+          {t('account.confirmGuestNote')}
+        </Text>
       ) : null}
-      {confirm.accepted ? null : (
-        <>
-          <CodeField
-            label={t('account.code', { length: CODE_LENGTH })}
-            value={code}
-            onChange={change}
-            length={CODE_LENGTH}
-            invalid={reason === 'invalidCode'}
+    </FormScreen>
+  );
+}
+
+type SavePasswordProps = {
+  password: string;
+  save: (password: string) => void;
+  saving: boolean;
+  error: unknown;
+  reset: () => void;
+};
+
+/**
+ * The account's address is confirmed and only its password is left, as saving it failed. There is
+ * no way back, as the form can do no more; Android's back button is stopped too, and the routes
+ * turn off the swipe back.
+ */
+function SavePassword({ password, save, saving, error, reset }: SavePasswordProps) {
+  const { t } = useTranslation();
+  const { spacing } = useTheme();
+  const [value, setValue] = useState(password);
+  const { reason, message } = useAccountError(error);
+  const onField = reason !== null && errorField(reason) === 'password';
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => subscription.remove();
+  }, []);
+
+  const change = (next: string) => {
+    setValue(next);
+    if (!saving) {
+      reset();
+    }
+  };
+
+  return (
+    <FormScreen
+      title={t('account.confirmPasswordTitle')}
+      subtitle={t('account.confirmPasswordLeft')}
+      footer={
+        <View style={{ gap: spacing.lg }}>
+          {message && !onField ? <Note tone="danger">{message}</Note> : null}
+          <Button
+            label={t('account.confirm')}
+            disabled={!isPasswordValid(value)}
+            loading={saving}
+            onPress={() => save(value)}
           />
-          <View style={{ gap: spacing.md, alignItems: 'flex-start' }}>
-            <Text color="textMuted">{t('account.confirmSpam')}</Text>
-            <TextLink
-              label={
-                waiting
-                  ? t('account.confirmResendIn', { time: minutesAndSeconds(secondsLeft) })
-                  : t('account.confirmResend')
-              }
-              align="start"
-              size="regular"
-              disabled={waiting || resend.isPending}
-              onPress={sendAgain}
-            />
-            <TextLink
-              label={t('account.confirmAnotherEmail')}
-              align="start"
-              size="regular"
-              onPress={onBack}
-            />
-          </View>
-          {kind === 'guest' ? (
-            <Text variant="caption" color="textMuted">
-              {t('account.confirmGuestNote')}
-            </Text>
-          ) : null}
-        </>
-      )}
+        </View>
+      }
+    >
+      <PasswordField
+        value={value}
+        onChange={change}
+        editable={!saving}
+        error={onField ? message : null}
+        isNew
+      />
     </FormScreen>
   );
 }

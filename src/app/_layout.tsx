@@ -127,8 +127,10 @@ function RootNavigator() {
             <Stack.Screen name="dev/tools" />
           </Stack.Protected>
           {/* Reachable from the onboarding's first step and from the settings. */}
-          <Stack.Screen name="account/create" />
-          <Stack.Screen name="account/login" />
+          {/* Both can lead to a confirmed code with only the password left, which must not be
+              swiped away (ADR 0091); they close with their own button. */}
+          <Stack.Screen name="account/create" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="account/login" options={{ gestureEnabled: false }} />
           <Stack.Screen name="dev/components" />
           <Stack.Screen name="dev/trial-ending" />
           <Stack.Screen name="dev/special-offer" />
