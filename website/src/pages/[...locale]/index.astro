@@ -14,18 +14,21 @@ const INK = 'var(--ink)';
 
 // The day's colours are the app's meal colours. The evening is the dark one, and lunch's time keeps
 // the brand's orange text, as the meal's own orange is too light for it.
-const plan = {
-  id: 'plan',
-  time: '06:45',
-  navColor: 'var(--snack-on-dark)',
-  colors: { band: 'var(--snack-background)', text: INK, time: 'var(--snack)' },
+type Hour = Pick<ComponentProps<typeof DaySection>, 'id' | 'time' | 'bite' | 'colors' | 'flip'> & {
+  navColor: string;
+  copy: { nav: string; title: string; text: string };
 };
 
-const screens: (Pick<ComponentProps<typeof DaySection>, 'id' | 'time' | 'bite' | 'colors' | 'flip'> & {
-  navColor: string;
-  copy: { nav: string; title: string; text: string; alt: string };
-  image: string;
-})[] = [
+const plan: Hour = {
+  id: 'plan',
+  time: '06:45',
+  bite: 'thinking',
+  navColor: 'var(--snack-on-dark)',
+  colors: { band: 'var(--snack-background)', text: INK, time: 'var(--snack)' },
+  copy: day.plan,
+};
+
+const screens: (Hour & { copy: { alt: string }; image: string })[] = [
   {
     id: 'breakfast',
     time: '07:30',
@@ -66,10 +69,7 @@ const screens: (Pick<ComponentProps<typeof DaySection>, 'id' | 'time' | 'bite' |
   },
 ];
 
-const hours = [
-  { ...plan, nav: day.plan.nav },
-  ...screens.map((hour) => ({ id: hour.id, time: hour.time, navColor: hour.navColor, nav: hour.copy.nav })),
-];
+const hours: Hour[] = [plan, ...screens];
 ---
 
 <Layout locale={locale} brandHeader nightFooter>
@@ -92,7 +92,7 @@ const hours = [
       {
         hours.map((hour) => (
           <a href={`#${hour.id}`}>
-            <span style={`color: ${hour.navColor}`}>{hour.time}</span> {hour.nav}
+            <span style={`color: ${hour.navColor}`}>{hour.time}</span> {hour.copy.nav}
           </a>
         ))
       }
@@ -101,9 +101,9 @@ const hours = [
     <DaySection
       id={plan.id}
       time={plan.time}
-      bite="thinking"
-      title={day.plan.title}
-      text={day.plan.text}
+      bite={plan.bite}
+      title={plan.copy.title}
+      text={plan.copy.text}
       colors={plan.colors}
     >
       <ul class="chips" slot="after-text">
