@@ -459,6 +459,23 @@ verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/delete-account/index.ts"
 
+# Sends a link to delete an account, asked for by the website's form (ADR 0094). Anyone can ask,
+# as people without the app have no session, so the platform's JWT check is off; the function
+# answers the same for every address and limits requests per address and IP.
+[functions.request-account-deletion]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/request-account-deletion/index.ts"
+
+# Deletes the account a link from request-account-deletion belongs to (ADR 0094). The link's
+# random, short-lived token is the proof, so the platform's JWT check is off.
+[functions.confirm-account-deletion]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/confirm-account-deletion/index.ts"
+
 # Removes the photos of deleted chats (ADR 0063). Only the pg_cron job calls it, with the secret
 # API key, which the function checks; the key is no JWT, so the platform's JWT check is off.
 [functions.purge-coach-media]
