@@ -2,7 +2,10 @@ import { de } from './de';
 import { en, type Messages } from './en';
 import { tr } from './tr';
 
-/** A new language also needs its rule in `public/_redirects`. */
+/**
+ * A new language also needs its rule in `public/_redirects`, and its place in the Edge Functions'
+ * `SITE_LOCALES` (supabase/functions/_shared/site.ts) and their email copy.
+ */
 export const LOCALES = ['en', 'de', 'tr'] as const;
 export type Locale = (typeof LOCALES)[number];
 
