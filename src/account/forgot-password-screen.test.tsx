@@ -1,4 +1,4 @@
-import { AuthApiError } from '@supabase/supabase-js';
+import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 
 import { supabase } from '@/lib/supabase';
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
@@ -110,6 +110,24 @@ describe('ForgotPasswordScreen', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
       await waitFor(() => expect(auth.resetPasswordForEmail).toHaveBeenCalledTimes(2));
       expect(await screen.findByRole('button', { name: 'Send again in 1:00' })).toBeOnTheScreen();
+    });
+
+    it('clears an error of sending again once the next code is typed', async () => {
+      await renderScreen();
+      await sendCode();
+      auth.resetPasswordForEmail.mockResolvedValueOnce({
+        data: {},
+        error: new AuthRetryableFetchError('Failed to fetch', 0),
+      } as never);
+      await act(async () => jest.advanceTimersByTime(60_000));
+      await fireEvent.press(screen.getByRole('button', { name: 'Send a new code' }));
+      expect(
+        await screen.findByText('No connection. Check your internet and try again.'),
+      ).toBeOnTheScreen();
+      await typeCode('1');
+      expect(
+        screen.queryByText('No connection. Check your internet and try again.'),
+      ).not.toBeOnTheScreen();
     });
   });
 });

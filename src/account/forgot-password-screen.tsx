@@ -8,7 +8,6 @@ import { Note } from '@/components/ui/note';
 import { useTheme } from '@/theme';
 
 import {
-  accountError,
   CODE_LENGTH,
   errorField,
   useAccountError,
@@ -16,7 +15,7 @@ import {
   useSendResetCode,
 } from './account';
 import { EmailField } from './account-fields';
-import { CodeEntry, useResendWait } from './code-entry';
+import { CodeEntry, useCodeEntry } from './code-entry';
 
 type ForgotPasswordScreenProps = {
   /** What the log-in form held, to start from. */
@@ -86,49 +85,12 @@ export function ForgotPasswordScreen({
 function ResetCodeScreen({ email, onBack }: { email: string; onBack: () => void }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const confirm = useConfirmReset();
-  const resend = useSendResetCode();
-  const wait = useResendWait();
-  const [code, setCode] = useState('');
-  const { reason, message } = useAccountError(confirm.error ?? resend.error);
-
-  const send = (token: string) =>
-    confirm.mutate(
-      { email, token },
-      {
-        // A wrong code is typed anew. Otherwise it stays, for the button to try again.
-        onError: (error) => {
-          if (accountError(error) === 'invalidCode') {
-            setCode('');
-          }
-        },
-      },
-    );
-
-  const change = (value: string) => {
-    // The field stays editable, as taking that away would close the keyboard.
-    if (confirm.isPending) {
-      return;
-    }
-    setCode(value);
-    confirm.reset();
-    // The whole code needs no further press, as when the keyboard suggests it.
-    if (value.length === CODE_LENGTH) {
-      send(value);
-    }
-  };
-
-  const sendAgain = () =>
-    resend.mutate(
-      { email },
-      {
-        onSuccess: () => {
-          setCode('');
-          confirm.reset();
-          wait.restart();
-        },
-      },
-    );
+  const entry = useCodeEntry({
+    check: useConfirmReset(),
+    checkWith: (token) => ({ email, token }),
+    resend: useSendResetCode(),
+    resendWith: { email },
+  });
 
   return (
     <FormScreen
@@ -137,24 +99,17 @@ function ResetCodeScreen({ email, onBack }: { email: string; onBack: () => void 
       onBack={onBack}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {message ? <Note tone="danger">{message}</Note> : null}
+          {entry.message ? <Note tone="danger">{entry.message}</Note> : null}
           <Button
             label={t('account.confirm')}
-            disabled={code.length < CODE_LENGTH}
-            loading={confirm.isPending}
-            onPress={() => send(code)}
+            disabled={entry.code.length < CODE_LENGTH}
+            loading={entry.checking}
+            onPress={entry.submit}
           />
         </View>
       }
     >
-      <CodeEntry
-        code={code}
-        onChange={change}
-        invalid={reason === 'invalidCode'}
-        wait={wait}
-        onResend={sendAgain}
-        resending={resend.isPending}
-      />
+      <CodeEntry entry={entry} />
     </FormScreen>
   );
 }

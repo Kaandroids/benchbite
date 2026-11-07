@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { FormScreen } from '@/components/ui/form-screen';
@@ -9,18 +8,9 @@ import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
 import { useTheme } from '@/theme';
 
-import { PasswordField } from './account-fields';
-import {
-  accountError,
-  CODE_LENGTH,
-  errorField,
-  useAccountError,
-  useConfirmAccount,
-  useResendCode,
-  type NewAccountKind,
-} from './account';
-import { CodeEntry, useResendWait } from './code-entry';
-import { isPasswordValid } from './passwords';
+import { CODE_LENGTH, useConfirmAccount, useResendCode, type NewAccountKind } from './account';
+import { CodeEntry, useCodeEntry } from './code-entry';
+import { NewPasswordForm } from './new-password-form';
 
 type ConfirmEmailScreenProps = {
   email: string;
@@ -48,64 +38,31 @@ export function ConfirmEmailScreen({
   const { spacing } = useTheme();
   const confirm = useConfirmAccount();
   const resend = useResendCode();
-  const [code, setCode] = useState('');
-  const wait = useResendWait();
-
-  const send = (token: string) =>
-    confirm.mutate(
-      { email, token, password, kind },
-      {
-        onSuccess: onConfirmed,
-        // A wrong code is typed anew. Otherwise it stays, for the button to try again.
-        onError: (error) => {
-          if (accountError(error) === 'invalidCode') {
-            setCode('');
-          }
-        },
-      },
-    );
-
-  const change = (value: string) => {
-    // The field stays editable, as taking that away would close the keyboard.
-    if (confirm.isPending) {
-      return;
-    }
-    setCode(value);
-    confirm.reset();
-    // The whole code needs no further press, as when the keyboard suggests it.
-    if (value.length === CODE_LENGTH) {
-      send(value);
-    }
-  };
-
-  const sendAgain = () => {
-    resend.mutate(
-      { email, kind },
-      {
-        onSuccess: () => {
-          setCode('');
-          confirm.reset();
-          wait.restart();
-        },
-      },
-    );
-  };
-
-  const { reason, message } = useAccountError(confirm.error ?? resend.error);
+  const entry = useCodeEntry({
+    check: confirm,
+    checkWith: (token) => ({ email, token, password, kind }),
+    onChecked: onConfirmed,
+    resend,
+    resendWith: { email, kind },
+  });
 
   if (confirm.accepted) {
+    // Saving the password failed after the code: the account exists, and the form can do no more.
     return (
-      <SavePassword
-        password={password}
-        save={(newPassword) =>
-          confirm.mutate(
-            { email, token: code, password: newPassword, kind },
-            { onSuccess: onConfirmed },
-          )
-        }
+      <NewPasswordForm
+        title={t('account.confirmPasswordTitle')}
+        subtitle={t('account.confirmPasswordLeft')}
+        initial={password}
+        saveLabel={t('account.confirm')}
         saving={confirm.isPending}
         error={confirm.error}
         reset={confirm.reset}
+        onSave={(newPassword) =>
+          confirm.mutate(
+            { email, token: entry.code, password: newPassword, kind },
+            { onSuccess: onConfirmed },
+          )
+        }
       />
     );
   }
@@ -117,24 +74,17 @@ export function ConfirmEmailScreen({
       onBack={onBack}
       footer={
         <View style={{ gap: spacing.lg }}>
-          {message ? <Note tone="danger">{message}</Note> : null}
+          {entry.message ? <Note tone="danger">{entry.message}</Note> : null}
           <Button
             label={t('account.confirm')}
-            disabled={code.length < CODE_LENGTH}
-            loading={confirm.isPending}
-            onPress={() => send(code)}
+            disabled={entry.code.length < CODE_LENGTH}
+            loading={entry.checking}
+            onPress={entry.submit}
           />
         </View>
       }
     >
-      <CodeEntry
-        code={code}
-        onChange={change}
-        invalid={reason === 'invalidCode'}
-        wait={wait}
-        onResend={sendAgain}
-        resending={resend.isPending}
-      >
+      <CodeEntry entry={entry}>
         <TextLink
           label={t('account.confirmAnotherEmail')}
           align="start"
@@ -147,65 +97,6 @@ export function ConfirmEmailScreen({
           {t('account.confirmGuestNote')}
         </Text>
       ) : null}
-    </FormScreen>
-  );
-}
-
-type SavePasswordProps = {
-  password: string;
-  save: (password: string) => void;
-  saving: boolean;
-  error: unknown;
-  reset: () => void;
-};
-
-/**
- * The account's address is confirmed and only its password is left, as saving it failed. There is
- * no way back, as the form can do no more; Android's back button is stopped too, and the routes
- * turn off the swipe back.
- */
-function SavePassword({ password, save, saving, error, reset }: SavePasswordProps) {
-  const { t } = useTranslation();
-  const { spacing } = useTheme();
-  const [value, setValue] = useState(password);
-  const { reason, message } = useAccountError(error);
-  const onField = reason !== null && errorField(reason) === 'password';
-
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => true);
-    return () => subscription.remove();
-  }, []);
-
-  const change = (next: string) => {
-    setValue(next);
-    if (!saving) {
-      reset();
-    }
-  };
-
-  return (
-    <FormScreen
-      title={t('account.confirmPasswordTitle')}
-      subtitle={t('account.confirmPasswordLeft')}
-      footer={
-        <View style={{ gap: spacing.lg }}>
-          {message && !onField ? <Note tone="danger">{message}</Note> : null}
-          <Button
-            label={t('account.confirm')}
-            disabled={!isPasswordValid(value)}
-            loading={saving}
-            onPress={() => save(value)}
-          />
-        </View>
-      }
-    >
-      <PasswordField
-        value={value}
-        onChange={change}
-        editable={!saving}
-        error={onField ? message : null}
-        isNew
-      />
     </FormScreen>
   );
 }
