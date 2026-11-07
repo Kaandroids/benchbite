@@ -41,6 +41,6 @@ Deno.test('fails when the email is not accepted, or there is no way to send', ()
   withFetch(422, async () => {
     const send = emailSender((name) => (name === 'LETTERMINT_API_TOKEN' ? 'token' : undefined));
     await assertRejects(() => send(EMAIL));
-    await assertRejects(() => emailSender(() => undefined)(EMAIL));
+    await assertRejects(() => emailSender(() => undefined)(EMAIL), Error, 'MAILPIT_URL');
   }),
 );

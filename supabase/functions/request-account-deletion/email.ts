@@ -1,5 +1,6 @@
 // The email with the link to delete an account (ADR 0094), in the language of the page it was asked
-// from. Laid out as the Auth emails in supabase/templates/.
+// from. Laid out as the Auth emails in supabase/templates/, which point here: change them together.
+// Its colours are the app's: background, surface, text, textMuted and primaryButton.
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
 

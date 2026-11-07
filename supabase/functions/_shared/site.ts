@@ -1,6 +1,6 @@
 // The website's pages that the Edge Functions send people to (ADR 0094).
-import { readBody } from './request.ts';
 
+/** The site's languages, as `LOCALES` in website/src/i18n/index.ts: a new one goes in both. */
 export const SITE_LOCALES = ['en', 'de', 'tr'] as const;
 export type SiteLocale = (typeof SITE_LOCALES)[number];
 
@@ -22,15 +22,4 @@ export function siteUrl(env: (name: string) => string | undefined = Deno.env.get
 /** Sends the browser on to a page after a form, as a GET. */
 export function redirect(location: string): Response {
   return new Response(null, { status: 303, headers: { location } });
-}
-
-/** A form's fields, read within a small limit; none for a body that is too large or not a form. */
-export async function readForm(req: Request, max = 2048): Promise<URLSearchParams> {
-  return new URLSearchParams((await readBody(req, max)) ?? '');
-}
-
-/** The SHA-256 of a text, as Postgres takes a bytea: `\x` and hex. */
-export async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return `\\x${[...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }

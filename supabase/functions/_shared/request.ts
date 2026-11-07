@@ -46,3 +46,8 @@ export async function readJson(req: Request, max: number): Promise<unknown> {
   const text = await readBody(req, max);
   return text === undefined ? TOO_LARGE : parseJson(text);
 }
+
+/** A form's fields, read within a small limit; none for a body that is too large or not a form. */
+export async function readForm(req: Request, max = 2048): Promise<URLSearchParams> {
+  return new URLSearchParams((await readBody(req, max)) ?? '');
+}

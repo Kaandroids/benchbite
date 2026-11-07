@@ -14,37 +14,41 @@ const FROM = { name: 'Benchbite', address: 'no-reply@benchbite.com' };
 export function emailSender(env: (name: string) => string | undefined = Deno.env.get): Send {
   const token = env('LETTERMINT_API_TOKEN');
   const mailpit = env('MAILPIT_URL');
-  return async ({ to, subject, html, text }) => {
-    const [url, headers, body] = token
-      ? [
-          'https://api.lettermint.co/v1/send',
-          { 'x-lettermint-token': token },
-          { from: `${FROM.name} <${FROM.address}>`, to: [to], subject, html, text },
-        ]
-      : mailpit
-        ? [
-            `${mailpit}/api/v1/send`,
-            {},
-            {
-              From: { Email: FROM.address, Name: FROM.name },
-              To: [{ Email: to }],
-              Subject: subject,
-              HTML: html,
-              Text: text,
-            },
-          ]
-        : [];
-    if (!url) {
-      throw new Error('No way to send email: LETTERMINT_API_TOKEN is not set');
+  return ({ to, subject, html, text }) => {
+    if (token) {
+      return post(
+        'https://api.lettermint.co/v1/send',
+        { 'x-lettermint-token': token },
+        { from: `${FROM.name} <${FROM.address}>`, to: [to], subject, html, text },
+      );
     }
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...headers },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw new Error(`Sending an email failed with ${response.status}`);
+    if (mailpit) {
+      return post(
+        `${mailpit}/api/v1/send`,
+        {},
+        {
+          From: { Email: FROM.address, Name: FROM.name },
+          To: [{ Email: to }],
+          Subject: subject,
+          HTML: html,
+          Text: text,
+        },
+      );
     }
-    await response.body?.cancel();
+    return Promise.reject(
+      new Error('No way to send email: neither LETTERMINT_API_TOKEN nor MAILPIT_URL is set'),
+    );
   };
+}
+
+async function post(url: string, headers: Record<string, string>, body: unknown): Promise<void> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`Sending an email failed with ${response.status}`);
+  }
+  await response.body?.cancel();
 }
