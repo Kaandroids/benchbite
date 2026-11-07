@@ -7,10 +7,12 @@ import { useTheme } from '@/theme';
 import { LinkPrompt } from '@/components/ui/link-prompt';
 import { Note } from '@/components/ui/note';
 import { FormScreen } from '@/components/ui/form-screen';
+import { TextLink } from '@/components/ui/text-link';
 
 import { accountError, useResendCode, useSignIn } from './account';
 import { EmailField, PasswordField } from './account-fields';
 import { ConfirmEmailScreen } from './confirm-email-screen';
+import { ForgotPasswordScreen } from './forgot-password-screen';
 import { useCredentialsForm } from './use-credentials-form';
 
 type LogInScreenProps = {
@@ -23,7 +25,8 @@ type LogInScreenProps = {
 
 /**
  * Logs in to an account. The app then starts again as that user, so this screen does not navigate
- * on success. An account whose email address was never confirmed goes on to its code.
+ * on success. An account whose email address was never confirmed goes on to its code, and a
+ * forgotten password to a reset code.
  */
 export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogInScreenProps) {
   const { t } = useTranslation();
@@ -31,15 +34,24 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
   const signIn = useSignIn();
   const resend = useResendCode();
   const { email, password, setEmail, setPassword, message } = useCredentialsForm(signIn);
-  const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<'confirm' | 'forgot' | null>(null);
 
-  if (confirming) {
+  if (step === 'forgot') {
+    return (
+      <ForgotPasswordScreen
+        email={email}
+        leavesGuestData={leavesGuestData}
+        onBack={() => setStep(null)}
+      />
+    );
+  }
+  if (step === 'confirm') {
     return (
       <ConfirmEmailScreen
         email={email}
         password={password}
         kind="new"
-        onBack={() => setConfirming(false)}
+        onBack={() => setStep(null)}
       />
     );
   }
@@ -52,7 +64,7 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
           if (accountError(error) === 'emailNotConfirmed') {
             // Refused only within a minute of the last code, which then still works.
             resend.mutate({ email, kind: 'new' });
-            setConfirming(true);
+            setStep('confirm');
           }
         },
       },
@@ -84,6 +96,12 @@ export function LogInScreen({ onClose, onCreateAccount, leavesGuestData }: LogIn
       {leavesGuestData ? <Note tone="warning">{t('account.guestDataStays')}</Note> : null}
       <EmailField value={email} onChange={setEmail} editable={!signIn.isPending} />
       <PasswordField value={password} onChange={setPassword} editable={!signIn.isPending} />
+      <TextLink
+        label={t('account.forgotPassword')}
+        align="end"
+        size="regular"
+        onPress={() => setStep('forgot')}
+      />
     </FormScreen>
   );
 }

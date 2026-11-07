@@ -9,6 +9,7 @@ jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithPassword: jest.fn(),
+      resetPasswordForEmail: jest.fn(),
       resend: jest.fn(),
       verifyOtp: jest.fn(),
       updateUser: jest.fn(),
@@ -126,6 +127,18 @@ describe('LogInScreen', () => {
       await fireEvent.press(await screen.findByRole('button', { name: 'Use another email' }));
       expect(screen.getByLabelText('Email')).toHaveProp('value', ' kaan@example.com ');
     });
+  });
+
+  it('opens the reset of a forgotten password with the email typed so far', async () => {
+    auth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null } as never);
+    await renderScreen(true);
+    await fireEvent.changeText(screen.getByLabelText('Email'), 'kaan@example.com');
+    await fireEvent.press(screen.getByRole('button', { name: 'Forgot your password?' }));
+    expect(screen.getByText('Reset your password')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Email')).toHaveProp('value', 'kaan@example.com');
+    expect(screen.getByText(WARNING)).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByText('Welcome back. Your plan and workouts are waiting.')).toBeOnTheScreen();
   });
 
   it('warns a guest with data that it stays behind', async () => {
