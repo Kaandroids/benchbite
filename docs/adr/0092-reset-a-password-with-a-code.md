@@ -23,5 +23,5 @@ Someone who forgot their password had no way back into their account, and an acc
 
 - If the app stops before the new password is saved, the person stays logged in on this phone without a password they know, and can reset it again.
 - A guest who resets the password of their account leaves their guest data behind, as when logging in; the screen warns them as the log-in screen does.
-- Someone could try codes for another person's address. Auth limits how many codes one IP address can check, 30 every 5 minutes, and a code works for 15 minutes; many IP addresses together could still try more. A captcha (#455) would make it harder to ask for codes.
+- Someone could try codes for another person's address. Auth limits how many codes one IP address can check, 30 every 5 minutes, and a code works for 15 minutes; many IP addresses together could still try more. A captcha (#455) would make it harder to ask for codes. Codes stay 6 digits, as on most services, rather than 8, which would make guessing a hundred times harder.
 - Changing a password while logged in is a separate step, with the current password.
