@@ -161,15 +161,15 @@ export const en = {
     text: 'Accounts and guest data can be deleted in the app. Deleting cannot be undone.',
     inApp: 'In the app',
     steps: [
-      'Open Benchbite and go to Settings.',
-      'Choose the option to delete your account or guest data.',
+      'Open Benchbite. If you have an account, log in first.',
+      'Go to Settings and choose the option to delete your account or guest data.',
       'Confirm.',
     ],
     guestNote:
-      'Using Benchbite as a guest? Delete your data here before removing the app. Guest data has no email address, so we cannot find it later.',
+      'Using Benchbite as a guest? Delete your data in the app before removing it. Guest data has no email address, so we cannot find it later.',
     withoutApp: 'Without the app',
     withoutAppText:
-      'Removed the app and have an account? Soon you can request deletion here and confirm it by email.',
+      'Removed the app and have an account? Install it again and log in to delete your account. Soon you can also request deletion here and confirm it by email.',
     kept: 'What is deleted and kept',
     keptPlaceholder: '[LEGAL TEXT: DATA DELETED, DATA KEPT, RETENTION PERIODS]',
   },

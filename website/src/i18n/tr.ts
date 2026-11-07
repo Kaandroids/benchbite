@@ -159,15 +159,15 @@ export const tr: Messages = {
     text: 'Hesaplar ve misafir verileri uygulamadan silinebilir. Silme işlemi geri alınamaz.',
     inApp: 'Uygulamada',
     steps: [
-      'Benchbite’ı aç ve Ayarlar’a git.',
-      'Hesabını veya misafir verilerini silme seçeneğini seç.',
+      'Benchbite’ı aç. Hesabın varsa önce giriş yap.',
+      'Ayarlar’a git ve hesabını veya misafir verilerini silme seçeneğini seç.',
       'Onayla.',
     ],
     guestNote:
-      'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamayı kaldırmadan önce verilerini buradan sil. Misafir verilerinin e-posta adresi olmadığı için onları sonradan bulamayız.',
+      'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamayı kaldırmadan önce verilerini uygulamanın içinden sil. Misafir verilerinin e-posta adresi olmadığı için onları sonradan bulamayız.',
     withoutApp: 'Uygulama olmadan',
     withoutAppText:
-      'Uygulamayı kaldırdın ve hesabın var mı? Yakında silme isteğini buradan gönderip e-postayla onaylayabileceksin.',
+      'Uygulamayı kaldırdın ve hesabın var mı? Hesabını silmek için uygulamayı yeniden kurup giriş yap. Yakında silme isteğini buradan da gönderip e-postayla onaylayabileceksin.',
     kept: 'Neler silinir, neler kalır',
     keptPlaceholder: '[YASAL METİN: SİLİNEN VERİLER, KALAN VERİLER, SÜRELER]',
   },
