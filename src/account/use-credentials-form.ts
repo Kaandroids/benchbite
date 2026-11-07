@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
-import { accountError } from './account';
-import { PASSWORD_LIMITS } from './passwords';
+import { useAccountError } from './account';
 
 type Request = { isPending: boolean; error: unknown; reset: () => void };
 
@@ -11,10 +9,9 @@ type Request = { isPending: boolean; error: unknown; reset: () => void };
  * a new attempt without the last one's error.
  */
 export function useCredentialsForm(request: Request) {
-  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const reason = request.error ? accountError(request.error) : null;
+  const { reason, message } = useAccountError(request.error);
 
   const change = (set: (value: string) => void) => (value: string) => {
     set(value);
@@ -30,6 +27,6 @@ export function useCredentialsForm(request: Request) {
     setEmail: change(setEmail),
     setPassword: change(setPassword),
     reason,
-    message: reason ? t(`account.errors.${reason}`, PASSWORD_LIMITS) : null,
+    message,
   };
 }

@@ -2650,6 +2650,7 @@ export type Database = {
         }[];
       };
       refresh_day_nutrition_targets: { Args: { from_day: string }; Returns: undefined };
+      remove_unconfirmed_users: { Args: Record<PropertyKey, never>; Returns: undefined };
       rename_workout_alternative: {
         Args: { alternative_id: number; name: string };
         Returns: undefined;
