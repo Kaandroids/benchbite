@@ -15,13 +15,14 @@ import type { HealthStore } from './types';
 
 /** What the user is asked to allow, as the consent sheet lists it. */
 const READS: {
-  key: 'heartRate' | 'calories';
+  key: 'heartRate' | 'calories' | 'weight';
   icon: IconName;
   color: keyof ColorTokens;
   background: keyof ColorTokens;
 }[] = [
   { key: 'heartRate', icon: 'heart', color: 'snack', background: 'snackBackground' },
   { key: 'calories', icon: 'flame', color: 'lunch', background: 'lunchBackground' },
+  { key: 'weight', icon: 'scale', color: 'water', background: 'waterBackground' },
 ];
 
 type SheetProps = {
@@ -57,7 +58,12 @@ export function ConsentSheet({
             ]}
           >
             <IconTile name={icon} size={36} color={color} background={background} />
-            <Text variant="label">{t(`health.consent.${key}`)}</Text>
+            <View style={styles.flex}>
+              <Text variant="label">{t(`health.consent.${key}`)}</Text>
+              <Text variant="caption" color="textMuted">
+                {t(`health.consent.${key}When`)}
+              </Text>
+            </View>
           </View>
         ))}
       </Card>
@@ -131,6 +137,9 @@ export function InstallSheet({
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
