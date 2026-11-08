@@ -2369,6 +2369,19 @@ export type Database = {
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
+      health_source_name:
+        | {
+            Args: { source: Json };
+            Returns: {
+              error: true;
+            } & 'Could not choose the best candidate function between: public.health_source_name(source => text), public.health_source_name(source => jsonb). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
+          }
+        | {
+            Args: { source: string };
+            Returns: {
+              error: true;
+            } & 'Could not choose the best candidate function between: public.health_source_name(source => text), public.health_source_name(source => jsonb). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
+          };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
