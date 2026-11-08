@@ -9,9 +9,8 @@ import {
 import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
 import { supabase } from '@/lib/supabase';
-import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
+import { reloadTargets } from '@/nutrition/targets';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
-import { STREAK_KEY } from '@/streak/streak';
 
 /** The query keys of the weights, which logging one reloads. */
 export const WEIGHTS_KEY = ['weights'];
@@ -103,16 +102,11 @@ export function weightChange(entries: readonly WeightEntry[]): number | null {
   return Math.round((last.weightKg - first.weightKg) * 10) / 10;
 }
 
-/**
- * Loads again what follows a weight: the weights, the targets that depend on the latest one, and
- * today's calories, which are counted for the streak and charted against the targets.
- */
+/** Loads again what follows a weight: the weights, and the targets that depend on the latest. */
 export function reloadAfterWeight(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: WEIGHTS_KEY }),
-    queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
-    queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
-    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+    reloadTargets(queryClient),
   ]);
 }
 
