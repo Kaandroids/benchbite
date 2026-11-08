@@ -1,6 +1,7 @@
 // The email with the code to delete an account from the app (#438, ADR 0095), in the app's
-// language. Laid out as the Auth emails in supabase/templates/, which point here: change them
-// together. Its colours are the app's: background, surface, text and textMuted.
+// language, in the layout of _shared/account_email.ts. The 15 minutes it names are those of
+// new_account_deletion_code in the migration: change them together.
+import { accountEmailHtml, escape, note, paragraph } from '../_shared/account_email.ts';
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
 
@@ -25,22 +26,14 @@ const COPY = {
   },
 } satisfies Record<SiteLocale, Record<string, unknown>>;
 
-const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
 export function deletionCodeEmail(locale: SiteLocale, to: string, code: string): Email {
   const copy = COPY[locale];
-  const html = `<!doctype html>
-<html lang="${locale}">
-  <body style="margin: 0; padding: 24px; background: #f6f6f8; font-family: Helvetica, Arial, sans-serif; color: #16171a">
-    <div style="max-width: 480px; margin: 0 auto; padding: 32px; border-radius: 20px; background: #ffffff">
-      <p style="margin: 0 0 24px; font-size: 22px; font-weight: 800">benchbite</p>
-      <h1 style="margin: 0 0 12px; font-size: 24px">${escape(copy.title)}</h1>
-      <p style="margin: 0 0 16px">${escape(copy.ask)}</p>
-      <p style="margin: 0 0 16px; padding: 14px 24px; display: inline-block; border-radius: 14px; background: #f6f6f8; font-size: 32px; font-weight: 800; letter-spacing: 4px">${code}</p>
-      <p style="margin: 0; color: #676a72">${escape(copy.note)}</p>
-    </div>
-  </body>
-</html>`;
+  const codeBlock = `<p style="margin: 0 0 16px; padding: 14px 24px; display: inline-block; border-radius: 14px; background: #f6f6f8; font-size: 32px; font-weight: 800; letter-spacing: 4px">${escape(code)}</p>`;
+  const html = accountEmailHtml(locale, copy.title, [
+    paragraph(copy.ask),
+    codeBlock,
+    note(copy.note),
+  ]);
   const text = [copy.title, copy.ask, code, copy.note].join('\n\n');
   return { to, subject: copy.subject(code), html, text };
 }
