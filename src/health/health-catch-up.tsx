@@ -10,6 +10,7 @@ import { useUserId } from '@/providers/session-provider';
 
 import { isHealthConnected, useHealthConnected } from './connection';
 import type { WorkoutStats } from './types';
+import { importHealthSteps } from './steps-import';
 import { importHealthWeights } from './weight-import';
 import { keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';
 
@@ -46,7 +47,7 @@ export async function catchUpWorkoutHealth(queryClient: QueryClient): Promise<bo
 let running: { userId: string; done: Promise<unknown> } | null = null;
 
 /**
- * Catches up on the last day's logs, and takes the store's new weights, as the app starts and each
+ * Catches up on the last day's logs, and takes the store's new weights and steps, as the app starts and each
  * time it comes to the front.
  */
 export function HealthCatchUp() {
@@ -65,6 +66,9 @@ export function HealthCatchUp() {
           ),
           importHealthWeights(queryClient).catch((error: unknown) =>
             console.warn('Could not take the weights from the health store', error),
+          ),
+          importHealthSteps(queryClient).catch((error: unknown) =>
+            console.warn('Could not take the steps from the health store', error),
           ),
         ]).finally(() => {
           if (running === current) running = null;
