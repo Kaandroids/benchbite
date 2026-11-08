@@ -111,3 +111,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0093](0093-change-a-password-with-the-current-one.md)                | Change a password with the current one                                                  | Accepted                                             |
 | [0094](0094-delete-an-account-from-the-website.md)                    | Delete an account from the website                                                      | Accepted                                             |
 | [0095](0095-confirm-deleting-an-account-by-email.md)                  | Confirm deleting an account by email                                                    | Accepted                                             |
+| [0096](0096-develop-with-a-development-build.md)                      | Develop with a development build                                                        | Accepted                                             |
