@@ -218,9 +218,9 @@ select is(
 );
 
 -- Which calories to show.
-select results_eq(
+select set_eq(
   $$ select id, kcal, kcal_source::text from public.workout_log_summaries
-     where id in (800, 802) or id = current_setting('test.log')::bigint order by id $$,
+     where id in (800, 802) or id = current_setting('test.log')::bigint $$,
   $$ values (800::bigint, 350, 'heart_rate'),
             (802::bigint, (select heart_rate_kcal from public.workout_logs where id = 802), 'heart_rate'),
             (current_setting('test.log')::bigint,
