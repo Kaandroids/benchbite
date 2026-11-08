@@ -12,6 +12,7 @@
   --primary-button-ledge: #c24800;
   --danger-button: #dc2626;
   --danger-button-ledge: #a61b1b;
+  --on-danger: #ffffff;
   --on-primary: #ffffff;
   --warning: #b45309;
   --warning-background: #fef3c7;
@@ -170,9 +171,24 @@ h1 {
   color: var(--on-primary);
 }
 
-.button.danger {
+.button.danger,
+.button.danger:hover {
   background: var(--danger-button);
   box-shadow: 0 4px 0 var(--danger-button-ledge);
+  color: var(--on-danger);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* A link beside a button, or on its own as the way on. */
+.text-link {
+  align-self: flex-start;
+  color: var(--primary-text);
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .field {

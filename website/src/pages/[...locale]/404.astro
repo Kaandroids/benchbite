@@ -14,7 +14,7 @@ const { notFound } = messagesFor(locale);
     <BiteCircle face="sad" size={200} imageWidth={178} alt={notFound.biteAlt} loading="eager" />
     <h1>{notFound.heading}</h1>
     <p class="muted">{notFound.text}</p>
-    <a class="back" href={localePath(locale)}>{notFound.back}</a>
+    <a class="button back" href={localePath(locale)}>{notFound.back}</a>
   </main>
 </Layout>
 
@@ -35,16 +35,5 @@ const { notFound } = messagesFor(locale);
 
   .back {
     margin-top: 8px;
-    padding: 14px 24px;
-    border-radius: 16px;
-    background: var(--primary-button);
-    box-shadow: 0 4px 0 var(--primary-button-ledge);
-    color: var(--on-primary);
-    font-weight: 800;
-    text-decoration: none;
-  }
-
-  .back:hover {
-    color: var(--on-primary);
   }
 </style>

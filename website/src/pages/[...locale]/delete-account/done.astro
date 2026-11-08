@@ -17,15 +17,7 @@ const { deleteLink } = messagesFor(locale);
     <section class="card">
       <p>{deleteLink.doneNote}</p>
     </section>
-    <a class="start" href={localePath(locale)}>{deleteLink.backToStart}</a>
+    <a class="text-link" href={localePath(locale)}>{deleteLink.backToStart}</a>
   </main>
 </Layout>
 
-<style>
-  .start {
-    align-self: flex-start;
-    color: var(--primary-text);
-    font-weight: 800;
-    text-decoration: none;
-  }
-</style>
