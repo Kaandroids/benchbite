@@ -83,11 +83,11 @@ const { deleteLink } = messagesFor(locale);
     gap: 8px;
   }
 
-
   .failed {
     padding: 16px 20px;
     border-radius: 16px;
-    border: 2px solid var(--danger-button);
+    border: 2px solid var(--danger);
+    background: var(--danger-background);
   }
 
   form {
@@ -102,13 +102,4 @@ const { deleteLink } = messagesFor(locale);
     flex-direction: column;
     gap: 28px;
   }
-
-  [hidden] {
-    display: none;
-  }
-
-  form .text-link {
-    align-self: center;
-  }
-
 </style>

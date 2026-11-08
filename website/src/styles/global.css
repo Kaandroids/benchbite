@@ -13,6 +13,8 @@
   --danger-button: #dc2626;
   --danger-button-ledge: #a61b1b;
   --on-danger: #ffffff;
+  --danger: #dc2626;
+  --danger-background: #fee2e2;
   --on-primary: #ffffff;
   --warning: #b45309;
   --warning-background: #fef3c7;
@@ -43,6 +45,11 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Hidden even where a class gives the element a display, as `display: flex`. */
+[hidden] {
+  display: none !important;
 }
 
 html {
@@ -183,9 +190,8 @@ h1 {
   cursor: default;
 }
 
-/* A link beside a button, or on its own as the way on. */
+/* A link beside a button, or on its own as the way on; its container places it. */
 .text-link {
-  align-self: flex-start;
   color: var(--primary-text);
   font-weight: 800;
   text-decoration: none;
