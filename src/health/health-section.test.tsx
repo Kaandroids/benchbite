@@ -1,9 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { isHealthConnected, setHealthConnected } from './connection';
+import { isHealthConnected, setHealthConnected, setWeightSync, weightSync } from './connection';
 import {
   healthAvailability,
   healthStillAllowed,
+  healthWeightAllowed,
   installHealthStore,
   releaseHealthAccess,
   requestHealthAccess,
@@ -25,6 +26,7 @@ jest.mock('./health', () => ({
   healthStore: 'appleHealth',
   healthAvailability: jest.fn(),
   healthStillAllowed: jest.fn(),
+  healthWeightAllowed: jest.fn(),
   requestHealthAccess: jest.fn(),
   releaseHealthAccess: jest.fn(),
   installHealthStore: jest.fn(),
@@ -36,9 +38,11 @@ const available = (availability: HealthAvailability) =>
 beforeEach(() => {
   jest.clearAllMocks();
   setHealthConnected(false);
+  setWeightSync(null);
   available('available');
   jest.mocked(requestHealthAccess).mockResolvedValue(true);
   jest.mocked(healthStillAllowed).mockResolvedValue(true);
+  jest.mocked(healthWeightAllowed).mockResolvedValue(true);
   jest.mocked(releaseHealthAccess).mockResolvedValue();
 });
 
@@ -56,6 +60,7 @@ it('says what connecting adds, and asks before the system does', async () => {
   expect(await screen.findByText('Read from Apple Health?')).toBeOnTheScreen();
   expect(screen.getByText('Heart rate')).toBeOnTheScreen();
   expect(screen.getByText('Active calories')).toBeOnTheScreen();
+  expect(screen.getByText('Weight')).toBeOnTheScreen();
   expect(requestHealthAccess).not.toHaveBeenCalled();
 });
 
@@ -67,6 +72,17 @@ it('connects once the system allowed it', async () => {
   expect(requestHealthAccess).toHaveBeenCalled();
   expect(await screen.findByText('Connected')).toBeOnTheScreen();
   expect(isHealthConnected()).toBe(true);
+  expect(weightSync()).toBe('on');
+});
+
+it('leaves weight to be asked for alone when the system allowed the rest without it', async () => {
+  jest.mocked(healthWeightAllowed).mockResolvedValue(false);
+  await render(<HealthSection />);
+  await fireEvent.press(row());
+  await fireEvent.press(await screen.findByRole('button', { name: 'Continue' }));
+
+  expect(await screen.findByText('Connected')).toBeOnTheScreen();
+  expect(weightSync()).toBeNull();
 });
 
 it('connects nothing when the last question is declined', async () => {

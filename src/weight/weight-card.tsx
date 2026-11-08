@@ -8,7 +8,8 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
-import { toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
+import { useStoreName } from '@/health/use-store-name';
+import { fromIsoDate, toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useWeightFormat, weightIn, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
 import type { ProgressRange } from '@/lib/ranges';
@@ -47,6 +48,7 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
   const formatWeight = useWeightFormat();
   const formatDate = useDateFormat('medium');
   const monthDay = useMonthDayFormat();
+  const storeName = useStoreName();
   const logWeight = useLogWeight();
   const [range, setRange] = useState<ProgressRange>('threeMonths');
   const history = useWeightHistory(range, today);
@@ -150,14 +152,26 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
                 </Text>
               </View>
             ) : null}
-            <Text variant="caption" color="textMuted">
-              {loggedToday
-                ? t('weight.loggedToday')
-                : t('weight.loggedOn', {
-                    // A day without a time zone, so it is read as local midnight.
-                    date: formatDate(new Date(`${latest?.measuredOn}T00:00`)),
+            {draftKg === null && latest?.fromHealth ? (
+              // Taken from the health store (ADR 0100): where it came from, as a scale or an app.
+              <View style={[styles.row, { gap: spacing.xs }]}>
+                <Icon name="heart" size={14} color="snack" />
+                <Text variant="caption" color="textMuted">
+                  {t(loggedToday ? 'weight.fromToday' : 'weight.fromOn', {
+                    date: formatDate(fromIsoDate(latest.measuredOn)),
+                    source: latest.source ?? storeName ?? t('weight.healthApp'),
                   })}
-            </Text>
+                </Text>
+              </View>
+            ) : (
+              <Text variant="caption" color="textMuted">
+                {loggedToday
+                  ? t('weight.loggedToday')
+                  : t('weight.loggedOn', {
+                      date: latest ? formatDate(fromIsoDate(latest.measuredOn)) : '',
+                    })}
+              </Text>
+            )}
           </View>
           <StepButtons
             variant="joined"

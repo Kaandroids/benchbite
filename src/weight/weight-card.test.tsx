@@ -12,8 +12,18 @@ jest.mock('./weights', () => ({
 
 // A Wednesday.
 const WEDNESDAY = new Date(2026, 9, 21, 9, 0);
-const TODAYS: WeightEntry = { weightKg: 80, measuredOn: '2026-10-21' };
-const MONDAYS: WeightEntry = { weightKg: 80, measuredOn: '2026-10-19' };
+const TODAYS: WeightEntry = {
+  weightKg: 80,
+  measuredOn: '2026-10-21',
+  fromHealth: false,
+  source: null,
+};
+const MONDAYS: WeightEntry = {
+  weightKg: 80,
+  measuredOn: '2026-10-19',
+  fromHealth: false,
+  source: null,
+};
 
 const mutate = jest.fn();
 const reset = jest.fn();
@@ -62,6 +72,22 @@ it('shows the day of an earlier weight, in the unit of the user', async () => {
   expect(screen.getByText('Logged on Oct 19, 2026')).toBeTruthy();
 });
 
+it('says where a weight from the health store came from', async () => {
+  await render(
+    <WeightCard
+      latest={{ ...MONDAYS, fromHealth: true, source: 'Withings' }}
+      unit="kg"
+      today={WEDNESDAY}
+    />,
+  );
+  expect(screen.getByText('Oct 19, 2026, from Withings')).toBeTruthy();
+});
+
+it('names the store when the weight says no app', async () => {
+  await render(<WeightCard latest={{ ...TODAYS, fromHealth: true }} unit="kg" today={WEDNESDAY} />);
+  expect(screen.getByText('Today, from your health app')).toBeTruthy();
+});
+
 it('changes the weight a tenth of a kilogram per press and saves it once after the last', async () => {
   await render(<WeightCard latest={MONDAYS} unit="kg" today={WEDNESDAY} />);
   await press('Increase weight');
@@ -94,7 +120,11 @@ it('saves a waiting change when the card closes', async () => {
 
 it('stays within the weights the database accepts', async () => {
   await render(
-    <WeightCard latest={{ weightKg: 30, measuredOn: '2026-10-21' }} unit="kg" today={WEDNESDAY} />,
+    <WeightCard
+      latest={{ weightKg: 30, measuredOn: '2026-10-21', fromHealth: false, source: null }}
+      unit="kg"
+      today={WEDNESDAY}
+    />,
   );
   await press('Decrease weight');
   expect(screen.getByText('30 kg')).toBeTruthy();
@@ -124,12 +154,12 @@ it('keeps a later change while an earlier one is saved (#153)', async () => {
 
 it('says how much the weight changed in the range, toward the target', async () => {
   mockHistory([
-    { weightKg: 86.4, measuredOn: '2026-08-01' },
-    { weightKg: 85, measuredOn: '2026-10-21' },
+    { weightKg: 86.4, measuredOn: '2026-08-01', fromHealth: false, source: null },
+    { weightKg: 85, measuredOn: '2026-10-21', fromHealth: false, source: null },
   ]);
   await render(
     <WeightCard
-      latest={{ weightKg: 85, measuredOn: '2026-10-21' }}
+      latest={{ weightKg: 85, measuredOn: '2026-10-21', fromHealth: false, source: null }}
       unit="kg"
       today={WEDNESDAY}
       goal={{ goal: 'lose_fat', targetKg: 80, paceKg: 0.5 }}
@@ -141,12 +171,12 @@ it('says how much the weight changed in the range, toward the target', async () 
 
 it('marks a change away from the target in red', async () => {
   mockHistory([
-    { weightKg: 85, measuredOn: '2026-08-01' },
-    { weightKg: 86.4, measuredOn: '2026-10-21' },
+    { weightKg: 85, measuredOn: '2026-08-01', fromHealth: false, source: null },
+    { weightKg: 86.4, measuredOn: '2026-10-21', fromHealth: false, source: null },
   ]);
   await render(
     <WeightCard
-      latest={{ weightKg: 86.4, measuredOn: '2026-10-21' }}
+      latest={{ weightKg: 86.4, measuredOn: '2026-10-21', fromHealth: false, source: null }}
       unit="kg"
       today={WEDNESDAY}
       goal={{ goal: 'lose_fat', targetKg: 80, paceKg: 0.5 }}
@@ -157,12 +187,12 @@ it('marks a change away from the target in red', async () => {
 
 it('leaves a change grey without a target weight', async () => {
   mockHistory([
-    { weightKg: 85, measuredOn: '2026-08-01' },
-    { weightKg: 86.4, measuredOn: '2026-10-21' },
+    { weightKg: 85, measuredOn: '2026-08-01', fromHealth: false, source: null },
+    { weightKg: 86.4, measuredOn: '2026-10-21', fromHealth: false, source: null },
   ]);
   await render(
     <WeightCard
-      latest={{ weightKg: 86.4, measuredOn: '2026-10-21' }}
+      latest={{ weightKg: 86.4, measuredOn: '2026-10-21', fromHealth: false, source: null }}
       unit="kg"
       today={WEDNESDAY}
     />,
@@ -184,8 +214,8 @@ it('says when the range has no weight', async () => {
 
 it('leaves out a weight that did not change in the range', async () => {
   mockHistory([
-    { weightKg: 85, measuredOn: '2026-08-01' },
-    { weightKg: 85, measuredOn: '2026-10-21' },
+    { weightKg: 85, measuredOn: '2026-08-01', fromHealth: false, source: null },
+    { weightKg: 85, measuredOn: '2026-10-21', fromHealth: false, source: null },
   ]);
   await render(<WeightCard latest={TODAYS} unit="kg" today={WEDNESDAY} />);
   expect(screen.queryByText(/in 3 months/)).toBeNull();

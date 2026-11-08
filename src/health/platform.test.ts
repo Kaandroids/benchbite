@@ -1,4 +1,5 @@
 import {
+  queryQuantitySamples,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
   requestAuthorization,
@@ -7,6 +8,7 @@ import {
   aggregateRecord,
   getGrantedPermissions,
   getSdkStatus,
+  readRecords,
   requestPermission,
   revokeAllPermissions,
 } from 'react-native-health-connect';
@@ -21,6 +23,7 @@ jest.unmock('./platform.android');
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   isHealthDataAvailable: jest.fn(() => true),
   requestAuthorization: jest.fn(() => Promise.resolve(true)),
+  queryQuantitySamples: jest.fn(),
   queryStatisticsForQuantity: jest.fn(),
   queryStatisticsForQuantitySeparateBySource: jest.fn(),
 }));
@@ -36,16 +39,45 @@ jest.mock('react-native-health-connect', () => ({
   getGrantedPermissions: jest.fn(),
   revokeAllPermissions: jest.fn(),
   aggregateRecord: jest.fn(),
+  readRecords: jest.fn(),
 }));
 
 beforeEach(() => jest.clearAllMocks());
 
 describe('Apple Health', () => {
-  it('asks to read heart rate and active energy, and nothing to write', async () => {
+  it('asks to read heart rate, active energy and body mass, and nothing to write', async () => {
     expect(await ios.requestAccess()).toBe(true);
     expect(requestAuthorization).toHaveBeenCalledWith({
-      toRead: ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'],
+      toRead: [
+        'HKQuantityTypeIdentifierHeartRate',
+        'HKQuantityTypeIdentifierActiveEnergyBurned',
+        'HKQuantityTypeIdentifierBodyMass',
+      ],
     });
+  });
+
+  it('asks for body mass alone, for a connection made before weight was read', async () => {
+    expect(await ios.requestWeightAccess()).toBe(true);
+    expect(requestAuthorization).toHaveBeenCalledWith({
+      toRead: ['HKQuantityTypeIdentifierBodyMass'],
+    });
+  });
+
+  it('reads the weighings in kilograms, with the app that wrote them', async () => {
+    const at = new Date('2026-11-08T06:12:00Z');
+    jest.mocked(queryQuantitySamples).mockResolvedValue([
+      { startDate: at, quantity: 84.4, sourceRevision: { source: { name: 'Withings' } } },
+      { startDate: at, quantity: 84.2, sourceRevision: { source: { name: '' } } },
+    ] as never);
+
+    expect(await ios.weightsSince(FROM)).toEqual([
+      { at, weightKg: 84.4, source: 'Withings' },
+      { at, weightKg: 84.2, source: null },
+    ]);
+    expect(queryQuantitySamples).toHaveBeenCalledWith(
+      'HKQuantityTypeIdentifierBodyMass',
+      expect.objectContaining({ unit: 'kg', filter: { date: { startDate: FROM } } }),
+    );
   });
 });
 
@@ -121,12 +153,51 @@ describe('Health Connect', () => {
     expect(requestPermission).toHaveBeenCalledWith([
       { accessType: 'read', recordType: 'HeartRate' },
       { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+      { accessType: 'read', recordType: 'Weight' },
     ]);
 
     jest
       .mocked(getGrantedPermissions)
       .mockResolvedValue([{ accessType: 'read', recordType: 'HeartRate' }]);
     expect(await android.requestAccess()).toBe(true);
+  });
+
+  it('knows whether weight was allowed', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'HeartRate' }]);
+    expect(await android.weightAllowed()).toBe(false);
+  });
+
+  it('asks for weight alone, and says whether it was allowed', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([]);
+    expect(await android.requestWeightAccess()).toBe(false);
+    expect(requestPermission).toHaveBeenCalledWith([{ accessType: 'read', recordType: 'Weight' }]);
+  });
+
+  it('reads the weighings in kilograms, with the app that wrote them', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'Weight' }]);
+    jest.mocked(readRecords).mockResolvedValue({
+      records: [
+        {
+          time: '2026-11-08T06:12:00Z',
+          weight: { inKilograms: 84.4 },
+          metadata: { dataOrigin: 'com.huami.watch.hmwatchmanager' },
+        },
+      ],
+    } as never);
+
+    expect(await android.weightsSince(FROM)).toEqual([
+      { at: new Date('2026-11-08T06:12:00Z'), weightKg: 84.4, source: 'Zepp' },
+    ]);
+  });
+
+  it('reads no weight when it may not be read', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([]);
+    expect(await android.weightsSince(FROM)).toEqual([]);
+    expect(readRecords).not.toHaveBeenCalled();
   });
 
   it('knows when heart rate was taken back', async () => {

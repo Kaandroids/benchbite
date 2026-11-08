@@ -169,6 +169,9 @@
     "none": "Noch kein Gewicht eingetragen.",
     "loggedToday": "Heute eingetragen",
     "loggedOn": "Eingetragen am {{date}}",
+    "fromToday": "Heute, von {{source}}",
+    "fromOn": "{{date}}, von {{source}}",
+    "healthApp": "deiner Gesundheits-App",
     "saveError": "Wir konnten dein Gewicht nicht speichern. Prüfe deine Verbindung und versuche es erneut.",
     "decrease": "Gewicht verringern",
     "increase": "Gewicht erhöhen",
@@ -2388,10 +2391,14 @@
     },
     "consent": {
       "title": "Aus {{store}} lesen?",
-      "body": "Für die Dauer jedes Workouts liest Benchbite:",
+      "body": "Benchbite liest:",
       "heartRate": "Herzfrequenz",
+      "heartRateWhen": "während Workouts",
       "calories": "Aktive Kalorien",
-      "keeps": "Gespeichert werden nur die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
+      "caloriesWhen": "während Workouts",
+      "weight": "Gewicht",
+      "weightWhen": "eins pro Tag, ab den letzten 30 Tagen",
+      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht pro Tag, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
       "continue": "Weiter",
       "notNow": "Nicht jetzt",
       "next": {
@@ -2400,7 +2407,7 @@
       }
     },
     "disconnect": {
-      "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Herzfrequenz und Kalorien, die deinen Workouts schon hinzugefügt wurden, bleiben; wenn du ein Workout löschst, werden sie mitgelöscht.",
+      "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Schon übernommene Gewichte sowie Herzfrequenz und Kalorien deiner Workouts bleiben. Wenn du ein Workout löschst, werden seine Herzfrequenz und Kalorien mitgelöscht.",
       "keep": "Verbunden lassen",
       "confirm": "Trennen"
     },
@@ -2428,6 +2435,12 @@
       "throughStore": "Über {{store}}",
       "waitingTitle": "Warte auf deine Uhr",
       "waitingBody": "Herzfrequenz und Kalorien erscheinen hier, sobald sie in {{store}} ankommen. Benchbite sieht einen Tag lang wieder nach."
+    },
+    "weightAsk": {
+      "title": "Dein Gewicht aus {{store}}",
+      "body": "Gewichte von deiner Waage oder aus anderen Apps füllen dieses Diagramm von selbst. Ein hier eingetragenes Gewicht hat an seinem Tag Vorrang.",
+      "bringIn": "Mein Gewicht übernehmen",
+      "notNow": "Nicht jetzt"
     }
   }
 }

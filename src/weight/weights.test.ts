@@ -49,12 +49,17 @@ describe('useWeightUnit', () => {
 describe('useLatestWeight', () => {
   it('loads the most recent entry', async () => {
     maybeSingle.mockResolvedValue({
-      data: { weight_kg: 79.5, measured_on: '2026-10-21' },
+      data: { weight_kg: 79.5, measured_on: '2026-10-21', from_health: false, source: null },
       error: null,
     });
     const { result } = await renderHook(() => useLatestWeight());
     await waitFor(() =>
-      expect(result.current.data).toEqual({ weightKg: 79.5, measuredOn: '2026-10-21' }),
+      expect(result.current.data).toEqual({
+        weightKg: 79.5,
+        measuredOn: '2026-10-21',
+        fromHealth: false,
+        source: null,
+      }),
     );
     expect(supabase.from).toHaveBeenCalledWith('weight_entries');
     expect(order).toHaveBeenCalledWith('measured_on', { ascending: false });
@@ -131,8 +136,8 @@ describe('useWeightHistory', () => {
     const gte = jest.fn(() => ({
       order: jest.fn().mockResolvedValue({
         data: [
-          { weight_kg: 86.4, measured_on: '2026-10-01' },
-          { weight_kg: 85, measured_on: '2026-10-29' },
+          { weight_kg: 86.4, measured_on: '2026-10-01', from_health: false, source: null },
+          { weight_kg: 85, measured_on: '2026-10-29', from_health: false, source: null },
         ],
         error: null,
       }),
@@ -143,8 +148,8 @@ describe('useWeightHistory', () => {
     );
     await waitFor(() =>
       expect(result.current.data).toEqual([
-        { weightKg: 86.4, measuredOn: '2026-10-01' },
-        { weightKg: 85, measuredOn: '2026-10-29' },
+        { weightKg: 86.4, measuredOn: '2026-10-01', fromHealth: false, source: null },
+        { weightKg: 85, measuredOn: '2026-10-29', fromHealth: false, source: null },
       ]),
     );
     expect(gte).toHaveBeenCalledWith('measured_on', '2026-09-29');
@@ -155,15 +160,17 @@ describe('weightChange', () => {
   it('is the last weight less the first, to a tenth', () => {
     expect(
       weightChange([
-        { weightKg: 86.4, measuredOn: '2026-10-01' },
-        { weightKg: 85.9, measuredOn: '2026-10-15' },
-        { weightKg: 85, measuredOn: '2026-10-29' },
+        { weightKg: 86.4, measuredOn: '2026-10-01', fromHealth: false, source: null },
+        { weightKg: 85.9, measuredOn: '2026-10-15', fromHealth: false, source: null },
+        { weightKg: 85, measuredOn: '2026-10-29', fromHealth: false, source: null },
       ]),
     ).toBe(-1.4);
   });
 
   it('is unknown with fewer than two weights', () => {
-    expect(weightChange([{ weightKg: 85, measuredOn: '2026-10-29' }])).toBeNull();
+    expect(
+      weightChange([{ weightKg: 85, measuredOn: '2026-10-29', fromHealth: false, source: null }]),
+    ).toBeNull();
     expect(weightChange([])).toBeNull();
   });
 });

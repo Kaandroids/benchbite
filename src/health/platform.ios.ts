@@ -2,6 +2,7 @@
 // may not read simply has no data, so access counts as allowed once asked.
 import {
   isHealthDataAvailable,
+  queryQuantitySamples,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
   requestAuthorization,
@@ -11,12 +12,14 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type WeightReading,
   type WorkoutStats,
 } from './types';
 
 const HEART_RATE = 'HKQuantityTypeIdentifierHeartRate';
 const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
-const READS = [HEART_RATE, ACTIVE_ENERGY] as const;
+const BODY_MASS = 'HKQuantityTypeIdentifierBodyMass';
+const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS] as const;
 
 export const store: HealthStore = 'appleHealth';
 
@@ -65,4 +68,25 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
       : null,
     source: heart.sources[0]?.name ?? null,
   };
+}
+
+export const weightAllowed = (): Promise<boolean> => Promise.resolve(true);
+
+export async function requestWeightAccess(): Promise<boolean> {
+  await requestAuthorization({ toRead: [BODY_MASS] });
+  return true;
+}
+
+export async function weightsSince(from: Date): Promise<WeightReading[]> {
+  const samples = await queryQuantitySamples(BODY_MASS, {
+    filter: { date: { startDate: from } },
+    unit: 'kg',
+    ascending: true,
+    limit: 0,
+  });
+  return samples.map((sample) => ({
+    at: sample.startDate,
+    weightKg: sample.quantity,
+    source: sample.sourceRevision.source.name || null,
+  }));
 }

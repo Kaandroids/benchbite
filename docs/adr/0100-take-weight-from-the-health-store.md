@@ -1,6 +1,6 @@
 # 0100. Take weight from the health store
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0101
 - **Date:** 2026-11-08
 
 ## Context

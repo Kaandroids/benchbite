@@ -7,13 +7,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { healthStore } from './health';
-
-/** The name of the phone's health store, or none where it has none. */
-function useStoreName(): string | null {
-  const { t } = useTranslation();
-  return healthStore ? t(`health.${healthStore}`) : null;
-}
+import { useStoreName } from './use-store-name';
 
 type WatchCardProps = {
   averageBpm: number | null;
