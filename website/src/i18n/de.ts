@@ -185,11 +185,11 @@ export const de: Messages = {
     keptItems: [
       {
         title: 'Sofort gelöscht',
-        text: 'Dein Konto, dein Plan, deine Workouts und dein Verlauf, Mahlzeiten, Rezepte und eigene Lebensmittel, Gewicht, Ziele und Fortschritt, deine Chats mit Bite und die Notizen, die Bite angelegt hat, und deine Übungsfotos. Die Fotos und Sprachnachrichten deiner Chats folgen innerhalb von Minuten.',
+        text: 'Dein Konto, dein Plan, deine Workouts und dein Verlauf, Mahlzeiten, Rezepte und eigene Lebensmittel, Gewicht, Ziele und Fortschritt, deine Chats mit Bite und die Notizen, die Bite angelegt hat, und deine Übungsfotos. Die Fotos und Sprachnachrichten deiner Chats folgen, meist innerhalb von Minuten und spätestens nach wenigen Stunden.',
       },
       {
         title: 'Eine Zeit lang aufbewahrt',
-        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, bis diese ablaufen. E-Mails, die wir dir geschickt haben, bleiben in deinem Postfach, und unser E-Mail-Versender bewahrt einen Eintrag dazu bis zu 28 Tage auf.',
+        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, bis diese ablaufen, und unser Eintrag zu einer Anfrage auf dieser Seite, einen Tag lang. E-Mails, die wir dir geschickt haben, bleiben in deinem Postfach, und unser E-Mail-Versender bewahrt einen Eintrag dazu bis zu 28 Tage auf.',
       },
       {
         title: 'Nicht von uns zu löschen',
@@ -213,6 +213,7 @@ export const de: Messages = {
       'Mahlzeiten, Rezepte und eigene Lebensmittel',
       'Gewicht, Ziele und Fortschritt',
       'Chats mit Bite, Fotos und Sprachnachrichten',
+      'Die Notizen, die Bite angelegt hat, und deine Übungsfotos',
     ],
     subscription:
       'Ein Abo im App Store oder bei Google Play wird dadurch nicht gekündigt. Kündige es dort, um nicht mehr zu zahlen.',

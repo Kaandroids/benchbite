@@ -184,11 +184,11 @@ export const tr: Messages = {
     keptItems: [
       {
         title: 'Hemen silinenler',
-        text: 'Hesabın, planın, antrenmanların ve geçmişin, öğünler, tarifler ve kendi besinlerin, kilo, hedefler ve ilerleme, Bite ile sohbetlerin ve Bite’ın tuttuğu notlar, ve egzersiz fotoğrafların. Sohbetlerindeki fotoğraflar ve sesler birkaç dakika içinde silinir.',
+        text: 'Hesabın, planın, antrenmanların ve geçmişin, öğünler, tarifler ve kendi besinlerin, kilo, hedefler ve ilerleme, Bite ile sohbetlerin ve Bite’ın tuttuğu notlar, ve egzersiz fotoğrafların. Sohbetlerindeki fotoğraflar ve sesler de silinir; çoğunlukla birkaç dakika içinde, en geç birkaç saatte.',
       },
       {
         title: 'Bir süre kalanlar',
-        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar, süreleri dolana kadar. Sana gönderdiğimiz e-postalar gelen kutunda kalır; e-posta gönderen hizmetimiz bunların kaydını en fazla 28 gün saklar.',
+        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar, süreleri dolana kadar; bu sayfadan yapılan bir isteğin kaydı da bir gün boyunca. Sana gönderdiğimiz e-postalar gelen kutunda kalır; e-posta gönderen hizmetimiz bunların kaydını en fazla 28 gün saklar.',
       },
       {
         title: 'Bizim silemeyeceklerimiz',
@@ -211,6 +211,7 @@ export const tr: Messages = {
       'Öğünler, tarifler ve kendi besinlerin',
       'Kilo, hedefler ve ilerleme',
       'Bite ile sohbetler, fotoğraflar ve sesler',
+      'Bite’ın tuttuğu notlar ve egzersiz fotoğrafların',
     ],
     subscription:
       'App Store veya Google Play aboneliğin bununla iptal olmaz. Ödemeyi durdurmak için orada iptal et.',

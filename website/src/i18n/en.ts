@@ -186,11 +186,11 @@ export const en = {
     keptItems: [
       {
         title: 'Deleted at once',
-        text: 'Your account, your plan, workouts and history, meals, recipes and your own foods, weight, goals and progress, your chats with Bite and the notes Bite kept, and your exercise photos. The photos and voice of your chats follow within minutes.',
+        text: 'Your account, your plan, workouts and history, meals, recipes and your own foods, weight, goals and progress, your chats with Bite and the notes Bite kept, and your exercise photos. The photos and voice of your chats follow, usually within minutes and at most within a few hours.',
       },
       {
         title: 'Kept for a while',
-        text: 'Copies in the backups and logs of the services we use, until these expire. Emails we sent you stay in your inbox, and our email sender keeps a record of them for up to 28 days.',
+        text: 'Copies in the backups and logs of the services we use, until these expire, and our record of a request made on this page, for a day. Emails we sent you stay in your inbox, and our email sender keeps a record of them for up to 28 days.',
       },
       {
         title: 'Not ours to delete',
@@ -213,6 +213,7 @@ export const en = {
       'Meals, recipes and your own foods',
       'Weight, goals and progress',
       'Chats with Bite, photos and voice',
+      'The notes Bite kept, and your exercise photos',
     ],
     subscription:
       'A subscription in the App Store or Google Play is not cancelled by this. Cancel it there to stop paying.',
