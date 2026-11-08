@@ -7,7 +7,7 @@ import {
   releaseHealthAccess,
   requestHealthAccess,
 } from './health';
-import { READS } from './reads';
+import { READ_KINDS } from './read-kinds';
 
 /** Why the last step did not connect or disconnect as asked. */
 export type HealthProblem = 'denied' | 'unavailable' | 'failed' | 'releaseFailed';
@@ -67,7 +67,7 @@ export function useHealthConnection() {
       // without them, and Progress and Today then ask for each alone. They are set first, as
       // connecting starts the first read.
       if (allowed) {
-        const kinds = await Promise.all(HEALTH_READS.map((kind) => READS[kind].allowed()));
+        const kinds = await Promise.all(HEALTH_READS.map((kind) => READ_KINDS[kind].allowed()));
         HEALTH_READS.forEach((kind, index) => setReadSync(kind, kinds[index] ? 'on' : null));
       }
       setHealthConnected(allowed);

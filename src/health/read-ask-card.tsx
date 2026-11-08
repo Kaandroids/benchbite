@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { useStoreName } from './use-store-name';
-import { READS } from './reads';
+import { READ_LOOKS } from './reads';
 import type { useReadAsk } from './use-read-ask';
 
 /**
@@ -33,10 +33,10 @@ export function ReadAskCard({
     <Card entering={entering}>
       <View style={[styles.row, { gap: spacing.md, paddingRight: spacing.xl }]}>
         <IconTile
-          name={READS[kind].icon}
+          name={READ_LOOKS[kind].icon}
           size={40}
-          color={READS[kind].color}
-          background={READS[kind].background}
+          color={READ_LOOKS[kind].color}
+          background={READ_LOOKS[kind].background}
         />
         <Text variant="headline" style={styles.flex}>
           {t(`health.ask.${kind}.title`, { store: storeName })}

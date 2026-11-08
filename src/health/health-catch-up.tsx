@@ -8,10 +8,9 @@ import { AppState } from 'react-native';
 import { LOGS_KEY, recentLogs } from '@/history/history';
 import { useUserId } from '@/providers/session-provider';
 
-import { isHealthConnected, useHealthConnected } from './connection';
+import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
 import type { WorkoutStats } from './types';
-import { importHealthSteps } from './steps-import';
-import { importHealthWeights } from './weight-import';
+import { READ_KINDS } from './read-kinds';
 import { keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';
 
 /**
@@ -64,11 +63,12 @@ export function HealthCatchUp() {
           catchUpWorkoutHealth(queryClient).catch((error: unknown) =>
             console.warn('Could not catch up on the workouts’ health data', error),
           ),
-          importHealthWeights(queryClient).catch((error: unknown) =>
-            console.warn('Could not take the weights from the health store', error),
-          ),
-          importHealthSteps(queryClient).catch((error: unknown) =>
-            console.warn('Could not take the steps from the health store', error),
+          ...HEALTH_READS.map((kind) =>
+            READ_KINDS[kind]
+              .bringIn(queryClient)
+              .catch((error: unknown) =>
+                console.warn(`Could not take the ${kind} from the health store`, error),
+              ),
           ),
         ]).finally(() => {
           if (running === current) running = null;

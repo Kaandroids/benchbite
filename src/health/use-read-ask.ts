@@ -1,17 +1,9 @@
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { setReadSync, useHealthConnected, useReadSync, type HealthRead } from './connection';
 import { healthStore } from './health';
-import { READS } from './reads';
-import { importHealthSteps } from './steps-import';
-import { importHealthWeights } from './weight-import';
-
-/** How each kind is brought in once allowed. */
-const BRING_IN: Record<HealthRead, (queryClient: QueryClient) => Promise<boolean>> = {
-  weight: importHealthWeights,
-  steps: importHealthSteps,
-};
+import { READ_KINDS } from './read-kinds';
 
 /**
  * Asking once to read a kind, for a user who connected the store before it was read (ADR 0100,
@@ -27,9 +19,9 @@ export function useReadAsk(kind: HealthRead) {
     if (busy) return;
     setBusy(true);
     try {
-      const allowed = await READS[kind].request();
+      const allowed = await READ_KINDS[kind].request();
       setReadSync(kind, allowed ? 'on' : 'off');
-      if (allowed) await BRING_IN[kind](queryClient);
+      if (allowed) await READ_KINDS[kind].bringIn(queryClient);
     } catch (error) {
       console.warn(`Could not bring in the ${kind} from the health store`, error);
     } finally {

@@ -23,6 +23,7 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('./health', () => ({
   healthStore: 'appleHealth',
   healthAvailability: jest.fn(),
