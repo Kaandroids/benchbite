@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { AccountSection, DeleteAccountButton } from '@/account/account-section';
+import { HealthSection } from '@/health/health-section';
+import { healthStore } from '@/health/health';
 import { Screen } from '@/components/ui/screen';
 import { Caption } from '@/components/ui/caption';
 import { useTheme } from '@/theme';
@@ -26,6 +28,11 @@ export function SettingsScreen() {
       <Section title={t('settings.account')}>
         <AccountSection />
       </Section>
+      {healthStore ? (
+        <Section title={t('settings.health')}>
+          <HealthSection />
+        </Section>
+      ) : null}
       <Section title={t('settings.waterGoal')}>
         <WaterGoalSection />
       </Section>

@@ -140,6 +140,7 @@
     "languageHint": "Öffnet die Sprachen zur Auswahl",
     "phoneLanguage": "Sprache des Handys",
     "phoneLanguageNow": "Gerade {{language}}",
+    "health": "Gesundheit",
     "waterGoal": "Tägliches Wasserziel",
     "waterGoalNote": "Die Gläser, die du im Ernährungs-Tab füllst, je {{ml}} ml.",
     "liters": "{{amount}} L",
@@ -2371,6 +2372,51 @@
     "seePremium": "Premium ansehen",
     "offerSheet": {
       "notNow": "Nicht jetzt"
+    }
+  },
+  "health": {
+    "appleHealth": "Apple Health",
+    "healthConnect": "Health Connect",
+    "connected": "Verbunden",
+    "notConnected": "Nicht verbunden",
+    "rowHint": "Öffnet, wo du es verbindest oder trennst",
+    "note": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat.",
+    "noteConnected": {
+      "appleHealth": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat. Kommen keine Daten an? Erlaube Benchbite den Zugriff in der Health-App unter „Teilen“.",
+      "healthConnect": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat. Kommen keine Daten an? Erlaube Benchbite den Zugriff in Health Connect."
+    },
+    "consent": {
+      "title": "Aus {{store}} lesen?",
+      "body": "Für die Dauer jedes Workouts liest Benchbite:",
+      "heartRate": "Herzfrequenz",
+      "calories": "Aktive Kalorien",
+      "keeps": "Gespeichert werden nur die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
+      "continue": "Weiter",
+      "notNow": "Nicht jetzt",
+      "next": {
+        "appleHealth": "Als Nächstes fragt Apple, was davon du erlaubst.",
+        "healthConnect": "Als Nächstes fragt Health Connect, was davon du erlaubst."
+      }
+    },
+    "disconnect": {
+      "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Herzfrequenz und Kalorien, die deinen Workouts schon hinzugefügt wurden, bleiben; wenn du ein Workout löschst, werden sie mitgelöscht.",
+      "keep": "Verbunden lassen",
+      "confirm": "Trennen"
+    },
+    "install": {
+      "title": "Health Connect wird benötigt",
+      "body": "Android speichert, was deine Uhr misst, in Health Connect. Lade oder aktualisiere es bei Google Play und komm dann zurück, um es zu verbinden.",
+      "open": "Google Play öffnen",
+      "builtIn": "Ab Android 14 ist es bereits eingebaut."
+    },
+    "problems": {
+      "denied": {
+        "appleHealth": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in der Health-App unter „Teilen“.",
+        "healthConnect": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in Health Connect und verbinde dann erneut."
+      },
+      "unavailable": "Auf diesem Gerät gibt es keine Gesundheitsdaten zu lesen.",
+      "failed": "Das hat nicht geklappt. Versuch es gleich noch einmal.",
+      "releaseFailed": "Benchbite liest nichts mehr, aber Health Connect erlaubt es noch. Nimm die Erlaubnis in Health Connect zurück."
     }
   }
 }

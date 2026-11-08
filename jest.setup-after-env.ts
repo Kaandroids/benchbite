@@ -17,3 +17,6 @@ jest.mock('expo-audio', () => require('./src/test/expo-audio'));
 
 // expo-notifications schedules nothing in tests; this stand-in's functions are mocks.
 jest.mock('expo-notifications', () => require('./src/test/expo-notifications'));
+
+// The health store's native modules do not load in tests; this stand-in has no store.
+jest.mock('./src/health/platform', () => require('./src/test/health-platform'));

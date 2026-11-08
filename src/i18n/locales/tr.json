@@ -140,6 +140,7 @@
     "languageHint": "Seçilebilecek dilleri açar",
     "phoneLanguage": "Telefonun dili",
     "phoneLanguageNow": "Şu an {{language}}",
+    "health": "Sağlık",
     "waterGoal": "Günlük su hedefi",
     "waterGoalNote": "Beslenme sekmesinde dolduracağın bardaklar, her biri {{ml}} ml.",
     "liters": "{{amount}} L",
@@ -2371,6 +2372,51 @@
     "seePremium": "Premium'a bak",
     "offerSheet": {
       "notNow": "Şimdi değil"
+    }
+  },
+  "health": {
+    "appleHealth": "Apple Health",
+    "healthConnect": "Health Connect",
+    "connected": "Bağlı",
+    "notConnected": "Bağlı değil",
+    "rowHint": "Bağlayacağın ya da bağlantıyı keseceğin yeri açar",
+    "note": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler.",
+    "noteConnected": {
+      "appleHealth": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler. Veri gelmiyor mu? Sağlık uygulamasında, Paylaşım altında Benchbite’a izin ver.",
+      "healthConnect": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler. Veri gelmiyor mu? Health Connect’te Benchbite’a izin ver."
+    },
+    "consent": {
+      "title": "{{store}} verileri okunsun mu?",
+      "body": "Her antrenman süresince Benchbite şunları okur:",
+      "heartRate": "Nabız",
+      "calories": "Aktif kalori",
+      "keeps": "Her antrenmanın yalnızca ortalama ve en yüksek nabzını ve kalorisini hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "continue": "Devam",
+      "notNow": "Şimdi değil",
+      "next": {
+        "appleHealth": "Sırada Apple bunlardan hangilerine izin vereceğini soracak.",
+        "healthConnect": "Sırada Health Connect bunlardan hangilerine izin vereceğini soracak."
+      }
+    },
+    "disconnect": {
+      "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Antrenmanlarına eklenmiş nabız ve kalori kalır; bir antrenmanı silersen onlar da silinir.",
+      "keep": "Bağlı kalsın",
+      "confirm": "Bağlantıyı kes"
+    },
+    "install": {
+      "title": "Health Connect gerekli",
+      "body": "Android, saatinin ölçtüklerini Health Connect’te tutar. Google Play’den indir ya da güncelle, sonra bağlamak için buraya dön.",
+      "open": "Google Play’i aç",
+      "builtIn": "Android 14 ve sonrasında yerleşik olarak gelir."
+    },
+    "problems": {
+      "denied": {
+        "appleHealth": "Benchbite henüz nabzını okuyamıyor. Sağlık uygulamasında, Paylaşım altında izin ver.",
+        "healthConnect": "Benchbite henüz nabzını okuyamıyor. Health Connect’te izin ver, sonra tekrar bağlan."
+      },
+      "unavailable": "Bu cihazda okunacak sağlık verisi yok.",
+      "failed": "Olmadı. Birazdan tekrar dene.",
+      "releaseFailed": "Benchbite okumayı bıraktı ama Health Connect hâlâ izin veriyor. İzni Health Connect’ten geri al."
     }
   }
 }

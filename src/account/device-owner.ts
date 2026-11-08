@@ -1,17 +1,20 @@
 import { useEffect } from 'react';
 
+import { setHealthConnected } from '@/health/connection';
+import { releaseHealthAccess } from '@/health/health';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
 import { cancelReminders } from '@/reminders/reminders';
 import { saveReminderMinutes } from '@/reminders/settings';
 import { endSession } from '@/sessions/session';
 
-/** The user whose workout in progress and reminders the device keeps. */
+/** The user whose workout in progress, reminders and health connection the device keeps. */
 const OWNER_KEY = 'device.owner';
 
 /**
  * Makes the signed-in user the owner of what the device keeps for its user. When another user
- * signs in, or a new guest replaces one, the previous user's workout in progress and reminders go
+ * signs in, or a new guest replaces one, the previous user's workout in progress, reminders and
+ * connection to the health store go
  * (ADR 0031). The same user signing in again keeps them, and so does a guest who creates an account,
  * as their id stays the same.
  */
@@ -29,6 +32,10 @@ export function claimDevice(userId: string) {
   saveReminderMinutes(null);
   void cancelReminders().catch((error: unknown) =>
     console.warn('Could not cancel the reminders', error),
+  );
+  setHealthConnected(false);
+  void releaseHealthAccess().catch((error: unknown) =>
+    console.warn('Could not give up the access to health data', error),
   );
 }
 

@@ -1,3 +1,5 @@
+import { isHealthConnected, setHealthConnected } from '@/health/connection';
+import { releaseHealthAccess } from '@/health/health';
 import { cancelReminders } from '@/reminders/reminders';
 import { loadReminderMinutes, saveReminderMinutes } from '@/reminders/settings';
 import { endSession } from '@/sessions/session';
@@ -18,6 +20,7 @@ jest.mock('expo-sqlite/kv-store', () => {
 jest.mock('@/providers/session-provider', () => ({ useUserId: jest.fn() }));
 jest.mock('@/reminders/reminders', () => ({ cancelReminders: jest.fn() }));
 jest.mock('@/sessions/session', () => ({ endSession: jest.fn() }));
+jest.mock('@/health/health', () => ({ releaseHealthAccess: jest.fn() }));
 
 const { Storage } = jest.requireMock<{ Storage: { clearSync: () => void } }>(
   'expo-sqlite/kv-store',
@@ -27,7 +30,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   Storage.clearSync();
   jest.mocked(cancelReminders).mockResolvedValue();
+  jest.mocked(releaseHealthAccess).mockResolvedValue();
   saveReminderMinutes(1080);
+  setHealthConnected(true);
 });
 
 describe('claimDevice', () => {
@@ -37,14 +42,17 @@ describe('claimDevice', () => {
     expect(endSession).not.toHaveBeenCalled();
     expect(cancelReminders).not.toHaveBeenCalled();
     expect(loadReminderMinutes()).toBe(1080);
+    expect(isHealthConnected()).toBe(true);
   });
 
-  it('drops the previous user’s workout in progress and reminders for another user', () => {
+  it('drops the previous user’s workout in progress, reminders and health connection for another user', () => {
     claimDevice('user-1');
     claimDevice('user-2');
     expect(endSession).toHaveBeenCalledTimes(1);
     expect(cancelReminders).toHaveBeenCalledTimes(1);
     expect(loadReminderMinutes()).toBeNull();
+    expect(isHealthConnected()).toBe(false);
+    expect(releaseHealthAccess).toHaveBeenCalledTimes(1);
 
     claimDevice('user-2');
     expect(endSession).toHaveBeenCalledTimes(1);
