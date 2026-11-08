@@ -169,6 +169,9 @@
     "none": "No weight logged yet.",
     "loggedToday": "Logged today",
     "loggedOn": "Logged on {{date}}",
+    "fromToday": "Today, from {{source}}",
+    "fromOn": "{{date}}, from {{source}}",
+    "healthApp": "your health app",
     "saveError": "We couldn't save your weight. Check your connection and try again.",
     "decrease": "Decrease weight",
     "increase": "Increase weight",
@@ -2388,10 +2391,14 @@
     },
     "consent": {
       "title": "Read from {{store}}?",
-      "body": "For the time of each workout, Benchbite reads:",
+      "body": "Benchbite reads:",
       "heartRate": "Heart rate",
+      "heartRateWhen": "during workouts",
       "calories": "Active calories",
-      "keeps": "It keeps only each workout’s average and highest heart rate and its calories, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
+      "caloriesWhen": "during workouts",
+      "weight": "Weight",
+      "weightWhen": "one a day, from the last 30 days on",
+      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight a day, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
       "continue": "Continue",
       "notNow": "Not now",
       "next": {
@@ -2400,7 +2407,7 @@
       }
     },
     "disconnect": {
-      "body": "Disconnecting stops Benchbite reading from {{store}}. The heart rate and calories already added to your workouts stay; deleting a workout deletes them.",
+      "body": "Disconnecting stops Benchbite reading from {{store}}. The weights and the workouts’ heart rate and calories already taken stay. Deleting a workout deletes its heart rate and calories.",
       "keep": "Keep connected",
       "confirm": "Disconnect"
     },
@@ -2428,6 +2435,12 @@
       "throughStore": "Through {{store}}",
       "waitingTitle": "Waiting for your watch",
       "waitingBody": "Its heart rate and calories show here once they reach {{store}}. Benchbite looks again for a day."
+    },
+    "weightAsk": {
+      "title": "Your weight from {{store}}",
+      "body": "Weights from your scale or other apps fill this chart by themselves. One you enter here wins on its day.",
+      "bringIn": "Bring in my weight",
+      "notNow": "Not now"
     }
   }
 }

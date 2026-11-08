@@ -169,6 +169,9 @@
     "none": "Henüz kilo girmedin.",
     "loggedToday": "Bugün girildi",
     "loggedOn": "{{date}} tarihinde girildi",
+    "fromToday": "Bugün, {{source}} üzerinden",
+    "fromOn": "{{date}}, {{source}} üzerinden",
+    "healthApp": "sağlık uygulaman",
     "saveError": "Kilonu kaydedemedik. Bağlantını kontrol edip tekrar dene.",
     "decrease": "Kiloyu azalt",
     "increase": "Kiloyu artır",
@@ -2388,10 +2391,14 @@
     },
     "consent": {
       "title": "{{store}} verileri okunsun mu?",
-      "body": "Her antrenman süresince Benchbite şunları okur:",
+      "body": "Benchbite şunları okur:",
       "heartRate": "Nabız",
+      "heartRateWhen": "antrenman sırasında",
       "calories": "Aktif kalori",
-      "keeps": "Her antrenmanın yalnızca ortalama ve en yüksek nabzını ve kalorisini hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "caloriesWhen": "antrenman sırasında",
+      "weight": "Kilo",
+      "weightWhen": "günde bir, son 30 günden itibaren",
+      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kiloyu hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
       "continue": "Devam",
       "notNow": "Şimdi değil",
       "next": {
@@ -2400,7 +2407,7 @@
       }
     },
     "disconnect": {
-      "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Antrenmanlarına eklenmiş nabız ve kalori kalır; bir antrenmanı silersen onlar da silinir.",
+      "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Alınmış kilolar ile antrenmanlarının nabız ve kalorisi kalır. Bir antrenmanı silersen onun nabzı ve kalorisi de silinir.",
       "keep": "Bağlı kalsın",
       "confirm": "Bağlantıyı kes"
     },
@@ -2428,6 +2435,12 @@
       "throughStore": "{{store}} üzerinden",
       "waitingTitle": "Saatin bekleniyor",
       "waitingBody": "Nabız ve kalori {{store}} içine ulaşınca burada görünür. Benchbite bir gün boyunca tekrar bakar."
+    },
+    "weightAsk": {
+      "title": "Kilon {{store}} üzerinden",
+      "body": "Tartından ya da başka uygulamalardan gelen kilolar bu grafiği kendiliğinden doldurur. Burada girdiğin kilo o gün için geçerli olur.",
+      "bringIn": "Kilomu getir",
+      "notNow": "Şimdi değil"
     }
   }
 }
