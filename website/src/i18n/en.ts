@@ -180,10 +180,22 @@ export const en = {
     emailLabel: 'Email',
     emailPlaceholder: 'you@example.com',
     send: 'Send link',
-    linkNote:
-      'The link works once, for 30 minutes. Deleting your account does not cancel a subscription in the App Store or Google Play.',
+    linkNote: 'The link works once, for 30 minutes.',
     kept: 'What is deleted and kept',
-    keptPlaceholder: '[LEGAL TEXT: DATA DELETED, DATA KEPT, RETENTION PERIODS]',
+    keptItems: [
+      {
+        title: 'Deleted',
+        text: 'Your account and everything that is yours, usually within 24 hours.',
+      },
+      {
+        title: 'Kept for up to 28 days',
+        text: 'Copies in the backups and logs of the services we use, and their records of the emails we sent you, until these are overwritten. The AI behind Bite is not one of them: the privacy policy says what it keeps. A request made on this page is kept for about a day.',
+      },
+      {
+        title: 'Not ours to delete',
+        text: 'Purchases and subscriptions, kept by the App Store or Google Play. Emails we sent you stay in your inbox.',
+      },
+    ],
   },
   deleteLink: {
     sentTitle: 'Check your email',
@@ -200,6 +212,7 @@ export const en = {
       'Meals, recipes and your own foods',
       'Weight, goals and progress',
       'Chats with Bite, photos and voice',
+      'The notes Bite kept, and your exercise photos',
     ],
     subscription:
       'A subscription in the App Store or Google Play is not cancelled by this. Cancel it there to stop paying.',
