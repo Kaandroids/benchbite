@@ -13,26 +13,21 @@ jest.mock('expo-sqlite/kv-store', () => {
   };
 });
 
-it('keeps the connection for each user on the phone', () => {
-  setHealthConnected('user-a', true);
+it('keeps whether the phone reads its health store', () => {
+  expect(isHealthConnected()).toBe(false);
 
-  expect(isHealthConnected('user-a')).toBe(true);
-  expect(isHealthConnected('user-b')).toBe(false);
+  setHealthConnected(true);
+  expect(isHealthConnected()).toBe(true);
 
-  setHealthConnected('user-a', false);
-  expect(isHealthConnected('user-a')).toBe(false);
+  setHealthConnected(false);
+  expect(isHealthConnected()).toBe(false);
 });
 
 it('updates whoever shows it', async () => {
-  const { result } = await renderHook(() => useHealthConnected('user-c'));
+  const { result } = await renderHook(() => useHealthConnected());
   expect(result.current).toBe(false);
 
-  await act(() => setHealthConnected('user-c', true));
+  await act(() => setHealthConnected(true));
 
   expect(result.current).toBe(true);
-});
-
-it('is never connected without a user', async () => {
-  const { result } = await renderHook(() => useHealthConnected(undefined));
-  expect(result.current).toBe(false);
 });

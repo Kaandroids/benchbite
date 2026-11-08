@@ -1,9 +1,11 @@
-// Whether the signed-in user connected Benchbite to the phone's health store (#467). It belongs to
-// the phone, as the store does, and to the user who agreed to it, so another user on the same
-// phone starts unconnected.
+// Whether Benchbite reads the phone's health store (#467, ADR 0097). It belongs to the phone, as
+// the store does, and to its owner: when another user signs in, it goes with the rest the device
+// kept (ADR 0031).
 import { useSyncExternalStore } from 'react';
 
 import { readItem, writeItem } from '@/lib/device-storage';
+
+const KEY = 'health.connected';
 
 const listeners = new Set<() => void>();
 
@@ -12,22 +14,18 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-const key = (userId: string) => `health.connected.${userId}`;
-
-/** Whether the user connected the health store on this phone. */
-export function isHealthConnected(userId: string): boolean {
-  return readItem(key(userId)) === 'true';
+export function isHealthConnected(): boolean {
+  return readItem(KEY) === 'true';
 }
 
-/** Keeps whether the user connected the health store on this phone. */
-export function setHealthConnected(userId: string, connected: boolean) {
-  writeItem(key(userId), connected ? 'true' : null);
+export function setHealthConnected(connected: boolean) {
+  writeItem(KEY, connected ? 'true' : null);
   for (const listener of listeners) {
     listener();
   }
 }
 
-/** Whether the user connected the health store on this phone, kept up to date. */
-export function useHealthConnected(userId: string | undefined): boolean {
-  return useSyncExternalStore(subscribe, () => (userId ? isHealthConnected(userId) : false));
+/** Whether Benchbite reads the phone's health store, kept up to date. */
+export function useHealthConnected(): boolean {
+  return useSyncExternalStore(subscribe, isHealthConnected);
 }
