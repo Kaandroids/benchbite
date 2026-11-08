@@ -54,7 +54,11 @@ beforeEach(() => {
       heightCm: 180,
     }),
   );
-  jest.mocked(useLatestWeight).mockReturnValue(loaded({ weightKg: 80, measuredOn: '2026-10-28' }));
+  jest
+    .mocked(useLatestWeight)
+    .mockReturnValue(
+      loaded({ weightKg: 80, measuredOn: '2026-10-28', fromHealth: false, source: null }),
+    );
   jest.mocked(useWeightUnit).mockReturnValue(loaded('kg'));
   jest
     .mocked(useNutritionTargets)
@@ -195,7 +199,9 @@ describe('the target step', () => {
   it('sends someone at the lower end of a healthy weight back to the goals', async () => {
     jest
       .mocked(useLatestWeight)
-      .mockReturnValue(loaded({ weightKg: 59.5, measuredOn: '2026-10-28' }));
+      .mockReturnValue(
+        loaded({ weightKg: 59.5, measuredOn: '2026-10-28', fromHealth: false, source: null }),
+      );
     open({ step: 'target', goal: 'lose_fat' });
     await render(<RecalculateScreen />);
     expect(screen.getByText(/already at the lower end of a healthy range/)).toBeTruthy();

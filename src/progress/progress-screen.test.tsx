@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@/test/render';
-import { useLatestWeight, useLogWeight, useWeightUnit } from '@/weight/weights';
+import { useLatestWeight, useLogWeight, useWeightUnit, type WeightEntry } from '@/weight/weights';
 
 import { ProgressScreen } from './progress-screen';
 
@@ -41,10 +41,15 @@ const failed = <T,>(): Query<T> => ({
   refetch: jest.fn(),
 });
 
-type Weight = { weightKg: number; measuredOn: string } | null;
+type Weight = WeightEntry | null;
 
 function mockData({
-  weight = loaded<Weight>({ weightKg: 80, measuredOn: '2026-10-19' }),
+  weight = loaded<Weight>({
+    weightKg: 80,
+    measuredOn: '2026-10-19',
+    fromHealth: false,
+    source: null,
+  }),
   unit = loaded<'kg' | 'lb'>('kg'),
 }: {
   weight?: Query<Weight>;

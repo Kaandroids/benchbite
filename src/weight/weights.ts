@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 
 import { toIsoDate } from '@/i18n/dates';
 import type { WeightUnit } from '@/i18n/units';
@@ -14,7 +20,22 @@ export type WeightEntry = {
   weightKg: number;
   /** The day, YYYY-MM-DD. */
   measuredOn: string;
+  /** Whether it came from the phone's health store (ADR 0100), and from which app or scale. */
+  fromHealth: boolean;
+  source: string | null;
 };
+
+const toEntry = (row: {
+  weight_kg: number;
+  measured_on: string;
+  from_health: boolean;
+  source: string | null;
+}): WeightEntry => ({
+  weightKg: row.weight_kg,
+  measuredOn: row.measured_on,
+  fromHealth: row.from_health,
+  source: row.source,
+});
 
 /** The unit the signed-in user chose for weights in the onboarding; kilograms without a profile. */
 export function useWeightUnit() {
@@ -37,14 +58,14 @@ export function useLatestWeight() {
     queryFn: async (): Promise<WeightEntry | null> => {
       const { data, error } = await supabase
         .from('weight_entries')
-        .select('weight_kg, measured_on')
+        .select('weight_kg, measured_on, from_health, source')
         .order('measured_on', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) {
         throw error;
       }
-      return data ? { weightKg: data.weight_kg, measuredOn: data.measured_on } : null;
+      return data ? toEntry(data) : null;
     },
   });
 }
@@ -61,13 +82,13 @@ export function useWeightHistory(range: ProgressRange, today: Date) {
     queryFn: async (): Promise<WeightEntry[]> => {
       const { data, error } = await supabase
         .from('weight_entries')
-        .select('weight_kg, measured_on')
+        .select('weight_kg, measured_on, from_health, source')
         .gte('measured_on', from)
         .order('measured_on');
       if (error) {
         throw error;
       }
-      return data.map((row) => ({ weightKg: row.weight_kg, measuredOn: row.measured_on }));
+      return data.map(toEntry);
     },
   });
 }
@@ -80,6 +101,19 @@ export function weightChange(entries: readonly WeightEntry[]): number | null {
     return null;
   }
   return Math.round((last.weightKg - first.weightKg) * 10) / 10;
+}
+
+/**
+ * Loads again what follows a weight: the weights, the targets that depend on the latest one, and
+ * today's calories, which are counted for the streak and charted against the targets.
+ */
+export function reloadAfterWeight(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: WEIGHTS_KEY }),
+    queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
+    queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
+    queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+  ]);
 }
 
 /**
@@ -101,14 +135,6 @@ export function useLogWeight() {
         throw error;
       }
     },
-    // Today's calories are counted for the streak and charted against the targets, which follow
-    // the weight.
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: WEIGHTS_KEY }),
-        queryClient.invalidateQueries({ queryKey: ['nutrition-targets'] }),
-        queryClient.invalidateQueries({ queryKey: NUTRITION_DAYS_KEY }),
-        queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
-      ]),
+    onSuccess: () => reloadAfterWeight(queryClient),
   });
 }

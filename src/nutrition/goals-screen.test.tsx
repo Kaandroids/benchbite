@@ -50,7 +50,11 @@ beforeEach(() => {
       achievablePaceKg: 0.5,
     }),
   );
-  jest.mocked(useLatestWeight).mockReturnValue(loaded({ weightKg: 80, measuredOn: '2026-10-28' }));
+  jest
+    .mocked(useLatestWeight)
+    .mockReturnValue(
+      loaded({ weightKg: 80, measuredOn: '2026-10-28', fromHealth: false, source: null }),
+    );
   jest.mocked(useWeightUnit).mockReturnValue(loaded('kg'));
   jest.mocked(useSetOwnTargets).mockReturnValue({ mutate: setOwn, isPending: false } as never);
   jest.mocked(useUseCalculatedTargets).mockReturnValue({ mutate: useCalculated } as never);
@@ -174,7 +178,9 @@ describe('GoalsScreen', () => {
   it('says the target is reached, without a pace, once the weight is at or past it', async () => {
     jest
       .mocked(useLatestWeight)
-      .mockReturnValue(loaded({ weightKg: 74.6, measuredOn: '2026-10-28' }));
+      .mockReturnValue(
+        loaded({ weightKg: 74.6, measuredOn: '2026-10-28', fromHealth: false, source: null }),
+      );
     await render(<GoalsScreen />);
     expect(screen.getByLabelText('Weight: 74.6 kg, Target reached')).toBeTruthy();
     expect(screen.queryByLabelText(/^Pace/)).toBeNull();
