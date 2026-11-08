@@ -2842,11 +2842,11 @@ export type Database = {
       };
       set_workout_health: {
         Args: {
-          p_active_kcal: number;
-          p_heart_rate_avg: number;
-          p_heart_rate_max: number;
-          p_log_id: number;
-          p_source: string;
+          active_kcal?: number;
+          heart_rate_avg?: number;
+          heart_rate_max?: number;
+          log_id: number;
+          source?: string;
         };
         Returns: undefined;
       };
