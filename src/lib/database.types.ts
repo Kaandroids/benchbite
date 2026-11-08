@@ -1924,6 +1924,8 @@ export type Database = {
           heart_rate_kcal: number | null;
           heart_rate_max: number | null;
           id: number | null;
+          kcal: number | null;
+          kcal_source: string | null;
           kilograms: number | null;
           name: string | null;
           planned_exercise_ids: string[] | null;
@@ -2300,6 +2302,10 @@ export type Database = {
         Returns: Database['public']['Enums']['plan'];
       };
       device_today_or_server: { Args: { sent: string }; Returns: string };
+      done_at_within: {
+        Args: { done_at: string; finished: string; started: string };
+        Returns: string;
+      };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
@@ -2411,6 +2417,11 @@ export type Database = {
           weight_kg: number;
         };
         Returns: number;
+      };
+      heart_rate_or_none: { Args: { heart_rate: number }; Returns: number };
+      heart_rate_samples_of: {
+        Args: { finished: string; samples: number[]; started: string };
+        Returns: number[];
       };
       import_steps: { Args: { days: Json; today: string }; Returns: number };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
@@ -2875,10 +2886,6 @@ export type Database = {
           recipe_id: number;
         }[];
       };
-      set_done_at: {
-        Args: { done_at: string; finished: string; started: string };
-        Returns: string;
-      };
       set_suits: {
         Args: {
           meters: number;
@@ -3054,6 +3061,7 @@ export type Database = {
         Returns: number;
       };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
+      weight_on: { Args: { day: string; user_id: string }; Returns: number };
       with_grace: {
         Args: {
           span: unknown;
