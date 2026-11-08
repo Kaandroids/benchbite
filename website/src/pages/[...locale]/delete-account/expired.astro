@@ -1,0 +1,27 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { deleteLink } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="delete-account/expired" title={deleteLink.expiredTitle}>
+  <main class="page">
+    <div>
+      <h1>{deleteLink.expiredTitle}</h1>
+      <p class="muted lead">{deleteLink.expiredText}</p>
+    </div>
+    <a class="button again" href={`${localePath(locale, 'delete-account')}#without-app`}>
+      {deleteLink.askAgain}
+    </a>
+  </main>
+</Layout>
+
+<style>
+  .again {
+    align-self: flex-start;
+  }
+</style>

@@ -165,7 +165,7 @@ export const en = {
   },
   deleteAccount: {
     title: 'Delete your Benchbite account',
-    text: 'Accounts and guest data can be deleted in the app. Deleting cannot be undone.',
+    text: 'Accounts and guest data can be deleted in the app, or an account here with its email address. Deleting cannot be undone.',
     inApp: 'In the app',
     steps: [
       'Open Benchbite. If you have an account, log in first.',
@@ -176,9 +176,47 @@ export const en = {
       'Using Benchbite as a guest? Delete your data in the app before removing it. Guest data has no email address, so we cannot find it later.',
     withoutApp: 'Without the app',
     withoutAppText:
-      'Removed the app and have an account? Install it again and log in to delete your account. Soon you can also request deletion here and confirm it by email.',
+      "Enter your account's email address. We'll send a link to it, and you confirm on the page it opens.",
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@example.com',
+    send: 'Send link',
+    linkNote:
+      'The link works once, for 30 minutes. Deleting your account does not cancel a subscription in the App Store or Google Play.',
     kept: 'What is deleted and kept',
     keptPlaceholder: '[LEGAL TEXT: DATA DELETED, DATA KEPT, RETENTION PERIODS]',
+  },
+  deleteLink: {
+    sentTitle: 'Check your email',
+    sentText: 'If an account uses this address, we sent it a link to delete it.',
+    sentHow:
+      'Open the link on any device, then confirm on the page it opens. Opening it deletes nothing yet.',
+    sentNote:
+      "The link works once, for 30 minutes. Didn't get it? Check your spam folder, or ask again in a minute.",
+    anotherEmail: 'Use another email',
+    confirmTitle: 'Delete your account?',
+    confirmText: "Everything below is deleted for good. It can't be brought back.",
+    items: [
+      'Your plan, workouts and history',
+      'Meals, recipes and your own foods',
+      'Weight, goals and progress',
+      'Chats with Bite, photos and voice',
+    ],
+    subscription:
+      'A subscription in the App Store or Google Play is not cancelled by this. Cancel it there to stop paying.',
+    delete: 'Delete for good',
+    keep: 'Keep my account',
+    failed: "We couldn't delete it just now. Try again in a moment.",
+    noLink: 'This page opens from the link in the email. Ask for a link on the delete page.',
+    noScript:
+      'This page needs JavaScript to read the link. You can also delete your account in the app.',
+    doneTitle: 'Your account is deleted',
+    doneText: 'Everything that was yours in Benchbite is gone. Thanks for training with us.',
+    doneNote:
+      'The app on your phone now starts again as a new guest. A store subscription keeps running until you cancel it in the App Store or Google Play.',
+    backToStart: 'Back to the start',
+    expiredTitle: 'This link no longer works',
+    expiredText: 'This link ran out after 30 minutes, or was already used.',
+    askAgain: 'Ask for a new link',
   },
 };
 

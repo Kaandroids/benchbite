@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { FUNCTIONS_URL } from '../../functions';
 import { localeStaticPaths, messagesFor, type Locale } from '../../i18n';
 
 export const getStaticPaths = localeStaticPaths;
@@ -21,9 +22,29 @@ const { deleteAccount } = messagesFor(locale);
       </ol>
       <p class="guest-note">{deleteAccount.guestNote}</p>
     </section>
-    <section class="without-app">
-      <h2 class="section-title">{deleteAccount.withoutApp}</h2>
-      <p>{deleteAccount.withoutAppText}</p>
+    <section class="without-app" id="without-app">
+      <div>
+        <h2 class="section-title">{deleteAccount.withoutApp}</h2>
+        <p>{deleteAccount.withoutAppText}</p>
+      </div>
+      <form method="post" action={`${FUNCTIONS_URL}/request-account-deletion`}>
+        <input type="hidden" name="locale" value={locale} />
+        <label for="email">{deleteAccount.emailLabel}</label>
+        <div class="row">
+          <input
+            class="field"
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            maxlength="254"
+            required
+            placeholder={deleteAccount.emailPlaceholder}
+          />
+          <button class="button" type="submit">{deleteAccount.send}</button>
+        </div>
+      </form>
+      <p class="muted link-note">{deleteAccount.linkNote}</p>
     </section>
     <section>
       <h2 class="section-title">{deleteAccount.kept}</h2>
@@ -45,6 +66,33 @@ const { deleteAccount } = messagesFor(locale);
     padding: 24px;
     border-radius: 24px;
     background: var(--lunch-background);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label {
+    font-weight: 800;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .field {
+    flex: 1 1 260px;
+  }
+
+  .link-note {
+    font-size: 16px;
   }
 
   .guest-note {

@@ -10,6 +10,11 @@
   --primary-text: #c2410c;
   --primary-button: #f25a00;
   --primary-button-ledge: #c24800;
+  --danger-button: #dc2626;
+  --danger-button-ledge: #a61b1b;
+  --on-danger: #ffffff;
+  --danger: #dc2626;
+  --danger-background: #fee2e2;
   --on-primary: #ffffff;
   --warning: #b45309;
   --warning-background: #fef3c7;
@@ -40,6 +45,11 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Hidden even where a class gives the element a display, as `display: flex`. */
+[hidden] {
+  display: none !important;
 }
 
 html {
@@ -147,4 +157,52 @@ h1 {
   border-radius: 24px;
   background: var(--surface);
   border: 2px solid var(--border);
+}
+
+/* A button of the app, as a link or in a form; the ledge under it as in the app. */
+.button {
+  display: inline-block;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--primary-button);
+  box-shadow: 0 4px 0 var(--primary-button-ledge);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--on-primary);
+}
+
+.button.danger,
+.button.danger:hover {
+  background: var(--danger-button);
+  box-shadow: 0 4px 0 var(--danger-button-ledge);
+  color: var(--on-danger);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* A link beside a button, or on its own as the way on; its container places it. */
+.text-link {
+  color: var(--primary-text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.field {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
 }

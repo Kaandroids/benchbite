@@ -9,8 +9,20 @@ import { tr } from './tr';
 export const LOCALES = ['en', 'de', 'tr'] as const;
 export type Locale = (typeof LOCALES)[number];
 
-/** The pages below the landing page, as they appear in addresses. */
-export type Page = 'privacy' | 'terms' | 'imprint' | 'support' | 'delete-account';
+/**
+ * The pages below the landing page, as they appear in addresses. The Edge Functions redirect to
+ * the `delete-account/*` ones (supabase/functions/request-account-deletion and
+ * confirm-account-deletion): a new name goes there too.
+ */
+export type Page =
+  | 'privacy'
+  | 'terms'
+  | 'imprint'
+  | 'support'
+  | 'delete-account'
+  | 'delete-account/sent'
+  | 'delete-account/done'
+  | 'delete-account/expired';
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';

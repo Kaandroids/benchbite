@@ -163,7 +163,7 @@ export const tr: Messages = {
   },
   deleteAccount: {
     title: 'Benchbite hesabını sil',
-    text: 'Hesaplar ve misafir verileri uygulamadan silinebilir. Silme işlemi geri alınamaz.',
+    text: 'Hesaplar ve misafir verileri uygulamadan, bir hesap ayrıca e-posta adresiyle buradan silinebilir. Silme işlemi geri alınamaz.',
     inApp: 'Uygulamada',
     steps: [
       'Benchbite’ı aç. Hesabın varsa önce giriş yap.',
@@ -174,8 +174,47 @@ export const tr: Messages = {
       'Benchbite’ı misafir olarak mı kullanıyorsun? Uygulamayı kaldırmadan önce verilerini uygulamanın içinden sil. Misafir verilerinin e-posta adresi olmadığı için onları sonradan bulamayız.',
     withoutApp: 'Uygulama olmadan',
     withoutAppText:
-      'Uygulamayı kaldırdın ve hesabın var mı? Hesabını silmek için uygulamayı yeniden kurup giriş yap. Yakında silme isteğini buradan da gönderip e-postayla onaylayabileceksin.',
+      'Hesabının e-posta adresini gir. O adrese bir bağlantı göndeririz, açtığı sayfada onaylarsın.',
+    emailLabel: 'E-posta',
+    emailPlaceholder: 'sen@ornek.com',
+    send: 'Bağlantı gönder',
+    linkNote:
+      'Bağlantı bir kez, 30 dakika boyunca çalışır. Hesabını silmek App Store veya Google Play aboneliğini iptal etmez.',
     kept: 'Neler silinir, neler kalır',
     keptPlaceholder: '[YASAL METİN: SİLİNEN VERİLER, KALAN VERİLER, SÜRELER]',
+  },
+  deleteLink: {
+    sentTitle: 'E-postanı kontrol et',
+    sentText: 'Bu adresi kullanan bir hesap varsa, ona silme bağlantısı gönderdik.',
+    sentHow:
+      'Bağlantıyı herhangi bir cihazda aç, sonra açılan sayfada onayla. Açmak henüz hiçbir şeyi silmez.',
+    sentNote:
+      'Bağlantı bir kez, 30 dakika boyunca çalışır. Gelmedi mi? Spam klasörüne bak ya da bir dakika sonra yeniden iste.',
+    anotherEmail: 'Başka e-posta kullan',
+    confirmTitle: 'Hesabın silinsin mi?',
+    confirmText: 'Aşağıdakilerin hepsi kalıcı olarak silinir. Geri getirilemez.',
+    items: [
+      'Planın, antrenmanların ve geçmişin',
+      'Öğünler, tarifler ve kendi besinlerin',
+      'Kilo, hedefler ve ilerleme',
+      'Bite ile sohbetler, fotoğraflar ve sesler',
+    ],
+    subscription:
+      'App Store veya Google Play aboneliğin bununla iptal olmaz. Ödemeyi durdurmak için orada iptal et.',
+    delete: 'Kalıcı olarak sil',
+    keep: 'Hesabımı tut',
+    failed: 'Şu an silemedik. Birazdan tekrar dene.',
+    noLink: 'Bu sayfa e-postadaki bağlantıyla açılır. Silme sayfasından bir bağlantı iste.',
+    noScript:
+      'Bu sayfanın bağlantıyı okuması için JavaScript gerekir. Hesabını uygulamadan da silebilirsin.',
+    doneTitle: 'Hesabın silindi',
+    doneText:
+      'Benchbite’ta sana ait olan her şey silindi. Bizimle antrenman yaptığın için teşekkürler.',
+    doneNote:
+      'Telefonundaki uygulama artık yeni bir misafir olarak başlar. Mağaza aboneliği, App Store veya Google Play’den iptal edene kadar sürer.',
+    backToStart: 'Ana sayfaya dön',
+    expiredTitle: 'Bu bağlantı artık çalışmıyor',
+    expiredText: 'Bu bağlantının 30 dakikalık süresi doldu ya da zaten kullanıldı.',
+    askAgain: 'Yeni bağlantı iste',
   },
 };
