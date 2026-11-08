@@ -9,7 +9,8 @@ const locale = Astro.props.locale as Locale;
 const { deleteLink } = messagesFor(locale);
 ---
 
-<Layout locale={locale} page="delete-account/confirm" title={deleteLink.confirmTitle}>
+<!-- No page for the language links: they would open this page without its token. -->
+<Layout locale={locale} title={deleteLink.confirmTitle}>
   <main class="page">
     <div>
       <h1>{deleteLink.confirmTitle}</h1>
@@ -22,13 +23,13 @@ const { deleteLink } = messagesFor(locale);
           {deleteLink.items.map((item) => <li>{item}</li>)}
         </ul>
       </section>
-      <p class="subscription">{deleteLink.subscription}</p>
+      <p class="note">{deleteLink.subscription}</p>
       <p class="failed" id="failed" role="alert" hidden>{deleteLink.failed}</p>
       <form method="post" action={`${FUNCTIONS_URL}/confirm-account-deletion`}>
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="token" />
         <button class="button danger" type="submit">{deleteLink.delete}</button>
-        <a class="keep" href={localePath(locale)}>{deleteLink.keep}</a>
+        <a class="text-link" href={localePath(locale)}>{deleteLink.keep}</a>
       </form>
     </div>
     <p class="card" id="no-link" hidden>
@@ -60,6 +61,17 @@ const { deleteLink } = messagesFor(locale);
   }
   readLink();
   window.addEventListener('hashchange', readLink);
+
+  // One press: a second, once the first has deleted the account, would find the link gone.
+  const form = document.querySelector('#with-link form') as HTMLFormElement;
+  const button = form.querySelector('button') as HTMLButtonElement;
+  form.addEventListener('submit', () => {
+    button.disabled = true;
+  });
+  // A page brought back by Back can be sent again.
+  window.addEventListener('pageshow', () => {
+    button.disabled = false;
+  });
 </script>
 
 <style>
@@ -71,11 +83,6 @@ const { deleteLink } = messagesFor(locale);
     gap: 8px;
   }
 
-  .subscription {
-    padding: 16px 20px;
-    border-radius: 16px;
-    background: var(--warning-background);
-  }
 
   .failed {
     padding: 16px 20px;
@@ -100,9 +107,8 @@ const { deleteLink } = messagesFor(locale);
     display: none;
   }
 
-  .keep {
-    color: var(--primary-text);
-    font-weight: 800;
-    text-decoration: none;
+  form .text-link {
+    align-self: center;
   }
+
 </style>
