@@ -23,6 +23,31 @@ export type Database = {
   };
   public: {
     Tables: {
+      account_deletion_codes: {
+        Row: {
+          code_hash: string;
+          expires_at: string;
+          failed_tries: number;
+          sent_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          code_hash: string;
+          expires_at: string;
+          failed_tries?: number;
+          sent_at?: string;
+          user_id: string;
+        };
+        Update: {
+          code_hash?: string;
+          expires_at?: string;
+          failed_tries?: number;
+          sent_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       account_deletion_links: {
         Row: {
           created_at: string;
@@ -41,6 +66,22 @@ export type Database = {
           created_at?: string;
           expires_at?: string;
           token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      account_deletion_password_tries: {
+        Row: {
+          created_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -2040,6 +2081,10 @@ export type Database = {
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       card_alternative: { Args: { alternative: Json }; Returns: Json };
+      check_account_deletion_code: {
+        Args: { p_code_hash: string; p_user: string };
+        Returns: boolean;
+      };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
@@ -2516,6 +2561,10 @@ export type Database = {
         }[];
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
+      new_account_deletion_code: {
+        Args: { p_code_hash: string; p_user: string };
+        Returns: boolean;
+      };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       plan_by_weekdays: {
         Args: { from_day: string; owner: string; to_day: string };
@@ -2831,6 +2880,7 @@ export type Database = {
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
+      take_account_deletion_password_try: { Args: { p_user: string }; Returns: boolean };
       target_kind: {
         Args: {
           exercise: Omit<
