@@ -398,7 +398,14 @@ export function toLog(value: Session, finishedAt = Date.now()) {
       exerciseId: exercise.exerciseId,
       sets: exercise.sets
         .filter((s) => s.done)
-        .map(({ weightKg, reps, seconds, meters }) => ({ weightKg, reps, seconds, meters })),
+        .map(({ weightKg, reps, seconds, meters, doneAt }) => ({
+          weightKg,
+          reps,
+          seconds,
+          meters,
+          // When the set was done, which the heart rate chart marks (ADR 0104).
+          ...(doneAt !== undefined ? { doneAt: new Date(doneAt).toISOString() } : {}),
+        })),
     })),
     ...(value.move ? { move: value.move } : {}),
   };
