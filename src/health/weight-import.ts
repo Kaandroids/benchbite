@@ -5,11 +5,11 @@
 // the store days late.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { toIsoDate } from '@/i18n/dates';
+import { lastDays, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterWeight } from '@/weight/weights';
 
-import { lastDays, mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
+import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
 import { weightsSince } from './platform';
 import type { WeightReading } from './types';
 

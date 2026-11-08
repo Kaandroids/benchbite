@@ -1,6 +1,5 @@
 // What every import from the health store keeps to: it reads only while the store is connected and
 // the kind is read, sends nothing for an account signed in while it read, and runs once at a time.
-import { addDays } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { isHealthConnected, readSync, type HealthRead } from './connection';
@@ -33,9 +32,4 @@ export function oneAtATime<Args extends unknown[]>(
     });
     return running;
   };
-}
-
-/** The start of the last `count` days by the phone's calendar, today one of them. */
-export function lastDays(count: number, now = new Date()): Date {
-  return addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1 - count);
 }

@@ -45,6 +45,11 @@ export function sameDay(a: Date, b: Date): boolean {
   return daysBetween(a, b) === 0;
 }
 
+/** The start of the last `count` days by the calendar, `now`'s day one of them. */
+export function lastDays(count: number, now = new Date()): Date {
+  return addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1 - count);
+}
+
 /** The Monday a week starts on, at midnight. */
 export function weekStart(date: Date): Date {
   return addDays(date, 1 - isoWeekday(date));
