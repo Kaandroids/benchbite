@@ -13,9 +13,14 @@ function context(
   { guest = false, accountLocale = 'en', sendFails = false } = {},
 ) {
   const calls: Record<string, string>[] = [];
+  const takenBack: Record<string, string>[] = [];
   const sent: Email[] = [];
   const admin = {
     rpc: (fn: string, args: Record<string, string>) => {
+      if (fn === 'take_back_account_deletion_code') {
+        takenBack.push(args);
+        return Promise.resolve({ data: null, error: null });
+      }
       assertEquals(fn, 'new_account_deletion_code');
       calls.push(args);
       return Promise.resolve(answer);
@@ -27,6 +32,7 @@ function context(
   };
   return {
     calls,
+    takenBack,
     sent,
     ctx: { admin, send, userId: A, email: guest ? undefined : 'kaan@example.com', accountLocale },
   };
@@ -105,4 +111,13 @@ Deno.test('takes only POST requests', async () => {
 
   assertEquals(response.status, 405);
   assertEquals(calls, []);
+});
+
+Deno.test('takes back a code whose email could not be sent', async () => {
+  const { ctx, calls, takenBack } = context({ data: 'sent', error: null }, { sendFails: true });
+
+  const response = await handleSendCode(post(), ctx);
+
+  assertEquals(response.status, 503);
+  assertEquals(takenBack, calls);
 });

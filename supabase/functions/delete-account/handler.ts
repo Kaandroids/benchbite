@@ -1,6 +1,7 @@
 // The work of delete-account (#134, ADR 0087), apart from signing in, so that it can be tested with
 // a stand-in for storage and auth. An account must prove its owner asks, with a code from
 // send-deletion-code or its password (#438, ADR 0095); a guest has neither, and needs no proof.
+import { type AccountRefusal, refused } from '../_shared/account_refusals.ts';
 import { codeHash, isCode } from '../_shared/deletion_code.ts';
 import { deleteUser } from '../_shared/delete_user.ts';
 import { isObject } from '../_shared/json.ts';
@@ -24,20 +25,20 @@ export type DeleteContext = {
 };
 
 /** The answers to a code that is not right, by what check_account_deletion_code said. */
-const CODE_REFUSED: Record<string, [string, number]> = {
+const CODE_REFUSED: Record<string, [AccountRefusal, number]> = {
   wrong: ['wrong_code', 403],
   expired: ['code_expired', 410],
   too_many: ['too_many_tries', 429],
 };
 
 /** The answers to a password that may not be tried, by what take_account_deletion_password_try said. */
-const PASSWORD_REFUSED: Record<string, [string, number]> = {
+const PASSWORD_REFUSED: Record<string, [AccountRefusal, number]> = {
   recently_changed: ['password_recently_changed', 403],
   too_many: ['too_many_tries', 429],
   busy: ['busy', 429],
 };
 
-const unavailable = () => Response.json({ error: 'unavailable' }, { status: 503 });
+const unavailable = () => refused('unavailable', 503);
 
 /** Why the request does not prove the owner of the account asks, or nothing when it does. */
 async function proofRefused(
@@ -57,7 +58,7 @@ async function proofRefused(
     }
     if (answer === 'right') return undefined;
     const [refusal, status] = CODE_REFUSED[answer] ?? ['wrong_code', 403];
-    return Response.json({ error: refusal }, { status });
+    return refused(refusal, status);
   }
 
   if (typeof password === 'string' && password && email) {
@@ -70,28 +71,32 @@ async function proofRefused(
     }
     if (answer !== 'allowed') {
       const [refusal, status] = PASSWORD_REFUSED[answer] ?? ['busy', 429];
-      return Response.json({ error: refusal }, { status });
+      return refused(refusal, status);
     }
     try {
       const check = await checkPassword(email, password);
       if (check === 'right') return undefined;
-      return check === 'busy'
-        ? Response.json({ error: 'busy' }, { status: 429 })
-        : Response.json({ error: 'wrong_password' }, { status: 403 });
+      return check === 'busy' ? refused('busy', 429) : refused('wrong_password', 403);
     } catch (cause) {
       logError('Checking the password to delete an account failed', cause);
       return unavailable();
     }
   }
 
-  return Response.json({ error: 'proof_required' }, { status: 400 });
+  return refused('proof_required', 400);
 }
 
 export async function handleDeleteRequest(req: Request, context: DeleteContext): Promise<Response> {
   if (req.method !== 'POST') {
-    return Response.json({ error: 'method_not_allowed' }, { status: 405 });
+    return refused('method_not_allowed', 405);
   }
   if (!context.guest) {
+    // Deleted already, as when the answer to a try that deleted it was lost: what was asked for is
+    // done, and its code went with it, so no proof could be checked.
+    const { error } = await context.admin.auth.admin.getUserById(context.userId);
+    if (error?.status === 404) {
+      return Response.json({ deleted: true });
+    }
     const refusal = await proofRefused(await readJson(req, 4096), context);
     if (refusal) return refusal;
   }

@@ -17,6 +17,8 @@ type Options = {
   deleteError?: { status: number } | null;
   /** The answers of the database's functions, by name. */
   rpc?: Record<string, { data: string | null; error: { message: string } | null }>;
+  /** The user is gone already, as after a try whose answer was lost. */
+  gone?: boolean;
 };
 
 /**
@@ -25,7 +27,14 @@ type Options = {
  */
 function fakeAdmin(
   objects: Set<string>,
-  { storageError, storageErrorAfter, uploadedLate, deleteError = null, rpc = {} }: Options = {},
+  {
+    storageError,
+    storageErrorAfter,
+    uploadedLate,
+    deleteError = null,
+    rpc = {},
+    gone,
+  }: Options = {},
 ) {
   const calls: string[] = [];
   let deleted = false;
@@ -58,6 +67,10 @@ function fakeAdmin(
     },
     auth: {
       admin: {
+        getUserById: () =>
+          Promise.resolve(
+            gone ? { data: null, error: { status: 404 } } : { data: {}, error: null },
+          ),
         deleteUser: (id: string) => {
           calls.push(`delete ${id}`);
           deleted = true;
@@ -346,4 +359,14 @@ Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
   assertEquals(response.status, 429);
   assertEquals(await response.json(), { error: 'busy' });
   assertEquals(calls, [`take_account_deletion_password_try ${A}`]);
+});
+
+Deno.test('counts an account already gone as deleted, without asking for proof', async () => {
+  const { admin, calls } = fakeAdmin(new Set(), { gone: true });
+
+  const response = await handleDeleteRequest(post({ code: '481027' }), account(admin));
+
+  assertEquals(response.status, 200);
+  assertEquals(await response.json(), { deleted: true });
+  assertEquals(calls, []);
 });
