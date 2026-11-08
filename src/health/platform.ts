@@ -4,6 +4,7 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type WeightReading,
   type WorkoutStats,
 } from './types';
 
@@ -26,3 +27,9 @@ export const installStore = (): void => undefined;
 /** The heart rate and active calories measured between two times, unrounded. */
 export const workoutStats = (_from: Date, _to: Date): Promise<WorkoutStats> =>
   Promise.resolve(NO_WORKOUT_STATS);
+
+/** Asks for weight alone, for a user who connected before it was read; whether it was allowed. */
+export const requestWeightAccess = (): Promise<boolean> => Promise.resolve(false);
+
+/** The weighings since a time, oldest first. */
+export const weightsSince = (_from: Date): Promise<WeightReading[]> => Promise.resolve([]);

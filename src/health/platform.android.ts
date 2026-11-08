@@ -5,6 +5,7 @@ import {
   getGrantedPermissions,
   getSdkStatus,
   initialize,
+  readRecords,
   requestPermission,
   revokeAllPermissions,
   SdkAvailabilityStatus,
@@ -15,12 +16,14 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type WeightReading,
   type WorkoutStats,
 } from './types';
 
 const PERMISSIONS = [
   { accessType: 'read', recordType: 'HeartRate' },
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+  { accessType: 'read', recordType: 'Weight' },
 ] as const;
 
 const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
@@ -45,13 +48,16 @@ export async function availability(): Promise<HealthAvailability> {
   return 'unavailable';
 }
 
-/** Whether heart rate, the part a workout needs most, may be read. */
-async function heartRateAllowed(): Promise<boolean> {
+/** Whether a type may be read. */
+async function allowedToRead(recordType: string): Promise<boolean> {
   const granted = await getGrantedPermissions();
   return granted.some(
-    (permission) => permission.accessType === 'read' && permission.recordType === 'HeartRate',
+    (permission) => permission.accessType === 'read' && permission.recordType === recordType,
   );
 }
+
+/** Whether heart rate, the part a workout needs most, may be read. */
+const heartRateAllowed = () => allowedToRead('HeartRate');
 
 export async function requestAccess(): Promise<boolean> {
   if (!(await initialize())) return false;
@@ -112,4 +118,27 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     activeKcal,
     source: origin ? (APP_NAMES[origin] ?? origin) : null,
   };
+}
+
+export async function requestWeightAccess(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  await requestPermission([{ accessType: 'read', recordType: 'Weight' }]);
+  return allowedToRead('Weight');
+}
+
+export async function weightsSince(from: Date): Promise<WeightReading[]> {
+  if (!(await initialize()) || !(await allowedToRead('Weight'))) return [];
+  const { records } = await readRecords('Weight', {
+    timeRangeFilter: { operator: 'after', startTime: from.toISOString() },
+    ascendingOrder: true,
+    pageSize: 1000,
+  });
+  return records.map((record) => {
+    const origin = record.metadata?.dataOrigin;
+    return {
+      at: new Date(record.time),
+      weightKg: record.weight.inKilograms,
+      source: origin ? (APP_NAMES[origin] ?? origin) : null,
+    };
+  });
 }

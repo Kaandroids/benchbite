@@ -4,9 +4,10 @@
 export {
   availability as healthAvailability,
   installStore as installHealthStore,
+  requestWeightAccess as requestHealthWeightAccess,
   releaseAccess as releaseHealthAccess,
   requestAccess as requestHealthAccess,
   stillAllowed as healthStillAllowed,
   store as healthStore,
 } from './platform';
-export type { HealthAvailability, HealthStore, WorkoutStats } from './types';
+export type { HealthAvailability, HealthStore, WeightReading, WorkoutStats } from './types';
