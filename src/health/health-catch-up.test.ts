@@ -23,6 +23,7 @@ const STATS = {
   heartRate: { average: 131.6, max: 168 },
   activeKcal: 411.7,
   source: 'Apple Watch',
+  samples: null,
 };
 const log = (id: number) => ({
   id,

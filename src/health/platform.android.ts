@@ -13,6 +13,7 @@ import {
 } from 'react-native-health-connect';
 import { Linking } from 'react-native';
 
+import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
@@ -123,6 +124,7 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     heartRate: { average: heart.BPM_AVG, max: heart.BPM_MAX },
     activeKcal,
     source: sourceName(heart.dataOrigins[0]),
+    samples: heartRateSamples(await heartRatePoints(timeRangeFilter), from, to),
   };
 }
 
@@ -147,6 +149,31 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
     weightKg: record.weight.inKilograms,
     source: sourceName(record.metadata?.dataOrigin),
   }));
+}
+
+/** Every heart rate sample between two times, page by page; a workout has a few thousand at most. */
+async function heartRatePoints(timeRangeFilter: {
+  operator: 'between';
+  startTime: string;
+  endTime: string;
+}): Promise<HeartRatePoint[]> {
+  const points: HeartRatePoint[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const { records, pageToken: next } = await readRecords('HeartRate', {
+      timeRangeFilter,
+      pageSize: 1000,
+      ...(pageToken ? { pageToken } : {}),
+    });
+    for (const record of records) {
+      for (const sample of record.samples) {
+        points.push({ at: new Date(sample.time), bpm: sample.beatsPerMinute });
+      }
+    }
+    if (!next) break;
+    pageToken = next;
+  }
+  return points;
 }
 
 export const stepsAllowed = () => allowedToRead('Steps');

@@ -18,10 +18,17 @@ export type WorkoutStats = {
   activeKcal: number | null;
   /** The app or watch that measured the heart rate, by its name. */
   source: string | null;
+  /** The heart rate every 10 seconds from the start (heartRateSamples()); null without any. */
+  samples: (number | null)[] | null;
 };
 
 /** Nothing measured. */
-export const NO_WORKOUT_STATS: WorkoutStats = { heartRate: null, activeKcal: null, source: null };
+export const NO_WORKOUT_STATS: WorkoutStats = {
+  heartRate: null,
+  activeKcal: null,
+  source: null,
+  samples: null,
+};
 
 /** A weighing the store holds: when, how much, and the app or scale that measured it. */
 export type WeightReading = { at: Date; weightKg: number; source: string | null };

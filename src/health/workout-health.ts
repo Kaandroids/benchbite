@@ -48,6 +48,8 @@ export async function keepWorkoutHealth(logId: number, stats: WorkoutStats): Pro
     heart_rate_max: stats.heartRate.max,
     ...(stats.activeKcal !== null ? { active_kcal: stats.activeKcal } : {}),
     ...(stats.source ? { source: stats.source } : {}),
+    // A sample the store had none for is sent as none, which the function keeps as a gap.
+    ...(stats.samples ? { heart_rate_samples: stats.samples as number[] } : {}),
   });
   if (error) throw error;
   return data === true;
