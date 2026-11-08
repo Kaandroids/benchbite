@@ -211,7 +211,7 @@ file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md
 | `pnpm format`           | Format all files with Prettier                        |
 | `pnpm format:check`     | Check formatting without changing it                  |
 | `pnpm test`             | Run the app's tests with Jest                         |
-| `pnpm check:locales`    | Check that all translations have the same keys        |
+| `pnpm check:locales`    | Check that translations and permission texts match    |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |
