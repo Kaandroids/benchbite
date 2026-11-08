@@ -2446,7 +2446,11 @@
       "through": "{{source}}, über {{store}}",
       "throughStore": "Über {{store}}",
       "waitingTitle": "Warte auf deine Uhr",
-      "waitingBody": "Herzfrequenz und Kalorien erscheinen hier, sobald sie in {{store}} ankommen. Benchbite sieht einen Tag lang wieder nach."
+      "waitingBody": "Herzfrequenz und Kalorien erscheinen hier, sobald sie in {{store}} ankommen. Benchbite sieht einen Tag lang wieder nach.",
+      "chartLabel_one": "Herzfrequenz im Workout, von {{low}} bis {{high}} Schlägen pro Minute, im Schnitt {{average}}, mit {{count}} Satz",
+      "chartLabel_other": "Herzfrequenz im Workout, von {{low}} bis {{high}} Schlägen pro Minute, im Schnitt {{average}}, mit {{count}} Sätzen",
+      "chartAverage": "Ø {{average}}",
+      "kcalEstimated": "Sie hat keine Kalorien gemessen, daher sind sie aus deiner Herzfrequenz geschätzt."
     },
     "ask": {
       "notNow": "Nicht jetzt",
