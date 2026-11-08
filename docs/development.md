@@ -186,6 +186,27 @@ pnpm ios                         # or pnpm android
   address on the local network, for example `http://192.168.1.20:54321`. The phone must be on
   the same network. On macOS, `ipconfig getifaddr en0` prints the address.
 
+## Add a language
+
+The app's text is in `src/i18n/locales/`, one file per language (ADR 0007). iOS takes the sentence
+under a permission prompt from `src/i18n/permissions/`, which `expo.locales` in `app.json` names. A
+new language needs all of these:
+
+1. `src/i18n/locales/<code>.json`, imported in `src/i18n/index.ts`, and its code in
+   `SUPPORTED_LANGUAGES`.
+2. `src/i18n/permissions/<code>.json`, with the keys of `en.json`.
+3. `"<code>": "./src/i18n/permissions/<code>.json"` in `expo.locales` in `app.json`, then a new
+   development build.
+
+`pnpm check:locales` checks that the files and `expo.locales` hold the same languages and keys, and
+that the English permission texts are those the config plugins in `app.json` write to Info.plist
+(ADR 0102). A new permission text goes in the plugin's options in `app.json`, in each file in
+`src/i18n/permissions/` and in `PLUGIN_TEXTS` in `scripts/check-locales.ts`. Set it in `app.json`
+even when the plugin has a default text: the check sees only the texts `app.json` sets.
+
+iOS picks a permission text by the phone's language, or the per-app language in iOS Settings, not by
+the language chosen in Benchbite.
+
 ## Run the website
 
 The website in `website/` is a package of its own, with its own dependencies:
@@ -211,7 +232,7 @@ file per language. See [ADR 0088](adr/0088-a-static-website-in-the-repository.md
 | `pnpm format`           | Format all files with Prettier                        |
 | `pnpm format:check`     | Check formatting without changing it                  |
 | `pnpm test`             | Run the app's tests with Jest                         |
-| `pnpm check:locales`    | Check that all translations have the same keys        |
+| `pnpm check:locales`    | Check that translations and permission texts match    |
 | `pnpm db:types`         | Generate TypeScript types from the local database     |
 | `pnpm import:exercises` | Import the exercise library from free-exercise-db     |
 | `pnpm import:foods`     | Import the food library from the BLS 4.0              |
