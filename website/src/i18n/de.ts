@@ -184,16 +184,16 @@ export const de: Messages = {
     kept: 'Was gelöscht wird und was bleibt',
     keptItems: [
       {
-        title: 'Sofort gelöscht',
-        text: 'Dein Konto, dein Plan, deine Workouts und dein Verlauf, Mahlzeiten, Rezepte und eigene Lebensmittel, Gewicht, Ziele und Fortschritt, deine Chats mit Bite und die Notizen, die Bite angelegt hat, und deine Übungsfotos. Die Fotos und Sprachnachrichten deiner Chats folgen, meist innerhalb von Minuten und spätestens nach wenigen Stunden.',
+        title: 'Gelöscht',
+        text: 'Dein Konto und alles, was dir gehört, meist innerhalb von 24 Stunden.',
       },
       {
-        title: 'Eine Zeit lang aufbewahrt',
-        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, bis diese ablaufen, und unser Eintrag zu einer Anfrage auf dieser Seite, einen Tag lang. E-Mails, die wir dir geschickt haben, bleiben in deinem Postfach, und unser E-Mail-Versender bewahrt einen Eintrag dazu bis zu 28 Tage auf.',
+        title: 'Bis zu 28 Tage aufbewahrt',
+        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, und ihre Einträge zu den E-Mails, die wir dir geschickt haben, bis sie überschrieben werden. Eine Anfrage auf dieser Seite wird einen Tag lang aufbewahrt.',
       },
       {
         title: 'Nicht von uns zu löschen',
-        text: 'Käufe und Abos bewahren der App Store oder Google Play auf.',
+        text: 'Käufe und Abos, die der App Store oder Google Play aufbewahren. E-Mails, die wir dir geschickt haben, bleiben in deinem Postfach.',
       },
     ],
   },

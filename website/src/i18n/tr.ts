@@ -182,17 +182,14 @@ export const tr: Messages = {
       'Bağlantı bir kez, 30 dakika boyunca çalışır. Hesabını silmek App Store veya Google Play aboneliğini iptal etmez.',
     kept: 'Neler silinir, neler kalır',
     keptItems: [
+      { title: 'Silinenler', text: 'Hesabın ve sana ait her şey, çoğunlukla 24 saat içinde.' },
       {
-        title: 'Hemen silinenler',
-        text: 'Hesabın, planın, antrenmanların ve geçmişin, öğünler, tarifler ve kendi besinlerin, kilo, hedefler ve ilerleme, Bite ile sohbetlerin ve Bite’ın tuttuğu notlar, ve egzersiz fotoğrafların. Sohbetlerindeki fotoğraflar ve sesler de silinir; çoğunlukla birkaç dakika içinde, en geç birkaç saatte.',
-      },
-      {
-        title: 'Bir süre kalanlar',
-        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar, süreleri dolana kadar; bu sayfadan yapılan bir isteğin kaydı da bir gün boyunca. Sana gönderdiğimiz e-postalar gelen kutunda kalır; e-posta gönderen hizmetimiz bunların kaydını en fazla 28 gün saklar.',
+        title: 'En fazla 28 gün kalanlar',
+        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar ve sana gönderdiğimiz e-postaların kayıtları, üzerine yazılana kadar. Bu sayfadan yapılan bir istek bir gün saklanır.',
       },
       {
         title: 'Bizim silemeyeceklerimiz',
-        text: 'Satın almalar ve abonelikler App Store veya Google Play’de kalır.',
+        text: 'Satın almalar ve abonelikler; bunları App Store veya Google Play saklar. Sana gönderdiğimiz e-postalar gelen kutunda kalır.',
       },
     ],
   },

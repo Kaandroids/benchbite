@@ -185,16 +185,16 @@ export const en = {
     kept: 'What is deleted and kept',
     keptItems: [
       {
-        title: 'Deleted at once',
-        text: 'Your account, your plan, workouts and history, meals, recipes and your own foods, weight, goals and progress, your chats with Bite and the notes Bite kept, and your exercise photos. The photos and voice of your chats follow, usually within minutes and at most within a few hours.',
+        title: 'Deleted',
+        text: 'Your account and everything that is yours, usually within 24 hours.',
       },
       {
-        title: 'Kept for a while',
-        text: 'Copies in the backups and logs of the services we use, until these expire, and our record of a request made on this page, for a day. Emails we sent you stay in your inbox, and our email sender keeps a record of them for up to 28 days.',
+        title: 'Kept for up to 28 days',
+        text: 'Copies in the backups and logs of the services we use, and their records of the emails we sent you, until these are overwritten. A request made on this page is kept for a day.',
       },
       {
         title: 'Not ours to delete',
-        text: 'Purchases and subscriptions are kept by the App Store or Google Play.',
+        text: 'Purchases and subscriptions, kept by the App Store or Google Play. Emails we sent you stay in your inbox.',
       },
     ],
   },
