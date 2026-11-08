@@ -10,10 +10,10 @@ Many users weigh themselves on a smart scale, or log their weight in another app
 ## Decision
 
 - **Weights come from the store as the app comes to the front,** while connected, from the last read on and at most 30 days back, with the latest weight of each day.
-- **`import_weights()` keeps them,** one a day, with the app or scale that measured them (`weight_entries.source`); of a day given twice, the last counts. Days that are no date, values that are no number or no person has, and days outside the last 60 are left out on their own: 60 is a ceiling above the 30 the app reads. The targets follow when anything changed, as they do after `log_weight()`.
+- **`import_weights()` keeps them,** one a day, marked as the store's (`weight_entries.from_health`) and with the app or scale that measured them when it is named (`source`); of a day given twice, the last counts. Days must be `YYYY-MM-DD`. Days that are no date, values that are no number or no person has, and days outside the last 60 are left out on their own: 60 is a ceiling above the 30 the app reads. The targets follow when anything changed, as they do after `log_weight()`.
 - **Weights are written only by functions:** `log_weight()`, `import_weights()` and `complete_onboarding()`. Users can no longer write `weight_entries` directly, which would leave a day's source as it was.
-- **A source's name is kept one way** (`health_source_name()`), for weights and workouts alike: a string, trimmed and cut to 80 characters.
-- **A weight entered in Benchbite wins on its day.** Its source is none; the store never changes such a day. `log_weight()` clears the source, so a day the store had filled becomes the user's own once they change it. It writes the source, which users may not, so it now runs with the definer's rights and checks the caller and the day itself.
+- **A source's name is kept one way** (`health_source_name()`), for weights and workouts alike: trimmed, at most 80 characters, none when nothing is left. A missing source stays none, as for workouts; the app names the store then.
+- **A weight entered in Benchbite wins on its day:** the store never changes a day that is not marked as its own. `log_weight()` makes a day the user's own, and can also correct a day of the last 60 that the store filled, as when someone else stepped on a shared scale. It writes the mark, which users may not, so it now runs with the definer's rights and checks the caller and the day itself.
 - **Users already connected are asked once** for the new permission, on Progress; new connections ask for it with the others.
 - **Not now:** height, which does not change, body fat, and writing Benchbite's weights to the store.
 
