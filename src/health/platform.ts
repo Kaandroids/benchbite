@@ -34,5 +34,5 @@ export const weightAllowed = (): Promise<boolean> => Promise.resolve(false);
 /** Asks for weight alone, for a user who connected before it was read; whether it was allowed. */
 export const requestWeightAccess = (): Promise<boolean> => Promise.resolve(false);
 
-/** The weighings since a time, oldest first. */
+/** The weighings since a time, in no set order. */
 export const weightsSince = (_from: Date): Promise<WeightReading[]> => Promise.resolve([]);

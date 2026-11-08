@@ -38,6 +38,10 @@ const APP_NAMES: Record<string, string> = {
   'com.google.android.apps.healthdata': 'Health Connect',
 };
 
+/** The app's name for a package that wrote data, or the package itself. */
+const sourceName = (origin: string | undefined): string | null =>
+  origin ? (APP_NAMES[origin] ?? origin) : null;
+
 export const store: HealthStore = 'healthConnect';
 
 export async function availability(): Promise<HealthAvailability> {
@@ -112,11 +116,10 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
       console.warn('Could not read the active calories', error);
     }
   }
-  const origin = heart.dataOrigins[0];
   return {
     heartRate: { average: heart.BPM_AVG, max: heart.BPM_MAX },
     activeKcal,
-    source: origin ? (APP_NAMES[origin] ?? origin) : null,
+    source: sourceName(heart.dataOrigins[0]),
   };
 }
 
@@ -132,15 +135,13 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
   if (!(await initialize()) || !(await allowedToRead('Weight'))) return [];
   const { records } = await readRecords('Weight', {
     timeRangeFilter: { operator: 'after', startTime: from.toISOString() },
-    ascendingOrder: true,
+    // Newest first, so a page that cannot hold them all leaves out the oldest.
+    ascendingOrder: false,
     pageSize: 1000,
   });
-  return records.map((record) => {
-    const origin = record.metadata?.dataOrigin;
-    return {
-      at: new Date(record.time),
-      weightKg: record.weight.inKilograms,
-      source: origin ? (APP_NAMES[origin] ?? origin) : null,
-    };
-  });
+  return records.map((record) => ({
+    at: new Date(record.time),
+    weightKg: record.weight.inKilograms,
+    source: sourceName(record.metadata?.dataOrigin),
+  }));
 }
