@@ -59,7 +59,7 @@ function database(
       maybeSingle: () => Promise.resolve({ data: result().data[0] ?? null, error: null }),
       single: () => Promise.resolve({ data: result().data[0], error: null }),
     };
-    for (const method of ['select', 'eq', 'is', 'in', 'ilike', 'order', 'limit']) {
+    for (const method of ['select', 'eq', 'is', 'in', 'ilike', 'gte', 'lte', 'order', 'limit']) {
       builder[method] = () => builder;
     }
     return builder;

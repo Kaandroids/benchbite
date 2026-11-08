@@ -5,6 +5,7 @@
 import type { NoteCategory } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+import { addDays } from './day.ts';
 import { alternativeName, workoutName } from './workout.ts';
 
 type GoalKind = Database['public']['Enums']['goal_kind'];
@@ -39,6 +40,12 @@ export type Snapshot = {
   };
   /** The latest weight, in kg. */
   weightKg?: number;
+  /**
+   * The steps the phone's health store counted (ADR 0103): today's so far, none before the store
+   * counted any or while steps are not read, and the average a day of the STEP_DAYS days before
+   * over the days counted; none when no step was read that week.
+   */
+  steps?: { today?: number; average?: number; days: number };
   targets?: Macros;
   eaten?: Macros;
   training?: string;
@@ -71,6 +78,9 @@ export type Note = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/** How many days before today the steps' average a day is of. */
+export const STEP_DAYS = 7;
+
 /** Weekdays, 1 Monday to 7 Sunday, as "Mon, Thu". */
 function dayNames(days: number[]) {
   return days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ');
@@ -83,7 +93,7 @@ export async function loadSnapshot(
   time?: string,
 ): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan] =
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan, steps] =
     await Promise.all([
       supabase
         .from('profiles')
@@ -115,8 +125,25 @@ export async function loadSnapshot(
         .eq('active', true)
         .order('id')
         .order('position', { referencedTable: 'workout_alternatives' }),
+      supabase
+        .from('step_days')
+        .select('day, steps')
+        .gte('day', addDays(today, -STEP_DAYS))
+        .lte('day', today),
     ]);
-  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan };
+  const results = {
+    profile,
+    goal,
+    pace,
+    weight,
+    nutrition,
+    planned,
+    trained,
+    streak,
+    notes,
+    plan,
+    steps,
+  };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -155,6 +182,15 @@ export async function loadSnapshot(
     };
   }
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;
+  if (steps.data?.length) {
+    const before = steps.data.filter(({ day }) => day !== today);
+    const total = before.reduce((sum, row) => sum + row.steps, 0);
+    snapshot.steps = {
+      today: steps.data.find(({ day }) => day === today)?.steps,
+      average: before.length ? Math.round(total / before.length) : undefined,
+      days: before.length,
+    };
+  }
   const n = nutrition.data?.[0];
   if (n) {
     snapshot.targets = {
