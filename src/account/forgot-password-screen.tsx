@@ -101,7 +101,7 @@ function ResetCodeScreen({ email, onBack }: { email: string; onBack: () => void 
           {entry.message ? <Note tone="danger">{entry.message}</Note> : null}
           <Button
             label={t('account.confirm')}
-            disabled={entry.code.length < CODE_LENGTH}
+            disabled={!entry.full}
             loading={entry.checking}
             onPress={entry.submit}
           />

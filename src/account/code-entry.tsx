@@ -104,6 +104,8 @@ export function useCodeEntry<C, R>({
   const { reason, message } = useAccountError(check.error ?? resend.error);
   return {
     code,
+    /** Whether all of the code is in. */
+    full: code.length === CODE_LENGTH,
     change,
     submit: () => submit(code),
     sendAgain,
