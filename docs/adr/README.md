@@ -22,7 +22,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0004](0004-auth-session-storage.md)                                  | Store the auth session with expo-sqlite's localStorage                                  | Accepted                                             |
 | [0005](0005-guest-first-accounts.md)                                  | Let people start as guests with anonymous sign-ins                                      | Accepted                                             |
 | [0006](0006-styling-with-stylesheet-and-tokens.md)                    | Style the app with StyleSheet and theme tokens                                          | Accepted                                             |
-| [0007](0007-internationalization.md)                                  | Translate the app with i18next and default units from the device                        | Accepted                                             |
+| [0007](0007-internationalization.md)                                  | Translate the app with i18next and default units from the device                        | Accepted, amended by ADR-0102                        |
 | [0008](0008-exercise-library.md)                                      | Import free-exercise-db as the exercise library                                         | Accepted                                             |
 | [0009](0009-nutrition-targets.md)                                     | Calculate nutrition targets in Postgres on every read                                   | Accepted                                             |
 | [0010](0010-plan-builder-edge-function.md)                            | Build the starter workout plan in an Edge Function from fixed rules                     | Accepted                                             |
@@ -117,3 +117,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0099](0099-read-a-workouts-health-again-for-a-day.md)                | Read a workout's health again for a day                                                 | Accepted                                             |
 | [0100](0100-take-weight-from-the-health-store.md)                     | Take weight from the health store                                                       | Accepted, amended by ADR-0101                        |
 | [0101](0101-read-the-last-30-days-of-weight-each-time.md)             | Read the last 30 days of weight each time                                               | Accepted                                             |
+| [0102](0102-translate-the-ios-permission-texts.md)                    | Translate the iOS permission texts                                                      | Accepted                                             |

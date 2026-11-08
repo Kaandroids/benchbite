@@ -1,6 +1,6 @@
 # 0007. Translate the app with i18next and default units from the device
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0102
 - **Date:** 2026-10-20
 
 ## Context
