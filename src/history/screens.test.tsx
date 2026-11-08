@@ -10,6 +10,7 @@ import { EditLogScreen } from './edit-log-screen';
 import {
   useDeleteLog,
   useEditLog,
+  useHeartRateSamples,
   useLoggedSets,
   useLogSummaries,
   useLogSummary,
@@ -44,6 +45,7 @@ jest.mock('./history', () => ({
   useLogSummary: jest.fn(),
   useRecentLogs: jest.fn(),
   useLoggedSets: jest.fn(),
+  useHeartRateSamples: jest.fn(),
   useDeleteLog: jest.fn(),
   useEditLog: jest.fn(),
 }));
@@ -73,6 +75,8 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   heartRateMax: null,
   activeKcal: null,
   healthSource: null,
+  kcal: 390,
+  kcalSource: 'minutes',
   plannedExerciseIds: null,
   alternative: null,
 });
@@ -88,6 +92,11 @@ const LOGS = [
 const deleteLog = jest.fn();
 const fetchNextPage = jest.fn();
 const editLog = jest.fn();
+
+/** When the logged sets were done. */
+const BENCH_1 = new Date('2026-10-23T16:10:00Z');
+const BENCH_2 = new Date('2026-10-23T16:14:00Z');
+const PLANK = new Date('2026-10-23T16:40:00Z');
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -131,6 +140,7 @@ beforeEach(() => {
       },
     ]) as never,
   );
+  jest.mocked(useHeartRateSamples).mockReturnValue(loaded(null) as never);
   jest.mocked(useLoggedSets).mockReturnValue(
     loaded([
       {
@@ -140,6 +150,7 @@ beforeEach(() => {
         reps: 8,
         seconds: null,
         meters: null,
+        doneAt: BENCH_1,
       },
       {
         exercisePosition: 0,
@@ -148,6 +159,7 @@ beforeEach(() => {
         reps: 7,
         seconds: null,
         meters: null,
+        doneAt: BENCH_2,
       },
       {
         exercisePosition: 2,
@@ -156,6 +168,7 @@ beforeEach(() => {
         reps: null,
         seconds: 50,
         meters: null,
+        doneAt: PLANK,
       },
     ]) as never,
   );
@@ -333,6 +346,8 @@ describe('LogScreen', () => {
         heartRateMax: 168,
         activeKcal: 412,
         healthSource: 'Apple Watch',
+        kcal: 412,
+        kcalSource: 'watch',
       }) as never,
     );
     await render(<LogScreen id={3} />);
@@ -341,6 +356,30 @@ describe('LogScreen', () => {
     expect(screen.getByText('From your watch')).toBeTruthy();
     expect(screen.getByText('132')).toBeTruthy();
     expect(screen.getByText('168')).toBeTruthy();
+  });
+
+  it('draws the heart rate over the workout, with its sets, and says when calories are estimated', async () => {
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        heartRateAvg: 132,
+        heartRateMax: 168,
+        healthSource: 'Zepp',
+        kcal: 395,
+        kcalSource: 'heart_rate',
+      }) as never,
+    );
+    jest.mocked(useHeartRateSamples).mockReturnValue(loaded([95, 120, 168, 140]) as never);
+    await render(<LogScreen id={3} />);
+    expect(screen.getByText('~395')).toBeTruthy();
+    expect(
+      screen.getByLabelText(
+        'Heart rate over the workout, from 95 to 168 beats a minute, 132 on average, with 3 sets',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/It measured no calories, so they are estimated from your heart rate/),
+    ).toBeTruthy();
   });
 
   it('waits for the watch for a day after a workout, while connected', async () => {
@@ -440,13 +479,20 @@ describe('LogScreen', () => {
 });
 
 describe('EditLogScreen', () => {
-  const bench = (weightKg: number | null, reps: number | null) => ({
+  const bench = (weightKg: number | null, reps: number | null, doneAt: Date | null = null) => ({
     weightKg,
     reps,
     seconds: null,
     meters: null,
+    doneAt,
   });
-  const plank = (seconds: number) => ({ weightKg: null, reps: null, seconds, meters: null });
+  const plank = (seconds: number, doneAt: Date | null = null) => ({
+    weightKg: null,
+    reps: null,
+    seconds,
+    meters: null,
+    doneAt,
+  });
 
   it('shows the sets to edit and keeps the time', async () => {
     await render(<EditLogScreen id={3} />);
@@ -472,9 +518,10 @@ describe('EditLogScreen', () => {
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
-        { place: 0, exerciseId: 'bench', sets: [bench(82.5, 8)] },
+        { place: 0, exerciseId: 'bench', sets: [bench(82.5, 8, BENCH_1)] },
         { place: 1, exerciseId: 'row', sets: [] },
-        { place: 2, exerciseId: 'plank', sets: [plank(50), plank(50)] },
+        // A set added in the edit was not done during the workout, so it has no time.
+        { place: 2, exerciseId: 'plank', sets: [plank(50, PLANK), plank(50)] },
       ],
     });
     expect(router.back).toHaveBeenCalled();
@@ -495,9 +542,9 @@ describe('EditLogScreen', () => {
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
-        { place: 0, exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
+        { place: 0, exerciseId: 'bench', sets: [bench(80, 8, BENCH_1), bench(80, 7, BENCH_2)] },
         { place: 1, exerciseId: 'row', sets: [bench(50, 10)] },
-        { place: 2, exerciseId: 'plank', sets: [plank(50)] },
+        { place: 2, exerciseId: 'plank', sets: [plank(50, PLANK)] },
       ],
     });
   });
@@ -511,8 +558,8 @@ describe('EditLogScreen', () => {
     expect(editLog).toHaveBeenCalledWith({
       id: 3,
       exercises: [
-        { place: 0, exerciseId: 'bench', sets: [bench(80, 8), bench(80, 7)] },
-        { place: 2, exerciseId: 'plank', sets: [plank(50)] },
+        { place: 0, exerciseId: 'bench', sets: [bench(80, 8, BENCH_1), bench(80, 7, BENCH_2)] },
+        { place: 2, exerciseId: 'plank', sets: [plank(50, PLANK)] },
       ],
     });
   });

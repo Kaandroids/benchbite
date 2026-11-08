@@ -26,7 +26,15 @@ import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 
 import { useTotalFormat } from './format';
-import { byExercise, doneOf, kcalOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
+import {
+  byExercise,
+  doneOf,
+  kcalOf,
+  useDeleteLog,
+  useHeartRateSamples,
+  useLoggedSets,
+  useLogSummary,
+} from './history';
 
 // The width the buttons beside an exercise take, with the space before them.
 const BUTTON_ROOM = 40;
@@ -38,6 +46,7 @@ export function LogScreen({ id }: { id: number }) {
   const { colors, spacing } = useTheme();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
+  const heartRate = useHeartRateSamples(id);
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
@@ -161,6 +170,18 @@ export function LogScreen({ id }: { id: number }) {
           averageBpm={log.heartRateAvg}
           maxBpm={log.heartRateMax}
           source={log.healthSource}
+          chart={
+            heartRate.data
+              ? {
+                  samples: heartRate.data,
+                  average: log.heartRateAvg,
+                  startedAt: log.startedAt,
+                  finishedAt: log.finishedAt,
+                  setTimes: (sets.data ?? []).flatMap((set) => (set.doneAt ? [set.doneAt] : [])),
+                }
+              : null
+          }
+          kcalEstimated={log.kcalSource === 'heart_rate'}
         />
       ) : waitingForWatch ? (
         <WaitingCard />
