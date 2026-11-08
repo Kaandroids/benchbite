@@ -928,6 +928,7 @@ export type Database = {
       };
       logged_sets: {
         Row: {
+          done_at: string | null;
           exercise_id: string;
           exercise_position: number;
           id: number;
@@ -941,6 +942,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          done_at?: string | null;
           exercise_id: string;
           exercise_position: number;
           id?: never;
@@ -953,6 +955,7 @@ export type Database = {
           weight_kg?: number | null;
         };
         Update: {
+          done_at?: string | null;
           exercise_id?: string;
           exercise_position?: number;
           id?: never;
@@ -1748,7 +1751,9 @@ export type Database = {
           finished_at: string;
           health_source: string | null;
           heart_rate_avg: number | null;
+          heart_rate_kcal: number | null;
           heart_rate_max: number | null;
+          heart_rate_samples: number[] | null;
           id: number;
           name: string | null;
           planned_exercise_ids: string[] | null;
@@ -1771,7 +1776,9 @@ export type Database = {
           finished_at: string;
           health_source?: string | null;
           heart_rate_avg?: number | null;
+          heart_rate_kcal?: number | null;
           heart_rate_max?: number | null;
+          heart_rate_samples?: number[] | null;
           id?: never;
           name?: string | null;
           planned_exercise_ids?: string[] | null;
@@ -1793,7 +1800,9 @@ export type Database = {
           finished_at?: string;
           health_source?: string | null;
           heart_rate_avg?: number | null;
+          heart_rate_kcal?: number | null;
           heart_rate_max?: number | null;
+          heart_rate_samples?: number[] | null;
           id?: never;
           name?: string | null;
           planned_exercise_ids?: string[] | null;
@@ -1914,6 +1923,8 @@ export type Database = {
           heart_rate_avg: number | null;
           heart_rate_max: number | null;
           id: number | null;
+          kcal: number | null;
+          kcal_source: Database['public']['Enums']['kcal_source'] | null;
           kilograms: number | null;
           name: string | null;
           planned_exercise_ids: string[] | null;
@@ -2290,6 +2301,10 @@ export type Database = {
         Returns: Database['public']['Enums']['plan'];
       };
       device_today_or_server: { Args: { sent: string }; Returns: string };
+      done_at_within: {
+        Args: { done_at: string; finished: string; started: string };
+        Returns: string;
+      };
       edit_exercise: { Args: { exercise: Json; exercise_id: string }; Returns: undefined };
       edit_workout_log: { Args: { log: Json; log_id: number }; Returns: undefined };
       edited_workout_exercises: { Args: { edit: Json; workout: Json }; Returns: Json };
@@ -2392,6 +2407,31 @@ export type Database = {
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
       health_source_name: { Args: { source: string }; Returns: string };
+      heart_rate_kcal: {
+        Args: {
+          age: number;
+          heart_rate: number;
+          minutes: number;
+          sex: Database['public']['Enums']['sex'];
+          weight_kg: number;
+        };
+        Returns: number;
+      };
+      heart_rate_kcal_of: {
+        Args: {
+          average: number;
+          log: Omit<
+            Database['public']['Tables']['workout_logs']['Row'],
+            Database['public']['Tables']['workout_logs']['ComputedFields']
+          >;
+        };
+        Returns: number;
+      };
+      heart_rate_or_none: { Args: { heart_rate: number }; Returns: number };
+      heart_rate_samples_of: {
+        Args: { finished: string; samples: number[]; started: string };
+        Returns: number[];
+      };
       import_steps: { Args: { days: Json; today: string }; Returns: number };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
@@ -2430,6 +2470,7 @@ export type Database = {
       last_sets: {
         Args: { exercise_ids: string[] };
         Returns: {
+          done_at: string | null;
           exercise_id: string;
           exercise_position: number;
           id: number;
@@ -2873,6 +2914,7 @@ export type Database = {
           active_kcal?: number;
           heart_rate_avg?: number;
           heart_rate_max?: number;
+          heart_rate_samples?: number[];
           log_id: number;
           source?: string;
         };
@@ -2881,6 +2923,7 @@ export type Database = {
       sets_of: {
         Args: { log: Json };
         Returns: {
+          done_at: string;
           exercise_id: string;
           exercise_position: number;
           meters: number;
@@ -3027,6 +3070,7 @@ export type Database = {
         Returns: number;
       };
       weekly_loss_kg: { Args: { kept: number; target: number }; Returns: number };
+      weight_on: { Args: { day: string; user_id: string }; Returns: number };
       with_grace: {
         Args: {
           span: unknown;
@@ -3132,6 +3176,7 @@ export type Database = {
       food_source: 'bls';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
       height_unit: 'cm' | 'ft';
+      kcal_source: 'watch' | 'heart_rate' | 'minutes';
       meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       muscle:
         | 'abdominals'
@@ -3433,6 +3478,7 @@ export const Constants = {
       food_source: ['bls'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
       height_unit: ['cm', 'ft'],
+      kcal_source: ['watch', 'heart_rate', 'minutes'],
       meal: ['breakfast', 'lunch', 'dinner', 'snack'],
       muscle: [
         'abdominals',
