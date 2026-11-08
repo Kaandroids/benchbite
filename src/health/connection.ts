@@ -29,3 +29,39 @@ export function setHealthConnected(connected: boolean) {
 export function useHealthConnected(): boolean {
   return useSyncExternalStore(subscribe, isHealthConnected);
 }
+
+const WEIGHT_KEY = 'health.weight';
+const WEIGHTS_READ_AT_KEY = 'health.weightsReadAt';
+
+/**
+ * Whether weight is read from the store (ADR 0100): on, off when the user said not now, or not
+ * asked yet, as for a user who connected before weight was read.
+ */
+export type WeightReading = 'on' | 'off' | null;
+
+export function weightReading(): WeightReading {
+  const stored = readItem(WEIGHT_KEY);
+  return stored === 'on' || stored === 'off' ? stored : null;
+}
+
+export function setWeightReading(reading: WeightReading) {
+  writeItem(WEIGHT_KEY, reading);
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/** Whether weight is read from the store, kept up to date. */
+export function useWeightReading(): WeightReading {
+  return useSyncExternalStore(subscribe, weightReading);
+}
+
+/** When the store's weights were last read, to read only what came since. */
+export function weightsReadAt(): Date | null {
+  const stored = readItem(WEIGHTS_READ_AT_KEY);
+  return stored ? new Date(stored) : null;
+}
+
+export function setWeightsReadAt(at: Date | null) {
+  writeItem(WEIGHTS_READ_AT_KEY, at ? at.toISOString() : null);
+}
