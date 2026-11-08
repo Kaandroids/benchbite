@@ -12,7 +12,8 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { WatchCard } from '@/health/watch-card';
-import { keepNewLogHealth, measuredAnything, useWorkoutHealth } from '@/health/workout-health';
+import { keepNewLogHealth } from '@/health/health-catch-up';
+import { hasHeartRate, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { dbErrorMessage, isDbError } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
@@ -107,7 +108,7 @@ export function FinishScreen({ next }: { next?: number }) {
     try {
       const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
       // What the watch measured goes with it; if it cannot, it is read again later (ADR 0099).
-      if (measuredAnything(health.data) && logId !== null) {
+      if (hasHeartRate(health.data) && logId !== null) {
         keepNewLogHealth(queryClient, logId, health.data);
       }
       endSession();
@@ -169,10 +170,10 @@ export function FinishScreen({ next }: { next?: number }) {
         </View>
 
         <FinishStats session={session} totals={totals} finishedAt={finishedAt} />
-        {measuredAnything(health.data) ? (
+        {hasHeartRate(health.data) ? (
           <WatchCard
-            averageBpm={health.data.averageBpm}
-            maxBpm={health.data.maxBpm}
+            averageBpm={health.data.heartRate.average}
+            maxBpm={health.data.heartRate.max}
             activeKcal={health.data.activeKcal}
             source={health.data.source}
           />

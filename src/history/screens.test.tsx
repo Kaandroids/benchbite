@@ -358,7 +358,21 @@ describe('LogScreen', () => {
     expect(screen.queryByText('From your watch')).toBeNull();
   });
 
-  it('shows nothing of a watch for an older workout, or without one connected', async () => {
+  it('waits for no watch while none is connected', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(false);
+    const finishedAt = new Date();
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        startedAt: new Date(finishedAt.getTime() - 3_000_000),
+        finishedAt,
+      }) as never,
+    );
+    await render(<LogScreen id={3} />);
+    expect(screen.queryByText('Waiting for your watch')).toBeNull();
+  });
+
+  it('shows nothing of a watch for an older workout', async () => {
     jest.mocked(useHealthConnected).mockReturnValue(true);
     const finishedAt = new Date(Date.now() - 2 * 24 * 3600 * 1000);
     jest.mocked(useLogSummary).mockReturnValue(
