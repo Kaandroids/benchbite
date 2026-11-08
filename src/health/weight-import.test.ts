@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createTestQueryClient } from '@/test/render';
 
-import { setHealthConnected, setWeightSync } from './connection';
+import { setHealthConnected, setReadSync } from './connection';
 import { weightsSince } from './platform';
 import { importHealthWeights, latestPerDay } from './weight-import';
 
@@ -32,7 +32,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: NOW, advanceTimers: true });
   setHealthConnected(true);
-  setWeightSync('on');
+  setReadSync('weight', 'on');
   signedIn('user-1');
   jest.mocked(weightsSince).mockResolvedValue([
     { at: at(7, 7), weightKg: 84.6, source: 'Withings' },
@@ -106,11 +106,11 @@ it('says when the weights could not be sent', async () => {
 });
 
 it('reads nothing while weight is not read or the store not connected', async () => {
-  setWeightSync('off');
+  setReadSync('weight', 'off');
   expect(await importHealthWeights(createTestQueryClient())).toBe(false);
-  setWeightSync(null);
+  setReadSync('weight', null);
   expect(await importHealthWeights(createTestQueryClient())).toBe(false);
-  setWeightSync('on');
+  setReadSync('weight', 'on');
   setHealthConnected(false);
   expect(await importHealthWeights(createTestQueryClient())).toBe(false);
 

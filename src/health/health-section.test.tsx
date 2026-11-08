@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { isHealthConnected, setHealthConnected, setWeightSync, weightSync } from './connection';
+import { isHealthConnected, setHealthConnected, setReadSync, readSync } from './connection';
 import {
   healthAvailability,
+  healthStepsAllowed,
   healthStillAllowed,
   healthWeightAllowed,
   installHealthStore,
@@ -25,6 +26,7 @@ jest.mock('expo-sqlite/kv-store', () => {
 jest.mock('./health', () => ({
   healthStore: 'appleHealth',
   healthAvailability: jest.fn(),
+  healthStepsAllowed: jest.fn(),
   healthStillAllowed: jest.fn(),
   healthWeightAllowed: jest.fn(),
   requestHealthAccess: jest.fn(),
@@ -38,11 +40,12 @@ const available = (availability: HealthAvailability) =>
 beforeEach(() => {
   jest.clearAllMocks();
   setHealthConnected(false);
-  setWeightSync(null);
+  setReadSync('weight', null);
   available('available');
   jest.mocked(requestHealthAccess).mockResolvedValue(true);
   jest.mocked(healthStillAllowed).mockResolvedValue(true);
   jest.mocked(healthWeightAllowed).mockResolvedValue(true);
+  jest.mocked(healthStepsAllowed).mockResolvedValue(true);
   jest.mocked(releaseHealthAccess).mockResolvedValue();
 });
 
@@ -72,7 +75,8 @@ it('connects once the system allowed it', async () => {
   expect(requestHealthAccess).toHaveBeenCalled();
   expect(await screen.findByText('Connected')).toBeOnTheScreen();
   expect(isHealthConnected()).toBe(true);
-  expect(weightSync()).toBe('on');
+  expect(readSync('weight')).toBe('on');
+  expect(readSync('steps')).toBe('on');
 });
 
 it('leaves weight to be asked for alone when the system allowed the rest without it', async () => {
@@ -82,7 +86,7 @@ it('leaves weight to be asked for alone when the system allowed the rest without
   await fireEvent.press(await screen.findByRole('button', { name: 'Continue' }));
 
   expect(await screen.findByText('Connected')).toBeOnTheScreen();
-  expect(weightSync()).toBeNull();
+  expect(readSync('weight')).toBeNull();
 });
 
 it('connects nothing when the last question is declined', async () => {

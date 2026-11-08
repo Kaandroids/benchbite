@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { setHealthConnected, setWeightSync } from '@/health/connection';
+import { forgetHealthOnDevice } from '@/health/connection';
 import { releaseHealthAccess } from '@/health/health';
 import { readItem, writeItem } from '@/lib/device-storage';
 import { useUserId } from '@/providers/session-provider';
@@ -33,8 +33,7 @@ export function claimDevice(userId: string) {
   void cancelReminders().catch((error: unknown) =>
     console.warn('Could not cancel the reminders', error),
   );
-  setHealthConnected(false);
-  setWeightSync(null);
+  forgetHealthOnDevice();
   void releaseHealthAccess().catch((error: unknown) =>
     console.warn('Could not give up the access to health data', error),
   );

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import { setHealthConnected, setWeightSync, useHealthConnected } from './connection';
+import { setHealthConnected, setReadSync, useHealthConnected } from './connection';
 import {
   healthAvailability,
+  healthStepsAllowed,
   healthStillAllowed,
   healthWeightAllowed,
   releaseHealthAccess,
@@ -63,9 +64,14 @@ export function useHealthConnection() {
     setBusy(true);
     try {
       const allowed = await requestHealthAccess();
-      // Weight is among what was asked for (ADR 0100); Android can allow the rest without it, and
-      // Progress then asks for it alone. It is set first, as connecting starts the first read.
-      if (allowed) setWeightSync((await healthWeightAllowed()) ? 'on' : null);
+      // Weight and steps are among what was asked for (ADR 0100, 0103); Android can allow the rest
+      // without them, and Progress and Today then ask for each alone. They are set first, as
+      // connecting starts the first read.
+      if (allowed) {
+        const [weight, steps] = await Promise.all([healthWeightAllowed(), healthStepsAllowed()]);
+        setReadSync('weight', weight ? 'on' : null);
+        setReadSync('steps', steps ? 'on' : null);
+      }
       setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');
     } catch (error) {
