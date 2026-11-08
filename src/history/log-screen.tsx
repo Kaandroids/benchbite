@@ -13,6 +13,8 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { WaitingCard, WatchCard } from '@/health/watch-card';
+import { useAwaitingWatch } from '@/health/workout-health';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
@@ -24,7 +26,7 @@ import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 
 import { useTotalFormat } from './format';
-import { byExercise, doneOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
+import { byExercise, doneOf, kcalOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
 
 // The width the buttons beside an exercise take, with the space before them.
 const BUTTON_ROOM = 40;
@@ -43,6 +45,7 @@ export function LogScreen({ id }: { id: number }) {
   const { format } = useNumberFormat();
   const formatTotal = useTotalFormat();
   const log = summary.data;
+  const waitingForWatch = useAwaitingWatch(log);
 
   if (!allLoaded([summary, sets, library])) {
     return (
@@ -76,13 +79,15 @@ export function LogScreen({ id }: { id: number }) {
   const totalTime = workoutLength(
     Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 1000),
   );
+  const burned = kcalOf(log);
   // The workout at a glance, quietly: the figures stand out by weight, not colour.
   const stats = [
     { value: totalTime, label: t('history.stats.time') },
     { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
     { value: format(Math.round(log.kilograms)), label: 'kg' },
-    ...(log.estimatedKcal !== null
-      ? [{ value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
+    // What the watch measured takes the estimate's place.
+    ...(burned
+      ? [{ value: `${burned.measured ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
       : []),
   ];
 
@@ -151,6 +156,15 @@ export function LogScreen({ id }: { id: number }) {
           </View>
         }
       />
+      {log.heartRateAvg !== null && log.heartRateMax !== null ? (
+        <WatchCard
+          averageBpm={log.heartRateAvg}
+          maxBpm={log.heartRateMax}
+          source={log.healthSource}
+        />
+      ) : waitingForWatch ? (
+        <WaitingCard />
+      ) : null}
 
       {exercises.map((exercise, index) => {
         const info = findExercise(library.data, exercise.exerciseId);

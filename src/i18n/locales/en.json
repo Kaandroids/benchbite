@@ -1661,6 +1661,7 @@
     "minutes": "{{minutes}} min",
     "hours": "{{hours}} h {{minutes}} min",
     "kcal": "~{{kcal}} kcal",
+    "kcalMeasured": "{{kcal}} kcal",
     "open": "Opens the workout",
     "stats": {
       "time": "time",
@@ -2417,6 +2418,16 @@
       "unavailable": "This device has no health data to read.",
       "failed": "That didn’t work. Try again in a moment.",
       "releaseFailed": "Benchbite stopped reading, but Health Connect still allows it. Take it back in Health Connect."
+    },
+    "watch": {
+      "title": "From your watch",
+      "averageBpm": "avg bpm",
+      "maxBpm": "max bpm",
+      "kcal": "kcal burned",
+      "through": "{{source}}, through {{store}}",
+      "throughStore": "Through {{store}}",
+      "waitingTitle": "Waiting for your watch",
+      "waitingBody": "Its heart rate and calories show here once they reach {{store}}. Benchbite looks again for a day."
     }
   }
 }

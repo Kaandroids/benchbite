@@ -9,3 +9,16 @@ export type HealthStore = 'appleHealth' | 'healthConnect' | null;
  * Play first, and cannot have it at all before Android 9.
  */
 export type HealthAvailability = 'available' | 'missing' | 'unavailable';
+
+/** What was measured between two times: each part missing when nothing measured it. */
+export type WorkoutStats = {
+  /** The average and highest heart rate, in beats a minute, unrounded. */
+  heartRate: { average: number; max: number } | null;
+  /** The active calories of the apps that measured the heart rate, which a watch writes. */
+  activeKcal: number | null;
+  /** The app or watch that measured the heart rate, by its name. */
+  source: string | null;
+};
+
+/** Nothing measured. */
+export const NO_WORKOUT_STATS: WorkoutStats = { heartRate: null, activeKcal: null, source: null };

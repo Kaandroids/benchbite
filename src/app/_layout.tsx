@@ -23,6 +23,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { ReminderSync } from '@/reminders/reminder-sync';
 import { showRemindersInForeground } from '@/reminders/reminders';
+import { WorkoutHealthCatchUp } from '@/health/health-catch-up';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';
@@ -144,6 +145,7 @@ function RootNavigator() {
       {status === 'ready' ? <LeftOpenSaver /> : null}
       {status === 'ready' ? <StartMoveSheet /> : null}
       {status === 'ready' && completed ? <ReminderSync /> : null}
+      {status === 'ready' && completed ? <WorkoutHealthCatchUp /> : null}
       {/* Drawn in the same frame the native splash screen hides, over the first screen. */}
       {splashDone ? null : <AnimatedSplash scheme={launchScheme} onDone={endSplash} />}
     </>

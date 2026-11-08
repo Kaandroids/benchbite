@@ -1,3 +1,4 @@
+import { useHealthConnected } from '@/health/connection';
 import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -24,6 +25,11 @@ jest.mock('expo-router', () => ({
   usePreventRemove: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('@/health/connection', () => ({ useHealthConnected: jest.fn(() => false) }));
+jest.mock('@/health/health', () => ({
+  ...jest.requireActual<typeof import('@/health/health')>('@/health/health'),
+  healthStore: 'appleHealth',
+}));
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),
@@ -63,6 +69,10 @@ const log = (id: number, type: LogSummary['type'], start: Date, minutes: number)
   plannedSets: null,
   kilograms: 6240,
   estimatedKcal: 390,
+  heartRateAvg: null,
+  heartRateMax: null,
+  activeKcal: null,
+  healthSource: null,
   plannedExerciseIds: null,
   alternative: null,
 });
@@ -313,6 +323,68 @@ describe('LogScreen', () => {
     await render(<LogScreen id={3} />);
     expect(screen.getByText('Push')).toBeTruthy();
     expect(screen.getByText('Home · Friday, October 23')).toBeTruthy();
+  });
+
+  it('shows what the watch measured, its calories in place of the estimate', async () => {
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        heartRateAvg: 132,
+        heartRateMax: 168,
+        activeKcal: 412,
+        healthSource: 'Apple Watch',
+      }) as never,
+    );
+    await render(<LogScreen id={3} />);
+    expect(screen.getByText('412')).toBeTruthy();
+    expect(screen.queryByText('~390')).toBeNull();
+    expect(screen.getByText('From your watch')).toBeTruthy();
+    expect(screen.getByText('132')).toBeTruthy();
+    expect(screen.getByText('168')).toBeTruthy();
+  });
+
+  it('waits for the watch for a day after a workout, while connected', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(true);
+    const finishedAt = new Date();
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        startedAt: new Date(finishedAt.getTime() - 3_000_000),
+        finishedAt,
+      }) as never,
+    );
+    await render(<LogScreen id={3} />);
+    expect(screen.getByText('Waiting for your watch')).toBeTruthy();
+    expect(screen.queryByText('From your watch')).toBeNull();
+  });
+
+  it('waits for no watch while none is connected', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(false);
+    const finishedAt = new Date();
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        startedAt: new Date(finishedAt.getTime() - 3_000_000),
+        finishedAt,
+      }) as never,
+    );
+    await render(<LogScreen id={3} />);
+    expect(screen.queryByText('Waiting for your watch')).toBeNull();
+  });
+
+  it('shows nothing of a watch for an older workout', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(true);
+    const finishedAt = new Date(Date.now() - 2 * 24 * 3600 * 1000);
+    jest.mocked(useLogSummary).mockReturnValue(
+      loaded({
+        ...LOGS[0]!,
+        startedAt: new Date(finishedAt.getTime() - 3_000_000),
+        finishedAt,
+      }) as never,
+    );
+    await render(<LogScreen id={3} />);
+    expect(screen.queryByText('Waiting for your watch')).toBeNull();
+    expect(screen.queryByText('From your watch')).toBeNull();
   });
 
   it('opens the workout to edit it', async () => {

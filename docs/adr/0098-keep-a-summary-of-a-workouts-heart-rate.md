@@ -1,6 +1,6 @@
 # 0098. Keep a summary of a workout's heart rate
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0099
 - **Date:** 2026-11-08
 
 ## Context

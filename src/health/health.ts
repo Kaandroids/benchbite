@@ -9,4 +9,4 @@ export {
   stillAllowed as healthStillAllowed,
   store as healthStore,
 } from './platform';
-export type { HealthAvailability, HealthStore } from './types';
+export type { HealthAvailability, HealthStore, WorkoutStats } from './types';

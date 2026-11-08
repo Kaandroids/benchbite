@@ -11,7 +11,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
 import { useDurationFormat } from './format';
-import { doneOf, durationMinutes, isPartial, type LogSummary } from './history';
+import { doneOf, durationMinutes, isPartial, kcalOf, type LogSummary } from './history';
 
 type LogRowProps = {
   log: LogSummary;
@@ -36,6 +36,10 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const setsLabel = isPartial(log.sets, log.plannedSets)
     ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
     : t('common.sets', { count: log.sets });
+  const burned = kcalOf(log);
+  const kcal = burned
+    ? t(burned.measured ? 'history.kcalMeasured' : 'history.kcal', { kcal: burned.kcal })
+    : null;
 
   return (
     <Pressable
@@ -80,21 +84,11 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
               label={setsLabel}
             />
             <IconStat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
-            {log.estimatedKcal !== null ? (
-              <IconStat
-                icon="flame"
-                color="primary"
-                text={t('history.kcal', { kcal: log.estimatedKcal })}
-              />
-            ) : null}
+            {kcal ? <IconStat icon="flame" color="primary" text={kcal} /> : null}
           </View>
         ) : (
           <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {[
-              duration(durationMinutes(log)),
-              t('common.sets', { count: log.sets }),
-              log.estimatedKcal !== null ? t('history.kcal', { kcal: log.estimatedKcal }) : null,
-            ]
+            {[duration(durationMinutes(log)), t('common.sets', { count: log.sets }), kcal]
               .filter(Boolean)
               .join(' · ')}
           </Text>

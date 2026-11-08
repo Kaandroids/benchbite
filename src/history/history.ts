@@ -34,6 +34,12 @@ export type LogSummary = {
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
   estimatedKcal: number | null;
+  /** What the watch measured, from the phone's health store (ADR 0098); null when nothing did. */
+  heartRateAvg: number | null;
+  heartRateMax: number | null;
+  activeKcal: number | null;
+  /** The app or watch that measured them. */
+  healthSource: string | null;
   /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
   plannedExerciseIds: string[] | null;
   /** The alternative it was done with (ADR 0069); null without alternatives and for older logs. */
@@ -97,6 +103,15 @@ export function doneOf(done: number, planned: number | null): string {
   return isPartial(done, planned) ? `${done}/${planned}` : String(done);
 }
 
+/** The calories a workout burned: what the watch measured, or else the estimate; none without either. */
+export function kcalOf(
+  log: Pick<LogSummary, 'activeKcal' | 'estimatedKcal'>,
+): { kcal: number; measured: boolean } | null {
+  if (log.activeKcal !== null) return { kcal: log.activeKcal, measured: true };
+  if (log.estimatedKcal !== null) return { kcal: log.estimatedKcal, measured: false };
+  return null;
+}
+
 /** Whole minutes between the start and the end of a workout. */
 export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'>): number {
   return Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 60_000);
@@ -118,6 +133,10 @@ function toSummary(row: SummaryRow): LogSummary {
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
+    heartRateAvg: row.heart_rate_avg,
+    heartRateMax: row.heart_rate_max,
+    activeKcal: row.active_kcal,
+    healthSource: row.health_source,
     plannedExerciseIds: row.planned_exercise_ids,
     alternative:
       row.alternative_position === null
@@ -134,6 +153,29 @@ export type LogCursor = { finishedAt: string; id: number };
 
 /** A page of finished workouts, and where the next one starts unless this one was the last. */
 export type LogPage = { logs: LogSummary[]; next?: LogCursor };
+
+/** The workouts finished since a time, with only their times, as the health catch-up reads them. */
+export async function recentLogs(
+  since: Date,
+): Promise<{ id: number; startedAt: Date; finishedAt: Date }[]> {
+  const { data, error } = await supabase
+    .from('workout_log_summaries')
+    .select('id, started_at, finished_at')
+    .gte('finished_at', since.toISOString())
+    .limit(20);
+  if (error) throw error;
+  return data.flatMap((row) =>
+    row.id === null || !row.started_at || !row.finished_at
+      ? []
+      : [
+          {
+            id: row.id,
+            startedAt: new Date(row.started_at),
+            finishedAt: new Date(row.finished_at),
+          },
+        ],
+  );
+}
 
 /** The latest `count` finished workouts, or the `count` before `after`, latest first. */
 export async function fetchLogSummaries(count: number, after?: LogCursor): Promise<LogPage> {

@@ -1661,6 +1661,7 @@
     "minutes": "{{minutes}} dk",
     "hours": "{{hours}} sa {{minutes}} dk",
     "kcal": "~{{kcal}} kcal",
+    "kcalMeasured": "{{kcal}} kcal",
     "open": "Antrenmanı açar",
     "stats": {
       "time": "süre",
@@ -2417,6 +2418,16 @@
       "unavailable": "Bu cihazda okunacak sağlık verisi yok.",
       "failed": "Olmadı. Birazdan tekrar dene.",
       "releaseFailed": "Benchbite okumayı bıraktı ama Health Connect hâlâ izin veriyor. İzni Health Connect’ten geri al."
+    },
+    "watch": {
+      "title": "Saatinden",
+      "averageBpm": "ort. nabız",
+      "maxBpm": "en yüksek nabız",
+      "kcal": "yakılan kcal",
+      "through": "{{source}}, {{store}} üzerinden",
+      "throughStore": "{{store}} üzerinden",
+      "waitingTitle": "Saatin bekleniyor",
+      "waitingBody": "Nabız ve kalori {{store}} içine ulaşınca burada görünür. Benchbite bir gün boyunca tekrar bakar."
     }
   }
 }

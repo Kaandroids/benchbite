@@ -11,6 +11,9 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { WatchCard } from '@/health/watch-card';
+import { keepNewLogHealth } from '@/health/health-catch-up';
+import { hasHeartRate, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { dbErrorMessage, isDbError } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
@@ -30,8 +33,17 @@ import {
   stopClock,
   toLog,
   useActiveSession,
+  type Session,
 } from './session';
 import { useStartWorkout } from './start';
+
+/**
+ * When the workout ends: the end the user chose, or now, or its last set when it was left open
+ * longer than a workout can be.
+ */
+function endOf(session: Session, openedAt: number, chosenEnd: number | null): number {
+  return chosenEnd ?? (isLeftOpen(session, openedAt) ? lastActivity(session) : openedAt);
+}
 
 /**
  * The summary of the workout in progress, where it is saved or discarded. With `next`, that workout
@@ -56,6 +68,11 @@ export function FinishScreen({ next }: { next?: number }) {
   const [choosingEnd, setChoosingEnd] = useState(false);
   // Only one save, also when Save is tapped twice before the button turns off.
   const saving = useRef(false);
+  // What the watch measured from the start to the end below, read again when the end changes.
+  const health = useWorkoutHealth(
+    active?.startedAt ?? 0,
+    active ? endOf(active, openedAt, chosenEnd) : 0,
+  );
 
   if (!active) {
     return (
@@ -74,7 +91,7 @@ export function FinishScreen({ next }: { next?: number }) {
   const lastSet = lastActivity(active);
   const latestEnd = Math.min(openedAt, active.startedAt + MAX_WORKOUT_MS);
   const earliestEnd = Math.min(Math.max(lastSet, active.startedAt + 60_000), latestEnd);
-  const finishedAt = chosenEnd ?? (isLeftOpen(active, openedAt) ? lastSet : openedAt);
+  const finishedAt = endOf(active, openedAt, chosenEnd);
 
   // A clock still running logs its set, as it would on stopping it when the workout ended. The
   // workout itself keeps it running, so that "Keep going" goes on where it was.
@@ -89,7 +106,11 @@ export function FinishScreen({ next }: { next?: number }) {
     }
     saving.current = true;
     try {
-      await logWorkout.mutateAsync(toLog(session, finishedAt));
+      const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
+      // What the watch measured goes with it; if it cannot, it is read again later (ADR 0099).
+      if (hasHeartRate(health.data) && logId !== null) {
+        keepNewLogHealth(queryClient, logId, health.data);
+      }
       endSession();
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
@@ -149,6 +170,14 @@ export function FinishScreen({ next }: { next?: number }) {
         </View>
 
         <FinishStats session={session} totals={totals} finishedAt={finishedAt} />
+        {hasHeartRate(health.data) ? (
+          <WatchCard
+            averageBpm={health.data.heartRate.average}
+            maxBpm={health.data.heartRate.max}
+            activeKcal={health.data.activeKcal}
+            source={health.data.source}
+          />
+        ) : null}
         <EndTime
           startedAt={session.startedAt}
           finishedAt={finishedAt}
