@@ -459,6 +459,14 @@ verify_jwt = true
 import_map = "./functions/deno.json"
 entrypoint = "./functions/delete-account/index.ts"
 
+# Emails the signed-in account a code that confirms deleting it (ADR 0095). The platform verifies
+# the user's JWT before the function runs.
+[functions.send-deletion-code]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/send-deletion-code/index.ts"
+
 # Sends a link to delete an account, asked for by the website's form (ADR 0094). Anyone can ask,
 # as people without the app have no session, so the platform's JWT check is off; the function
 # answers the same for every address and limits requests per address and IP.
