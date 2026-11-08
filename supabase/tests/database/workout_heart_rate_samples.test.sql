@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -97,7 +97,24 @@ select is(
 reset role;
 insert into public.workouts (id, user_id, name, type, estimated_minutes)
   overriding system value values (900, '00000000-0000-0000-0000-00000000000a', null, 'push', 45);
+-- A 12-hour log, as long as a workout may be.
+insert into public.workout_logs (id, user_id, name, started_at, started_on, finished_at)
+  overriding system value values
+  (802, '00000000-0000-0000-0000-00000000000a', 'Hike', now() - interval '13 hours', current_date, now() - interval '1 hour');
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+
+select ok(
+  public.set_workout_health(802, 120, 150, null, 'Zepp',
+    (select array_agg(120) from generate_series(1, 4321))),
+  'A 12-hour read keeps its heart rate, though its samples are one too many'
+);
+select is(
+  (select heart_rate_samples from public.workout_logs where id = 802),
+  null::smallint[],
+  'And leaves out the samples beyond 4320'
+);
+
+-- Plank twice, as a workout may have one exercise at two places.
 select set_config('test.log', public.log_workout(jsonb_build_object(
   'workoutId', 900,
   'startedAt', now() - interval '1 hour',
@@ -107,34 +124,68 @@ select set_config('test.log', public.log_workout(jsonb_build_object(
     jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
       jsonb_build_object('seconds', 50, 'doneAt', now() - interval '50 minutes'),
       jsonb_build_object('seconds', 45, 'doneAt', now() - interval '3 hours'),
-      jsonb_build_object('seconds', 40, 'doneAt', 'soon'),
-      jsonb_build_object('seconds', 30))))
+      jsonb_build_object('seconds', 40, 'doneAt', 'soon'))),
+    jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
+      jsonb_build_object('seconds', 30, 'doneAt', now() - interval '15 minutes'))))
 ))::text, true);
 select results_eq(
   $$ select done_at is not null from public.logged_sets
-     where log_id = current_setting('test.log')::bigint order by set_position $$,
-  $$ values (true), (false), (false), (false) $$,
+     where log_id = current_setting('test.log')::bigint order by exercise_position, set_position $$,
+  $$ values (true), (false), (false), (true) $$,
   'A set keeps when it was done, if within its workout and a time'
 );
 
+create function pg_temp.minutes_ago() returns table (seconds integer, minutes integer)
+language sql as $$
+  select s.seconds, round(extract(epoch from now() - s.done_at) / 60)::integer
+  from public.logged_sets s
+  where s.log_id = current_setting('test.log')::bigint
+  order by s.exercise_position, s.set_position;
+$$;
+
+-- An app that sends no times: each set keeps its own, also with one exercise at two places.
 select public.edit_workout_log(current_setting('test.log')::bigint, jsonb_build_object(
   'exercises', jsonb_build_array(
     jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
-      jsonb_build_object('seconds', 55),
-      jsonb_build_object('seconds', 45, 'doneAt', now() - interval '20 minutes'))))
+      jsonb_build_object('seconds', 55), jsonb_build_object('seconds', 45), jsonb_build_object('seconds', 40))),
+    jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
+      jsonb_build_object('seconds', 35))))
 ));
 select results_eq(
-  $$ select seconds, done_at is not null from public.logged_sets
-     where log_id = current_setting('test.log')::bigint order by set_position $$,
-  $$ values (55, true), (45, true) $$,
-  'An edit keeps the time a set had at its place, and takes the one it sends'
+  $$ select * from pg_temp.minutes_ago() $$,
+  $$ values (55, 50), (45, null), (40, null), (35, 15) $$,
+  'An edit without times keeps each set''s own, by the exercise''s place too'
 );
-select is(
-  (select done_at from public.logged_sets
-   where log_id = current_setting('test.log')::bigint and set_position = 0)
-    between now() - interval '51 minutes' and now() - interval '49 minutes',
-  true,
-  'The kept time is the set''s own'
+
+-- An app that sends times: a set added in the edit has none.
+select public.edit_workout_log(current_setting('test.log')::bigint, jsonb_build_object(
+  'exercises', jsonb_build_array(
+    jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
+      jsonb_build_object('seconds', 55, 'doneAt', now() - interval '50 minutes'),
+      jsonb_build_object('seconds', 20))))
+));
+select results_eq(
+  $$ select * from pg_temp.minutes_ago() $$,
+  $$ values (55, 50), (20, null) $$,
+  'An edit with times takes them as sent, and a set added without one has none'
+);
+
+-- Which calories to show.
+select results_eq(
+  $$ select id, kcal, kcal_source from public.workout_log_summaries
+     where id in (800, 802) or id = current_setting('test.log')::bigint order by id $$,
+  $$ values (800::bigint, 350, 'heart_rate'),
+            (802::bigint, (select heart_rate_kcal from public.workout_logs where id = 802), 'heart_rate'),
+            (current_setting('test.log')::bigint,
+              (select estimated_kcal from public.workout_logs where id = current_setting('test.log')::bigint),
+              'minutes') $$,
+  'The summary shows the heart rate''s calories before the minutes'''
+);
+select public.set_workout_health(800, 130, 168, 412, 'Zepp');
+select results_eq(
+  $$ select kcal, kcal_source from public.workout_log_summaries where id = 800 $$,
+  $$ values (412, 'watch') $$,
+  'And the watch''s before all'
 );
 
 reset role;
