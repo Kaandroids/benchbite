@@ -40,9 +40,18 @@ jobs:
         working-directory: website
         run: pnpm install --frozen-lockfile
 
+      # The forms post to the Edge Functions (ADR 0094). Their address is no secret, so it comes
+      # from a repository variable; without it the forms would post to the local stack.
       - name: Build
         working-directory: website
-        run: pnpm build
+        env:
+          PUBLIC_FUNCTIONS_URL: ${{ vars.SUPABASE_FUNCTIONS_URL }}
+        run: |
+          if [ -z "$PUBLIC_FUNCTIONS_URL" ]; then
+            echo "Set the repository variable SUPABASE_FUNCTIONS_URL first." >&2
+            exit 1
+          fi
+          pnpm build
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
