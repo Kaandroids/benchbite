@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -90,6 +90,15 @@ select results_eq(
 );
 select public.set_workout_health(703, active_kcal => 95, source => repeat('x', 100));
 select is((select length(source) from pg_temp.kept(703)), 80, 'A long source is cut to fit');
+
+select public.set_workout_health(703, active_kcal => 100);
+select is((select source from pg_temp.kept(703)), repeat('x', 80), 'Calories without a source keep the source kept');
+select public.set_workout_health(702, 130, 160);
+select results_eq(
+  $$ select avg, max, source from pg_temp.kept(702) $$,
+  $$ values (130::smallint, 160::smallint, 'Galaxy Watch') $$,
+  'A heart rate without a source keeps the source kept'
+);
 
 select throws_ok(
   $$ select public.set_workout_health(701, 120, 150, 200, 'Zepp') $$,

@@ -13,8 +13,9 @@ alter table public.workout_logs
 -- spike, is left out on its own rather than failing the others; the ranges are the columns' checks
 -- above. Heart rate is a pair, kept with its source: a read with both its average and highest
 -- replaces them, and one without keeps what was kept. Calories are kept apart, and name the source
--- only while no heart rate does. A read changes only what it found, so the app reads again only
--- while something is missing (ADR 0098). Users still cannot update their logs directly.
+-- only while no heart rate does; a read without a source keeps the one kept. A read changes only
+-- what it found, and the app sends only the values still missing (ADR 0098). Users still cannot
+-- update their logs directly.
 create function public.set_workout_health(
   log_id bigint,
   heart_rate_avg numeric default null,
@@ -36,29 +37,25 @@ declare
   kcal integer := case when round(set_workout_health.active_kcal) between 0 and 5000
     then round(set_workout_health.active_kcal) end;
   named text := left(nullif(regexp_replace(set_workout_health.source, '^\s+|\s+$', '', 'g'), ''), 80);
-  heart_rate boolean;
+  has_heart_rate boolean := average is not null and highest is not null;
 begin
   if caller_id is null then
     raise exception 'Not signed in' using errcode = '42501';
   end if;
-  if not exists (
-    select from public.workout_logs l
-    where l.id = set_workout_health.log_id and l.user_id = caller_id
-  ) then
-    raise exception 'Workout log not found' using errcode = 'BB013';
-  end if;
 
-  heart_rate := average is not null and highest is not null;
   update public.workout_logs l
-  set heart_rate_avg = case when heart_rate then least(average, highest) else l.heart_rate_avg end,
-    heart_rate_max = case when heart_rate then highest else l.heart_rate_max end,
+  set heart_rate_avg = case when has_heart_rate then least(average, highest) else l.heart_rate_avg end,
+    heart_rate_max = case when has_heart_rate then highest else l.heart_rate_max end,
     active_kcal = coalesce(kcal, l.active_kcal),
     health_source = case
-      when heart_rate then named
-      when kcal is not null and l.heart_rate_max is null then named
+      when has_heart_rate or (kcal is not null and l.heart_rate_max is null)
+        then coalesce(named, l.health_source)
       else l.health_source
     end
-  where l.id = set_workout_health.log_id;
+  where l.id = set_workout_health.log_id and l.user_id = caller_id;
+  if not found then
+    raise exception 'Workout log not found' using errcode = 'BB013';
+  end if;
 end;
 $$;
 
