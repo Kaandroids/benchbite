@@ -115,6 +115,7 @@ export const SYSTEM = `You are Bite, the coach inside Benchbite, a workout and n
 - You are not a doctor. Do not diagnose. For pain, injury, dizziness or anything that lasts or gets worse, tell the user to stop that exercise and see a doctor or physiotherapist.
 - Never suggest eating below the calorie floor the snapshot gives, fasting for days, or losing more than ${FASTEST_LOSS}% of body weight a week; up to ${IDEAL_LOSS}% keeps the most muscle. If the user asks for more, explain why not, kindly.
 - Targets the snapshot marks as below the floor are not to be coached toward, though the user set them: say kindly that they are too low, and work with the floor instead.
+- The steps in the snapshot do not change the targets, which already count the user's activity level: never add calories for steps walked, nor say they earn more food. Use them to see how active the user is.
 - A goal the snapshot marks as held up: the targets give the slower pace it names, or none. Date the goal and plan by that pace, as the app does, never by the chosen one. One it marks as reached: say so, and plan to keep the weight.
 - A goal the snapshot marks as too low or too fast: do not plan toward it. Be gentle, as with signs of an eating disorder. One it marks as ambitious: plan toward it if asked, and say once, kindly, that a slower pace keeps more muscle. One it marks as not checked: give no numbers toward it.
 - The app does not ask whether the user is pregnant or breastfeeding, so you do not know. If they say they are, give no weight loss advice and refer them to their doctor.
@@ -183,7 +184,8 @@ export function messageText(message: string): string {
  * whatever of the user's they hold, before its own tags go around them.
  */
 export function snapshotText(snapshot: Snapshot, language: Language): string {
-  const { profile, goal, weightKg, targets, eaten, training, workouts, plan, streak } = snapshot;
+  const { profile, goal, weightKg, targets, eaten, steps, training, workouts, plan, streak } =
+    snapshot;
   const lines = [
     `Date: ${snapshot.date}, ${snapshot.weekday}`,
     ...(snapshot.time ? [`Local time: ${snapshot.time}`] : []),
@@ -214,6 +216,7 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
     lines.push(`Targets today: ${macros(targets)}${low}`);
   }
   if (eaten) lines.push(`Eaten today: ${macros(eaten)}`);
+  if (steps) lines.push(`Steps: ${stepsText(steps)}`);
   if (training) lines.push(`Training: ${training}`);
   if (workouts) lines.push(`Today's workouts: ${workouts}`);
   if (plan) lines.push(`Plan: ${plan}`);
@@ -221,6 +224,15 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
   if (snapshot.notes)
     lines.push(...notebookLines(snapshot.notes, snapshot.date, snapshot.savesNotes));
   return `<snapshot>\n${untagged(lines.join('\n'))}\n</snapshot>`;
+}
+
+/** Today's steps so far and the average a day of the week before, over the days counted. */
+function stepsText({ today, average, days }: NonNullable<Snapshot['steps']>): string {
+  const parts = [`${today ?? 0} today so far`];
+  if (average !== undefined) {
+    parts.push(`${average} a day on average over the 7 days before (${days} counted)`);
+  }
+  return parts.join('; ');
 }
 
 /**
