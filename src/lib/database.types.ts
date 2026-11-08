@@ -1921,7 +1921,6 @@ export type Database = {
           finished_at: string | null;
           health_source: string | null;
           heart_rate_avg: number | null;
-          heart_rate_kcal: number | null;
           heart_rate_max: number | null;
           id: number | null;
           kcal: number | null;
@@ -2885,6 +2884,10 @@ export type Database = {
           protein_g: number;
           recipe_id: number;
         }[];
+      };
+      set_key: {
+        Args: { exercise_id: string; exercise_position: number; set_position: number };
+        Returns: string;
       };
       set_suits: {
         Args: {
