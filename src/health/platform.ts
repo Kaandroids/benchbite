@@ -1,6 +1,11 @@
 // Where the app reads no health data, as on the web. iOS and Android read through
 // platform.ios.ts and platform.android.ts, which keep the same exports.
-import type { HealthAvailability, HealthStore, WorkoutStats } from './types';
+import {
+  NO_WORKOUT_STATS,
+  type HealthAvailability,
+  type HealthStore,
+  type WorkoutStats,
+} from './types';
 
 export const store: HealthStore = null;
 
@@ -20,4 +25,4 @@ export const installStore = (): void => undefined;
 
 /** The heart rate and active calories measured between two times, unrounded. */
 export const workoutStats = (_from: Date, _to: Date): Promise<WorkoutStats> =>
-  Promise.resolve({ averageBpm: null, maxBpm: null, activeKcal: null, source: null });
+  Promise.resolve(NO_WORKOUT_STATS);

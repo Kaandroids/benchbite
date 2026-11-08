@@ -8,10 +8,9 @@ import {
 
 import type { HealthAvailability, HealthStore, WorkoutStats } from './types';
 
-const READS = [
-  'HKQuantityTypeIdentifierHeartRate',
-  'HKQuantityTypeIdentifierActiveEnergyBurned',
-] as const;
+const HEART_RATE = 'HKQuantityTypeIdentifierHeartRate';
+const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
+const READS = [HEART_RATE, ACTIVE_ENERGY] as const;
 
 export const store: HealthStore = 'appleHealth';
 
@@ -38,11 +37,11 @@ export const installStore = (): void => undefined;
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
   const filter = { date: { startDate: from, endDate: to } };
   const [heart, energy] = await Promise.all([
-    queryStatisticsForQuantity(READS[0], ['discreteAverage', 'discreteMax'], {
+    queryStatisticsForQuantity(HEART_RATE, ['discreteAverage', 'discreteMax'], {
       filter,
       unit: 'count/min',
     }),
-    queryStatisticsForQuantity(READS[1], ['cumulativeSum'], { filter, unit: 'kcal' }),
+    queryStatisticsForQuantity(ACTIVE_ENERGY, ['cumulativeSum'], { filter, unit: 'kcal' }),
   ]);
   return {
     averageBpm: heart.averageQuantity?.quantity ?? null,

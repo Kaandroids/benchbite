@@ -18,3 +18,11 @@ export type WorkoutStats = {
   /** The app or watch that measured the heart rate, or else the calories, by its name. */
   source: string | null;
 };
+
+/** Nothing measured. */
+export const NO_WORKOUT_STATS: WorkoutStats = {
+  averageBpm: null,
+  maxBpm: null,
+  activeKcal: null,
+  source: null,
+};

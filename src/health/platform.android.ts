@@ -11,7 +11,12 @@ import {
 } from 'react-native-health-connect';
 import { Linking } from 'react-native';
 
-import type { HealthAvailability, HealthStore, WorkoutStats } from './types';
+import {
+  NO_WORKOUT_STATS,
+  type HealthAvailability,
+  type HealthStore,
+  type WorkoutStats,
+} from './types';
 
 const PERMISSIONS = [
   { accessType: 'read', recordType: 'HeartRate' },
@@ -71,9 +76,7 @@ export const installStore = (): void => void Linking.openURL(PLAY_STORE);
  * not read, so only the allowed ones are asked for, and one that fails leaves the other.
  */
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
-  if (!(await initialize())) {
-    return { averageBpm: null, maxBpm: null, activeKcal: null, source: null };
-  }
+  if (!(await initialize())) return NO_WORKOUT_STATS;
   const granted = await getGrantedPermissions();
   const allowed = (recordType: string) =>
     granted.some(
@@ -87,15 +90,19 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
   const [heart, energy] = await Promise.allSettled([
     allowed('HeartRate')
       ? aggregateRecord({ recordType: 'HeartRate', timeRangeFilter })
-      : Promise.reject(new Error('Heart rate may not be read')),
+      : Promise.resolve(null),
     allowed('ActiveCaloriesBurned')
       ? aggregateRecord({ recordType: 'ActiveCaloriesBurned', timeRangeFilter })
-      : Promise.reject(new Error('Active calories may not be read')),
+      : Promise.resolve(null),
   ]);
   const measured =
-    heart.status === 'fulfilled' && heart.value.MEASUREMENTS_COUNT > 0 ? heart.value : null;
+    heart.status === 'fulfilled' && heart.value && heart.value.MEASUREMENTS_COUNT > 0
+      ? heart.value
+      : null;
   const kcal =
-    energy.status === 'fulfilled' && energy.value.ACTIVE_CALORIES_TOTAL.inKilocalories > 0
+    energy.status === 'fulfilled' &&
+    energy.value &&
+    energy.value.ACTIVE_CALORIES_TOTAL.inKilocalories > 0
       ? energy.value
       : null;
   const origin = (measured ?? kcal)?.dataOrigins[0];
