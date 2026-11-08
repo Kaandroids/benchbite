@@ -1,4 +1,9 @@
-import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  isAuthApiError,
+  isAuthRetryableFetchError,
+} from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
@@ -29,6 +34,7 @@ export function errorField(reason: AccountError): 'email' | 'password' | 'curren
       return 'email';
     case 'weakPassword':
     case 'passwordTooLong':
+    case 'wrongPassword':
       return 'password';
     default:
       return null;
@@ -41,6 +47,9 @@ export type AccountError =
   | 'emailNotConfirmed'
   | 'invalidCode'
   | 'wrongCurrentPassword'
+  | 'wrongPassword'
+  | 'passwordRecentlyChanged'
+  | 'tooManyTries'
   | 'emailTaken'
   | 'invalidEmail'
   | 'weakPassword'
@@ -65,13 +74,60 @@ const AUTH_ERRORS: Record<string, AccountError> = {
   over_email_send_rate_limit: 'codeWait',
 };
 
+// The errors the account's Edge Functions answer with (ADR 0095), by what they mean to the user.
+const FUNCTION_ERRORS: Record<string, AccountError> = {
+  wrong_code: 'invalidCode',
+  code_expired: 'invalidCode',
+  wrong_password: 'wrongPassword',
+  password_recently_changed: 'passwordRecentlyChanged',
+  too_many_tries: 'tooManyTries',
+  too_many_codes: 'tooManyTries',
+  too_soon: 'codeWait',
+  busy: 'rateLimited',
+};
+
 /** The current password given to change it was not the account's. */
 class WrongCurrentPassword extends Error {}
+
+/** An Edge Function's answer that it did not do what was asked, with its reason. */
+class FunctionRefusal extends Error {
+  constructor(
+    readonly reason: string,
+    readonly status: number,
+  ) {
+    super(`The function refused: ${reason}`);
+  }
+}
+
+/** Calls an Edge Function of the account, throwing its reason when it refuses. */
+async function callFunction(name: string, body?: Record<string, unknown>) {
+  const { error } = body
+    ? await supabase.functions.invoke(name, { body })
+    : await supabase.functions.invoke(name);
+  if (error instanceof FunctionsHttpError) {
+    const context = error.context as Response;
+    const answer: unknown = await context.json().catch(() => null);
+    const reason =
+      typeof answer === 'object' && answer !== null && 'error' in answer
+        ? String(answer.error)
+        : 'unknown';
+    throw new FunctionRefusal(reason, context.status);
+  }
+  if (error) {
+    throw error;
+  }
+}
 
 /** The reason a request to Supabase Auth failed. */
 export function accountError(error: unknown): AccountError {
   if (error instanceof WrongCurrentPassword) {
     return 'wrongCurrentPassword';
+  }
+  if (error instanceof FunctionRefusal) {
+    return FUNCTION_ERRORS[error.reason] ?? (error.status >= 500 ? 'serverError' : 'unknown');
+  }
+  if (error instanceof FunctionsFetchError) {
+    return 'offline';
   }
   // supabase-js reports both a request that never got an answer (status 0) and a server error
   // (5xx) as retryable; only the first is about the connection.
@@ -303,18 +359,26 @@ export function useSignOut() {
   return useMutation({ mutationFn: signOut });
 }
 
+/** What proves the owner of an account asks to delete it (ADR 0095); a guest needs nothing. */
+export type DeletionProof = { code: string } | { password: string };
+
+/** Emails the account a code that confirms deleting it, in the app's language (ADR 0095). */
+export function useSendDeletionCode() {
+  const { i18n } = useTranslation();
+  return useMutation({
+    mutationFn: () => callFunction('send-deletion-code', { locale: i18n.language }),
+  });
+}
+
 /**
  * Deletes the user on this device, guest or account, and all that is theirs (ADR 0087); the app
- * starts over as a new guest.
+ * starts over as a new guest. An account brings a code from its email or its password (ADR 0095).
  */
 export function useDeleteAccount() {
   const { leaveDeletedUser } = useSession();
   return useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.functions.invoke('delete-account');
-      if (error) {
-        throw error;
-      }
+    mutationFn: async (proof?: DeletionProof) => {
+      await callFunction('delete-account', proof);
       await leaveDeletedUser();
     },
   });
