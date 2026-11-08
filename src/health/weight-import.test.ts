@@ -25,7 +25,6 @@ const signedIn = (userId: string) =>
     .mockResolvedValue({ data: { session: { user: { id: userId } } }, error: null } as never);
 
 const NOW = new Date(2026, 10, 8, 9, 0);
-const DAY_MS = 24 * 3600 * 1000;
 const at = (day: number, hour: number) => new Date(2026, 10, day, hour, 0);
 
 beforeEach(() => {
@@ -61,9 +60,7 @@ it('reads the last 30 days and sends the latest of each, then refreshes the weig
 
   expect(await importHealthWeights(queryClient)).toBe(true);
 
-  expect(jest.mocked(weightsSince).mock.calls[0]![0]).toEqual(
-    new Date(NOW.getTime() - 30 * DAY_MS),
-  );
+  expect(jest.mocked(weightsSince).mock.calls[0]![0]).toEqual(new Date(2026, 9, 10));
   expect(supabase.rpc).toHaveBeenCalledWith('import_weights', {
     weights: [
       { day: '2026-11-07', weightKg: 84.6, source: 'Withings' },
@@ -79,7 +76,7 @@ it('reads all 30 days again each time, for a weighing a scale’s app wrote days
   await importHealthWeights(createTestQueryClient());
 
   for (const [from] of jest.mocked(weightsSince).mock.calls) {
-    expect(from).toEqual(new Date(NOW.getTime() - 30 * DAY_MS));
+    expect(from).toEqual(new Date(2026, 9, 10));
   }
 });
 

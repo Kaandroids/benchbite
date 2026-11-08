@@ -9,12 +9,11 @@ import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterWeight } from '@/weight/weights';
 
-import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
+import { lastDays, mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
 import { weightsSince } from './platform';
 import type { WeightReading } from './types';
 
-const DAY_MS = 24 * 3600 * 1000;
-/** How far back each read goes. */
+/** How many days, today among them, each read goes back. */
 const READ_DAYS = 30;
 
 /** The latest weighing of each day, by the phone's day, oldest first. */
@@ -36,7 +35,7 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   if (!mayImport('weight')) return false;
   const userId = await signedInUser();
   const now = new Date();
-  const days = latestPerDay(await weightsSince(new Date(now.getTime() - READ_DAYS * DAY_MS)));
+  const days = latestPerDay(await weightsSince(lastDays(READ_DAYS, now)));
   // Another user may have signed in while the store was read, which lets go of the connection.
   if (!days.length || !(await stillImporting('weight', userId))) return false;
   const { data, error } = await supabase.rpc('import_weights', {
