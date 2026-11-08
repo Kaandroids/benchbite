@@ -30,7 +30,7 @@ needs `GEMINI_API_KEY` (see [Development](../development.md)).
 ## Taking the screenshots
 
 1. Start Metro without the developer tools, so that no developer buttons show:
-   `pnpm start --no-dev --minify`. In Expo Go's menu, turn off the tools button.
+   `pnpm start --no-dev --minify`. In the development build's menu, turn off the tools button.
 2. Log in as the demo account in the simulator (Settings → Log in). After running the seed again,
    log out first: the old session belongs to the deleted account.
 3. Take each screen with `xcrun simctl io booted screenshot <file>.png`, then shrink it to
