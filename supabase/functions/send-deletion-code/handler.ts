@@ -1,5 +1,6 @@
 // The work of send-deletion-code (#438, ADR 0095): emails the signed-in account a code that
 // delete-account takes as proof that its owner asks.
+import { refused } from '../_shared/account_refusals.ts';
 import { codeHash, newCode } from '../_shared/deletion_code.ts';
 import type { Send } from '../_shared/email.ts';
 import { isObject } from '../_shared/json.ts';
@@ -25,37 +26,40 @@ export async function handleSendCode(
   { admin, send, userId, email, accountLocale }: SendCodeContext,
 ): Promise<Response> {
   if (req.method !== 'POST') {
-    return Response.json({ error: 'method_not_allowed' }, { status: 405 });
+    return refused('method_not_allowed', 405);
   }
   if (!email) {
-    return Response.json({ error: 'no_email' }, { status: 400 });
+    return refused('no_email', 400);
   }
   const body = await readJson(req, 1024);
   const locale = siteLocale((isObject(body) && body.locale) || accountLocale);
 
   const code = newCode();
+  const hash = await codeHash(userId, code);
   const { data: answer, error } = await admin.rpc('new_account_deletion_code', {
     p_user: userId,
-    p_code_hash: await codeHash(userId, code),
+    p_code_hash: hash,
   });
   if (error) {
     logError('Keeping a code to delete an account failed', error);
-    return Response.json({ error: 'unavailable' }, { status: 503 });
+    return refused('unavailable', 503);
   }
   if (answer !== 'sent') {
     // A code a minute, and 5 an hour.
-    return Response.json(
-      { error: answer === 'too_soon' ? 'too_soon' : 'too_many_codes' },
-      {
-        status: 429,
-      },
-    );
+    return refused(answer === 'too_soon' ? 'too_soon' : 'too_many_codes', 429);
   }
   try {
     await send(deletionCodeEmail(locale, email, code));
   } catch (cause) {
     logError('Sending the code to delete an account failed', cause);
-    return Response.json({ error: 'unavailable' }, { status: 503 });
+    // Taken back, so that trying again sends one at once rather than wait for a code that never
+    // came.
+    const { error } = await admin.rpc('take_back_account_deletion_code', {
+      p_user: userId,
+      p_code_hash: hash,
+    });
+    if (error) logError('Taking back an unsent code to delete an account failed', error);
+    return refused('unavailable', 503);
   }
   return Response.json({ sent: true });
 }

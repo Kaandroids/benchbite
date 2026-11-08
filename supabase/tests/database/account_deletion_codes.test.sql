@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(24);
 
 insert into auth.users (id, email, email_confirmed_at, is_anonymous) values
   ('00000000-0000-0000-0000-00000000000a', 'kaan@example.com', now(), false),
@@ -92,6 +92,26 @@ select is(
   public.check_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xe5'),
   'right',
   'And the last one sent still works'
+);
+
+select pg_temp.later(61);
+select public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1');
+select public.take_back_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1');
+select is(
+  public.check_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1'),
+  'expired',
+  'A code taken back, as its email failed, does not work'
+);
+select is(
+  public.new_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf2'),
+  'sent',
+  'And another can be sent at once'
+);
+select public.take_back_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf1');
+select is(
+  public.check_account_deletion_code('00000000-0000-0000-0000-00000000000a', '\xf2'),
+  'right',
+  'Taking back an older code leaves the newer one'
 );
 
 select is(

@@ -11,6 +11,7 @@ import {
 } from '@shared/meal/estimate';
 
 import { REFUSALS, type Refusal } from '@/ai/access';
+import { functionRefusal } from '@/lib/errors';
 import { oneOf } from '@/lib/one-of';
 import { preparePhoto } from '@/lib/photos';
 import { functionHeaders, functionUrl } from '@/lib/supabase';
@@ -70,9 +71,8 @@ export async function estimateMeal(
   });
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok || typeof body !== 'object' || body === null || !('isFood' in body)) {
-    const reason = (body as { error?: unknown } | null)?.error;
     throw new EstimateFailure(
-      typeof reason === 'string' ? (reason as EstimateReason) : 'unavailable',
+      (functionRefusal(body) as EstimateReason | undefined) ?? 'unavailable',
       response.status,
       body,
     );

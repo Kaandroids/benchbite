@@ -1,6 +1,7 @@
 import type { ChatRefusal, ChatRequest, ChatEvent as SharedChatEvent } from '@shared/coach/chat';
 import { randomUUID } from 'expo-crypto';
 
+import { functionRefusal } from '@/lib/errors';
 import { functionHeaders, functionUrl, supabase } from '@/lib/supabase';
 
 import type { AnswerExpression } from './bite-expressions';
@@ -54,10 +55,10 @@ export class ChatRequestError extends Error {
 async function requestError(response: Response): Promise<ChatRequestError> {
   const body: unknown = await response.json().catch(() => null);
   if (typeof body !== 'object' || body === null) return new ChatRequestError(response.status);
-  const { error, photo } = body as { error?: unknown; photo?: unknown };
+  const { photo } = body as { photo?: unknown };
   return new ChatRequestError(
     response.status,
-    typeof error === 'string' ? (error as ChatRefusal) : undefined,
+    functionRefusal(body) as ChatRefusal | undefined,
     typeof photo === 'number' ? photo : undefined,
   );
 }
