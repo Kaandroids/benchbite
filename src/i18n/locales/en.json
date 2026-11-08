@@ -140,6 +140,7 @@
     "languageHint": "Opens the languages to choose from",
     "phoneLanguage": "Phone’s language",
     "phoneLanguageNow": "{{language}} now",
+    "health": "Health",
     "waterGoal": "Daily water goal",
     "waterGoalNote": "The glasses to fill on the Nutrition tab, {{ml}} ml each.",
     "liters": "{{amount}} L",
@@ -2371,6 +2372,51 @@
     "seePremium": "See premium",
     "offerSheet": {
       "notNow": "Not now"
+    }
+  },
+  "health": {
+    "appleHealth": "Apple Health",
+    "healthConnect": "Health Connect",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "rowHint": "Opens where you connect it or disconnect it",
+    "note": "Adds the heart rate and calories your watch measured to your workouts.",
+    "noData": {
+      "appleHealth": "No data arriving? Allow Benchbite in the Health app, under Sharing.",
+      "healthConnect": "No data arriving? Allow Benchbite in Health Connect."
+    },
+    "denied": {
+      "appleHealth": "Benchbite may not read your heart rate yet. Allow it in the Health app, under Sharing.",
+      "healthConnect": "Benchbite may not read your heart rate yet. Allow it in Health Connect, then connect again."
+    },
+    "unavailable": {
+      "appleHealth": "This device has no health data to read.",
+      "healthConnect": "This device has no health data to read."
+    },
+    "consent": {
+      "title": "Read from {{store}}?",
+      "body": "For the time of each workout, Benchbite reads:",
+      "heartRate": "Heart rate",
+      "calories": "Active calories",
+      "keeps": "It keeps only each workout’s average and highest heart rate and its calories, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
+      "continue": "Continue",
+      "notNow": "Not now",
+      "next": {
+        "appleHealth": "Next, Apple asks which of these to allow.",
+        "healthConnect": "Next, Health Connect asks which of these to allow."
+      }
+    },
+    "disconnect": {
+      "body": "Disconnecting stops Benchbite reading from {{store}}. The heart rate and calories already added to your workouts stay; deleting a workout deletes them.",
+      "keep": "Keep connected",
+      "confirm": "Disconnect"
+    },
+    "install": {
+      "title": "Health Connect is needed",
+      "notInstalled": "Android keeps what your watch measures in Health Connect. Get it from Google Play, then come back here to connect.",
+      "updateRequired": "Health Connect needs an update from Google Play before Benchbite can read from it.",
+      "open": "Open Google Play",
+      "builtIn": "Android 14 and later have it built in."
     }
   }
 }
