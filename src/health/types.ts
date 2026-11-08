@@ -25,3 +25,6 @@ export const NO_WORKOUT_STATS: WorkoutStats = { heartRate: null, activeKcal: nul
 
 /** A weighing the store holds: when, how much, and the app or scale that measured it. */
 export type WeightReading = { at: Date; weightKg: number; source: string | null };
+
+/** The steps the store counted on a day, as YYYY-MM-DD by the phone's clock. */
+export type StepDay = { day: string; steps: number };
