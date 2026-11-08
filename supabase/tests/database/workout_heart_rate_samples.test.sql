@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -51,9 +51,9 @@ select is(
   'The calories are estimated from the heart rate, the age, sex, weight and minutes'
 );
 select is(
-  (select heart_rate_kcal from public.workout_log_summaries where id = 800),
+  (select kcal from public.workout_log_summaries where id = 800),
   350,
-  'And shown in the summary'
+  'And shown in the summary, as the watch measured no calories'
 );
 select ok(
   not public.set_workout_health(800, 130, 168, null, 'Zepp'),
@@ -170,6 +170,39 @@ select results_eq(
   'An edit with times takes them as sent, and a set added without one has none'
 );
 
+-- A calm workout: below 90 beats a minute the formula gives no estimate, and the minutes' shows.
+reset role;
+insert into public.workout_logs (id, user_id, name, started_at, started_on, finished_at, estimated_kcal)
+  overriding system value values
+  (803, '00000000-0000-0000-0000-00000000000a', 'Mobility', now() - interval '70 minutes', current_date, now() - interval '10 minutes', 400);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select public.set_workout_health(803, 70, 95);
+select results_eq(
+  $$ select l.heart_rate_kcal, s.kcal, s.kcal_source
+     from public.workout_logs l join public.workout_log_summaries s using (id) where l.id = 803 $$,
+  $$ values (null::integer, 400, 'minutes') $$,
+  'A heart rate below the formula''s range gives no estimate, and the minutes'' shows'
+);
+
+-- An app that sends no day: the 5 MET estimate takes the latest weight, not any.
+reset role;
+insert into public.weight_entries (user_id, weight_kg, measured_on)
+  values ('00000000-0000-0000-0000-00000000000a', 95, current_date - 400);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select set_config('test.dayless', public.log_workout(jsonb_build_object(
+  'workoutId', 900,
+  'startedAt', now() - interval '2 hours',
+  'finishedAt', now() - interval '1 hour',
+  'exercises', jsonb_build_array(jsonb_build_object('exerciseId', 'Plank', 'sets',
+    jsonb_build_array(jsonb_build_object('seconds', 60)))))
+)::text, true);
+select is(
+  (select estimated_kcal from public.workout_logs where id = current_setting('test.dayless')::bigint),
+  -- 5 MET at 80 kg, the latest weight, for 60 minutes.
+  400,
+  'A log without its day takes the latest weight for its estimate'
+);
+
 -- Which calories to show.
 select results_eq(
   $$ select id, kcal, kcal_source from public.workout_log_summaries
@@ -197,6 +230,14 @@ select ok(
   not has_function_privilege('authenticated', 'public.heart_rate_kcal(numeric, numeric, numeric, numeric, public.sex)', 'execute'),
   'The estimate is the server''s alone'
 );
+
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is(
+  public.weight_on('00000000-0000-0000-0000-00000000000a', current_date),
+  null::numeric,
+  'Nobody reads another user''s weight through weight_on()'
+);
+reset role;
 
 select * from finish();
 rollback;

@@ -67,22 +67,60 @@ $$;
 revoke execute on function public.done_at_within(timestamptz, timestamptz, timestamptz)
   from public, anon, authenticated;
 
--- A user's weight on a day: the latest on or before it, else the first after it; none without any.
--- Each estimate of a workout's calories takes the weight on its day.
+-- A user's weight on a day, today without one: the latest on or before it, else the first after
+-- it; none without any. Each estimate of a workout's calories takes the weight on its day.
 create function public.weight_on(user_id uuid, day date)
 returns numeric
 language sql
 stable
 set search_path = ''
 as $$
-  select e.weight_kg
-  from public.weight_entries e
-  where e.user_id = weight_on.user_id
-  order by e.measured_on > weight_on.day, abs(e.measured_on - weight_on.day)
-  limit 1;
+  select coalesce(
+    (
+      select e.weight_kg
+      from public.weight_entries e
+      where e.user_id = weight_on.user_id
+        and e.measured_on <= coalesce(weight_on.day, current_date)
+      order by e.measured_on desc
+      limit 1
+    ),
+    (
+      select e.weight_kg
+      from public.weight_entries e
+      where e.user_id = weight_on.user_id
+        and e.measured_on > coalesce(weight_on.day, current_date)
+      order by e.measured_on
+      limit 1
+    )
+  );
 $$;
 
-revoke execute on function public.weight_on(uuid, date) from public, anon, authenticated;
+-- The 5 MET estimate of planned workouts, as before, with today's weight as weight_on() gives it.
+create or replace function public.my_strength_kcal_per_minute()
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select public.strength_kcal_per_minute(public.weight_on((select auth.uid()), current_date));
+$$;
+
+-- The key a set's time is kept by during an edit: its exercise, the exercise's place and its own.
+create function public.set_key(exercise_position smallint, exercise_id text, set_position smallint)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select exercise_position || ':' || exercise_id || ':' || set_position;
+$$;
+
+revoke execute on function public.set_key(smallint, text, smallint) from public, anon, authenticated;
+
+-- It runs with the caller's rights, so row level security gives a user only their own weights;
+-- my_strength_kcal_per_minute() calls it as the user.
+revoke execute on function public.weight_on(uuid, date) from public, anon;
+grant execute on function public.weight_on(uuid, date) to authenticated;
 
 -- A heart rate as it is kept, rounded, or none when no person can have it.
 create function public.heart_rate_or_none(heart_rate numeric)
@@ -110,9 +148,7 @@ immutable
 set search_path = ''
 as $$
   select case
-    when cardinality(kept) is not null
-      and exists (select from unnest(kept) as k(sample) where sample is not null)
-    then kept
+    when exists (select from unnest(kept) as k(sample) where sample is not null) then kept
   end
   from (
     select (
@@ -198,7 +234,9 @@ begin
       from jsonb_array_elements(log -> 'exercises') with ordinality e
     ),
     round(
-      public.strength_kcal_per_minute(public.weight_on(caller_id, device_day))
+      public.strength_kcal_per_minute(
+        public.weight_on(caller_id, coalesce(device_day, (started at time zone 'UTC')::date))
+      )
         * extract(epoch from finished - started) / 60
     )::integer,
     log_client_id
@@ -266,7 +304,7 @@ begin
   perform public.check_sets(log);
 
   select jsonb_object_agg(
-      s.exercise_position || ':' || s.exercise_id || ':' || s.set_position, s.done_at
+      public.set_key(s.exercise_position, s.exercise_id, s.set_position), s.done_at
     ) into kept
   from public.logged_sets s
   where s.log_id = edit_workout_log.log_id and s.done_at is not null;
@@ -281,7 +319,7 @@ begin
     public.done_at_within(
       case
         when sends_times then s.done_at
-        else (kept ->> (s.exercise_position || ':' || s.exercise_id || ':' || s.set_position))
+        else (kept ->> public.set_key(s.exercise_position, s.exercise_id, s.set_position))
           ::timestamptz
       end,
       started,
@@ -294,7 +332,8 @@ $$;
 -- The calories a workout burns by Keytel et al. (2005), from its average heart rate, its minutes and
 -- the user's weight, age and sex, in kcal; for a sex not given, the mean of the two formulas. Like
 -- the estimate a log is saved with (ADR 0021), it counts all the calories burned, not only those
--- above resting.
+-- above resting. None below the 90 beats a minute the formula was fitted from, or below 1 MET for
+-- the minutes, as resting burns at least that: the 5 MET estimate is shown then.
 create function public.heart_rate_kcal(
   heart_rate numeric,
   minutes numeric,
@@ -312,12 +351,18 @@ as $$
       (-55.0969 + 0.6309 * heart_rate + 0.1988 * weight_kg + 0.2017 * age) / 4.184 as male,
       (-20.4022 + 0.4472 * heart_rate - 0.1263 * weight_kg + 0.074 * age) / 4.184 as female
   )
-  select least(5000, greatest(0, round(minutes * case sex
-      when 'male' then male
-      when 'female' then female
-      else (male + female) / 2
-    end)))::integer
-  from per_minute;
+  select case
+    when heart_rate >= 90 and estimate >= minutes * weight_kg / 60
+    then least(5000, round(estimate))::integer
+  end
+  from (
+    select minutes * case sex
+        when 'male' then male
+        when 'female' then female
+        else (male + female) / 2
+      end as estimate
+    from per_minute
+  ) e;
 $$;
 
 revoke execute on function public.heart_rate_kcal(numeric, numeric, numeric, numeric, public.sex)
@@ -378,6 +423,7 @@ begin
       average,
       extract(epoch from log.finished_at - log.started_at) / 60,
       public.weight_on(caller_id, log.started_on),
+      -- The age on the workout's day; age_in_years() gives today's.
       extract(year from log.started_on) - p.birth_year,
       p.sex
     )
@@ -406,8 +452,8 @@ revoke execute on function public.set_workout_health(bigint, numeric, numeric, n
 grant execute on function public.set_workout_health(bigint, numeric, numeric, numeric, text, numeric[])
   to authenticated;
 
--- Unchanged apart from the calories estimated from the heart rate, and which calories to show and
--- where they come from, so that the app and Bite choose alike. The samples are read with the log
+-- Unchanged apart from which calories to show and where they come from, so that the app and Bite
+-- choose alike. The samples are read with the log
 -- itself, as a summary has no use for them.
 create or replace view public.workout_log_summaries
 with (security_invoker = true)
@@ -432,7 +478,6 @@ select
   l.heart_rate_max,
   l.active_kcal,
   l.health_source,
-  l.heart_rate_kcal,
   -- The calories to show: the watch's, else those from the heart rate, else those from the minutes.
   coalesce(l.active_kcal, l.heart_rate_kcal, l.estimated_kcal) as kcal,
   case
@@ -449,3 +494,15 @@ cross join lateral (
   from public.logged_sets t
   where t.log_id = l.id
 ) s;
+
+-- Logs kept with a heart rate before this get its estimate, as a new one does.
+update public.workout_logs l
+set heart_rate_kcal = public.heart_rate_kcal(
+    l.heart_rate_avg,
+    extract(epoch from l.finished_at - l.started_at) / 60,
+    public.weight_on(l.user_id, l.started_on),
+    extract(year from l.started_on) - p.birth_year,
+    p.sex
+  )
+from public.profiles p
+where p.user_id = l.user_id and l.heart_rate_avg is not null;
