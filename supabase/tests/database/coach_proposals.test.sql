@@ -267,7 +267,7 @@ select ok(
     and not has_function_privilege('anon', 'public.decide_coach_proposal(bigint, public.coach_proposal_decision, date)', 'execute')
     and not has_function_privilege('anon', 'public.save_own_nutrition_targets(jsonb, date)', 'execute')
     and not has_function_privilege('anon', 'public.use_calculated_nutrition_targets(date)', 'execute')
-    and not has_function_privilege('anon', 'public.log_weight(numeric, date)', 'execute')
+    and not has_function_privilege('anon', 'public.log_weight(numeric, date, date)', 'execute')
     and not has_table_privilege('anon', 'public.coach_proposals', 'select'),
   'Signed-out callers propose, decide and read nothing'
 );

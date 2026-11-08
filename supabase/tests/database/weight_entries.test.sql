@@ -1,8 +1,9 @@
--- Logging weights: one entry per user and day, corrected by logging again.
+-- Logging weights: one entry per user and day, corrected by logging again, written only through
+-- log_weight() (ADR 0100), each user's apart from the others'.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -13,72 +14,60 @@ create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
     set_config('request.jwt.claims', json_build_object('sub', user_id, 'role', 'authenticated')::text, true);
 $$;
 
-select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
-
+-- An entry of an earlier day, as one logged then.
 insert into public.weight_entries (user_id, weight_kg, measured_on)
-  values ('00000000-0000-0000-0000-00000000000a', 80, '2026-10-21');
+  values ('00000000-0000-0000-0000-00000000000a', 81, current_date - 1);
 
 select throws_ok(
   $$ insert into public.weight_entries (user_id, weight_kg, measured_on)
-     values ('00000000-0000-0000-0000-00000000000a', 79.5, '2026-10-21') $$,
+     values ('00000000-0000-0000-0000-00000000000a', 79.5, current_date - 1) $$,
   '23505',
   null,
   'A second entry for the same day is rejected'
 );
 
--- What the app sends: insert, or correct the day's entry.
-insert into public.weight_entries (user_id, weight_kg, measured_on)
-  values ('00000000-0000-0000-0000-00000000000a', 79.5, '2026-10-21')
-  on conflict (user_id, measured_on) do update set weight_kg = excluded.weight_kg;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
+select lives_ok(
+  $$ select public.log_weight(80, current_date) $$,
+  'A user logs today''s weight'
+);
+select public.log_weight(79.5, current_date);
 select results_eq(
-  $$ select weight_kg from public.weight_entries where measured_on = '2026-10-21' $$,
+  $$ select weight_kg from public.weight_entries where measured_on = current_date $$,
   $$ values (79.5::numeric(4, 1)) $$,
   'Logging again on the same day corrects the entry'
 );
--- The app's upsert sets every column it sends again.
-select lives_ok(
+select is(
+  (select count(*)::integer from public.weight_entries),
+  2,
+  'Another day keeps an entry of its own'
+);
+
+select throws_ok(
   $$ insert into public.weight_entries (user_id, weight_kg, measured_on)
-     values ('00000000-0000-0000-0000-00000000000a', 79.4, '2026-10-21')
-     on conflict (user_id, measured_on) do update
-     set user_id = excluded.user_id, measured_on = excluded.measured_on, weight_kg = excluded.weight_kg $$,
-  'The app''s upsert still corrects the entry'
+     values ('00000000-0000-0000-0000-00000000000a', 79, current_date - 2) $$,
+  '42501', null, 'Users cannot add an entry directly'
+);
+select throws_ok(
+  $$ update public.weight_entries set weight_kg = 70 $$,
+  '42501', null, 'Nor change one directly'
 );
 select throws_ok(
   $$ update public.weight_entries set created_at = now() - interval '1 year' $$,
   '42501', null, 'When an entry was created cannot be changed'
 );
 
-insert into public.weight_entries (user_id, weight_kg, measured_on)
-  values ('00000000-0000-0000-0000-00000000000a', 79, '2026-10-22');
-
-select is(
-  (select count(*)::integer from public.weight_entries),
-  2,
-  'Another day gets an entry of its own'
-);
-
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 
 select lives_ok(
-  $$ insert into public.weight_entries (user_id, weight_kg, measured_on)
-     values ('00000000-0000-0000-0000-00000000000b', 60, '2026-10-21') $$,
+  $$ select public.log_weight(60, current_date) $$,
   'Another user logs the same day independently'
 );
-
-select throws_ok(
-  $$ insert into public.weight_entries (user_id, weight_kg, measured_on)
-     values ('00000000-0000-0000-0000-00000000000a', 50, '2026-10-21')
-     on conflict (user_id, measured_on) do update set weight_kg = excluded.weight_kg $$,
-  '42501',
-  null,
-  'A user cannot correct another user''s entry'
-);
-
 select results_eq(
   $$ select weight_kg from public.weight_entries order by measured_on $$,
   $$ values (60::numeric(4, 1)) $$,
-  'A user only sees their own entries'
+  'Each user reads only their own entries'
 );
 
 select * from finish();
