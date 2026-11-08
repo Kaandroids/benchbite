@@ -25,7 +25,8 @@ it("shows today's steps, the week from Monday and its average a day", async () =
 
   expect(screen.getByText('6,248 steps today')).toBeOnTheScreen();
   expect(screen.getByText('From Apple Health')).toBeOnTheScreen();
-  expect(screen.getByText('6,599 a day on average this week')).toBeOnTheScreen();
+  // Today is still being counted, so the average is of Monday and Tuesday.
+  expect(screen.getByText('6,775 a day on average this week')).toBeOnTheScreen();
   expect(
     screen.getByLabelText('Steps this week: Monday 8,120, Tuesday 5,430, Wednesday 6,248'),
   ).toBeOnTheScreen();
@@ -52,4 +53,14 @@ it('says when the steps could not load', async () => {
   await render(<WeekStepsCard today={TODAY} />);
 
   expect(screen.getByText('Your steps could not load.')).toBeOnTheScreen();
+});
+
+it('shows no average before the week has a day that is over', async () => {
+  // A Monday.
+  const monday = new Date(2026, 10, 9, 8, 0);
+  mockDays([{ day: '2026-11-09', steps: 500 }]);
+  await render(<WeekStepsCard today={monday} />);
+
+  expect(screen.getByText('500 steps today')).toBeOnTheScreen();
+  expect(screen.queryByText(/on average this week/)).toBeNull();
 });

@@ -23,7 +23,7 @@ import { StreakMark } from '@/streak/streak-mark';
 import { useMonthStreak, useStreak, useStreakStart } from '@/streak/use-streak';
 import { useTheme, type ColorTokens } from '@/theme';
 
-import { CardLoadState } from './card-load-state';
+import { CardLoadState } from '@/components/card-load-state';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 const MARKS: readonly MarkedState[] = ['done', 'frozen', 'missed'];

@@ -12,7 +12,7 @@ type CardLoadStateProps = {
   error: string;
 };
 
-/** A Progress card's data loading, the height of a chart, or the failure with Try again. */
+/** A card's data loading, the height of a chart, or the failure with Try again. */
 export function CardLoadState({ query, error }: CardLoadStateProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();

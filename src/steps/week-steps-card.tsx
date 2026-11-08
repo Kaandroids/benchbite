@@ -7,10 +7,12 @@ import { Text } from '@/components/ui/text';
 import { useStoreName } from '@/health/use-store-name';
 import { addDays, sameDay, toIsoDate, useWeekdayFormat, weekStart } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { CardLoadState } from '@/progress/card-load-state';
+import { CardLoadState } from '@/components/card-load-state';
 import { fonts, useTheme } from '@/theme';
 
-import { averageSteps, useStepDays } from './steps';
+import { READS } from '@/health/reads';
+
+import { averageSteps, pastDays, useStepDays } from './steps';
 
 const BAR_HEIGHT = 64;
 
@@ -32,6 +34,7 @@ export function WeekStepsCard({ entering, today }: WeekStepsCardProps) {
   const store = useStoreName() ?? '';
   const monday = weekStart(today);
   const days = useStepDays(monday, today);
+  const look = READS.steps;
 
   if (days.data === undefined) {
     return (
@@ -47,7 +50,7 @@ export function WeekStepsCard({ entering, today }: WeekStepsCardProps) {
     return (
       <Card entering={entering}>
         <View style={[styles.row, { gap: spacing.md }]}>
-          <IconTile name="steps" size={40} color="info" background="infoBackground" />
+          <IconTile name={look.icon} size={40} color={look.color} background={look.background} />
           <View style={styles.flex}>
             <Text variant="label">{t('steps.noneTitle')}</Text>
             <Text variant="caption" color="textMuted">
@@ -69,13 +72,14 @@ export function WeekStepsCard({ entering, today }: WeekStepsCardProps) {
     };
   });
   const most = Math.max(1, ...week.map(({ steps }) => steps ?? 0));
-  const average = averageSteps(days.data);
+  // Today is still being counted; before the week has a day that is over, there is no average.
+  const average = averageSteps(pastDays(days.data, today));
   const count = todaySteps ?? 0;
 
   return (
     <Card entering={entering}>
       <View style={[styles.row, { gap: spacing.md }]}>
-        <IconTile name="steps" size={40} color="info" background="infoBackground" />
+        <IconTile name={look.icon} size={40} color={look.color} background={look.background} />
         <View style={styles.flex}>
           <Text style={styles.value}>
             {format(count)}{' '}
@@ -132,7 +136,7 @@ export function WeekStepsCard({ entering, today }: WeekStepsCardProps) {
       </View>
       {average !== null ? (
         <Text variant="captionStrong" color="textMuted">
-          {t('steps.weekAverage', { steps: format(average) })}
+          {t('steps.weekAverage', { steps: format(Math.round(average)) })}
         </Text>
       ) : null}
     </Card>

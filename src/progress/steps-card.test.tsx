@@ -38,10 +38,11 @@ it('shows the average a day against the range before', async () => {
   );
   await render(<StepsCard today={TODAY} />);
 
-  expect(screen.getByText('7,000 a day on average')).toBeOnTheScreen();
-  expect(screen.getByText('2,000 a day more than the range before')).toBeOnTheScreen();
+  // Today is still being counted, so it is left out of the average.
+  expect(screen.getByText('8,000 a day on average')).toBeOnTheScreen();
+  expect(screen.getByText('3,000 a day more than the range before')).toBeOnTheScreen();
   expect(
-    screen.getByLabelText('Steps a day from October 8 to November 8, 7,000 on average'),
+    screen.getByLabelText('Steps a day from October 8 to November 8, 8,000 on average'),
   ).toBeOnTheScreen();
 });
 

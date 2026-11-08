@@ -15,7 +15,7 @@ import { MacroBars } from '@/nutrition/macro-bars';
 import { NOTHING } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 
-import { CardLoadState } from './card-load-state';
+import { CardLoadState } from '@/components/card-load-state';
 import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
 
 type NutritionCardProps = {

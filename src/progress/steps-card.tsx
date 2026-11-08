@@ -8,10 +8,10 @@ import { Text } from '@/components/ui/text';
 import { addDays, toIsoDate, useMonthDayFormat, weekStart } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
-import { averageSteps, useStepDays, type StepDay } from '@/steps/steps';
+import { averageSteps, pastDays, useStepDays, type StepDay } from '@/steps/steps';
 import { fonts, useTheme } from '@/theme';
 
-import { CardLoadState } from './card-load-state';
+import { CardLoadState } from '@/components/card-load-state';
 
 const CHART_HEIGHT = 110;
 
@@ -30,15 +30,12 @@ function bars(range: ProgressRange, start: Date, today: Date, days: readonly Ste
   const result: Bar[] = [];
   for (let from = range === 'month' ? start : weekStart(start); from <= today;) {
     const to = addDays(from, length);
-    const counted: number[] = [];
+    const counted: StepDay[] = [];
     for (let day = from; day < to && day <= today; day = addDays(day, 1)) {
       const steps = byDay.get(toIsoDate(day));
-      if (steps !== undefined) counted.push(steps);
+      if (steps !== undefined) counted.push({ day: toIsoDate(day), steps });
     }
-    result.push({
-      from,
-      steps: counted.length ? counted.reduce((sum, steps) => sum + steps, 0) / counted.length : 0,
-    });
+    result.push({ from, steps: averageSteps(counted) ?? 0 });
     from = to;
   }
   return result;
@@ -69,12 +66,17 @@ export function StepsCard({ entering, today }: StepsCardProps) {
       </Text>
     );
   } else {
-    const average = averageSteps(days.data) ?? 0;
+    // Today is still being counted, so the average is of the days that are over, or of today alone
+    // before any is.
+    const average = Math.round(
+      averageSteps(pastDays(days.data, today)) ?? averageSteps(days.data) ?? 0,
+    );
     const lastAverage =
       last.data && !last.isPlaceholderData && !days.isPlaceholderData
         ? averageSteps(last.data)
         : null;
-    const change = lastAverage === null ? 0 : average - lastAverage;
+    const lastRounded = lastAverage === null ? null : Math.round(lastAverage);
+    const change = lastRounded === null ? 0 : average - lastRounded;
     const chart = bars(range, start, today, days.data);
     const most = Math.max(1, ...chart.map(({ steps }) => steps));
     content = (

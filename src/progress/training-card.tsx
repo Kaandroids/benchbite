@@ -11,7 +11,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { useTheme } from '@/theme';
 
-import { CardLoadState } from './card-load-state';
+import { CardLoadState } from '@/components/card-load-state';
 import { HeatMap, HeatMapLegend } from './heat-map';
 
 /** A month is too short to show how training went; the map fills its width from three. */
