@@ -136,21 +136,22 @@ select public.give_plan('you@example.com', now(), now() + interval '1 year');
 
 The app runs in a development build: Benchbite itself, built on your machine with the native
 modules it uses and Expo's development tools, rather than Expo Go, which has only its own
-([ADR 0096](adr/0096-develop-with-a-development-build.md)). Build it once for each simulator,
-emulator or device:
+([ADR 0096](adr/0096-develop-with-a-development-build.md)). Generate its native folders, then
+build it once for each simulator, emulator or device:
 
 ```bash
-pnpm expo run:ios                # the iOS Simulator
-pnpm expo run:android            # the Android Emulator, or a device connected over USB
-pnpm expo run:ios --device       # an iPhone connected over USB, which asks which one
+pnpm native:dev                  # fresh ios/ and android/ folders for the development build
+pnpm ios                         # the iOS Simulator
+pnpm android                     # the Android Emulator, or a device connected over USB
+pnpm ios --device                # an iPhone connected over USB, which asks which one
 ```
 
 It is installed as **Benchbite Dev**, an app of its own (`com.benchbite.app.dev`, set in
-`app.config.ts`), so a phone can have it beside a release build of Benchbite. The first build
-generates the `ios/` and `android/` folders, which are ignored by Git. If it changes the `ios`
-and `android` scripts in `package.json`, undo that change. An iPhone needs
-**Developer Mode** (Settings → Privacy & Security) and is signed with the project's Apple
-developer team.
+`app.config.ts`), so a phone can have it beside a release build of Benchbite. The `ios/` and
+`android/` folders are ignored by Git, and `pnpm ios` and `pnpm android` reuse the ones they find:
+folders left by a release build would make the development build Benchbite itself, in place of
+the release. An iPhone needs **Developer Mode** (Settings → Privacy & Security) and is signed with
+the project's Apple developer team.
 
 Then, with the local Supabase stack running, start the dev server:
 
@@ -162,13 +163,13 @@ Press `i` or `a` in the terminal to open the app in the iOS Simulator or Android
 scan the QR code with a phone that has the development build. Restart the dev server after
 changing `.env.local`.
 
-Changes to the code only need the dev server. Build again after adding or updating a library with
-native code, changing `app.json` or `app.config.ts`, or upgrading the Expo SDK, from fresh native
-folders:
+Changes to the code only need the dev server. Build again from fresh native folders after a
+release build, adding or updating a library with native code, changing `app.json` or
+`app.config.ts`, or upgrading the Expo SDK:
 
 ```bash
-pnpm expo prebuild --clean
-pnpm expo run:ios                # or run:android
+pnpm native:dev
+pnpm ios                         # or pnpm android
 ```
 
 `127.0.0.1` in `.env.local` reaches your computer directly from the iOS Simulator. Elsewhere:

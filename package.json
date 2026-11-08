@@ -57,8 +57,10 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "native:dev": "expo prebuild --clean",
+    "native:release": "APP_VARIANT=production expo prebuild --clean --platform ios",
     "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc --noEmit && tsc -p scripts",
     "format": "prettier --write .",

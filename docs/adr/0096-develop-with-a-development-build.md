@@ -10,7 +10,7 @@ The app has been developed in Expo Go, which holds only the native modules it sh
 ## Decision
 
 - **Develop in a development build, made with `expo-dev-client`.** It is the app itself, with its own native modules and Expo's development tools: the dev menu, reloading and the launcher that finds the dev server. `pnpm start` opens it in place of Expo Go.
-- **Build it on the machine:** `pnpm expo run:ios` and `pnpm expo run:android`, once for each simulator, emulator or device, and again when native code or `app.json` changes. Code changes need only the dev server, as before.
+- **Build it on the machine:** `pnpm native:dev` generates the native folders, and `pnpm ios` and `pnpm android` build them, once for each simulator, emulator or device, and again when native code or the app config changes, or after a release build, whose folders they would otherwise reuse. Code changes need only the dev server, as before.
 - **The development build is an app of its own:** "Benchbite Dev", `com.benchbite.app.dev`, with the scheme `benchbite-dev`, set by `app.config.ts`. A release build is made with `APP_VARIANT=production`. A phone can then keep a release build against the hosted project beside the development build, each with its own storage and notifications.
 - **The native folders stay generated** and ignored by Git (Continuous Native Generation): native settings live in `app.json`, `app.config.ts` and config plugins.
 - **Building in the cloud** with EAS for preview and production is left to #165.
@@ -19,6 +19,7 @@ The app has been developed in Expo Go, which holds only the native modules it sh
 
 - **Staying in Expo Go:** not possible once a native module outside it is added.
 - **EAS Build for development builds too:** builds without Xcode or Android Studio, but each build waits in a queue, and both are already needed for the simulators and releases.
+- **Selecting the development identity with `APP_VARIANT=development`,** Expo's convention, and making Benchbite itself by default: a development build made without the variable would then replace a phone's release build. Here a release names its variant on purpose, and `pnpm native:release` sets it.
 - **Committing `ios/` and `android/`:** native changes by hand, which Continuous Native Generation avoids, and folders that drift from `app.json`.
 
 ## Consequences
