@@ -119,3 +119,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0101](0101-read-the-last-30-days-of-weight-each-time.md)             | Read the last 30 days of weight each time                                               | Accepted                                             |
 | [0102](0102-translate-the-ios-permission-texts.md)                    | Translate the iOS permission texts                                                      | Accepted                                             |
 | [0103](0103-keep-the-days-steps.md)                                   | Keep the day's steps                                                                    | Accepted                                             |
+| [0104](0104-keep-a-workouts-heart-rate-over-its-time.md)              | Keep a workout's heart rate over its time                                               | Accepted                                             |
