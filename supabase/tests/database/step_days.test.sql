@@ -1,9 +1,9 @@
 -- import_steps() keeps the day's steps read from Apple Health or Health Connect (#469, ADR 0103): one
--- total a day of the last year, the latest count winning; only the caller's rows, read by them alone.
+-- total a day of the last year, the higher count winning; only the caller's rows, read by them alone.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -46,6 +46,16 @@ select is(
   pg_temp.steps(jsonb_build_array(jsonb_build_object('day', current_date, 'steps', 7012))),
   1,
   'A day counted again takes the new total'
+);
+select is(
+  pg_temp.steps(jsonb_build_array(jsonb_build_object('day', current_date - 1, 'steps', 2000))),
+  0,
+  'A lower total, as from a second phone, changes nothing'
+);
+select is(
+  (select steps from public.step_days where day = current_date - 1),
+  11340,
+  'And the higher total stays'
 );
 select is(
   pg_temp.steps(jsonb_build_array(

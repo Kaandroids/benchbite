@@ -18,10 +18,12 @@ create policy "Users read their own step days"
 revoke all on public.step_days from anon, authenticated;
 grant select on public.step_days to authenticated;
 
--- Keeps the steps read from the phone's health store for the caller, one total a day, each a day of
--- the last year; of a day given twice, the last counts. A day the store counts again, as today does
--- while the user walks, takes the new total. Entries that are no day or no count are left out on
--- their own. How many days changed.
+-- Keeps the steps read from the phone's health store for the caller, given as
+-- [{"day": "YYYY-MM-DD", "steps"}], at most 366: one total a day of the last year; of a day given
+-- twice, the last counts. A store's count of a day only grows, as today's does while the user
+-- walks, so the higher total is kept: a second phone that counted less, or a read that ended late,
+-- never lowers it. Entries that are no day or no count are left out on their own. How many days
+-- changed.
 create function public.import_steps(days jsonb, today date)
 returns integer
 language plpgsql
@@ -49,21 +51,27 @@ begin
       and s ->> 'day' ~ '^\d{4}-\d{2}-\d{2}$'
       and pg_input_is_valid(s ->> 'day', 'date')
   ), read as (
-    select distinct on (r.day) r.day, r.count
+    select distinct on (r.day) r.day, r.steps
     from (
-      select (s ->> 'day')::date as day, round((s ->> 'steps')::numeric) as count, place
+      -- Each cast checks its value again, so no plan can cast an entry the filter above left out.
+      select
+        case when pg_input_is_valid(s ->> 'day', 'date') then (s ->> 'day')::date end as day,
+        case when jsonb_typeof(s -> 'steps') = 'number' then round((s ->> 'steps')::numeric) end
+          as steps,
+        place
       from given
     ) r
     where r.day between import_steps.today - 365 and import_steps.today
-      and r.count between 0 and 200000
+      -- The column's check.
+      and r.steps between 0 and 200000
     order by r.day, r.place desc
   ), kept as (
     insert into public.step_days as d (user_id, day, steps)
-    select caller_id, r.day, r.count::integer
+    select caller_id, r.day, r.steps::integer
     from read r
     on conflict (user_id, day) do update
       set steps = excluded.steps
-      where d.steps <> excluded.steps
+      where excluded.steps > d.steps
     returning 1
   )
   select count(*) into changed from kept;
