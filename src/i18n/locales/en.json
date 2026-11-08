@@ -1917,6 +1917,16 @@
       "freezes_one": "{{count}} freeze left",
       "freezes_other": "{{count}} freezes left",
       "error": "We couldn't load your streak."
+    },
+    "steps": {
+      "title": "Steps",
+      "average": "a day on average",
+      "more": "{{steps}} a day more than the range before",
+      "fewer": "{{steps}} a day fewer than the range before",
+      "none": "No steps counted in this range.",
+      "error": "Your steps could not load.",
+      "chartLabel": "Steps a day from {{from}} to {{to}}, {{average}} on average",
+      "rangeLabel": "Steps over"
     }
   },
   "bite": {
@@ -2398,7 +2408,9 @@
       "caloriesWhen": "during workouts",
       "weight": "Weight",
       "weightWhen": "one a day, from the last 30 days on",
-      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight a day, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
+      "steps": "Steps",
+      "stepsWhen": "a total for each day",
+      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight and a step count a day, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
       "continue": "Continue",
       "notNow": "Not now",
       "next": {
@@ -2407,7 +2419,7 @@
       }
     },
     "disconnect": {
-      "body": "Disconnecting stops Benchbite reading from {{store}}. The weights and the workouts’ heart rate and calories already taken stay. Deleting a workout deletes its heart rate and calories.",
+      "body": "Disconnecting stops Benchbite reading from {{store}}. The weights, the steps and the workouts’ heart rate and calories already taken stay. Deleting a workout deletes its heart rate and calories.",
       "keep": "Keep connected",
       "confirm": "Disconnect"
     },
@@ -2436,11 +2448,29 @@
       "waitingTitle": "Waiting for your watch",
       "waitingBody": "Its heart rate and calories show here once they reach {{store}}. Benchbite looks again for a day."
     },
-    "weightAsk": {
-      "title": "Your weight from {{store}}",
-      "body": "Weights from your scale or other apps fill this chart by themselves. One you enter here wins on its day.",
-      "bringIn": "Bring in my weight",
-      "notNow": "Not now"
+    "ask": {
+      "notNow": "Not now",
+      "weight": {
+        "title": "Your weight from {{store}}",
+        "body": "Weights from your scale or other apps fill this chart by themselves. One you enter here wins on its day.",
+        "bringIn": "Bring in my weight"
+      },
+      "steps": {
+        "title": "Your steps from {{store}}",
+        "body": "See how much you walk each day, counted by your phone or your watch.",
+        "bringIn": "Show my steps"
+      }
     }
+  },
+  "steps": {
+    "today_one": "step today",
+    "today_other": "steps today",
+    "fromStore": "From {{store}}",
+    "weekAverage": "{{steps}} a day on average this week",
+    "noneTitle": "No steps yet today",
+    "noneBody": "They show here once {{store}} counts them.",
+    "weekLabel": "Steps this week: {{days}}",
+    "dayLabel": "{{day}} {{steps}}",
+    "error": "Your steps could not load."
   }
 }

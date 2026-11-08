@@ -1917,6 +1917,16 @@
       "freezes_one": "{{count}} freeze kaldı",
       "freezes_other": "{{count}} freeze kaldı",
       "error": "Serin yüklenemedi."
+    },
+    "steps": {
+      "title": "Adımlar",
+      "average": "günde ortalama",
+      "more": "Önceki döneme göre günde {{steps}} adım fazla",
+      "fewer": "Önceki döneme göre günde {{steps}} adım az",
+      "none": "Bu dönemde sayılmış adım yok.",
+      "error": "Adımların yüklenemedi.",
+      "chartLabel": "{{from}} – {{to}} arası günlük adımlar, ortalama {{average}}",
+      "rangeLabel": "Adım aralığı"
     }
   },
   "bite": {
@@ -2398,7 +2408,9 @@
       "caloriesWhen": "antrenman sırasında",
       "weight": "Kilo",
       "weightWhen": "günde bir, son 30 günden itibaren",
-      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kiloyu hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "steps": "Adımlar",
+      "stepsWhen": "her gün için bir toplam",
+      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kilo ve adım sayısını hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
       "continue": "Devam",
       "notNow": "Şimdi değil",
       "next": {
@@ -2407,7 +2419,7 @@
       }
     },
     "disconnect": {
-      "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Alınmış kilolar ile antrenmanlarının nabız ve kalorisi kalır. Bir antrenmanı silersen onun nabzı ve kalorisi de silinir.",
+      "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Alınmış kilolar, adımlar ve antrenmanlarının nabız ve kalorisi kalır. Bir antrenmanı silersen onun nabzı ve kalorisi de silinir.",
       "keep": "Bağlı kalsın",
       "confirm": "Bağlantıyı kes"
     },
@@ -2436,11 +2448,29 @@
       "waitingTitle": "Saatin bekleniyor",
       "waitingBody": "Nabız ve kalori {{store}} içine ulaşınca burada görünür. Benchbite bir gün boyunca tekrar bakar."
     },
-    "weightAsk": {
-      "title": "Kilon {{store}} üzerinden",
-      "body": "Tartından ya da başka uygulamalardan gelen kilolar bu grafiği kendiliğinden doldurur. Burada girdiğin kilo o gün için geçerli olur.",
-      "bringIn": "Kilomu getir",
-      "notNow": "Şimdi değil"
+    "ask": {
+      "notNow": "Şimdi değil",
+      "weight": {
+        "title": "Kilon {{store}} üzerinden",
+        "body": "Tartından ya da başka uygulamalardan gelen kilolar bu grafiği kendiliğinden doldurur. Burada girdiğin kilo o gün için geçerli olur.",
+        "bringIn": "Kilomu getir"
+      },
+      "steps": {
+        "title": "Adımların {{store}} üzerinden",
+        "body": "Telefonunun ya da saatinin saydığı adımlarla her gün ne kadar yürüdüğünü gör.",
+        "bringIn": "Adımlarımı göster"
+      }
     }
+  },
+  "steps": {
+    "today_one": "adım bugün",
+    "today_other": "adım bugün",
+    "fromStore": "{{store}} üzerinden",
+    "weekAverage": "Bu hafta günde ortalama {{steps}} adım",
+    "noneTitle": "Bugün henüz adım yok",
+    "noneBody": "{{store}} saydığında burada görünür.",
+    "weekLabel": "Bu haftanın adımları: {{days}}",
+    "dayLabel": "{{day}} {{steps}}",
+    "error": "Adımların yüklenemedi."
   }
 }

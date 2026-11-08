@@ -15,7 +15,7 @@ import type { HealthStore } from './types';
 
 /** What the user is asked to allow, as the consent sheet lists it. */
 const READS: {
-  key: 'heartRate' | 'calories' | 'weight';
+  key: 'heartRate' | 'calories' | 'weight' | 'steps';
   icon: IconName;
   color: keyof ColorTokens;
   background: keyof ColorTokens;
@@ -23,6 +23,7 @@ const READS: {
   { key: 'heartRate', icon: 'heart', color: 'snack', background: 'snackBackground' },
   { key: 'calories', icon: 'flame', color: 'lunch', background: 'lunchBackground' },
   { key: 'weight', icon: 'scale', color: 'water', background: 'waterBackground' },
+  { key: 'steps', icon: 'steps', color: 'info', background: 'infoBackground' },
 ];
 
 type SheetProps = {

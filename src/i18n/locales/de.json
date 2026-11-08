@@ -1917,6 +1917,16 @@
       "freezes_one": "Noch {{count}} Freeze",
       "freezes_other": "Noch {{count}} Freezes",
       "error": "Deine Serie konnte nicht geladen werden."
+    },
+    "steps": {
+      "title": "Schritte",
+      "average": "pro Tag im Schnitt",
+      "more": "{{steps}} pro Tag mehr als im Zeitraum davor",
+      "fewer": "{{steps}} pro Tag weniger als im Zeitraum davor",
+      "none": "In diesem Zeitraum wurden keine Schritte gezählt.",
+      "error": "Deine Schritte konnten nicht geladen werden.",
+      "chartLabel": "Schritte pro Tag vom {{from}} bis {{to}}, im Schnitt {{average}}",
+      "rangeLabel": "Schritte über"
     }
   },
   "bite": {
@@ -2398,7 +2408,9 @@
       "caloriesWhen": "während Workouts",
       "weight": "Gewicht",
       "weightWhen": "eins pro Tag, ab den letzten 30 Tagen",
-      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht pro Tag, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
+      "steps": "Schritte",
+      "stepsWhen": "eine Summe pro Tag",
+      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht und eine Schrittzahl pro Tag, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
       "continue": "Weiter",
       "notNow": "Nicht jetzt",
       "next": {
@@ -2407,7 +2419,7 @@
       }
     },
     "disconnect": {
-      "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Schon übernommene Gewichte sowie Herzfrequenz und Kalorien deiner Workouts bleiben. Wenn du ein Workout löschst, werden seine Herzfrequenz und Kalorien mitgelöscht.",
+      "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Schon übernommene Gewichte, Schritte sowie Herzfrequenz und Kalorien deiner Workouts bleiben. Wenn du ein Workout löschst, werden seine Herzfrequenz und Kalorien mitgelöscht.",
       "keep": "Verbunden lassen",
       "confirm": "Trennen"
     },
@@ -2436,11 +2448,29 @@
       "waitingTitle": "Warte auf deine Uhr",
       "waitingBody": "Herzfrequenz und Kalorien erscheinen hier, sobald sie in {{store}} ankommen. Benchbite sieht einen Tag lang wieder nach."
     },
-    "weightAsk": {
-      "title": "Dein Gewicht aus {{store}}",
-      "body": "Gewichte von deiner Waage oder aus anderen Apps füllen dieses Diagramm von selbst. Ein hier eingetragenes Gewicht hat an seinem Tag Vorrang.",
-      "bringIn": "Mein Gewicht übernehmen",
-      "notNow": "Nicht jetzt"
+    "ask": {
+      "notNow": "Nicht jetzt",
+      "weight": {
+        "title": "Dein Gewicht aus {{store}}",
+        "body": "Gewichte von deiner Waage oder aus anderen Apps füllen dieses Diagramm von selbst. Ein hier eingetragenes Gewicht hat an seinem Tag Vorrang.",
+        "bringIn": "Mein Gewicht übernehmen"
+      },
+      "steps": {
+        "title": "Deine Schritte aus {{store}}",
+        "body": "Sieh, wie viel du jeden Tag gehst, gezählt von deinem Handy oder deiner Uhr.",
+        "bringIn": "Meine Schritte zeigen"
+      }
     }
+  },
+  "steps": {
+    "today_one": "Schritt heute",
+    "today_other": "Schritte heute",
+    "fromStore": "Aus {{store}}",
+    "weekAverage": "Im Schnitt {{steps}} pro Tag diese Woche",
+    "noneTitle": "Heute noch keine Schritte",
+    "noneBody": "Sie erscheinen hier, sobald {{store}} sie zählt.",
+    "weekLabel": "Schritte diese Woche: {{days}}",
+    "dayLabel": "{{day}} {{steps}}",
+    "error": "Deine Schritte konnten nicht geladen werden."
   }
 }
