@@ -3,25 +3,27 @@
 // the last 30 days, so a watch that syncs late still fills its days. It keeps a day's higher total.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { addDays, toIsoDate } from '@/i18n/dates';
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { STEPS_KEY } from '@/steps/steps';
 
 import { setStepsYearRead, stepsYearRead } from './connection';
-import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
+import { lastDays, mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
 import { dailySteps } from './platform';
 
-/** How far back the first read goes, and each later one; import_steps() takes a year's days. */
-const FIRST_READ_DAYS = 365;
-const READ_DAYS = 29;
+/**
+ * How many days, today among them, the first read goes back, and each later one; import_steps()
+ * takes a year and a day.
+ */
+const FIRST_READ_DAYS = 366;
+const READ_DAYS = 30;
 
 async function importNow(queryClient: QueryClient): Promise<boolean> {
   if (!mayImport('steps')) return false;
   const userId = await signedInUser();
   const now = new Date();
   const firstRead = !stepsYearRead();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const days = await dailySteps(addDays(today, -(firstRead ? FIRST_READ_DAYS : READ_DAYS)));
+  const days = await dailySteps(lastDays(firstRead ? FIRST_READ_DAYS : READ_DAYS, now));
   // Another user may have signed in while the store was read, which lets go of the connection.
   if (!(await stillImporting('steps', userId))) return false;
   let changed = false;
@@ -30,7 +32,9 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
     if (error) throw error;
     changed = (data ?? 0) > 0;
   }
-  if (firstRead) setStepsYearRead(true);
+  // Only a read that found steps counts as the year's: one made while steps could not be read finds
+  // none, and the year is read again once they can. Nor does it count for a user signed in since.
+  if (firstRead && days.length && (await stillImporting('steps', userId))) setStepsYearRead(true);
   if (changed) await queryClient.invalidateQueries({ queryKey: STEPS_KEY });
   return changed;
 }

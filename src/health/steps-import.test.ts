@@ -107,3 +107,25 @@ it('reads the store once for imports asked for at the same time', async () => {
 
   expect(dailySteps).toHaveBeenCalledTimes(1);
 });
+
+it('reads the year again when the first read found no steps, as before they could be read', async () => {
+  jest.mocked(dailySteps).mockResolvedValueOnce([]);
+
+  await importHealthSteps(createTestQueryClient());
+  expect(stepsYearRead()).toBe(false);
+
+  await importHealthSteps(createTestQueryClient());
+  expect(daysBack(jest.mocked(dailySteps).mock.calls[1]![0])).toBe(365);
+});
+
+it('does not mark the year read for a user who signed in while the steps were sent', async () => {
+  jest.mocked(supabase.rpc).mockImplementation((() => {
+    signedIn('user-2');
+    forgetHealthOnDevice();
+    return Promise.resolve({ data: 2, error: null });
+  }) as never);
+
+  await importHealthSteps(createTestQueryClient());
+
+  expect(stepsYearRead()).toBe(false);
+});
