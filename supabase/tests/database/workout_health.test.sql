@@ -112,7 +112,7 @@ select results_eq(
   'The other user''s log is untouched'
 );
 select ok(
-  not has_function_privilege('anon', 'public.set_workout_health(bigint, numeric, numeric, numeric, text)', 'execute'),
+  not has_function_privilege('anon', 'public.set_workout_health(bigint, numeric, numeric, numeric, text, numeric[])', 'execute'),
   'Without a session nobody can call it'
 );
 
