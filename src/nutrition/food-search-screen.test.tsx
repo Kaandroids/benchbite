@@ -407,6 +407,8 @@ describe('FoodSearchScreen', () => {
   });
 
   it("says the week's photos are used up from the photo tile, with a way to premium", async () => {
+    // A Wednesday before the Monday they come back, so that the day reads as a weekday.
+    jest.useFakeTimers({ now: new Date(2026, 10, 4, 9, 0), advanceTimers: true });
     jest.mocked(useAiAccess).mockReturnValue({
       data: { refusal: 'limit_reached', byCount: true, resetsAt: new Date(2026, 10, 9) },
     } as never);
@@ -416,6 +418,7 @@ describe('FoodSearchScreen', () => {
     expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
     expect(screen.getByText(/New ones on Monday/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'See premium' })).toBeTruthy();
+    jest.useRealTimers();
   });
 
   it('keeps the sheet the tile opened when the answer comes later', async () => {

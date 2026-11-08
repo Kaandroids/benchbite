@@ -45,7 +45,14 @@ function mockPlan(summary: PlanSummary) {
 
 const onClose = jest.fn();
 
-beforeEach(() => jest.clearAllMocks());
+// A Wednesday before the Monday the week starts again, so that the day reads as a weekday.
+const WEDNESDAY = new Date(2026, 10, 4, 9, 0);
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true });
+});
+afterEach(() => jest.useRealTimers());
 
 describe('PremiumScreen', () => {
   it('shows a free user their photos this week and the free plan beside premium', async () => {
