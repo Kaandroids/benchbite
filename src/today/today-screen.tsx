@@ -9,6 +9,8 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
+import { ReadAskCard } from '@/health/read-ask-card';
+import { useReadAsk, useReading } from '@/health/use-read-ask';
 import { toIsoDate } from '@/i18n/dates';
 import { totalOf, useDayEntries } from '@/nutrition/meals';
 import { useNutritionTargets } from '@/nutrition/targets';
@@ -16,6 +18,7 @@ import { useDisplayName } from '@/profile/display-name';
 import { useBreakPrompt } from '@/streak/break-prompt';
 import { BreakSheet } from '@/streak/break-sheet';
 import { StreakBadge } from '@/streak/streak-badge';
+import { WeekStepsCard } from '@/steps/week-steps-card';
 import { useStreak } from '@/streak/use-streak';
 import { useTheme } from '@/theme';
 import { useWeekSchedule } from '@/week/use-week-schedule';
@@ -48,6 +51,8 @@ export function TodayScreen() {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const targets = useNutritionTargets();
+  const readingSteps = useReading('steps');
+  const stepsAsk = useReadAsk('steps');
   const name = useDisplayName().data;
   const greeting = useGreeting();
   const today = new Date();
@@ -133,16 +138,18 @@ export function TodayScreen() {
             day={todayOn}
           />
         ) : null}
+        {readingSteps ? <WeekStepsCard entering={cardEntering(2)} today={today} /> : null}
+        <ReadAskCard ask={stepsAsk} entering={cardEntering(2)} />
         {missed.length > 0 ? (
           <MissedCard
-            entering={cardEntering(2)}
+            entering={cardEntering(3)}
             missed={missed}
             onCatchUp={() => setSheet({ kind: 'catchUp' })}
           />
         ) : null}
         {plan.data ? (
           <WorkoutCard
-            entering={cardEntering(2)}
+            entering={cardEntering(3)}
             schedule={schedule}
             sessions={plan.data.sessions}
             today={today}
