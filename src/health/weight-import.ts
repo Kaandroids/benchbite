@@ -38,18 +38,16 @@ async function signedInUser(): Promise<string | undefined> {
   return data.session?.user.id;
 }
 
+/** Whether the store is connected and weight is read from it. */
+const mayImport = () => isHealthConnected() && weightSync() === 'on';
+
 /** Whether weight may be read now, for the user signed in when the import started. */
 async function stillImporting(userId: string | undefined): Promise<boolean> {
-  return (
-    userId !== undefined &&
-    isHealthConnected() &&
-    weightSync() === 'on' &&
-    (await signedInUser()) === userId
-  );
+  return userId !== undefined && mayImport() && (await signedInUser()) === userId;
 }
 
 async function importNow(queryClient: QueryClient): Promise<boolean> {
-  if (!isHealthConnected() || weightSync() !== 'on') return false;
+  if (!mayImport()) return false;
   const userId = await signedInUser();
   const now = new Date();
   const days = latestPerDay(await weightsSince(new Date(now.getTime() - READ_DAYS * DAY_MS)));

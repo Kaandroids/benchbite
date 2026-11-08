@@ -14,15 +14,19 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+function notify() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 export function isHealthConnected(): boolean {
   return readItem(KEY) === 'true';
 }
 
 export function setHealthConnected(connected: boolean) {
   writeItem(KEY, connected ? 'true' : null);
-  for (const listener of listeners) {
-    listener();
-  }
+  notify();
 }
 
 /** Whether Benchbite reads the phone's health store, kept up to date. */
@@ -45,9 +49,7 @@ export function weightSync(): WeightSync {
 
 export function setWeightSync(sync: WeightSync) {
   writeItem(WEIGHT_KEY, sync);
-  for (const listener of listeners) {
-    listener();
-  }
+  notify();
 }
 
 /** Whether weight is read from the store, kept up to date. */

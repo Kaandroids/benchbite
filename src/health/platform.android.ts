@@ -132,7 +132,7 @@ export async function requestWeightAccess(): Promise<boolean> {
 }
 
 export async function weightsSince(from: Date): Promise<WeightReading[]> {
-  if (!(await initialize()) || !(await allowedToRead('Weight'))) return [];
+  if (!(await initialize()) || !(await weightAllowed())) return [];
   const { records } = await readRecords('Weight', {
     timeRangeFilter: { operator: 'after', startTime: from.toISOString() },
     // Newest first, so a page that cannot hold them all leaves out the oldest.
