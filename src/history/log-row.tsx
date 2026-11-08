@@ -36,6 +36,13 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const setsLabel = isPartial(log.sets, log.plannedSets)
     ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
     : t('common.sets', { count: log.sets });
+  // What the watch measured, or else the estimate.
+  const kcal =
+    log.activeKcal !== null
+      ? t('history.kcalMeasured', { kcal: log.activeKcal })
+      : log.estimatedKcal !== null
+        ? t('history.kcal', { kcal: log.estimatedKcal })
+        : null;
 
   return (
     <Pressable
@@ -80,21 +87,11 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
               label={setsLabel}
             />
             <IconStat icon="timer" color="primaryText" text={duration(durationMinutes(log))} />
-            {log.estimatedKcal !== null ? (
-              <IconStat
-                icon="flame"
-                color="primary"
-                text={t('history.kcal', { kcal: log.estimatedKcal })}
-              />
-            ) : null}
+            {kcal ? <IconStat icon="flame" color="primary" text={kcal} /> : null}
           </View>
         ) : (
           <Text variant="caption" color="textMuted" numberOfLines={1}>
-            {[
-              duration(durationMinutes(log)),
-              t('common.sets', { count: log.sets }),
-              log.estimatedKcal !== null ? t('history.kcal', { kcal: log.estimatedKcal }) : null,
-            ]
+            {[duration(durationMinutes(log)), t('common.sets', { count: log.sets }), kcal]
               .filter(Boolean)
               .join(' · ')}
           </Text>

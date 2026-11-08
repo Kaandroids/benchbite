@@ -13,8 +13,12 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { useHealthConnected } from '@/health/connection';
+import { WaitingCard, WatchCard } from '@/health/watch-card';
+import { READ_FOR_MS } from '@/health/workout-health';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
+import { useNow } from '@/lib/use-now';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
 import { describeSet, setKindOf } from '@/sets/fields';
 import { SetChips } from '@/sets/set-chips';
@@ -40,6 +44,8 @@ export function LogScreen({ id }: { id: number }) {
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
+  const connected = useHealthConnected();
+  const now = useNow(false);
   const { format } = useNumberFormat();
   const formatTotal = useTotalFormat();
   const log = summary.data;
@@ -81,10 +87,15 @@ export function LogScreen({ id }: { id: number }) {
     { value: totalTime, label: t('history.stats.time') },
     { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
     { value: format(Math.round(log.kilograms)), label: 'kg' },
-    ...(log.estimatedKcal !== null
-      ? [{ value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
-      : []),
+    // What the watch measured takes the estimate's place.
+    ...(log.activeKcal !== null
+      ? [{ value: format(log.activeKcal), label: 'kcal' }]
+      : log.estimatedKcal !== null
+        ? [{ value: `~${format(log.estimatedKcal)}`, label: 'kcal' }]
+        : []),
   ];
+  const waitingForWatch =
+    connected && log.heartRateMax === null && now - log.finishedAt.getTime() < READ_FOR_MS;
 
   const exercises = byExercise(sets.data ?? []);
 
@@ -151,6 +162,15 @@ export function LogScreen({ id }: { id: number }) {
           </View>
         }
       />
+      {log.heartRateAvg !== null && log.heartRateMax !== null ? (
+        <WatchCard
+          averageBpm={log.heartRateAvg}
+          maxBpm={log.heartRateMax}
+          source={log.healthSource}
+        />
+      ) : waitingForWatch ? (
+        <WaitingCard />
+      ) : null}
 
       {exercises.map((exercise, index) => {
         const info = findExercise(library.data, exercise.exerciseId);

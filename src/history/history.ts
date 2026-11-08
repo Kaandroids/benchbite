@@ -34,6 +34,12 @@ export type LogSummary = {
   kilograms: number;
   /** Estimated from the time and the user's weight; null without a weight. */
   estimatedKcal: number | null;
+  /** What the watch measured, from the phone's health store (ADR 0098); null when nothing did. */
+  heartRateAvg: number | null;
+  heartRateMax: number | null;
+  activeKcal: number | null;
+  /** The app or watch that measured them. */
+  healthSource: string | null;
   /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
   plannedExerciseIds: string[] | null;
   /** The alternative it was done with (ADR 0069); null without alternatives and for older logs. */
@@ -118,6 +124,10 @@ function toSummary(row: SummaryRow): LogSummary {
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
     estimatedKcal: row.estimated_kcal,
+    heartRateAvg: row.heart_rate_avg,
+    heartRateMax: row.heart_rate_max,
+    activeKcal: row.active_kcal,
+    healthSource: row.health_source,
     plannedExerciseIds: row.planned_exercise_ids,
     alternative:
       row.alternative_position === null
