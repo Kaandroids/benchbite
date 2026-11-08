@@ -13,7 +13,10 @@
         "dark": "./assets/images/ios-icon-dark.png",
         "tinted": "./assets/images/ios-icon-tinted.png"
       },
-      "bundleIdentifier": "com.benchbite.app"
+      "bundleIdentifier": "com.benchbite.app",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "android": {
       "package": "com.benchbite.app",
@@ -28,6 +31,11 @@
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_WEIGHT"
       ]
+    },
+    "locales": {
+      "en": "./src/i18n/permissions/en.json",
+      "de": "./src/i18n/permissions/de.json",
+      "tr": "./src/i18n/permissions/tr.json"
     },
     "plugins": [
       "expo-router",
@@ -72,7 +80,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were. It writes nothing to Apple Health.",
+          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight, to keep your progress up to date. It writes nothing to Apple Health.",
           "NSHealthUpdateUsageDescription": false,
           "background": false
         }

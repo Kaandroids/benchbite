@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Benchbite nutzt die Kamera für Fotos davon, wie deine eigenen Übungen ausgeführt werden, von Mahlzeiten zum Schätzen und von dem, was du Bite, deinem Coach, schickst.",
+    "NSPhotoLibraryUsageDescription": "Benchbite nutzt die Fotos, die du auswählst, um zu zeigen, wie deine eigenen Übungen ausgeführt werden, um deine Mahlzeiten zu schätzen und um sie Bite, deinem Coach, zu schicken.",
+    "NSMicrophoneUsageDescription": "Benchbite nutzt das Mikrofon nur, solange du gedrückt hältst, um mit Bite, deinem Coach, zu sprechen, und schickt das Gesagte als Sprachnachricht.",
+    "NSHealthShareUsageDescription": "Benchbite liest die Herzfrequenz und die aktiven Kalorien deiner Workouts, um zu zeigen, wie anstrengend sie waren, und dein Gewicht, um deinen Fortschritt aktuell zu halten. In Apple Health wird nichts geschrieben."
+  }
+}
