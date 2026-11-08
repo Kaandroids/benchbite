@@ -1585,6 +1585,7 @@ export type Database = {
       weight_entries: {
         Row: {
           created_at: string;
+          from_health: boolean;
           id: number;
           measured_on: string;
           source: string | null;
@@ -1594,6 +1595,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           created_at?: string;
+          from_health?: boolean;
           id?: never;
           measured_on?: string;
           source?: string | null;
@@ -1602,6 +1604,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          from_health?: boolean;
           id?: never;
           measured_on?: string;
           source?: string | null;
@@ -2369,19 +2372,7 @@ export type Database = {
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
-      health_source_name:
-        | {
-            Args: { source: Json };
-            Returns: {
-              error: true;
-            } & 'Could not choose the best candidate function between: public.health_source_name(source => text), public.health_source_name(source => jsonb). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
-          }
-        | {
-            Args: { source: string };
-            Returns: {
-              error: true;
-            } & 'Could not choose the best candidate function between: public.health_source_name(source => text), public.health_source_name(source => jsonb). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
-          };
+      health_source_name: { Args: { source: string }; Returns: string };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
@@ -2538,7 +2529,7 @@ export type Database = {
           kcal: number;
         }[];
       };
-      log_weight: { Args: { today: string; weight_kg: number }; Returns: undefined };
+      log_weight: { Args: { day?: string; today: string; weight_kg: number }; Returns: undefined };
       log_workout: { Args: { log: Json }; Returns: number };
       loggable_foods: {
         Args: { language: string };

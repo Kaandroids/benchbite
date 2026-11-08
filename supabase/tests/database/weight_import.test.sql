@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -85,10 +85,10 @@ select is(
   1,
   'Weights no person has, days out of range and values that are no number are left out alone'
 );
-select is(
-  (select source from public.weight_entries
-   where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on = pg_temp.day(5)),
-  'Health',
+select results_eq(
+  $$ select from_health, source from public.weight_entries
+     where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on = current_date - 5 $$,
+  $$ values (true, null::text) $$,
   'A weight without a source still counts as the store''s'
 );
 
@@ -119,10 +119,26 @@ select is(
   'A day that is no date is left out alone'
 );
 select is(
-  (select array_agg(source) from public.weight_entries
-   where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on in (current_date - 8, current_date - 9)),
-  array['Health', 'Health'],
+  (select count(*)::int from public.weight_entries
+   where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on in (current_date - 8, current_date - 9)
+     and from_health and source is null),
+  2,
   'A source that is no string counts as none'
+);
+select is(
+  pg_temp.weights(jsonb_build_array(
+    jsonb_build_object('day', 'today', 'weightKg', 70, 'source', 'Scale'),
+    jsonb_build_object('day', (current_date - 11)::text || 'T23:30:00+14', 'weightKg', 70, 'source', 'Scale'),
+    jsonb_build_object('day', pg_temp.day(59), 'weightKg', 79, 'source', repeat('a', 79) || '  b')
+  )),
+  1,
+  'Only a day in the form YYYY-MM-DD counts, and day 59 is still in the window'
+);
+select is(
+  (select source from public.weight_entries
+   where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on = current_date - 59),
+  repeat('a', 79),
+  'A long source is cut to 80 and trimmed again'
 );
 select is(
   pg_temp.weights(jsonb_build_array(
@@ -148,6 +164,26 @@ select throws_ok(
   $$ select public.log_weight(80, current_date - 5) $$,
   '22023', null,
   'log_weight() takes only the device''s today'
+);
+select lives_ok(
+  $$ select public.log_weight(84.6, current_date, current_date - 2) $$,
+  'A recent day the store filled can be corrected'
+);
+select results_eq(
+  $$ select weight_kg, from_health, source from public.weight_entries
+     where user_id = '00000000-0000-0000-0000-00000000000a' and measured_on = current_date - 2 $$,
+  $$ values (84.6::numeric(4, 1), false, null::text) $$,
+  'And is the user''s own afterwards'
+);
+select throws_ok(
+  $$ select public.log_weight(80, current_date, current_date - 1) $$,
+  '22023', 'Only today, or a recent day the health store filled',
+  'A past day the user entered is not changed this way'
+);
+select throws_ok(
+  $$ select public.import_weights(null, current_date) $$,
+  '22023', 'Weights are a list of at most 60',
+  'No list is refused'
 );
 
 select throws_ok(
