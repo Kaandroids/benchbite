@@ -1,6 +1,4 @@
--- import_weights() (20261108160000) left a bad entry out only because the planner happened to run its
--- filter before the casts; the filter now runs first for certain, as in import_steps() (#485). The
--- function is otherwise the same.
+-- Recreates import_weights() (20261108160000) with its filter run before the casts.
 
 create or replace function public.import_weights(weights jsonb, today date)
 returns integer
