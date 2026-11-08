@@ -13,7 +13,7 @@ import { Constants } from '../_shared/database.types.ts';
 import { MAX_ESTIMATE_ITEMS } from '../_shared/meal/estimate.ts';
 import { ITEM_LINES } from '../_shared/meal/item.ts';
 import { type Language, LANGUAGE_NAMES, untagged } from '../_shared/prompt.ts';
-import type { Macros, Note, Snapshot } from './snapshot.ts';
+import { type Macros, type Note, type Snapshot, STEP_DAYS } from './snapshot.ts';
 
 /** The faces Bite answers with (`bite_expression`). */
 export const EXPRESSIONS = Constants.public.Enums.bite_expression;
@@ -226,11 +226,14 @@ export function snapshotText(snapshot: Snapshot, language: Language): string {
   return `<snapshot>\n${untagged(lines.join('\n'))}\n</snapshot>`;
 }
 
-/** Today's steps so far and the average a day of the week before, over the days counted. */
+/**
+ * Today's steps so far and the average a day of the days before, over the days counted. A day the
+ * store gave no count for was not read, which is not a day without steps.
+ */
 function stepsText({ today, average, days }: NonNullable<Snapshot['steps']>): string {
-  const parts = [`${today ?? 0} today so far`];
+  const parts = [today === undefined ? 'none counted yet today' : `${today} today so far`];
   if (average !== undefined) {
-    parts.push(`${average} a day on average over the 7 days before (${days} counted)`);
+    parts.push(`${average} a day on average over the ${STEP_DAYS} days before (${days} counted)`);
   }
   return parts.join('; ');
 }

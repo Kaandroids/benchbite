@@ -5,6 +5,7 @@
 import type { NoteCategory } from '../_shared/coach/chat.ts';
 import type { Database } from '../_shared/database.types.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+import { addDays } from './day.ts';
 import { alternativeName, workoutName } from './workout.ts';
 
 type GoalKind = Database['public']['Enums']['goal_kind'];
@@ -40,8 +41,9 @@ export type Snapshot = {
   /** The latest weight, in kg. */
   weightKg?: number;
   /**
-   * The steps the phone's health store counted (ADR 0103): today's so far, and the average a day of
-   * the 7 days before over the days counted; none when no step was read that week.
+   * The steps the phone's health store counted (ADR 0103): today's so far, none before the store
+   * counted any or while steps are not read, and the average a day of the STEP_DAYS days before
+   * over the days counted; none when no step was read that week.
    */
   steps?: { today?: number; average?: number; days: number };
   targets?: Macros;
@@ -76,12 +78,8 @@ export type Note = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/** The day `days` before `day`, both YYYY-MM-DD. */
-function daysBefore(day: string, days: number): string {
-  const date = new Date(`${day}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() - days);
-  return date.toISOString().slice(0, 10);
-}
+/** How many days before today the steps' average a day is of. */
+export const STEP_DAYS = 7;
 
 /** Weekdays, 1 Monday to 7 Sunday, as "Mon, Thu". */
 function dayNames(days: number[]) {
@@ -130,7 +128,7 @@ export async function loadSnapshot(
       supabase
         .from('step_days')
         .select('day, steps')
-        .gte('day', daysBefore(today, 7))
+        .gte('day', addDays(today, -STEP_DAYS))
         .lte('day', today),
     ]);
   const results = {
@@ -186,7 +184,7 @@ export async function loadSnapshot(
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;
   if (steps.data?.length) {
     const before = steps.data.filter(({ day }) => day !== today);
-    const total = before.reduce((sum, { steps }) => sum + steps, 0);
+    const total = before.reduce((sum, row) => sum + row.steps, 0);
     snapshot.steps = {
       today: steps.data.find(({ day }) => day === today)?.steps,
       average: before.length ? Math.round(total / before.length) : undefined,
