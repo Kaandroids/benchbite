@@ -5,16 +5,17 @@ import { withSupabase } from '@supabase/server';
 import { createContextClient } from '@supabase/server/core';
 
 import type { Database } from '../_shared/database.types.ts';
-import { handleDeleteRequest } from './handler.ts';
+import { handleDeleteRequest, type PasswordCheck } from './handler.ts';
 
 /**
  * Signs in with the password on a client of its own, which is dropped after: on the service role's
  * client, the session would replace the service role for the calls after it.
  */
-async function checkPassword(email: string, password: string): Promise<boolean> {
+async function checkPassword(email: string, password: string): Promise<PasswordCheck> {
   const { error } = await createContextClient().auth.signInWithPassword({ email, password });
-  if (!error) return true;
-  if (error.code === 'invalid_credentials') return false;
+  if (!error) return 'right';
+  if (error.code === 'invalid_credentials') return 'wrong';
+  if (error.status === 429) return 'busy';
   throw error;
 }
 

@@ -1,11 +1,14 @@
 // The work of delete-account (#134, ADR 0087), apart from signing in, so that it can be tested with
 // a stand-in for storage and auth. An account must prove its owner asks, with a code from
 // send-deletion-code or its password (#438, ADR 0095); a guest has neither, and needs no proof.
-import { codeHash, CODE_LENGTH } from '../_shared/deletion_code.ts';
+import { codeHash, isCode } from '../_shared/deletion_code.ts';
 import { deleteUser } from '../_shared/delete_user.ts';
 import { isObject } from '../_shared/json.ts';
 import { readJson } from '../_shared/request.ts';
 import { type Client, logError } from '../_shared/supabase.ts';
+
+/** What signing in with a password said: right, wrong, or that Auth takes no more tries for now. */
+export type PasswordCheck = 'right' | 'wrong' | 'busy';
 
 export type DeleteContext = {
   /** A client with the service role, which alone deletes users. */
@@ -16,13 +19,25 @@ export type DeleteContext = {
   guest: boolean;
   /** Their address; a guest has none. */
   email: string | undefined;
-  /** Whether the password is the account's, by signing in with it; throws when Auth fails. */
-  checkPassword: (email: string, password: string) => Promise<boolean>;
+  /** Checks the password by signing in with it; throws when Auth fails. */
+  checkPassword: (email: string, password: string) => Promise<PasswordCheck>;
 };
 
-const CODE = new RegExp(`^\\d{${CODE_LENGTH}}$`);
+/** The answers to a code that is not right, by what check_account_deletion_code said. */
+const CODE_REFUSED: Record<string, [string, number]> = {
+  wrong: ['wrong_code', 403],
+  expired: ['code_expired', 410],
+  too_many: ['too_many_tries', 429],
+};
 
-const refused = (error: string, status: number) => Response.json({ error }, { status });
+/** The answers to a password that may not be tried, by what take_account_deletion_password_try said. */
+const PASSWORD_REFUSED: Record<string, [string, number]> = {
+  recently_changed: ['password_recently_changed', 403],
+  too_many: ['too_many_tries', 429],
+  busy: ['busy', 429],
+};
+
+const unavailable = () => Response.json({ error: 'unavailable' }, { status: 503 });
 
 /** Why the request does not prove the owner of the account asks, or nothing when it does. */
 async function proofRefused(
@@ -31,50 +46,57 @@ async function proofRefused(
 ): Promise<Response | undefined> {
   const { code, password } = isObject(body) ? body : {};
 
-  if (typeof code === 'string' && CODE.test(code)) {
-    const { data: right, error } = await admin.rpc('check_account_deletion_code', {
+  if (isCode(code)) {
+    const { data: answer, error } = await admin.rpc('check_account_deletion_code', {
       p_user: userId,
       p_code_hash: await codeHash(userId, code),
     });
     if (error) {
       logError('Checking a code to delete an account failed', error);
-      return refused('unavailable', 503);
+      return unavailable();
     }
-    return right ? undefined : refused('wrong_code', 403);
+    if (answer === 'right') return undefined;
+    const [refusal, status] = CODE_REFUSED[answer] ?? ['wrong_code', 403];
+    return Response.json({ error: refusal }, { status });
   }
 
   if (typeof password === 'string' && password && email) {
-    const { data: allowed, error } = await admin.rpc('take_account_deletion_password_try', {
+    const { data: answer, error } = await admin.rpc('take_account_deletion_password_try', {
       p_user: userId,
     });
     if (error) {
       logError('Counting a password try to delete an account failed', error);
-      return refused('unavailable', 503);
+      return unavailable();
     }
-    if (!allowed) {
-      return refused('too_many_tries', 429);
+    if (answer !== 'allowed') {
+      const [refusal, status] = PASSWORD_REFUSED[answer] ?? ['busy', 429];
+      return Response.json({ error: refusal }, { status });
     }
     try {
-      return (await checkPassword(email, password)) ? undefined : refused('wrong_password', 403);
+      const check = await checkPassword(email, password);
+      if (check === 'right') return undefined;
+      return check === 'busy'
+        ? Response.json({ error: 'busy' }, { status: 429 })
+        : Response.json({ error: 'wrong_password' }, { status: 403 });
     } catch (cause) {
       logError('Checking the password to delete an account failed', cause);
-      return refused('unavailable', 503);
+      return unavailable();
     }
   }
 
-  return refused('proof_required', 400);
+  return Response.json({ error: 'proof_required' }, { status: 400 });
 }
 
 export async function handleDeleteRequest(req: Request, context: DeleteContext): Promise<Response> {
   if (req.method !== 'POST') {
-    return refused('method_not_allowed', 405);
+    return Response.json({ error: 'method_not_allowed' }, { status: 405 });
   }
   if (!context.guest) {
     const refusal = await proofRefused(await readJson(req, 4096), context);
     if (refusal) return refusal;
   }
   if (!(await deleteUser(context.admin, context.userId))) {
-    return refused('unavailable', 503);
+    return unavailable();
   }
   return Response.json({ deleted: true });
 }

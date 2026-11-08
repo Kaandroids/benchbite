@@ -4,6 +4,13 @@ import { sha256Hex } from './hash.ts';
 /** How many digits a code has, as the app's code fields. */
 export const CODE_LENGTH = 6;
 
+const CODE = new RegExp(`^\\d{${CODE_LENGTH}}$`);
+
+/** Whether a value has the form of a code. */
+export function isCode(value: unknown): value is string {
+  return typeof value === 'string' && CODE.test(value);
+}
+
 /** A code of random digits, each as likely as the others. */
 export function newCode(): string {
   const digits: number[] = [];

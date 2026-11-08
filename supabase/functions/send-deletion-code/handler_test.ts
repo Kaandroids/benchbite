@@ -9,7 +9,7 @@ const A = '00000000-0000-0000-0000-00000000000a';
 
 /** A stand-in for the service role client: the one call, its arguments and its answer. */
 function context(
-  answer: { data: boolean | null; error: { message: string } | null },
+  answer: { data: string | null; error: { message: string } | null },
   { guest = false, accountLocale = 'en', sendFails = false } = {},
 ) {
   const calls: Record<string, string>[] = [];
@@ -39,7 +39,7 @@ const post = (body?: unknown) =>
   });
 
 Deno.test('emails the account a code in the app’s language and keeps only its hash', async () => {
-  const { ctx, calls, sent } = context({ data: true, error: null });
+  const { ctx, calls, sent } = context({ data: 'sent', error: null });
 
   const response = await handleSendCode(post({ locale: 'de' }), ctx);
 
@@ -54,27 +54,32 @@ Deno.test('emails the account a code in the app’s language and keeps only its 
 });
 
 Deno.test('writes in the account’s language when the app names none', async () => {
-  const { ctx, sent } = context({ data: true, error: null }, { accountLocale: 'tr' });
+  const { ctx, sent } = context({ data: 'sent', error: null }, { accountLocale: 'tr' });
 
   await handleSendCode(post(), ctx);
 
   assert(sent[0]!.subject.endsWith('Benchbite hesabını silme kodun'));
 });
 
-Deno.test('sends nothing within a minute of the last code', async () => {
-  const { ctx, sent } = context({ data: false, error: null });
+Deno.test('sends nothing within a minute of the last code, or after 5 in an hour', async () => {
+  for (const [said, refusal] of [
+    ['too_soon', 'too_soon'],
+    ['too_many', 'too_many_codes'],
+  ]) {
+    const { ctx, sent } = context({ data: said!, error: null });
 
-  const response = await handleSendCode(post({ locale: 'en' }), ctx);
+    const response = await handleSendCode(post({ locale: 'en' }), ctx);
 
-  assertEquals(response.status, 429);
-  assertEquals(await response.json(), { error: 'too_soon' });
-  assertEquals(sent, []);
+    assertEquals(response.status, 429);
+    assertEquals(await response.json(), { error: refusal });
+    assertEquals(sent, []);
+  }
 });
 
 Deno.test('says so when the code cannot be kept or sent', async () => {
   const failing = [
     context({ data: null, error: { message: 'down' } }),
-    context({ data: true, error: null }, { sendFails: true }),
+    context({ data: 'sent', error: null }, { sendFails: true }),
   ];
   for (const { ctx } of failing) {
     const response = await handleSendCode(post(), ctx);
@@ -85,7 +90,7 @@ Deno.test('says so when the code cannot be kept or sent', async () => {
 });
 
 Deno.test('sends nothing to a guest, who has no address', async () => {
-  const { ctx, calls } = context({ data: true, error: null }, { guest: true });
+  const { ctx, calls } = context({ data: 'sent', error: null }, { guest: true });
 
   const response = await handleSendCode(post(), ctx);
 
@@ -94,7 +99,7 @@ Deno.test('sends nothing to a guest, who has no address', async () => {
 });
 
 Deno.test('takes only POST requests', async () => {
-  const { ctx, calls } = context({ data: true, error: null });
+  const { ctx, calls } = context({ data: 'sent', error: null });
 
   const response = await handleSendCode(new Request('http://localhost/send-deletion-code'), ctx);
 

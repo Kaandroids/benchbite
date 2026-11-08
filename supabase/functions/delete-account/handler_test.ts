@@ -3,7 +3,7 @@ import { assertEquals } from '@std/assert';
 import { EXERCISE_PHOTOS_BUCKET } from '../_shared/exercise_photos.ts';
 import { codeHash } from '../_shared/deletion_code.ts';
 import { PAGE_SIZE } from '../_shared/storage.ts';
-import { handleDeleteRequest } from './handler.ts';
+import { handleDeleteRequest, type PasswordCheck } from './handler.ts';
 
 const A = '00000000-0000-0000-0000-00000000000a';
 const B = '00000000-0000-0000-0000-00000000000b';
@@ -16,7 +16,7 @@ type Options = {
   uploadedLate?: string;
   deleteError?: { status: number } | null;
   /** The answers of the database's functions, by name. */
-  rpc?: Record<string, { data: boolean | null; error: { message: string } | null }>;
+  rpc?: Record<string, { data: string | null; error: { message: string } | null }>;
 };
 
 /**
@@ -85,7 +85,7 @@ const guest = (admin: never, userId = A) => ({
   checkPassword: () => Promise.reject(new Error('A guest has no password')),
 });
 
-/** An account's request, whose password is `secret`. */
+/** An account's request, whose password is `secret`; Auth is busy for `busy`. */
 const account = (admin: never, passwords: string[] = []) => ({
   admin,
   userId: A,
@@ -93,7 +93,9 @@ const account = (admin: never, passwords: string[] = []) => ({
   email: 'kaan@example.com',
   checkPassword: (email: string, password: string) => {
     passwords.push(`${email} ${password}`);
-    return Promise.resolve(password === 'secret');
+    return Promise.resolve<PasswordCheck>(
+      password === 'secret' ? 'right' : password === 'busy' ? 'busy' : 'wrong',
+    );
   },
 });
 
@@ -179,8 +181,9 @@ Deno.test('takes only POST requests', async () => {
   assertEquals(calls, []);
 });
 
-const RIGHT = { data: true, error: null };
-const WRONG = { data: false, error: null };
+const answer = (data: string) => ({ data, error: null });
+const RIGHT = answer('right');
+const ALLOWED = answer('allowed');
 const DOWN = { data: null, error: { message: 'down' } };
 
 Deno.test('deletes an account with its code', async () => {
@@ -196,7 +199,9 @@ Deno.test('deletes an account with its code', async () => {
 });
 
 Deno.test('keeps an account whose code is wrong', async () => {
-  const { admin, calls } = fakeAdmin(new Set(), { rpc: { check_account_deletion_code: WRONG } });
+  const { admin, calls } = fakeAdmin(new Set(), {
+    rpc: { check_account_deletion_code: answer('wrong') },
+  });
 
   const response = await handleDeleteRequest(post({ code: '000000' }), account(admin));
 
@@ -208,7 +213,7 @@ Deno.test('keeps an account whose code is wrong', async () => {
 Deno.test('deletes an account with its password, counting the try first', async () => {
   const passwords: string[] = [];
   const { admin, calls } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: RIGHT },
+    rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
   const response = await handleDeleteRequest(
@@ -223,7 +228,7 @@ Deno.test('deletes an account with its password, counting the try first', async 
 
 Deno.test('keeps an account whose password is wrong', async () => {
   const { admin, calls } = fakeAdmin(new Set(), {
-    rpc: { take_account_deletion_password_try: RIGHT },
+    rpc: { take_account_deletion_password_try: ALLOWED },
   });
 
   const response = await handleDeleteRequest(post({ password: 'guess' }), account(admin));
@@ -235,7 +240,9 @@ Deno.test('keeps an account whose password is wrong', async () => {
 
 Deno.test('tries no password once the tries are used up', async () => {
   const passwords: string[] = [];
-  const { admin } = fakeAdmin(new Set(), { rpc: { take_account_deletion_password_try: WRONG } });
+  const { admin } = fakeAdmin(new Set(), {
+    rpc: { take_account_deletion_password_try: answer('too_many') },
+  });
 
   const response = await handleDeleteRequest(
     post({ password: 'secret' }),
@@ -261,7 +268,9 @@ Deno.test('keeps an account that brings no proof', async () => {
 
 Deno.test('keeps an account when its proof cannot be checked', async () => {
   const failing = {
-    ...account(fakeAdmin(new Set(), { rpc: { take_account_deletion_password_try: RIGHT } }).admin),
+    ...account(
+      fakeAdmin(new Set(), { rpc: { take_account_deletion_password_try: ALLOWED } }).admin,
+    ),
     checkPassword: () => Promise.reject(new Error('Auth is down')),
   };
   for (const [body, context] of [
@@ -288,4 +297,53 @@ Deno.test('asks a guest for no proof', async () => {
 
   assertEquals(response.status, 200);
   assertEquals(calls, [`delete ${A}`]);
+});
+
+Deno.test('tells an expired code and too many wrong codes apart', async () => {
+  for (const [said, refusal, status] of [
+    ['expired', 'code_expired', 410],
+    ['too_many', 'too_many_tries', 429],
+  ] as const) {
+    const { admin, calls } = fakeAdmin(new Set(), {
+      rpc: { check_account_deletion_code: answer(said) },
+    });
+
+    const response = await handleDeleteRequest(post({ code: '481027' }), account(admin));
+
+    assertEquals(response.status, status);
+    assertEquals(await response.json(), { error: refusal });
+    assertEquals(calls.length, 1);
+  }
+});
+
+Deno.test('tries no password that changed lately, or while all tries are taken', async () => {
+  for (const [said, refusal] of [
+    ['recently_changed', 'password_recently_changed'],
+    ['busy', 'busy'],
+  ] as const) {
+    const passwords: string[] = [];
+    const { admin } = fakeAdmin(new Set(), {
+      rpc: { take_account_deletion_password_try: answer(said) },
+    });
+
+    const response = await handleDeleteRequest(
+      post({ password: 'secret' }),
+      account(admin, passwords),
+    );
+
+    assertEquals(await response.json(), { error: refusal });
+    assertEquals(passwords, []);
+  }
+});
+
+Deno.test('asks to wait when Auth takes no more sign-ins', async () => {
+  const { admin, calls } = fakeAdmin(new Set(), {
+    rpc: { take_account_deletion_password_try: ALLOWED },
+  });
+
+  const response = await handleDeleteRequest(post({ password: 'busy' }), account(admin));
+
+  assertEquals(response.status, 429);
+  assertEquals(await response.json(), { error: 'busy' });
+  assertEquals(calls, [`take_account_deletion_password_try ${A}`]);
 });

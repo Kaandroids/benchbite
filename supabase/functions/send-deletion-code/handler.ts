@@ -34,7 +34,7 @@ export async function handleSendCode(
   const locale = siteLocale((isObject(body) && body.locale) || accountLocale);
 
   const code = newCode();
-  const { data: made, error } = await admin.rpc('new_account_deletion_code', {
+  const { data: answer, error } = await admin.rpc('new_account_deletion_code', {
     p_user: userId,
     p_code_hash: await codeHash(userId, code),
   });
@@ -42,8 +42,14 @@ export async function handleSendCode(
     logError('Keeping a code to delete an account failed', error);
     return Response.json({ error: 'unavailable' }, { status: 503 });
   }
-  if (!made) {
-    return Response.json({ error: 'too_soon' }, { status: 429 });
+  if (answer !== 'sent') {
+    // A code a minute, and 5 an hour.
+    return Response.json(
+      { error: answer === 'too_soon' ? 'too_soon' : 'too_many_codes' },
+      {
+        status: 429,
+      },
+    );
   }
   try {
     await send(deletionCodeEmail(locale, email, code));
