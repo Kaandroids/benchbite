@@ -1,22 +1,27 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { useTheme, type ColorTokens } from '@/theme';
 
 import { Card } from './card';
-import { Icon } from './icon';
+import { Icon, type IconName } from './icon';
+import { IconTile } from './icon-tile';
 import { Text } from './text';
 
 type SettingRowProps = {
   label: string;
   /** The current setting, after the label; nothing when there is none. */
   value?: string | null;
+  /** A state that reads as good, such as a connection, in its colour with a check. */
+  valueIsGood?: boolean;
+  /** A tile before the label, for a setting that stands for something else, as an app. */
+  icon?: { name: IconName; color: keyof ColorTokens; background: keyof ColorTokens };
   /** What pressing the row does, for screen readers. */
   hint: string;
   onPress: () => void;
 };
 
 /** A setting in a row with its current value, which opens where it is changed. */
-export function SettingRow({ label, value, hint, onPress }: SettingRowProps) {
+export function SettingRow({ label, value, valueIsGood, icon, hint, onPress }: SettingRowProps) {
   const { spacing } = useTheme();
   return (
     <Pressable
@@ -26,13 +31,24 @@ export function SettingRow({ label, value, hint, onPress }: SettingRowProps) {
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
       <Card style={[styles.row, { gap: spacing.md }]}>
+        {icon ? (
+          <IconTile name={icon.name} size={40} color={icon.color} background={icon.background} />
+        ) : null}
         <Text variant="label" style={styles.label}>
           {label}
         </Text>
         {value ? (
-          <Text variant="bodyStrong" color="textMuted" numberOfLines={1} style={styles.value}>
-            {value}
-          </Text>
+          <View style={[styles.row, styles.value, { gap: spacing.xs }]}>
+            {valueIsGood ? <Icon name="check" size={16} color="success" /> : null}
+            <Text
+              variant="bodyStrong"
+              color={valueIsGood ? 'success' : 'textMuted'}
+              numberOfLines={1}
+              style={styles.value}
+            >
+              {value}
+            </Text>
+          </View>
         ) : null}
         <Icon name="forward" size={18} color="textMuted" />
       </Card>
