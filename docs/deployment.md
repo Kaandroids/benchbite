@@ -86,9 +86,12 @@ with Xcode and an Apple Developer account added in Xcode's settings.
 3. Find the iPhone's UDID with `xcrun devicectl list devices`, then build and install:
 
    ```bash
-   pnpm expo run:ios --device <udid> --configuration Release
+   APP_VARIANT=production pnpm expo prebuild --clean --platform ios
+   APP_VARIANT=production pnpm expo run:ios --device <udid> --configuration Release
    ```
 
-   The first build generates the `ios/` folder (ignored by Git). If it changes the `ios` and
-   `android` scripts in `package.json`, undo that change. Run the command again to install a newer
-   version.
+   `APP_VARIANT=production` makes it Benchbite itself, not the development build, which has a name
+   and bundle ID of its own ([ADR 0096](adr/0096-develop-with-a-development-build.md)). The
+   `ios/` folder (ignored by Git) is generated for one of the two, so the prebuild makes it anew.
+   If it changes the `ios` and `android` scripts in `package.json`, undo that change. Run the
+   second command again to install a newer version.

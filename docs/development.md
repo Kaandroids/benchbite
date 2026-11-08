@@ -145,8 +145,10 @@ pnpm expo run:android            # the Android Emulator, or a device connected o
 pnpm expo run:ios --device       # an iPhone connected over USB, which asks which one
 ```
 
-The first build generates the `ios/` and `android/` folders, which are ignored by Git. If it
-changes the `ios` and `android` scripts in `package.json`, undo that change. An iPhone needs
+It is installed as **Benchbite Dev**, an app of its own (`com.benchbite.app.dev`, set in
+`app.config.ts`), so a phone can have it beside a release build of Benchbite. The first build
+generates the `ios/` and `android/` folders, which are ignored by Git. If it changes the `ios`
+and `android` scripts in `package.json`, undo that change. An iPhone needs
 **Developer Mode** (Settings → Privacy & Security) and is signed with the project's Apple
 developer team.
 
@@ -161,11 +163,12 @@ scan the QR code with a phone that has the development build. Restart the dev se
 changing `.env.local`.
 
 Changes to the code only need the dev server. Build again after adding or updating a library with
-native code, changing `app.json` or upgrading the Expo SDK, from fresh native folders:
+native code, changing `app.json` or `app.config.ts`, or upgrading the Expo SDK, from fresh native
+folders:
 
 ```bash
 pnpm expo prebuild --clean
-pnpm expo run:ios
+pnpm expo run:ios                # or run:android
 ```
 
 `127.0.0.1` in `.env.local` reaches your computer directly from the iOS Simulator. Elsewhere:
