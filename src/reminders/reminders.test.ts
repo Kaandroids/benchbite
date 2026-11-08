@@ -17,17 +17,6 @@ import {
   showRemindersInForeground,
 } from './reminders';
 
-jest.mock('expo-notifications', () => ({
-  ...jest.requireActual<typeof import('expo-notifications')>('expo-notifications'),
-  cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
-  getAllScheduledNotificationsAsync: jest.fn(() => Promise.resolve([])),
-  getPermissionsAsync: jest.fn(),
-  requestPermissionsAsync: jest.fn(),
-  setNotificationHandler: jest.fn(),
-  scheduleNotificationAsync: jest.fn(() => Promise.resolve('id')),
-  setNotificationChannelAsync: jest.fn(() => Promise.resolve(null)),
-}));
-
 const getAll = jest.mocked(getAllScheduledNotificationsAsync);
 const cancel = jest.mocked(cancelScheduledNotificationAsync);
 const schedule = jest.mocked(scheduleNotificationAsync);

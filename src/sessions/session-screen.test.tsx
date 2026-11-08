@@ -46,11 +46,6 @@ jest.mock('@/exercises/library', () => ({
 jest.mock('./start', () => ({ useStartWorkout: jest.fn() }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('./logs', () => ({ useLogWorkout: jest.fn() }));
-jest.mock('expo-notifications', () => ({
-  ...jest.requireActual<typeof import('expo-notifications')>('expo-notifications'),
-  getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true, canAskAgain: true })),
-  requestPermissionsAsync: jest.fn(),
-}));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),

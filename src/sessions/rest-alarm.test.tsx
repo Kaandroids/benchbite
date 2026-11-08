@@ -32,14 +32,6 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
-jest.mock('expo-notifications', () => ({
-  ...jest.requireActual<typeof import('expo-notifications')>('expo-notifications'),
-  cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
-  getPermissionsAsync: jest.fn(),
-  requestPermissionsAsync: jest.fn(),
-  scheduleNotificationAsync: jest.fn(() => Promise.resolve('rest-end')),
-  setNotificationChannelAsync: jest.fn(() => Promise.resolve(null)),
-}));
 jest.mock('expo-haptics', () => ({
   notificationAsync: jest.fn(() => Promise.resolve()),
   NotificationFeedbackType: { Success: 'success' },
