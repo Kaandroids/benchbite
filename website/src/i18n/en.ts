@@ -183,7 +183,20 @@ export const en = {
     linkNote:
       'The link works once, for 30 minutes. Deleting your account does not cancel a subscription in the App Store or Google Play.',
     kept: 'What is deleted and kept',
-    keptPlaceholder: '[LEGAL TEXT: DATA DELETED, DATA KEPT, RETENTION PERIODS]',
+    keptItems: [
+      {
+        title: 'Deleted at once',
+        text: 'Your account, your plan, workouts and history, meals, recipes and your own foods, weight, goals and progress, your chats with Bite and the notes Bite kept, and your exercise photos. The photos and voice of your chats follow within minutes.',
+      },
+      {
+        title: 'Kept for a while',
+        text: 'Copies in the backups and logs of the services we use, until these expire. Emails we sent you stay in your inbox, and our email sender keeps a record of them for up to 28 days.',
+      },
+      {
+        title: 'Not ours to delete',
+        text: 'Purchases and subscriptions are kept by the App Store or Google Play.',
+      },
+    ],
   },
   deleteLink: {
     sentTitle: 'Check your email',

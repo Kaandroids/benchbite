@@ -181,7 +181,20 @@ export const tr: Messages = {
     linkNote:
       'Bağlantı bir kez, 30 dakika boyunca çalışır. Hesabını silmek App Store veya Google Play aboneliğini iptal etmez.',
     kept: 'Neler silinir, neler kalır',
-    keptPlaceholder: '[YASAL METİN: SİLİNEN VERİLER, KALAN VERİLER, SÜRELER]',
+    keptItems: [
+      {
+        title: 'Hemen silinenler',
+        text: 'Hesabın, planın, antrenmanların ve geçmişin, öğünler, tarifler ve kendi besinlerin, kilo, hedefler ve ilerleme, Bite ile sohbetlerin ve Bite’ın tuttuğu notlar, ve egzersiz fotoğrafların. Sohbetlerindeki fotoğraflar ve sesler birkaç dakika içinde silinir.',
+      },
+      {
+        title: 'Bir süre kalanlar',
+        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar, süreleri dolana kadar. Sana gönderdiğimiz e-postalar gelen kutunda kalır; e-posta gönderen hizmetimiz bunların kaydını en fazla 28 gün saklar.',
+      },
+      {
+        title: 'Bizim silemeyeceklerimiz',
+        text: 'Satın almalar ve abonelikler App Store veya Google Play’de kalır.',
+      },
+    ],
   },
   deleteLink: {
     sentTitle: 'E-postanı kontrol et',

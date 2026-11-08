@@ -182,7 +182,20 @@ export const de: Messages = {
     linkNote:
       'Der Link funktioniert einmal, 30 Minuten lang. Das Löschen deines Kontos kündigt kein Abo im App Store oder bei Google Play.',
     kept: 'Was gelöscht wird und was bleibt',
-    keptPlaceholder: '[RECHTSTEXT: GELÖSCHTE DATEN, VERBLEIBENDE DATEN, FRISTEN]',
+    keptItems: [
+      {
+        title: 'Sofort gelöscht',
+        text: 'Dein Konto, dein Plan, deine Workouts und dein Verlauf, Mahlzeiten, Rezepte und eigene Lebensmittel, Gewicht, Ziele und Fortschritt, deine Chats mit Bite und die Notizen, die Bite angelegt hat, und deine Übungsfotos. Die Fotos und Sprachnachrichten deiner Chats folgen innerhalb von Minuten.',
+      },
+      {
+        title: 'Eine Zeit lang aufbewahrt',
+        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, bis diese ablaufen. E-Mails, die wir dir geschickt haben, bleiben in deinem Postfach, und unser E-Mail-Versender bewahrt einen Eintrag dazu bis zu 28 Tage auf.',
+      },
+      {
+        title: 'Nicht von uns zu löschen',
+        text: 'Käufe und Abos bewahren der App Store oder Google Play auf.',
+      },
+    ],
   },
   deleteLink: {
     sentTitle: 'Schau in deine E-Mails',
