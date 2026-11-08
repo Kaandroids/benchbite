@@ -9,15 +9,19 @@ ADR 0098 keeps a summary of what a watch measured on a workout. Its decision had
 
 ## Decision
 
-- **For a day after a workout, every read is kept.** Each time the app comes to the front, the logs of the last day are read again, and what each read found is sent. `set_workout_health()` keeps what a read did not find, so a read that finds nothing wipes nothing; the last read that found a value wins. This replaces ADR 0098's "only the values still missing".
-- **A read counts only with a heart rate a person can have.** Its calories are kept only with it, so the few a phone counts from motion never stand in for the estimate, and a spike beyond 250 bpm leaves the whole read out rather than being sent again and again.
-- **One catch-up at a time,** however often the app comes to the front.
+- **For a day after a workout, every read is sent.** Each time the app comes to the front, the logs of the last day are read again and each read is sent, one catch-up at a time. A value the read did not find keeps what was kept, so a read that finds nothing wipes nothing; the last read that found a value wins. This replaces ADR 0098's "only the values still missing".
+- **`set_workout_health()` decides what of a read counts,** in the database, as business rules do: a read counts only with a heart rate a person can have, as a pair, and its calories only with it. A read without one, or with a value no person can have such as a sensor's spike, changes nothing. It answers whether it changed anything, so that the app reloads its screens only then.
+- **Calories come from the apps that measured the heart rate.** A phone counts some from motion alone, which no watch measured: the app reads the calories of the heart rate's sources only, on iOS by source and on Android by data origin.
+- **Saving a workout and keeping its read are two calls.** `log_workout()` stays as it is; a read that fails to be kept is sent again by the catch-up within the day.
+- **The app shows only what the function would keep,** with the same ranges, rounded as it rounds.
 
 ## Alternatives considered
 
 - **Sending only the missing values** (ADR 0098): it keeps a partial first read for good.
 - **Keeping the larger of two reads:** a partial read cannot be told from a light workout.
-- **Calories without a heart rate:** a phone's motion count would show as the watch's.
+- **Calories without a heart rate, or of every source:** a phone's motion count would show as the watch's.
+- **The read inside `log_workout()`:** one call, but a change to a function the whole history depends on, for a value the catch-up keeps anyway.
+- **The rule in the app:** it would repeat the function's ranges, and differ from them.
 
 ## Consequences
 
