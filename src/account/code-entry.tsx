@@ -45,11 +45,14 @@ type CodeEntryOptions<C, R> = {
   /** Sends a new code. */
   resend: Request<R>;
   resendWith: R;
+  /** Checks the code once all of it is in; off where checking does what cannot be undone. */
+  submitWhenFull?: boolean;
 };
 
 /**
- * What a code screen does with the code: checks it once all of it is in, has a wrong one typed
- * anew, and sends a new one when asked. Typing starts a new attempt, without the errors before it.
+ * What a code screen does with the code: checks it once all of it is in, unless told to wait for
+ * the button, has a wrong one typed anew, and sends a new one when asked. Typing starts a new
+ * attempt, without the errors before it.
  */
 export function useCodeEntry<C, R>({
   check,
@@ -57,6 +60,7 @@ export function useCodeEntry<C, R>({
   onChecked,
   resend,
   resendWith,
+  submitWhenFull = true,
 }: CodeEntryOptions<C, R>) {
   const [code, setCode] = useState('');
   const wait = useResendWait();
@@ -83,7 +87,7 @@ export function useCodeEntry<C, R>({
       resend.reset();
     }
     // The whole code needs no further press, as when the keyboard suggests it.
-    if (value.length === CODE_LENGTH) {
+    if (submitWhenFull && value.length === CODE_LENGTH) {
       submit(value);
     }
   };
