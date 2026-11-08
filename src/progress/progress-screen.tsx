@@ -34,8 +34,9 @@ export function ProgressScreen() {
   const today = new Date();
   const queryClient = useQueryClient();
   const weightAsk = useWeightSyncAsk();
-  // The cards come in below the ask for weight while it shows.
-  const first = weightAsk.asking ? 1 : 0;
+  // Each card comes in after the one above it, below the ask for weight while it shows.
+  let position = weightAsk.asking ? 1 : 0;
+  const nextEntering = () => cardEntering(position++);
   const queries = [latestWeight, weightUnit];
   // Pulling down loads again what the cards load themselves too: the weights, meals, workouts and records.
   const refreshed = [
@@ -70,20 +71,16 @@ export function ProgressScreen() {
         <>
           <WeightAskCard ask={weightAsk} entering={cardEntering(0)} />
           <WeightCard
-            entering={cardEntering(first)}
+            entering={nextEntering()}
             latest={latestWeight.data ?? null}
             unit={weightUnit.data ?? 'kg'}
             today={today}
             goal={goal}
           />
-          <NutritionCard
-            summaryEntering={cardEntering(1 + first)}
-            entering={cardEntering(2 + first)}
-            today={today}
-          />
-          <TrainingCard entering={cardEntering(3 + first)} today={today} />
-          <RecordsButton entering={cardEntering(4 + first)} today={today} />
-          <StreakButton entering={cardEntering(5 + first)} today={today} />
+          <NutritionCard summaryEntering={nextEntering()} entering={nextEntering()} today={today} />
+          <TrainingCard entering={nextEntering()} today={today} />
+          <RecordsButton entering={nextEntering()} today={today} />
+          <StreakButton entering={nextEntering()} today={today} />
         </>
       ) : (
         <LoadState queries={queries} />
