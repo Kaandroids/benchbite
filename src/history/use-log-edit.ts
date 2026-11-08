@@ -12,7 +12,8 @@ import { EMPTY_SET, missingFields, type SetValues } from '@/sets/values';
 
 import { useEditLog, type LoggedExercise, type LogSummary } from './history';
 
-export type EditedSet = SetValues & { key: number };
+/** A set being corrected, with when it was done, which the edit keeps; none for one added in it. */
+export type EditedSet = SetValues & { key: number; doneAt: Date | null };
 export type EditedExercise = { place: number; exerciseId: string; sets: EditedSet[] };
 
 /**
@@ -28,11 +29,12 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
     return initial.map((exercise) => ({
       place: exercise.place,
       exerciseId: exercise.exerciseId,
-      sets: exercise.sets.map(({ weightKg, reps, seconds, meters }) => ({
+      sets: exercise.sets.map(({ weightKg, reps, seconds, meters, doneAt }) => ({
         weightKg,
         reps,
         seconds,
         meters,
+        doneAt,
         key: key++,
       })),
     }));
@@ -72,11 +74,13 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
         if (i !== index) {
           return item;
         }
-        const { key: _key, ...values } = item.sets[item.sets.length - 1] ?? {
-          ...EMPTY_SET,
-          key: 0,
-        };
-        return { ...item, sets: [...item.sets, { ...values, key: key + 1 }] };
+        const {
+          key: _key,
+          doneAt: _doneAt,
+          ...values
+        } = item.sets[item.sets.length - 1] ?? { ...EMPTY_SET, key: 0, doneAt: null };
+        // A set added now was not done during the workout, so it has no time of its own.
+        return { ...item, sets: [...item.sets, { ...values, doneAt: null, key: key + 1 }] };
       });
     });
 

@@ -40,14 +40,27 @@ export type LogSummary = {
   activeKcal: number | null;
   /** The app or watch that measured them. */
   healthSource: string | null;
+  /**
+   * The calories to show and where they come from (ADR 0104): the watch's, else estimated from the
+   * heart rate, else from the minutes; null without any.
+   */
+  kcal: number | null;
+  kcalSource: KcalSource | null;
   /** The workout's exercises when it started, in order; null for logs saved before they were kept. */
   plannedExerciseIds: string[] | null;
   /** The alternative it was done with (ADR 0069); null without alternatives and for older logs. */
   alternative: Pick<WorkoutAlternative, 'name' | 'position'> | null;
 };
 
-/** A set of a finished workout. */
-export type LoggedSet = SetValues & { exercisePosition: number; exerciseId: string };
+/** Where the calories a workout shows come from. */
+export type KcalSource = Database['public']['Enums']['kcal_source'];
+
+/** A set of a finished workout, with when it was done; none for one logged before this was kept. */
+export type LoggedSet = SetValues & {
+  exercisePosition: number;
+  exerciseId: string;
+  doneAt: Date | null;
+};
 
 /** The sets of one exercise of a finished workout, and its place in the workout from 0. */
 export type LoggedExercise = { place: number; exerciseId: string; sets: LoggedSet[] };
@@ -103,13 +116,14 @@ export function doneOf(done: number, planned: number | null): string {
   return isPartial(done, planned) ? `${done}/${planned}` : String(done);
 }
 
-/** The calories a workout burned: what the watch measured, or else the estimate; none without either. */
+/**
+ * The calories a workout burned, as the summary chooses them, and whether the watch measured them;
+ * none without any.
+ */
 export function kcalOf(
-  log: Pick<LogSummary, 'activeKcal' | 'estimatedKcal'>,
+  log: Pick<LogSummary, 'kcal' | 'kcalSource'>,
 ): { kcal: number; measured: boolean } | null {
-  if (log.activeKcal !== null) return { kcal: log.activeKcal, measured: true };
-  if (log.estimatedKcal !== null) return { kcal: log.estimatedKcal, measured: false };
-  return null;
+  return log.kcal === null ? null : { kcal: log.kcal, measured: log.kcalSource === 'watch' };
 }
 
 /** Whole minutes between the start and the end of a workout. */
@@ -137,6 +151,8 @@ function toSummary(row: SummaryRow): LogSummary {
     heartRateMax: row.heart_rate_max,
     activeKcal: row.active_kcal,
     healthSource: row.health_source,
+    kcal: row.kcal,
+    kcalSource: row.kcal_source,
     plannedExerciseIds: row.planned_exercise_ids,
     alternative:
       row.alternative_position === null
@@ -321,7 +337,9 @@ export function useLoggedSets(logId: number) {
     queryFn: async (): Promise<LoggedSet[]> => {
       const { data, error } = await supabase
         .from('logged_sets')
-        .select('exercise_position, set_position, exercise_id, weight_kg, reps, seconds, meters')
+        .select(
+          'exercise_position, set_position, exercise_id, weight_kg, reps, seconds, meters, done_at',
+        )
         .eq('log_id', logId)
         .order('exercise_position')
         .order('set_position');
@@ -335,7 +353,29 @@ export function useLoggedSets(logId: number) {
         reps: row.reps,
         seconds: row.seconds,
         meters: row.meters,
+        doneAt: row.done_at ? new Date(row.done_at) : null,
       }));
+    },
+  });
+}
+
+/**
+ * A finished workout's heart rate every 10 seconds from its start (ADR 0104), none where nothing
+ * measured it; null when the watch gave none.
+ */
+export function useHeartRateSamples(logId: number) {
+  return useQuery({
+    queryKey: [...LOGS_KEY, logId, 'heart-rate'],
+    queryFn: async (): Promise<(number | null)[] | null> => {
+      const { data, error } = await supabase
+        .from('workout_logs')
+        .select('heart_rate_samples')
+        .eq('id', logId)
+        .maybeSingle();
+      if (error) {
+        throw error;
+      }
+      return data?.heart_rate_samples ?? null;
     },
   });
 }
@@ -365,7 +405,10 @@ export function useDeleteLog() {
   });
 }
 
-/** Replaces the sets of a finished workout; its time and calories stay as they were (ADR 0023). */
+/**
+ * Replaces the sets of a finished workout; its time and calories stay as they were (ADR 0023). Each
+ * set sends when it was done, which a set added in the edit has not (ADR 0104).
+ */
 export function useEditLog() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -374,7 +417,11 @@ export function useEditLog() {
       exercises,
     }: {
       id: number;
-      exercises: { place: number; exerciseId: string; sets: SetValues[] }[];
+      exercises: {
+        place: number;
+        exerciseId: string;
+        sets: (SetValues & { doneAt?: Date | null })[];
+      }[];
     }) => {
       // The function takes an exercise's place from its index, so every place up to the last is
       // sent: exercises without sets, and gaps without an exercise, keep the others where they were.
@@ -383,7 +430,13 @@ export function useEditLog() {
       const log = {
         exercises: Array.from({ length: places }, (_, place) => {
           const exercise = byPlace.get(place);
-          return { exerciseId: exercise?.exerciseId ?? null, sets: exercise?.sets ?? [] };
+          return {
+            exerciseId: exercise?.exerciseId ?? null,
+            sets: (exercise?.sets ?? []).map(({ doneAt, ...values }) => ({
+              ...values,
+              doneAt: doneAt ? doneAt.toISOString() : null,
+            })),
+          };
         }),
       };
       const { error } = await supabase.rpc('edit_workout_log', { log_id: id, log });
