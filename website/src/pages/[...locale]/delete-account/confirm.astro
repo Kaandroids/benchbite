@@ -1,0 +1,108 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { FUNCTIONS_URL } from '../../../functions';
+import { localePath, localeStaticPaths, messagesFor, type Locale } from '../../../i18n';
+
+export const getStaticPaths = localeStaticPaths;
+
+const locale = Astro.props.locale as Locale;
+const { deleteLink } = messagesFor(locale);
+---
+
+<Layout locale={locale} page="delete-account/confirm" title={deleteLink.confirmTitle}>
+  <main class="page">
+    <div>
+      <h1>{deleteLink.confirmTitle}</h1>
+      <p class="muted lead">{deleteLink.confirmText}</p>
+    </div>
+    <!-- Shown once the script has read the link's token. -->
+    <div class="content" id="with-link" hidden>
+      <section class="card">
+        <ul>
+          {deleteLink.items.map((item) => <li>{item}</li>)}
+        </ul>
+      </section>
+      <p class="subscription">{deleteLink.subscription}</p>
+      <p class="failed" id="failed" role="alert" hidden>{deleteLink.failed}</p>
+      <form method="post" action={`${FUNCTIONS_URL}/confirm-account-deletion`}>
+        <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="token" />
+        <button class="button danger" type="submit">{deleteLink.delete}</button>
+        <a class="keep" href={localePath(locale)}>{deleteLink.keep}</a>
+      </form>
+    </div>
+    <p class="card" id="no-link" hidden>
+      {deleteLink.noLink}{' '}
+      <a href={`${localePath(locale, 'delete-account')}#without-app`}>{deleteLink.askAgain}</a>
+    </p>
+    <noscript><p class="card">{deleteLink.noScript}</p></noscript>
+  </main>
+</Layout>
+
+<script>
+  // The site's only script (ADR 0094): the link holds its token in the fragment, which no server
+  // sees, and this puts it into the form. It then leaves the address, so the token is not kept in
+  // the history. It runs again when only the fragment changes, which loads no new page.
+  function readLink() {
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const token = fragment.get('token');
+    const content = document.getElementById('with-link') as HTMLElement;
+    const noLink = document.getElementById('no-link') as HTMLElement;
+    if (token) {
+      (content.querySelector('input[name="token"]') as HTMLInputElement).value = token;
+      content.hidden = false;
+      noLink.hidden = true;
+      (document.getElementById('failed') as HTMLElement).hidden = !fragment.has('failed');
+      window.history.replaceState(null, '', window.location.pathname);
+    } else if (content.hidden) {
+      noLink.hidden = false;
+    }
+  }
+  readLink();
+  window.addEventListener('hashchange', readLink);
+</script>
+
+<style>
+  ul {
+    margin: 0;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .subscription {
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: var(--warning-background);
+  }
+
+  .failed {
+    padding: 16px 20px;
+    border-radius: 16px;
+    border: 2px solid var(--danger-button);
+  }
+
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  [hidden] {
+    display: none;
+  }
+
+  .keep {
+    color: var(--primary-text);
+    font-weight: 800;
+    text-decoration: none;
+  }
+</style>
