@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -75,16 +75,24 @@ select is(
   pg_temp.steps(jsonb_build_array(
     jsonb_build_object('day', current_date - 7, 'steps', 300000),
     jsonb_build_object('day', current_date - 7, 'steps', 8000),
-    jsonb_build_object('day', current_date - 8, 'steps', 9000),
-    jsonb_build_object('day', current_date - 8, 'steps', 9100)
+    jsonb_build_object('day', current_date - 8, 'steps', 9100),
+    jsonb_build_object('day', current_date - 8, 'steps', 9000)
   )),
   2,
-  'Of a day given twice, the last valid one counts'
+  'Of a day given twice, one valid total is kept'
 );
 select results_eq(
   $$ select steps from public.step_days where day in (current_date - 7, current_date - 8) order by day desc $$,
   $$ values (8000), (9100) $$,
-  'An out-of-range entry loses to a valid one, and the later of two valid ones wins'
+  'An out-of-range entry loses to a valid one, and the higher of two valid ones wins, sent first or last'
+);
+select is(
+  pg_temp.steps(jsonb_build_array(
+    jsonb_build_object('day', current_date - 10, 'steps', 4000),
+    jsonb_build_object('day', current_date - 10, 'steps', 4500)
+  )),
+  1,
+  'The higher total wins when sent last too'
 );
 select is(
   pg_temp.steps(jsonb_build_array(

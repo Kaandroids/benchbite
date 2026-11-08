@@ -19,10 +19,9 @@ revoke all on public.step_days from anon, authenticated;
 grant select on public.step_days to authenticated;
 
 -- Keeps the steps read from the phone's health store for the caller, given as
--- [{"day": "YYYY-MM-DD", "steps"}], at most 366: one total a day of the last year; of a day given
--- twice, the last counts. A store's count of a day only grows, as today's does while the user
--- walks, so the higher total is kept: a second phone that counted less, or a read that ended late,
--- never lowers it. Entries that are no day or no count are left out on their own. How many days
+-- [{"day": "YYYY-MM-DD", "steps"}], at most 366: one total a day of the last year. A store's count of
+-- a day only grows, as today's does while the user walks, so the higher total is kept, within a call
+-- and across them: a second phone that counted less, or a read that ended late, never lowers it. Entries that are no day or no count are left out on their own. How many days
 -- changed.
 create function public.import_steps(days jsonb, today date)
 returns integer
@@ -44,27 +43,23 @@ begin
     raise exception 'Steps are a list of at most 366' using errcode = '22023';
   end if;
 
-  with given as (
-    select s, place
-    from jsonb_array_elements(import_steps.days) with ordinality as e(s, place)
+  -- Materialized, so that its filter runs before any cast below.
+  with given as materialized (
+    select s
+    from jsonb_array_elements(import_steps.days) as e(s)
     where jsonb_typeof(s -> 'steps') = 'number'
       and s ->> 'day' ~ '^\d{4}-\d{2}-\d{2}$'
       and pg_input_is_valid(s ->> 'day', 'date')
   ), read as (
     select distinct on (r.day) r.day, r.steps
     from (
-      -- Each cast checks its value again, so no plan can cast an entry the filter above left out.
-      select
-        case when pg_input_is_valid(s ->> 'day', 'date') then (s ->> 'day')::date end as day,
-        case when jsonb_typeof(s -> 'steps') = 'number' then round((s ->> 'steps')::numeric) end
-          as steps,
-        place
+      select (s ->> 'day')::date as day, round((s ->> 'steps')::numeric) as steps
       from given
     ) r
     where r.day between import_steps.today - 365 and import_steps.today
-      -- The column's check.
+      -- step_days' check on steps; the two change together.
       and r.steps between 0 and 200000
-    order by r.day, r.place desc
+    order by r.day, r.steps desc
   ), kept as (
     insert into public.step_days as d (user_id, day, steps)
     select caller_id, r.day, r.steps::integer
