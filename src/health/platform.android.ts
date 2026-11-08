@@ -72,8 +72,9 @@ export async function releaseAccess(): Promise<void> {
 export const installStore = (): void => void Linking.openURL(PLAY_STORE);
 
 /**
- * The workout's heart rate and active calories. Health Connect refuses to sum a type the app may
- * not read, so only the allowed ones are asked for, and one that fails leaves the other.
+ * The workout's heart rate, and the active calories of the apps that measured it: a phone's own
+ * count from motion is no watch's. Health Connect refuses to sum a type the app may not read, so
+ * only the allowed ones are asked for.
  */
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
   if (!(await initialize())) return NO_WORKOUT_STATS;
@@ -87,29 +88,28 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     startTime: from.toISOString(),
     endTime: to.toISOString(),
   };
-  const [heart, energy] = await Promise.allSettled([
-    allowed('HeartRate')
-      ? aggregateRecord({ recordType: 'HeartRate', timeRangeFilter })
-      : Promise.resolve(null),
-    allowed('ActiveCaloriesBurned')
-      ? aggregateRecord({ recordType: 'ActiveCaloriesBurned', timeRangeFilter })
-      : Promise.resolve(null),
-  ]);
-  const measured =
-    heart.status === 'fulfilled' && heart.value && heart.value.MEASUREMENTS_COUNT > 0
-      ? heart.value
-      : null;
-  const kcal =
-    energy.status === 'fulfilled' &&
-    energy.value &&
-    energy.value.ACTIVE_CALORIES_TOTAL.inKilocalories > 0
-      ? energy.value
-      : null;
-  const origin = (measured ?? kcal)?.dataOrigins[0];
+  if (!allowed('HeartRate')) return NO_WORKOUT_STATS;
+  const heart = await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter });
+  if (heart.MEASUREMENTS_COUNT === 0) return NO_WORKOUT_STATS;
+
+  let activeKcal: number | null = null;
+  if (allowed('ActiveCaloriesBurned')) {
+    try {
+      const energy = await aggregateRecord({
+        recordType: 'ActiveCaloriesBurned',
+        timeRangeFilter,
+        dataOriginFilter: heart.dataOrigins,
+      });
+      const kcal = energy.ACTIVE_CALORIES_TOTAL.inKilocalories;
+      activeKcal = kcal > 0 ? kcal : null;
+    } catch (error) {
+      console.warn('Could not read the active calories', error);
+    }
+  }
+  const origin = heart.dataOrigins[0];
   return {
-    averageBpm: measured?.BPM_AVG ?? null,
-    maxBpm: measured?.BPM_MAX ?? null,
-    activeKcal: kcal?.ACTIVE_CALORIES_TOTAL.inKilocalories ?? null,
+    heartRate: { average: heart.BPM_AVG, max: heart.BPM_MAX },
+    activeKcal,
     source: origin ? (APP_NAMES[origin] ?? origin) : null,
   };
 }

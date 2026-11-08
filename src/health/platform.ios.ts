@@ -3,10 +3,16 @@
 import {
   isHealthDataAvailable,
   queryStatisticsForQuantity,
+  queryStatisticsForQuantitySeparateBySource,
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
 
-import type { HealthAvailability, HealthStore, WorkoutStats } from './types';
+import {
+  NO_WORKOUT_STATS,
+  type HealthAvailability,
+  type HealthStore,
+  type WorkoutStats,
+} from './types';
 
 const HEART_RATE = 'HKQuantityTypeIdentifierHeartRate';
 const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
@@ -31,22 +37,32 @@ export const releaseAccess = (): Promise<void> => Promise.resolve();
 export const installStore = (): void => undefined;
 
 /**
- * The workout's heart rate and active calories. The module asks HealthKit for each source's
- * statistics too, so the sources come with them; a type that may not be read has no data.
+ * The workout's heart rate, and the active calories of the apps that measured it: the phone counts
+ * some from motion too, which no watch measured. The module asks HealthKit for each source's
+ * statistics, so the heart rate's sources come with it; a type that may not be read has no data.
  */
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
   const filter = { date: { startDate: from, endDate: to } };
-  const [heart, energy] = await Promise.all([
-    queryStatisticsForQuantity(HEART_RATE, ['discreteAverage', 'discreteMax'], {
+  const heart = await queryStatisticsForQuantity(HEART_RATE, ['discreteAverage', 'discreteMax'], {
+    filter,
+    unit: 'count/min',
+  });
+  const average = heart.averageQuantity?.quantity;
+  const max = heart.maximumQuantity?.quantity;
+  if (average === undefined || max === undefined) return NO_WORKOUT_STATS;
+
+  const watch = new Set(heart.sources.map((source) => source.bundleIdentifier));
+  const energy = (
+    await queryStatisticsForQuantitySeparateBySource(ACTIVE_ENERGY, ['cumulativeSum'], {
       filter,
-      unit: 'count/min',
-    }),
-    queryStatisticsForQuantity(ACTIVE_ENERGY, ['cumulativeSum'], { filter, unit: 'kcal' }),
-  ]);
+      unit: 'kcal',
+    })
+  ).filter((part) => watch.has(part.source.bundleIdentifier) && part.sumQuantity);
   return {
-    averageBpm: heart.averageQuantity?.quantity ?? null,
-    maxBpm: heart.maximumQuantity?.quantity ?? null,
-    activeKcal: energy.sumQuantity?.quantity ?? null,
-    source: heart.sources[0]?.name ?? energy.sources[0]?.name ?? null,
+    heartRate: { average, max },
+    activeKcal: energy.length
+      ? energy.reduce((sum, part) => sum + (part.sumQuantity?.quantity ?? 0), 0)
+      : null,
+    source: heart.sources[0]?.name ?? null,
   };
 }
