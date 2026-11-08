@@ -16,6 +16,9 @@ const PROFILE = {
   session_minutes: 45,
 };
 
+/** The range filters the last snapshot read with, as [method, column, value]. */
+let rangesRead: unknown[][] = [];
+
 /**
  * A database whose profile is `profile`, with `goal`, what `rpc` names, the notes in use `notes`,
  * the active `workouts` and the week's `steps`, and nothing else.
@@ -28,14 +31,20 @@ function database(
   workouts: Record<string, unknown>[] | null = null,
   steps: Record<string, unknown>[] | null = null,
 ) {
+  rangesRead = [];
   const empty = { data: null, error: null };
   const query = (data: unknown) => {
     const builder: Record<string, unknown> = {
       maybeSingle: () => Promise.resolve({ data, error: null }),
       then: (resolve: (value: unknown) => void) => resolve({ data, error: null }),
     };
-    for (const method of ['select', 'eq', 'is', 'gte', 'lte', 'order', 'limit'])
-      builder[method] = () => builder;
+    for (const method of ['select', 'eq', 'is', 'order', 'limit']) builder[method] = () => builder;
+    for (const method of ['gte', 'lte']) {
+      builder[method] = (column: string, value: unknown) => {
+        rangesRead.push([method, column, value]);
+        return builder;
+      };
+    }
     return builder;
   };
   return {
@@ -203,7 +212,7 @@ Deno.test("tells Bite today's steps and the week before's average, without today
   );
 });
 
-Deno.test('says no steps today before the store counted one', async () => {
+Deno.test('says no steps were counted today, rather than none walked', async () => {
   const snapshot = await loadSnapshot(
     database(PROFILE, null, {}, [], null, [{ day: '2026-10-29', steps: 6000 }]),
     '2026-10-30',
@@ -211,7 +220,7 @@ Deno.test('says no steps today before the store counted one', async () => {
 
   assertEquals(
     snapshotText(snapshot, 'en').includes(
-      'Steps: 0 today so far; 6000 a day on average over the 7 days before (1 counted)',
+      'Steps: none counted yet today; 6000 a day on average over the 7 days before (1 counted)',
     ),
     true,
   );
@@ -222,4 +231,13 @@ Deno.test('leaves steps out for a user whose steps are not read', async () => {
 
   assertEquals(snapshot.steps, undefined);
   assertEquals(snapshotText(snapshot, 'en').includes('Steps:'), false);
+});
+
+Deno.test('reads the steps of today and the 7 days before, across the turn of a year', async () => {
+  await loadSnapshot(database(PROFILE), '2026-01-03');
+
+  assertEquals(rangesRead, [
+    ['gte', 'day', '2025-12-27'],
+    ['lte', 'day', '2026-01-03'],
+  ]);
 });
