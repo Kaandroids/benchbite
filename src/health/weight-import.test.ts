@@ -15,7 +15,14 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
-jest.mock('@/lib/supabase', () => ({ supabase: { rpc: jest.fn() } }));
+jest.mock('@/lib/supabase', () => ({
+  supabase: { rpc: jest.fn(), auth: { getSession: jest.fn() } },
+}));
+
+const signedIn = (userId: string) =>
+  jest
+    .mocked(supabase.auth.getSession)
+    .mockResolvedValue({ data: { session: { user: { id: userId } } }, error: null } as never);
 
 const NOW = new Date(2026, 10, 8, 9, 0);
 const DAY_MS = 24 * 3600 * 1000;
@@ -26,6 +33,7 @@ beforeEach(() => {
   jest.useFakeTimers({ now: NOW, advanceTimers: true });
   setHealthConnected(true);
   setWeightSync('on');
+  signedIn('user-1');
   jest.mocked(weightsSince).mockResolvedValue([
     { at: at(7, 7), weightKg: 84.6, source: 'Withings' },
     { at: at(8, 7), weightKg: 84.4, source: 'Withings' },
@@ -107,4 +115,34 @@ it('reads nothing while weight is not read or the store not connected', async ()
   expect(await importHealthWeights(createTestQueryClient())).toBe(false);
 
   expect(weightsSince).not.toHaveBeenCalled();
+});
+
+it('sends nothing when another user signed in while the store was read', async () => {
+  jest.mocked(weightsSince).mockImplementation(async () => {
+    signedIn('user-2');
+    setHealthConnected(false);
+    return [{ at: at(8, 7), weightKg: 84.4, source: 'Withings' }];
+  });
+
+  expect(await importHealthWeights(createTestQueryClient())).toBe(false);
+  expect(supabase.rpc).not.toHaveBeenCalled();
+});
+
+it('sends nothing when the session changed, even with the store still connected', async () => {
+  jest.mocked(weightsSince).mockImplementation(async () => {
+    signedIn('user-2');
+    return [{ at: at(8, 7), weightKg: 84.4, source: 'Withings' }];
+  });
+
+  expect(await importHealthWeights(createTestQueryClient())).toBe(false);
+  expect(supabase.rpc).not.toHaveBeenCalled();
+});
+
+it('reads the store once for imports asked for at the same time', async () => {
+  const queryClient = createTestQueryClient();
+
+  await Promise.all([importHealthWeights(queryClient), importHealthWeights(queryClient)]);
+
+  expect(weightsSince).toHaveBeenCalledTimes(1);
+  expect(supabase.rpc).toHaveBeenCalledTimes(1);
 });

@@ -32,12 +32,29 @@ export function latestPerDay(
     .map(([day, { weightKg, source }]) => ({ day, weightKg, source }));
 }
 
-/** Reads the store's last 30 days of weights and keeps them; whether any day changed. */
-export async function importHealthWeights(queryClient: QueryClient): Promise<boolean> {
+/** The user whose weights are imported now, to send none to an account signed in since. */
+async function signedInUser(): Promise<string | undefined> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id;
+}
+
+/** Whether weight may be read now, for the user signed in when the import started. */
+async function stillImporting(userId: string | undefined): Promise<boolean> {
+  return (
+    userId !== undefined &&
+    isHealthConnected() &&
+    weightSync() === 'on' &&
+    (await signedInUser()) === userId
+  );
+}
+
+async function importNow(queryClient: QueryClient): Promise<boolean> {
   if (!isHealthConnected() || weightSync() !== 'on') return false;
+  const userId = await signedInUser();
   const now = new Date();
   const days = latestPerDay(await weightsSince(new Date(now.getTime() - READ_DAYS * DAY_MS)));
-  if (!days.length) return false;
+  // Another user may have signed in while the store was read, which lets go of the connection.
+  if (!days.length || !(await stillImporting(userId))) return false;
   const { data, error } = await supabase.rpc('import_weights', {
     weights: days,
     today: toIsoDate(now),
@@ -46,4 +63,15 @@ export async function importHealthWeights(queryClient: QueryClient): Promise<boo
   const changed = (data ?? 0) > 0;
   if (changed) await reloadAfterWeight(queryClient);
   return changed;
+}
+
+/** The import running now, which a second caller waits for instead of reading the store again. */
+let running: Promise<boolean> | null = null;
+
+/** Reads the store's last 30 days of weights and keeps them; whether any day changed. */
+export function importHealthWeights(queryClient: QueryClient): Promise<boolean> {
+  running ??= importNow(queryClient).finally(() => {
+    running = null;
+  });
+  return running;
 }
