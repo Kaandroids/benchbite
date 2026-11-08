@@ -88,7 +88,7 @@ describe('a guest', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 
-    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account');
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', { body: undefined });
     await waitFor(() => expect(leaveDeletedUser).toHaveBeenCalled());
   });
 
@@ -110,7 +110,7 @@ describe('a guest', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }));
 
     expect(
-      await screen.findByText('We couldn’t delete it. Check your connection and try again.'),
+      await screen.findByText('Something went wrong on our side. Try again in a moment.'),
     ).toBeOnTheScreen();
     expect(leaveDeletedUser).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Delete for good' })).toBeNull();
@@ -226,5 +226,19 @@ describe('an account', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Use a code from my email instead' }));
     expect(screen.getByLabelText('6-digit code')).toBeOnTheScreen();
+  });
+
+  it('keeps the code typed and the wait when coming back from the password', async () => {
+    await sendCode();
+    await fireEvent.changeText(await screen.findByLabelText('6-digit code'), '481');
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'Can’t open your email? Use your password' }),
+    );
+    expect(screen.queryByLabelText('6-digit code')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Use a code from my email instead' }));
+
+    expect(screen.getByLabelText('6-digit code')).toHaveProp('value', '481');
+    expect(supabase.functions.invoke).toHaveBeenCalledTimes(1);
   });
 });

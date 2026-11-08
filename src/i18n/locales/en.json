@@ -82,7 +82,6 @@
       "sendCode": "Send code",
       "confirm": "Delete for good",
       "notNow": "Not now",
-      "failed": "We couldn’t delete it. Check your connection and try again.",
       "codeSubtitle": "We sent a {{length}}-digit code to {{email}}. Enter it to delete your account.",
       "usePassword": "Can’t open your email? Use your password",
       "passwordTitle": "Confirm with your password",

@@ -53,43 +53,54 @@ export function DeleteAccountScreen() {
   const email = useUserEmail() ?? '';
   const [proof, setProof] = useState<'code' | 'password' | null>(null);
 
-  if (isAccount && proof === 'code') {
+  if (isAccount && proof) {
+    // The code screen stays while the password is shown, so that coming back keeps the code typed
+    // and the wait for a new one.
     return (
-      <DeletionCodeScreen
-        email={email}
-        onBack={() => setProof(null)}
-        onUsePassword={() => setProof('password')}
-      />
+      <>
+        <View style={[styles.flex, proof !== 'code' && styles.hidden]}>
+          <DeletionCodeScreen
+            email={email}
+            onBack={() => setProof(null)}
+            onUsePassword={() => setProof('password')}
+          />
+        </View>
+        {proof === 'password' ? (
+          <DeletionPasswordScreen
+            onBack={() => setProof(null)}
+            onUseCode={() => setProof('code')}
+          />
+        ) : null}
+      </>
     );
   }
-  if (isAccount && proof === 'password') {
-    return (
-      <DeletionPasswordScreen onBack={() => setProof(null)} onUseCode={() => setProof('code')} />
-    );
-  }
-  return <WhatGoesScreen onCodeSent={() => setProof('code')} />;
+  return <WhatGoesScreen isAccount={isAccount} email={email} onCodeSent={() => setProof('code')} />;
 }
 
+type WhatGoesScreenProps = {
+  isAccount: boolean;
+  email: string;
+  onCodeSent: () => void;
+};
+
 /** What goes, and the sheet that asks once more. */
-function WhatGoesScreen({ onCodeSent }: { onCodeSent: () => void }) {
+function WhatGoesScreen({ isAccount, email, onCodeSent }: WhatGoesScreenProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const isAccount = useIsAccount();
-  const email = useUserEmail() ?? '';
   const deleteAccount = useDeleteAccount();
   const sendCode = useSendDeletionCode();
-  const { message: sendFailed } = useAccountError(sendCode.error);
+  const { message } = useAccountError(sendCode.error ?? deleteAccount.error);
   const [asking, setAsking] = useState(false);
-  const deleting = deleteAccount.isPending || sendCode.isPending;
+  const pending = deleteAccount.isPending || sendCode.isPending;
 
   return (
     <Screen
       onBack={() => router.back()}
       footer={
         <View style={{ gap: spacing.md }}>
-          {deleteAccount.isError || sendFailed ? (
+          {message ? (
             <Text variant="caption" color="danger" align="center" accessibilityLiveRegion="polite">
-              {sendFailed ?? t('account.delete.failed')}
+              {message}
             </Text>
           ) : null}
           <Button
@@ -102,6 +113,7 @@ function WhatGoesScreen({ onCodeSent }: { onCodeSent: () => void }) {
             size="regular"
             onPress={() => {
               sendCode.reset();
+              deleteAccount.reset();
               setAsking(true);
             }}
           />
@@ -140,14 +152,14 @@ function WhatGoesScreen({ onCodeSent }: { onCodeSent: () => void }) {
           expression="sad"
           // It cannot be called back while it runs, so the sheet stays until it is decided.
           onClose={() => {
-            if (!deleting) setAsking(false);
+            if (!pending) setAsking(false);
           }}
         >
           {isAccount ? (
             <Button
               label={t('account.delete.sendCode')}
               variant="danger"
-              loading={deleting}
+              loading={pending}
               onPress={() =>
                 sendCode.mutate(undefined, {
                   onSuccess: onCodeSent,
@@ -161,14 +173,14 @@ function WhatGoesScreen({ onCodeSent }: { onCodeSent: () => void }) {
             <Button
               label={t('account.delete.confirm')}
               variant="danger"
-              loading={deleting}
+              loading={pending}
               onPress={() => deleteAccount.mutate(undefined, { onError: () => setAsking(false) })}
             />
           )}
           <Button
             label={t('account.delete.notNow')}
             variant="secondary"
-            disabled={deleting}
+            disabled={pending}
             onPress={() => setAsking(false)}
           />
         </BiteSheet>
@@ -205,7 +217,7 @@ function DeletionCodeScreen({ email, onBack, onUsePassword }: DeletionCodeScreen
       footer={
         <DeleteFooter
           message={entry.message}
-          disabled={entry.code.length < CODE_LENGTH}
+          disabled={!entry.full}
           deleting={entry.checking}
           onDelete={entry.submit}
         />
@@ -308,5 +320,8 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  hidden: {
+    display: 'none',
   },
 });

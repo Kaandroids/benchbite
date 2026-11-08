@@ -82,7 +82,6 @@
       "sendCode": "Code senden",
       "confirm": "Endgültig löschen",
       "notNow": "Nicht jetzt",
-      "failed": "Das Löschen hat nicht geklappt. Prüfe deine Verbindung und versuche es erneut.",
       "codeSubtitle": "Wir haben einen {{length}}-stelligen Code an {{email}} geschickt. Gib ihn ein, um dein Konto zu löschen.",
       "usePassword": "Kommst du nicht an deine E-Mails? Nutze dein Passwort",
       "passwordTitle": "Mit deinem Passwort bestätigen",

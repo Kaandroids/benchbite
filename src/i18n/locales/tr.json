@@ -82,7 +82,6 @@
       "sendCode": "Kod gönder",
       "confirm": "Kalıcı olarak sil",
       "notNow": "Şimdi değil",
-      "failed": "Silinemedi. Bağlantını kontrol edip tekrar dene.",
       "codeSubtitle": "{{email}} adresine {{length}} haneli bir kod gönderdik. Hesabını silmek için kodu gir.",
       "usePassword": "E-postana ulaşamıyor musun? Şifreni kullan",
       "passwordTitle": "Şifrenle onayla",
