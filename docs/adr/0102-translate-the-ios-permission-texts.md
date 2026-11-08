@@ -28,4 +28,4 @@ On iOS, the buttons of a permission prompt follow the phone's language, but the 
 - German and Turkish users read the permission prompts in their language once a new build is installed.
 - iOS picks the text by the phone's language, or the per-app language in iOS Settings, not by the language chosen in Benchbite.
 - A new permission text goes in four places: the plugin option, the three permission files and `PLUGIN_TEXTS`. The check names what is missing.
-- The check sees only texts `app.json` sets. A plugin that writes a default text of its own, without an option, is not caught; its text has to be set in `app.json` to be translated.
+- The check sees only texts `app.json` sets. A plugin that writes a default text of its own, without an option, is not caught; its text has to be set in `app.json` to be translated. `expo-dev-launcher`'s local network text is one; it shows only in development builds, which stay English there.
