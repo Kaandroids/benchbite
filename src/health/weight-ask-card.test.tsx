@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { setHealthConnected, setWeightReading, weightReading } from './connection';
+import { setHealthConnected, setWeightSync, weightSync } from './connection';
 import { requestHealthWeightAccess } from './health';
 import { WeightAskCard } from './weight-ask-card';
 import { importHealthWeights } from './weight-import';
@@ -26,7 +26,7 @@ const TITLE = 'Your weight from Apple Health';
 beforeEach(() => {
   jest.clearAllMocks();
   setHealthConnected(true);
-  setWeightReading(null);
+  setWeightSync(null);
   jest.mocked(requestHealthWeightAccess).mockResolvedValue(true);
   jest.mocked(importHealthWeights).mockResolvedValue(true);
 });
@@ -37,7 +37,7 @@ it('asks for weight, then reads it and hides', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
-  expect(weightReading()).toBe('on');
+  expect(weightSync()).toBe('on');
   expect(importHealthWeights).toHaveBeenCalled();
 });
 
@@ -47,7 +47,7 @@ it('reads nothing when weight was not allowed', async () => {
 
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
-  await waitFor(() => expect(weightReading()).toBe('off'));
+  await waitFor(() => expect(weightSync()).toBe('off'));
   expect(importHealthWeights).not.toHaveBeenCalled();
 });
 
@@ -57,15 +57,15 @@ it('hides for good on not now', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
-  expect(weightReading()).toBe('off');
+  expect(weightSync()).toBe('off');
 });
 
 it('shows only to a user who connected the store and was not asked yet', async () => {
-  setWeightReading('on');
+  setWeightSync('on');
   await render(<WeightAskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();
 
-  setWeightReading(null);
+  setWeightSync(null);
   setHealthConnected(false);
   await render(<WeightAskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();

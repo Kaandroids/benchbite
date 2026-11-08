@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { setHealthConnected, setWeightReading, useHealthConnected } from './connection';
+import { setHealthConnected, setWeightSync, useHealthConnected } from './connection';
 import {
   healthAvailability,
   healthStillAllowed,
@@ -64,7 +64,7 @@ export function useHealthConnection() {
       const allowed = await requestHealthAccess();
       setHealthConnected(allowed);
       // Weight is among what was asked for (ADR 0100).
-      if (allowed) setWeightReading('on');
+      if (allowed) setWeightSync('on');
       setProblem(allowed ? null : 'denied');
     } catch (error) {
       console.warn('Could not ask for the access to health data', error);

@@ -37,23 +37,23 @@ const WEIGHTS_READ_AT_KEY = 'health.weightsReadAt';
  * Whether weight is read from the store (ADR 0100): on, off when the user said not now, or not
  * asked yet, as for a user who connected before weight was read.
  */
-export type WeightReading = 'on' | 'off' | null;
+export type WeightSync = 'on' | 'off' | null;
 
-export function weightReading(): WeightReading {
+export function weightSync(): WeightSync {
   const stored = readItem(WEIGHT_KEY);
   return stored === 'on' || stored === 'off' ? stored : null;
 }
 
-export function setWeightReading(reading: WeightReading) {
-  writeItem(WEIGHT_KEY, reading);
+export function setWeightSync(sync: WeightSync) {
+  writeItem(WEIGHT_KEY, sync);
   for (const listener of listeners) {
     listener();
   }
 }
 
 /** Whether weight is read from the store, kept up to date. */
-export function useWeightReading(): WeightReading {
-  return useSyncExternalStore(subscribe, weightReading);
+export function useWeightSync(): WeightSync {
+  return useSyncExternalStore(subscribe, weightSync);
 }
 
 /** When the store's weights were last read, to read only what came since. */

@@ -8,7 +8,7 @@ import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterWeight } from '@/weight/weights';
 
-import { isHealthConnected, setWeightsReadAt, weightReading, weightsReadAt } from './connection';
+import { isHealthConnected, setWeightsReadAt, weightSync, weightsReadAt } from './connection';
 import { weightsSince } from './platform';
 import type { WeightReading } from './types';
 
@@ -40,7 +40,7 @@ function readFrom(now: Date): Date {
 
 /** Reads the store's weights since the last read and keeps them; whether any day changed. */
 export async function importHealthWeights(queryClient: QueryClient): Promise<boolean> {
-  if (!isHealthConnected() || weightReading() !== 'on') return false;
+  if (!isHealthConnected() || weightSync() !== 'on') return false;
   const now = new Date();
   const days = latestPerDay(await weightsSince(readFrom(now)));
   let changed = false;
