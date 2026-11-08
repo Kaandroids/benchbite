@@ -9,6 +9,9 @@ import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { AccountRefusal } from '@shared/account_refusals';
+
+import { functionRefusal } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { useSession, useUserEmail } from '@/providers/session-provider';
 
@@ -75,7 +78,11 @@ const AUTH_ERRORS: Record<string, AccountError> = {
 };
 
 // The errors the account's Edge Functions answer with (ADR 0095), by what they mean to the user.
-const FUNCTION_ERRORS: Record<string, AccountError> = {
+const FUNCTION_ERRORS: Record<AccountRefusal, AccountError> = {
+  method_not_allowed: 'unknown',
+  unavailable: 'serverError',
+  no_email: 'unknown',
+  proof_required: 'unknown',
   wrong_code: 'invalidCode',
   code_expired: 'invalidCode',
   wrong_password: 'wrongPassword',
@@ -101,30 +108,27 @@ class FunctionRefusal extends Error {
 
 /** Calls an Edge Function of the account, throwing its reason when it refuses. */
 async function callFunction(name: string, body?: Record<string, unknown>) {
-  const { error } = body
-    ? await supabase.functions.invoke(name, { body })
-    : await supabase.functions.invoke(name);
+  const { error } = await supabase.functions.invoke(name, { body });
   if (error instanceof FunctionsHttpError) {
     const context = error.context as Response;
     const answer: unknown = await context.json().catch(() => null);
-    const reason =
-      typeof answer === 'object' && answer !== null && 'error' in answer
-        ? String(answer.error)
-        : 'unknown';
-    throw new FunctionRefusal(reason, context.status);
+    throw new FunctionRefusal(functionRefusal(answer) ?? 'unknown', context.status);
   }
   if (error) {
     throw error;
   }
 }
 
-/** The reason a request to Supabase Auth failed. */
+/** The reason a request to Supabase Auth or the account's Edge Functions failed. */
 export function accountError(error: unknown): AccountError {
   if (error instanceof WrongCurrentPassword) {
     return 'wrongCurrentPassword';
   }
   if (error instanceof FunctionRefusal) {
-    return FUNCTION_ERRORS[error.reason] ?? (error.status >= 500 ? 'serverError' : 'unknown');
+    return (
+      FUNCTION_ERRORS[error.reason as AccountRefusal] ??
+      (error.status >= 500 ? 'serverError' : 'unknown')
+    );
   }
   if (error instanceof FunctionsFetchError) {
     return 'offline';
@@ -164,7 +168,7 @@ export function startingAgain(request: Attempt) {
   };
 }
 
-/** The message that says why a request to Supabase Auth failed. */
+/** The message that says why a request to Supabase Auth or the account's Edge Functions failed. */
 export function accountErrorMessage(t: TFunction, error: unknown): string {
   return t(`account.errors.${accountError(error)}`, PASSWORD_LIMITS);
 }
