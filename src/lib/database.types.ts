@@ -1494,6 +1494,25 @@ export type Database = {
           },
         ];
       };
+      step_days: {
+        Row: {
+          day: string;
+          steps: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          steps: number;
+          user_id: string;
+        };
+        Update: {
+          day?: string;
+          steps?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       streak_days: {
         Row: {
           day: string;
@@ -2373,6 +2392,7 @@ export type Database = {
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
       health_source_name: { Args: { source: string }; Returns: string };
+      import_steps: { Args: { days: Json; today: string }; Returns: number };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
