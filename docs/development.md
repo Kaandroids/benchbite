@@ -9,7 +9,9 @@ For the hosted project, see [Deployment](deployment.md).
   [fnm](https://github.com/Schniz/fnm) and [nvm](https://github.com/nvm-sh/nvm) pick up automatically.
 - [pnpm](https://pnpm.io/), enabled through Corepack (ships with Node.js 24): `corepack enable`.
   Corepack then uses the exact pnpm version from `package.json`.
-- [Expo Go](https://expo.dev/go) on an iOS or Android device, or an iOS Simulator / Android Emulator.
+- [Xcode](https://developer.apple.com/xcode/) for the iOS Simulator and iPhones, and
+  [Android Studio](https://developer.android.com/studio) for the Android Emulator and Android devices,
+  to build the development app (see [Run the app](#run-the-app)).
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or another Docker-compatible runtime,
   for the local Supabase stack.
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/) 2, to check and test the Edge
@@ -132,15 +134,39 @@ select public.give_plan('you@example.com', now(), now() + interval '1 year');
 
 ## Run the app
 
-With the local Supabase stack running:
+The app runs in a development build: Benchbite itself, built on your machine with the native
+modules it uses and Expo's development tools, rather than Expo Go, which has only its own
+([ADR 0096](adr/0096-develop-with-a-development-build.md)). Build it once for each simulator,
+emulator or device:
+
+```bash
+pnpm expo run:ios                # the iOS Simulator
+pnpm expo run:android            # the Android Emulator, or a device connected over USB
+pnpm expo run:ios --device       # an iPhone connected over USB, which asks which one
+```
+
+The first build generates the `ios/` and `android/` folders, which are ignored by Git. If it
+changes the `ios` and `android` scripts in `package.json`, undo that change. An iPhone needs
+**Developer Mode** (Settings → Privacy & Security) and is signed with the project's Apple
+developer team.
+
+Then, with the local Supabase stack running, start the dev server:
 
 ```bash
 pnpm start
 ```
 
-Scan the QR code with the camera (iOS) or Expo Go (Android). Press `i` or `a` in the terminal
-to open the iOS Simulator or Android Emulator instead. Restart the dev server after changing
-`.env.local`.
+Press `i` or `a` in the terminal to open the app in the iOS Simulator or Android Emulator, or
+scan the QR code with a phone that has the development build. Restart the dev server after
+changing `.env.local`.
+
+Changes to the code only need the dev server. Build again after adding or updating a library with
+native code, changing `app.json` or upgrading the Expo SDK, from fresh native folders:
+
+```bash
+pnpm expo prebuild --clean
+pnpm expo run:ios
+```
 
 `127.0.0.1` in `.env.local` reaches your computer directly from the iOS Simulator. Elsewhere:
 
