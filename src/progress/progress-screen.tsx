@@ -7,6 +7,7 @@ import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
 import { cardEntering } from '@/components/ui/card';
 import { DevButton } from '@/dev/dev-button';
+import { WeightAskCard } from '@/health/weight-ask-card';
 import { RECORDS_KEY, TRAINING_DAYS_KEY } from '@/history/history';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
 import { useTargetBasis } from '@/nutrition/targets';
@@ -63,6 +64,7 @@ export function ProgressScreen() {
       </TabHeader>
       {allLoaded(queries) ? (
         <>
+          <WeightAskCard entering={cardEntering(0)} />
           <WeightCard
             entering={cardEntering(0)}
             latest={latestWeight.data ?? null}
