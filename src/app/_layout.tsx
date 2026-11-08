@@ -23,7 +23,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
 import { ReminderSync } from '@/reminders/reminder-sync';
 import { showRemindersInForeground } from '@/reminders/reminders';
-import { WorkoutHealthCatchUp } from '@/health/workout-health';
+import { WorkoutHealthCatchUp } from '@/health/health-catch-up';
 import { LeftOpenSaver } from '@/sessions/left-open';
 import { StartMoveSheet } from '@/sessions/start-move';
 import { REST_NOTIFICATION_ID, RestAlarm } from '@/sessions/rest-alarm';

@@ -154,6 +154,29 @@ export type LogCursor = { finishedAt: string; id: number };
 /** A page of finished workouts, and where the next one starts unless this one was the last. */
 export type LogPage = { logs: LogSummary[]; next?: LogCursor };
 
+/** The workouts finished since a time, with only their times, as the health catch-up reads them. */
+export async function recentLogs(
+  since: Date,
+): Promise<{ id: number; startedAt: Date; finishedAt: Date }[]> {
+  const { data, error } = await supabase
+    .from('workout_log_summaries')
+    .select('id, started_at, finished_at')
+    .gte('finished_at', since.toISOString())
+    .limit(20);
+  if (error) throw error;
+  return data.flatMap((row) =>
+    row.id === null || !row.started_at || !row.finished_at
+      ? []
+      : [
+          {
+            id: row.id,
+            startedAt: new Date(row.started_at),
+            finishedAt: new Date(row.finished_at),
+          },
+        ],
+  );
+}
+
 /** The latest `count` finished workouts, or the `count` before `after`, latest first. */
 export async function fetchLogSummaries(count: number, after?: LogCursor): Promise<LogPage> {
   let query = supabase.from('workout_log_summaries').select('*');
