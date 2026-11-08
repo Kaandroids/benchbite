@@ -16,6 +16,8 @@ jest.mock('./plan', () => ({
 
 // A Monday, so that the next week starts on one.
 const MONDAY = new Date(2026, 10, 9, 9, 0);
+// A Wednesday before that Monday, so that the day reads as a weekday.
+const WEDNESDAY = new Date(2026, 10, 4, 9, 0);
 
 const FREE: PlanSummary = {
   plan: 'free',
@@ -44,9 +46,6 @@ function mockPlan(summary: PlanSummary) {
 }
 
 const onClose = jest.fn();
-
-// A Wednesday before the Monday the week starts again, so that the day reads as a weekday.
-const WEDNESDAY = new Date(2026, 10, 4, 9, 0);
 
 beforeEach(() => {
   jest.clearAllMocks();
