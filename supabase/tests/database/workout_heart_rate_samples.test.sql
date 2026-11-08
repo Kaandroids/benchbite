@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -157,6 +157,20 @@ select results_eq(
   'An edit without times keeps each set''s own, by the exercise''s place too'
 );
 
+-- An app that sends no times, with a set removed: that exercise's times would move, so it keeps none.
+select public.edit_workout_log(current_setting('test.log')::bigint, jsonb_build_object(
+  'exercises', jsonb_build_array(
+    jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
+      jsonb_build_object('seconds', 45), jsonb_build_object('seconds', 40))),
+    jsonb_build_object('exerciseId', 'Plank', 'sets', jsonb_build_array(
+      jsonb_build_object('seconds', 35))))
+));
+select results_eq(
+  $$ select * from pg_temp.minutes_ago() $$,
+  $$ values (45, null), (40, null), (35, 15) $$,
+  'An exercise whose sets changed keeps no times, and the others keep theirs'
+);
+
 -- An app that sends times: a set added in the edit has none.
 select public.edit_workout_log(current_setting('test.log')::bigint, jsonb_build_object(
   'exercises', jsonb_build_array(
@@ -178,7 +192,7 @@ insert into public.workout_logs (id, user_id, name, started_at, started_on, fini
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select public.set_workout_health(803, 70, 95);
 select results_eq(
-  $$ select l.heart_rate_kcal, s.kcal, s.kcal_source
+  $$ select l.heart_rate_kcal, s.kcal, s.kcal_source::text
      from public.workout_logs l join public.workout_log_summaries s using (id) where l.id = 803 $$,
   $$ values (null::integer, 400, 'minutes') $$,
   'A heart rate below the formula''s range gives no estimate, and the minutes'' shows'
@@ -205,7 +219,7 @@ select is(
 
 -- Which calories to show.
 select results_eq(
-  $$ select id, kcal, kcal_source from public.workout_log_summaries
+  $$ select id, kcal, kcal_source::text from public.workout_log_summaries
      where id in (800, 802) or id = current_setting('test.log')::bigint order by id $$,
   $$ values (800::bigint, 350, 'heart_rate'),
             (802::bigint, (select heart_rate_kcal from public.workout_logs where id = 802), 'heart_rate'),
@@ -216,7 +230,7 @@ select results_eq(
 );
 select public.set_workout_health(800, 130, 168, 412, 'Zepp');
 select results_eq(
-  $$ select kcal, kcal_source from public.workout_log_summaries where id = 800 $$,
+  $$ select kcal, kcal_source::text from public.workout_log_summaries where id = 800 $$,
   $$ values (412, 'watch') $$,
   'And the watch''s before all'
 );
@@ -236,6 +250,17 @@ select is(
   public.weight_on('00000000-0000-0000-0000-00000000000a', current_date),
   null::numeric,
   'Nobody reads another user''s weight through weight_on()'
+);
+reset role;
+
+-- Planned workouts take the latest weight, also one dated after the server's day.
+insert into public.weight_entries (user_id, weight_kg, measured_on)
+  values ('00000000-0000-0000-0000-00000000000b', 60, current_date + 1);
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is(
+  public.my_strength_kcal_per_minute(),
+  public.strength_kcal_per_minute(60),
+  'Planned workouts take the latest weight'
 );
 reset role;
 

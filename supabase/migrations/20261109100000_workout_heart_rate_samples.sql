@@ -14,6 +14,9 @@ alter table public.workout_logs
   -- formula, kept with every read; the summary shows them when the watch measured no calories.
   add column heart_rate_kcal integer check (heart_rate_kcal between 0 and 5000);
 
+-- Where the calories a summary shows come from: the watch, the heart rate or the minutes.
+create type public.kcal_source as enum ('watch', 'heart_rate', 'minutes');
+
 -- The sets of a log, as before, with when each was done.
 drop function public.sets_of(jsonb);
 create function public.sets_of(log jsonb)
@@ -67,8 +70,9 @@ $$;
 revoke execute on function public.done_at_within(timestamptz, timestamptz, timestamptz)
   from public, anon, authenticated;
 
--- A user's weight on a day, today without one: the latest on or before it, else the first after
--- it; none without any. Each estimate of a workout's calories takes the weight on its day.
+-- A user's weight on a day: the latest on or before it, else the first after it; the latest of all
+-- without a day; none without any. Each estimate of a workout's calories takes the weight on its
+-- day.
 create function public.weight_on(user_id uuid, day date)
 returns numeric
 language sql
@@ -80,7 +84,7 @@ as $$
       select e.weight_kg
       from public.weight_entries e
       where e.user_id = weight_on.user_id
-        and e.measured_on <= coalesce(weight_on.day, current_date)
+        and (weight_on.day is null or e.measured_on <= weight_on.day)
       order by e.measured_on desc
       limit 1
     ),
@@ -88,39 +92,29 @@ as $$
       select e.weight_kg
       from public.weight_entries e
       where e.user_id = weight_on.user_id
-        and e.measured_on > coalesce(weight_on.day, current_date)
+        and e.measured_on > weight_on.day
       order by e.measured_on
       limit 1
     )
   );
 $$;
 
--- The 5 MET estimate of planned workouts, as before, with today's weight as weight_on() gives it.
+-- It runs with the caller's rights, so row level security gives a user only their own weights;
+-- my_strength_kcal_per_minute() calls it as the user.
+revoke execute on function public.weight_on(uuid, date) from public, anon;
+grant execute on function public.weight_on(uuid, date) to authenticated;
+
+-- The 5 MET estimate of planned workouts, as before: the latest weight, through weight_on().
 create or replace function public.my_strength_kcal_per_minute()
 returns numeric
 language sql
 stable
 set search_path = ''
 as $$
-  select public.strength_kcal_per_minute(public.weight_on((select auth.uid()), current_date));
+  select public.strength_kcal_per_minute(public.weight_on((select auth.uid()), null));
 $$;
 
--- The key a set's time is kept by during an edit: its exercise, the exercise's place and its own.
-create function public.set_key(exercise_position smallint, exercise_id text, set_position smallint)
-returns text
-language sql
-immutable
-set search_path = ''
-as $$
-  select exercise_position || ':' || exercise_id || ':' || set_position;
-$$;
 
-revoke execute on function public.set_key(smallint, text, smallint) from public, anon, authenticated;
-
--- It runs with the caller's rights, so row level security gives a user only their own weights;
--- my_strength_kcal_per_minute() calls it as the user.
-revoke execute on function public.weight_on(uuid, date) from public, anon;
-grant execute on function public.weight_on(uuid, date) to authenticated;
 
 -- A heart rate as it is kept, rounded, or none when no person can have it.
 create function public.heart_rate_or_none(heart_rate numeric)
@@ -143,28 +137,31 @@ create function public.heart_rate_samples_of(
   finished timestamptz
 )
 returns smallint[]
-language sql
+language plpgsql
 immutable
 set search_path = ''
 as $$
-  select case
-    when exists (select from unnest(kept) as k(sample) where sample is not null) then kept
-  end
-  from (
-    select (
-      select array_agg(public.heart_rate_or_none(sample) order by place)
-      from unnest(samples) with ordinality as s(sample, place)
-    ) as kept
-    where cardinality(samples)
-      <= least(4320, ceil(extract(epoch from finished - started) / 10) + 1)
-  ) c;
+declare
+  kept smallint[];
+begin
+  -- A workout of exactly 12 hours has one sample more than the column takes.
+  if cardinality(samples) > least(4320, ceil(extract(epoch from finished - started) / 10) + 1) then
+    return null;
+  end if;
+  select array_agg(public.heart_rate_or_none(sample) order by place) into kept
+  from unnest(samples) with ordinality as s(sample, place);
+  if not exists (select from unnest(kept) as k(sample) where sample is not null) then
+    return null;
+  end if;
+  return kept;
+end;
 $$;
 
 revoke execute on function public.heart_rate_samples_of(numeric[], timestamptz, timestamptz)
   from public, anon, authenticated;
 
--- Unchanged apart from keeping when each set was done, and taking the weight on the workout's day
--- for its estimate, as the estimate from the heart rate does.
+-- Unchanged apart from keeping when each set was done, taking the weight on the workout's day for
+-- its estimate, as the estimate from the heart rate does, and working out that day once.
 create or replace function public.log_workout(log jsonb)
 returns bigint
 language plpgsql
@@ -208,6 +205,9 @@ begin
     raise exception 'The workout''s start and end do not make sense' using errcode = 'BB012';
   end if;
 
+  -- An app from before that sends no day either: the start's day in UTC, as the log is kept with.
+  device_day := coalesce(device_day, (started at time zone 'UTC')::date);
+
   select * into source from public.workouts w where w.id = source_id and w.user_id = caller_id;
   if not found then
     raise exception 'Workout not found' using errcode = 'BB006';
@@ -235,7 +235,7 @@ begin
     ),
     round(
       public.strength_kcal_per_minute(
-        public.weight_on(caller_id, coalesce(device_day, (started at time zone 'UTC')::date))
+        public.weight_on(caller_id, device_day)
       )
         * extract(epoch from finished - started) / 60
     )::integer,
@@ -275,7 +275,8 @@ end;
 $$;
 
 -- Unchanged apart from keeping when each set was done: as the edit sends it, or, for an app that
--- sends no times, as the set at the same place of the same exercise had it.
+-- sends no times, as the set at the same place of the same exercise had it, while that exercise
+-- keeps its number of sets.
 create or replace function public.edit_workout_log(log_id bigint, log jsonb)
 returns void
 language plpgsql
@@ -286,8 +287,6 @@ declare
   caller_id uuid := (select auth.uid());
   started timestamptz;
   finished timestamptz;
-  -- When each set was done before the edit, by its exercise, the exercise's place and its own.
-  kept jsonb;
   sends_times boolean := jsonb_path_exists(log, '$.exercises[*].sets[*].doneAt');
 begin
   if caller_id is null then
@@ -303,29 +302,37 @@ begin
 
   perform public.check_sets(log);
 
-  select jsonb_object_agg(
-      public.set_key(s.exercise_position, s.exercise_id, s.set_position), s.done_at
-    ) into kept
-  from public.logged_sets s
-  where s.log_id = edit_workout_log.log_id and s.done_at is not null;
-
-  delete from public.logged_sets s where s.log_id = edit_workout_log.log_id;
+  -- Without times sent, a set keeps the time of the set at its place, but only in an exercise
+  -- whose sets were not added or removed: otherwise the times would move one set over.
+  with old as (
+    delete from public.logged_sets s
+    where s.log_id = edit_workout_log.log_id
+    returning s.exercise_position, s.exercise_id, s.set_position, s.done_at
+  ), new as (
+    select n.*, count(*) over (partition by n.exercise_position, n.exercise_id) as sets
+    from public.sets_of(log) n
+  ), old_counts as (
+    select o.exercise_position, o.exercise_id, count(*) as sets
+    from old o
+    group by o.exercise_position, o.exercise_id
+  )
   insert into public.logged_sets (
     log_id, user_id, exercise_position, set_position, exercise_id, weight_kg, reps, seconds, meters,
     done_at
   )
-  select edit_workout_log.log_id, caller_id, s.exercise_position, s.set_position, s.exercise_id,
-    s.weight_kg, s.reps, s.seconds, s.meters,
+  select edit_workout_log.log_id, caller_id, n.exercise_position, n.set_position, n.exercise_id,
+    n.weight_kg, n.reps, n.seconds, n.meters,
     public.done_at_within(
       case
-        when sends_times then s.done_at
-        else (kept ->> public.set_key(s.exercise_position, s.exercise_id, s.set_position))
-          ::timestamptz
+        when sends_times then n.done_at
+        when c.sets = n.sets then o.done_at
       end,
       started,
       finished
     )
-  from public.sets_of(log) s;
+  from new n
+  left join old_counts c using (exercise_position, exercise_id)
+  left join old o using (exercise_position, exercise_id, set_position);
 end;
 $$;
 
@@ -368,9 +375,31 @@ $$;
 revoke execute on function public.heart_rate_kcal(numeric, numeric, numeric, numeric, public.sex)
   from public, anon, authenticated;
 
+-- A log's calories from an average heart rate: its minutes, and the user's weight and age on its day
+-- and sex. The age is the one on the workout's day, which age_in_years() gives for today.
+create function public.heart_rate_kcal_of(log public.workout_logs, average numeric)
+returns integer
+language sql
+stable
+set search_path = ''
+as $$
+  select public.heart_rate_kcal(
+    average,
+    extract(epoch from log.finished_at - log.started_at) / 60,
+    public.weight_on(log.user_id, log.started_on),
+    extract(year from log.started_on) - p.birth_year,
+    p.sex
+  )
+  from public.profiles p
+  where p.user_id = log.user_id;
+$$;
+
+revoke execute on function public.heart_rate_kcal_of(public.workout_logs, numeric)
+  from public, anon, authenticated;
+
 -- Keeps what the phone's health store measured for one of the caller's workouts, as before (ADR
 -- 0099), with its heart rate every 10 seconds from the start: a value no person can have is none,
--- and samples running past the workout's end are left out. With a heart rate, the calories it gives are
+-- and an array longer than the workout is left out. With a heart rate, the calories it gives are
 -- estimated too, for when the watch measured none. Whether the log changed.
 drop function public.set_workout_health(bigint, numeric, numeric, numeric, text);
 create function public.set_workout_health(
@@ -419,17 +448,7 @@ begin
   samples := public.heart_rate_samples_of(
     set_workout_health.heart_rate_samples, log.started_at, log.finished_at
   );
-  select public.heart_rate_kcal(
-      average,
-      extract(epoch from log.finished_at - log.started_at) / 60,
-      public.weight_on(caller_id, log.started_on),
-      -- The age on the workout's day; age_in_years() gives today's.
-      extract(year from log.started_on) - p.birth_year,
-      p.sex
-    )
-    into estimate
-  from public.profiles p
-  where p.user_id = caller_id;
+  estimate := public.heart_rate_kcal_of(log, average);
 
   update public.workout_logs l
   set heart_rate_avg = average,
@@ -452,9 +471,8 @@ revoke execute on function public.set_workout_health(bigint, numeric, numeric, n
 grant execute on function public.set_workout_health(bigint, numeric, numeric, numeric, text, numeric[])
   to authenticated;
 
--- Unchanged apart from which calories to show and where they come from, so that the app and Bite
--- choose alike. The samples are read with the log
--- itself, as a summary has no use for them.
+-- Unchanged apart from which calories to show and where they come from, so that every reader
+-- chooses alike. The samples are read with the log itself, as a summary has no use for them.
 create or replace view public.workout_log_summaries
 with (security_invoker = true)
 as
@@ -484,7 +502,7 @@ select
     when l.active_kcal is not null then 'watch'
     when l.heart_rate_kcal is not null then 'heart_rate'
     when l.estimated_kcal is not null then 'minutes'
-  end as kcal_source
+  end::public.kcal_source as kcal_source
 from public.workout_logs l
 cross join lateral (
   select
@@ -497,12 +515,5 @@ cross join lateral (
 
 -- Logs kept with a heart rate before this get its estimate, as a new one does.
 update public.workout_logs l
-set heart_rate_kcal = public.heart_rate_kcal(
-    l.heart_rate_avg,
-    extract(epoch from l.finished_at - l.started_at) / 60,
-    public.weight_on(l.user_id, l.started_on),
-    extract(year from l.started_on) - p.birth_year,
-    p.sex
-  )
-from public.profiles p
-where p.user_id = l.user_id and l.heart_rate_avg is not null;
+set heart_rate_kcal = public.heart_rate_kcal_of(l, l.heart_rate_avg)
+where l.heart_rate_avg is not null;
