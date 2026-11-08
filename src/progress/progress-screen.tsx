@@ -7,8 +7,8 @@ import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
 import { cardEntering } from '@/components/ui/card';
 import { DevButton } from '@/dev/dev-button';
-import { useWeightSyncAsk } from '@/health/use-weight-sync-ask';
-import { WeightAskCard } from '@/health/weight-ask-card';
+import { ReadAskCard } from '@/health/read-ask-card';
+import { useReadAsk, useReading } from '@/health/use-read-ask';
 import { RECORDS_KEY, TRAINING_DAYS_KEY } from '@/history/history';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
 import { useTargetBasis } from '@/nutrition/targets';
@@ -18,6 +18,7 @@ import { useLatestWeight, useWeightUnit, WEIGHTS_KEY } from '@/weight/weights';
 
 import { NutritionCard } from './nutrition-card';
 import { RecordsButton } from './records-button';
+import { StepsCard } from './steps-card';
 import { StreakButton } from './streak-button';
 import { TrainingCard } from './training-card';
 
@@ -33,7 +34,8 @@ export function ProgressScreen() {
   const basis = useTargetBasis();
   const today = new Date();
   const queryClient = useQueryClient();
-  const weightAsk = useWeightSyncAsk();
+  const weightAsk = useReadAsk('weight');
+  const readingSteps = useReading('steps');
   // Each card comes in after the one above it, below the ask for weight while it shows.
   let position = weightAsk.asking ? 1 : 0;
   const nextEntering = () => cardEntering(position++);
@@ -69,7 +71,7 @@ export function ProgressScreen() {
       </TabHeader>
       {allLoaded(queries) ? (
         <>
-          <WeightAskCard ask={weightAsk} entering={cardEntering(0)} />
+          <ReadAskCard ask={weightAsk} entering={cardEntering(0)} />
           <WeightCard
             entering={nextEntering()}
             latest={latestWeight.data ?? null}
@@ -79,6 +81,7 @@ export function ProgressScreen() {
           />
           <NutritionCard summaryEntering={nextEntering()} entering={nextEntering()} today={today} />
           <TrainingCard entering={nextEntering()} today={today} />
+          {readingSteps ? <StepsCard entering={nextEntering()} today={today} /> : null}
           <RecordsButton entering={nextEntering()} today={today} />
           <StreakButton entering={nextEntering()} today={today} />
         </>
