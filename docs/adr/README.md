@@ -115,3 +115,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0097](0097-read-workouts-from-apple-health-and-health-connect.md)    | Read workouts from Apple Health and Health Connect                                      | Accepted                                             |
 | [0098](0098-keep-a-summary-of-a-workouts-heart-rate.md)               | Keep a summary of a workout's heart rate                                                | Accepted, amended by ADR-0099                        |
 | [0099](0099-read-a-workouts-health-again-for-a-day.md)                | Read a workout's health again for a day                                                 | Accepted                                             |
+| [0100](0100-take-weight-from-the-health-store.md)                     | Take weight from the health store                                                       | Accepted                                             |
