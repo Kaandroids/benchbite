@@ -48,7 +48,16 @@ const { deleteAccount } = messagesFor(locale);
     </section>
     <section>
       <h2 class="section-title">{deleteAccount.kept}</h2>
-      <p class="placeholder">{deleteAccount.keptPlaceholder}</p>
+      <dl class="kept">
+        {
+          deleteAccount.keptItems.map(({ title, text }) => (
+            <div>
+              <dt>{title}</dt>
+              <dd>{text}</dd>
+            </div>
+          ))
+        }
+      </dl>
     </section>
   </main>
 </Layout>
@@ -89,6 +98,21 @@ const { deleteAccount } = messagesFor(locale);
 
   .field {
     flex: 1 1 260px;
+  }
+
+  .kept {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  dt {
+    font-weight: 800;
+  }
+
+  dd {
+    margin: 0;
   }
 
   .link-note {
