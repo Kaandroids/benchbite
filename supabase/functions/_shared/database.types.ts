@@ -2898,6 +2898,10 @@ export type Database = {
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
       take_account_deletion_password_try: { Args: { p_user: string }; Returns: string };
+      take_back_account_deletion_code: {
+        Args: { p_code_hash: string; p_user: string };
+        Returns: undefined;
+      };
       target_kind: {
         Args: {
           exercise: Omit<
