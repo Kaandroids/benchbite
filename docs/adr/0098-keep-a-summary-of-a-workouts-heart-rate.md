@@ -13,7 +13,7 @@ The app reads what a watch measured from the phone's health store (ADR 0097). A 
 - **Not the samples.** A chart over the workout would need every measurement; it can come later, with its own decision.
 - **`set_workout_health()` keeps it,** only on the caller's own log, and decides what to keep in one place. The stores' fractions are rounded, and a value no person or watch can have, such as a sensor's spike, is left out on its own rather than failing the others.
 - **Heart rate is a pair, kept with its source.** A read with both an average and a highest replaces them and names its source; a read without keeps them, so calories from another app never relabel a heart rate. Calories are kept apart, and name the source only while no heart rate does.
-- **A read changes only what it found, and the last one wins.** The app reads again only while a value is missing, so a full read is not overwritten by a later one that found less. Taking the larger of two reads was left out: a partial read cannot be told from a light workout.
+- **A read changes only what it found, and the last one wins.** The app reads again only while a value is missing, and sends only the values still missing, so a heart rate or calories once kept are not overwritten by a later read that found less. A read without a source keeps the source kept. Taking the larger of two reads was left out: a partial read cannot be told from a light workout.
 - **The app reads it after the workout** and again while a value is missing, for a day, and only while the user has connected the store; the screens show the measured calories in place of the estimate.
 - **It goes with the log,** and with the account, as the log's columns.
 
