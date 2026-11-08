@@ -1,6 +1,6 @@
 # 0088. A static website in the repository
 
-- **Status:** Accepted, amended by ADR-0090
+- **Status:** Accepted, amended by ADR-0090 and ADR-0094
 - **Date:** 2026-11-07
 
 ## Context
