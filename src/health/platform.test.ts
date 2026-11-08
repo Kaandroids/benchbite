@@ -9,6 +9,9 @@ import {
 import * as android from './platform.android';
 import * as ios from './platform.ios';
 
+// The real modules, which every other test replaces with a stand-in (jest.setup-after-env.ts).
+jest.unmock('./platform.ios');
+jest.unmock('./platform.android');
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   isHealthDataAvailable: jest.fn(() => true),
   requestAuthorization: jest.fn(() => Promise.resolve(true)),
