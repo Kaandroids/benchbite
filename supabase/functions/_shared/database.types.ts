@@ -1924,7 +1924,7 @@ export type Database = {
           heart_rate_max: number | null;
           id: number | null;
           kcal: number | null;
-          kcal_source: string | null;
+          kcal_source: Database['public']['Enums']['kcal_source'] | null;
           kilograms: number | null;
           name: string | null;
           planned_exercise_ids: string[] | null;
@@ -2417,6 +2417,16 @@ export type Database = {
         };
         Returns: number;
       };
+      heart_rate_kcal_of: {
+        Args: {
+          average: number;
+          log: Omit<
+            Database['public']['Tables']['workout_logs']['Row'],
+            Database['public']['Tables']['workout_logs']['ComputedFields']
+          >;
+        };
+        Returns: number;
+      };
       heart_rate_or_none: { Args: { heart_rate: number }; Returns: number };
       heart_rate_samples_of: {
         Args: { finished: string; samples: number[]; started: string };
@@ -2885,10 +2895,6 @@ export type Database = {
           recipe_id: number;
         }[];
       };
-      set_key: {
-        Args: { exercise_id: string; exercise_position: number; set_position: number };
-        Returns: string;
-      };
       set_suits: {
         Args: {
           meters: number;
@@ -3170,6 +3176,7 @@ export type Database = {
       food_source: 'bls';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
       height_unit: 'cm' | 'ft';
+      kcal_source: 'watch' | 'heart_rate' | 'minutes';
       meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       muscle:
         | 'abdominals'
@@ -3471,6 +3478,7 @@ export const Constants = {
       food_source: ['bls'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
       height_unit: ['cm', 'ft'],
+      kcal_source: ['watch', 'heart_rate', 'minutes'],
       meal: ['breakfast', 'lunch', 'dinner', 'snack'],
       muscle: [
         'abdominals',
