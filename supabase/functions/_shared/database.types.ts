@@ -2848,7 +2848,7 @@ export type Database = {
           log_id: number;
           source?: string;
         };
-        Returns: undefined;
+        Returns: boolean;
       };
       sets_of: {
         Args: { log: Json };

@@ -1,10 +1,11 @@
--- set_workout_health() keeps what a watch measured during a workout (#85, ADR 0098): only on the
--- caller's own logs, rounded, each value out of range left out on its own, heart rate as a pair
--- with its source, calories apart, and never for anon.
+-- set_workout_health() keeps what a watch measured during a workout (#85, ADR 0098, ADR 0099):
+-- only on the caller's own logs, rounded, a whole read or nothing (a heart rate a person can have,
+-- and calories only with it), keeping what a read did not find, saying whether it changed anything,
+-- and never for anon.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(17);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -14,8 +15,7 @@ insert into public.workout_logs (id, user_id, name, started_at, finished_at)
   overriding system value values
   (700, '00000000-0000-0000-0000-00000000000a', 'Push', now() - interval '1 hour', now()),
   (701, '00000000-0000-0000-0000-00000000000b', 'Arms', now() - interval '1 hour', now()),
-  (702, '00000000-0000-0000-0000-00000000000a', 'Legs', now() - interval '3 hours', now() - interval '2 hours'),
-  (703, '00000000-0000-0000-0000-00000000000a', 'Core', now() - interval '5 hours', now() - interval '4 hours');
+  (702, '00000000-0000-0000-0000-00000000000a', 'Legs', now() - interval '3 hours', now() - interval '2 hours');
 
 create function pg_temp.sign_in(user_id uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -30,75 +30,57 @@ $$;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 
-select lives_ok(
-  $$ select public.set_workout_health(700, 131.6, 168, 411.7, ' Apple Watch ') $$,
-  'A user keeps what their watch measured'
+select ok(
+  public.set_workout_health(700, 131.6, 168, 411.7, ' Apple Watch '),
+  'A user keeps what their watch measured, and hears that it changed'
 );
 select results_eq(
   $$ select * from pg_temp.kept(700) $$,
   $$ values (132::smallint, 168::smallint, 412, 'Apple Watch') $$,
   'Rounded, in the summary, the source trimmed'
 );
+select ok(
+  not public.set_workout_health(700, 131.6, 168, 411.7, 'Apple Watch'),
+  'The same read again changes nothing'
+);
 
-select public.set_workout_health(700, active_kcal => 380, source => 'Zepp');
+select public.set_workout_health(700, 140, 175);
 select results_eq(
   $$ select * from pg_temp.kept(700) $$,
-  $$ values (132::smallint, 168::smallint, 380, 'Apple Watch') $$,
-  'Calories from another app keep the heart rate''s source'
+  $$ values (140::smallint, 175::smallint, 412, 'Apple Watch') $$,
+  'A later read replaces the heart rate, and keeps the calories and source it did not find'
 );
 
-select public.set_workout_health(700, heart_rate_avg => 150, source => 'Zepp');
+select ok(
+  not public.set_workout_health(700, active_kcal => 6, source => 'iPhone'),
+  'Calories without a heart rate change nothing'
+);
+select ok(
+  not public.set_workout_health(700, 140, 262, 500, 'Zepp'),
+  'A spike leaves the whole read out'
+);
+select ok(
+  not public.set_workout_health(700, 10, 150, 500, 'Zepp'),
+  'So does an average no person has'
+);
+select ok(
+  not public.set_workout_health(700, 1e10, 1e10, 1e10, 'Zepp'),
+  'And values too large for any column'
+);
 select results_eq(
   $$ select * from pg_temp.kept(700) $$,
-  $$ values (132::smallint, 168::smallint, 380, 'Apple Watch') $$,
-  'Half a heart rate changes nothing'
+  $$ values (140::smallint, 175::smallint, 412, 'Apple Watch') $$,
+  'None of those changed what was kept'
 );
 
-select public.set_workout_health(700, source => 'Nothing');
-select results_eq(
-  $$ select source from pg_temp.kept(700) $$,
-  $$ values ('Apple Watch') $$,
-  'A read that found nothing changes nothing, not even the source'
-);
-
-select public.set_workout_health(702, 140, 255, 0.4, 'Zepp');
+select public.set_workout_health(702, 151.4, 149.6, null, E'\n\t ');
 select results_eq(
   $$ select * from pg_temp.kept(702) $$,
-  $$ values (null::smallint, null::smallint, 0, 'Zepp') $$,
-  'A spike leaves the heart rate out, the calories (0 for a light session) still name their source'
+  $$ values (150::smallint, 150::smallint, null::integer, null::text) $$,
+  'The average is held to the highest, and a source of only whitespace is none'
 );
-
-select public.set_workout_health(702, 151.4, 149.6, null, 'Galaxy Watch');
-select results_eq(
-  $$ select * from pg_temp.kept(702) $$,
-  $$ values (150::smallint, 150::smallint, 0, 'Galaxy Watch') $$,
-  'A heart rate replaces the pair with its source, the average held to the highest'
-);
-
-select public.set_workout_health(702, 10, 9000, -5, 'Bad');
-select results_eq(
-  $$ select * from pg_temp.kept(702) $$,
-  $$ values (150::smallint, 150::smallint, 0, 'Galaxy Watch') $$,
-  'Values out of range all left out keep what was there'
-);
-
-select public.set_workout_health(703, active_kcal => 90, source => E'\n\t ');
-select results_eq(
-  $$ select kcal, source from pg_temp.kept(703) $$,
-  $$ values (90, null::text) $$,
-  'A source of only whitespace is none'
-);
-select public.set_workout_health(703, active_kcal => 95, source => repeat('x', 100));
-select is((select length(source) from pg_temp.kept(703)), 80, 'A long source is cut to fit');
-
-select public.set_workout_health(703, active_kcal => 100);
-select is((select source from pg_temp.kept(703)), repeat('x', 80), 'Calories without a source keep the source kept');
-select public.set_workout_health(702, 130, 160);
-select results_eq(
-  $$ select avg, max, source from pg_temp.kept(702) $$,
-  $$ values (130::smallint, 160::smallint, 'Galaxy Watch') $$,
-  'A heart rate without a source keeps the source kept'
-);
+select public.set_workout_health(702, 120, 150, 90, repeat('x', 100));
+select is((select length(source) from pg_temp.kept(702)), 80, 'A long source is cut to fit');
 
 select throws_ok(
   $$ select public.set_workout_health(701, 120, 150, 200, 'Zepp') $$,
@@ -132,11 +114,6 @@ select results_eq(
 select ok(
   not has_function_privilege('anon', 'public.set_workout_health(bigint, numeric, numeric, numeric, text)', 'execute'),
   'Without a session nobody can call it'
-);
-select throws_ok(
-  $$ update public.workout_logs set heart_rate_avg = 150, heart_rate_max = 140 where id = 700 $$,
-  '23514', null,
-  'The table itself never keeps an average above the highest'
 );
 
 select * from finish();
