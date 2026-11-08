@@ -103,6 +103,15 @@ export function doneOf(done: number, planned: number | null): string {
   return isPartial(done, planned) ? `${done}/${planned}` : String(done);
 }
 
+/** The calories a workout burned: what the watch measured, or else the estimate; none without either. */
+export function kcalOf(
+  log: Pick<LogSummary, 'activeKcal' | 'estimatedKcal'>,
+): { kcal: number; measured: boolean } | null {
+  if (log.activeKcal !== null) return { kcal: log.activeKcal, measured: true };
+  if (log.estimatedKcal !== null) return { kcal: log.estimatedKcal, measured: false };
+  return null;
+}
+
 /** Whole minutes between the start and the end of a workout. */
 export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'>): number {
   return Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 60_000);

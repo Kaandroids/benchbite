@@ -9,6 +9,12 @@ import { useTheme } from '@/theme';
 
 import { healthStore } from './health';
 
+/** The name of the phone's health store, or none where it has none. */
+function useStoreName(): string | null {
+  const { t } = useTranslation();
+  return healthStore ? t(`health.${healthStore}`) : null;
+}
+
 type WatchCardProps = {
   averageBpm: number | null;
   maxBpm: number | null;
@@ -33,7 +39,7 @@ export function WatchCard({ averageBpm, maxBpm, activeKcal, source }: WatchCardP
       ? [{ value: format(Math.round(activeKcal)), label: t('health.watch.kcal') }]
       : []),
   ];
-  const store = healthStore ? t(`health.${healthStore}`) : null;
+  const store = useStoreName();
   return (
     <Card style={{ gap: spacing.md }}>
       <View style={[styles.row, { gap: spacing.md }]}>
@@ -71,7 +77,8 @@ export function WatchCard({ averageBpm, maxBpm, activeKcal, source }: WatchCardP
 export function WaitingCard() {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const store = healthStore ? t(`health.${healthStore}`) : '';
+  const store = useStoreName();
+  if (!store) return null;
   return (
     <Card style={[styles.row, { gap: spacing.md }]}>
       <IconTile name="heart" size={36} color="snack" background="snackBackground" />

@@ -26,6 +26,10 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/health/connection', () => ({ useHealthConnected: jest.fn(() => false) }));
+jest.mock('@/health/health', () => ({
+  ...jest.requireActual<typeof import('@/health/health')>('@/health/health'),
+  healthStore: 'appleHealth',
+}));
 jest.mock('@/exercises/library', () => ({
   ...jest.requireActual<typeof import('@/exercises/library')>('@/exercises/library'),
   useExerciseLibrary: jest.fn(),

@@ -11,7 +11,7 @@ import { useWorkoutName } from '@/workouts/format';
 
 import { DateTile } from './date-tile';
 import { useDurationFormat } from './format';
-import { doneOf, durationMinutes, isPartial, type LogSummary } from './history';
+import { doneOf, durationMinutes, isPartial, kcalOf, type LogSummary } from './history';
 
 type LogRowProps = {
   log: LogSummary;
@@ -36,13 +36,10 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
   const setsLabel = isPartial(log.sets, log.plannedSets)
     ? t('history.setsOf', { done: log.sets, count: log.plannedSets })
     : t('common.sets', { count: log.sets });
-  // What the watch measured, or else the estimate.
-  const kcal =
-    log.activeKcal !== null
-      ? t('history.kcalMeasured', { kcal: log.activeKcal })
-      : log.estimatedKcal !== null
-        ? t('history.kcal', { kcal: log.estimatedKcal })
-        : null;
+  const burned = kcalOf(log);
+  const kcal = burned
+    ? t(burned.measured ? 'history.kcalMeasured' : 'history.kcal', { kcal: burned.kcal })
+    : null;
 
   return (
     <Pressable
