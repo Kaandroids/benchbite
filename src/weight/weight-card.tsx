@@ -8,6 +8,7 @@ import { Card, type CardProps } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { StepButtons } from '@/components/ui/step-buttons';
 import { Text } from '@/components/ui/text';
+import { healthStore } from '@/health/health';
 import { toIsoDate, useDateFormat, useMonthDayFormat } from '@/i18n/dates';
 import { useWeightFormat, weightIn, type WeightUnit } from '@/i18n/units';
 import { clamp } from '@/lib/math';
@@ -150,14 +151,29 @@ export function WeightCard({ latest, unit, today, goal = null, entering }: Weigh
                 </Text>
               </View>
             ) : null}
-            <Text variant="caption" color="textMuted">
-              {loggedToday
-                ? t('weight.loggedToday')
-                : t('weight.loggedOn', {
-                    // A day without a time zone, so it is read as local midnight.
-                    date: formatDate(new Date(`${latest?.measuredOn}T00:00`)),
+            {draftKg === null && latest?.fromHealth ? (
+              // Taken from the health store (ADR 0100): where it came from, as a scale or an app.
+              <View style={[styles.row, { gap: spacing.xs }]}>
+                <Icon name="heart" size={14} color="snack" />
+                <Text variant="caption" color="textMuted">
+                  {t(loggedToday ? 'weight.fromToday' : 'weight.fromOn', {
+                    date: formatDate(new Date(`${latest.measuredOn}T00:00`)),
+                    source:
+                      latest.source ??
+                      (healthStore ? t(`health.${healthStore}`) : t('weight.healthApp')),
                   })}
-            </Text>
+                </Text>
+              </View>
+            ) : (
+              <Text variant="caption" color="textMuted">
+                {loggedToday
+                  ? t('weight.loggedToday')
+                  : t('weight.loggedOn', {
+                      // A day without a time zone, so it is read as local midnight.
+                      date: formatDate(new Date(`${latest?.measuredOn}T00:00`)),
+                    })}
+              </Text>
+            )}
           </View>
           <StepButtons
             variant="joined"
