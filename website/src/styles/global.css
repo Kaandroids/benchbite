@@ -10,6 +10,8 @@
   --primary-text: #c2410c;
   --primary-button: #f25a00;
   --primary-button-ledge: #c24800;
+  --danger-button: #dc2626;
+  --danger-button-ledge: #a61b1b;
   --on-primary: #ffffff;
   --warning: #b45309;
   --warning-background: #fef3c7;
@@ -147,4 +149,38 @@ h1 {
   border-radius: 24px;
   background: var(--surface);
   border: 2px solid var(--border);
+}
+
+/* A button of the app, as a link or in a form; the ledge under it as in the app. */
+.button {
+  display: inline-block;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--primary-button);
+  box-shadow: 0 4px 0 var(--primary-button-ledge);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--on-primary);
+}
+
+.button.danger {
+  background: var(--danger-button);
+  box-shadow: 0 4px 0 var(--danger-button-ledge);
+}
+
+.field {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
 }
