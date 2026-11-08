@@ -9,18 +9,19 @@ import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
 import { useStoreName } from './use-store-name';
-import type { useWeightSyncAsk } from './use-weight-sync-ask';
+import { READ_LOOKS } from './reads';
+import type { useReadAsk } from './use-read-ask';
 
 /**
- * Asks once whether to take weight from the health store, for a user who connected it before
- * weight was read (#22, ADR 0100); it hides once they answer. The screen holds the asking, to
- * place the cards below it.
+ * Asks once whether to read a kind from the health store, for a user who connected it before the
+ * kind was read (ADR 0100, 0103); it hides once they answer. The screen holds the asking, to place
+ * the cards below it.
  */
-export function WeightAskCard({
-  ask: { asking, busy, bringIn, notNow },
+export function ReadAskCard({
+  ask: { kind, asking, busy, bringIn, notNow },
   entering,
 }: {
-  ask: ReturnType<typeof useWeightSyncAsk>;
+  ask: ReturnType<typeof useReadAsk>;
   entering?: CardProps['entering'];
 }) {
   const { t } = useTranslation();
@@ -31,9 +32,14 @@ export function WeightAskCard({
   return (
     <Card entering={entering}>
       <View style={[styles.row, { gap: spacing.md, paddingRight: spacing.xl }]}>
-        <IconTile name="heart" size={40} color="snack" background="snackBackground" />
+        <IconTile
+          name={READ_LOOKS[kind].icon}
+          size={40}
+          color={READ_LOOKS[kind].color}
+          background={READ_LOOKS[kind].background}
+        />
         <Text variant="headline" style={styles.flex}>
-          {t('health.weightAsk.title', { store: storeName })}
+          {t(`health.ask.${kind}.title`, { store: storeName })}
         </Text>
       </View>
       <View style={styles.close}>
@@ -41,13 +47,13 @@ export function WeightAskCard({
           icon="close"
           color="textMuted"
           background="surface"
-          label={t('health.weightAsk.notNow')}
+          label={t('health.ask.notNow')}
           disabled={busy}
           onPress={notNow}
         />
       </View>
-      <Text color="textMuted">{t('health.weightAsk.body')}</Text>
-      <Button label={t('health.weightAsk.bringIn')} loading={busy} onPress={bringIn} />
+      <Text color="textMuted">{t(`health.ask.${kind}.body`)}</Text>
+      <Button label={t(`health.ask.${kind}.bringIn`)} loading={busy} onPress={bringIn} />
     </Card>
   );
 }

@@ -5,16 +5,15 @@
 // the store days late.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { toIsoDate } from '@/i18n/dates';
+import { lastDays, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterWeight } from '@/weight/weights';
 
-import { isHealthConnected, weightSync } from './connection';
+import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
 import { weightsSince } from './platform';
 import type { WeightReading } from './types';
 
-const DAY_MS = 24 * 3600 * 1000;
-/** How far back each read goes. */
+/** How many days, today among them, each read goes back. */
 const READ_DAYS = 30;
 
 /** The latest weighing of each day, by the phone's day, oldest first. */
@@ -32,27 +31,13 @@ export function latestPerDay(
     .map(([day, { weightKg, source }]) => ({ day, weightKg, source }));
 }
 
-/** The user whose weights are imported now, to send none to an account signed in since. */
-async function signedInUser(): Promise<string | undefined> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.user.id;
-}
-
-/** Whether the store is connected and weight is read from it. */
-const mayImport = () => isHealthConnected() && weightSync() === 'on';
-
-/** Whether weight may be read now, for the user signed in when the import started. */
-async function stillImporting(userId: string | undefined): Promise<boolean> {
-  return userId !== undefined && mayImport() && (await signedInUser()) === userId;
-}
-
 async function importNow(queryClient: QueryClient): Promise<boolean> {
-  if (!mayImport()) return false;
+  if (!mayImport('weight')) return false;
   const userId = await signedInUser();
   const now = new Date();
-  const days = latestPerDay(await weightsSince(new Date(now.getTime() - READ_DAYS * DAY_MS)));
+  const days = latestPerDay(await weightsSince(lastDays(READ_DAYS, now)));
   // Another user may have signed in while the store was read, which lets go of the connection.
-  if (!days.length || !(await stillImporting(userId))) return false;
+  if (!days.length || !(await stillImporting('weight', userId))) return false;
   const { data, error } = await supabase.rpc('import_weights', {
     weights: days,
     today: toIsoDate(now),
@@ -63,13 +48,5 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   return changed;
 }
 
-/** The import running now, which a second caller waits for instead of reading the store again. */
-let running: Promise<boolean> | null = null;
-
 /** Reads the store's last 30 days of weights and keeps them; whether any day changed. */
-export function importHealthWeights(queryClient: QueryClient): Promise<boolean> {
-  running ??= importNow(queryClient).finally(() => {
-    running = null;
-  });
-  return running;
-}
+export const importHealthWeights = oneAtATime(importNow);

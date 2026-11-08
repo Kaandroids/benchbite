@@ -61,6 +61,7 @@ export const ICONS = {
   plus: { ios: 'plus', android: 'add', web: 'add' },
   redo: { ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' },
   scale: { ios: 'scalemass', android: 'monitor_weight', web: 'monitor_weight' },
+  steps: { ios: 'figure.walk', android: 'directions_walk', web: 'directions_walk' },
   seated: {
     ios: 'figure.seated.seatbelt',
     android: 'airline_seat_recline_normal',

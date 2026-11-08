@@ -3,15 +3,19 @@
 import {
   isHealthDataAvailable,
   queryQuantitySamples,
+  queryStatisticsCollectionForQuantity,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
 
+import { toIsoDate } from '@/i18n/dates';
+
 import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type StepDay,
   type WeightReading,
   type WorkoutStats,
 } from './types';
@@ -19,7 +23,8 @@ import {
 const HEART_RATE = 'HKQuantityTypeIdentifierHeartRate';
 const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
 const BODY_MASS = 'HKQuantityTypeIdentifierBodyMass';
-const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS] as const;
+const STEP_COUNT = 'HKQuantityTypeIdentifierStepCount';
+const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS, STEP_COUNT] as const;
 
 export const store: HealthStore = 'appleHealth';
 
@@ -89,4 +94,27 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
     weightKg: sample.quantity,
     source: sample.sourceRevision.source.name || null,
   }));
+}
+
+export const stepsAllowed = (): Promise<boolean> => Promise.resolve(true);
+
+export async function requestStepsAccess(): Promise<boolean> {
+  await requestAuthorization({ toRead: [STEP_COUNT] });
+  return true;
+}
+
+// One sum a day, which HealthKit takes from the phone and a watch without counting a step twice.
+export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
+  const days = await queryStatisticsCollectionForQuantity(
+    STEP_COUNT,
+    ['cumulativeSum'],
+    from,
+    { day: 1 },
+    { filter: { date: { startDate: from, endDate: to } }, unit: 'count' },
+  );
+  return days.flatMap((day) =>
+    day.startDate && day.sumQuantity
+      ? [{ day: toIsoDate(day.startDate), steps: day.sumQuantity.quantity }]
+      : [],
+  );
 }

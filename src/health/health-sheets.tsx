@@ -11,18 +11,23 @@ import { Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme, type ColorTokens } from '@/theme';
 
+import { HEALTH_READS, type HealthRead } from './connection';
+import { READ_LOOKS } from './reads';
 import type { HealthStore } from './types';
 
 /** What the user is asked to allow, as the consent sheet lists it. */
-const READS: {
-  key: 'heartRate' | 'calories' | 'weight';
+const CONSENT_ROWS: {
+  key: 'heartRate' | 'calories' | HealthRead;
   icon: IconName;
   color: keyof ColorTokens;
   background: keyof ColorTokens;
 }[] = [
   { key: 'heartRate', icon: 'heart', color: 'snack', background: 'snackBackground' },
   { key: 'calories', icon: 'flame', color: 'lunch', background: 'lunchBackground' },
-  { key: 'weight', icon: 'scale', color: 'water', background: 'waterBackground' },
+  ...HEALTH_READS.map((key) => {
+    const { icon, color, background } = READ_LOOKS[key];
+    return { key, icon, color, background };
+  }),
 ];
 
 type SheetProps = {
@@ -48,7 +53,7 @@ export function ConsentSheet({
       onClose={onClose}
     >
       <Card list>
-        {READS.map(({ key, icon, color, background }, index) => (
+        {CONSENT_ROWS.map(({ key, icon, color, background }, index) => (
           <View
             key={key}
             style={[

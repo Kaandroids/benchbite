@@ -34,25 +34,50 @@ export function useHealthConnected(): boolean {
   return useSyncExternalStore(subscribe, isHealthConnected);
 }
 
-const WEIGHT_KEY = 'health.weight';
+/** What is read from the store apart from workouts, each asked for on its own (ADR 0100, 0103). */
+export const HEALTH_READS = ['weight', 'steps'] as const;
+export type HealthRead = (typeof HEALTH_READS)[number];
 
 /**
- * Whether weight is read from the store (ADR 0100): on, off when the user said not now, or not
- * asked yet, as for a user who connected before weight was read.
+ * Whether a kind is read from the store: on, off when the user said not now, or not asked yet, as
+ * for a user who connected before it was read.
  */
-export type WeightSync = 'on' | 'off' | null;
+export type ReadSync = 'on' | 'off' | null;
 
-export function weightSync(): WeightSync {
-  const stored = readItem(WEIGHT_KEY);
+const readKey = (kind: HealthRead) => `health.${kind}`;
+
+export function readSync(kind: HealthRead): ReadSync {
+  const stored = readItem(readKey(kind));
   return stored === 'on' || stored === 'off' ? stored : null;
 }
 
-export function setWeightSync(sync: WeightSync) {
-  writeItem(WEIGHT_KEY, sync);
+export function setReadSync(kind: HealthRead, sync: ReadSync) {
+  writeItem(readKey(kind), sync);
   notify();
 }
 
-/** Whether weight is read from the store, kept up to date. */
-export function useWeightSync(): WeightSync {
-  return useSyncExternalStore(subscribe, weightSync);
+/** Whether a kind is read from the store, kept up to date. */
+export function useReadSync(kind: HealthRead): ReadSync {
+  return useSyncExternalStore(subscribe, () => readSync(kind));
+}
+
+const STEPS_READ_ON_KEY = 'health.stepsReadOn';
+
+/** The day, YYYY-MM-DD, the store's steps were last read on, from which the next read goes on. */
+export function stepsReadOn(): string | null {
+  return readItem(STEPS_READ_ON_KEY);
+}
+
+export function setStepsReadOn(day: string | null) {
+  writeItem(STEPS_READ_ON_KEY, day);
+}
+
+/** Lets go of all the device keeps about the store, as when another user signs in. */
+export function forgetHealthOnDevice() {
+  writeItem(KEY, null);
+  for (const kind of HEALTH_READS) {
+    writeItem(readKey(kind), null);
+  }
+  writeItem(STEPS_READ_ON_KEY, null);
+  notify();
 }

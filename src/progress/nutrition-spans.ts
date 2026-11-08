@@ -1,22 +1,10 @@
-import { fromIsoDate, toIsoDate, weekStart } from '@/i18n/dates';
 import {
   nutritionSummary,
   type DayNutrition,
   type NutritionSummary,
 } from '@/nutrition/day-nutrition';
 
-import type { ProgressRange } from '@/lib/ranges';
-
-/** What one bar of the eating chart stands for. */
-export type Span = 'day' | 'week' | 'month';
-
-/** A bar for each day of a month, each week of 3 or 6 months, and each month of a year. */
-export const SPAN_OF: Record<ProgressRange, Span> = {
-  month: 'day',
-  threeMonths: 'week',
-  sixMonths: 'week',
-  year: 'month',
-};
+import { spanStart, type Span } from './spans';
 
 export type NutritionSpan = {
   /** Its first day, YYYY-MM-DD: the day, the Monday or the first of the month. */
@@ -27,22 +15,11 @@ export type NutritionSpan = {
   over: boolean;
 };
 
-function startOf(day: string, span: Span): string {
-  switch (span) {
-    case 'day':
-      return day;
-    case 'week':
-      return toIsoDate(weekStart(fromIsoDate(day)));
-    case 'month':
-      return `${day.slice(0, 7)}-01`;
-  }
-}
-
 /** The days, from the first, grouped into spans of `span`, each summed up over its days logged. */
 export function nutritionSpans(days: readonly DayNutrition[], span: Span): NutritionSpan[] {
   const groups = new Map<string, DayNutrition[]>();
   for (const day of days) {
-    const start = startOf(day.day, span);
+    const start = spanStart(day.day, span);
     groups.set(start, [...(groups.get(start) ?? []), day]);
   }
   return [...groups].map(([start, spanDays]) => {

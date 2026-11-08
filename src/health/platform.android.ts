@@ -1,6 +1,7 @@
 // Health Connect: built into Android 14 and later, an app from Google Play on Android 9 to 13, and
 // not available before.
 import {
+  aggregateGroupByPeriod,
   aggregateRecord,
   getGrantedPermissions,
   getSdkStatus,
@@ -16,6 +17,7 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type StepDay,
   type WeightReading,
   type WorkoutStats,
 } from './types';
@@ -24,6 +26,7 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'HeartRate' },
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
   { accessType: 'read', recordType: 'Weight' },
+  { accessType: 'read', recordType: 'Steps' },
 ] as const;
 
 const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
@@ -144,4 +147,32 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
     weightKg: record.weight.inKilograms,
     source: sourceName(record.metadata?.dataOrigin),
   }));
+}
+
+export const stepsAllowed = () => allowedToRead('Steps');
+
+export async function requestStepsAccess(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  await requestPermission([{ accessType: 'read', recordType: 'Steps' }]);
+  return stepsAllowed();
+}
+
+// One total a day, which Health Connect takes from every app without counting a step twice. The
+// days are the phone's: the library reads the times in its time zone.
+export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
+  if (!(await initialize()) || !(await stepsAllowed())) return [];
+  const days = await aggregateGroupByPeriod({
+    recordType: 'Steps',
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: from.toISOString(),
+      endTime: to.toISOString(),
+    },
+    timeRangeSlicer: { period: 'DAYS', length: 1 },
+  });
+  return days.flatMap(({ result, startTime }) =>
+    result.dataOrigins.length > 0
+      ? [{ day: startTime.slice(0, 10), steps: result.COUNT_TOTAL }]
+      : [],
+  );
 }

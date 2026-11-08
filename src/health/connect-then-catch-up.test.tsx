@@ -4,7 +4,7 @@ import { recentLogs } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { setHealthConnected, setWeightSync } from './connection';
+import { setHealthConnected, setReadSync } from './connection';
 import { HealthCatchUp } from './health-catch-up';
 import { requestAccess, stillAllowed, weightAllowed, weightsSince } from './platform';
 import { useHealthConnection } from './use-health-connection';
@@ -37,7 +37,7 @@ function Connect() {
 beforeEach(() => {
   jest.clearAllMocks();
   setHealthConnected(false);
-  setWeightSync(null);
+  setReadSync('weight', null);
   jest.mocked(requestAccess).mockResolvedValue(true);
   jest.mocked(stillAllowed).mockResolvedValue(true);
   jest.mocked(weightAllowed).mockResolvedValue(true);

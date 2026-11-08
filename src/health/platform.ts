@@ -4,6 +4,7 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type StepDay,
   type WeightReading,
   type WorkoutStats,
 } from './types';
@@ -36,3 +37,12 @@ export const requestWeightAccess = (): Promise<boolean> => Promise.resolve(false
 
 /** The weighings since a time, in no set order. */
 export const weightsSince = (_from: Date): Promise<WeightReading[]> => Promise.resolve([]);
+
+/** Whether steps may be read, where the system says so. */
+export const stepsAllowed = (): Promise<boolean> => Promise.resolve(false);
+
+/** Asks for steps alone, for a user who connected before they were read; whether allowed. */
+export const requestStepsAccess = (): Promise<boolean> => Promise.resolve(false);
+
+/** The steps of each day from a day's start until a time, in no set order; days without any left out. */
+export const dailySteps = (_from: Date, _to: Date): Promise<StepDay[]> => Promise.resolve([]);

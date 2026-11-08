@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { setHealthConnected, setWeightSync, weightSync } from './connection';
-import { requestHealthWeightAccess } from './health';
-import { useWeightSyncAsk } from './use-weight-sync-ask';
-import { WeightAskCard } from './weight-ask-card';
+import { setHealthConnected, setReadSync, readSync } from './connection';
+import { requestHealthStepsAccess, requestHealthWeightAccess } from './health';
+import { ReadAskCard } from './read-ask-card';
+import { useReadAsk } from './use-read-ask';
+import { importHealthSteps } from './steps-import';
 import { importHealthWeights } from './weight-import';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -18,12 +19,14 @@ jest.mock('expo-sqlite/kv-store', () => {
 });
 jest.mock('./health', () => ({
   healthStore: 'appleHealth',
+  requestHealthStepsAccess: jest.fn(),
   requestHealthWeightAccess: jest.fn(),
 }));
 jest.mock('./weight-import', () => ({ importHealthWeights: jest.fn() }));
+jest.mock('./steps-import', () => ({ importHealthSteps: jest.fn() }));
 
-function AskCard() {
-  return <WeightAskCard ask={useWeightSyncAsk()} />;
+function AskCard({ kind = 'weight' }: { kind?: 'weight' | 'steps' }) {
+  return <ReadAskCard ask={useReadAsk(kind)} />;
 }
 
 const TITLE = 'Your weight from Apple Health';
@@ -31,7 +34,7 @@ const TITLE = 'Your weight from Apple Health';
 beforeEach(() => {
   jest.clearAllMocks();
   setHealthConnected(true);
-  setWeightSync(null);
+  setReadSync('weight', null);
   jest.mocked(requestHealthWeightAccess).mockResolvedValue(true);
   jest.mocked(importHealthWeights).mockResolvedValue(true);
 });
@@ -42,7 +45,7 @@ it('asks for weight, then reads it and hides', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
-  expect(weightSync()).toBe('on');
+  expect(readSync('weight')).toBe('on');
   expect(importHealthWeights).toHaveBeenCalled();
 });
 
@@ -52,7 +55,7 @@ it('reads nothing when weight was not allowed', async () => {
 
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
-  await waitFor(() => expect(weightSync()).toBe('off'));
+  await waitFor(() => expect(readSync('weight')).toBe('off'));
   expect(importHealthWeights).not.toHaveBeenCalled();
 });
 
@@ -62,16 +65,29 @@ it('hides for good on not now', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
 
   await waitFor(() => expect(screen.queryByText(TITLE)).toBeNull());
-  expect(weightSync()).toBe('off');
+  expect(readSync('weight')).toBe('off');
 });
 
 it('shows only to a user who connected the store and was not asked yet', async () => {
-  setWeightSync('on');
+  setReadSync('weight', 'on');
   await render(<AskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();
 
-  setWeightSync(null);
+  setReadSync('weight', null);
   setHealthConnected(false);
   await render(<AskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();
+});
+
+it('asks for steps the same way, on their own', async () => {
+  setReadSync('steps', null);
+  jest.mocked(requestHealthStepsAccess).mockResolvedValue(true);
+  await render(<AskCard kind="steps" />);
+  expect(screen.getByText('Your steps from Apple Health')).toBeOnTheScreen();
+
+  fireEvent.press(screen.getByRole('button', { name: 'Show my steps' }));
+
+  await waitFor(() => expect(readSync('steps')).toBe('on'));
+  expect(importHealthSteps).toHaveBeenCalled();
+  expect(readSync('weight')).toBeNull();
 });

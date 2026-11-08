@@ -1,10 +1,12 @@
 import {
   queryQuantitySamples,
+  queryStatisticsCollectionForQuantity,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
 import {
+  aggregateGroupByPeriod,
   aggregateRecord,
   getGrantedPermissions,
   getSdkStatus,
@@ -24,6 +26,7 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
   isHealthDataAvailable: jest.fn(() => true),
   requestAuthorization: jest.fn(() => Promise.resolve(true)),
   queryQuantitySamples: jest.fn(),
+  queryStatisticsCollectionForQuantity: jest.fn(),
   queryStatisticsForQuantity: jest.fn(),
   queryStatisticsForQuantitySeparateBySource: jest.fn(),
 }));
@@ -39,19 +42,21 @@ jest.mock('react-native-health-connect', () => ({
   getGrantedPermissions: jest.fn(),
   revokeAllPermissions: jest.fn(),
   aggregateRecord: jest.fn(),
+  aggregateGroupByPeriod: jest.fn(),
   readRecords: jest.fn(),
 }));
 
 beforeEach(() => jest.clearAllMocks());
 
 describe('Apple Health', () => {
-  it('asks to read heart rate, active energy and body mass, and nothing to write', async () => {
+  it('asks to read heart rate, active energy, body mass and steps, and nothing to write', async () => {
     expect(await ios.requestAccess()).toBe(true);
     expect(requestAuthorization).toHaveBeenCalledWith({
       toRead: [
         'HKQuantityTypeIdentifierHeartRate',
         'HKQuantityTypeIdentifierActiveEnergyBurned',
         'HKQuantityTypeIdentifierBodyMass',
+        'HKQuantityTypeIdentifierStepCount',
       ],
     });
   });
@@ -145,7 +150,7 @@ describe('Health Connect', () => {
     }
   });
 
-  it('asks for heart rate and active calories, and counts as allowed with heart rate', async () => {
+  it('asks for its four types, and counts as allowed with heart rate', async () => {
     jest
       .mocked(getGrantedPermissions)
       .mockResolvedValue([{ accessType: 'read', recordType: 'ActiveCaloriesBurned' }]);
@@ -154,6 +159,7 @@ describe('Health Connect', () => {
       { accessType: 'read', recordType: 'HeartRate' },
       { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
       { accessType: 'read', recordType: 'Weight' },
+      { accessType: 'read', recordType: 'Steps' },
     ]);
 
     jest
@@ -270,5 +276,61 @@ describe('Health Connect', () => {
 
     expect(await android.workoutStats(FROM, TO)).toEqual(NO_WORKOUT_STATS);
     expect(aggregateRecord).not.toHaveBeenCalled();
+  });
+});
+
+describe('steps', () => {
+  const from = new Date(2026, 10, 1);
+  const to = new Date(2026, 10, 8, 9, 0);
+
+  it('reads one sum a day from Apple Health, leaving out days without steps', async () => {
+    jest.mocked(queryStatisticsCollectionForQuantity).mockResolvedValue([
+      {
+        startDate: new Date(2026, 10, 7),
+        sumQuantity: { unit: 'count', quantity: 11340 },
+        sources: [],
+      },
+      { startDate: new Date(2026, 10, 8), sources: [] },
+    ] as never);
+
+    expect(await ios.dailySteps(from, to)).toEqual([{ day: '2026-11-07', steps: 11340 }]);
+    expect(queryStatisticsCollectionForQuantity).toHaveBeenCalledWith(
+      'HKQuantityTypeIdentifierStepCount',
+      ['cumulativeSum'],
+      from,
+      { day: 1 },
+      { filter: { date: { startDate: from, endDate: to } }, unit: 'count' },
+    );
+  });
+
+  it("reads one total a day from Health Connect, by the phone's day", async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'Steps' }]);
+    jest.mocked(aggregateGroupByPeriod).mockResolvedValue([
+      {
+        startTime: '2026-11-07T00:00',
+        endTime: '2026-11-08T00:00',
+        result: { COUNT_TOTAL: 9100, dataOrigins: ['com.google.android.apps.fitness'] },
+      },
+      {
+        startTime: '2026-11-08T00:00',
+        endTime: '2026-11-08T09:00',
+        result: { COUNT_TOTAL: 0, dataOrigins: [] },
+      },
+    ] as never);
+
+    expect(await android.dailySteps(from, to)).toEqual([{ day: '2026-11-07', steps: 9100 }]);
+    expect(jest.mocked(aggregateGroupByPeriod).mock.calls[0]![0]).toMatchObject({
+      recordType: 'Steps',
+      timeRangeSlicer: { period: 'DAYS', length: 1 },
+    });
+  });
+
+  it('reads no steps from Health Connect when they may not be read', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([]);
+
+    expect(await android.dailySteps(from, to)).toEqual([]);
+    expect(aggregateGroupByPeriod).not.toHaveBeenCalled();
   });
 });

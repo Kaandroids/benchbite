@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { CardLoadState } from '@/components/card-load-state';
 import { RangeControl } from '@/components/range-control';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
@@ -15,8 +16,8 @@ import { MacroBars } from '@/nutrition/macro-bars';
 import { NOTHING } from '@/nutrition/meals';
 import { useTheme } from '@/theme';
 
-import { CardLoadState } from './card-load-state';
-import { nutritionSpans, SPAN_OF, type NutritionSpan } from './nutrition-spans';
+import { nutritionSpans, type NutritionSpan } from './nutrition-spans';
+import { SPAN_OF } from './spans';
 
 type NutritionCardProps = {
   /** How the card of the chart comes in. */

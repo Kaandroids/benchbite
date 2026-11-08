@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { CardLoadState } from '@/components/card-load-state';
 import { Card } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { RoundIconButton } from '@/components/ui/round-icon-button';
@@ -22,8 +23,6 @@ import { StreakBadge } from '@/streak/streak-badge';
 import { StreakMark } from '@/streak/streak-mark';
 import { useMonthStreak, useStreak, useStreakStart } from '@/streak/use-streak';
 import { useTheme, type ColorTokens } from '@/theme';
-
-import { CardLoadState } from './card-load-state';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 const MARKS: readonly MarkedState[] = ['done', 'frozen', 'missed'];
