@@ -199,8 +199,9 @@ new language needs all of these:
    development build.
 
 `pnpm check:locales` checks that the files and `expo.locales` hold the same languages and keys, and
-that the English permission texts are those the config plugins in `app.json` write to Info.plist. A
-new permission text goes in both places.
+that the English permission texts are those the config plugins in `app.json` write to Info.plist
+(ADR 0102). A new permission text goes in the plugin's options in `app.json`, in each file in
+`src/i18n/permissions/` and in `PLUGIN_TEXTS` in `scripts/check-locales.ts`.
 
 iOS picks a permission text by the phone's language, or the per-app language in iOS Settings, not by
 the language chosen in Benchbite.
