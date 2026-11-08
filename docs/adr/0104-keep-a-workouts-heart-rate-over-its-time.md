@@ -9,9 +9,10 @@ A logged workout keeps its average and highest heart rate and its active calorie
 
 ## Decision
 
-- **The samples are kept with the log,** as `workout_logs.heart_rate_samples`: one every 10 seconds from the start, in beats a minute, none where nothing measured it, 12 hours at most. They arrive with a whole read through `set_workout_health()` (ADR 0099). Values no person can have are dropped, and an array longer than the workout is refused. A later read without samples keeps them.
-- **Each set keeps when it was done** (`logged_sets.done_at`), from the phone's clock, if it falls within its workout, so that the chart can mark the sets. An edit keeps a set's time at its place. Sets logged before this, or added in an edit, have none.
-- **Calories are estimated from the heart rate** (`workout_logs.heart_rate_kcal`), by Keytel et al. (2005), from the average heart rate, the minutes and the user's age, sex and weight on the workout's day. For a sex not given, the mean of the two formulas is used. Like the 5 MET estimate, it counts all the calories burned. The app shows the watch's own calories when there are any, then this estimate marked as such, then the 5 MET one.
+- **The samples are kept with the log,** as `workout_logs.heart_rate_samples`: one every 10 seconds from the start, in beats a minute, none where nothing measured it, 12 hours at most. They arrive with a whole read through `set_workout_health()` (ADR 0099). Values no person can have are dropped, and an array longer than the workout, or than 4320, is left out without failing the read. A later read without samples keeps them.
+- **Each set keeps when it was done** (`logged_sets.done_at`), from the phone's clock, if it falls within its workout, so that the chart can mark the sets. An edit takes the times it sends; one from an app that sends none keeps each set's time at its place in its exercise. Sets logged before this, or added in an edit, have none.
+- **Calories are estimated from the heart rate** (`workout_logs.heart_rate_kcal`), by Keytel et al. (2005), from the average heart rate, the minutes and the user's age, sex and weight on the workout's day. For a sex not given, the mean of the two formulas is used. Like the 5 MET estimate, it counts all the calories burned, and both now take the weight on the workout's day (`weight_on()`).
+- **The summary chooses the calories to show** (`workout_log_summaries.kcal` and `kcal_source`): the watch's own when there are any, then the estimate from the heart rate, then the 5 MET one, so that the app and Bite choose alike.
 
 ## Alternatives considered
 
