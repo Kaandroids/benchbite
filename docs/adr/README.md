@@ -118,3 +118,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0100](0100-take-weight-from-the-health-store.md)                     | Take weight from the health store                                                       | Accepted, amended by ADR-0101                        |
 | [0101](0101-read-the-last-30-days-of-weight-each-time.md)             | Read the last 30 days of weight each time                                               | Accepted                                             |
 | [0102](0102-translate-the-ios-permission-texts.md)                    | Translate the iOS permission texts                                                      | Accepted                                             |
+| [0103](0103-keep-the-days-steps.md)                                   | Keep the day's steps                                                                    | Accepted                                             |
