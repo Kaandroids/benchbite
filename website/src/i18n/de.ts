@@ -179,8 +179,7 @@ export const de: Messages = {
     emailLabel: 'E-Mail',
     emailPlaceholder: 'du@beispiel.de',
     send: 'Link senden',
-    linkNote:
-      'Der Link funktioniert einmal, 30 Minuten lang. Das Löschen deines Kontos kündigt kein Abo im App Store oder bei Google Play.',
+    linkNote: 'Der Link funktioniert einmal, 30 Minuten lang.',
     kept: 'Was gelöscht wird und was bleibt',
     keptItems: [
       {
@@ -189,7 +188,7 @@ export const de: Messages = {
       },
       {
         title: 'Bis zu 28 Tage aufbewahrt',
-        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, und ihre Einträge zu den E-Mails, die wir dir geschickt haben, bis sie überschrieben werden. Eine Anfrage auf dieser Seite wird einen Tag lang aufbewahrt.',
+        text: 'Kopien in den Backups und Logs der Dienste, die wir nutzen, und ihre Einträge zu den E-Mails, die wir dir geschickt haben, bis sie überschrieben werden. Die KI hinter Bite gehört nicht dazu: Was sie aufbewahrt, steht in der Datenschutzerklärung. Eine Anfrage auf dieser Seite wird etwa einen Tag lang aufbewahrt.',
       },
       {
         title: 'Nicht von uns zu löschen',

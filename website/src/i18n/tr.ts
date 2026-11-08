@@ -178,14 +178,13 @@ export const tr: Messages = {
     emailLabel: 'E-posta',
     emailPlaceholder: 'sen@ornek.com',
     send: 'Bağlantı gönder',
-    linkNote:
-      'Bağlantı bir kez, 30 dakika boyunca çalışır. Hesabını silmek App Store veya Google Play aboneliğini iptal etmez.',
+    linkNote: 'Bağlantı bir kez, 30 dakika boyunca çalışır.',
     kept: 'Neler silinir, neler kalır',
     keptItems: [
       { title: 'Silinenler', text: 'Hesabın ve sana ait her şey, çoğunlukla 24 saat içinde.' },
       {
         title: 'En fazla 28 gün kalanlar',
-        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar ve sana gönderdiğimiz e-postaların kayıtları, üzerine yazılana kadar. Bu sayfadan yapılan bir istek bir gün saklanır.',
+        text: 'Kullandığımız hizmetlerin yedeklerindeki ve kayıtlarındaki kopyalar ve sana gönderdiğimiz e-postaların kayıtları, üzerine yazılana kadar. Bite’ın arkasındaki yapay zekâ bunlara dahil değil: neyi sakladığını gizlilik politikası anlatır. Bu sayfadan yapılan bir istek yaklaşık bir gün saklanır.',
       },
       {
         title: 'Bizim silemeyeceklerimiz',
