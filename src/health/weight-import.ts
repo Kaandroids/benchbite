@@ -1,20 +1,21 @@
 // Weights taken from the phone's health store, as from a smart scale (#22, ADR 0100). While the
-// store is connected and weight is read, the weighings since the last read, at most 30 days back,
-// go to import_weights() as the latest of each day; it keeps them unless the user entered a weight
-// that day.
+// store is connected and weight is read, the last 30 days' weighings go to import_weights() as the
+// latest of each day; it keeps them unless the user entered a weight that day, and writes only the
+// days that changed. Reading all 30 days each time takes in a weighing that a scale's app wrote to
+// the store days late.
 import type { QueryClient } from '@tanstack/react-query';
 
 import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { reloadAfterWeight } from '@/weight/weights';
 
-import { isHealthConnected, setWeightsReadAt, weightSync, weightsReadAt } from './connection';
+import { isHealthConnected, weightSync } from './connection';
 import { weightsSince } from './platform';
 import type { WeightReading } from './types';
 
 const DAY_MS = 24 * 3600 * 1000;
-/** How far back the first read goes. */
-const FIRST_READ_DAYS = 30;
+/** How far back each read goes. */
+const READ_DAYS = 30;
 
 /** The latest weighing of each day, by the phone's day, oldest first. */
 export function latestPerDay(
@@ -31,28 +32,18 @@ export function latestPerDay(
     .map(([day, { weightKg, source }]) => ({ day, weightKg, source }));
 }
 
-/** Where the next read starts: a day before the last one, for a weighing written late, or 30 days back. */
-function readFrom(now: Date): Date {
-  const firstRead = new Date(now.getTime() - FIRST_READ_DAYS * DAY_MS);
-  const last = weightsReadAt();
-  return last && last > firstRead ? new Date(last.getTime() - DAY_MS) : firstRead;
-}
-
-/** Reads the store's weights since the last read and keeps them; whether any day changed. */
+/** Reads the store's last 30 days of weights and keeps them; whether any day changed. */
 export async function importHealthWeights(queryClient: QueryClient): Promise<boolean> {
   if (!isHealthConnected() || weightSync() !== 'on') return false;
   const now = new Date();
-  const days = latestPerDay(await weightsSince(readFrom(now)));
-  let changed = false;
-  if (days.length) {
-    const { data, error } = await supabase.rpc('import_weights', {
-      weights: days,
-      today: toIsoDate(now),
-    });
-    if (error) throw error;
-    changed = (data ?? 0) > 0;
-  }
-  setWeightsReadAt(now);
+  const days = latestPerDay(await weightsSince(new Date(now.getTime() - READ_DAYS * DAY_MS)));
+  if (!days.length) return false;
+  const { data, error } = await supabase.rpc('import_weights', {
+    weights: days,
+    today: toIsoDate(now),
+  });
+  if (error) throw error;
+  const changed = (data ?? 0) > 0;
   if (changed) await reloadAfterWeight(queryClient);
   return changed;
 }

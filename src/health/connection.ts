@@ -31,7 +31,6 @@ export function useHealthConnected(): boolean {
 }
 
 const WEIGHT_KEY = 'health.weight';
-const WEIGHTS_READ_AT_KEY = 'health.weightsReadAt';
 
 /**
  * Whether weight is read from the store (ADR 0100): on, off when the user said not now, or not
@@ -54,14 +53,4 @@ export function setWeightSync(sync: WeightSync) {
 /** Whether weight is read from the store, kept up to date. */
 export function useWeightSync(): WeightSync {
   return useSyncExternalStore(subscribe, weightSync);
-}
-
-/** When the store's weights were last read, to read only what came since. */
-export function weightsReadAt(): Date | null {
-  const stored = readItem(WEIGHTS_READ_AT_KEY);
-  return stored ? new Date(stored) : null;
-}
-
-export function setWeightsReadAt(at: Date | null) {
-  writeItem(WEIGHTS_READ_AT_KEY, at ? at.toISOString() : null);
 }

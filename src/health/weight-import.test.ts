@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { createTestQueryClient } from '@/test/render';
 
-import { setHealthConnected, setWeightSync, setWeightsReadAt, weightsReadAt } from './connection';
+import { setHealthConnected, setWeightSync } from './connection';
 import { weightsSince } from './platform';
 import { importHealthWeights, latestPerDay } from './weight-import';
 
@@ -26,7 +26,6 @@ beforeEach(() => {
   jest.useFakeTimers({ now: NOW, advanceTimers: true });
   setHealthConnected(true);
   setWeightSync('on');
-  setWeightsReadAt(null);
   jest.mocked(weightsSince).mockResolvedValue([
     { at: at(7, 7), weightKg: 84.6, source: 'Withings' },
     { at: at(8, 7), weightKg: 84.4, source: 'Withings' },
@@ -48,7 +47,7 @@ it('keeps the latest weighing of each day, oldest day first', () => {
   ]);
 });
 
-it('reads 30 days back the first time and sends the days, then refreshes the weights', async () => {
+it('reads the last 30 days and sends the latest of each, then refreshes the weights', async () => {
   const queryClient = createTestQueryClient();
   const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -64,16 +63,16 @@ it('reads 30 days back the first time and sends the days, then refreshes the wei
     ],
     today: '2026-11-08',
   });
-  expect(weightsReadAt()).toEqual(NOW);
   expect(invalidate).toHaveBeenCalledWith({ queryKey: ['weights'] });
 });
 
-it('reads again from a day before the last read, for a weighing written late', async () => {
-  setWeightsReadAt(new Date(NOW.getTime() - 3 * DAY_MS));
-
+it('reads all 30 days again each time, for a weighing a scale’s app wrote days late', async () => {
+  await importHealthWeights(createTestQueryClient());
   await importHealthWeights(createTestQueryClient());
 
-  expect(jest.mocked(weightsSince).mock.calls[0]![0]).toEqual(new Date(NOW.getTime() - 4 * DAY_MS));
+  for (const [from] of jest.mocked(weightsSince).mock.calls) {
+    expect(from).toEqual(new Date(NOW.getTime() - 30 * DAY_MS));
+  }
 });
 
 it('refreshes nothing when no day changed', async () => {
@@ -85,19 +84,17 @@ it('refreshes nothing when no day changed', async () => {
   expect(invalidate).not.toHaveBeenCalled();
 });
 
-it('sends nothing without a weighing, and still keeps when it read', async () => {
+it('sends nothing without a weighing', async () => {
   jest.mocked(weightsSince).mockResolvedValue([]);
 
   expect(await importHealthWeights(createTestQueryClient())).toBe(false);
   expect(supabase.rpc).not.toHaveBeenCalled();
-  expect(weightsReadAt()).toEqual(NOW);
 });
 
-it('keeps the last read when the weights could not be sent, to read them again', async () => {
+it('says when the weights could not be sent', async () => {
   jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('offline') } as never);
 
   await expect(importHealthWeights(createTestQueryClient())).rejects.toThrow('offline');
-  expect(weightsReadAt()).toBeNull();
 });
 
 it('reads nothing while weight is not read or the store not connected', async () => {
