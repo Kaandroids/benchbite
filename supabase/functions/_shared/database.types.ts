@@ -1587,6 +1587,7 @@ export type Database = {
           created_at: string;
           id: number;
           measured_on: string;
+          source: string | null;
           user_id: string;
           weight_kg: number;
         };
@@ -1595,6 +1596,7 @@ export type Database = {
           created_at?: string;
           id?: never;
           measured_on?: string;
+          source?: string | null;
           user_id: string;
           weight_kg: number;
         };
@@ -1602,6 +1604,7 @@ export type Database = {
           created_at?: string;
           id?: never;
           measured_on?: string;
+          source?: string | null;
           user_id?: string;
           weight_kg?: number;
         };
@@ -2366,6 +2369,7 @@ export type Database = {
       has_no_duplicates: { Args: { items: number[] }; Returns: boolean };
       has_premium: { Args: Record<PropertyKey, never>; Returns: boolean };
       has_waiting_choices: { Args: { owner: string }; Returns: boolean };
+      import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
         Args: { windows: Database['public']['CompositeTypes']['ai_windows'] };
         Returns: boolean;
