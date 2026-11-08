@@ -6,3 +6,6 @@ export const requestAccess = jest.fn(() => Promise.resolve(false));
 export const stillAllowed = jest.fn(() => Promise.resolve(false));
 export const releaseAccess = jest.fn(() => Promise.resolve());
 export const installStore = jest.fn();
+export const workoutStats = jest.fn(() =>
+  Promise.resolve({ averageBpm: null, maxBpm: null, activeKcal: null, source: null }),
+);
