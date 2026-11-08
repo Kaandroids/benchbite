@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { CardLoadState } from '@/components/card-load-state';
 import { RangeControl } from '@/components/range-control';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { addDays, toIsoDate, useMonthDayFormat, weekStart } from '@/i18n/dates';
+import { addDays, toIsoDate, useMonthDayFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { averageSteps, pastDays, useStepDays, type StepDay } from '@/steps/steps';
 import { fonts, useTheme } from '@/theme';
 
-import { CardLoadState } from '@/components/card-load-state';
+import { SPAN_OF, spanStart, type Span } from './spans';
 
 const CHART_HEIGHT = 110;
 
@@ -20,30 +21,37 @@ type StepsCardProps = {
   today: Date;
 };
 
-/** A bar of the chart: a day's steps, or a week's average a day over a longer range. */
-type Bar = { from: Date; steps: number };
+/** A bar of the chart: the average steps a day of its day, week or month. */
+type Bar = { start: string; steps: number };
 
-/** A bar a day over a month, a bar a week over longer ranges, so that the bars stay readable. */
-function bars(range: ProgressRange, start: Date, today: Date, days: readonly StepDay[]): Bar[] {
+/**
+ * The range's bars, one a span (SPAN_OF), from its first day to today, each the average of its days
+ * counted. Today, still being counted, is left out of its span while another day of it counts.
+ */
+export function stepBars(span: Span, start: Date, today: Date, days: readonly StepDay[]): Bar[] {
   const byDay = new Map(days.map(({ day, steps }) => [day, steps]));
-  const length = range === 'month' ? 1 : 7;
-  const result: Bar[] = [];
-  for (let from = range === 'month' ? start : weekStart(start); from <= today;) {
-    const to = addDays(from, length);
-    const counted: StepDay[] = [];
-    for (let day = from; day < to && day <= today; day = addDays(day, 1)) {
-      const steps = byDay.get(toIsoDate(day));
-      if (steps !== undefined) counted.push({ day: toIsoDate(day), steps });
+  const todayOn = toIsoDate(today);
+  const spans = new Map<string, { sum: number; count: number; today?: number }>();
+  for (let date = start; date <= today; date = addDays(date, 1)) {
+    const day = toIsoDate(date);
+    const totals = spans.get(spanStart(day, span)) ?? { sum: 0, count: 0 };
+    const steps = byDay.get(day);
+    if (day === todayOn) {
+      totals.today = steps;
+    } else if (steps !== undefined) {
+      totals.sum += steps;
+      totals.count += 1;
     }
-    result.push({ from, steps: averageSteps(counted) ?? 0 });
-    from = to;
+    spans.set(spanStart(day, span), totals);
   }
-  return result;
+  return [...spans].map(([spanFirst, { sum, count, today: todaySteps }]) => ({
+    start: spanFirst,
+    steps: count > 0 ? sum / count : (todaySteps ?? 0),
+  }));
 }
 
 /**
- * The steps a day over a range (#469): the average a day against the range before, and a chart of
- * the days, or of the weeks over longer ranges, with the range to choose under it.
+ * X * the days, or of the weeks over longer ranges, with the range to choose under it.
  */
 export function StepsCard({ entering, today }: StepsCardProps) {
   const { t } = useTranslation();
@@ -53,6 +61,11 @@ export function StepsCard({ entering, today }: StepsCardProps) {
   const [range, setRange] = useState<ProgressRange>('month');
   const start = rangeStart(range, today);
   const days = useStepDays(start, today);
+  // While a new range loads, the last days keep the bars of the range they were loaded for.
+  const [shownRange, setShownRange] = useState(range);
+  if (days.data && !days.isPlaceholderData && shownRange !== range) {
+    setShownRange(range);
+  }
   const before = addDays(start, -1);
   const last = useStepDays(rangeStart(range, before), before);
 
@@ -77,7 +90,7 @@ export function StepsCard({ entering, today }: StepsCardProps) {
         : null;
     const lastRounded = lastAverage === null ? null : Math.round(lastAverage);
     const change = lastRounded === null ? 0 : average - lastRounded;
-    const chart = bars(range, start, today, days.data);
+    const chart = stepBars(SPAN_OF[shownRange], rangeStart(shownRange, today), today, days.data);
     const most = Math.max(1, ...chart.map(({ steps }) => steps));
     content = (
       <>
@@ -109,9 +122,9 @@ export function StepsCard({ entering, today }: StepsCardProps) {
             { height: CHART_HEIGHT, gap: chart.length > 40 ? 1 : 3, borderColor: colors.border },
           ]}
         >
-          {chart.map(({ from, steps }, index) => (
+          {chart.map(({ start: spanFirst, steps }, index) => (
             <View
-              key={from.toISOString()}
+              key={spanFirst}
               style={[
                 styles.bar,
                 {

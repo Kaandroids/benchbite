@@ -1,16 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { CardLoadState } from '@/components/card-load-state';
 import { Card, type CardProps } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
+import { READ_LOOKS } from '@/health/reads';
 import { useStoreName } from '@/health/use-store-name';
 import { addDays, sameDay, toIsoDate, useWeekdayFormat, weekStart } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
-import { CardLoadState } from '@/components/card-load-state';
 import { fonts, useTheme } from '@/theme';
-
-import { READS } from '@/health/reads';
 
 import { averageSteps, pastDays, useStepDays } from './steps';
 
@@ -34,7 +33,7 @@ export function WeekStepsCard({ entering, today }: WeekStepsCardProps) {
   const store = useStoreName() ?? '';
   const monday = weekStart(today);
   const days = useStepDays(monday, today);
-  const look = READS.steps;
+  const look = READ_LOOKS.steps;
 
   if (days.data === undefined) {
     return (

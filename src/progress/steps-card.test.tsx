@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@/test/render';
 import { useStepDays } from '@/steps/steps';
 
-import { StepsCard } from './steps-card';
+import { StepsCard, stepBars } from './steps-card';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/steps/steps', () => ({
@@ -67,4 +67,32 @@ it('changes the range', async () => {
   await fireEvent.press(screen.getByText('Year'));
 
   expect(useStepDays).toHaveBeenLastCalledWith(new Date(2024, 10, 7), new Date(2025, 10, 7));
+});
+
+describe('stepBars', () => {
+  it('makes a bar a month over a year, each the average of its days counted', () => {
+    const bars = stepBars('month', new Date(2025, 10, 8), TODAY, [
+      { day: '2025-11-10', steps: 4000 },
+      { day: '2025-11-20', steps: 6000 },
+    ]);
+
+    expect(bars).toHaveLength(13);
+    expect(bars[0]).toEqual({ start: '2025-11-01', steps: 5000 });
+    expect(bars[1]).toEqual({ start: '2025-12-01', steps: 0 });
+  });
+
+  it('leaves today out of its week while another day of the week counts', () => {
+    const bars = stepBars('week', new Date(2026, 10, 2), TODAY, [
+      { day: '2026-11-03', steps: 9000 },
+      { day: '2026-11-08', steps: 800 },
+    ]);
+
+    expect(bars).toEqual([{ start: '2026-11-02', steps: 9000 }]);
+  });
+
+  it("shows today's count for a span of today alone", () => {
+    expect(stepBars('day', TODAY, TODAY, [{ day: '2026-11-08', steps: 800 }])).toEqual([
+      { start: '2026-11-08', steps: 800 },
+    ]);
+  });
 });

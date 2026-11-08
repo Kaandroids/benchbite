@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
+import { CardLoadState } from '@/components/card-load-state';
 import { RangeControl } from '@/components/range-control';
 import { Card, type CardProps } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
@@ -11,7 +12,6 @@ import { useNumberFormat } from '@/i18n/units';
 import { rangeStart, type ProgressRange } from '@/lib/ranges';
 import { useTheme } from '@/theme';
 
-import { CardLoadState } from '@/components/card-load-state';
 import { HeatMap, HeatMapLegend } from './heat-map';
 
 /** A month is too short to show how training went; the map fills its width from three. */
