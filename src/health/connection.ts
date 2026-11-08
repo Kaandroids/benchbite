@@ -61,15 +61,15 @@ export function useReadSync(kind: HealthRead): ReadSync {
   return useSyncExternalStore(subscribe, () => readSync(kind));
 }
 
-const STEPS_YEAR_KEY = 'health.stepsYearRead';
+const STEPS_READ_ON_KEY = 'health.stepsReadOn';
 
-/** Whether the store's last year of steps was read once; later reads take 30 days (ADR 0103). */
-export function stepsYearRead(): boolean {
-  return readItem(STEPS_YEAR_KEY) === 'true';
+/** The day, YYYY-MM-DD, the store's steps were last read on, from which the next read goes on. */
+export function stepsReadOn(): string | null {
+  return readItem(STEPS_READ_ON_KEY);
 }
 
-export function setStepsYearRead(read: boolean) {
-  writeItem(STEPS_YEAR_KEY, read ? 'true' : null);
+export function setStepsReadOn(day: string | null) {
+  writeItem(STEPS_READ_ON_KEY, day);
 }
 
 /** Lets go of all the device keeps about the store, as when another user signs in. */
@@ -78,6 +78,6 @@ export function forgetHealthOnDevice() {
   for (const kind of HEALTH_READS) {
     writeItem(readKey(kind), null);
   }
-  writeItem(STEPS_YEAR_KEY, null);
+  writeItem(STEPS_READ_ON_KEY, null);
   notify();
 }

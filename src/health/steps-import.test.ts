@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { createTestQueryClient } from '@/test/render';
 
-import { forgetHealthOnDevice, setHealthConnected, setReadSync, stepsYearRead } from './connection';
+import {
+  forgetHealthOnDevice,
+  setHealthConnected,
+  setReadSync,
+  setStepsReadOn,
+  stepsReadOn,
+} from './connection';
 import { dailySteps } from './platform';
 import { importHealthSteps } from './steps-import';
 
@@ -51,10 +57,12 @@ it('reads the last year the first time and sends each day, then refreshes the st
 
   expect(await importHealthSteps(queryClient)).toBe(true);
 
-  expect(daysBack(jest.mocked(dailySteps).mock.calls[0]![0])).toBe(365);
+  const [from, to] = jest.mocked(dailySteps).mock.calls[0]!;
+  expect(daysBack(from)).toBe(365);
+  expect(to).toEqual(NOW);
   expect(supabase.rpc).toHaveBeenCalledWith('import_steps', { days: DAYS, today: '2026-11-08' });
   expect(invalidate).toHaveBeenCalledWith({ queryKey: ['steps'] });
-  expect(stepsYearRead()).toBe(true);
+  expect(stepsReadOn()).toBe('2026-11-08');
 });
 
 it('reads the last 30 days after that, for a watch that syncs late', async () => {
@@ -64,11 +72,27 @@ it('reads the last 30 days after that, for a watch that syncs late', async () =>
   expect(daysBack(jest.mocked(dailySteps).mock.calls[1]![0])).toBe(29);
 });
 
-it('reads the year again when the first read could not be sent', async () => {
+it('reads on from the day last read, after weeks without a read', async () => {
+  setStepsReadOn('2026-09-24');
+
+  await importHealthSteps(createTestQueryClient());
+
+  expect(daysBack(jest.mocked(dailySteps).mock.calls[0]![0])).toBe(45);
+});
+
+it('reads a year back at most, however long ago the last read was', async () => {
+  setStepsReadOn('2024-01-01');
+
+  await importHealthSteps(createTestQueryClient());
+
+  expect(daysBack(jest.mocked(dailySteps).mock.calls[0]![0])).toBe(365);
+});
+
+it('keeps the day last read when the steps could not be sent', async () => {
   jest.mocked(supabase.rpc).mockResolvedValue({ data: null, error: new Error('offline') } as never);
 
   await expect(importHealthSteps(createTestQueryClient())).rejects.toThrow('offline');
-  expect(stepsYearRead()).toBe(false);
+  expect(stepsReadOn()).toBeNull();
 });
 
 it('refreshes nothing when no day changed', async () => {
@@ -108,17 +132,17 @@ it('reads the store once for imports asked for at the same time', async () => {
   expect(dailySteps).toHaveBeenCalledTimes(1);
 });
 
-it('reads the year again when the first read found no steps, as before they could be read', async () => {
+it('reads as far back again when a read found no steps, as before they could be read', async () => {
   jest.mocked(dailySteps).mockResolvedValueOnce([]);
 
   await importHealthSteps(createTestQueryClient());
-  expect(stepsYearRead()).toBe(false);
+  expect(stepsReadOn()).toBeNull();
 
   await importHealthSteps(createTestQueryClient());
   expect(daysBack(jest.mocked(dailySteps).mock.calls[1]![0])).toBe(365);
 });
 
-it('does not mark the year read for a user who signed in while the steps were sent', async () => {
+it('keeps no day read for a user who signed in while the steps were sent', async () => {
   jest.mocked(supabase.rpc).mockImplementation((() => {
     signedIn('user-2');
     forgetHealthOnDevice();
@@ -127,5 +151,5 @@ it('does not mark the year read for a user who signed in while the steps were se
 
   await importHealthSteps(createTestQueryClient());
 
-  expect(stepsYearRead()).toBe(false);
+  expect(stepsReadOn()).toBeNull();
 });

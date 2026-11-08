@@ -281,6 +281,7 @@ describe('Health Connect', () => {
 
 describe('steps', () => {
   const from = new Date(2026, 10, 1);
+  const to = new Date(2026, 10, 8, 9, 0);
 
   it('reads one sum a day from Apple Health, leaving out days without steps', async () => {
     jest.mocked(queryStatisticsCollectionForQuantity).mockResolvedValue([
@@ -292,13 +293,13 @@ describe('steps', () => {
       { startDate: new Date(2026, 10, 8), sources: [] },
     ] as never);
 
-    expect(await ios.dailySteps(from)).toEqual([{ day: '2026-11-07', steps: 11340 }]);
+    expect(await ios.dailySteps(from, to)).toEqual([{ day: '2026-11-07', steps: 11340 }]);
     expect(queryStatisticsCollectionForQuantity).toHaveBeenCalledWith(
       'HKQuantityTypeIdentifierStepCount',
       ['cumulativeSum'],
       from,
       { day: 1 },
-      expect.objectContaining({ unit: 'count' }),
+      { filter: { date: { startDate: from, endDate: to } }, unit: 'count' },
     );
   });
 
@@ -319,7 +320,7 @@ describe('steps', () => {
       },
     ] as never);
 
-    expect(await android.dailySteps(from)).toEqual([{ day: '2026-11-07', steps: 9100 }]);
+    expect(await android.dailySteps(from, to)).toEqual([{ day: '2026-11-07', steps: 9100 }]);
     expect(jest.mocked(aggregateGroupByPeriod).mock.calls[0]![0]).toMatchObject({
       recordType: 'Steps',
       timeRangeSlicer: { period: 'DAYS', length: 1 },
@@ -329,7 +330,7 @@ describe('steps', () => {
   it('reads no steps from Health Connect when they may not be read', async () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([]);
 
-    expect(await android.dailySteps(from)).toEqual([]);
+    expect(await android.dailySteps(from, to)).toEqual([]);
     expect(aggregateGroupByPeriod).not.toHaveBeenCalled();
   });
 });

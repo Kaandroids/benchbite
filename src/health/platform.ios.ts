@@ -104,13 +104,13 @@ export async function requestStepsAccess(): Promise<boolean> {
 }
 
 // One sum a day, which HealthKit takes from the phone and a watch without counting a step twice.
-export async function dailySteps(from: Date): Promise<StepDay[]> {
+export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
   const days = await queryStatisticsCollectionForQuantity(
     STEP_COUNT,
     ['cumulativeSum'],
     from,
     { day: 1 },
-    { filter: { date: { startDate: from, endDate: new Date() } }, unit: 'count' },
+    { filter: { date: { startDate: from, endDate: to } }, unit: 'count' },
   );
   return days.flatMap((day) =>
     day.startDate && day.sumQuantity

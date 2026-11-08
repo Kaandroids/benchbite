@@ -159,14 +159,14 @@ export async function requestStepsAccess(): Promise<boolean> {
 
 // One total a day, which Health Connect takes from every app without counting a step twice. The
 // days are the phone's: the library reads the times in its time zone.
-export async function dailySteps(from: Date): Promise<StepDay[]> {
+export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
   if (!(await initialize()) || !(await stepsAllowed())) return [];
   const days = await aggregateGroupByPeriod({
     recordType: 'Steps',
     timeRangeFilter: {
       operator: 'between',
       startTime: from.toISOString(),
-      endTime: new Date().toISOString(),
+      endTime: to.toISOString(),
     },
     timeRangeSlicer: { period: 'DAYS', length: 1 },
   });

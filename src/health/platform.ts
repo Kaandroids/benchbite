@@ -44,5 +44,5 @@ export const stepsAllowed = (): Promise<boolean> => Promise.resolve(false);
 /** Asks for steps alone, for a user who connected before they were read; whether allowed. */
 export const requestStepsAccess = (): Promise<boolean> => Promise.resolve(false);
 
-/** The steps of each day from a day's start until now, in no set order; days without any left out. */
-export const dailySteps = (_from: Date): Promise<StepDay[]> => Promise.resolve([]);
+/** The steps of each day from a day's start until a time, in no set order; days without any left out. */
+export const dailySteps = (_from: Date, _to: Date): Promise<StepDay[]> => Promise.resolve([]);
