@@ -52,3 +52,9 @@ export function dbErrorMessage(
 ): string {
   return messages.find(([name]) => isDbError(error, name))?.[1] ?? fallback;
 }
+
+/** The reason an Edge Function gave for refusing, as it answers `{ error }`, if its answer has one. */
+export function functionRefusal(body: unknown): string | undefined {
+  if (typeof body !== 'object' || body === null || !('error' in body)) return undefined;
+  return typeof body.error === 'string' ? body.error : undefined;
+}
