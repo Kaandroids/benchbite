@@ -1,6 +1,6 @@
 # 0087. Delete a user and all that is theirs
 
-- **Status:** Accepted
+- **Status:** Accepted, amended by ADR-0095
 - **Date:** 2026-11-06
 
 ## Context

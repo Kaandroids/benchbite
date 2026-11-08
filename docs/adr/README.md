@@ -102,7 +102,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0084](0084-what-is-not-chosen-goes-to-the-archive.md)                | What is not chosen goes to the archive                                                  | Accepted                                             |
 | [0085](0085-own-foods-and-recipes-stay-free.md)                       | Own foods and recipes stay free                                                         | Accepted, amended by ADR-0086                        |
 | [0086](0086-what-the-limits-on-own-foods-mean.md)                     | What the limits on own foods mean                                                       | Accepted                                             |
-| [0087](0087-delete-a-user-and-all-that-is-theirs.md)                  | Delete a user and all that is theirs                                                    | Accepted                                             |
+| [0087](0087-delete-a-user-and-all-that-is-theirs.md)                  | Delete a user and all that is theirs                                                    | Accepted, amended by ADR-0095                        |
 | [0088](0088-a-static-website-in-the-repository.md)                    | A static website in the repository                                                      | Accepted, amended by ADR-0090 and ADR-0094           |
 | [0089](0089-deploy-the-website-to-netlify.md)                         | Deploy the website to Netlify                                                           | Accepted                                             |
 | [0090](0090-check-the-websites-astro-files.md)                        | Check the website's Astro files                                                         | Accepted                                             |
@@ -110,3 +110,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0092](0092-reset-a-password-with-a-code.md)                          | Reset a password with a code                                                            | Accepted                                             |
 | [0093](0093-change-a-password-with-the-current-one.md)                | Change a password with the current one                                                  | Accepted                                             |
 | [0094](0094-delete-an-account-from-the-website.md)                    | Delete an account from the website                                                      | Accepted                                             |
+| [0095](0095-confirm-deleting-an-account-by-email.md)                  | Confirm deleting an account by email                                                    | Accepted                                             |
