@@ -1,5 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,43 +8,32 @@ import { RoundIconButton } from '@/components/ui/round-icon-button';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { setWeightSync, useHealthConnected, useWeightSync } from './connection';
-import { healthStore, requestHealthWeightAccess } from './health';
-import { importHealthWeights } from './weight-import';
+import { useStoreName } from './use-store-name';
+import type { useWeightSyncAsk } from './use-weight-sync-ask';
 
 /**
  * Asks once whether to take weight from the health store, for a user who connected it before
- * weight was read (#22, ADR 0100); it hides once they answer.
+ * weight was read (#22, ADR 0100); it hides once they answer. The screen holds the asking, to
+ * place the cards below it.
  */
-export function WeightAskCard({ entering }: { entering?: CardProps['entering'] }) {
+export function WeightAskCard({
+  ask: { asking, busy, bringIn, notNow },
+  entering,
+}: {
+  ask: ReturnType<typeof useWeightSyncAsk>;
+  entering?: CardProps['entering'];
+}) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  const queryClient = useQueryClient();
-  const connected = useHealthConnected();
-  const sync = useWeightSync();
-  const [busy, setBusy] = useState(false);
-  if (!healthStore || !connected || sync !== null) return null;
-  const store = t(`health.${healthStore}`);
-
-  const bringIn = async () => {
-    setBusy(true);
-    try {
-      const allowed = await requestHealthWeightAccess();
-      setWeightSync(allowed ? 'on' : 'off');
-      if (allowed) await importHealthWeights(queryClient);
-    } catch (error) {
-      console.warn('Could not bring in the weights from the health store', error);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const storeName = useStoreName();
+  if (!asking) return null;
 
   return (
     <Card entering={entering}>
       <View style={[styles.row, { gap: spacing.md, paddingRight: spacing.xl }]}>
         <IconTile name="heart" size={40} color="snack" background="snackBackground" />
         <Text variant="headline" style={styles.flex}>
-          {t('health.weightAsk.title', { store })}
+          {t('health.weightAsk.title', { store: storeName })}
         </Text>
       </View>
       <View style={styles.close}>
@@ -56,7 +43,7 @@ export function WeightAskCard({ entering }: { entering?: CardProps['entering'] }
           background="surface"
           label={t('health.weightAsk.notNow')}
           disabled={busy}
-          onPress={() => setWeightSync('off')}
+          onPress={notNow}
         />
       </View>
       <Text color="textMuted">{t('health.weightAsk.body')}</Text>

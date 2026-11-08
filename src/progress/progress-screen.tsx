@@ -7,6 +7,7 @@ import { TabHeader } from '@/components/tab-header';
 import { TabScreen } from '@/components/tab-screen';
 import { cardEntering } from '@/components/ui/card';
 import { DevButton } from '@/dev/dev-button';
+import { useWeightSyncAsk } from '@/health/use-weight-sync-ask';
 import { WeightAskCard } from '@/health/weight-ask-card';
 import { RECORDS_KEY, TRAINING_DAYS_KEY } from '@/history/history';
 import { NUTRITION_DAYS_KEY } from '@/nutrition/day-nutrition';
@@ -32,6 +33,9 @@ export function ProgressScreen() {
   const basis = useTargetBasis();
   const today = new Date();
   const queryClient = useQueryClient();
+  const weightAsk = useWeightSyncAsk();
+  // The cards come in below the ask for weight while it shows.
+  const first = weightAsk.asking ? 1 : 0;
   const queries = [latestWeight, weightUnit];
   // Pulling down loads again what the cards load themselves too: the weights, meals, workouts and records.
   const refreshed = [
@@ -64,22 +68,22 @@ export function ProgressScreen() {
       </TabHeader>
       {allLoaded(queries) ? (
         <>
-          <WeightAskCard entering={cardEntering(0)} />
+          <WeightAskCard ask={weightAsk} entering={cardEntering(0)} />
           <WeightCard
-            entering={cardEntering(0)}
+            entering={cardEntering(first)}
             latest={latestWeight.data ?? null}
             unit={weightUnit.data ?? 'kg'}
             today={today}
             goal={goal}
           />
           <NutritionCard
-            summaryEntering={cardEntering(1)}
-            entering={cardEntering(2)}
+            summaryEntering={cardEntering(1 + first)}
+            entering={cardEntering(2 + first)}
             today={today}
           />
-          <TrainingCard entering={cardEntering(3)} today={today} />
-          <RecordsButton entering={cardEntering(4)} today={today} />
-          <StreakButton entering={cardEntering(5)} today={today} />
+          <TrainingCard entering={cardEntering(3 + first)} today={today} />
+          <RecordsButton entering={cardEntering(4 + first)} today={today} />
+          <StreakButton entering={cardEntering(5 + first)} today={today} />
         </>
       ) : (
         <LoadState queries={queries} />

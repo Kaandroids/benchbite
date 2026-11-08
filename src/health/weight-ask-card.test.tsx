@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { setHealthConnected, setWeightSync, weightSync } from './connection';
 import { requestHealthWeightAccess } from './health';
+import { useWeightSyncAsk } from './use-weight-sync-ask';
 import { WeightAskCard } from './weight-ask-card';
 import { importHealthWeights } from './weight-import';
 
@@ -21,6 +22,10 @@ jest.mock('./health', () => ({
 }));
 jest.mock('./weight-import', () => ({ importHealthWeights: jest.fn() }));
 
+function AskCard() {
+  return <WeightAskCard ask={useWeightSyncAsk()} />;
+}
+
 const TITLE = 'Your weight from Apple Health';
 
 beforeEach(() => {
@@ -32,7 +37,7 @@ beforeEach(() => {
 });
 
 it('asks for weight, then reads it and hides', async () => {
-  await render(<WeightAskCard />);
+  await render(<AskCard />);
 
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
@@ -43,7 +48,7 @@ it('asks for weight, then reads it and hides', async () => {
 
 it('reads nothing when weight was not allowed', async () => {
   jest.mocked(requestHealthWeightAccess).mockResolvedValue(false);
-  await render(<WeightAskCard />);
+  await render(<AskCard />);
 
   fireEvent.press(screen.getByRole('button', { name: 'Bring in my weight' }));
 
@@ -52,7 +57,7 @@ it('reads nothing when weight was not allowed', async () => {
 });
 
 it('hides for good on not now', async () => {
-  await render(<WeightAskCard />);
+  await render(<AskCard />);
 
   fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
 
@@ -62,11 +67,11 @@ it('hides for good on not now', async () => {
 
 it('shows only to a user who connected the store and was not asked yet', async () => {
   setWeightSync('on');
-  await render(<WeightAskCard />);
+  await render(<AskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();
 
   setWeightSync(null);
   setHealthConnected(false);
-  await render(<WeightAskCard />);
+  await render(<AskCard />);
   expect(screen.queryByText(TITLE)).toBeNull();
 });
