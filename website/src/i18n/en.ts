@@ -215,7 +215,7 @@ export const en = {
       'The app on your phone now starts again as a new guest. A store subscription keeps running until you cancel it in the App Store or Google Play.',
     backToStart: 'Back to the start',
     expiredTitle: 'This link no longer works',
-    expiredText: 'A link works once, for 30 minutes. Nothing was deleted.',
+    expiredText: 'This link ran out after 30 minutes, or was already used.',
     askAgain: 'Ask for a new link',
   },
 };

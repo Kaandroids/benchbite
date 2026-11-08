@@ -217,7 +217,7 @@ export const de: Messages = {
       'Die App auf deinem Handy startet jetzt als neuer Gast. Ein Abo läuft weiter, bis du es im App Store oder bei Google Play kündigst.',
     backToStart: 'Zur Startseite',
     expiredTitle: 'Dieser Link funktioniert nicht mehr',
-    expiredText: 'Ein Link funktioniert einmal, 30 Minuten lang. Es wurde nichts gelöscht.',
+    expiredText: 'Dieser Link ist nach 30 Minuten abgelaufen oder wurde schon benutzt.',
     askAgain: 'Neuen Link anfordern',
   },
 };

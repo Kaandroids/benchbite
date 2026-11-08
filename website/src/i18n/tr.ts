@@ -214,7 +214,7 @@ export const tr: Messages = {
       'Telefonundaki uygulama artık yeni bir misafir olarak başlar. Mağaza aboneliği, App Store veya Google Play’den iptal edene kadar sürer.',
     backToStart: 'Ana sayfaya dön',
     expiredTitle: 'Bu bağlantı artık çalışmıyor',
-    expiredText: 'Bir bağlantı bir kez, 30 dakika boyunca çalışır. Hiçbir şey silinmedi.',
+    expiredText: 'Bu bağlantının 30 dakikalık süresi doldu ya da zaten kullanıldı.',
     askAgain: 'Yeni bağlantı iste',
   },
 };
