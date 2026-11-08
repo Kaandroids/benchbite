@@ -1,7 +1,4 @@
-import {
-  getPermissionsAsync,
-  requestPermissionsAsync,
-} from 'expo-notifications/build/NotificationPermissions';
+import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
 import { router } from 'expo-router';
 import { Alert, Keyboard } from 'react-native';
 
@@ -49,10 +46,6 @@ jest.mock('@/exercises/library', () => ({
 jest.mock('./start', () => ({ useStartWorkout: jest.fn() }));
 jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('./logs', () => ({ useLogWorkout: jest.fn() }));
-jest.mock('expo-notifications/build/NotificationPermissions', () => ({
-  getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true, canAskAgain: true })),
-  requestPermissionsAsync: jest.fn(),
-}));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),

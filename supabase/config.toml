@@ -166,6 +166,8 @@ site_url = "benchbite://"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # The app opens through its `benchbite://` scheme. This file is pushed to the hosted project
 # (ADR 0030), so Expo Go's `exp://` URLs are not allowed: any Expo Go project could receive a token.
+# The development build's `benchbite-dev://` (ADR 0096) is left out too: no flow redirects into
+# the app, as accounts are confirmed with codes, and the hosted project has no development build.
 additional_redirect_urls = ["benchbite://**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

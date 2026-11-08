@@ -1,10 +1,10 @@
 import * as Haptics from 'expo-haptics';
-import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
 import {
+  cancelScheduledNotificationAsync,
   getPermissionsAsync,
   requestPermissionsAsync,
-} from 'expo-notifications/build/NotificationPermissions';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
+  scheduleNotificationAsync,
+} from 'expo-notifications';
 import { Storage } from 'expo-sqlite/kv-store';
 import { Alert, Linking, type AlertButton } from 'react-native';
 
@@ -32,19 +32,6 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
-jest.mock('expo-notifications/build/cancelScheduledNotificationAsync', () => ({
-  cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
-}));
-jest.mock('expo-notifications/build/NotificationPermissions', () => ({
-  getPermissionsAsync: jest.fn(),
-  requestPermissionsAsync: jest.fn(),
-}));
-jest.mock('expo-notifications/build/scheduleNotificationAsync', () => ({
-  scheduleNotificationAsync: jest.fn(() => Promise.resolve('rest-end')),
-}));
-jest.mock('expo-notifications/build/setNotificationChannelAsync', () => ({
-  setNotificationChannelAsync: jest.fn(() => Promise.resolve(null)),
-}));
 jest.mock('expo-haptics', () => ({
   notificationAsync: jest.fn(() => Promise.resolve()),
   NotificationFeedbackType: { Success: 'success' },
