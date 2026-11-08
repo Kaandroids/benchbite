@@ -27,3 +27,4 @@ The app stores ask for a way to have an account deleted without the app. Until n
 - The confirming page needs a few lines of script, to put the token from the address into its form: the website's only script, an exception to ADR 0088.
 - Someone with access to an account's mailbox can delete the account. They could already reset its password with a code (ADR 0092).
 - Each link uses one of the sender's emails, and the per-address limit keeps one person from using many.
+- The form has no script, so a second press while it waits sends a second link; the limits count it as a request.
