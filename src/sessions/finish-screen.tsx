@@ -11,6 +11,8 @@ import { MessageView } from '@/components/ui/message-view';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
+import { WatchCard } from '@/health/watch-card';
+import { keepWorkoutHealth, measuredAnything, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { dbErrorMessage, isDbError } from '@/lib/errors';
 import { useUserId } from '@/providers/session-provider';
@@ -56,6 +58,11 @@ export function FinishScreen({ next }: { next?: number }) {
   const [choosingEnd, setChoosingEnd] = useState(false);
   // Only one save, also when Save is tapped twice before the button turns off.
   const saving = useRef(false);
+  // What the watch measured from the start to the end shown below, read again when it changes.
+  const health = useWorkoutHealth(
+    active?.startedAt ?? 0,
+    active ? (chosenEnd ?? (isLeftOpen(active, openedAt) ? lastActivity(active) : openedAt)) : 0,
+  );
 
   if (!active) {
     return (
@@ -89,7 +96,15 @@ export function FinishScreen({ next }: { next?: number }) {
     }
     saving.current = true;
     try {
-      await logWorkout.mutateAsync(toLog(session, finishedAt));
+      const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
+      // What the watch measured goes with it; if it cannot, it is read again later (ADR 0098).
+      if (measuredAnything(health.data) && logId !== null) {
+        void keepWorkoutHealth(logId, { heartRateMax: null, activeKcal: null }, health.data)
+          .then(async (kept) => {
+            if (kept) await queryClient.invalidateQueries({ queryKey: ['workout-logs'] });
+          })
+          .catch((error: unknown) => console.warn('Could not keep the watch’s data', error));
+      }
       endSession();
       router.dismissAll();
       const following = findWorkout(workouts.data, next);
@@ -149,6 +164,14 @@ export function FinishScreen({ next }: { next?: number }) {
         </View>
 
         <FinishStats session={session} totals={totals} finishedAt={finishedAt} />
+        {measuredAnything(health.data) ? (
+          <WatchCard
+            averageBpm={health.data.averageBpm}
+            maxBpm={health.data.maxBpm}
+            activeKcal={health.data.activeKcal}
+            source={health.data.source}
+          />
+        ) : null}
         <EndTime
           startedAt={session.startedAt}
           finishedAt={finishedAt}
