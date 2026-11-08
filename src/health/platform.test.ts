@@ -1,8 +1,10 @@
+import { requestAuthorization } from '@kingstinct/react-native-healthkit';
 import {
-  queryStatisticsForQuantity,
-  queryStatisticsForQuantitySeparateBySource,
-} from '@kingstinct/react-native-healthkit';
-import { aggregateRecord, getGrantedPermissions, getSdkStatus } from 'react-native-health-connect';
+  getGrantedPermissions,
+  getSdkStatus,
+  requestPermission,
+  revokeAllPermissions,
+} from 'react-native-health-connect';
 
 import * as android from './platform.android';
 import * as ios from './platform.ios';
@@ -10,8 +12,6 @@ import * as ios from './platform.ios';
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   isHealthDataAvailable: jest.fn(() => true),
   requestAuthorization: jest.fn(() => Promise.resolve(true)),
-  queryStatisticsForQuantity: jest.fn(),
-  queryStatisticsForQuantitySeparateBySource: jest.fn(),
 }));
 jest.mock('react-native-health-connect', () => ({
   SdkAvailabilityStatus: {
@@ -24,72 +24,38 @@ jest.mock('react-native-health-connect', () => ({
   requestPermission: jest.fn(() => Promise.resolve([])),
   getGrantedPermissions: jest.fn(),
   revokeAllPermissions: jest.fn(),
-  openHealthConnectSettings: jest.fn(),
-  aggregateRecord: jest.fn(),
 }));
 
-const FROM = new Date('2026-11-08T18:04:00Z');
-const TO = new Date('2026-11-08T18:56:00Z');
-
 describe('Apple Health', () => {
-  it('reads the average and highest heart rate and the calories, rounded, with the watch', async () => {
-    jest
-      .mocked(queryStatisticsForQuantity)
-      .mockResolvedValueOnce({
-        averageQuantity: { unit: 'count/min', quantity: 131.6 },
-        maximumQuantity: { unit: 'count/min', quantity: 168 },
-        sources: [],
-      })
-      .mockResolvedValueOnce({ sumQuantity: { unit: 'kcal', quantity: 411.7 }, sources: [] });
-    jest
-      .mocked(queryStatisticsForQuantitySeparateBySource)
-      .mockResolvedValue([
-        { source: { name: 'Apple Watch', bundleIdentifier: 'com.apple.health' } },
-      ]);
-
-    expect(await ios.workoutStats(FROM, TO)).toEqual({
-      averageBpm: 132,
-      maxBpm: 168,
-      activeKcal: 412,
-      source: 'Apple Watch',
-    });
-    expect(queryStatisticsForQuantity).toHaveBeenCalledWith(
-      'HKQuantityTypeIdentifierHeartRate',
-      ['discreteAverage', 'discreteMax'],
-      { filter: { date: { startDate: FROM, endDate: TO } }, unit: 'count/min' },
-    );
-  });
-
-  it('finds nothing when nothing was measured', async () => {
-    jest.mocked(queryStatisticsForQuantity).mockResolvedValue({ sources: [] });
-    jest.mocked(queryStatisticsForQuantitySeparateBySource).mockResolvedValue([]);
-
-    expect(await ios.workoutStats(FROM, TO)).toEqual({
-      averageBpm: null,
-      maxBpm: null,
-      activeKcal: null,
-      source: null,
+  it('asks to read heart rate and active energy, and nothing to write', async () => {
+    expect(await ios.requestAccess()).toBe(true);
+    expect(requestAuthorization).toHaveBeenCalledWith({
+      toRead: ['HKQuantityTypeIdentifierHeartRate', 'HKQuantityTypeIdentifierActiveEnergyBurned'],
     });
   });
 });
 
 describe('Health Connect', () => {
-  it('tells whether it is installed, or needs an update', async () => {
+  it('needs Google Play when missing or old, and is unavailable before Android 9', async () => {
     for (const [status, availability] of [
       [3, 'available'],
-      [2, 'updateRequired'],
-      [1, 'notInstalled'],
+      [2, 'missing'],
+      [1, 'unavailable'],
     ] as const) {
       jest.mocked(getSdkStatus).mockResolvedValue(status);
       expect(await android.availability()).toBe(availability);
     }
   });
 
-  it('counts as allowed only when heart rate may be read', async () => {
+  it('asks for heart rate and active calories, and counts as allowed with heart rate', async () => {
     jest
       .mocked(getGrantedPermissions)
       .mockResolvedValue([{ accessType: 'read', recordType: 'ActiveCaloriesBurned' }]);
     expect(await android.requestAccess()).toBe(false);
+    expect(requestPermission).toHaveBeenCalledWith([
+      { accessType: 'read', recordType: 'HeartRate' },
+      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+    ]);
 
     jest
       .mocked(getGrantedPermissions)
@@ -97,49 +63,13 @@ describe('Health Connect', () => {
     expect(await android.requestAccess()).toBe(true);
   });
 
-  it('reads the heart rate and calories, naming the app that measured them', async () => {
-    jest
-      .mocked(aggregateRecord)
-      .mockResolvedValueOnce({
-        BPM_AVG: 131.6,
-        BPM_MAX: 168,
-        BPM_MIN: 90,
-        MEASUREMENTS_COUNT: 300,
-        dataOrigins: ['com.huami.watch.hmwatchmanager'],
-      } as never)
-      .mockResolvedValueOnce({
-        ACTIVE_CALORIES_TOTAL: { inKilocalories: 411.7 },
-        dataOrigins: ['com.huami.watch.hmwatchmanager'],
-      } as never);
-
-    expect(await android.workoutStats(FROM, TO)).toEqual({
-      averageBpm: 132,
-      maxBpm: 168,
-      activeKcal: 412,
-      source: 'Zepp',
-    });
+  it('knows when heart rate was taken back', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([]);
+    expect(await android.stillAllowed()).toBe(false);
   });
 
-  it('finds no heart rate without measurements, and names an unknown app by its package', async () => {
-    jest
-      .mocked(aggregateRecord)
-      .mockResolvedValueOnce({
-        BPM_AVG: 0,
-        BPM_MAX: 0,
-        BPM_MIN: 0,
-        MEASUREMENTS_COUNT: 0,
-        dataOrigins: [],
-      } as never)
-      .mockResolvedValueOnce({
-        ACTIVE_CALORIES_TOTAL: { inKilocalories: 120 },
-        dataOrigins: ['com.example.tracker'],
-      } as never);
-
-    expect(await android.workoutStats(FROM, TO)).toEqual({
-      averageBpm: null,
-      maxBpm: null,
-      activeKcal: 120,
-      source: 'com.example.tracker',
-    });
+  it('gives up what was allowed', async () => {
+    await android.releaseAccess();
+    expect(revokeAllPermissions).toHaveBeenCalled();
   });
 });
