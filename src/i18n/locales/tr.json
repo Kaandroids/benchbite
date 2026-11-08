@@ -2381,17 +2381,9 @@
     "notConnected": "Bağlı değil",
     "rowHint": "Bağlayacağın ya da bağlantıyı keseceğin yeri açar",
     "note": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler.",
-    "noData": {
-      "appleHealth": "Veri gelmiyor mu? Sağlık uygulamasında, Paylaşım altında Benchbite’a izin ver.",
-      "healthConnect": "Veri gelmiyor mu? Health Connect’te Benchbite’a izin ver."
-    },
-    "denied": {
-      "appleHealth": "Benchbite henüz nabzını okuyamıyor. Sağlık uygulamasında, Paylaşım altında izin ver.",
-      "healthConnect": "Benchbite henüz nabzını okuyamıyor. Health Connect’te izin ver, sonra tekrar bağlan."
-    },
-    "unavailable": {
-      "appleHealth": "Bu cihazda okunacak sağlık verisi yok.",
-      "healthConnect": "Bu cihazda okunacak sağlık verisi yok."
+    "noteConnected": {
+      "appleHealth": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler. Veri gelmiyor mu? Sağlık uygulamasında, Paylaşım altında Benchbite’a izin ver.",
+      "healthConnect": "Saatinin ölçtüğü nabzı ve kaloriyi antrenmanlarına ekler. Veri gelmiyor mu? Health Connect’te Benchbite’a izin ver."
     },
     "consent": {
       "title": "{{store}} verileri okunsun mu?",
@@ -2413,10 +2405,18 @@
     },
     "install": {
       "title": "Health Connect gerekli",
-      "notInstalled": "Android, saatinin ölçtüklerini Health Connect’te tutar. Google Play’den indir, sonra bağlamak için buraya dön.",
-      "updateRequired": "Benchbite’ın okuyabilmesi için Health Connect’in Google Play’den güncellenmesi gerekiyor.",
+      "body": "Android, saatinin ölçtüklerini Health Connect’te tutar. Google Play’den indir ya da güncelle, sonra bağlamak için buraya dön.",
       "open": "Google Play’i aç",
       "builtIn": "Android 14 ve sonrasında yerleşik olarak gelir."
+    },
+    "problems": {
+      "denied": {
+        "appleHealth": "Benchbite henüz nabzını okuyamıyor. Sağlık uygulamasında, Paylaşım altında izin ver.",
+        "healthConnect": "Benchbite henüz nabzını okuyamıyor. Health Connect’te izin ver, sonra tekrar bağlan."
+      },
+      "unavailable": "Bu cihazda okunacak sağlık verisi yok.",
+      "failed": "Olmadı. Birazdan tekrar dene.",
+      "releaseFailed": "Benchbite okumayı bıraktı ama Health Connect hâlâ izin veriyor. İzni Health Connect’ten geri al."
     }
   }
 }

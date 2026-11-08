@@ -2381,17 +2381,9 @@
     "notConnected": "Not connected",
     "rowHint": "Opens where you connect it or disconnect it",
     "note": "Adds the heart rate and calories your watch measured to your workouts.",
-    "noData": {
-      "appleHealth": "No data arriving? Allow Benchbite in the Health app, under Sharing.",
-      "healthConnect": "No data arriving? Allow Benchbite in Health Connect."
-    },
-    "denied": {
-      "appleHealth": "Benchbite may not read your heart rate yet. Allow it in the Health app, under Sharing.",
-      "healthConnect": "Benchbite may not read your heart rate yet. Allow it in Health Connect, then connect again."
-    },
-    "unavailable": {
-      "appleHealth": "This device has no health data to read.",
-      "healthConnect": "This device has no health data to read."
+    "noteConnected": {
+      "appleHealth": "Adds the heart rate and calories your watch measured to your workouts. No data arriving? Allow Benchbite in the Health app, under Sharing.",
+      "healthConnect": "Adds the heart rate and calories your watch measured to your workouts. No data arriving? Allow Benchbite in Health Connect."
     },
     "consent": {
       "title": "Read from {{store}}?",
@@ -2413,10 +2405,18 @@
     },
     "install": {
       "title": "Health Connect is needed",
-      "notInstalled": "Android keeps what your watch measures in Health Connect. Get it from Google Play, then come back here to connect.",
-      "updateRequired": "Health Connect needs an update from Google Play before Benchbite can read from it.",
+      "body": "Android keeps what your watch measures in Health Connect. Get or update it from Google Play, then come back here to connect.",
       "open": "Open Google Play",
       "builtIn": "Android 14 and later have it built in."
+    },
+    "problems": {
+      "denied": {
+        "appleHealth": "Benchbite may not read your heart rate yet. Allow it in the Health app, under Sharing.",
+        "healthConnect": "Benchbite may not read your heart rate yet. Allow it in Health Connect, then connect again."
+      },
+      "unavailable": "This device has no health data to read.",
+      "failed": "That didn’t work. Try again in a moment.",
+      "releaseFailed": "Benchbite stopped reading, but Health Connect still allows it. Take it back in Health Connect."
     }
   }
 }

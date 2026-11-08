@@ -2381,17 +2381,9 @@
     "notConnected": "Nicht verbunden",
     "rowHint": "Öffnet, wo du es verbindest oder trennst",
     "note": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat.",
-    "noData": {
-      "appleHealth": "Kommen keine Daten an? Erlaube Benchbite den Zugriff in der Health-App unter „Teilen“.",
-      "healthConnect": "Kommen keine Daten an? Erlaube Benchbite den Zugriff in Health Connect."
-    },
-    "denied": {
-      "appleHealth": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in der Health-App unter „Teilen“.",
-      "healthConnect": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in Health Connect und verbinde dann erneut."
-    },
-    "unavailable": {
-      "appleHealth": "Auf diesem Gerät gibt es keine Gesundheitsdaten zu lesen.",
-      "healthConnect": "Auf diesem Gerät gibt es keine Gesundheitsdaten zu lesen."
+    "noteConnected": {
+      "appleHealth": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat. Kommen keine Daten an? Erlaube Benchbite den Zugriff in der Health-App unter „Teilen“.",
+      "healthConnect": "Fügt deinen Workouts die Herzfrequenz und Kalorien hinzu, die deine Uhr gemessen hat. Kommen keine Daten an? Erlaube Benchbite den Zugriff in Health Connect."
     },
     "consent": {
       "title": "Aus {{store}} lesen?",
@@ -2413,10 +2405,18 @@
     },
     "install": {
       "title": "Health Connect wird benötigt",
-      "notInstalled": "Android speichert, was deine Uhr misst, in Health Connect. Lade es bei Google Play und komm dann zurück, um es zu verbinden.",
-      "updateRequired": "Health Connect braucht ein Update von Google Play, bevor Benchbite daraus lesen kann.",
+      "body": "Android speichert, was deine Uhr misst, in Health Connect. Lade oder aktualisiere es bei Google Play und komm dann zurück, um es zu verbinden.",
       "open": "Google Play öffnen",
       "builtIn": "Ab Android 14 ist es bereits eingebaut."
+    },
+    "problems": {
+      "denied": {
+        "appleHealth": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in der Health-App unter „Teilen“.",
+        "healthConnect": "Benchbite darf deine Herzfrequenz noch nicht lesen. Erlaube es in Health Connect und verbinde dann erneut."
+      },
+      "unavailable": "Auf diesem Gerät gibt es keine Gesundheitsdaten zu lesen.",
+      "failed": "Das hat nicht geklappt. Versuch es gleich noch einmal.",
+      "releaseFailed": "Benchbite liest nichts mehr, aber Health Connect erlaubt es noch. Nimm die Erlaubnis in Health Connect zurück."
     }
   }
 }

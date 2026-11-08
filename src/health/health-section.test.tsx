@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@/test/render';
+import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { isHealthConnected, setHealthConnected } from './connection';
 import {
   healthAvailability,
-  openHealthStore,
+  healthStillAllowed,
+  installHealthStore,
   releaseHealthAccess,
   requestHealthAccess,
   type HealthAvailability,
@@ -20,13 +21,13 @@ jest.mock('expo-sqlite/kv-store', () => {
     },
   };
 });
-jest.mock('@/providers/session-provider', () => ({ useUserId: () => 'user-a' }));
 jest.mock('./health', () => ({
   healthStore: 'appleHealth',
   healthAvailability: jest.fn(),
+  healthStillAllowed: jest.fn(),
   requestHealthAccess: jest.fn(),
-  releaseHealthAccess: jest.fn(() => Promise.resolve()),
-  openHealthStore: jest.fn(),
+  releaseHealthAccess: jest.fn(),
+  installHealthStore: jest.fn(),
 }));
 
 const available = (availability: HealthAvailability) =>
@@ -34,9 +35,11 @@ const available = (availability: HealthAvailability) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  setHealthConnected('user-a', false);
+  setHealthConnected(false);
   available('available');
   jest.mocked(requestHealthAccess).mockResolvedValue(true);
+  jest.mocked(healthStillAllowed).mockResolvedValue(true);
+  jest.mocked(releaseHealthAccess).mockResolvedValue();
 });
 
 const row = () => screen.getByRole('button', { name: /Apple Health/ });
@@ -56,15 +59,14 @@ it('says what connecting adds, and asks before the system does', async () => {
   expect(requestHealthAccess).not.toHaveBeenCalled();
 });
 
-it('connects once the system allowed it, for this user only', async () => {
+it('connects once the system allowed it', async () => {
   await render(<HealthSection />);
   await fireEvent.press(row());
   await fireEvent.press(await screen.findByRole('button', { name: 'Continue' }));
 
   expect(requestHealthAccess).toHaveBeenCalled();
   expect(await screen.findByText('Connected')).toBeOnTheScreen();
-  expect(isHealthConnected('user-a')).toBe(true);
-  expect(isHealthConnected('user-b')).toBe(false);
+  expect(isHealthConnected()).toBe(true);
 });
 
 it('connects nothing when the last question is declined', async () => {
@@ -74,7 +76,7 @@ it('connects nothing when the last question is declined', async () => {
 
   expect(requestHealthAccess).not.toHaveBeenCalled();
   expect(screen.queryByText('Read from Apple Health?')).toBeNull();
-  expect(isHealthConnected('user-a')).toBe(false);
+  expect(isHealthConnected()).toBe(false);
 });
 
 it('says where to allow it when the system refused', async () => {
@@ -88,18 +90,28 @@ it('says where to allow it when the system refused', async () => {
       'Benchbite may not read your heart rate yet. Allow it in the Health app, under Sharing.',
     ),
   ).toBeOnTheScreen();
-  expect(isHealthConnected('user-a')).toBe(false);
+  expect(isHealthConnected()).toBe(false);
 });
 
-it('points to Google Play when Health Connect is missing', async () => {
-  available('notInstalled');
+it('says so when asking fails, and stays unconnected', async () => {
+  jest.mocked(requestHealthAccess).mockRejectedValue(new Error('no entitlement'));
+  await render(<HealthSection />);
+  await fireEvent.press(row());
+  await fireEvent.press(await screen.findByRole('button', { name: 'Continue' }));
+
+  expect(await screen.findByText('That didn’t work. Try again in a moment.')).toBeOnTheScreen();
+  expect(isHealthConnected()).toBe(false);
+});
+
+it('points to Google Play when Health Connect is missing or old', async () => {
+  available('missing');
   await render(<HealthSection />);
   await fireEvent.press(row());
 
   expect(await screen.findByText('Health Connect is needed')).toBeOnTheScreen();
   await fireEvent.press(screen.getByRole('button', { name: 'Open Google Play' }));
 
-  expect(openHealthStore).toHaveBeenCalledWith('notInstalled');
+  expect(installHealthStore).toHaveBeenCalled();
 });
 
 it('says so on a device without health data', async () => {
@@ -111,17 +123,42 @@ it('says so on a device without health data', async () => {
 });
 
 it('disconnects only when asked twice, and gives up what was allowed', async () => {
-  setHealthConnected('user-a', true);
+  setHealthConnected(true);
   await render(<HealthSection />);
   await fireEvent.press(row());
 
   await fireEvent.press(await screen.findByRole('button', { name: 'Keep connected' }));
-  expect(isHealthConnected('user-a')).toBe(true);
+  expect(isHealthConnected()).toBe(true);
 
   await fireEvent.press(row());
   await fireEvent.press(await screen.findByRole('button', { name: 'Disconnect' }));
 
-  await waitFor(() => expect(isHealthConnected('user-a')).toBe(false));
-  expect(releaseHealthAccess).toHaveBeenCalled();
+  await waitFor(() => expect(isHealthConnected()).toBe(false));
+  expect(releaseHealthAccess).toHaveBeenCalledTimes(1);
   expect(await screen.findByText('Not connected')).toBeOnTheScreen();
+});
+
+it('says where to take access back when giving it up failed', async () => {
+  setHealthConnected(true);
+  jest.mocked(releaseHealthAccess).mockRejectedValue(new Error('busy'));
+  await render(<HealthSection />);
+  await fireEvent.press(row());
+  await fireEvent.press(await screen.findByRole('button', { name: 'Disconnect' }));
+
+  expect(
+    await screen.findByText(
+      'Benchbite stopped reading, but Health Connect still allows it. Take it back in Health Connect.',
+    ),
+  ).toBeOnTheScreen();
+  expect(isHealthConnected()).toBe(false);
+});
+
+it('lets go of a connection the system has taken back', async () => {
+  setHealthConnected(true);
+  jest.mocked(healthStillAllowed).mockResolvedValue(false);
+  await render(<HealthSection />);
+
+  expect(await screen.findByText('Not connected')).toBeOnTheScreen();
+  await act(async () => {});
+  expect(isHealthConnected()).toBe(false);
 });
