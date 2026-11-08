@@ -10,7 +10,16 @@ export const LOCALES = ['en', 'de', 'tr'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 /** The pages below the landing page, as they appear in addresses. */
-export type Page = 'privacy' | 'terms' | 'imprint' | 'support' | 'delete-account';
+export type Page =
+  | 'privacy'
+  | 'terms'
+  | 'imprint'
+  | 'support'
+  | 'delete-account'
+  | 'delete-account/sent'
+  | 'delete-account/confirm'
+  | 'delete-account/done'
+  | 'delete-account/expired';
 
 /** English lives at the root, so the links in the app (`/privacy`) stay short. */
 const DEFAULT_LOCALE: Locale = 'en';

@@ -164,7 +164,7 @@ export const de: Messages = {
   },
   deleteAccount: {
     title: 'Dein Benchbite-Konto löschen',
-    text: 'Konten und Gastdaten lassen sich in der App löschen. Das Löschen kann nicht rückgängig gemacht werden.',
+    text: 'Konten und Gastdaten lassen sich in der App löschen, ein Konto auch hier mit seiner E-Mail-Adresse. Das Löschen kann nicht rückgängig gemacht werden.',
     inApp: 'In der App',
     steps: [
       'Öffne Benchbite. Wenn du ein Konto hast, melde dich zuerst an.',
@@ -175,8 +175,49 @@ export const de: Messages = {
       'Nutzt du Benchbite als Gast? Lösche deine Daten in der App, bevor du sie entfernst. Gastdaten haben keine E-Mail-Adresse, deshalb können wir sie später nicht finden.',
     withoutApp: 'Ohne die App',
     withoutAppText:
-      'App schon entfernt und du hast ein Konto? Installiere sie erneut und melde dich an, um dein Konto zu löschen. Bald kannst du die Löschung auch hier anfordern und per E-Mail bestätigen.',
+      'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken einen Link dorthin, und du bestätigst auf der Seite, die er öffnet.',
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'du@beispiel.de',
+    send: 'Link senden',
+    linkNote:
+      'Der Link funktioniert einmal, 30 Minuten lang. Das Löschen deines Kontos kündigt kein Abo im App Store oder bei Google Play.',
     kept: 'Was gelöscht wird und was bleibt',
     keptPlaceholder: '[RECHTSTEXT: GELÖSCHTE DATEN, VERBLEIBENDE DATEN, FRISTEN]',
+  },
+  deleteLink: {
+    sentTitle: 'Schau in deine E-Mails',
+    sentText:
+      'Falls ein Konto diese Adresse nutzt, haben wir ihr einen Link zum Löschen geschickt.',
+    sentHow:
+      'Öffne den Link auf einem beliebigen Gerät und bestätige auf der Seite, die er öffnet. Das Öffnen löscht noch nichts.',
+    sentNote:
+      'Der Link funktioniert einmal, 30 Minuten lang. Nichts angekommen? Schau in deinen Spam-Ordner oder frag in einer Minute erneut.',
+    anotherEmail: 'Andere E-Mail verwenden',
+    confirmTitle: 'Dein Konto löschen?',
+    confirmText: 'Alles hier wird endgültig gelöscht. Es lässt sich nicht wiederherstellen.',
+    items: [
+      'Dein Plan, deine Workouts und dein Verlauf',
+      'Mahlzeiten, Rezepte und eigene Lebensmittel',
+      'Gewicht, Ziele und Fortschritt',
+      'Chats mit Bite, Fotos und Sprachnachrichten',
+    ],
+    subscription:
+      'Ein Abo im App Store oder bei Google Play wird dadurch nicht gekündigt. Kündige es dort, um nicht mehr zu zahlen.',
+    delete: 'Endgültig löschen',
+    keep: 'Konto behalten',
+    failed: 'Das Löschen hat gerade nicht geklappt. Versuch es gleich noch einmal.',
+    noLink:
+      'Diese Seite öffnet sich über den Link in der E-Mail. Fordere auf der Löschseite einen Link an.',
+    noScript:
+      'Diese Seite braucht JavaScript, um den Link zu lesen. Du kannst dein Konto auch in der App löschen.',
+    doneTitle: 'Dein Konto ist gelöscht',
+    doneText:
+      'Alles, was dir in Benchbite gehörte, ist weg. Danke, dass du mit uns trainiert hast.',
+    doneNote:
+      'Die App auf deinem Handy startet jetzt als neuer Gast. Ein Abo läuft weiter, bis du es im App Store oder bei Google Play kündigst.',
+    backToStart: 'Zur Startseite',
+    expiredTitle: 'Dieser Link funktioniert nicht mehr',
+    expiredText: 'Ein Link funktioniert einmal, 30 Minuten lang. Es wurde nichts gelöscht.',
+    askAgain: 'Neuen Link anfordern',
   },
 };
