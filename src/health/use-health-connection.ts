@@ -63,10 +63,10 @@ export function useHealthConnection() {
     setBusy(true);
     try {
       const allowed = await requestHealthAccess();
-      setHealthConnected(allowed);
       // Weight is among what was asked for (ADR 0100); Android can allow the rest without it, and
-      // Progress then asks for it alone.
+      // Progress then asks for it alone. It is set first, as connecting starts the first read.
       if (allowed) setWeightSync((await healthWeightAllowed()) ? 'on' : null);
+      setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');
     } catch (error) {
       console.warn('Could not ask for the access to health data', error);
