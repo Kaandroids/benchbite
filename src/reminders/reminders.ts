@@ -1,23 +1,17 @@
 // Workout reminders: local notifications scheduled on the device, one for each day with workouts
 // in the coming weeks, following the week as it is, moves included (ADR 0029). Nothing is sent
 // from a server, so they work offline and need no push setup.
-//
-// Imported from the package's modules rather than its index, which also loads the push topic
-// module. Expo Go on Android does not include that native module, so loading the index throws
-// and the app crashes there, although local notifications work. The paths can go back to
-// 'expo-notifications' once Expo Go includes the module, or when the app moves to development
-// builds.
-import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
-import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getAllScheduledNotificationsAsync';
-import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import {
+  cancelScheduledNotificationAsync,
+  getAllScheduledNotificationsAsync,
+  AndroidImportance,
   getPermissionsAsync,
   requestPermissionsAsync,
-} from 'expo-notifications/build/NotificationPermissions';
-import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
-import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
-import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
+  SchedulableTriggerInputTypes,
+  setNotificationHandler,
+  scheduleNotificationAsync,
+  setNotificationChannelAsync,
+} from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { fromIsoDate } from '@/i18n/dates';

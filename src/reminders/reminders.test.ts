@@ -1,13 +1,13 @@
-import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
-import { getAllScheduledNotificationsAsync } from 'expo-notifications/build/getAllScheduledNotificationsAsync';
-import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import {
+  cancelScheduledNotificationAsync,
+  getAllScheduledNotificationsAsync,
+  AndroidImportance,
   getPermissionsAsync,
   requestPermissionsAsync,
-} from 'expo-notifications/build/NotificationPermissions';
-import { setNotificationHandler } from 'expo-notifications/build/NotificationsHandler';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
-import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
+  setNotificationHandler,
+  scheduleNotificationAsync,
+  setNotificationChannelAsync,
+} from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import {
@@ -17,23 +17,14 @@ import {
   showRemindersInForeground,
 } from './reminders';
 
-jest.mock('expo-notifications/build/cancelScheduledNotificationAsync', () => ({
+jest.mock('expo-notifications', () => ({
+  ...jest.requireActual<typeof import('expo-notifications')>('expo-notifications'),
   cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
-}));
-jest.mock('expo-notifications/build/getAllScheduledNotificationsAsync', () => ({
   getAllScheduledNotificationsAsync: jest.fn(() => Promise.resolve([])),
-}));
-jest.mock('expo-notifications/build/NotificationPermissions', () => ({
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
-}));
-jest.mock('expo-notifications/build/NotificationsHandler', () => ({
   setNotificationHandler: jest.fn(),
-}));
-jest.mock('expo-notifications/build/scheduleNotificationAsync', () => ({
   scheduleNotificationAsync: jest.fn(() => Promise.resolve('id')),
-}));
-jest.mock('expo-notifications/build/setNotificationChannelAsync', () => ({
   setNotificationChannelAsync: jest.fn(() => Promise.resolve(null)),
 }));
 

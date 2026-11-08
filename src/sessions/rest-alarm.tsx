@@ -2,18 +2,16 @@
 // phone is locked (#35): a local notification is scheduled for the moment the rest ends, and
 // replaced or cancelled whenever the rest changes. While the app is open, a haptic signals it
 // instead, and the notification is not shown. Permission is offered once, when a workout starts.
-//
-// Imported from the package's modules rather than its index, as in src/reminders/reminders.ts.
 import * as Haptics from 'expo-haptics';
-import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 import {
+  AndroidImportance,
   getPermissionsAsync,
   requestPermissionsAsync,
-} from 'expo-notifications/build/NotificationPermissions';
-import { SchedulableTriggerInputTypes } from 'expo-notifications/build/Notifications.types';
-import { cancelScheduledNotificationAsync } from 'expo-notifications/build/cancelScheduledNotificationAsync';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
-import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
+  SchedulableTriggerInputTypes,
+  cancelScheduledNotificationAsync,
+  scheduleNotificationAsync,
+  setNotificationChannelAsync,
+} from 'expo-notifications';
 import { useEffect, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, Linking, Platform } from 'react-native';
