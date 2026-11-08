@@ -1,3 +1,7 @@
-# The legal pages still hold placeholder text, so search engines stay away until it is replaced.
+# The delete pages act on an account, so no other site may show the site in a frame.
+# X-Robots-Tag: the legal pages still hold placeholder text, so search engines stay away until it
+# is replaced; remove that line before the site goes live.
 /*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
   X-Robots-Tag: noindex

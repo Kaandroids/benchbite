@@ -45,7 +45,7 @@ To set it up once:
    ([ADR 0094](adr/0094-delete-an-account-from-the-website.md)). The workflow stops without it.
 
 The token reaches the whole Netlify account, so replace it if it may have leaked. Before the site
-goes live, replace the placeholder texts and remove `website/public/_headers`, which keeps search
+goes live, replace the placeholder texts and remove the `X-Robots-Tag` line from `website/public/_headers`, which keeps search
 engines away.
 
 ## Monitoring
