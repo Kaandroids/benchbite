@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
-const LOCALES_DIR = join(ROOT, 'src', 'i18n', 'locales');
+const LOCALES_DIR = join(ROOT, 'src/i18n/locales');
 /** Where the iOS permission texts are, as app.json's `expo.locales` names them. */
 const PERMISSIONS_PATH = 'src/i18n/permissions';
 const PERMISSIONS_DIR = join(ROOT, PERMISSIONS_PATH);
@@ -93,21 +93,20 @@ type AppJson = {
   };
 };
 
-/**
- * The permission texts app.json writes to Info.plist, by key: through the plugins in
- * `PLUGIN_TEXTS`, or set in `ios.infoPlist`. A plugin's own default text, written without an
- * option, is not among them. Adds to `errors` each plugin option missing from `PLUGIN_TEXTS`.
- */
-function appTexts(
-  plugins: Plugins,
-  infoPlist: Record<string, unknown>,
-  errors: string[],
-): Map<string, unknown> {
-  const options = new Map(
+/** Each plugin's options in app.json, by the plugin's name. */
+function pluginOptions(plugins: Plugins): Map<string, Record<string, unknown>> {
+  return new Map(
     plugins.flatMap((plugin) =>
       typeof plugin === 'string' ? [] : [[plugin[0], plugin[1] ?? {}] as const],
     ),
   );
+}
+
+/**
+ * Adds to `errors` each plugin option that holds a permission text but is missing from
+ * `PLUGIN_TEXTS`. It goes by the option's name, so an option named otherwise is not caught.
+ */
+function checkPluginOptions(options: Map<string, Record<string, unknown>>, errors: string[]) {
   const listed = new Set(
     Object.values(PLUGIN_TEXTS).map(([plugin, option]) => `${plugin}.${option}`),
   );
@@ -124,6 +123,17 @@ function appTexts(
       }
     }
   }
+}
+
+/**
+ * The permission texts app.json writes to Info.plist, by key: through the plugins in
+ * `PLUGIN_TEXTS`, or set in `ios.infoPlist`, where a plugin's option wins as it does in prebuild.
+ * A plugin's own default text, written without an option, is not among them.
+ */
+function appTexts(
+  options: Map<string, Record<string, unknown>>,
+  infoPlist: Record<string, unknown>,
+): Map<string, unknown> {
   const texts = new Map<string, unknown>(
     Object.entries(PLUGIN_TEXTS).map(([key, [plugin, option]]) => [
       key,
@@ -131,7 +141,9 @@ function appTexts(
     ]),
   );
   for (const [key, value] of Object.entries(infoPlist)) {
-    if (USAGE_DESCRIPTION.test(key) && typeof value === 'string') texts.set(key, value);
+    if (USAGE_DESCRIPTION.test(key) && typeof value === 'string' && texts.get(key) === undefined) {
+      texts.set(key, value);
+    }
   }
   return texts;
 }
@@ -149,8 +161,9 @@ function checkEnglish(texts: Map<string, unknown>, errors: string[]) {
       errors.push(`${PERMISSIONS_PATH}/${SOURCE}: "ios.${key}" differs from the text in app.json`);
     }
   }
+  // Other Info.plist keys, such as the app's name, need no text in app.json.
   for (const key of Object.keys(english)) {
-    if (!texts.has(key.replace(/^ios\./, ''))) {
+    if (USAGE_DESCRIPTION.test(key) && !texts.has(key.replace(/^ios\./, ''))) {
       errors.push(
         `${PERMISSIONS_PATH}/${SOURCE}: "${key}" is written by nothing in app.json or PLUGIN_TEXTS`,
       );
@@ -191,7 +204,9 @@ const locales = translationsIn(LOCALES_DIR);
 const permissionLocales = translationsIn(PERMISSIONS_DIR);
 check(LOCALES_DIR, '', locales, errors);
 check(PERMISSIONS_DIR, `${PERMISSIONS_PATH}/`, permissionLocales, errors);
-checkEnglish(appTexts(app.plugins, app.ios?.infoPlist ?? {}, errors), errors);
+const options = pluginOptions(app.plugins);
+checkPluginOptions(options, errors);
+checkEnglish(appTexts(options, app.ios?.infoPlist ?? {}), errors);
 checkLanguages(locales, permissionLocales, app.locales ?? {}, errors);
 
 if (errors.length > 0) {
