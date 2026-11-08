@@ -23,6 +23,28 @@ export type Database = {
   };
   public: {
     Tables: {
+      account_deletion_codes: {
+        Row: {
+          code_hash: string;
+          expires_at: string;
+          sent_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          code_hash: string;
+          expires_at: string;
+          sent_at?: string;
+          user_id: string;
+        };
+        Update: {
+          code_hash?: string;
+          expires_at?: string;
+          sent_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       account_deletion_links: {
         Row: {
           created_at: string;
@@ -61,6 +83,25 @@ export type Database = {
           created_at?: string;
           email_hash?: string;
           ip_hash?: string;
+        };
+        Relationships: [];
+      };
+      account_deletion_tries: {
+        Row: {
+          created_at: string;
+          kind: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          kind: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          kind?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -1074,6 +1115,22 @@ export type Database = {
         };
         Relationships: [];
       };
+      password_changes: {
+        Row: {
+          changed_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          changed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          changed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       plan_slot_exercises: {
         Row: {
           exercise_id: string;
@@ -1839,6 +1896,10 @@ export type Database = {
       };
     };
     Functions: {
+      account_deletion_tries_since: {
+        Args: { p_kind: string; p_since: string; p_user: string };
+        Returns: number;
+      };
       account_deletion_user: { Args: { p_token_hash: string }; Returns: string };
       achievable_weekly_pace_kg: {
         Args: {
@@ -2040,6 +2101,10 @@ export type Database = {
       };
       can_upload_exercise_photo: { Args: Record<PropertyKey, never>; Returns: boolean };
       card_alternative: { Args: { alternative: Json }; Returns: Json };
+      check_account_deletion_code: {
+        Args: { p_code_hash: string; p_user: string };
+        Returns: string;
+      };
       check_coach_targets: { Args: { change: Json }; Returns: undefined };
       check_food_log_days: { Args: { entries: Json }; Returns: undefined };
       check_sets: { Args: { log: Json }; Returns: undefined };
@@ -2516,6 +2581,7 @@ export type Database = {
         }[];
       };
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
+      new_account_deletion_code: { Args: { p_code_hash: string; p_user: string }; Returns: string };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
       plan_by_weekdays: {
         Args: { from_day: string; owner: string; to_day: string };
@@ -2831,6 +2897,7 @@ export type Database = {
         }[];
       };
       strength_kcal_per_minute: { Args: { weight_kg: number }; Returns: number };
+      take_account_deletion_password_try: { Args: { p_user: string }; Returns: string };
       target_kind: {
         Args: {
           exercise: Omit<

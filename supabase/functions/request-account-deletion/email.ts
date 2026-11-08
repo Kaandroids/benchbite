@@ -1,6 +1,6 @@
 // The email with the link to delete an account (ADR 0094), in the language of the page it was asked
-// from. Laid out as the Auth emails in supabase/templates/, which point here: change them together.
-// Its colours are the app's: background, surface, text, textMuted and primaryButton.
+// from, in the layout of _shared/account_email.ts.
+import { accountEmailHtml, escape, note, paragraph } from '../_shared/account_email.ts';
 import type { Email } from '../_shared/email.ts';
 import type { SiteLocale } from '../_shared/site.ts';
 
@@ -31,25 +31,17 @@ const COPY = {
   },
 } satisfies Record<SiteLocale, Record<string, string>>;
 
-const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
 export function deletionEmail(locale: SiteLocale, to: string, link: string): Email {
   const copy = COPY[locale];
-  const html = `<!doctype html>
-<html lang="${locale}">
-  <body style="margin: 0; padding: 24px; background: #f6f6f8; font-family: Helvetica, Arial, sans-serif; color: #16171a">
-    <div style="max-width: 480px; margin: 0 auto; padding: 32px; border-radius: 20px; background: #ffffff">
-      <p style="margin: 0 0 24px; font-size: 22px; font-weight: 800">benchbite</p>
-      <h1 style="margin: 0 0 12px; font-size: 24px">${escape(copy.title)}</h1>
-      <p style="margin: 0 0 20px">${escape(copy.ask)}</p>
-      <p style="margin: 0 0 20px">
+  const button = `<p style="margin: 0 0 16px">
         <a href="${escape(link)}" style="display: inline-block; padding: 14px 24px; border-radius: 14px; background: #f25a00; color: #ffffff; font-weight: 800; text-decoration: none">${escape(copy.button)}</a>
-      </p>
-      <p style="margin: 0 0 12px; color: #676a72">${escape(copy.note)}</p>
-      <p style="margin: 0; color: #676a72">${escape(copy.ignore)}</p>
-    </div>
-  </body>
-</html>`;
+      </p>`;
+  const html = accountEmailHtml(locale, copy.title, [
+    paragraph(copy.ask),
+    button,
+    note(copy.note),
+    note(copy.ignore),
+  ]);
   const text = [copy.title, copy.ask, link, copy.note, copy.ignore].join('\n\n');
   return { to, subject: copy.subject, html, text };
 }
