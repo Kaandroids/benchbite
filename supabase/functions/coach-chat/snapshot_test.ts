@@ -17,8 +17,8 @@ const PROFILE = {
 };
 
 /**
- * A database whose profile is `profile`, with `goal`, what `rpc` names, the notes in use `notes`
- * and the active `workouts`, and nothing else.
+ * A database whose profile is `profile`, with `goal`, what `rpc` names, the notes in use `notes`,
+ * the active `workouts` and the week's `steps`, and nothing else.
  */
 function database(
   profile: Record<string, unknown>,
@@ -26,6 +26,7 @@ function database(
   rpc: Record<string, unknown> = {},
   notes: Record<string, unknown>[] = [],
   workouts: Record<string, unknown>[] | null = null,
+  steps: Record<string, unknown>[] | null = null,
 ) {
   const empty = { data: null, error: null };
   const query = (data: unknown) => {
@@ -33,7 +34,8 @@ function database(
       maybeSingle: () => Promise.resolve({ data, error: null }),
       then: (resolve: (value: unknown) => void) => resolve({ data, error: null }),
     };
-    for (const method of ['select', 'eq', 'is', 'order', 'limit']) builder[method] = () => builder;
+    for (const method of ['select', 'eq', 'is', 'gte', 'lte', 'order', 'limit'])
+      builder[method] = () => builder;
     return builder;
   };
   return {
@@ -47,7 +49,9 @@ function database(
               ? notes
               : table === 'workouts'
                 ? workouts
-                : null,
+                : table === 'step_days'
+                  ? steps
+                  : null,
       ),
     rpc: (name: string) => Promise.resolve(name in rpc ? { data: rpc[name], error: null } : empty),
   } as unknown as Client;
@@ -178,4 +182,44 @@ Deno.test("keeps a note's text from passing for the snapshot's end", async () =>
   const snapshot = await loadSnapshot(database(PROFILE, null, {}, notes), '2026-10-30');
 
   assertEquals(snapshotText(snapshot, 'en').match(/<\/snapshot>/g)?.length, 1);
+});
+
+Deno.test("tells Bite today's steps and the week before's average, without today", async () => {
+  const snapshot = await loadSnapshot(
+    database(PROFILE, null, {}, [], null, [
+      { day: '2026-10-28', steps: 8000 },
+      { day: '2026-10-29', steps: 6000 },
+      { day: '2026-10-30', steps: 1200 },
+    ]),
+    '2026-10-30',
+  );
+
+  assertEquals(snapshot.steps, { today: 1200, average: 7000, days: 2 });
+  assertEquals(
+    snapshotText(snapshot, 'en').includes(
+      'Steps: 1200 today so far; 7000 a day on average over the 7 days before (2 counted)',
+    ),
+    true,
+  );
+});
+
+Deno.test('says no steps today before the store counted one', async () => {
+  const snapshot = await loadSnapshot(
+    database(PROFILE, null, {}, [], null, [{ day: '2026-10-29', steps: 6000 }]),
+    '2026-10-30',
+  );
+
+  assertEquals(
+    snapshotText(snapshot, 'en').includes(
+      'Steps: 0 today so far; 6000 a day on average over the 7 days before (1 counted)',
+    ),
+    true,
+  );
+});
+
+Deno.test('leaves steps out for a user whose steps are not read', async () => {
+  const snapshot = await loadSnapshot(database(PROFILE, null, {}, [], null, []), '2026-10-30');
+
+  assertEquals(snapshot.steps, undefined);
+  assertEquals(snapshotText(snapshot, 'en').includes('Steps:'), false);
 });

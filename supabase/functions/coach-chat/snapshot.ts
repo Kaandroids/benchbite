@@ -39,6 +39,11 @@ export type Snapshot = {
   };
   /** The latest weight, in kg. */
   weightKg?: number;
+  /**
+   * The steps the phone's health store counted (ADR 0103): today's so far, and the average a day of
+   * the 7 days before over the days counted; none when no step was read that week.
+   */
+  steps?: { today?: number; average?: number; days: number };
   targets?: Macros;
   eaten?: Macros;
   training?: string;
@@ -71,6 +76,13 @@ export type Note = {
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/** The day `days` before `day`, both YYYY-MM-DD. */
+function daysBefore(day: string, days: number): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
 /** Weekdays, 1 Monday to 7 Sunday, as "Mon, Thu". */
 function dayNames(days: number[]) {
   return days.map((d) => WEEKDAYS[d - 1].slice(0, 3)).join(', ');
@@ -83,7 +95,7 @@ export async function loadSnapshot(
   time?: string,
 ): Promise<Snapshot> {
   const day = { from_day: today, to_day: today, today };
-  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan] =
+  const [profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan, steps] =
     await Promise.all([
       supabase
         .from('profiles')
@@ -115,8 +127,25 @@ export async function loadSnapshot(
         .eq('active', true)
         .order('id')
         .order('position', { referencedTable: 'workout_alternatives' }),
+      supabase
+        .from('step_days')
+        .select('day, steps')
+        .gte('day', daysBefore(today, 7))
+        .lte('day', today),
     ]);
-  const results = { profile, goal, pace, weight, nutrition, planned, trained, streak, notes, plan };
+  const results = {
+    profile,
+    goal,
+    pace,
+    weight,
+    nutrition,
+    planned,
+    trained,
+    streak,
+    notes,
+    plan,
+    steps,
+  };
   for (const [name, result] of Object.entries(results)) {
     if (result.error) logError(`Could not read the ${name} for the snapshot`, result.error);
   }
@@ -155,6 +184,15 @@ export async function loadSnapshot(
     };
   }
   if (weight.data) snapshot.weightKg = weight.data.weight_kg;
+  if (steps.data?.length) {
+    const before = steps.data.filter(({ day }) => day !== today);
+    const total = before.reduce((sum, { steps }) => sum + steps, 0);
+    snapshot.steps = {
+      today: steps.data.find(({ day }) => day === today)?.steps,
+      average: before.length ? Math.round(total / before.length) : undefined,
+      days: before.length,
+    };
+  }
   const n = nutrition.data?.[0];
   if (n) {
     snapshot.targets = {
