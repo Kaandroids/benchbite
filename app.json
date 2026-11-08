@@ -22,7 +22,11 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -62,6 +66,23 @@
           "recordAudioAndroid": true,
           "enableBackgroundRecording": false,
           "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were. It writes nothing to Apple Health.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
         }
       ]
     ],
