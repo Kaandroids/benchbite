@@ -11,6 +11,8 @@ import { Sheet, SheetTitle } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useTheme, type ColorTokens } from '@/theme';
 
+import { HEALTH_READS } from './connection';
+import { READS as HEALTH_READ_LOOKS } from './reads';
 import type { HealthStore } from './types';
 
 /** What the user is asked to allow, as the consent sheet lists it. */
@@ -22,8 +24,10 @@ const READS: {
 }[] = [
   { key: 'heartRate', icon: 'heart', color: 'snack', background: 'snackBackground' },
   { key: 'calories', icon: 'flame', color: 'lunch', background: 'lunchBackground' },
-  { key: 'weight', icon: 'scale', color: 'water', background: 'waterBackground' },
-  { key: 'steps', icon: 'steps', color: 'info', background: 'infoBackground' },
+  ...HEALTH_READS.map((key) => {
+    const { icon, color, background } = HEALTH_READ_LOOKS[key];
+    return { key, icon, color, background };
+  }),
 ];
 
 type SheetProps = {

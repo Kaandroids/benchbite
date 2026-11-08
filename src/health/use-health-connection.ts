@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { setHealthConnected, setReadSync, useHealthConnected } from './connection';
+import { HEALTH_READS, setHealthConnected, setReadSync, useHealthConnected } from './connection';
 import {
   healthAvailability,
-  healthStepsAllowed,
   healthStillAllowed,
-  healthWeightAllowed,
   releaseHealthAccess,
   requestHealthAccess,
 } from './health';
+import { READS } from './reads';
 
 /** Why the last step did not connect or disconnect as asked. */
 export type HealthProblem = 'denied' | 'unavailable' | 'failed' | 'releaseFailed';
@@ -68,9 +67,8 @@ export function useHealthConnection() {
       // without them, and Progress and Today then ask for each alone. They are set first, as
       // connecting starts the first read.
       if (allowed) {
-        const [weight, steps] = await Promise.all([healthWeightAllowed(), healthStepsAllowed()]);
-        setReadSync('weight', weight ? 'on' : null);
-        setReadSync('steps', steps ? 'on' : null);
+        const kinds = await Promise.all(HEALTH_READS.map((kind) => READS[kind].allowed()));
+        HEALTH_READS.forEach((kind, index) => setReadSync(kind, kinds[index] ? 'on' : null));
       }
       setHealthConnected(allowed);
       setProblem(allowed ? null : 'denied');

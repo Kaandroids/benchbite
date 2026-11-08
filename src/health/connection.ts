@@ -35,7 +35,8 @@ export function useHealthConnected(): boolean {
 }
 
 /** What is read from the store apart from workouts, each asked for on its own (ADR 0100, 0103). */
-export type HealthRead = 'weight' | 'steps';
+export const HEALTH_READS = ['weight', 'steps'] as const;
+export type HealthRead = (typeof HEALTH_READS)[number];
 
 /**
  * Whether a kind is read from the store: on, off when the user said not now, or not asked yet, as
@@ -74,8 +75,9 @@ export function setStepsYearRead(read: boolean) {
 /** Lets go of all the device keeps about the store, as when another user signs in. */
 export function forgetHealthOnDevice() {
   writeItem(KEY, null);
-  writeItem(readKey('weight'), null);
-  writeItem(readKey('steps'), null);
+  for (const kind of HEALTH_READS) {
+    writeItem(readKey(kind), null);
+  }
   writeItem(STEPS_YEAR_KEY, null);
   notify();
 }
