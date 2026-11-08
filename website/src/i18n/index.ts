@@ -21,7 +21,6 @@ export type Page =
   | 'support'
   | 'delete-account'
   | 'delete-account/sent'
-  | 'delete-account/confirm'
   | 'delete-account/done'
   | 'delete-account/expired';
 
