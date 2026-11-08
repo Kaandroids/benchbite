@@ -9,5 +9,6 @@ export {
   requestAccess as requestHealthAccess,
   stillAllowed as healthStillAllowed,
   store as healthStore,
+  weightAllowed as healthWeightAllowed,
 } from './platform';
 export type { HealthAvailability, HealthStore, WeightReading, WorkoutStats } from './types';

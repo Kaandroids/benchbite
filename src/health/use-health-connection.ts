@@ -4,6 +4,7 @@ import { setHealthConnected, setWeightSync, useHealthConnected } from './connect
 import {
   healthAvailability,
   healthStillAllowed,
+  healthWeightAllowed,
   releaseHealthAccess,
   requestHealthAccess,
 } from './health';
@@ -63,8 +64,9 @@ export function useHealthConnection() {
     try {
       const allowed = await requestHealthAccess();
       setHealthConnected(allowed);
-      // Weight is among what was asked for (ADR 0100).
-      if (allowed) setWeightSync('on');
+      // Weight is among what was asked for (ADR 0100); Android can allow the rest without it, and
+      // Progress then asks for it alone.
+      if (allowed) setWeightSync((await healthWeightAllowed()) ? 'on' : null);
       setProblem(allowed ? null : 'denied');
     } catch (error) {
       console.warn('Could not ask for the access to health data', error);

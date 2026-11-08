@@ -120,10 +120,12 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
   };
 }
 
+export const weightAllowed = () => allowedToRead('Weight');
+
 export async function requestWeightAccess(): Promise<boolean> {
   if (!(await initialize())) return false;
   await requestPermission([{ accessType: 'read', recordType: 'Weight' }]);
-  return allowedToRead('Weight');
+  return weightAllowed();
 }
 
 export async function weightsSince(from: Date): Promise<WeightReading[]> {

@@ -162,6 +162,13 @@ describe('Health Connect', () => {
     expect(await android.requestAccess()).toBe(true);
   });
 
+  it('knows whether weight was allowed', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'HeartRate' }]);
+    expect(await android.weightAllowed()).toBe(false);
+  });
+
   it('asks for weight alone, and says whether it was allowed', async () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([]);
     expect(await android.requestWeightAccess()).toBe(false);

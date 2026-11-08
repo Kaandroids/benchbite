@@ -28,6 +28,9 @@ export const installStore = (): void => undefined;
 export const workoutStats = (_from: Date, _to: Date): Promise<WorkoutStats> =>
   Promise.resolve(NO_WORKOUT_STATS);
 
+/** Whether weight may be read, where the system says so. */
+export const weightAllowed = (): Promise<boolean> => Promise.resolve(false);
+
 /** Asks for weight alone, for a user who connected before it was read; whether it was allowed. */
 export const requestWeightAccess = (): Promise<boolean> => Promise.resolve(false);
 

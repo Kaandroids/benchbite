@@ -70,6 +70,8 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
   };
 }
 
+export const weightAllowed = (): Promise<boolean> => Promise.resolve(true);
+
 export async function requestWeightAccess(): Promise<boolean> {
   await requestAuthorization({ toRead: [BODY_MASS] });
   return true;
