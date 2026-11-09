@@ -12,8 +12,9 @@ import { useTheme } from '@/theme';
 
 import { ACTIVITY_ICONS } from './activities';
 import { FigureRow, type Figure } from './figure-row';
-import { outsideMinutes, useOutsideSource } from './outside-workout-row';
+import { outsideMinutes, useOutsideSource } from './outside-format';
 import type { ListedOutsideWorkout } from './outside-workouts';
+import { READ_LOOKS } from './reads';
 
 /**
  * A workout another app recorded (#468, ADR 0106): what was done, when, and what was measured. It
@@ -48,8 +49,8 @@ export function OutsideWorkoutSheet({
         <IconTile
           name={ACTIVITY_ICONS[workout.activity]}
           size={48}
-          color="dinner"
-          background="dinnerBackground"
+          color={READ_LOOKS.workouts.color}
+          background={READ_LOOKS.workouts.background}
         />
         <View style={styles.flex}>
           <Text variant="headline" accessibilityRole="header">

@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useUpperCase } from '@/i18n/case';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
-import { fonts, useTheme } from '@/theme';
+import { fonts, useTheme, type ColorTokens } from '@/theme';
 
 import { Text } from './text';
 
@@ -11,12 +11,19 @@ type DateTileProps = {
   large?: boolean;
   /** On orange, or on grey where it would add to too much orange. */
   tinted?: boolean;
-  /** In the colour of workouts from other apps (ADR 0106), set apart from Benchbite's orange. */
-  outside?: boolean;
+  /** Another colour for the weekday and the tile, in place of orange, as for another kind of day. */
+  color?: keyof ColorTokens;
+  background?: keyof ColorTokens;
 };
 
 /** A day as a small tile: its weekday above its date, as on a calendar. */
-export function DateTile({ date, large = false, tinted = true, outside = false }: DateTileProps) {
+export function DateTile({
+  date,
+  large = false,
+  tinted = true,
+  color = 'primaryText',
+  background = tinted ? 'selected' : 'background',
+}: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');
   const upperCase = useUpperCase();
@@ -27,15 +34,11 @@ export function DateTile({ date, large = false, tinted = true, outside = false }
         large ? styles.large : styles.small,
         {
           borderRadius: large ? radii.lg : radii.md,
-          backgroundColor: outside
-            ? colors.dinnerBackground
-            : tinted
-              ? colors.selected
-              : colors.background,
+          backgroundColor: colors[background],
         },
       ]}
     >
-      <Text variant="caption" color={outside ? 'dinner' : 'primaryText'} style={styles.weekday}>
+      <Text variant="caption" color={color} style={styles.weekday}>
         {upperCase(weekday(isoWeekday(date)))}
       </Text>
       <Text variant={large ? 'title' : 'headline'} style={large ? styles.largeDay : styles.day}>

@@ -8,6 +8,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { StepArrow } from '@/components/ui/step-arrow';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { READ_LOOKS } from '@/health/reads';
 import {
   fromIsoDate,
   toIsoDate,
@@ -27,6 +28,9 @@ import {
   type ScheduleDay,
   type WeekSchedule,
 } from '@/workouts/week-schedule';
+
+/** How workouts from other apps look, as everywhere they show (ADR 0106). */
+const OUTSIDE_LOOK = READ_LOOKS.workouts;
 
 const RING_SIZE = 32;
 const REST_SIZE = 8;
@@ -103,12 +107,12 @@ function DayMark({ day, state, outside }: { day: ScheduleDay; state: DayState; o
             styles.ring,
             {
               borderWidth: 2,
-              borderColor: colors.dinner,
-              backgroundColor: colors.dinnerBackground,
+              borderColor: colors[OUTSIDE_LOOK.color],
+              backgroundColor: colors[OUTSIDE_LOOK.background],
             },
           ]}
         >
-          <Icon name="run" size={16} color="dinner" />
+          <Icon name={OUTSIDE_LOOK.icon} size={16} color={OUTSIDE_LOOK.color} />
         </View>
       ) : (
         <View style={[styles.rest, { backgroundColor: colors.track }]} />

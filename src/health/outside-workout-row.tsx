@@ -5,53 +5,16 @@ import { DateTile } from '@/components/ui/date-tile';
 import { Icon } from '@/components/ui/icon';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { useClockFormat, useDurationFormat } from '@/i18n/dates';
-import { useNumberFormat } from '@/i18n/units';
+import { useClockFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { ACTIVITY_ICONS } from './activities';
+import { useOutsideSource, useOutsideSummary } from './outside-format';
 import type { ListedOutsideWorkout } from './outside-workouts';
-import { useStoreName } from './use-store-name';
+import { READ_LOOKS } from './reads';
 
-/** How long a workout from another app took, in whole minutes. */
-export const outsideMinutes = (workout: ListedOutsideWorkout) =>
-  Math.max(1, Math.round((workout.endedAt.getTime() - workout.startedAt.getTime()) / 60_000));
-
-/** A workout's length, calories and source, as one line. */
-export function useOutsideSummary() {
-  const { t } = useTranslation();
-  const duration = useDurationFormat();
-  const { format } = useNumberFormat();
-  return (workout: ListedOutsideWorkout, withSource = true) =>
-    [
-      duration(outsideMinutes(workout)),
-      workout.activeKcal !== null
-        ? t('history.kcalMeasured', { kcal: format(Math.round(workout.activeKcal)) })
-        : null,
-      withSource ? workout.source : null,
-    ]
-      .filter(Boolean)
-      .join(' · ');
-}
-
-/**
- * Where a workout came from, in words: "From Apple Watch" under it, or "Apple Watch, through Apple
- * Health" in its details; the store alone when no app is named. Null without either.
- */
-export function useOutsideSource() {
-  const { t } = useTranslation();
-  const store = useStoreName();
-  return (workout: ListedOutsideWorkout, form: 'from' | 'through'): string | null => {
-    if (workout.source) {
-      if (form === 'from') return t('health.outside.from', { source: workout.source });
-      return store ? t('health.watch.through', { source: workout.source, store }) : workout.source;
-    }
-    if (!store) return null;
-    return form === 'from'
-      ? t('health.outside.fromStore', { store })
-      : t('health.watch.throughStore', { store });
-  };
-}
+/** The colours of workouts from other apps, set apart from Benchbite's orange. */
+const { color, background } = READ_LOOKS.workouts;
 
 /**
  * A workout another app recorded, in a list of Benchbite's (#468, ADR 0106), in its own colour.
@@ -91,19 +54,19 @@ export function OutsideWorkoutRow({
       ]}
     >
       {leading === 'day' ? (
-        <DateTile date={workout.startedAt} outside />
+        <DateTile date={workout.startedAt} color={color} background={background} />
       ) : (
         <IconTile
           name={ACTIVITY_ICONS[workout.activity]}
           size={44}
-          color="dinner"
-          background="dinnerBackground"
+          color={color}
+          background={background}
         />
       )}
       <View style={[styles.flex, { gap: 2 }]}>
         <View style={[styles.name, { gap: spacing.xs }]}>
           {leading === 'day' ? (
-            <Icon name={ACTIVITY_ICONS[workout.activity]} size={16} color="dinner" />
+            <Icon name={ACTIVITY_ICONS[workout.activity]} size={16} color={color} />
           ) : null}
           <Text variant="label" numberOfLines={1} style={styles.shrink}>
             {t(`health.activities.${workout.activity}`)}
@@ -115,7 +78,7 @@ export function OutsideWorkoutRow({
             : [clock(workout.startedAt), summary(workout, false)].join(' · ')}
         </Text>
         {source ? (
-          <Text variant="captionStrong" color="dinner" numberOfLines={1}>
+          <Text variant="captionStrong" color={color} numberOfLines={1}>
             {source}
           </Text>
         ) : null}
