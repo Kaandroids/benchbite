@@ -10,7 +10,9 @@
     "sets_other": "{{count}} sets",
     "keepEditing": "Keep editing",
     "discard": "Discard",
-    "done": "Done"
+    "done": "Done",
+    "minutes": "{{minutes}} min",
+    "hours": "{{hours}} h {{minutes}} min"
   },
   "photoSheet": {
     "take": "Take a photo",
@@ -1663,8 +1665,6 @@
     "weekLast": "Last week",
     "weekTotal_one": "{{count}} workout · {{time}}",
     "weekTotal_other": "{{count}} workouts · {{time}}",
-    "minutes": "{{minutes}} min",
-    "hours": "{{hours}} h {{minutes}} min",
     "kcal": "~{{kcal}} kcal",
     "kcalMeasured": "{{kcal}} kcal",
     "open": "Opens the workout",
@@ -2508,7 +2508,8 @@
       "open": "Shows its details",
       "time": "{{day}} · {{from}} to {{to}}",
       "duration": "duration",
-      "note": "Recorded by another app, so Benchbite only shows it. Change or delete it there."
+      "note": "Recorded by another app, so Benchbite only shows it. Change or delete it there.",
+      "kcal": "{{kcal}} kcal"
     },
     "activities": {
       "running": "Running",

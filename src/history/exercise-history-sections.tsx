@@ -232,7 +232,7 @@ export function SessionList({
             },
           ]}
         >
-          <DateTile date={session.startedAt} tinted={false} />
+          <DateTile date={session.startedAt} background="background" />
           <View style={[styles.flex, { gap: spacing.xs }]}>
             <Text variant="label" numberOfLines={1}>
               {workoutName(session)}

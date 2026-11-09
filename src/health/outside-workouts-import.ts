@@ -28,6 +28,11 @@ import type { HealthStore, OutsideWorkout, WorkoutFigures } from './types';
  * late; an older workout's are taken as kept.
  */
 const SETTLED_AFTER_DAYS = 3;
+/**
+ * The most kept figures taken, as many as the server gives in one answer: past it, a workout's are
+ * read again from the store, which only takes longer.
+ */
+const MOST_KEPT_FIGURES = 1000;
 /** The most workouts import_outside_workouts() takes at once. */
 export const MOST_PER_PART = 500;
 
@@ -41,7 +46,7 @@ export async function keptFigures(
     .select('source_id, active_kcal, heart_rate_avg')
     .eq('store', store)
     .gte('started_at', since.toISOString())
-    .limit(1000);
+    .limit(MOST_KEPT_FIGURES);
   if (error) throw error;
   return new Map(
     data.map((row) => [

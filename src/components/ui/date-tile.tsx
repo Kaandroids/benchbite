@@ -9,9 +9,10 @@ import { Text } from './text';
 type DateTileProps = {
   date: Date;
   large?: boolean;
-  /** On orange, or on grey where it would add to too much orange. */
-  tinted?: boolean;
-  /** Another colour for the weekday and the tile, in place of orange, as for another kind of day. */
+  /**
+   * The weekday's colour and the tile's: orange by default, the tile grey where orange would add up
+   * to too much, or another pair for another kind of day.
+   */
   color?: keyof ColorTokens;
   background?: keyof ColorTokens;
 };
@@ -20,9 +21,8 @@ type DateTileProps = {
 export function DateTile({
   date,
   large = false,
-  tinted = true,
   color = 'primaryText',
-  background = tinted ? 'selected' : 'background',
+  background = 'selected',
 }: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');

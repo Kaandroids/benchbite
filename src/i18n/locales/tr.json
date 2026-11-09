@@ -10,7 +10,9 @@
     "sets_other": "{{count}} set",
     "keepEditing": "Düzenlemeye devam et",
     "discard": "Sil",
-    "done": "Bitti"
+    "done": "Bitti",
+    "minutes": "{{minutes}} dk",
+    "hours": "{{hours}} sa {{minutes}} dk"
   },
   "photoSheet": {
     "take": "Fotoğraf çek",
@@ -1663,8 +1665,6 @@
     "weekLast": "Geçen hafta",
     "weekTotal_one": "{{count}} antrenman · {{time}}",
     "weekTotal_other": "{{count}} antrenman · {{time}}",
-    "minutes": "{{minutes}} dk",
-    "hours": "{{hours}} sa {{minutes}} dk",
     "kcal": "~{{kcal}} kcal",
     "kcalMeasured": "{{kcal}} kcal",
     "open": "Antrenmanı açar",
@@ -2508,7 +2508,8 @@
       "open": "Ayrıntılarını gösterir",
       "time": "{{day}} · {{from}}–{{to}}",
       "duration": "süre",
-      "note": "Başka bir uygulama kaydetti, bu yüzden Benchbite yalnızca gösterir. Orada değiştir ya da sil."
+      "note": "Başka bir uygulama kaydetti, bu yüzden Benchbite yalnızca gösterir. Orada değiştir ya da sil.",
+      "kcal": "{{kcal}} kcal"
     },
     "activities": {
       "running": "Koşu",

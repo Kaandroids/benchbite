@@ -76,8 +76,8 @@ export const requestWorkoutsAccess = (): Promise<boolean> => Promise.resolve(fal
 
 /**
  * The workouts other apps recorded that started between two times, in no set order, with the
- * figures kept of older ones in place of reading them again. Null when they could not be read, as
- * without the permission or when a figure's read failed, which is not a store without any.
+ * figures kept of older ones in place of reading them again. Null when they may not be read, which
+ * is not a store without any; a figure's read that fails throws, so none is taken as no figure.
  */
 export const outsideWorkouts = (
   _from: Date,

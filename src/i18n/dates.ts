@@ -204,6 +204,6 @@ export function useDurationFormat() {
   const { t } = useTranslation();
   return (minutes: number) =>
     minutes < 60
-      ? t('history.minutes', { minutes })
-      : t('history.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
+      ? t('common.minutes', { minutes })
+      : t('common.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
 }
