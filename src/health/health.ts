@@ -13,7 +13,6 @@ export {
   stillAllowed as healthStillAllowed,
   store as healthStore,
   weightAllowed as healthWeightAllowed,
-  writeAllowed as healthWriteAllowed,
 } from './platform';
 export type {
   HealthAvailability,

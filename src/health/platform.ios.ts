@@ -20,6 +20,7 @@ import { toIsoDate } from '@/i18n/dates';
 
 import { heartRateSamples } from './samples';
 import {
+  coversMostOf,
   isSavedWorkoutId,
   NO_WORKOUT_STATS,
   savedWorkoutId,
@@ -151,9 +152,14 @@ export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
   );
 }
 
-// Apple tells an app whether it may write a type, unlike whether it may read one.
+// Apple tells an app whether it may write a type, unlike whether it may read one. A workout is
+// saved with its calories, so both have to be allowed: Apple lets the user allow either alone.
 export const writeAllowed = (): Promise<boolean> =>
-  Promise.resolve(authorizationStatusFor(WORKOUT) === AuthorizationStatus.sharingAuthorized);
+  Promise.resolve(
+    ([WORKOUT, ACTIVE_ENERGY] as const).every(
+      (type) => authorizationStatusFor(type) === AuthorizationStatus.sharingAuthorized,
+    ),
+  );
 
 export async function requestWriteAccess(): Promise<boolean> {
   await requestAuthorization({ toShare: [WORKOUT, ACTIVE_ENERGY], toRead: [WORKOUT] });
@@ -181,7 +187,11 @@ export async function storedWorkouts(logId: number, from: Date, to: Date): Promi
   const kcal = ours?.metadata[SAVED_KCAL];
   return {
     ours: ours ? { activeKcal: typeof kcal === 'number' ? kcal : null } : null,
-    others: workouts.some((workout) => !isSavedWorkoutId(workout.metadata[EXTERNAL_ID])),
+    others: workouts.some(
+      (workout) =>
+        !isSavedWorkoutId(workout.metadata[EXTERNAL_ID]) &&
+        coversMostOf({ start: workout.startDate, end: workout.endDate }, from, to),
+    ),
   };
 }
 

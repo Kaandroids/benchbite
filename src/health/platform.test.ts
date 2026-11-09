@@ -396,7 +396,9 @@ describe('saving workouts', () => {
   const start = new Date('2026-11-09T18:05:00Z');
   const end = new Date('2026-11-09T18:45:00Z');
   const workout = { logId: 11, start, end, activeKcal: 395 };
-  const savedBy = (id?: string, kcal?: number) => ({
+  const savedBy = (id?: string, kcal?: number, from = start, to = end) => ({
+    startDate: from,
+    endDate: to,
     metadata: {
       ...(id ? { HKExternalUUID: id } : {}),
       ...(kcal !== undefined ? { BenchbiteActiveKcal: kcal } : {}),
@@ -411,6 +413,13 @@ describe('saving workouts', () => {
       toRead: ['HKWorkoutTypeIdentifier'],
     });
     jest.mocked(authorizationStatusFor).mockReturnValue(1 as never);
+    expect(await ios.writeAllowed()).toBe(false);
+  });
+
+  it('counts writing as not allowed in Apple Health with workouts allowed but not energy', async () => {
+    jest
+      .mocked(authorizationStatusFor)
+      .mockImplementation((type) => (type === 'HKWorkoutTypeIdentifier' ? 2 : 1) as never);
     expect(await ios.writeAllowed()).toBe(false);
   });
 
@@ -450,16 +459,35 @@ describe('saving workouts', () => {
     expect(await ios.storedWorkouts(11, start, end)).toEqual({ ours: null, others: false });
   });
 
+  it('counts no workout of another app in Apple Health that only touches the log’s time', async () => {
+    const run = savedBy(
+      undefined,
+      undefined,
+      new Date('2026-11-09T17:30:00Z'),
+      new Date('2026-11-09T18:10:00Z'),
+    );
+    jest.mocked(queryWorkoutSamples).mockResolvedValue([run] as never);
+    expect(await ios.storedWorkouts(11, start, end)).toEqual({ ours: null, others: false });
+  });
+
   it('asks Health Connect to write exercise and calories, and to read exercise', async () => {
-    jest
-      .mocked(getGrantedPermissions)
-      .mockResolvedValue([{ accessType: 'write', recordType: 'ExerciseSession' }] as never);
+    jest.mocked(getGrantedPermissions).mockResolvedValue([
+      { accessType: 'write', recordType: 'ExerciseSession' },
+      { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
+    ] as never);
     expect(await android.requestWriteAccess()).toBe(true);
     expect(requestPermission).toHaveBeenCalledWith([
       { accessType: 'write', recordType: 'ExerciseSession' },
       { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
       { accessType: 'read', recordType: 'ExerciseSession' },
     ]);
+  });
+
+  it('counts writing as not allowed in Health Connect with exercise allowed but not calories', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'write', recordType: 'ExerciseSession' }] as never);
+    expect(await android.writeAllowed()).toBe(false);
   });
 
   it('saves a strength session to Health Connect under the log’s id, which replaces its copy', async () => {
@@ -497,11 +525,17 @@ describe('saving workouts', () => {
     );
   });
 
+  const session = (clientRecordId?: string, from = start, to = end) => ({
+    startTime: from.toISOString(),
+    endTime: to.toISOString(),
+    metadata: clientRecordId ? { clientRecordId } : {},
+  });
+
   it('finds its own copy, with its calories, and other apps’ sessions in Health Connect', async () => {
-    const own = { metadata: { clientRecordId: 'benchbite-log-11' } };
+    const own = session('benchbite-log-11');
     jest
       .mocked(readRecords)
-      .mockResolvedValueOnce({ records: [own, { metadata: {} }] } as never)
+      .mockResolvedValueOnce({ records: [own, session()] } as never)
       .mockResolvedValueOnce({
         records: [{ ...own, energy: { inKilocalories: 395 } }],
       } as never);
@@ -509,6 +543,22 @@ describe('saving workouts', () => {
       ours: { activeKcal: 395 },
       others: true,
     });
+  });
+
+  it('counts its copies of other logs in Health Connect as no other app’s', async () => {
+    jest
+      .mocked(readRecords)
+      .mockResolvedValueOnce({ records: [session('benchbite-log-10')] } as never);
+    expect(await android.storedWorkouts(11, start, end)).toEqual({ ours: null, others: false });
+  });
+
+  it('counts a session of another app in Health Connect that covers most of the log’s time', async () => {
+    jest.mocked(readRecords).mockResolvedValueOnce({
+      records: [
+        session(undefined, new Date('2026-11-09T18:00:00Z'), new Date('2026-11-09T18:30:00Z')),
+      ],
+    } as never);
+    expect(await android.storedWorkouts(11, start, end)).toEqual({ ours: null, others: true });
   });
 
   it('takes its copy out of Health Connect', async () => {

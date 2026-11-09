@@ -2,7 +2,7 @@ import { recentLogs } from '@/history/history';
 import { createTestQueryClient } from '@/test/render';
 
 import { setHealthConnected, setWriteSince, writeSince } from './connection';
-import { removeWorkout, saveWorkout, storedWorkouts } from './platform';
+import { removeWorkout, saveWorkout, storedWorkouts, writeAllowed } from './platform';
 import { saveRecentWorkouts, saveToHealth } from './workout-write';
 
 jest.mock('expo-sqlite/kv-store', () => {
@@ -37,6 +37,7 @@ beforeEach(() => {
   setHealthConnected(true);
   setWriteSince(SINCE);
   jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: false });
+  jest.mocked(writeAllowed).mockResolvedValue(true);
 });
 
 describe('saveToHealth', () => {
@@ -100,6 +101,13 @@ describe('saveRecentWorkouts', () => {
     expect(saveWorkout).toHaveBeenCalledWith(saved(7));
     expect(saveWorkout).toHaveBeenCalledWith(saved(8));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['saved-to-health'] });
+  });
+
+  it('turns saving off when the system took writing back', async () => {
+    jest.mocked(writeAllowed).mockResolvedValue(false);
+    await saveRecentWorkouts(createTestQueryClient());
+    expect(recentLogs).not.toHaveBeenCalled();
+    expect(writeSince()).toBeNull();
   });
 
   it('reads no logs while saving is off', async () => {

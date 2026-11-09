@@ -13,11 +13,13 @@ import {
   requestPermission,
   revokeAllPermissions,
   SdkAvailabilityStatus,
+  type Metadata,
 } from 'react-native-health-connect';
 import { Linking } from 'react-native';
 
 import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
+  coversMostOf,
   isSavedWorkoutId,
   NO_STORED_WORKOUTS,
   NO_WORKOUT_STATS,
@@ -232,12 +234,19 @@ const WRITES = [
   { accessType: 'read', recordType: 'ExerciseSession' },
 ] as const;
 
+/**
+ * Whether workouts may be written: exercise and its calories both, which are written together and
+ * which Health Connect lets the user allow alone.
+ */
 export async function writeAllowed(): Promise<boolean> {
   if (!(await initialize())) return false;
   const granted = await getGrantedPermissions();
-  return granted.some(
-    (permission) =>
-      permission.accessType === 'write' && permission.recordType === 'ExerciseSession',
+  return WRITES.every(
+    ({ accessType, recordType }) =>
+      accessType !== 'write' ||
+      granted.some(
+        (permission) => permission.accessType === 'write' && permission.recordType === recordType,
+      ),
   );
 }
 
@@ -257,15 +266,18 @@ export async function storedWorkouts(logId: number, from: Date, to: Date): Promi
     endTime: to.toISOString(),
   };
   const id = savedWorkoutId(logId);
+  const byAnotherApp = (record: { startTime: string; endTime: string; metadata?: Metadata }) =>
+    !isSavedWorkoutId(record.metadata?.clientRecordId) &&
+    coversMostOf({ start: new Date(record.startTime), end: new Date(record.endTime) }, from, to);
   const { records } = await readRecords('ExerciseSession', { timeRangeFilter });
   if (!records.some((record) => record.metadata?.clientRecordId === id)) {
-    return { ours: null, others: records.length > 0 };
+    return { ours: null, others: records.some(byAnotherApp) };
   }
   const { records: energy } = await readRecords('ActiveCaloriesBurned', { timeRangeFilter });
   const kcal = energy.find((record) => record.metadata?.clientRecordId === id);
   return {
     ours: { activeKcal: kcal ? kcal.energy.inKilocalories : null },
-    others: records.some((record) => !isSavedWorkoutId(record.metadata?.clientRecordId)),
+    others: records.some(byAnotherApp),
   };
 }
 

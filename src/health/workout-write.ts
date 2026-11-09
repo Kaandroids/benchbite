@@ -8,11 +8,12 @@ import { recentLogs } from '@/history/history';
 import {
   isHealthConnected,
   useHealthConnected,
+  setWriteSince,
   useWritingWorkouts,
   writeSince,
 } from './connection';
 import { oneAtATime } from './import-guard';
-import { removeWorkout, saveWorkout, storedWorkouts } from './platform';
+import { removeWorkout, saveWorkout, storedWorkouts, writeAllowed } from './platform';
 import { READ_FOR_MS } from './workout-health';
 
 /** Where a workout is in the store: saved by Benchbite, or recorded by another app, as a watch's. */
@@ -51,6 +52,11 @@ export async function saveToHealth(log: LogToSave): Promise<SavedToHealth | null
  */
 const saveRecent = oneAtATime(async (): Promise<boolean> => {
   if (!isHealthConnected() || writeSince() === null) return false;
+  // The system may have taken writing back since, which turns saving off (ADR 0105).
+  if (!(await writeAllowed())) {
+    setWriteSince(null);
+    return false;
+  }
   const logs = await recentLogs(new Date(Date.now() - READ_FOR_MS));
   for (const log of logs) {
     try {

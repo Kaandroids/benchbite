@@ -41,16 +41,29 @@ export type WorkoutToSave = { logId: number; start: Date; end: Date; activeKcal:
 
 /**
  * The workouts the store holds in a workout's time: Benchbite's own copy of it, with the calories
- * it was saved with, and whether another app, as a watch's, recorded one.
+ * it was saved with, and whether another app, as a watch's, recorded the same workout.
  */
 export type StoredWorkouts = { ours: { activeKcal: number | null } | null; others: boolean };
 
 /** Nothing in the store. */
 export const NO_STORED_WORKOUTS: StoredWorkouts = { ours: null, others: false };
 
+const SAVED_ID_PREFIX = 'benchbite-log-';
+
 /** How Benchbite's own copy of a workout is known in the store, by its log. */
-export const savedWorkoutId = (logId: number) => `benchbite-log-${logId}`;
+export const savedWorkoutId = (logId: number) => `${SAVED_ID_PREFIX}${logId}`;
 
 /** Whether an id is that of a workout Benchbite saved. */
 export const isSavedWorkoutId = (id: unknown) =>
-  typeof id === 'string' && id.startsWith('benchbite-log-');
+  typeof id === 'string' && id.startsWith(SAVED_ID_PREFIX);
+
+/**
+ * Whether another app's workout is the log's own, as a watch recorded it: one that covers more than
+ * half of the log's time. A run just before or after only touches it.
+ */
+export function coversMostOf(workout: { start: Date; end: Date }, from: Date, to: Date): boolean {
+  const overlap =
+    Math.min(workout.end.getTime(), to.getTime()) -
+    Math.max(workout.start.getTime(), from.getTime());
+  return overlap > (to.getTime() - from.getTime()) / 2;
+}
