@@ -9,6 +9,8 @@ import { MessageView } from '@/components/ui/message-view';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
+import { AlsoTodayCard } from '@/health/also-today-card';
+import { useOutsideWorkoutsOn } from '@/health/outside-workouts';
 import { ReadAskCard } from '@/health/read-ask-card';
 import { useReadAsk, useReading } from '@/health/use-read-ask';
 import { toIsoDate } from '@/i18n/dates';
@@ -60,6 +62,12 @@ export function TodayScreen() {
   const { schedule, plan, queries: weekQueries } = useWeekSchedule(today);
   const todayOn = toIsoDate(today);
   const eaten = useDayEntries(todayOn);
+  // Other apps' workouts of the week: shown, counted toward neither the streak nor the week.
+  const outside = useOutsideWorkoutsOn(schedule.days[0]!.date, schedule.days[6]!.date);
+  const outsideDays: Record<string, number> = {};
+  for (const workout of outside.data ?? []) {
+    outsideDays[workout.startedOn] = (outsideDays[workout.startedOn] ?? 0) + 1;
+  }
   const queries = [...weekQueries, targets, eaten];
 
   // The streak is tried again too, though the tab shows without it.
@@ -129,6 +137,7 @@ export function TodayScreen() {
           startedOn={paging.startedOn}
           onDayPress={(day) => setSheet({ kind: 'day', date: day.date })}
           onPrevious={paging.onPrevious}
+          outsideDays={outsideDays}
         />
         {targets.data ? (
           <TargetsCard
@@ -155,6 +164,10 @@ export function TodayScreen() {
             today={today}
           />
         ) : null}
+        <AlsoTodayCard
+          entering={cardEntering(4)}
+          workouts={(outside.data ?? []).filter((workout) => workout.startedOn === todayOn)}
+        />
       </>
     );
   }
