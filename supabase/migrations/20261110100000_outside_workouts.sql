@@ -18,10 +18,12 @@ create table public.outside_workouts (
   -- The device's day it started on, as for logged workouts (ADR 0044).
   started_on date not null,
   -- As on workout_logs (ADR 0098).
-  active_kcal smallint check (active_kcal between 0 and 5000),
+  active_kcal integer check (active_kcal between 0 and 5000),
   heart_rate_avg smallint check (heart_rate_avg between 25 and 250),
   -- The app or watch that recorded it, by its name, as health_source_name() keeps it.
   source text check (char_length(source) between 1 and 80),
+  -- When the server first kept it, which the limit counts by: the times above are the caller's.
+  imported_at timestamptz not null default now(),
   primary key (user_id, store, source_id),
   check (ended_at > started_at and ended_at - started_at <= interval '24 hours'),
   -- The device's day is within a day of the start's day in UTC.
@@ -41,9 +43,10 @@ create policy "Users read their own outside workouts"
 revoke all on public.outside_workouts from anon, authenticated;
 grant select on public.outside_workouts to authenticated;
 
--- The outside workouts to show: one that covers more than half of a logged workout's time is that
--- workout, as a watch recorded it, and its heart rate and calories already show on the log. A view,
--- so that a workout logged after the import hides it too.
+-- The outside workouts to show: one that shares more than half of its time with a logged workout,
+-- and more than half of the log's, is that workout, as a watch recorded it, and its heart rate and
+-- calories already show on the log. A long hike around a short log is not. A view, so that a workout
+-- logged after the import hides it too.
 create view public.outside_workout_list
 with (security_invoker = true)
 as
@@ -64,16 +67,20 @@ where not exists (
   where l.user_id = o.user_id
     and l.started_at < o.ended_at
     and l.finished_at > o.started_at
+    -- A log lasts at most 12 hours, which bounds the logs read.
+    and l.finished_at < o.ended_at + interval '12 hours'
     and least(o.ended_at, l.finished_at) - greatest(o.started_at, l.started_at)
       > (l.finished_at - l.started_at) / 2
+    and least(o.ended_at, l.finished_at) - greatest(o.started_at, l.started_at)
+      > (o.ended_at - o.started_at) / 2
 );
 
 revoke all on public.outside_workout_list from anon, authenticated;
 grant select on public.outside_workout_list to authenticated;
 
--- The most outside workouts a user keeps from the last 400 days, the most an import reaches back:
--- several a day, far more than anyone records, so that no one fills the table. Older ones stay
--- without counting, so a user of many years is never stopped.
+-- The most outside workouts a user's imports of the last 400 days keep: several a day, far more than
+-- anyone records, so that no one fills the table. They count by when they were kept, which the
+-- caller cannot choose; older ones stay without counting, so a user of many years is never stopped.
 create function public.outside_workout_limit()
 returns integer
 language sql
@@ -192,7 +199,8 @@ begin
       r.started_at,
       r.ended_at,
       r.started_on,
-      case when r.active_kcal between 0 and 5000 then r.active_kcal::smallint end,
+      -- outside_workouts' checks; they change together.
+      case when r.active_kcal between 0 and 5000 then r.active_kcal::integer end,
       case when r.heart_rate_avg between 25 and 250 then r.heart_rate_avg::smallint end,
       r.source
     from read r
@@ -216,7 +224,7 @@ begin
     select count(*)
     from public.outside_workouts o
     where o.user_id = caller_id
-      and o.started_at >= now() - interval '400 days'
+      and o.imported_at >= now() - interval '400 days'
   ) > public.outside_workout_limit() then
     raise exception 'Too many outside workouts' using errcode = '54000';
   end if;

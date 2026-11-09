@@ -1093,6 +1093,7 @@ export type Database = {
           activity: string;
           ended_at: string;
           heart_rate_avg: number | null;
+          imported_at: string;
           source: string | null;
           source_id: string;
           started_at: string;
@@ -1106,6 +1107,7 @@ export type Database = {
           activity: string;
           ended_at: string;
           heart_rate_avg?: number | null;
+          imported_at?: string;
           source?: string | null;
           source_id: string;
           started_at: string;
@@ -1118,6 +1120,7 @@ export type Database = {
           activity?: string;
           ended_at?: string;
           heart_rate_avg?: number | null;
+          imported_at?: string;
           source?: string | null;
           source_id?: string;
           started_at?: string;
