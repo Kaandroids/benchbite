@@ -8,6 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
+import { FigureRow, type Figure } from './figure-row';
 import { HeartRateChart } from './heart-rate-chart';
 import { SavedToHealthLine } from './saved-to-health';
 import { useStoreName } from './use-store-name';
@@ -40,11 +41,11 @@ export function WatchCard({
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
-  const figures = [
+  const figures: Figure[] = [
     ...(averageBpm !== null && maxBpm !== null
       ? [
-          { value: Math.round(averageBpm), label: t('health.watch.averageBpm') },
-          { value: Math.round(maxBpm), label: t('health.watch.maxBpm') },
+          { value: String(Math.round(averageBpm)), label: t('health.watch.averageBpm') },
+          { value: String(Math.round(maxBpm)), label: t('health.watch.maxBpm') },
         ]
       : []),
     ...(activeKcal != null
@@ -58,22 +59,7 @@ export function WatchCard({
         <IconTile name="heart" size={36} color="snack" background="snackBackground" />
         <Text variant="headline">{t('health.watch.title')}</Text>
       </View>
-      <View style={styles.row}>
-        {figures.map((figure, index) => (
-          <View
-            key={figure.label}
-            style={[
-              styles.figure,
-              { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-            ]}
-          >
-            <Text variant="headline">{figure.value}</Text>
-            <Text variant="caption" color="textMuted">
-              {figure.label}
-            </Text>
-          </View>
-        ))}
-      </View>
+      <FigureRow figures={figures} />
       {chart && averageBpm !== null && maxBpm !== null ? (
         <HeartRateChart {...chart} average={averageBpm} max={maxBpm} />
       ) : null}
@@ -124,10 +110,6 @@ export function WaitingCard() {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  figure: {
-    flex: 1,
     alignItems: 'center',
   },
   flex: {

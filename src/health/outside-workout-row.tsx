@@ -24,7 +24,7 @@ export function useOutsideSummary() {
     [
       duration(outsideMinutes(workout)),
       workout.activeKcal !== null
-        ? t('history.kcalMeasured', { kcal: format(workout.activeKcal) })
+        ? t('history.kcalMeasured', { kcal: format(Math.round(workout.activeKcal)) })
         : null,
       withSource ? workout.source : null,
     ]

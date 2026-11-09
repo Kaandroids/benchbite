@@ -11,6 +11,7 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { ACTIVITY_ICONS } from './activities';
+import { FigureRow, type Figure } from './figure-row';
 import { outsideMinutes } from './outside-workout-row';
 import type { ListedOutsideWorkout } from './outside-workouts';
 import { useStoreName } from './use-store-name';
@@ -27,19 +28,19 @@ export function OutsideWorkoutSheet({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const day = useDayFormat();
   const clock = useClockFormat();
   const duration = useDurationFormat();
   const { format } = useNumberFormat();
   const store = useStoreName();
-  const figures = [
+  const figures: Figure[] = [
     { value: duration(outsideMinutes(workout)), label: t('health.outside.duration') },
     ...(workout.activeKcal !== null
-      ? [{ value: format(workout.activeKcal), label: t('health.watch.kcal') }]
+      ? [{ value: format(Math.round(workout.activeKcal)), label: t('health.watch.kcal') }]
       : []),
     ...(workout.heartRateAvg !== null
-      ? [{ value: String(workout.heartRateAvg), label: t('health.watch.averageBpm') }]
+      ? [{ value: String(Math.round(workout.heartRateAvg)), label: t('health.watch.averageBpm') }]
       : []),
   ];
   const source = workout.source
@@ -72,21 +73,8 @@ export function OutsideWorkoutSheet({
           </Text>
         </View>
       </View>
-      <Card style={styles.row}>
-        {figures.map((figure, index) => (
-          <View
-            key={figure.label}
-            style={[
-              styles.figure,
-              { borderLeftWidth: index > 0 ? 1 : 0, borderLeftColor: colors.border },
-            ]}
-          >
-            <Text variant="headline">{figure.value}</Text>
-            <Text variant="caption" color="textMuted">
-              {figure.label}
-            </Text>
-          </View>
-        ))}
+      <Card>
+        <FigureRow figures={figures} />
       </Card>
       <View style={{ gap: spacing.xs }}>
         {source ? <Text variant="label">{source}</Text> : null}
@@ -102,10 +90,6 @@ export function OutsideWorkoutSheet({
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  figure: {
-    flex: 1,
     alignItems: 'center',
   },
   flex: {
