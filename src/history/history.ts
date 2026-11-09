@@ -1,7 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
-import type { ListedOutsideWorkout } from '@/health/outside-workouts';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
@@ -450,42 +449,32 @@ export function useEditLog() {
   });
 }
 
-export type LogWeek = { start: Date; logs: LogSummary[]; minutes: number };
-
-/** Finished workouts by the week they were done in, latest first. */
-export function byWeek(logs: LogSummary[]): LogWeek[] {
-  const weeks: LogWeek[] = [];
-  for (const log of logs) {
-    const start = weekStart(log.startedAt);
-    let week = weeks.find((item) => item.start.getTime() === start.getTime());
-    if (!week) {
-      week = { start, logs: [], minutes: 0 };
-      weeks.push(week);
-    }
-    week.logs.push(log);
-    week.minutes += durationMinutes(log);
-  }
-  return weeks;
-}
-
-/** An entry of the history: a finished workout, or a workout another app recorded (ADR 0106). */
-export type HistoryEntry =
-  { kind: 'log'; log: LogSummary } | { kind: 'outside'; workout: ListedOutsideWorkout };
+/** An entry of the history: a finished workout, or another thing done then, as from another app. */
+export type HistoryEntry<Other> =
+  { kind: 'log'; log: LogSummary } | { kind: 'other'; other: Other };
 
 /**
- * A week of the history, latest first: its finished workouts and other apps' workouts by when they
- * started. Its count and minutes are the finished workouts' alone, as other apps' count toward
- * neither the streak nor the week.
+ * A week of the history: its finished workouts and the other entries by when they started, latest
+ * first. Its count and minutes are the finished workouts' alone, as other apps' workouts count
+ * toward neither the streak nor the week (ADR 0106).
  */
-export type HistoryWeek = LogWeek & { entries: HistoryEntry[] };
+export type HistoryWeek<Other> = {
+  start: Date;
+  logs: LogSummary[];
+  minutes: number;
+  entries: HistoryEntry<Other>[];
+};
 
-/** Finished workouts and other apps' workouts by the week they were done in, latest first. */
-export function byWeekWith(logs: LogSummary[], outside: ListedOutsideWorkout[]): HistoryWeek[] {
-  const entries: (HistoryEntry & { at: Date })[] = [
+/** Finished workouts, and other entries by when they started, by week, latest first. */
+export function byWeek<Other extends { startedAt: Date } = never>(
+  logs: LogSummary[],
+  others: Other[] = [],
+): HistoryWeek<Other>[] {
+  const entries: (HistoryEntry<Other> & { at: Date })[] = [
     ...logs.map((log) => ({ kind: 'log' as const, log, at: log.startedAt })),
-    ...outside.map((workout) => ({ kind: 'outside' as const, workout, at: workout.startedAt })),
+    ...others.map((other) => ({ kind: 'other' as const, other, at: other.startedAt })),
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
-  const weeks: HistoryWeek[] = [];
+  const weeks: HistoryWeek<Other>[] = [];
   for (const { at, ...entry } of entries) {
     const start = weekStart(at);
     let week = weeks.find((item) => item.start.getTime() === start.getTime());

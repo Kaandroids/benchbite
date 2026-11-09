@@ -17,11 +17,11 @@ import { weekStart } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
 import { useDurationFormat, useWeekTitle } from './format';
-import { byWeekWith, useLogSummaries, type HistoryEntry } from './history';
+import { byWeek, useLogSummaries, type HistoryEntry } from './history';
 import { LogRow } from './log-row';
 
-const keyOf = (entry: HistoryEntry) =>
-  entry.kind === 'log' ? String(entry.log.id) : entry.workout.key;
+const keyOf = (entry: HistoryEntry<ListedOutsideWorkout>) =>
+  entry.kind === 'log' ? String(entry.log.id) : entry.other.key;
 
 /**
  * Every finished workout, by week, latest first, with the workouts other apps recorded among them
@@ -45,7 +45,7 @@ export function HistoryScreen() {
   );
   // Grouped after the pages are joined, so that a week split between two pages shows as one. The
   // last week may go on in the next page, so it is complete only once there are no more pages.
-  const weeks = byWeekWith(loadedLogs, outside.data ?? []).map((week, index, all) => ({
+  const weeks = byWeek(loadedLogs, outside.data ?? []).map((week, index, all) => ({
     ...week,
     data: week.entries,
     complete: !logs.hasNextPage || index < all.length - 1,
@@ -143,9 +143,9 @@ export function HistoryScreen() {
                   <LogRow log={entry.log} divider={!first} icons />
                 ) : (
                   <OutsideWorkoutRow
-                    workout={entry.workout}
+                    workout={entry.other}
                     divider={!first}
-                    onPress={() => setOpen(entry.workout)}
+                    onPress={() => setOpen(entry.other)}
                   />
                 )}
               </View>

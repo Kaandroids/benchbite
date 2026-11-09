@@ -369,4 +369,23 @@ describe('byWeek', () => {
       [new Date(2026, 9, 12), [1], 55],
     ]);
   });
+  it('puts other entries among them by when they started, outside the count and minutes', () => {
+    const run = { key: 'run', startedAt: new Date('2026-10-21T07:00') };
+    const ride = { key: 'ride', startedAt: new Date('2026-10-14T07:00') };
+    const weeks = byWeek(
+      [log(3, '2026-10-23T18:00', 52), log(2, '2026-10-19T18:00', 48)],
+      [run, ride],
+    );
+    expect(
+      weeks.map((week) => [
+        week.start,
+        week.entries.map((entry) => (entry.kind === 'log' ? entry.log.id : entry.other.key)),
+        week.logs.length,
+        week.minutes,
+      ]),
+    ).toEqual([
+      [new Date(2026, 9, 19), [3, 'run', 2], 2, 100],
+      [new Date(2026, 9, 12), ['ride'], 0, 0],
+    ]);
+  });
 });
