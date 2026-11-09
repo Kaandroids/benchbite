@@ -30,7 +30,10 @@
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_WEIGHT",
-        "android.permission.health.READ_STEPS"
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_EXERCISE",
+        "android.permission.health.WRITE_EXERCISE",
+        "android.permission.health.WRITE_ACTIVE_CALORIES_BURNED"
       ]
     },
     "locales": {
@@ -81,8 +84,8 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date. It writes nothing to Apple Health.",
-          "NSHealthUpdateUsageDescription": false,
+          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date.",
+          "NSHealthUpdateUsageDescription": "When you turn it on, Benchbite saves each workout you finish, with its time and active calories, to Apple Health.",
           "background": false
         }
       ],

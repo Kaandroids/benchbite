@@ -3,6 +3,7 @@
     "NSCameraUsageDescription": "Benchbite uses the camera to take photos of how your own exercises are done, of meals to estimate and of what you send to Bite, your coach.",
     "NSPhotoLibraryUsageDescription": "Benchbite uses the photos you choose to show how your own exercises are done, to estimate your meals and to send them to Bite, your coach.",
     "NSMicrophoneUsageDescription": "Benchbite uses the microphone only while you hold to talk to Bite, your coach, to send what you say as a voice message.",
-    "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date. It writes nothing to Apple Health."
+    "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date.",
+    "NSHealthUpdateUsageDescription": "When you turn it on, Benchbite saves each workout you finish, with its time and active calories, to Apple Health."
   }
 }
