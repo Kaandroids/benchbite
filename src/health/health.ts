@@ -6,6 +6,7 @@ export {
   installStore as installHealthStore,
   requestStepsAccess as requestHealthStepsAccess,
   requestWeightAccess as requestHealthWeightAccess,
+  requestWorkoutsAccess as requestHealthWorkoutsAccess,
   releaseAccess as releaseHealthAccess,
   requestAccess as requestHealthAccess,
   requestWriteAccess as requestHealthWriteAccess,
@@ -13,6 +14,7 @@ export {
   stillAllowed as healthStillAllowed,
   store as healthStore,
   weightAllowed as healthWeightAllowed,
+  workoutsAllowed as healthWorkoutsAllowed,
 } from './platform';
 export type {
   HealthAvailability,

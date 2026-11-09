@@ -10,7 +10,9 @@
     "sets_other": "{{count}} set",
     "keepEditing": "Düzenlemeye devam et",
     "discard": "Sil",
-    "done": "Bitti"
+    "done": "Bitti",
+    "minutes": "{{minutes}} dk",
+    "hours": "{{hours}} sa {{minutes}} dk"
   },
   "photoSheet": {
     "take": "Fotoğraf çek",
@@ -223,7 +225,9 @@
       "streak": {
         "done": "seriye sayıldı",
         "frozen": "donduruldu"
-      }
+      },
+      "outside_one": "başka bir uygulamadan {{count}} antrenman",
+      "outside_other": "başka uygulamalardan {{count}} antrenman"
     },
     "pastWeek": {
       "workouts": {
@@ -1661,8 +1665,6 @@
     "weekLast": "Geçen hafta",
     "weekTotal_one": "{{count}} antrenman · {{time}}",
     "weekTotal_other": "{{count}} antrenman · {{time}}",
-    "minutes": "{{minutes}} dk",
-    "hours": "{{hours}} sa {{minutes}} dk",
     "kcal": "~{{kcal}} kcal",
     "kcalMeasured": "{{kcal}} kcal",
     "open": "Antrenmanı açar",
@@ -2410,13 +2412,15 @@
       "weightWhen": "günde bir, son 30 günden itibaren",
       "steps": "Adımlar",
       "stepsWhen": "her gün için bir toplam",
-      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kilo ve adım sayısını hesabınla birlikte saklar. {{store}} içine yalnızca antrenmanları kaydetmeyi açarsan yazar. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, günde bir kilo ve adım sayısını ve diğer uygulamaların kaydettiği antrenmanları hesabınla birlikte saklar. {{store}} içine yalnızca antrenmanları kaydetmeyi açarsan yazar. Bağlantıyı Ayarlar’dan kesebilirsin.",
       "continue": "Devam",
       "notNow": "Şimdi değil",
       "next": {
         "appleHealth": "Sırada Apple bunlardan hangilerine izin vereceğini soracak.",
         "healthConnect": "Sırada Health Connect bunlardan hangilerine izin vereceğini soracak."
-      }
+      },
+      "workouts": "Diğer antrenmanlar",
+      "workoutsWhen": "diğer uygulamaların kaydettiği koşu, bisiklet ve dersler"
     },
     "disconnect": {
       "body": "Bağlantıyı kesince Benchbite {{store}} verilerini okumayı bırakır. Alınmış kilolar, adımlar ve antrenmanlarının nabız ve kalorisi kalır. Bir antrenmanı silersen onun nabzı ve kalorisi de silinir.",
@@ -2464,6 +2468,11 @@
         "title": "Adımların {{store}} üzerinden",
         "body": "Telefonunun ya da saatinin saydığı adımlarla her gün ne kadar yürüdüğünü gör.",
         "bringIn": "Adımlarımı göster"
+      },
+      "workouts": {
+        "title": "{{store}} üzerinden diğer antrenmanların",
+        "body": "Saatinin ya da diğer uygulamaların kaydettiği koşu, bisiklet ve dersler burada ve Bugün’de, Benchbite antrenmanlarının yanında görünür.",
+        "bringIn": "Antrenmanlarımı göster"
       }
     },
     "write": {
@@ -2491,6 +2500,37 @@
       },
       "saved": "{{store}}’e kaydedildi",
       "recorded": "Saatin kaydettiği için zaten {{store}} içinde"
+    },
+    "outside": {
+      "alsoToday": "Bugün ayrıca",
+      "from": "{{source}} kaydetti",
+      "fromStore": "{{store}} üzerinden",
+      "open": "Ayrıntılarını gösterir",
+      "time": "{{day}} · {{from}}–{{to}}",
+      "duration": "süre",
+      "note": "Başka bir uygulama kaydetti, bu yüzden Benchbite yalnızca gösterir. Orada değiştir ya da sil.",
+      "kcal": "{{kcal}} kcal"
+    },
+    "activities": {
+      "running": "Koşu",
+      "walking": "Yürüyüş",
+      "hiking": "Doğa yürüyüşü",
+      "cycling": "Bisiklet",
+      "swimming": "Yüzme",
+      "strength_training": "Kuvvet antrenmanı",
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "pilates": "Pilates",
+      "dance": "Dans",
+      "rowing": "Kürek",
+      "elliptical": "Eliptik",
+      "stair_climbing": "Merdiven",
+      "team_sport": "Takım sporu",
+      "racket_sport": "Raket sporu",
+      "martial_arts": "Dövüş sporu",
+      "winter_sport": "Kış sporu",
+      "water_sport": "Su sporu",
+      "other": "Antrenman"
     }
   },
   "steps": {

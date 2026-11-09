@@ -1,7 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@/test/render';
 
 import { setHealthConnected, setReadSync, readSync } from './connection';
-import { requestHealthStepsAccess, requestHealthWeightAccess } from './health';
+import {
+  requestHealthStepsAccess,
+  requestHealthWeightAccess,
+  requestHealthWorkoutsAccess,
+} from './health';
+import { importOutsideWorkouts } from './outside-workouts-import';
 import { ReadAskCard } from './read-ask-card';
 import { useReadAsk } from './use-read-ask';
 import { importHealthSteps } from './steps-import';
@@ -21,11 +26,13 @@ jest.mock('./health', () => ({
   healthStore: 'appleHealth',
   requestHealthStepsAccess: jest.fn(),
   requestHealthWeightAccess: jest.fn(),
+  requestHealthWorkoutsAccess: jest.fn(),
 }));
 jest.mock('./weight-import', () => ({ importHealthWeights: jest.fn() }));
 jest.mock('./steps-import', () => ({ importHealthSteps: jest.fn() }));
+jest.mock('./outside-workouts-import', () => ({ importOutsideWorkouts: jest.fn() }));
 
-function AskCard({ kind = 'weight' }: { kind?: 'weight' | 'steps' }) {
+function AskCard({ kind = 'weight' }: { kind?: 'weight' | 'steps' | 'workouts' }) {
   return <ReadAskCard ask={useReadAsk(kind)} />;
 }
 
@@ -90,4 +97,16 @@ it('asks for steps the same way, on their own', async () => {
   await waitFor(() => expect(readSync('steps')).toBe('on'));
   expect(importHealthSteps).toHaveBeenCalled();
   expect(readSync('weight')).toBeNull();
+});
+
+it('asks to show the workouts other apps recorded, and brings them in once allowed', async () => {
+  setReadSync('workouts', null);
+  jest.mocked(requestHealthWorkoutsAccess).mockResolvedValue(true);
+  jest.mocked(importOutsideWorkouts).mockResolvedValue(true);
+  await render(<AskCard kind="workouts" />);
+  expect(screen.getByText('Your other workouts from Apple Health')).toBeOnTheScreen();
+
+  await fireEvent.press(screen.getByRole('button', { name: 'Show my workouts' }));
+  await waitFor(() => expect(readSync('workouts')).toBe('on'));
+  expect(importOutsideWorkouts).toHaveBeenCalled();
 });

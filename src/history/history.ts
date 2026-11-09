@@ -1,8 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { OUTSIDE_WORKOUTS_KEY } from '@/health/outside-workouts-key';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import { minutesBetween } from '@/lib/time';
 import type { SetValues } from '@/sets/values';
 import { STREAK_KEY } from '@/streak/streak';
 import type { WorkoutAlternative } from '@/workouts/alternatives';
@@ -126,7 +128,7 @@ export function kcalOf(
 
 /** Whole minutes between the start and the end of a workout. */
 export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'>): number {
-  return Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 60_000);
+  return minutesBetween(log.startedAt, log.finishedAt);
 }
 
 type SummaryRow = Database['public']['Views']['workout_log_summaries']['Row'];
@@ -402,6 +404,8 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: TRAINING_DAYS_KEY }),
         queryClient.invalidateQueries({ queryKey: RECORDS_KEY }),
         queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+        // A watch's copy of it, hidden while it was logged, shows again (ADR 0106).
+        queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY }),
       ]),
   });
 }
@@ -449,20 +453,66 @@ export function useEditLog() {
   });
 }
 
-export type LogWeek = { start: Date; logs: LogSummary[]; minutes: number };
+/** An entry of the history: a finished workout, or another thing done then, as from another app. */
+export type HistoryEntry<Other> =
+  { kind: 'log'; log: LogSummary } | { kind: 'other'; other: Other };
 
-/** Finished workouts by the week they were done in, latest first. */
-export function byWeek(logs: LogSummary[]): LogWeek[] {
-  const weeks: LogWeek[] = [];
-  for (const log of logs) {
-    const start = weekStart(log.startedAt);
+/**
+ * A week of the history: its finished workouts and the other entries by when they started, latest
+ * first. Its count and minutes are the finished workouts' alone, as other apps' workouts count
+ * toward neither the streak nor the week (ADR 0106).
+ */
+export type HistoryWeek<Other> = {
+  start: Date;
+  logs: LogSummary[];
+  minutes: number;
+  entries: HistoryEntry<Other>[];
+};
+
+/** Finished workouts, and other entries by when they started, by week, latest first. */
+export function byWeek<Other extends { startedAt: Date } = never>(
+  logs: LogSummary[],
+  others: Other[] = [],
+): HistoryWeek<Other>[] {
+  const entries: (HistoryEntry<Other> & { at: Date })[] = [
+    ...logs.map((log) => ({ kind: 'log' as const, log, at: log.startedAt })),
+    ...others.map((other) => ({ kind: 'other' as const, other, at: other.startedAt })),
+  ].sort((a, b) => b.at.getTime() - a.at.getTime());
+  const weeks: HistoryWeek<Other>[] = [];
+  for (const { at, ...entry } of entries) {
+    const start = weekStart(at);
     let week = weeks.find((item) => item.start.getTime() === start.getTime());
     if (!week) {
-      week = { start, logs: [], minutes: 0 };
+      week = { start, logs: [], minutes: 0, entries: [] };
       weeks.push(week);
     }
-    week.logs.push(log);
-    week.minutes += durationMinutes(log);
+    week.entries.push(entry);
+    if (entry.kind === 'log') {
+      week.logs.push(entry.log);
+      week.minutes += durationMinutes(entry.log);
+    }
   }
   return weeks;
+}
+
+/** A range of time, from a moment until before another; either open. */
+export type PageRange = { from: Date | null; to: Date | null };
+
+/**
+ * The range of time each page of logs reaches, latest first, from the week of its oldest log until
+ * the page before's: what else to show among them is read a page's range at a time, so loading an
+ * older page reads only its own. The last page's range is open once there are no more pages, and a
+ * page that reaches no further week adds none.
+ */
+export function rangesOfPages(pages: { logs: LogSummary[] }[], hasNextPage: boolean): PageRange[] {
+  const ranges: PageRange[] = [];
+  let to: Date | null = null;
+  pages.forEach((page, index) => {
+    const oldest = page.logs.at(-1);
+    const last = index === pages.length - 1;
+    const from = last && !hasNextPage ? null : oldest ? weekStart(oldest.startedAt) : to;
+    if (from === null || to === null || from < to) ranges.push({ from, to });
+    to = from ?? to;
+  });
+  return ranges;
 }

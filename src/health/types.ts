@@ -1,5 +1,6 @@
 // The types of the health store's interface (#467, ADR 0097), apart from it, which each
 // platform's module implements.
+import type { Activity } from './activities';
 
 /** The phone's store of health data, or none where the app has no way to read one. */
 export type HealthStore = 'appleHealth' | 'healthConnect' | null;
@@ -67,3 +68,32 @@ export function coversMostOf(workout: { start: Date; end: Date }, from: Date, to
     Math.max(workout.start.getTime(), from.getTime());
   return overlap > (to.getTime() - from.getTime()) / 2;
 }
+
+/**
+ * A workout another app or watch recorded in the store (#468, ADR 0106): what was done, when, and
+ * what was measured, each figure missing when nothing measured it.
+ */
+export type OutsideWorkout = {
+  /** The store's own id of it. */
+  id: string;
+  activity: Activity;
+  start: Date;
+  end: Date;
+  activeKcal: number | null;
+  heartRateAvg: number | null;
+  /** The app or watch that recorded it, by its name. */
+  source: string | null;
+};
+
+/** A workout's measured figures. */
+export type WorkoutFigures = Pick<OutsideWorkout, 'activeKcal' | 'heartRateAvg'>;
+
+/**
+ * The figures already kept of workouts, by the store's id of each, which a read takes in place of
+ * reading them again for the workouts that started before `before`: their figures no longer change.
+ */
+export type KeptFigures = { figures: Map<string, WorkoutFigures>; before: Date };
+
+/** The kept figures of a workout that need not be read again, if any. */
+export const keptFiguresOf = (kept: KeptFigures | undefined, id: string, start: Date) =>
+  kept && start < kept.before ? kept.figures.get(id) : undefined;

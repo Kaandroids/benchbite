@@ -4,6 +4,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import {
   byExercise,
   byWeek,
+  rangesOfPages,
   doneOf,
   durationMinutes,
   fetchLogSummaries,
@@ -177,6 +178,8 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'days'],
       ['workout-logs', 'records'],
       ['streak'],
+      // A watch's copy of it among other apps' workouts shows again.
+      ['outside-workouts'],
     ]);
     // A past week's workouts are under the week's.
     expect(weekLogsKey(new Date(2026, 9, 14)).slice(0, 2)).toEqual(['workout-logs', 'week']);
@@ -368,5 +371,57 @@ describe('byWeek', () => {
       [new Date(2026, 9, 19), [3, 2], 100],
       [new Date(2026, 9, 12), [1], 55],
     ]);
+  });
+  it('puts other entries among them by when they started, outside the count and minutes', () => {
+    const run = { key: 'run', startedAt: new Date('2026-10-21T07:00') };
+    const ride = { key: 'ride', startedAt: new Date('2026-10-14T07:00') };
+    const weeks = byWeek(
+      [log(3, '2026-10-23T18:00', 52), log(2, '2026-10-19T18:00', 48)],
+      [run, ride],
+    );
+    expect(
+      weeks.map((week) => [
+        week.start,
+        week.entries.map((entry) => (entry.kind === 'log' ? entry.log.id : entry.other.key)),
+        week.logs.length,
+        week.minutes,
+      ]),
+    ).toEqual([
+      [new Date(2026, 9, 19), [3, 'run', 2], 2, 100],
+      [new Date(2026, 9, 12), ['ride'], 0, 0],
+    ]);
+  });
+});
+
+describe('rangesOfPages', () => {
+  const [w3, w2, w1] = [
+    log(3, '2026-10-23T18:00', 52),
+    log(2, '2026-10-14T18:00', 48),
+    log(1, '2026-10-05T18:00', 55),
+  ];
+
+  it('gives each page the weeks it reaches, the latest open above', () => {
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [w2] }], true)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+      { from: new Date(2026, 9, 12), to: new Date(2026, 9, 19) },
+    ]);
+  });
+
+  it('opens the last page’s range once there are no more pages', () => {
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [w2, w1] }], false)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+      { from: null, to: new Date(2026, 9, 19) },
+    ]);
+  });
+
+  it('adds no range for a page that reaches no further week', () => {
+    const sameWeek = log(4, '2026-10-20T18:00', 40);
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [sameWeek] }], true)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+    ]);
+  });
+
+  it('reads everything without any logs', () => {
+    expect(rangesOfPages([{ logs: [] }], false)).toEqual([{ from: null, to: null }]);
   });
 });

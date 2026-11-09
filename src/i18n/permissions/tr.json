@@ -3,7 +3,7 @@
     "NSCameraUsageDescription": "Benchbite kamerayı kendi egzersizlerinin nasıl yapıldığını, tahmin edilecek öğünleri ve koçun Bite’a gönderdiklerini fotoğraflamak için kullanır.",
     "NSPhotoLibraryUsageDescription": "Benchbite seçtiğin fotoğrafları kendi egzersizlerinin nasıl yapıldığını göstermek, öğünlerini tahmin etmek ve koçun Bite’a göndermek için kullanır.",
     "NSMicrophoneUsageDescription": "Benchbite mikrofonu yalnızca koçun Bite ile konuşmak için basılı tuttuğun sürece, söylediklerini sesli mesaj olarak göndermek için kullanır.",
-    "NSHealthShareUsageDescription": "Benchbite antrenmanlarının ne kadar zorlu geçtiğini göstermek için nabzını ve aktif kalorisini, ilerlemeni güncel tutmak için de kilonu ve adımlarını okur. Saatinin kaydettiği bir antrenman iki kez kaydedilmesin diye diğer uygulamaların kaydettiği antrenmanları da okur.",
+    "NSHealthShareUsageDescription": "Benchbite antrenmanlarının ne kadar zorlu geçtiğini göstermek için nabzını ve aktif kalorisini, ilerlemeni güncel tutmak için de kilonu ve adımlarını okur. Diğer uygulamaların kaydettiği antrenmanları da senin antrenmanlarının yanında göstermek ve saatinin kaydettiği bir antrenman iki kez kaydedilmesin diye okur.",
     "NSHealthUpdateUsageDescription": "Açtığında Benchbite bitirdiğin her antrenmanı süresi ve aktif kalorisiyle Apple Health’e kaydeder."
   }
 }

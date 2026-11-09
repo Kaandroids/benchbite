@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { useOutsideWorkoutsOn } from '@/health/outside-workouts';
 import { useFinishedInWeek } from '@/history/history';
 import { useDayEntries, type MealEntry } from '@/nutrition/meals';
 import { useNutritionTargets, type NutritionTargets } from '@/nutrition/targets';
@@ -26,6 +27,12 @@ jest.mock('@/workouts/planned-week', () => ({
   usePlannedWeek: jest.fn(),
 }));
 jest.mock('@/history/history', () => ({ useFinishedInWeek: jest.fn() }));
+jest.mock('@/health/outside-workouts', () => ({
+  useOutsideWorkoutsOn: jest.fn(() => []),
+  countByDay: jest.requireActual<typeof import('@/health/outside-workouts')>(
+    '@/health/outside-workouts',
+  ).countByDay,
+}));
 jest.mock('@/workouts/moves', () => ({
   useWeekMoves: jest.fn(),
   useMoveWorkout: jest.fn(),
@@ -204,6 +211,7 @@ function mockData({
     );
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useDayEntries).mockReturnValue(eaten as never);
+  jest.mocked(useOutsideWorkoutsOn).mockReturnValue([]);
   return { plan, targets, eaten };
 }
 
@@ -227,6 +235,36 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Wednesday, October 21')).toBeTruthy();
     // Streaks are not recorded yet, so every user has none.
     expect(screen.getByLabelText('0-day streak')).toBeTruthy();
+  });
+
+  it('shows today’s workouts from other apps, and marks their days on the week', async () => {
+    mockData();
+    const run = (startedOn: string, hour: number) => ({
+      key: `appleHealth:${startedOn}`,
+      activity: 'running',
+      startedAt: new Date(`${startedOn}T0${hour}:10:00`),
+      endedAt: new Date(`${startedOn}T0${hour}:42:00`),
+      startedOn,
+      activeKcal: 310,
+      heartRateAvg: 148,
+      source: 'Apple Watch',
+    });
+    jest
+      .mocked(useOutsideWorkoutsOn)
+      .mockReturnValue([run('2026-10-21', 7), run('2026-10-20', 6)] as never);
+    await render(<TodayScreen />);
+    expect(useOutsideWorkoutsOn).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
+    expect(screen.getByText('ALSO TODAY')).toBeTruthy();
+    expect(screen.getAllByText('Running')).toHaveLength(1);
+    expect(screen.getByText('From Apple Watch')).toBeTruthy();
+    expect(screen.getByLabelText(/Tue 20.*1 workout from another app/)).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: /Running/ }));
+    expect(
+      screen.getByText(
+        'Recorded by another app, so Benchbite only shows it. Change or delete it there.',
+      ),
+    ).toBeTruthy();
   });
 
   it('shows an error and loads only what failed again', async () => {

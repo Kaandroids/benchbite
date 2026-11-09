@@ -1,19 +1,29 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui/text';
-import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
-import { fonts, useTheme } from '@/theme';
 import { useUpperCase } from '@/i18n/case';
+import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
+import { fonts, useTheme, type ColorTokens } from '@/theme';
+
+import { Text } from './text';
 
 type DateTileProps = {
   date: Date;
   large?: boolean;
-  /** On orange, or on grey where it would add to too much orange. */
-  tinted?: boolean;
+  /**
+   * The weekday's colour and the tile's: orange by default, the tile grey where orange would add up
+   * to too much, or another pair for another kind of day.
+   */
+  color?: keyof ColorTokens;
+  background?: keyof ColorTokens;
 };
 
 /** A day as a small tile: its weekday above its date, as on a calendar. */
-export function DateTile({ date, large = false, tinted = true }: DateTileProps) {
+export function DateTile({
+  date,
+  large = false,
+  color = 'primaryText',
+  background = 'selected',
+}: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');
   const upperCase = useUpperCase();
@@ -24,11 +34,11 @@ export function DateTile({ date, large = false, tinted = true }: DateTileProps) 
         large ? styles.large : styles.small,
         {
           borderRadius: large ? radii.lg : radii.md,
-          backgroundColor: tinted ? colors.selected : colors.background,
+          backgroundColor: colors[background],
         },
       ]}
     >
-      <Text variant="caption" color="primaryText" style={styles.weekday}>
+      <Text variant="caption" color={color} style={styles.weekday}>
         {upperCase(weekday(isoWeekday(date)))}
       </Text>
       <Text variant={large ? 'title' : 'headline'} style={large ? styles.largeDay : styles.day}>

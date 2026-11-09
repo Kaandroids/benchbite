@@ -1,6 +1,6 @@
 // A stand-in for the health store's platform module in tests (src/health/platform.*.ts), whose
 // native modules do not load there: a phone without a store, unless a test says otherwise.
-import { NO_STORED_WORKOUTS, NO_WORKOUT_STATS } from '@/health/types';
+import { NO_STORED_WORKOUTS, NO_WORKOUT_STATS, type OutsideWorkout } from '@/health/types';
 
 export const store = null;
 export const availability = jest.fn(() => Promise.resolve('unavailable'));
@@ -20,3 +20,8 @@ export const requestWriteAccess = jest.fn(() => Promise.resolve(false));
 export const storedWorkouts = jest.fn(() => Promise.resolve(NO_STORED_WORKOUTS));
 export const saveWorkout = jest.fn(() => Promise.resolve());
 export const removeWorkout = jest.fn(() => Promise.resolve());
+export const workoutsAllowed = jest.fn(() => Promise.resolve(false));
+export const requestWorkoutsAccess = jest.fn(() => Promise.resolve(false));
+export const outsideWorkouts = jest.fn((): Promise<OutsideWorkout[] | null> =>
+  Promise.resolve(null),
+);

@@ -8,6 +8,7 @@ import { Icon, type IconName } from '@/components/ui/icon';
 import { StepArrow } from '@/components/ui/step-arrow';
 import { Text } from '@/components/ui/text';
 import { TextLink } from '@/components/ui/text-link';
+import { READ_LOOKS } from '@/health/reads';
 import {
   fromIsoDate,
   toIsoDate,
@@ -27,6 +28,9 @@ import {
   type ScheduleDay,
   type WeekSchedule,
 } from '@/workouts/week-schedule';
+
+/** How workouts from other apps look, as everywhere they show (ADR 0106). */
+const OUTSIDE_LOOK = READ_LOOKS.workouts;
 
 const RING_SIZE = 32;
 const REST_SIZE = 8;
@@ -59,6 +63,11 @@ type WeekCardProps = {
   loading?: boolean;
   /** Shown under the days, inside the card. */
   children?: ReactNode;
+  /**
+   * How many workouts other apps recorded on each day, by its date (ADR 0106): a rest day with one
+   * shows it in their colour.
+   */
+  outsideDays?: Record<string, number>;
 };
 
 type RingState = Exclude<DayState, 'rest' | 'extra' | 'partial'>;
@@ -79,8 +88,11 @@ function ringOf(state: RingState, colors: ColorTokens): { style: ViewStyle; icon
   return rings[state];
 }
 
-/** The mark of a day: a ring for workout days, a dot for rest days, with a badge on top. */
-function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
+/**
+ * The mark of a day: a ring for workout days, a dot for rest days, with a badge on top. A rest day
+ * with a workout from another app shows a ring in that workout's colour.
+ */
+function DayMark({ day, state, outside }: { day: ScheduleDay; state: DayState; outside: boolean }) {
   const { colors } = useTheme();
   const movedIn = day.workouts.some((workout) => workout.movedFrom !== null);
   const radius = (RING_SIZE - 3) / 2;
@@ -88,7 +100,23 @@ function DayMark({ day, state }: { day: ScheduleDay; state: DayState }) {
   let mark;
   switch (state) {
     case 'rest':
-      mark = <View style={[styles.rest, { backgroundColor: colors.track }]} />;
+      mark = outside ? (
+        <View
+          testID="day-outside"
+          style={[
+            styles.ring,
+            {
+              borderWidth: 2,
+              borderColor: colors[OUTSIDE_LOOK.color],
+              backgroundColor: colors[OUTSIDE_LOOK.background],
+            },
+          ]}
+        >
+          <Icon name={OUTSIDE_LOOK.icon} size={16} color={OUTSIDE_LOOK.color} />
+        </View>
+      ) : (
+        <View style={[styles.rest, { backgroundColor: colors.track }]} />
+      );
       break;
     case 'extra':
       mark = (
@@ -204,6 +232,7 @@ export function WeekCard({
   loading = false,
   children,
   entering,
+  outsideDays = {},
 }: WeekCardProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -234,6 +263,7 @@ export function WeekCard({
         t('today.week.movedTo', { day: longWeekday(weekdayOf(away.toOn)) }),
       ]),
       ...(day.extras > 0 ? [t('today.week.extra', { count: day.extras })] : []),
+      ...(outsideDays[day.date] ? [t('today.week.outside', { count: outsideDays[day.date] })] : []),
       ...(streakDays[day.date] ? [t(`today.week.streak.${streakDays[day.date]!}`)] : []),
     ].join(', ');
 
@@ -310,7 +340,11 @@ export function WeekCard({
                   { opacity: beforeStart ? BEFORE_START_OPACITY : pressed ? 0.6 : 1 },
                 ]}
               >
-                <DayMark day={day} state={dayState(day, todayOn)} />
+                <DayMark
+                  day={day}
+                  state={dayState(day, todayOn)}
+                  outside={(outsideDays[day.date] ?? 0) > 0}
+                />
                 <Text
                   variant={isToday ? 'captionStrong' : 'caption'}
                   color={isToday ? 'primaryText' : 'textMuted'}

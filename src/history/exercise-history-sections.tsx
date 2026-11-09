@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { CardHeading } from '@/components/ui/card-heading';
+import { DateTile } from '@/components/ui/date-tile';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Text } from '@/components/ui/text';
 import { useShortDateFormat } from '@/i18n/dates';
@@ -15,7 +16,6 @@ import { SetChips } from '@/sets/set-chips';
 import { fonts, useTheme } from '@/theme';
 import { useWorkoutName } from '@/workouts/format';
 
-import { DateTile } from './date-tile';
 import {
   recordSets,
   type ExerciseRecord,
@@ -232,7 +232,7 @@ export function SessionList({
             },
           ]}
         >
-          <DateTile date={session.startedAt} tinted={false} />
+          <DateTile date={session.startedAt} background="background" />
           <View style={[styles.flex, { gap: spacing.xs }]}>
             <Text variant="label" numberOfLines={1}>
               {workoutName(session)}

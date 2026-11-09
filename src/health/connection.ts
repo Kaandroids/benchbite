@@ -37,8 +37,11 @@ export function useHealthConnected(): boolean {
   return useSyncExternalStore(subscribe, isHealthConnected);
 }
 
-/** What is read from the store apart from workouts, each asked for on its own (ADR 0100, 0103). */
-export const HEALTH_READS = ['weight', 'steps'] as const;
+/**
+ * What is read from the store apart from the heart rate and calories of Benchbite's workouts, each
+ * asked for on its own (ADR 0100, 0103, 0106).
+ */
+export const HEALTH_READS = ['weight', 'steps', 'workouts'] as const;
 export type HealthRead = (typeof HEALTH_READS)[number];
 
 /**
@@ -75,6 +78,17 @@ export function setStepsReadOn(day: string | null) {
   writeItem(STEPS_READ_ON_KEY, day);
 }
 
+const WORKOUTS_READ_ON_KEY = 'health.workoutsReadOn';
+
+/** The day, YYYY-MM-DD, other apps' workouts were last read on, from which the next read goes on. */
+export function workoutsReadOn(): string | null {
+  return readItem(WORKOUTS_READ_ON_KEY);
+}
+
+export function setWorkoutsReadOn(day: string | null) {
+  writeItem(WORKOUTS_READ_ON_KEY, day);
+}
+
 /**
  * Since when finished workouts are saved to the store (ADR 0105), or null while they are not: a
  * workout finished before writing was turned on is not saved.
@@ -105,5 +119,6 @@ export function forgetHealthOnDevice() {
     writeItem(readKey(kind), null);
   }
   writeItem(STEPS_READ_ON_KEY, null);
+  writeItem(WORKOUTS_READ_ON_KEY, null);
   notify();
 }

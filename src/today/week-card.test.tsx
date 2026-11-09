@@ -59,6 +59,19 @@ describe('WeekCard', () => {
     expect(screen.getByLabelText('Sat 24')).toBeTruthy();
   });
 
+  it('marks a rest day with a workout from another app, without counting it', async () => {
+    await render(
+      <WeekCard
+        today={WEDNESDAY}
+        schedule={weekSchedule([session(1, 1, 'push')], [], [], WEDNESDAY)}
+        outsideDays={{ '2026-10-20': 1 }}
+      />,
+    );
+    expect(screen.getByText('0 of 1 workout this week')).toBeTruthy();
+    expect(screen.getByLabelText('Tue 20, 1 workout from another app')).toBeTruthy();
+    expect(screen.getByTestId('day-outside')).toBeTruthy();
+  });
+
   it('never counts more than the plan: a workout on a rest day is an extra', async () => {
     await renderWeek(
       [session(1, 1, 'push')],

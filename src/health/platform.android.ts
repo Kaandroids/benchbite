@@ -18,18 +18,24 @@ import {
 import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
+import { HEALTH_CONNECT_ACTIVITIES } from './activities';
+import { inBatches } from './batches';
 import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
   coversMostOf,
   isSavedWorkoutId,
+  keptFiguresOf,
   NO_STORED_WORKOUTS,
   NO_WORKOUT_STATS,
   savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
+  type KeptFigures,
+  type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
   type WeightReading,
+  type WorkoutFigures,
   type WorkoutStats,
   type WorkoutToSave,
 } from './types';
@@ -39,6 +45,7 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
   { accessType: 'read', recordType: 'Weight' },
   { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'ExerciseSession' },
 ] as const;
 
 const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
@@ -67,12 +74,15 @@ export async function availability(): Promise<HealthAvailability> {
   return 'unavailable';
 }
 
-/** Whether a type may be read. */
-async function allowedToRead(recordType: string): Promise<boolean> {
-  const granted = await getGrantedPermissions();
-  return granted.some(
+/** Whether the permissions granted let a type be read. */
+const readGranted = (granted: { accessType: string; recordType: string }[], recordType: string) =>
+  granted.some(
     (permission) => permission.accessType === 'read' && permission.recordType === recordType,
   );
+
+/** Whether a type may be read. */
+async function allowedToRead(recordType: string): Promise<boolean> {
+  return readGranted(await getGrantedPermissions(), recordType);
 }
 
 /** Whether heart rate, the part a workout needs most, may be read. */
@@ -104,10 +114,7 @@ export const installStore = (): void => void Linking.openURL(PLAY_STORE);
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
   if (!(await initialize())) return NO_WORKOUT_STATS;
   const granted = await getGrantedPermissions();
-  const allowed = (recordType: string) =>
-    granted.some(
-      (permission) => permission.accessType === 'read' && permission.recordType === recordType,
-    );
+  const allowed = (recordType: string) => readGranted(granted, recordType);
   const timeRangeFilter = {
     operator: 'between' as const,
     startTime: from.toISOString(),
@@ -319,4 +326,104 @@ export async function removeWorkout(logId: number): Promise<void> {
   for (const recordType of ['ExerciseSession', 'ActiveCaloriesBurned'] as const) {
     await deleteRecordsByUuids(recordType, [], [savedWorkoutId(logId)]);
   }
+}
+
+export const workoutsAllowed = () => allowedToRead('ExerciseSession');
+
+export async function requestWorkoutsAccess(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  await requestPermission([{ accessType: 'read', recordType: 'ExerciseSession' }]);
+  return workoutsAllowed();
+}
+
+/** Each exercise type's name in Health Connect's constants, by its number. */
+const EXERCISE_NAMES = new Map(
+  Object.entries(ExerciseType).map(([name, type]) => [type as number, name]),
+);
+
+/**
+ * A session's calories, those of the app that recorded it, and its average heart rate, where they
+ * may be read; none where nothing was measured. A read that fails throws: a figure taken as none
+ * would replace the one kept.
+ */
+async function figuresOf(
+  startTime: string,
+  endTime: string,
+  origin: string | undefined,
+  allowed: (recordType: string) => boolean,
+): Promise<WorkoutFigures> {
+  const during = { operator: 'between' as const, startTime, endTime };
+  const kcal =
+    allowed('ActiveCaloriesBurned') && origin
+      ? (
+          await aggregateRecord({
+            recordType: 'ActiveCaloriesBurned',
+            timeRangeFilter: during,
+            dataOriginFilter: [origin],
+          })
+        ).ACTIVE_CALORIES_TOTAL.inKilocalories
+      : 0;
+  const heart = allowed('HeartRate')
+    ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during })
+    : null;
+  return {
+    activeKcal: kcal > 0 ? kcal : null,
+    heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
+  };
+}
+
+/** The most pages of sessions read at once: far more than anyone records in 400 days. */
+const MOST_SESSION_PAGES = 10;
+
+/**
+ * The workouts other apps recorded, with the calories of the app that recorded each and the
+ * average heart rate during it, where they may be read. Benchbite's own are left out: they are its
+ * logs (ADR 0105). Null when they could not be read, which is not a store without any.
+ */
+export async function outsideWorkouts(
+  from: Date,
+  to: Date,
+  kept?: KeptFigures,
+): Promise<OutsideWorkout[] | null> {
+  if (!(await initialize())) return null;
+  const granted = await getGrantedPermissions();
+  const allowed = (recordType: string) => readGranted(granted, recordType);
+  if (!allowed('ExerciseSession')) return null;
+  const read: OutsideWorkout[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < MOST_SESSION_PAGES; page++) {
+    const { records, pageToken: next } = await readRecords('ExerciseSession', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: from.toISOString(),
+        endTime: to.toISOString(),
+      },
+      pageSize: 1000,
+      ...(pageToken ? { pageToken } : {}),
+    });
+    const others = records.filter(
+      (record) =>
+        record.metadata?.dataOrigin !== applicationId && new Date(record.startTime) >= from,
+    );
+    read.push(
+      ...(await inBatches(others, async (record) => {
+        const origin = record.metadata?.dataOrigin;
+        const id = record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`;
+        const start = new Date(record.startTime);
+        const known = keptFiguresOf(kept, id, start);
+        return {
+          id,
+          activity:
+            HEALTH_CONNECT_ACTIVITIES[EXERCISE_NAMES.get(record.exerciseType) ?? ''] ?? 'other',
+          start,
+          end: new Date(record.endTime),
+          ...(known ?? (await figuresOf(record.startTime, record.endTime, origin, allowed))),
+          source: sourceName(origin),
+        };
+      })),
+    );
+    if (!next) break;
+    pageToken = next;
+  }
+  return read;
 }

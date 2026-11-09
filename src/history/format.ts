@@ -23,15 +23,6 @@ export function useTotalFormat() {
   };
 }
 
-/** A length of time in minutes, such as "52 min" or "2 h 41 min". */
-export function useDurationFormat() {
-  const { t } = useTranslation();
-  return (minutes: number) =>
-    minutes < 60
-      ? t('history.minutes', { minutes })
-      : t('history.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
-}
-
 /** A week's title: this week, last week, or its days, such as "October 6 – 12". */
 export function useWeekTitle(today = new Date()) {
   const { t } = useTranslation();

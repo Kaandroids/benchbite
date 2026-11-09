@@ -2,15 +2,15 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { DateTile } from '@/components/ui/date-tile';
 import { Icon } from '@/components/ui/icon';
 import { IconStat } from '@/components/ui/icon-stat';
 import { Text } from '@/components/ui/text';
+import { useDurationFormat } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName } from '@/workouts/format';
 
-import { DateTile } from './date-tile';
-import { useDurationFormat } from './format';
 import { doneOf, durationMinutes, isPartial, kcalOf, type LogSummary } from './history';
 
 type LogRowProps = {
@@ -56,7 +56,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
         },
       ]}
     >
-      <DateTile date={log.startedAt} tinted={icons} />
+      <DateTile date={log.startedAt} background={icons ? 'selected' : 'background'} />
       <View style={[styles.flex, { gap: 2 }]}>
         {/* A long name is cut before the alternative, which is what tells the logs apart. */}
         <View style={styles.name}>

@@ -198,3 +198,12 @@ export function useShortDateFormat(today: Date) {
   return (date: Date) =>
     (date.getFullYear() === today.getFullYear() ? thisYear : otherYear).format(date);
 }
+
+/** A length of time in minutes, such as "52 min" or "2 h 41 min". */
+export function useDurationFormat() {
+  const { t } = useTranslation();
+  return (minutes: number) =>
+    minutes < 60
+      ? t('common.minutes', { minutes })
+      : t('common.hours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
+}

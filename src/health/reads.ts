@@ -1,5 +1,6 @@
-// How each kind read from the store apart from workouts looks (ADR 0100, 0103), wherever it is
-// named: the consent sheet, the ask card and its own cards. What reads it is in read-kinds.ts.
+// How each kind read from the store apart from Benchbite's workouts looks (ADR 0100, 0103, 0106),
+// wherever it is named: the consent sheet, the ask card and its own cards. What reads it is in
+// read-kinds.ts.
 import type { IconName } from '@/components/ui/icon';
 import type { ColorTokens } from '@/theme';
 
@@ -11,4 +12,5 @@ export const READ_LOOKS: Record<
 > = {
   weight: { icon: 'scale', color: 'water', background: 'waterBackground' },
   steps: { icon: 'steps', color: 'info', background: 'infoBackground' },
+  workouts: { icon: 'run', color: 'dinner', background: 'dinnerBackground' },
 };
