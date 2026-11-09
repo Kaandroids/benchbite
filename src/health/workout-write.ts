@@ -6,6 +6,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { recentLogs } from '@/history/history';
 
 import {
+  isHealthConnected,
   mayWrite,
   setWriteSince,
   useHealthConnected,
@@ -33,12 +34,16 @@ const whereStored = (stored: StoredWorkouts): SavedToHealth | null =>
 
 /** Brings the store in line with a log; where the workout is now, or null when it is not saved. */
 export async function saveToHealth(log: LogToSave): Promise<SavedToHealth | null> {
-  if (!mayWrite() || log.finishedAt < writeSince()!) return null;
+  const since = writeSince();
+  if (!isHealthConnected() || since === null) return null;
   const stored = await storedWorkouts(log.id, log.startedAt, log.finishedAt);
   if (whereStored(stored) === 'recorded') {
     if (stored.ours) await removeWorkout(log.id);
     return 'recorded';
   }
+  // A workout finished before saving was turned on is not saved; one saved already, as before
+  // saving was turned off and on again, is still kept right.
+  if (log.finishedAt < since && !stored.ours) return null;
   if (!stored.ours || !sameKcal(stored.ours.activeKcal, log.kcal)) {
     await saveWorkout({
       logId: log.id,
@@ -62,6 +67,7 @@ const saveRecent = oneAtATimeThenAgain(async (): Promise<boolean> => {
     setWriteSince(null);
     return false;
   }
+  // Read after the catch-up kept what the watch measured, for the calories that gives the logs.
   const logs = await recentLogs(new Date(Date.now() - READ_FOR_MS));
   for (const log of logs) {
     try {

@@ -76,7 +76,15 @@ describe('saveToHealth', () => {
   it('saves no workout finished before saving was turned on', async () => {
     setWriteSince(new Date('2026-11-08T19:00:00Z'));
     expect(await saveToHealth(log(7))).toBeNull();
-    expect(storedWorkouts).not.toHaveBeenCalled();
+    expect(saveWorkout).not.toHaveBeenCalled();
+  });
+
+  it('still takes out a copy saved before saving was turned off and on again', async () => {
+    setWriteSince(new Date('2026-11-08T19:00:00Z'));
+    jest.mocked(storedWorkouts).mockResolvedValue({ ours: { activeKcal: 312 }, others: true });
+    expect(await saveToHealth(log(7))).toBe('recorded');
+    expect(removeWorkout).toHaveBeenCalledWith(7);
+    expect(saveWorkout).not.toHaveBeenCalled();
   });
 
   it('saves nothing while saving is off or the store is disconnected', async () => {
