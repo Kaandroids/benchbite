@@ -4,28 +4,20 @@
 // weeks without opening the app leave days out. It keeps a day's higher total.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { fromIsoDate, lastDays, toIsoDate } from '@/i18n/dates';
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 import { STEPS_KEY } from '@/steps/steps';
 
 import { setStepsReadOn, stepsReadOn } from './connection';
-import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
+import {
+  MOST_DAYS,
+  mayImport,
+  oneAtATime,
+  readFrom,
+  signedInUser,
+  stillImporting,
+} from './import-guard';
 import { dailySteps } from './platform';
-
-/** How many days, today among them, a read goes back at most, which import_steps() takes. */
-const MOST_DAYS = 366;
-/** How many days a read goes back at least, for a watch that syncs late. */
-const LEAST_DAYS = 30;
-
-/** Where a read starts: the day last read on, or 30 days back if later; a year back at most. */
-function readFrom(now: Date): Date {
-  const last = stepsReadOn();
-  const least = lastDays(LEAST_DAYS, now);
-  if (last === null) return lastDays(MOST_DAYS, now);
-  const from = fromIsoDate(last);
-  const most = lastDays(MOST_DAYS, now);
-  return from > least ? least : from < most ? most : from;
-}
 
 async function importNow(queryClient: QueryClient): Promise<boolean> {
   if (!mayImport('steps')) return false;
@@ -33,7 +25,7 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   const now = new Date();
   // Read up to the moment `today` is of, so a read across midnight stays within import_steps()'s
   // days.
-  const days = await dailySteps(readFrom(now), now);
+  const days = await dailySteps(readFrom(stepsReadOn(), MOST_DAYS, now), now);
   // Another user may have signed in while the store was read, which lets go of the connection.
   if (!(await stillImporting('steps', userId))) return false;
   let changed = false;

@@ -5,32 +5,25 @@
 // deleted there goes here too. More than 500 go in parts of the time, as the function takes.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { fromIsoDate, lastDays, toIsoDate } from '@/i18n/dates';
+import { toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { setWorkoutsReadOn, workoutsReadOn } from './connection';
 import { healthStore } from './health';
-import { mayImport, oneAtATime, signedInUser, stillImporting } from './import-guard';
+import {
+  LEAST_DAYS,
+  mayImport,
+  oneAtATime,
+  readFrom,
+  signedInUser,
+  stillImporting,
+} from './import-guard';
 import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
 import { outsideWorkouts } from './platform';
 import type { OutsideWorkout } from './types';
 
-/** How many days, today among them, a read goes back at most. */
-const MOST_DAYS = 366;
-/** How many days a read goes back at least, for a watch that syncs late. */
-const LEAST_DAYS = 30;
 /** The most workouts import_outside_workouts() takes at once. */
 export const MOST_PER_PART = 500;
-
-/** Where a read starts: the day last read on, or 30 days back if later; a year back at most. */
-function readFrom(now: Date): Date {
-  const last = workoutsReadOn();
-  const least = lastDays(LEAST_DAYS, now);
-  if (last === null) return least;
-  const from = fromIsoDate(last);
-  const most = lastDays(MOST_DAYS, now);
-  return from > least ? least : from < most ? most : from;
-}
 
 type Part = { since: Date; until: Date; workouts: OutsideWorkout[] };
 
@@ -64,7 +57,7 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   if (!mayImport('workouts') || healthStore === null) return false;
   const userId = await signedInUser();
   const now = new Date();
-  const from = readFrom(now);
+  const from = readFrom(workoutsReadOn(), LEAST_DAYS, now);
   const workouts = await outsideWorkouts(from, now);
   // A read that could not be made sends nothing: the store would be taken as holding none, and the
   // workouts of the time read would go. Nor does it count for a user signed in since.

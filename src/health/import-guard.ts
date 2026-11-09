@@ -1,6 +1,8 @@
 // What every import from the health store keeps to: it reads only while the store is connected and
-// the kind is read, sends nothing for an account signed in while it read, and runs once at a time.
+// the kind is read, sends nothing for an account signed in while it read, runs once at a time, and
+// reads from the day last read on.
 // Saving workouts to the store (ADR 0105) runs once at a time too, with oneAtATimeThenAgain.
+import { fromIsoDate, lastDays } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { isHealthConnected, readSync, type HealthRead } from './connection';
@@ -59,4 +61,21 @@ export function oneAtATimeThenAgain(run: () => Promise<boolean>): () => Promise<
       });
     return next;
   };
+}
+
+/** How many days, today among them, a read goes back at most. */
+export const MOST_DAYS = 366;
+/** How many days a read goes back at least, for a watch or an app that syncs late. */
+export const LEAST_DAYS = 30;
+
+/**
+ * Where a read starts: `firstDays` back the first time, then the day last read on, YYYY-MM-DD, or
+ * 30 days back if later; a year back at most.
+ */
+export function readFrom(lastReadOn: string | null, firstDays: number, now: Date): Date {
+  const least = lastDays(LEAST_DAYS, now);
+  const most = lastDays(MOST_DAYS, now);
+  if (lastReadOn === null) return lastDays(firstDays, now);
+  const from = fromIsoDate(lastReadOn);
+  return from > least ? least : from < most ? most : from;
 }
