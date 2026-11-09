@@ -73,6 +73,9 @@ export const workoutsAllowed = (): Promise<boolean> => Promise.resolve(false);
 /** Asks for other apps' workouts alone; whether reading them was allowed. */
 export const requestWorkoutsAccess = (): Promise<boolean> => Promise.resolve(false);
 
-/** The workouts other apps recorded that started between two times, in no set order. */
-export const outsideWorkouts = (_from: Date, _to: Date): Promise<OutsideWorkout[]> =>
-  Promise.resolve([]);
+/**
+ * The workouts other apps recorded that started between two times, in no set order; null when they
+ * could not be read, as without the permission, which is not a store without any.
+ */
+export const outsideWorkouts = (_from: Date, _to: Date): Promise<OutsideWorkout[] | null> =>
+  Promise.resolve(null);

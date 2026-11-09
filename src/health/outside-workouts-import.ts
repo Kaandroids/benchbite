@@ -66,8 +66,9 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   const now = new Date();
   const from = readFrom(now);
   const workouts = await outsideWorkouts(from, now);
-  // Another user may have signed in while the store was read, which lets go of the connection.
-  if (!(await stillImporting('workouts', userId))) return false;
+  // A read that could not be made sends nothing: the store would be taken as holding none, and the
+  // workouts of the time read would go. Nor does it count for a user signed in since.
+  if (workouts === null || !(await stillImporting('workouts', userId))) return false;
   let changed = false;
   // A minute past now, so that a workout that started as the store was read still falls within.
   for (const part of partsOf(workouts, from, new Date(now.getTime() + 60_000))) {

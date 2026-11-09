@@ -111,6 +111,14 @@ it('still sends a read without workouts, as they were deleted in the store', asy
   );
 });
 
+it('sends nothing, and reads as far back next time, when the store could not be read', async () => {
+  setWorkoutsReadOn('2026-08-01');
+  jest.mocked(outsideWorkouts).mockResolvedValue(null);
+  expect(await importOutsideWorkouts(createTestQueryClient())).toBe(false);
+  expect(supabase.rpc).not.toHaveBeenCalled();
+  expect(workoutsReadOn()).toBe('2026-08-01');
+});
+
 it('reads nothing while workouts are not read', async () => {
   setReadSync('workouts', 'off');
   expect(await importOutsideWorkouts(createTestQueryClient())).toBe(false);

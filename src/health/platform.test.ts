@@ -695,7 +695,7 @@ describe('workouts from other apps', () => {
 
   it('reads no sessions from Health Connect while they may not be read', async () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([] as never);
-    expect(await android.outsideWorkouts(from, to)).toEqual([]);
+    expect(await android.outsideWorkouts(from, to)).toBeNull();
     expect(readRecords).not.toHaveBeenCalled();
   });
 });

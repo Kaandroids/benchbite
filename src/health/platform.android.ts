@@ -343,10 +343,10 @@ const MOST_SESSION_PAGES = 10;
 /**
  * The workouts other apps recorded, with the calories of the app that recorded each and the
  * average heart rate during it, where they may be read. Benchbite's own are left out: they are its
- * logs (ADR 0105).
+ * logs (ADR 0105). Null when they could not be read, which is not a store without any.
  */
-export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[]> {
-  if (!(await initialize()) || !(await workoutsAllowed())) return [];
+export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[] | null> {
+  if (!(await initialize()) || !(await workoutsAllowed())) return null;
   const granted = await getGrantedPermissions();
   const allowed = (recordType: string) =>
     granted.some(
