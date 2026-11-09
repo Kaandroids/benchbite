@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(30);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -217,7 +217,22 @@ select throws_ok(
   'A time that ends before it starts is refused'
 );
 
--- A user at the limit, whose next workout is one too many.
+-- Years of workouts from before the last 400 days, which do not count toward the limit.
+reset role;
+insert into public.outside_workouts (user_id, store, source_id, activity, started_at, ended_at,
+  started_on)
+select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'years-ago-' || n, 'walking',
+  now() - make_interval(days => 400 + n), now() - make_interval(days => 400 + n) + interval '20 minutes',
+  (now() - make_interval(days => 400 + n))::date
+from generate_series(1, public.outside_workout_limit() + 650) as n;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select is(
+  pg_temp.import(jsonb_build_array(pg_temp.workout('run', 5, 32), pg_temp.workout('today', 2, 30))),
+  1,
+  'Workouts from years ago do not count toward the limit'
+);
+
+-- A user at the limit within the last 400 days, whose next workout is one too many.
 reset role;
 insert into public.outside_workouts (user_id, store, source_id, activity, started_at, ended_at,
   started_on)

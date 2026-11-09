@@ -71,8 +71,9 @@ where not exists (
 revoke all on public.outside_workout_list from anon, authenticated;
 grant select on public.outside_workout_list to authenticated;
 
--- The most outside workouts a user keeps: about 400 days of several a day, far more than anyone
--- records, so that no one fills the table.
+-- The most outside workouts a user keeps from the last 400 days, the most an import reaches back:
+-- several a day, far more than anyone records, so that no one fills the table. Older ones stay
+-- without counting, so a user of many years is never stopped.
 create function public.outside_workout_limit()
 returns integer
 language sql
@@ -211,8 +212,12 @@ begin
   )
   select (select count(*) from gone), (select count(*) from kept) into removed, changed;
 
-  if (select count(*) from public.outside_workouts o where o.user_id = caller_id)
-    > public.outside_workout_limit() then
+  if (
+    select count(*)
+    from public.outside_workouts o
+    where o.user_id = caller_id
+      and o.started_at >= now() - interval '400 days'
+  ) > public.outside_workout_limit() then
     raise exception 'Too many outside workouts' using errcode = '54000';
   end if;
 
