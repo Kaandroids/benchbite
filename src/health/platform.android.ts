@@ -18,6 +18,7 @@ import {
 import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
+import { HEALTH_CONNECT_ACTIVITIES } from './activities';
 import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
   coversMostOf,
@@ -27,6 +28,7 @@ import {
   savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
+  type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
   type WeightReading,
@@ -39,6 +41,7 @@ const PERMISSIONS = [
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
   { accessType: 'read', recordType: 'Weight' },
   { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'ExerciseSession' },
 ] as const;
 
 const PLAY_STORE = 'market://details?id=com.google.android.apps.healthdata';
@@ -319,4 +322,85 @@ export async function removeWorkout(logId: number): Promise<void> {
   for (const recordType of ['ExerciseSession', 'ActiveCaloriesBurned'] as const) {
     await deleteRecordsByUuids(recordType, [], [savedWorkoutId(logId)]);
   }
+}
+
+export const workoutsAllowed = () => allowedToRead('ExerciseSession');
+
+export async function requestWorkoutsAccess(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  await requestPermission([{ accessType: 'read', recordType: 'ExerciseSession' }]);
+  return workoutsAllowed();
+}
+
+/** Each exercise type's name in Health Connect's constants, by its number. */
+const EXERCISE_NAMES = new Map(
+  Object.entries(ExerciseType).map(([name, type]) => [type as number, name]),
+);
+
+/** The most pages of sessions read at once: far more than anyone records in 400 days. */
+const MOST_SESSION_PAGES = 10;
+
+/**
+ * The workouts other apps recorded, with the calories of the app that recorded each and the
+ * average heart rate during it, where they may be read. Benchbite's own are left out: they are its
+ * logs (ADR 0105).
+ */
+export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[]> {
+  if (!(await initialize()) || !(await workoutsAllowed())) return [];
+  const granted = await getGrantedPermissions();
+  const allowed = (recordType: string) =>
+    granted.some(
+      (permission) => permission.accessType === 'read' && permission.recordType === recordType,
+    );
+  const read: OutsideWorkout[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < MOST_SESSION_PAGES; page++) {
+    const { records, pageToken: next } = await readRecords('ExerciseSession', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: from.toISOString(),
+        endTime: to.toISOString(),
+      },
+      pageSize: 1000,
+      ...(pageToken ? { pageToken } : {}),
+    });
+    for (const record of records) {
+      const origin = record.metadata?.dataOrigin;
+      if (origin === applicationId || new Date(record.startTime) < from) continue;
+      const during = {
+        operator: 'between' as const,
+        startTime: record.startTime,
+        endTime: record.endTime,
+      };
+      // Either figure may be missing or not allowed; the workout is kept without it.
+      const kcal =
+        allowed('ActiveCaloriesBurned') && origin
+          ? await aggregateRecord({
+              recordType: 'ActiveCaloriesBurned',
+              timeRangeFilter: during,
+              dataOriginFilter: [origin],
+            })
+              .then((energy) => energy.ACTIVE_CALORIES_TOTAL.inKilocalories)
+              .catch(() => 0)
+          : 0;
+      const heart = allowed('HeartRate')
+        ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during }).catch(
+            () => null,
+          )
+        : null;
+      read.push({
+        id: record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`,
+        activity:
+          HEALTH_CONNECT_ACTIVITIES[EXERCISE_NAMES.get(record.exerciseType) ?? ''] ?? 'other',
+        start: new Date(record.startTime),
+        end: new Date(record.endTime),
+        activeKcal: kcal > 0 ? kcal : null,
+        heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
+        source: sourceName(origin),
+      });
+    }
+    if (!next) break;
+    pageToken = next;
+  }
+  return read;
 }

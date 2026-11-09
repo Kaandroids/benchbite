@@ -5,6 +5,7 @@ import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
+  type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
   type WeightReading,
@@ -65,3 +66,13 @@ export const saveWorkout = (_workout: WorkoutToSave): Promise<void> => Promise.r
 
 /** Takes Benchbite's copy of a log's workout out of the store. */
 export const removeWorkout = (_logId: number): Promise<void> => Promise.resolve();
+
+/** Whether other apps' workouts may be read, where the system says so (ADR 0106). */
+export const workoutsAllowed = (): Promise<boolean> => Promise.resolve(false);
+
+/** Asks for other apps' workouts alone; whether reading them was allowed. */
+export const requestWorkoutsAccess = (): Promise<boolean> => Promise.resolve(false);
+
+/** The workouts other apps recorded that started between two times, in no set order. */
+export const outsideWorkouts = (_from: Date, _to: Date): Promise<OutsideWorkout[]> =>
+  Promise.resolve([]);

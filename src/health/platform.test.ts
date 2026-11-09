@@ -32,7 +32,13 @@ jest.mock('expo-application', () => ({ applicationId: 'com.benchbite.app' }));
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   AuthorizationStatus: { notDetermined: 0, sharingDenied: 1, sharingAuthorized: 2 },
   ComparisonPredicateOperator: { equalTo: 4 },
-  WorkoutActivityType: { traditionalStrengthTraining: 50 },
+  WorkoutActivityType: {
+    traditionalStrengthTraining: 50,
+    running: 37,
+    50: 'traditionalStrengthTraining',
+    37: 'running',
+    3000: 'other',
+  },
   authorizationStatusFor: jest.fn(),
   deleteObjects: jest.fn(() => Promise.resolve(0)),
   queryWorkoutSamples: jest.fn(),
@@ -45,7 +51,7 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
   queryStatisticsForQuantitySeparateBySource: jest.fn(),
 }));
 jest.mock('react-native-health-connect', () => ({
-  ExerciseType: { STRENGTH_TRAINING: 70 },
+  ExerciseType: { STRENGTH_TRAINING: 70, BIKING: 8, OTHER_WORKOUT: 0 },
   insertRecords: jest.fn(() => Promise.resolve([])),
   deleteRecordsByUuids: jest.fn(() => Promise.resolve()),
   SdkAvailabilityStatus: {
@@ -66,7 +72,7 @@ jest.mock('react-native-health-connect', () => ({
 beforeEach(() => jest.clearAllMocks());
 
 describe('Apple Health', () => {
-  it('asks to read heart rate, active energy, body mass and steps, and nothing to write', async () => {
+  it('asks to read heart rate, active energy, body mass, steps and workouts, and nothing to write', async () => {
     expect(await ios.requestAccess()).toBe(true);
     expect(requestAuthorization).toHaveBeenCalledWith({
       toRead: [
@@ -74,6 +80,7 @@ describe('Apple Health', () => {
         'HKQuantityTypeIdentifierActiveEnergyBurned',
         'HKQuantityTypeIdentifierBodyMass',
         'HKQuantityTypeIdentifierStepCount',
+        'HKWorkoutTypeIdentifier',
       ],
     });
   });
@@ -192,7 +199,7 @@ describe('Health Connect', () => {
     }
   });
 
-  it('asks for its four types, and counts as allowed with heart rate', async () => {
+  it('asks for its five types, and counts as allowed with heart rate', async () => {
     jest
       .mocked(getGrantedPermissions)
       .mockResolvedValue([{ accessType: 'read', recordType: 'ActiveCaloriesBurned' }]);
@@ -202,6 +209,7 @@ describe('Health Connect', () => {
       { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
       { accessType: 'read', recordType: 'Weight' },
       { accessType: 'read', recordType: 'Steps' },
+      { accessType: 'read', recordType: 'ExerciseSession' },
     ]);
 
     jest
@@ -594,5 +602,100 @@ describe('saving workouts', () => {
       [],
       ['benchbite-log-11'],
     );
+  });
+});
+
+describe('workouts from other apps', () => {
+  const from = new Date('2026-11-01T00:00:00Z');
+  const to = new Date('2026-11-10T00:00:00Z');
+  const start = new Date('2026-11-09T07:10:00Z');
+  const end = new Date('2026-11-09T07:42:00Z');
+
+  it('reads Apple Health’s workouts of other apps, with their heart rate, as an activity', async () => {
+    const workout = (app: string, type: number, at = start) => ({
+      uuid: `${app}-${type}`,
+      workoutActivityType: type,
+      startDate: at,
+      endDate: end,
+      totalEnergyBurned: { unit: 'kcal', quantity: 310 },
+      sourceRevision: { source: { bundleIdentifier: app, name: 'Apple Watch' } },
+    });
+    jest
+      .mocked(queryWorkoutSamples)
+      .mockResolvedValue([
+        workout('com.apple.health', 37),
+        workout('com.apple.health', 3000),
+        workout('com.benchbite.app', 50),
+        workout('com.apple.health', 37, new Date('2026-10-31T23:30:00Z')),
+      ] as never);
+    jest.mocked(queryStatisticsForQuantity).mockResolvedValue({
+      averageQuantity: { unit: 'count/min', quantity: 148 },
+    } as never);
+
+    expect(await ios.outsideWorkouts(from, to)).toEqual([
+      {
+        id: 'com.apple.health-37',
+        activity: 'running',
+        start,
+        end,
+        activeKcal: 310,
+        heartRateAvg: 148,
+        source: 'Apple Watch',
+      },
+      {
+        id: 'com.apple.health-3000',
+        activity: 'other',
+        start,
+        end,
+        activeKcal: 310,
+        heartRateAvg: 148,
+        source: 'Apple Watch',
+      },
+    ]);
+  });
+
+  it('reads Health Connect’s sessions of other apps, with the calories of the app that recorded each', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([
+      { accessType: 'read', recordType: 'ExerciseSession' },
+      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+      { accessType: 'read', recordType: 'HeartRate' },
+    ] as never);
+    const session = (origin: string, type: number) => ({
+      exerciseType: type,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      metadata: { id: `${origin}-${type}`, dataOrigin: origin },
+    });
+    jest.mocked(readRecords).mockResolvedValueOnce({
+      records: [session('com.huami.watch.hmwatchmanager', 8), session('com.benchbite.app', 70)],
+    } as never);
+    jest
+      .mocked(aggregateRecord)
+      .mockResolvedValueOnce({ ACTIVE_CALORIES_TOTAL: { inKilocalories: 540 } } as never)
+      .mockResolvedValueOnce({ MEASUREMENTS_COUNT: 900, BPM_AVG: 132 } as never);
+
+    expect(await android.outsideWorkouts(from, to)).toEqual([
+      {
+        id: 'com.huami.watch.hmwatchmanager-8',
+        activity: 'cycling',
+        start,
+        end,
+        activeKcal: 540,
+        heartRateAvg: 132,
+        source: 'Zepp',
+      },
+    ]);
+    expect(aggregateRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordType: 'ActiveCaloriesBurned',
+        dataOriginFilter: ['com.huami.watch.hmwatchmanager'],
+      }),
+    );
+  });
+
+  it('reads no sessions from Health Connect while they may not be read', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([] as never);
+    expect(await android.outsideWorkouts(from, to)).toEqual([]);
+    expect(readRecords).not.toHaveBeenCalled();
   });
 });

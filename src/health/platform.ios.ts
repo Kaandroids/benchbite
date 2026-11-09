@@ -20,6 +20,7 @@ import { applicationId } from 'expo-application';
 
 import { toIsoDate } from '@/i18n/dates';
 
+import { HEALTHKIT_ACTIVITIES } from './activities';
 import { heartRateSamples } from './samples';
 import {
   coversMostOf,
@@ -28,6 +29,7 @@ import {
   savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
+  type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
   type WeightReading,
@@ -40,7 +42,7 @@ const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
 const BODY_MASS = 'HKQuantityTypeIdentifierBodyMass';
 const STEP_COUNT = 'HKQuantityTypeIdentifierStepCount';
 const WORKOUT = 'HKWorkoutTypeIdentifier';
-const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS, STEP_COUNT] as const;
+const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS, STEP_COUNT, WORKOUT] as const;
 
 /** The metadata a saved workout and its calories are known by, and the calories it was saved with. */
 const EXTERNAL_ID = 'HKExternalUUID';
@@ -235,4 +237,46 @@ export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSa
 export async function removeWorkout(logId: number): Promise<void> {
   await deleteObjects(WORKOUT, savedOf(logId));
   await deleteObjects(ACTIVE_ENERGY, savedOf(logId));
+}
+
+// Apple never tells whether workouts may be read: none may simply be found.
+export const workoutsAllowed = (): Promise<boolean> => Promise.resolve(true);
+
+export async function requestWorkoutsAccess(): Promise<boolean> {
+  await requestAuthorization({ toRead: [WORKOUT] });
+  return true;
+}
+
+/**
+ * The workouts other apps recorded, with the average heart rate measured during each, which the
+ * workout itself does not hold. Benchbite's own are left out: they are its logs (ADR 0105).
+ */
+export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[]> {
+  const workouts = await queryWorkoutSamples({
+    filter: { date: { startDate: from, endDate: to } },
+    limit: 0,
+  });
+  const read: OutsideWorkout[] = [];
+  for (const workout of workouts) {
+    if (workout.sourceRevision.source.bundleIdentifier === applicationId) continue;
+    if (workout.startDate < from) continue;
+    const heart = await queryStatisticsForQuantity(HEART_RATE, ['discreteAverage'], {
+      filter: { date: { startDate: workout.startDate, endDate: workout.endDate } },
+      unit: 'count/min',
+    }).catch((error: unknown) => {
+      console.warn('Could not read the heart rate of a workout', error);
+      return null;
+    });
+    read.push({
+      id: workout.uuid,
+      activity: HEALTHKIT_ACTIVITIES[WorkoutActivityType[workout.workoutActivityType]] ?? 'other',
+      start: workout.startDate,
+      end: workout.endDate,
+      // The library gives it in kilocalories.
+      activeKcal: workout.totalEnergyBurned?.quantity ?? null,
+      heartRateAvg: heart?.averageQuantity?.quantity ?? null,
+      source: workout.sourceRevision.source.name || null,
+    });
+  }
+  return read;
 }
