@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -43,6 +44,45 @@ type SheetProps = {
   onClose: () => void;
 };
 
+/**
+ * The frame of a sheet before the system asks: what it is about, then Continue, Not now and what
+ * the system asks next.
+ */
+function AskSheet({
+  title,
+  body,
+  next,
+  busy,
+  onContinue,
+  onClose,
+  children,
+}: {
+  title: string;
+  body: string;
+  next: string;
+  busy: boolean;
+  onContinue: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <BiteSheet title={title} body={body} onClose={onClose}>
+      {children}
+      <Button label={t('health.consent.continue')} loading={busy} onPress={onContinue} />
+      <Button
+        label={t('health.consent.notNow')}
+        variant="secondary"
+        disabled={busy}
+        onPress={onClose}
+      />
+      <Text variant="caption" color="textMuted" align="center">
+        {next}
+      </Text>
+    </BiteSheet>
+  );
+}
+
 /** Says what is read and kept, and when anything is written, before the system asks. */
 export function ConsentSheet({
   store,
@@ -54,9 +94,12 @@ export function ConsentSheet({
   const { colors, spacing } = useTheme();
   const name = t(`health.${store}`);
   return (
-    <BiteSheet
+    <AskSheet
       title={t('health.consent.title', { store: name })}
       body={t('health.consent.body')}
+      next={t(`health.consent.next.${store}`)}
+      busy={busy}
+      onContinue={onConnect}
       onClose={onClose}
     >
       <Card list>
@@ -80,17 +123,7 @@ export function ConsentSheet({
         ))}
       </Card>
       <Text color="textMuted">{t('health.consent.keeps', { store: name })}</Text>
-      <Button label={t('health.consent.continue')} loading={busy} onPress={onConnect} />
-      <Button
-        label={t('health.consent.notNow')}
-        variant="secondary"
-        disabled={busy}
-        onPress={onClose}
-      />
-      <Text variant="caption" color="textMuted" align="center">
-        {t(`health.consent.next.${store}`)}
-      </Text>
-    </BiteSheet>
+    </AskSheet>
   );
 }
 
@@ -134,9 +167,12 @@ export function WriteSheet({
   const { colors, spacing } = useTheme();
   const name = t(`health.${store}`);
   return (
-    <BiteSheet
+    <AskSheet
       title={t('health.write.title', { store: name })}
       body={t(`health.write.body.${store}`)}
+      next={t(`health.write.next.${store}`)}
+      busy={busy}
+      onContinue={onAllow}
       onClose={onClose}
     >
       <Card list>
@@ -159,17 +195,7 @@ export function WriteSheet({
           </View>
         ))}
       </Card>
-      <Button label={t('health.consent.continue')} loading={busy} onPress={onAllow} />
-      <Button
-        label={t('health.consent.notNow')}
-        variant="secondary"
-        disabled={busy}
-        onPress={onClose}
-      />
-      <Text variant="caption" color="textMuted" align="center">
-        {t(`health.write.next.${store}`)}
-      </Text>
-    </BiteSheet>
+    </AskSheet>
   );
 }
 
