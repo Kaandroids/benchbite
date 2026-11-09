@@ -8,6 +8,8 @@ import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
+import { SAMPLE_SECONDS } from './samples';
+
 const HEIGHT = 110;
 /** Room above the highest heart rate for its label. */
 const TOP = 18;
@@ -31,14 +33,22 @@ type HeartRateChartProps = {
   setTimes: readonly Date[];
 };
 
-/** The x of each sample, from 0 to `width`, and its y, the highest at TOP. */
-export function heartRateScale(samples: readonly (number | null)[], width: number) {
+/**
+ * The x of each sample, from 0 to `width` over the workout's real length in milliseconds, as the set
+ * marks are placed, and its y, the highest at TOP.
+ */
+export function heartRateScale(
+  samples: readonly (number | null)[],
+  width: number,
+  duration: number,
+) {
   const values = samples.filter((sample): sample is number => sample !== null);
   const min = Math.min(...values);
   const high = Math.max(...values);
   const low = min - PADDING_BPM;
   const span = Math.max(1, high - low);
-  const x = (index: number) => (samples.length > 1 ? (index / (samples.length - 1)) * width : 0);
+  const x = (index: number) =>
+    Math.min(width, ((index * SAMPLE_SECONDS * 1000) / Math.max(1, duration)) * width);
   const y = (bpm: number) => TOP + (1 - (bpm - low) / span) * (HEIGHT - TOP);
   return { min, high, x, y };
 }
@@ -91,11 +101,11 @@ export function HeartRateChart({
   const { format } = useNumberFormat();
   const clock = useClockFormat();
   const [width, setWidth] = useState(0);
-  const scaled = heartRateScale(samples, width);
+  const duration = finishedAt.getTime() - startedAt.getTime();
+  const scaled = heartRateScale(samples, width, duration);
   const { line, area, dots } = heartRatePaths(samples, scaled);
   // The dot sits on the highest 10 seconds; its label is the watch's own highest, as the card says.
   const peak = samples.indexOf(scaled.high);
-  const duration = finishedAt.getTime() - startedAt.getTime();
   const lowest = Math.round(scaled.min);
   const highest = Math.round(max);
   const figures = {
@@ -154,7 +164,7 @@ export function HeartRateChart({
                 { top: scaled.y(average) - 20, backgroundColor: colors.surface },
               ]}
             >
-              {t('health.watch.chartAverage', { average: format(Math.round(average)) })}
+              {t('health.watch.chartAverage', { average: figures.average })}
             </Text>
             {peak >= 0 ? (
               <Text

@@ -45,7 +45,10 @@ it('says nothing of the sets for a workout logged before their times were kept',
 
 describe('heartRatePaths', () => {
   const draw = (samples: (number | null)[]) =>
-    heartRatePaths(samples, heartRateScale(samples, samples.length - 1));
+    heartRatePaths(
+      samples,
+      heartRateScale(samples, samples.length - 1, (samples.length - 1) * 10_000),
+    );
 
   it('runs the line across gaps of up to 2 minutes, as a watch that measures now and then leaves', () => {
     // A value every 90 seconds, nine samples of 10 seconds apart.
@@ -70,5 +73,14 @@ describe('heartRatePaths', () => {
     const { line, dots } = draw(samples);
     expect(line.match(/M/g)).toHaveLength(1);
     expect(dots).toHaveLength(2);
+  });
+});
+
+describe('heartRateScale', () => {
+  it('places each value at its own time, as the set marks are, also on a short workout', () => {
+    // 65 seconds: the value of 60 to 70 seconds sits where a set done at 60 seconds is marked.
+    const { x } = heartRateScale([90, 100, 110, 120, 130, 140, 150, 160], 650, 65_000);
+    expect(x(6)).toBe(600);
+    expect(x(7)).toBe(650);
   });
 });

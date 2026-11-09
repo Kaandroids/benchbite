@@ -4,7 +4,7 @@
 // Both must match heart_rate_samples_of() in the migration 20261109100000, which leaves out an
 // array that does not fit them.
 /** How many seconds one kept value stands for. */
-const SAMPLE_SECONDS = 10;
+export const SAMPLE_SECONDS = 10;
 /** The most values set_workout_health() keeps: a 12-hour workout's. */
 const MOST_SAMPLES = 4320;
 
