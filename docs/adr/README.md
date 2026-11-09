@@ -121,3 +121,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0103](0103-keep-the-days-steps.md)                                   | Keep the day's steps                                                                    | Accepted                                             |
 | [0104](0104-keep-a-workouts-heart-rate-over-its-time.md)              | Keep a workout's heart rate over its time                                               | Accepted                                             |
 | [0105](0105-save-workouts-to-the-health-store.md)                     | Save workouts to the health store                                                       | Accepted                                             |
+| [0106](0106-show-workouts-from-other-apps.md)                         | Show workouts from other apps                                                           | Accepted                                             |
