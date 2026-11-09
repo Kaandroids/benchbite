@@ -30,6 +30,13 @@ const CONSENT_ROWS: {
   }),
 ];
 
+/** What saving workouts writes, and what it leaves out, as the write sheet lists it. */
+const WRITE_ROWS: { key: 'workout' | 'fromNow' | 'notTwice'; icon: IconName; good: boolean }[] = [
+  { key: 'workout', icon: 'check', good: true },
+  { key: 'fromNow', icon: 'check', good: true },
+  { key: 'notTwice', icon: 'close', good: false },
+];
+
 type SheetProps = {
   store: NonNullable<HealthStore>;
   busy: boolean;
@@ -126,11 +133,6 @@ export function WriteSheet({
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const name = t(`health.${store}`);
-  const rows: { key: 'workout' | 'fromNow' | 'notTwice'; icon: IconName; good: boolean }[] = [
-    { key: 'workout', icon: 'check', good: true },
-    { key: 'fromNow', icon: 'check', good: true },
-    { key: 'notTwice', icon: 'close', good: false },
-  ];
   return (
     <BiteSheet
       title={t('health.write.title', { store: name })}
@@ -141,7 +143,7 @@ export function WriteSheet({
         <Text variant="caption" color="textMuted" style={{ paddingVertical: spacing.sm }}>
           {t('health.write.writes')}
         </Text>
-        {rows.map(({ key, icon, good }) => (
+        {WRITE_ROWS.map(({ key, icon, good }) => (
           <View
             key={key}
             style={[
