@@ -106,6 +106,9 @@ beforeEach(() => {
   jest.mocked(useRecipes).mockReturnValue(loaded([]));
 });
 
+/** The Monday the week's photos come back, and the Wednesday before it. */
+const MONDAY = new Date(2026, 10, 9);
+const WEDNESDAY = new Date(2026, 10, 4, 9, 0);
 describe('FoodSearchScreen', () => {
   it('asks for two letters before searching', async () => {
     await render(<FoodSearchScreen meal="lunch" day="2026-10-27" />);
@@ -406,26 +409,29 @@ describe('FoodSearchScreen', () => {
     expect(screen.getByLabelText('Egg, raw, 1 piece · 60 g · 82 kcal')).toBeTruthy();
   });
 
-  it("says the week's photos are used up from the photo tile, with a way to premium", async () => {
-    // A Wednesday before the Monday they come back, so that the day reads as a weekday.
-    jest.useFakeTimers({ now: new Date(2026, 10, 4, 9, 0), advanceTimers: true });
-    jest.mocked(useAiAccess).mockReturnValue({
-      data: { refusal: 'limit_reached', byCount: true, resetsAt: new Date(2026, 10, 9) },
-    } as never);
-    await render(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
-    expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
-    expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
-    expect(screen.getByText(/New ones on Monday/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'See premium' })).toBeTruthy();
-    jest.useRealTimers();
+  describe('on the Wednesday before the photos come back', () => {
+    // So that the coming Monday reads as a weekday, as it would not on that Monday.
+    beforeEach(() => jest.useFakeTimers({ now: WEDNESDAY, advanceTimers: true }));
+    afterEach(() => jest.useRealTimers());
+
+    it("says the week's photos are used up from the photo tile, with a way to premium", async () => {
+      jest.mocked(useAiAccess).mockReturnValue({
+        data: { refusal: 'limit_reached', byCount: true, resetsAt: MONDAY },
+      } as never);
+      await render(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
+      await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
+      expect(screen.queryByText('Up to 3 photos of the same meal')).toBeNull();
+      expect(screen.getByText("You've used this week's meal photos")).toBeTruthy();
+      expect(screen.getByText(/New ones on Monday/)).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'See premium' })).toBeTruthy();
+    });
   });
 
   it('keeps the sheet the tile opened when the answer comes later', async () => {
     const view = await render(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
     await fireEvent.press(screen.getByRole('button', { name: 'Log a meal from a photo' }));
     jest.mocked(useAiAccess).mockReturnValue({
-      data: { refusal: 'limit_reached', byCount: true, resetsAt: new Date(2026, 10, 9) },
+      data: { refusal: 'limit_reached', byCount: true, resetsAt: MONDAY },
     } as never);
     await view.rerender(<FoodSearchScreen meal="lunch" day="2026-10-30" />);
     expect(screen.getByText('Up to 3 photos of the same meal')).toBeTruthy();
