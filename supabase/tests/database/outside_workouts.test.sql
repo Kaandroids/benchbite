@@ -1,10 +1,11 @@
 -- import_outside_workouts() keeps the workouts other apps recorded in a store (#468, ADR 0106): the
--- store is the truth from `since` on, rows of the other store stay, and outside_workout_list leaves
--- out a watch's copy of a logged workout. Only the caller's rows, read by them alone.
+-- store is the truth for the time read, rows of the other store and of other times stay, and
+-- outside_workout_list leaves out a watch's copy of a logged workout. Only the caller's rows, read
+-- by them alone, and no more than the limit.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -32,7 +33,10 @@ $$;
 
 create function pg_temp.import(workouts jsonb, store text default 'appleHealth') returns integer
 language sql as $$
-  select public.import_outside_workouts(workouts, store, now() - interval '30 days', current_date);
+  select public.import_outside_workouts(
+    workouts, store::public.health_store, now() - interval '30 days', now() + interval '1 hour',
+    current_date
+  );
 $$;
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
@@ -84,11 +88,23 @@ select is(
 );
 select is(
   public.import_outside_workouts(
-    jsonb_build_array(pg_temp.workout('run', 5, 32, '{"activeKcal": 290}')),
-    'appleHealth', now() - interval '1 hour', current_date
+    '[]', 'appleHealth', now() - interval '1 hour', now() + interval '1 hour', current_date
   ),
   0,
-  'Workouts before since are neither given nor taken out'
+  'Workouts before since are not taken out'
+);
+select is(
+  public.import_outside_workouts(
+    jsonb_build_array(pg_temp.workout('run', 5, 32, '{"activeKcal": 290}')),
+    'appleHealth', now() - interval '30 days', now() - interval '6 hours', current_date
+  ),
+  0,
+  'A workout from after until is left out, and the rows after it stay'
+);
+select is(
+  (select count(*)::integer from public.outside_workouts where store = 'appleHealth'),
+  1,
+  'So the app can read a longer time in parts'
 );
 select is(
   pg_temp.import(jsonb_build_array(
@@ -98,15 +114,17 @@ select is(
     pg_temp.workout('', 12, 20),
     pg_temp.workout('Bad', 12, 20, '{"activity": "Running!"}'),
     pg_temp.workout('nodate', 12, 20, '{"startedAt": "yesterday-ish"}'),
-    pg_temp.workout('old', 24 * 40, 20)
+    pg_temp.workout('old', 24 * 40, 20),
+    pg_temp.workout('future', 5, 20, '{"startedAt": "9999-01-01T00:00:00Z", "endedAt": "9999-01-01T00:20:00Z"}'),
+    pg_temp.workout('wrongday', 5, 20, jsonb_build_object('startedOn', current_date - 10))
   )),
   0,
-  'Entries that are no workout, or start before since, are left out on their own'
+  'Entries that are no workout, start outside the time read or on another day, are left out on their own'
 );
 select is(
   pg_temp.import(jsonb_build_array(
     pg_temp.workout('run', 5, 32, '{"activeKcal": 290}'),
-    pg_temp.workout('odd', 8, 20, '{"activeKcal": 99999, "heartRateAvg": 400, "source": "  "}')
+    pg_temp.workout('odd', 8, 20, '{"activeKcal": 9999, "heartRateAvg": 400, "source": "  "}')
   )),
   1,
   'A workout with figures out of range is kept'
@@ -126,7 +144,7 @@ select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
 select is(
   pg_temp.import(jsonb_build_array(
     pg_temp.workout('run', 5, 32, '{"activeKcal": 290}'),
-    pg_temp.workout('odd', 8, 20, '{"activeKcal": 99999, "heartRateAvg": 400, "source": "  "}'),
+    pg_temp.workout('odd', 8, 20, '{"activeKcal": 9999, "heartRateAvg": 400, "source": "  "}'),
     pg_temp.workout('gym', 4.55, 33, '{"activity": "strength_training"}'),
     pg_temp.workout('walk-home', 4.1, 30, '{"activity": "walking"}')
   )),
@@ -166,24 +184,74 @@ select throws_ok(
   'No one writes the rows directly'
 );
 select throws_ok(
-  $$ select public.import_outside_workouts('[]', 'googleFit', now() - interval '1 day', current_date) $$,
-  '22023',
-  'The store is Apple Health or Health Connect',
+  $$ update public.outside_workouts set activity = 'walking' $$,
+  '42501',
+  null,
+  'Nor change them'
+);
+select throws_ok(
+  $$ delete from public.outside_workouts $$,
+  '42501',
+  null,
+  'Nor delete them'
+);
+select throws_ok(
+  $$ select public.import_outside_workouts(
+       '[]', 'googleFit', now() - interval '1 day', now(), current_date) $$,
+  '22P02',
+  null,
   'An unknown store is refused'
 );
 select throws_ok(
-  $$ select public.import_outside_workouts('[]', 'appleHealth', now() - interval '500 days', current_date) $$,
+  $$ select public.import_outside_workouts(
+       '[]', 'appleHealth', now() - interval '500 days', now(), current_date) $$,
   '22023',
-  'Since is within the last 400 days',
+  'The time read is within the last 400 days',
   'A read from too long ago is refused'
+);
+select throws_ok(
+  $$ select public.import_outside_workouts(
+       '[]', 'appleHealth', now(), now() - interval '1 day', current_date) $$,
+  '22023',
+  'The time read is within the last 400 days',
+  'A time that ends before it starts is refused'
+);
+
+-- A user at the limit, whose next workout is one too many.
+reset role;
+insert into public.outside_workouts (user_id, store, source_id, activity, started_at, ended_at,
+  started_on)
+select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'old-' || n, 'walking',
+  now() - interval '100 days', now() - interval '100 days' + interval '20 minutes',
+  (now() - interval '100 days')::date
+from generate_series(1, public.outside_workout_limit()) as n;
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
+select throws_ok(
+  $$ select pg_temp.import(jsonb_build_array(pg_temp.workout('one-more', 2, 30))) $$,
+  '54000',
+  'Too many outside workouts',
+  'An import past the limit is refused'
 );
 
 set local role anon;
 select throws_ok(
-  $$ select public.import_outside_workouts('[]', 'appleHealth', now() - interval '1 day', current_date) $$,
+  $$ select public.import_outside_workouts(
+       '[]', 'appleHealth', now() - interval '1 day', now(), current_date) $$,
   '42501',
   null,
   'Anonymous callers may not import'
+);
+select throws_ok(
+  $$ select * from public.outside_workouts $$,
+  '42501',
+  null,
+  'Nor read the workouts'
+);
+select throws_ok(
+  $$ select * from public.outside_workout_list $$,
+  '42501',
+  null,
+  'Nor the list'
 );
 
 select * from finish();
