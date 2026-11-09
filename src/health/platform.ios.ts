@@ -21,6 +21,7 @@ import { applicationId } from 'expo-application';
 import { toIsoDate } from '@/i18n/dates';
 
 import { HEALTHKIT_ACTIVITIES } from './activities';
+import { inBatches } from './batches';
 import { heartRateSamples } from './samples';
 import {
   coversMostOf,
@@ -256,10 +257,11 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
     filter: { date: { startDate: from, endDate: to } },
     limit: 0,
   });
-  const read: OutsideWorkout[] = [];
-  for (const workout of workouts) {
-    if (workout.sourceRevision.source.bundleIdentifier === applicationId) continue;
-    if (workout.startDate < from) continue;
+  const others = workouts.filter(
+    (workout) =>
+      workout.sourceRevision.source.bundleIdentifier !== applicationId && workout.startDate >= from,
+  );
+  return inBatches(others, async (workout) => {
     const heart = await queryStatisticsForQuantity(HEART_RATE, ['discreteAverage'], {
       filter: { date: { startDate: workout.startDate, endDate: workout.endDate } },
       unit: 'count/min',
@@ -267,7 +269,7 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
       console.warn('Could not read the heart rate of a workout', error);
       return null;
     });
-    read.push({
+    return {
       id: workout.uuid,
       activity: HEALTHKIT_ACTIVITIES[WorkoutActivityType[workout.workoutActivityType]] ?? 'other',
       start: workout.startDate,
@@ -276,7 +278,6 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
       activeKcal: workout.totalEnergyBurned?.quantity ?? null,
       heartRateAvg: heart?.averageQuantity?.quantity ?? null,
       source: workout.sourceRevision.source.name || null,
-    });
-  }
-  return read;
+    };
+  });
 }

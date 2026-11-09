@@ -19,6 +19,7 @@ import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
 import { HEALTH_CONNECT_ACTIVITIES } from './activities';
+import { inBatches } from './batches';
 import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
   coversMostOf,
@@ -71,11 +72,14 @@ export async function availability(): Promise<HealthAvailability> {
 }
 
 /** Whether a type may be read. */
-async function allowedToRead(recordType: string): Promise<boolean> {
-  const granted = await getGrantedPermissions();
-  return granted.some(
+/** Whether the permissions granted let a type be read. */
+const readGranted = (granted: { accessType: string; recordType: string }[], recordType: string) =>
+  granted.some(
     (permission) => permission.accessType === 'read' && permission.recordType === recordType,
   );
+
+async function allowedToRead(recordType: string): Promise<boolean> {
+  return readGranted(await getGrantedPermissions(), recordType);
 }
 
 /** Whether heart rate, the part a workout needs most, may be read. */
@@ -107,10 +111,7 @@ export const installStore = (): void => void Linking.openURL(PLAY_STORE);
 export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> {
   if (!(await initialize())) return NO_WORKOUT_STATS;
   const granted = await getGrantedPermissions();
-  const allowed = (recordType: string) =>
-    granted.some(
-      (permission) => permission.accessType === 'read' && permission.recordType === recordType,
-    );
+  const allowed = (recordType: string) => readGranted(granted, recordType);
   const timeRangeFilter = {
     operator: 'between' as const,
     startTime: from.toISOString(),
@@ -348,10 +349,7 @@ const MOST_SESSION_PAGES = 10;
 export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[] | null> {
   if (!(await initialize()) || !(await workoutsAllowed())) return null;
   const granted = await getGrantedPermissions();
-  const allowed = (recordType: string) =>
-    granted.some(
-      (permission) => permission.accessType === 'read' && permission.recordType === recordType,
-    );
+  const allowed = (recordType: string) => readGranted(granted, recordType);
   const read: OutsideWorkout[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < MOST_SESSION_PAGES; page++) {
@@ -364,41 +362,46 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
       pageSize: 1000,
       ...(pageToken ? { pageToken } : {}),
     });
-    for (const record of records) {
-      const origin = record.metadata?.dataOrigin;
-      if (origin === applicationId || new Date(record.startTime) < from) continue;
-      const during = {
-        operator: 'between' as const,
-        startTime: record.startTime,
-        endTime: record.endTime,
-      };
-      // Either figure may be missing or not allowed; the workout is kept without it.
-      const kcal =
-        allowed('ActiveCaloriesBurned') && origin
-          ? await aggregateRecord({
-              recordType: 'ActiveCaloriesBurned',
-              timeRangeFilter: during,
-              dataOriginFilter: [origin],
-            })
-              .then((energy) => energy.ACTIVE_CALORIES_TOTAL.inKilocalories)
-              .catch(() => 0)
-          : 0;
-      const heart = allowed('HeartRate')
-        ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during }).catch(
-            () => null,
-          )
-        : null;
-      read.push({
-        id: record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`,
-        activity:
-          HEALTH_CONNECT_ACTIVITIES[EXERCISE_NAMES.get(record.exerciseType) ?? ''] ?? 'other',
-        start: new Date(record.startTime),
-        end: new Date(record.endTime),
-        activeKcal: kcal > 0 ? kcal : null,
-        heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
-        source: sourceName(origin),
-      });
-    }
+    const others = records.filter(
+      (record) =>
+        record.metadata?.dataOrigin !== applicationId && new Date(record.startTime) >= from,
+    );
+    read.push(
+      ...(await inBatches(others, async (record) => {
+        const origin = record.metadata?.dataOrigin;
+        const during = {
+          operator: 'between' as const,
+          startTime: record.startTime,
+          endTime: record.endTime,
+        };
+        // Either figure may be missing or not allowed; the workout is kept without it.
+        const kcal =
+          allowed('ActiveCaloriesBurned') && origin
+            ? await aggregateRecord({
+                recordType: 'ActiveCaloriesBurned',
+                timeRangeFilter: during,
+                dataOriginFilter: [origin],
+              })
+                .then((energy) => energy.ACTIVE_CALORIES_TOTAL.inKilocalories)
+                .catch(() => 0)
+            : 0;
+        const heart = allowed('HeartRate')
+          ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during }).catch(
+              () => null,
+            )
+          : null;
+        return {
+          id: record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`,
+          activity:
+            HEALTH_CONNECT_ACTIVITIES[EXERCISE_NAMES.get(record.exerciseType) ?? ''] ?? 'other',
+          start: new Date(record.startTime),
+          end: new Date(record.endTime),
+          activeKcal: kcal > 0 ? kcal : null,
+          heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
+          source: sourceName(origin),
+        };
+      })),
+    );
     if (!next) break;
     pageToken = next;
   }
