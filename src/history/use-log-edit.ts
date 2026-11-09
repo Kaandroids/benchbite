@@ -74,11 +74,11 @@ export function useLogEdit(log: LogSummary, initial: LoggedExercise[], library: 
         if (i !== index) {
           return item;
         }
-        const {
-          key: _key,
-          doneAt: _doneAt,
-          ...values
-        } = item.sets[item.sets.length - 1] ?? { ...EMPTY_SET, key: 0, doneAt: null };
+        const { key: _key, ...values } = item.sets[item.sets.length - 1] ?? {
+          ...EMPTY_SET,
+          key: 0,
+          doneAt: null,
+        };
         // A set added now was not done during the workout, so it has no time of its own.
         return { ...item, sets: [...item.sets, { ...values, doneAt: null, key: key + 1 }] };
       });

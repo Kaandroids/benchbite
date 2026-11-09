@@ -38,7 +38,7 @@ export function LogRow({ log, divider, icons = false }: LogRowProps) {
     : t('common.sets', { count: log.sets });
   const burned = kcalOf(log);
   const kcal = burned
-    ? t(burned.measured ? 'history.kcalMeasured' : 'history.kcal', { kcal: burned.kcal })
+    ? t(burned.source === 'watch' ? 'history.kcalMeasured' : 'history.kcal', { kcal: burned.kcal })
     : null;
 
   return (

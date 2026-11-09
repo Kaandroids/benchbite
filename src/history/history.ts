@@ -32,12 +32,9 @@ export type LogSummary = {
   sets: number;
   plannedSets: number | null;
   kilograms: number;
-  /** Estimated from the time and the user's weight; null without a weight. */
-  estimatedKcal: number | null;
   /** What the watch measured, from the phone's health store (ADR 0098); null when nothing did. */
   heartRateAvg: number | null;
   heartRateMax: number | null;
-  activeKcal: number | null;
   /** The app or watch that measured them. */
   healthSource: string | null;
   /**
@@ -117,13 +114,15 @@ export function doneOf(done: number, planned: number | null): string {
 }
 
 /**
- * The calories a workout burned, as the summary chooses them, and whether the watch measured them;
- * none without any.
+ * The calories a workout burned, as the summary chooses them, and where they come from: only the
+ * watch's are measured; none without any.
  */
 export function kcalOf(
   log: Pick<LogSummary, 'kcal' | 'kcalSource'>,
-): { kcal: number; measured: boolean } | null {
-  return log.kcal === null ? null : { kcal: log.kcal, measured: log.kcalSource === 'watch' };
+): { kcal: number; source: KcalSource } | null {
+  return log.kcal === null || log.kcalSource === null
+    ? null
+    : { kcal: log.kcal, source: log.kcalSource };
 }
 
 /** Whole minutes between the start and the end of a workout. */
@@ -146,10 +145,8 @@ function toSummary(row: SummaryRow): LogSummary {
     sets: row.sets ?? 0,
     plannedSets: row.planned_sets,
     kilograms: Number(row.kilograms ?? 0),
-    estimatedKcal: row.estimated_kcal,
     heartRateAvg: row.heart_rate_avg,
     heartRateMax: row.heart_rate_max,
-    activeKcal: row.active_kcal,
     healthSource: row.health_source,
     kcal: row.kcal,
     kcalSource: row.kcal_source,
@@ -420,7 +417,7 @@ export function useEditLog() {
       exercises: {
         place: number;
         exerciseId: string;
-        sets: (SetValues & { doneAt?: Date | null })[];
+        sets: (SetValues & { doneAt: Date | null })[];
       }[];
     }) => {
       // The function takes an exercise's place from its index, so every place up to the last is

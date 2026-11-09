@@ -96,7 +96,7 @@ export function LogScreen({ id }: { id: number }) {
     { value: format(Math.round(log.kilograms)), label: 'kg' },
     // What the watch measured takes the estimate's place.
     ...(burned
-      ? [{ value: `${burned.measured ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
+      ? [{ value: `${burned.source === 'watch' ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
       : []),
   ];
 
@@ -174,14 +174,13 @@ export function LogScreen({ id }: { id: number }) {
             heartRate.data
               ? {
                   samples: heartRate.data,
-                  average: log.heartRateAvg,
                   startedAt: log.startedAt,
                   finishedAt: log.finishedAt,
                   setTimes: (sets.data ?? []).flatMap((set) => (set.doneAt ? [set.doneAt] : [])),
                 }
               : null
           }
-          kcalEstimated={log.kcalSource === 'heart_rate'}
+          kcalEstimated={burned?.source === 'heart_rate'}
         />
       ) : waitingForWatch ? (
         <WaitingCard />
