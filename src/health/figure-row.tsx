@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
+import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 /** A measured figure, already rounded and formatted, under its value. */
@@ -38,3 +39,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+/** Calories and a heart rate as figures show them: whole, the calories with the language's digits. */
+export function useFigureFormat() {
+  const { format } = useNumberFormat();
+  return {
+    kcal: (kcal: number) => format(Math.round(kcal)),
+    bpm: (bpm: number) => String(Math.round(bpm)),
+  };
+}

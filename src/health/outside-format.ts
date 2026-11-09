@@ -3,25 +3,26 @@
 import { useTranslation } from 'react-i18next';
 
 import { useDurationFormat } from '@/i18n/dates';
-import { useNumberFormat } from '@/i18n/units';
+import { minutesBetween } from '@/lib/time';
 
+import { useFigureFormat } from './figure-row';
 import type { ListedOutsideWorkout } from './outside-workouts';
-import { useStoreName } from './use-store-name';
+import { useSourceThrough, useStoreName } from './use-store-name';
 
-/** How long a workout from another app took, in whole minutes. */
+/** How long a workout from another app took, in whole minutes, one at least. */
 export const outsideMinutes = (workout: ListedOutsideWorkout) =>
-  Math.max(1, Math.round((workout.endedAt.getTime() - workout.startedAt.getTime()) / 60_000));
+  Math.max(1, minutesBetween(workout.startedAt, workout.endedAt));
 
 /** A workout's length, calories and source, as one line. */
 export function useOutsideSummary() {
   const { t } = useTranslation();
   const duration = useDurationFormat();
-  const { format } = useNumberFormat();
+  const figure = useFigureFormat();
   return (workout: ListedOutsideWorkout, withSource = true) =>
     [
       duration(outsideMinutes(workout)),
       workout.activeKcal !== null
-        ? t('history.kcalMeasured', { kcal: format(Math.round(workout.activeKcal)) })
+        ? t('history.kcalMeasured', { kcal: figure.kcal(workout.activeKcal) })
         : null,
       withSource ? workout.source : null,
     ]
@@ -36,14 +37,10 @@ export function useOutsideSummary() {
 export function useOutsideSource() {
   const { t } = useTranslation();
   const store = useStoreName();
+  const through = useSourceThrough();
   return (workout: ListedOutsideWorkout, form: 'from' | 'through'): string | null => {
-    if (workout.source) {
-      if (form === 'from') return t('health.outside.from', { source: workout.source });
-      return store ? t('health.watch.through', { source: workout.source, store }) : workout.source;
-    }
-    if (!store) return null;
-    return form === 'from'
-      ? t('health.outside.fromStore', { store })
-      : t('health.watch.throughStore', { store });
+    if (form === 'through') return through(workout.source);
+    if (workout.source) return t('health.outside.from', { source: workout.source });
+    return store ? t('health.outside.fromStore', { store }) : null;
   };
 }

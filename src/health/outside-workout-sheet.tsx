@@ -7,11 +7,10 @@ import { IconTile } from '@/components/ui/icon-tile';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { useClockFormat, useDayFormat, useDurationFormat } from '@/i18n/dates';
-import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { ACTIVITY_ICONS } from './activities';
-import { FigureRow, type Figure } from './figure-row';
+import { FigureRow, useFigureFormat, type Figure } from './figure-row';
 import { outsideMinutes, useOutsideSource } from './outside-format';
 import type { ListedOutsideWorkout } from './outside-workouts';
 import { READ_LOOKS } from './reads';
@@ -32,14 +31,14 @@ export function OutsideWorkoutSheet({
   const day = useDayFormat();
   const clock = useClockFormat();
   const duration = useDurationFormat();
-  const { format } = useNumberFormat();
+  const figure = useFigureFormat();
   const figures: Figure[] = [
     { value: duration(outsideMinutes(workout)), label: t('health.outside.duration') },
     ...(workout.activeKcal !== null
-      ? [{ value: format(Math.round(workout.activeKcal)), label: t('health.watch.kcal') }]
+      ? [{ value: figure.kcal(workout.activeKcal), label: t('health.watch.kcal') }]
       : []),
     ...(workout.heartRateAvg !== null
-      ? [{ value: String(Math.round(workout.heartRateAvg)), label: t('health.watch.averageBpm') }]
+      ? [{ value: figure.bpm(workout.heartRateAvg), label: t('health.watch.averageBpm') }]
       : []),
   ];
   const source = useOutsideSource()(workout, 'through');

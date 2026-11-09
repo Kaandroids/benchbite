@@ -5,13 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Text } from '@/components/ui/text';
-import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
-import { FigureRow, type Figure } from './figure-row';
+import { FigureRow, useFigureFormat, type Figure } from './figure-row';
 import { HeartRateChart } from './heart-rate-chart';
 import { SavedToHealthLine } from './saved-to-health';
-import { useStoreName } from './use-store-name';
+import { useSourceThrough, useStoreName } from './use-store-name';
 import type { SavedToHealth } from './workout-write';
 
 type WatchCardProps = {
@@ -40,19 +39,19 @@ export function WatchCard({
 }: WatchCardProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
-  const { format } = useNumberFormat();
+  const figure = useFigureFormat();
   const figures: Figure[] = [
     ...(averageBpm !== null && maxBpm !== null
       ? [
-          { value: String(Math.round(averageBpm)), label: t('health.watch.averageBpm') },
-          { value: String(Math.round(maxBpm)), label: t('health.watch.maxBpm') },
+          { value: figure.bpm(averageBpm), label: t('health.watch.averageBpm') },
+          { value: figure.bpm(maxBpm), label: t('health.watch.maxBpm') },
         ]
       : []),
     ...(activeKcal != null
-      ? [{ value: format(Math.round(activeKcal)), label: t('health.watch.kcal') }]
+      ? [{ value: figure.kcal(activeKcal), label: t('health.watch.kcal') }]
       : []),
   ];
-  const store = useStoreName();
+  const through = useSourceThrough()(source);
   return (
     <Card style={{ gap: spacing.md }}>
       <View style={[styles.row, { gap: spacing.md }]}>
@@ -63,13 +62,11 @@ export function WatchCard({
       {chart && averageBpm !== null && maxBpm !== null ? (
         <HeartRateChart {...chart} average={averageBpm} max={maxBpm} />
       ) : null}
-      {store || kcalEstimated ? (
+      {through || kcalEstimated ? (
         <View style={{ gap: spacing.xs }}>
-          {store ? (
+          {through ? (
             <Text variant="caption" color="textMuted">
-              {source
-                ? t('health.watch.through', { source, store })
-                : t('health.watch.throughStore', { store })}
+              {through}
             </Text>
           ) : null}
           {kcalEstimated ? (

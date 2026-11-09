@@ -4,6 +4,7 @@ import { OUTSIDE_WORKOUTS_KEY } from '@/health/outside-workouts-key';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
+import { minutesBetween } from '@/lib/time';
 import type { SetValues } from '@/sets/values';
 import { STREAK_KEY } from '@/streak/streak';
 import type { WorkoutAlternative } from '@/workouts/alternatives';
@@ -127,7 +128,7 @@ export function kcalOf(
 
 /** Whole minutes between the start and the end of a workout. */
 export function durationMinutes(log: Pick<LogSummary, 'startedAt' | 'finishedAt'>): number {
-  return Math.round((log.finishedAt.getTime() - log.startedAt.getTime()) / 60_000);
+  return minutesBetween(log.startedAt, log.finishedAt);
 }
 
 type SummaryRow = Database['public']['Views']['workout_log_summaries']['Row'];
