@@ -223,7 +223,9 @@
       "streak": {
         "done": "counted for the streak",
         "frozen": "frozen"
-      }
+      },
+      "outside_one": "{{count}} workout from another app",
+      "outside_other": "{{count}} workouts from other apps"
     },
     "pastWeek": {
       "workouts": {
@@ -2410,13 +2412,15 @@
       "weightWhen": "one a day, from the last 30 days on",
       "steps": "Steps",
       "stepsWhen": "a total for each day",
-      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight and a step count a day, with your account. It writes to {{store}} only if you turn on saving workouts. You can disconnect in Settings.",
+      "keeps": "It keeps each workout’s average and highest heart rate and its calories, a weight and a step count a day, and the workouts other apps recorded, with your account. It writes to {{store}} only if you turn on saving workouts. You can disconnect in Settings.",
       "continue": "Continue",
       "notNow": "Not now",
       "next": {
         "appleHealth": "Next, Apple asks which of these to allow.",
         "healthConnect": "Next, Health Connect asks which of these to allow."
-      }
+      },
+      "workouts": "Other workouts",
+      "workoutsWhen": "runs, rides and classes other apps recorded"
     },
     "disconnect": {
       "body": "Disconnecting stops Benchbite reading from {{store}}. The weights, the steps and the workouts’ heart rate and calories already taken stay. Deleting a workout deletes its heart rate and calories.",
@@ -2464,6 +2468,11 @@
         "title": "Your steps from {{store}}",
         "body": "See how much you walk each day, counted by your phone or your watch.",
         "bringIn": "Show my steps"
+      },
+      "workouts": {
+        "title": "Your other workouts from {{store}}",
+        "body": "Runs, rides and classes your watch or other apps recorded show here and on Today, next to your Benchbite workouts.",
+        "bringIn": "Show my workouts"
       }
     },
     "write": {
@@ -2491,6 +2500,36 @@
       },
       "saved": "Saved to {{store}}",
       "recorded": "Already in {{store}}, recorded by your watch"
+    },
+    "outside": {
+      "alsoToday": "Also today",
+      "from": "From {{source}}",
+      "fromStore": "From {{store}}",
+      "open": "Shows its details",
+      "time": "{{day}} · {{from}} to {{to}}",
+      "duration": "duration",
+      "note": "Recorded by another app, so Benchbite only shows it. Change or delete it there."
+    },
+    "activities": {
+      "running": "Running",
+      "walking": "Walking",
+      "hiking": "Hiking",
+      "cycling": "Cycling",
+      "swimming": "Swimming",
+      "strength_training": "Strength training",
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "pilates": "Pilates",
+      "dance": "Dance",
+      "rowing": "Rowing",
+      "elliptical": "Elliptical",
+      "stair_climbing": "Stair climbing",
+      "team_sport": "Team sport",
+      "racket_sport": "Racket sport",
+      "martial_arts": "Martial arts",
+      "winter_sport": "Winter sport",
+      "water_sport": "Water sport",
+      "other": "Workout"
     }
   },
   "steps": {

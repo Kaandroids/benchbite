@@ -223,7 +223,9 @@
       "streak": {
         "done": "zählte für die Serie",
         "frozen": "eingefroren"
-      }
+      },
+      "outside_one": "{{count}} Workout aus einer anderen App",
+      "outside_other": "{{count}} Workouts aus anderen Apps"
     },
     "pastWeek": {
       "workouts": {
@@ -2410,13 +2412,15 @@
       "weightWhen": "eins pro Tag, ab den letzten 30 Tagen",
       "steps": "Schritte",
       "stepsWhen": "eine Summe pro Tag",
-      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht und eine Schrittzahl pro Tag, mit deinem Konto. In {{store}} wird nur geschrieben, wenn du das Speichern von Workouts einschaltest. Du kannst die Verbindung in den Einstellungen trennen.",
+      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts, ein Gewicht und eine Schrittzahl pro Tag sowie die Workouts anderer Apps, mit deinem Konto. In {{store}} wird nur geschrieben, wenn du das Speichern von Workouts einschaltest. Du kannst die Verbindung in den Einstellungen trennen.",
       "continue": "Weiter",
       "notNow": "Nicht jetzt",
       "next": {
         "appleHealth": "Als Nächstes fragt Apple, was davon du erlaubst.",
         "healthConnect": "Als Nächstes fragt Health Connect, was davon du erlaubst."
-      }
+      },
+      "workouts": "Andere Workouts",
+      "workoutsWhen": "Läufe, Radtouren und Kurse, die andere Apps aufgezeichnet haben"
     },
     "disconnect": {
       "body": "Nach dem Trennen liest Benchbite nichts mehr aus {{store}}. Schon übernommene Gewichte, Schritte sowie Herzfrequenz und Kalorien deiner Workouts bleiben. Wenn du ein Workout löschst, werden seine Herzfrequenz und Kalorien mitgelöscht.",
@@ -2464,6 +2468,11 @@
         "title": "Deine Schritte aus {{store}}",
         "body": "Sieh, wie viel du jeden Tag gehst, gezählt von deinem Handy oder deiner Uhr.",
         "bringIn": "Meine Schritte zeigen"
+      },
+      "workouts": {
+        "title": "Deine anderen Workouts aus {{store}}",
+        "body": "Läufe, Radtouren und Kurse, die deine Uhr oder andere Apps aufgezeichnet haben, erscheinen hier und unter Heute, neben deinen Benchbite-Workouts.",
+        "bringIn": "Meine Workouts zeigen"
       }
     },
     "write": {
@@ -2491,6 +2500,36 @@
       },
       "saved": "In {{store}} gespeichert",
       "recorded": "Schon in {{store}}, von deiner Uhr aufgezeichnet"
+    },
+    "outside": {
+      "alsoToday": "Heute außerdem",
+      "from": "Von {{source}}",
+      "fromStore": "Aus {{store}}",
+      "open": "Zeigt die Details",
+      "time": "{{day}} · {{from}} bis {{to}}",
+      "duration": "Dauer",
+      "note": "Von einer anderen App aufgezeichnet, daher zeigt Benchbite es nur an. Ändere oder lösche es dort."
+    },
+    "activities": {
+      "running": "Laufen",
+      "walking": "Gehen",
+      "hiking": "Wandern",
+      "cycling": "Radfahren",
+      "swimming": "Schwimmen",
+      "strength_training": "Krafttraining",
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "pilates": "Pilates",
+      "dance": "Tanzen",
+      "rowing": "Rudern",
+      "elliptical": "Crosstrainer",
+      "stair_climbing": "Treppensteigen",
+      "team_sport": "Mannschaftssport",
+      "racket_sport": "Schlägersport",
+      "martial_arts": "Kampfsport",
+      "winter_sport": "Wintersport",
+      "water_sport": "Wassersport",
+      "other": "Workout"
     }
   },
   "steps": {
