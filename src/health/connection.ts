@@ -72,9 +72,31 @@ export function setStepsReadOn(day: string | null) {
   writeItem(STEPS_READ_ON_KEY, day);
 }
 
+const WRITE_SINCE_KEY = 'health.writeSince';
+
+/**
+ * Since when finished workouts are saved to the store (ADR 0105), or null while they are not: a
+ * workout finished before writing was turned on is not saved.
+ */
+export function writeSince(): Date | null {
+  const stored = readItem(WRITE_SINCE_KEY);
+  return stored ? new Date(stored) : null;
+}
+
+export function setWriteSince(since: Date | null) {
+  writeItem(WRITE_SINCE_KEY, since?.toISOString() ?? null);
+  notify();
+}
+
+/** Whether finished workouts are saved to the store, kept up to date. */
+export function useWritingWorkouts(): boolean {
+  return useSyncExternalStore(subscribe, () => readItem(WRITE_SINCE_KEY) !== null);
+}
+
 /** Lets go of all the device keeps about the store, as when another user signs in. */
 export function forgetHealthOnDevice() {
   writeItem(KEY, null);
+  writeItem(WRITE_SINCE_KEY, null);
   for (const kind of HEALTH_READS) {
     writeItem(readKey(kind), null);
   }
