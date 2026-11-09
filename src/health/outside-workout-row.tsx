@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { DateTile } from '@/components/ui/date-tile';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { DateTile } from '@/history/date-tile';
-import { useDurationFormat } from '@/history/format';
+import { useDurationFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 

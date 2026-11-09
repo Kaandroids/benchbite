@@ -6,8 +6,7 @@ import { Card } from '@/components/ui/card';
 import { IconTile } from '@/components/ui/icon-tile';
 import { Sheet } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
-import { useDurationFormat } from '@/history/format';
-import { useClockFormat, useDayFormat } from '@/i18n/dates';
+import { useClockFormat, useDayFormat, useDurationFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 

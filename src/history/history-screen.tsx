@@ -13,10 +13,10 @@ import { OutsideWorkoutSheet } from '@/health/outside-workout-sheet';
 import { useOutsideWorkoutsSince, type ListedOutsideWorkout } from '@/health/outside-workouts';
 import { ReadAskCard } from '@/health/read-ask-card';
 import { useReadAsk } from '@/health/use-read-ask';
-import { weekStart } from '@/i18n/dates';
+import { useDurationFormat, weekStart } from '@/i18n/dates';
 import { useTheme } from '@/theme';
 
-import { useDurationFormat, useWeekTitle } from './format';
+import { useWeekTitle } from './format';
 import { byWeek, useLogSummaries, type HistoryEntry } from './history';
 import { LogRow } from './log-row';
 

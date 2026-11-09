@@ -1,9 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui/text';
+import { useUpperCase } from '@/i18n/case';
 import { isoWeekday, useWeekdayFormat } from '@/i18n/dates';
 import { fonts, useTheme } from '@/theme';
-import { useUpperCase } from '@/i18n/case';
+
+import { Text } from './text';
 
 type DateTileProps = {
   date: Date;
