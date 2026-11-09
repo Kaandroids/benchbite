@@ -2451,7 +2451,7 @@
       "chartLabel_other": "Herzfrequenz im Workout, von {{low}} bis {{high}} Schlägen pro Minute, im Schnitt {{average}}, mit {{count}} Sätzen",
       "chartLabelNoSets": "Herzfrequenz im Workout, von {{low}} bis {{high}} Schlägen pro Minute, im Schnitt {{average}}",
       "chartAverage": "Ø {{average}}",
-      "kcalEstimated": "Sie hat keine Kalorien gemessen, daher sind sie aus deiner Herzfrequenz geschätzt."
+      "kcalEstimated": "Deine Uhr hat keine Kalorien gemessen, daher sind sie aus deiner Herzfrequenz geschätzt."
     },
     "ask": {
       "notNow": "Nicht jetzt",

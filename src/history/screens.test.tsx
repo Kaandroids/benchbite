@@ -381,7 +381,9 @@ describe('LogScreen', () => {
       ),
     ).toBeTruthy();
     expect(
-      screen.getByText(/It measured no calories, so they are estimated from your heart rate/),
+      screen.getByText(
+        /Your watch measured no calories, so they are estimated from your heart rate/,
+      ),
     ).toBeTruthy();
   });
 

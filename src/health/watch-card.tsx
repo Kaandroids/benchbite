@@ -77,7 +77,11 @@ export function WatchCard({
           {source
             ? t('health.watch.through', { source, store })
             : t('health.watch.throughStore', { store })}
-          {kcalEstimated ? ` ${t('health.watch.kcalEstimated')}` : ''}
+        </Text>
+      ) : null}
+      {kcalEstimated ? (
+        <Text variant="caption" color="textMuted">
+          {t('health.watch.kcalEstimated')}
         </Text>
       ) : null}
     </Card>
