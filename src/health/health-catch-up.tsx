@@ -11,23 +11,33 @@ import { useUserId } from '@/providers/session-provider';
 import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
 import type { WorkoutStats } from './types';
 import { READ_KINDS } from './read-kinds';
-import { keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';
+import { hasHeartRate, keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';
 import { saveRecentWorkouts } from './workout-write';
 
 /**
- * Keeps what was read for a workout just saved, and refreshes the logs when it changed them. Saving
- * the log and this are two calls: one that fails is read again by the catch-up (ADR 0099).
+ * What follows a workout just logged: what the watch measured is kept with it, and then it is saved
+ * to the store with the calories that gives it. Logging it and this are separate calls: what fails
+ * here is done again by the catch-up (ADR 0099, ADR 0105).
  */
-export function keepNewLogHealth(
+export async function afterWorkoutLogged(
   queryClient: QueryClient,
   logId: number,
-  stats: WorkoutStats,
+  stats: WorkoutStats | null | undefined,
 ): Promise<void> {
-  return keepWorkoutHealth(logId, stats)
-    .then(async (changed) => {
-      if (changed) await queryClient.invalidateQueries({ queryKey: LOGS_KEY });
-    })
-    .catch((error: unknown) => console.warn('Could not keep the watch’s data', error));
+  if (hasHeartRate(stats)) {
+    try {
+      if (await keepWorkoutHealth(logId, stats)) {
+        await queryClient.invalidateQueries({ queryKey: LOGS_KEY });
+      }
+    } catch (error) {
+      console.warn('Could not keep the watch’s data', error);
+    }
+  }
+  try {
+    await saveRecentWorkouts(queryClient);
+  } catch (error) {
+    console.warn('Could not save the workout to the store', error);
+  }
 }
 
 /** Reads the logs of the last day again and sends each read; whether any log changed. */

@@ -1,12 +1,11 @@
-import { keepNewLogHealth } from '@/health/health-catch-up';
-import { saveRecentWorkouts } from '@/health/workout-write';
+import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { useWorkoutHealth } from '@/health/workout-health';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
 import { router } from 'expo-router';
 import { Alert, Keyboard } from 'react-native';
 
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { act, fireEvent, render, renderHook, screen, waitFor } from '@/test/render';
+import { act, fireEvent, render, renderHook, screen } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 import { reloadPlan } from '@/workouts/workouts';
 
@@ -54,10 +53,7 @@ jest.mock('@/health/workout-health', () => ({
   useWorkoutHealth: jest.fn(() => ({ data: null })),
 }));
 jest.mock('@/health/health-catch-up', () => ({
-  keepNewLogHealth: jest.fn(() => Promise.resolve()),
-}));
-jest.mock('@/health/workout-write', () => ({
-  saveRecentWorkouts: jest.fn(() => Promise.resolve()),
+  afterWorkoutLogged: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
@@ -398,20 +394,18 @@ describe('FinishScreen', () => {
     expect(screen.getByText('412')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).toHaveBeenCalledWith(expect.anything(), 1, stats);
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
   });
 
-  it('shows and keeps nothing of a watch without a heart rate, and still saves the workout', async () => {
-    jest
-      .mocked(useWorkoutHealth)
-      .mockReturnValue({ data: { heartRate: null, activeKcal: 6, source: 'iPhone' } } as never);
+  it('shows nothing of a watch without a heart rate, and still hands the workout on', async () => {
+    const stats = { heartRate: null, activeKcal: 6, source: 'iPhone' };
+    jest.mocked(useWorkoutHealth).mockReturnValue({ data: stats } as never);
     doFirstSet();
     await render(<FinishScreen />);
     expect(screen.queryByText('From your watch')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).not.toHaveBeenCalled();
-    await waitFor(() => expect(saveRecentWorkouts).toHaveBeenCalled());
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
   });
 
   it('logs the set of a clock that still runs', async () => {

@@ -2,9 +2,9 @@ import { recentLogs } from '@/history/history';
 import { supabase } from '@/lib/supabase';
 import { createTestQueryClient } from '@/test/render';
 
-import { setHealthConnected } from './connection';
-import { catchUpWorkoutHealth } from './health-catch-up';
-import { workoutStats } from './platform';
+import { setHealthConnected, setWriteSince } from './connection';
+import { afterWorkoutLogged, catchUpWorkoutHealth } from './health-catch-up';
+import { saveWorkout, workoutStats, writeAllowed } from './platform';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -80,4 +80,32 @@ it('does nothing while the store is not connected', async () => {
   setHealthConnected(false);
   expect(await catchUpWorkoutHealth(createTestQueryClient())).toBe(false);
   expect(recentLogs).not.toHaveBeenCalled();
+});
+
+describe('afterWorkoutLogged', () => {
+  beforeEach(() => {
+    setWriteSince(new Date('2026-11-08T12:00:00Z'));
+    jest.mocked(writeAllowed).mockResolvedValue(true);
+  });
+
+  it('keeps what the watch measured, then saves the workout with the calories that gives it', async () => {
+    const order: string[] = [];
+    jest.mocked(supabase.rpc).mockImplementation((async () => {
+      order.push('kept');
+      return { data: true, error: null };
+    }) as never);
+    jest.mocked(recentLogs).mockImplementation(async () => {
+      order.push('saved');
+      return [log(7)];
+    });
+    await afterWorkoutLogged(createTestQueryClient(), 7, STATS);
+    expect(order).toEqual(['kept', 'saved']);
+    expect(saveWorkout).toHaveBeenCalled();
+  });
+
+  it('still saves a workout without a heart rate, keeping nothing', async () => {
+    await afterWorkoutLogged(createTestQueryClient(), 7, { ...STATS, heartRate: null });
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(saveWorkout).toHaveBeenCalled();
+  });
 });

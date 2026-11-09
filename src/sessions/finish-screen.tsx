@@ -12,8 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { findExercise, useExerciseLibrary } from '@/exercises/library';
 import { WatchCard } from '@/health/watch-card';
-import { keepNewLogHealth } from '@/health/health-catch-up';
-import { saveRecentWorkouts } from '@/health/workout-write';
+import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { hasHeartRate, useWorkoutHealth } from '@/health/workout-health';
 import { useClockFormat, useDateFormat } from '@/i18n/dates';
 import { dbErrorMessage, isDbError } from '@/lib/errors';
@@ -108,18 +107,9 @@ export function FinishScreen({ next }: { next?: number }) {
     saving.current = true;
     try {
       const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
-      // What the watch measured goes with it, and then it is saved to the health store with the
-      // calories that gives it; what cannot be is done again later (ADR 0099, ADR 0105).
+      // What the watch measured goes with it, and it is saved to the health store (ADR 0105).
       if (logId !== null) {
-        void (
-          hasHeartRate(health.data)
-            ? keepNewLogHealth(queryClient, logId, health.data)
-            : Promise.resolve()
-        )
-          .then(() => saveRecentWorkouts(queryClient))
-          .catch((error: unknown) =>
-            console.warn('Could not save the workout to the store', error),
-          );
+        void afterWorkoutLogged(queryClient, logId, health.data);
       }
       endSession();
       router.dismissAll();
