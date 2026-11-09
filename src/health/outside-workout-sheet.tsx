@@ -12,9 +12,8 @@ import { useTheme } from '@/theme';
 
 import { ACTIVITY_ICONS } from './activities';
 import { FigureRow, type Figure } from './figure-row';
-import { outsideMinutes } from './outside-workout-row';
+import { outsideMinutes, useOutsideSource } from './outside-workout-row';
 import type { ListedOutsideWorkout } from './outside-workouts';
-import { useStoreName } from './use-store-name';
 
 /**
  * A workout another app recorded (#468, ADR 0106): what was done, when, and what was measured. It
@@ -33,7 +32,6 @@ export function OutsideWorkoutSheet({
   const clock = useClockFormat();
   const duration = useDurationFormat();
   const { format } = useNumberFormat();
-  const store = useStoreName();
   const figures: Figure[] = [
     { value: duration(outsideMinutes(workout)), label: t('health.outside.duration') },
     ...(workout.activeKcal !== null
@@ -43,14 +41,7 @@ export function OutsideWorkoutSheet({
       ? [{ value: String(Math.round(workout.heartRateAvg)), label: t('health.watch.averageBpm') }]
       : []),
   ];
-  const source = workout.source
-    ? store
-      ? t('health.watch.through', { source: workout.source, store })
-      : workout.source
-    : store
-      ? t('health.watch.throughStore', { store })
-      : null;
-
+  const source = useOutsideSource()(workout, 'through');
   return (
     <Sheet onClose={onClose}>
       <View style={[styles.row, { gap: spacing.md }]}>
