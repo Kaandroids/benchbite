@@ -11,11 +11,20 @@ import { useTheme } from '@/theme';
 const HEIGHT = 110;
 /** Room above the highest heart rate for its label. */
 const TOP = 18;
+/** Room below the lowest, so that the line keeps off the axis. */
+const PADDING_BPM = 5;
+/**
+ * The longest gap the line runs across, in samples of 10 seconds: a watch that measures every few
+ * minutes, as without a workout started on it, still draws a line.
+ */
+const LONGEST_JOINED_GAP = 12;
 
 type HeartRateChartProps = {
   /** The heart rate every 10 seconds from the start, none where nothing measured it. */
   samples: readonly (number | null)[];
+  /** The average and the highest heart rate, as the watch measured them over the whole workout. */
   average: number;
+  max: number;
   startedAt: Date;
   finishedAt: Date;
   /** When each set was done, marked under the chart. */
@@ -23,36 +32,46 @@ type HeartRateChartProps = {
 };
 
 /** The x of each sample, from 0 to `width`, and its y, the highest at TOP. */
-function scale(samples: readonly (number | null)[], width: number) {
+export function heartRateScale(samples: readonly (number | null)[], width: number) {
   const values = samples.filter((sample): sample is number => sample !== null);
-  const low = Math.min(...values) - 5;
+  const min = Math.min(...values);
   const high = Math.max(...values);
+  const low = min - PADDING_BPM;
   const span = Math.max(1, high - low);
   const x = (index: number) => (samples.length > 1 ? (index / (samples.length - 1)) * width : 0);
   const y = (bpm: number) => TOP + (1 - (bpm - low) / span) * (HEIGHT - TOP);
-  return { low, high, x, y };
+  return { min, high, x, y };
 }
 
-/** The line through the samples, broken where none was measured, and the area under it. */
-function paths(samples: readonly (number | null)[], { x, y }: ReturnType<typeof scale>) {
+/**
+ * The line through the samples and the area under it, run across short gaps and broken at long
+ * ones, and the samples left alone between long gaps, drawn as dots.
+ */
+export function heartRatePaths(
+  samples: readonly (number | null)[],
+  { x, y }: ReturnType<typeof heartRateScale>,
+) {
+  const runs: number[][] = [];
+  let previous = -Infinity;
+  samples.forEach((sample, index) => {
+    if (sample === null) return;
+    if (index - previous > LONGEST_JOINED_GAP + 1 || runs.length === 0) runs.push([]);
+    runs[runs.length - 1]!.push(index);
+    previous = index;
+  });
   let line = '';
   let area = '';
-  let start: number | null = null;
-  let last = 0;
-  samples.forEach((sample, index) => {
-    if (sample === null) {
-      if (start !== null) area += `L${x(last)},${HEIGHT}L${x(start)},${HEIGHT}Z`;
-      start = null;
-      return;
+  const dots: { cx: number; cy: number }[] = [];
+  for (const run of runs) {
+    if (run.length === 1) {
+      dots.push({ cx: x(run[0]!), cy: y(samples[run[0]!]!) });
+      continue;
     }
-    const point = `${x(index).toFixed(1)},${y(sample).toFixed(1)}`;
-    line += `${start === null ? 'M' : 'L'}${point}`;
-    area += `${start === null ? 'M' : 'L'}${point}`;
-    if (start === null) start = index;
-    last = index;
-  });
-  if (start !== null) area += `L${x(last)},${HEIGHT}L${x(start)},${HEIGHT}Z`;
-  return { line, area };
+    const points = run.map((index) => `${x(index).toFixed(1)},${y(samples[index]!).toFixed(1)}`);
+    line += `M${points.join('L')}`;
+    area += `M${points.join('L')}L${x(run[run.length - 1]!)},${HEIGHT}L${x(run[0]!)},${HEIGHT}Z`;
+  }
+  return { line, area, dots };
 }
 
 /**
@@ -62,6 +81,7 @@ function paths(samples: readonly (number | null)[], { x, y }: ReturnType<typeof 
 export function HeartRateChart({
   samples,
   average,
+  max,
   startedAt,
   finishedAt,
   setTimes,
@@ -71,24 +91,30 @@ export function HeartRateChart({
   const { format } = useNumberFormat();
   const clock = useClockFormat();
   const [width, setWidth] = useState(0);
-  const scaled = scale(samples, width);
-  const { line, area } = paths(samples, scaled);
+  const scaled = heartRateScale(samples, width);
+  const { line, area, dots } = heartRatePaths(samples, scaled);
+  // The dot sits on the highest 10 seconds; its label is the watch's own highest, as the card says.
   const peak = samples.indexOf(scaled.high);
   const duration = finishedAt.getTime() - startedAt.getTime();
-  const lowest = Math.round(scaled.low + 5);
-  const highest = Math.round(scaled.high);
+  const lowest = Math.round(scaled.min);
+  const highest = Math.round(max);
+  const figures = {
+    low: format(lowest),
+    high: format(highest),
+    average: format(Math.round(average)),
+  };
 
   return (
     <View style={{ gap: spacing.xs }}>
       <View
         accessible
         accessibilityRole="image"
-        accessibilityLabel={t('health.watch.chartLabel', {
-          low: format(lowest),
-          high: format(highest),
-          average: format(Math.round(average)),
-          count: setTimes.length,
-        })}
+        accessibilityLabel={
+          // A workout logged before set times were kept says nothing of its sets.
+          setTimes.length
+            ? t('health.watch.chartLabel', { ...figures, count: setTimes.length })
+            : t('health.watch.chartLabelNoSets', figures)
+        }
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
         style={{ height: HEIGHT }}
       >
@@ -113,6 +139,9 @@ export function HeartRateChart({
                 strokeWidth={1.2}
                 strokeDasharray="4 4"
               />
+              {dots.map(({ cx, cy }) => (
+                <Circle key={cx} cx={cx} cy={cy} r={2.5} fill={colors.snack} />
+              ))}
               {peak >= 0 ? (
                 <Circle cx={scaled.x(peak)} cy={scaled.y(scaled.high)} r={4} fill={colors.snack} />
               ) : null}

@@ -2449,6 +2449,7 @@
       "waitingBody": "Nabız ve kalori {{store}} içine ulaşınca burada görünür. Benchbite bir gün boyunca tekrar bakar.",
       "chartLabel_one": "Antrenman boyunca nabız, dakikada {{low}} ile {{high}} atış arası, ortalama {{average}}, {{count}} set",
       "chartLabel_other": "Antrenman boyunca nabız, dakikada {{low}} ile {{high}} atış arası, ortalama {{average}}, {{count}} set",
+      "chartLabelNoSets": "Antrenman boyunca nabız, dakikada {{low}} ile {{high}} atış arası, ortalama {{average}}",
       "chartAverage": "ort. {{average}}",
       "kcalEstimated": "Kalori ölçmediği için kalori nabzından tahmin edildi."
     },

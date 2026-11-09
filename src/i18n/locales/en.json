@@ -2449,6 +2449,7 @@
       "waitingBody": "Its heart rate and calories show here once they reach {{store}}. Benchbite looks again for a day.",
       "chartLabel_one": "Heart rate over the workout, from {{low}} to {{high}} beats a minute, {{average}} on average, with {{count}} set",
       "chartLabel_other": "Heart rate over the workout, from {{low}} to {{high}} beats a minute, {{average}} on average, with {{count}} sets",
+      "chartLabelNoSets": "Heart rate over the workout, from {{low}} to {{high}} beats a minute, {{average}} on average",
       "chartAverage": "avg {{average}}",
       "kcalEstimated": "It measured no calories, so they are estimated from your heart rate."
     },

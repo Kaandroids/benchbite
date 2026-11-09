@@ -18,7 +18,7 @@ type WatchCardProps = {
   activeKcal?: number | null;
   source: string | null;
   /** The heart rate over the workout's time, drawn under the figures when it was kept. */
-  chart?: ComponentProps<typeof HeartRateChart> | null;
+  chart?: Omit<ComponentProps<typeof HeartRateChart>, 'average' | 'max'> | null;
   /** The calories shown were estimated from the heart rate, as the watch measured none. */
   kcalEstimated?: boolean;
 };
@@ -69,7 +69,9 @@ export function WatchCard({
           </View>
         ))}
       </View>
-      {chart ? <HeartRateChart {...chart} /> : null}
+      {chart && averageBpm !== null && maxBpm !== null ? (
+        <HeartRateChart {...chart} average={averageBpm} max={maxBpm} />
+      ) : null}
       {store ? (
         <Text variant="caption" color="textMuted">
           {source
