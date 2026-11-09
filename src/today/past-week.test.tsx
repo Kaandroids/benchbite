@@ -51,11 +51,11 @@ const log = (id: number, type: LogSummary['type'], startedAt: Date): LogSummary 
   sets: 15,
   plannedSets: 15,
   kilograms: 4820,
-  estimatedKcal: null,
   heartRateAvg: null,
   heartRateMax: null,
-  activeKcal: null,
   healthSource: null,
+  kcal: null,
+  kcalSource: null,
   plannedExerciseIds: null,
   alternative: null,
 });

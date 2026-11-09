@@ -296,7 +296,15 @@ describe('finishing', () => {
       exercises: [
         {
           exerciseId: 'bench',
-          sets: [{ weightKg: 80, reps: 8, seconds: null, meters: null }],
+          sets: [
+            {
+              weightKg: 80,
+              reps: 8,
+              seconds: null,
+              meters: null,
+              doneAt: new Date(NOW).toISOString(),
+            },
+          ],
         },
         { exerciseId: 'plank', sets: [] },
         { exerciseId: 'rowing', sets: [] },

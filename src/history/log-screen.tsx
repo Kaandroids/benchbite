@@ -26,7 +26,15 @@ import { useAlternativeName } from '@/workouts/alternatives';
 import { useWorkoutName, workoutLength } from '@/workouts/format';
 
 import { useTotalFormat } from './format';
-import { byExercise, doneOf, kcalOf, useDeleteLog, useLoggedSets, useLogSummary } from './history';
+import {
+  byExercise,
+  doneOf,
+  kcalOf,
+  useDeleteLog,
+  useHeartRateSamples,
+  useLoggedSets,
+  useLogSummary,
+} from './history';
 
 // The width the buttons beside an exercise take, with the space before them.
 const BUTTON_ROOM = 40;
@@ -38,6 +46,8 @@ export function LogScreen({ id }: { id: number }) {
   const { colors, spacing } = useTheme();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
+  // Only a workout with a heart rate has samples to chart.
+  const heartRate = useHeartRateSamples(id, summary.data?.heartRateMax != null);
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
@@ -85,7 +95,7 @@ export function LogScreen({ id }: { id: number }) {
     { value: totalTime, label: t('history.stats.time') },
     { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
     { value: format(Math.round(log.kilograms)), label: 'kg' },
-    // What the watch measured takes the estimate's place.
+    // The summary's calories: only the watch's are measured, the others are marked as estimates.
     ...(burned
       ? [{ value: `${burned.measured ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
       : []),
@@ -161,6 +171,17 @@ export function LogScreen({ id }: { id: number }) {
           averageBpm={log.heartRateAvg}
           maxBpm={log.heartRateMax}
           source={log.healthSource}
+          chart={
+            heartRate.data
+              ? {
+                  samples: heartRate.data,
+                  startedAt: log.startedAt,
+                  finishedAt: log.finishedAt,
+                  setTimes: (sets.data ?? []).flatMap((set) => (set.doneAt ? [set.doneAt] : [])),
+                }
+              : null
+          }
+          kcalEstimated={burned?.source === 'heart_rate'}
         />
       ) : waitingForWatch ? (
         <WaitingCard />

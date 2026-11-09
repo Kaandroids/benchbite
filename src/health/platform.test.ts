@@ -107,10 +107,35 @@ describe('Apple Health workouts', () => {
       },
     ]);
 
-    expect(await ios.workoutStats(FROM, TO)).toEqual({
+    jest.mocked(queryQuantitySamples).mockResolvedValue([
+      { startDate: new Date(FROM.getTime() + 2_000), quantity: 118 },
+      { startDate: new Date(FROM.getTime() + 7_000), quantity: 122 },
+      { startDate: new Date(FROM.getTime() + 25_000), quantity: 140 },
+    ] as never);
+
+    const stats = await ios.workoutStats(FROM, TO);
+    expect(stats).toMatchObject({
       heartRate: { average: 131.6, max: 168 },
       activeKcal: 411.7,
       source: 'Apple Watch',
+    });
+    // One value every 10 seconds of the 52 minutes, the average of the samples in them.
+    expect(stats.samples).toHaveLength(313);
+    expect(stats.samples?.slice(0, 3)).toEqual([120, null, 140]);
+  });
+
+  it('keeps the heart rate when its samples cannot be read', async () => {
+    jest.mocked(queryStatisticsForQuantity).mockResolvedValue({
+      averageQuantity: { unit: 'count/min', quantity: 120 },
+      maximumQuantity: { unit: 'count/min', quantity: 150 },
+      sources: [{ name: 'Zepp', bundleIdentifier: 'com.huami.zepp' }],
+    });
+    jest.mocked(queryStatisticsForQuantitySeparateBySource).mockResolvedValue([]);
+    jest.mocked(queryQuantitySamples).mockRejectedValue(new Error('denied'));
+
+    expect(await ios.workoutStats(FROM, TO)).toMatchObject({
+      heartRate: { average: 120, max: 150 },
+      samples: null,
     });
   });
 
@@ -235,11 +260,24 @@ describe('Health Connect', () => {
         dataOrigins: ['com.huami.watch.hmwatchmanager'],
       } as never);
 
-    expect(await android.workoutStats(FROM, TO)).toEqual({
+    jest.mocked(readRecords).mockResolvedValue({
+      records: [
+        {
+          samples: [
+            { time: new Date(FROM.getTime() + 3_000).toISOString(), beatsPerMinute: 130 },
+            { time: new Date(FROM.getTime() + 12_000).toISOString(), beatsPerMinute: 140 },
+          ],
+        },
+      ],
+    } as never);
+
+    const stats = await android.workoutStats(FROM, TO);
+    expect(stats).toMatchObject({
       heartRate: { average: 131.6, max: 168 },
       activeKcal: 411.7,
       source: 'Zepp',
     });
+    expect(stats.samples?.slice(0, 3)).toEqual([130, 140, null]);
     expect(jest.mocked(aggregateRecord).mock.calls[1]![0]).toMatchObject({
       recordType: 'ActiveCaloriesBurned',
       dataOriginFilter: ['com.huami.watch.hmwatchmanager'],
@@ -262,10 +300,13 @@ describe('Health Connect', () => {
       } as never)
       .mockRejectedValueOnce(new Error('SecurityException'));
 
+    jest.mocked(readRecords).mockResolvedValue({ records: [] } as never);
+
     expect(await android.workoutStats(FROM, TO)).toEqual({
       heartRate: { average: 120, max: 150 },
       activeKcal: null,
       source: 'com.example.tracker',
+      samples: null,
     });
   });
 

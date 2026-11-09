@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,6 +8,7 @@ import { Text } from '@/components/ui/text';
 import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
+import { HeartRateChart } from './heart-rate-chart';
 import { useStoreName } from './use-store-name';
 
 type WatchCardProps = {
@@ -15,10 +17,21 @@ type WatchCardProps = {
   /** The calories, when no other figure on the screen shows them. */
   activeKcal?: number | null;
   source: string | null;
+  /** The heart rate over the workout's time, drawn under the figures when it was kept. */
+  chart?: Omit<ComponentProps<typeof HeartRateChart>, 'average' | 'max'> | null;
+  /** The calories shown were estimated from the heart rate, as the watch measured none. */
+  kcalEstimated?: boolean;
 };
 
 /** What the watch measured during a workout (#85): its heart rate, and its calories where asked. */
-export function WatchCard({ averageBpm, maxBpm, activeKcal, source }: WatchCardProps) {
+export function WatchCard({
+  averageBpm,
+  maxBpm,
+  activeKcal,
+  source,
+  chart,
+  kcalEstimated = false,
+}: WatchCardProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
   const { format } = useNumberFormat();
@@ -56,11 +69,15 @@ export function WatchCard({ averageBpm, maxBpm, activeKcal, source }: WatchCardP
           </View>
         ))}
       </View>
+      {chart && averageBpm !== null && maxBpm !== null ? (
+        <HeartRateChart {...chart} average={averageBpm} max={maxBpm} />
+      ) : null}
       {store ? (
         <Text variant="caption" color="textMuted">
           {source
             ? t('health.watch.through', { source, store })
             : t('health.watch.throughStore', { store })}
+          {kcalEstimated ? ` ${t('health.watch.kcalEstimated')}` : ''}
         </Text>
       ) : null}
     </Card>

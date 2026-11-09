@@ -17,9 +17,10 @@ values
     'sedentary', 'beginner', '{1}', 'gym', 45, 'cm', 'kg'),
   ('00000000-0000-0000-0000-00000000000b', 'unspecified', extract(year from current_date)::int - 30,
     170, 'sedentary', 'beginner', '{1}', 'gym', 45, 'cm', 'kg');
-insert into public.weight_entries (user_id, weight_kg) values
-  ('00000000-0000-0000-0000-00000000000a', 80),
-  ('00000000-0000-0000-0000-00000000000b', 70);
+-- Dated before any log here, which may start yesterday when the tests run just after midnight.
+insert into public.weight_entries (user_id, weight_kg, measured_on) values
+  ('00000000-0000-0000-0000-00000000000a', 80, current_date - 10),
+  ('00000000-0000-0000-0000-00000000000b', 70, current_date - 10);
 
 -- A 30-minute log of each.
 insert into public.workout_logs (id, user_id, name, started_at, started_on, finished_at)

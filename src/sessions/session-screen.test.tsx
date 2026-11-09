@@ -359,7 +359,15 @@ describe('FinishScreen', () => {
         exercises: [
           {
             exerciseId: 'bench',
-            sets: [{ weightKg: 80, reps: 8, seconds: null, meters: null }],
+            sets: [
+              {
+                weightKg: 80,
+                reps: 8,
+                seconds: null,
+                meters: null,
+                doneAt: NOW.toISOString(),
+              },
+            ],
           },
           { exerciseId: 'plank', sets: [] },
         ],
@@ -412,7 +420,15 @@ describe('FinishScreen', () => {
           { exerciseId: 'bench', sets: [] },
           {
             exerciseId: 'plank',
-            sets: [{ weightKg: null, reps: null, seconds: 40, meters: null }],
+            sets: [
+              {
+                weightKg: null,
+                reps: null,
+                seconds: 40,
+                meters: null,
+                doneAt: new Date(NOW.getTime() + 40_000).toISOString(),
+              },
+            ],
           },
         ],
       }),

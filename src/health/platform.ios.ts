@@ -11,6 +11,7 @@ import {
 
 import { toIsoDate } from '@/i18n/dates';
 
+import { heartRateSamples } from './samples';
 import {
   NO_WORKOUT_STATS,
   type HealthAvailability,
@@ -66,12 +67,27 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
       unit: 'kcal',
     })
   ).filter((part) => watch.has(part.source.bundleIdentifier) && part.sumQuantity);
+  // The samples only draw the chart: without them the read keeps its average and highest.
+  const points = await queryQuantitySamples(HEART_RATE, {
+    filter,
+    unit: 'count/min',
+    ascending: true,
+    limit: 0,
+  }).catch((error: unknown) => {
+    console.warn('Could not read the heart rate samples', error);
+    return [];
+  });
   return {
     heartRate: { average, max },
     activeKcal: energy.length
       ? energy.reduce((sum, part) => sum + (part.sumQuantity?.quantity ?? 0), 0)
       : null,
     source: heart.sources[0]?.name ?? null,
+    samples: heartRateSamples(
+      points.map((point) => ({ at: point.startDate, bpm: point.quantity })),
+      from,
+      to,
+    ),
   };
 }
 

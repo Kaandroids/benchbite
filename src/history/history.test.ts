@@ -34,11 +34,11 @@ const log = (id: number, started: string, minutes: number): LogSummary => {
     sets: 10,
     plannedSets: null,
     kilograms: 1000,
-    estimatedKcal: 300,
     heartRateAvg: null,
     heartRateMax: null,
-    activeKcal: null,
     healthSource: null,
+    kcal: 300,
+    kcalSource: 'minutes',
     plannedExerciseIds: null,
     alternative: null,
   };
@@ -67,6 +67,8 @@ describe('fetchLogSummaries', () => {
           heart_rate_max: null,
           active_kcal: null,
           health_source: null,
+          kcal: null,
+          kcal_source: null,
           planned_exercise_ids: ['curl', 'dips'],
           alternative_name: null,
           alternative_position: 2,
@@ -108,11 +110,11 @@ describe('fetchLogSummaries', () => {
       sets: 17,
       plannedSets: 24,
       kilograms: 6240.5,
-      estimatedKcal: null,
       heartRateAvg: null,
       heartRateMax: null,
-      activeKcal: null,
       healthSource: null,
+      kcal: null,
+      kcalSource: null,
       plannedExerciseIds: ['curl', 'dips'],
       // An unnamed alternative keeps its position, for "Alternative 2".
       alternative: { name: null, position: 2 },
@@ -133,6 +135,7 @@ describe('useLoggedSets', () => {
           reps: 8,
           seconds: null,
           meters: null,
+          done_at: '2026-10-23T16:10:00Z',
         },
       ],
       error: null,
@@ -151,6 +154,7 @@ describe('useLoggedSets', () => {
       reps: 8,
       seconds: null,
       meters: null,
+      doneAt: new Date('2026-10-23T16:10:00Z'),
     });
   });
 });
@@ -185,7 +189,7 @@ describe('useEditLog', () => {
     const queryClient = createTestQueryClient();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
     const { result } = await renderHook(() => useEditLog(), { queryClient });
-    const hold = { weightKg: null, reps: null, seconds: 50, meters: null };
+    const hold = { weightKg: null, reps: null, seconds: 50, meters: null, doneAt: null };
     await act(() =>
       result.current.mutateAsync({
         id: 7,
@@ -230,6 +234,7 @@ describe('byExercise', () => {
     reps,
     seconds: null,
     meters: null,
+    doneAt: null,
   });
 
   it('groups the sets by exercise, keeping an exercise done twice apart', () => {
@@ -250,6 +255,7 @@ describe('withSkipped', () => {
     reps: 8,
     seconds: null,
     meters: null,
+    doneAt: null,
   });
   const shape = (exercises: ReturnType<typeof withSkipped>) =>
     exercises.map((exercise) => [exercise.exerciseId, exercise.sets.length]);
