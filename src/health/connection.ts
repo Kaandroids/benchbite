@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react';
 import { readItem, writeItem } from '@/lib/device-storage';
 
 const KEY = 'health.connected';
+const WRITE_SINCE_KEY = 'health.writeSince';
 
 const listeners = new Set<() => void>();
 
@@ -24,8 +25,10 @@ export function isHealthConnected(): boolean {
   return readItem(KEY) === 'true';
 }
 
+/** Connects or disconnects the store; disconnecting stops saving workouts to it too (ADR 0105). */
 export function setHealthConnected(connected: boolean) {
   writeItem(KEY, connected ? 'true' : null);
+  if (!connected) writeItem(WRITE_SINCE_KEY, null);
   notify();
 }
 
@@ -71,8 +74,6 @@ export function stepsReadOn(): string | null {
 export function setStepsReadOn(day: string | null) {
   writeItem(STEPS_READ_ON_KEY, day);
 }
-
-const WRITE_SINCE_KEY = 'health.writeSince';
 
 /**
  * Since when finished workouts are saved to the store (ADR 0105), or null while they are not: a

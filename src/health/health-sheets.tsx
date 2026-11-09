@@ -36,7 +36,7 @@ type SheetProps = {
   onClose: () => void;
 };
 
-/** Says what is read and kept, and that nothing is written, before the system asks. */
+/** Says what is read and kept, and when anything is written, before the system asks. */
 export function ConsentSheet({
   store,
   busy,
@@ -113,6 +113,61 @@ export function DisconnectSheet({
         onPress={onDisconnect}
       />
     </Sheet>
+  );
+}
+
+/** What saving workouts writes to the store, before the system asks (ADR 0105). */
+export function WriteSheet({
+  store,
+  busy,
+  onAllow,
+  onClose,
+}: SheetProps & { onAllow: () => void }) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const name = t(`health.${store}`);
+  const rows: { key: 'workout' | 'fromNow' | 'notTwice'; icon: IconName; good: boolean }[] = [
+    { key: 'workout', icon: 'check', good: true },
+    { key: 'fromNow', icon: 'check', good: true },
+    { key: 'notTwice', icon: 'close', good: false },
+  ];
+  return (
+    <BiteSheet
+      title={t('health.write.title', { store: name })}
+      body={t(`health.write.body.${store}`)}
+      onClose={onClose}
+    >
+      <Card list>
+        <Text variant="caption" color="textMuted" style={{ paddingVertical: spacing.sm }}>
+          {t('health.write.writes')}
+        </Text>
+        {rows.map(({ key, icon, good }) => (
+          <View
+            key={key}
+            style={[
+              styles.row,
+              { gap: spacing.md, paddingVertical: spacing.sm },
+              listDivider(false, colors.border),
+            ]}
+          >
+            <Icon name={icon} size={18} color={good ? 'success' : 'textMuted'} />
+            <Text color={good ? 'text' : 'textMuted'} style={styles.flex}>
+              {t(`health.write.${key}`)}
+            </Text>
+          </View>
+        ))}
+      </Card>
+      <Button label={t('health.consent.continue')} loading={busy} onPress={onAllow} />
+      <Button
+        label={t('health.consent.notNow')}
+        variant="secondary"
+        disabled={busy}
+        onPress={onClose}
+      />
+      <Text variant="caption" color="textMuted" align="center">
+        {t(`health.write.next.${store}`)}
+      </Text>
+    </BiteSheet>
   );
 }
 
