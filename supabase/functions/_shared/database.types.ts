@@ -1087,6 +1087,49 @@ export type Database = {
           },
         ];
       };
+      outside_workouts: {
+        Row: {
+          active_kcal: number | null;
+          activity: string;
+          ended_at: string;
+          heart_rate_avg: number | null;
+          imported_at: string;
+          source: string | null;
+          source_id: string;
+          started_at: string;
+          started_on: string;
+          store: Database['public']['Enums']['health_store'];
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          active_kcal?: number | null;
+          activity: string;
+          ended_at: string;
+          heart_rate_avg?: number | null;
+          imported_at?: string;
+          source?: string | null;
+          source_id: string;
+          started_at: string;
+          started_on: string;
+          store: Database['public']['Enums']['health_store'];
+          user_id: string;
+        };
+        Update: {
+          active_kcal?: number | null;
+          activity?: string;
+          ended_at?: string;
+          heart_rate_avg?: number | null;
+          imported_at?: string;
+          source?: string | null;
+          source_id?: string;
+          started_at?: string;
+          started_on?: string;
+          store?: Database['public']['Enums']['health_store'];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       own_nutrition_targets: {
         Row: {
           calories: number;
@@ -1898,6 +1941,43 @@ export type Database = {
       };
     };
     Views: {
+      outside_workout_list: {
+        Row: {
+          active_kcal: number | null;
+          activity: string | null;
+          ended_at: string | null;
+          heart_rate_avg: number | null;
+          source: string | null;
+          source_id: string | null;
+          started_at: string | null;
+          started_on: string | null;
+          store: Database['public']['Enums']['health_store'] | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          active_kcal?: number | null;
+          activity?: string | null;
+          ended_at?: string | null;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id?: string | null;
+          started_at?: string | null;
+          started_on?: string | null;
+          store?: Database['public']['Enums']['health_store'] | null;
+        };
+        Update: {
+          active_kcal?: number | null;
+          activity?: string | null;
+          ended_at?: string | null;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id?: string | null;
+          started_at?: string | null;
+          started_on?: string | null;
+          store?: Database['public']['Enums']['health_store'] | null;
+        };
+        Relationships: [];
+      };
       recipe_values: {
         Row: {
           carbs_g: number | null;
@@ -2432,6 +2512,16 @@ export type Database = {
         Args: { finished: string; samples: number[]; started: string };
         Returns: number[];
       };
+      import_outside_workouts: {
+        Args: {
+          health_store: Database['public']['Enums']['health_store'];
+          since: string;
+          today: string;
+          until: string;
+          workouts: Json;
+        };
+        Returns: number;
+      };
       import_steps: { Args: { days: Json; today: string }; Returns: number };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
       in_grace: {
@@ -2668,6 +2758,7 @@ export type Database = {
       my_strength_kcal_per_minute: { Args: Record<PropertyKey, never>; Returns: number };
       new_account_deletion_code: { Args: { p_code_hash: string; p_user: string }; Returns: string };
       one_rep_max: { Args: { reps: number; weight_kg: number }; Returns: number };
+      outside_workout_limit: { Args: Record<PropertyKey, never>; Returns: number };
       plan_by_weekdays: {
         Args: { from_day: string; owner: string; to_day: string };
         Returns: {
@@ -3175,6 +3266,7 @@ export type Database = {
         | 'dishes';
       food_source: 'bls';
       goal_kind: 'lose_fat' | 'build_muscle' | 'get_stronger' | 'stay_healthy';
+      health_store: 'appleHealth' | 'healthConnect';
       height_unit: 'cm' | 'ft';
       kcal_source: 'watch' | 'heart_rate' | 'minutes';
       meal: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -3477,6 +3569,7 @@ export const Constants = {
       ],
       food_source: ['bls'],
       goal_kind: ['lose_fat', 'build_muscle', 'get_stronger', 'stay_healthy'],
+      health_store: ['appleHealth', 'healthConnect'],
       height_unit: ['cm', 'ft'],
       kcal_source: ['watch', 'heart_rate', 'minutes'],
       meal: ['breakfast', 'lunch', 'dinner', 'snack'],
