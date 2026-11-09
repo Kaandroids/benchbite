@@ -2,10 +2,13 @@
 -- a ride or a class, shown next to Benchbite's own workouts. Only import_outside_workouts() writes
 -- them; they count toward neither the streak nor the week's workouts.
 
+-- The phone's store of health data, as the app names it (src/health/types.ts).
+create type public.health_store as enum ('appleHealth', 'healthConnect');
+
 create table public.outside_workouts (
   user_id uuid not null references auth.users (id) on delete cascade,
-  -- The store it was read from: a second phone with the other store keeps its own rows.
-  store text not null check (store in ('appleHealth', 'healthConnect')),
+  -- The store it was read from: a phone with the other store keeps its own rows.
+  store public.health_store not null,
   -- The store's own id of the workout.
   source_id text not null check (char_length(source_id) between 1 and 200),
   -- What was done, as the app names it from the store's type, such as running or cycling.
@@ -14,12 +17,16 @@ create table public.outside_workouts (
   ended_at timestamptz not null,
   -- The device's day it started on, as for logged workouts (ADR 0044).
   started_on date not null,
-  active_kcal smallint check (active_kcal between 0 and 10000),
+  -- As on workout_logs (ADR 0098).
+  active_kcal smallint check (active_kcal between 0 and 5000),
   heart_rate_avg smallint check (heart_rate_avg between 25 and 250),
-  -- The app or watch that recorded it, by its name.
-  source text check (char_length(source) between 1 and 100),
+  -- The app or watch that recorded it, by its name, as health_source_name() keeps it.
+  source text check (char_length(source) between 1 and 80),
   primary key (user_id, store, source_id),
-  check (ended_at > started_at and ended_at - started_at <= interval '24 hours')
+  check (ended_at > started_at and ended_at - started_at <= interval '24 hours'),
+  -- The device's day is within a day of the start's day in UTC.
+  check (started_at >= (started_on::timestamp at time zone 'UTC') - interval '1 day'
+    and started_at < (started_on::timestamp at time zone 'UTC') + interval '2 days')
 );
 
 create index outside_workouts_by_start on public.outside_workouts (user_id, started_at desc);
@@ -64,16 +71,31 @@ where not exists (
 revoke all on public.outside_workout_list from anon, authenticated;
 grant select on public.outside_workout_list to authenticated;
 
+-- The most outside workouts a user keeps: about 400 days of several a day, far more than anyone
+-- records, so that no one fills the table.
+create function public.outside_workout_limit()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select 3000;
+$$;
+
+revoke execute on function public.outside_workout_limit() from public, anon, authenticated;
+
 -- Keeps the caller's workouts read from a store, given as [{"id", "activity", "startedAt",
 -- "endedAt", "startedOn", "activeKcal"?, "heartRateAvg"?, "source"?}], at most 500: every workout the
--- store holds from `since` on. The store is the truth for that time, so the caller's rows of the
--- same store from then on that are not given are taken out, as deleted or changed there. An entry
--- that is no workout is left out on its own; figures out of range are kept as none. How many rows
--- changed.
+-- store holds that started from `since` until before `until`. The app reads a longer time in parts.
+-- The store is the truth for that time, so the caller's rows of the same store then that are not
+-- given are taken out, as deleted or changed there. One phone per store is the truth: two with
+-- their own Health Connect would take out each other's. An entry that is no workout is left out on
+-- its own; figures out of range are kept as none. How many rows changed.
 create function public.import_outside_workouts(
   workouts jsonb,
-  store text,
+  health_store public.health_store,
   since timestamptz,
+  until timestamptz,
   today date
 )
 returns integer
@@ -81,8 +103,6 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
--- The parameter `store` names a column too; every use of the parameter is qualified.
-#variable_conflict use_column
 declare
   caller_id uuid := (select auth.uid());
   removed integer;
@@ -92,19 +112,23 @@ begin
     raise exception 'Not signed in' using errcode = '42501';
   end if;
   perform public.assert_device_today(import_outside_workouts.today);
-  if import_outside_workouts.store is null
-    or import_outside_workouts.store not in ('appleHealth', 'healthConnect') then
+  if import_outside_workouts.health_store is null then
     raise exception 'The store is Apple Health or Health Connect' using errcode = '22023';
   end if;
   if import_outside_workouts.since is null
-    or import_outside_workouts.since not between now() - interval '400 days' and now() then
-    raise exception 'Since is within the last 400 days' using errcode = '22023';
+    or import_outside_workouts.until is null
+    or import_outside_workouts.since < now() - interval '400 days'
+    or import_outside_workouts.until > now() + interval '1 day'
+    or import_outside_workouts.until <= import_outside_workouts.since then
+    raise exception 'The time read is within the last 400 days' using errcode = '22023';
   end if;
   if import_outside_workouts.workouts is null
     or jsonb_typeof(import_outside_workouts.workouts) <> 'array'
     or jsonb_array_length(import_outside_workouts.workouts) > 500 then
     raise exception 'Workouts are a list of at most 500' using errcode = '22023';
   end if;
+  -- One import of the caller's at a time, so that the count after it holds.
+  perform public.lock_user_limits(caller_id);
 
   -- Materialized, so that its filter runs before any cast below.
   with given as materialized (
@@ -132,21 +156,26 @@ begin
           then round((w ->> 'activeKcal')::numeric) end as active_kcal,
         case when jsonb_typeof(w -> 'heartRateAvg') = 'number'
           then round((w ->> 'heartRateAvg')::numeric) end as heart_rate_avg,
-        case when jsonb_typeof(w -> 'source') = 'string'
-          then nullif(left(trim(w ->> 'source'), 100), '') end as source
+        public.health_source_name(
+          case when jsonb_typeof(w -> 'source') = 'string' then w ->> 'source' end
+        ) as source
       from given
     ) r
     where r.started_at >= import_outside_workouts.since
+      and r.started_at < import_outside_workouts.until
       -- outside_workouts' checks; they change together.
       and r.ended_at > r.started_at
       and r.ended_at - r.started_at <= interval '24 hours'
       and r.started_on between import_outside_workouts.today - 400 and import_outside_workouts.today
+      and r.started_at >= (r.started_on::timestamp at time zone 'UTC') - interval '1 day'
+      and r.started_at < (r.started_on::timestamp at time zone 'UTC') + interval '2 days'
     order by r.source_id
   ), gone as (
     delete from public.outside_workouts o
     where o.user_id = caller_id
-      and o.store = import_outside_workouts.store
+      and o.store = import_outside_workouts.health_store
       and o.started_at >= import_outside_workouts.since
+      and o.started_at < import_outside_workouts.until
       and not exists (select 1 from read r where r.source_id = o.source_id)
     returning 1
   ), kept as (
@@ -156,13 +185,13 @@ begin
     )
     select
       caller_id,
-      import_outside_workouts.store,
+      import_outside_workouts.health_store,
       r.source_id,
       r.activity,
       r.started_at,
       r.ended_at,
       r.started_on,
-      case when r.active_kcal between 0 and 10000 then r.active_kcal::smallint end,
+      case when r.active_kcal between 0 and 5000 then r.active_kcal::smallint end,
       case when r.heart_rate_avg between 25 and 250 then r.heart_rate_avg::smallint end,
       r.source
     from read r
@@ -182,11 +211,18 @@ begin
   )
   select (select count(*) from gone), (select count(*) from kept) into removed, changed;
 
+  if (select count(*) from public.outside_workouts o where o.user_id = caller_id)
+    > public.outside_workout_limit() then
+    raise exception 'Too many outside workouts' using errcode = '54000';
+  end if;
+
   return removed + changed;
 end;
 $$;
 
-revoke execute on function public.import_outside_workouts(jsonb, text, timestamptz, date)
-  from public, anon;
-grant execute on function public.import_outside_workouts(jsonb, text, timestamptz, date)
-  to authenticated;
+revoke execute on function public.import_outside_workouts(
+  jsonb, public.health_store, timestamptz, timestamptz, date
+) from public, anon;
+grant execute on function public.import_outside_workouts(
+  jsonb, public.health_store, timestamptz, timestamptz, date
+) to authenticated;
