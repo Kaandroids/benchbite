@@ -166,13 +166,16 @@ export type LogCursor = { finishedAt: string; id: number };
 /** A page of finished workouts, and where the next one starts unless this one was the last. */
 export type LogPage = { logs: LogSummary[]; next?: LogCursor };
 
-/** The workouts finished since a time, with only their times, as the health catch-up reads them. */
+/**
+ * The workouts finished since a time, with their times and calories, as the health catch-up reads
+ * and saves them.
+ */
 export async function recentLogs(
   since: Date,
-): Promise<{ id: number; startedAt: Date; finishedAt: Date }[]> {
+): Promise<{ id: number; startedAt: Date; finishedAt: Date; kcal: number | null }[]> {
   const { data, error } = await supabase
     .from('workout_log_summaries')
-    .select('id, started_at, finished_at')
+    .select('id, started_at, finished_at, kcal')
     .gte('finished_at', since.toISOString())
     .limit(20);
   if (error) throw error;
@@ -184,6 +187,7 @@ export async function recentLogs(
             id: row.id,
             startedAt: new Date(row.started_at),
             finishedAt: new Date(row.finished_at),
+            kcal: row.kcal,
           },
         ],
   );

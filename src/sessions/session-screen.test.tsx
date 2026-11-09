@@ -395,7 +395,7 @@ describe('FinishScreen', () => {
     expect(keepNewLogHealth).toHaveBeenCalledWith(expect.anything(), 1, stats);
   });
 
-  it('shows and keeps nothing of a watch without a heart rate', async () => {
+  it('shows and keeps nothing of a watch without a heart rate, and still saves the workout', async () => {
     jest
       .mocked(useWorkoutHealth)
       .mockReturnValue({ data: { heartRate: null, activeKcal: 6, source: 'iPhone' } } as never);
@@ -404,7 +404,7 @@ describe('FinishScreen', () => {
     expect(screen.queryByText('From your watch')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).not.toHaveBeenCalled();
+    expect(keepNewLogHealth).toHaveBeenCalledWith(expect.anything(), 1, null);
   });
 
   it('logs the set of a clock that still runs', async () => {

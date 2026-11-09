@@ -27,6 +27,7 @@ const STATS = {
 };
 const log = (id: number) => ({
   id,
+  kcal: 300,
   startedAt: new Date('2026-11-08T18:04:00Z'),
   finishedAt: new Date('2026-11-08T18:56:00Z'),
 });

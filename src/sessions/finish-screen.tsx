@@ -107,9 +107,10 @@ export function FinishScreen({ next }: { next?: number }) {
     saving.current = true;
     try {
       const logId = await logWorkout.mutateAsync(toLog(session, finishedAt));
-      // What the watch measured goes with it; if it cannot, it is read again later (ADR 0099).
-      if (hasHeartRate(health.data) && logId !== null) {
-        keepNewLogHealth(queryClient, logId, health.data);
+      // What the watch measured goes with it, and it is saved to the health store; what cannot
+      // be is done again later (ADR 0099, ADR 0105).
+      if (logId !== null) {
+        keepNewLogHealth(queryClient, logId, hasHeartRate(health.data) ? health.data : null);
       }
       endSession();
       router.dismissAll();
