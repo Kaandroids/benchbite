@@ -103,6 +103,13 @@ describe('afterWorkoutLogged', () => {
     expect(saveWorkout).toHaveBeenCalled();
   });
 
+  it('refreshes other apps’ workouts, among which the log may hide a watch’s copy', async () => {
+    const queryClient = createTestQueryClient();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    await afterWorkoutLogged(queryClient, 7, null);
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['outside-workouts'] });
+  });
+
   it('still saves a workout without a heart rate, keeping nothing', async () => {
     await afterWorkoutLogged(createTestQueryClient(), 7, { ...STATS, heartRate: null });
     expect(supabase.rpc).not.toHaveBeenCalled();

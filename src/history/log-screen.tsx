@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -13,6 +14,7 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { OUTSIDE_WORKOUTS_KEY } from '@/health/outside-workouts';
 import { SavedToHealthLine } from '@/health/saved-to-health';
 import { WaitingCard, WatchCard } from '@/health/watch-card';
 import { useAwaitingWatch } from '@/health/workout-health';
@@ -52,6 +54,7 @@ export function LogScreen({ id }: { id: number }) {
   const heartRate = useHeartRateSamples(id, summary.data?.heartRateMax != null);
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
+  const queryClient = useQueryClient();
   const workoutName = useWorkoutName();
   const alternativeName = useAlternativeName();
   const { format } = useNumberFormat();
@@ -116,6 +119,8 @@ export function LogScreen({ id }: { id: number }) {
           void remove.mutateAsync(id).then(
             () => {
               void removeSavedWorkout(id);
+              // A watch's copy of it, hidden while it was logged, shows again (ADR 0106).
+              void queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY });
               router.back();
             },
             (error: unknown) => {

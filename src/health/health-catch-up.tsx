@@ -9,6 +9,7 @@ import { LOGS_KEY, recentLogs } from '@/history/history';
 import { useUserId } from '@/providers/session-provider';
 
 import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
+import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
 import type { WorkoutStats } from './types';
 import { READ_KINDS } from './read-kinds';
 import { hasHeartRate, keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';
@@ -24,6 +25,8 @@ export async function afterWorkoutLogged(
   logId: number,
   stats: WorkoutStats | null | undefined,
 ): Promise<void> {
+  // The log may hide a watch's copy of it among other apps' workouts (ADR 0106).
+  void queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY });
   if (hasHeartRate(stats)) {
     try {
       if (await keepWorkoutHealth(logId, stats)) {
