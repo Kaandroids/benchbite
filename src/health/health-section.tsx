@@ -1,11 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 
-import { Card } from '@/components/ui/card';
 import { SettingRow } from '@/components/ui/setting-row';
-import { Switch } from '@/components/ui/switch';
+import { SwitchCard } from '@/components/ui/switch-card';
 import { Text } from '@/components/ui/text';
-import { useTheme } from '@/theme';
 
 import { healthStore, installHealthStore } from './health';
 import { ConsentSheet, DisconnectSheet, InstallSheet, WriteSheet } from './health-sheets';
@@ -72,41 +69,26 @@ export function HealthSection() {
 /** Saving finished workouts to the store, once it is connected (#479, ADR 0105). */
 function WritingSwitch({ store }: { store: NonNullable<HealthStore> }) {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const { writing, asking, problem, busy, toggle, allow, close } = useWorkoutWriting();
   const name = t(`health.${store}`);
   return (
     <>
-      <Card style={[styles.row, { gap: spacing.md }]}>
-        <View style={styles.flex}>
-          <Text variant="bodyStrong">{t('health.write.label', { store: name })}</Text>
-          <Text variant="caption" color={problem ? 'danger' : 'textMuted'}>
-            {problem === 'denied'
-              ? t(`health.write.denied.${store}`)
-              : problem === 'failed'
-                ? t('health.problems.failed')
-                : t(`health.write.note.${store}`)}
-          </Text>
-        </View>
-        <Switch
-          accessibilityLabel={t('health.write.label', { store: name })}
-          value={writing}
-          onValueChange={toggle}
-        />
-      </Card>
+      <SwitchCard
+        label={t('health.write.label', { store: name })}
+        note={
+          problem === 'denied'
+            ? t(`health.write.denied.${store}`)
+            : problem === 'failed'
+              ? t('health.problems.failed')
+              : t(`health.write.note.${store}`)
+        }
+        noteColor={problem ? 'danger' : 'textMuted'}
+        value={writing}
+        onValueChange={toggle}
+      />
       {asking ? (
         <WriteSheet store={store} busy={busy} onAllow={() => void allow()} onClose={close} />
       ) : null}
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  flex: {
-    flex: 1,
-  },
-});
