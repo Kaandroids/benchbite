@@ -1087,6 +1087,46 @@ export type Database = {
           },
         ];
       };
+      outside_workouts: {
+        Row: {
+          active_kcal: number | null;
+          activity: string;
+          ended_at: string;
+          heart_rate_avg: number | null;
+          source: string | null;
+          source_id: string;
+          started_at: string;
+          started_on: string;
+          store: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          active_kcal?: number | null;
+          activity: string;
+          ended_at: string;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id: string;
+          started_at: string;
+          started_on: string;
+          store: string;
+          user_id: string;
+        };
+        Update: {
+          active_kcal?: number | null;
+          activity?: string;
+          ended_at?: string;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id?: string;
+          started_at?: string;
+          started_on?: string;
+          store?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       own_nutrition_targets: {
         Row: {
           calories: number;
@@ -1898,6 +1938,43 @@ export type Database = {
       };
     };
     Views: {
+      outside_workout_list: {
+        Row: {
+          active_kcal: number | null;
+          activity: string | null;
+          ended_at: string | null;
+          heart_rate_avg: number | null;
+          source: string | null;
+          source_id: string | null;
+          started_at: string | null;
+          started_on: string | null;
+          store: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          active_kcal?: number | null;
+          activity?: string | null;
+          ended_at?: string | null;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id?: string | null;
+          started_at?: string | null;
+          started_on?: string | null;
+          store?: string | null;
+        };
+        Update: {
+          active_kcal?: number | null;
+          activity?: string | null;
+          ended_at?: string | null;
+          heart_rate_avg?: number | null;
+          source?: string | null;
+          source_id?: string | null;
+          started_at?: string | null;
+          started_on?: string | null;
+          store?: string | null;
+        };
+        Relationships: [];
+      };
       recipe_values: {
         Row: {
           carbs_g: number | null;
@@ -2431,6 +2508,10 @@ export type Database = {
       heart_rate_samples_of: {
         Args: { finished: string; samples: number[]; started: string };
         Returns: number[];
+      };
+      import_outside_workouts: {
+        Args: { since: string; store: string; today: string; workouts: Json };
+        Returns: number;
       };
       import_steps: { Args: { days: Json; today: string }; Returns: number };
       import_weights: { Args: { today: string; weights: Json }; Returns: number };
