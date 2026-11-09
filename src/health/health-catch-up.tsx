@@ -15,23 +15,19 @@ import { keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-hea
 import { saveRecentWorkouts } from './workout-write';
 
 /**
- * Keeps what was read for a workout just saved, and refreshes the logs when it changed them; then
- * saves it to the store, where workouts are. Saving the log and this are separate calls: one that
- * fails is done again by the catch-up (ADR 0099, ADR 0105).
+ * Keeps what was read for a workout just saved, and refreshes the logs when it changed them. Saving
+ * the log and this are two calls: one that fails is read again by the catch-up (ADR 0099).
  */
 export function keepNewLogHealth(
   queryClient: QueryClient,
   logId: number,
-  stats: WorkoutStats | null,
-) {
-  void (stats ? keepWorkoutHealth(logId, stats) : Promise.resolve(false))
+  stats: WorkoutStats,
+): Promise<void> {
+  return keepWorkoutHealth(logId, stats)
     .then(async (changed) => {
       if (changed) await queryClient.invalidateQueries({ queryKey: LOGS_KEY });
     })
-    .catch((error: unknown) => console.warn('Could not keep the watch’s data', error))
-    // Saved with the calories the log has after what the watch measured (ADR 0105).
-    .then(() => saveRecentWorkouts(queryClient))
-    .catch((error: unknown) => console.warn('Could not save the workout to the store', error));
+    .catch((error: unknown) => console.warn('Could not keep the watch’s data', error));
 }
 
 /** Reads the logs of the last day again and sends each read; whether any log changed. */

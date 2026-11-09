@@ -1,11 +1,12 @@
 import { keepNewLogHealth } from '@/health/health-catch-up';
+import { saveRecentWorkouts } from '@/health/workout-write';
 import { useWorkoutHealth } from '@/health/workout-health';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
 import { router } from 'expo-router';
 import { Alert, Keyboard } from 'react-native';
 
 import { useExerciseLibrary, type LibraryExercise } from '@/exercises/library';
-import { act, fireEvent, render, renderHook, screen } from '@/test/render';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@/test/render';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 import { reloadPlan } from '@/workouts/workouts';
 
@@ -52,7 +53,12 @@ jest.mock('@/health/workout-health', () => ({
   ...jest.requireActual<typeof import('@/health/workout-health')>('@/health/workout-health'),
   useWorkoutHealth: jest.fn(() => ({ data: null })),
 }));
-jest.mock('@/health/health-catch-up', () => ({ keepNewLogHealth: jest.fn() }));
+jest.mock('@/health/health-catch-up', () => ({
+  keepNewLogHealth: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('@/health/workout-write', () => ({
+  saveRecentWorkouts: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),
@@ -404,7 +410,8 @@ describe('FinishScreen', () => {
     expect(screen.queryByText('From your watch')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).toHaveBeenCalledWith(expect.anything(), 1, null);
+    expect(keepNewLogHealth).not.toHaveBeenCalled();
+    await waitFor(() => expect(saveRecentWorkouts).toHaveBeenCalled());
   });
 
   it('logs the set of a clock that still runs', async () => {
