@@ -1,4 +1,4 @@
-import { keepNewLogHealth } from '@/health/health-catch-up';
+import { afterWorkoutLogged } from '@/health/health-catch-up';
 import { useWorkoutHealth } from '@/health/workout-health';
 import { getPermissionsAsync, requestPermissionsAsync } from 'expo-notifications';
 import { router } from 'expo-router';
@@ -52,7 +52,9 @@ jest.mock('@/health/workout-health', () => ({
   ...jest.requireActual<typeof import('@/health/workout-health')>('@/health/workout-health'),
   useWorkoutHealth: jest.fn(() => ({ data: null })),
 }));
-jest.mock('@/health/health-catch-up', () => ({ keepNewLogHealth: jest.fn() }));
+jest.mock('@/health/health-catch-up', () => ({
+  afterWorkoutLogged: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: () => ({ data: [{ id: 5, name: null, type: 'pull' }] }),
@@ -392,19 +394,18 @@ describe('FinishScreen', () => {
     expect(screen.getByText('412')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).toHaveBeenCalledWith(expect.anything(), 1, stats);
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
   });
 
-  it('shows and keeps nothing of a watch without a heart rate', async () => {
-    jest
-      .mocked(useWorkoutHealth)
-      .mockReturnValue({ data: { heartRate: null, activeKcal: 6, source: 'iPhone' } } as never);
+  it('shows nothing of a watch without a heart rate, and still hands the workout on', async () => {
+    const stats = { heartRate: null, activeKcal: 6, source: 'iPhone' };
+    jest.mocked(useWorkoutHealth).mockReturnValue({ data: stats } as never);
     doFirstSet();
     await render(<FinishScreen />);
     expect(screen.queryByText('From your watch')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Save workout' }));
-    expect(keepNewLogHealth).not.toHaveBeenCalled();
+    expect(afterWorkoutLogged).toHaveBeenCalledWith(expect.anything(), 1, stats);
   });
 
   it('logs the set of a clock that still runs', async () => {

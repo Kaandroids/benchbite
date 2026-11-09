@@ -8,6 +8,7 @@ export {
   requestWeightAccess as requestHealthWeightAccess,
   releaseAccess as releaseHealthAccess,
   requestAccess as requestHealthAccess,
+  requestWriteAccess as requestHealthWriteAccess,
   stepsAllowed as healthStepsAllowed,
   stillAllowed as healthStillAllowed,
   store as healthStore,

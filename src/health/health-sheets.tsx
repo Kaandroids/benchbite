@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -30,13 +31,59 @@ const CONSENT_ROWS: {
   }),
 ];
 
+/** What saving workouts writes, and what it leaves out, as the write sheet lists it. */
+const WRITE_ROWS: { key: 'workout' | 'fromNow' | 'notTwice'; icon: IconName; good: boolean }[] = [
+  { key: 'workout', icon: 'check', good: true },
+  { key: 'fromNow', icon: 'check', good: true },
+  { key: 'notTwice', icon: 'close', good: false },
+];
+
 type SheetProps = {
   store: NonNullable<HealthStore>;
   busy: boolean;
   onClose: () => void;
 };
 
-/** Says what is read and kept, and that nothing is written, before the system asks. */
+/**
+ * The frame of a sheet before the system asks: what it is about, then Continue, Not now and what
+ * the system asks next.
+ */
+function AskSheet({
+  title,
+  body,
+  next,
+  busy,
+  onContinue,
+  onClose,
+  children,
+}: {
+  title: string;
+  body: string;
+  next: string;
+  busy: boolean;
+  onContinue: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <BiteSheet title={title} body={body} onClose={onClose}>
+      {children}
+      <Button label={t('health.consent.continue')} loading={busy} onPress={onContinue} />
+      <Button
+        label={t('health.consent.notNow')}
+        variant="secondary"
+        disabled={busy}
+        onPress={onClose}
+      />
+      <Text variant="caption" color="textMuted" align="center">
+        {next}
+      </Text>
+    </BiteSheet>
+  );
+}
+
+/** Says what is read and kept, and when anything is written, before the system asks. */
 export function ConsentSheet({
   store,
   busy,
@@ -47,9 +94,12 @@ export function ConsentSheet({
   const { colors, spacing } = useTheme();
   const name = t(`health.${store}`);
   return (
-    <BiteSheet
+    <AskSheet
       title={t('health.consent.title', { store: name })}
       body={t('health.consent.body')}
+      next={t(`health.consent.next.${store}`)}
+      busy={busy}
+      onContinue={onConnect}
       onClose={onClose}
     >
       <Card list>
@@ -73,17 +123,7 @@ export function ConsentSheet({
         ))}
       </Card>
       <Text color="textMuted">{t('health.consent.keeps', { store: name })}</Text>
-      <Button label={t('health.consent.continue')} loading={busy} onPress={onConnect} />
-      <Button
-        label={t('health.consent.notNow')}
-        variant="secondary"
-        disabled={busy}
-        onPress={onClose}
-      />
-      <Text variant="caption" color="textMuted" align="center">
-        {t(`health.consent.next.${store}`)}
-      </Text>
-    </BiteSheet>
+    </AskSheet>
   );
 }
 
@@ -113,6 +153,49 @@ export function DisconnectSheet({
         onPress={onDisconnect}
       />
     </Sheet>
+  );
+}
+
+/** What saving workouts writes to the store, before the system asks (ADR 0105). */
+export function WriteSheet({
+  store,
+  busy,
+  onAllow,
+  onClose,
+}: SheetProps & { onAllow: () => void }) {
+  const { t } = useTranslation();
+  const { colors, spacing } = useTheme();
+  const name = t(`health.${store}`);
+  return (
+    <AskSheet
+      title={t('health.write.title', { store: name })}
+      body={t(`health.write.body.${store}`)}
+      next={t(`health.write.next.${store}`)}
+      busy={busy}
+      onContinue={onAllow}
+      onClose={onClose}
+    >
+      <Card list>
+        <Text variant="caption" color="textMuted" style={{ paddingVertical: spacing.sm }}>
+          {t('health.write.writes')}
+        </Text>
+        {WRITE_ROWS.map(({ key, icon, good }) => (
+          <View
+            key={key}
+            style={[
+              styles.row,
+              { gap: spacing.md, paddingVertical: spacing.sm },
+              listDivider(false, colors.border),
+            ]}
+          >
+            <Icon name={icon} size={18} color={good ? 'success' : 'textMuted'} />
+            <Text color={good ? 'text' : 'textMuted'} style={styles.flex}>
+              {t(`health.write.${key}`)}
+            </Text>
+          </View>
+        ))}
+      </Card>
+    </AskSheet>
   );
 }
 

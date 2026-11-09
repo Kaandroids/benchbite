@@ -85,6 +85,7 @@ export const ICONS = {
   trophy: { ios: 'trophy', android: 'trophy', web: 'trophy' },
   undo: { ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' },
   up: { ios: 'chevron.up', android: 'expand_less', web: 'expand_less' },
+  watch: { ios: 'applewatch', android: 'watch', web: 'watch' },
   water: { ios: 'drop', android: 'water_drop', web: 'water_drop' },
   warning: { ios: 'exclamationmark.triangle', android: 'warning', web: 'warning' },
   woman: { ios: 'figure.stand.dress', android: 'woman', web: 'woman' },

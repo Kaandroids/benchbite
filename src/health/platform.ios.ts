@@ -1,31 +1,50 @@
 // Apple Health, through HealthKit. Apple never tells an app whether it may read a type: a type it
 // may not read simply has no data, so access counts as allowed once asked.
 import {
+  AuthorizationStatus,
+  authorizationStatusFor,
+  ComparisonPredicateOperator,
+  deleteObjects,
   isHealthDataAvailable,
   queryQuantitySamples,
   queryStatisticsCollectionForQuantity,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
+  queryWorkoutSamples,
   requestAuthorization,
+  saveWorkoutSample,
+  WorkoutActivityType,
 } from '@kingstinct/react-native-healthkit';
+
+import { applicationId } from 'expo-application';
 
 import { toIsoDate } from '@/i18n/dates';
 
 import { heartRateSamples } from './samples';
 import {
+  coversMostOf,
+  isSavedWorkoutId,
   NO_WORKOUT_STATS,
+  savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
   type StepDay,
+  type StoredWorkouts,
   type WeightReading,
   type WorkoutStats,
+  type WorkoutToSave,
 } from './types';
 
 const HEART_RATE = 'HKQuantityTypeIdentifierHeartRate';
 const ACTIVE_ENERGY = 'HKQuantityTypeIdentifierActiveEnergyBurned';
 const BODY_MASS = 'HKQuantityTypeIdentifierBodyMass';
 const STEP_COUNT = 'HKQuantityTypeIdentifierStepCount';
+const WORKOUT = 'HKWorkoutTypeIdentifier';
 const READS = [HEART_RATE, ACTIVE_ENERGY, BODY_MASS, STEP_COUNT] as const;
+
+/** The metadata a saved workout and its calories are known by, and the calories it was saved with. */
+const EXTERNAL_ID = 'HKExternalUUID';
+const SAVED_KCAL = 'BenchbiteActiveKcal';
 
 export const store: HealthStore = 'appleHealth';
 
@@ -133,4 +152,87 @@ export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
       ? [{ day: toIsoDate(day.startDate), steps: day.sumQuantity.quantity }]
       : [],
   );
+}
+
+// Apple tells an app whether it may write a type, unlike whether it may read one. A workout is
+// saved with its calories, so both have to be allowed: Apple lets the user allow either alone.
+export const writeAllowed = (): Promise<boolean> =>
+  Promise.resolve(
+    ([WORKOUT, ACTIVE_ENERGY] as const).every(
+      (type) => authorizationStatusFor(type) === AuthorizationStatus.sharingAuthorized,
+    ),
+  );
+
+export async function requestWriteAccess(): Promise<boolean> {
+  await requestAuthorization({ toShare: [WORKOUT, ACTIVE_ENERGY], toRead: [WORKOUT] });
+  return writeAllowed();
+}
+
+/** Benchbite's samples of a log's workout, the workout and its calories, by the id they were saved with. */
+const savedOf = (logId: number) => ({
+  metadata: {
+    withMetadataKey: EXTERNAL_ID,
+    operatorType: ComparisonPredicateOperator.equalTo,
+    value: savedWorkoutId(logId),
+  },
+});
+
+/** Whether a workout is one Benchbite saved: by its id, and written by this app, as another can copy the id. */
+const savedByBenchbite = (workout: {
+  metadata: Record<string, unknown>;
+  sourceRevision: { source: { bundleIdentifier: string } };
+}) =>
+  workout.sourceRevision.source.bundleIdentifier === applicationId &&
+  isSavedWorkoutId(workout.metadata[EXTERNAL_ID]);
+
+// An app may always read what it wrote itself, so Benchbite's copy is found even when reading
+// workouts was not allowed; other apps' workouts are then simply not seen.
+export async function storedWorkouts(logId: number, from: Date, to: Date): Promise<StoredWorkouts> {
+  const workouts = await queryWorkoutSamples({
+    filter: { date: { startDate: from, endDate: to } },
+    limit: 0,
+  });
+  const id = savedWorkoutId(logId);
+  const ours = workouts.find(
+    (workout) => savedByBenchbite(workout) && workout.metadata[EXTERNAL_ID] === id,
+  );
+  const kcal = ours?.metadata[SAVED_KCAL];
+  return {
+    ours: ours ? { activeKcal: typeof kcal === 'number' ? kcal : null } : null,
+    others: workouts.some(
+      (workout) =>
+        !savedByBenchbite(workout) &&
+        coversMostOf({ start: workout.startDate, end: workout.endDate }, from, to),
+    ),
+  };
+}
+
+// The calories are saved as a sample of the workout's time too, which the Activity rings count.
+// The library gives that sample the workout's metadata, so it is taken out with it.
+export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSave): Promise<void> {
+  await removeWorkout(logId);
+  const id = savedWorkoutId(logId);
+  await saveWorkoutSample(
+    WorkoutActivityType.traditionalStrengthTraining,
+    activeKcal === null
+      ? []
+      : [
+          {
+            quantityType: ACTIVE_ENERGY,
+            quantity: activeKcal,
+            unit: 'kcal',
+            startDate: start,
+            endDate: end,
+          },
+        ],
+    start,
+    end,
+    activeKcal === null ? undefined : { energyBurned: activeKcal },
+    { [EXTERNAL_ID]: id, ...(activeKcal === null ? {} : { [SAVED_KCAL]: activeKcal }) },
+  );
+}
+
+export async function removeWorkout(logId: number): Promise<void> {
+  await deleteObjects(WORKOUT, savedOf(logId));
+  await deleteObjects(ACTIVE_ENERGY, savedOf(logId));
 }

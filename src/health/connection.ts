@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react';
 import { readItem, writeItem } from '@/lib/device-storage';
 
 const KEY = 'health.connected';
+const WRITE_SINCE_KEY = 'health.writeSince';
 
 const listeners = new Set<() => void>();
 
@@ -24,8 +25,10 @@ export function isHealthConnected(): boolean {
   return readItem(KEY) === 'true';
 }
 
+/** Connects or disconnects the store; disconnecting stops saving workouts to it too (ADR 0105). */
 export function setHealthConnected(connected: boolean) {
   writeItem(KEY, connected ? 'true' : null);
+  if (!connected) writeItem(WRITE_SINCE_KEY, null);
   notify();
 }
 
@@ -72,9 +75,32 @@ export function setStepsReadOn(day: string | null) {
   writeItem(STEPS_READ_ON_KEY, day);
 }
 
+/**
+ * Since when finished workouts are saved to the store (ADR 0105), or null while they are not: a
+ * workout finished before writing was turned on is not saved.
+ */
+export function writeSince(): Date | null {
+  const stored = readItem(WRITE_SINCE_KEY);
+  return stored ? new Date(stored) : null;
+}
+
+export function setWriteSince(since: Date | null) {
+  writeItem(WRITE_SINCE_KEY, since?.toISOString() ?? null);
+  notify();
+}
+
+/** Whether workouts may be saved now: the store is connected and saving is on. */
+export const mayWrite = () => isHealthConnected() && writeSince() !== null;
+
+/** Whether finished workouts are saved to the store, kept up to date. */
+export function useWritingWorkouts(): boolean {
+  return useSyncExternalStore(subscribe, () => readItem(WRITE_SINCE_KEY) !== null);
+}
+
 /** Lets go of all the device keeps about the store, as when another user signs in. */
 export function forgetHealthOnDevice() {
   writeItem(KEY, null);
+  writeItem(WRITE_SINCE_KEY, null);
   for (const kind of HEALTH_READS) {
     writeItem(readKey(kind), null);
   }

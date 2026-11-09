@@ -13,8 +13,10 @@ import { ExerciseThumbnail } from '@/exercises/exercise-thumbnail';
 import { HistoryButton } from '@/exercises/history-button';
 import { InfoButton } from '@/exercises/info-button';
 import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/library';
+import { SavedToHealthLine } from '@/health/saved-to-health';
 import { WaitingCard, WatchCard } from '@/health/watch-card';
 import { useAwaitingWatch } from '@/health/workout-health';
+import { removeSavedWorkout, useSavedToHealth } from '@/health/workout-write';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
@@ -56,6 +58,7 @@ export function LogScreen({ id }: { id: number }) {
   const formatTotal = useTotalFormat();
   const log = summary.data;
   const waitingForWatch = useAwaitingWatch(log);
+  const saved = useSavedToHealth(log);
 
   if (!allLoaded([summary, sets, library])) {
     return (
@@ -111,7 +114,10 @@ export function LogScreen({ id }: { id: number }) {
         style: 'destructive',
         onPress: () =>
           void remove.mutateAsync(id).then(
-            () => router.back(),
+            () => {
+              void removeSavedWorkout(id);
+              router.back();
+            },
             (error: unknown) => {
               console.warn('Could not delete the workout log', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));
@@ -182,10 +188,18 @@ export function LogScreen({ id }: { id: number }) {
               : null
           }
           kcalEstimated={burned?.source === 'heart_rate'}
+          saved={saved}
         />
-      ) : waitingForWatch ? (
-        <WaitingCard />
-      ) : null}
+      ) : (
+        <>
+          {waitingForWatch ? <WaitingCard /> : null}
+          {saved ? (
+            <Card>
+              <SavedToHealthLine saved={saved} />
+            </Card>
+          ) : null}
+        </>
+      )}
 
       {exercises.map((exercise, index) => {
         const info = findExercise(library.data, exercise.exerciseId);

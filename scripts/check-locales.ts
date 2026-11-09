@@ -77,6 +77,10 @@ const PLUGIN_TEXTS: Record<string, [plugin: string, option: string]> = {
     '@kingstinct/react-native-healthkit',
     'NSHealthShareUsageDescription',
   ],
+  NSHealthUpdateUsageDescription: [
+    '@kingstinct/react-native-healthkit',
+    'NSHealthUpdateUsageDescription',
+  ],
 };
 /** A plugin option that holds a permission text, by its name. */
 const PERMISSION_OPTION = /(Permission|UsageDescription)$/;

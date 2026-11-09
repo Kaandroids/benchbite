@@ -112,7 +112,7 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0094](0094-delete-an-account-from-the-website.md)                    | Delete an account from the website                                                      | Accepted                                             |
 | [0095](0095-confirm-deleting-an-account-by-email.md)                  | Confirm deleting an account by email                                                    | Accepted                                             |
 | [0096](0096-develop-with-a-development-build.md)                      | Develop with a development build                                                        | Accepted                                             |
-| [0097](0097-read-workouts-from-apple-health-and-health-connect.md)    | Read workouts from Apple Health and Health Connect                                      | Accepted                                             |
+| [0097](0097-read-workouts-from-apple-health-and-health-connect.md)    | Read workouts from Apple Health and Health Connect                                      | Accepted, amended by ADR-0105                        |
 | [0098](0098-keep-a-summary-of-a-workouts-heart-rate.md)               | Keep a summary of a workout's heart rate                                                | Accepted, amended by ADR-0099                        |
 | [0099](0099-read-a-workouts-health-again-for-a-day.md)                | Read a workout's health again for a day                                                 | Accepted                                             |
 | [0100](0100-take-weight-from-the-health-store.md)                     | Take weight from the health store                                                       | Accepted, amended by ADR-0101                        |
@@ -120,3 +120,4 @@ and mark the old one as `Superseded by ADR-NNNN`.
 | [0102](0102-translate-the-ios-permission-texts.md)                    | Translate the iOS permission texts                                                      | Accepted                                             |
 | [0103](0103-keep-the-days-steps.md)                                   | Keep the day's steps                                                                    | Accepted                                             |
 | [0104](0104-keep-a-workouts-heart-rate-over-its-time.md)              | Keep a workout's heart rate over its time                                               | Accepted                                             |
+| [0105](0105-save-workouts-to-the-health-store.md)                     | Save workouts to the health store                                                       | Accepted                                             |

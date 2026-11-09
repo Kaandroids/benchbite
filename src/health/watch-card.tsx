@@ -9,7 +9,9 @@ import { useNumberFormat } from '@/i18n/units';
 import { useTheme } from '@/theme';
 
 import { HeartRateChart } from './heart-rate-chart';
+import { SavedToHealthLine } from './saved-to-health';
 import { useStoreName } from './use-store-name';
+import type { SavedToHealth } from './workout-write';
 
 type WatchCardProps = {
   averageBpm: number | null;
@@ -21,6 +23,8 @@ type WatchCardProps = {
   chart?: Omit<ComponentProps<typeof HeartRateChart>, 'average' | 'max'> | null;
   /** The calories shown were estimated from the heart rate, as the watch measured none. */
   kcalEstimated?: boolean;
+  /** Where the workout is in the store, while workouts are saved to it (ADR 0105). */
+  saved?: SavedToHealth | null;
 };
 
 /** What the watch measured during a workout (#85): its heart rate, and its calories where asked. */
@@ -31,6 +35,7 @@ export function WatchCard({
   source,
   chart,
   kcalEstimated = false,
+  saved = null,
 }: WatchCardProps) {
   const { t } = useTranslation();
   const { colors, spacing } = useTheme();
@@ -86,6 +91,11 @@ export function WatchCard({
               {t('health.watch.kcalEstimated')}
             </Text>
           ) : null}
+        </View>
+      ) : null}
+      {saved ? (
+        <View style={{ paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <SavedToHealthLine saved={saved} />
         </View>
       ) : null}
     </Card>

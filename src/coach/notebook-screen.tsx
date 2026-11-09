@@ -12,7 +12,7 @@ import { FieldLabel, useFieldStyle } from '@/components/ui/field';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { afterSheetCloses, Sheet } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
+import { SwitchCard } from '@/components/ui/switch-card';
 import { Text } from '@/components/ui/text';
 import { Toast } from '@/components/ui/toast';
 import { Tag } from '@/components/ui/tag';
@@ -179,23 +179,15 @@ export function NotebookScreen() {
 /** Saving notes from chats: on, Bite saves them; off, it asks first. */
 function SavingSwitch() {
   const { t } = useTranslation();
-  const { spacing } = useTheme();
   const saves = useSavesNotes();
   const setSaves = useSetSavesNotes();
   return (
-    <Card style={[styles.row, { gap: spacing.md }]}>
-      <View style={styles.flex}>
-        <Text variant="bodyStrong">{t('bite.notebook.saving')}</Text>
-        <Text variant="caption" color="textMuted">
-          {t('bite.notebook.savingNote')}
-        </Text>
-      </View>
-      <Switch
-        accessibilityLabel={t('bite.notebook.saving')}
-        value={saves.data ?? true}
-        onValueChange={(value) => setSaves.mutate(value)}
-      />
-    </Card>
+    <SwitchCard
+      label={t('bite.notebook.saving')}
+      note={t('bite.notebook.savingNote')}
+      value={saves.data ?? true}
+      onValueChange={(value) => setSaves.mutate(value)}
+    />
   );
 }
 

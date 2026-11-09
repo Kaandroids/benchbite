@@ -3,24 +3,35 @@
 import {
   aggregateGroupByPeriod,
   aggregateRecord,
+  deleteRecordsByUuids,
+  ExerciseType,
   getGrantedPermissions,
   getSdkStatus,
   initialize,
+  insertRecords,
   readRecords,
   requestPermission,
   revokeAllPermissions,
   SdkAvailabilityStatus,
+  type Metadata,
 } from 'react-native-health-connect';
+import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
 import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
+  coversMostOf,
+  isSavedWorkoutId,
+  NO_STORED_WORKOUTS,
   NO_WORKOUT_STATS,
+  savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
   type StepDay,
+  type StoredWorkouts,
   type WeightReading,
   type WorkoutStats,
+  type WorkoutToSave,
 } from './types';
 
 const PERMISSIONS = [
@@ -215,4 +226,97 @@ export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
       ? [{ day: startTime.slice(0, 10), steps: result.COUNT_TOTAL }]
       : [],
   );
+}
+
+/** What saving a workout writes: exercise and its calories, which are written together. */
+const WRITE_TYPES = ['ExerciseSession', 'ActiveCaloriesBurned'] as const;
+
+/**
+ * Whether workouts may be written: both types, which Health Connect lets the user allow alone.
+ */
+export async function writeAllowed(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  const granted = await getGrantedPermissions();
+  return WRITE_TYPES.every((recordType) =>
+    granted.some(
+      (permission) => permission.accessType === 'write' && permission.recordType === recordType,
+    ),
+  );
+}
+
+export async function requestWriteAccess(): Promise<boolean> {
+  if (!(await initialize())) return false;
+  await requestPermission([
+    ...WRITE_TYPES.map((recordType) => ({ accessType: 'write' as const, recordType })),
+    // To find a workout a watch's app recorded, which is then not saved again (ADR 0105).
+    { accessType: 'read', recordType: 'ExerciseSession' },
+  ]);
+  return writeAllowed();
+}
+
+/** Whether a record is one Benchbite saved: by its id, and written by this app, as another can copy the id. */
+const savedByBenchbite = (record: { metadata?: Metadata }) =>
+  record.metadata?.dataOrigin === applicationId &&
+  isSavedWorkoutId(record.metadata?.clientRecordId);
+
+// Health Connect lets an app read what it wrote itself, so Benchbite's copy is found even when
+// reading exercise was not allowed; other apps' workouts are then simply not seen.
+export async function storedWorkouts(logId: number, from: Date, to: Date): Promise<StoredWorkouts> {
+  if (!(await initialize())) return NO_STORED_WORKOUTS;
+  const timeRangeFilter = {
+    operator: 'between' as const,
+    startTime: from.toISOString(),
+    endTime: to.toISOString(),
+  };
+  const id = savedWorkoutId(logId);
+  const isOurs = (record: { metadata?: Metadata }) =>
+    savedByBenchbite(record) && record.metadata?.clientRecordId === id;
+  const byAnotherApp = (record: { startTime: string; endTime: string; metadata?: Metadata }) =>
+    !savedByBenchbite(record) &&
+    coversMostOf({ start: new Date(record.startTime), end: new Date(record.endTime) }, from, to);
+  const { records } = await readRecords('ExerciseSession', { timeRangeFilter });
+  if (!records.some(isOurs)) {
+    return { ours: null, others: records.some(byAnotherApp) };
+  }
+  const { records: energy } = await readRecords('ActiveCaloriesBurned', { timeRangeFilter });
+  const kcal = energy.find(isOurs);
+  return {
+    ours: { activeKcal: kcal ? kcal.energy.inKilocalories : null },
+    others: records.some(byAnotherApp),
+  };
+}
+
+// A record with the same client id replaces the one before when its version is higher.
+export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSave): Promise<void> {
+  if (!(await initialize())) return;
+  const metadata = { clientRecordId: savedWorkoutId(logId), clientRecordVersion: Date.now() };
+  const times = { startTime: start.toISOString(), endTime: end.toISOString() };
+  await insertRecords([
+    {
+      recordType: 'ExerciseSession',
+      exerciseType: ExerciseType.STRENGTH_TRAINING,
+      ...times,
+      metadata,
+    },
+    ...(activeKcal === null
+      ? []
+      : [
+          {
+            recordType: 'ActiveCaloriesBurned' as const,
+            energy: { unit: 'kilocalories' as const, value: activeKcal },
+            ...times,
+            metadata,
+          },
+        ]),
+  ]);
+  if (activeKcal === null) {
+    await deleteRecordsByUuids('ActiveCaloriesBurned', [], [savedWorkoutId(logId)]);
+  }
+}
+
+export async function removeWorkout(logId: number): Promise<void> {
+  if (!(await initialize())) return;
+  for (const recordType of ['ExerciseSession', 'ActiveCaloriesBurned'] as const) {
+    await deleteRecordsByUuids(recordType, [], [savedWorkoutId(logId)]);
+  }
 }
