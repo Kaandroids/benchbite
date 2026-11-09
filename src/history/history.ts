@@ -494,3 +494,25 @@ export function byWeek<Other extends { startedAt: Date } = never>(
   }
   return weeks;
 }
+
+/** A range of time, from a moment until before another; either open. */
+export type PageRange = { from: Date | null; to: Date | null };
+
+/**
+ * The range of time each page of logs reaches, latest first, from the week of its oldest log until
+ * the page before's: what else to show among them is read a page's range at a time, so loading an
+ * older page reads only its own. The last page's range is open once there are no more pages, and a
+ * page that reaches no further week adds none.
+ */
+export function rangesOfPages(pages: { logs: LogSummary[] }[], hasNextPage: boolean): PageRange[] {
+  const ranges: PageRange[] = [];
+  let to: Date | null = null;
+  pages.forEach((page, index) => {
+    const oldest = page.logs.at(-1);
+    const last = index === pages.length - 1;
+    const from = last && !hasNextPage ? null : oldest ? weekStart(oldest.startedAt) : to;
+    if (from === null || to === null || from < to) ranges.push({ from, to });
+    to = from ?? to;
+  });
+  return ranges;
+}

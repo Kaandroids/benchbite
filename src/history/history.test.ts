@@ -4,6 +4,7 @@ import { act, createTestQueryClient, renderHook, waitFor } from '@/test/render';
 import {
   byExercise,
   byWeek,
+  rangesOfPages,
   doneOf,
   durationMinutes,
   fetchLogSummaries,
@@ -389,5 +390,38 @@ describe('byWeek', () => {
       [new Date(2026, 9, 19), [3, 'run', 2], 2, 100],
       [new Date(2026, 9, 12), ['ride'], 0, 0],
     ]);
+  });
+});
+
+describe('rangesOfPages', () => {
+  const [w3, w2, w1] = [
+    log(3, '2026-10-23T18:00', 52),
+    log(2, '2026-10-14T18:00', 48),
+    log(1, '2026-10-05T18:00', 55),
+  ];
+
+  it('gives each page the weeks it reaches, the latest open above', () => {
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [w2] }], true)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+      { from: new Date(2026, 9, 12), to: new Date(2026, 9, 19) },
+    ]);
+  });
+
+  it('opens the last page’s range once there are no more pages', () => {
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [w2, w1] }], false)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+      { from: null, to: new Date(2026, 9, 19) },
+    ]);
+  });
+
+  it('adds no range for a page that reaches no further week', () => {
+    const sameWeek = log(4, '2026-10-20T18:00', 40);
+    expect(rangesOfPages([{ logs: [w3] }, { logs: [sameWeek] }], true)).toEqual([
+      { from: new Date(2026, 9, 19), to: null },
+    ]);
+  });
+
+  it('reads everything without any logs', () => {
+    expect(rangesOfPages([{ logs: [] }], false)).toEqual([{ from: null, to: null }]);
   });
 });
