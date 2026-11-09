@@ -1,5 +1,6 @@
 // What every import from the health store keeps to: it reads only while the store is connected and
 // the kind is read, sends nothing for an account signed in while it read, and runs once at a time.
+// Saving workouts to the store (ADR 0105) runs once at a time too, with oneAtATimeThenAgain.
 import { supabase } from '@/lib/supabase';
 
 import { isHealthConnected, readSync, type HealthRead } from './connection';

@@ -5,15 +5,15 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useTheme } from '@/theme';
 
-import { healthStore } from './health';
+import { useStoreName } from './use-store-name';
 import type { SavedToHealth } from './workout-write';
 
 /** Where a logged workout is in the store: saved by Benchbite, or recorded by the watch (ADR 0105). */
 export function SavedToHealthLine({ saved }: { saved: SavedToHealth }) {
   const { t } = useTranslation();
   const { spacing } = useTheme();
-  if (!healthStore) return null;
-  const store = t(`health.${healthStore}`);
+  const store = useStoreName();
+  if (!store) return null;
   return (
     <View style={[styles.row, { gap: spacing.sm }]}>
       <Icon
