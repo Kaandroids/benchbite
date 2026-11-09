@@ -38,6 +38,7 @@ jest.mock('./health', () => ({
   healthStepsAllowed: jest.fn(),
   healthStillAllowed: jest.fn(),
   healthWeightAllowed: jest.fn(),
+  healthWorkoutsAllowed: jest.fn(() => Promise.resolve(true)),
   requestHealthAccess: jest.fn(),
   requestHealthWriteAccess: jest.fn(),
   releaseHealthAccess: jest.fn(),

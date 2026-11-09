@@ -1,4 +1,4 @@
-// How each kind read from the store apart from workouts is read (ADR 0100, 0103): whether the system
+// How each kind read from the store is read, apart from Benchbite's workouts (ADR 0100, 0103, 0106): whether the system
 // lets it be read, asking for it alone, and taking it in. A new kind goes in HEALTH_READS, here and
 // in READ_LOOKS; the types name what is missing.
 import type { QueryClient } from '@tanstack/react-query';
@@ -7,9 +7,12 @@ import type { HealthRead } from './connection';
 import {
   healthStepsAllowed,
   healthWeightAllowed,
+  healthWorkoutsAllowed,
   requestHealthStepsAccess,
   requestHealthWeightAccess,
+  requestHealthWorkoutsAccess,
 } from './health';
+import { importOutsideWorkouts } from './outside-workouts-import';
 import { importHealthSteps } from './steps-import';
 import { importHealthWeights } from './weight-import';
 
@@ -32,5 +35,10 @@ export const READ_KINDS: Record<HealthRead, ReadKind> = {
     allowed: healthStepsAllowed,
     request: requestHealthStepsAccess,
     bringIn: importHealthSteps,
+  },
+  workouts: {
+    allowed: healthWorkoutsAllowed,
+    request: requestHealthWorkoutsAccess,
+    bringIn: importOutsideWorkouts,
   },
 };
