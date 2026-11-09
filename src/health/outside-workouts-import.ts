@@ -19,7 +19,8 @@ import {
   signedInUser,
   stillImporting,
 } from './import-guard';
-import { keptFigures, OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
+import { keptFigures } from './outside-workouts';
+import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
 import { outsideWorkouts } from './platform';
 import type { OutsideWorkout } from './types';
 

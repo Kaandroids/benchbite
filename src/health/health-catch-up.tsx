@@ -9,7 +9,7 @@ import { LOGS_KEY, recentLogs } from '@/history/history';
 import { useUserId } from '@/providers/session-provider';
 
 import { HEALTH_READS, isHealthConnected, useHealthConnected } from './connection';
-import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
+import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
 import type { WorkoutStats } from './types';
 import { READ_KINDS } from './read-kinds';
 import { hasHeartRate, keepWorkoutHealth, READ_FOR_MS, readWorkoutHealth } from './workout-health';

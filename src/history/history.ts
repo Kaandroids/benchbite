@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { OUTSIDE_WORKOUTS_KEY } from '@/health/outside-workouts-key';
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
@@ -402,6 +403,8 @@ export function useDeleteLog() {
         queryClient.invalidateQueries({ queryKey: TRAINING_DAYS_KEY }),
         queryClient.invalidateQueries({ queryKey: RECORDS_KEY }),
         queryClient.invalidateQueries({ queryKey: STREAK_KEY }),
+        // A watch's copy of it, hidden while it was logged, shows again (ADR 0106).
+        queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY }),
       ]),
   });
 }

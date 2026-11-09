@@ -3,13 +3,15 @@
 // count toward neither the streak nor the week.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
+import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import { activityOf, type Activity } from './activities';
+import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
 import type { HealthStore, WorkoutFigures } from './types';
 import { useReading } from './use-read-ask';
 
-export const OUTSIDE_WORKOUTS_KEY = ['outside-workouts'];
+export { OUTSIDE_WORKOUTS_KEY };
 
 /** The most read at once, as many as the server gives in one answer. */
 const MOST = 1000;
@@ -28,17 +30,7 @@ export type ListedOutsideWorkout = {
   source: string | null;
 };
 
-type Row = {
-  store: string | null;
-  source_id: string | null;
-  activity: string | null;
-  started_at: string | null;
-  ended_at: string | null;
-  started_on: string | null;
-  active_kcal: number | null;
-  heart_rate_avg: number | null;
-  source: string | null;
-};
+type Row = Database['public']['Views']['outside_workout_list']['Row'];
 
 const toListed = (row: Row): ListedOutsideWorkout[] =>
   row.store && row.source_id && row.activity && row.started_at && row.ended_at && row.started_on

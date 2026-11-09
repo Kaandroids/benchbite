@@ -177,6 +177,8 @@ describe('useDeleteLog', () => {
       ['workout-logs', 'days'],
       ['workout-logs', 'records'],
       ['streak'],
+      // A watch's copy of it among other apps' workouts shows again.
+      ['outside-workouts'],
     ]);
     // A past week's workouts are under the week's.
     expect(weekLogsKey(new Date(2026, 9, 14)).slice(0, 2)).toEqual(['workout-logs', 'week']);
