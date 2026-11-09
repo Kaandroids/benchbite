@@ -6,6 +6,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 import { activityOf, type Activity } from './activities';
+import type { HealthStore, WorkoutFigures } from './types';
 import { useReading } from './use-read-ask';
 
 export const OUTSIDE_WORKOUTS_KEY = ['outside-workouts'];
@@ -100,4 +101,24 @@ export function useOutsideWorkoutsSince(since: Date | null, enabled = true) {
     enabled: reading && enabled,
     placeholderData: keepPreviousData,
   });
+}
+
+/** The figures kept of a store's workouts that started since a time, by the store's id of each. */
+export async function keptFigures(
+  store: NonNullable<HealthStore>,
+  since: Date,
+): Promise<Map<string, WorkoutFigures>> {
+  const { data, error } = await supabase
+    .from('outside_workouts')
+    .select('source_id, active_kcal, heart_rate_avg')
+    .eq('store', store)
+    .gte('started_at', since.toISOString())
+    .limit(MOST);
+  if (error) throw error;
+  return new Map(
+    data.map((row) => [
+      row.source_id,
+      { activeKcal: row.active_kcal, heartRateAvg: row.heart_rate_avg },
+    ]),
+  );
 }

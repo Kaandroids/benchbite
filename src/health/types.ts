@@ -85,3 +85,16 @@ export type OutsideWorkout = {
   /** The app or watch that recorded it, by its name. */
   source: string | null;
 };
+
+/** A workout's measured figures. */
+export type WorkoutFigures = Pick<OutsideWorkout, 'activeKcal' | 'heartRateAvg'>;
+
+/**
+ * The figures already kept of workouts, by the store's id of each, which a read takes in place of
+ * reading them again for the workouts that started before `before`: their figures no longer change.
+ */
+export type KeptFigures = { figures: Map<string, WorkoutFigures>; before: Date };
+
+/** The kept figures of a workout that need not be read again, if any. */
+export const keptFiguresOf = (kept: KeptFigures | undefined, id: string, start: Date) =>
+  kept && start < kept.before ? kept.figures.get(id) : undefined;

@@ -26,10 +26,12 @@ import { heartRateSamples } from './samples';
 import {
   coversMostOf,
   isSavedWorkoutId,
+  keptFiguresOf,
   NO_WORKOUT_STATS,
   savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
+  type KeptFigures,
   type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
@@ -252,7 +254,11 @@ export async function requestWorkoutsAccess(): Promise<boolean> {
  * The workouts other apps recorded, with the average heart rate measured during each, which the
  * workout itself does not hold. Benchbite's own are left out: they are its logs (ADR 0105).
  */
-export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[]> {
+export async function outsideWorkouts(
+  from: Date,
+  to: Date,
+  kept?: KeptFigures,
+): Promise<OutsideWorkout[]> {
   const workouts = await queryWorkoutSamples({
     filter: { date: { startDate: from, endDate: to } },
     limit: 0,
@@ -262,13 +268,16 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
       workout.sourceRevision.source.bundleIdentifier !== applicationId && workout.startDate >= from,
   );
   return inBatches(others, async (workout) => {
-    const heart = await queryStatisticsForQuantity(HEART_RATE, ['discreteAverage'], {
-      filter: { date: { startDate: workout.startDate, endDate: workout.endDate } },
-      unit: 'count/min',
-    }).catch((error: unknown) => {
-      console.warn('Could not read the heart rate of a workout', error);
-      return null;
-    });
+    // A failed read throws: a heart rate taken as none would replace the one kept.
+    const known = keptFiguresOf(kept, workout.uuid, workout.startDate);
+    const heartRateAvg = known
+      ? known.heartRateAvg
+      : ((
+          await queryStatisticsForQuantity(HEART_RATE, ['discreteAverage'], {
+            filter: { date: { startDate: workout.startDate, endDate: workout.endDate } },
+            unit: 'count/min',
+          })
+        ).averageQuantity?.quantity ?? null);
     return {
       id: workout.uuid,
       activity: HEALTHKIT_ACTIVITIES[WorkoutActivityType[workout.workoutActivityType]] ?? 'other',
@@ -276,7 +285,7 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
       end: workout.endDate,
       // The library gives it in kilocalories.
       activeKcal: workout.totalEnergyBurned?.quantity ?? null,
-      heartRateAvg: heart?.averageQuantity?.quantity ?? null,
+      heartRateAvg,
       source: workout.sourceRevision.source.name || null,
     };
   });

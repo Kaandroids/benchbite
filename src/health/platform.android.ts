@@ -24,15 +24,18 @@ import { heartRateSamples, type HeartRatePoint } from './samples';
 import {
   coversMostOf,
   isSavedWorkoutId,
+  keptFiguresOf,
   NO_STORED_WORKOUTS,
   NO_WORKOUT_STATS,
   savedWorkoutId,
   type HealthAvailability,
   type HealthStore,
+  type KeptFigures,
   type OutsideWorkout,
   type StepDay,
   type StoredWorkouts,
   type WeightReading,
+  type WorkoutFigures,
   type WorkoutStats,
   type WorkoutToSave,
 } from './types';
@@ -71,13 +74,13 @@ export async function availability(): Promise<HealthAvailability> {
   return 'unavailable';
 }
 
-/** Whether a type may be read. */
 /** Whether the permissions granted let a type be read. */
 const readGranted = (granted: { accessType: string; recordType: string }[], recordType: string) =>
   granted.some(
     (permission) => permission.accessType === 'read' && permission.recordType === recordType,
   );
 
+/** Whether a type may be read. */
 async function allowedToRead(recordType: string): Promise<boolean> {
   return readGranted(await getGrantedPermissions(), recordType);
 }
@@ -338,6 +341,37 @@ const EXERCISE_NAMES = new Map(
   Object.entries(ExerciseType).map(([name, type]) => [type as number, name]),
 );
 
+/**
+ * A session's calories, those of the app that recorded it, and its average heart rate, where they
+ * may be read; none where nothing was measured. A read that fails throws: a figure taken as none
+ * would replace the one kept.
+ */
+async function figuresOf(
+  startTime: string,
+  endTime: string,
+  origin: string | undefined,
+  allowed: (recordType: string) => boolean,
+): Promise<WorkoutFigures> {
+  const during = { operator: 'between' as const, startTime, endTime };
+  const kcal =
+    allowed('ActiveCaloriesBurned') && origin
+      ? (
+          await aggregateRecord({
+            recordType: 'ActiveCaloriesBurned',
+            timeRangeFilter: during,
+            dataOriginFilter: [origin],
+          })
+        ).ACTIVE_CALORIES_TOTAL.inKilocalories
+      : 0;
+  const heart = allowed('HeartRate')
+    ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during })
+    : null;
+  return {
+    activeKcal: kcal > 0 ? kcal : null,
+    heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
+  };
+}
+
 /** The most pages of sessions read at once: far more than anyone records in 400 days. */
 const MOST_SESSION_PAGES = 10;
 
@@ -346,10 +380,15 @@ const MOST_SESSION_PAGES = 10;
  * average heart rate during it, where they may be read. Benchbite's own are left out: they are its
  * logs (ADR 0105). Null when they could not be read, which is not a store without any.
  */
-export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWorkout[] | null> {
-  if (!(await initialize()) || !(await workoutsAllowed())) return null;
+export async function outsideWorkouts(
+  from: Date,
+  to: Date,
+  kept?: KeptFigures,
+): Promise<OutsideWorkout[] | null> {
+  if (!(await initialize())) return null;
   const granted = await getGrantedPermissions();
   const allowed = (recordType: string) => readGranted(granted, recordType);
+  if (!allowed('ExerciseSession')) return null;
   const read: OutsideWorkout[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < MOST_SESSION_PAGES; page++) {
@@ -369,35 +408,16 @@ export async function outsideWorkouts(from: Date, to: Date): Promise<OutsideWork
     read.push(
       ...(await inBatches(others, async (record) => {
         const origin = record.metadata?.dataOrigin;
-        const during = {
-          operator: 'between' as const,
-          startTime: record.startTime,
-          endTime: record.endTime,
-        };
-        // Either figure may be missing or not allowed; the workout is kept without it.
-        const kcal =
-          allowed('ActiveCaloriesBurned') && origin
-            ? await aggregateRecord({
-                recordType: 'ActiveCaloriesBurned',
-                timeRangeFilter: during,
-                dataOriginFilter: [origin],
-              })
-                .then((energy) => energy.ACTIVE_CALORIES_TOTAL.inKilocalories)
-                .catch(() => 0)
-            : 0;
-        const heart = allowed('HeartRate')
-          ? await aggregateRecord({ recordType: 'HeartRate', timeRangeFilter: during }).catch(
-              () => null,
-            )
-          : null;
+        const id = record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`;
+        const start = new Date(record.startTime);
+        const known = keptFiguresOf(kept, id, start);
         return {
-          id: record.metadata?.id ?? `${record.startTime}-${origin ?? ''}`,
+          id,
           activity:
             HEALTH_CONNECT_ACTIVITIES[EXERCISE_NAMES.get(record.exerciseType) ?? ''] ?? 'other',
-          start: new Date(record.startTime),
+          start,
           end: new Date(record.endTime),
-          activeKcal: kcal > 0 ? kcal : null,
-          heartRateAvg: heart && heart.MEASUREMENTS_COUNT > 0 ? heart.BPM_AVG : null,
+          ...(known ?? (await figuresOf(record.startTime, record.endTime, origin, allowed))),
           source: sourceName(origin),
         };
       })),

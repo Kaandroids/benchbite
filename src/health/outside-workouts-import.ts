@@ -2,10 +2,11 @@
 // store is connected and they are read, every workout the store holds goes to
 // import_outside_workouts(): the last 30 days the first time, then from the day last read on and at
 // least the last 30 days, a year back at most. The store is the truth for the time read, so one
-// deleted there goes here too. More than 500 go in parts of the time, as the function takes.
+// deleted there goes here too. More than 500 go in parts of the time, as the function takes. The
+// figures of workouts older than three days are taken as kept, not read again.
 import type { QueryClient } from '@tanstack/react-query';
 
-import { toIsoDate } from '@/i18n/dates';
+import { lastDays, toIsoDate } from '@/i18n/dates';
 import { supabase } from '@/lib/supabase';
 
 import { setWorkoutsReadOn, workoutsReadOn } from './connection';
@@ -18,10 +19,15 @@ import {
   signedInUser,
   stillImporting,
 } from './import-guard';
-import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
+import { keptFigures, OUTSIDE_WORKOUTS_KEY } from './outside-workouts';
 import { outsideWorkouts } from './platform';
 import type { OutsideWorkout } from './types';
 
+/**
+ * How many days, today among them, a workout's figures are read again, for a watch that syncs them
+ * late; an older workout's are taken as kept.
+ */
+const SETTLED_AFTER_DAYS = 3;
 /** The most workouts import_outside_workouts() takes at once. */
 export const MOST_PER_PART = 500;
 
@@ -58,13 +64,20 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   const userId = await signedInUser();
   const now = new Date();
   const from = readFrom(workoutsReadOn(), LEAST_DAYS, now);
-  const workouts = await outsideWorkouts(from, now);
+  // The figures of older workouts no longer change, so those kept are taken, not read again.
+  const kept = {
+    figures: await keptFigures(healthStore, from),
+    before: lastDays(SETTLED_AFTER_DAYS, now),
+  };
+  const workouts = await outsideWorkouts(from, now, kept);
   // A read that could not be made sends nothing: the store would be taken as holding none, and the
   // workouts of the time read would go. Nor does it count for a user signed in since.
   if (workouts === null || !(await stillImporting('workouts', userId))) return false;
   let changed = false;
   // A minute past now, so that a workout that started as the store was read still falls within.
   for (const part of partsOf(workouts, from, new Date(now.getTime() + 60_000))) {
+    // Each part is sent for the user the store was read for, or none is.
+    if (!(await stillImporting('workouts', userId))) return false;
     const { data, error } = await supabase.rpc('import_outside_workouts', {
       workouts: part.workouts.map((workout) => ({
         id: workout.id,

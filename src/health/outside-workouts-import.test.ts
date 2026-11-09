@@ -9,6 +9,7 @@ import {
   workoutsReadOn,
 } from './connection';
 import { importOutsideWorkouts, MOST_PER_PART, partsOf } from './outside-workouts-import';
+import { keptFigures } from './outside-workouts';
 import { outsideWorkouts } from './platform';
 import type { OutsideWorkout } from './types';
 
@@ -24,6 +25,10 @@ jest.mock('expo-sqlite/kv-store', () => {
 });
 jest.mock('@/lib/supabase', () => ({
   supabase: { rpc: jest.fn(), auth: { getSession: jest.fn() } },
+}));
+jest.mock('./outside-workouts', () => ({
+  ...jest.requireActual<typeof import('./outside-workouts')>('./outside-workouts'),
+  keptFigures: jest.fn(),
 }));
 jest.mock('./health', () => ({
   ...jest.requireActual<typeof import('./health')>('./health'),
@@ -57,6 +62,7 @@ beforeEach(() => {
   signedIn('user-1');
   jest.mocked(outsideWorkouts).mockResolvedValue([RUN]);
   jest.mocked(supabase.rpc).mockResolvedValue({ data: 1, error: null } as never);
+  jest.mocked(keptFigures).mockResolvedValue(new Map());
 });
 afterEach(() => jest.useRealTimers());
 
@@ -123,6 +129,28 @@ it('reads nothing while workouts are not read', async () => {
   setReadSync('workouts', 'off');
   expect(await importOutsideWorkouts(createTestQueryClient())).toBe(false);
   expect(outsideWorkouts).not.toHaveBeenCalled();
+});
+
+it('takes the kept figures of workouts older than three days, not reading them again', async () => {
+  const figures = new Map([['ride', { activeKcal: 540, heartRateAvg: 132 }]]);
+  jest.mocked(keptFigures).mockResolvedValue(figures);
+  await importOutsideWorkouts(createTestQueryClient());
+  const [from, , kept] = jest.mocked(outsideWorkouts).mock.calls[0]!;
+  expect(keptFigures).toHaveBeenCalledWith('appleHealth', from);
+  expect(kept).toEqual({ figures, before: new Date(2026, 10, 8) });
+});
+
+it('sends no later part for a user who signed in while an earlier one was sent', async () => {
+  const many = Array.from({ length: MOST_PER_PART + 1 }, (_, n) =>
+    workout(`w${n}`, new Date(2026, 10, 1, 0, n)),
+  );
+  jest.mocked(outsideWorkouts).mockResolvedValue(many);
+  jest.mocked(supabase.rpc).mockImplementation((async () => {
+    signedIn('user-2');
+    return { data: 1, error: null };
+  }) as never);
+  expect(await importOutsideWorkouts(createTestQueryClient())).toBe(false);
+  expect(supabase.rpc).toHaveBeenCalledTimes(1);
 });
 
 it('sends nothing for a user who signed in while the store was read', async () => {

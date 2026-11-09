@@ -693,6 +693,70 @@ describe('workouts from other apps', () => {
     );
   });
 
+  it('fails the whole read when a session’s figures cannot be read', async () => {
+    jest.mocked(getGrantedPermissions).mockResolvedValue([
+      { accessType: 'read', recordType: 'ExerciseSession' },
+      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+    ] as never);
+    jest.mocked(readRecords).mockResolvedValueOnce({
+      records: [
+        {
+          exerciseType: 8,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          metadata: { id: 'ride', dataOrigin: 'com.huami.watch.hmwatchmanager' },
+        },
+      ],
+    } as never);
+    jest.mocked(aggregateRecord).mockRejectedValueOnce(new Error('quota'));
+    await expect(android.outsideWorkouts(from, to)).rejects.toThrow('quota');
+  });
+
+  it('takes the kept figures of older sessions instead of reading them again', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'read', recordType: 'ExerciseSession' }] as never);
+    jest.mocked(readRecords).mockResolvedValueOnce({
+      records: [
+        {
+          exerciseType: 8,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          metadata: { id: 'ride', dataOrigin: 'com.huami.watch.hmwatchmanager' },
+        },
+      ],
+    } as never);
+    const kept = {
+      figures: new Map([['ride', { activeKcal: 540, heartRateAvg: 132 }]]),
+      before: to,
+    };
+    expect(await android.outsideWorkouts(from, to, kept)).toEqual([
+      expect.objectContaining({ id: 'ride', activeKcal: 540, heartRateAvg: 132 }),
+    ]);
+    expect(aggregateRecord).not.toHaveBeenCalled();
+  });
+
+  it('takes the kept heart rate of an older Apple Health workout, even none', async () => {
+    jest.mocked(queryWorkoutSamples).mockResolvedValue([
+      {
+        uuid: 'run',
+        workoutActivityType: 37,
+        startDate: start,
+        endDate: end,
+        totalEnergyBurned: { unit: 'kcal', quantity: 310 },
+        sourceRevision: { source: { bundleIdentifier: 'com.apple.health', name: 'Apple Watch' } },
+      },
+    ] as never);
+    const kept = {
+      figures: new Map([['run', { activeKcal: 310, heartRateAvg: null }]]),
+      before: to,
+    };
+    expect(await ios.outsideWorkouts(from, to, kept)).toEqual([
+      expect.objectContaining({ id: 'run', heartRateAvg: null }),
+    ]);
+    expect(queryStatisticsForQuantity).not.toHaveBeenCalled();
+  });
+
   it('reads no sessions from Health Connect while they may not be read', async () => {
     jest.mocked(getGrantedPermissions).mockResolvedValue([] as never);
     expect(await android.outsideWorkouts(from, to)).toBeNull();
