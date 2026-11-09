@@ -9,7 +9,6 @@ import {
   workoutsReadOn,
 } from './connection';
 import { importOutsideWorkouts, MOST_PER_PART, partsOf } from './outside-workouts-import';
-import { keptFigures } from './outside-workouts';
 import { outsideWorkouts } from './platform';
 import type { OutsideWorkout } from './types';
 
@@ -24,16 +23,24 @@ jest.mock('expo-sqlite/kv-store', () => {
   };
 });
 jest.mock('@/lib/supabase', () => ({
-  supabase: { rpc: jest.fn(), auth: { getSession: jest.fn() } },
-}));
-jest.mock('./outside-workouts', () => ({
-  ...jest.requireActual<typeof import('./outside-workouts')>('./outside-workouts'),
-  keptFigures: jest.fn(),
+  supabase: { rpc: jest.fn(), from: jest.fn(), auth: { getSession: jest.fn() } },
 }));
 jest.mock('./health', () => ({
   ...jest.requireActual<typeof import('./health')>('./health'),
   healthStore: 'appleHealth',
 }));
+
+/** The figures the server keeps, as `outside_workouts` gives them. */
+const query: { select: jest.Mock; eq: jest.Mock; gte: jest.Mock; limit: jest.Mock } = {
+  select: jest.fn((): unknown => query),
+  eq: jest.fn((): unknown => query),
+  gte: jest.fn((): unknown => query),
+  limit: jest.fn(),
+};
+const keptRows = (rows: { source_id: string; active_kcal: number; heart_rate_avg: number }[]) => {
+  jest.mocked(supabase.from).mockReturnValue(query as never);
+  query.limit.mockResolvedValue({ data: rows, error: null } as never);
+};
 
 const signedIn = (userId: string) =>
   jest
@@ -62,7 +69,7 @@ beforeEach(() => {
   signedIn('user-1');
   jest.mocked(outsideWorkouts).mockResolvedValue([RUN]);
   jest.mocked(supabase.rpc).mockResolvedValue({ data: 1, error: null } as never);
-  jest.mocked(keptFigures).mockResolvedValue(new Map());
+  keptRows([]);
 });
 afterEach(() => jest.useRealTimers());
 
@@ -132,12 +139,16 @@ it('reads nothing while workouts are not read', async () => {
 });
 
 it('takes the kept figures of workouts older than three days, not reading them again', async () => {
-  const figures = new Map([['ride', { activeKcal: 540, heartRateAvg: 132 }]]);
-  jest.mocked(keptFigures).mockResolvedValue(figures);
+  keptRows([{ source_id: 'ride', active_kcal: 540, heart_rate_avg: 132 }]);
   await importOutsideWorkouts(createTestQueryClient());
   const [from, , kept] = jest.mocked(outsideWorkouts).mock.calls[0]!;
-  expect(keptFigures).toHaveBeenCalledWith('appleHealth', from);
-  expect(kept).toEqual({ figures, before: new Date(2026, 10, 8) });
+  expect(supabase.from).toHaveBeenCalledWith('outside_workouts');
+  expect(query.eq).toHaveBeenCalledWith('store', 'appleHealth');
+  expect(query.gte).toHaveBeenCalledWith('started_at', from.toISOString());
+  expect(kept).toEqual({
+    figures: new Map([['ride', { activeKcal: 540, heartRateAvg: 132 }]]),
+    before: new Date(2026, 10, 8),
+  });
 });
 
 it('sends no later part for a user who signed in while an earlier one was sent', async () => {

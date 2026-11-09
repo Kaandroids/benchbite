@@ -28,7 +28,10 @@ jest.mock('@/workouts/planned-week', () => ({
 }));
 jest.mock('@/history/history', () => ({ useFinishedInWeek: jest.fn() }));
 jest.mock('@/health/outside-workouts', () => ({
-  useOutsideWorkoutsOn: jest.fn(() => ({ data: [] })),
+  useOutsideWorkoutsOn: jest.fn(() => []),
+  countByDay: jest.requireActual<typeof import('@/health/outside-workouts')>(
+    '@/health/outside-workouts',
+  ).countByDay,
 }));
 jest.mock('@/workouts/moves', () => ({
   useWeekMoves: jest.fn(),
@@ -208,7 +211,7 @@ function mockData({
     );
   jest.mocked(useNutritionTargets).mockReturnValue(targets as never);
   jest.mocked(useDayEntries).mockReturnValue(eaten as never);
-  jest.mocked(useOutsideWorkoutsOn).mockReturnValue({ data: [] } as never);
+  jest.mocked(useOutsideWorkoutsOn).mockReturnValue([]);
   return { plan, targets, eaten };
 }
 
@@ -248,7 +251,7 @@ describe('TodayScreen', () => {
     });
     jest
       .mocked(useOutsideWorkoutsOn)
-      .mockReturnValue({ data: [run('2026-10-21', 7), run('2026-10-20', 6)] } as never);
+      .mockReturnValue([run('2026-10-21', 7), run('2026-10-20', 6)] as never);
     await render(<TodayScreen />);
     expect(useOutsideWorkoutsOn).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
     expect(screen.getByText('ALSO TODAY')).toBeTruthy();

@@ -1,20 +1,19 @@
 // Workouts other apps and watches recorded, as the server keeps them (#468, ADR 0106): the list to
 // show leaves out a watch's copy of a logged workout. They are shown next to Benchbite's own and
 // count toward neither the streak nor the week.
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 
 import { activityOf, type Activity } from './activities';
 import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
-import type { HealthStore, WorkoutFigures } from './types';
 import { useReading } from './use-read-ask';
 
-export { OUTSIDE_WORKOUTS_KEY };
-
-/** The most read at once, as many as the server gives in one answer. */
-const MOST = 1000;
+/** As many as the server gives in one answer. */
+const PAGE = 1000;
+/** The most a list reads: as many as the server keeps of a user's from 400 days. */
+const MOST = 3000;
 
 /** A workout another app recorded, as shown. */
 export type ListedOutsideWorkout = {
@@ -50,67 +49,80 @@ const toListed = (row: Row): ListedOutsideWorkout[] =>
 
 const listQuery = () => supabase.from('outside_workout_list').select('*');
 
-/** The list to show, narrowed by a filter, latest first. */
+/** The list to show, narrowed by a filter, latest first, a page of the server's at a time. */
 async function listed(
   narrow: (query: ReturnType<typeof listQuery>) => ReturnType<typeof listQuery>,
 ) {
-  const { data, error } = await narrow(listQuery())
-    .order('started_at', { ascending: false })
-    .limit(MOST);
-  if (error) throw error;
-  return data.flatMap(toListed);
+  const workouts: ListedOutsideWorkout[] = [];
+  for (let first = 0; first < MOST; first += PAGE) {
+    const { data, error } = await narrow(listQuery())
+      .order('started_at', { ascending: false })
+      .range(first, first + PAGE - 1);
+    if (error) throw error;
+    workouts.push(...data.flatMap(toListed));
+    if (data.length < PAGE) break;
+  }
+  return workouts;
 }
 
 /** The workouts that started on the days from `first` to `last`, YYYY-MM-DD, latest first. */
 export const outsideWorkoutsOn = (first: string, last: string) =>
   listed((query) => query.gte('started_on', first).lte('started_on', last));
 
-/** The workouts that started since a time, or all of them without it, latest first. */
-export const outsideWorkoutsSince = (since: Date | null) =>
-  listed((query) => (since ? query.gte('started_at', since.toISOString()) : query));
+/** A range of time, from a moment until before another; either open. */
+export type TimeRange = { from: Date | null; to: Date | null };
 
-/** The workouts of the days from `first` to `last`, while other apps' workouts are read. */
-export function useOutsideWorkoutsOn(first: string, last: string) {
+/** The workouts that started within a range, latest first. */
+export const outsideWorkoutsIn = ({ from, to }: TimeRange) =>
+  listed((query) => {
+    const since = from ? query.gte('started_at', from.toISOString()) : query;
+    return to ? since.lt('started_at', to.toISOString()) : since;
+  });
+
+/** How many workouts started on each day, by its date. */
+export function countByDay(workouts: ListedOutsideWorkout[]): Record<string, number> {
+  const days: Record<string, number> = {};
+  for (const workout of workouts) {
+    days[workout.startedOn] = (days[workout.startedOn] ?? 0) + 1;
+  }
+  return days;
+}
+
+/**
+ * The workouts of the days from `first` to `last`, while other apps' workouts are read; none once
+ * they are no longer, though some were read before.
+ */
+export function useOutsideWorkoutsOn(first: string, last: string): ListedOutsideWorkout[] {
   const reading = useReading('workouts');
-  return useQuery({
+  const query = useQuery({
     queryKey: [...OUTSIDE_WORKOUTS_KEY, 'on', first, last],
     queryFn: () => outsideWorkoutsOn(first, last),
     enabled: reading,
     // Paging to another week keeps the last one's on screen until its own arrive.
     placeholderData: keepPreviousData,
   });
+  return reading ? (query.data ?? []) : [];
 }
 
 /**
- * The workouts since a time, or all of them, while other apps' workouts are read. As the history
- * loads older pages, the time moves back, and the ones already shown stay until the rest arrive.
+ * The workouts within each range, while other apps' workouts are read; none once they are no
+ * longer. One query a range, so that a range added as the history loads an older page reads only
+ * its own time, and a range that changes keeps what it showed until the rest arrive.
  */
-export function useOutsideWorkoutsSince(since: Date | null, enabled = true) {
+export function useOutsideWorkoutsIn(ranges: TimeRange[], enabled = true): ListedOutsideWorkout[] {
   const reading = useReading('workouts');
-  return useQuery({
-    queryKey: [...OUTSIDE_WORKOUTS_KEY, 'since', since?.getTime() ?? null],
-    queryFn: () => outsideWorkoutsSince(since),
-    enabled: reading && enabled,
-    placeholderData: keepPreviousData,
+  const results = useQueries({
+    queries: ranges.map((range) => ({
+      queryKey: [
+        ...OUTSIDE_WORKOUTS_KEY,
+        'in',
+        range.from?.getTime() ?? null,
+        range.to?.getTime() ?? null,
+      ],
+      queryFn: () => outsideWorkoutsIn(range),
+      enabled: reading && enabled,
+      placeholderData: keepPreviousData,
+    })),
   });
-}
-
-/** The figures kept of a store's workouts that started since a time, by the store's id of each. */
-export async function keptFigures(
-  store: NonNullable<HealthStore>,
-  since: Date,
-): Promise<Map<string, WorkoutFigures>> {
-  const { data, error } = await supabase
-    .from('outside_workouts')
-    .select('source_id, active_kcal, heart_rate_avg')
-    .eq('store', store)
-    .gte('started_at', since.toISOString())
-    .limit(MOST);
-  if (error) throw error;
-  return new Map(
-    data.map((row) => [
-      row.source_id,
-      { activeKcal: row.active_kcal, heartRateAvg: row.heart_rate_avg },
-    ]),
-  );
+  return reading ? results.flatMap((result) => result.data ?? []) : [];
 }

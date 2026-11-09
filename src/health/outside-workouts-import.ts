@@ -19,10 +19,9 @@ import {
   signedInUser,
   stillImporting,
 } from './import-guard';
-import { keptFigures } from './outside-workouts';
 import { OUTSIDE_WORKOUTS_KEY } from './outside-workouts-key';
 import { outsideWorkouts } from './platform';
-import type { OutsideWorkout } from './types';
+import type { HealthStore, OutsideWorkout, WorkoutFigures } from './types';
 
 /**
  * How many days, today among them, a workout's figures are read again, for a watch that syncs them
@@ -31,6 +30,26 @@ import type { OutsideWorkout } from './types';
 const SETTLED_AFTER_DAYS = 3;
 /** The most workouts import_outside_workouts() takes at once. */
 export const MOST_PER_PART = 500;
+
+/** The figures kept of a store's workouts that started since a time, by the store's id of each. */
+export async function keptFigures(
+  store: NonNullable<HealthStore>,
+  since: Date,
+): Promise<Map<string, WorkoutFigures>> {
+  const { data, error } = await supabase
+    .from('outside_workouts')
+    .select('source_id, active_kcal, heart_rate_avg')
+    .eq('store', store)
+    .gte('started_at', since.toISOString())
+    .limit(1000);
+  if (error) throw error;
+  return new Map(
+    data.map((row) => [
+      row.source_id,
+      { activeKcal: row.active_kcal, heartRateAvg: row.heart_rate_avg },
+    ]),
+  );
+}
 
 type Part = { since: Date; until: Date; workouts: OutsideWorkout[] };
 

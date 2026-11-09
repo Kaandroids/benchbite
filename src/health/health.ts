@@ -19,7 +19,6 @@ export {
 export type {
   HealthAvailability,
   HealthStore,
-  OutsideWorkout,
   StepDay,
   WeightReading,
   WorkoutStats,

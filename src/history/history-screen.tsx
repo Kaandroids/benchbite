@@ -10,7 +10,11 @@ import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
 import { OutsideWorkoutRow } from '@/health/outside-workout-row';
 import { OutsideWorkoutSheet } from '@/health/outside-workout-sheet';
-import { useOutsideWorkoutsSince, type ListedOutsideWorkout } from '@/health/outside-workouts';
+import {
+  useOutsideWorkoutsIn,
+  type ListedOutsideWorkout,
+  type TimeRange,
+} from '@/health/outside-workouts';
 import { ReadAskCard } from '@/health/read-ask-card';
 import { useReadAsk } from '@/health/use-read-ask';
 import { useDurationFormat, weekStart } from '@/i18n/dates';
@@ -36,16 +40,23 @@ export function HistoryScreen() {
   const [open, setOpen] = useState<ListedOutsideWorkout | null>(null);
   const weekTitle = useWeekTitle();
   const duration = useDurationFormat();
-  const loadedLogs = logs.data?.pages.flatMap((page) => page.logs) ?? [];
-  // Other apps' workouts of the weeks the pages reach; all of the latest once there are no more.
-  const oldest = loadedLogs.at(-1);
-  const outside = useOutsideWorkoutsSince(
-    logs.hasNextPage && oldest ? weekStart(oldest.startedAt) : null,
-    logs.isSuccess,
-  );
+  const pages = logs.data?.pages ?? [];
+  const loadedLogs = pages.flatMap((page) => page.logs);
+  // Other apps' workouts of the weeks each page reaches, a range a page, so that loading an older
+  // page reads only its own time; all the rest once there are no more pages.
+  const ranges: TimeRange[] = [];
+  let to: Date | null = null;
+  pages.forEach((page, index) => {
+    const oldest = page.logs.at(-1);
+    const last = index === pages.length - 1;
+    const from = last && !logs.hasNextPage ? null : oldest ? weekStart(oldest.startedAt) : to;
+    if (from === null || to === null || from < to) ranges.push({ from, to });
+    to = from ?? to;
+  });
+  const outside = useOutsideWorkoutsIn(ranges, logs.isSuccess);
   // Grouped after the pages are joined, so that a week split between two pages shows as one. The
   // last week may go on in the next page, so it is complete only once there are no more pages.
-  const weeks = byWeek(loadedLogs, outside.data ?? []).map((week, index, all) => ({
+  const weeks = byWeek(loadedLogs, outside).map((week, index, all) => ({
     ...week,
     data: week.entries,
     complete: !logs.hasNextPage || index < all.length - 1,

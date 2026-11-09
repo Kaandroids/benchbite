@@ -1,7 +1,6 @@
-import type { Activity } from './activities';
-
 // The types of the health store's interface (#467, ADR 0097), apart from it, which each
 // platform's module implements.
+import type { Activity } from './activities';
 
 /** The phone's store of health data, or none where the app has no way to read one. */
 export type HealthStore = 'appleHealth' | 'healthConnect' | null;

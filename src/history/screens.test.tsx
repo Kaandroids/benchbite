@@ -1,5 +1,6 @@
 import { mayWrite, useHealthConnected, useWritingWorkouts } from '@/health/connection';
-import { useOutsideWorkoutsSince } from '@/health/outside-workouts';
+import { useOutsideWorkoutsIn } from '@/health/outside-workouts';
+import { weekStart } from '@/i18n/dates';
 import { removeWorkout, storedWorkouts } from '@/health/platform';
 import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
@@ -47,7 +48,7 @@ jest.mock('@/workouts/workouts', () => ({
   useWorkouts: jest.fn(),
 }));
 jest.mock('@/health/outside-workouts', () => ({
-  useOutsideWorkoutsSince: jest.fn(() => ({ data: [] })),
+  useOutsideWorkoutsIn: jest.fn(() => []),
 }));
 jest.mock('./history', () => ({
   ...jest.requireActual<typeof import('./history')>('./history'),
@@ -111,7 +112,7 @@ beforeEach(() => {
   jest.useFakeTimers({ now: FRIDAY });
   jest.mocked(useWritingWorkouts).mockReturnValue(false);
   jest.mocked(mayWrite).mockReturnValue(false);
-  jest.mocked(useOutsideWorkoutsSince).mockReturnValue({ data: [] } as never);
+  jest.mocked(useOutsideWorkoutsIn).mockReturnValue([]);
   jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: false });
   // Two pages, the second starting within this week, which still shows as one week.
   jest.mocked(useLogSummaries).mockReturnValue({
@@ -280,21 +281,27 @@ describe('HistoryScreen', () => {
 
   it('shows the workouts other apps recorded among them, outside the week’s total, and opens one', async () => {
     const startedAt = new Date(LOGS[0]!.startedAt.getTime() + 3_600_000 * 3);
-    jest.mocked(useOutsideWorkoutsSince).mockReturnValue({
-      data: [
-        {
-          key: 'appleHealth:run',
-          activity: 'running',
-          startedAt,
-          endedAt: new Date(startedAt.getTime() + 32 * 60_000),
-          startedOn: '2026-10-07',
-          activeKcal: 310,
-          heartRateAvg: 148,
-          source: 'Apple Watch',
-        },
-      ],
-    } as never);
+    jest.mocked(useOutsideWorkoutsIn).mockReturnValue([
+      {
+        key: 'appleHealth:run',
+        activity: 'running',
+        startedAt,
+        endedAt: new Date(startedAt.getTime() + 32 * 60_000),
+        startedOn: '2026-10-07',
+        activeKcal: 310,
+        heartRateAvg: 148,
+        source: 'Apple Watch',
+      },
+    ] as never);
     await render(<HistoryScreen />);
+    // A range of time a page, so that an older page reads only its own.
+    expect(useOutsideWorkoutsIn).toHaveBeenLastCalledWith(
+      [
+        { from: weekStart(LOGS[0]!.startedAt), to: null },
+        { from: weekStart(LOGS.at(-1)!.startedAt), to: weekStart(LOGS[0]!.startedAt) },
+      ],
+      undefined,
+    );
     expect(screen.getByText('Running')).toBeTruthy();
     expect(screen.getByText('32 min · 310 kcal · Apple Watch')).toBeTruthy();
     expect(screen.getByText('2 workouts · 1 h 53 min')).toBeTruthy();
