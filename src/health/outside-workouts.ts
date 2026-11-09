@@ -57,6 +57,9 @@ async function listed(
   for (let first = 0; first < MOST; first += PAGE) {
     const { data, error } = await narrow(listQuery())
       .order('started_at', { ascending: false })
+      // Workouts that start at the same moment keep one order across pages.
+      .order('store')
+      .order('source_id')
       .range(first, first + PAGE - 1);
     if (error) throw error;
     workouts.push(...data.flatMap(toListed));

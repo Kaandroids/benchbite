@@ -160,8 +160,24 @@ it('sends no later part for a user who signed in while an earlier one was sent',
     signedIn('user-2');
     return { data: 1, error: null };
   }) as never);
-  expect(await importOutsideWorkouts(createTestQueryClient())).toBe(false);
+  expect(await importOutsideWorkouts(createTestQueryClient())).toBe(true);
   expect(supabase.rpc).toHaveBeenCalledTimes(1);
+});
+
+it('refreshes the parts already kept when a later one fails', async () => {
+  const many = Array.from({ length: MOST_PER_PART + 1 }, (_, n) =>
+    workout(`w${n}`, new Date(2026, 10, 1, 0, n)),
+  );
+  jest.mocked(outsideWorkouts).mockResolvedValue(many);
+  jest
+    .mocked(supabase.rpc)
+    .mockResolvedValueOnce({ data: 500, error: null } as never)
+    .mockResolvedValueOnce({ data: null, error: new Error('offline') } as never);
+  const queryClient = createTestQueryClient();
+  const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+  await expect(importOutsideWorkouts(queryClient)).rejects.toThrow('offline');
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: ['outside-workouts'] });
+  expect(workoutsReadOn()).toBeNull();
 });
 
 it('sends nothing for a user who signed in while the store was read', async () => {
@@ -191,6 +207,17 @@ describe('partsOf', () => {
     expect(parts[0]!.until).toEqual(minutes(MOST_PER_PART));
     expect(parts[1]!.since).toEqual(minutes(MOST_PER_PART));
     expect(parts[1]!.until).toBe(until);
+  });
+
+  it('keeps workouts that start at the same moment in one part, and fails past 500 of them', () => {
+    const same = (count: number, at: number) =>
+      Array.from({ length: count }, (_, n) => workout(`s${at}-${n}`, minutes(at)));
+    expect(
+      partsOf(same(300, 1).concat(same(300, 2)), from, until).map((part) => part.workouts.length),
+    ).toEqual([300, 300]);
+    expect(() => partsOf(same(MOST_PER_PART + 1, 1), from, until)).toThrow(
+      'More than 500 workouts start at the same moment',
+    );
   });
 
   it('never ends a part among workouts that start at the same moment', () => {

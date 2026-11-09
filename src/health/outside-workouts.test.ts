@@ -62,6 +62,8 @@ it('reads past the server’s 1000 a page, in a range of time', async () => {
   expect(workouts).toHaveLength(1001);
   expect(query.gte).toHaveBeenCalledWith('started_at', from.toISOString());
   expect(query.lt).toHaveBeenCalledWith('started_at', to.toISOString());
+  expect(query.order.mock.calls).toContainEqual(['store']);
+  expect(query.order.mock.calls).toContainEqual(['source_id']);
   expect(query.range.mock.calls).toEqual([
     [0, 999],
     [1000, 1999],

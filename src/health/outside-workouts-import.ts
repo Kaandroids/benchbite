@@ -62,6 +62,8 @@ type Part = { since: Date; until: Date; workouts: OutsideWorkout[] };
  * The time read in parts of at most 500 workouts each, latest last; a part never ends among
  * workouts that start at the same moment, so none falls between two.
  */
+const sameStart = (a: OutsideWorkout, b: OutsideWorkout) => a.start.getTime() === b.start.getTime();
+
 export function partsOf(workouts: OutsideWorkout[], from: Date, until: Date): Part[] {
   const sorted = [...workouts].sort((a, b) => a.start.getTime() - b.start.getTime());
   const parts: Part[] = [];
@@ -69,12 +71,15 @@ export function partsOf(workouts: OutsideWorkout[], from: Date, until: Date): Pa
   let first = 0;
   while (first < sorted.length) {
     let next = Math.min(first + MOST_PER_PART, sorted.length);
-    while (
-      next > first + 1 &&
-      next < sorted.length &&
-      sorted[next]!.start <= sorted[next - 1]!.start
-    ) {
+    while (next > first && next < sorted.length && sameStart(sorted[next]!, sorted[next - 1]!)) {
       next--;
+    }
+    // Every workout of the part starts as the next does: they all go in one, if they fit.
+    if (next === first) {
+      while (next < sorted.length && sameStart(sorted[next]!, sorted[first]!)) next++;
+      if (next - first > MOST_PER_PART) {
+        throw new Error(`More than ${MOST_PER_PART} workouts start at the same moment`);
+      }
     }
     const end = next < sorted.length ? sorted[next]!.start : until;
     parts.push({ since, until: end, workouts: sorted.slice(first, next) });
@@ -99,31 +104,35 @@ async function importNow(queryClient: QueryClient): Promise<boolean> {
   // workouts of the time read would go. Nor does it count for a user signed in since.
   if (workouts === null || !(await stillImporting('workouts', userId))) return false;
   let changed = false;
-  // A minute past now, so that a workout that started as the store was read still falls within.
-  for (const part of partsOf(workouts, from, new Date(now.getTime() + 60_000))) {
-    // Each part is sent for the user the store was read for, or none is.
-    if (!(await stillImporting('workouts', userId))) return false;
-    const { data, error } = await supabase.rpc('import_outside_workouts', {
-      workouts: part.workouts.map((workout) => ({
-        id: workout.id,
-        activity: workout.activity,
-        startedAt: workout.start.toISOString(),
-        endedAt: workout.end.toISOString(),
-        startedOn: toIsoDate(workout.start),
-        activeKcal: workout.activeKcal,
-        heartRateAvg: workout.heartRateAvg,
-        source: workout.source,
-      })),
-      health_store: healthStore,
-      since: part.since.toISOString(),
-      until: part.until.toISOString(),
-      today: toIsoDate(now),
-    });
-    if (error) throw error;
-    changed = (data ?? 0) > 0 || changed;
+  try {
+    // A minute past now, so that a workout that started as the store was read still falls within.
+    for (const part of partsOf(workouts, from, new Date(now.getTime() + 60_000))) {
+      // Each part is sent for the user the store was read for, or none is.
+      if (!(await stillImporting('workouts', userId))) return changed;
+      const { data, error } = await supabase.rpc('import_outside_workouts', {
+        workouts: part.workouts.map((workout) => ({
+          id: workout.id,
+          activity: workout.activity,
+          startedAt: workout.start.toISOString(),
+          endedAt: workout.end.toISOString(),
+          startedOn: toIsoDate(workout.start),
+          activeKcal: workout.activeKcal,
+          heartRateAvg: workout.heartRateAvg,
+          source: workout.source,
+        })),
+        health_store: healthStore,
+        since: part.since.toISOString(),
+        until: part.until.toISOString(),
+        today: toIsoDate(now),
+      });
+      if (error) throw error;
+      changed = (data ?? 0) > 0 || changed;
+    }
+    if (await stillImporting('workouts', userId)) setWorkoutsReadOn(toIsoDate(now));
+  } finally {
+    // The parts already kept show, though a later one failed.
+    if (changed) await queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY });
   }
-  if (await stillImporting('workouts', userId)) setWorkoutsReadOn(toIsoDate(now));
-  if (changed) await queryClient.invalidateQueries({ queryKey: OUTSIDE_WORKOUTS_KEY });
   return changed;
 }
 
