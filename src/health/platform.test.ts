@@ -124,6 +124,21 @@ describe('Apple Health workouts', () => {
     expect(stats.samples?.slice(0, 3)).toEqual([120, null, 140]);
   });
 
+  it('keeps the heart rate when its samples cannot be read', async () => {
+    jest.mocked(queryStatisticsForQuantity).mockResolvedValue({
+      averageQuantity: { unit: 'count/min', quantity: 120 },
+      maximumQuantity: { unit: 'count/min', quantity: 150 },
+      sources: [{ name: 'Zepp', bundleIdentifier: 'com.huami.zepp' }],
+    });
+    jest.mocked(queryStatisticsForQuantitySeparateBySource).mockResolvedValue([]);
+    jest.mocked(queryQuantitySamples).mockRejectedValue(new Error('denied'));
+
+    expect(await ios.workoutStats(FROM, TO)).toMatchObject({
+      heartRate: { average: 120, max: 150 },
+      samples: null,
+    });
+  });
+
   it('keeps no calories that only the phone counted', async () => {
     jest.mocked(queryStatisticsForQuantity).mockResolvedValue({
       averageQuantity: { unit: 'count/min', quantity: 120 },

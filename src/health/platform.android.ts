@@ -124,7 +124,15 @@ export async function workoutStats(from: Date, to: Date): Promise<WorkoutStats> 
     heartRate: { average: heart.BPM_AVG, max: heart.BPM_MAX },
     activeKcal,
     source: sourceName(heart.dataOrigins[0]),
-    samples: heartRateSamples(await heartRatePoints(timeRangeFilter), from, to),
+    // The samples only draw the chart: without them the read keeps its average and highest.
+    samples: heartRateSamples(
+      await heartRatePoints(timeRangeFilter).catch((error: unknown) => {
+        console.warn('Could not read the heart rate samples', error);
+        return [];
+      }),
+      from,
+      to,
+    ),
   };
 }
 
@@ -151,15 +159,20 @@ export async function weightsSince(from: Date): Promise<WeightReading[]> {
   }));
 }
 
-/** Every heart rate sample between two times, page by page; a workout has a few thousand at most. */
-async function heartRatePoints(timeRangeFilter: {
-  operator: 'between';
-  startTime: string;
-  endTime: string;
-}): Promise<HeartRatePoint[]> {
+/**
+ * The most pages of heart rate records read for one workout: a record holds many samples, so 20
+ * pages of 1000 are far more than the 4320 values a 12-hour workout keeps.
+ */
+const MOST_HEART_RATE_PAGES = 20;
+
+/** A range of time as Health Connect's reads take it, which the library does not export. */
+type TimeRangeFilter = Parameters<typeof readRecords>[1]['timeRangeFilter'];
+
+/** Every heart rate sample between two times, page by page. */
+async function heartRatePoints(timeRangeFilter: TimeRangeFilter): Promise<HeartRatePoint[]> {
   const points: HeartRatePoint[] = [];
   let pageToken: string | undefined;
-  for (let page = 0; page < 20; page++) {
+  for (let page = 0; page < MOST_HEART_RATE_PAGES; page++) {
     const { records, pageToken: next } = await readRecords('HeartRate', {
       timeRangeFilter,
       pageSize: 1000,

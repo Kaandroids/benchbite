@@ -1,8 +1,10 @@
 // A workout's heart rate over its time as it is kept (ADR 0104): one value every 10 seconds from the
 // start, the average of the store's samples in those seconds, none where it has none.
 
+// Both must match heart_rate_samples_of() in the migration 20261109100000, which leaves out an
+// array that does not fit them.
 /** How many seconds one kept value stands for. */
-export const SAMPLE_SECONDS = 10;
+const SAMPLE_SECONDS = 10;
 /** The most values set_workout_health() keeps: a 12-hour workout's. */
 const MOST_SAMPLES = 4320;
 
