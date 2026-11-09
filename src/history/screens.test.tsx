@@ -1,4 +1,5 @@
 import { mayWrite, useHealthConnected, useWritingWorkouts } from '@/health/connection';
+import { useOutsideWorkoutsSince } from '@/health/outside-workouts';
 import { removeWorkout, storedWorkouts } from '@/health/platform';
 import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
@@ -29,6 +30,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/health/connection', () => ({
   mayWrite: jest.fn(() => false),
+  useReadSync: jest.fn(() => 'on'),
   useHealthConnected: jest.fn(() => false),
   useWritingWorkouts: jest.fn(() => false),
 }));
@@ -43,6 +45,9 @@ jest.mock('@/exercises/library', () => ({
 jest.mock('@/workouts/workouts', () => ({
   ...jest.requireActual<typeof import('@/workouts/workouts')>('@/workouts/workouts'),
   useWorkouts: jest.fn(),
+}));
+jest.mock('@/health/outside-workouts', () => ({
+  useOutsideWorkoutsSince: jest.fn(() => ({ data: [] })),
 }));
 jest.mock('./history', () => ({
   ...jest.requireActual<typeof import('./history')>('./history'),
@@ -106,6 +111,7 @@ beforeEach(() => {
   jest.useFakeTimers({ now: FRIDAY });
   jest.mocked(useWritingWorkouts).mockReturnValue(false);
   jest.mocked(mayWrite).mockReturnValue(false);
+  jest.mocked(useOutsideWorkoutsSince).mockReturnValue({ data: [] } as never);
   jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: false });
   // Two pages, the second starting within this week, which still shows as one week.
   jest.mocked(useLogSummaries).mockReturnValue({
@@ -270,6 +276,37 @@ describe('HistoryScreen', () => {
     expect(screen.getAllByLabelText('17 sets')).toHaveLength(3);
     // The last week may go on in the next page, so it has no total yet.
     expect(screen.queryByText('1 workout · 58 min')).toBeNull();
+  });
+
+  it('shows the workouts other apps recorded among them, outside the week’s total, and opens one', async () => {
+    const startedAt = new Date(LOGS[0]!.startedAt.getTime() + 3_600_000 * 3);
+    jest.mocked(useOutsideWorkoutsSince).mockReturnValue({
+      data: [
+        {
+          key: 'appleHealth:run',
+          activity: 'running',
+          startedAt,
+          endedAt: new Date(startedAt.getTime() + 32 * 60_000),
+          startedOn: '2026-10-07',
+          activeKcal: 310,
+          heartRateAvg: 148,
+          source: 'Apple Watch',
+        },
+      ],
+    } as never);
+    await render(<HistoryScreen />);
+    expect(screen.getByText('Running')).toBeTruthy();
+    expect(screen.getByText('32 min · 310 kcal · Apple Watch')).toBeTruthy();
+    expect(screen.getByText('2 workouts · 1 h 53 min')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: /Running/ }));
+    expect(screen.getByText('Apple Watch, through Apple Health')).toBeTruthy();
+    expect(screen.getByText('148')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Recorded by another app, so Benchbite only shows it. Change or delete it there.',
+      ),
+    ).toBeTruthy();
   });
 
   it('totals the last week once there are no more pages', async () => {

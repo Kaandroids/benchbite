@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { addDays, toIsoDate, weekStart } from '@/i18n/dates';
+import type { ListedOutsideWorkout } from '@/health/outside-workouts';
 import type { Database } from '@/lib/database.types';
 import { supabase } from '@/lib/supabase';
 import type { SetValues } from '@/sets/values';
@@ -463,6 +464,40 @@ export function byWeek(logs: LogSummary[]): LogWeek[] {
     }
     week.logs.push(log);
     week.minutes += durationMinutes(log);
+  }
+  return weeks;
+}
+
+/** An entry of the history: a finished workout, or a workout another app recorded (ADR 0106). */
+export type HistoryEntry =
+  { kind: 'log'; log: LogSummary } | { kind: 'outside'; workout: ListedOutsideWorkout };
+
+/**
+ * A week of the history, latest first: its finished workouts and other apps' workouts by when they
+ * started. Its count and minutes are the finished workouts' alone, as other apps' count toward
+ * neither the streak nor the week.
+ */
+export type HistoryWeek = LogWeek & { entries: HistoryEntry[] };
+
+/** Finished workouts and other apps' workouts by the week they were done in, latest first. */
+export function byWeekWith(logs: LogSummary[], outside: ListedOutsideWorkout[]): HistoryWeek[] {
+  const entries: (HistoryEntry & { at: Date })[] = [
+    ...logs.map((log) => ({ kind: 'log' as const, log, at: log.startedAt })),
+    ...outside.map((workout) => ({ kind: 'outside' as const, workout, at: workout.startedAt })),
+  ].sort((a, b) => b.at.getTime() - a.at.getTime());
+  const weeks: HistoryWeek[] = [];
+  for (const { at, ...entry } of entries) {
+    const start = weekStart(at);
+    let week = weeks.find((item) => item.start.getTime() === start.getTime());
+    if (!week) {
+      week = { start, logs: [], minutes: 0, entries: [] };
+      weeks.push(week);
+    }
+    week.entries.push(entry);
+    if (entry.kind === 'log') {
+      week.logs.push(entry.log);
+      week.minutes += durationMinutes(entry.log);
+    }
   }
   return weeks;
 }
