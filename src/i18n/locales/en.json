@@ -2451,7 +2451,7 @@
       "chartLabel_other": "Heart rate over the workout, from {{low}} to {{high}} beats a minute, {{average}} on average, with {{count}} sets",
       "chartLabelNoSets": "Heart rate over the workout, from {{low}} to {{high}} beats a minute, {{average}} on average",
       "chartAverage": "avg {{average}}",
-      "kcalEstimated": "It measured no calories, so they are estimated from your heart rate."
+      "kcalEstimated": "Your watch measured no calories, so they are estimated from your heart rate."
     },
     "ask": {
       "notNow": "Not now",
