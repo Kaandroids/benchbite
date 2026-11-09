@@ -1,15 +1,21 @@
 import {
+  authorizationStatusFor,
+  deleteObjects,
   queryQuantitySamples,
   queryStatisticsCollectionForQuantity,
   queryStatisticsForQuantity,
   queryStatisticsForQuantitySeparateBySource,
+  queryWorkoutSamples,
   requestAuthorization,
+  saveWorkoutSample,
 } from '@kingstinct/react-native-healthkit';
 import {
   aggregateGroupByPeriod,
   aggregateRecord,
+  deleteRecordsByUuids,
   getGrantedPermissions,
   getSdkStatus,
+  insertRecords,
   readRecords,
   requestPermission,
   revokeAllPermissions,
@@ -23,6 +29,13 @@ import { NO_WORKOUT_STATS } from './types';
 jest.unmock('./platform.ios');
 jest.unmock('./platform.android');
 jest.mock('@kingstinct/react-native-healthkit', () => ({
+  AuthorizationStatus: { notDetermined: 0, sharingDenied: 1, sharingAuthorized: 2 },
+  ComparisonPredicateOperator: { equalTo: 4 },
+  WorkoutActivityType: { traditionalStrengthTraining: 50 },
+  authorizationStatusFor: jest.fn(),
+  deleteObjects: jest.fn(() => Promise.resolve(0)),
+  queryWorkoutSamples: jest.fn(),
+  saveWorkoutSample: jest.fn(() => Promise.resolve()),
   isHealthDataAvailable: jest.fn(() => true),
   requestAuthorization: jest.fn(() => Promise.resolve(true)),
   queryQuantitySamples: jest.fn(),
@@ -31,6 +44,9 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
   queryStatisticsForQuantitySeparateBySource: jest.fn(),
 }));
 jest.mock('react-native-health-connect', () => ({
+  ExerciseType: { STRENGTH_TRAINING: 70 },
+  insertRecords: jest.fn(() => Promise.resolve([])),
+  deleteRecordsByUuids: jest.fn(() => Promise.resolve()),
   SdkAvailabilityStatus: {
     SDK_UNAVAILABLE: 1,
     SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED: 2,
@@ -373,5 +389,135 @@ describe('steps', () => {
 
     expect(await android.dailySteps(from, to)).toEqual([]);
     expect(aggregateGroupByPeriod).not.toHaveBeenCalled();
+  });
+});
+
+describe('saving workouts', () => {
+  const start = new Date('2026-11-09T18:05:00Z');
+  const end = new Date('2026-11-09T18:45:00Z');
+  const workout = { logId: 11, start, end, activeKcal: 395 };
+  const savedBy = (id?: string, kcal?: number) => ({
+    metadata: {
+      ...(id ? { HKExternalUUID: id } : {}),
+      ...(kcal !== undefined ? { BenchbiteActiveKcal: kcal } : {}),
+    },
+  });
+
+  it('asks Apple Health to write workouts and active energy, and knows when it may', async () => {
+    jest.mocked(authorizationStatusFor).mockReturnValue(2 as never);
+    expect(await ios.requestWriteAccess()).toBe(true);
+    expect(requestAuthorization).toHaveBeenCalledWith({
+      toShare: ['HKWorkoutTypeIdentifier', 'HKQuantityTypeIdentifierActiveEnergyBurned'],
+      toRead: ['HKWorkoutTypeIdentifier'],
+    });
+    jest.mocked(authorizationStatusFor).mockReturnValue(1 as never);
+    expect(await ios.writeAllowed()).toBe(false);
+  });
+
+  it('saves a strength workout to Apple Health with its calories, in place of its copy', async () => {
+    await ios.saveWorkout(workout);
+    expect(deleteObjects).toHaveBeenCalledWith('HKWorkoutTypeIdentifier', {
+      metadata: { withMetadataKey: 'HKExternalUUID', operatorType: 4, value: 'benchbite-log-11' },
+    });
+    expect(saveWorkoutSample).toHaveBeenCalledWith(
+      50,
+      [
+        {
+          quantityType: 'HKQuantityTypeIdentifierActiveEnergyBurned',
+          quantity: 395,
+          unit: 'kcal',
+          startDate: start,
+          endDate: end,
+          metadata: { HKExternalUUID: 'benchbite-log-11' },
+        },
+      ],
+      start,
+      end,
+      { energyBurned: 395 },
+      { HKExternalUUID: 'benchbite-log-11', BenchbiteActiveKcal: 395 },
+    );
+  });
+
+  it('finds its own copy and other apps’ workouts in Apple Health', async () => {
+    jest
+      .mocked(queryWorkoutSamples)
+      .mockResolvedValue([savedBy('benchbite-log-11', 395), savedBy()] as never);
+    expect(await ios.storedWorkouts(11, start, end)).toEqual({
+      ours: { activeKcal: 395 },
+      others: true,
+    });
+    jest.mocked(queryWorkoutSamples).mockResolvedValue([savedBy('benchbite-log-10')] as never);
+    expect(await ios.storedWorkouts(11, start, end)).toEqual({ ours: null, others: false });
+  });
+
+  it('asks Health Connect to write exercise and calories, and to read exercise', async () => {
+    jest
+      .mocked(getGrantedPermissions)
+      .mockResolvedValue([{ accessType: 'write', recordType: 'ExerciseSession' }] as never);
+    expect(await android.requestWriteAccess()).toBe(true);
+    expect(requestPermission).toHaveBeenCalledWith([
+      { accessType: 'write', recordType: 'ExerciseSession' },
+      { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
+      { accessType: 'read', recordType: 'ExerciseSession' },
+    ]);
+  });
+
+  it('saves a strength session to Health Connect under the log’s id, which replaces its copy', async () => {
+    await android.saveWorkout(workout);
+    const metadata = {
+      clientRecordId: 'benchbite-log-11',
+      clientRecordVersion: expect.any(Number),
+    };
+    expect(insertRecords).toHaveBeenCalledWith([
+      {
+        recordType: 'ExerciseSession',
+        exerciseType: 70,
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        metadata,
+      },
+      {
+        recordType: 'ActiveCaloriesBurned',
+        energy: { unit: 'kilocalories', value: 395 },
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        metadata,
+      },
+    ]);
+    expect(deleteRecordsByUuids).not.toHaveBeenCalled();
+  });
+
+  it('takes out the calories of a copy saved again without any', async () => {
+    await android.saveWorkout({ ...workout, activeKcal: null });
+    expect(insertRecords).toHaveBeenCalledWith([expect.objectContaining({ exerciseType: 70 })]);
+    expect(deleteRecordsByUuids).toHaveBeenCalledWith(
+      'ActiveCaloriesBurned',
+      [],
+      ['benchbite-log-11'],
+    );
+  });
+
+  it('finds its own copy, with its calories, and other apps’ sessions in Health Connect', async () => {
+    const own = { metadata: { clientRecordId: 'benchbite-log-11' } };
+    jest
+      .mocked(readRecords)
+      .mockResolvedValueOnce({ records: [own, { metadata: {} }] } as never)
+      .mockResolvedValueOnce({
+        records: [{ ...own, energy: { inKilocalories: 395 } }],
+      } as never);
+    expect(await android.storedWorkouts(11, start, end)).toEqual({
+      ours: { activeKcal: 395 },
+      others: true,
+    });
+  });
+
+  it('takes its copy out of Health Connect', async () => {
+    await android.removeWorkout(11);
+    expect(deleteRecordsByUuids).toHaveBeenCalledWith('ExerciseSession', [], ['benchbite-log-11']);
+    expect(deleteRecordsByUuids).toHaveBeenCalledWith(
+      'ActiveCaloriesBurned',
+      [],
+      ['benchbite-log-11'],
+    );
   });
 });
