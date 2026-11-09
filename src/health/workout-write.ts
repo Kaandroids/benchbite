@@ -79,6 +79,16 @@ const saveRecent = oneAtATimeThenAgain(async (): Promise<boolean> => {
   return logs.length > 0;
 });
 
+/** Takes a deleted log's copy out of the store, while workouts are saved to it (ADR 0105). */
+export async function removeSavedWorkout(logId: number): Promise<void> {
+  if (!mayWrite()) return;
+  try {
+    await removeWorkout(logId);
+  } catch (error) {
+    console.warn('Could not take the workout out of the health store', error);
+  }
+}
+
 /** Saves the last day's workouts, and refreshes what the logs show about them. */
 export async function saveRecentWorkouts(queryClient: QueryClient): Promise<void> {
   if (await saveRecent()) {

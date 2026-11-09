@@ -16,7 +16,7 @@ import { thumbnailOf, useExerciseLibrary, findExercise } from '@/exercises/libra
 import { SavedToHealthLine } from '@/health/saved-to-health';
 import { WaitingCard, WatchCard } from '@/health/watch-card';
 import { useAwaitingWatch } from '@/health/workout-health';
-import { useSavedToHealth } from '@/health/workout-write';
+import { removeSavedWorkout, useSavedToHealth } from '@/health/workout-write';
 import { useClockFormat } from '@/i18n/dates';
 import { useNumberFormat } from '@/i18n/units';
 import { shortSet, summarizeSets } from '@/sets/exercise-summary';
@@ -114,7 +114,10 @@ export function LogScreen({ id }: { id: number }) {
         style: 'destructive',
         onPress: () =>
           void remove.mutateAsync(id).then(
-            () => router.back(),
+            () => {
+              void removeSavedWorkout(id);
+              router.back();
+            },
             (error: unknown) => {
               console.warn('Could not delete the workout log', error);
               Alert.alert(t('history.deleteErrorTitle'), t('history.deleteError'));

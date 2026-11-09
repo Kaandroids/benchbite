@@ -26,7 +26,7 @@ Benchbite reads the phone's health store and writes nothing to it (ADR 0097). Us
 ## Consequences
 
 - Strength training counts in Activity rings and in apps that read the store.
-- A workout deleted in Benchbite stays in the store; the user deletes it in the Health app or in Health Connect.
+- A workout deleted in Benchbite is taken out of the store too, while workouts are saved to it, so it no longer counts in the Activity rings; one saved before saving was turned off stays, and the user deletes it in the Health app or in Health Connect.
 - Turning writing off keeps what was written.
 - The iOS texts no longer say Benchbite writes nothing, and ask for writing in en, de and tr (ADR 0102). Google Play's Health declaration names writing exercise and active calories, and reading exercise.
 - ADR 0097's "nothing is written to the store" no longer holds once the user turns writing on.

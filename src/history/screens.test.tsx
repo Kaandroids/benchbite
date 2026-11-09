@@ -1,5 +1,5 @@
-import { useHealthConnected, useWritingWorkouts } from '@/health/connection';
-import { storedWorkouts } from '@/health/platform';
+import { mayWrite, useHealthConnected, useWritingWorkouts } from '@/health/connection';
+import { removeWorkout, storedWorkouts } from '@/health/platform';
 import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -28,6 +28,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/health/connection', () => ({
+  mayWrite: jest.fn(() => false),
   useHealthConnected: jest.fn(() => false),
   useWritingWorkouts: jest.fn(() => false),
 }));
@@ -104,6 +105,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: FRIDAY });
   jest.mocked(useWritingWorkouts).mockReturnValue(false);
+  jest.mocked(mayWrite).mockReturnValue(false);
   jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: false });
   // Two pages, the second starting within this week, which still shows as one week.
   jest.mocked(useLogSummaries).mockReturnValue({
@@ -479,6 +481,17 @@ describe('LogScreen', () => {
     await act(async () => confirm?.onPress?.());
     expect(deleteLog).toHaveBeenCalledWith(3);
     expect(router.back).toHaveBeenCalled();
+    expect(removeWorkout).not.toHaveBeenCalled();
+  });
+
+  it('takes a deleted workout out of Apple Health too, while workouts are saved', async () => {
+    jest.mocked(mayWrite).mockReturnValue(true);
+    const alert = jest.spyOn(Alert, 'alert');
+    await render(<LogScreen id={3} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete from history' }));
+    const confirm = alert.mock.calls[0]?.[2]?.find((button) => button.style === 'destructive');
+    await act(async () => confirm?.onPress?.());
+    expect(removeWorkout).toHaveBeenCalledWith(3);
   });
 
   it('says when deleting fails', async () => {

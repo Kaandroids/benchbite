@@ -3,7 +3,7 @@ import { createTestQueryClient } from '@/test/render';
 
 import { setHealthConnected, setWriteSince, writeSince } from './connection';
 import { removeWorkout, saveWorkout, storedWorkouts, writeAllowed } from './platform';
-import { saveRecentWorkouts, saveToHealth } from './workout-write';
+import { removeSavedWorkout, saveRecentWorkouts, saveToHealth } from './workout-write';
 
 jest.mock('expo-sqlite/kv-store', () => {
   const items = new Map<string, string>();
@@ -140,6 +140,19 @@ describe('saveRecentWorkouts', () => {
     setWriteSince(null);
     await saveRecentWorkouts(createTestQueryClient());
     expect(recentLogs).not.toHaveBeenCalled();
+  });
+});
+
+describe('removeSavedWorkout', () => {
+  it('takes a deleted log’s copy out of the store, while workouts are saved', async () => {
+    await removeSavedWorkout(7);
+    expect(removeWorkout).toHaveBeenCalledWith(7);
+  });
+
+  it('leaves the store alone while saving is off', async () => {
+    setWriteSince(null);
+    await removeSavedWorkout(7);
+    expect(removeWorkout).not.toHaveBeenCalled();
   });
 });
 
