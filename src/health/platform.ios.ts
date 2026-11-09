@@ -16,6 +16,8 @@ import {
   WorkoutActivityType,
 } from '@kingstinct/react-native-healthkit';
 
+import { applicationId } from 'expo-application';
+
 import { toIsoDate } from '@/i18n/dates';
 
 import { heartRateSamples } from './samples';
@@ -175,6 +177,14 @@ const savedOf = (logId: number) => ({
   },
 });
 
+/** Whether a workout is one Benchbite saved: by its id, and written by this app, as another can copy the id. */
+const savedByBenchbite = (workout: {
+  metadata: Record<string, unknown>;
+  sourceRevision: { source: { bundleIdentifier: string } };
+}) =>
+  workout.sourceRevision.source.bundleIdentifier === applicationId &&
+  isSavedWorkoutId(workout.metadata[EXTERNAL_ID]);
+
 // An app may always read what it wrote itself, so Benchbite's copy is found even when reading
 // workouts was not allowed; other apps' workouts are then simply not seen.
 export async function storedWorkouts(logId: number, from: Date, to: Date): Promise<StoredWorkouts> {
@@ -183,19 +193,22 @@ export async function storedWorkouts(logId: number, from: Date, to: Date): Promi
     limit: 0,
   });
   const id = savedWorkoutId(logId);
-  const ours = workouts.find((workout) => workout.metadata[EXTERNAL_ID] === id);
+  const ours = workouts.find(
+    (workout) => savedByBenchbite(workout) && workout.metadata[EXTERNAL_ID] === id,
+  );
   const kcal = ours?.metadata[SAVED_KCAL];
   return {
     ours: ours ? { activeKcal: typeof kcal === 'number' ? kcal : null } : null,
     others: workouts.some(
       (workout) =>
-        !isSavedWorkoutId(workout.metadata[EXTERNAL_ID]) &&
+        !savedByBenchbite(workout) &&
         coversMostOf({ start: workout.startDate, end: workout.endDate }, from, to),
     ),
   };
 }
 
 // The calories are saved as a sample of the workout's time too, which the Activity rings count.
+// The library gives that sample the workout's metadata, so it is taken out with it.
 export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSave): Promise<void> {
   await removeWorkout(logId);
   const id = savedWorkoutId(logId);
@@ -210,7 +223,6 @@ export async function saveWorkout({ logId, start, end, activeKcal }: WorkoutToSa
             unit: 'kcal',
             startDate: start,
             endDate: end,
-            metadata: { [EXTERNAL_ID]: id },
           },
         ],
     start,

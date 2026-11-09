@@ -15,6 +15,7 @@ import {
   SdkAvailabilityStatus,
   type Metadata,
 } from 'react-native-health-connect';
+import { applicationId } from 'expo-application';
 import { Linking } from 'react-native';
 
 import { heartRateSamples, type HeartRatePoint } from './samples';
@@ -227,34 +228,36 @@ export async function dailySteps(from: Date, to: Date): Promise<StepDay[]> {
   );
 }
 
-const WRITES = [
-  { accessType: 'write', recordType: 'ExerciseSession' },
-  { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
-  // To find a workout a watch's app recorded, which is then not saved again (ADR 0105).
-  { accessType: 'read', recordType: 'ExerciseSession' },
-] as const;
+/** What saving a workout writes: exercise and its calories, which are written together. */
+const WRITE_TYPES = ['ExerciseSession', 'ActiveCaloriesBurned'] as const;
 
 /**
- * Whether workouts may be written: exercise and its calories both, which are written together and
- * which Health Connect lets the user allow alone.
+ * Whether workouts may be written: both types, which Health Connect lets the user allow alone.
  */
 export async function writeAllowed(): Promise<boolean> {
   if (!(await initialize())) return false;
   const granted = await getGrantedPermissions();
-  return WRITES.every(
-    ({ accessType, recordType }) =>
-      accessType !== 'write' ||
-      granted.some(
-        (permission) => permission.accessType === 'write' && permission.recordType === recordType,
-      ),
+  return WRITE_TYPES.every((recordType) =>
+    granted.some(
+      (permission) => permission.accessType === 'write' && permission.recordType === recordType,
+    ),
   );
 }
 
 export async function requestWriteAccess(): Promise<boolean> {
   if (!(await initialize())) return false;
-  await requestPermission([...WRITES]);
+  await requestPermission([
+    ...WRITE_TYPES.map((recordType) => ({ accessType: 'write' as const, recordType })),
+    // To find a workout a watch's app recorded, which is then not saved again (ADR 0105).
+    { accessType: 'read', recordType: 'ExerciseSession' },
+  ]);
   return writeAllowed();
 }
+
+/** Whether a record is one Benchbite saved: by its id, and written by this app, as another can copy the id. */
+const savedByBenchbite = (record: { metadata?: Metadata }) =>
+  record.metadata?.dataOrigin === applicationId &&
+  isSavedWorkoutId(record.metadata?.clientRecordId);
 
 // Health Connect lets an app read what it wrote itself, so Benchbite's copy is found even when
 // reading exercise was not allowed; other apps' workouts are then simply not seen.
@@ -266,15 +269,17 @@ export async function storedWorkouts(logId: number, from: Date, to: Date): Promi
     endTime: to.toISOString(),
   };
   const id = savedWorkoutId(logId);
+  const isOurs = (record: { metadata?: Metadata }) =>
+    savedByBenchbite(record) && record.metadata?.clientRecordId === id;
   const byAnotherApp = (record: { startTime: string; endTime: string; metadata?: Metadata }) =>
-    !isSavedWorkoutId(record.metadata?.clientRecordId) &&
+    !savedByBenchbite(record) &&
     coversMostOf({ start: new Date(record.startTime), end: new Date(record.endTime) }, from, to);
   const { records } = await readRecords('ExerciseSession', { timeRangeFilter });
-  if (!records.some((record) => record.metadata?.clientRecordId === id)) {
+  if (!records.some(isOurs)) {
     return { ours: null, others: records.some(byAnotherApp) };
   }
   const { records: energy } = await readRecords('ActiveCaloriesBurned', { timeRangeFilter });
-  const kcal = energy.find((record) => record.metadata?.clientRecordId === id);
+  const kcal = energy.find(isOurs);
   return {
     ours: { activeKcal: kcal ? kcal.energy.inKilocalories : null },
     others: records.some(byAnotherApp),

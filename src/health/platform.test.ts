@@ -28,6 +28,7 @@ import { NO_WORKOUT_STATS } from './types';
 // The real modules, which every other test replaces with a stand-in (jest.setup-after-env.ts).
 jest.unmock('./platform.ios');
 jest.unmock('./platform.android');
+jest.mock('expo-application', () => ({ applicationId: 'com.benchbite.app' }));
 jest.mock('@kingstinct/react-native-healthkit', () => ({
   AuthorizationStatus: { notDetermined: 0, sharingDenied: 1, sharingAuthorized: 2 },
   ComparisonPredicateOperator: { equalTo: 4 },
@@ -396,9 +397,16 @@ describe('saving workouts', () => {
   const start = new Date('2026-11-09T18:05:00Z');
   const end = new Date('2026-11-09T18:45:00Z');
   const workout = { logId: 11, start, end, activeKcal: 395 };
-  const savedBy = (id?: string, kcal?: number, from = start, to = end) => ({
+  const savedBy = (
+    id?: string,
+    kcal?: number,
+    from = start,
+    to = end,
+    app = id ? 'com.benchbite.app' : 'com.apple.health',
+  ) => ({
     startDate: from,
     endDate: to,
+    sourceRevision: { source: { bundleIdentifier: app } },
     metadata: {
       ...(id ? { HKExternalUUID: id } : {}),
       ...(kcal !== undefined ? { BenchbiteActiveKcal: kcal } : {}),
@@ -437,7 +445,6 @@ describe('saving workouts', () => {
           unit: 'kcal',
           startDate: start,
           endDate: end,
-          metadata: { HKExternalUUID: 'benchbite-log-11' },
         },
       ],
       start,
@@ -457,6 +464,12 @@ describe('saving workouts', () => {
     });
     jest.mocked(queryWorkoutSamples).mockResolvedValue([savedBy('benchbite-log-10')] as never);
     expect(await ios.storedWorkouts(11, start, end)).toEqual({ ours: null, others: false });
+  });
+
+  it('counts a workout of another app in Apple Health as its own, whatever id it carries', async () => {
+    const copied = savedBy('benchbite-log-11', 395, start, end, 'com.example.other');
+    jest.mocked(queryWorkoutSamples).mockResolvedValue([copied] as never);
+    expect(await ios.storedWorkouts(11, start, end)).toEqual({ ours: null, others: true });
   });
 
   it('counts no workout of another app in Apple Health that only touches the log’s time', async () => {
@@ -525,10 +538,15 @@ describe('saving workouts', () => {
     );
   });
 
-  const session = (clientRecordId?: string, from = start, to = end) => ({
+  const session = (
+    clientRecordId?: string,
+    from = start,
+    to = end,
+    dataOrigin = clientRecordId ? 'com.benchbite.app' : 'com.garmin.android.apps.connectmobile',
+  ) => ({
     startTime: from.toISOString(),
     endTime: to.toISOString(),
-    metadata: clientRecordId ? { clientRecordId } : {},
+    metadata: { dataOrigin, ...(clientRecordId ? { clientRecordId } : {}) },
   });
 
   it('finds its own copy, with its calories, and other apps’ sessions in Health Connect', async () => {
@@ -543,6 +561,13 @@ describe('saving workouts', () => {
       ours: { activeKcal: 395 },
       others: true,
     });
+  });
+
+  it('counts a session of another app in Health Connect as its own, whatever id it carries', async () => {
+    jest.mocked(readRecords).mockResolvedValueOnce({
+      records: [session('benchbite-log-11', start, end, 'com.example.other')],
+    } as never);
+    expect(await android.storedWorkouts(11, start, end)).toEqual({ ours: null, others: true });
   });
 
   it('counts its copies of other logs in Health Connect as no other app’s', async () => {
