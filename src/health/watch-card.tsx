@@ -72,17 +72,21 @@ export function WatchCard({
       {chart && averageBpm !== null && maxBpm !== null ? (
         <HeartRateChart {...chart} average={averageBpm} max={maxBpm} />
       ) : null}
-      {store ? (
-        <Text variant="caption" color="textMuted">
-          {source
-            ? t('health.watch.through', { source, store })
-            : t('health.watch.throughStore', { store })}
-        </Text>
-      ) : null}
-      {kcalEstimated ? (
-        <Text variant="caption" color="textMuted">
-          {t('health.watch.kcalEstimated')}
-        </Text>
+      {store || kcalEstimated ? (
+        <View style={{ gap: spacing.xs }}>
+          {store ? (
+            <Text variant="caption" color="textMuted">
+              {source
+                ? t('health.watch.through', { source, store })
+                : t('health.watch.throughStore', { store })}
+            </Text>
+          ) : null}
+          {kcalEstimated ? (
+            <Text variant="caption" color="textMuted">
+              {t('health.watch.kcalEstimated')}
+            </Text>
+          ) : null}
+        </View>
       ) : null}
     </Card>
   );
