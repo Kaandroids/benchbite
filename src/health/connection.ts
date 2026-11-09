@@ -89,6 +89,9 @@ export function setWriteSince(since: Date | null) {
   notify();
 }
 
+/** Whether workouts may be saved now: the store is connected and saving is on. */
+export const mayWrite = () => isHealthConnected() && writeSince() !== null;
+
 /** Whether finished workouts are saved to the store, kept up to date. */
 export function useWritingWorkouts(): boolean {
   return useSyncExternalStore(subscribe, () => readItem(WRITE_SINCE_KEY) !== null);

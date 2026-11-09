@@ -103,6 +103,24 @@ describe('saveRecentWorkouts', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['saved-to-health'] });
   });
 
+  it('saves a workout finished during a run in a run after it', async () => {
+    let release: (logs: ReturnType<typeof log>[]) => void = () => undefined;
+    jest
+      .mocked(recentLogs)
+      .mockReturnValueOnce(new Promise((resolve) => (release = resolve)))
+      .mockResolvedValueOnce([log(7), log(8)]);
+    const queryClient = createTestQueryClient();
+
+    const running = saveRecentWorkouts(queryClient);
+    const finished = saveRecentWorkouts(queryClient);
+    await Promise.resolve();
+    release([log(7)]);
+    await Promise.all([running, finished]);
+
+    expect(recentLogs).toHaveBeenCalledTimes(2);
+    expect(saveWorkout).toHaveBeenCalledWith(saved(8));
+  });
+
   it('turns saving off when the system took writing back', async () => {
     jest.mocked(writeAllowed).mockResolvedValue(false);
     await saveRecentWorkouts(createTestQueryClient());

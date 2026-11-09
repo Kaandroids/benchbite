@@ -33,3 +33,29 @@ export function oneAtATime<Args extends unknown[]>(
     return running;
   };
 }
+
+/**
+ * Runs a job once at a time, as oneAtATime, but a caller that comes while it runs gets a run after
+ * it, as what it asks for may have changed meanwhile. Callers during one run share the next.
+ */
+export function oneAtATimeThenAgain(run: () => Promise<boolean>): () => Promise<boolean> {
+  let running: Promise<boolean> | null = null;
+  let next: Promise<boolean> | null = null;
+  const start = () => {
+    const current = run().finally(() => {
+      running = null;
+    });
+    running = current;
+    return current;
+  };
+  return () => {
+    if (!running) return start();
+    next ??= running
+      .catch(() => false)
+      .then(() => {
+        next = null;
+        return start();
+      });
+    return next;
+  };
+}
