@@ -10,10 +10,12 @@ type DateTileProps = {
   large?: boolean;
   /** On orange, or on grey where it would add to too much orange. */
   tinted?: boolean;
+  /** In the colour of workouts from other apps (ADR 0106), set apart from Benchbite's orange. */
+  outside?: boolean;
 };
 
 /** A day as a small tile: its weekday above its date, as on a calendar. */
-export function DateTile({ date, large = false, tinted = true }: DateTileProps) {
+export function DateTile({ date, large = false, tinted = true, outside = false }: DateTileProps) {
   const { colors, radii } = useTheme();
   const weekday = useWeekdayFormat('short');
   const upperCase = useUpperCase();
@@ -24,11 +26,15 @@ export function DateTile({ date, large = false, tinted = true }: DateTileProps) 
         large ? styles.large : styles.small,
         {
           borderRadius: large ? radii.lg : radii.md,
-          backgroundColor: tinted ? colors.selected : colors.background,
+          backgroundColor: outside
+            ? colors.dinnerBackground
+            : tinted
+              ? colors.selected
+              : colors.background,
         },
       ]}
     >
-      <Text variant="caption" color="primaryText" style={styles.weekday}>
+      <Text variant="caption" color={outside ? 'dinner' : 'primaryText'} style={styles.weekday}>
         {upperCase(weekday(isoWeekday(date)))}
       </Text>
       <Text variant={large ? 'title' : 'headline'} style={large ? styles.largeDay : styles.day}>
