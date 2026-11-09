@@ -336,6 +336,11 @@ describe('LogScreen', () => {
     expect(screen.getByText('Home · Friday, October 23')).toBeTruthy();
   });
 
+  it('fetches no heart rate samples for a workout without a heart rate', async () => {
+    await render(<LogScreen id={3} />);
+    expect(useHeartRateSamples).toHaveBeenLastCalledWith(3, false);
+  });
+
   it('shows what the watch measured, its calories in place of the estimate', async () => {
     jest.mocked(useLogSummary).mockReturnValue(
       loaded({
@@ -368,6 +373,7 @@ describe('LogScreen', () => {
     );
     jest.mocked(useHeartRateSamples).mockReturnValue(loaded([95, 120, 168, 140]) as never);
     await render(<LogScreen id={3} />);
+    expect(useHeartRateSamples).toHaveBeenLastCalledWith(3, true);
     expect(screen.getByText('~395')).toBeTruthy();
     expect(
       screen.getByLabelText(

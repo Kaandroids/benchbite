@@ -8,12 +8,12 @@ import { useLeavePrompt } from '@/components/use-leave-prompt';
 import { findExercise, type LibraryExercise } from '@/exercises/library';
 import { isDbError } from '@/lib/errors';
 import { setKindOf } from '@/sets/fields';
-import { EMPTY_SET, missingFields, type SetValues } from '@/sets/values';
+import { EMPTY_SET, missingFields } from '@/sets/values';
 
-import { useEditLog, type LoggedExercise, type LogSummary } from './history';
+import { useEditLog, type LoggedExercise, type LogSummary, type TimedSet } from './history';
 
 /** A set being corrected, with when it was done, which the edit keeps; none for one added in it. */
-export type EditedSet = SetValues & { key: number; doneAt: Date | null };
+export type EditedSet = TimedSet & { key: number };
 export type EditedExercise = { place: number; exerciseId: string; sets: EditedSet[] };
 
 /**

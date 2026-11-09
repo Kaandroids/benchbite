@@ -46,7 +46,8 @@ export function LogScreen({ id }: { id: number }) {
   const { colors, spacing } = useTheme();
   const summary = useLogSummary(id);
   const sets = useLoggedSets(id);
-  const heartRate = useHeartRateSamples(id);
+  // Only a workout with a heart rate has samples to chart.
+  const heartRate = useHeartRateSamples(id, summary.data?.heartRateMax != null);
   const library = useExerciseLibrary();
   const remove = useDeleteLog();
   const workoutName = useWorkoutName();
@@ -94,9 +95,9 @@ export function LogScreen({ id }: { id: number }) {
     { value: totalTime, label: t('history.stats.time') },
     { value: doneOf(log.sets, log.plannedSets), label: t('history.stats.sets') },
     { value: format(Math.round(log.kilograms)), label: 'kg' },
-    // What the watch measured takes the estimate's place.
+    // The summary's calories: only the watch's are measured, the others are marked as estimates.
     ...(burned
-      ? [{ value: `${burned.source === 'watch' ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
+      ? [{ value: `${burned.measured ? '' : '~'}${format(burned.kcal)}`, label: 'kcal' }]
       : []),
   ];
 

@@ -52,12 +52,11 @@ export type LogSummary = {
 /** Where the calories a workout shows come from. */
 export type KcalSource = Database['public']['Enums']['kcal_source'];
 
-/** A set of a finished workout, with when it was done; none for one logged before this was kept. */
-export type LoggedSet = SetValues & {
-  exercisePosition: number;
-  exerciseId: string;
-  doneAt: Date | null;
-};
+/** A set's values, and when it was done; none for one logged before this was kept or added later. */
+export type TimedSet = SetValues & { doneAt: Date | null };
+
+/** A set of a finished workout, by its exercise and that exercise's place. */
+export type LoggedSet = TimedSet & { exercisePosition: number; exerciseId: string };
 
 /** The sets of one exercise of a finished workout, and its place in the workout from 0. */
 export type LoggedExercise = { place: number; exerciseId: string; sets: LoggedSet[] };
@@ -119,10 +118,10 @@ export function doneOf(done: number, planned: number | null): string {
  */
 export function kcalOf(
   log: Pick<LogSummary, 'kcal' | 'kcalSource'>,
-): { kcal: number; source: KcalSource } | null {
+): { kcal: number; source: KcalSource; measured: boolean } | null {
   return log.kcal === null || log.kcalSource === null
     ? null
-    : { kcal: log.kcal, source: log.kcalSource };
+    : { kcal: log.kcal, source: log.kcalSource, measured: log.kcalSource === 'watch' };
 }
 
 /** Whole minutes between the start and the end of a workout. */
@@ -360,9 +359,10 @@ export function useLoggedSets(logId: number) {
  * A finished workout's heart rate every 10 seconds from its start (ADR 0104), none where nothing
  * measured it; null when the watch gave none.
  */
-export function useHeartRateSamples(logId: number) {
+export function useHeartRateSamples(logId: number, enabled = true) {
   return useQuery({
     queryKey: [...LOGS_KEY, logId, 'heart-rate'],
+    enabled,
     queryFn: async (): Promise<(number | null)[] | null> => {
       const { data, error } = await supabase
         .from('workout_logs')
@@ -417,7 +417,7 @@ export function useEditLog() {
       exercises: {
         place: number;
         exerciseId: string;
-        sets: (SetValues & { doneAt: Date | null })[];
+        sets: TimedSet[];
       }[];
     }) => {
       // The function takes an exercise's place from its index, so every place up to the last is
