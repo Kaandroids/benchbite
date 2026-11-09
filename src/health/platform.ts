@@ -1,12 +1,15 @@
 // Where the app reads no health data, as on the web. iOS and Android read through
 // platform.ios.ts and platform.android.ts, which keep the same exports.
 import {
+  NO_STORED_WORKOUTS,
   NO_WORKOUT_STATS,
   type HealthAvailability,
   type HealthStore,
   type StepDay,
+  type StoredWorkouts,
   type WeightReading,
   type WorkoutStats,
+  type WorkoutToSave,
 } from './types';
 
 export const store: HealthStore = null;
@@ -46,3 +49,19 @@ export const requestStepsAccess = (): Promise<boolean> => Promise.resolve(false)
 
 /** The steps of each day from a day's start until a time, in no set order; days without any left out. */
 export const dailySteps = (_from: Date, _to: Date): Promise<StepDay[]> => Promise.resolve([]);
+
+/** Whether workouts may be written, where the system says so (ADR 0105). */
+export const writeAllowed = (): Promise<boolean> => Promise.resolve(false);
+
+/** Asks to write workouts and their active calories; whether writing was allowed. */
+export const requestWriteAccess = (): Promise<boolean> => Promise.resolve(false);
+
+/** The workouts the store holds between two times, Benchbite's copy of a log's among them. */
+export const storedWorkouts = (_logId: number, _from: Date, _to: Date): Promise<StoredWorkouts> =>
+  Promise.resolve(NO_STORED_WORKOUTS);
+
+/** Saves a workout, in place of the copy Benchbite saved of it before. */
+export const saveWorkout = (_workout: WorkoutToSave): Promise<void> => Promise.resolve();
+
+/** Takes Benchbite's copy of a log's workout out of the store. */
+export const removeWorkout = (_logId: number): Promise<void> => Promise.resolve();
