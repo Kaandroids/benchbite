@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -49,8 +49,8 @@ select is(
 select results_eq(
   $$ select source_id, activity, active_kcal, heart_rate_avg, source from public.outside_workouts
      order by started_at desc $$,
-  $$ values ('run', 'running', 310::smallint, 148::smallint, 'Apple Watch'),
-            ('ride', 'running', 310::smallint, 148::smallint, 'Apple Watch') $$,
+  $$ values ('run', 'running', 310, 148::smallint, 'Apple Watch'),
+            ('ride', 'running', 310, 148::smallint, 'Apple Watch') $$,
   'With their activity, rounded calories, heart rate and source'
 );
 select is(
@@ -131,7 +131,7 @@ select is(
 );
 select results_eq(
   $$ select active_kcal, heart_rate_avg, source from public.outside_workouts where source_id = 'odd' $$,
-  $$ values (null::smallint, null::smallint, null::text) $$,
+  $$ values (null::integer, null::smallint, null::text) $$,
   'With those figures as none'
 );
 
@@ -156,6 +156,28 @@ select results_eq(
      order by started_at desc $$,
   $$ values ('walk-home'), ('run'), ('odd') $$,
   'The list leaves out the one covering most of the log, not one that only touches it'
+);
+
+-- A 20-minute log in the middle of a four-hour hike.
+reset role;
+insert into public.workout_logs (user_id, name, started_at, finished_at) values
+  ('00000000-0000-0000-0000-00000000000a', 'Core', now() - interval '20 hours',
+    now() - interval '1180 minutes');
+select pg_temp.sign_in('00000000-0000-0000-0000-00000000000a');
+select is(
+  pg_temp.import(jsonb_build_array(
+    pg_temp.workout('run', 5, 32, '{"activeKcal": 290}'),
+    pg_temp.workout('odd', 8, 20, '{"activeKcal": 9999, "heartRateAvg": 400, "source": "  "}'),
+    pg_temp.workout('gym', 4.55, 33, '{"activity": "strength_training"}'),
+    pg_temp.workout('walk-home', 4.1, 30, '{"activity": "walking"}'),
+    pg_temp.workout('hike', 22, 240, '{"activity": "hiking"}')
+  )),
+  1,
+  'A long hike is kept'
+);
+select ok(
+  exists (select 1 from public.outside_workout_list where source_id = 'hike'),
+  'And listed, though a short log falls inside it'
 );
 
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
@@ -217,13 +239,13 @@ select throws_ok(
   'A time that ends before it starts is refused'
 );
 
--- Years of workouts from before the last 400 days, which do not count toward the limit.
+-- Years of workouts kept before the last 400 days, which do not count toward the limit.
 reset role;
 insert into public.outside_workouts (user_id, store, source_id, activity, started_at, ended_at,
-  started_on)
+  started_on, imported_at)
 select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'years-ago-' || n, 'walking',
   now() - make_interval(days => 400 + n), now() - make_interval(days => 400 + n) + interval '20 minutes',
-  (now() - make_interval(days => 400 + n))::date
+  (now() - make_interval(days => 400 + n))::date, now() - make_interval(days => 400 + n)
 from generate_series(1, public.outside_workout_limit() + 650) as n;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select is(
@@ -232,20 +254,21 @@ select is(
   'Workouts from years ago do not count toward the limit'
 );
 
--- A user at the limit within the last 400 days, whose next workout is one too many.
+-- A user whose imports of the last 400 days are at the limit, though the workouts start long ago, as
+-- a caller could date them to slip out of the count. The next workout is one too many.
 reset role;
 insert into public.outside_workouts (user_id, store, source_id, activity, started_at, ended_at,
   started_on)
 select '00000000-0000-0000-0000-00000000000b', 'healthConnect', 'old-' || n, 'walking',
-  now() - interval '100 days', now() - interval '100 days' + interval '20 minutes',
-  (now() - interval '100 days')::date
+  now() - interval '450 days', now() - interval '450 days' + interval '20 minutes',
+  (now() - interval '450 days')::date
 from generate_series(1, public.outside_workout_limit()) as n;
 select pg_temp.sign_in('00000000-0000-0000-0000-00000000000b');
 select throws_ok(
   $$ select pg_temp.import(jsonb_build_array(pg_temp.workout('one-more', 2, 30))) $$,
   '54000',
   'Too many outside workouts',
-  'An import past the limit is refused'
+  'An import past the limit is refused, counted by when the workouts were kept'
 );
 
 set local role anon;
