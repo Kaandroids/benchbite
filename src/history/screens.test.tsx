@@ -1,4 +1,5 @@
-import { useHealthConnected } from '@/health/connection';
+import { useHealthConnected, useWritingWorkouts } from '@/health/connection';
+import { storedWorkouts } from '@/health/platform';
 import { router, usePreventRemove } from 'expo-router';
 import { Alert } from 'react-native';
 
@@ -26,7 +27,10 @@ jest.mock('expo-router', () => ({
   usePreventRemove: jest.fn(),
 }));
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
-jest.mock('@/health/connection', () => ({ useHealthConnected: jest.fn(() => false) }));
+jest.mock('@/health/connection', () => ({
+  useHealthConnected: jest.fn(() => false),
+  useWritingWorkouts: jest.fn(() => false),
+}));
 jest.mock('@/health/health', () => ({
   ...jest.requireActual<typeof import('@/health/health')>('@/health/health'),
   healthStore: 'appleHealth',
@@ -99,6 +103,8 @@ const PLANK = new Date('2026-10-23T16:40:00Z');
 beforeEach(() => {
   jest.clearAllMocks();
   jest.useFakeTimers({ now: FRIDAY });
+  jest.mocked(useWritingWorkouts).mockReturnValue(false);
+  jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: false });
   // Two pages, the second starting within this week, which still shows as one week.
   jest.mocked(useLogSummaries).mockReturnValue({
     ...loaded({ pages: [{ logs: LOGS.slice(0, 1) }, { logs: LOGS.slice(1) }] }),
@@ -398,6 +404,31 @@ describe('LogScreen', () => {
     await render(<LogScreen id={3} />);
     expect(screen.getByText('Waiting for your watch')).toBeTruthy();
     expect(screen.queryByText('From your watch')).toBeNull();
+  });
+
+  it('says the workout was saved to Apple Health, while workouts are saved', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(true);
+    jest.mocked(useWritingWorkouts).mockReturnValue(true);
+    jest.mocked(storedWorkouts).mockResolvedValue({ ours: { activeKcal: 300 }, others: false });
+    await render(<LogScreen id={3} />);
+    expect(await screen.findByText('Saved to Apple Health')).toBeTruthy();
+    expect(storedWorkouts).toHaveBeenCalledWith(3, LOGS[0]!.startedAt, LOGS[0]!.finishedAt);
+  });
+
+  it('says when the watch recorded the workout in Apple Health itself', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(true);
+    jest.mocked(useWritingWorkouts).mockReturnValue(true);
+    jest.mocked(storedWorkouts).mockResolvedValue({ ours: null, others: true });
+    await render(<LogScreen id={3} />);
+    expect(await screen.findByText('Already in Apple Health, recorded by your watch')).toBeTruthy();
+  });
+
+  it('looks for no saved workout while workouts are not saved', async () => {
+    jest.mocked(useHealthConnected).mockReturnValue(true);
+    jest.mocked(useWritingWorkouts).mockReturnValue(false);
+    await render(<LogScreen id={3} />);
+    expect(storedWorkouts).not.toHaveBeenCalled();
+    expect(screen.queryByText('Saved to Apple Health')).toBeNull();
   });
 
   it('waits for no watch while none is connected', async () => {
