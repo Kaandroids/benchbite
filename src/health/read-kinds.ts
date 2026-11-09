@@ -1,6 +1,6 @@
-// How each kind read from the store is read, apart from Benchbite's workouts (ADR 0100, 0103, 0106): whether the system
-// lets it be read, asking for it alone, and taking it in. A new kind goes in HEALTH_READS, here and
-// in READ_LOOKS; the types name what is missing.
+// How each kind read from the store apart from Benchbite's workouts is read (ADR 0100, 0103, 0106):
+// whether the system lets it be read, asking for it alone, and taking it in. A new kind goes in
+// HEALTH_READS, here and in READ_LOOKS; the types name what is missing.
 import type { QueryClient } from '@tanstack/react-query';
 
 import type { HealthRead } from './connection';

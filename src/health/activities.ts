@@ -30,8 +30,8 @@ export type Activity = (typeof ACTIVITIES)[number];
 /** The icon of each activity, where it is named. */
 export const ACTIVITY_ICONS: Record<Activity, IconName> = {
   running: 'run',
-  walking: 'walk',
-  hiking: 'hike',
+  walking: 'steps',
+  hiking: 'hiking',
   cycling: 'bike',
   swimming: 'swim',
   strength_training: 'dumbbell',
