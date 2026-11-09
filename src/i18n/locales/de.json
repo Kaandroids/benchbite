@@ -2410,7 +2410,7 @@
       "weightWhen": "eins pro Tag, ab den letzten 30 Tagen",
       "steps": "Schritte",
       "stepsWhen": "eine Summe pro Tag",
-      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht und eine Schrittzahl pro Tag, mit deinem Konto. In {{store}} wird nichts geschrieben. Du kannst die Verbindung in den Einstellungen trennen.",
+      "keeps": "Gespeichert werden die durchschnittliche und höchste Herzfrequenz und die Kalorien jedes Workouts sowie ein Gewicht und eine Schrittzahl pro Tag, mit deinem Konto. In {{store}} wird nur geschrieben, wenn du das Speichern von Workouts einschaltest. Du kannst die Verbindung in den Einstellungen trennen.",
       "continue": "Weiter",
       "notNow": "Nicht jetzt",
       "next": {
@@ -2465,6 +2465,32 @@
         "body": "Sieh, wie viel du jeden Tag gehst, gezählt von deinem Handy oder deiner Uhr.",
         "bringIn": "Meine Schritte zeigen"
       }
+    },
+    "write": {
+      "label": "Workouts in {{store}} speichern",
+      "note": {
+        "appleHealth": "Jedes beendete Workout, mit seiner Zeit und seinen Kalorien. Es zählt für deine Aktivitätsringe.",
+        "healthConnect": "Jedes beendete Workout, mit seiner Zeit und seinen Kalorien."
+      },
+      "title": "Deine Workouts in {{store}} speichern?",
+      "body": {
+        "appleHealth": "Dein Krafttraining zählt dann für deine Aktivitätsringe, neben deinen anderen Workouts.",
+        "healthConnect": "Dein Krafttraining erscheint dann in Health Connect und den Apps, die es lesen, neben deinen anderen Workouts."
+      },
+      "writes": "Benchbite schreibt",
+      "workout": "Krafttraining, mit Beginn, Ende und aktiven Kalorien",
+      "fromNow": "Nur Workouts, die du ab jetzt beendest",
+      "notTwice": "Ein Workout, das deine Uhr schon aufgezeichnet hat, wird nicht noch einmal geschrieben",
+      "next": {
+        "appleHealth": "Als Nächstes fragt Apple, ob du das Schreiben von Workouts erlaubst.",
+        "healthConnect": "Als Nächstes fragt Health Connect, ob du das Schreiben von Workouts erlaubst."
+      },
+      "denied": {
+        "appleHealth": "Benchbite darf noch keine Workouts speichern. Erlaube es in der Health-App unter „Teilen“.",
+        "healthConnect": "Benchbite darf noch keine Workouts speichern. Erlaube es in Health Connect und versuche es dann erneut."
+      },
+      "saved": "In {{store}} gespeichert",
+      "recorded": "Schon in {{store}}, von deiner Uhr aufgezeichnet"
     }
   },
   "steps": {

@@ -2410,7 +2410,7 @@
       "weightWhen": "one a day, from the last 30 days on",
       "steps": "Steps",
       "stepsWhen": "a total for each day",
-      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight and a step count a day, with your account, and writes nothing to {{store}}. You can disconnect in Settings.",
+      "keeps": "It keeps each workout’s average and highest heart rate and its calories, and a weight and a step count a day, with your account. It writes to {{store}} only if you turn on saving workouts. You can disconnect in Settings.",
       "continue": "Continue",
       "notNow": "Not now",
       "next": {
@@ -2465,6 +2465,32 @@
         "body": "See how much you walk each day, counted by your phone or your watch.",
         "bringIn": "Show my steps"
       }
+    },
+    "write": {
+      "label": "Save workouts to {{store}}",
+      "note": {
+        "appleHealth": "Each finished workout, with its time and calories. It counts toward your Activity rings.",
+        "healthConnect": "Each finished workout, with its time and calories."
+      },
+      "title": "Save your workouts to {{store}}?",
+      "body": {
+        "appleHealth": "Your strength training then counts toward your Activity rings, next to your other workouts.",
+        "healthConnect": "Your strength training then shows in Health Connect and the apps that read it, next to your other workouts."
+      },
+      "writes": "Benchbite writes",
+      "workout": "Strength training, with its start, end and active calories",
+      "fromNow": "Only workouts you finish from now on",
+      "notTwice": "A workout your watch already recorded is not written again",
+      "next": {
+        "appleHealth": "Next, Apple asks you to allow writing workouts.",
+        "healthConnect": "Next, Health Connect asks you to allow writing workouts."
+      },
+      "denied": {
+        "appleHealth": "Benchbite may not save workouts yet. Allow it in the Health app, under Sharing.",
+        "healthConnect": "Benchbite may not save workouts yet. Allow it in Health Connect, then try again."
+      },
+      "saved": "Saved to {{store}}",
+      "recorded": "Already in {{store}}, recorded by your watch"
     }
   },
   "steps": {

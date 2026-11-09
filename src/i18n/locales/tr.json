@@ -2410,7 +2410,7 @@
       "weightWhen": "günde bir, son 30 günden itibaren",
       "steps": "Adımlar",
       "stepsWhen": "her gün için bir toplam",
-      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kilo ve adım sayısını hesabınla birlikte saklar; {{store}} içine hiçbir şey yazmaz. Bağlantıyı Ayarlar’dan kesebilirsin.",
+      "keeps": "Her antrenmanın ortalama ve en yüksek nabzını ve kalorisini, bir de günde bir kilo ve adım sayısını hesabınla birlikte saklar. {{store}} içine yalnızca antrenmanları kaydetmeyi açarsan yazar. Bağlantıyı Ayarlar’dan kesebilirsin.",
       "continue": "Devam",
       "notNow": "Şimdi değil",
       "next": {
@@ -2465,6 +2465,32 @@
         "body": "Telefonunun ya da saatinin saydığı adımlarla her gün ne kadar yürüdüğünü gör.",
         "bringIn": "Adımlarımı göster"
       }
+    },
+    "write": {
+      "label": "Antrenmanları {{store}}’e kaydet",
+      "note": {
+        "appleHealth": "Bitirdiğin her antrenman, süresi ve kalorisiyle. Aktivite halkalarına sayılır.",
+        "healthConnect": "Bitirdiğin her antrenman, süresi ve kalorisiyle."
+      },
+      "title": "Antrenmanların {{store}}’e kaydedilsin mi?",
+      "body": {
+        "appleHealth": "Kuvvet antrenmanların böylece diğer antrenmanlarının yanında Aktivite halkalarına sayılır.",
+        "healthConnect": "Kuvvet antrenmanların böylece diğer antrenmanlarının yanında Health Connect’te ve onu okuyan uygulamalarda görünür."
+      },
+      "writes": "Benchbite şunları yazar",
+      "workout": "Kuvvet antrenmanı, başlangıcı, bitişi ve aktif kalorisiyle",
+      "fromNow": "Yalnızca bundan sonra bitirdiğin antrenmanlar",
+      "notTwice": "Saatinin zaten kaydettiği bir antrenman ikinci kez yazılmaz",
+      "next": {
+        "appleHealth": "Sırada Apple antrenman yazmaya izin verip vermeyeceğini soracak.",
+        "healthConnect": "Sırada Health Connect antrenman yazmaya izin verip vermeyeceğini soracak."
+      },
+      "denied": {
+        "appleHealth": "Benchbite henüz antrenman kaydedemiyor. Sağlık uygulamasında, Paylaşım altında izin ver.",
+        "healthConnect": "Benchbite henüz antrenman kaydedemiyor. Health Connect’te izin ver, sonra tekrar dene."
+      },
+      "saved": "{{store}}’e kaydedildi",
+      "recorded": "Saatin kaydettiği için zaten {{store}} içinde"
     }
   },
   "steps": {
