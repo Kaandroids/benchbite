@@ -1,6 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from '@/test/render';
 
-import { isHealthConnected, setHealthConnected, setReadSync, readSync } from './connection';
+import {
+  isHealthConnected,
+  readSync,
+  setHealthConnected,
+  setReadSync,
+  setWriteSince,
+  writeSince,
+} from './connection';
 import {
   healthAvailability,
   healthStepsAllowed,
@@ -9,6 +16,7 @@ import {
   installHealthStore,
   releaseHealthAccess,
   requestHealthAccess,
+  requestHealthWriteAccess,
   type HealthAvailability,
 } from './health';
 import { HealthSection } from './health-section';
@@ -31,6 +39,7 @@ jest.mock('./health', () => ({
   healthStillAllowed: jest.fn(),
   healthWeightAllowed: jest.fn(),
   requestHealthAccess: jest.fn(),
+  requestHealthWriteAccess: jest.fn(),
   releaseHealthAccess: jest.fn(),
   installHealthStore: jest.fn(),
 }));
@@ -182,4 +191,58 @@ it('lets go of a connection the system has taken back', async () => {
   expect(await screen.findByText('Not connected')).toBeOnTheScreen();
   await act(async () => {});
   expect(isHealthConnected()).toBe(false);
+});
+
+describe('saving workouts', () => {
+  const toggle = () => screen.getByRole('switch', { name: 'Save workouts to Apple Health' });
+
+  beforeEach(() => {
+    setHealthConnected(true);
+    jest.mocked(requestHealthWriteAccess).mockResolvedValue(true);
+  });
+
+  it('is offered only once the store is connected', async () => {
+    setHealthConnected(false);
+    await render(<HealthSection />);
+    expect(screen.queryByRole('switch')).toBeNull();
+  });
+
+  it('says what is written before the system asks, and saves from then on once allowed', async () => {
+    await render(<HealthSection />);
+    expect(toggle()).toHaveProp('value', false);
+
+    await fireEvent(toggle(), 'valueChange', true);
+    expect(await screen.findByText('Save your workouts to Apple Health?')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Strength training, with its start, end and active calories'),
+    ).toBeOnTheScreen();
+    expect(requestHealthWriteAccess).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    expect(requestHealthWriteAccess).toHaveBeenCalled();
+    await waitFor(() => expect(toggle()).toHaveProp('value', true));
+    expect(writeSince()).not.toBeNull();
+  });
+
+  it('says where to allow it when the system did not', async () => {
+    jest.mocked(requestHealthWriteAccess).mockResolvedValue(false);
+    await render(<HealthSection />);
+    await fireEvent(toggle(), 'valueChange', true);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Continue' }));
+
+    expect(
+      await screen.findByText(
+        'Benchbite may not save workouts yet. Allow it in the Health app, under Sharing.',
+      ),
+    ).toBeOnTheScreen();
+    expect(writeSince()).toBeNull();
+  });
+
+  it('stops at once when turned off', async () => {
+    setWriteSince(new Date());
+    await render(<HealthSection />);
+    await fireEvent(toggle(), 'valueChange', false);
+    expect(writeSince()).toBeNull();
+    expect(screen.queryByText('Save your workouts to Apple Health?')).toBeNull();
+  });
 });
