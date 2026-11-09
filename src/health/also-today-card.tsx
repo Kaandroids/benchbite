@@ -6,7 +6,7 @@ import { Caption } from '@/components/ui/caption';
 import { Card, type CardProps } from '@/components/ui/card';
 import { useTheme } from '@/theme';
 
-import { OutsideWorkoutRow } from './outside-workout-row';
+import { OutsideTodayRow } from './outside-workout-row';
 import { OutsideWorkoutSheet } from './outside-workout-sheet';
 import type { ListedOutsideWorkout } from './outside-workouts';
 
@@ -31,11 +31,10 @@ export function AlsoTodayCard({
       <Caption accessibilityRole="header">{t('health.outside.alsoToday')}</Caption>
       <Card list entering={entering}>
         {workouts.map((workout, index) => (
-          <OutsideWorkoutRow
+          <OutsideTodayRow
             key={workout.key}
             workout={workout}
             divider={index > 0}
-            leading="icon"
             onPress={() => setOpen(workout)}
           />
         ))}

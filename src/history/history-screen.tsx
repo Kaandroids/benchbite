@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Tag } from '@/components/ui/tag';
 import { Text } from '@/components/ui/text';
-import { OutsideWorkoutRow } from '@/health/outside-workout-row';
+import { OutsideHistoryRow } from '@/health/outside-workout-row';
 import { OutsideWorkoutSheet } from '@/health/outside-workout-sheet';
 import { useOutsideWorkoutsIn, type ListedOutsideWorkout } from '@/health/outside-workouts';
 import { ReadAskCard } from '@/health/read-ask-card';
@@ -139,7 +139,7 @@ export function HistoryScreen() {
                 {entry.kind === 'log' ? (
                   <LogRow log={entry.log} divider={!first} icons />
                 ) : (
-                  <OutsideWorkoutRow
+                  <OutsideHistoryRow
                     workout={entry.other}
                     divider={!first}
                     onPress={() => setOpen(entry.other)}
