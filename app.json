@@ -84,7 +84,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date.",
+          "NSHealthShareUsageDescription": "Benchbite reads the heart rate and active calories of your workouts, to show how hard they were, and your weight and steps, to keep your progress up to date. It also reads the workouts other apps recorded, so that one your watch recorded is not saved twice.",
           "NSHealthUpdateUsageDescription": "When you turn it on, Benchbite saves each workout you finish, with its time and active calories, to Apple Health.",
           "background": false
         }
