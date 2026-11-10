@@ -1,6 +1,9 @@
 import type { WatchState } from './protocol';
 
-/** Whether a watch is there to follow the workout. */
+/**
+ * Whether a watch is there to follow the workout, which decides whether starting one asks to start
+ * it on the watch too (ADR 0109).
+ */
 export type WatchStatus = {
   /** A watch is paired with the phone. */
   paired: boolean;

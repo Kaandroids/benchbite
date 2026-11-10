@@ -1,4 +1,11 @@
-import { setValues, startSession, toggleDone, type Session } from '@/sessions/session';
+import {
+  setValues,
+  startClock,
+  startSession,
+  stopClock,
+  toggleDone,
+  type Session,
+} from '@/sessions/session';
 import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
@@ -22,6 +29,7 @@ const PUSH = testWorkout(7, {
   exercises: [
     testExercise('bench', { sets: 4, restSeconds: 90 }),
     testExercise('row', { sets: 2, restSeconds: 60 }),
+    testExercise('plank', { sets: 1, target: { seconds: 45, meters: null }, restSeconds: 0 }),
   ],
 });
 
@@ -72,14 +80,24 @@ describe('parseCommand', () => {
       { ...base, type: 'addSet', exercise: 1.5 },
       { ...base, type: 'setDone', exercise: 0, set: 0, done: 'yes' },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: {} },
-      { ...base, type: 'setValues', exercise: 0, set: 0, values: { weightKg: -5 } },
-      { ...base, type: 'setValues', exercise: 0, set: 0, values: { weightKg: 5000 } },
       { ...base, type: 'setValues', exercise: 0, set: 0, values: { notes: 'hi' } },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: { constructor: null } },
+      { ...base, type: 'setValues', exercise: 0, set: 0, values: { reps: '8' } },
+      { ...base, id: 'x'.repeat(65), type: 'addSet', exercise: 0 },
       { ...base, type: 'setRest', of: NOW, endsAt: 'later' },
     ]) {
       expect(parseCommand(message)).toBeNull();
     }
   });
+});
+
+it('keeps values as the phone keeps what is typed', () => {
+  const values = (sent: Record<string, unknown>) =>
+    command(NOW, { type: 'setValues', exercise: 0, set: 0, values: sent }).values;
+  expect(values({ weightKg: 62.3, reps: 8.5 })).toEqual({ weightKg: 62.25, reps: 9 });
+  // Nothing, or more than a set can hold, as when typed.
+  expect(values({ reps: 0, seconds: -5 })).toEqual({ reps: null, seconds: null });
+  expect(values({ weightKg: 5000 })).toEqual({ weightKg: 999.75 });
 });
 
 describe('stateOf', () => {
@@ -116,7 +134,7 @@ describe('stateOf', () => {
 
 describe('applyCommand', () => {
   it('ticks a set the watch ticked, with the rest from then', () => {
-    const session = applyCommand(start(), done(NOW + MINUTE, 0), NOW + MINUTE + 1000);
+    const session = applyCommand(start(), done(NOW + MINUTE, 0), { now: NOW + MINUTE + 1000 });
     expect(bench(session)[0]).toMatchObject({ done: true, doneAt: NOW + MINUTE });
     expect(session.rest).toEqual({ endsAt: NOW + MINUTE + 90_000, seconds: 90 });
     expect(session.watchCommands).toHaveLength(1);
@@ -124,23 +142,23 @@ describe('applyCommand', () => {
 
   it('applies a command once, however often it arrives', () => {
     const tick = done(NOW + MINUTE, 0);
-    const once = applyCommand(start(), tick, NOW + MINUTE);
+    const once = applyCommand(start(), tick, { now: NOW + MINUTE });
     // A second delivery would untick it, were the command a toggle.
-    expect(applyCommand(once, tick, NOW + MINUTE)).toBe(once);
+    expect(applyCommand(once, tick, { now: NOW + MINUTE })).toBe(once);
   });
 
   it('drops a command for another workout', () => {
     const session = start();
     const other = { ...done(NOW + MINUTE, 0), workoutId: 'workout-0' };
-    expect(applyCommand(session, other, NOW + MINUTE)).toBe(session);
+    expect(applyCommand(session, other, { now: NOW + MINUTE })).toBe(session);
   });
 
   it('follows sets done in turn on the watch and the phone', () => {
     // Set 1 on the watch, set 2 on the phone, set 3 on the watch again, set 4 on the phone.
-    let session = applyCommand(start(), done(NOW + MINUTE, 0), NOW + MINUTE);
+    let session = applyCommand(start(), done(NOW + MINUTE, 0), { now: NOW + MINUTE });
     session = toggleDone(session, 0, 1, NOW + 3 * MINUTE);
-    session = applyCommand(session, weigh(NOW + 5 * MINUTE, 2, 82.5), NOW + 5 * MINUTE);
-    session = applyCommand(session, done(NOW + 6 * MINUTE, 2), NOW + 6 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 5 * MINUTE, 2, 82.5), { now: NOW + 5 * MINUTE });
+    session = applyCommand(session, done(NOW + 6 * MINUTE, 2), { now: NOW + 6 * MINUTE });
     session = toggleDone(session, 0, 3, NOW + 9 * MINUTE);
     expect(bench(session).map((set) => set.done)).toEqual([true, true, true, true]);
     expect(bench(session)[2]?.weightKg).toBe(82.5);
@@ -151,7 +169,7 @@ describe('applyCommand', () => {
   it('keeps a value typed on the phone after one sent late from the watch', () => {
     // Set on the watch at 10:02, out of reach; typed on the phone at 10:04; delivered at 10:05.
     let session = setValues(start(), 0, 1, { weightKg: 85 }, NOW + 4 * MINUTE);
-    session = applyCommand(session, weigh(NOW + 2 * MINUTE, 1, 80), NOW + 5 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 2 * MINUTE, 1, 80), { now: NOW + 5 * MINUTE });
     expect(bench(session)[1]?.weightKg).toBe(85);
     // The command still counts as applied, so that the watch stops waiting on it.
     expect(session.watchCommands).toHaveLength(1);
@@ -162,13 +180,13 @@ describe('applyCommand', () => {
     // 10:04, as a mistake; both ticks delivered at 10:05.
     let session = toggleDone(start(), 0, 0, NOW);
     session = toggleDone(session, 0, 0, NOW + 4 * MINUTE);
-    session = applyCommand(session, done(NOW + MINUTE, 0), NOW + 5 * MINUTE);
-    session = applyCommand(session, done(NOW + 3 * MINUTE, 1), NOW + 5 * MINUTE);
+    session = applyCommand(session, done(NOW + MINUTE, 0), { now: NOW + 5 * MINUTE });
+    session = applyCommand(session, done(NOW + 3 * MINUTE, 1), { now: NOW + 5 * MINUTE });
     expect(bench(session).map((set) => set.done)).toEqual([false, true, false, false]);
   });
 
   it('starts no rest that would already be over', () => {
-    const session = applyCommand(start(), done(NOW, 0), NOW + 5 * MINUTE);
+    const session = applyCommand(start(), done(NOW, 0), { now: NOW + 5 * MINUTE });
     expect(bench(session)[0]?.done).toBe(true);
     expect(session.rest).toBeNull();
   });
@@ -176,26 +194,26 @@ describe('applyCommand', () => {
   it('keeps the rest of a later set when an older tick arrives', () => {
     let session = toggleDone(start(), 0, 1, NOW + 3 * MINUTE);
     const rest = session.rest;
-    session = applyCommand(session, done(NOW + 2 * MINUTE, 0), NOW + 3 * MINUTE + 1000);
+    session = applyCommand(session, done(NOW + 2 * MINUTE, 0), { now: NOW + 3 * MINUTE + 1000 });
     expect(bench(session)[0]?.done).toBe(true);
     expect(session.rest).toEqual(rest);
   });
 
   it('keeps a time from the future as the time it arrived', () => {
     // A command that says 10:10 arrives at 10:05; one made at 10:06 still applies after it.
-    let session = applyCommand(start(), weigh(NOW + 10 * MINUTE, 0, 70), NOW + 5 * MINUTE);
+    let session = applyCommand(start(), weigh(NOW + 10 * MINUTE, 0, 70), { now: NOW + 5 * MINUTE });
     expect(bench(session)[0]?.valuesAt).toBe(NOW + 5 * MINUTE);
-    session = applyCommand(session, weigh(NOW + 6 * MINUTE, 0, 72.5), NOW + 6 * MINUTE);
+    session = applyCommand(session, weigh(NOW + 6 * MINUTE, 0, 72.5), { now: NOW + 6 * MINUTE });
     expect(bench(session)[0]?.weightKg).toBe(72.5);
   });
 
   it('adds a set once, and none past the most an exercise can have', () => {
     const add = command(NOW, { type: 'addSet', exercise: 1 });
-    let session = applyCommand(start(), add, NOW);
-    session = applyCommand(session, add, NOW);
+    let session = applyCommand(start(), add, { now: NOW });
+    session = applyCommand(session, add, { now: NOW });
     expect(session.exercises[1]?.sets).toHaveLength(3);
     expect(
-      applyCommand(start(), command(NOW, { type: 'addSet', exercise: 9 }), NOW).exercises,
+      applyCommand(start(), command(NOW, { type: 'addSet', exercise: 9 }), { now: NOW }).exercises,
     ).toEqual(start().exercises);
   });
 
@@ -205,28 +223,67 @@ describe('applyCommand', () => {
     const longer = applyCommand(
       resting,
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: endsAt + 15_000 }),
-      NOW + 10_000,
+      { now: NOW + 10_000 },
     );
     expect(longer.rest).toEqual({ endsAt: endsAt + 15_000, seconds: 90 });
     const skipped = applyCommand(
       resting,
       command(NOW + 10_000, { type: 'setRest', of: endsAt, endsAt: null }),
-      NOW + 10_000,
+      { now: NOW + 10_000 },
     );
     expect(skipped.rest).toBeNull();
     // A rest that changed on the phone meanwhile stays as it is.
     const stale = applyCommand(
       resting,
       command(NOW + 10_000, { type: 'setRest', of: endsAt - 5000, endsAt: null }),
-      NOW + 10_000,
+      { now: NOW + 10_000 },
     );
     expect(stale.rest).toEqual(resting.rest);
+  });
+
+  it('stops the phone’s clock on a set ticked on the watch, which then stays done', () => {
+    const clocked = startClock(start(), 2, 0, NOW);
+    const plank = command(NOW + 50_000, { type: 'setDone', exercise: 2, set: 0, done: true });
+    const session = applyCommand(clocked, plank, { now: NOW + 51_000 });
+    expect(session.clock).toBeNull();
+    expect(session.exercises[2]?.sets[0]).toMatchObject({ done: true, seconds: 50 });
+    // Finishing stops a running clock, which would otherwise untick the set.
+    expect(stopClock(session, NOW + 60_000).exercises[2]?.sets[0]?.done).toBe(true);
+  });
+
+  it('ticks no set without what it needs, as the phone does not', () => {
+    const lifted = { metricsOf: () => ['weight', 'reps'] as ('weight' | 'reps')[], now: NOW };
+    // Without a weight, for an exercise that lifts one.
+    let session = applyCommand(start(), done(NOW, 0), lifted);
+    expect(bench(session)[0]?.done).toBe(false);
+    session = applyCommand(session, weigh(NOW, 0, 60), lifted);
+    session = applyCommand(session, done(NOW, 0), lifted);
+    expect(bench(session)[0]?.done).toBe(true);
+    // Without reps, which the log refuses.
+    const noReps = setValues(start(), 0, 1, { reps: null }, NOW);
+    expect(bench(applyCommand(noReps, done(NOW, 1), { now: NOW }))[1]?.done).toBe(false);
+    // A timed set without its time.
+    const plank = command(NOW, { type: 'setDone', exercise: 2, set: 0, done: true });
+    expect(applyCommand(start(), plank, { now: NOW }).exercises[2]?.sets[0]?.done).toBe(false);
+  });
+
+  it('keeps the open exercise when an older tick completes an earlier one', () => {
+    // The bench press's last set ticked on the watch at 10:04, delivered after the plank was
+    // opened on the phone at 10:05.
+    let session = toggleDone(start(), 0, 0, NOW);
+    session = toggleDone(session, 0, 1, NOW + MINUTE);
+    session = toggleDone(session, 0, 2, NOW + 2 * MINUTE);
+    session = { ...setValues(session, 2, 0, { seconds: 40 }, NOW + 5 * MINUTE), current: 2 };
+    session = toggleDone(session, 2, 0, NOW + 5 * MINUTE);
+    session = applyCommand(session, done(NOW + 4 * MINUTE, 3), { now: NOW + 6 * MINUTE });
+    expect(bench(session)[3]?.done).toBe(true);
+    expect(session.current).toBe(2);
   });
 
   it('keeps only the latest command ids', () => {
     let session = start();
     for (let i = 0; i < 60; i++) {
-      session = applyCommand(session, weigh(NOW + i, 0, i), NOW + i);
+      session = applyCommand(session, weigh(NOW + i, 0, i), { now: NOW + i });
     }
     expect(session.watchCommands).toHaveLength(50);
   });

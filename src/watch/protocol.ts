@@ -2,16 +2,19 @@
 // phone keeps the workout and sends the watch its state; the watch sends commands, each saying what
 // a set or the rest should be, never what to toggle, so that one that arrives twice or late does
 // no harm.
+import type { LibraryExercise } from '@/exercises/library';
 import {
   addSet,
   lastActivity,
+  restUntil,
   setValues,
+  stopClock,
   toggleDone,
   type Session,
   type SessionSet,
 } from '@/sessions/session';
-import { SET_LIMITS } from '@/sets/fields';
-import { MAX_SETS, type SetValues } from '@/sets/values';
+import { SET_LIMITS, setKindOf, setValueOf, type SetField } from '@/sets/fields';
+import { missingFields, pickSetValues, type SetValues } from '@/sets/values';
 import type { WorkoutTarget } from '@/workouts/workouts';
 
 /** Raised when a message changes shape; each side drops a message of another version. */
@@ -19,6 +22,8 @@ export const PROTOCOL_VERSION = 1;
 
 /** How many applied command ids the workout keeps and sends back: far more than wait at once. */
 const KEPT_COMMANDS = 50;
+/** The longest command id taken: a UUID is 36 characters. */
+const MAX_ID_LENGTH = 64;
 
 export type WatchSet = SetValues & { done: boolean };
 
@@ -95,13 +100,7 @@ export function stateOf(
         name: names(exercise.exerciseId),
         target: exercise.target,
         restSeconds: exercise.restSeconds,
-        sets: exercise.sets.map(({ weightKg, reps, seconds, meters, done }) => ({
-          weightKg,
-          reps,
-          seconds,
-          meters,
-          done,
-        })),
+        sets: exercise.sets.map((set) => ({ ...pickSetValues(set), done: set.done })),
         last: exercise.last,
       })),
       applied: session.watchCommands ?? [],
@@ -118,17 +117,17 @@ const isIndex = (value: unknown): value is number =>
 const isTime = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0;
 
-/** A set's values as a watch sent them: only known fields, each none or within a set's limits. */
+/**
+ * A set's values as a watch sent them, kept as the phone keeps what is typed: only a set's own
+ * fields, each none or a number made a value a set can hold.
+ */
 function valuesOf(value: unknown): Partial<SetValues> | null {
   if (!isRecord(value)) return null;
   const values: Partial<SetValues> = {};
   for (const [field, given] of Object.entries(value)) {
-    if (!(field in SET_LIMITS)) return null;
-    const limit = SET_LIMITS[field as keyof SetValues];
-    if (given !== null && !(typeof given === 'number' && given >= 0 && given <= limit)) {
-      return null;
-    }
-    values[field as keyof SetValues] = given;
+    if (!Object.hasOwn(SET_LIMITS, field)) return null;
+    if (given !== null && typeof given !== 'number') return null;
+    values[field as SetField] = given === null ? null : setValueOf(field as SetField, given);
   }
   return Object.keys(values).length > 0 ? values : null;
 }
@@ -137,7 +136,8 @@ function valuesOf(value: unknown): Partial<SetValues> | null {
 export function parseCommand(message: unknown): WatchCommand | null {
   if (!isRecord(message) || message.v !== PROTOCOL_VERSION) return null;
   const { id, at, workoutId, type } = message;
-  if (typeof id !== 'string' || !id || !isTime(at) || typeof workoutId !== 'string') return null;
+  if (typeof id !== 'string' || !id || id.length > MAX_ID_LENGTH) return null;
+  if (!isTime(at) || typeof workoutId !== 'string') return null;
   const base: CommandBase = { v: PROTOCOL_VERSION, id, at, workoutId };
   switch (type) {
     case 'setValues': {
@@ -165,8 +165,17 @@ function setAt(session: Session, exercise: number, set: number): SessionSet | un
   return session.exercises[exercise]?.sets[set];
 }
 
+/** An exercise's metrics, which say what its sets need; none where the library is not loaded. */
+export type MetricsOf = (exerciseId: string) => LibraryExercise['metrics'] | undefined;
+
 /** The change a command makes, before it is recorded as applied. */
-function change(session: Session, command: WatchCommand, at: number, now: number): Session {
+function change(
+  session: Session,
+  command: WatchCommand,
+  at: number,
+  now: number,
+  metricsOf: MetricsOf,
+): Session {
   switch (command.type) {
     case 'setValues': {
       const set = setAt(session, command.exercise, command.set);
@@ -175,31 +184,36 @@ function change(session: Session, command: WatchCommand, at: number, now: number
       return setValues(session, command.exercise, command.set, command.values, at);
     }
     case 'setDone': {
-      const set = setAt(session, command.exercise, command.set);
-      if (!set || set.done === command.done || (set.doneChangedAt ?? 0) > at) return session;
-      const next = toggleDone(session, command.exercise, command.set, at);
-      // A tick older than the latest set leaves the rest that set started; a rest over is none.
-      const rest = lastActivity(session) > at ? session.rest : next.rest;
-      return { ...next, rest: rest && rest.endsAt > now ? rest : null };
-    }
-    case 'addSet': {
-      const exercise = session.exercises[command.exercise];
-      return exercise && exercise.sets.length < MAX_SETS
-        ? addSet(session, command.exercise)
-        : session;
-    }
-    case 'setRest': {
-      // Only the rest the watch showed: one that has changed since is left as it is.
-      const { rest } = session;
-      if (!rest || rest.endsAt !== command.of) return session;
+      const { exercise, set: index, done } = command;
+      const set = setAt(session, exercise, index);
+      const item = session.exercises[exercise];
+      if (!set || !item || set.done === done || (set.doneChangedAt ?? 0) > at) return session;
+      let next: Session;
+      if (done && session.clock?.exercise === exercise && session.clock.set === index) {
+        // Ticked on the watch while the phone's clock ran on it: the clock stops and gives its time.
+        next = stopClock(session, at);
+      } else {
+        // Not done without what it needs, as on the phone, since the log would refuse it.
+        const kind = setKindOf(metricsOf(item.exerciseId), item.target);
+        if (done && missingFields(set, kind).length > 0) return session;
+        next = toggleDone(session, exercise, index, at);
+      }
+      // A tick older than the latest set leaves the open exercise and the rest that set started.
+      const older = lastActivity(session) > at;
+      const rest = older ? session.rest : next.rest;
       return {
-        ...session,
-        rest:
-          command.endsAt !== null && command.endsAt > now
-            ? { ...rest, endsAt: command.endsAt }
-            : null,
+        ...next,
+        current: older ? session.current : next.current,
+        rest: restUntil(rest, rest?.endsAt ?? null, now),
       };
     }
+    case 'addSet':
+      return addSet(session, command.exercise);
+    case 'setRest':
+      // Only the rest the watch showed: one that has changed since is left as it is.
+      return session.rest?.endsAt === command.of
+        ? { ...session, rest: restUntil(session.rest, command.endsAt, now) }
+        : session;
   }
 }
 
@@ -208,11 +222,15 @@ function change(session: Session, command: WatchCommand, at: number, now: number
  * already applied, changes nothing. Its time is at most `now`, so that a watch whose clock runs
  * ahead cannot outrank changes made on the phone after it.
  */
-export function applyCommand(session: Session, command: WatchCommand, now = Date.now()): Session {
+export function applyCommand(
+  session: Session,
+  command: WatchCommand,
+  { now = Date.now(), metricsOf = () => undefined }: { now?: number; metricsOf?: MetricsOf } = {},
+): Session {
   const applied = session.watchCommands ?? [];
   if (command.workoutId !== workoutIdOf(session) || applied.includes(command.id)) {
     return session;
   }
-  const next = change(session, command, Math.min(command.at, now), now);
+  const next = change(session, command, Math.min(command.at, now), now, metricsOf);
   return { ...next, watchCommands: [...applied, command.id].slice(-KEPT_COMMANDS) };
 }
