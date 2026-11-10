@@ -14,6 +14,7 @@ import { testExercise, testWorkout } from '@/workouts/test-data';
 
 import {
   enableRestAlerts,
+  REST_NOTIFICATION_ID,
   offerRestAlarm,
   refreshPermission,
   resetPermission,
@@ -73,6 +74,11 @@ beforeEach(() => {
   resetPermission();
 });
 afterEach(() => jest.useRealTimers());
+
+it('keeps the id the watch link removes the notification by', () => {
+  // modules/watch-link/ios/WatchSession.swift removes it by this id.
+  expect(REST_NOTIFICATION_ID).toBe('rest-end');
+});
 
 describe('scheduleRestEnd', () => {
   it('schedules one notification for the end of the rest', async () => {
